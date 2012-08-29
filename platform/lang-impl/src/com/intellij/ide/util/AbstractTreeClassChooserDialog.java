@@ -76,36 +76,40 @@ abstract public class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   private TabbedPaneWrapper myTabbedPane;
   private ChooseByNamePanel myGotoByNamePanel;
   private final GlobalSearchScope myScope;
-  @NotNull private final Filter<Object> myClassFilter;
-  private final T myBaseClass;
+  @NotNull private final Filter<T> myClassFilter;
+  private final Class<T> myElementClass;
+  @Nullable private final T myBaseClass;
   private T myInitialClass;
   private final boolean myIsShowMembers;
 
-  public AbstractTreeClassChooserDialog(String title, Project project) {
-    this(title, project, null);
+  public AbstractTreeClassChooserDialog(String title, Project project, final Class<T> elementClass) {
+    this(title, project, elementClass, null);
   }
 
-  public AbstractTreeClassChooserDialog(String title, Project project, @Nullable T initialClass) {
-    this(title, project, GlobalSearchScope.projectScope(project), null, initialClass);
+  public AbstractTreeClassChooserDialog(String title, Project project, final Class<T> elementClass, @Nullable T initialClass) {
+    this(title, project, GlobalSearchScope.projectScope(project), elementClass, null, initialClass);
   }
 
   public AbstractTreeClassChooserDialog(String title,
                                         Project project,
                                         GlobalSearchScope scope,
-                                        @Nullable Filter<Object> classFilter,
+                                        @NotNull Class<T> elementClass,
+                                        @Nullable Filter<T> classFilter,
                                         @Nullable T initialClass) {
-    this(title, project, scope, classFilter, null, initialClass, false);
+    this(title, project, scope, elementClass, classFilter, null, initialClass, false);
   }
 
   public AbstractTreeClassChooserDialog(String title,
                                         Project project,
                                         GlobalSearchScope scope,
-                                        @Nullable Filter<Object> classFilter,
-                                        T baseClass,
+                                        @NotNull Class<T> elementClass,
+                                        @Nullable Filter<T> classFilter,
+                                        @Nullable T baseClass,
                                         @Nullable T initialClass,
                                         boolean isShowMembers) {
     super(project, true);
     myScope = scope;
+    myElementClass = elementClass;
     myClassFilter = classFilter == null ? allFilter() : classFilter;
     myBaseClass = baseClass;
     myInitialClass = initialClass;
@@ -122,6 +126,7 @@ abstract public class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
 
   private Filter<T> allFilter() {
     return new Filter<T>() {
+      @Override
       public boolean isAccepted(T element) {
         return true;
       }
@@ -271,7 +276,7 @@ abstract public class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   private Set<Object> doFilter(Set<Object> elements) {
     Set<Object> result = new HashSet<Object>();
     for (Object o : elements) {
-      if (getFilter().isAccepted(o)) {
+      if (myElementClass.isInstance(o) && getFilter().isAccepted((T)o)) {
         result.add(o);
       }
     }
@@ -408,7 +413,7 @@ abstract public class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   }
 
   @NotNull
-  protected Filter<Object> getFilter() {
+  protected Filter<T> getFilter() {
     return myClassFilter;
   }
 

@@ -37,20 +37,29 @@ import java.util.List;
  */
 public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<PsiClass> implements TreeClassChooser {
   public TreeJavaClassChooserDialog(String title, Project project) {
-    super(title, project);
+    super(title, project, PsiClass.class);
   }
 
   public TreeJavaClassChooserDialog(String title, Project project, @Nullable PsiClass initialClass) {
-    super(title, project, initialClass);
+    super(title, project, PsiClass.class, initialClass);
   }
 
   public TreeJavaClassChooserDialog(String title,
                                     Project project,
                                     GlobalSearchScope scope,
                                     final ClassFilter classFilter, @Nullable PsiClass initialClass) {
-    super(title, project, scope, createFilter(classFilter), initialClass);
+    super(title, project, scope, PsiClass.class, createFilter(classFilter), initialClass);
   }
 
+
+  public TreeJavaClassChooserDialog(String title,
+                                    Project project,
+                                    GlobalSearchScope scope,
+                                    final @Nullable ClassFilter classFilter,
+                                    PsiClass baseClass,
+                                    @Nullable PsiClass initialClass, boolean isShowMembers) {
+    super(title, project, scope, PsiClass.class, createFilter(classFilter), baseClass, initialClass, isShowMembers);
+  }
 
   @Override
   @Nullable
@@ -59,15 +68,6 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
     if (!(userObject instanceof ClassTreeNode)) return null;
     ClassTreeNode descriptor = (ClassTreeNode)userObject;
     return descriptor.getPsiClass();
-  }
-
-  public TreeJavaClassChooserDialog(String title,
-                                    Project project,
-                                    GlobalSearchScope scope,
-                                    final ClassFilter classFilter,
-                                    PsiClass baseClass,
-                                    @Nullable PsiClass initialClass, boolean isShowMembers) {
-    super(title, project, scope, createFilter(classFilter), baseClass, initialClass, isShowMembers);
   }
 
   public static TreeJavaClassChooserDialog withInnerClasses(String title,
@@ -79,15 +79,15 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
   }
 
   @Nullable
-  private static Filter<Object> createFilter(@Nullable final ClassFilter classFilter) {
+  private static Filter<PsiClass> createFilter(@Nullable final ClassFilter classFilter) {
     if (classFilter == null) {
       return null;
     }
     else {
-      return new Filter<Object>() {
+      return new Filter<PsiClass>() {
         @Override
-        public boolean isAccepted(Object element) {
-          return element instanceof PsiClass && classFilter.isAccepted((PsiClass)element);
+        public boolean isAccepted(PsiClass element) {
+          return classFilter.isAccepted(element);
         }
       };
     }
