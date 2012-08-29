@@ -84,4 +84,10 @@ public abstract class LookupElement extends UserDataHolderBase {
   public boolean isCaseSensitive() {
     return true;
   }
+
+  @Nullable
+  public PsiElement getPsiElement() {
+    Object object = getObject();
+    return object instanceof PsiElement ? (PsiElement)object : null;
+  }
 }
