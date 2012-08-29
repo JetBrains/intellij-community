@@ -30,15 +30,6 @@ public abstract class PsiDocumentManager {
   public abstract boolean isCommitted(@NotNull Document document);
 
   /**
-   * Defer action until all documents are committed.
-   * Must be called from the EDT only.
-   *
-   * @param action to run when all documents committed
-   * @return true if action was run immediately (i.e. all documents are already committed)
-   */
-  public abstract boolean performWhenAllCommitted(@NotNull Runnable action);
-
-  /**
    * Returns the document manager instance for the specified project.
    *
    * @param project the project for which the document manager is requested.
@@ -189,4 +180,13 @@ public abstract class PsiDocumentManager {
   public abstract boolean isDocumentBlockedByPsi(@NotNull Document doc);
 
   public abstract void doPostponedOperationsAndUnblockDocument(@NotNull Document doc);
+
+  /**
+   * Defer action until all documents are committed.
+   * Must be called from the EDT only.
+   *
+   * @param action to run when all documents committed
+   * @return true if action was run immediately (i.e. all documents are already committed)
+   */
+  public abstract boolean performWhenAllCommitted(@NotNull Runnable action);
 }

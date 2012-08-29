@@ -70,17 +70,17 @@ import java.util.List;
     )}
 )
 public class Commander extends JPanel implements PersistentStateComponent<Element>, DataProvider, TwoPaneIdeView, Disposable {
-  private Project myProject;
+  private final Project myProject;
   private CommanderPanel myLeftPanel;
   private CommanderPanel myRightPanel;
-  private Splitter mySplitter;
-  private ListSelectionListener mySelectionListener;
-  private ListDataListener myListDataListener;
+  private final Splitter mySplitter;
+  private final ListSelectionListener mySelectionListener;
+  private final ListDataListener myListDataListener;
   public boolean MOVE_FOCUS = true; // internal option: move focus to editor when class/file/...etc. is created
   private Element myElement;
-  private FocusWatcher myFocusWatcher;
-  private CommanderHistory myHistory;
-  private boolean myAutoScrollMode = false;
+  private final FocusWatcher myFocusWatcher;
+  private final CommanderHistory myHistory;
+  private boolean myAutoScrollMode;
   private final ToolWindowManager myToolWindowManager;
   @NonNls private static final String ACTION_BACKCOMMAND = "backCommand";
   @NonNls private static final String ACTION_FORWARDCOMMAND = "forwardCommand";
@@ -140,77 +140,6 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
 
     myHistory = new CommanderHistory(this);
 
-    setupImpl();
-  }
-
-  public static Commander getInstance(final Project project) {
-    return ServiceManager.getService(project, Commander.class);
-  }
-
-  public CommanderHistory getCommandHistory() {
-    return myHistory;
-  }
-
-  private void processConfigurationElement() {
-    if (myElement == null) return;
-
-    Element element = myElement.getChild(ELEMENT_LEFTPANEL);
-    if (element != null) {
-      final PsiElement parentElement = readParentElement(element);
-      if (parentElement != null) {
-        myLeftPanel.getBuilder().enterElement(parentElement, PsiUtilCore.getVirtualFile(parentElement));
-      }
-    }
-
-    element = myElement.getChild(ELEMENT_RIGHTPANEL);
-    if (element != null) {
-      final PsiElement parentElement = readParentElement(element);
-      if (parentElement != null) {
-        myRightPanel.getBuilder().enterElement(parentElement, PsiUtilCore.getVirtualFile(parentElement));
-      }
-    }
-
-    element = myElement.getChild(ELEMENT_SPLITTER);
-    if (element != null) {
-      final String attribute = element.getAttributeValue(ATTRIBUTE_PROPORTION);
-      if (attribute != null) {
-        try {
-          final float proportion = Float.valueOf(attribute).floatValue();
-          if (proportion >= 0 && proportion <= 1) {
-            mySplitter.setProportion(proportion);
-          }
-        }
-        catch (NumberFormatException ignored) {
-        }
-      }
-    }
-
-    element = myElement.getChild(ELEMENT_OPTION);
-    if (element != null) {
-      //noinspection HardCodedStringLiteral
-      MOVE_FOCUS = !"false".equals(element.getAttributeValue(ATTRIBUTE_MOVE_FOCUS));
-    }
-
-    myLeftPanel.setActive(false);
-    myRightPanel.setActive(false);
-    myLeftPanel.setMoveFocus(MOVE_FOCUS);
-    myRightPanel.setMoveFocus(MOVE_FOCUS);
-
-    myElement = null;
-  }
-
-  private static KeyStroke[] getKeyStrokes(String actionId, KeymapManager keymapManager) {
-    final Shortcut[] shortcuts = keymapManager.getActiveKeymap().getShortcuts(actionId);
-    final List<KeyStroke> strokes = new ArrayList<KeyStroke>();
-    for (final Shortcut shortcut : shortcuts) {
-      if (shortcut instanceof KeyboardShortcut) {
-        strokes.add(((KeyboardShortcut)shortcut).getFirstKeyStroke());
-      }
-    }
-    return strokes.toArray(new KeyStroke[strokes.size()]);
-  }
-
-  public void setupImpl() {
     mySelectionListener = new ListSelectionListener() {
       @Override
       public void valueChanged(final ListSelectionEvent e) {
@@ -279,6 +208,73 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     }
 
     myFocusWatcher.install(this);
+  }
+
+  public static Commander getInstance(final Project project) {
+    return ServiceManager.getService(project, Commander.class);
+  }
+
+  public CommanderHistory getCommandHistory() {
+    return myHistory;
+  }
+
+  private void processConfigurationElement() {
+    if (myElement == null) return;
+
+    Element element = myElement.getChild(ELEMENT_LEFTPANEL);
+    if (element != null) {
+      final PsiElement parentElement = readParentElement(element);
+      if (parentElement != null) {
+        myLeftPanel.getBuilder().enterElement(parentElement, PsiUtilCore.getVirtualFile(parentElement));
+      }
+    }
+
+    element = myElement.getChild(ELEMENT_RIGHTPANEL);
+    if (element != null) {
+      final PsiElement parentElement = readParentElement(element);
+      if (parentElement != null) {
+        myRightPanel.getBuilder().enterElement(parentElement, PsiUtilCore.getVirtualFile(parentElement));
+      }
+    }
+
+    element = myElement.getChild(ELEMENT_SPLITTER);
+    if (element != null) {
+      final String attribute = element.getAttributeValue(ATTRIBUTE_PROPORTION);
+      if (attribute != null) {
+        try {
+          final float proportion = Float.valueOf(attribute).floatValue();
+          if (proportion >= 0 && proportion <= 1) {
+            mySplitter.setProportion(proportion);
+          }
+        }
+        catch (NumberFormatException ignored) {
+        }
+      }
+    }
+
+    element = myElement.getChild(ELEMENT_OPTION);
+    if (element != null) {
+      //noinspection HardCodedStringLiteral
+      MOVE_FOCUS = !"false".equals(element.getAttributeValue(ATTRIBUTE_MOVE_FOCUS));
+    }
+
+    myLeftPanel.setActive(false);
+    myRightPanel.setActive(false);
+    myLeftPanel.setMoveFocus(MOVE_FOCUS);
+    myRightPanel.setMoveFocus(MOVE_FOCUS);
+
+    myElement = null;
+  }
+
+  private static KeyStroke[] getKeyStrokes(String actionId, KeymapManager keymapManager) {
+    final Shortcut[] shortcuts = keymapManager.getActiveKeymap().getShortcuts(actionId);
+    final List<KeyStroke> strokes = new ArrayList<KeyStroke>();
+    for (final Shortcut shortcut : shortcuts) {
+      if (shortcut instanceof KeyboardShortcut) {
+        strokes.add(((KeyboardShortcut)shortcut).getFirstKeyStroke());
+      }
+    }
+    return strokes.toArray(new KeyStroke[strokes.size()]);
   }
 
   private DefaultActionGroup createToolbarActions() {
@@ -408,7 +404,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     updateToolWindowTitle(panel);
   }
 
-  protected void updateToolWindowTitle(final CommanderPanel activePanel) {
+  protected void updateToolWindowTitle(CommanderPanel activePanel) {
     final ToolWindow toolWindow = myToolWindowManager.getToolWindow(ToolWindowId.COMMANDER);
     if (toolWindow != null) {
       final AbstractTreeNode node = activePanel.getSelectedNode();
@@ -591,7 +587,6 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     myLeftPanel.dispose();
     myRightPanel.dispose();
     myHistory.clearHistory();
-    myProject = null;
   }
 
   public CommanderPanel getRightPanel() {
