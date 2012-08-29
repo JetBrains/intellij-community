@@ -233,25 +233,13 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     final List<PsiFile> files = myExternalAnnotations.get(fqn);
     if (files == NULL) return null;
     if (files != null) {
-      boolean hasInvalidFiles = false;
+      boolean allValid = true;
       for (PsiFile file : files) {
-        if (!file.isValid()) {
-          hasInvalidFiles = true;
-          break;
-        }
+        allValid &= file.isValid();
       }
-      if (hasInvalidFiles) {
-        ArrayList<PsiFile> onlyValid = new ArrayList<PsiFile>();
-        for (PsiFile file : files) {
-          if (file.isValid()) {
-            onlyValid.add(file);
-          }
-        }
-        onlyValid.trimToSize();
-        myExternalAnnotations.put(fqn, onlyValid);
-        return onlyValid;
+      if (allValid) {
+        return files;
       }
-      return files;
     }
 
     if (virtualFile == null) {
