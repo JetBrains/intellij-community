@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.JBList;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
@@ -76,11 +78,16 @@ public class BreakpointChooser {
         break;
       }
     }
+    final Ref<Object> hackedSelection = Ref.create();
+
     myDetailController = new DetailController(new MasterController() {
       JLabel fake = new JLabel();
       @Override
       public ItemWrapper[] getSelectedItems() {
-        return new ItemWrapper[]{((BreakpointItem)myList.getSelectedValue())};
+        if (hackedSelection.get() == null) {
+          return new ItemWrapper[0];
+        }
+        return new ItemWrapper[]{((BreakpointItem) hackedSelection.get())};
       }
 
       @Override
@@ -92,18 +99,21 @@ public class BreakpointChooser {
     final ItemWrapperListRenderer listRenderer = new ItemWrapperListRenderer(project, null);
 
     ComboBoxModel model = new CollectionComboBoxModel(breakpointItems, breakpointItem);
-    myComboBox = new ComboBox(model) {
+    myComboBox = new ComboBox(model);
+    myComboBox.setRenderer(new ItemWrapperListRenderer(project, null) {
       @Override
-      protected JBList createJBList(ComboBoxModel model) {
-        myList = super.createJBList(model);
-        myDetailController.setList(myList);
-        myList.setCellRenderer(listRenderer);
-        return myList;
+      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        super.customizeCellRenderer(list, value, index, selected,
+                                    hasFocus);
+        if (selected) {
+          if (hackedSelection.get() != value) {
+            hackedSelection.set(value);
+            myDetailController.selectionChanged();
+          }
+        }
       }
-    };
-    myComboBox.setRenderer(listRenderer);
+    });
 
-    myComboBox.setSwingPopup(false);
     myComboBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent event) {

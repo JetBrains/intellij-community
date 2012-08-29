@@ -21,6 +21,7 @@ import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,9 +47,13 @@ public abstract class CachingReference implements PsiReference, EmptyResolveMess
     return false;
   }
 
-  @Nullable
+  @NotNull
   public static <T extends PsiElement> ElementManipulator<T> getManipulator(T currentElement){
-    return ElementManipulators.getManipulator(currentElement);
+    ElementManipulator<T> manipulator = ElementManipulators.getManipulator(currentElement);
+    if (manipulator == null) {
+      throw new IncorrectOperationException("Manipulator for this element is not defined: " + currentElement);
+    }
+    return manipulator;
   }
 
   private static class MyResolver implements ResolveCache.Resolver {

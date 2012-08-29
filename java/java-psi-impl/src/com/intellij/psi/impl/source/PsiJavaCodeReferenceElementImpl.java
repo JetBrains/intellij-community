@@ -85,12 +85,14 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   public int getKind() {
-    IElementType i = getTreeParent().getElementType();
+    LOG.assertTrue(isValid());
+    CompositeElement treeParent = getTreeParent();
+    IElementType i = treeParent.getElementType();
     if (isDummy(i)) {
       return myKindWhenDummy;
     }
     if (i == JavaElementType.TYPE) {
-      return getTreeParent().getTreeParent().getPsi() instanceof PsiTypeCodeFragment ? CLASS_OR_PACKAGE_NAME_KIND : CLASS_NAME_KIND;
+      return treeParent.getTreeParent().getPsi() instanceof PsiTypeCodeFragment ? CLASS_OR_PACKAGE_NAME_KIND : CLASS_NAME_KIND;
     }
     if (i == JavaElementType.EXTENDS_LIST ||
         i == JavaElementType.IMPLEMENTS_LIST ||
@@ -108,13 +110,13 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return CLASS_NAME_KIND;
     }
     if (i == JavaElementType.NEW_EXPRESSION) {
-      final ASTNode qualifier = getTreeParent().findChildByRole(ChildRole.QUALIFIER);
+      final ASTNode qualifier = treeParent.findChildByRole(ChildRole.QUALIFIER);
       return qualifier != null ? CLASS_IN_QUALIFIED_NEW_KIND : CLASS_NAME_KIND;
     }
     if (i == JavaElementType.ANONYMOUS_CLASS) {
-      if (getTreeParent().getChildRole(this) == ChildRole.BASE_CLASS_REFERENCE) {
-        LOG.assertTrue(getTreeParent().getTreeParent().getElementType() == JavaElementType.NEW_EXPRESSION);
-        final ASTNode qualifier = getTreeParent().getTreeParent().findChildByRole(ChildRole.QUALIFIER);
+      if (treeParent.getChildRole(this) == ChildRole.BASE_CLASS_REFERENCE) {
+        LOG.assertTrue(treeParent.getTreeParent().getElementType() == JavaElementType.NEW_EXPRESSION);
+        final ASTNode qualifier = treeParent.getTreeParent().findChildByRole(ChildRole.QUALIFIER);
         return qualifier != null ? CLASS_IN_QUALIFIED_NEW_KIND : CLASS_NAME_KIND;
       }
       else {
@@ -125,14 +127,14 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return PACKAGE_NAME_KIND;
     }
     if (i == JavaElementType.IMPORT_STATEMENT) {
-      final boolean isOnDemand = ((PsiImportStatement)SourceTreeToPsiMap.treeElementToPsi(getTreeParent())).isOnDemand();
+      final boolean isOnDemand = ((PsiImportStatement)SourceTreeToPsiMap.treeElementToPsi(treeParent)).isOnDemand();
       return isOnDemand ? CLASS_FQ_OR_PACKAGE_NAME_KIND : CLASS_FQ_NAME_KIND;
     }
     if (i == JavaElementType.IMPORT_STATIC_STATEMENT) {
       return CLASS_FQ_OR_PACKAGE_NAME_KIND;
     }
     if (i == JavaElementType.JAVA_CODE_REFERENCE) {
-      final int parentKind = ((PsiJavaCodeReferenceElementImpl)getTreeParent()).getKind();
+      final int parentKind = ((PsiJavaCodeReferenceElementImpl)treeParent).getKind();
       switch (parentKind) {
         case CLASS_NAME_KIND:
           return CLASS_OR_PACKAGE_NAME_KIND;
@@ -170,11 +172,17 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return CLASS_OR_PACKAGE_NAME_KIND;
     }
     if (isCodeFragmentType(i)) {
-      PsiJavaCodeReferenceCodeFragment fragment = (PsiJavaCodeReferenceCodeFragment)getTreeParent().getPsi();
+      PsiJavaCodeReferenceCodeFragment fragment = (PsiJavaCodeReferenceCodeFragment)treeParent.getPsi();
       return fragment.isClassesAccepted() ? CLASS_FQ_OR_PACKAGE_NAME_KIND : PACKAGE_NAME_KIND;
     }
 
+    diagnoseUnknownParent();
+    return CLASS_NAME_KIND;
+  }
+
+  private void diagnoseUnknownParent() {
     CompositeElement parent = getTreeParent();
+    IElementType i = parent.getElementType();
     String message = "Unknown parent for java code reference: '" + parent + "'; Type: " + i + ";\n";
     while (parent != null && parent.getPsi() instanceof PsiExpression) {
       parent = parent.getTreeParent();
@@ -184,7 +192,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       message += DebugUtil.treeToString(parent, false);
     }
     LOG.error(message);
-    return CLASS_NAME_KIND;
   }
 
   private static boolean isCodeFragmentType(IElementType type) {

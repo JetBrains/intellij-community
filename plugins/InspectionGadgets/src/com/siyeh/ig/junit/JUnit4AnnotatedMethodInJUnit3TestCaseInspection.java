@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2009 Bas Leijdekkers
+ * Copyright 2008-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -30,8 +30,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends
-                                                             BaseInspection {
+import java.util.ArrayList;
+import java.util.List;
+
+public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspection {
 
   private static final String IGNORE = "org.junit.Ignore";
 
@@ -39,20 +41,16 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends
   @Nls
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "junit4.test.method.in.class.extending.junit3.testcase.display.name");
+    return InspectionGadgetsBundle.message("junit4.test.method.in.class.extending.junit3.testcase.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-
-    if (infos[0] instanceof PsiMethod &&
-        AnnotationUtil.isAnnotated((PsiModifierListOwner)infos[0], IGNORE, false)) {
+    if (AnnotationUtil.isAnnotated((PsiMethod)infos[1], IGNORE, false)) {
       return InspectionGadgetsBundle.message("ignore.test.method.in.class.extending.junit3.testcase.problem.descriptor");
     }
-    return InspectionGadgetsBundle.message(
-      "junit4.test.method.in.class.extending.junit3.testcase.problem.descriptor");
+    return InspectionGadgetsBundle.message("junit4.test.method.in.class.extending.junit3.testcase.problem.descriptor");
   }
 
   @Override
@@ -63,39 +61,18 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-    String className = null;
-    if (infos[0] instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)infos[0];
-      PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) return InspectionGadgetsFix.EMPTY_ARRAY;
-      className = containingClass.getName();
-      if (AnnotationUtil.isAnnotated(method, IGNORE, false)) {
-        if (!TestUtils.isJUnit4TestMethod(method)) {
-          return new InspectionGadgetsFix[]{new RemoveIgnoreAndRename(method),
-            new RemoveExtendsTestCaseFix(className)};
-        }
-        else {
-          return new InspectionGadgetsFix[]{new RemoveIgnoreAndRename(method),
-            new RemoveTestAnnotationFix(),
-            new RemoveExtendsTestCaseFix(className)};
-        }
-      }
+    final List<InspectionGadgetsFix> fixes = new ArrayList(3);
+    final PsiMethod method = (PsiMethod)infos[1];
+    if (AnnotationUtil.isAnnotated(method, IGNORE, false)) {
+      fixes.add(new RemoveIgnoreAndRename(method));
     }
-
-    if (className == null) {
-      className = (String)infos[0];
+    if (TestUtils.isJUnit4TestMethod(method)) {
+      fixes.add(new RemoveTestAnnotationFix());
     }
-    if (className != null) {
-      return new InspectionGadgetsFix[]{
-        new RemoveTestAnnotationFix(),
-        new RemoveExtendsTestCaseFix(className)
-      };
-    }
-    else {
-      return new InspectionGadgetsFix[]{
-        new RemoveTestAnnotationFix()
-      };
-    }
+    final PsiClass aClass = (PsiClass)infos[0];
+    final String className = aClass.getName();
+    fixes.add(new ConvertToJUnit4Fix(className));
+    return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
   }
 
   private static void deleteAnnotation(ProblemDescriptor descriptor, final String qualifiedName) {
@@ -117,6 +94,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends
   }
 
   private static class RemoveIgnoreAndRename extends RenameFix {
+
     public RemoveIgnoreAndRename(@NonNls PsiMethod method) {
       super("_" + method.getName());
     }
@@ -124,7 +102,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("ignore.test.method.in.class.extending.junit3.testcase.problem.fix", getTargetName());
+      return InspectionGadgetsBundle.message("ignore.test.method.in.class.extending.junit3.testcase.quickfix", getTargetName());
     }
 
     @Override
@@ -134,53 +112,157 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends
     }
   }
 
+  private static class ConvertToJUnit4Fix extends InspectionGadgetsFix {
 
-  private static class RemoveExtendsTestCaseFix extends InspectionGadgetsFix {
     private final String className;
 
-    RemoveExtendsTestCaseFix(String className) {
+    ConvertToJUnit4Fix(String className) {
       this.className = className;
     }
 
+    @Override
     @NotNull
     public String getName() {
-      return "remove 'extends TestCase' from class '" + className + '\'';
+      return InspectionGadgetsBundle.message("convert.junit3.test.class.quickfix", className);
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiMember)) {
         return;
       }
-      final PsiMember method = (PsiMember)parent;
-      final PsiClass containingClass = method.getContainingClass();
+      final PsiMember member = (PsiMember)parent;
+      final PsiClass containingClass = member.getContainingClass();
       if (containingClass == null) {
         return;
       }
-      final PsiReferenceList extendsList =
-        containingClass.getExtendsList();
+      final PsiReferenceList extendsList = containingClass.getExtendsList();
       if (extendsList == null) {
         return;
       }
-      extendsList.delete();
+      final PsiMethod[] methods = containingClass.getMethods();
+      for (PsiMethod method : methods) {
+        @NonNls final String name = method.getName();
+        if (method.hasModifierProperty(PsiModifier.STATIC)) {
+          continue;
+        }
+        final PsiType returnType = method.getReturnType();
+        if (!PsiType.VOID.equals(returnType)) {
+          continue;
+        }
+        final PsiModifierList modifierList = method.getModifierList();
+        if (name.startsWith("test")) {
+          addAnnotationIfNotPresent(modifierList, "org.junit.Test");
+        }
+        else if (name.equals("setUp")) {
+          transformSetUpOrTearDownMethod(method);
+          addAnnotationIfNotPresent(modifierList, "org.junit.Before");
+        }
+        else if (name.equals("tearDown")) {
+          transformSetUpOrTearDownMethod(method);
+          addAnnotationIfNotPresent(modifierList, "org.junit.After");
+        }
+        method.accept(new MethodCallModifier());
+      }
+      final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
+      for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
+        referenceElement.delete();
+      }
+    }
+
+    private static void addAnnotationIfNotPresent(PsiModifierList modifierList, String qualifiedAnnotationName) {
+      if (modifierList.findAnnotation(qualifiedAnnotationName) != null) {
+        return;
+      }
+      final PsiAnnotation annotation = modifierList.addAnnotation(qualifiedAnnotationName);
+      final Project project = modifierList.getProject();
+      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+      codeStyleManager.shortenClassReferences(annotation);
+    }
+
+    private static void transformSetUpOrTearDownMethod(PsiMethod method) {
+      final PsiModifierList modifierList = method.getModifierList();
+      if (modifierList.hasModifierProperty(PsiModifier.PROTECTED)) {
+        modifierList.setModifierProperty(PsiModifier.PROTECTED, false);
+      }
+      if (!modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
+        modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
+      }
+      final PsiAnnotation overrideAnnotation = modifierList.findAnnotation("java.lang.Override");
+      if (overrideAnnotation != null) {
+        overrideAnnotation.delete();
+      }
+      method.accept(new SuperLifeCycleCallRemover(method.getName()));
+    }
+
+    private static class SuperLifeCycleCallRemover extends JavaRecursiveElementVisitor {
+
+      @NotNull private final String myLifeCycleMethodName;
+
+      private SuperLifeCycleCallRemover(@NotNull String lifeCycleMethodName) {
+        myLifeCycleMethodName = lifeCycleMethodName;
+      }
+
+      @Override
+      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        super.visitMethodCallExpression(expression);
+        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+        final String methodName = methodExpression.getReferenceName();
+        if (!myLifeCycleMethodName.equals(methodName)) {
+          return;
+        }
+        final PsiExpression target = methodExpression.getQualifierExpression();
+        if (!(target instanceof PsiSuperExpression)) {
+          return;
+        }
+        expression.delete();
+      }
+    }
+
+    private static class MethodCallModifier extends JavaRecursiveElementVisitor {
+
+      @Override
+      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        super.visitMethodCallExpression(expression);
+        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+        if (methodExpression.getQualifierExpression() != null) {
+          return;
+        }
+        final PsiMethod method = expression.resolveMethod();
+        if (method == null) {
+          return;
+        }
+        final PsiClass aClass = method.getContainingClass();
+        if (aClass == null) {
+          return;
+        }
+        final String name = aClass.getQualifiedName();
+        if (!"junit.framework.Assert".equals(name)) {
+          return;
+        }
+        @NonNls final String newExpressionText = "org.junit.Assert." + expression.getText();
+        final Project project = expression.getProject();
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+        final PsiExpression newExpression = factory.createExpressionFromText(newExpressionText, expression);
+        final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+        final PsiElement replacedExpression = expression.replace(newExpression);
+        codeStyleManager.shortenClassReferences(replacedExpression);
+      }
     }
   }
 
+  private static class RemoveTestAnnotationFix extends InspectionGadgetsFix {
 
-  private static class RemoveTestAnnotationFix
-    extends InspectionGadgetsFix {
-
+    @Override
     @NotNull
     public String getName() {
-      return "Remove @Test annotation";
+      return InspectionGadgetsBundle.message("remove.junit4.test.annotation.quickfix");
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       deleteAnnotation(descriptor, "org.junit.Test");
     }
   }
@@ -190,8 +272,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends
     return new Junit4AnnotatedMethodInJunit3TestCaseVisitor();
   }
 
-  private static class Junit4AnnotatedMethodInJunit3TestCaseVisitor
-    extends BaseInspectionVisitor {
+  private static class Junit4AnnotatedMethodInJunit3TestCaseVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(PsiMethod method) {
@@ -204,14 +285,10 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends
         return;
       }
       if (AnnotationUtil.isAnnotated(method, IGNORE, false) && method.getName().startsWith("test")) {
-        registerMethodError(method, method);
-        return;
+        registerMethodError(method, containingClass, method);
+      } else if (TestUtils.isJUnit4TestMethod(method)) {
+        registerMethodError(method, containingClass, method);
       }
-      if (!TestUtils.isJUnit4TestMethod(method)) {
-        return;
-      }
-      final String className = containingClass.getName();
-      registerMethodError(method, className);
     }
   }
 }

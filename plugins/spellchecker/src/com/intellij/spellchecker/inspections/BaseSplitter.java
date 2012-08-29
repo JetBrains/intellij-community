@@ -15,8 +15,11 @@
  */
 package com.intellij.spellchecker.inspections;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,7 +35,10 @@ import java.util.regex.Pattern;
 
 public abstract class BaseSplitter implements Splitter {
 
+  static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.inspections.BaseSplitter");
+
   public static final int MIN_RANGE_LENGTH = 3;
+  public static final int MAX_RANGE_LENGTH = 50;
 
 
   protected static void addWord(@NotNull Consumer<TextRange> consumer, boolean ignore, @Nullable TextRange found) {
@@ -83,8 +90,9 @@ public abstract class BaseSplitter implements Splitter {
     return TextRange.from(range.getStartOffset() + start, end - start);
   }
 
-  protected static boolean tooSmall(int from, int till) {
-    return till - from <= MIN_RANGE_LENGTH;
+  protected static boolean badSize(int from, int till) {
+    int l = till - from;
+    return l <= MIN_RANGE_LENGTH || l>= MAX_RANGE_LENGTH;
   }
 
   @NotNull
@@ -93,35 +101,40 @@ public abstract class BaseSplitter implements Splitter {
     int from = range.getStartOffset();
     int till;
     boolean addLast = true;
-    Matcher matcher = toExclude.matcher(range.substring(text));
-    while (matcher.find()) {
-
-      checkCancelled();
-
-      TextRange found = matcherRange(range, matcher);
-      till = found.getStartOffset() - 1;
-      if (range.getEndOffset() - found.getEndOffset() < MIN_RANGE_LENGTH) {
-        addLast = false;
+    Matcher matcher = toExclude.matcher(new StringUtil.BombedCharSequence(range.substring(text), 500));
+    try {
+      while (matcher.find()) {
+        checkCancelled();
+        TextRange found = matcherRange(range, matcher);
+        till = found.getStartOffset();
+        if (range.getEndOffset() - found.getEndOffset() < MIN_RANGE_LENGTH) {
+          addLast = false;
+        }
+        if (!badSize(from, till)) {
+          toCheck.add(new TextRange(from, till));
+        }
+        if (groupToInclude > 0) {
+          TextRange contentFound = matcherRange(range, matcher, groupToInclude);
+          if (badSize(contentFound.getEndOffset(), contentFound.getStartOffset())) {
+            toCheck.add(TextRange.create(contentFound));
+          }
+        }
+        from = found.getEndOffset();
       }
-      if (!tooSmall(from, till)) {
+      till = range.getEndOffset();
+      if (badSize(from, till)) {
+        return toCheck;
+      }
+      if (addLast) {
         toCheck.add(new TextRange(from, till));
       }
-      if (groupToInclude > 0) {
-        TextRange contentFound = matcherRange(range, matcher, groupToInclude);
-        if (tooSmall(contentFound.getEndOffset(), contentFound.getStartOffset())) {
-          toCheck.add(TextRange.create(contentFound));
-        }
-      }
-      from = found.getEndOffset();
-    }
-    till = range.getEndOffset();
-    if (tooSmall(from, till)) {
       return toCheck;
     }
-    if (addLast) {
-      toCheck.add(new TextRange(from, till));
+    catch (ProcessCanceledException e) {
+      //LOG.warn("Matching took too long: >>>" + range.substring(text) + "<<< " + toExclude);
+      return Collections.singletonList(range);
+      //return Collections.emptyList();
     }
-    return toCheck;
   }
 
   public static void checkCancelled() {

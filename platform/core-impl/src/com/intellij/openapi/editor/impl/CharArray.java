@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -197,20 +198,20 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
     assert count == stringLen || stringLen==-1;
 
     if (!myDebug) return;
-    final String stringFromCharArray;
+    final CharSequence seqFromCharArray;
 
     if (myArray != null) {
       assert myCount <= myArray.length;
-      stringFromCharArray = new String(myArray, myStart, myCount);
+      seqFromCharArray = new CharArrayCharSequence(myArray, myStart, myCount);
     } else {
-      stringFromCharArray = null;
+      seqFromCharArray = null;
     }
 
-    if (stringFromCharArray != null && originalSequence != null) {
-      assert stringFromCharArray.equals(originalSequence);
+    if (seqFromCharArray != null && originalSequence != null) {
+      assert StringUtil.equals(seqFromCharArray, originalSequence);
     }
-    if (!isDeferredChangeMode() && stringFromCharArray != null && string != null) {
-      assert stringFromCharArray.equals(string);
+    if (!isDeferredChangeMode() && seqFromCharArray != null && string != null) {
+      assert StringUtil.equals(seqFromCharArray, string);
     }
     if (originalSequence != null && string != null) {
       assert string.equals(originalSequence.toString());
@@ -218,7 +219,7 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
 
     myDebugArray.assertConsistency();
 
-    String str = myStringRef == null ? null : myStringRef.get();
+    CharSequence str = myStringRef == null ? null : myStringRef.get();
     if (str == null) {
       if (myHasDeferredChanges) {
         str = doSubString(0, myCount + myDeferredShift).toString();
@@ -227,7 +228,7 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
         str = myOriginalSequence.toString();
       }
       else {
-        str = stringFromCharArray;
+        str = seqFromCharArray;
       }
     }
     assert count == str.length();
@@ -675,8 +676,8 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
            ", deferred shift: " + myDeferredShift+"); view offsets: [" + myStart+"; "+myCount+"]; deferred changes: "+myDeferredChangesStorage;
   }
   
-  private void checkStrings(@NonNls @NotNull String operation, @NotNull String expected, @NotNull String actual) {
-    if (expected.equals(actual)) {
+  private void checkStrings(@NonNls @NotNull String operation, @NotNull String expected, @NotNull CharSequence actual) {
+    if (StringUtil.equals(expected, actual)) {
       return;
     }
     for (int i = 0, max = Math.min(expected.length(), actual.length()); i < max; i++) {

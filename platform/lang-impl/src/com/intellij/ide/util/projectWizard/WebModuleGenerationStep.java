@@ -15,14 +15,14 @@
  */
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.WebProjectGenerator;
@@ -30,6 +30,7 @@ import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +47,6 @@ import java.util.Map;
  */
 public class WebModuleGenerationStep extends ModuleWizardStep {
 
-  private final Project myProject;
   private final ModuleBuilder myModuleBuilder;
   private final Icon myIcon;
   private final String myHelpId;
@@ -55,11 +55,9 @@ public class WebModuleGenerationStep extends ModuleWizardStep {
   private WebProjectGenerator myCurrentGenerator;
   private JPanel myRightPanel;
 
-  public WebModuleGenerationStep(@Nullable Project project,
-                                 @NotNull ModuleBuilder moduleBuilder,
+  public WebModuleGenerationStep(@NotNull ModuleBuilder moduleBuilder,
                                  @NotNull Icon icon,
                                  @NotNull String helpId) {
-    myProject = project;
     myModuleBuilder = moduleBuilder;
     myIcon = icon;
     myHelpId = helpId;
@@ -126,11 +124,6 @@ public class WebModuleGenerationStep extends ModuleWizardStep {
     splitPane.setRightComponent(myRightPanel);
 
     generatorList.setSelectedValue(emptyProjectGenerator, true);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        generatorList.requestFocusInWindow();
-      }
-    }, ModalityState.any());
     return splitPane;
   }
 
@@ -202,7 +195,7 @@ public class WebModuleGenerationStep extends ModuleWizardStep {
   @SuppressWarnings("unchecked")
   @Override
   public void updateDataModel() {
-    WebProjectGenerator generator = myCurrentGenerator;
+    final WebProjectGenerator generator = myCurrentGenerator;
     if (generator == null) {
       throw new RuntimeException("Current generator should be not-null");
     }
@@ -210,14 +203,42 @@ public class WebModuleGenerationStep extends ModuleWizardStep {
     if (peer == null) {
       throw new RuntimeException("Peer should be not-null for " + myCurrentGenerator.getName());
     }
-    Object settings = peer.getSettings();
+    final Object settings = peer.getSettings();
     File dir = new File(myModuleBuilder.getModuleFileDirectory());
-    VirtualFile moduleDir = LocalFileSystem.getInstance().findFileByIoFile(dir);
-    if (moduleDir == null || !moduleDir.isValid()) {
-      moduleDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
-    }
+    final VirtualFile moduleDir = VfsUtil.findFileByIoFile(dir, true);
     if (moduleDir != null && moduleDir.isValid()) {
-      generator.generateProject(myProject, moduleDir, settings, null);
+      myModuleBuilder.addListener(new ModuleBuilderListener() {
+        @Override
+        public void moduleCreated(@NotNull final Module module) {
+          myModuleBuilder.removeListener(this);
+
+          final Project project = module.getProject();
+          final Runnable task = new Runnable() {
+            @Override
+            public void run() {
+              generator.generateProject(project, moduleDir, settings, module);
+            }
+          };
+          final boolean scheduledAsPostStartupActivity;
+          StartupManagerEx startupManager = StartupManagerEx.getInstanceEx(project);
+          //noinspection SynchronizationOnLocalVariableOrMethodParameter
+          synchronized (startupManager) {
+            scheduledAsPostStartupActivity = !startupManager.postStartupActivityPassed();
+            if (scheduledAsPostStartupActivity) {
+              startupManager.registerPostStartupActivity(task);
+            }
+          }
+          if (!scheduledAsPostStartupActivity) {
+            UIUtil.invokeLaterIfNeeded(new Runnable() {
+              public void run() {
+                if (!project.isDisposed()) {
+                  task.run();
+                }
+              }
+            });
+          }
+        }
+      });
     }
   }
 
@@ -238,7 +259,7 @@ public class WebModuleGenerationStep extends ModuleWizardStep {
     }
 
     @Override
-    public void generateProject(Project project, VirtualFile baseDir, Object settings, Module module) {}
+    public void generateProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Object settings, @NotNull Module module) {}
 
     @NotNull
     @Override

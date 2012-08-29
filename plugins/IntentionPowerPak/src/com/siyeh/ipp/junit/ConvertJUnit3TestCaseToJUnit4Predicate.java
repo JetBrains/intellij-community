@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Bas Leijdekkers
+ * Copyright 2009-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-public class ConvertJUnit3TestCaseToJUnit4Predicate
-  implements PsiElementPredicate {
+class ConvertJUnit3TestCaseToJUnit4Predicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiClass)) {
@@ -31,21 +31,18 @@ public class ConvertJUnit3TestCaseToJUnit4Predicate
     final PsiClass aClass = (PsiClass)parent;
     final PsiElement leftBrace = aClass.getLBrace();
     final int offsetInParent = element.getStartOffsetInParent();
-    if (leftBrace == null ||
-        offsetInParent >= leftBrace.getStartOffsetInParent()) {
+    if (leftBrace == null || offsetInParent >= leftBrace.getStartOffsetInParent()) {
       return false;
     }
     final PsiReferenceList extendsList = aClass.getExtendsList();
     if (extendsList == null) {
       return false;
     }
-    final PsiJavaCodeReferenceElement[] referenceElements =
-      extendsList.getReferenceElements();
+    final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
     if (referenceElements.length != 1) {
       return false;
     }
-    final PsiJavaCodeReferenceElement referenceElement =
-      referenceElements[0];
+    final PsiJavaCodeReferenceElement referenceElement = referenceElements[0];
     final PsiElement target = referenceElement.resolve();
     if (!(target instanceof PsiClass)) {
       return false;
@@ -58,8 +55,7 @@ public class ConvertJUnit3TestCaseToJUnit4Predicate
     final Project project = element.getProject();
     final GlobalSearchScope scope = element.getResolveScope();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiClass testAnnotation =
-      psiFacade.findClass("org.junit.Test", scope);
+    final PsiClass testAnnotation = psiFacade.findClass("org.junit.Test", scope);
     return testAnnotation != null;
   }
 }

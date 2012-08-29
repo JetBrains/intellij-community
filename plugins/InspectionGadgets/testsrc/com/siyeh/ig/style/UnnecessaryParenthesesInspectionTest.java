@@ -8,8 +8,7 @@ import com.siyeh.ig.IGInspectionTestCase;
 public class UnnecessaryParenthesesInspectionTest extends IGInspectionTestCase {
 
   public void test() throws Exception {
-    final UnnecessaryParenthesesInspection inspection =
-      new UnnecessaryParenthesesInspection();
+    final UnnecessaryParenthesesInspection inspection = new UnnecessaryParenthesesInspection();
     inspection.ignoreParenthesesOnConditionals = true;
     final LanguageLevelProjectExtension levelProjectExtension = LanguageLevelProjectExtension.getInstance(getProject());
     final LanguageLevel level = levelProjectExtension.getLanguageLevel();
@@ -21,5 +20,11 @@ public class UnnecessaryParenthesesInspectionTest extends IGInspectionTestCase {
     finally {
       levelProjectExtension.setLanguageLevel(level);
     }
+  }
+
+  public void testClarifyingParentheses() {
+    final UnnecessaryParenthesesInspection inspection = new UnnecessaryParenthesesInspection();
+    inspection.ignoreClarifyingParentheses = true;
+    doTest("com/siyeh/igtest/style/clarifying_parentheses", inspection);
   }
 }

@@ -125,9 +125,9 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   }
 
   @Override
-  protected boolean notSameFile(@Nullable VirtualFile file, PsiFile containingFile) {
+  protected boolean notSameFile(@Nullable VirtualFile file, @NotNull PsiFile containingFile) {
     final PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
-    return currentFile == null || containingFile != currentFile;
+    return currentFile == null || InjectedLanguageUtil.getTopLevelFile(containingFile) != InjectedLanguageUtil.getTopLevelFile(currentFile);
   }
 
   @Override

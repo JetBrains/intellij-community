@@ -356,6 +356,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
         if (param.isValid()) {
           PsiType paramType = param.getType();
+          assert paramType.isValid();
           if (substitutor != null) {
             paramType = substitutor.substitute(paramType);
           }
