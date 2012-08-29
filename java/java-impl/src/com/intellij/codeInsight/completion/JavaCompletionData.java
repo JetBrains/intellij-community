@@ -371,6 +371,13 @@ public class JavaCompletionData extends JavaAwareCompletionData {
 
         return TailType.HUMBLE_SPACE_BEFORE_WORD;
       }
+      if (scope instanceof PsiLambdaExpression) {
+        final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(((PsiLambdaExpression)scope));
+        if (PsiType.VOID.equals(returnType)) {
+          return TailType.SEMICOLON;
+        }
+        return TailType.HUMBLE_SPACE_BEFORE_WORD;
+      }
       scope = scope.getParent();
     }
   }
