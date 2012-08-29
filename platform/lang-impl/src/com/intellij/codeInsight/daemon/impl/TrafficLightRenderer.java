@@ -39,6 +39,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
@@ -117,6 +118,12 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
   public static void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel, @NotNull Project project, Document document, PsiFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    PsiFile currentFile = PsiDocumentManager.getInstance(project).getPsiFile(editorMarkupModel.getEditor().getDocument());
+
+    if (currentFile != null && !currentFile.equals(file)) {
+      return;
+    }
+
     if (editorMarkupModel.isErrorStripeVisible()) {
       ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
       if (renderer instanceof TrafficLightRenderer) {
