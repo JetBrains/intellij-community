@@ -21,6 +21,7 @@ public class WebModuleType extends WebModuleTypeBase<ModuleBuilder> {
   @Override
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModuleBuilder moduleBuilder, ModulesProvider modulesProvider) {
     WebModuleGenerationStep generationStep = new WebModuleGenerationStep(
+      wizardContext.getProject(),
       moduleBuilder,
       wizardContext.getStepIcon(),
       "reference.dialogs.new.project.fromScratch.webModuleGeneration"
