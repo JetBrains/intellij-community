@@ -399,6 +399,10 @@ public class NameUtilTest extends UsefulTestCase {
     assertFalse(new MinusculeMatcher("WL", NameUtil.MatchingCaseSensitivity.ALL).matches("weblogic"));
     assertFalse(new MinusculeMatcher("webLogic", NameUtil.MatchingCaseSensitivity.ALL).matches("WebLogic"));
     assertFalse(new MinusculeMatcher("Str", NameUtil.MatchingCaseSensitivity.ALL).matches("SomeThingRidiculous"));
+    assertFalse(new MinusculeMatcher("*list*", NameUtil.MatchingCaseSensitivity.ALL).matches("List"));
+    assertFalse(new MinusculeMatcher("*list*", NameUtil.MatchingCaseSensitivity.ALL).matches("AbstractList"));
+    assertFalse(new MinusculeMatcher("java.util.list", NameUtil.MatchingCaseSensitivity.ALL).matches("java.util.List"));
+    assertFalse(new MinusculeMatcher("java.util.list", NameUtil.MatchingCaseSensitivity.ALL).matches("java.util.AbstractList"));
   }
 
   public void testMatchingFragments() {
