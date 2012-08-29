@@ -88,6 +88,10 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     }
 
     PsiTypeLookupItem.addImportForItem(context, psiClass);
+    if (context.getOffset(refEnd) < 0) {
+      return;
+    }
+
     context.setTailOffset(context.getOffset(refEnd));
 
     if (shouldInsertParentheses(file.findElementAt(context.getTailOffset() - 1))) {
