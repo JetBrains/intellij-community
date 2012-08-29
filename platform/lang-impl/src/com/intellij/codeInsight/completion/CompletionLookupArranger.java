@@ -26,6 +26,7 @@ import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -48,6 +49,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class CompletionLookupArranger extends LookupArranger {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionLookupArranger");
   @Nullable private static StatisticsUpdate ourPendingUpdate;
   private static final Alarm ourStatsAlarm = new Alarm(ApplicationManager.getApplication());
   private static final Key<String> PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
@@ -181,6 +183,7 @@ public class CompletionLookupArranger extends LookupArranger {
                                     fillModelByRelevance((LookupImpl)lookup, items, itemsBySorter);
 
     int toSelect = getItemToSelect(lookup, listModel, itemsBySorter, onExplicitAction);
+    LOG.assertTrue(toSelect >= 0);
 
     addDummyItems(items.size() - listModel.size(), listModel);
 
@@ -351,7 +354,7 @@ public class CompletionLookupArranger extends LookupArranger {
       ProcessingContext context = createContext(true);
       for (LookupElement element : myClassifiers.get(sorter).classify(itemsBySorter.get(sorter), context)) {
         if (!shouldSkip(skippers, element)) {
-          return items.indexOf(element);
+          return ContainerUtil.indexOfIdentity(items, element);
         }
       }
     }
