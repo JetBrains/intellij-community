@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
@@ -51,14 +51,14 @@ public class RenameFix extends InspectionGadgetsFix {
     m_searchInNonJavaFiles = searchInNonJavaFiles;
   }
 
+  @Override
   @NotNull
   public String getName() {
     if (m_targetName == null) {
       return InspectionGadgetsBundle.message("rename.quickfix");
     }
     else {
-      return InspectionGadgetsBundle.message("renameto.quickfix",
-                                             m_targetName);
+      return InspectionGadgetsBundle.message("renameto.quickfix", m_targetName);
     }
   }
 
@@ -67,30 +67,24 @@ public class RenameFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(final Project project, ProblemDescriptor descriptor) {
+  public void doFix(final Project project, final ProblemDescriptor descriptor) {
     final PsiElement nameIdentifier = descriptor.getPsiElement();
     final PsiElement elementToRename = nameIdentifier.getParent();
     if (m_targetName == null) {
-      final DataManager dataManager = DataManager.getInstance();
-      final DataContext dataContext = dataManager.getDataContext();
-      final RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(dataContext);
-      if (renameHandler == null) return;
-      Runnable runnable = new Runnable() {
-        public void run() {
-          renameHandler.invoke(project, new PsiElement[]{elementToRename},
-                               dataContext);
+      final AsyncResult<DataContext> contextFromFocus = DataManager.getInstance().getDataContextFromFocus();
+      contextFromFocus.doWhenDone(new AsyncResult.Handler<DataContext>() {
+        @Override
+        public void run(DataContext context) {
+          final RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
+          if (renameHandler == null) {
+            return;
+          }
+          renameHandler.invoke(project, new PsiElement[]{elementToRename}, context);
         }
-      };
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        runnable.run();
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
-      }
+      });
     }
     else {
-      final RefactoringFactory factory =
-        RefactoringFactory.getInstance(project);
+      final RefactoringFactory factory = RefactoringFactory.getInstance(project);
       final RenameRefactoring renameRefactoring =
         factory.createRename(elementToRename, m_targetName, m_searchInStrings, m_searchInNonJavaFiles);
       renameRefactoring.run();
