@@ -221,7 +221,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
           lock.wait(10);
         }
         catch (InterruptedException e) {
-          LOG.error(e);
+          //pass
         }
       }
     }
