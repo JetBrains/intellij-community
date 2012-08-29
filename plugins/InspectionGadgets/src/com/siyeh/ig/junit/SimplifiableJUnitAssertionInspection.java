@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -53,6 +52,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
 
   private static class SimplifyJUnitAssertFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
@@ -70,16 +70,16 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
       final PsiMethodCallExpression callExpression =
         (PsiMethodCallExpression)parent.getParent();
       if (isAssertThatCouldBeAssertNull(callExpression)) {
-        replaceAssertWithAssertNull(callExpression, project);
+        replaceAssertWithAssertNull(callExpression);
       }
       else if (isAssertThatCouldBeAssertSame(callExpression)) {
-        replaceAssertWithAssertSame(callExpression, project);
+        replaceAssertWithAssertSame(callExpression);
       }
       else if (isAssertTrueThatCouldBeAssertEquals(callExpression)) {
-        replaceAssertTrueWithAssertEquals(callExpression, project);
+        replaceAssertTrueWithAssertEquals(callExpression);
       }
       else if (isAssertEqualsThatCouldBeAssertLiteral(callExpression)) {
-        replaceAssertEqualsWithAssertLiteral(callExpression, project);
+        replaceAssertEqualsWithAssertLiteral(callExpression);
       }
       else if (isAssertThatCouldBeFail(callExpression)) {
         replaceAssertWithFail(callExpression);
@@ -115,7 +115,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
     }
 
     private static void replaceAssertTrueWithAssertEquals(
-      PsiMethodCallExpression callExpression, Project project)
+      PsiMethodCallExpression callExpression)
       throws IncorrectOperationException {
       final PsiMethod method = callExpression.resolveMethod();
       if (method == null) {
@@ -123,10 +123,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
       }
       final PsiParameterList parameterList = method.getParameterList();
       final PsiParameter[] parameters = parameterList.getParameters();
-      final PsiManager psiManager = callExpression.getManager();
-      final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-      final PsiType stringType =
-        PsiType.getJavaLangString(psiManager, scope);
+      final PsiType stringType = TypeUtils.getStringType(callExpression);
       final PsiType paramType1 = parameters[0].getType();
       final PsiExpressionList argumentList =
         callExpression.getArgumentList();
@@ -191,7 +188,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
     }
 
     private static void replaceAssertWithAssertNull(
-      PsiMethodCallExpression callExpression, Project project)
+      PsiMethodCallExpression callExpression)
       throws IncorrectOperationException {
       final PsiMethod method = callExpression.resolveMethod();
       if (method == null) {
@@ -199,10 +196,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
       }
       final PsiParameterList parameterList = method.getParameterList();
       final PsiParameter[] parameters = parameterList.getParameters();
-      final PsiManager psiManager = callExpression.getManager();
-      final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-      final PsiType stringType =
-        PsiType.getJavaLangString(psiManager, scope);
+      final PsiType stringType = TypeUtils.getStringType(callExpression);
       final PsiType paramType1 = parameters[0].getType();
       final PsiExpressionList argumentList =
         callExpression.getArgumentList();
@@ -257,7 +251,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
     }
 
     private static void replaceAssertWithAssertSame(
-      PsiMethodCallExpression callExpression, Project project)
+      PsiMethodCallExpression callExpression)
       throws IncorrectOperationException {
       final PsiMethod method = callExpression.resolveMethod();
       if (method == null) {
@@ -265,10 +259,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
       }
       final PsiParameterList parameterList = method.getParameterList();
       final PsiParameter[] parameters = parameterList.getParameters();
-      final PsiManager psiManager = callExpression.getManager();
-      final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-      final PsiType stringType =
-        PsiType.getJavaLangString(psiManager, scope);
+      final PsiType stringType = TypeUtils.getStringType(callExpression);
       final PsiType paramType1 = parameters[0].getType();
       final PsiExpressionList argumentList =
         callExpression.getArgumentList();
@@ -327,7 +318,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
     }
 
     private static void replaceAssertEqualsWithAssertLiteral(
-      PsiMethodCallExpression callExpression, Project project)
+      PsiMethodCallExpression callExpression)
       throws IncorrectOperationException {
       final PsiMethod method = callExpression.resolveMethod();
       if (method == null) {
@@ -335,10 +326,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
       }
       final PsiParameterList parameterList = method.getParameterList();
       final PsiParameter[] parameters = parameterList.getParameters();
-      final PsiManager psiManager = callExpression.getManager();
-      final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-      final PsiType stringType =
-        PsiType.getJavaLangString(psiManager, scope);
+      final PsiType stringType = TypeUtils.getStringType(callExpression);
       final PsiType paramType1 = parameters[0].getType();
       final PsiExpressionList argumentList =
         callExpression.getArgumentList();
@@ -523,11 +511,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
     if (parameterList.getParametersCount() < 1) {
       return false;
     }
-    final PsiManager psiManager = expression.getManager();
-    final Project project = psiManager.getProject();
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final PsiType stringType =
-      PsiType.getJavaLangString(psiManager, scope);
+    final PsiType stringType = TypeUtils.getStringType(expression);
     final PsiParameter[] parameters = parameterList.getParameters();
     final PsiType paramType1 = parameters[0].getType();
     final int testPosition;
@@ -558,11 +542,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
     if (parameterList.getParametersCount() < 1) {
       return false;
     }
-    final PsiManager psiManager = expression.getManager();
-    final Project project = psiManager.getProject();
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final PsiType stringType =
-      PsiType.getJavaLangString(psiManager, scope);
+    final PsiType stringType = TypeUtils.getStringType(expression);
     final PsiParameter[] parameters = parameterList.getParameters();
     final PsiType paramType1 = parameters[0].getType();
     final int testPosition;
@@ -593,11 +573,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
     if (parameterList.getParametersCount() < 1) {
       return false;
     }
-    final PsiManager psiManager = expression.getManager();
-    final Project project = psiManager.getProject();
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final PsiType stringType =
-      PsiType.getJavaLangString(psiManager, scope);
+    final PsiType stringType = TypeUtils.getStringType(expression);
     final PsiParameter[] parameters = parameterList.getParameters();
     final PsiType paramType1 = parameters[0].getType();
     final int testPosition;
@@ -635,11 +611,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
     if (parameterList.getParametersCount() < 1) {
       return false;
     }
-    final PsiManager psiManager = expression.getManager();
-    final Project project = psiManager.getProject();
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final PsiType stringType =
-      PsiType.getJavaLangString(psiManager, scope);
+    final PsiType stringType = TypeUtils.getStringType(expression);
     final PsiParameter[] parameters = parameterList.getParameters();
     final PsiType paramType1 = parameters[0].getType();
     final int testPosition;
@@ -679,11 +651,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
     if (parameterList.getParametersCount() < 2) {
       return false;
     }
-    final PsiManager psiManager = expression.getManager();
-    final Project project = psiManager.getProject();
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final PsiType stringType =
-      PsiType.getJavaLangString(psiManager, scope);
+    final PsiType stringType = TypeUtils.getStringType(expression);
     final PsiParameter[] parameters = parameterList.getParameters();
     final PsiType paramType1 = parameters[0].getType();
     final int firstTestPosition;

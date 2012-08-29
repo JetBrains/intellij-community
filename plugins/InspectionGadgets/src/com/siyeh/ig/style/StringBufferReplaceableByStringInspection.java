@@ -102,9 +102,8 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       if (stringExpression == null) {
         return;
       }
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiClassType javaLangString = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, variable.getResolveScope());
-      final PsiTypeElement typeElement = factory.createTypeElement(javaLangString);
+      final PsiClassType javaLangString = TypeUtils.getStringType(variable);
+      final PsiTypeElement typeElement = JavaPsiFacade.getElementFactory(project).createTypeElement(javaLangString);
       replaceExpression(initializer, stringExpression.toString());
       originalTypeElement.replace(typeElement);
     }

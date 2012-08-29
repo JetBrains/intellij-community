@@ -15,13 +15,12 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -97,10 +96,7 @@ public class AssertsWithoutMessagesInspection extends BaseInspection {
         registerMethodCallError(expression);
         return;
       }
-      final PsiManager psiManager = expression.getManager();
-      final Project project = psiManager.getProject();
-      final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-      final PsiType stringType = PsiType.getJavaLangString(psiManager, scope);
+      final PsiType stringType = TypeUtils.getStringType(expression);
       final PsiParameter[] parameters = parameterList.getParameters();
       final PsiType parameterType1 = parameters[0].getType();
       if (!parameterType1.equals(stringType)) {

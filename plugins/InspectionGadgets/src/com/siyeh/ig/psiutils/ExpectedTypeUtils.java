@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -30,8 +29,7 @@ import java.util.Set;
 
 public class ExpectedTypeUtils {
 
-  private ExpectedTypeUtils() {
-  }
+  private ExpectedTypeUtils() {}
 
   @Nullable
   public static PsiType findExpectedType(
@@ -310,10 +308,7 @@ public class ExpectedTypeUtils {
     @Override
     public void visitSynchronizedStatement(
       @NotNull PsiSynchronizedStatement statement) {
-      final PsiManager manager = statement.getManager();
-      final Project project = manager.getProject();
-      final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-      expectedType = PsiType.getJavaLangObject(manager, scope);
+      expectedType = TypeUtils.getObjectType(statement);
     }
 
     @Override

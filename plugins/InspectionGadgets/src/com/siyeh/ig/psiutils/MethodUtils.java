@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
@@ -33,47 +32,36 @@ import java.util.regex.Pattern;
 
 public class MethodUtils {
 
-  private MethodUtils() {
-  }
+  private MethodUtils() {}
 
   public static boolean isCompareTo(@Nullable PsiMethod method) {
     if (method == null) {
       return false;
     }
-    return methodMatches(method, null, PsiType.INT,
-                         HardcodedMethodConstants.COMPARE_TO, PsiType.NULL);
+    return methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.COMPARE_TO, PsiType.NULL);
   }
 
   public static boolean isHashCode(@Nullable PsiMethod method) {
     if (method == null) {
       return false;
     }
-    return methodMatches(method, null, PsiType.INT,
-                         HardcodedMethodConstants.HASH_CODE);
+    return methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.HASH_CODE);
   }
 
   public static boolean isToString(@Nullable PsiMethod method) {
     if (method == null) {
       return false;
     }
-    final PsiManager manager = method.getManager();
-    final GlobalSearchScope scope = method.getResolveScope();
-    final PsiClassType stringType =
-      PsiType.getJavaLangString(manager, scope);
-    return methodMatches(method, null, stringType,
-                         HardcodedMethodConstants.TO_STRING);
+    final PsiClassType stringType = TypeUtils.getStringType(method);
+    return methodMatches(method, null, stringType, HardcodedMethodConstants.TO_STRING);
   }
 
   public static boolean isEquals(@Nullable PsiMethod method) {
     if (method == null) {
       return false;
     }
-    final PsiManager manager = method.getManager();
-    final Project project = method.getProject();
-    final PsiClassType objectType = PsiType.getJavaLangObject(
-      manager, GlobalSearchScope.allScope(project));
-    return methodMatches(method, null, PsiType.BOOLEAN,
-                         HardcodedMethodConstants.EQUALS, objectType);
+    final PsiClassType objectType = TypeUtils.getObjectType(method);
+    return methodMatches(method, null, PsiType.BOOLEAN, HardcodedMethodConstants.EQUALS, objectType);
   }
 
   /**

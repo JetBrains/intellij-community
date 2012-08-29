@@ -188,7 +188,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
         parameterType = extractContentTypeFromType(type);
       }
       if (parameterType == null) {
-        parameterType = PsiType.getJavaLangObject(forStatement.getManager(), forStatement.getResolveScope());
+        parameterType = TypeUtils.getObjectType(forStatement);
       }
       final String typeString = parameterType.getCanonicalText();
       final PsiVariable listVariable;
@@ -318,14 +318,12 @@ public class ForCanBeForeachInspection extends BaseInspection {
         listClass = listClass.getSuperClass();
       }
       if (listClass == null || subClass == null) {
-        return PsiType.getJavaLangObject(element.getManager(),
-                                         element.getResolveScope());
+        return TypeUtils.getObjectType(element);
       }
       final PsiTypeParameter[] typeParameters =
         listClass.getTypeParameters();
       if (!parameterClass.equals(typeParameters[0])) {
-        return PsiType.getJavaLangObject(element.getManager(),
-                                         element.getResolveScope());
+        return TypeUtils.getObjectType(element);
       }
       final PsiReferenceList extendsList = subClass.getExtendsList();
       if (extendsList == null) {
@@ -339,8 +337,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
       final PsiType[] types =
         referenceElements[0].getTypeParameters();
       if (types.length == 0) {
-        return PsiType.getJavaLangObject(element.getManager(),
-                                         element.getResolveScope());
+        return TypeUtils.getObjectType(element);
       }
       return types[0];
     }
@@ -377,9 +374,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
         extractContentTypeFromType(iteratorType);
       final PsiType iteratorVariableType = iteratorVariable.getType();
       final PsiType contentType;
-      final PsiClassType javaLangObject = PsiType.getJavaLangObject(
-        forStatement.getManager(),
-        forStatement.getResolveScope());
+      final PsiClassType javaLangObject = TypeUtils.getObjectType(forStatement);
       if (iteratorContentType == null) {
         final PsiType iteratorVariableContentType =
           extractContentTypeFromType(iteratorVariableType);
