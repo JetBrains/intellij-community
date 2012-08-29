@@ -177,9 +177,11 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     else {
       previous = myModuleBytecodeTarget.put(module.getName(), level);
     }
-    if (!Comparing.equal(previous, level)) {
-      //final Project project = module.getProject(); // todo[jeka] so what?
-    }
+    // todo: mark module as dirty in order to rebuild it completely with the new target level
+    //if (!Comparing.equal(previous, level)) {
+    //  final Project project = module.getProject();
+    //
+    //}
   }
 
   @Override

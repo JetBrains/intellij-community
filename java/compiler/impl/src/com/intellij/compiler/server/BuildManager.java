@@ -53,7 +53,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.SavingRequestor;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -276,6 +279,11 @@ public class BuildManager implements ApplicationComponent{
           }
           catch (RejectedExecutionException ignored) {
             // we were shut down
+            myAutoMakeInProgress.set(false);
+          }
+          catch (Throwable e) {
+            myAutoMakeInProgress.set(false);
+            throw new RuntimeException(e);
           }
         }
         else {
