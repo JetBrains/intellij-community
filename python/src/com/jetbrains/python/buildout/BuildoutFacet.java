@@ -97,6 +97,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
 
   /**
    * Generates a <code>sys.path[0:0] = [...]</code> with paths that buildout script wants.
+   *
    * @param module to get a buildout facet from
    * @return the statement, or null if there's no buildout facet.
    */
@@ -158,7 +159,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
       }
       return paths;
     }
-    catch(IOException e) {
+    catch (IOException e) {
       LOG.info(e);
       return null;
     }
@@ -208,18 +209,20 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
     String text = VfsUtil.loadText(vFile);
     String[] lines = LineTokenizer.tokenize(text, false);
     int index = 0;
-    while(index < lines.length && !lines [index].startsWith("def addsitepackages("))
+    while (index < lines.length && !lines[index].startsWith("def addsitepackages(")) {
       index++;
-    while(index < lines.length && !lines [index].trim().startsWith("buildout_paths = ["))
+    }
+    while (index < lines.length && !lines[index].trim().startsWith("buildout_paths = [")) {
       index++;
+    }
     index++;
-    while(index < lines.length && !lines [index].trim().equals("]")) {
-      String line = lines [index].trim();
+    while (index < lines.length && !lines[index].trim().equals("]")) {
+      String line = lines[index].trim();
       if (line.endsWith(",")) {
-        line = line.substring(0, line.length()-1);
+        line = line.substring(0, line.length() - 1);
       }
       if (line.startsWith("'") && line.endsWith("'")) {
-        result.add(StringUtil.unescapeStringCharacters(line.substring(1, line.length()-1)));
+        result.add(StringUtil.unescapeStringCharacters(line.substring(1, line.length() - 1)));
       }
       index++;
     }
@@ -243,10 +246,12 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
     // alter execution script
     ParamsGroup script_params = params.getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
     assert script_params != null;
-    String normal_script = script_params.getParameters().get(0); // expect DjangoUtil.MANAGE_FILE
-    String engulfer_path = PythonHelpersLocator.getHelperPath("pycharm/buildout_engulfer.py");
-    new_env.put("PYCHARM_ENGULF_SCRIPT", getConfiguration().getScriptName());
-    script_params.getParametersList().replaceOrPrepend(normal_script, engulfer_path);
+    if (script_params.getParameters().size() > 0) {
+      String normal_script = script_params.getParameters().get(0); // expect DjangoUtil.MANAGE_FILE
+      String engulfer_path = PythonHelpersLocator.getHelperPath("pycharm/buildout_engulfer.py");
+      new_env.put("PYCHARM_ENGULF_SCRIPT", getConfiguration().getScriptName());
+      script_params.getParametersList().replaceOrPrepend(normal_script, engulfer_path);
+    }
     // add pycharm helpers to pythonpath so that fixGetpass is importable
 
     PythonEnvUtil.addToPythonPath(new_env, PythonHelpersLocator.getHelpersRoot().getAbsolutePath());
@@ -280,7 +285,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
         String text = FileUtil.loadFile(cfg);
         final PsiFile configFile = PsiFileFactory
           .getInstance(getModule().getProject()).createFileFromText("buildout.cfg",
-                                                                                  BuildoutCfgLanguage.INSTANCE, text);
+                                                                    BuildoutCfgLanguage.INSTANCE, text);
         if (configFile != null && configFile instanceof BuildoutCfgFile) {
           return (BuildoutCfgFile)configFile;
         }
@@ -290,7 +295,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
     }
     return null;
   }
-  
+
   public static List<File> getScripts(@Nullable BuildoutFacet buildoutFacet, final VirtualFile baseDir) {
     File rootPath = null;
     if (buildoutFacet != null) {
