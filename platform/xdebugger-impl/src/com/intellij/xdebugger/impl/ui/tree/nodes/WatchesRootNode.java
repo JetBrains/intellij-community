@@ -137,9 +137,11 @@ public class WatchesRootNode extends XDebuggerTreeNode {
 
   public int removeChildNode(XDebuggerTreeNode node) {
     int index = myChildren.indexOf(node);
-    myChildren.remove(node);
-    myLoadedChildren = null;
-    fireNodesRemoved(new int[]{index}, new TreeNode[]{node});
+    if (index != -1) {
+      myChildren.remove(node);
+      myLoadedChildren = null;
+      fireNodesRemoved(new int[]{index}, new TreeNode[]{node});
+    }
     return index;
   }
 
