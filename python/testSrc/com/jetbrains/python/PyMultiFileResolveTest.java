@@ -9,7 +9,6 @@ import com.jetbrains.cython.psi.CythonFunction;
 import com.jetbrains.cython.psi.CythonVariable;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyImportedModule;
 
 /**
  * @author yole
@@ -364,10 +363,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
 
   // PY-2813
   public void testNamespacePackage() {
-    final PsiElement element = doResolve();
-    assertInstanceOf(element, PyImportedModule.class);
-    final PyImportedModule module = (PyImportedModule)element;
-    assertEquals("p1", module.getImportedPrefix().toString());
+    assertResolvesTo(PsiDirectory.class, "p1");
   }
 
   // PY-2813
@@ -408,10 +404,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
   public void testPython33NamespacePackage() {
     setLanguageLevel(LanguageLevel.PYTHON33);
     try {
-      final PsiElement element = doResolve();
-      assertInstanceOf(element, PyImportedModule.class);
-      final PyImportedModule module = (PyImportedModule)element;
-      assertEquals("p1", module.getImportedPrefix().toString());
+      assertResolvesTo(PsiDirectory.class, "p1");
     } finally {
       setLanguageLevel(null);
     }

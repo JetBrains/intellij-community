@@ -241,7 +241,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       for (PsiElement hit : processor.getDefiners()) {
         ret.poke(hit, getRate(hit));
       }
-      uexpr = PyUtil.turnDirIntoInit(uexpr); // an import statement may have returned a dir
+      final PsiElement packageInit = PyUtil.turnDirIntoInit(uexpr);
+      if (packageInit != null) {
+        uexpr = packageInit; // an import statement may have returned a dir
+      }
     }
     else if (!processor.getDefiners().isEmpty()) {
       ret.add(new ImportedResolveResult(null, RatedResolveResult.RATE_LOW, processor.getDefiners()));
@@ -396,9 +399,19 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       if (resolveResult instanceof PyImportedModule) {
         resolveResult = resolveResult.getNavigationElement();
       }
-      if (element instanceof PsiDirectory && resolveResult instanceof PyFile &&
-          PyNames.INIT_DOT_PY.equals(((PyFile)resolveResult).getName()) && ((PyFile)resolveResult).getContainingDirectory() == element) {
-        return true;
+      if (element instanceof PsiDirectory) {
+        if (resolveResult instanceof PyFile) {
+          final PyFile file = (PyFile)resolveResult;
+          if (PyUtil.isPackage(file) && file.getContainingDirectory() == element) {
+            return true;
+          }
+        }
+        else if (resolveResult instanceof PsiDirectory) {
+          final PsiDirectory directory = (PsiDirectory)resolveResult;
+          if (PyUtil.isPackage(directory) && directory == element) {
+            return true;
+          }
+        }
       }
       return resolveResult == element;
     }
