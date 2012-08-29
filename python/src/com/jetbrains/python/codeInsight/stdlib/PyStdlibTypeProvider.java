@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -15,6 +16,7 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
@@ -249,7 +251,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     final String name = level.isPy3K() ? "StdlibTypes3" : "StdlibTypes2";
     if (result.isEmpty()) {
       try {
-        final InputStream s = getClass().getResourceAsStream(String.format("%s.properties", name));
+        final InputStream s = new FileInputStream(PythonHelpersLocator.getHelperFile(String.format("%s.properties", name)));
         try {
           result.load(s);
         }
