@@ -20,6 +20,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
@@ -214,7 +215,8 @@ class AndroidInlineUtil {
     }
     else if (testConfig != null) {
       final AndroidInlineAllStyleUsagesProcessor processor = new AndroidInlineAllStyleUsagesProcessor(
-        project, data.myReferredElement, style.getXmlTag(), data.myStyleName, attributeValues, parentStyleRef);
+        project, data.myReferredElement, style.getXmlTag(), data.myStyleName,
+        attributeValues, parentStyleRef, testConfig);
       processor.setPreviewUsages(false);
       processor.run();
     }
@@ -303,6 +305,37 @@ class AndroidInlineUtil {
     }
     builder.delete(builder.length() - 2, builder.length());
     return builder.toString();
+  }
+
+  @NotNull
+  static MultiMap<PsiElement, String> buildConflicts(Collection<PsiElement> nonXmlUsages,
+                                                     Collection<PsiElement> unambiguousUsages,
+                                                     Collection<PsiElement> unsupportedUsages,
+                                                     Collection<PsiElement> implicitlyInherited) {
+    final MultiMap<PsiElement, String> result = new MultiMap<PsiElement, String>();
+
+    for (PsiElement usage : nonXmlUsages) {
+      result.putValue(usage, "Non-XML reference '" + toString(usage) + "' won't be updated");
+    }
+
+    for (PsiElement usage : unambiguousUsages) {
+      result.putValue(usage, "Unambiguous reference '" + toString(usage) + "' won't be updated");
+    }
+
+    for (PsiElement usage : unsupportedUsages) {
+      result.putValue(usage, "Unsupported reference '" + toString(usage) + "' won't be updated");
+    }
+
+    for (PsiElement usage : implicitlyInherited) {
+      result.putValue(usage, "The style has implicit inheritor '" + toString(usage) + "' which won't be updated");
+    }
+    return result;
+  }
+
+  private static String toString(PsiElement element) {
+    return element instanceof XmlAttributeValue
+           ? ((XmlAttributeValue)element).getValue()
+           : element.getText();
   }
 
   private static void buildString(StringBuilder builder, Project project, Collection<PsiElement> invalidRefs) {
