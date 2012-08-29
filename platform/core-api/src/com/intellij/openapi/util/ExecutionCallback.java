@@ -16,51 +16,30 @@
 package com.intellij.openapi.util;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 class ExecutionCallback {
-  private final Executed myExecuted;
+  private int myCurrentCount;
+  private final int myCountToExecution;
   private List<Runnable> myRunnables;
 
   ExecutionCallback() {
-    myExecuted = new Executed(1);
+    this(1);
   }
 
   ExecutionCallback(int executedCount) {
-    myExecuted = new Executed(executedCount);
+    myCountToExecution = executedCount;
   }
 
-  public void setExecuted() {
-    myExecuted.signalExecution();
-    callback();
-  }
-
-  public boolean isExecuted() {
-    return myExecuted.isExecuted();
-  }
-
-  final void doWhenExecuted(@NotNull final Runnable runnable) {
-    synchronized (this) {
-      if (myRunnables == null) {
-        myRunnables = new ArrayList<Runnable>();
-      }
-
-      myRunnables.add(runnable);
-    }
-
-    callback();
-  }
-
-  final void notifyWhenExecuted(final ActionCallback child) {
-    doWhenExecuted(child.createSetDoneRunnable());
-  }
-
-  private void callback() {
-    if (myExecuted.isExecuted()) {
+  void setExecuted() {
+    signalExecution();
+    if (isExecuted()) {
       Runnable[] all;
       synchronized (this) {
         if (myRunnables == null) {
@@ -77,31 +56,58 @@ class ExecutionCallback {
     }
   }
 
-  @Override
-  public String toString() {
-    return myExecuted.toString();
+  private static class CompositeRunnable extends ArrayList<Runnable> implements Runnable {
+    private CompositeRunnable(@NotNull Collection<? extends Runnable> c) {
+      super(c);
+    }
+
+    @Override
+    public void run() {
+      for (Runnable runnable : this) {
+        runnable.run();
+      }
+    }
   }
 
-  private static class Executed {
-    private int myCurrentCount;
-    private final int myCountToExecution;
+  final void doWhenExecuted(@NotNull final Runnable runnable) {
+    Runnable toRun;
+    synchronized (this) {
+      if (isExecuted()) {
+        if (myRunnables == null) {
+          toRun = runnable;
+        }
+        else {
+          CompositeRunnable composite = new CompositeRunnable(myRunnables);
+          composite.add(runnable);
+          toRun = composite;
+          myRunnables = null;
+        }
+      }
+      else {
+        toRun = EmptyRunnable.getInstance();
+        if (myRunnables == null) {
+          myRunnables = new SmartList<Runnable>();
+        }
 
-    Executed(final int countToExecution) {
-      myCountToExecution = countToExecution;
+        myRunnables.add(runnable);
+      }
     }
 
-    void signalExecution() {
-      myCurrentCount++;
-    }
+    toRun.run();
+  }
 
-    boolean isExecuted() {
-      return myCurrentCount >= myCountToExecution;
-    }
 
-    @NonNls
-    @Override
-    public String toString() {
-      return "current=" + myCurrentCount + " countToExecution=" + myCountToExecution;
-    }
+  private synchronized void signalExecution() {
+    myCurrentCount++;
+  }
+
+  synchronized boolean isExecuted() {
+    return myCurrentCount >= myCountToExecution;
+  }
+
+  @NonNls
+  @Override
+  public synchronized String toString() {
+    return "current=" + myCurrentCount + " countToExecution=" + myCountToExecution;
   }
 }

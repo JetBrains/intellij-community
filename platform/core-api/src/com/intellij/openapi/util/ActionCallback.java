@@ -149,10 +149,12 @@ public class ActionCallback implements Disposable {
       myCallbacks.add(callback);
     }
 
+    @NotNull
     public ActionCallback getWhenProcessed() {
       final ActionCallback result = new ActionCallback(myCallbacks.size());
+      Runnable setDoneRunnable = result.createSetDoneRunnable();
       for (ActionCallback each : myCallbacks) {
-        each.doWhenProcessed(result.createSetDoneRunnable());
+        each.doWhenProcessed(setDoneRunnable);
       }
       return result;
     }
