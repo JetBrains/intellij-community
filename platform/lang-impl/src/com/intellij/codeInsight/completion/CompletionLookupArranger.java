@@ -136,7 +136,9 @@ public class CompletionLookupArranger extends LookupArranger {
 
   @Override
   public void addElement(Lookup lookup, LookupElement element, LookupElementPresentation presentation) {
-    super.addElement(lookup, element, presentation);
+    final String invariant = presentation.getItemText() + "###" + getTailTextOrSpace(presentation) + "###" + presentation.getTypeText();
+    element.putUserData(PRESENTATION_INVARIANT, invariant);
+
     CompletionSorterImpl sorter = obtainSorter(element);
     Classifier<LookupElement> classifier = myClassifiers.get(sorter);
     if (classifier == null) {
@@ -144,8 +146,7 @@ public class CompletionLookupArranger extends LookupArranger {
     }
     classifier.addElement(element);
 
-    final String invariant = presentation.getItemText() + "###" + getTailTextOrSpace(presentation) + "###" + presentation.getTypeText();
-    element.putUserData(PRESENTATION_INVARIANT, invariant);
+    super.addElement(lookup, element, presentation);
   }
 
   @NotNull
