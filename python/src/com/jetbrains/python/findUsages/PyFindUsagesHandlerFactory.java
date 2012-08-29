@@ -4,12 +4,16 @@ import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesHandlerFactory;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,14 +26,22 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
   @Override
   public boolean canFindUsages(@NotNull PsiElement element) {
     return element instanceof PyClass ||
-           (element instanceof PyFile && PyNames.INIT_DOT_PY.equals(((PyFile) element).getName())) ||
+           (element instanceof PyFile && PyUtil.isPackage((PyFile)element)) ||
+           element instanceof PyImportedModule ||
            element instanceof PyFunction;
   }
 
+  @Nullable
   @Override
   public FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
-    if (element instanceof PyFile) {
-      return new PyModuleFindUsagesHandler((PyFile) element);
+    if (element instanceof PyImportedModule) {
+      final PsiElement resolved = ((PyImportedModule)element).resolve();
+      if (resolved != null) {
+        element = resolved;
+      }
+    }
+    if (element instanceof PsiFileSystemItem) {
+      return new PyModuleFindUsagesHandler((PsiFileSystemItem)element);
     }
     if (element instanceof PyFunction) {
       if (!forHighlightUsages) {
@@ -60,7 +72,10 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
       }
       return new PyFunctionFindUsagesHandler(element);
     }
-    return new PyClassFindUsagesHandler((PyClass)element);
+    if (element instanceof PyClass) {
+      return new PyClassFindUsagesHandler((PyClass)element);
+    }
+    return null;
   }
 
   private static boolean isInClassobj(PyFunction fun) {

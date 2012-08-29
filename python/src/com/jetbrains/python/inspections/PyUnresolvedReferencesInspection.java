@@ -39,6 +39,7 @@ import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
 import com.jetbrains.python.codeInsight.imports.PythonReferenceImporter;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.documentation.DocStringParameterReference;
+import com.jetbrains.python.documentation.DocStringTypeReference;
 import com.jetbrains.python.packaging.PyPIPackageUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyRequirement;
@@ -366,6 +367,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
     private void registerUnresolvedReferenceProblem(@NotNull PyElement node, @NotNull PsiReference reference,
                                                     @NotNull HighlightSeverity severity) {
+      if (reference instanceof DocStringTypeReference) {
+        return;
+      }
       String description = null;
       final String text = reference.getElement().getText();
       TextRange rangeInElement = reference.getRangeInElement();
