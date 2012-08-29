@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PlainTextSplitter extends BaseSplitter {
@@ -33,6 +34,10 @@ public class PlainTextSplitter extends BaseSplitter {
   public static PlainTextSplitter getInstance() {
     return INSTANCE;
   }
+
+  @NonNls
+  private static final
+  Pattern SPLIT_PATTERN = Pattern.compile("(\\s)");
 
   @NonNls
   private static final Pattern MAIL =
@@ -64,25 +69,42 @@ public class PlainTextSplitter extends BaseSplitter {
     //  }
     //}
 
-    List<TextRange> toCheck;
-    if (text.indexOf('@')>0) {
-      toCheck = excludeByPattern(text, range, MAIL, 0);
-    }
-    else
-    if (text.indexOf(':')>0) {
-      toCheck = excludeByPattern(text, range, URL, 0);
-    }
-    else
-    {
-      toCheck = Collections.singletonList(range);
-    }
-
     final TextSplitter ws = TextSplitter.getInstance();
-    for (TextRange r : toCheck) {
-
+    int from = range.getStartOffset();
+    int till;
+    Matcher matcher = SPLIT_PATTERN.matcher(range.substring(text));
+    while (true) {
       checkCancelled();
-
-      ws.split(text, r, consumer);
+      List<TextRange> toCheck;
+      TextRange wRange;
+      String word;
+      if(matcher.find()) {
+        TextRange found = matcherRange(range, matcher);
+        till = found.getStartOffset();
+        if (badSize(from, till)) {
+          continue;
+        }
+        wRange = new TextRange(from, till);
+        word = wRange.substring(text);
+        from = found.getEndOffset();
+      } else { // end hit or zero matches
+        wRange = new TextRange(from, range.getEndOffset());
+        word = wRange.substring(text);
+      }
+      if (word.contains("@")) {
+        toCheck = excludeByPattern(text, wRange, MAIL, 0);
+      }
+      else
+      if (text.contains("://")) {
+        toCheck = excludeByPattern(text, wRange, URL, 0);
+      }
+      else {
+        toCheck = Collections.singletonList(wRange);
+      }
+      for (TextRange r : toCheck) {
+        ws.split(text, r, consumer);
+      }
+      if(matcher.hitEnd()) break;
     }
   }
 }
