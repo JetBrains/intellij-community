@@ -180,11 +180,12 @@ public class CompletionLookupArranger extends LookupArranger {
     List<LookupElement> items = getMatchingItems();
     MultiMap<CompletionSorterImpl, LookupElement> itemsBySorter = groupItemsBySorter(items);
 
+    LookupElement relevantSelection = findMostRelevantItem(itemsBySorter);
     List<LookupElement> listModel = isAlphaSorted() ?
                                     sortByPresentation(items) :
-                                    fillModelByRelevance((LookupImpl)lookup, items, itemsBySorter);
+                                    fillModelByRelevance((LookupImpl)lookup, items, itemsBySorter, relevantSelection);
 
-    int toSelect = getItemToSelect(lookup, listModel, itemsBySorter, onExplicitAction);
+    int toSelect = getItemToSelect(lookup, listModel, onExplicitAction, relevantSelection);
     LOG.assertTrue(toSelect >= 0);
 
     addDummyItems(items.size() - listModel.size(), listModel);
@@ -201,7 +202,8 @@ public class CompletionLookupArranger extends LookupArranger {
 
   private List<LookupElement> fillModelByRelevance(LookupImpl lookup,
                                                    List<LookupElement> items,
-                                                   MultiMap<CompletionSorterImpl, LookupElement> inputBySorter) {
+                                                   MultiMap<CompletionSorterImpl, LookupElement> inputBySorter,
+                                                   @Nullable LookupElement relevantSelection) {
     Iterator<LookupElement> byRelevance = sortByRelevance(inputBySorter).iterator();
 
     final LinkedHashSet<LookupElement> model = new LinkedHashSet<LookupElement>();
@@ -218,7 +220,8 @@ public class CompletionLookupArranger extends LookupArranger {
 
     freezeTopItems(lookup, model);
 
-    ensureCurrentSelectionAdded(lookup, items, model, byRelevance);
+    ensureItemAdded(items, model, byRelevance, lookup.getCurrentItem());
+    ensureItemAdded(items, model, byRelevance, relevantSelection);
     ensureEverythingVisibleAdded(lookup, model, byRelevance);
 
     return new ArrayList<LookupElement>(model);
@@ -236,16 +239,14 @@ public class CompletionLookupArranger extends LookupArranger {
     });
   }
 
-  private static void ensureCurrentSelectionAdded(LookupImpl lookup,
-                                                  List<LookupElement> items,
-                                                  LinkedHashSet<LookupElement> model,
-                                                  Iterator<LookupElement> byRelevance) {
-    final LookupElement currentItem = lookup.getCurrentItem();
-    if (ContainerUtil.indexOfIdentity(items, currentItem) >= 0 && !model.contains(currentItem)) {
+  private static void ensureItemAdded(List<LookupElement> items,
+                                      LinkedHashSet<LookupElement> model,
+                                      Iterator<LookupElement> byRelevance, @Nullable final LookupElement item) {
+    if (item != null && ContainerUtil.indexOfIdentity(items, item) >= 0 && !model.contains(item)) {
       addSomeItems(model, byRelevance, new Condition<LookupElement>() {
         @Override
         public boolean value(LookupElement lastAdded) {
-          return lastAdded == currentItem;
+          return lastAdded == item;
         }
       });
     }
@@ -312,9 +313,7 @@ public class CompletionLookupArranger extends LookupArranger {
     return new CompletionLookupArranger(myParameters, myProcess);
   }
 
-  private int getItemToSelect(Lookup lookup, List<LookupElement> items,
-                              MultiMap<CompletionSorterImpl, LookupElement> itemsBySorter,
-                              boolean onExplicitAction) {
+  private static int getItemToSelect(Lookup lookup, List<LookupElement> items, boolean onExplicitAction, @Nullable LookupElement mostRelevant) {
     if (items.isEmpty() || !lookup.isFocused()) {
       return 0;
     }
@@ -351,18 +350,24 @@ public class CompletionLookupArranger extends LookupArranger {
       }
     }
 
+    return Math.max(0, ContainerUtil.indexOfIdentity(items, mostRelevant));
+  }
+
+  @Nullable
+  private LookupElement findMostRelevantItem(MultiMap<CompletionSorterImpl, LookupElement> itemsBySorter) {
     final CompletionPreselectSkipper[] skippers = CompletionPreselectSkipper.EP_NAME.getExtensions();
     for (CompletionSorterImpl sorter : myClassifiers.keySet()) {
       ProcessingContext context = createContext(true);
       for (LookupElement element : myClassifiers.get(sorter).classify(itemsBySorter.get(sorter), context)) {
         if (!shouldSkip(skippers, element)) {
-          return ContainerUtil.indexOfIdentity(items, element);
+          return element;
         }
       }
     }
 
-    return 0;
+    return null;
   }
+
 
   private static boolean isLiveTemplate(LookupElement element) {
     return element instanceof LiveTemplateLookupElement && ((LiveTemplateLookupElement)element).sudden;
