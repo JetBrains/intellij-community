@@ -38,10 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static javax.swing.SwingUtilities.invokeLater;
@@ -61,7 +58,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private final Map<String, XBreakpoint<? extends ExceptionBreakpointProperties>> myRegisteredExceptionBreakpoints =
     new ConcurrentHashMap<String, XBreakpoint<? extends ExceptionBreakpointProperties>>();
 
-  private final List<PyThreadInfo> mySuspendedThreads = Lists.newArrayList();
+  private final List<PyThreadInfo> mySuspendedThreads = Collections.synchronizedList(Lists.<PyThreadInfo>newArrayList());
   private final Map<String, XValueChildrenList> myStackFrameCache = Maps.newHashMap();
   private final Map<String, PyDebugValue> myNewVariableValue = Maps.newHashMap();
 
