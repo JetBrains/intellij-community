@@ -44,6 +44,10 @@ public class SpaceHandler extends TypedActionHandlerBase {
     }
 
     TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
+    if (templateManager == null) {
+      throw new AssertionError(project + "; " + project.isDisposed());
+    }
+
     if (!templateManager.startTemplate(editor, TemplateSettings.SPACE_CHAR)) {
       if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);
     }
