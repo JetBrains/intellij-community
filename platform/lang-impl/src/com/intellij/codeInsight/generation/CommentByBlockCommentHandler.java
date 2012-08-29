@@ -227,7 +227,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       return false;
     }
     intersection = TextRange.from(Math.max(intersection.getStartOffset() - element.getTextRange().getStartOffset(), 0),
-                                  intersection.getEndOffset() - element.getTextRange().getStartOffset());
+                                  Math.min(intersection.getEndOffset() - element.getTextRange().getStartOffset(), element.getTextRange().getLength()));
     return isWhiteSpaceOrComment(element) ||
            intersection.substring(element.getText()).trim().length() == 0;
   }
