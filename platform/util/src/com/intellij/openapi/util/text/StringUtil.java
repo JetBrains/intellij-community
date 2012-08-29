@@ -17,6 +17,7 @@ package com.intellij.openapi.util.text;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.*;
@@ -2350,5 +2351,44 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   public static String getShortName(@NotNull String fqName, char separator) {
     return StringUtilRt.getShortName(fqName, separator);
+  }
+
+  public static class BombedCharSequence implements CharSequence {
+    private CharSequence delegate;
+    private long myTime;
+    private long i = 0;
+
+    public BombedCharSequence(CharSequence sequence, long time) {
+      delegate = sequence;
+      myTime = time;
+    }
+
+    @Override
+    public int length() {
+      check();
+      return delegate.length();
+    }
+
+    @Override
+    public char charAt(int i) {
+      check();
+      return delegate.charAt(i);
+    }
+
+    private void check() {
+      ++i;
+      if (i % 1000 == 0) {
+        long l = System.currentTimeMillis();
+        if (l >= myTime) {
+          throw new ProcessCanceledException();
+        }
+      }
+    }
+
+    @Override
+    public CharSequence subSequence(int i, int i1) {
+      check();
+      return delegate.subSequence(i, i1);
+    }
   }
 }

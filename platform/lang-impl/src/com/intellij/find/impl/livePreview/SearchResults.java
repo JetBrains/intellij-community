@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.HashSet;
@@ -192,45 +193,6 @@ public class SearchResults implements DocumentListener {
   public void clear() {
     searchCompleted(new ArrayList<LiveOccurrence>(), getEditor(), null, false, null, getStamp());
   }
-  
-  private static class BombedCharSequence implements CharSequence {
-    private CharSequence delegate;
-    private long myTime;
-    private long i = 0;
-
-    public BombedCharSequence(CharSequence sequence, long time) {
-      delegate = sequence;
-      myTime = time;
-    }
-
-    @Override
-    public int length() {
-      check();
-      return delegate.length();
-    }
-
-    @Override
-    public char charAt(int i) {
-      check();
-      return delegate.charAt(i);
-    }
-
-    private void check() {
-      ++i;
-      if (i % 1000 == 0) {
-        long l = System.currentTimeMillis();
-        if (l >= myTime) {
-          throw new ProcessCanceledException();
-        }
-      }
-    }
-
-    @Override
-    public CharSequence subSequence(int i, int i1) {
-      check();
-      return delegate.subSequence(i, i1);
-    }
-  }
 
   public void updateThreadSafe(final FindModel findModel, final boolean toChangeSelection, @Nullable final TextRange next, final int stamp) {
     if (myDisposed) return;
@@ -330,8 +292,8 @@ public class SearchResults implements DocumentListener {
       FindManager findManager = FindManager.getInstance(getProject());
       FindResult result;
       try {
-        BombedCharSequence
-          bombedCharSequence = new BombedCharSequence(editor.getDocument().getCharsSequence(), System.currentTimeMillis() + 3000);
+        StringUtil.BombedCharSequence
+          bombedCharSequence = new StringUtil.BombedCharSequence(editor.getDocument().getCharsSequence(), System.currentTimeMillis() + 3000);
         result = findManager.findString(bombedCharSequence, offset, findModel, virtualFile);
       } catch(PatternSyntaxException e) {
         result = null;
