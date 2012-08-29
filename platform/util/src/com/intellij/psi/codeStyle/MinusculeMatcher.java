@@ -211,7 +211,7 @@ public class MinusculeMatcher implements Matcher {
     }
 
     if (patternIndex + i >= myPattern.length) {
-      return i >= minFragment ? FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i)) : null;
+      return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
     }
     while (i >= minFragment) {
       int nextWordStart;

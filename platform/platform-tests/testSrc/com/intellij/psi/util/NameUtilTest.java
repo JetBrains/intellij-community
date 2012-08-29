@@ -252,7 +252,9 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("*f", "format");
     assertMatches("*f", "Format");
     assertMatches("*Stri", "string");
-    assertDoesntMatch("*f", "reformat");
+    assertMatches("*f", "reformat");
+    assertMatches("*f", "reformatCode");
+    assertDoesntMatch("*fc", "reformatCode");
     assertDoesntMatch("*sTC", "LazyClassTypeConstructor");
   }
 
