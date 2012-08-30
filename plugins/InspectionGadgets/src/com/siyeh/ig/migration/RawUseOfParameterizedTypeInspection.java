@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -30,44 +30,34 @@ import javax.swing.*;
 
 public class RawUseOfParameterizedTypeInspection extends BaseInspection {
 
-  /**
-   * @noinspection PublicField
-   */
-  public boolean ignoreObjectConstruction = true;
+  @SuppressWarnings("PublicField") public boolean ignoreObjectConstruction = true;
 
-  /**
-   * @noinspection PublicField
-   */
-  public boolean ignoreTypeCasts = false;
+  @SuppressWarnings("PublicField") public boolean ignoreTypeCasts = false;
 
+  @SuppressWarnings("PublicField") public boolean ignoreUncompilable = false;
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "raw.use.of.parameterized.type.display.name");
+    return InspectionGadgetsBundle.message("raw.use.of.parameterized.type.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "raw.use.of.parameterized.type.problem.descriptor");
+    return InspectionGadgetsBundle.message("raw.use.of.parameterized.type.problem.descriptor");
   }
 
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel =
-      new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(
-      InspectionGadgetsBundle.message(
-        "raw.use.of.parameterized.type.ignore.new.objects.option"),
-      "ignoreObjectConstruction");
-    optionsPanel.addCheckbox(
-      InspectionGadgetsBundle.message(
-        "raw.use.of.parameterized.type.ignore.type.casts.option"),
-      "ignoreTypeCasts");
+    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("raw.use.of.parameterized.type.ignore.new.objects.option"),
+                             "ignoreObjectConstruction");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("raw.use.of.parameterized.type.ignore.type.casts.option"),
+                             "ignoreTypeCasts");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("raw.use.of.parameterized.type.ignore.uncompilable.option"),
+                             "ignoreUncompilable");
     return optionsPanel;
   }
 
@@ -81,12 +71,10 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     return new RawUseOfParameterizedTypeVisitor();
   }
 
-  private class RawUseOfParameterizedTypeVisitor
-    extends BaseInspectionVisitor {
+  private class RawUseOfParameterizedTypeVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitNewExpression(
-      @NotNull PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       if (!hasNeededLanguageLevel(expression)) {
         return;
       }
@@ -94,13 +82,11 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       if (ignoreObjectConstruction) {
         return;
       }
-      if (expression.getArrayInitializer() != null ||
-          expression.getArrayDimensions().length > 0) {
+      if (ignoreUncompilable && (expression.getArrayInitializer() != null || expression.getArrayDimensions().length > 0)) {
         // array creation cannot be generic
         return;
       }
-      final PsiJavaCodeReferenceElement classReference =
-        expression.getClassOrAnonymousClassReference();
+      final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
       checkReferenceElement(classReference);
     }
 
@@ -109,27 +95,36 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       if (!hasNeededLanguageLevel(typeElement)) {
         return;
       }
+      final PsiType type = typeElement.getType();
+      if (type instanceof PsiArrayType) {
+        return;
+      }
       super.visitTypeElement(typeElement);
       final PsiElement parent = typeElement.getParent();
-      if (parent instanceof PsiInstanceOfExpression ||
-          parent instanceof PsiClassObjectAccessExpression) {
+      if (parent instanceof PsiInstanceOfExpression || parent instanceof PsiClassObjectAccessExpression) {
         return;
       }
       if (ignoreTypeCasts && parent instanceof PsiTypeCastExpression) {
         return;
       }
-      if (PsiTreeUtil.getParentOfType(typeElement, PsiComment.class)
-          != null) {
+      if (PsiTreeUtil.getParentOfType(typeElement, PsiComment.class) != null) {
         return;
       }
-      final PsiJavaCodeReferenceElement referenceElement =
-        typeElement.getInnermostComponentReferenceElement();
+      final PsiAnnotationMethod annotationMethod =
+        PsiTreeUtil.getParentOfType(typeElement, PsiAnnotationMethod.class, true, PsiClass.class);
+      if (ignoreUncompilable && annotationMethod != null) {
+        // type of class type parameter cannot be parameterized if annotation method has default value
+        final PsiAnnotationMemberValue defaultValue = annotationMethod.getDefaultValue();
+        if (defaultValue != null && parent != annotationMethod) {
+          return;
+        }
+      }
+      final PsiJavaCodeReferenceElement referenceElement = typeElement.getInnermostComponentReferenceElement();
       checkReferenceElement(referenceElement);
     }
 
     @Override
-    public void visitReferenceElement(
-      PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
       if (!hasNeededLanguageLevel(reference)) {
         return;
       }
@@ -138,8 +133,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       if (!(referenceParent instanceof PsiReferenceList)) {
         return;
       }
-      final PsiReferenceList referenceList =
-        (PsiReferenceList)referenceParent;
+      final PsiReferenceList referenceList = (PsiReferenceList)referenceParent;
       final PsiElement listParent = referenceList.getParent();
       if (!(listParent instanceof PsiClass)) {
         return;
@@ -147,8 +141,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       checkReferenceElement(reference);
     }
 
-    private void checkReferenceElement(
-      PsiJavaCodeReferenceElement reference) {
+    private void checkReferenceElement(PsiJavaCodeReferenceElement reference) {
       if (reference == null) {
         return;
       }
@@ -163,10 +156,8 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       final PsiClass aClass = (PsiClass)element;
       final PsiElement qualifier = reference.getQualifier();
       if (qualifier instanceof PsiJavaCodeReferenceElement) {
-        final PsiJavaCodeReferenceElement qualifierReference =
-          (PsiJavaCodeReferenceElement)qualifier;
-        if (!aClass.hasModifierProperty(PsiModifier.STATIC) &&
-            !aClass.isInterface() && !aClass.isEnum()) {
+        final PsiJavaCodeReferenceElement qualifierReference = (PsiJavaCodeReferenceElement)qualifier;
+        if (!aClass.hasModifierProperty(PsiModifier.STATIC) && !aClass.isInterface() && !aClass.isEnum()) {
           checkReferenceElement(qualifierReference);
         }
       }
@@ -177,7 +168,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     }
 
     private boolean hasNeededLanguageLevel(PsiElement element) {
-      if (element.getLanguage() != StdLanguages.JAVA) {
+      if (element.getLanguage() != JavaLanguage.INSTANCE) {
         return false;
       }
       return PsiUtil.isLanguageLevel5OrHigher(element);
