@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -41,6 +42,11 @@ public final class JdkPathMacro extends Macro {
       return null;
     }
     final Sdk anyJdk = PathUtilEx.getAnyJdk(project);
+    return sdkPath(anyJdk);
+  }
+
+  @Nullable
+  static String sdkPath(@Nullable Sdk anyJdk) {
     if (anyJdk == null) {
       return null;
     }
