@@ -27,6 +27,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * @author Bas Leijdekkers
+ */
 public class AssertsWithoutMessagesTestNGInspection extends BaseJavaLocalInspectionTool {
 
   @NotNull
@@ -45,15 +48,16 @@ public class AssertsWithoutMessagesTestNGInspection extends BaseJavaLocalInspect
     }
 
     static {
-      ourAssertMethods.add("assertTrue");
-      ourAssertMethods.add("assertFalse");
+      ourAssertMethods.add("assertArrayEquals");
       ourAssertMethods.add("assertEquals");
       ourAssertMethods.add("assertEqualsNoOrder");
-      ourAssertMethods.add("assertNull");
+      ourAssertMethods.add("assertFalse");
       ourAssertMethods.add("assertNotEquals");
       ourAssertMethods.add("assertNotNull");
-      ourAssertMethods.add("assertSame");
       ourAssertMethods.add("assertNotSame");
+      ourAssertMethods.add("assertNull");
+      ourAssertMethods.add("assertSame");
+      ourAssertMethods.add("assertTrue");
       ourAssertMethods.add("fail");
     }
 

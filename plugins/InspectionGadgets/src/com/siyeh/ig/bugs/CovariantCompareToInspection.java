@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,15 +32,13 @@ public class CovariantCompareToInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "covariant.compareto.display.name");
+    return InspectionGadgetsBundle.message("covariant.compareto.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "covariant.compareto.problem.descriptor");
+    return InspectionGadgetsBundle.message("covariant.compareto.problem.descriptor");
   }
 
   @Override
@@ -48,12 +46,10 @@ public class CovariantCompareToInspection extends BaseInspection {
     return new CovariantCompareToVisitor();
   }
 
-  private static class CovariantCompareToVisitor
-    extends BaseInspectionVisitor {
+  private static class CovariantCompareToVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      // note: no call to super
       final String name = method.getName();
       if (!HardcodedMethodConstants.COMPARE_TO.equals(name)) {
         return;
@@ -74,15 +70,13 @@ public class CovariantCompareToInspection extends BaseInspection {
       if (aClass == null) {
         return;
       }
-      final PsiMethod[] methods = aClass.findMethodsByName(
-        HardcodedMethodConstants.COMPARE_TO, false);
+      final PsiMethod[] methods = aClass.findMethodsByName(HardcodedMethodConstants.COMPARE_TO, false);
       final Project project = method.getProject();
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final GlobalSearchScope scope = method.getResolveScope();
       final PsiClass comparableClass = psiFacade.findClass(CommonClassNames.JAVA_LANG_COMPARABLE, scope);
       PsiType substitutedTypeParam = null;
-      if (comparableClass != null &&
-          comparableClass.getTypeParameters().length == 1) {
+      if (comparableClass != null && comparableClass.getTypeParameters().length == 1) {
         final PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(comparableClass, aClass, PsiSubstitutor.EMPTY);
         //null iff aClass is not inheritor of comparableClass
         if (superSubstitutor != null) {
@@ -98,12 +92,14 @@ public class CovariantCompareToInspection extends BaseInspection {
     }
 
     private static boolean isNonVariantCompareTo(PsiMethod method, PsiType substitutedTypeParam) {
-      final PsiManager manager = method.getManager();
-      final Project project = method.getProject();
-      final PsiClassType objectType = PsiType.getJavaLangObject(
-        manager, GlobalSearchScope.allScope(project));
-      return MethodUtils.methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.COMPARE_TO, objectType) ||
-             (substitutedTypeParam != null && MethodUtils.methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.COMPARE_TO, substitutedTypeParam));
+      final PsiClassType objectType = TypeUtils.getObjectType(method);
+      if (MethodUtils.methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.COMPARE_TO, objectType)) {
+        return true;
+      }
+      if (substitutedTypeParam == null) {
+        return false;
+      }
+      return MethodUtils.methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.COMPARE_TO, substitutedTypeParam);
     }
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.intellij.lang.annotations.MagicConstant;
@@ -45,7 +46,8 @@ public class CommonCodeStyleSettings {
   
   @NonNls private static final String ARRANGEMENT_ELEMENT_NAME = "arrangementRules";
   
-  private final List<ArrangementRule> myArrangementRules = new ArrayList<ArrangementRule>();
+  private final List<ArrangementRule> myArrangementRules
+    = new ArrayList<ArrangementRule>();
   private final Language          myLanguage;
   private CodeStyleSettings myRootSettings;
   private IndentOptions     myIndentOptions;
@@ -126,11 +128,12 @@ public class CommonCodeStyleSettings {
     return myArrangementRules;
   }
 
-  public void setArrangementRules(@NotNull List<ArrangementRule> rules) {
+  public void setArrangementRules(@NotNull List<? extends ArrangementRule> rules) {
     myArrangementRules.clear();
     myArrangementRules.addAll(rules);
   }
 
+  @SuppressWarnings("unchecked")
   public CommonCodeStyleSettings clone(@NotNull CodeStyleSettings rootSettings) {
     CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage, getFileType());
     copyPublicFields(this, commonSettings);
@@ -138,6 +141,9 @@ public class CommonCodeStyleSettings {
     if (myIndentOptions != null) {
       IndentOptions targetIndentOptions = commonSettings.initIndentOptions();
       targetIndentOptions.copyFrom(myIndentOptions);
+    }
+    if (!myArrangementRules.isEmpty()) {
+      rootSettings.setArrangementRules(getArrangementRules());
     }
     return commonSettings;
   }
@@ -516,6 +522,8 @@ public class CommonCodeStyleSettings {
   public boolean SPACE_AROUND_SHIFT_OPERATORS = true;
 
   public boolean SPACE_AROUND_UNARY_OPERATOR = false;
+
+  public boolean SPACE_AROUND_LAMBDA_ARROW = true;
 
   public boolean SPACE_AFTER_COMMA = true;
   public boolean SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = true;

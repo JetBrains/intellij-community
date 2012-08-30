@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.Project;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 
@@ -22,15 +23,15 @@ public class AllProjectScope extends CompileScope {
     super(project, jpsProject, artifacts, forcedCompilation, includeTests);
   }
 
-  public boolean isRecompilationForced(@NotNull String moduleName) {
+  public boolean isRecompilationForced(@NotNull BuildTarget target) {
     return myForcedCompilation;
   }
 
-  public boolean isAffected(@NotNull String moduleName) {
+  public boolean isAffected(@NotNull BuildTarget target) {
     return true;
   }
 
-  public boolean isAffected(String moduleName, @NotNull File file) {
+  public boolean isAffected(BuildTarget target, @NotNull File file) {
     return true;
   }
 

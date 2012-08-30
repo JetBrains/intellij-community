@@ -11,7 +11,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.android.dom.converters.AndroidResourceReferenceBase;
-import org.jetbrains.android.dom.resources.ResourceNameConverter;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.ErrorReporter;
 import org.jetbrains.android.util.HintBasedErrorReporter;
@@ -57,10 +56,6 @@ public class AndroidInlineStyleHandler extends InlineActionHandler {
         final PsiReference reference = TargetElementUtilBase.findReference(editor);
 
         if (reference instanceof AndroidResourceReferenceBase) {
-          if (reference instanceof ResourceNameConverter.MyParentStyleReference) {
-            reporter.report("Implicit inheritance is not supported", "");
-            return;
-          }
           usageData = getUsageDataFromEditor(reference);
         }
       }

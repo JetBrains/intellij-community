@@ -1266,6 +1266,13 @@ def foo(Integer a) {
 ''')
   }
 
+  public void testForSpace() {
+    configure('f<caret>')
+    myFixture.completeBasic()
+    myFixture.type 'or '
+    myFixture.checkResult "for <caret>"
+  }
+
   void testInferArgumentTypeFromMethod3() {
     doBasicTest('''\
 def bar(String s) {}

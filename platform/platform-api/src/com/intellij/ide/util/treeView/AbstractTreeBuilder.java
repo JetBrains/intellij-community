@@ -27,6 +27,7 @@ import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,7 @@ import java.util.*;
 
 public class AbstractTreeBuilder implements Disposable {
   private AbstractTreeUi myUi;
-  private static final String TREE_BUILDER = "TreeBuilder";
+  @NonNls private static final String TREE_BUILDER = "TreeBuilder";
   public static final boolean DEFAULT_UPDATE_INACTIVE = true;
 
   public AbstractTreeBuilder(JTree tree,
@@ -66,10 +67,10 @@ public class AbstractTreeBuilder implements Disposable {
   protected void init(final JTree tree,
                       final DefaultTreeModel treeModel,
                       final AbstractTreeStructure treeStructure,
-                      final @Nullable Comparator<NodeDescriptor> comparator,
+                      @Nullable final Comparator<NodeDescriptor> comparator,
                       final boolean updateIfInactive) {
 
-    tree.putClientProperty(TREE_BUILDER, new WeakReference(this));
+    tree.putClientProperty(TREE_BUILDER, new WeakReference<AbstractTreeBuilder>(this));
 
     myUi = createUi();
     getUi().init(this, tree, treeModel, treeStructure, comparator, updateIfInactive);
@@ -208,9 +209,7 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   protected boolean validateNode(final Object child) {
-    if (isDisposed()) return false;
-
-    return getUi().getTreeStructure().isValid(child);
+    return !isDisposed() && getUi().getTreeStructure().isValid(child);
   }
 
   protected boolean isDisposeOnCollapsing(NodeDescriptor nodeDescriptor) {
@@ -347,9 +346,7 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   protected boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
-    if (isDisposed()) return false;
-
-    return getRootElement() == getTreeStructureElement(nodeDescriptor);
+    return !isDisposed() && getRootElement() == getTreeStructureElement(nodeDescriptor);
   }
 
   protected boolean isAlwaysShowPlus(final NodeDescriptor descriptor) {
@@ -376,15 +373,11 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   public final boolean wasRootNodeInitialized() {
-    if (isDisposed()) return false;
-
-    return getUi().wasRootNodeInitialized();
+    return !isDisposed() && getUi().wasRootNodeInitialized();
   }
 
   public final boolean isNodeBeingBuilt(final TreePath path) {
-    if (isDisposed()) return false;
-
-    return getUi().isNodeBeingBuilt(path);
+    return !isDisposed() && getUi().isNodeBeingBuilt(path);
   }
 
   /**
@@ -458,6 +451,7 @@ public class AbstractTreeBuilder implements Disposable {
     final Application app = ApplicationManager.getApplication();
     if (app != null) {
       app.runReadAction(new Runnable() {
+        @Override
         public void run() {
           runnable.run();
         }
@@ -533,11 +527,13 @@ public class AbstractTreeBuilder implements Disposable {
       super(null, null);
     }
 
+    @Override
     @NotNull
     public Collection<AbstractTreeNode> getChildren() {
       return Collections.emptyList();
     }
 
+    @Override
     public void update(PresentationData presentation) {
     }
   }
@@ -546,6 +542,7 @@ public class AbstractTreeBuilder implements Disposable {
     return myUi;
   }
 
+  @Override
   public void dispose() {
     if (isDisposed()) return;
 
@@ -560,7 +557,7 @@ public class AbstractTreeBuilder implements Disposable {
     if (isDisposed()) return false;
 
     AbstractTreeUi ui = getUi();
-    return ui != null && ui.doUpdateNodeDescriptor(descriptor);
+    return ui != null && descriptor.update();
   }
 
   @Nullable
@@ -645,14 +642,14 @@ public class AbstractTreeBuilder implements Disposable {
     myUi.scrollSelectionToVisible(onDone, shouldBeCentered);
   }
 
-  protected boolean isUnitTestingMode() {
+  private static boolean isUnitTestingMode() {
     Application app = ApplicationManager.getApplication();
     return app != null && app.isUnitTestMode();
   }
 
   public static boolean isToPaintSelection(JTree tree) {
     AbstractTreeBuilder builder = getBuilderFor(tree);
-    return builder != null && builder.getUi() != null ? builder.getUi().isToPaintSelection() : true;
+    return builder == null || builder.getUi() == null || builder.getUi().isToPaintSelection();
   }
 
   class UserRunnable implements Runnable {
@@ -680,9 +677,5 @@ public class AbstractTreeBuilder implements Disposable {
   public boolean isSelectionBeingAdjusted() {
     AbstractTreeUi ui = getUi();
     return ui != null && ui.isSelectionBeingAdjusted();
-  }
-
-  private void assertDisposed() {
-    assert !isDisposed();
   }
 }

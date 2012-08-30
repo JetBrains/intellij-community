@@ -133,9 +133,17 @@ public class PropertyUtil {
   }
 
   @NotNull
-  public static Map<String, PsiMethod> getAllProperties(@NotNull final PsiClass psiClass, final boolean acceptSetters, final boolean acceptGetters, final boolean includeSuperClass) {
+  public static Map<String, PsiMethod> getAllProperties(@NotNull final PsiClass psiClass,
+                                                        final boolean acceptSetters,
+                                                        final boolean acceptGetters,
+                                                        final boolean includeSuperClass) {
+    return getAllProperties(acceptSetters, acceptGetters, includeSuperClass ? psiClass.getAllMethods() : psiClass.getMethods());
+  }
+
+  @NotNull
+  public static Map<String, PsiMethod> getAllProperties(final boolean acceptSetters,
+                                                        final boolean acceptGetters, PsiMethod[] methods) {
     final Map<String, PsiMethod> map = new HashMap<String, PsiMethod>();
-    final PsiMethod[] methods = includeSuperClass ? psiClass.getAllMethods() : psiClass.getMethods();
 
     for (PsiMethod method : methods) {
       if (filterMethods(method)) continue;

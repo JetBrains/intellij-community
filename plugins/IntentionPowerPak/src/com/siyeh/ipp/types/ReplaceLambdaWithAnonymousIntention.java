@@ -30,7 +30,9 @@ import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ReplaceLambdaWithAnonymousIntention extends Intention {
   private static final Logger LOG = Logger.getInstance("#" + ReplaceLambdaWithAnonymousIntention.class.getName());
@@ -49,6 +51,7 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
   protected void processIntention(Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
     LOG.assertTrue(lambdaExpression != null);
+    final PsiParameter[] paramListCopy = ((PsiParameterList)lambdaExpression.getParameterList().copy()).getParameters();
     PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
     LOG.assertTrue(functionalInterfaceType != null);
     functionalInterfaceType = GenericsUtil.eliminateWildcards(functionalInterfaceType);
@@ -67,22 +70,34 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
     final List<PsiGenerationInfo<PsiMethod>> infos = OverrideImplementUtil.overrideOrImplement(anonymousClass, method);
     if (infos != null && infos.size() == 1) {
       final PsiMethod member = infos.get(0).getPsiMember();
-      final PsiCodeBlock codeBlock = member.getBody();
+      final PsiParameter[] parameters = member.getParameterList().getParameters();
+      for (int i = 0; i < parameters.length; i++) {
+        final PsiParameter parameter = parameters[i];
+        final String lambdaParamName = paramListCopy[i].getName();
+        if (lambdaParamName != null) {
+          parameter.setName(lambdaParamName);
+        }
+      }
+      PsiCodeBlock codeBlock = member.getBody();
       LOG.assertTrue(codeBlock != null);
-      codeBlock.replace(psiElementFactory.createCodeBlockFromText(blockText, null));
-      for (PsiParameter parameter : member.getParameterList().getParameters()) {
-        if (parameter.hasModifierProperty(PsiModifier.FINAL)) continue;
-        boolean declareFinal = false;
-        for (PsiReference reference : ReferencesSearch.search(parameter)) {
-          final PsiClass innerClass = HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(parameter, reference.getElement());
-          if (innerClass != null) {
-            declareFinal = true;
-            break;
+      codeBlock = (PsiCodeBlock)codeBlock.replace(psiElementFactory.createCodeBlockFromText(blockText, null));
+      final Set<PsiVariable> vars2BeFinal = new HashSet<PsiVariable>();
+      codeBlock.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitReferenceExpression(PsiReferenceExpression expression) {
+          super.visitReferenceExpression(expression);
+          final PsiElement resolve = expression.resolve();
+          if (resolve instanceof PsiVariable) {
+            final PsiVariable variable = (PsiVariable)resolve;
+            final PsiClass innerClass = HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(variable, expression);
+            if (innerClass != null) {
+              vars2BeFinal.add(variable);
+            }
           }
         }
-        if (declareFinal) {
-          PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, true);
-        }
+      });
+      for (PsiVariable var : vars2BeFinal) {
+        PsiUtil.setModifierProperty(var, PsiModifier.FINAL, true);
       }
       GenerateMembersUtil.positionCaret(editor, member, true);
     }

@@ -30,6 +30,7 @@ public class XmlFoldingTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testTagFolding() throws Throwable { doTest(); }
 
   public void testStyleAttributeFolding() throws Throwable { doTest(); }
+  public void testStyleAttributeFolding2() throws Throwable { doTest(".xml"); }
 
 
 
@@ -39,7 +40,11 @@ public class XmlFoldingTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   private void doTest() throws Throwable {
-    myFixture.testFolding(getTestDataPath() + getTestName(true) + ".html");
+    doTest(".html");
+  }
+
+  private void doTest(String extension) throws Throwable {
+    myFixture.testFolding(getTestDataPath() + getTestName(true) + extension);
   }
 
   @Override

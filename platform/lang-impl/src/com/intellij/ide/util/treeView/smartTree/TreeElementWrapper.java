@@ -27,15 +27,18 @@ public class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement> {
     super(project, value, treeModel);
   }
 
+  @Override
   public void copyFromNewInstance(final CachingChildrenTreeNode oldInstance) {
   }
 
+  @Override
   public void update(PresentationData presentation) {
     if (((StructureViewTreeElement)getValue()).getValue() != null) {
       presentation.updateFrom(getValue().getPresentation());
     }
   }
 
+  @Override
   public void initChildren() {
     clearChildren();
     TreeElement[] children = getValue().getChildren();
@@ -55,6 +58,7 @@ public class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement> {
     }
   }
 
+  @Override
   protected void performTreeActions() {
     filterChildren(myTreeModel.getFilters());
     groupChildren(myTreeModel.getGroupers());

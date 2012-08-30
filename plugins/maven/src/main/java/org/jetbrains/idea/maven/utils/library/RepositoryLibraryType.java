@@ -32,7 +32,7 @@ import javax.swing.*;
  * @author nik
  */
 public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperties> {
-  private static final PersistentLibraryKind<RepositoryLibraryProperties> LIBRARY_KIND = new PersistentLibraryKind<RepositoryLibraryProperties>("repository", false) {
+  private static final PersistentLibraryKind<RepositoryLibraryProperties> LIBRARY_KIND = new PersistentLibraryKind<RepositoryLibraryProperties>("repository") {
     @NotNull
     @Override
     public RepositoryLibraryProperties createDefaultProperties() {

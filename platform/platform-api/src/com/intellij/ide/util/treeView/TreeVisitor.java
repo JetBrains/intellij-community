@@ -15,8 +15,8 @@
  */
 package com.intellij.ide.util.treeView;
 
-public interface TreeVisitor<T> {
+import org.jetbrains.annotations.NotNull;
 
-  boolean visit(T node);
-  
+public interface TreeVisitor<T> {
+  boolean visit(@NotNull T node);
 }

@@ -51,6 +51,10 @@ public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
   }
 
   public OpenFileDescriptor getDescriptor() {
+    if (!myFile.isValid()) {
+      return null;
+    }
+
     int offset = calculateOffset(myFile, myDocumentLine, myDocumentColumn);
     if (offset != UNDEFINED_OFFSET) {
       return new OpenFileDescriptor(myProject, myFile, offset);

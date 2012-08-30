@@ -19,7 +19,7 @@
   <name>Groovy</name>
   <description>Plugin for Groovy language support, including Groovy++, Grape, Gant and Griffon</description>
   <version>9.0</version>
-  <vendor logo="/org/jetbrains/plugins/groovy/images/groovy_16x16.png" url="http://www.jetbrains.com">JetBrains Inc.
+  <vendor logo="/icons/groovy/groovy_16x16.png" url="http://www.jetbrains.com">JetBrains Inc.
   </vendor>
   <depends>com.intellij.properties</depends>
 
@@ -1345,13 +1345,13 @@
     <action id="Groovy.Doc.Generating"
             class="org.jetbrains.plugins.groovy.doc.actions.GenerateGroovyDocAction"
             text="Generate GroovyDoc" description="Generating Groovy Documentation"
-            icon="/org/jetbrains/plugins/groovy/images/GroovyDoc.png">
+            icon="/icons/groovy/GroovyDoc.png">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
     <action id="Groovy.Console"
             class="org.jetbrains.plugins.groovy.console.GroovyShellAction"
             text="Groovy Shell..." description="Launch Groovy Shell"
-            icon="/org/jetbrains/plugins/groovy/images/groovy_16x16.png">
+            icon="/icons/groovy/groovy_16x16.png">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 

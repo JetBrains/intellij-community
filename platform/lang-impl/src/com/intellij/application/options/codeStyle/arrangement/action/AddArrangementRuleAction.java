@@ -19,12 +19,13 @@ import com.intellij.application.options.codeStyle.arrangement.ArrangementConstan
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.project.DumbAware;
 
 /**
  * @author Denis Zhdanov
  * @since 8/24/12 1:54 PM
  */
-public class AddArrangementRuleAction extends AnAction {
+public class AddArrangementRuleAction extends AnAction implements DumbAware {
   
   public AddArrangementRuleAction() {
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.add.text"));

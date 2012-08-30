@@ -45,7 +45,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
@@ -60,6 +60,7 @@ import javax.swing.border.BevelBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -91,7 +92,7 @@ public class CommanderPanel extends JPanel {
   private boolean myActive = true;
   private final List<CommanderHistoryListener> myHistoryListeners = ContainerUtil.createEmptyCOWList();
   private boolean myMoveFocus = false;
-  private boolean myEnableSearchHighlighting;
+  private final boolean myEnableSearchHighlighting;
 
   public CommanderPanel(final Project project, final boolean enablePopupMenu, final boolean enableSearchHighlighting) {
     super(new BorderLayout());
@@ -103,6 +104,7 @@ public class CommanderPanel extends JPanel {
 
     if (enablePopupMenu) {
       myCopyPasteDelegator = new CopyPasteDelegator(myProject, myList) {
+        @Override
         @NotNull
         protected PsiElement[] getSelectedElements() {
           return CommanderPanel.this.getSelectedElements();
@@ -116,16 +118,18 @@ public class CommanderPanel extends JPanel {
     ListScrollingUtil.installActions(myList);
 
     myList.registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         if (myBuilder == null) return;
         myBuilder.buildRoot();
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK), JComponent.WHEN_FOCUSED);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), JComponent.WHEN_FOCUSED);
 
     myList.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTION_DRILL_DOWN);
     myList.getInputMap(WHEN_FOCUSED)
-      .put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK), ACTION_DRILL_DOWN);
+      .put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), ACTION_DRILL_DOWN);
     myList.getActionMap().put(ACTION_DRILL_DOWN, new AbstractAction() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         drillDown();
       }
@@ -139,15 +143,17 @@ public class CommanderPanel extends JPanel {
     }.installOn(myList);
 
     myList.getInputMap(WHEN_FOCUSED)
-      .put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK), ACTION_GO_UP);
+      .put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), ACTION_GO_UP);
     myList.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), ACTION_GO_UP);
     myList.getActionMap().put(ACTION_GO_UP, new AbstractAction() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         goUp();
       }
     });
 
     myList.getActionMap().put("selectAll", new AbstractAction() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
       }
     });
@@ -155,6 +161,7 @@ public class CommanderPanel extends JPanel {
 
     if (enablePopupMenu) {
       myList.addMouseListener(new PopupHandler() {
+        @Override
         public void invokePopup(final Component comp, final int x, final int y) {
           CommanderPanel.this.invokePopup(comp, x, y);
         }
@@ -162,10 +169,12 @@ public class CommanderPanel extends JPanel {
     }
 
     myList.addFocusListener(new FocusAdapter() {
+      @Override
       public void focusGained(final FocusEvent e) {
         setActive(true);
       }
 
+      @Override
       public void focusLost(final FocusEvent e) {
         setActive(false);
       }
@@ -177,15 +186,11 @@ public class CommanderPanel extends JPanel {
     return myEnableSearchHighlighting;
   }
 
-  public ListSpeedSearch getListSpeedSearch() {
-    return myListSpeedSearch;
-  }
-
-  public void addHistoryListener(CommanderHistoryListener listener) {
+  public void addHistoryListener(@NotNull CommanderHistoryListener listener) {
     myHistoryListeners.add(listener);
   }
 
-  public void removeHistoryListener(CommanderHistoryListener listener) {
+  private void removeHistoryListener(CommanderHistoryListener listener) {
     myHistoryListeners.remove(listener);
   }
 
@@ -227,7 +232,7 @@ public class CommanderPanel extends JPanel {
     }
 
     final AbstractTreeNode element = getSelectedNode();
-    if (element.getChildren().size() == 0) {
+    if (element.getChildren().isEmpty()) {
       if (!shouldDrillDownOnEmptyElement(element)) {
         navigateSelectedElement();
         return;
@@ -292,10 +297,12 @@ public class CommanderPanel extends JPanel {
 
     // TODO[vova,anton] it seems that the code below performs double focus request. Is it OK?
     myTitlePanel.addMouseListener(new MouseAdapter() {
+      @Override
       public void mouseClicked(final MouseEvent e) {
         myList.requestFocus();
       }
 
+      @Override
       public void mousePressed(final MouseEvent e) {
         myList.requestFocus();
       }
@@ -327,8 +334,9 @@ public class CommanderPanel extends JPanel {
     return elementAtIndex instanceof AbstractTreeNode ? (AbstractTreeNode)elementAtIndex : null;
   }
 
-  private ArrayList<AbstractTreeNode> getSelectedNodes() {
-    if (myBuilder == null) return null;
+  @NotNull
+  private List<AbstractTreeNode> getSelectedNodes() {
+    if (myBuilder == null) return Collections.emptyList();
     final int[] indices = myList.getSelectedIndices();
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     for (int index : indices) {
@@ -359,7 +367,7 @@ public class CommanderPanel extends JPanel {
       }
     }
 
-    return PsiUtilBase.toPsiElementArray(elements);
+    return PsiUtilCore.toPsiElementArray(elements);
   }
 
   private static Object getValueAtIndex(AbstractTreeNode node) {
@@ -440,39 +448,39 @@ public class CommanderPanel extends JPanel {
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       return filterInvalidElements(getSelectedElements());
     }
-    else if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataId)) {
+    if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataId)) {
       final AbstractTreeNode parentNode = myBuilder.getParentNode();
       final Object element = parentNode != null ? parentNode.getValue() : null;
       return element instanceof PsiElement && ((PsiElement)element).isValid() ? element : null;
     }
-    else if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+    if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       return getNavigatables();
     }
-    else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator != null ? myCopyPasteDelegator.getCopyProvider() : null;
     }
-    else if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
+    if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator != null ? myCopyPasteDelegator.getCutProvider() : null;
     }
-    else if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
+    if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator != null ? myCopyPasteDelegator.getPasteProvider() : null;
     }
-    else if (LangDataKeys.IDE_VIEW.is(dataId)) {
+    if (LangDataKeys.IDE_VIEW.is(dataId)) {
       return myIdeView;
     }
-    else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return myDeleteElementProvider;
     }
-    else if (LangDataKeys.MODULE.is(dataId)) {
+    if (LangDataKeys.MODULE.is(dataId)) {
       return selectedValue instanceof Module ? selectedValue : null;
     }
-    else if (ModuleGroup.ARRAY_DATA_KEY.is(dataId)) {
+    if (ModuleGroup.ARRAY_DATA_KEY.is(dataId)) {
       return selectedValue instanceof ModuleGroup ? new ModuleGroup[]{(ModuleGroup)selectedValue} : null;
     }
-    else if (LibraryGroupElement.ARRAY_DATA_KEY.is(dataId)) {
+    if (LibraryGroupElement.ARRAY_DATA_KEY.is(dataId)) {
       return selectedValue instanceof LibraryGroupElement ? new LibraryGroupElement[]{(LibraryGroupElement)selectedValue} : null;
     }
-    else if (NamedLibraryElement.ARRAY_DATA_KEY.is(dataId)) {
+    if (NamedLibraryElement.ARRAY_DATA_KEY.is(dataId)) {
       return selectedValue instanceof NamedLibraryElement ? new NamedLibraryElement[]{(NamedLibraryElement)selectedValue} : null;
     }
 
@@ -511,7 +519,7 @@ public class CommanderPanel extends JPanel {
         validElements.add(element);
       }
     }
-    return validElements.size() == elements.length ? elements : PsiUtilBase.toPsiElementArray(validElements);
+    return validElements.size() == elements.length ? elements : PsiUtilCore.toPsiElementArray(validElements);
   }
 
   protected final Navigatable createEditSourceDescriptor() {
@@ -529,18 +537,20 @@ public class CommanderPanel extends JPanel {
       myPanel = panel;
     }
 
+    @Override
     public void setText(String text) {
-      if (text == null || text.length() == 0) {
+      if (text == null || text.isEmpty()) {
         text = " ";
       }
       super.setText(text);
       if (myPanel != null) {
-        myPanel.setToolTipText(text.trim().length() == 0 ? null : text);
+        myPanel.setToolTipText(text.trim().isEmpty() ? null : text);
       }
     }
   }
 
   private final class MyDeleteElementProvider implements DeleteProvider {
+    @Override
     public void deleteElement(@NotNull final DataContext dataContext) {
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));
       try {
@@ -552,6 +562,7 @@ public class CommanderPanel extends JPanel {
       }
     }
 
+    @Override
     public boolean canDeleteElement(@NotNull final DataContext dataContext) {
       final PsiElement[] elements = getSelectedElements();
       return DeleteHandler.shouldEnableDeleteAction(elements);
@@ -559,16 +570,19 @@ public class CommanderPanel extends JPanel {
   }
 
   private final class MyIdeView implements IdeView {
+    @Override
     public void selectElement(final PsiElement element) {
       final boolean isDirectory = element instanceof PsiDirectory;
       if (!isDirectory) {
         EditorHelper.openInEditor(element);
       }
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
-          myBuilder.selectElement(element, PsiUtilBase.getVirtualFile(element));
+          myBuilder.selectElement(element, PsiUtilCore.getVirtualFile(element));
           if (!isDirectory) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
               public void run() {
                 if (myMoveFocus) {
                   ToolWindowManager.getInstance(myProject).activateEditorComponent();
@@ -593,11 +607,13 @@ public class CommanderPanel extends JPanel {
       }
     }
 
+    @Override
     public PsiDirectory[] getDirectories() {
       PsiDirectory directory = getDirectory();
       return directory == null ? PsiDirectory.EMPTY_ARRAY : new PsiDirectory[]{directory};
     }
 
+    @Override
     public PsiDirectory getOrChooseDirectory() {
       return DirectoryChooserUtil.getOrChooseDirectory(this);
     }
@@ -605,6 +621,7 @@ public class CommanderPanel extends JPanel {
   
   public static final class MyModel extends AbstractListModel implements AbstractListBuilder.Model{
     final List myElements = new ArrayList();
+    @Override
     public void removeAllElements() {
       int index1 = myElements.size()-1;
       myElements.clear();
@@ -613,30 +630,36 @@ public class CommanderPanel extends JPanel {
       }
     }
 
+    @Override
     public void addElement(final Object obj) {
       int index = myElements.size();
       myElements.add(obj);
       fireIntervalAdded(this, index, index);
     }
 
+    @Override
     public void replaceElements(final List newElements) {
       removeAllElements();
       myElements.addAll(newElements);
       fireIntervalAdded(this, 0, newElements.size());
     }
 
+    @Override
     public Object[] toArray() {
       return ArrayUtil.toObjectArray(myElements);
     }
 
+    @Override
     public int indexOf(final Object o) {
       return myElements.indexOf(o);
     }
 
+    @Override
     public int getSize() {
       return myElements.size();
     }
 
+    @Override
     public Object getElementAt(final int index) {
       return myElements.get(index);
     }

@@ -15,41 +15,30 @@
  */
 package com.intellij.ide.util.treeView;
 
-import com.intellij.openapi.util.ActiveRunnable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.HashSet;
 import java.util.Set;
 
 public class TreeUpdatePass {
-
-  private DefaultMutableTreeNode myNode;
-
-  private ActiveRunnable myBefore;
-  private ActiveRunnable myAfter;
+  private final DefaultMutableTreeNode myNode;
 
   private long myUpdateStamp;
   private boolean myExpired;
 
   private DefaultMutableTreeNode myCurrentNode;
 
-  private long myAllocation;
+  private final long myAllocation;
 
   private boolean myUpdateChildren = true;
   private boolean myUpdateStructure = true;
-  private Set<NodeDescriptor> myUpdatedDescriptors = new HashSet<NodeDescriptor>();
-
-  public TreeUpdatePass(@NotNull final DefaultMutableTreeNode node, @Nullable final ActiveRunnable before, @Nullable final ActiveRunnable after) {
-    myNode = node;
-    myBefore = before;
-    myAfter = after;
-    myAllocation = System.currentTimeMillis();
-  }
+  private final Set<NodeDescriptor> myUpdatedDescriptors = new HashSet<NodeDescriptor>();
 
   public TreeUpdatePass(@NotNull final DefaultMutableTreeNode node) {
-    this(node, null, null);
+    myNode = node;
+    myAllocation = System.currentTimeMillis();
   }
 
   public TreeUpdatePass setUpdateChildren(boolean updateChildren) {
@@ -90,6 +79,7 @@ public class TreeUpdatePass {
     myCurrentNode = currentNode;
   }
 
+  @NonNls
   @Override
   public String toString() {
     return "TreUpdatePass node=" + myNode + " structure=" + myUpdateStructure + " stamp=" + myUpdateStamp + " expired=" + myExpired + " currentNode=" + myCurrentNode + " allocation=" + myAllocation;

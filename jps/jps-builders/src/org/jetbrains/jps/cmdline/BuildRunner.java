@@ -9,6 +9,7 @@ import org.jetbrains.jps.Project;
 import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.artifacts.JpsBuilderArtifactService;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
@@ -157,17 +158,17 @@ public class BuildRunner {
         forcedModules = Collections.emptySet();
       }
 
-      final Map<String, Set<File>> filesToCompile;
+      final Map<BuildTarget, Set<File>> filesToCompile;
       if (!paths.isEmpty()) {
-        filesToCompile = new HashMap<String, Set<File>>();
+        filesToCompile = new HashMap<BuildTarget, Set<File>>();
         for (String path : paths) {
           final File file = new File(path);
           final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(null, file);
           if (rd != null) {
-            Set<File> files = filesToCompile.get(rd.module);
+            Set<File> files = filesToCompile.get(rd.target);
             if (files == null) {
               files = new HashSet<File>();
-              filesToCompile.put(rd.module, files);
+              filesToCompile.put(rd.target, files);
             }
             files.add(file);
             if (buildType == BuildType.FORCED_COMPILATION) {

@@ -70,7 +70,8 @@ public class EditorHyperlinkSupport {
     myHighlighters = new SmartList<RangeHighlighter>();
 
     editor.addEditorMouseListener(new EditorMouseAdapter() {
-      public void mouseReleased(final EditorMouseEvent e) {
+      @Override
+      public void mouseClicked(EditorMouseEvent e) {
         final MouseEvent mouseEvent = e.getMouseEvent();
         if (mouseEvent.getButton() == MouseEvent.BUTTON1 && !mouseEvent.isPopupTrigger()) {
           LogicalPosition logical = myEditor.xyToLogicalPosition(e.getMouseEvent().getPoint());

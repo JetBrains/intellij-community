@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,34 +36,29 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreParenthesesOnConditionals = false;
+
+  @SuppressWarnings("PublicField")
   public boolean ignoreParenthesesOnLambdaParameter = false;
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.parentheses.display.name");
+    return InspectionGadgetsBundle.message("unnecessary.parentheses.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.parentheses.problem.descriptor");
+    return InspectionGadgetsBundle.message("unnecessary.parentheses.problem.descriptor");
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel =
-      new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "unnecessary.parentheses.option"),
-                             "ignoreClarifyingParentheses");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "unnecessary.parentheses.conditional.option"),
+    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("unnecessary.parentheses.option"), "ignoreClarifyingParentheses");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("unnecessary.parentheses.conditional.option"),
                              "ignoreParenthesesOnConditionals");
-    optionsPanel.addCheckbox("Ignore parentheses around single no formal type lambda parameter",
-                             "ignoreParenthesesOnLambdaParameter");
+    optionsPanel.addCheckbox("Ignore parentheses around single no formal type lambda parameter", "ignoreParenthesesOnLambdaParameter");
     return optionsPanel;
   }
 
@@ -112,26 +107,28 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
     }
 
     @Override
-    public void visitParenthesizedExpression(
-      PsiParenthesizedExpression expression) {
+    public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
       final PsiElement parent = expression.getParent();
       final PsiExpression child = expression.getExpression();
       if (child == null) {
         return;
       }
-      if (!(parent instanceof PsiExpression) ||
-          parent instanceof PsiParenthesizedExpression) {
+      if (!(parent instanceof PsiExpression) || parent instanceof PsiParenthesizedExpression) {
         registerError(expression);
         return;
       }
-      final int parentPrecedence =
-        ParenthesesUtils.getPrecedence((PsiExpression)parent);
+      final int parentPrecedence = ParenthesesUtils.getPrecedence((PsiExpression)parent);
       final int childPrecedence = ParenthesesUtils.getPrecedence(child);
       if (parentPrecedence > childPrecedence) {
         if (ignoreClarifyingParentheses) {
-          if (parent instanceof PsiPolyadicExpression &&
-              child instanceof PsiPolyadicExpression) {
-            return;
+          if (child instanceof PsiPolyadicExpression) {
+            if (parent instanceof PsiPolyadicExpression) {
+              return;
+            } else if (parent instanceof PsiConditionalExpression) {
+              return;
+            } else if (parent instanceof PsiInstanceOfExpression) {
+              return;
+            }
           }
           else if (child instanceof PsiInstanceOfExpression) {
             return;
@@ -139,10 +136,8 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
         }
         if (ignoreParenthesesOnConditionals) {
           if (parent instanceof PsiConditionalExpression) {
-            final PsiConditionalExpression conditionalExpression =
-              (PsiConditionalExpression)parent;
-            final PsiExpression condition =
-              conditionalExpression.getCondition();
+            final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)parent;
+            final PsiExpression condition = conditionalExpression.getCondition();
             if (expression == condition) {
               return;
             }
@@ -152,8 +147,7 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
         return;
       }
       if (parentPrecedence == childPrecedence) {
-        if (!ParenthesesUtils.areParenthesesNeeded(expression,
-                                                   ignoreClarifyingParentheses)) {
+        if (!ParenthesesUtils.areParenthesesNeeded(expression, ignoreClarifyingParentheses)) {
           registerError(expression);
           return;
         }

@@ -538,6 +538,7 @@ class Bar {{
   void testConstructorTypeArgs(){doTest()}
 
   void testIncorrectEscaping() {doTest()}
+  void testExtendingOwnInner() {doTest()}
 
   void testRegexInCommandArg() {doTest()}
   void testOctalInspection() {

@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -35,12 +37,12 @@ public class ContainerUtilRt {
 
   @NotNull
   public static <K, V> HashMap<K, V> newHashMap() {
-    return new HashMap<K, V>();
+    return new com.intellij.util.containers.HashMap<K, V>();
   }
 
   @NotNull
   public static <K, V> HashMap<K, V> newHashMap(Map<K, V> map) {
-    return new HashMap<K, V>(map);
+    return new com.intellij.util.containers.HashMap<K, V>(map);
   }
 
   @NotNull
@@ -81,7 +83,7 @@ public class ContainerUtilRt {
 
   @NotNull
   public static <T> HashSet<T> newHashSet() {
-    return new HashSet<T>();
+    return new com.intellij.util.containers.HashSet<T>();
   }
 
   @NotNull

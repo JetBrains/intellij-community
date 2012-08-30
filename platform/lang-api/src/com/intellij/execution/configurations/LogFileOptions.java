@@ -22,9 +22,11 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -43,22 +45,31 @@ public class LogFileOptions implements JDOMExternalizable {
   @NonNls private static final String ALIAS = "alias";
   @NonNls private static final String SKIPPED = "skipped";
   @NonNls private static final String SHOW_ALL = "show_all";
+  @NonNls private static final String CHARSET = "charset";
+
   private String myName;
   private String myPathPattern;
   private boolean myEnabled;
   private boolean mySkipContent;
   private boolean myShowAll;
+  @NotNull
+  private Charset myCharset;
 
   //read external
   public LogFileOptions() {
   }
 
   public LogFileOptions(String name, String path, boolean enabled, boolean skipContent, final boolean showAll) {
+    this(name, path, null, enabled, skipContent, showAll);
+  }
+
+  public LogFileOptions(String name, String path, @Nullable final Charset charset, boolean enabled, boolean skipContent, final boolean showAll) {
     myName = name;
     myPathPattern = path;
     myEnabled = enabled;
     mySkipContent = skipContent;
     myShowAll = showAll;
+    myCharset = charset != null ? charset : Charset.defaultCharset();
   }
 
   public String getName() {
@@ -158,6 +169,14 @@ public class LogFileOptions implements JDOMExternalizable {
     return myShowAll;
   }
 
+  public Charset getCharset() {
+    return myCharset;
+  }
+
+  public void setCharset(Charset charset) {
+    myCharset = charset;
+  }
+
   public void readExternal(Element element) throws InvalidDataException {
     String file = element.getAttributeValue(PATH);
     if (file != null){
@@ -177,6 +196,14 @@ public class LogFileOptions implements JDOMExternalizable {
     setShowAll(showAll.booleanValue());
 
     setName(element.getAttributeValue(ALIAS));
+
+    final String charsetStr = element.getAttributeValue(CHARSET);
+    try {
+      setCharset(Charset.forName(charsetStr));
+    }
+    catch (Exception e) {
+      setCharset(Charset.defaultCharset());
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -185,6 +212,9 @@ public class LogFileOptions implements JDOMExternalizable {
     element.setAttribute(SKIPPED, String.valueOf(isSkipContent()));
     element.setAttribute(SHOW_ALL, String.valueOf(isShowAll()));
     element.setAttribute(ALIAS, getName());
+    if (!getCharset().equals(Charset.defaultCharset())) {
+      element.setAttribute(CHARSET, getCharset().name());
+    }
   }
 
   public static boolean areEqual(@Nullable LogFileOptions options1, @Nullable LogFileOptions options2) {

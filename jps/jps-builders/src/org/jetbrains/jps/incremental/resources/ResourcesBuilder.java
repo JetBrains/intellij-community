@@ -44,7 +44,7 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
     }
   }
 
-  public ExitCode build(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+  public ExitCode build(final CompileContext context, final ModuleChunk chunk) throws ProjectBuildException {
     final ResourcePatterns patterns = ResourcePatterns.KEY.get(context);
     assert patterns != null;
     try {
@@ -69,7 +69,7 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
               doneSomething.set(true);
               copyResource(
                 context, module, file, sourceRoot,
-                context.getProjectDescriptor().dataManager.getSourceToOutputMap(module.getName(), context.isCompilingTests())
+                context.getProjectDescriptor().dataManager.getSourceToOutputMap(module.getName(), chunk.isTests()), chunk.isTests()
               );
             }
             catch (IOException e) {
@@ -95,8 +95,8 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
                                    JpsModule module,
                                    File file,
                                    String sourceRoot,
-                                   final SourceToOutputMapping outputToSourceMapping) throws IOException {
-    final String outputRootUrl = JpsJavaExtensionService.getInstance().getOutputUrl(module, context.isCompilingTests());
+                                   final SourceToOutputMapping outputToSourceMapping, final boolean tests) throws IOException {
+    final String outputRootUrl = JpsJavaExtensionService.getInstance().getOutputUrl(module, tests);
     if (outputRootUrl == null) {
       return;
     }

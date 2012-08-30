@@ -16,6 +16,7 @@
 package com.intellij.openapi.util.io.win32;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ import java.io.FileNotFoundException;
  * @since 12.0
  */
 public class IdeaWin32 {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.win32.Win32LocalFileSystem");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.win32.IdeaWin32");
 
   private static final String PATH_PREFIX = "\\\\?\\";
   private static final int PREFIX_SIZE = PATH_PREFIX.length();
@@ -97,6 +98,7 @@ public class IdeaWin32 {
 
   @Nullable
   public FileInfo getInfo(@NotNull final String path) {
+    LogUtil.debug(LOG, "getInfo(%s)", path);
     return getInfo0(path(path));
   }
 
@@ -108,6 +110,7 @@ public class IdeaWin32 {
 
   @Nullable
   public FileInfo[] listChildren(@NotNull final String path) {
+    LogUtil.debug(LOG, "list(%s)", path);
     return listChildren0(path(path) + PATH_SUFFIX);
   }
 

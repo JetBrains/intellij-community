@@ -54,18 +54,22 @@ public interface NodeOptions {
    * The default tree view settings.
    */
   NodeOptions DEFAULT_OPTIONS = new NodeOptions() {
+    @Override
     public boolean isFlattenPackages() {
       return false;
     }
 
+    @Override
     public boolean isAbbreviatePackageNames() {
       return false;
     }
 
+    @Override
     public boolean isHideEmptyMiddlePackages() {
       return false;
     }
 
+    @Override
     public boolean isShowLibraryContents() {
       return false;
     }

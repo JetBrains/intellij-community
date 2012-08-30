@@ -200,9 +200,6 @@ public class StubSerializationHelper {
       if (value == null) return 0;
       int i = myEnumerates.get(value);
       if (i == 0) {
-        if (myEnumerates.containsKey(value)) {
-          int a = 1;
-        }
         myEnumerates.put(value, i = myStrings.size() + 1);
         myStrings.add(value);
       }

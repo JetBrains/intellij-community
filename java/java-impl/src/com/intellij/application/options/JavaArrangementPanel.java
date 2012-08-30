@@ -15,14 +15,11 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementSettingsPanel;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.arrangement.Rearranger;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -32,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class JavaArrangementPanel extends ArrangementSettingsPanel {
 
   public JavaArrangementPanel(@NotNull CodeStyleSettings settings) {
-    super(settings, (ArrangementStandardSettingsAware)Rearranger.EXTENSION.forLanguage(JavaLanguage.INSTANCE));
+    super(settings, JavaLanguage.INSTANCE);
   }
 
   @Override

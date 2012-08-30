@@ -113,15 +113,9 @@ public class CodeCompletionHandlerBase {
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     assert psiFile != null : "no PSI file: " + FileDocumentManager.getInstance().getFile(editor.getDocument());
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-        throw new AssertionError("Completion should not be invoked inside write action");
-      }
-    }
+    checkNoWriteAccess();
 
-    if (editor instanceof EditorWindow && !((EditorWindow)editor).isValid()) {
-      throw new AssertionError();
-    }
+    checkEditorValid(editor);
 
     if (editor.isViewer()) {
       editor.getDocument().fireReadOnlyModificationAttempt();
@@ -191,9 +185,7 @@ public class CodeCompletionHandlerBase {
               throw new AssertionError("unsuccessful commit: injected=" + (editor instanceof EditorWindow));
             }
 
-            if (editor instanceof EditorWindow && !((EditorWindow)editor).isValid()) {
-              throw new AssertionError();
-            }
+            checkEditorValid(editor);
 
             final Ref<CompletionContributor> current = Ref.create(null);
             initializationContext[0] = new CompletionInitializationContext(editor, psiFile, myCompletionType) {
@@ -215,6 +207,7 @@ public class CodeCompletionHandlerBase {
 
               current.set(contributor);
               contributor.beforeCompletion(initializationContext[0]);
+              checkEditorValid(editor);
               assert !documentManager.isUncommited(document) : "Contributor " + contributor + " left the document uncommitted";
             }
           }
@@ -232,6 +225,20 @@ public class CodeCompletionHandlerBase {
     }
 
     insertDummyIdentifier(initializationContext[0], hasModifiers, time);
+  }
+
+  private static void checkEditorValid(Editor editor) {
+    if (editor instanceof EditorWindow && !((EditorWindow)editor).isValid()) {
+      throw new AssertionError();
+    }
+  }
+
+  private static void checkNoWriteAccess() {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        throw new AssertionError("Completion should not be invoked inside write action");
+      }
+    }
   }
 
   private static boolean shouldSkipAutoPopup(Editor editor, PsiFile psiFile) {
@@ -260,6 +267,7 @@ public class CodeCompletionHandlerBase {
 
   @NotNull
   private LookupImpl obtainLookup(Editor editor) {
+    checkEditorValid(editor);
     LookupImpl existing = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (existing != null && existing.isCompletion()) {
       existing.markReused();
@@ -593,7 +601,8 @@ public class CodeCompletionHandlerBase {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_BASIC);
     }
 
-    final CompletionLookupArranger.StatisticsUpdate update = CompletionLookupArranger.collectStatisticChanges(indicator, item);
+    final CompletionLookupArranger.StatisticsUpdate update =
+      CompletionLookupArranger.collectStatisticChanges(item, indicator.getParameters().getLookup());
 
     final Editor editor = indicator.getEditor();
 

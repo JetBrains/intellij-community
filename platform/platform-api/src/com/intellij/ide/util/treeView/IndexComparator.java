@@ -28,6 +28,7 @@ public class IndexComparator implements Comparator<NodeDescriptor> {
 
   private IndexComparator() {}
 
+  @Override
   public int compare(NodeDescriptor nodeDescriptor1, NodeDescriptor nodeDescriptor2) {
     return nodeDescriptor1.getIndex() - nodeDescriptor2.getIndex();
   }

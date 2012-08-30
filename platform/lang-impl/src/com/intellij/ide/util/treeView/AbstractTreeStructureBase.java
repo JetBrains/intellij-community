@@ -41,6 +41,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     myProject = project;
   }
 
+  @Override
   public Object[] getChildElements(Object element) {
     LOG.assertTrue(element instanceof AbstractTreeNode, element != null ? element.getClass().getName() : null);
     AbstractTreeNode<?> treeNode = (AbstractTreeNode)element;
@@ -69,6 +70,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     return element instanceof AbstractTreeNode;
   }
 
+  @Override
   public Object getParentElement(Object element) {
     if (element instanceof AbstractTreeNode){
       return ((AbstractTreeNode)element).getParent();
@@ -76,6 +78,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     return null;
   }
 
+  @Override
   @NotNull
   public NodeDescriptor createDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
     return (NodeDescriptor)element;
@@ -89,7 +92,8 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
   @Nullable
   public abstract List<TreeStructureProvider> getProviders();
 
-  public Object getDataFromProviders(final List<AbstractTreeNode> selectedNodes, final String dataId) {
+  @Nullable
+  public Object getDataFromProviders(@NotNull List<AbstractTreeNode> selectedNodes, final String dataId) {
     final List<TreeStructureProvider> providers = getProvidersDumbAware();
     if (providers != null) {
       for (TreeStructureProvider treeStructureProvider : providers) {

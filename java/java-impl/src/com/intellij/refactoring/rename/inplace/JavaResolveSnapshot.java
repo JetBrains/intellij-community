@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.rename.RenameJavaMemberProcessor;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
@@ -74,28 +75,7 @@ class JavaResolveSnapshot extends ResolveSnapshotProvider.ResolveSnapshot {
       if (!ref.isQualified() && hidingLocalName.equals(ref.getReferenceName())) {
         final PsiElement newlyResolved = ref.resolve();
         if (referee.getManager().areElementsEquivalent(newlyResolved, referee)) return;
-        PsiClass refereeClass = ((PsiField) referee).getContainingClass();
-        PsiClass referentClass = PsiTreeUtil.getParentOfType(referent, PsiClass.class);
-        if (refereeClass != null && referentClass != null &&
-            PsiTreeUtil.isAncestor(refereeClass, referentClass, false)) {
-          if (refereeClass == referentClass ||
-              refereeClass.getName() != null) {  //otherwise cannot qualify anonymous referee class
-            @NonNls String qualifer;
-            if (RefactoringUtil.isInStaticContext(ref, refereeClass)) {
-              qualifer = refereeClass.getName();
-            } else {
-              qualifer = refereeClass == referentClass ? "this" : refereeClass.getName() + ".this";
-            }
-            String qualifiedRefText = qualifer + "." + ref.getText();
-            PsiElementFactory elementFactory = JavaPsiFacade.getInstance(referentClass.getProject()).getElementFactory();
-            try {
-              PsiReferenceExpression qualifiedRef = (PsiReferenceExpression) elementFactory.createExpressionFromText(qualifiedRefText, null);
-              ref.replace(qualifiedRef);
-            } catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        }
+        RenameJavaMemberProcessor.qualifyMember((PsiField)referee, referent, hidingLocalName);
       }
     }
   }

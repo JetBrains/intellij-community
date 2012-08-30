@@ -45,42 +45,51 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     super(project);
   }
 
+  @Override
   public String getTitle() {
     return IdeBundle.message("title.project");
   }
 
+  @Override
   @NotNull
   public String getId() {
     return ID;
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.General.ProjectTab;
   }
 
 
+  @Override
   public SelectInTarget createSelectInTarget() {
     return new ProjectPaneSelectInTarget(myProject);
   }
 
+  @Override
   protected AbstractTreeUpdater createTreeUpdater(AbstractTreeBuilder treeBuilder) {
     return new ProjectViewTreeUpdater(treeBuilder);
   }
 
+  @Override
   protected ProjectAbstractTreeStructureBase createStructure() {
     return new ProjectTreeStructure(myProject, ID){
+      @Override
       protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
         return new ProjectViewProjectNode(project, settings);
       }
     };
   }
 
+  @Override
   protected ProjectViewTree createTree(DefaultTreeModel treeModel) {
     return new ProjectViewTree(myProject, treeModel) {
       public String toString() {
         return getTitle() + " " + super.toString();
       }
 
+      @Override
       public DefaultMutableTreeNode getSelectedNode() {
         return ProjectViewPane.this.getSelectedNode();
       }
@@ -94,6 +103,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
 
 
   // should be first
+  @Override
   public int getWeight() {
     return 0;
   }
@@ -103,6 +113,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
       super(treeBuilder);
     }
 
+    @Override
     public boolean addSubtreeToUpdateByElement(Object element) {
       if (element instanceof PsiDirectory) {
         final PsiDirectory dir = (PsiDirectory)element;

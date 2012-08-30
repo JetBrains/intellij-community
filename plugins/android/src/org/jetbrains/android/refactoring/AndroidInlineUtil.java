@@ -5,10 +5,6 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -20,7 +16,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.OrderedSet;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.GenericAttributeValue;
@@ -38,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -214,7 +209,8 @@ class AndroidInlineUtil {
     }
     else if (testConfig != null) {
       final AndroidInlineAllStyleUsagesProcessor processor = new AndroidInlineAllStyleUsagesProcessor(
-        project, data.myReferredElement, style.getXmlTag(), data.myStyleName, attributeValues, parentStyleRef);
+        project, data.myReferredElement, style.getXmlTag(), data.myStyleName,
+        attributeValues, parentStyleRef, testConfig);
       processor.setPreviewUsages(false);
       processor.run();
     }
@@ -271,87 +267,34 @@ class AndroidInlineUtil {
   }
 
   @NotNull
-  static String buildErrorMessage(Project project,
-                                          Collection<PsiElement> nonXmlUsages,
-                                          Collection<PsiElement> unambiguousUsages,
-                                          Collection<PsiElement> unsupportedUsages,
-                                          Collection<PsiElement> implicitlyInherited) {
-    final StringBuilder builder = new StringBuilder("Cannot perform refactoring\n\n");
+  static MultiMap<PsiElement, String> buildConflicts(Collection<PsiElement> nonXmlUsages,
+                                                     Collection<PsiElement> unambiguousUsages,
+                                                     Collection<PsiElement> unsupportedUsages,
+                                                     Collection<PsiElement> implicitlyInherited) {
+    final MultiMap<PsiElement, String> result = new MultiMap<PsiElement, String>();
 
-    if (nonXmlUsages.size() > 0) {
-      builder.append("Non-XML references are not supported:\n");
-      buildString(builder, project, nonXmlUsages);
-      builder.append("\n\n");
+    for (PsiElement usage : nonXmlUsages) {
+      result.putValue(usage, "Non-XML reference '" + toString(usage) + "' won't be updated");
     }
 
-    if (unambiguousUsages.size() > 0) {
-      builder.append("Unambiguous references:\n");
-      buildString(builder, project, unambiguousUsages);
-      builder.append("\n\n");
+    for (PsiElement usage : unambiguousUsages) {
+      result.putValue(usage, "Unambiguous reference '" + toString(usage) + "' won't be updated");
     }
 
-    if (unsupportedUsages.size() > 0) {
-      builder.append("Unsupported references:\n");
-      buildString(builder, project, unsupportedUsages);
-      builder.append("\n\n");
+    for (PsiElement usage : unsupportedUsages) {
+      result.putValue(usage, "Unsupported reference '" + toString(usage) + "' won't be updated");
     }
 
-    if (implicitlyInherited.size() > 0) {
-      builder.append("Implicit inheritance is not supported:\n");
-      buildString(builder, project, implicitlyInherited);
-      builder.append("\n\n");
+    for (PsiElement usage : implicitlyInherited) {
+      result.putValue(usage, "The style has implicit inheritor '" + toString(usage) + "' which won't be updated");
     }
-    builder.delete(builder.length() - 2, builder.length());
-    return builder.toString();
+    return result;
   }
 
-  private static void buildString(StringBuilder builder, Project project, Collection<PsiElement> invalidRefs) {
-    final OrderedSet<String> lines = new OrderedSet<String>();
-
-    for (PsiElement usage : invalidRefs) {
-      final PsiFile psiFile = usage.getContainingFile();
-      final VirtualFile file = psiFile != null
-                               ? psiFile.getVirtualFile()
-                               : null;
-      if (file != null) {
-        lines.add("    in '" + getPresentableFilePath(project, file) + "'");
-      }
-      else {
-        lines.add("    in unknown file");
-      }
-    }
-
-    for (Iterator<String> it = lines.iterator(); it.hasNext(); ) {
-      final String line = it.next();
-      builder.append(line);
-
-      if (it.hasNext()) {
-        builder.append('\n');
-      }
-    }
-  }
-
-  private static String getPresentableFilePath(Project project, VirtualFile file) {
-    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-    final int contentRootCount = projectRootManager.getContentRoots().length;
-
-    if (contentRootCount == 0) {
-      return file.getPath();
-    }
-    final VirtualFile contentRoot = projectRootManager.getFileIndex().getContentRootForFile(file);
-
-    if (contentRoot == null) {
-      return file.getPath();
-    }
-    final String relativePath = VfsUtilCore.getRelativePath(file, contentRoot, '/');
-
-    if (relativePath == null) {
-      return file.getPath();
-    }
-    final String presentableRelativePath = contentRootCount == 1
-                                           ? relativePath
-                                           : contentRoot.getName() + '/' + relativePath;
-    return FileUtil.toSystemDependentName(".../" + presentableRelativePath);
+  private static String toString(PsiElement element) {
+    return element instanceof XmlAttributeValue
+           ? ((XmlAttributeValue)element).getValue()
+           : element.getText();
   }
 
   static void doInlineLayoutFile(@NotNull Project project,
@@ -367,7 +310,7 @@ class AndroidInlineUtil {
     }
     else {
       final AndroidInlineLayoutProcessor processor =
-        new AndroidInlineLayoutProcessor(project, layoutFile, rootTag, testConfig.isInlineThisOnly() ? usageElement : null);
+        new AndroidInlineLayoutProcessor(project, layoutFile, rootTag, testConfig.isInlineThisOnly() ? usageElement : null, testConfig);
       processor.setPreviewUsages(false);
       processor.run();
     }

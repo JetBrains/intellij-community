@@ -16,8 +16,8 @@
 package com.intellij.psi.codeStyle.arrangement
 
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType
-import com.intellij.psi.codeStyle.arrangement.match.ByTypeArrangementEntryMatcher
 /**
  * @author Denis Zhdanov
  * @since 7/20/12 2:45 PM
@@ -26,6 +26,7 @@ class JavaRearrangerByTypeTest extends AbstractRearrangerTest {
 
   JavaRearrangerByTypeTest() {
     fileType = JavaFileType.INSTANCE
+    language = JavaLanguage.INSTANCE
   }
 
   void testFieldsBeforeMethods() {
@@ -52,7 +53,7 @@ class Test2 {
 public void test() {
 }
 }''',
-            [new ArrangementRule(new ByTypeArrangementEntryMatcher(ArrangementEntryType.FIELD))]
+            [rule(atom(ArrangementEntryType.FIELD))]
     )
   }
 
@@ -96,7 +97,7 @@ class Test {
     return null;
   }
 }''',
-            [new ArrangementRule(new ByTypeArrangementEntryMatcher(ArrangementEntryType.FIELD))]
+            [rule(atom(ArrangementEntryType.FIELD))]
     )
   }
   
@@ -134,7 +135,27 @@ class Test {
      });
    }
 }''',
-            [new ArrangementRule(new ByTypeArrangementEntryMatcher(ArrangementEntryType.FIELD))]
+            [rule(atom(ArrangementEntryType.FIELD))]
+    )
+  }
+  
+  void testInnerClassInterfaceAndEnum() {
+    doTest(
+            '''\
+class Test {
+   enum E { ONE, TWO }
+   class Inner {}
+   interface Intf {}
+}''',
+            '''\
+class Test {
+   interface Intf {}
+   enum E { ONE, TWO }
+   class Inner {}
+}''',
+            [rule(atom(ArrangementEntryType.INTERFACE)),
+             rule(atom(ArrangementEntryType.ENUM)),
+             rule(atom(ArrangementEntryType.CLASS))]
     )
   }
   
@@ -172,7 +193,7 @@ class Test {
     });
   }
 }''',
-            [new ArrangementRule(new ByTypeArrangementEntryMatcher(ArrangementEntryType.FIELD))]
+            [rule(atom(ArrangementEntryType.FIELD))]
     )
   }
 }

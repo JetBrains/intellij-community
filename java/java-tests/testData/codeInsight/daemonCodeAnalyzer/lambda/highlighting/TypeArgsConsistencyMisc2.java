@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+import java.util.*;
 class Test1 {
   {
     Comparable<? extends Integer> c = (Integer o)->{
@@ -46,3 +46,13 @@ class Test2<U> {
   }
 }
 
+class TestNewExpression<E> {
+    public TestNewExpression(Comparator<? super E> comparator) {
+        //some code
+    }
+    public static void main(String[] args) {
+      TestNewExpression<String> strs = new TestNewExpression<String>((o1, o2) -> {
+            return o2.compareToIgnoreCase(o1);
+        });
+    }
+}

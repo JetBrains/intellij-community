@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2011 Bas Leijdekkers
+ * Copyright 2008-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -483,10 +483,8 @@ public class WeakestTypeFinder {
   private static boolean findWeakestType(PsiThrowStatement throwStatement,
                                          PsiClass variableOrMethodClass,
                                          Set<PsiClass> weakestTypeClasses) {
-    final PsiManager manager = throwStatement.getManager();
     final PsiClassType runtimeExceptionType =
-      PsiType.getJavaLangRuntimeException(manager,
-                                          throwStatement.getResolveScope());
+      TypeUtils.getType(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, throwStatement);
     final PsiClass runtimeExceptionClass = runtimeExceptionType.resolve();
     if (runtimeExceptionClass != null &&
         InheritanceUtil.isInheritorOrSelf(variableOrMethodClass,

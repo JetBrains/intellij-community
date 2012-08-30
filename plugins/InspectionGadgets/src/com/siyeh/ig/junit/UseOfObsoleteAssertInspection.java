@@ -129,7 +129,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
               importReference.bindToElement(newAssertClass);
             }
             else {
-              final PsiExpression importQExpression = ((PsiReferenceExpression)importReference).getQualifierExpression();
+              final PsiElement importQExpression = importReference.getQualifier();
               if (importQExpression instanceof PsiReferenceExpression) {
                 ((PsiReferenceExpression)importQExpression).bindToElement(newAssertClass);
               }

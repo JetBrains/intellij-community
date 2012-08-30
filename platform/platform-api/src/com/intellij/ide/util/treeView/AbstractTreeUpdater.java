@@ -50,13 +50,13 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   private long myUpdateCount;
   private boolean myReleaseRequested;
 
-  public AbstractTreeUpdater(AbstractTreeBuilder treeBuilder) {
+  public AbstractTreeUpdater(@NotNull AbstractTreeBuilder treeBuilder) {
     myTreeBuilder = treeBuilder;
     final JTree tree = myTreeBuilder.getTree();
     final JComponent component = tree instanceof TreeTableTree ? ((TreeTableTree)tree).getTreeTable() : tree;
     myUpdateQueue = new MergingUpdateQueue("UpdateQueue", 300, component.isShowing(), component) {
       @Override
-      protected Alarm createAlarm(Alarm.ThreadToUse thread, Disposable parent) {
+      protected Alarm createAlarm(@NotNull Alarm.ThreadToUse thread, Disposable parent) {
         return new Alarm(thread, parent) {
           @Override
           protected boolean isEdt() {
@@ -175,7 +175,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
 
 
     if (toAdd.isExpired()) {
-      requeueViewUpdateIfNeeded();
+      reQueueViewUpdateIfNeeded();
       return;
     }
 
@@ -186,18 +186,16 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     myUpdateCount = newUpdateCount;
     toAdd.setUpdateStamp(myUpdateCount);
 
-    requeueViewUpdate();
+    reQueueViewUpdate();
   }
 
-  private void requeueViewUpdateIfNeeded() {
-    //if (myTreeBuilder.getUi().isPassthroughMode()) return;
-
+  private void reQueueViewUpdateIfNeeded() {
     if (myUpdateQueue.isEmpty() && !myNodeQueue.isEmpty()) {
-      requeueViewUpdate();
+      reQueueViewUpdate();
     }
   }
 
-  private void requeueViewUpdate() {
+  private void reQueueViewUpdate() {
     queue(new Update("ViewUpdate") {
       @Override
       public boolean isExpired() {
@@ -208,7 +206,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
       public void run() {
         if (myTreeBuilder.getTreeStructure().hasSomethingToCommit()) {
           myTreeBuilder.getTreeStructure().commit();
-          requeueViewUpdateIfNeeded();
+          reQueueViewUpdateIfNeeded();
           return;
         }
         try {
@@ -354,7 +352,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     myRunBeforeUpdate = runnable;
   }
 
-  public long getUpdateCount() {
+  public synchronized long getUpdateCount() {
     return myUpdateCount;
   }
 
@@ -382,7 +380,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
 
   @NonNls
   @Override
-  public String toString() {
+  public synchronized String toString() {
     return "AbstractTreeUpdater updateCount=" + myUpdateCount + " queue=[" + myUpdateQueue.toString() + "] " + " nodeQueue=" + myNodeQueue;
   }
 
@@ -416,7 +414,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     });
   }
 
-  public void requestRelease() {
+  public synchronized void requestRelease() {
     myReleaseRequested = true;
 
     reset();

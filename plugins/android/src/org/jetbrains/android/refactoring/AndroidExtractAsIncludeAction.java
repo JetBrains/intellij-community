@@ -139,12 +139,13 @@ public class AndroidExtractAsIncludeAction extends AndroidBaseLayoutRefactoringA
     final FolderConfiguration config = dirName.length() > 0
                                        ? FolderConfiguration.getConfig(dirName.split(AndroidConstants.RES_QUALIFIER_SEP))
                                        : null;
+    final String title = "Extract Android Layout";
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
       public void run() {
         final XmlFile newFile =
-          CreateResourceFileAction.createFileResource(facet, ResourceType.LAYOUT, fileName, "temp_root", config, true);
+          CreateResourceFileAction.createFileResource(facet, ResourceType.LAYOUT, fileName, "temp_root", config, true, title);
 
         if (newFile != null) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -155,7 +156,7 @@ public class AndroidExtractAsIncludeAction extends AndroidBaseLayoutRefactoringA
           });
         }
       }
-    }, "Extract Android Layout", null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
+    }, title, null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
   }
 
   private static void doRefactor(AndroidFacet facet,

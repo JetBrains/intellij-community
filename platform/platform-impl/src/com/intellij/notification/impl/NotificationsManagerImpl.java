@@ -18,8 +18,8 @@ package com.intellij.notification.impl;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.ui.NotificationsUtil;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -51,33 +51,10 @@ import java.util.List;
 /**
  * @author spleaner
  */
-public class NotificationsManagerImpl extends NotificationsManager implements Notifications, ApplicationComponent {
+public class NotificationsManagerImpl extends NotificationsManager {
 
-  @NotNull
-  public String getComponentName() {
-    return "NotificationsManager";
-  }
-
-  public void initComponent() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(TOPIC, this);
-  }
-
-  public static NotificationsManagerImpl getNotificationsManagerImpl() {
-    return (NotificationsManagerImpl) ApplicationManager.getApplication().getComponent(NotificationsManager.class);
-  }
-
-  public void notify(@NotNull Notification notification) {
-    doNotify(notification, NotificationDisplayType.BALLOON, null);
-  }
-
-  @Override
-  public void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType) {
-  }
-
-  @Override
-  public void register(@NotNull String groupDisplayName,
-                       @NotNull NotificationDisplayType defaultDisplayType,
-                       boolean shouldLog) {
+  public NotificationsManagerImpl() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, new MyNotificationListener(null));
   }
 
   @Override
@@ -99,10 +76,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     return ArrayUtil.toObjectArray(result, klass);
   }
 
-  public void disposeComponent() {
-  }
-
-  public static void doNotify(@NotNull final Notification notification,
+  private static void doNotify(@NotNull final Notification notification,
                               @Nullable NotificationDisplayType displayType,
                               @Nullable final Project project) {
     final NotificationsConfigurationImpl configuration = NotificationsConfigurationImpl.getNotificationsConfigurationImpl();
@@ -197,7 +171,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   private static Balloon notifyByBalloon(final Notification notification,
                                       final NotificationDisplayType displayType,
                                       @Nullable final Project project) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return null;
+    if (isDummyEnvironment()) return null;
 
     Window window = findWindowForBalloon(project);
     if (window instanceof IdeFrameImpl) {
@@ -306,6 +280,46 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     final Balloon balloon = builder.createBalloon();
     notification.setBalloon(balloon);
     return balloon;
+  }
+
+  private static boolean isDummyEnvironment() {
+    final Application application = ApplicationManager.getApplication();
+    return application.isUnitTestMode() || application.isCommandLine();
+  }
+
+  public static class ProjectNotificationsComponent {
+
+    public ProjectNotificationsComponent(final Project project) {
+      if (isDummyEnvironment()) {
+        return;
+      }
+
+      project.getMessageBus().connect().subscribe(Notifications.TOPIC, new MyNotificationListener(project));
+    }
+
+  }
+
+  private static class MyNotificationListener implements Notifications {
+    private final Project myProject;
+
+    public MyNotificationListener(@Nullable Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void notify(@NotNull Notification notification) {
+      doNotify(notification, null, myProject);
+    }
+
+    @Override
+    public void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType) {
+    }
+
+    @Override
+    public void register(@NotNull String groupDisplayName,
+                         @NotNull NotificationDisplayType defaultDisplayType,
+                         boolean shouldLog) {
+    }
   }
 
 }

@@ -12,6 +12,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.ui.UISettings
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.statistics.StatisticsManager
@@ -444,6 +445,12 @@ import java.lang.annotation.Target;
     assertPreferredItems(0, '_goo2', '_goo1')
     myFixture.type('o')
     assertPreferredItems(0, '_goo2', '_goo1')
+  }
+
+  public void testPreferFieldToMethod() {
+    checkPreferredItems(0, 'size', 'size')
+    assert lookup.items[0].object instanceof PsiField
+    assert lookup.items[1].object instanceof PsiMethod
   }
 
 }

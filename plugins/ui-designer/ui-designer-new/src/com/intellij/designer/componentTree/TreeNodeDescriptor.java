@@ -18,8 +18,6 @@ package com.intellij.designer.componentTree;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 /**
  * @author Alexander Lobas
  */
@@ -44,9 +42,5 @@ public final class TreeNodeDescriptor extends NodeDescriptor {
   @Override
   public Object getElement() {
     return myElement;
-  }
-
-  public void setIcon(Icon icon) {
-    myIcon = icon;
   }
 }

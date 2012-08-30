@@ -27,6 +27,7 @@ import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import org.jetbrains.annotations.NonNls;
 
@@ -38,6 +39,7 @@ public class TestProgress extends DefaultBoundedRangeModel implements Disposable
   private TestProxy myCurrentState = null;
   private final MyJUnitListener myListener = new MyJUnitListener();
   private int myMissingChildren;
+  private Project myProject;
   public static final Filter TEST_CASE = new Filter() {
     public boolean shouldAccept(final AbstractTestProxy test) {
       return test.shouldRun();
@@ -55,6 +57,7 @@ public class TestProgress extends DefaultBoundedRangeModel implements Disposable
 
   public void setModel(final JUnitRunningModel model) {
     myMissingChildren = 0;
+    myProject = model.getProject();
     final int knownTestCases = TEST_CASE.select(model.getRoot().getAllTests()).size();
     final int declaredTestCases = model.getRoot().getInfo().getTestsCount();
     if (declaredTestCases > knownTestCases)
@@ -125,10 +128,10 @@ public class TestProgress extends DefaultBoundedRangeModel implements Disposable
   @Override
   public void setValue(int n) {
     super.setValue(n);
-    TestsUIUtil.showIconProgress(n, getMaximum(), myProblemsCounter);
+    TestsUIUtil.showIconProgress(myProject, n, getMaximum(), myProblemsCounter);
   }
 
   public void dispose() {
-    TestsUIUtil.clearIconProgress();
+    TestsUIUtil.clearIconProgress(myProject);
   }
 }

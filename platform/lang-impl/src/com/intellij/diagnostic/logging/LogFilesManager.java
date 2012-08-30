@@ -136,7 +136,7 @@ public class LogFilesManager implements Disposable {
       }
       for (final String title : title2Path.keySet()) {
         final String path = title2Path.get(title);
-        myManager.addLogConsole(title, path, logFile.isSkipContent() ? new File(path).length() : 0);
+        myManager.addLogConsole(title, path, logFile.getCharset(), logFile.isSkipContent() ? new File(path).length() : 0);
       }
     }
   }

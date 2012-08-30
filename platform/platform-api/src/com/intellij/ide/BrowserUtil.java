@@ -227,9 +227,25 @@ public class BrowserUtil {
     return command;
   }
 
+  public static void addLaunchArgs(List<String> command, String[] launchArgs) {
+    if (launchArgs.length == 0) {
+      return;
+    }
+
+    if (SystemInfo.isMac && ExecUtil.getOpenCommandPath().equals(command.get(0))) {
+      if (isOpenCommandSupportArgs()) {
+        command.add("--args");
+      }
+      else {
+        LOG.warn("'open' command doesn't allow to pass command line arguments so they will be ignored: " + Arrays.toString(launchArgs));
+        return;
+      }
+    }
+
+    Collections.addAll(command, launchArgs);
+  }
+
   public static List<String> getOpenBrowserCommand(final @NonNls @NotNull String browserPath) {
-    // versions before 10.6 don't allow to pass command line arguments to browser via 'open' command
-    // so we use full path to browser executable in such case
     if (SystemInfo.isMac && !new File(browserPath).isFile()) {
       ArrayList<String> command = new ArrayList<String>();
       command.add(ExecUtil.getOpenCommandPath());

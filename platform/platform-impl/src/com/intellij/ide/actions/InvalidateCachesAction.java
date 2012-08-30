@@ -27,8 +27,11 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 public class InvalidateCachesAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     final Application app = ApplicationManager.getApplication();
-    String[] options = app.isRestartCapable() ? new String[]{"Invalidate and Restart", "Invalidate", "Cancel"}
-                                              : new String[]{"Invalidate and Exit", "Invalidate", "Cancel"};
+    final boolean mac = Messages.canShowMacSheetPanel();
+    String[] options = new String[3];
+    options[0] = app.isRestartCapable() ? "Invalidate and Restart" : "Invalidate and Exit";
+    options[1] = mac ? "Cancel" : "Invalidate";
+    options[2] = mac ? "Invalidate" : "Cancel";
 
     int result = Messages.showYesNoCancelDialog(e.getData(PlatformDataKeys.PROJECT),
                                      "The caches will be invalidated and rebuilt on the next startup.\n" +
@@ -38,7 +41,7 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
                                      options[0], options[1], options[2],
                                      Messages.getWarningIcon());
 
-    if (result == -1 || result == options.length - 1) {
+    if (result == -1 || result == (mac ? 1 : 2)) {
       return;
     }
     FSRecords.invalidateCaches();

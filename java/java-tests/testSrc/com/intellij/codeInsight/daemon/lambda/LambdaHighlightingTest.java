@@ -72,6 +72,10 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testAmbiguity1() throws Exception {
     doTest();
   }
+
+  public void _testAmbiguity2() throws Exception {
+    doTest();
+  }
   
   public void testAmbiguityVarargs() throws Exception {
     doTest();
@@ -99,6 +103,10 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testUnhandledException() throws Exception {
+    doTest();
+  }
+  
   private void doTest() throws Exception {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
   }

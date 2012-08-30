@@ -15,6 +15,9 @@
  */
 package com.intellij.ui.tabs.impl;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.ScreenUtil;
@@ -224,6 +227,24 @@ class DragHelper extends MouseDragHelper {
     super.processDragFinish(event, willDragOutStart);
 
     endDrag(willDragOutStart);
+
+    final int place = UISettings.getInstance().EDITOR_TAB_PLACEMENT;
+
+    if (!willDragOutStart && JBEditorTabs.isAlphabeticalMode() && place != SwingConstants.TOP && place != SwingConstants.BOTTOM) {
+      final Point p = new Point(event.getPoint());
+      SwingUtilities.convertPoint(event.getComponent(), p, myTabs);
+      if (myTabs.getVisibleRect().contains(p)) {
+        final int answer = Messages.showOkCancelDialog(myTabs,
+                                                       IdeBundle.message("alphabetical.mode.is.on.warning"),
+                                                       IdeBundle.message("title.warning"),
+                                                       Messages.getQuestionIcon());
+        if (answer == Messages.OK) {
+          JBEditorTabs.setAlphabeticalMode(false);
+          myTabs.relayout(true, false);
+          myTabs.revalidate();
+        }
+      }
+    }
   }
 
   private void endDrag(boolean willDragOutStart) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,7 @@ public class TypeUtils {
   private TypeUtils() {
   }
 
-  public static boolean expressionHasType(
-    @Nullable PsiExpression expression,
-    @NonNls @NotNull String typeName) {
+  public static boolean expressionHasType(@Nullable PsiExpression expression, @NonNls @NotNull String typeName) {
     if (expression == null) {
       return false;
     }
@@ -40,23 +38,23 @@ public class TypeUtils {
     return typeEquals(typeName, type);
   }
 
-  public static boolean typeEquals(@NonNls @NotNull String typeName,
-                                   @Nullable PsiType targetType) {
+  public static boolean typeEquals(@NonNls @NotNull String typeName, @Nullable PsiType targetType) {
     return targetType != null && targetType.equalsToText(typeName);
   }
 
-  public static PsiClassType getType(@NotNull String fqName,
-                                     @NotNull PsiElement context) {
+  public static PsiClassType getType(@NotNull String fqName, @NotNull PsiElement context) {
     final Project project = context.getProject();
-    final PsiElementFactory factory =
-      JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     final GlobalSearchScope scope = context.getResolveScope();
     return factory.createTypeByFQClassName(fqName, scope);
   }
 
-  public static PsiClassType getJavaLangObjectType(
-    @NotNull PsiElement context) {
+  public static PsiClassType getObjectType(@NotNull PsiElement context) {
     return getType(CommonClassNames.JAVA_LANG_OBJECT, context);
+  }
+
+  public static PsiClassType getStringType(@NotNull PsiElement context) {
+    return getType(CommonClassNames.JAVA_LANG_STRING, context);
   }
 
   public static boolean isJavaLangObject(@Nullable PsiType targetType) {

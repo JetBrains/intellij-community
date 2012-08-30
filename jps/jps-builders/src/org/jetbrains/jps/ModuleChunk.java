@@ -3,9 +3,12 @@ package org.jetbrains.jps;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.incremental.RealModuleBuildTarget;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.module.JpsModule;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -20,9 +23,16 @@ public class ModuleChunk {
     }
   };
   private Set<JpsModule> myModules;
+  private final boolean myTests;
+  private Set<RealModuleBuildTarget> myTargets;
 
-  public ModuleChunk(Set<JpsModule> modules) {
+  public ModuleChunk(Set<JpsModule> modules, boolean tests) {
     myModules = modules;
+    myTests = tests;
+    myTargets = new LinkedHashSet<RealModuleBuildTarget>();
+    for (JpsModule module : modules) {
+      myTargets.add(new RealModuleBuildTarget(module, JavaModuleBuildTargetType.getInstance(tests)));
+    }
   }
 
   public String getName() {
@@ -32,6 +42,14 @@ public class ModuleChunk {
 
   public Set<JpsModule> getModules() {
     return myModules;
+  }
+
+  public boolean isTests() {
+    return myTests;
+  }
+
+  public Set<RealModuleBuildTarget> getTargets() {
+    return myTargets;
   }
 
   public String toString() {

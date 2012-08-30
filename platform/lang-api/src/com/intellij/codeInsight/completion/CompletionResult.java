@@ -61,4 +61,8 @@ public class CompletionResult {
     return new CompletionResult(element, myMatcher, mySorter);
   }
 
+  public boolean isStartMatch() {
+    return myMatcher.isStartMatch(myLookupElement);
+  }
+
 }

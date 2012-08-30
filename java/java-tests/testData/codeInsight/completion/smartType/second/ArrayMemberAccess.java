@@ -1,6 +1,6 @@
 class Goo {
     {
-        boolean[] ls;
-        boolean a = l<caret>
+        boolean[] los;
+        boolean a = los<caret>
     }
 }

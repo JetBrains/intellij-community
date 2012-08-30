@@ -54,6 +54,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
     return CopyPasteManager.getInstance().isCutElement(getValue());
   }
 
+  @Override
   public PresentableNodeDescriptor getChildToHighlightAt(int index) {
     final Collection<? extends AbstractTreeNode> kids = getChildren();
     int i = 0;
@@ -86,6 +87,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
     }
   }
 
+  @Override
   protected boolean shouldUpdateData() {
     return !myProject.isDisposed() && getValue() != null;
   }
@@ -103,6 +105,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
     return false;
   }
 
+  @Override
   @Nullable
   public final Object getElement() {
     return getValue() != null ? this : null;
@@ -131,6 +134,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
     return this;                        
   }
 
+  @Override
   public final NodeDescriptor getParentDescriptor() {
     return myParentDescriptor;
   }
@@ -153,6 +157,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
     return getTestPresentation();
   }
 
+  @Override
   public void apply(@NotNull Map<String, String> info) {
   }
 
@@ -164,11 +169,11 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
   @NonNls public String getTestPresentation() {
     if (myName != null) {
       return myName;
-    } else if (getValue() != null){
-      return getValue().toString();
-    } else {
-      return null;
     }
+    if (getValue() != null){
+      return getValue().toString();
+    }
+    return null;
   }
 
 
@@ -176,17 +181,21 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
     return FileStatus.NOT_CHANGED;
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
   }
 
+  @Override
   public boolean canNavigate() {
     return false;
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return false;
   }

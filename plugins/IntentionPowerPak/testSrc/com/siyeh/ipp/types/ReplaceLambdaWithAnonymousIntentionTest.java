@@ -31,6 +31,10 @@ public class ReplaceLambdaWithAnonymousIntentionTest extends IPPTestCase {
     doTest();
   }
 
+  public void testRenameParams() {
+    doTest();
+  }
+
   public void testInsertFinal() {
     doTest();
   }
@@ -45,6 +49,10 @@ public class ReplaceLambdaWithAnonymousIntentionTest extends IPPTestCase {
 
   public void testAmbiguity() {
     assertIntentionNotAvailable();
+  }
+
+  public void testEffectivelyFinal() {
+    doTest();
   }
 
   @Override

@@ -1168,6 +1168,14 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   }
 
+  @Override
+  public void visitLambdaExpression(PsiLambdaExpression expression) {
+    if ((myRole1 == ChildRole.ARROW && (myRole2 == ChildRole.LBRACE || myRole2 == ChildRole.EXPRESSION)) || 
+        (myRole1 == ChildRole.PARAMETER_LIST && myRole2 == ChildRole.ARROW)) {
+      createSpaceInCode(mySettings.SPACE_AROUND_LAMBDA_ARROW);
+    }
+  }
+
   @Override public void visitForStatement(PsiForStatement statement) {
     if (myRole2 == ChildRole.LPARENTH) {
       createSpaceInCode(mySettings.SPACE_BEFORE_FOR_PARENTHESES);

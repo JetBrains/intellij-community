@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,7 @@ import java.util.List;
 
 public class ImportUtils {
 
-  private ImportUtils() {
-  }
+  private ImportUtils() {}
 
   public static void addImportIfNeeded(@NotNull PsiClass aClass,
                                        @NotNull PsiElement context) {
@@ -302,10 +301,10 @@ public class ImportUtils {
           return true;
         }
         final String qualifiedClassName = aClass.getQualifiedName();
-        final ClassReferenceVisitor visitor =
-          new ClassReferenceVisitor(qualifiedClassName);
-        file.accept(visitor);
-        return visitor.isReferenceFound();
+        if (fqName.equals(qualifiedClassName)) {
+          continue;
+        }
+        return containsReferenceToClass(file, qualifiedClassName);
       }
     }
     return hasJavaLangImportConflict(fqName, file);
@@ -411,19 +410,15 @@ public class ImportUtils {
     return false;
   }
 
-  private static boolean containsConflictingClass(String fqName,
-                                                  PsiJavaFile file) {
+  private static boolean containsConflictingClass(String fqName, PsiJavaFile file) {
     final PsiClass[] classes = file.getClasses();
     for (PsiClass aClass : classes) {
       if (containsConflictingInnerClass(fqName, aClass)) {
         return true;
       }
     }
-    //return false;
-    final ClassReferenceVisitor visitor =
-      new ClassReferenceVisitor(fqName);
-    file.accept(visitor);
-    return visitor.isReferenceFound();
+    return false;
+    //return containsReferenceToClass(file, fqName);
   }
 
   /**
@@ -646,8 +641,13 @@ public class ImportUtils {
     }
   }
 
-  private static class ClassReferenceVisitor
-    extends JavaRecursiveElementVisitor {
+  public static boolean containsReferenceToClass(PsiElement element, String fullyQualifiedName) {
+    final ClassReferenceVisitor visitor = new ClassReferenceVisitor(fullyQualifiedName);
+    element.accept(visitor);
+    return visitor.isReferenceFound();
+  }
+
+  private static class ClassReferenceVisitor extends JavaRecursiveElementVisitor {
 
     private final String name;
     private final String fullyQualifiedName;
@@ -659,8 +659,7 @@ public class ImportUtils {
     }
 
     @Override
-    public void visitReferenceElement(
-      PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       if (referenceFound) {
         return;
@@ -670,16 +669,14 @@ public class ImportUtils {
         return;
       }
       final PsiElement element = reference.resolve();
-      if (!(element instanceof PsiClass)
-          || element instanceof PsiTypeParameter) {
+      if (!(element instanceof PsiClass) || element instanceof PsiTypeParameter) {
         return;
       }
       final PsiClass aClass = (PsiClass)element;
       final String testClassName = aClass.getName();
       final String testClassQualifiedName = aClass.getQualifiedName();
       if (testClassQualifiedName == null || testClassName == null
-          || testClassQualifiedName.equals(fullyQualifiedName) ||
-          !testClassName.equals(name)) {
+          || !testClassQualifiedName.equals(fullyQualifiedName) || !testClassName.equals(name)) {
         return;
       }
       referenceFound = true;

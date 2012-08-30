@@ -190,7 +190,7 @@ public abstract class InplaceRefactoring {
     return buildTemplateAndStart(refs, stringUsages, scope, containingFile);
   }
 
-  protected boolean notSameFile(@Nullable VirtualFile file, PsiFile containingFile) {
+  protected boolean notSameFile(@Nullable VirtualFile file, @NotNull PsiFile containingFile) {
     return !Comparing.equal(getTopLevelVirtualFile(containingFile.getViewProvider()), file);
   }
 

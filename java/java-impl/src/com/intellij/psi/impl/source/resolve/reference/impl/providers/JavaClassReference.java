@@ -180,12 +180,9 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
-    if (manipulator != null) {
-      final PsiElement element = manipulator.handleContentChange(getElement(), getRangeInElement(), newElementName);
-      myRange = new TextRange(getRangeInElement().getStartOffset(), getRangeInElement().getStartOffset() + newElementName.length());
-      return element;
-    }
-    throw new IncorrectOperationException("Manipulator for this element is not defined: " + getElement());
+    final PsiElement element = manipulator.handleContentChange(getElement(), getRangeInElement(), newElementName);
+    myRange = new TextRange(getRangeInElement().getStartOffset(), getRangeInElement().getStartOffset() + newElementName.length());
+    return element;
   }
 
   @Override
@@ -215,12 +212,9 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     }
     TextRange range = new TextRange(myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset(), end);
     final ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
-    if (manipulator != null) {
-      final PsiElement finalElement = manipulator.handleContentChange(getElement(), range, newName);
-      myJavaClassReferenceSet.reparse(finalElement, TextRange.from(range.getStartOffset(), newName.length()));
-      return finalElement;
-    }
-    return element;
+    final PsiElement finalElement = manipulator.handleContentChange(getElement(), range, newName);
+    myJavaClassReferenceSet.reparse(finalElement, TextRange.from(range.getStartOffset(), newName.length()));
+    return finalElement;
   }
 
   @Override

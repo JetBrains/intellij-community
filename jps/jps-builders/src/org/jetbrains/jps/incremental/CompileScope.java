@@ -3,9 +3,9 @@ package org.jetbrains.jps.incremental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.Project;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
-import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.util.Set;
@@ -46,15 +46,15 @@ public abstract class CompileScope {
     return myForcedCompilation && myArtifacts.contains(artifact);
   }
 
-  public abstract boolean isAffected(String moduleName, @NotNull File file);
+  public abstract boolean isAffected(BuildTarget target, @NotNull File file);
 
-  public abstract boolean isAffected(@NotNull String moduleName);
+  public abstract boolean isAffected(@NotNull BuildTarget target);
 
-  public abstract boolean isRecompilationForced(@NotNull String moduleName);
+  public abstract boolean isRecompilationForced(@NotNull BuildTarget target);
 
   public final boolean isAffected(ModuleChunk chunk) {
-    for (JpsModule module : chunk.getModules()) {
-      if (isAffected(module.getName())) {
+    for (RealModuleBuildTarget target : chunk.getTargets()) {
+      if (isAffected(target)) {
         return true;
       }
     }

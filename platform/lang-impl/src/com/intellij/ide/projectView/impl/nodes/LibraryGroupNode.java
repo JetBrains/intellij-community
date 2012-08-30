@@ -53,6 +53,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
     this(project, (LibraryGroupElement)value, viewSettings);
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     Module module = getValue().getModule();
@@ -107,10 +108,12 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
   }
 
 
+  @Override
   public String getTestPresentation() {
     return "Libraries";
   }
 
+  @Override
   public boolean contains(@NotNull VirtualFile file) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
     if (!index.isInLibrarySource(file) && !index.isInLibraryClasses(file)) {
@@ -120,15 +123,18 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
     return someChildContainsFile(file, false);
   }
 
+  @Override
   public void update(PresentationData presentation) {
     presentation.setPresentableText(IdeBundle.message("node.projectview.libraries"));
     presentation.setIcon(PlatformIcons.LIBRARY_ICON);
   }
 
+  @Override
   public boolean canNavigate() {
     return ProjectSettingsService.getInstance(myProject).canOpenModuleLibrarySettings();
   }
 
+  @Override
   public void navigate(final boolean requestFocus) {
     Module module = getValue().getModule();
     ProjectSettingsService.getInstance(myProject).openModuleLibrarySettings(module);

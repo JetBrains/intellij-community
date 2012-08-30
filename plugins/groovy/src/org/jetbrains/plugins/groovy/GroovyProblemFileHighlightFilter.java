@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 

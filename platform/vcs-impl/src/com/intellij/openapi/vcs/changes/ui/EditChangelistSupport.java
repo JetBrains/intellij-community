@@ -15,17 +15,13 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
 
 /**
  * @author Dmitry Avdeev

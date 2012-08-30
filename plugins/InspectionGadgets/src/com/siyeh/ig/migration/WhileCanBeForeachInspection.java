@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -120,12 +119,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
       if (collection == null) {
         return;
       }
-      final PsiType collectionType = collection.getType();
-      if (collectionType == null) {
-        return;
-      }
-      final PsiManager manager = collection.getManager();
-      final PsiType contentType = getContentType(collectionType, manager);
+      final PsiType contentType = getContentType(collection.getType(), collection);
       if (contentType == null) {
         return;
       }
@@ -167,7 +161,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
       }
       final CodeStyleSettings codeStyleSettings =
         CodeStyleSettingsManager.getSettings(project);
-      final @NonNls String finalString =
+      @NonNls final String finalString =
         codeStyleSettings.GENERATE_FINAL_PARAMETERS ? "final " : "";
       @NonNls final StringBuilder out = new StringBuilder();
       out.append("for(");
@@ -180,9 +174,8 @@ public class WhileCanBeForeachInspection extends BaseInspection {
       out.append(')');
       // add cast if type returned by collection is not assignable to
       // the iterator type.
-      final PsiType iteratorType = iterator.getType();
       final PsiType iteratorContentType =
-        getContentType(iteratorType, manager);
+        getContentType(iterator.getType(), iterator);
       if (iteratorContentType != null &&
           !TypeConversionUtil.isAssignable(iteratorContentType,
                                            contentType)) {
@@ -229,8 +222,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
     }
 
     @Nullable
-    private static PsiType getContentType(PsiType type,
-                                          PsiManager manager) {
+    private static PsiType getContentType(PsiType type, PsiElement context) {
       if (!(type instanceof PsiClassType)) {
         return null;
       }
@@ -250,8 +242,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
           return parameterType;
         }
       }
-      final GlobalSearchScope scope = type.getResolveScope();
-      return PsiType.getJavaLangObject(manager, scope);
+      return TypeUtils.getObjectType(context);
     }
 
     private static void replaceIteratorNext(

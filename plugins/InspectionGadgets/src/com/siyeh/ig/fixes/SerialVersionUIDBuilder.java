@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Bas Leijdekkers
+ * Copyright 2003-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -317,19 +318,13 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
 
   private static boolean hasStaticInitializer(PsiField field) {
     if (field.hasModifierProperty(PsiModifier.STATIC)) {
-      final PsiManager manager = field.getManager();
-      final Project project = manager.getProject();
-      final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
       final PsiExpression initializer = field.getInitializer();
       if (initializer == null) {
         return false;
       }
       final PsiType fieldType = field.getType();
-      final PsiType stringType = PsiType.getJavaLangString(manager,
-                                                           scope);
-      if (field.hasModifierProperty(PsiModifier.FINAL) &&
-          (fieldType instanceof PsiPrimitiveType ||
-           fieldType.equals(stringType))) {
+      final PsiType stringType = TypeUtils.getStringType(field);
+      if (field.hasModifierProperty(PsiModifier.FINAL) && (fieldType instanceof PsiPrimitiveType || fieldType.equals(stringType))) {
         return !PsiUtil.isConstantExpression(initializer);
       }
       else {

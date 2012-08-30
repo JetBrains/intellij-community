@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Time;
 import com.intellij.util.WaitFor;
 import com.intellij.util.containers.HashMap;
 import junit.framework.Assert;
@@ -542,7 +541,6 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
       initRootNode();
 
-      getUi().setJantorPollPeriod(Time.SECOND * 2);
     }
 
 

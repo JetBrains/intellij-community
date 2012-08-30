@@ -44,6 +44,7 @@ public class ProjectViewModuleNode extends AbstractModuleNode {
     this(project, (Module)value, viewSettings);
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     Module module = getValue();
@@ -76,10 +77,12 @@ public class ProjectViewModuleNode extends AbstractModuleNode {
     return children;
   }
 
+  @Override
   public int getWeight() {
     return 10;
   }
 
+  @Override
   public int getTypeSortWeight(final boolean sortByType) {
     return 2;
   }

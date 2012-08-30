@@ -71,7 +71,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
     }
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
     final PsiExpression[] operands = polyadicExpression.getOperands();
-    final PsiClassType stringType = PsiType.getJavaLangString(expression.getManager(), expression.getResolveScope());
+    final PsiClassType stringType = TypeUtils.getStringType(expression);
     boolean seenString = false;
     boolean seenEmpty = false;
     boolean replaced = false;

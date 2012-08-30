@@ -44,8 +44,8 @@ public class ArrangementCompositeMatchCondition implements ArrangementMatchCondi
     return myOperands;
   }
 
-  public ArrangementCompositeMatchCondition addOperand(@NotNull ArrangementMatchCondition node) {
-    myOperands.add(node);
+  public ArrangementCompositeMatchCondition addOperand(@NotNull ArrangementMatchCondition condition) {
+    myOperands.add(condition);
     return this;
   }
 

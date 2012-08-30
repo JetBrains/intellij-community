@@ -517,7 +517,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     final boolean isIndeterminate = myTestsTotal == 0;
     final int total = isIndeterminate ? 2 : myTestsTotal;
     final int count = isIndeterminate ? 1 : myTestsCurrentCount;
-    TestsUIUtil.showIconProgress(count, total, myTestsFailuresCount);
+    TestsUIUtil.showIconProgress(myProject, count, total, myTestsFailuresCount);
   }
 
   /**

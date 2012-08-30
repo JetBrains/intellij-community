@@ -2167,7 +2167,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private boolean isTooLarge(@NotNull VirtualFile file) {
-    if (SingleRootFileViewProvider.isTooLarge(file)) {
+    if (SingleRootFileViewProvider.isTooLargeForIntelligence(file)) {
       final FileType type = file.getFileType();
       return !myNoLimitCheckTypes.contains(type);
     }
@@ -2175,7 +2175,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private boolean isTooLarge(@NotNull VirtualFile file, long contentSize) {
-    if (SingleRootFileViewProvider.isTooLarge(file, contentSize)) {
+    if (SingleRootFileViewProvider.isTooLargeForIntelligence(file, contentSize)) {
       final FileType type = file.getFileType();
       return !myNoLimitCheckTypes.contains(type);
     }

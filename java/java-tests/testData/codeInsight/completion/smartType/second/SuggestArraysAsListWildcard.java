@@ -6,7 +6,7 @@ class Foo implements Bar {
 
   {
     Foo[] foos;
-    Collection<? extends Bar> c = f<caret>
+    Collection<? extends Bar> c = foo<caret>
   }
 
 }

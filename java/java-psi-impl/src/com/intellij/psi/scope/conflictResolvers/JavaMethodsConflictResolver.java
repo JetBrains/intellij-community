@@ -106,8 +106,21 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           if (method != null) {
             final PsiParameter[] methodParameters = method.getParameterList().getParameters();
             final PsiParameter param = i < methodParameters.length ? methodParameters[i] : methodParameters[methodParameters.length - 1];
-            if (!LambdaUtil.isAcceptable(lambdaExpression, param.getType())) {
+            final PsiType paramType = param.getType();
+            if (!LambdaUtil.isAcceptable(lambdaExpression, paramType)) {
               iterator.remove();
+            } else {
+              /*todo
+              final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(paramType);
+              final PsiMethod functionalInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(paramType);
+              if (functionalInterfaceMethod != null) {
+                for (PsiParameter parameter : functionalInterfaceMethod.getParameterList().getParameters()) {
+                  if (LambdaUtil.dependsOnTypeParams(resolveResult.getSubstitutor().substitute(parameter.getType()), resolveResult.getElement(), method)) {
+                    iterator.remove();
+                    break;
+                  }
+                }
+              }*/
             }
           }
         }

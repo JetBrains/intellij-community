@@ -450,7 +450,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNoUninitializedFieldsInConstructor() throws Throwable {
     configureByTestName();
-    assertStringItems("aac", "aab");
+    assertStringItems("aac", "aab", "hashCode");
   }
   public void testFieldsSetInAnotherConstructor() throws Throwable { doTest(); }
   public void testFieldsSetAbove() throws Throwable { doTest(); }
@@ -471,7 +471,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testVoidExpectedType() throws Throwable {
     configureByTestName();
     assertStringItems("notify", "notifyAll", "wait", "wait", "wait", "getClass", "equals", "hashCode", "toString");
-    type('e');
+    type("eq");
     assertEquals("equals", assertOneElement(getLookup().getItems()).getLookupString());
     select();
     checkResultByTestName();

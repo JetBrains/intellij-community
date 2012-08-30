@@ -431,7 +431,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           if (progress != null) progress.checkCanceled();
-          if (!file.isDirectory() || isIgnored(file)) return false;
+          if (!file.isDirectory() && file != dir || isIgnored(file)) return false;
 
           DirectoryInfo info = getOrCreateDirInfo(file);
 
@@ -477,7 +477,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           if (progress != null) progress.checkCanceled();
-          if (!file.isDirectory() || isIgnored(file)) return false;
+          if (!file.isDirectory() && file != dir || isIgnored(file)) return false;
 
           DirectoryInfo info = getOrCreateDirInfo(file);
 

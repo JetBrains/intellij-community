@@ -814,7 +814,7 @@ public class Switcher extends AnAction implements DumbAware {
                     manager.addSelectionRecord(info.first, wnd);
                   }
                 } else {
-                  manager.openFile(info.first, true);
+                  manager.openFile(info.first, true, true);
                 }
               }
             }

@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.groovy.lang
 
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.IdeaTestUtil
@@ -26,6 +27,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   public void testDontWalkLongInferenceChain() throws Exception {
+    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     Map<Integer, PsiClass> classes = [:]
     myFixture.addFileToProject "Foo0.groovy", """class Foo0 {
       def foo() { return 0 }
@@ -97,10 +99,15 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
     }
     text += "}"
 
-    IdeaTestUtil.startPerformanceTest("slow", 5000, configureAndHighlight(text)).cpuBound().usesAllCPUCores().assertTiming()
+    measureHighlighting(text, 5000)
+  }
+
+  private void measureHighlighting(String text, int time) {
+    IdeaTestUtil.startPerformanceTest("slow", time, configureAndHighlight(text)).cpuBound().usesAllCPUCores().assertTiming()
   }
 
   public void testDeeplyNestedClosures() {
+    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     String text = "println 'hi'"
     String defs = ""
     for (i in 1..10) {
@@ -108,29 +115,66 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
       defs += "def foo$i(Closure cl) {}\n"
     }
     myFixture.enableInspections(new MissingReturnInspection())
-    IdeaTestUtil.startPerformanceTest("slow", 10000, configureAndHighlight(defs + text)).cpuBound().usesAllCPUCores().assertTiming()
+    measureHighlighting(defs + text, 10000)
   }
 
   public void testDeeplyNestedClosuresInGenericCalls() {
+    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     String text = "println it"
     for (i in 1..10) {
       text = "foo(it) { $text }"
     }
     myFixture.enableInspections(new MissingReturnInspection())
-    IdeaTestUtil.startPerformanceTest("slow", 10000, configureAndHighlight("def <T> foo(T t, Closure cl) {}\n" + text)).cpuBound().usesAllCPUCores().assertTiming()
+    measureHighlighting("def <T> foo(T t, Closure cl) {}\n" + text, 10000)
   }
 
   public void testDeeplyNestedClosuresInGenericCalls2() {
+    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     String text = "println it"
     for (i in 1..10) {
       text = "foo(it) { $text }"
     }
     myFixture.enableInspections(new MissingReturnInspection())
-    IdeaTestUtil.startPerformanceTest("slow", 10000, configureAndHighlight("def <T> foo(T t, Closure<T> cl) {}\n" + text)).cpuBound().usesAllCPUCores().assertTiming()
-
+    measureHighlighting("def <T> foo(T t, Closure<T> cl) {}\n" + text, 10000)
   }
 
   public void testManyAnnotatedScriptVariables() {
-    IdeaTestUtil.startPerformanceTest("slow", 10000, configureAndHighlight((0..100).collect { "@Anno String i$it = null" }.join("\n"))).cpuBound().usesAllCPUCores().assertTiming()
+    measureHighlighting((0..100).collect { "@Anno String i$it = null" }.join("\n"), 10000)
+  }
+
+  public void "test no recursion prevention when resolving supertype"() {
+    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+    myFixture.addClass("interface Bar {}")
+    measureHighlighting("class Foo implements Bar {}", 200)
+  }
+
+  public void "test no recursion prevention when contributing constructors"() {
+    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+    myFixture.addClass("interface Bar {}")
+    def text = """
+@groovy.transform.TupleConstructor
+class Foo implements Bar {
+  int a
+  Foo b
+  int getBar() {}
+  void setBar(int bar) {}
+  void someMethod(int a = 1) {}
+}"""
+    measureHighlighting(text, 200)
+  }
+
+  public void "test using SSA variables in a for loop"() {
+    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+    def text = """
+def foo(List<File list) {
+  for (file in list) {
+${
+"   println bar(file)\n" * 10
+}
+  }
+}
+def bar(File file) { file.path }
+"""
+    measureHighlighting(text, 300)
   }
 }

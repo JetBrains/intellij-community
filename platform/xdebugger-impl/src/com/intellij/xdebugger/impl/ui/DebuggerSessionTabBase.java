@@ -48,7 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.Reader;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -116,22 +116,9 @@ public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManage
     myEnvironment = env;
   }
 
-  @NotNull
-  public LogConsoleBase addLogConsole(String name, Reader reader, long skippedContent, Icon icon) {
+  public void addLogConsole(final String name, final String path, @NotNull final Charset charset, final long skippedContent, Icon icon) {
     final Ref<Content> content = new Ref<Content>();
-    LogConsoleBase console = new LogConsoleBase(myProject, reader, skippedContent, name, false, new DefaultLogFilterModel(myProject)) {
-      public boolean isActive() {
-        final Content logContent = content.get();
-        return logContent != null && logContent.isSelected();
-      }
-    };
-    addLogConsole(console, icon, content);
-    return console;
-  }
-
-  public void addLogConsole(final String name, final String path, final long skippedContent, Icon icon) {
-    final Ref<Content> content = new Ref<Content>();
-    addLogConsole(new LogConsoleImpl(myProject, new File(path), skippedContent, name, false) {
+    addLogConsole(new LogConsoleImpl(myProject, new File(path), charset, skippedContent, name, false) {
       public boolean isActive() {
         final Content logContent = content.get();
         return logContent != null && logContent.isSelected();
@@ -156,8 +143,8 @@ public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManage
     getUi().addListener(l, this);
   }
 
-  public void addLogConsole(String name, String path, long skippedContent) {
-    addLogConsole(name, path, skippedContent, AllIcons.FileTypes.Text);
+  public void addLogConsole(String name, String path, @NotNull Charset charset, long skippedContent) {
+    addLogConsole(name, path, charset, skippedContent, AllIcons.FileTypes.Text);
   }
 
   protected void attachNotificationTo(final Content content) {
@@ -243,7 +230,7 @@ public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManage
           boolean focusWnd = Registry.is("debugger.mayBringFrameToFrontOnBreakpoint");
           ProjectUtil.focusProjectWindow(getProject(), focusWnd);
           if (!focusWnd) {
-            AppIcon.getInstance().requestAttention(true);
+            AppIcon.getInstance().requestAttention(myProject, true);
           }
         }
       });

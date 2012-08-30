@@ -254,6 +254,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
 
       PsiElement parent = element.getParent();
       if (parent instanceof PsiArrayAccessExpression) {
+        if (((PsiArrayAccessExpression)parent).getIndexExpression() == element) continue;
         element = parent;
         parent = parent.getParent();
       }

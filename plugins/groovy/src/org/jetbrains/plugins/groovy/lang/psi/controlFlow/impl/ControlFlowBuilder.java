@@ -718,27 +718,47 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     myConditions.push(conditionStart);
   }
 
+  private void acceptNullable(@Nullable GroovyPsiElement element) {
+    if (element != null) {
+      element.accept(this);
+    }
+  }
+
   public void visitForStatement(GrForStatement forStatement) {
     final GrForClause clause = forStatement.getClause();
-    if (clause instanceof GrTraditionalForClause) {
-      final GrCondition initializer = ((GrTraditionalForClause)clause).getInitialization();
-      if (initializer != null) {
-        initializer.accept(this);
-      }
-    }
-    else if (clause instanceof GrForInClause) {
-      final GrExpression expression = ((GrForInClause)clause).getIteratedExpression();
-      if (expression != null) {
-        expression.accept(this);
-      }
-      GrVariable variable = clause.getDeclaredVariable();
-      if (variable != null) {
-        ReadWriteVariableInstruction writeInst = new ReadWriteVariableInstruction(variable.getName(), variable, WRITE);
-        addNodeAndCheckPending(writeInst);
-      }
-    }
 
-    InstructionImpl instruction = startNode(forStatement);
+    processForLoopInitializer(clause);
+
+    InstructionImpl start = startNode(forStatement);
+
+    addForLoopBreakingEdge(forStatement, clause);
+
+    flushForeachLoopVariable(clause);
+
+    final GrStatement body = forStatement.getBody();
+    if (body != null) {
+      InstructionImpl bodyInstruction = startNode(body);
+      body.accept(this);
+      finishNode(bodyInstruction);
+    }
+    checkPending(start); //check for breaks targeted here
+
+    if (clause instanceof GrTraditionalForClause) {
+      acceptNullable(((GrTraditionalForClause)clause).getUpdate());
+    }
+    if (myHead != null) addEdge(myHead, start);  //loop
+    interruptFlow();
+
+    finishNode(start);
+  }
+
+  private void processForLoopInitializer(GrForClause clause) {
+    GroovyPsiElement initializer = clause instanceof GrTraditionalForClause ? ((GrTraditionalForClause)clause).getInitialization() :
+                                   clause instanceof GrForInClause ? ((GrForInClause)clause).getIteratedExpression() : null;
+    acceptNullable(initializer);
+  }
+
+  private void addForLoopBreakingEdge(GrForStatement forStatement, GrForClause clause) {
     if (clause instanceof GrTraditionalForClause) {
       final GrExpression condition = ((GrTraditionalForClause)clause).getCondition();
       if (condition != null) {
@@ -751,25 +771,15 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     else {
       addPendingEdge(forStatement, myHead); //break cycle
     }
+  }
 
-    final GrStatement body = forStatement.getBody();
-    if (body != null) {
-      InstructionImpl bodyInstruction = startNode(body);
-      body.accept(this);
-      finishNode(bodyInstruction);
-    }
-    checkPending(instruction); //check for breaks targeted here
-
-    if (clause instanceof GrTraditionalForClause) {
-      final GrExpression update = ((GrTraditionalForClause)clause).getUpdate();
-      if (update != null) {
-        update.accept(this);
+  private void flushForeachLoopVariable(GrForClause clause) {
+    if (clause instanceof GrForInClause) {
+      GrVariable variable = clause.getDeclaredVariable();
+      if (variable != null) {
+        addNodeAndCheckPending(new ReadWriteVariableInstruction(variable.getName(), variable, WRITE));
       }
     }
-    if (myHead != null) addEdge(myHead, instruction);  //loop
-    interruptFlow();
-
-    finishNode(instruction);
   }
 
   private void checkPending(InstructionImpl instruction) {

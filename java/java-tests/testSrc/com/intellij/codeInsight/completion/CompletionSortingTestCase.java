@@ -5,7 +5,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -77,7 +76,7 @@ public abstract class CompletionSortingTestCase extends LightFixtureCompletionTe
   protected static void imitateItemSelection(final LookupImpl lookup, final int index) {
     final LookupElement item = lookup.getItems().get(index);
     lookup.setCurrentItem(item);
-    CompletionLookupArranger.collectStatisticChanges(CompletionServiceImpl.getCompletionService().getCurrentCompletion(), item);
+    CompletionLookupArranger.collectStatisticChanges(item, lookup);
     CompletionLookupArranger.applyLastCompletionStatisticsUpdate();
   }
 }

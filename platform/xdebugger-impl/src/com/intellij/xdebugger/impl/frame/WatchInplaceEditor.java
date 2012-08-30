@@ -57,7 +57,7 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     if (!isShown()) return;
     super.cancelEditing();
     int index = myRootNode.removeChildNode(getNode());
-    if (myOldNode != null) {
+    if (myOldNode != null && index != -1) {
       getWatchesView().addWatchExpression(myOldNode.getExpression(), index, false);
     }
   }
@@ -67,7 +67,7 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     myExpressionEditor.saveTextInHistory();
     super.doOKAction();
     int index = myRootNode.removeChildNode(getNode());
-    if (!StringUtil.isEmpty(expression)) {
+    if (!StringUtil.isEmpty(expression) && index != -1) {
       getWatchesView().addWatchExpression(expression, index, false);
     }
   }

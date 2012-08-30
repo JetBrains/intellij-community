@@ -96,7 +96,6 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the first child, or null if the element has no children.
    */
-  @Nullable
   PsiElement getFirstChild();
 
   /**
@@ -104,7 +103,6 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the last child, or null if the element has no children.
    */
-  @Nullable
   PsiElement getLastChild();
 
   /**

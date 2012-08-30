@@ -194,10 +194,15 @@ public class ShowFilePathAction extends AnAction {
    *
    * @param file a file or directory to show and highlight in a file manager.
    */
-  public static void openFile(@NotNull final File file) {
+  public static void openFile(@NotNull File file) {
     if (!file.exists()) return;
+    file = file.getAbsoluteFile();
+    File parent = file.getParentFile();
+    if (parent == null) {
+      return;
+    }
     try {
-      doOpen(file.getParentFile(), file);
+      doOpen(parent, file);
     }
     catch (Exception e) {
       LOG.warn(e);

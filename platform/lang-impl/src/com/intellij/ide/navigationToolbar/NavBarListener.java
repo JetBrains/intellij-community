@@ -53,7 +53,7 @@ import java.util.List;
  */
 public class NavBarListener extends WolfTheProblemSolver.ProblemListener
   implements ActionListener, FocusListener, FileStatusListener, AnActionListener, FileEditorManagerListener,
-             PsiTreeChangeListener, ModuleRootListener, NavBarModelListener, PropertyChangeListener, KeyListener {
+             PsiTreeChangeListener, ModuleRootListener, NavBarModelListener, PropertyChangeListener, KeyListener, WindowFocusListener {
   private static final String LISTENER = "NavBarListener";
   private static final String BUS = "NavBarMessageBus";
   private final NavBarPanel myPanel;
@@ -62,6 +62,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
     if (panel.getClientProperty(LISTENER) != null) {
       unsubscribeFrom(panel);
     }
+
     final NavBarListener listener = new NavBarListener(panel);
     final Project project = panel.getProject();
     panel.putClientProperty(LISTENER, listener);
@@ -77,6 +78,13 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
     panel.putClientProperty(BUS, connection);
     panel.addKeyListener(listener);
+
+    if (panel.isInFloatingMode()) {
+      final Window window = SwingUtilities.windowForComponent(panel);
+      if (window != null) {
+        window.addWindowFocusListener(listener);
+      }
+    }
   }
 
   static void unsubscribeFrom(NavBarPanel panel) {
@@ -315,7 +323,19 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
     });
   }
 
+  @Override
+  public void windowLostFocus(WindowEvent e) {
+    final Window window = e.getWindow();
+    final Window oppositeWindow = e.getOppositeWindow();
+    System.out.println(window);
+    System.out.println(oppositeWindow);
+  }
+
   //---- Ignored
+  @Override
+  public void windowGainedFocus(WindowEvent e) {
+  }
+
   @Override
   public void keyTyped(KeyEvent e) {}
 

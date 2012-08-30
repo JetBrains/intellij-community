@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 
 public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
@@ -82,15 +84,17 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
         if (provider != null) {
           provider.setActive(true);
         }
-   
+
+        Editor editor = getEditorFromFocus();
         HashMap<String, Object> map = new HashMap<String, Object>();
         PsiElement psiElement = descriptor.getPsiElement();
         PsiFile containingFile = psiElement.getContainingFile();
-        Editor editor = InjectedLanguageUtil.openEditorFor(containingFile, project);
         if (editor == null) {
-          return;
+          editor = InjectedLanguageUtil.openEditorFor(containingFile, project);
         }
-        
+
+        if (editor == null) return;
+
         if (editor instanceof EditorWindow) {
           map.put(PlatformDataKeys.EDITOR.getName(), editor);
           map.put(LangDataKeys.PSI_ELEMENT.getName(), psiElement);
@@ -126,4 +130,12 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
     else SwingUtilities.invokeLater(fix); // TODO [shkate] this is hard to test!
   }
 
+  @Nullable
+  private static Editor getEditorFromFocus() {
+    final Component c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (c instanceof EditorComponentImpl) {
+      return ((EditorComponentImpl)c).getEditor();
+    }
+    return null;
+  }
 }

@@ -56,6 +56,7 @@ import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBScrollPane;
@@ -162,7 +163,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   public Document getDocument(@NotNull final VirtualFile file) {
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document == null) {
-      if (file.isDirectory() || isBinaryWithoutDecompiler(file)) return null;
+      if (file.isDirectory() || isBinaryWithoutDecompiler(file) || SingleRootFileViewProvider.isTooLargeForContentLoading(file)) {
+        return null;
+      }
       final CharSequence text = LoadTextUtil.loadText(file);
 
       synchronized (lock) {

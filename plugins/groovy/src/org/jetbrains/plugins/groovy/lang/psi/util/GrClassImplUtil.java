@@ -364,9 +364,7 @@ public class GrClassImplUtil {
     final GrTypeDefinitionBody body = grType.getBody();
     if (body != null) {
       if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.CLASS)) {
-        for (CandidateInfo info : CollectClassMembersUtil.getAllInnerClasses(grType, false).values()) {
-          final PsiClass innerClass = (PsiClass)info.getElement();
-          assert innerClass != null;
+        for (PsiClass innerClass : getInnerClassesForResolve(grType, lastParent)) {
           final String innerClassName = innerClass.getName();
           if (nameHint != null && !innerClassName.equals(nameHint.getName(state))) {
             continue;
@@ -381,6 +379,17 @@ public class GrClassImplUtil {
 
 
     return true;
+  }
+
+  private static List<PsiClass> getInnerClassesForResolve(GrTypeDefinition grType, PsiElement lastParent) {
+    if (lastParent instanceof GrReferenceList) {
+      return Arrays.asList(grType.getInnerClasses());
+    }
+    List<PsiClass> result = new ArrayList<PsiClass>();
+    for (CandidateInfo info : CollectClassMembersUtil.getAllInnerClasses(grType, false).values()) {
+      ContainerUtil.addIfNotNull(result, (PsiClass)info.getElement());
+    }
+    return result;
   }
 
   public static boolean isSameDeclaration(PsiElement place, PsiElement element) {
@@ -420,7 +429,7 @@ public class GrClassImplUtil {
                                                boolean includeSyntheticAccessors) {
     if (!checkBases) {
       List<PsiMethod> result = new ArrayList<PsiMethod>();
-      for (PsiMethod method : includeSyntheticAccessors ? grType.getMethods() : grType.getGroovyMethods()) {
+      for (PsiMethod method : CollectClassMembersUtil.getMethods(grType, includeSyntheticAccessors)) {
         if (name.equals(method.getName())) result.add(method);
       }
 
@@ -514,7 +523,7 @@ public class GrClassImplUtil {
   @Nullable
   public static PsiField findFieldByName(GrTypeDefinition grType, String name, boolean checkBases, boolean includeSynthetic) {
     if (!checkBases) {
-      for (GrField field : includeSynthetic ? grType.getFields() : grType.getCodeFields()) {
+      for (PsiField field : CollectClassMembersUtil.getFields(grType, includeSynthetic)) {
         if (name.equals(field.getName())) return field;
       }
 

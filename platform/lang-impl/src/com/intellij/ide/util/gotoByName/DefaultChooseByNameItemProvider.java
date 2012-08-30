@@ -96,6 +96,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     boolean previousElemSeparator = false;
     boolean wasElement = false;
 
+    List<Pair<String, MinusculeMatcher>> patternsAndMatchers = getPatternsAndMatchers(qualifierPattern, base);
     for (String name : namesList) {
       indicator.checkCanceled();
       if (name == ChooseByNameBase.NON_PREFIX_SEPARATOR) {
@@ -109,7 +110,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       if (elements.length > 1) {
         sameNameElements.clear();
         for (final Object element : elements) {
-          if (matchesQualifier(element, qualifierPattern, base)) {
+          if (matchesQualifier(element, base, patternsAndMatchers)) {
             sameNameElements.add(element);
           }
         }
@@ -121,7 +122,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
           wasElement = true;
         }
       }
-      else if (elements.length == 1 && matchesQualifier(elements[0], qualifierPattern, base)) {
+      else if (elements.length == 1 && matchesQualifier(elements[0], base, patternsAndMatchers)) {
         if (previousElemSeparator && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return;
         if (!consumer.process(elements[0])) return;
         previousElemSeparator = false;
@@ -181,20 +182,12 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   private static boolean matchesQualifier(final Object element,
-                                          @NotNull final String qualifierPattern,
-                                          @NotNull final ChooseByNameBase base) {
+                                          @NotNull final ChooseByNameBase base,
+                                          final List<Pair<String, MinusculeMatcher>> patternsAndMatchers) {
     final String name = base.getModel().getFullName(element);
     if (name == null) return false;
 
     final List<String> suspects = split(name, base);
-    final List<Pair<String, MinusculeMatcher>> patternsAndMatchers =
-      ContainerUtil.map2List(split(qualifierPattern, base), new Function<String, Pair<String, MinusculeMatcher>>() {
-        @NotNull
-        @Override
-        public Pair<String, MinusculeMatcher> fun(String s) {
-          return Pair.create(getNamePattern(base, s), buildPatternMatcher(getNamePattern(base, s), NameUtil.MatchingCaseSensitivity.NONE));
-        }
-      });
 
     int matchPosition = 0;
 
@@ -222,6 +215,16 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     }
 
     return true;
+  }
+
+  private static List<Pair<String, MinusculeMatcher>> getPatternsAndMatchers(String qualifierPattern, final ChooseByNameBase base) {
+    return ContainerUtil.map2List(split(qualifierPattern, base), new Function<String, Pair<String, MinusculeMatcher>>() {
+      @NotNull
+      @Override
+      public Pair<String, MinusculeMatcher> fun(String s) {
+        return Pair.create(getNamePattern(base, s), buildPatternMatcher(getNamePattern(base, s), NameUtil.MatchingCaseSensitivity.NONE));
+      }
+    });
   }
 
   @NotNull

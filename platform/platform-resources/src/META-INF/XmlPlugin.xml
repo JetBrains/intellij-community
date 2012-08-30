@@ -24,6 +24,8 @@
                     interface="com.intellij.xml.XmlAttributeDescriptorsProvider"/>
     <extensionPoint name="xml.elementDescriptorProvider"
                     interface="com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider"/>
+    <extensionPoint name="xml.util.htmlDoctypeProvider"
+                    interface="com.intellij.xml.util.HtmlDoctypeProvider"/>
 
     <extensionPoint name="xml.xmlSuppressionProvider"
                     interface="com.intellij.codeInspection.XmlSuppressionProvider"/>

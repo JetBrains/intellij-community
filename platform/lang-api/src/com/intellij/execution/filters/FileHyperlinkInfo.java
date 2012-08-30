@@ -17,11 +17,13 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  * @since 7.0.3
  */
 public interface FileHyperlinkInfo extends HyperlinkInfo {
+  @Nullable
   OpenFileDescriptor getDescriptor();
 }

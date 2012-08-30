@@ -66,7 +66,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     final CompositeAppearance oldText = myHighlightedText;
     final boolean isMeta = myTarget instanceof MetaTarget;
 
-    myIcon = isMeta ? AllIcons.Ant.MetaTarget : AllIcons.Ant.Target;
+    setIcon(isMeta ? AllIcons.Ant.MetaTarget : AllIcons.Ant.Target);
 
     myHighlightedText = new CompositeAppearance();
 

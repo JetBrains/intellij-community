@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Bas Leijdekkers
+ * Copyright 2009-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ConvertJUnit3TestCaseToJUnit4Intention extends Intention {
@@ -32,8 +33,7 @@ public class ConvertJUnit3TestCaseToJUnit4Intention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiClass)) {
       return;
@@ -45,7 +45,7 @@ public class ConvertJUnit3TestCaseToJUnit4Intention extends Intention {
     }
     final PsiMethod[] methods = aClass.getMethods();
     for (PsiMethod method : methods) {
-      final String name = method.getName();
+      @NonNls final String name = method.getName();
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
         continue;
       }
@@ -67,23 +67,19 @@ public class ConvertJUnit3TestCaseToJUnit4Intention extends Intention {
       }
       method.accept(new MethodCallModifier());
     }
-    final PsiJavaCodeReferenceElement[] referenceElements =
-      extendsList.getReferenceElements();
+    final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
     for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
       referenceElement.delete();
     }
   }
 
-  private static void addAnnotationIfNotPresent(
-    PsiModifierList modifierList, String qualifiedAnnotationName) {
+  private static void addAnnotationIfNotPresent(PsiModifierList modifierList, String qualifiedAnnotationName) {
     if (modifierList.findAnnotation(qualifiedAnnotationName) != null) {
       return;
     }
-    final PsiAnnotation annotation =
-      modifierList.addAnnotation(qualifiedAnnotationName);
+    final PsiAnnotation annotation = modifierList.addAnnotation(qualifiedAnnotationName);
     final Project project = modifierList.getProject();
-    final JavaCodeStyleManager codeStyleManager =
-      JavaCodeStyleManager.getInstance(project);
+    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     codeStyleManager.shortenClassReferences(annotation);
   }
 
@@ -95,17 +91,14 @@ public class ConvertJUnit3TestCaseToJUnit4Intention extends Intention {
     if (!modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
       modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
     }
-    final PsiAnnotation overrideAnnotation =
-      modifierList.findAnnotation("java.lang.Override");
+    final PsiAnnotation overrideAnnotation = modifierList.findAnnotation("java.lang.Override");
     if (overrideAnnotation != null) {
       overrideAnnotation.delete();
     }
-
     method.accept(new SuperLifeCycleCallRemover(method.getName()));
   }
 
-  private static class SuperLifeCycleCallRemover
-    extends JavaRecursiveElementVisitor {
+  private static class SuperLifeCycleCallRemover extends JavaRecursiveElementVisitor {
 
     @NotNull private final String myLifeCycleMethodName;
 
@@ -114,17 +107,14 @@ public class ConvertJUnit3TestCaseToJUnit4Intention extends Intention {
     }
 
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
       if (!myLifeCycleMethodName.equals(methodName)) {
         return;
       }
-      final PsiExpression target =
-        methodExpression.getQualifierExpression();
+      final PsiExpression target = methodExpression.getQualifierExpression();
       if (!(target instanceof PsiSuperExpression)) {
         return;
       }
@@ -132,15 +122,12 @@ public class ConvertJUnit3TestCaseToJUnit4Intention extends Intention {
     }
   }
 
-  private static class MethodCallModifier
-    extends JavaRecursiveElementVisitor {
+  private static class MethodCallModifier extends JavaRecursiveElementVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       if (methodExpression.getQualifierExpression() != null) {
         return;
       }
@@ -156,18 +143,12 @@ public class ConvertJUnit3TestCaseToJUnit4Intention extends Intention {
       if (!"junit.framework.Assert".equals(name)) {
         return;
       }
-      final String newExpressionText =
-        "org.junit.Assert." + expression.getText();
+      @NonNls final String newExpressionText = "org.junit.Assert." + expression.getText();
       final Project project = expression.getProject();
-      final PsiElementFactory factory =
-        JavaPsiFacade.getElementFactory(project);
-      final PsiExpression newExpression =
-        factory.createExpressionFromText(newExpressionText,
-                                         expression);
-      final JavaCodeStyleManager codeStyleManager =
-        JavaCodeStyleManager.getInstance(project);
-      final PsiElement replacedExpression =
-        expression.replace(newExpression);
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      final PsiExpression newExpression = factory.createExpressionFromText(newExpressionText, expression);
+      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+      final PsiElement replacedExpression = expression.replace(newExpression);
       codeStyleManager.shortenClassReferences(replacedExpression);
     }
   }

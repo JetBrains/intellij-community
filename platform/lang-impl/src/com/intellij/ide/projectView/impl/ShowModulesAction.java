@@ -26,17 +26,20 @@ public abstract class ShowModulesAction extends ToggleAction {
     myProject = project;
   }
 
+  @Override
   public boolean isSelected(AnActionEvent event) {
     return ProjectView.getInstance(myProject).isShowModules(getId());
   }
 
   protected abstract String getId();
 
+  @Override
   public void setSelected(AnActionEvent event, boolean flag) {
     final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(myProject);
     projectView.setShowModules(flag, getId());
   }
 
+  @Override
   public void update(AnActionEvent e) {
     super.update(e);
     final Presentation presentation = e.getPresentation();

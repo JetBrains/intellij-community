@@ -16,6 +16,7 @@
 
 package com.intellij.psi;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -49,9 +50,13 @@ public class PsiInvalidElementAccessException extends RuntimeException {
 
   @NonNls
   @NotNull
-  private static String reason(@NotNull PsiElement element){
-    PsiFile file = element.getContainingFile();
-    if (file == null) return element.getParent() == null ? "parent is null" : "containing file is null";
+  private static String reason(@NotNull PsiElement root){
+    ASTNode element;
+    for (element = root.getNode(); element != null && element.getTreeParent() != null; element = element.getTreeParent()) {
+    }
+    PsiElement psiElement = element == null ? null : element.getPsi();
+    PsiFile file = psiElement instanceof PsiFile ? (PsiFile)psiElement : null;
+    if (file == null) return root.getParent() == null ? "parent is null" : "containing file is null";
     FileViewProvider provider = file.getViewProvider();
     VirtualFile vFile = provider.getVirtualFile();
     if (!vFile.isValid()) return vFile+" is invalid";

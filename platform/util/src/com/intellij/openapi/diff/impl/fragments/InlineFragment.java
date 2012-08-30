@@ -21,8 +21,6 @@ import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 
-import java.security.InvalidParameterException;
-
 public class InlineFragment implements Fragment {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.fragments.InlineFragment");
   private final TextRange myRange1;

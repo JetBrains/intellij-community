@@ -19,6 +19,7 @@ import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -35,10 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -126,6 +124,22 @@ public class NavBarPopup extends LightweightHint implements Disposable{
       if (0 <= myIndex && myIndex < list.getItemsCount()) {
        ListScrollingUtil.selectItem(list, myIndex);
       }
+    }
+    if (myPanel.isInFloatingMode()) {
+      final Window window = SwingUtilities.windowForComponent(getList());
+      window.addWindowFocusListener(new WindowFocusListener() {
+        @Override
+        public void windowGainedFocus(WindowEvent e) {
+        }
+
+        @Override
+        public void windowLostFocus(WindowEvent e) {
+          final Window w = e.getOppositeWindow();
+          if (w != null && DialogWrapper.findInstance(w.getComponent(0)) != null) {
+            myPanel.hideHint();
+          }
+        }
+      });
     }
   }
 

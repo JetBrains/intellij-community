@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CloneUtils {
 
-  private CloneUtils() {
-  }
+  private CloneUtils() {}
 
   public static boolean isCloneable(@NotNull PsiClass aClass) {
     return InheritanceUtil.isInheritor(aClass,
@@ -48,8 +47,7 @@ public class CloneUtils {
   public static boolean isClone(@NotNull PsiMethod method) {
     final PsiClassType javaLangObject;
     if (!PsiUtil.isLanguageLevel5OrHigher(method)) {
-      javaLangObject = PsiType.getJavaLangObject(
-        method.getManager(), method.getResolveScope());
+      javaLangObject = TypeUtils.getObjectType(method);
     }
     else {
       // for 1.5 and after, clone may be covariant

@@ -61,7 +61,7 @@ public class StandardArrangementEntryMatcherTest {
   public void atomCondition() {
     ArrangementAtomMatchCondition condition = new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD);
     
-    StandardArrangementEntryMatcher matcher = new StandardArrangementEntryMatcher(condition);
+    StdArrangementEntryMatcher matcher = new StdArrangementEntryMatcher(condition);
     assertEquals(condition, matcher.getCondition());
 
     final TypeAwareArrangementEntry fieldEntry = myMockery.mock(TypeAwareArrangementEntry.class, "field");
@@ -84,7 +84,7 @@ public class StandardArrangementEntryMatcherTest {
     condition.addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD));
     condition.addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC));
 
-    StandardArrangementEntryMatcher matcher = new StandardArrangementEntryMatcher(condition);
+    StdArrangementEntryMatcher matcher = new StdArrangementEntryMatcher(condition);
     assertEquals(condition, matcher.getCondition());
 
     final TypeAwareArrangementEntry fieldEntry = myMockery.mock(TypeAwareArrangementEntry.class, "field");

@@ -44,7 +44,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -108,11 +108,13 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     myToolWindowManager = toolWindowManager;
 
     final AbstractAction backAction = new AbstractAction() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         myHistory.back();
       }
     };
     final AbstractAction fwdAction = new AbstractAction() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         myHistory.forward();
       }
@@ -152,13 +154,11 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   private void processConfigurationElement() {
     if (myElement == null) return;
 
-    Element element;
-
-    element = myElement.getChild(ELEMENT_LEFTPANEL);
+    Element element = myElement.getChild(ELEMENT_LEFTPANEL);
     if (element != null) {
       final PsiElement parentElement = readParentElement(element);
       if (parentElement != null) {
-        myLeftPanel.getBuilder().enterElement(parentElement, PsiUtilBase.getVirtualFile(parentElement));
+        myLeftPanel.getBuilder().enterElement(parentElement, PsiUtilCore.getVirtualFile(parentElement));
       }
     }
 
@@ -166,7 +166,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     if (element != null) {
       final PsiElement parentElement = readParentElement(element);
       if (parentElement != null) {
-        myRightPanel.getBuilder().enterElement(parentElement, PsiUtilBase.getVirtualFile(parentElement));
+        myRightPanel.getBuilder().enterElement(parentElement, PsiUtilCore.getVirtualFile(parentElement));
       }
     }
 
@@ -179,7 +179,8 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
           if (proportion >= 0 && proportion <= 1) {
             mySplitter.setProportion(proportion);
           }
-        } catch (NumberFormatException e) {
+        }
+        catch (NumberFormatException ignored) {
         }
       }
     }
@@ -211,19 +212,23 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
 
   public void setupImpl() {
     mySelectionListener = new ListSelectionListener() {
+      @Override
       public void valueChanged(final ListSelectionEvent e) {
         updateToolWindowTitle();
       }
     };
     myListDataListener = new ListDataListener() {
+      @Override
       public void intervalAdded(final ListDataEvent e) {
         updateToolWindowTitle();
       }
 
+      @Override
       public void intervalRemoved(final ListDataEvent e) {
         updateToolWindowTitle();
       }
 
+      @Override
       public void contentsChanged(final ListDataEvent e) {
         updateToolWindowTitle();
       }
@@ -232,12 +237,14 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
 
     myLeftPanel = createPanel();
     myLeftPanel.addHistoryListener(new CommanderHistoryListener() {
+      @Override
       public void historyChanged(final PsiElement selectedElement, final boolean elementExpanded) {
         getCommandHistory().saveState(selectedElement, elementExpanded, true);
       }
     });
     myRightPanel = createPanel();
     myRightPanel.addHistoryListener(new CommanderHistoryListener() {
+      @Override
       public void historyChanged(final PsiElement selectedElement, final boolean elementExpanded) {
         getCommandHistory().saveState(selectedElement, elementExpanded, false);
       }
@@ -250,10 +257,12 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     add(mySplitter, BorderLayout.CENTER);
 
     final AutoScrollToSourceHandler handler = new AutoScrollToSourceHandler() {
+      @Override
       protected boolean isAutoScrollMode() {
         return myAutoScrollMode;
       }
 
+      @Override
       protected void setAutoScrollMode(boolean state) {
         myAutoScrollMode = state;
       }
@@ -277,10 +286,12 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     final DefaultActionGroup group = new DefaultActionGroup();
 
     final AnAction backAction = new AnAction() {
+      @Override
       public void actionPerformed(AnActionEvent e) {
         myHistory.back();
       }
 
+      @Override
       public void update(AnActionEvent e) {
         super.update(e);
         e.getPresentation().setEnabled(myHistory.canGoBack());
@@ -290,10 +301,12 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     group.add(backAction);
 
     final AnAction forwardAction = new AnAction() {
+      @Override
       public void actionPerformed(AnActionEvent e) {
         myHistory.forward();
       }
 
+      @Override
       public void update(AnActionEvent e) {
         super.update(e);
         e.getPresentation().setEnabled(myHistory.canGoForward());
@@ -312,6 +325,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     final CommanderPanel panel = new CommanderPanel(myProject, true, false);
 
     panel.getList().addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(final KeyEvent e) {
         if (KeyEvent.VK_ESCAPE == e.getKeyCode()) {
           if (e.isConsumed()) return;
@@ -331,6 +345,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     panel.setProjectTreeStructure(treeStructure);
 
     final FocusAdapter focusListener = new FocusAdapter() {
+      @Override
       public void focusGained(final FocusEvent e) {
         updateToolWindowTitle(panel);
       }
@@ -341,6 +356,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     list.getModel().addListDataListener(myListDataListener);
 
     Disposer.register(this, new Disposable() {
+      @Override
       public void dispose() {
         list.removeFocusListener(focusListener);
         list.getSelectionModel().removeListSelectionListener(mySelectionListener);
@@ -352,26 +368,32 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
 
   protected AbstractProjectTreeStructure createProjectTreeStructure() {
     return new AbstractProjectTreeStructure(myProject) {
+      @Override
       public boolean isShowMembers() {
         return true;
       }
 
+      @Override
       public boolean isHideEmptyMiddlePackages() {
         return false;
       }
 
+      @Override
       public boolean isFlattenPackages() {
         return false;
       }
 
+      @Override
       public boolean isAbbreviatePackageNames() {
         return false;
       }
 
+      @Override
       public boolean isShowLibraryContents() {
         return false;
       }
 
+      @Override
       public boolean isShowModules() {
         return false;
       }
@@ -427,13 +449,8 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   public void enterElementInActivePanel(final PsiElement element) {
-    final CommanderPanel activePanel;
-    if (isLeftPanelActive()) {
-      activePanel = myLeftPanel;
-    } else {
-      activePanel = myRightPanel;
-    }
-    activePanel.getBuilder().enterElement(element, PsiUtilBase.getVirtualFile(element));
+    final CommanderPanel activePanel = isLeftPanelActive() ? myLeftPanel : myRightPanel;
+    activePanel.getBuilder().enterElement(element, PsiUtilCore.getVirtualFile(element));
   }
 
   public void swapPanels() {
@@ -466,6 +483,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     return !isLeftPanelActive() ? myLeftPanel : myRightPanel;
   }
 
+  @Override
   public Object getData(final String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HelpID.COMMANDER;
@@ -477,7 +495,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
       final AbstractTreeNode parentElement = getInactivePanel().getBuilder().getParentNode();
       if (parentElement == null) return null;
       final Object element = parentElement.getValue();
-      return (element instanceof PsiElement) && ((PsiElement)element).isValid()? element : null;
+      return element instanceof PsiElement && ((PsiElement)element).isValid()? element : null;
     }
     else if (CompareFiles.DIFF_REQUEST.is(dataId)) {
       PsiElement primary = getActivePanel().getSelectedElement();
@@ -495,6 +513,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     }
   }
 
+  @Override
   public Element getState() {
     Element element = new Element("commander");
     if (myLeftPanel == null || myRightPanel == null) {
@@ -543,6 +562,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     }
   }
 
+  @Override
   public void loadState(Element state) {
     myElement = state;
     processConfigurationElement();
@@ -554,13 +574,15 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
       final String url = element.getAttributeValue(ATTRIBUTE_URL);
       final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
       return file != null ? PsiManager.getInstance(myProject).findDirectory(file) : null;
-    } else if (element.getAttributeValue(ATTRIBUTE_CLASS) != null) {
+    }
+    if (element.getAttributeValue(ATTRIBUTE_CLASS) != null) {
       final String className = element.getAttributeValue(ATTRIBUTE_CLASS);
       return className != null ? JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject)) : null;
     }
     return null;
   }
 
+  @Override
   public void dispose() {
     if (myLeftPanel == null) {
       // not opened project (default?)
@@ -580,9 +602,10 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     return myLeftPanel;
   }
 
+  @Override
   public void selectElement(PsiElement element, boolean selectInActivePanel) {
     CommanderPanel panel = selectInActivePanel ? getActivePanel() : getInactivePanel();
-    panel.getBuilder().selectElement(element, PsiUtilBase.getVirtualFile(element));
+    panel.getBuilder().selectElement(element, PsiUtilCore.getVirtualFile(element));
   }
 }
 

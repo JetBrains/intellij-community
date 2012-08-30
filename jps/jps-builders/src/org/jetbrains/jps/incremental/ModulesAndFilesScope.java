@@ -2,6 +2,8 @@ package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.Project;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -17,36 +19,36 @@ import java.util.Set;
  *         Date: 9/17/11
  */
 public class ModulesAndFilesScope extends CompileScope {
+  private final Set<BuildTarget> myTargets;
+  private final Map<BuildTarget, Set<File>> myFiles;
 
-  private final Set<String> myModules;
-  private final Map<String, Set<File>> myFiles;
-
-  public ModulesAndFilesScope(Project project, JpsProject jpsProject, Collection<JpsModule> modules, Map<String, Set<File>> files,
+  public ModulesAndFilesScope(Project project, JpsProject jpsProject, Collection<JpsModule> targets, Map<BuildTarget, Set<File>> files,
                               Set<JpsArtifact> artifacts, boolean isForcedCompilation) {
     super(project, jpsProject, artifacts, isForcedCompilation, true);
     myFiles = files;
-    myModules = new HashSet<String>();
-    for (JpsModule module : modules) {
-      myModules.add(module.getName());
+    myTargets = new HashSet<BuildTarget>();
+    for (JpsModule module : targets) {
+      myTargets.add(new RealModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION));
+      myTargets.add(new RealModuleBuildTarget(module, JavaModuleBuildTargetType.TEST));
     }
   }
 
-  public boolean isRecompilationForced(@NotNull String moduleName) {
-    return myForcedCompilation && myModules.contains(moduleName);
+  public boolean isRecompilationForced(@NotNull BuildTarget target) {
+    return myForcedCompilation && myTargets.contains(target);
   }
 
-  public boolean isAffected(@NotNull String moduleName) {
-    if (myModules.contains(moduleName) || myFiles.containsKey(moduleName)) {
+  public boolean isAffected(@NotNull BuildTarget target) {
+    if (myTargets.contains(target) || myFiles.containsKey(target)) {
       return true;
     }
     return false;
   }
 
-  public boolean isAffected(String moduleName, @NotNull File file) {
-    if (myModules.contains(moduleName)) {
+  public boolean isAffected(BuildTarget target, @NotNull File file) {
+    if (myTargets.contains(target)) {
       return true;
     }
-    final Set<File> files = myFiles.get(moduleName);
+    final Set<File> files = myFiles.get(target);
     return files != null && files.contains(file);
   }
 

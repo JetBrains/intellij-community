@@ -80,7 +80,7 @@ public class DetailController implements TreeSelectionListener, ListSelectionLis
     }, 100);
   }
 
-  void updateDetailViewLater() {
+  public void selectionChanged() {
     doUpdateDetailView();
   }
 
@@ -105,11 +105,11 @@ public class DetailController implements TreeSelectionListener, ListSelectionLis
 
   @Override
   public void valueChanged(TreeSelectionEvent event) {
-    updateDetailViewLater();
+    selectionChanged();
   }
 
   @Override
   public void valueChanged(ListSelectionEvent event) {
-    updateDetailViewLater();
+    selectionChanged();
   }
 }

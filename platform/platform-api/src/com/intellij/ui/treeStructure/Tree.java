@@ -57,7 +57,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   private Dimension myHoldSize;
   private final MySelectionModel mySelectionModel = new MySelectionModel();
-  private boolean myHorizontalAutoScrolling = false;
+  private boolean myHorizontalAutoScrolling = true;
 
   public Tree() {
     initTree_();

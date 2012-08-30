@@ -184,6 +184,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     TreeUtil.selectPath(myTree, treePath);
   }
 
+  @Override
   public void dispose() {
     if (myDndManager != null) {
       if (myDropTarget != null) {
@@ -211,12 +212,14 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   private void doSelectModuleOrGroup(final Object toSelect, final boolean requestFocus) {
     ToolWindowManager windowManager=ToolWindowManager.getInstance(myProject);
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         ProjectView projectView = ProjectView.getInstance(myProject);
         if (requestFocus) {
           projectView.changeView(getId(), getSubId());
         }
         ((BaseProjectTreeBuilder)getTreeBuilder()).selectInWidth(toSelect, requestFocus, new Condition<AbstractTreeNode>(){
+          @Override
           public boolean value(final AbstractTreeNode node) {
             return node instanceof AbstractModuleNode || node instanceof ModuleGroupNode || node instanceof AbstractProjectNode;
           }
@@ -260,6 +263,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return result;
   }
 
+  @Override
   public Object getData(String dataId) {
     if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       TreePath[] paths = getSelectionPaths();

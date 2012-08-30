@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.builders.AdditionalRootsProviderService;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.model.JpsProject;
@@ -50,7 +51,7 @@ public class ModuleRootsIndex {
       for (JpsModuleSourceRoot sourceRoot : module.getSourceRoots()) {
         final File root = JpsPathUtil.urlToFile(sourceRoot.getUrl());
         final boolean testRoot = JavaSourceRootType.TEST_SOURCE.equals(sourceRoot.getRootType());
-        final RootDescriptor descriptor = new RootDescriptor(moduleName, root, testRoot, false, false);
+        final RootDescriptor descriptor = new RootDescriptor(moduleName, root, new RealModuleBuildTarget(module, JavaModuleBuildTargetType.getInstance(testRoot)), testRoot, false, false);
         myRootToDescriptorMap.put(root, descriptor);
         moduleRoots.add(descriptor);
       }
@@ -58,7 +59,7 @@ public class ModuleRootsIndex {
         final List<String> roots = provider.getAdditionalSourceRoots(module, dataManager);
         for (String path : roots) {
           File root = new File(path);
-          final RootDescriptor descriptor = new RootDescriptor(moduleName, root, false, true, false);
+          final RootDescriptor descriptor = new RootDescriptor(moduleName, root, new RealModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION), false, true, false);
           moduleRoots.add(descriptor);
           myRootToDescriptorMap.put(root, descriptor);
         }
@@ -180,7 +181,7 @@ public class ModuleRootsIndex {
       moduleRoots = new ArrayList<RootDescriptor>();
       moduleToRootMap.put(module, moduleRoots);
     }
-    final RootDescriptor descriptor = new RootDescriptor(module.getName(), root, isTestRoot, true, true);
+    final RootDescriptor descriptor = new RootDescriptor(module.getName(), root, new RealModuleBuildTarget(module, JavaModuleBuildTargetType.getInstance(isTestRoot)), isTestRoot, true, true);
     rootToDescriptorMap.put(root, descriptor);
     moduleRoots.add(descriptor);
     return descriptor;

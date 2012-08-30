@@ -58,9 +58,9 @@ public class FileNodeDescriptor extends NodeDescriptor {
 
     if (file == null) return true;
 
-    myIcon = myOriginalIcon;
+    setIcon(myOriginalIcon);
     if (myFileElement.isHidden()) {
-      myIcon = IconLoader.getTransparentIcon(myIcon);
+      setIcon(IconLoader.getTransparentIcon(getIcon()));
     }
     myColor = myFileElement.isHidden() ? SimpleTextAttributes.DARK_TEXT.getFgColor() : null;
     return changed;

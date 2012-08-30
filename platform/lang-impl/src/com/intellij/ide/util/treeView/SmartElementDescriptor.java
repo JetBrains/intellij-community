@@ -42,6 +42,7 @@ public class SmartElementDescriptor extends NodeDescriptor{
     mySmartPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element);
   }
 
+  @Override
   public Object getElement() {
     return myElement;
   }
@@ -55,6 +56,7 @@ public class SmartElementDescriptor extends NodeDescriptor{
   }
 
   // Should be called in atomic action
+  @Override
   public boolean update() {
     myElement = mySmartPointer.getElement();
     if (myElement == null) return true;
@@ -80,8 +82,8 @@ public class SmartElementDescriptor extends NodeDescriptor{
       color = CopyPasteManager.CUT_COLOR;
     }
 
-    boolean changes = !Comparing.equal(icon, myIcon) || !Comparing.equal(color, myColor);
-    myIcon = icon;
+    boolean changes = !Comparing.equal(icon, getIcon()) || !Comparing.equal(color, myColor);
+    setIcon(icon);
     myColor = color;
     return changes;
   }

@@ -16,6 +16,7 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementConditionNode;
@@ -58,7 +59,7 @@ public class ArrangementRuleEditingModelBuilder {
    * </ol>
    * </pre>
    *
-   * @param matchCondition target settings to process
+   * @param rule           target rule to process
    * @param tree           UI tree which shows arrangement matcher rules
    * @param root           UI tree settings root to use (may be not the same as the tree root)
    * @param anchor         node after which should be previous sibling for the root node of the inserted condition;
@@ -70,13 +71,13 @@ public class ArrangementRuleEditingModelBuilder {
    */
   @SuppressWarnings("MethodMayBeStatic")
   public Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> build(
-    @NotNull ArrangementMatchCondition matchCondition,
+    @NotNull StdArrangementRule rule,
     @NotNull JTree tree,
     @NotNull ArrangementTreeNode root,
     @Nullable ArrangementTreeNode anchor,
     @NotNull ArrangementConditionsGrouper grouper)
   {
-    HierarchicalArrangementConditionNode grouped = grouper.group(matchCondition);
+    HierarchicalArrangementConditionNode grouped = grouper.group(rule.getMatcher().getCondition());
     DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
     Pair<ArrangementTreeNode, Integer> pair = ArrangementConfigUtil.map(null, grouped, null);
     ArrangementTreeNode topMostNode = ArrangementConfigUtil.getRoot(pair.first);
@@ -95,7 +96,7 @@ public class ArrangementRuleEditingModelBuilder {
     int row = ArrangementConfigUtil.getRow(pair.first, tree.isRootVisible());
     ArrangementRuleEditingModelImpl model = new ArrangementRuleEditingModelImpl(
       treeModel,
-      matchCondition,
+      rule,
       topMostNode,
       pair.first,
       grouper,

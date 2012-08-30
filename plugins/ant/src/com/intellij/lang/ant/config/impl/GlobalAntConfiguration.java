@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.config.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -108,8 +107,8 @@ public class GlobalAntConfiguration implements ApplicationComponent, JDOMExterna
   }
 
   public Map<AntReference, AntInstallation> getConfiguredAnts() {
-    HashMap<AntReference, AntInstallation> map = ContainerUtil.assignKeys(ANTS.getIterator(getProperties()),
-                                                                          AntInstallation.REFERENCE_TO_ANT);
+    Map<AntReference, AntInstallation> map = ContainerUtil.newMapFromValues(ANTS.getIterator(getProperties()),
+                                                                            AntInstallation.REFERENCE_TO_ANT);
     map.put(AntReference.BUNDLED_ANT, myBundledAnt);
     return map;
   }

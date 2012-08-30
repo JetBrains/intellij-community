@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Getter;

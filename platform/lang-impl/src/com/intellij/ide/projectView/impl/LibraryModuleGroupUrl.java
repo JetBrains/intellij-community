@@ -31,16 +31,19 @@ public class LibraryModuleGroupUrl extends AbstractUrl {
     super(null, moduleName, ELEMENT_TYPE);
   }
 
+  @Override
   public Object[] createPath(Project project) {
     final Module module = moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null;
     if (module == null) return null;
     return new Object[]{new LibraryGroupElement(module)};
   }
 
+  @Override
   protected AbstractUrl createUrl(String moduleName, String url) {
       return new LibraryModuleGroupUrl(moduleName);
   }
 
+  @Override
   public AbstractUrl createUrlByElement(Object element) {
     if (element instanceof LibraryGroupElement) {
       LibraryGroupElement libraryGroupElement = (LibraryGroupElement)element;

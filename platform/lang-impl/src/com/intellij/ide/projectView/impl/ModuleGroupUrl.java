@@ -27,15 +27,18 @@ public class ModuleGroupUrl extends AbstractUrl {
     super(url, null, ELEMENT_TYPE);
   }
 
+  @Override
   public Object[] createPath(Project project) {
     final String[] groupPath = url.split(";");
     return new Object[]{new ModuleGroup(groupPath)};
   }
 
+  @Override
   protected AbstractUrl createUrl(String moduleName, String url) {
       return new ModuleGroupUrl(url);
   }
 
+  @Override
   public AbstractUrl createUrlByElement(Object element) {
     if (element instanceof ModuleGroup) {
       ModuleGroup group = (ModuleGroup)element;

@@ -1,0 +1,6 @@
+<resources>
+
+    <style name="parentStyle.s">
+        <item name="android:textColor">@android:color/green</item>
+    </style>
+</resources>

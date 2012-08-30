@@ -29,6 +29,7 @@ import com.intellij.ui.content.ContentManager;
  * @author Konstantin Bulenkov
  */
 public class FavoritesViewToolWindowFactory implements ToolWindowFactory, DumbAware {
+  @Override
   public void createToolWindowContent(Project project, ToolWindow toolWindow) {
     if (toolWindow != null) {
       final ContentManager contentManager = toolWindow.getContentManager();

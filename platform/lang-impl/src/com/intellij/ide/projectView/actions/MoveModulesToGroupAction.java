@@ -39,6 +39,7 @@ public class MoveModulesToGroupAction extends AnAction {
     myModuleGroup = moduleGroup;
   }
 
+  @Override
   public void update(AnActionEvent e) {
     Presentation presentation = getTemplatePresentation();
     final DataContext dataContext = e.getDataContext();
@@ -52,6 +53,7 @@ public class MoveModulesToGroupAction extends AnAction {
     return modules.length == 1 ? IdeBundle.message("message.module", modules[0].getName()) : IdeBundle.message("message.modules");
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);

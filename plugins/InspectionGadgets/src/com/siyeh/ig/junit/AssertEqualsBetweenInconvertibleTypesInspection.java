@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 Bas Leijdekkers
+ * Copyright 2007-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,17 +23,16 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class AssertEqualsBetweenInconvertibleTypesInspection
-  extends BaseInspection {
+public class AssertEqualsBetweenInconvertibleTypesInspection extends BaseInspection {
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "assertequals.between.inconvertible.types.display.name");
+    return InspectionGadgetsBundle.message("assertequals.between.inconvertible.types.display.name");
   }
 
   @Override
@@ -43,10 +42,9 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
     final PsiType comparisonType = (PsiType)infos[1];
     final String comparedTypeText = comparedType.getPresentableText();
     final String comparisonTypeText = comparisonType.getPresentableText();
-    return InspectionGadgetsBundle.message(
-      "assertequals.between.inconvertible.types.problem.descriptor",
-      StringUtil.escapeXml(comparedTypeText),
-      StringUtil.escapeXml(comparisonTypeText));
+    return InspectionGadgetsBundle.message("assertequals.between.inconvertible.types.problem.descriptor",
+                                           StringUtil.escapeXml(comparedTypeText),
+                                           StringUtil.escapeXml(comparisonTypeText));
   }
 
   @Override
@@ -59,17 +57,13 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
     return new AssertEqualsBetweenInconvertibleTypesVisitor();
   }
 
-  private static class AssertEqualsBetweenInconvertibleTypesVisitor
-    extends BaseInspectionVisitor {
+  private static class AssertEqualsBetweenInconvertibleTypesVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      @NonNls final String methodName =
-        methodExpression.getReferenceName();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      @NonNls final String methodName = methodExpression.getReferenceName();
       if (!"assertEquals".equals(methodName)) {
         return;
       }
@@ -78,10 +72,8 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
-      if (!InheritanceUtil.isInheritor(containingClass,
-                                       "junit.framework.Assert") &&
-          !InheritanceUtil.isInheritor(containingClass,
-                                       "org.junit.Assert")) {
+      if (!InheritanceUtil.isInheritor(containingClass, "junit.framework.Assert") &&
+          !InheritanceUtil.isInheritor(containingClass, "org.junit.Assert")) {
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();
@@ -116,23 +108,17 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
       if (type2 == null) {
         return;
       }
-      final PsiType parameterType1 =
-        parameters[argumentIndex].getType();
-      final PsiType parameterType2 =
-        parameters[argumentIndex + 1].getType();
+      final PsiType parameterType1 = parameters[argumentIndex].getType();
+      final PsiType parameterType2 = parameters[argumentIndex + 1].getType();
       if (!parameterType1.equals(parameterType2)) {
         return;
       }
-      final PsiManager manager = expression.getManager();
-      final GlobalSearchScope scope = expression.getResolveScope();
-      if (type2 instanceof PsiPrimitiveType &&
-          parameterType2.equals(PsiType.getJavaLangObject(manager,
-                                                          scope))) {
+      if (type2 instanceof PsiPrimitiveType && parameterType2.equals(TypeUtils.getObjectType(expression))) {
         final PsiPrimitiveType primitiveType = (PsiPrimitiveType)type2;
-        final PsiClassType boxedType =
-          primitiveType.getBoxedType(manager, scope);
-        if (boxedType != null &&
-            TypeConversionUtil.areTypesConvertible(type1, boxedType)) {
+        final PsiManager manager = expression.getManager();
+        final GlobalSearchScope scope = expression.getResolveScope();
+        final PsiClassType boxedType = primitiveType.getBoxedType(manager, scope);
+        if (boxedType != null && TypeConversionUtil.areTypesConvertible(type1, boxedType)) {
           return;
         }
       }

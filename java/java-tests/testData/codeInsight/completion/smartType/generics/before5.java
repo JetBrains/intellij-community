@@ -4,6 +4,6 @@ class A{
  }
 
  {
-   String str = new Map<Object, String>().g<caret>
+   String str = new Map<Object, String>().ge<caret>
  }
 }

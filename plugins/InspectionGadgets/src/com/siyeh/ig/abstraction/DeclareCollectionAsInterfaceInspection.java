@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
+import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.WeakestTypeFinder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -219,10 +220,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
         return;
       }
       final List<PsiClass> weaklingList = new ArrayList(weaklings);
-      final PsiManager manager = variable.getManager();
-      final GlobalSearchScope scope = variable.getResolveScope();
-      final PsiClassType javaLangObject =
-        PsiType.getJavaLangObject(manager, scope);
+      final PsiClassType javaLangObject = TypeUtils.getObjectType(variable);
       final PsiClass objectClass = javaLangObject.resolve();
       weaklingList.remove(objectClass);
       if (weaklingList.isEmpty()) {
@@ -276,10 +274,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
         return;
       }
       final List<PsiClass> weaklingList = new ArrayList(weaklings);
-      final PsiManager manager = method.getManager();
-      final GlobalSearchScope scope = method.getResolveScope();
-      final PsiClassType javaLangObject =
-        PsiType.getJavaLangObject(manager, scope);
+      final PsiClassType javaLangObject = TypeUtils.getObjectType(method);
       final PsiClass objectClass = javaLangObject.resolve();
       weaklingList.remove(objectClass);
       if (weaklingList.isEmpty()) {
