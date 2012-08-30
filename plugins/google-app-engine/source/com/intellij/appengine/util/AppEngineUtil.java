@@ -2,17 +2,17 @@ package com.intellij.appengine.util;
 
 import com.intellij.appengine.facet.AppEngineFacet;
 import com.intellij.facet.FacetManager;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.javaee.artifact.JavaeeArtifactUtil;
 import com.intellij.javaee.web.artifact.WebArtifactUtil;
 import com.intellij.javaee.web.facet.WebFacet;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.ui.ListCellRendererWrapper;
+import icons.GoogleAppEngineIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +28,7 @@ import java.util.List;
  * @author nik
  */
 public class AppEngineUtil {
-  public static final Icon APP_ENGINE_ICON = IconLoader.getIcon("/icons/appEngine.png");
+  public static final Icon APP_ENGINE_ICON = GoogleAppEngineIcons.AppEngine;
   @NonNls public static final String APP_ENGINE_WEB_XML_NAME = "appengine-web.xml";
   @NonNls public static final String JDO_CONFIG_XML_NAME = "jdoconfig.xml";
   @NonNls public static final String JPA_CONFIG_XML_NAME = "persistence.xml";

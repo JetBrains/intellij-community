@@ -50,7 +50,7 @@
 
   <actions>
     <action class="com.intellij.appengine.actions.UploadApplicationAction" id="AppEngine.UploadApplication"
-            text="Upload App Engine Application" icon="/icons/appEngine.png">
+            text="Upload App Engine Application" icon="GoogleAppEngineIcons.AppEngine">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
   </actions>
