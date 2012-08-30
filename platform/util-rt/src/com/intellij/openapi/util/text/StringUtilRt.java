@@ -187,6 +187,15 @@ public class StringUtilRt {
     }
   }
 
+  public static boolean parseBoolean(final String string, final boolean defaultValue) {
+    try {
+      return Boolean.parseBoolean(string);
+    }
+    catch (Exception e) {
+      return defaultValue;
+    }
+  }
+
   @NotNull
   public static String getShortName(@NotNull Class aClass) {
     return getShortName(aClass.getName());
