@@ -252,7 +252,7 @@
     <compileServer.plugin classpath="sdklib.jar;common.jar;jarutils.jar;androidprefs.jar"/>
 
     <inlineActionHandler implementation="org.jetbrains.android.refactoring.AndroidInlineStyleHandler"/>
-    <inlineActionHandler implementation="org.jetbrains.android.refactoring.AndroidInlineLayoutHandler"/>
+    <inlineActionHandler implementation="org.jetbrains.android.refactoring.AndroidInlineLayoutHandler" order="first"/>
   </extensions>
 
   <extensionPoints>
