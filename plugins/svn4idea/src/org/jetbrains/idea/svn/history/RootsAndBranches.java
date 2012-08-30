@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
@@ -34,6 +33,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.messages.Topic;
+import icons.Svn4ideaIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -468,7 +468,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     public void update(final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      presentation.setIcon(IconLoader.getIcon("/icons/ShowIntegratedTo.png"));
+      presentation.setIcon(Svn4ideaIcons.ShowIntegratedTo);
     }
 
     public boolean isSelected(final AnActionEvent e) {
@@ -489,7 +489,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     public void update(final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      presentation.setIcon(IconLoader.getIcon("/icons/ShowIntegratedFrom.png"));
+      presentation.setIcon(Svn4ideaIcons.ShowIntegratedFrom);
       presentation.setText(SvnBundle.message("committed.changes.action.enable.merge.highlighting"));
       presentation.setDescription(SvnBundle.message("committed.changes.action.enable.merge.highlighting.description.text"));
     }
@@ -537,19 +537,19 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
   private class FilterOutMerged extends CommonFilter {
     private FilterOutMerged() {
-      super(IconLoader.getIcon("/icons/FilterIntegrated.png"), SvnBundle.message("tab.repository.merge.panel.filter.plus"));
+      super(Svn4ideaIcons.FilterIntegrated, SvnBundle.message("tab.repository.merge.panel.filter.plus"));
     }
   }
 
   private class FilterOutNotMerged extends CommonFilter {
     private FilterOutNotMerged() {
-      super(IconLoader.getIcon("/icons/FilterNotIntegrated.png"), SvnBundle.message("tab.repository.merge.panel.filter.minus"));
+      super(Svn4ideaIcons.FilterNotIntegrated, SvnBundle.message("tab.repository.merge.panel.filter.minus"));
     }
   }
 
   private class FilterOutAlien extends CommonFilter {
     private FilterOutAlien() {
-      super(IconLoader.getIcon("/icons/FilterOthers.png"), SvnBundle.message("tab.repository.merge.panel.filter.others"));
+      super(Svn4ideaIcons.FilterOthers, SvnBundle.message("tab.repository.merge.panel.filter.others"));
     }
   }
 
@@ -601,7 +601,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     @Override
     protected void updateWithChecker(AnActionEvent e, SelectedCommittedStuffChecker checker) {
       final Presentation presentation = e.getPresentation();
-      presentation.setIcon(IconLoader.getIcon("/icons/MarkAsMerged.png"));
+      presentation.setIcon(Svn4ideaIcons.MarkAsMerged);
       presentation.setText(myText);
       presentation.setDescription(myDescription);
       presentation.setEnabled(presentation.isEnabled() && mergeEnabled(checker.getSelectedLists(), true));
@@ -653,7 +653,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     @Override
     protected void updateWithChecker(AnActionEvent e, SelectedCommittedStuffChecker checker) {
       final Presentation presentation = e.getPresentation();
-      presentation.setIcon(IconLoader.getIcon("/icons/MarkAsNotMerged.png"));
+      presentation.setIcon(Svn4ideaIcons.MarkAsNotMerged);
       presentation.setText(myText);
       presentation.setDescription(myDescription);
       presentation.setEnabled(presentation.isEnabled() && mergeEnabled(checker.getSelectedLists(), false));
@@ -689,7 +689,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
     @Override
     protected void updateWithChecker(AnActionEvent e, SelectedCommittedStuffChecker checker) {
-      e.getPresentation().setIcon(IconLoader.getIcon("/icons/UndoIntegrateToBranch.png"));
+      e.getPresentation().setIcon(Svn4ideaIcons.UndoIntegrateToBranch);
       e.getPresentation().setText(SvnBundle.message("undo.integrate.to.branch"));
       e.getPresentation().setDescription(SvnBundle.message("undo.integrate.to.branch.description"));
     }
@@ -742,7 +742,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
     @Override
     protected void updateWithChecker(AnActionEvent e, SelectedCommittedStuffChecker checker) {
-      e.getPresentation().setIcon(IconLoader.getIcon("/icons/IntegrateToBranch.png"));
+      e.getPresentation().setIcon(Svn4ideaIcons.IntegrateToBranch);
     }
 
     protected String getSelectedBranchUrl(SelectedCommittedStuffChecker checker) {

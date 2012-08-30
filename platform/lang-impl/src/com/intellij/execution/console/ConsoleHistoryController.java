@@ -411,8 +411,7 @@ public class ConsoleHistoryController {
 
         @Override
         protected List<String> getContents() {
-          List<String> history = myModel.getHistory();
-          return ContainerUtil.reverse(history);
+          return myModel.getHistory();
         }
 
         @Override
@@ -441,10 +440,10 @@ public class ConsoleHistoryController {
       };
       chooser.setContentIcon(null);
       chooser.setSplitterOrientation(false);
-      chooser.setSelectedIndex(Math.min(myModel.getHistorySize() - myModel.getHistoryCursor() - 1, myModel.getHistorySize() - 1));
+      chooser.setSelectedIndex(Math.max(myModel.getHistoryCursor(), 0));
       chooser.show();
       if (chooser.isOK()) {
-        setConsoleText(myModel.getHistory().get(chooser.getSelectedIndex()), false, true);
+        setConsoleText(chooser.getSelectedText(), false, true);
       }
     }
   }

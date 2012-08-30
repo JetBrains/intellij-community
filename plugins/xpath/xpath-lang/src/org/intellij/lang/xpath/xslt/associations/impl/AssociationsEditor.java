@@ -17,7 +17,6 @@ import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -26,6 +25,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.IconUtil;
 import com.intellij.util.config.StorageAccessors;
 import com.intellij.util.ui.UIUtil;
+import icons.XpathIcons;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 import org.jetbrains.annotations.NonNls;
@@ -46,7 +46,7 @@ import java.util.Collections;
 import java.util.List;
 
 class AssociationsEditor {
-  private static final Icon LINK_OVERLAY = IconLoader.getIcon("/icons/association_small.png");
+  private static final Icon LINK_OVERLAY = XpathIcons.Association_small;
   @NonNls private static final String DIVIDER_PROPORTION = "dividerProportion";
 
   private JPanel myComponent;

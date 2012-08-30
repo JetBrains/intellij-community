@@ -52,11 +52,6 @@ public class LayoutUsageData {
     }
   }
 
-  @NotNull
-  public XmlTag getIncludeTag() {
-    return myIncludeTag;
-  }
-
   private static void inlineSingleTag(XmlTag includeTag, XmlTag includeParentTag, XmlTag layoutRootTag) {
     final Map<String, String> attributesToAdd = new HashMap<String, String>();
 

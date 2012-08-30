@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.groovy.griffon;
 
-import com.intellij.openapi.util.IconLoader;
+import icons.JetgroovyIcons;
 import org.jetbrains.plugins.groovy.mvc.MvcModuleBuilder;
 
 import javax.swing.*;
@@ -9,7 +9,7 @@ import javax.swing.*;
  * @author peter
  */
 public class GriffonModuleBuilder extends MvcModuleBuilder {
-  private static final Icon GRIFFON_ICON_24x24 = IconLoader.getIcon("/icons/griffon/griffon-icon-24x24.png");
+  private static final Icon GRIFFON_ICON_24x24 = JetgroovyIcons.Griffon.Griffon_icon_24x24;
 
   public GriffonModuleBuilder() {
     super(GriffonFramework.getInstance(), GRIFFON_ICON_24x24);

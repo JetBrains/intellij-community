@@ -27,7 +27,7 @@
   <actions>
     <action class="org.intellij.images.actions.EditExternallyAction"
             id="Images.EditExternaly"
-            icon="/org/intellij/images/icons/EditExternaly.png"
+            icon="ImagesIcons.EditExternaly"
             text="Open Image in External Editor">
       <keyboard-shortcut first-keystroke="control alt F4" keymap="$default"/>
       <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
@@ -40,7 +40,7 @@
     </action>
     <action class="org.intellij.images.actions.ToggleTransparencyChessboardAction"
             id="Images.ToggleTransparencyChessboard"
-            icon="/org/intellij/images/icons/ToggleTransparencyChessboard.png"
+            icon="ImagesIcons.ToggleTransparencyChessboard"
             text="Show Chessboard"
             description="Show a chessboard on transparent image parts">
     </action>
@@ -48,24 +48,24 @@
       <reference id="Images.ToggleTransparencyChessboard"/>
       <action class="org.intellij.images.editor.actions.ToggleGridAction"
               id="Images.Editor.ToggleGrid"
-              icon="/org/intellij/images/icons/ToggleGrid.png"
+              icon="ImagesIcons.ToggleGrid"
               text="Show Grid">
         <keyboard-shortcut first-keystroke="control QUOTE" keymap="$default"/>
       </action>
       <separator/>
       <action class="org.intellij.images.editor.actions.ZoomInAction"
               id="Images.Editor.ZoomIn"
-              icon="/graph/zoomIn.png"
+              icon="AllIcons.Graph.ZoomIn"
               text="Zoom In"
               use-shortcut-of="ExpandAll" />
       <action class="org.intellij.images.editor.actions.ZoomOutAction"
               id="Images.Editor.ZoomOut"
-              icon="/graph/zoomOut.png"
+              icon="AllIcons.Graph.ZoomOut"
               text="Zoom Out"
               use-shortcut-of="CollapseAll"/>
       <action class="org.intellij.images.editor.actions.ActualSizeAction"
               id="Images.Editor.ActualSize"
-              icon="/graph/actualZoom.png"
+              icon="AllIcons.Graph.ActualZoom"
               text="Zoom to Actual Size">
         <keyboard-shortcut first-keystroke="control DIVIDE" keymap="$default"/>
         <keyboard-shortcut first-keystroke="control SLASH" keymap="$default"/>

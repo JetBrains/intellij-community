@@ -25,7 +25,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.github.GithubApiUtil;
@@ -34,6 +33,7 @@ import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
+import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
@@ -52,7 +52,7 @@ import java.util.List;
  */
 public class GithubUtil {
 
-  public static final Icon GITHUB_ICON = IconLoader.getIcon("/org/jetbrains/plugins/github/github_icon.png");
+  public static final Icon GITHUB_ICON = GithubIcons.Github_icon;
 
   public static final Logger LOG = Logger.getInstance("github");
 

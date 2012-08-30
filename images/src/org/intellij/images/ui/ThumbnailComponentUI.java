@@ -19,8 +19,8 @@
 package org.intellij.images.ui;
 
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.UIUtil;
+import icons.ImagesIcons;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.jetbrains.annotations.NonNls;
@@ -41,8 +41,8 @@ public class ThumbnailComponentUI extends ComponentUI {
     @NonNls
     private static final String THUMBNAIL_COMPONENT_ERROR_STRING = "ThumbnailComponent.errorString";
 
-    private static final Icon BLANK_ICON = IconLoader.getIcon("/org/intellij/images/icons/ThumbnailBlank.png");
-    private static final Icon DIRECTORY_ICON = IconLoader.getIcon("/org/intellij/images/icons/ThumbnailDirectory.png");
+    private static final Icon BLANK_ICON = ImagesIcons.ThumbnailBlank;
+    private static final Icon DIRECTORY_ICON = ImagesIcons.ThumbnailDirectory;
     private static final Icon ERROR_ICON = Messages.getErrorIcon();
 
     private static final Color LINE_COLOR = new Color(0x8E, 0xA8, 0xCE);

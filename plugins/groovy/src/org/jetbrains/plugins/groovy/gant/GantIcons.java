@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.gant;
 
-import com.intellij.openapi.util.IconLoader;
+import icons.JetgroovyIcons;
 
 import javax.swing.*;
 
@@ -24,11 +24,11 @@ import javax.swing.*;
  */
 public interface GantIcons {
 
-  Icon GANT_ICON_16x16 = IconLoader.getIcon("/icons/groovy/gant_16x16.png");
-  Icon GANT_SDK_ICON = IconLoader.getIcon("/icons/groovy/gant_sdk.png");
-  Icon GANT_NO_SDK_ICON = IconLoader.getIcon("/icons/groovy/no_gant_sdk.png");
-  Icon GANT_TARGET = IconLoader.getIcon("/icons/groovy/gant_target.png");
-  Icon GANT_TASK = IconLoader.getIcon("/icons/groovy/gant_task.png");
-  Icon ANT_TASK = IconLoader.getIcon("/icons/groovy/ant_task.png");
+  Icon GANT_ICON_16x16 = JetgroovyIcons.Groovy.Gant_16x16;
+  Icon GANT_SDK_ICON = JetgroovyIcons.Groovy.Gant_sdk;
+  Icon GANT_NO_SDK_ICON = JetgroovyIcons.Groovy.No_gant_sdk;
+  Icon GANT_TARGET = JetgroovyIcons.Groovy.Gant_target;
+  Icon GANT_TASK = JetgroovyIcons.Groovy.Gant_task;
+  Icon ANT_TASK = JetgroovyIcons.Groovy.Ant_task;
 
 }

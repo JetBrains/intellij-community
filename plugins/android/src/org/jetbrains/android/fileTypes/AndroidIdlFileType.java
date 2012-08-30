@@ -16,7 +16,7 @@
 package org.jetbrains.android.fileTypes;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.util.IconLoader;
+import icons.AndroidIcons;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +52,7 @@ public class AndroidIdlFileType extends LanguageFileType {
 
     @Nullable
     public Icon getIcon() {
-        return IconLoader.getIcon("/icons/android.png");
+        return AndroidIcons.Android;
     }
 
     @NotNull

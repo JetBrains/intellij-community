@@ -18,9 +18,9 @@ package com.intellij.android.designer.model.layout;
 import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import icons.AndroidDesignerIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,7 +33,7 @@ import java.util.List;
 public enum Gravity {
   left, right, center, top, bottom;
 
-  public static Icon ICON = IconLoader.getIcon("/icons/gravity.png");
+  public static Icon ICON = AndroidDesignerIcons.Gravity;
 
   public static final int NONE = 0;
   public static final int TOP = 1 << 0;

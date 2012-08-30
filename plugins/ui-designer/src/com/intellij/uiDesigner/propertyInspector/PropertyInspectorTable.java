@@ -29,7 +29,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.JavaPsiFacade;
@@ -53,6 +52,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.IndentedIcon;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
+import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -995,8 +995,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         }
       };
 
-      myExpandIcon=IconLoader.getIcon("/com/intellij/uiDesigner/icons/expandNode.png");
-      myCollapseIcon=IconLoader.getIcon("/com/intellij/uiDesigner/icons/collapseNode.png");
+      myExpandIcon= UIDesignerIcons.ExpandNode;
+      myCollapseIcon= UIDesignerIcons.CollapseNode;
       for(int i=0; i<myIndentIcons.length; i++) {
         myIndentIcons [i] = new EmptyIcon(9 + 11 * i, 9);
       }

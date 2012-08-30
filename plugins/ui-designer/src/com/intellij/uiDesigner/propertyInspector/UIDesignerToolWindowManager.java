@@ -27,7 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -42,6 +41,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.editor.UIFormEditor;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,7 +107,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(UIDesignerBundle.message("toolwindow.ui.designer"),
                                                                                myToolWindowPanel,
                                                                                ToolWindowAnchor.LEFT, myProject, true);
-    myToolWindow.setIcon(IconLoader.getIcon("/com/intellij/uiDesigner/icons/toolWindowUIDesigner.png"));
+    myToolWindow.setIcon(UIDesignerIcons.ToolWindowUIDesigner);
     myToolWindow.setAvailable(false, null);
   }
 

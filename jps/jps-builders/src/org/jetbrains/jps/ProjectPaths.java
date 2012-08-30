@@ -1,18 +1,21 @@
 package org.jetbrains.jps;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.JpsSimpleElement;
-import org.jetbrains.jps.model.java.JavaSourceRootProperties;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
-import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
-import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
+import org.jetbrains.jps.model.module.JpsDependencyElement;
+import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
+import org.jetbrains.jps.model.module.JpsSdkDependency;
 
 import java.io.File;
 import java.util.*;
@@ -21,91 +24,63 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: 9/30/11
  */
-//todo[nik] use JpsDependenciesEnumerator instead
 public class ProjectPaths {
   private static final String DEFAULT_GENERATED_DIR_NAME = "generated";
   @NotNull
   private final JpsProject myProject;
   //private final Map<JpsJavaClasspathKind, Map<ModuleChunk, List<String>>> myCachedClasspath = new HashMap<JpsJavaClasspathKind, Map<ModuleChunk, List<String>>>();
 
-  public ProjectPaths(JpsProject project) {
+  public ProjectPaths(@NotNull JpsProject project) {
     myProject = project;
   }
 
-  public Collection<File> getClasspathFiles(ModuleChunk chunk, JpsJavaClasspathKind kind) {
-    return getClasspathFiles(chunk, kind, !kind.isRuntime());
-  }
-
-  public List<String> getClasspath(ModuleChunk chunk, JpsJavaClasspathKind kind) {
-    return getPathsList(getClasspathFiles(chunk, kind));
-  }
-
-  public Collection<File> getClasspathFiles(ModuleChunk chunk, JpsJavaClasspathKind kind, final boolean excludeMainModuleOutput) {
-    return getClasspathFiles(chunk, kind, excludeMainModuleOutput, ClasspathPart.WHOLE);
+  public Collection<File> getCompilationClasspathFiles(ModuleChunk chunk,
+                                                       boolean includeTests,
+                                                       final boolean excludeMainModuleOutput,
+                                                       final boolean exportedOnly) {
+    return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(includeTests), excludeMainModuleOutput, ClasspathPart.WHOLE, exportedOnly);
   }
 
   public Collection<File> getPlatformCompilationClasspath(ModuleChunk chunk, boolean excludeMainModuleOutput) {
-    return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.isTests()), excludeMainModuleOutput, ClasspathPart.BEFORE_JDK);
+    return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.isTests()), excludeMainModuleOutput, ClasspathPart.BEFORE_JDK, true);
   }
 
   public Collection<File> getCompilationClasspath(ModuleChunk chunk, boolean excludeMainModuleOutput) {
-    return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.isTests()), excludeMainModuleOutput, ClasspathPart.AFTER_JDK);
+    return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.isTests()), excludeMainModuleOutput, ClasspathPart.AFTER_JDK, true);
   }
 
-  private Collection<File> getClasspathFiles(ModuleChunk chunk, JpsJavaClasspathKind kind, final boolean excludeMainModuleOutput, ClasspathPart classpathPart) {
+  private Collection<File> getClasspathFiles(ModuleChunk chunk,
+                                             JpsJavaClasspathKind kind,
+                                             final boolean excludeMainModuleOutput,
+                                             ClasspathPart classpathPart, final boolean exportedOnly) {
     final Set<File> files = new LinkedHashSet<File>();
     for (JpsModule module : chunk.getModules()) {
-      final ClasspathItemFilter filter = classpathPart == ClasspathPart.WHOLE ? ACCEPT_ALL :
-                                         classpathPart == ClasspathPart.BEFORE_JDK ? new BeforeSdkItemFilter(module) : new NotFilter(new BeforeSdkItemFilter(module));
-      collectClasspath(module, kind, files, new HashSet<JpsModule>(), false, excludeMainModuleOutput, false, filter);
+      JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).includedIn(kind).recursively();
+      if (exportedOnly) {
+        enumerator = enumerator.exportedOnly();
+      }
+      if (classpathPart == ClasspathPart.BEFORE_JDK) {
+        enumerator = enumerator.satisfying(new BeforeSdkItemFilter(module));
+      }
+      else if (classpathPart == ClasspathPart.AFTER_JDK) {
+        enumerator = enumerator.satisfying(Conditions.not(new BeforeSdkItemFilter(module))).withoutSdk();
+      }
+      JpsJavaDependenciesRootsEnumerator rootsEnumerator = enumerator.classes();
+      if (excludeMainModuleOutput) {
+        rootsEnumerator = rootsEnumerator.withoutSelfModuleOutput();
+      }
+      files.addAll(rootsEnumerator.getRoots());
+    }
+
+    if (classpathPart == ClasspathPart.BEFORE_JDK) {
+      for (JpsModule module : chunk.getModules()) {
+        JpsSdk<JpsDummyElement> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
+        if (sdk != null) {
+          files.addAll(sdk.getParent().getFiles(JpsOrderRootType.COMPILED));
+        }
+      }
     }
     return files;
-  }
-
-  private void collectClasspath(JpsModule module, JpsJavaClasspathKind kind, Set<File> classpath, Set<JpsModule> processed, boolean exportedOnly,
-                                boolean excludeMainModuleOutput, final boolean excludeSdk, ClasspathItemFilter filter) {
-    if (!processed.add(module)) {
-      return;
-    }
-
-    for (JpsDependencyElement it : JpsJavaExtensionService.getInstance().getDependencies(module, kind, exportedOnly)) {
-      if (!filter.accept(module, it) || it instanceof JpsSdkDependency && excludeSdk) {
-        continue;
-      }
-
-      if (it instanceof JpsModuleSourceDependency) {
-        if (!excludeMainModuleOutput && kind.isTestsIncluded()) {
-          final File out = getModuleOutputDir(module, true);
-          if (out != null) {
-            classpath.add(out);
-          }
-        }
-        if (!excludeMainModuleOutput || kind.isTestsIncluded()) {
-          final File out = getModuleOutputDir(module, false);
-          if (out != null) {
-            classpath.add(out);
-          }
-        }
-      }
-      else if (it instanceof JpsModuleDependency) {
-        final JpsModule dep = ((JpsModuleDependency)it).getModule();
-        if (dep != null) {
-          collectClasspath(dep, kind, classpath, processed, !kind.isRuntime(), false, true, filter);
-        }
-      }
-      else if (it instanceof JpsLibraryDependency) {
-        addLibraryFiles(classpath, ((JpsLibraryDependency)it).getLibrary());
-      }
-      else if (it instanceof JpsSdkDependency) {
-        addLibraryFiles(classpath, ((JpsSdkDependency)it).resolveSdk());
-      }
-    }
-  }
-
-  private static void addLibraryFiles(Set<File> classpath, @Nullable JpsLibrary library) {
-    if (library != null) {
-      classpath.addAll(library.getFiles(JpsOrderRootType.COMPILED));
-    }
   }
 
   private static void addFile(Set<File> classpath, @Nullable String url) {
@@ -114,26 +89,20 @@ public class ProjectPaths {
     }
   }
 
-  public static List<String> getPathsList(Collection<File> files) {
-    final List<String> result = new ArrayList<String>();
-    for (File file : files) {
-      result.add(getCanonicalPath(file));
-    }
-    return result;
-  }
-
   /**
+   *
    * @param chunk
-   * @param includeTests
    * @return mapping "sourceRoot" -> "package prefix" Package prefix uses slashes instead of dots and ends with trailing slash
    */
-  public static Map<File, String> getSourceRootsWithDependents(ModuleChunk chunk, boolean includeTests) {
+  public static Map<File, String> getSourceRootsWithDependents(ModuleChunk chunk) {
+    final boolean includeTests = chunk.isTests();
     final Map<File, String> result = new LinkedHashMap<File, String>();
-    collectPathsRecursively(chunk, JpsJavaClasspathKind.compile(includeTests), new PathsGetter() {
-      public void apply(JpsModule module, JpsJavaClasspathKind kind) {
+    processModulesRecursively(chunk, JpsJavaClasspathKind.compile(includeTests), new Consumer<JpsModule>() {
+      @Override
+      public void consume(JpsModule module) {
         for (JpsModuleSourceRoot root : module.getSourceRoots()) {
           if (root.getRootType().equals(JavaSourceRootType.SOURCE) ||
-              kind.isTestsIncluded() && root.getRootType().equals(JavaSourceRootType.TEST_SOURCE)) {
+              includeTests && root.getRootType().equals(JavaSourceRootType.TEST_SOURCE)) {
             JavaSourceRootProperties properties = (JavaSourceRootProperties)((JpsSimpleElement<?>)root.getProperties()).getData();
             String prefix = properties.getPackagePrefix();
             if (!prefix.isEmpty()) {
@@ -153,10 +122,12 @@ public class ProjectPaths {
     return result;
   }
 
-  public static Collection<File> getOutputPathsWithDependents(final ModuleChunk chunk, final boolean forTests) {
+  public static Collection<File> getOutputPathsWithDependents(final ModuleChunk chunk) {
+    final boolean forTests = chunk.isTests();
     final Set<File> sourcePaths = new LinkedHashSet<File>();
-    collectPathsRecursively(chunk, JpsJavaClasspathKind.compile(forTests), new PathsGetter() {
-      public void apply(JpsModule module, JpsJavaClasspathKind kind) {
+    processModulesRecursively(chunk, JpsJavaClasspathKind.compile(forTests), new Consumer<JpsModule>() {
+      @Override
+      public void consume(JpsModule module) {
         addFile(sourcePaths, JpsJavaExtensionService.getInstance().getOutputUrl(module, forTests));
       }
     });
@@ -164,40 +135,11 @@ public class ProjectPaths {
   }
 
   public static Set<JpsModule> getModulesWithDependentsRecursively(final JpsModule module, final boolean includeTests) {
-    final Set<JpsModule> result = new HashSet<JpsModule>();
-    collectPathsRecursively(module, JpsJavaClasspathKind.compile(includeTests), new HashSet<JpsModule>(), new PathsGetter() {
-      public void apply(JpsModule module, JpsJavaClasspathKind kind) {
-        result.add(module);
-      }
-    });
-    return result;
+    return JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.compile(includeTests)).recursively().getModules();
   }
 
-  private interface PathsGetter {
-    void apply(JpsModule module, JpsJavaClasspathKind kind);
-  }
-
-  private static void collectPathsRecursively(ModuleChunk chunk, JpsJavaClasspathKind kind, PathsGetter proc) {
-    final HashSet<JpsModule> processed = new HashSet<JpsModule>();
-    for (JpsModule module : chunk.getModules()) {
-      collectPathsRecursively(module, kind, processed, proc);
-    }
-  }
-
-  private static void collectPathsRecursively(JpsModule module, JpsJavaClasspathKind kind, Set<JpsModule> processed, PathsGetter processor) {
-    if (processed.add(module)) {
-      for (JpsDependencyElement item : JpsJavaExtensionService.getInstance().getDependencies(module, kind, false)) {
-        if (item instanceof JpsModuleSourceDependency) {
-          processor.apply(module, kind);
-        }
-        else if (item instanceof JpsModuleDependency) {
-          final JpsModule dep = ((JpsModuleDependency)item).getModule();
-          if (dep != null) {
-            collectPathsRecursively(dep, kind, processed, processor);
-          }
-        }
-      }
-    }
+  private static void processModulesRecursively(ModuleChunk chunk, JpsJavaClasspathKind kind, Consumer<JpsModule> processor) {
+    JpsJavaExtensionService.getInstance().enumerateDependencies(chunk.getModules()).includedIn(kind).recursively().processModules(processor);
   }
 
   @Nullable
@@ -235,34 +177,9 @@ public class ProjectPaths {
     return new File(parentFile, outputDir.getName() + "_" + DEFAULT_GENERATED_DIR_NAME);
   }
 
-  public List<String> getProjectRuntimeClasspath(boolean includeTests) {
-    Set<File> classpath = new LinkedHashSet<File>();
-    final JpsJavaClasspathKind kind = JpsJavaClasspathKind.runtime(includeTests);
-    for (JpsModule module : myProject.getModules()) {
-      collectClasspath(module, kind, classpath, new HashSet<JpsModule>(), false, false, false, WITHOUT_DEP_MODULES);
-    }
-    return getPathsList(classpath);
-  }
-
-  private interface ClasspathItemFilter {
-    boolean accept(JpsModule module, JpsDependencyElement item);
-  }
-
   private enum ClasspathPart {WHOLE, BEFORE_JDK, AFTER_JDK}
 
-  private static final ClasspathItemFilter ACCEPT_ALL = new ClasspathItemFilter() {
-    public boolean accept(JpsModule module, JpsDependencyElement item) {
-      return true;
-    }
-  };
-
-  private static final ClasspathItemFilter WITHOUT_DEP_MODULES = new ClasspathItemFilter() {
-    public boolean accept(JpsModule module, JpsDependencyElement item) {
-      return !(item instanceof JpsModuleDependency);
-    }
-  };
-
-  private static class BeforeSdkItemFilter implements ClasspathItemFilter {
+  private static class BeforeSdkItemFilter implements Condition<JpsDependencyElement> {
     private JpsModule myModule;
     private boolean mySdkFound;
 
@@ -270,30 +187,13 @@ public class ProjectPaths {
       myModule = module;
     }
 
-    public boolean accept(JpsModule module, JpsDependencyElement item) {
-      if (myModule.equals(module) && item instanceof JpsSdkDependency) {
+    @Override
+    public boolean value(JpsDependencyElement dependency) {
+      if (myModule.equals(dependency.getContainingModule()) && dependency instanceof JpsSdkDependency) {
         mySdkFound = true;
-        return true;
       }
-      return !mySdkFound && !(item instanceof JpsSdkDependency);
+      return !mySdkFound && !(dependency instanceof JpsSdkDependency);
     }
-  }
-
-  private static class NotFilter implements ClasspathItemFilter {
-    private ClasspathItemFilter myFilter;
-
-    private NotFilter(ClasspathItemFilter filter) {
-      myFilter = filter;
-    }
-
-    public boolean accept(JpsModule module, JpsDependencyElement item) {
-      return !myFilter.accept(module, item);
-    }
-  }
-
-  private static String getCanonicalPath(File file) {
-    final String path = file.getPath();
-    return path.contains(".")? FileUtil.toCanonicalPath(path) : FileUtil.toSystemIndependentName(path);
   }
 
 }

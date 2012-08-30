@@ -1,9 +1,9 @@
 package com.intellij.lang.properties.xml;
 
 import com.intellij.ide.IconProvider;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
+import icons.PropertiesIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -14,7 +14,7 @@ import javax.swing.*;
  */
 public class XmlPropertiesIconProvider extends IconProvider {
 
-  private static final Icon ICON = IconLoader.getIcon("/icons/xmlProperties.png");
+  private static final Icon ICON = PropertiesIcons.XmlProperties;
 
   @Override
   public Icon getIcon(@NotNull PsiElement element, int flags) {

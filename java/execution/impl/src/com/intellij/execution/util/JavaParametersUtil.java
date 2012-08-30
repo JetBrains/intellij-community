@@ -29,12 +29,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -79,8 +80,16 @@ public class JavaParametersUtil {
     if (virtualFile == null) throw CantRunException.classNotFound(mainClassName, module);
     Module classModule = new JUnitUtil.ModuleOfClass().convert(psiClass);
     if (classModule == null) classModule = module;
-    return ModuleRootManager.getInstance(classModule).getFileIndex().
-      isInTestSourceContent(virtualFile) ? JavaParameters.JDK_AND_CLASSES_AND_TESTS : JavaParameters.JDK_AND_CLASSES;
+    ModuleFileIndex fileIndex = ModuleRootManager.getInstance(classModule).getFileIndex();
+    if (fileIndex.isInSourceContent(virtualFile)) {
+      return fileIndex.
+        isInTestSourceContent(virtualFile) ? JavaParameters.JDK_AND_CLASSES_AND_TESTS : JavaParameters.JDK_AND_CLASSES;
+    }
+    final List<OrderEntry> entriesForFile = fileIndex.getOrderEntriesForFile(virtualFile);
+    for (OrderEntry entry : entriesForFile) {
+      if (entry instanceof ExportableOrderEntry && ((ExportableOrderEntry)entry).getScope() == DependencyScope.TEST) return JavaParameters.JDK_AND_CLASSES_AND_TESTS;
+    }
+    return JavaParameters.JDK_AND_CLASSES;
   }
 
   public static void configureModule(final RunConfigurationModule runConfigurationModule,

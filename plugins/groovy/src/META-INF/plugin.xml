@@ -1235,7 +1235,7 @@
     <projectStructureDetector implementation="org.jetbrains.plugins.groovy.griffon.GriffonProjectStructureDetector"/>
     <programRunner implementation="org.jetbrains.plugins.groovy.griffon.GriffonDebuggerRunner"/>
     <configurationType implementation="org.jetbrains.plugins.groovy.griffon.GriffonRunConfigurationType"/>
-    <toolWindow id="Griffon View" anchor="left" secondary="false" icon="/icons/griffon/griffonToolWindow.png"
+    <toolWindow id="Griffon View" anchor="left" secondary="false" icon="JetgroovyIcons.Griffon.GriffonToolWindow"
                 factoryClass="org.jetbrains.plugins.groovy.griffon.GriffonToolWindowFactory"
                 conditionClass="org.jetbrains.plugins.groovy.griffon.GriffonToolWindowFactory"/>
 
@@ -1345,13 +1345,13 @@
     <action id="Groovy.Doc.Generating"
             class="org.jetbrains.plugins.groovy.doc.actions.GenerateGroovyDocAction"
             text="Generate GroovyDoc" description="Generating Groovy Documentation"
-            icon="/icons/groovy/GroovyDoc.png">
+            icon="JetgroovyIcons.Groovy.GroovyDoc">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
     <action id="Groovy.Console"
             class="org.jetbrains.plugins.groovy.console.GroovyShellAction"
             text="Groovy Shell..." description="Launch Groovy Shell"
-            icon="/icons/groovy/groovy_16x16.png">
+            icon="JetgroovyIcons.Groovy.Groovy_16x16">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 

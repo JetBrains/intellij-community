@@ -9,5 +9,9 @@ import javax.swing.*;
  * Don't repeat mistakes of others ;-)
  */
 public class GenerateTostringIcons {
-  public static final Icon ConfigurableToStringPlugin = IconLoader.getIcon("/configurableToStringPlugin.png"); // 32x33
+  private static Icon load(String path) {
+    return IconLoader.getIcon(path, GenerateTostringIcons.class);
+  }
+
+  public static final Icon ConfigurableToStringPlugin = load("/configurableToStringPlugin.png"); // 32x33
 }

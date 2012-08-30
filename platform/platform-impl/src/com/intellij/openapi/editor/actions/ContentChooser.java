@@ -316,11 +316,6 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   private class MyListCellRenderer extends ColoredListCellRenderer {
     @Override
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      // Fix GTK background
-      if (UIUtil.isUnderGTKLookAndFeel()){
-        final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-        UIUtil.changeBackGround(this, background);
-      }
       setIcon(myListEntryIcon);
       if (myUseIdeaEditor) {
         int max = list.getModel().getSize();
@@ -330,6 +325,11 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
         Arrays.fill(spaces, ' ');
         String prefix = indexString + new String(spaces) + "  ";
         append(prefix, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      }
+      else if (UIUtil.isUnderGTKLookAndFeel()) {
+        // Fix GTK background
+        Color background = selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground();
+        UIUtil.changeBackGround(this, background);
       }
       String text = (String)value;
 

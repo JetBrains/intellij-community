@@ -9,14 +9,18 @@ import javax.swing.*;
  * Don't repeat mistakes of others ;-)
  */
 public class RearrangerIcons {
-  public static final Icon ClassInitializer = IconLoader.getIcon("/com/wrq/rearranger/ClassInitializer.png"); // 18x18
-  public static final Icon RearrangerIcon = IconLoader.getIcon("/com/wrq/rearranger/RearrangerIcon.png"); // 32x32
-  public static final Icon ShowComments = IconLoader.getIcon("/com/wrq/rearranger/ShowComments.png"); // 28x28
-  public static final Icon ShowFields = IconLoader.getIcon("/com/wrq/rearranger/ShowFields.png"); // 28x28
-  public static final Icon ShowMatchedRules = IconLoader.getIcon("/com/wrq/rearranger/ShowMatchedRules.png"); // 28x28
-  public static final Icon ShowParamNames = IconLoader.getIcon("/com/wrq/rearranger/ShowParamNames.png"); // 28x28
-  public static final Icon ShowParamTypes = IconLoader.getIcon("/com/wrq/rearranger/ShowParamTypes.png"); // 28x28
-  public static final Icon ShowRules = IconLoader.getIcon("/com/wrq/rearranger/ShowRules.png"); // 28x28
-  public static final Icon ShowTypeAfterMethod = IconLoader.getIcon("/com/wrq/rearranger/ShowTypeAfterMethod.png"); // 28x28
-  public static final Icon StaticClassInitializer = IconLoader.getIcon("/com/wrq/rearranger/StaticClassInitializer.png"); // 18x18
+  private static Icon load(String path) {
+    return IconLoader.getIcon(path, RearrangerIcons.class);
+  }
+
+  public static final Icon ClassInitializer = load("/com/wrq/rearranger/ClassInitializer.png"); // 18x18
+  public static final Icon RearrangerIcon = load("/com/wrq/rearranger/RearrangerIcon.png"); // 32x32
+  public static final Icon ShowComments = load("/com/wrq/rearranger/ShowComments.png"); // 28x28
+  public static final Icon ShowFields = load("/com/wrq/rearranger/ShowFields.png"); // 28x28
+  public static final Icon ShowMatchedRules = load("/com/wrq/rearranger/ShowMatchedRules.png"); // 28x28
+  public static final Icon ShowParamNames = load("/com/wrq/rearranger/ShowParamNames.png"); // 28x28
+  public static final Icon ShowParamTypes = load("/com/wrq/rearranger/ShowParamTypes.png"); // 28x28
+  public static final Icon ShowRules = load("/com/wrq/rearranger/ShowRules.png"); // 28x28
+  public static final Icon ShowTypeAfterMethod = load("/com/wrq/rearranger/ShowTypeAfterMethod.png"); // 28x28
+  public static final Icon StaticClassInitializer = load("/com/wrq/rearranger/StaticClassInitializer.png"); // 18x18
 }

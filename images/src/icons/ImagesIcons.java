@@ -9,12 +9,16 @@ import javax.swing.*;
  * Don't repeat mistakes of others ;-)
  */
 public class ImagesIcons {
-  public static final Icon EditExternaly = IconLoader.getIcon("/org/intellij/images/icons/EditExternaly.png"); // 16x16
-  public static final Icon ImagesConfigurable = IconLoader.getIcon("/org/intellij/images/icons/ImagesConfigurable.png"); // 32x32
-  public static final Icon ImagesFileType = IconLoader.getIcon("/org/intellij/images/icons/ImagesFileType.png"); // 18x18
-  public static final Icon ThumbnailBlank = IconLoader.getIcon("/org/intellij/images/icons/ThumbnailBlank.png"); // 75x86
-  public static final Icon ThumbnailDirectory = IconLoader.getIcon("/org/intellij/images/icons/ThumbnailDirectory.png"); // 75x82
-  public static final Icon ThumbnailToolWindow = IconLoader.getIcon("/org/intellij/images/icons/ThumbnailToolWindow.png"); // 13x13
-  public static final Icon ToggleGrid = IconLoader.getIcon("/org/intellij/images/icons/ToggleGrid.png"); // 16x16
-  public static final Icon ToggleTransparencyChessboard = IconLoader.getIcon("/org/intellij/images/icons/ToggleTransparencyChessboard.png"); // 18x18
+  private static Icon load(String path) {
+    return IconLoader.getIcon(path, ImagesIcons.class);
+  }
+
+  public static final Icon EditExternaly = load("/org/intellij/images/icons/EditExternaly.png"); // 16x16
+  public static final Icon ImagesConfigurable = load("/org/intellij/images/icons/ImagesConfigurable.png"); // 32x32
+  public static final Icon ImagesFileType = load("/org/intellij/images/icons/ImagesFileType.png"); // 18x18
+  public static final Icon ThumbnailBlank = load("/org/intellij/images/icons/ThumbnailBlank.png"); // 75x86
+  public static final Icon ThumbnailDirectory = load("/org/intellij/images/icons/ThumbnailDirectory.png"); // 75x82
+  public static final Icon ThumbnailToolWindow = load("/org/intellij/images/icons/ThumbnailToolWindow.png"); // 13x13
+  public static final Icon ToggleGrid = load("/org/intellij/images/icons/ToggleGrid.png"); // 16x16
+  public static final Icon ToggleTransparencyChessboard = load("/org/intellij/images/icons/ToggleTransparencyChessboard.png"); // 18x18
 }

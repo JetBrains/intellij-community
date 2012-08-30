@@ -39,6 +39,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.radComponents.RadAtomicComponent;
+import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -195,7 +196,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
       }
     }
     if(myIcon == null){
-      myIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/unknown.png");
+      myIcon = UIDesignerIcons.Unknown;
      }
     LOG.assertTrue(myIcon != null);
     return myIcon;

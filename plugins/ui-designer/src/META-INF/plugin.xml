@@ -157,7 +157,7 @@
       <action id="GuiDesigner.PreviewForm" class="com.intellij.uiDesigner.actions.PreviewFormAction"
               icon="AllIcons.Actions.Preview"/>
       <action id="GuiDesigner.DataBindingWizard" class="com.intellij.uiDesigner.actions.DataBindingWizardAction"
-              icon="/com/intellij/uiDesigner/icons/dataBindingWizard.png"/>
+              icon="UIDesignerIcons.DataBindingWizard"/>
       <action id="GuiDesigner.ReloadCustomComponents" class="com.intellij.uiDesigner.actions.ReloadCustomComponentsAction"
               icon="AllIcons.Actions.Refresh"/>
       <action id="GuiDesigner.ChooseLocale" class="com.intellij.uiDesigner.actions.ChooseLocaleAction"/>

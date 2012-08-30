@@ -245,7 +245,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
 
   private void createNewResourceFile(ResourceType resourceType) {
     AndroidFacet facet = AndroidFacet.getInstance(myModule);
-    XmlFile newFile = CreateResourceFileAction.createFileResource(facet, resourceType, null, null, null, true);
+    XmlFile newFile = CreateResourceFileAction.createFileResource(facet, resourceType, null, null, null, true, null);
 
     if (newFile != null) {
       String name = newFile.getName();

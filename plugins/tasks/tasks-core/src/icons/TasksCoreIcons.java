@@ -9,27 +9,31 @@ import javax.swing.*;
  * Don't repeat mistakes of others ;-)
  */
 public class TasksCoreIcons {
-  public static final Icon Bug = IconLoader.getIcon("/icons/bug.png"); // 16x16
-  public static final Icon Exception = IconLoader.getIcon("/icons/exception.png"); // 16x16
-  public static final Icon Feature = IconLoader.getIcon("/icons/feature.png"); // 16x16
-  public static final Icon Github = IconLoader.getIcon("/icons/github.png"); // 16x16
-  public static final Icon Mantis = IconLoader.getIcon("/icons/mantis.png"); // 16x16
-  public static final Icon Navigate = IconLoader.getIcon("/icons/navigate.png"); // 16x16
-  public static final Icon Other = IconLoader.getIcon("/icons/other.png"); // 16x16
+  private static Icon load(String path) {
+    return IconLoader.getIcon(path, TasksCoreIcons.class);
+  }
+
+  public static final Icon Bug = load("/icons/bug.png"); // 16x16
+  public static final Icon Exception = load("/icons/exception.png"); // 16x16
+  public static final Icon Feature = load("/icons/feature.png"); // 16x16
+  public static final Icon Github = load("/icons/github.png"); // 16x16
+  public static final Icon Mantis = load("/icons/mantis.png"); // 16x16
+  public static final Icon Navigate = load("/icons/navigate.png"); // 16x16
+  public static final Icon Other = load("/icons/other.png"); // 16x16
   
   public static class Pivotal {
-    public static final Icon Bug = IconLoader.getIcon("/icons/pivotal/bug.png"); // 14x14
-    public static final Icon Chore = IconLoader.getIcon("/icons/pivotal/chore.png"); // 14x14
-    public static final Icon Feature = IconLoader.getIcon("/icons/pivotal/feature.png"); // 14x14
-    public static final Icon Release = IconLoader.getIcon("/icons/pivotal/release.png"); // 14x14
+    public static final Icon Bug = load("/icons/pivotal/bug.png"); // 14x14
+    public static final Icon Chore = load("/icons/pivotal/chore.png"); // 14x14
+    public static final Icon Feature = load("/icons/pivotal/feature.png"); // 14x14
+    public static final Icon Release = load("/icons/pivotal/release.png"); // 14x14
 
   }
-  public static final Icon Pivotal = IconLoader.getIcon("/icons/pivotal.png"); // 16x16
-  public static final Icon Redmine = IconLoader.getIcon("/icons/redmine.png"); // 16x16
-  public static final Icon Save = IconLoader.getIcon("/icons/save.png"); // 16x16
-  public static final Icon SavedContext = IconLoader.getIcon("/icons/savedContext.png"); // 16x16
-  public static final Icon Trac = IconLoader.getIcon("/icons/trac.png"); // 16x16
-  public static final Icon Unknown = IconLoader.getIcon("/icons/unknown.png"); // 16x16
-  public static final Icon Web = IconLoader.getIcon("/icons/web.png"); // 16x16
-  public static final Icon Youtrack = IconLoader.getIcon("/icons/youtrack.png"); // 16x16
+  public static final Icon Pivotal = load("/icons/pivotal.png"); // 16x16
+  public static final Icon Redmine = load("/icons/redmine.png"); // 16x16
+  public static final Icon Save = load("/icons/save.png"); // 16x16
+  public static final Icon SavedContext = load("/icons/savedContext.png"); // 16x16
+  public static final Icon Trac = load("/icons/trac.png"); // 16x16
+  public static final Icon Unknown = load("/icons/unknown.png"); // 16x16
+  public static final Icon Web = load("/icons/web.png"); // 16x16
+  public static final Icon Youtrack = load("/icons/youtrack.png"); // 16x16
 }

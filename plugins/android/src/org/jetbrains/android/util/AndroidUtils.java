@@ -55,7 +55,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -77,6 +76,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
+import icons.AndroidIcons;
 import org.jetbrains.android.dom.AndroidDomUtil;
 import org.jetbrains.android.dom.manifest.Activity;
 import org.jetbrains.android.dom.manifest.Application;
@@ -103,11 +103,11 @@ public class AndroidUtils {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.util.AndroidUtils");
 
   // Icons
-  public static final Icon ANDROID_TOOLWINDOW_ICON = IconLoader.getIcon("/icons/androidToolWindow.png");
-  public static final Icon ANDROID_ICON = IconLoader.getIcon("/icons/android.png");
-  public static final Icon DDMS_ICON = IconLoader.getIcon("/icons/ddms.png");
-  public static final Icon RESTART_LOGCAT_ICON = IconLoader.getIcon("/icons/restartLogcat.png");
-  public static final Icon ANDROID_ICON_24 = IconLoader.getIcon("/icons/android24.png");
+  public static final Icon ANDROID_TOOLWINDOW_ICON = AndroidIcons.AndroidToolWindow;
+  public static final Icon ANDROID_ICON = AndroidIcons.Android;
+  public static final Icon DDMS_ICON = AndroidIcons.Ddms;
+  public static final Icon RESTART_LOGCAT_ICON = AndroidIcons.RestartLogcat;
+  public static final Icon ANDROID_ICON_24 = AndroidIcons.Android24;
 
   @NonNls public static final String NAMESPACE_KEY = "android";
   @NonNls public static final String SYSTEM_RESOURCE_PACKAGE = "android";

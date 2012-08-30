@@ -16,11 +16,11 @@
 package com.intellij.tasks.trac;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.tasks.impl.BaseRepositoryType;
 import com.intellij.util.Consumer;
+import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,7 +30,7 @@ import javax.swing.*;
  */
 public class TracRepositoryType extends BaseRepositoryType<TracRepository> {
 
-  private static final Icon ICON = IconLoader.getIcon("/icons/trac.png");
+  private static final Icon ICON = TasksCoreIcons.Trac;
 
   @NotNull
   @Override

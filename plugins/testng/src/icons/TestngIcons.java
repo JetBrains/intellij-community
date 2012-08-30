@@ -9,5 +9,9 @@ import javax.swing.*;
  * Don't repeat mistakes of others ;-)
  */
 public class TestngIcons {
-  public static final Icon TestNG = IconLoader.getIcon("/resources/testNG.png"); // 16x16
+  private static Icon load(String path) {
+    return IconLoader.getIcon(path, TestngIcons.class);
+  }
+
+  public static final Icon TestNG = load("/resources/testNG.png"); // 16x16
 }

@@ -9,8 +9,12 @@ import javax.swing.*;
  * Don't repeat mistakes of others ;-)
  */
 public class GradleIcons {
-  public static final Icon Gradle = IconLoader.getIcon("/icons/gradle.png"); // 16x16
-  public static final Icon GradleImport = IconLoader.getIcon("/icons/gradleImport.png"); // 16x16
-  public static final Icon GradleNavigate = IconLoader.getIcon("/icons/gradleNavigate.png"); // 16x16
-  public static final Icon ToolWindowGradle = IconLoader.getIcon("/icons/toolWindowGradle.png"); // 13x13
+  private static Icon load(String path) {
+    return IconLoader.getIcon(path, GradleIcons.class);
+  }
+
+  public static final Icon Gradle = load("/icons/gradle.png"); // 16x16
+  public static final Icon GradleImport = load("/icons/gradleImport.png"); // 16x16
+  public static final Icon GradleNavigate = load("/icons/gradleNavigate.png"); // 16x16
+  public static final Icon ToolWindowGradle = load("/icons/toolWindowGradle.png"); // 13x13
 }

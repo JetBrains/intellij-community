@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.CalledInBackground;
 import com.intellij.util.continuation.Continuation;
@@ -25,10 +24,12 @@ import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 public abstract class RunOrContinuation<T> {
   protected final Project myProject;
   private final String myTaskTitle;
-  private boolean myWasCanceled;
+  private volatile boolean myWasCanceled;
 
   protected RunOrContinuation(final Project project, final String taskTitle) {
     myProject = project;
@@ -50,7 +51,7 @@ public abstract class RunOrContinuation<T> {
 
   @CalledInAwt
   public TaskDescriptor getTask() {
-    final Ref<T> refT = new Ref<T>();
+    final AtomicReference<T> refT = new AtomicReference<T>();
 
     final TaskDescriptor pooled = new TaskDescriptor(myTaskTitle, Where.POOLED) {
       @Override
@@ -71,7 +72,7 @@ public abstract class RunOrContinuation<T> {
       @Override
       public void run(ContinuationContext context) {
         refT.set(calculate());
-        if ((! myWasCanceled) && (! refT.isNull())) {
+        if ((! myWasCanceled) && (refT.get() != null)) {
           processResult(refT.get());
           return;
         }

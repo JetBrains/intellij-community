@@ -17,10 +17,10 @@
 package org.intellij.plugins.xsltDebugger.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
+import icons.XsltDebuggerIcons;
 import org.intellij.plugins.xsltDebugger.rt.engine.OutputEventQueue;
 
 import javax.swing.*;
@@ -32,7 +32,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
  * Date: 09.06.2007
  */
 class GeneratedStructureRenderer extends ColoredTreeCellRenderer {
-  private static final Icon XML_COMMENT_ICON = IconLoader.getIcon("xmlComment.png");
+  private static final Icon XML_COMMENT_ICON = XsltDebuggerIcons.XmlComment;
 
   public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;

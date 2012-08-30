@@ -99,9 +99,10 @@ public class CreateResourceFileAction extends CreateElementActionBase {
                                            @Nullable String resName,
                                            @Nullable String rootElement,
                                            @Nullable FolderConfiguration config,
-                                           boolean chooseResName) {
+                                           boolean chooseResName,
+                                           @Nullable String dialogTitle) {
     final PsiElement[] elements = doCreateFileResource(facet, resType, resName, rootElement,
-                                                       config, chooseResName);
+                                                       config, chooseResName, dialogTitle);
     if (elements.length == 0) {
       return null;
     }
@@ -115,7 +116,8 @@ public class CreateResourceFileAction extends CreateElementActionBase {
                                                    @Nullable String resName,
                                                    @Nullable String rootElement,
                                                    @Nullable FolderConfiguration config,
-                                                   boolean chooseResName) {
+                                                   boolean chooseResName,
+                                                   @Nullable String dialogTitle) {
     final CreateResourceFileAction action = getInstance();
 
     final String subdirName;
@@ -127,6 +129,9 @@ public class CreateResourceFileAction extends CreateElementActionBase {
     else {
       final MyDialog dialog = new MyDialog(facet, action.mySubactions.values(), resType, resName, rootElement,
                                            config, chooseResName, action, facet.getModule(), true);
+      if (dialogTitle != null) {
+        dialog.setTitle(dialogTitle);
+      }
       dialog.show();
       if (!dialog.isOK()) {
         return PsiElement.EMPTY_ARRAY;
