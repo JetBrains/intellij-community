@@ -106,6 +106,8 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(psiElement, PsiModifierListOwner.class);
     assertNotNull(listOwner);
     assertNotNull(ExternalAnnotationsManager.getInstance(project).findExternalAnnotation(listOwner, AnnotationUtil.NOT_NULL));
+
+    myFixture.checkResultByFile("content/anno/p/annotations.xml", "content/anno/p/annotationsAnnotateLibrary_after.xml", false);
   }
 
   public void testPrimitive() throws Throwable {

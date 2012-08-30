@@ -607,7 +607,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
   @NotNull
   private static String createAnnotationTag(@NotNull String annotationFQName, @Nullable PsiNameValuePair[] values) {
     @NonNls String text;
-    if (values != null) {
+    if (values != null && values.length != 0) {
       text = "  <annotation name=\'" + annotationFQName + "\'>\n";
       text += StringUtil.join(values, new Function<PsiNameValuePair, String>() {
         @NonNls
