@@ -961,6 +961,10 @@ public class Mappings {
     }
 
     private void processAddedMethods(final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
+      final Collection<MethodRepr> added = diff.methods().added();
+      if (added.isEmpty()) {
+        return;
+      }
       debug("Processing added methods: ");
       if (it.isAnnotation()) {
         debug("Class is annotation, skipping method analysis");
@@ -968,7 +972,7 @@ public class Mappings {
       }
       final TIntHashSet affectedFiles = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
       Ref<ClassRepr> oldItRef = null;
-      for (final MethodRepr m : diff.methods().added()) {
+      for (final MethodRepr m : added) {
         debug("Method: ", m.name);
         if ((it.access & Opcodes.ACC_INTERFACE) > 0 ||
             (it.access & Opcodes.ACC_ABSTRACT) > 0 ||
@@ -1094,9 +1098,13 @@ public class Mappings {
     }
 
     private void processRemovedMethods(final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
+      final Collection<MethodRepr> removed = diff.methods().removed();
+      if (removed.isEmpty()) {
+        return;
+      }
       debug("Processing removed methods:");
       final TIntHashSet affectedFiles = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
-      for (final MethodRepr m : diff.methods().removed()) {
+      for (final MethodRepr m : removed) {
         debug("Method ", m.name);
 
         final Collection<Pair<MethodRepr, ClassRepr>> overridenMethods = myFuture.findOverriddenMethods(m, it);
@@ -1198,8 +1206,12 @@ public class Mappings {
     }
 
     private void processChangedMethods(final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
+      final Collection<Pair<MethodRepr, Difference>> changed = diff.methods().changed();
+      if (changed.isEmpty()) {
+        return;
+      }
       debug("Processing changed methods:");
-      for (final Pair<MethodRepr, Difference> mr : diff.methods().changed()) {
+      for (final Pair<MethodRepr, Difference> mr : changed) {
         final MethodRepr m = mr.first;
         final MethodRepr.Diff d = (MethodRepr.Diff)mr.second;
         final boolean throwsChanged = (d.exceptions().added().size() > 0) || (d.exceptions().changed().size() > 0);
@@ -1305,9 +1317,13 @@ public class Mappings {
     }
 
     private boolean processAddedFields(final DiffState state, final ClassRepr.Diff diff, final ClassRepr classRepr) {
+      final Collection<FieldRepr> added = diff.fields().added();
+      if (added.isEmpty()) {
+        return true;
+      }
       debug("Processing added fields");
 
-      for (final FieldRepr f : diff.fields().added()) {
+      for (final FieldRepr f : added) {
         debug("Field: ", f.name);
 
         final boolean fPrivate = (f.access & Opcodes.ACC_PRIVATE) > 0;
@@ -1405,9 +1421,13 @@ public class Mappings {
     }
 
     private boolean processRemovedFields(final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
+      final Collection<FieldRepr> removed = diff.fields().removed();
+      if (removed.isEmpty()) {
+        return true;
+      }
       debug("Processing removed fields:");
 
-      for (final FieldRepr f : diff.fields().removed()) {
+      for (final FieldRepr f : removed) {
         debug("Field: ", f.name);
 
         if ((f.access & Opcodes.ACC_PRIVATE) == 0 && (f.access & DESPERATE_MASK) == DESPERATE_MASK && f.hasValue()) {
@@ -1432,9 +1452,13 @@ public class Mappings {
     }
 
     private boolean processChangedFields(final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
+      final Collection<Pair<FieldRepr, Difference>> changed = diff.fields().changed();
+      if (changed.isEmpty()) {
+        return true;
+      }
       debug("Processing changed fields:");
 
-      for (final Pair<FieldRepr, Difference> f : diff.fields().changed()) {
+      for (final Pair<FieldRepr, Difference> f : changed) {
         final Difference d = f.second;
         final FieldRepr field = f.first;
 
@@ -1514,162 +1538,170 @@ public class Mappings {
     }
 
     private boolean processChangedClasses(final DiffState state) {
-      debug("Processing changed classes:");
-      for (final Pair<ClassRepr, Difference> changed : state.myClassDiff.changed()) {
-        final ClassRepr it = changed.first;
-        final ClassRepr.Diff diff = (ClassRepr.Diff)changed.second;
+      final Collection<Pair<ClassRepr, Difference>> changedClasses = state.myClassDiff.changed();
+      if (!changedClasses.isEmpty()) {
+        debug("Processing changed classes:");
 
-        myDelta.addChangedClass(it.name);
+        for (final Pair<ClassRepr, Difference> changed : changedClasses) {
+          final ClassRepr it = changed.first;
+          final ClassRepr.Diff diff = (ClassRepr.Diff)changed.second;
 
-        debug("Changed: ", it.name);
+          myDelta.addChangedClass(it.name);
 
-        final int addedModifiers = diff.addedModifiers();
+          debug("Changed: ", it.name);
 
-        final boolean superClassChanged = (diff.base() & Difference.SUPERCLASS) > 0;
-        final boolean interfacesChanged = !diff.interfaces().unchanged();
-        final boolean signatureChanged = (diff.base() & Difference.SIGNATURE) > 0;
+          final int addedModifiers = diff.addedModifiers();
 
-        if (superClassChanged) {
-          myDelta.registerRemovedSuperClass(it.name, ((TypeRepr.ClassType)it.getSuperClass()).myClassName);
+          final boolean superClassChanged = (diff.base() & Difference.SUPERCLASS) > 0;
+          final boolean interfacesChanged = !diff.interfaces().unchanged();
+          final boolean signatureChanged = (diff.base() & Difference.SIGNATURE) > 0;
 
-          final ClassRepr newClass = myDelta.getReprByName(it.name);
+          if (superClassChanged) {
+            myDelta.registerRemovedSuperClass(it.name, ((TypeRepr.ClassType)it.getSuperClass()).myClassName);
 
-          assert (newClass != null);
+            final ClassRepr newClass = myDelta.getReprByName(it.name);
 
-          myDelta.registerAddedSuperClass(it.name, ((TypeRepr.ClassType)newClass.getSuperClass()).myClassName);
-        }
+            assert (newClass != null);
 
-        if (interfacesChanged) {
-          for (final TypeRepr.AbstractType typ : diff.interfaces().removed()) {
-            myDelta.registerRemovedSuperClass(it.name, ((TypeRepr.ClassType)typ).myClassName);
+            myDelta.registerAddedSuperClass(it.name, ((TypeRepr.ClassType)newClass.getSuperClass()).myClassName);
           }
 
-          for (final TypeRepr.AbstractType typ : diff.interfaces().added()) {
-            myDelta.registerAddedSuperClass(it.name, ((TypeRepr.ClassType)typ).myClassName);
+          if (interfacesChanged) {
+            for (final TypeRepr.AbstractType typ : diff.interfaces().removed()) {
+              myDelta.registerRemovedSuperClass(it.name, ((TypeRepr.ClassType)typ).myClassName);
+            }
+
+            for (final TypeRepr.AbstractType typ : diff.interfaces().added()) {
+              myDelta.registerAddedSuperClass(it.name, ((TypeRepr.ClassType)typ).myClassName);
+            }
           }
-        }
 
-        if (myEasyMode) {
-          continue;
-        }
+          if (myEasyMode) {
+            continue;
+          }
 
-        myPresent.appendDependents(it, state.myDependants);
+          myPresent.appendDependents(it, state.myDependants);
 
-        if (superClassChanged || interfacesChanged || signatureChanged) {
-          debug("Superclass changed: ", superClassChanged);
-          debug("Interfaces changed: ", interfacesChanged);
-          debug("Signature changed ", signatureChanged);
+          if (superClassChanged || interfacesChanged || signatureChanged) {
+            debug("Superclass changed: ", superClassChanged);
+            debug("Interfaces changed: ", interfacesChanged);
+            debug("Signature changed ", signatureChanged);
 
-          final boolean extendsChanged = superClassChanged && !diff.extendsAdded();
-          final boolean interfacesRemoved = interfacesChanged && !diff.interfaces().removed().isEmpty();
+            final boolean extendsChanged = superClassChanged && !diff.extendsAdded();
+            final boolean interfacesRemoved = interfacesChanged && !diff.interfaces().removed().isEmpty();
 
-          debug("Extends changed: ", extendsChanged);
-          debug("Interfaces removed: ", interfacesRemoved);
+            debug("Extends changed: ", extendsChanged);
+            debug("Interfaces removed: ", interfacesRemoved);
 
-          myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants,
-                                     extendsChanged || interfacesRemoved || signatureChanged);
-        }
+            myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants,
+                                       extendsChanged || interfacesRemoved || signatureChanged);
+          }
 
-        if ((diff.addedModifiers() & Opcodes.ACC_INTERFACE) > 0 || (diff.removedModifiers() & Opcodes.ACC_INTERFACE) > 0) {
-          debug("Class-to-interface or interface-to-class conversion detected, added class usage to affected usages");
-          state.myAffectedUsages.add(it.createUsage());
-        }
+          if ((diff.addedModifiers() & Opcodes.ACC_INTERFACE) > 0 || (diff.removedModifiers() & Opcodes.ACC_INTERFACE) > 0) {
+            debug("Class-to-interface or interface-to-class conversion detected, added class usage to affected usages");
+            state.myAffectedUsages.add(it.createUsage());
+          }
 
-        if (it.isAnnotation() && it.getRetentionPolicy() == RetentionPolicy.SOURCE) {
-          debug("Annotation, retention policy = SOURCE => a switch to non-incremental mode requested");
-          if (!incrementalDecision(it.getOuterClassName(), it, myAffectedFiles, myFilter)) {
-            debug("End of Differentiate, returning false");
+          if (it.isAnnotation() && it.getRetentionPolicy() == RetentionPolicy.SOURCE) {
+            debug("Annotation, retention policy = SOURCE => a switch to non-incremental mode requested");
+            if (!incrementalDecision(it.getOuterClassName(), it, myAffectedFiles, myFilter)) {
+              debug("End of Differentiate, returning false");
+              return false;
+            }
+          }
+
+          if ((addedModifiers & Opcodes.ACC_PROTECTED) > 0) {
+            debug("Introduction of 'protected' modifier detected, adding class usage + inheritance constraint to affected usages");
+            final UsageRepr.Usage usage = it.createUsage();
+
+            state.myAffectedUsages.add(usage);
+            state.myUsageConstraints.put(usage, myFuture.new InheritanceConstraint(it.name));
+          }
+
+          if (diff.packageLocalOn()) {
+            debug("Introduction of 'package local' access detected, adding class usage + package constraint to affected usages");
+            final UsageRepr.Usage usage = it.createUsage();
+
+            state.myAffectedUsages.add(usage);
+            state.myUsageConstraints.put(usage, myFuture.new PackageConstraint(it.getPackageName()));
+          }
+
+          if ((addedModifiers & Opcodes.ACC_FINAL) > 0 || (addedModifiers & Opcodes.ACC_PRIVATE) > 0) {
+            debug("Introduction of 'private' or 'final' modifier(s) detected, adding class usage to affected usages");
+            state.myAffectedUsages.add(it.createUsage());
+          }
+
+          if ((addedModifiers & Opcodes.ACC_ABSTRACT) > 0 || (addedModifiers & Opcodes.ACC_STATIC) > 0) {
+            debug("Introduction of 'abstract' or 'static' modifier(s) detected, adding class new usage to affected usages");
+            state.myAffectedUsages.add(UsageRepr.createClassNewUsage(myContext, it.name));
+          }
+
+          if (it.isAnnotation()) {
+            debug("Class is annotation, performing annotation-specific analysis");
+
+            if (diff.retentionChanged()) {
+              debug("Retention policy change detected, adding class usage to affected usages");
+              state.myAffectedUsages.add(it.createUsage());
+            }
+            else {
+              final Collection<ElemType> removedtargets = diff.targets().removed();
+
+              if (removedtargets.contains(ElemType.LOCAL_VARIABLE)) {
+                debug("Removed target contains LOCAL_VARIABLE => a switch to non-incremental mode requested");
+                if (!incrementalDecision(it.getOuterClassName(), it, myAffectedFiles, myFilter)) {
+                  debug("End of Differentiate, returning false");
+                  return false;
+                }
+              }
+
+              if (!removedtargets.isEmpty()) {
+                debug("Removed some annotation targets, adding annotation query");
+                final UsageRepr.AnnotationUsage annotationUsage = (UsageRepr.AnnotationUsage)UsageRepr
+                  .createAnnotationUsage(myContext, TypeRepr.createClassType(myContext, it.name), null, EnumSet.copyOf(removedtargets));
+                state.myAnnotationQuery.add(annotationUsage);
+              }
+
+              for (final MethodRepr m : diff.methods().added()) {
+                if (!m.hasValue()) {
+                  debug("Added method with no default value: ", m.name);
+                  debug("Adding class usage to affected usages");
+                  state.myAffectedUsages.add(it.createUsage());
+                }
+              }
+            }
+
+            debug("End of annotation-specific analysis");
+          }
+
+          processAddedMethods(state, diff, it);
+          processRemovedMethods(state, diff, it);
+          processChangedMethods(state, diff, it);
+
+          if (!processAddedFields(state, diff, it)) {
+            return false;
+          }
+
+          if (!processRemovedFields(state, diff, it)) {
+            return false;
+          }
+
+          if (!processChangedFields(state, diff, it)) {
             return false;
           }
         }
-
-        if ((addedModifiers & Opcodes.ACC_PROTECTED) > 0) {
-          debug("Introduction of 'protected' modifier detected, adding class usage + inheritance constraint to affected usages");
-          final UsageRepr.Usage usage = it.createUsage();
-
-          state.myAffectedUsages.add(usage);
-          state.myUsageConstraints.put(usage, myFuture.new InheritanceConstraint(it.name));
-        }
-
-        if (diff.packageLocalOn()) {
-          debug("Introduction of 'package local' access detected, adding class usage + package constraint to affected usages");
-          final UsageRepr.Usage usage = it.createUsage();
-
-          state.myAffectedUsages.add(usage);
-          state.myUsageConstraints.put(usage, myFuture.new PackageConstraint(it.getPackageName()));
-        }
-
-        if ((addedModifiers & Opcodes.ACC_FINAL) > 0 || (addedModifiers & Opcodes.ACC_PRIVATE) > 0) {
-          debug("Introduction of 'private' or 'final' modifier(s) detected, adding class usage to affected usages");
-          state.myAffectedUsages.add(it.createUsage());
-        }
-
-        if ((addedModifiers & Opcodes.ACC_ABSTRACT) > 0 || (addedModifiers & Opcodes.ACC_STATIC) > 0) {
-          debug("Introduction of 'abstract' or 'static' modifier(s) detected, adding class new usage to affected usages");
-          state.myAffectedUsages.add(UsageRepr.createClassNewUsage(myContext, it.name));
-        }
-
-        if (it.isAnnotation()) {
-          debug("Class is annotation, performing annotation-specific analysis");
-
-          if (diff.retentionChanged()) {
-            debug("Retention policy change detected, adding class usage to affected usages");
-            state.myAffectedUsages.add(it.createUsage());
-          }
-          else {
-            final Collection<ElemType> removedtargets = diff.targets().removed();
-
-            if (removedtargets.contains(ElemType.LOCAL_VARIABLE)) {
-              debug("Removed target contains LOCAL_VARIABLE => a switch to non-incremental mode requested");
-              if (!incrementalDecision(it.getOuterClassName(), it, myAffectedFiles, myFilter)) {
-                debug("End of Differentiate, returning false");
-                return false;
-              }
-            }
-
-            if (!removedtargets.isEmpty()) {
-              debug("Removed some annotation targets, adding annotation query");
-              final UsageRepr.AnnotationUsage annotationUsage = (UsageRepr.AnnotationUsage)UsageRepr
-                .createAnnotationUsage(myContext, TypeRepr.createClassType(myContext, it.name), null, EnumSet.copyOf(removedtargets));
-              state.myAnnotationQuery.add(annotationUsage);
-            }
-
-            for (final MethodRepr m : diff.methods().added()) {
-              if (!m.hasValue()) {
-                debug("Added method with no default value: ", m.name);
-                debug("Adding class usage to affected usages");
-                state.myAffectedUsages.add(it.createUsage());
-              }
-            }
-          }
-
-          debug("End of annotation-specific analysis");
-        }
-
-        processAddedMethods(state, diff, it);
-        processRemovedMethods(state, diff, it);
-        processChangedMethods(state, diff, it);
-
-        if (!processAddedFields(state, diff, it)) {
-          return false;
-        }
-
-        if (!processRemovedFields(state, diff, it)) {
-          return false;
-        }
-
-        if (!processChangedFields(state, diff, it)) {
-          return false;
-        }
+        debug("End of changed classes processing");
       }
-      debug("End of changed classes processing");
 
       return !myEasyMode;
     }
 
     private void processRemovedClases(final DiffState state) {
+      final Collection<ClassRepr> removed = state.myClassDiff.removed();
+      if (removed.isEmpty()) {
+        return;
+      }
       debug("Processing removed classes:");
-      for (final ClassRepr c : state.myClassDiff.removed()) {
+      for (final ClassRepr c : removed) {
         myDelta.addDeletedClass(c);
 
         final int fileName = myClassToSourceFile.get(c.name);
@@ -1688,8 +1720,13 @@ public class Mappings {
     }
 
     private void processAddedClasses(final DiffState state) {
+      final Collection<ClassRepr> addedClasses = state.myClassDiff.added();
+      if (addedClasses.isEmpty()) {
+        return;
+      }
+
       debug("Processing added classes:");
-      for (final ClassRepr c : state.myClassDiff.added()) {
+      for (final ClassRepr c : addedClasses) {
         debug("Class name: ", c.name);
         myDelta.addChangedClass(c.name);
 
