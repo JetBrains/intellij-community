@@ -141,7 +141,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     try {
       data = CALL_SIGNATURES_ATTRIBUTE.readAttributeBytes(file);
     }
-    catch (IOException e) {
+    catch (Exception e) {
       data = null;
     }
 

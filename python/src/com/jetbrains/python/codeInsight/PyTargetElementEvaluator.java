@@ -6,9 +6,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,12 +31,15 @@ public class PyTargetElementEvaluator implements TargetElementEvaluator {
     }
     final PsiElement element = ref.getElement();
     PsiElement result = ref.resolve();
-    if (result instanceof PyReferenceExpression &&
-        PsiTreeUtil.getParentOfType(element, ScopeOwner.class) == PsiTreeUtil.getParentOfType(result, ScopeOwner.class)) {
-      QualifiedResolveResult resolveResult = ((PyReferenceExpression)result).followAssignmentsChain(PyResolveContext.noImplicits());
-      PsiElement finalResult = resolveResult.getElement();
-      if (PsiTreeUtil.getParentOfType(element, ScopeOwner.class) == PsiTreeUtil.getParentOfType(finalResult, ScopeOwner.class)) {
-        return finalResult;
+    while (result instanceof PyReferenceExpression || result instanceof PyTargetExpression) {
+      PsiElement nextResult = ((PyQualifiedExpression) result).getReference(PyResolveContext.noImplicits()).resolve();
+      if (nextResult != null && nextResult != result &&
+          PsiTreeUtil.getParentOfType(element, ScopeOwner.class) == PsiTreeUtil.getParentOfType(result, ScopeOwner.class) &&
+          (nextResult instanceof PyReferenceExpression || nextResult instanceof PyTargetExpression || nextResult instanceof PyParameter)) {
+        result = nextResult;
+      }
+      else {
+        break;
       }
     }
     return result;

@@ -17,11 +17,9 @@ import java.util.List;
  * @author traff
  */
 public class PyClassTreeChooserDialog extends AbstractTreeClassChooserDialog<PyClass>{
-  public PyClassTreeChooserDialog(String title,
-                                  Project project,
-                                  GlobalSearchScope scope,
-                                  @Nullable Filter<PyClass> classFilter, @Nullable PyClass initialClass) {
-    super(title, project, scope, classFilter, initialClass);
+  public PyClassTreeChooserDialog(String title, Project project, GlobalSearchScope scope, @Nullable Filter<PyClass> classFilter,
+                                  @Nullable PyClass initialClass) {
+    super(title, project, scope, PyClass.class, classFilter, initialClass);
   }
 
   @NotNull

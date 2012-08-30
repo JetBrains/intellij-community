@@ -46,15 +46,17 @@ public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
       final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
       if (psiFile != null) {
         int offset = sourcePosition.getOffset();
-        final int lineEndOffset = document.getLineEndOffset(document.getLineNumber(offset));
-        do {
-          PsiElement element = psiFile.findElementAt(offset);
-          if (element != null && !(element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
-            return PyPsiUtils.getStatement(element);
+        if (offset >= 0 && offset < document.getTextLength()) {
+          final int lineEndOffset = document.getLineEndOffset(document.getLineNumber(offset));
+          do {
+            PsiElement element = psiFile.findElementAt(offset);
+            if (element != null && !(element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
+              return PyPsiUtils.getStatement(element);
+            }
+            offset = element.getTextRange().getEndOffset() + 1;
           }
-          offset = element.getTextRange().getEndOffset() + 1;
+          while (offset < lineEndOffset);
         }
-        while (offset < lineEndOffset);
       }
     }
     return null;

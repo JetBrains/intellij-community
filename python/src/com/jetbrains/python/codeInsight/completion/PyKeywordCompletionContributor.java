@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
@@ -50,12 +51,12 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
         final ASTNode ctxNode = context.getNode();
         if (ctxNode != null && PyTokenTypes.STRING_NODES.contains(ctxNode.getElementType())) return false; // no sense inside string
         PsiElement p = (PsiElement)element;
-        int first_offset = p.getTextOffset();
+        int firstOffset = p.getTextRange().getStartOffset();
         // we must be a stmt ourselves, not a part of another stmt
         // try to climb to the stmt level with the same offset
         while (true) {
           if (p == null) return false;
-          if (p.getTextOffset() != first_offset) return false;
+          if (p.getTextRange().getStartOffset() != firstOffset) return false;
           if (p instanceof PyStatement) break;
           p = p.getParent();
         }
@@ -72,7 +73,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
               PsiDocumentManager docMgr = PsiDocumentManager.getInstance(p.getProject());
               Document doc = docMgr.getDocument(p.getContainingFile().getOriginalFile());
               if (doc != null) {
-                if (doc.getLineNumber(prev.getTextRange().getEndOffset()) == doc.getLineNumber(first_offset)) {
+                if (doc.getLineNumber(prev.getTextRange().getEndOffset()) == doc.getLineNumber(firstOffset)) {
                   return false; // same line
                 }
               }
@@ -214,6 +215,9 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   private static final PsiElementPattern.Capture<PsiElement> IN_STRING_LITERAL =
     psiElement().inside(PyStringLiteralExpression.class);
 
+  private static final PsiElementPattern.Capture<PsiElement> IN_FUNCTION_HEADER =
+    psiElement().inside(PyFunction.class).andNot(psiElement().inside(PyStatementList.class));
+
   public static final PsiElementPattern.Capture<PsiElement> AFTER_QUALIFIER =
     psiElement().afterLeaf(psiElement().withText(".").inside(PyReferenceExpression.class));
 
@@ -229,12 +233,13 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
          psiElement().withElementType(PyTokenTypes.DOT))
       ).inside(PyFromImportStatement.class);
 
-  private static final PsiElementPattern.Capture<PsiElement> IN_WITH_AFTER_REF =
-    psiElement().afterLeaf(psiElement()
-      .withElementType(PyTokenTypes.IDENTIFIER)
-      .inside(PyReferenceExpression.class)
-      .inside(PyWithStatement.class)
-    );
+  public static final ElementPattern<PsiElement> IN_WITH_AFTER_REF =
+    psiElement().afterLeaf(psiElement().inside(psiElement(PyWithItem.class).with(new PatternCondition<PyWithItem>("withoutAsKeyword") {
+      @Override
+      public boolean accepts(@NotNull PyWithItem item, ProcessingContext context) {
+        return item.getNode().findChildByType(PyTokenTypes.AS_KEYWORD) == null;
+      }
+    })));
 
   private static final PsiElementPattern.Capture<PsiElement> IN_EXCEPT_AFTER_REF =
     psiElement().afterLeaf(psiElement()
@@ -509,6 +514,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .andNot(IN_COMMENT)
       .andNot(IN_IMPORT_STMT)
       .andNot(IN_PARAM_LIST)
+      .andNot(IN_FUNCTION_HEADER)
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       ,
       new PyKeywordCompletionProvider("not", "lambda")
@@ -524,6 +530,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .andNot(IN_IMPORT_STMT)
       .and(NOT_PARAMETER_OR_DEFAULT_VALUE)
       .andNot(AFTER_QUALIFIER)
+      .andNot(IN_FUNCTION_HEADER)
       ,
       new PyKeywordCompletionProvider(TailType.NONE, "True", "False", "None")
     );

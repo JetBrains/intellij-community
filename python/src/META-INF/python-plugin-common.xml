@@ -455,6 +455,7 @@
     <configurationProducer implementation="com.jetbrains.django.testRunner.DjangoTestsConfigurationProducer"/>
 
     <highlightErrorFilter implementation="com.jetbrains.django.lang.template.inspection.DjangoErrorFilter"/>
+    <highlightErrorFilter implementation="com.jetbrains.django.lang.template.inspection.DjangoStructureXmlFilter"/>
 
     <lang.parserDefinition language="DjangoTemplate"
                            implementationClass="com.jetbrains.django.lang.template.parsing.DjangoTemplateParserDefinition"/>

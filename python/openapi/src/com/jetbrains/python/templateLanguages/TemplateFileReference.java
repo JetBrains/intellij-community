@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.templateLanguages;
 
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -26,10 +25,12 @@ import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelperRegistrar;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileSystemItemUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.psi.PsiReferenceEx;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.WeakFileReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,18 +39,12 @@ import java.util.Collection;
 /**
  * @author yole
  */
-public class TemplateFileReference extends FileReference implements PsiReferenceEx {
+public class TemplateFileReference extends WeakFileReference {
   @NotNull private final FileReferenceSet myReferenceSet;
 
   public TemplateFileReference(@NotNull FileReferenceSet fileReferenceSet, TextRange range, int index, String text) {
     super(fileReferenceSet, range, index, text);
     myReferenceSet = fileReferenceSet;
-  }
-
-  @Nullable
-  @Override
-  public HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context) {
-    return HighlightSeverity.WARNING;
   }
 
   @Nullable

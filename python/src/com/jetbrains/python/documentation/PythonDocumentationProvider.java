@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -385,15 +386,21 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   private static boolean pageExists(String url) {
+    if (new File(url).exists()) {
+      return true;
+    }
     HttpClient client = new HttpClient();
     client.setTimeout(5 * 1000);
     client.setConnectionTimeout(5 * 1000);
-    HeadMethod method = new HeadMethod(url);
     try {
+      HeadMethod method = new HeadMethod(url);
       int rc = client.executeMethod(method);
       if (rc == 404) {
         return false;
       }
+    }
+    catch (IllegalArgumentException e) {
+      return false;
     }
     catch (IOException ignored) {
     }
