@@ -106,7 +106,7 @@ public abstract class DebuggerSupport {
   public abstract EditBreakpointActionHandler getEditBreakpointAction();
 
 
-  @Nullable
+  @NotNull
   public static <T extends DebuggerSupport> DebuggerSupport getDebuggerSupport(Class<T> aClass) {
     for (DebuggerSupport support : getDebuggerSupports()) {
       if (support.getClass() == aClass) {

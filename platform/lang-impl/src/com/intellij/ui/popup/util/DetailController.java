@@ -40,7 +40,7 @@ public class DetailController implements TreeSelectionListener, ListSelectionLis
     }
     else {
       myDetailView.clearEditor();
-      myDetailView.setDetailPanel(null);
+      myDetailView.setPropertiesPanel(null);
       myDetailView.setCurrentItem(null);
     }
   }

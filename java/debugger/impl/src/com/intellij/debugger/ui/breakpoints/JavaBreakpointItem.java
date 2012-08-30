@@ -84,10 +84,10 @@ class JavaBreakpointItem extends BreakpointItem {
         breakpointPropertiesPanel.setDetailView(panel);
 
         final JPanel mainPanel = breakpointPropertiesPanel.getPanel();
-        panel.setDetailPanel(mainPanel);
+        panel.setPropertiesPanel(mainPanel);
       }
       else {
-        panel.setDetailPanel(null);
+        panel.setPropertiesPanel(null);
       }
     }
 

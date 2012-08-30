@@ -182,12 +182,12 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
   }
 
   @Override
-  public JPanel getDetailPanel() {
+  public JPanel getPropertiesPanel() {
     return myDetailPanel;
   }
 
   @Override
-  public void setDetailPanel(@Nullable final JPanel panel) {
+  public void setPropertiesPanel(@Nullable final JPanel panel) {
     if (panel == myDetailPanel) return;
 
     if (panel != null) {

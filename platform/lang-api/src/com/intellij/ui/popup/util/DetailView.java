@@ -37,9 +37,9 @@ public interface DetailView extends UserDataHolder {
 
   void navigateInPreviewEditor(PreviewEditorState editorState);
 
-  JPanel getDetailPanel();
+  JPanel getPropertiesPanel();
 
-  void setDetailPanel(@Nullable JPanel panel);
+  void setPropertiesPanel(@Nullable JPanel panel);
 
   void clearEditor();
 
