@@ -135,7 +135,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   protected DataContext getDataContext() {
-    return DataManager.getInstance().getDataContext();
+    ActionToolbar actionToolbar = UIUtil.getParentOfType(ActionToolbar.class, this);
+    return actionToolbar != null ? actionToolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext();
   }
 
   private void actionPerformed(final AnActionEvent event) {
