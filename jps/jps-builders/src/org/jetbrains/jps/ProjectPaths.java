@@ -2,7 +2,6 @@ package org.jetbrains.jps;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -33,10 +32,6 @@ public class ProjectPaths {
 
   public ProjectPaths(@NotNull JpsProject project) {
     myProject = project;
-  }
-
-  public Collection<File> getCompilationClasspathFiles(ModuleChunk chunk, boolean includeTests) {
-    return getCompilationClasspathFiles(chunk, includeTests, true, true);
   }
 
   public Collection<File> getCompilationClasspathFiles(ModuleChunk chunk,
@@ -92,14 +87,6 @@ public class ProjectPaths {
     if (url != null) {
       classpath.add(JpsPathUtil.urlToFile(url));
     }
-  }
-
-  public static List<String> getPathsList(Collection<File> files) {
-    final List<String> result = new ArrayList<String>();
-    for (File file : files) {
-      result.add(getCanonicalPath(file));
-    }
-    return result;
   }
 
   /**
@@ -190,12 +177,6 @@ public class ProjectPaths {
     return new File(parentFile, outputDir.getName() + "_" + DEFAULT_GENERATED_DIR_NAME);
   }
 
-  public List<String> getProjectRuntimeClasspath(boolean includeTests) {
-    final JpsJavaClasspathKind kind = JpsJavaClasspathKind.runtime(includeTests);
-    Set<File> classpath = new LinkedHashSet<File>(JpsJavaExtensionService.dependencies(myProject).includedIn(kind).withoutDepModules().classes().getRoots());
-    return getPathsList(classpath);
-  }
-
   private enum ClasspathPart {WHOLE, BEFORE_JDK, AFTER_JDK}
 
   private static class BeforeSdkItemFilter implements Condition<JpsDependencyElement> {
@@ -213,11 +194,6 @@ public class ProjectPaths {
       }
       return !mySdkFound && !(dependency instanceof JpsSdkDependency);
     }
-  }
-
-  private static String getCanonicalPath(File file) {
-    final String path = file.getPath();
-    return path.contains(".")? FileUtil.toCanonicalPath(path) : FileUtil.toSystemIndependentName(path);
   }
 
 }

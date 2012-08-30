@@ -42,16 +42,9 @@ public class ModuleClasspathTest extends JpsRebuildTestCase {
   public void testCompilationClasspath() {
     ModuleChunk chunk = createChunk('main')
     assertClasspath(["util/lib/exported.jar", "out/production/util", "/jdk.jar"],
-            ProjectPaths.getPathsList(getProjectPaths().getPlatformCompilationClasspath(chunk, true)))
+            getPathsList(getProjectPaths().getPlatformCompilationClasspath(chunk, true)))
     assertClasspath(["main/lib/service.jar"],
-            ProjectPaths.getPathsList(getProjectPaths().getCompilationClasspath(chunk, true)))
-  }
-
-  public void testProjectClasspath() {
-    assertClasspath(["out/production/main", "/jdk.jar", "main/lib/service.jar",
-                     "test-util/lib/runtime.jar", "out/production/test-util",
-                     "util/lib/exported.jar", "/jdk15.jar", "out/production/util"],
-                    getProjectPaths().getProjectRuntimeClasspath(false))
+            getPathsList(getProjectPaths().getCompilationClasspath(chunk, true)))
   }
 
   private ProjectPaths getProjectPaths() {
@@ -60,7 +53,7 @@ public class ModuleClasspathTest extends JpsRebuildTestCase {
 
   private def assertClasspath(String moduleName, boolean includeTests, List<String> expected) {
     ModuleChunk chunk = createChunk(moduleName)
-    final List<String> classpath = ProjectPaths.getPathsList(new ProjectPaths(myJpsProject).getCompilationClasspathFiles(chunk, includeTests))
+    final List<String> classpath = getPathsList(new ProjectPaths(myJpsProject).getCompilationClasspathFiles(chunk, includeTests, true, true))
     assertClasspath(expected, toSystemIndependentPaths(classpath))
   }
 
@@ -83,5 +76,17 @@ public class ModuleClasspathTest extends JpsRebuildTestCase {
       result.add(FileUtil.toSystemIndependentName(path));
     }
     return result
+  }
+
+  public static List<String> getPathsList(Collection<File> files) {
+    final List<String> result = new ArrayList<String>();
+    for (File file : files) {
+      result.add(getCanonicalPath(file));
+    }
+    return result;
+  }
+  private static String getCanonicalPath(File file) {
+    final String path = file.getPath();
+    return path.contains(".")? FileUtil.toCanonicalPath(path) : FileUtil.toSystemIndependentName(path);
   }
 }
