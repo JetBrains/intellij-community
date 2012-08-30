@@ -183,7 +183,7 @@ public class PyOverrideImplementUtil {
       statementBody.append(PyNames.PASS);
     }
     else {
-      if (baseFunction.getReturnType(TypeEvalContext.slow(), null) != PyNoneType.INSTANCE) {
+      if (!PyNames.INIT.equals(baseFunction.getName()) && baseFunction.getReturnType(TypeEvalContext.slow(), null) != PyNoneType.INSTANCE) {
         statementBody.append("return ");
       }
       if (baseClass.isNewStyleClass()) {
