@@ -55,6 +55,10 @@ public class ReplaceLambdaWithAnonymousIntentionTest extends IPPTestCase {
     doTest();
   }
 
+  public void testQualifyThis() {
+    doTest();
+  }
+
   @Override
   protected String getIntentionName() {
     return IntentionPowerPackBundle.message("replace.lambda.with.anonymous.intention.name");

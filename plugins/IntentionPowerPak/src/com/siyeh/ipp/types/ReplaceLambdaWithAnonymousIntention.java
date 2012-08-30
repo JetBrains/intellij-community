@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.types;
 
+import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
@@ -25,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -62,7 +64,12 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
     if (blockText == null) return;
 
     final PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(element.getProject());
+    PsiCodeBlock blockFromText = psiElementFactory.createCodeBlockFromText(blockText, lambdaExpression);
+    ChangeContextUtil.encodeContextInfo(blockFromText, true);
     PsiNewExpression newExpression = (PsiNewExpression)psiElementFactory.createExpressionFromText("new " + functionalInterfaceType.getCanonicalText() + "(){}", lambdaExpression);
+    PsiClass thisClass = PsiTreeUtil.getParentOfType(lambdaExpression, PsiClass.class, true);
+    ChangeContextUtil.decodeContextInfo(blockFromText, thisClass, RefactoringUtil.createThisExpression(lambdaExpression.getManager(), thisClass));
+    blockFromText = psiElementFactory.createCodeBlockFromText(blockFromText.getText(), null);
     newExpression = (PsiNewExpression)lambdaExpression.replace(newExpression);
 
     final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
@@ -80,7 +87,8 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
       }
       PsiCodeBlock codeBlock = member.getBody();
       LOG.assertTrue(codeBlock != null);
-      codeBlock = (PsiCodeBlock)codeBlock.replace(psiElementFactory.createCodeBlockFromText(blockText, null));
+
+      codeBlock = (PsiCodeBlock)codeBlock.replace(blockFromText);
       final Set<PsiVariable> vars2BeFinal = new HashSet<PsiVariable>();
       codeBlock.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
@@ -99,6 +107,7 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
       for (PsiVariable var : vars2BeFinal) {
         PsiUtil.setModifierProperty(var, PsiModifier.FINAL, true);
       }
+
       GenerateMembersUtil.positionCaret(editor, member, true);
     }
   }

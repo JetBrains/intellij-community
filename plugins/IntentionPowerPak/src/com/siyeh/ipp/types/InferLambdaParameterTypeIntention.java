@@ -84,7 +84,9 @@ public class InferLambdaParameterTypeIntention extends Intention {
     public boolean satisfiedBy(PsiElement element) {
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
       if (lambdaExpression != null) {
-        for (PsiParameter parameter : lambdaExpression.getParameterList().getParameters()) {
+        PsiParameter[] parameters = lambdaExpression.getParameterList().getParameters();
+        if (parameters.length == 0) return false;
+        for (PsiParameter parameter : parameters) {
           if (parameter.getTypeElement() != null) {
             return false;
           }
