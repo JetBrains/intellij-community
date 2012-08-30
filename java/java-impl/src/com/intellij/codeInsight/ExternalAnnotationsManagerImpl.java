@@ -150,7 +150,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
   public void annotateExternally(@NotNull final PsiModifierListOwner listOwner,
                                  @NotNull final String annotationFQName,
                                  @NotNull final PsiFile fromFile,
-                                 final PsiNameValuePair[] value) {
+                                 @Nullable final PsiNameValuePair[] value) {
     final Project project = myPsiManager.getProject();
     final PsiFile containingFile = listOwner.getContainingFile();
     if (!(containingFile instanceof PsiJavaFile)) {
@@ -210,7 +210,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
                                               @NotNull final String annotationFQName,
                                               @NotNull final PsiFile fromFile,
                                               @NotNull final String packageName,
-                                              final PsiNameValuePair[] value) {
+                                              @Nullable final PsiNameValuePair[] value) {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.setTitle(ProjectBundle.message("external.annotations.root.chooser.title", entry.getPresentableName()));
     descriptor.setDescription(ProjectBundle.message("external.annotations.root.chooser.description"));
@@ -268,7 +268,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
                                                @NotNull final Project project,
                                                @NotNull final String packageName,
                                                @NotNull VirtualFile[] roots,
-                                               final PsiNameValuePair[] value) {
+                                               @Nullable final PsiNameValuePair[] value) {
     if (roots.length > 1) {
       JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<VirtualFile>("Annotation Roots", roots) {
         @Override
@@ -316,7 +316,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
                                   @NotNull final String packageName,
                                   @NotNull final String annotationFQName,
                                   @NotNull final PsiFile fromFile,
-                                  final PsiNameValuePair[] value) {
+                                  @Nullable final PsiNameValuePair[] value) {
     List<XmlFile> xmlFiles = findExternalAnnotationsXmlFiles(listOwner);
 
     final XmlFile existingXml = findXmlFileInRoot(xmlFiles, root);
@@ -382,7 +382,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
   @Override
   public boolean editExternalAnnotation(@NotNull PsiModifierListOwner listOwner,
                                         @NotNull final String annotationFQN,
-                                        @NotNull final PsiNameValuePair[] value) {
+                                        @Nullable final PsiNameValuePair[] value) {
     return processExistingExternalAnnotations(listOwner, annotationFQN, new Processor<XmlTag>() {
       @Override
       public boolean process(XmlTag annotationTag) {
@@ -544,7 +544,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
                                   @NotNull final String annotationFQName,
                                   @Nullable final XmlFile xmlFile,
                                   @NotNull final PsiFile codeUsageFile,
-                                  final PsiNameValuePair[] values) {
+                                  @Nullable final PsiNameValuePair[] values) {
     if (xmlFile == null) {
       notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
       return;
