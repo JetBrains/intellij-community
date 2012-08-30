@@ -31,13 +31,14 @@ import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
@@ -70,6 +71,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.ref.Reference;
@@ -299,22 +301,16 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     while (true) {
       int count = 0;
 
-      final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
-      try {
-        for (Document document : myUnsavedDocuments) {
-          if (failedToSave.containsKey(document)) continue;
-          try {
-            doSaveDocument(document);
-          }
-          catch (IOException e) {
-            //noinspection ThrowableResultOfMethodCallIgnored
-            failedToSave.put(document, e);
-          }
-          count++;
+      for (Document document : myUnsavedDocuments) {
+        if (failedToSave.containsKey(document)) continue;
+        try {
+          doSaveDocument(document);
         }
-      }
-      finally {
-        token.finish();
+        catch (IOException e) {
+          //noinspection ThrowableResultOfMethodCallIgnored
+          failedToSave.put(document, e);
+        }
+        count++;
       }
 
       if (count == 0) break;
@@ -330,17 +326,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myUnsavedDocuments.contains(document)) return;
 
-    ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(document, null) {
-      @Override
-      public void run() {
-        try {
-          doSaveDocument(document);
-        }
-        catch (IOException e) {
-          handleErrorsOnSave(Collections.singletonMap(document, e));
-        }
-      }
-    });
+    try {
+      doSaveDocument(document);
+    }
+    catch (IOException e) {
+      handleErrorsOnSave(Collections.singletonMap(document, e));
+    }
   }
 
   @Override
@@ -363,15 +354,38 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private void doSaveDocument(@NotNull final Document document) throws IOException {
     VirtualFile file = getFile(document);
 
-    if (file == null || !file.isValid() || file instanceof LightVirtualFile || !isFileModified(file)) {
+    if (file == null || file instanceof LightVirtualFile || file.isValid() && !isFileModified(file)) {
       removeFromUnsaved(document);
       return;
     }
 
-    if (needsRefresh(file)) {
+    if (file.isValid() && needsRefresh(file)) {
       file.refresh(false, false);
       if (!myUnsavedDocuments.contains(document)) return;
-      if (!file.isValid()) return;
+    }
+
+    if (!file.isValid() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      file = handleExternalDeletion(file);
+      if (!myUnsavedDocuments.contains(document)) return;
+    }
+
+    final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
+    try {
+      doSaveDocumentInWriteAction(document, file);
+    }
+    finally {
+      token.finish();
+    }
+  }
+
+  private void doSaveDocumentInWriteAction(Document document, @Nullable VirtualFile file) throws IOException {
+    if (file == null || !file.isValid()) {
+      removeFromUnsaved(document);
+      return;
+    }
+
+    if (!file.equals(getFile(document))) {
+      registerDocument(document, file);
     }
 
     if (!isSaveNeeded(document, file)) {
@@ -411,6 +425,36 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     myUnsavedDocuments.remove(document);
     LOG.assertTrue(!myUnsavedDocuments.contains(document));
     myTrailingSpacesStripper.clearLineModificationFlags(document);
+  }
+
+  @Nullable
+  private static VirtualFile handleExternalDeletion(VirtualFile file) {
+    String path = file.getPath();
+    String[] options = {"Restore", "Save under a different name", "Discard changes"};
+    String message = "File has been deleted on disk: " + FileUtil.toSystemDependentName(path);
+    int result = Messages.showDialog(message, "File Deleted", options, 0, Messages.getQuestionIcon());
+    File newFile;
+    if (result == 0) {
+      newFile = new File(path);
+    } else if (result == 1) {
+      VirtualFile validParent = file;
+      while (validParent != null && !validParent.isValid()) {
+        validParent = validParent.getParent();
+      }
+      final VirtualFileWrapper wrapper = FileChooserFactory.getInstance().createSaveFileDialog(
+        new FileSaverDescriptor("Save File As...", "Save file under a different name"), (Project)null).save(validParent, file.getName());
+      if (wrapper == null) {
+        return null;
+      }
+      newFile = wrapper.getFile();
+    } else {
+      return null;
+    }
+    if (!FileUtil.createIfDoesntExist(newFile)) {
+      return null;
+    }
+
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(newFile);
   }
 
   private static void updateModifiedProperty(@NotNull VirtualFile file) {
