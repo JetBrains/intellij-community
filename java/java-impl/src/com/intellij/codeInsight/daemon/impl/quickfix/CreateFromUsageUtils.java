@@ -610,6 +610,7 @@ public class CreateFromUsageUtils {
     if (type instanceof PsiPrimitiveType) {
       type = ((PsiPrimitiveType)type).getBoxedType(methodCall);
     }
+    if (type == null) return ExpectedTypeInfo.EMPTY_ARRAY;
     return new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE)};
   }
 
