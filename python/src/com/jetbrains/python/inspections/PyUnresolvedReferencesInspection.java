@@ -449,6 +449,11 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       if (description == null) {
         boolean marked_qualified = false;
         if (element instanceof PyQualifiedExpression) {
+          // TODO: Add __qualname__ for Python 3.3 to the skeleton of <class 'object'>, introduce a pseudo-class skeleton for
+          // <class 'function'>
+          if ("__qualname__".equals(ref_text) && LanguageLevel.forElement(element).isAtLeast(LanguageLevel.PYTHON33)) {
+            return;
+          }
           final PyQualifiedExpression qexpr = (PyQualifiedExpression)element;
           if (PyNames.COMPARISON_OPERATORS.contains(qexpr.getReferencedName()) || refname == null) {
             return;
