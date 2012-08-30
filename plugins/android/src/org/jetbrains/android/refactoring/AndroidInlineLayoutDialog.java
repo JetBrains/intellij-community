@@ -58,6 +58,6 @@ public class AndroidInlineLayoutDialog extends InlineOptionsDialog {
   @Override
   protected void doAction() {
     final PsiElement usageElement = isInlineThisOnly() ? myUsageElement : null;
-    invokeRefactoring(new AndroidInlineLayoutProcessor(myProject, myLayoutFile, myLayoutRootTag, usageElement));
+    invokeRefactoring(new AndroidInlineLayoutProcessor(myProject, myLayoutFile, myLayoutRootTag, usageElement, null));
   }
 }

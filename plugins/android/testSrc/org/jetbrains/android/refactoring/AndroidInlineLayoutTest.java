@@ -2,8 +2,10 @@ package org.jetbrains.android.refactoring;
 
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.actions.InlineAction;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.android.AndroidTestCase;
 
 /**
@@ -84,13 +86,15 @@ public class AndroidInlineLayoutTest extends AndroidTestCase {
 
   public void test15() throws Exception {
     myFixture.copyFileToProject(BASE_PATH + getTestName(true) + "_included.xml", "res/layout-land/included.xml");
-    doTestCommonInlineActionError(false, true);
+    doTestCommonInlineActionWithConflicts(false, true);
+    myFixture.checkResultByFile("res/layout/test.xml", BASE_PATH + getTestName(true) + "_after.xml", true);
   }
 
   public void test16() throws Exception {
     myFixture.copyFileToProject("R.java", "gen/p1/p2/R.java");
     myFixture.copyFileToProject(BASE_PATH + "MyActivity.java", "src/p1/p2/MyActivity.java");
-    doTestCommonInlineActionError(false, true);
+    doTestCommonInlineActionWithConflicts(false, true);
+    myFixture.checkResultByFile("res/layout/test.xml", BASE_PATH + getTestName(true) + "_after.xml", true);
   }
 
   public void test17() throws Exception {
@@ -120,22 +124,17 @@ public class AndroidInlineLayoutTest extends AndroidTestCase {
     assertNull(myFixture.getTempDirFixture().getFile("res/layout/included.xml"));
   }
 
-  private void doTestCommonInlineActionError(boolean inlineThisOnly, boolean configureFromIncludedFile) {
+  private void doTestCommonInlineActionWithConflicts(boolean inlineThisOnly, boolean configureFromIncludedFile) {
     final String testName = getTestName(true);
     final VirtualFile included = myFixture.copyFileToProject(BASE_PATH + testName + "_included.xml", "res/layout/included.xml");
     final VirtualFile f = myFixture.copyFileToProject(BASE_PATH + testName + ".xml", "res/layout/test.xml");
     myFixture.configureFromExistingVirtualFile(configureFromIncludedFile ? included : f);
-    AndroidInlineLayoutHandler.setTestConfig(new AndroidInlineTestConfig(inlineThisOnly));
-    try {
-      myFixture.testAction(new InlineAction());
-      fail();
-    }
-    catch (IncorrectOperationException e) {
-      assertTrue(e.getMessage().length() > 0);
-    }
-    finally {
-      AndroidInlineLayoutHandler.setTestConfig(null);
-    }
+    final AndroidInlineTestConfig config = new AndroidInlineTestConfig(inlineThisOnly);
+    AndroidInlineLayoutHandler.setTestConfig(config);
+    myFixture.testAction(new InlineAction());
+    final MultiMap<PsiElement,String> conflicts = config.getConflicts();
+    assertEquals(1, conflicts.keySet().size());
+    assertEquals(1, conflicts.values().size());
   }
 
   private void doTestCommonInlineAction(boolean inlineThisOnly) {
