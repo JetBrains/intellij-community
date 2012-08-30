@@ -216,7 +216,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     psiElement().inside(PyStringLiteralExpression.class);
 
   private static final PsiElementPattern.Capture<PsiElement> IN_FUNCTION_HEADER =
-    psiElement().inside(PyFunction.class).andNot(psiElement().inside(PyStatementList.class));
+    psiElement().inside(PyFunction.class).andNot(psiElement().inside(false, psiElement(PyStatementList.class), psiElement(PyFunction.class)));
 
   public static final PsiElementPattern.Capture<PsiElement> AFTER_QUALIFIER =
     psiElement().afterLeaf(psiElement().withText(".").inside(PyReferenceExpression.class));
