@@ -54,6 +54,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -310,5 +311,10 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
   @Override
   public void dispose() {
     // noop
+  }
+
+  @TestOnly
+  public PsiFile getNewFile() {
+    return myNewFile;
   }
 }

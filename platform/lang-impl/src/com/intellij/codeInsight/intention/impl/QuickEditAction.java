@@ -19,6 +19,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -81,7 +82,10 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     assert pair != null;
     final PsiFile injectedFile = (PsiFile)pair.first;
     final int injectedOffset = ((DocumentWindow)PsiDocumentManager.getInstance(project).getDocument(injectedFile)).hostToInjected(offset);
-    getHandler(project, injectedFile, editor, file).navigate(injectedOffset);
+    QuickEditHandler handler = getHandler(project, injectedFile, editor, file);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      handler.navigate(injectedOffset);
+    }
   }
 
   public boolean startInWriteAction() {
