@@ -110,6 +110,9 @@ public class PyExtractMethodUtil {
               if (fragment.isReturnInstructionInside()) {
                 builder.append("return ");
               }
+              if (fragment.isYieldInside()) {
+                builder.append("yield from ");
+              }
               if (isMethod) {
                 appendSelf(firstElement, builder, isStaticMethod);
               }
@@ -158,6 +161,9 @@ public class PyExtractMethodUtil {
 
               // Generate call element
               builder.append(" = ");
+              if (fragment.isYieldInside()) {
+                builder.append("yield from ");
+              }
               if (isMethod){
                 appendSelf(elementsRange.get(0), builder, isStaticMethod);
               }
@@ -234,7 +240,7 @@ public class PyExtractMethodUtil {
 
   public static void extractFromExpression(final Project project,
                                            final Editor editor,
-                                           final CodeFragment fragment,
+                                           final PyCodeFragment fragment,
                                            final PsiElement expression) {
     if (!fragment.getOutputVariables().isEmpty()){
       CommonRefactoringUtil.showErrorHint(project, editor,
@@ -281,6 +287,9 @@ public class PyExtractMethodUtil {
               // Generating call element
               final StringBuilder builder = new StringBuilder();
               builder.append("return ");
+              if (fragment.isYieldInside()) {
+                builder.append("yield from ");
+              }
               if (isMethod){
                 appendSelf(expression, builder, isStaticMethod);
               }

@@ -240,4 +240,9 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testYield() {
     doFail("bar", "Cannot perform refactoring with 'yield' statement inside code block");
   }
+
+  // PY-7382
+  public void testYield33() {
+    doTest("bar", LanguageLevel.PYTHON33);
+  }
 }
