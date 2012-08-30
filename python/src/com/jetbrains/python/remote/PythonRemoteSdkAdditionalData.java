@@ -295,14 +295,14 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
 
     if (element != null) {
       data.setHost(element.getAttributeValue(HOST));
-      data.setPort(Integer.parseInt(element.getAttributeValue(PORT)));
-      data.setAnonymous(Boolean.parseBoolean(element.getAttributeValue(ANONYMOUS)));
+      data.setPort(StringUtil.parseInt(element.getAttributeValue(PORT), 22));
+      data.setAnonymous(StringUtil.parseBoolean(element.getAttributeValue(ANONYMOUS), false));
       data.setSerializedUserName(element.getAttributeValue(USERNAME));
       data.setSerializedPassword(element.getAttributeValue(PASSWORD));
       data.setPrivateKeyFile(StringUtil.nullize(element.getAttributeValue(PRIVATE_KEY_FILE)));
       data.setKnownHostsFile(StringUtil.nullize(element.getAttributeValue(KNOWN_HOSTS_FILE)));
       data.setSerializedPassphrase(element.getAttributeValue(PASSPHRASE));
-      data.setUseKeyPair(Boolean.parseBoolean(element.getAttributeValue(USE_KEY_PAIR)));
+      data.setUseKeyPair(StringUtil.parseBoolean(element.getAttributeValue(USE_KEY_PAIR), false));
 
       data.setInterpreterPath(StringUtil.nullize(element.getAttributeValue(INTERPRETER_PATH)));
       data.setPyCharmTempFilesPath(StringUtil.nullize(element.getAttributeValue(PYCHARM_HELPERS_PATH)));
