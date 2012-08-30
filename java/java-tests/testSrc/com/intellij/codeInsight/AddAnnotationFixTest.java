@@ -29,6 +29,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -63,7 +64,11 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     myModule = null;
   }
 
-  protected void addLibrary() {
+  private void addDefaultLibrary() {
+    addLibrary("/content/anno");
+  }
+
+  private void addLibrary(final @NotNull String... annotationsDirs) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -73,7 +78,9 @@ public class AddAnnotationFixTest extends UsefulTestCase {
 
         final Library.ModifiableModel libraryModel = library.getModifiableModel();
         libraryModel.addRoot(VfsUtil.pathToUrl(myFixture.getTempDirPath() + "/lib"), OrderRootType.SOURCES);
-        libraryModel.addRoot(VfsUtil.pathToUrl(myFixture.getTempDirPath() + "/content/anno"), AnnotationOrderRootType.getInstance());
+        for (String annotationsDir : annotationsDirs) {
+          libraryModel.addRoot(VfsUtil.pathToUrl(myFixture.getTempDirPath() + annotationsDir), AnnotationOrderRootType.getInstance());
+        }
         libraryModel.commit();
         model.commit();
       }
@@ -82,7 +89,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
 
   public void testAnnotateLibrary() throws Throwable {
 
-    addLibrary();
+    addDefaultLibrary();
     myFixture.configureByFiles("lib/p/TestPrimitive.java", "content/anno/p/annotations.xml");
     myFixture.configureByFiles("lib/p/Test.java");
     final Project project = myFixture.getProject();
@@ -136,14 +143,14 @@ public class AddAnnotationFixTest extends UsefulTestCase {
   }
 
   public void testDeannotation() throws Throwable {
-    addLibrary();
+    addDefaultLibrary();
     myFixture.configureByFiles("lib/p/TestPrimitive.java", "content/anno/p/annotations.xml");
     doDeannotate("lib/p/TestDeannotation.java", "Annotate method 'get' as @NotNull", "Annotate method 'get' as @Nullable");
     myFixture.checkResultByFile("content/anno/p/annotations.xml", "content/anno/p/annotationsDeannotation_after.xml", false);
   }
 
   public void testDeannotation1() throws Throwable {
-    addLibrary();
+    addDefaultLibrary();
     myFixture.configureByFiles("lib/p/TestPrimitive.java", "content/anno/p/annotations.xml");
     doDeannotate("lib/p/TestDeannotation1.java", "Annotate parameter 'ss' as @NotNull", "Annotate parameter 'ss' as @Nullable");
     myFixture.checkResultByFile("content/anno/p/annotations.xml", "content/anno/p/annotationsDeannotation1_after.xml", false);
@@ -180,7 +187,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
   }
 
   public void testReadingOldPersistenceFormat() throws Throwable {
-    addLibrary();
+    addDefaultLibrary();
     myFixture.configureByFiles("content/anno/persistence/annotations.xml");
     myFixture.configureByFiles("lib/persistence/Test.java");
 
@@ -196,5 +203,48 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     assertNotNull(manager.findExternalAnnotation(parameter, AnnotationUtil.NOT_NULL));
     assertNotNull(manager.findExternalAnnotation(parameter, AnnotationUtil.NON_NLS));
     assertEquals(2, manager.findExternalAnnotations(parameter).length);
+  }
+
+  private static void assertMethodAndParameterAnnotationsValues(ExternalAnnotationsManager manager,
+                                                         PsiMethod method,
+                                                         PsiParameter parameter,
+                                                         String expectedValue) {
+    PsiAnnotation methodAnnotation = manager.findExternalAnnotation(method, AnnotationUtil.NULLABLE);
+    assertNotNull(methodAnnotation);
+    assertEquals(expectedValue, methodAnnotation.findAttributeValue("value").getText());
+
+    PsiAnnotation parameterAnnotation = manager.findExternalAnnotation(parameter, AnnotationUtil.NOT_NULL);
+    assertNotNull(parameterAnnotation);
+    assertEquals(expectedValue, parameterAnnotation.findAttributeValue("value").getText());
+  }
+
+  public void testEditingMultiRootAnnotations() {
+    addLibrary("/content/annoMultiRoot/root1", "/content/annoMultiRoot/root2");
+    myFixture.configureByFiles("/content/annoMultiRoot/root1/multiRoot/annotations.xml",
+                               "/content/annoMultiRoot/root2/multiRoot/annotations.xml");
+    myFixture.configureByFiles("lib/multiRoot/Test.java");
+
+    final ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(myFixture.getProject());
+    final PsiMethod method = ((PsiJavaFile)myFixture.getFile()).getClasses()[0].getMethods()[0];
+    final PsiParameter parameter = method.getParameterList().getParameters()[0];
+
+    assertMethodAndParameterAnnotationsValues(manager, method, parameter, "\"foo\"");
+
+    final PsiAnnotation annotationFromText =
+      JavaPsiFacade.getElementFactory(myFixture.getProject()).createAnnotationFromText("@Annotation(value=\"bar\")", null);
+    new WriteCommandAction(myFixture.getProject()) {
+      @Override
+      protected void run(final Result result) throws Throwable {
+        manager.editExternalAnnotation(method, AnnotationUtil.NULLABLE, annotationFromText.getParameterList().getAttributes());
+        manager.editExternalAnnotation(parameter, AnnotationUtil.NOT_NULL, annotationFromText.getParameterList().getAttributes());
+      }
+    }.execute();
+
+    assertMethodAndParameterAnnotationsValues(manager, method, parameter, "\"bar\"");
+
+    myFixture.checkResultByFile("content/annoMultiRoot/root1/multiRoot/annotations.xml",
+                                "content/annoMultiRoot/root1/multiRoot/annotations_after.xml", false);
+    myFixture.checkResultByFile("content/annoMultiRoot/root2/multiRoot/annotations.xml",
+                                "content/annoMultiRoot/root2/multiRoot/annotations_after.xml", false);
   }
 }
