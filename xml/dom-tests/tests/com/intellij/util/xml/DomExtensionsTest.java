@@ -13,7 +13,6 @@ import com.intellij.util.xml.reflect.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 

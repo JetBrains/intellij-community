@@ -19,14 +19,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
-import com.intellij.util.ThrowableConsumer;
-import com.intellij.util.containers.ThrowableIterator;
 import com.intellij.util.continuation.ContinuationContext;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Iterator;
 
 /**
  * Created by IntelliJ IDEA.

@@ -22,7 +22,6 @@ import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.Convertor;
 
 import java.util.ArrayList;
 import java.util.List;

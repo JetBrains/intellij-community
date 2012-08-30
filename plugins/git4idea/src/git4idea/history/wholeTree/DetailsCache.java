@@ -30,7 +30,6 @@ import git4idea.GitBranch;
 import git4idea.history.browser.CachedRefs;
 import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.LowLevelAccessImpl;
-import git4idea.history.browser.SymbolicRefsI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
