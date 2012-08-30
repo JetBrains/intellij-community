@@ -74,7 +74,7 @@ public class CreateFileResourceQuickFix implements LocalQuickFix, IntentionActio
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final XmlFile newFile =
-      CreateResourceFileAction.createFileResource(myFacet, myResourceType, myResourceName + ".xml", null, null, myChooseResName);
+      CreateResourceFileAction.createFileResource(myFacet, myResourceType, myResourceName + ".xml", null, null, myChooseResName, null);
     if (newFile != null) {
       UndoUtil.markPsiFileForUndo(myFile);
     }

@@ -400,7 +400,7 @@ class AndroidInlineUtil {
     }
     else {
       final AndroidInlineLayoutProcessor processor =
-        new AndroidInlineLayoutProcessor(project, layoutFile, rootTag, testConfig.isInlineThisOnly() ? usageElement : null);
+        new AndroidInlineLayoutProcessor(project, layoutFile, rootTag, testConfig.isInlineThisOnly() ? usageElement : null, testConfig);
       processor.setPreviewUsages(false);
       processor.run();
     }
