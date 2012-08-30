@@ -95,9 +95,7 @@
       <add-to-group group-id="RefactoringMenu"/>
     </action>
     <action id="AndroidInlineIncludeAction" class="org.jetbrains.android.refactoring.AndroidInlineIncludeAction"
-            text="Inline _Layout..." description="Inlines included Android layout">
-      <add-to-group group-id="RefactoringMenu"/>
-    </action>
+            text="Inline _Layout..." description="Inlines included Android layout"/>
   </actions>
 
   <depends>JUnit</depends>

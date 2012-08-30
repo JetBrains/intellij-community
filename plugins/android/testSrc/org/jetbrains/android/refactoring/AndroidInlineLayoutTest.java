@@ -98,11 +98,11 @@ public class AndroidInlineLayoutTest extends AndroidTestCase {
   }
 
   public void test17() throws Exception {
-    doTestInlineIncludeAction(true);
+    doTestCommonInlineAction(true);
   }
 
   public void test18() throws Exception {
-    doTestInlineIncludeAction(false);
+    doTestCommonInlineAction(false);
   }
 
   public void test19() throws Exception {
@@ -111,6 +111,27 @@ public class AndroidInlineLayoutTest extends AndroidTestCase {
 
   public void test20() throws Exception {
     doTestInlineIncludeActionError(true);
+  }
+
+  public void test21() throws Exception {
+    doTestInlineIncludeAction(false);
+  }
+
+  public void test22() throws Exception {
+    myFixture.copyFileToProject(BASE_PATH + getTestName(true) + "_included.xml", "res/layout/included.xml");
+    final VirtualFile f = myFixture.copyFileToProject(BASE_PATH + getTestName(true) + ".xml", "res/layout/test.xml");
+    myFixture.configureFromExistingVirtualFile(f);
+    AndroidInlineLayoutHandler.setTestConfig(new AndroidInlineTestConfig(true));
+    try {
+      myFixture.testAction(new InlineAction());
+      fail();
+    }
+    catch (IncorrectOperationException e) {
+      assertTrue(e.getMessage().length() > 0);
+    }
+    finally {
+      AndroidInlineLayoutHandler.setTestConfig(null);
+    }
   }
 
   private void doTestCommonInlineThisOnly() throws Exception {

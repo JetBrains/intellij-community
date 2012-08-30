@@ -9,7 +9,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.android.dom.converters.AndroidResourceReferenceBase;
 import org.jetbrains.android.dom.layout.LayoutDomFileDescription;
@@ -40,31 +43,37 @@ public class AndroidInlineLayoutHandler extends InlineActionHandler {
 
   @Override
   public boolean canInlineElement(PsiElement element) {
+    return false;
+  }
+
+  @Override
+  public boolean canInlineElementInEditor(PsiElement element, Editor editor) {
     if (element instanceof ResourceElementWrapper) {
       element = ((ResourceElementWrapper)element).getWrappee();
     }
-    if (!(element instanceof XmlElement)) {
-      return false;
-    }
-    if (AndroidFacet.getInstance(element) == null) {
-      return false;
-    }
     if (element instanceof XmlFile) {
-      if (((XmlFile)element).getRootTag() == null) {
+      if (AndroidFacet.getInstance(element) == null ||
+          ((XmlFile)element).getRootTag() == null) {
         return false;
       }
       return DomManager.getDomManager(element.getProject()).getDomFileDescription((XmlFile)element)
         instanceof LayoutDomFileDescription;
     }
-    else if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_NAME) {
-      return getLayoutUsageDataFromContext(element) != null;
-    }
-    return false;
+    return getLayoutUsageDataFromContext(editor) != null;
   }
 
   @Nullable
-  private static LayoutUsageData getLayoutUsageDataFromContext(PsiElement context) {
-    final XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class);
+  private static LayoutUsageData getLayoutUsageDataFromContext(Editor editor) {
+    if (editor == null) {
+      return null;
+    }
+    final PsiElement element = PsiUtilBase.getElementAtCaret(editor);
+
+    if (!(element instanceof XmlToken) ||
+        AndroidFacet.getInstance(element) == null) {
+      return null;
+    }
+    final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
     return tag != null
            ? AndroidInlineUtil.getLayoutUsageData(tag)
            : null;
@@ -89,7 +98,7 @@ public class AndroidInlineLayoutHandler extends InlineActionHandler {
       AndroidInlineUtil.doInlineLayoutFile(project, (XmlFile)element, usageElement, ourTestConfig);
       return;
     }
-    final LayoutUsageData usageData = getLayoutUsageDataFromContext(element);
+    final LayoutUsageData usageData = getLayoutUsageDataFromContext(editor);
     assert usageData != null;
     final AndroidResourceReferenceBase ref = usageData.getReference();
     final PsiElement[] elements = ref.computeTargetElements();
@@ -117,6 +126,6 @@ public class AndroidInlineLayoutHandler extends InlineActionHandler {
       errorReporter.report("Cannot inline reference '" + ref.getValue() + "'", title);
       return;
     }
-    AndroidInlineUtil.doInlineLayoutFile(project, (XmlFile)resolvedElement, usageData.getIncludeTag(), ourTestConfig);
+    AndroidInlineUtil.doInlineLayoutFile(project, (XmlFile)resolvedElement, ref.getElement(), ourTestConfig);
   }
 }
