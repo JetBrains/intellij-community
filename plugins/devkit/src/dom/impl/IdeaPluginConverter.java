@@ -19,7 +19,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
@@ -47,7 +46,7 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
 
   @NotNull
   public Collection<? extends IdeaPlugin> getVariants(final ConvertContext context) {
-    Collection<IdeaPlugin> plugins = collectAllVisiblePlugins(context.getFile());
+    Collection<IdeaPlugin> plugins = getAllPlugins(context.getProject());
     return new THashSet<IdeaPlugin>(plugins, new TObjectHashingStrategy<IdeaPlugin>() {
       @Override
       public int computeHashCode(IdeaPlugin object) {
@@ -78,9 +77,7 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
     return DevKitBundle.message("error.cannot.resolve.plugin", s);
   }
 
-  public static Collection<IdeaPlugin> collectAllVisiblePlugins(@NotNull XmlFile xmlFile) {
-
-    Project project = xmlFile.getProject();
+  public static Collection<IdeaPlugin> getAllPlugins(final Project project) {
     if (DumbService.isDumb(project)) return Collections.emptyList();
     GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     List<DomFileElement<IdeaPlugin>> files = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);
