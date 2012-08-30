@@ -220,6 +220,11 @@
     </intentionAction>
 
     <intentionAction>
+      <className>com.siyeh.ipp.types.ExpandOneLineLambda2CodeBlockIntention</className>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
       <className>com.siyeh.ipp.decls.ChangeVariableTypeToRhsTypeIntention</className>
       <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
