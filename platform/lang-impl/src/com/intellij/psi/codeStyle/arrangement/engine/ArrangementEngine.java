@@ -18,6 +18,7 @@ package com.intellij.psi.codeStyle.arrangement.engine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -26,6 +27,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
+import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,17 +53,27 @@ public class ArrangementEngine {
       return;
     }
 
-    CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings();
-    final List<ArrangementRule> arrangementRules = settings.getCommonSettings(file.getLanguage()).getArrangementRules();
-    if (arrangementRules.isEmpty()) {
-      return;
-    }
-
     Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(file.getLanguage());
     if (rearranger == null) {
       return;
     }
 
+    CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings();
+    final Ref<List<? extends ArrangementRule>> rulesRef = new Ref<List<? extends ArrangementRule>>();
+    List<? extends ArrangementRule> arrangementRules = settings.getCommonSettings(file.getLanguage()).getArrangementRules();
+    if (arrangementRules.isEmpty() && rearranger instanceof ArrangementStandardSettingsAware) {
+      List<StdArrangementRule> defaultRules = ((ArrangementStandardSettingsAware)rearranger).getDefaultRules();
+      if (defaultRules != null) {
+        arrangementRules = defaultRules;
+      }
+    }
+    if (arrangementRules.isEmpty()) {
+      return;
+    }
+    else {
+      rulesRef.set(arrangementRules);
+    }
+    
     final Collection<? extends ArrangementEntry> entriesToProcess = rearranger.parse(file, document, ranges);
     final DocumentEx documentEx;
     if (document instanceof DocumentEx && !((DocumentEx)document).isInBulkUpdate()) {
@@ -77,7 +90,7 @@ public class ArrangementEngine {
           documentEx.setInBulkUpdate(true);
         }
         try {
-          doArrange(document, arrangementRules, entriesToProcess);
+          doArrange(document, rulesRef.get(), entriesToProcess);
         }
         finally {
           if (documentEx != null) {
@@ -89,7 +102,7 @@ public class ArrangementEngine {
   }
 
   private static void doArrange(@NotNull final Document document,
-                                @NotNull List<ArrangementRule> arrangementRules,
+                                @NotNull List<? extends ArrangementRule> arrangementRules,
                                 @NotNull Collection<? extends ArrangementEntry> entriesToProcess)
   {
     // The general idea is to process entries bottom-up where every processed group belongs to the same parent. We may not bother
@@ -174,8 +187,8 @@ public class ArrangementEngine {
     }
   }
 
-  private static void doArrange(@NotNull List<ArrangementRule> rules,
-                                @NotNull List<ArrangementEntry> entries,
+  private static void doArrange(@NotNull List<? extends  ArrangementRule> rules,
+                                @NotNull List<? extends  ArrangementEntry> entries,
                                 @NotNull Document document)
   {
     List<ArrangementEntry> arranged = new ArrayList<ArrangementEntry>();
