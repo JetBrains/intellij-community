@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.groovy.lang
 
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.IdeaTestUtil
@@ -26,6 +27,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   public void testDontWalkLongInferenceChain() throws Exception {
+    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     Map<Integer, PsiClass> classes = [:]
     myFixture.addFileToProject "Foo0.groovy", """class Foo0 {
       def foo() { return 0 }
@@ -101,6 +103,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   public void testDeeplyNestedClosures() {
+    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     String text = "println 'hi'"
     String defs = ""
     for (i in 1..10) {
@@ -112,6 +115,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   public void testDeeplyNestedClosuresInGenericCalls() {
+    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     String text = "println it"
     for (i in 1..10) {
       text = "foo(it) { $text }"
@@ -121,6 +125,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   public void testDeeplyNestedClosuresInGenericCalls2() {
+    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     String text = "println it"
     for (i in 1..10) {
       text = "foo(it) { $text }"
@@ -132,5 +137,11 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
 
   public void testManyAnnotatedScriptVariables() {
     IdeaTestUtil.startPerformanceTest("slow", 10000, configureAndHighlight((0..100).collect { "@Anno String i$it = null" }.join("\n"))).cpuBound().usesAllCPUCores().assertTiming()
+  }
+
+  public void "test no recursion prevention when resolving supertype"() {
+    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+    myFixture.addClass("interface Bar {}")
+    IdeaTestUtil.startPerformanceTest("slow", 200, configureAndHighlight("class Foo implements Bar {}")).cpuBound().usesAllCPUCores().assertTiming()
   }
 }

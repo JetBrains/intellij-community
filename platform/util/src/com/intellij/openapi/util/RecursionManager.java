@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.SoftHashMap;
@@ -23,6 +24,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -55,6 +57,7 @@ public class RecursionManager {
       return new CalculationStack();
     }
   };
+  private static boolean ourAssertOnPrevention;
 
   /**
    * @see RecursionGuard#doPreventingRecursion(Object, boolean, Computable)
@@ -77,6 +80,9 @@ public class RecursionManager {
         final CalculationStack stack = ourStack.get();
 
         if (stack.checkReentrancy(realKey)) {
+          if (ourAssertOnPrevention) {
+            throw new AssertionError("Endless recursion prevention occurred");
+          }
           return null;
         }
 
@@ -329,6 +335,18 @@ public class RecursionManager {
       return true;
     }
 
+  }
+
+  @TestOnly
+  public static void assertOnRecursionPrevention(@NotNull Disposable parentDisposable) {
+    ourAssertOnPrevention = true;
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourAssertOnPrevention = false;
+      }
+    });
   }
 
 }

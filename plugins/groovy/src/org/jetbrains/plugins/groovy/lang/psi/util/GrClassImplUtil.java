@@ -362,7 +362,7 @@ public class GrClassImplUtil {
     }
 
     final GrTypeDefinitionBody body = grType.getBody();
-    if (body != null) {
+    if (body != null && !(lastParent instanceof GrReferenceList)) {
       if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.CLASS)) {
         for (CandidateInfo info : CollectClassMembersUtil.getAllInnerClasses(grType, false).values()) {
           final PsiClass innerClass = (PsiClass)info.getElement();
