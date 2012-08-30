@@ -63,36 +63,33 @@ public class SpecifyTypeInPy3AnnotationsIntention implements IntentionAction {
     }
     final PyType type = problemElement.getType(TypeEvalContext.slow());
     if (type == null || type instanceof PyReturnTypeReference) {
-      PyFunction pyFunction = PsiTreeUtil.getParentOfType(problemElement, PyFunction.class);
       PsiReference reference = problemElement.getReference();
       if (problemElement instanceof PyQualifiedExpression) {
         final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
         if (qualifier != null && !qualifier.getText().equals(PyNames.CANONICAL_SELF)) reference = qualifier.getReference();
       }
-      if (pyFunction != null) {
-        PyParameter parameter = null;
-        final PsiElement resolvedReference = reference != null?reference.resolve() : null;
-        if (problemElement instanceof PyParameter)
-          parameter = (PyParameter)problemElement;
-        else if (resolvedReference instanceof PyParameter)
-          parameter = (PyParameter)resolvedReference;
-        if (parameter instanceof PyNamedParameter && (((PyNamedParameter)parameter).getAnnotation() != null ||
-          parameter.getDefaultValue() != null)) return false;
-        if (parameter != null)
-          return true;
-        else {
-          if (resolvedReference instanceof PyTargetExpression) {
-            final PyExpression assignedValue = ((PyTargetExpression)resolvedReference).findAssignedValue();
-            if (assignedValue instanceof PyCallExpression) {
-              final PyExpression callee = ((PyCallExpression)assignedValue).getCallee();
-              if (callee != null) {
-                final PsiReference psiReference = callee.getReference();
-                if (psiReference != null && psiReference.resolve() == null) return false;
-              }
-              final Callable callable = ((PyCallExpression)assignedValue).resolveCalleeFunction(PyResolveContext.defaultContext());
-
-              if (callable instanceof PyFunction && ((PyFunction)callable).getAnnotation() == null) return true;
+      PyParameter parameter = null;
+      final PsiElement resolvedReference = reference != null?reference.resolve() : null;
+      if (problemElement instanceof PyParameter)
+        parameter = (PyParameter)problemElement;
+      else if (resolvedReference instanceof PyParameter)
+        parameter = (PyParameter)resolvedReference;
+      if (parameter instanceof PyNamedParameter && (((PyNamedParameter)parameter).getAnnotation() != null ||
+        parameter.getDefaultValue() != null)) return false;
+      if (parameter != null)
+        return true;
+      else {
+        if (resolvedReference instanceof PyTargetExpression) {
+          final PyExpression assignedValue = ((PyTargetExpression)resolvedReference).findAssignedValue();
+          if (assignedValue instanceof PyCallExpression) {
+            final PyExpression callee = ((PyCallExpression)assignedValue).getCallee();
+            if (callee != null) {
+              final PsiReference psiReference = callee.getReference();
+              if (psiReference != null && psiReference.resolve() == null) return false;
             }
+            final Callable callable = ((PyCallExpression)assignedValue).resolveCalleeFunction(PyResolveContext.defaultContext());
+
+            if (callable instanceof PyFunction && ((PyFunction)callable).getAnnotation() == null) return true;
           }
         }
       }

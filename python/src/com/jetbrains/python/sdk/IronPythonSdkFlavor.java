@@ -1,8 +1,8 @@
 package com.jetbrains.python.sdk;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -84,6 +84,6 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
 
   @Override
   public Icon getIcon() {
-    return IconLoader.getIcon("/com/jetbrains/python/icons/dotnet.png");
+    return PythonIcons.Python.Icons.Dotnet;
   }
 }

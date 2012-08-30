@@ -2,13 +2,13 @@ package com.jetbrains.python.testing;
 
 import com.intellij.execution.configurations.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.testing.attest.PythonAtTestRunConfiguration;
 import com.jetbrains.python.testing.doctest.PythonDocTestRunConfiguration;
 import com.jetbrains.python.testing.nosetest.PythonNoseTestRunConfiguration;
 import com.jetbrains.python.testing.pytest.PyTestRunConfiguration;
 import com.jetbrains.python.testing.unittest.PythonUnitTestRunConfiguration;
+import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,7 +29,7 @@ public class PythonTestConfigurationType implements ConfigurationType {
     return ConfigurationTypeUtil.findConfigurationType(PythonTestConfigurationType.class);
   }
 
-  private static final Icon ICON = IconLoader.getIcon("/com/jetbrains/python/icons/pythonTests.png");
+  private static final Icon ICON = PythonIcons.Python.Icons.PythonTests;
 
   private static class PythonUnitTestConfigurationFactory extends ConfigurationFactory {
     protected PythonUnitTestConfigurationFactory(ConfigurationType configurationType) {

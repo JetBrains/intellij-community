@@ -6,8 +6,8 @@ import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.util.IconLoader;
 import com.jetbrains.python.PythonModuleTypeBase;
+import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +48,7 @@ public class BuildoutFacetType extends FacetType<BuildoutFacet, BuildoutFacetCon
     return (BuildoutFacetType)FacetTypeRegistry.getInstance().findFacetType(ID);
   }
 
-  public final static Icon BUILDOUT_ICON = IconLoader.getIcon("/com/jetbrains/python/icons/buildout/buildout.png");
+  public final static Icon BUILDOUT_ICON = PythonIcons.Python.Icons.Buildout.Buildout;
 
   @Override
   public Icon getIcon() {

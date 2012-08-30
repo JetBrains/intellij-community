@@ -3,6 +3,7 @@ package com.jetbrains.python.editor;
 import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -73,27 +74,50 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
       }
 
       // single string case PY-4375
+      final PyExpression leftExpression = request.leftExpr();
+      final PyExpression rightExpression = request.rightExpr();
       if (request.leftElem() == request.rightElem()) {
         IElementType type = request.leftElem().getNode().getElementType();
         if (PyTokenTypes.SINGLE_QUOTED_STRING == type || PyTokenTypes.SINGLE_QUOTED_UNICODE == type) {
-          PyExpression element = request.leftExpr();
+          PyExpression element = leftExpression;
           if (element == null) return CANNOT_JOIN;
-          String[] substrings = element.getText().split("\n");
-          if (substrings.length != 1) {
-            StringBuilder replacement = new StringBuilder();
-            for (String string : substrings) {
-              if (string.trim().endsWith("\\"))
-                replacement.append(string.substring(0, string.length()-1));
-              else
-                replacement.append(string);
-            }
-            document.replaceString(element.getTextOffset(), element.getTextOffset()+element.getTextLength(), replacement);
+          if (removeBackSlash(document, element, false)) {
             return element.getTextOffset();
+          }
+        }
+      }
+      PsiElement expression = null;
+      if (leftExpression != null && rightExpression != null) {
+        if (PsiTreeUtil.isAncestor(leftExpression, rightExpression, false))
+          expression = leftExpression;
+        else if (PsiTreeUtil.isAncestor(rightExpression, leftExpression, false))
+          expression = rightExpression;
+        if (expression != null && !(expression instanceof PyStringLiteralExpression)) {
+          if (removeBackSlash(document, expression, true)) {
+            return expression.getTextOffset();
           }
         }
       }
     }
     return CANNOT_JOIN;
+  }
+
+  private boolean removeBackSlash(Document document, PsiElement element, boolean trim) {
+    String[] substrings = element.getText().split("\n");
+    if (substrings.length != 1) {
+      StringBuilder replacement = new StringBuilder();
+      for (String string : substrings) {
+        if (trim)
+          string = StringUtil.trimLeading(string);
+        if (string.trim().endsWith("\\"))
+          replacement.append(string.substring(0, string.length()-1));
+        else
+          replacement.append(string);
+      }
+      document.replaceString(element.getTextOffset(), element.getTextOffset()+element.getTextLength(), replacement);
+      return true;
+    }
+    return false;
   }
 
   // a dumb immutable result holder
