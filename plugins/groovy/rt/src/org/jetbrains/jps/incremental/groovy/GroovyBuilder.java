@@ -25,7 +25,6 @@ import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.javac.OutputFileObject;
-import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -275,10 +274,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     // IMPORTANT! must be the first in classpath
     cp.add(ClasspathBootstrap.getResourcePath(GroovyCompilerWrapper.class).getPath());
 
-    for (File file : context.getProjectPaths().getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.isTests()), false)) {
-      cp.add(FileUtil.toCanonicalPath(file.getPath()));
-    }
-    for (File file : context.getProjectPaths().getClasspathFiles(chunk, JpsJavaClasspathKind.runtime(chunk.isTests()), false)) {
+    for (File file : context.getProjectPaths().getCompilationClasspathFiles(chunk, chunk.isTests(), false, false)) {
       cp.add(FileUtil.toCanonicalPath(file.getPath()));
     }
     return new ArrayList<String>(cp);

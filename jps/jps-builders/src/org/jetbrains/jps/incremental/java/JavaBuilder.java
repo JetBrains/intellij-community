@@ -322,7 +322,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         context.checkCanceled();
 
         if (!forms.isEmpty() || addNotNullAssertions) {
-          final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk, chunk.isTests());
+          final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk);
           final InstrumentationClassFinder finder = createInstrumentationClassFinder(platformCp, classpath, chunkSourcePath, outputSink);
 
           try {
@@ -919,7 +919,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     final MyNestedFormLoader nestedFormsLoader =
-      new MyNestedFormLoader(chunkSourcePath, ProjectPaths.getOutputPathsWithDependents(chunk, chunk.isTests()));
+      new MyNestedFormLoader(chunkSourcePath, ProjectPaths.getOutputPathsWithDependents(chunk));
 
     for (File formFile : formsToInstrument) {
       final LwRootContainer rootContainer;

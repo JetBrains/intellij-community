@@ -3,7 +3,6 @@ import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.ProjectPaths
 import org.jetbrains.jps.builders.rebuild.JpsRebuildTestCase
-import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 /**
  * @author nik
  */
@@ -22,35 +21,22 @@ public class ModuleClasspathTest extends JpsRebuildTestCase {
   }
 
   public void testSimpleClasspath() {
-    assertClasspath('util', JpsJavaClasspathKind.PRODUCTION_COMPILE, ["util/lib/exported.jar", "/jdk15.jar"])
-    assertClasspath('util', JpsJavaClasspathKind.PRODUCTION_RUNTIME, ["util/lib/exported.jar", "/jdk15.jar", "out/production/util"])
+    assertClasspath('util', false, ["util/lib/exported.jar", "/jdk15.jar"])
   }
 
   public void testScopes() {
-    assertClasspath("test-util", JpsJavaClasspathKind.PRODUCTION_COMPILE,
+    assertClasspath("test-util", false,
                     ["/jdk.jar", "test-util/lib/provided.jar"])
-    assertClasspath("test-util", JpsJavaClasspathKind.TEST_COMPILE,
+    assertClasspath("test-util", true,
                     ["/jdk.jar", "test-util/lib/provided.jar", "test-util/lib/test.jar", "out/production/test-util"])
-    assertClasspath("test-util", JpsJavaClasspathKind.PRODUCTION_RUNTIME,
-                    ["/jdk.jar", "test-util/lib/runtime.jar", "out/production/test-util"])
-    assertClasspath("test-util", JpsJavaClasspathKind.TEST_RUNTIME,
-                    ["/jdk.jar", "test-util/lib/provided.jar", "test-util/lib/runtime.jar",
-                     "test-util/lib/test.jar", "out/test/test-util", "out/production/test-util"])
   }
 
   public void testDepModules() {
-    assertClasspath("main", JpsJavaClasspathKind.PRODUCTION_COMPILE,
+    assertClasspath("main", false,
             ["util/lib/exported.jar", "out/production/util", "/jdk.jar", "main/lib/service.jar"])
-    assertClasspath("main", JpsJavaClasspathKind.TEST_COMPILE,
+    assertClasspath("main", true,
             ["out/production/main", "util/lib/exported.jar", "out/test/util", "out/production/util", "/jdk.jar",
              "out/test/test-util", "out/production/test-util", "main/lib/service.jar"])
-
-    assertClasspath("main", JpsJavaClasspathKind.PRODUCTION_RUNTIME,
-            ["out/production/main", "util/lib/exported.jar", "out/production/util", "/jdk.jar", "main/lib/service.jar"])
-    assertClasspath("main", JpsJavaClasspathKind.TEST_RUNTIME,
-            ["out/test/main", "out/production/main", "util/lib/exported.jar", "out/test/util", "out/production/util", "/jdk.jar",
-             "test-util/lib/provided.jar", "test-util/lib/runtime.jar", "test-util/lib/test.jar", "out/test/test-util",
-             "out/production/test-util","main/lib/service.jar"])
   }
 
   public void testCompilationClasspath() {
@@ -72,9 +58,9 @@ public class ModuleClasspathTest extends JpsRebuildTestCase {
     return new ProjectPaths(myJpsProject)
   }
 
-  private def assertClasspath(String moduleName, JpsJavaClasspathKind classpathKind, List<String> expected) {
+  private def assertClasspath(String moduleName, boolean includeTests, List<String> expected) {
     ModuleChunk chunk = createChunk(moduleName)
-    final List<String> classpath = new ProjectPaths(myJpsProject).getClasspath(chunk, classpathKind)
+    final List<String> classpath = ProjectPaths.getPathsList(new ProjectPaths(myJpsProject).getCompilationClasspathFiles(chunk, includeTests))
     assertClasspath(expected, toSystemIndependentPaths(classpath))
   }
 
