@@ -40,7 +40,7 @@
     <action id="Android.CreateResourceDirectory" class="org.jetbrains.android.actions.CreateResourceDirectoryAction">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Android.CreateResourcesActionGroup"/>
     </action>
-    <group id="AndroidToolsGroup" popup="true" text="Android" icon="/icons/android.png"
+    <group id="AndroidToolsGroup" popup="true" text="Android" icon="AndroidIcons.Android"
            class="org.jetbrains.android.actions.AndroidToolsActionGroup">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
@@ -79,7 +79,7 @@
             class="org.jetbrains.android.actions.AndroidConnectDebuggerAction"
             text="Attach debugger to Android process"
             description="Attach debugger to Android process"
-            icon="/icons/attachDebugger.png">
+            icon="AndroidIcons.AttachDebugger">
       <add-to-group group-id="ToolbarRunGroup" anchor="after" relative-to-action="RunnerActions"/>
     </action>
     <action id="AndroidExtractStyleAction" class="org.jetbrains.android.refactoring.AndroidExtractStyleAction" text="St_yle..."
@@ -95,9 +95,7 @@
       <add-to-group group-id="RefactoringMenu"/>
     </action>
     <action id="AndroidInlineIncludeAction" class="org.jetbrains.android.refactoring.AndroidInlineIncludeAction"
-            text="Inline _Layout..." description="Inlines included Android layout">
-      <add-to-group group-id="RefactoringMenu"/>
-    </action>
+            text="Inline _Layout..." description="Inlines included Android layout"/>
   </actions>
 
   <depends>JUnit</depends>
@@ -201,7 +199,7 @@
     <facet.toolWindow id="Android"
                       facetIdList="android"
                       anchor="bottom"
-                      icon="/icons/android.png"
+                      icon="AndroidIcons.Android"
                       factoryClass="org.jetbrains.android.logcat.AndroidLogcatToolWindowFactory"/>
     <projectService serviceInterface="org.jetbrains.android.logcat.AndroidLogcatFiltersPreferences"
                     serviceImplementation="org.jetbrains.android.logcat.AndroidLogcatFiltersPreferences"/>
@@ -252,7 +250,7 @@
     <compileServer.plugin classpath="sdklib.jar;common.jar;jarutils.jar;androidprefs.jar"/>
 
     <inlineActionHandler implementation="org.jetbrains.android.refactoring.AndroidInlineStyleHandler"/>
-    <inlineActionHandler implementation="org.jetbrains.android.refactoring.AndroidInlineLayoutHandler"/>
+    <inlineActionHandler implementation="org.jetbrains.android.refactoring.AndroidInlineLayoutHandler" order="first"/>
   </extensions>
 
   <extensionPoints>

@@ -9,5 +9,9 @@ import javax.swing.*;
  * Don't repeat mistakes of others ;-)
  */
 public class PropertiesIcons {
-  public static final Icon XmlProperties = IconLoader.getIcon("/icons/xmlProperties.png"); // 16x16
+  private static Icon load(String path) {
+    return IconLoader.getIcon(path, PropertiesIcons.class);
+  }
+
+  public static final Icon XmlProperties = load("/icons/xmlProperties.png"); // 16x16
 }

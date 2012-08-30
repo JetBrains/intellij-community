@@ -72,7 +72,7 @@ class AndroidInlineStyleDialog extends InlineOptionsDialog {
     }
     else {
       invokeRefactoring(new AndroidInlineAllStyleUsagesProcessor(myProject, myElement, myStyleTag, myStyleName,
-                                                                 myAttributeValues, myParentStyleRef));
+                                                                 myAttributeValues, myParentStyleRef, null));
     }
   }
 }

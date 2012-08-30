@@ -1,7 +1,7 @@
 package com.intellij.tasks.jira;
 
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.tasks.impl.BaseRepositoryType;
+import icons.JiraConnectorIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -20,7 +20,7 @@ public class JiraRepositoryType extends BaseRepositoryType<JiraRepository> {
   }
 
   public Icon getIcon() {
-    return IconLoader.getIcon("/resources/jira-blue-16.png");
+    return JiraConnectorIcons.Jira_blue_16;
   }
 
   @NotNull

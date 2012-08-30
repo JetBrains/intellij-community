@@ -43,7 +43,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.ToolWindow;
@@ -61,6 +60,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import icons.AndroidIcons;
 import org.jetbrains.android.dom.layout.LayoutDomFileDescription;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.maven.AndroidMavenUtil;
@@ -90,7 +90,7 @@ import java.util.Map;
  * @author Eugene.Kudelevsky
  */
 public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
-  private static final Icon ANDROID_PREVIEW_ICON = IconLoader.getIcon("/icons/androidPreview.png");
+  private static final Icon ANDROID_PREVIEW_ICON = AndroidIcons.AndroidPreview;
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.uipreview.AndroidLayoutPreviewToolWindowManager");
 

@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -31,6 +30,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
+import icons.Svn4ideaIcons;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.history.SvnChangeList;
@@ -51,7 +51,7 @@ public class ShowAllSubmittedFilesAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.actions.ShowAllSubmittedFilesAction");
 
   public ShowAllSubmittedFilesAction() {
-    super(SvnBundle.message("action.name.show.all.paths.affected"), null, IconLoader.getIcon("/icons/allRevisions.png"));
+    super(SvnBundle.message("action.name.show.all.paths.affected"), null, Svn4ideaIcons.AllRevisions);
   }
 
   public void update(AnActionEvent e) {

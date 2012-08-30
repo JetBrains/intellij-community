@@ -17,8 +17,8 @@ package org.intellij.lang.regexp;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.LayeredIcon;
+import icons.RegExpSupportIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,7 @@ public class RegExpFileType extends LanguageFileType {
 
         myIcon = new LayeredIcon(2);
         ((LayeredIcon)myIcon).setIcon(AllIcons.FileTypes.Text, 0);
-        ((LayeredIcon)myIcon).setIcon(IconLoader.getIcon("regexp-filetype-icon.png"), 1);
+        ((LayeredIcon)myIcon).setIcon(RegExpSupportIcons.Regexp_filetype_icon, 1);
 
 //        myIcon = LayeredIcon.create(
 //                IconLoader.getIcon("/fileTypes/text.png"),

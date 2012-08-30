@@ -36,7 +36,7 @@
     </group>
 
     <group id="GitRepositoryActions">
-      <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches" icon="/icons/branch.png"/>
+      <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches" icon="Git4ideaIcons.Branch"/>
       <action id="Git.Tag" class="git4idea.actions.GitTag" text="Tag Files..."/>
       <action id="Git.Merge" class="git4idea.actions.GitMerge" text="Merge Changes..." icon="AllIcons.Vcs.MergeSourcesTree"/>
       <action id="Git.Stash" class="git4idea.actions.GitStash" text="Stash Changes..."/>

@@ -9,5 +9,9 @@ import javax.swing.*;
  * Don't repeat mistakes of others ;-)
  */
 public class JiraConnectorIcons {
-  public static final Icon Jira_blue_16 = IconLoader.getIcon("/resources/jira-blue-16.png"); // 16x16
+  private static Icon load(String path) {
+    return IconLoader.getIcon(path, JiraConnectorIcons.class);
+  }
+
+  public static final Icon Jira_blue_16 = load("/resources/jira-blue-16.png"); // 16x16
 }

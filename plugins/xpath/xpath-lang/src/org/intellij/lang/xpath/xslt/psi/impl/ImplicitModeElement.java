@@ -2,7 +2,6 @@ package org.intellij.lang.xpath.xslt.psi.impl;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -15,6 +14,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import icons.XpathIcons;
 import org.intellij.lang.xpath.completion.CompletionLists;
 import org.intellij.lang.xpath.xslt.context.XsltNamespaceContext;
 import org.intellij.lang.xpath.xslt.impl.references.PrefixReference;
@@ -56,7 +56,7 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
 
     @Override
     public Icon getIcon(int i) {
-        return IconLoader.getIcon("/icons/template.png");
+        return XpathIcons.Template;
     }
 
     public String getName() {

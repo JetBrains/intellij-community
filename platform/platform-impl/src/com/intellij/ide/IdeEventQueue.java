@@ -322,52 +322,6 @@ public class IdeEventQueue extends EventQueue {
     return myCurrentEvent;
   }
 
-  //[jeka] commented for performance reasons
-
-  /*
-
-  public void postEvent(final AWTEvent e) {
-
-    // [vova] sometime people call SwingUtilities.invokeLater(null). To
-
-    // find such situations we will specially check InvokationEvents
-
-    try {
-
-      if (e instanceof InvocationEvent) {
-
-        //noinspection HardCodedStringLiteral
-
-        final Field field = InvocationEvent.class.getDeclaredField("runnable");
-
-        field.setAccessible(true);
-
-        final Object runnable = field.get(e);
-
-        if (runnable == null) {
-
-          //noinspection HardCodedStringLiteral
-
-          throw new IllegalStateException("InvocationEvent contains null runnable: " + e);
-
-        }
-
-      }
-
-    }
-
-    catch (final Exception exc) {
-
-      throw new Error(exc);
-
-    }
-
-    super.postEvent(e);
-
-  }
-
-  */
-
   @Override
   public void dispatchEvent(final AWTEvent e) {
     boolean wasInputEvent = myIsInInputEvent;

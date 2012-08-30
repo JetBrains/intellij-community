@@ -11,15 +11,15 @@ for (String taskName: taskNames) {}
 0(1) element: null
 1(2) WRITE taskNames
 2(3) element: Open block
-3(4) WRITE scriptName
-4(5,7) element: For statement
-5(4) element: Block statement
+3(4,7) element: For statement
+4(5) WRITE scriptName
+5(3) element: Block statement
 6(9) element: Finally clause
 7(6,8)  CALL 6
 8(10) AFTER CALL 7
 9(8)  RETURN
 10(11) READ taskNames
-11(12) WRITE taskName
-12(13,14) element: For statement
-13(12) element: Block statement
+11(12,14) element: For statement
+12(13) WRITE taskName
+13(11) element: Block statement
 14() element: null

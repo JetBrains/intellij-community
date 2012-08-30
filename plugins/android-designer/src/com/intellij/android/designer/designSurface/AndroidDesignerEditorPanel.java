@@ -165,16 +165,16 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     final ActionManager manager = ActionManager.getInstance();
 
     AnAction action = manager.getAction(AndroidExtractStyleAction.ACTION_ID);
-    group.add(new AndroidRefactoringActionWrapper("_Extract Style", action));
+    group.add(new AndroidRefactoringActionWrapper("_Extract Style...", action));
 
     action = manager.getAction(AndroidInlineStyleReferenceAction.ACTION_ID);
-    group.add(new AndroidRefactoringActionWrapper("_Inline Style", action));
+    group.add(new AndroidRefactoringActionWrapper("_Inline Style...", action));
 
     action = manager.getAction(AndroidExtractAsIncludeAction.ACTION_ID);
-    group.add(new AndroidRefactoringActionWrapper("E_xtract Layout", action));
+    group.add(new AndroidRefactoringActionWrapper("E_xtract Layout...", action));
 
     action = manager.getAction(AndroidInlineIncludeAction.ACTION_ID);
-    group.add(new AndroidRefactoringActionWrapper("I_nline Layout", action));
+    group.add(new AndroidRefactoringActionWrapper("I_nline Layout...", action));
     return group;
   }
 

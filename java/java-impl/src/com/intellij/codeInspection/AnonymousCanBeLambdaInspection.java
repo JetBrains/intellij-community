@@ -145,6 +145,14 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaLocalInspectionTool 
       buf.append("->");
       final PsiCodeBlock body = method.getBody();
       LOG.assertTrue(body != null);
+      final PsiStatement[] statements = body.getStatements();
+      if (statements.length == 1 && statements[0] instanceof PsiReturnStatement) {
+        PsiExpression value = ((PsiReturnStatement)statements[0]).getReturnValue();
+        if (value != null) {
+          buf.append(value.getText());
+          return buf.toString();
+        }
+      }
       buf.append(body.getText());
       return buf.toString();
     }

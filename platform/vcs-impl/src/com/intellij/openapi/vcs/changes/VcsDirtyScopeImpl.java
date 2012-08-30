@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,7 +158,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   /**
    * Add dirty directory recursively. If there are already dirty entries
    * that are descendants or ancestors for the added directory, the contained
-   * entries are droped from scope.
+   * entries are dropped from scope.
    *
    * @param newcomer a new directory to add
    */

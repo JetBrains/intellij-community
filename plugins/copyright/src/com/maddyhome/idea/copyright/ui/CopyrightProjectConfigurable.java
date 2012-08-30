@@ -21,7 +21,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
+import icons.CopyrightIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,7 +30,7 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
   private final Project project;
   private ProjectSettingsPanel optionsPanel = null;
 
-  private static final Icon icon = IconLoader.getIcon("/resources/copyright32x32.png");
+  private static final Icon icon = CopyrightIcons.Copyright32x32;
 
   private static final Logger logger = Logger.getInstance(CopyrightProjectConfigurable.class.getName());
   private final CopyrightProfilesPanel myProfilesPanel;

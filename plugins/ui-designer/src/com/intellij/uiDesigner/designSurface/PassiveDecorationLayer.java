@@ -15,7 +15,6 @@
  */
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
@@ -23,6 +22,7 @@ import com.intellij.uiDesigner.radComponents.RadButtonGroup;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.containers.HashSet;
+import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -98,7 +98,7 @@ class PassiveDecorationLayer extends JComponent{
   }
 
   private static class IconHolder {
-    private static final Icon ourDragIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/drag.png");
+    private static final Icon ourDragIcon = UIDesignerIcons.Drag;
   }
 
   private static Icon getDragIcon() {

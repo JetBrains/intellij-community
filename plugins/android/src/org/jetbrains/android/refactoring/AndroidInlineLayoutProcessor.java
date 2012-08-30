@@ -1,9 +1,11 @@
 package org.jetbrains.android.refactoring;
 
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -15,6 +17,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
@@ -35,15 +38,18 @@ public class AndroidInlineLayoutProcessor extends BaseRefactoringProcessor {
   private final XmlFile myLayoutFile;
   private final XmlTag myLayoutRootTag;
   private final PsiElement myUsageElement;
+  private final AndroidInlineTestConfig myTestConfig;
 
   protected AndroidInlineLayoutProcessor(@NotNull Project project,
                                          @NotNull XmlFile file,
                                          @NotNull XmlTag rootTag,
-                                         @Nullable PsiElement usageElement) {
+                                         @Nullable PsiElement usageElement,
+                                         @Nullable AndroidInlineTestConfig config) {
     super(project);
     myLayoutFile = file;
     myLayoutRootTag = rootTag;
     myUsageElement = usageElement;
+    myTestConfig = config;
   }
 
   @NotNull
@@ -86,6 +92,53 @@ public class AndroidInlineLayoutProcessor extends BaseRefactoringProcessor {
   @Override
   protected void performRefactoring(UsageInfo[] usages) {
     final List<LayoutUsageData> inlineInfos = new ArrayList<LayoutUsageData>();
+
+    for (UsageInfo usage : usages) {
+      final PsiElement element = usage.getElement();
+      if (element == null) continue;
+
+      final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+      final LayoutUsageData usageData = tag != null
+                                        ? AndroidInlineUtil.getLayoutUsageData(tag)
+                                        : null;
+      if (usageData != null && usageData.getReference().computeTargetElements().length == 1) {
+        inlineInfos.add(usageData);
+      }
+    }
+
+    for (LayoutUsageData info : inlineInfos) {
+      try {
+        info.inline(myLayoutRootTag);
+      }
+      catch (AndroidRefactoringErrorException e) {
+        LOG.info(e);
+        String message = e.getMessage();
+
+        if (message == null) {
+          message = "Refactoring was performed with errors";
+        }
+        AndroidUtils.reportError(myProject, message, AndroidBundle.message("android.inline.style.title"));
+        return;
+      }
+    }
+    if (myUsageElement == null) {
+      myLayoutFile.delete();
+    }
+  }
+
+  @Override
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+    final UsageInfo[] usages = refUsages.get();
+    final MultiMap<PsiElement, String> conflicts = detectConflicts(usages);
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      myTestConfig.setConflicts(conflicts);
+      return true;
+    }
+    return showConflicts(conflicts, usages);
+  }
+
+  private static MultiMap<PsiElement, String> detectConflicts(UsageInfo[] usages) {
     final List<PsiElement> nonXmlUsages = new ArrayList<PsiElement>();
     final List<PsiElement> unsupportedUsages = new ArrayList<PsiElement>();
     final List<PsiElement> unambiguousUsages = new ArrayList<PsiElement>();
@@ -109,37 +162,10 @@ public class AndroidInlineLayoutProcessor extends BaseRefactoringProcessor {
 
       if (usageData.getReference().computeTargetElements().length > 1) {
         unambiguousUsages.add(element);
-        continue;
-      }
-      inlineInfos.add(usageData);
-    }
-
-    if (nonXmlUsages.size() > 0 || unambiguousUsages.size() > 0 || unsupportedUsages.size() > 0) {
-      final String errorMessage = AndroidInlineUtil.buildErrorMessage(
-        myProject, nonXmlUsages, unambiguousUsages, unsupportedUsages,
-        Collections.<PsiElement>emptyList());
-      AndroidUtils.reportError(myProject, errorMessage, AndroidBundle.message("android.inline.style.title"));
-      return;
-    }
-
-    for (LayoutUsageData info : inlineInfos) {
-      try {
-        info.inline(myLayoutRootTag);
-      }
-      catch (AndroidRefactoringErrorException e) {
-        LOG.info(e);
-        String message = e.getMessage();
-
-        if (message == null) {
-          message = "Refactoring was performed with errors";
-        }
-        AndroidUtils.reportError(myProject, message, AndroidBundle.message("android.inline.style.title"));
-        return;
       }
     }
-    if (myUsageElement == null) {
-      myLayoutFile.delete();
-    }
+    return AndroidInlineUtil.buildConflicts(nonXmlUsages, unambiguousUsages, unsupportedUsages,
+                                            Collections.<PsiElement>emptyList());
   }
 
   @Override

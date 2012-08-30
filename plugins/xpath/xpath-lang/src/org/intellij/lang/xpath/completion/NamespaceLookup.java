@@ -16,7 +16,7 @@
 package org.intellij.lang.xpath.completion;
 
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.IconLoader;
+import icons.XpathIcons;
 
 import javax.swing.*;
 
@@ -26,6 +26,6 @@ public class NamespaceLookup extends AbstractLookup implements Lookup, Iconable 
     }
 
     public Icon getIcon(int flags) {
-        return IconLoader.getIcon("/icons/namespace.png");
+        return XpathIcons.Namespace;
     }
 }

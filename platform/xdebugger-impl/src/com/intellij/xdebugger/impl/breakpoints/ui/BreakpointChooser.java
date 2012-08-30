@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.ui.breakpoints;
+package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -22,32 +22,31 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.util.*;
-import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
 
 public class BreakpointChooser {
 
-  private DetailView myDetailView;
+  private DetailView myDetailViewDelegate;
 
   private Delegate myDelegate;
 
   private final ComboBox myComboBox;
 
   private DetailController myDetailController;
-  private JBList myList;
+  private final List<BreakpointItem> myBreakpointItems;
+  private BreakpointChooser.MyDetailView myDetailView;
 
   public void setDetailView(DetailView detailView) {
-    myDetailView = detailView;
-    myDetailController.setDetailView(new MyDetailView(myDetailView.getEditorState()));
+    myDetailViewDelegate = detailView;
+    myDetailView = new MyDetailView(myDetailViewDelegate.getEditorState());
+    myDetailController.setDetailView(myDetailView);
   }
 
   public Object getSelectedBreakpoint() {
@@ -56,28 +55,28 @@ public class BreakpointChooser {
 
   private void pop(DetailView.PreviewEditorState pushed) {
     if (pushed.getFile() != null) {
-      myDetailView
+      myDetailViewDelegate
         .navigateInPreviewEditor(
           new DetailView.PreviewEditorState(pushed.getFile(), pushed.getNavigate(), pushed.getAttributes()));
     }
     else {
-      myDetailView.clearEditor();
+      myDetailViewDelegate.clearEditor();
     }
   }
+
+  public void setSelectesBreakpoint(Object breakpoint) {
+    myComboBox.setSelectedItem(findItem(breakpoint, myBreakpointItems));
+  }
+
   public interface Delegate {
     void breakpointChosen(Project project, BreakpointItem breakpointItem);
   }
 
-  public BreakpointChooser(final Project project, Delegate delegate, Breakpoint baseBreakpoint, List<BreakpointItem> breakpointItems) {
+  public BreakpointChooser(final Project project, Delegate delegate, Object baseBreakpoint, List<BreakpointItem> breakpointItems) {
     myDelegate = delegate;
+    myBreakpointItems = breakpointItems;
 
-    BreakpointItem breakpointItem = null;
-    for (BreakpointItem item : breakpointItems) {
-      if (item.getBreakpoint() == baseBreakpoint) {
-        breakpointItem = item;
-        break;
-      }
-    }
+    BreakpointItem breakpointItem = findItem(baseBreakpoint, myBreakpointItems);
     final Ref<Object> hackedSelection = Ref.create();
 
     myDetailController = new DetailController(new MasterController() {
@@ -96,10 +95,18 @@ public class BreakpointChooser {
       }
     });
 
-    final ItemWrapperListRenderer listRenderer = new ItemWrapperListRenderer(project, null);
-
-    ComboBoxModel model = new CollectionComboBoxModel(breakpointItems, breakpointItem);
-    myComboBox = new ComboBox(model);
+    ComboBoxModel model = new CollectionComboBoxModel(myBreakpointItems, breakpointItem);
+    myComboBox = new ComboBox(model) {
+      @Override
+      public void setPopupVisible(boolean visible) {
+        super.setPopupVisible(visible);
+        if (!visible) {
+          if (myDetailView != null) {
+            myDetailView.clearEditor();
+          }
+        }
+      }
+    };
     myComboBox.setRenderer(new ItemWrapperListRenderer(project, null) {
       @Override
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
@@ -122,6 +129,18 @@ public class BreakpointChooser {
     });
   }
 
+  @Nullable
+  private static BreakpointItem findItem(Object baseBreakpoint, List<BreakpointItem> breakpointItems) {
+    BreakpointItem breakpointItem = null;
+    for (BreakpointItem item : breakpointItems) {
+      if (item.getBreakpoint() == baseBreakpoint) {
+        breakpointItem = item;
+        break;
+      }
+    }
+    return breakpointItem;
+  }
+
   public JComponent getComponent() {
     return myComboBox;
   }
@@ -138,23 +157,23 @@ public class BreakpointChooser {
 
     @Override
     public Editor getEditor() {
-      return myDetailView.getEditor();
+      return myDetailViewDelegate.getEditor();
     }
 
     @Override
     public void navigateInPreviewEditor(PreviewEditorState editorState) {
-      if (myDetailView != null) {
-        myDetailView.navigateInPreviewEditor(editorState);
+      if (myDetailViewDelegate != null) {
+        myDetailViewDelegate.navigateInPreviewEditor(editorState);
       }
     }
 
     @Override
-    public JPanel getDetailPanel() {
+    public JPanel getPropertiesPanel() {
       return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public void setDetailPanel(@Nullable JPanel panel) {
+    public void setPropertiesPanel(@Nullable JPanel panel) {
       //To change body of implemented methods use File | Settings | File Templates.
     }
 
@@ -165,7 +184,7 @@ public class BreakpointChooser {
 
     @Override
     public PreviewEditorState getEditorState() {
-      return myDetailView.getEditorState();
+      return myDetailViewDelegate.getEditorState();
     }
 
     public void setCurrentItem(ItemWrapper currentItem) {

@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
@@ -38,6 +37,7 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.Processor;
+import icons.UIDesignerIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -59,7 +59,7 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
 
   public ListenerNavigateButton(RadComponent component) {
     myComponent = component;
-    setIcon(IconLoader.getIcon("/com/intellij/uiDesigner/icons/listener.png"));
+    setIcon(UIDesignerIcons.Listener);
     setOpaque(false);
     setFocusable(false);
     setBorderPainted(false);

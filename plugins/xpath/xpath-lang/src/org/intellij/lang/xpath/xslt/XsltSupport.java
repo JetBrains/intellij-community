@@ -16,7 +16,6 @@
 package org.intellij.lang.xpath.xslt;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -30,6 +29,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.xml.NanoXmlUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import icons.XpathIcons;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +48,7 @@ public class XsltSupport {
     public static final String PLUGIN_EXTENSIONS_NS = "urn:idea:xslt-plugin#extensions";
     public static final Key<ParameterizedCachedValue<XsltChecker.LanguageLevel, PsiFile>> FORCE_XSLT_KEY = Key.create("FORCE_XSLT");
 
-    private static final Icon XSLT_OVERLAY = IconLoader.getIcon("/icons/xslt-filetype-overlay.png");
+    private static final Icon XSLT_OVERLAY = XpathIcons.Xslt_filetype_overlay;
     private static final Map<String, String> XPATH_ATTR_MAP = new THashMap<String, String>(10);
     private static final Map<String, Set<String>> XPATH_AVT_MAP = new THashMap<String, Set<String>>(10);
 

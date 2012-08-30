@@ -18,13 +18,13 @@ package org.jetbrains.idea.svn.mergeinfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListsListener;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
+import icons.Svn4ideaIcons;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
@@ -166,12 +166,12 @@ public class MergeInfoHolder {
   }
 
   public static enum ListMergeStatus {
-    COMMON(IconLoader.getIcon("/icons/Common.png")),
-    MERGED(IconLoader.getIcon("/icons/Integrated.png")),
-    NOT_MERGED(IconLoader.getIcon("/icons/Notintegrated.png")),
+    COMMON(Svn4ideaIcons.Common),
+    MERGED(Svn4ideaIcons.Integrated),
+    NOT_MERGED(Svn4ideaIcons.Notintegrated),
     //ALIEN(IconLoader.getIcon("/icons/OnDefault.png")),
     ALIEN(null),
-    REFRESHING(IconLoader.getIcon("/icons/IntegrationStatusUnknown.png"));
+    REFRESHING(Svn4ideaIcons.IntegrationStatusUnknown);
 
     private final Icon myIcon;
 

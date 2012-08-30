@@ -9,8 +9,12 @@ import javax.swing.*;
  * Don't repeat mistakes of others ;-)
  */
 public class DevkitIcons {
-  public static final Icon Add_sdk = IconLoader.getIcon("/add_sdk.png"); // 16x16
-  public static final Icon New_html = IconLoader.getIcon("/new_html.png"); // 16x16
-  public static final Icon Sdk_closed = IconLoader.getIcon("/sdk_closed.png"); // 16x16
-  public static final Icon Sdk_open = IconLoader.getIcon("/sdk_open.png"); // 16x16
+  private static Icon load(String path) {
+    return IconLoader.getIcon(path, DevkitIcons.class);
+  }
+
+  public static final Icon Add_sdk = load("/add_sdk.png"); // 16x16
+  public static final Icon New_html = load("/new_html.png"); // 16x16
+  public static final Icon Sdk_closed = load("/sdk_closed.png"); // 16x16
+  public static final Icon Sdk_open = load("/sdk_open.png"); // 16x16
 }

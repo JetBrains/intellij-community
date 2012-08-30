@@ -1,12 +1,15 @@
 package org.jetbrains.android.refactoring;
 
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.actions.InlineAction;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.android.AndroidTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,12 +93,27 @@ public class AndroidInlineStyleTest extends AndroidTestCase {
     myFixture.copyFileToProject(stylesLocalPath, appStylePath);
     myFixture.copyFileToProject(appLayoutLocalPath, appLayoutPath);
 
-    doTestErrorMessageShown(false, true, false, libModuleDir + "/res/layout");
+    final MultiMap<PsiElement,String> conflicts = performAction(false, libModuleDir + "/res/layout").getSecond().getConflicts();
+    assertEquals(1, conflicts.keySet().size());
+    assertEquals(1, conflicts.values().size());
 
-    myFixture.checkResultByFile(libStylesPath, stylesLocalPath, true);
+    myFixture.checkResultByFile(BASE_PATH + getTestName(true) + "_after.xml");
+    myFixture.checkResultByFile(libStylesPath, BASE_PATH + getTestName(true) + "_styles_after.xml", true);
     myFixture.checkResultByFile(appStylePath, stylesLocalPath, true);
     myFixture.checkResultByFile(appLayoutPath, appLayoutLocalPath, true);
+  }
 
+  public void test35() throws Exception {
+    final String libModuleDir = getContentRootPath("lib");
+    final String libStylesPath = libModuleDir + "/res/values/styles.xml";
+    final String appStylePath = "/res/values/styles.xml";
+    final String appLayoutLocalPath = BASE_PATH + getTestName(true) + "_1.xml";
+    final String stylesLocalPath = BASE_PATH + getTestName(true) + "_styles.xml";
+    final String appLayoutPath = "res/layout/layout.xml";
+
+    myFixture.copyFileToProject(stylesLocalPath, libStylesPath);
+    myFixture.copyFileToProject(stylesLocalPath, appStylePath);
+    myFixture.copyFileToProject(appLayoutLocalPath, appLayoutPath);
     doTest(true, libModuleDir + "/res/layout");
   }
 
@@ -130,8 +148,9 @@ public class AndroidInlineStyleTest extends AndroidTestCase {
     myFixture.checkResultByFile("res/values/styles.xml", BASE_PATH + testName + "_styles.xml", true);
   }
 
-  private void doCommonInlineAction(boolean inlineThisOnly) {
-    AndroidInlineStyleHandler.setTestConfig(new AndroidInlineTestConfig(inlineThisOnly));
+  private AndroidInlineTestConfig doCommonInlineAction(boolean inlineThisOnly) {
+    final AndroidInlineTestConfig config = new AndroidInlineTestConfig(inlineThisOnly);
+    AndroidInlineStyleHandler.setTestConfig(config);
     try {
       final Presentation p = myFixture.testAction(new InlineAction());
       assertTrue(p.isEnabled());
@@ -140,6 +159,7 @@ public class AndroidInlineStyleTest extends AndroidTestCase {
     finally {
       AndroidInlineStyleHandler.setTestConfig(null);
     }
+    return config;
   }
 
   public void test18() {
@@ -209,13 +229,14 @@ public class AndroidInlineStyleTest extends AndroidTestCase {
     myFixture.copyFileToProject("R.java", "gen/p1/p2/R.java");
     final VirtualFile f = myFixture.copyFileToProject(BASE_PATH + testName + ".xml", "res/layout/test.xml");
     myFixture.configureFromExistingVirtualFile(f);
-    try {
-      myFixture.testAction(new AndroidInlineStyleReferenceAction(new AndroidInlineTestConfig(false)));
-      fail();
-    }
-    catch (IncorrectOperationException e) {
-      assertTrue(e.getMessage().length() > 0);
-    }
+    final AndroidInlineTestConfig testConfig = new AndroidInlineTestConfig(false);
+    myFixture.testAction(new AndroidInlineStyleReferenceAction(testConfig));
+    final MultiMap<PsiElement, String> conflicts = testConfig.getConflicts();
+    assertEquals(1, conflicts.keySet().size());
+    assertEquals(1, conflicts.values().size());
+    myFixture.checkResultByFile(BASE_PATH + testName + "_after.xml");
+    myFixture.checkResultByFile("src/p1/p2/MyActivity.java", BASE_PATH + "MyActivity.java", true);
+    myFixture.checkResultByFile("res/values/styles.xml", BASE_PATH + testName + "_styles_after.xml", true);
   }
 
   public void test23() {
@@ -255,15 +276,24 @@ public class AndroidInlineStyleTest extends AndroidTestCase {
   }
 
   public void test30() {
-    doTestCommonInlineErrorHintInValues(true);
+    doTestCommonInlineConflicts();
   }
 
   public void test31() {
-    doTestCommonInlineErrorHintInValues(false);
+    doTestCommonInlineConflicts();
   }
 
   public void test32() {
-    doTestCommonInlineErrorHintInValues(false);
+    doTestCommonInlineConflicts();
+  }
+
+  private void doTestCommonInlineConflicts() {
+    final VirtualFile f = myFixture.copyFileToProject(BASE_PATH + getTestName(true) + ".xml", "res/values/test.xml");
+    myFixture.configureFromExistingVirtualFile(f);
+    final MultiMap<PsiElement, String> conflicts = doCommonInlineAction(false).getConflicts();
+    assertEquals(1, conflicts.keySet().size());
+    assertEquals(1, conflicts.values().size());
+    myFixture.checkResultByFile(BASE_PATH + getTestName(true) + "_after.xml");
   }
 
   public void test33() {
@@ -363,25 +393,27 @@ public class AndroidInlineStyleTest extends AndroidTestCase {
   }
 
   private void doTestDisabled() {
-    final Presentation presentation = performAction(true, "res/layout");
+    final Presentation presentation = performAction(true, "res/layout").getFirst();
     assertFalse(presentation.isEnabled());
     assertTrue(presentation.isVisible());
   }
 
-  private Presentation performAction(boolean inlineThisOnly, String dirToCopy) {
+  private Pair<Presentation, AndroidInlineTestConfig> performAction(boolean inlineThisOnly, String dirToCopy) {
     final String testName = getTestName(true);
     final VirtualFile f = myFixture.copyFileToProject(BASE_PATH + testName + ".xml",
                                                       dirToCopy + "/test" + testName + "_" +
                                                       Boolean.toString(inlineThisOnly) + ".xml");
     myFixture.configureFromExistingVirtualFile(f);
-    return myFixture.testAction(new AndroidInlineStyleReferenceAction(new AndroidInlineTestConfig(inlineThisOnly)));
+    final AndroidInlineTestConfig config = new AndroidInlineTestConfig(inlineThisOnly);
+    final Presentation presentation = myFixture.testAction(new AndroidInlineStyleReferenceAction(config));
+    return Pair.create(presentation, config);
   }
 
   @Override
   protected void configureAdditionalModules(@NotNull TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder,
                                             @NotNull List<MyAdditionalModuleData> modules) {
     final String testName = getTestName(true);
-    if (testName.equals("14") || testName.equals("15") || testName.equals("16")) {
+    if (testName.equals("14") || testName.equals("15") || testName.equals("16") || testName.equals("35")) {
       addModuleWithAndroidFacet(projectBuilder, modules, "lib", true);
     }
   }

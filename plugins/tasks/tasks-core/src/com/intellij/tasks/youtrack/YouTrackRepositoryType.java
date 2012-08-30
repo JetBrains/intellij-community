@@ -1,11 +1,11 @@
 package com.intellij.tasks.youtrack;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.tasks.impl.BaseRepositoryType;
 import com.intellij.util.Consumer;
+import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,7 +16,7 @@ import java.util.EnumSet;
  */
 public class YouTrackRepositoryType extends BaseRepositoryType<YouTrackRepository> {
 
-  private static final Icon ICON = IconLoader.getIcon("/icons/youtrack.png");
+  private static final Icon ICON = TasksCoreIcons.Youtrack;
 
   @NotNull
   public String getName() {

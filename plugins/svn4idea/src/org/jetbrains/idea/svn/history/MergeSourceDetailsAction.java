@@ -21,10 +21,10 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
+import icons.Svn4ideaIcons;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
@@ -39,7 +39,7 @@ public class MergeSourceDetailsAction extends AnAction implements DumbAware {
   }
 
   private static class IconHolder {
-    private static final Icon myIcon = IconLoader.getIcon("/icons/mergeSourcesDetails.png");
+    private static final Icon myIcon = Svn4ideaIcons.MergeSourcesDetails;
   }
 
   private Icon getIcon() {

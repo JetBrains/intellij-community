@@ -9,6 +9,10 @@ import javax.swing.*;
  * Don't repeat mistakes of others ;-)
  */
 public class CopyrightIcons {
-  public static final Icon Copyright18x18 = IconLoader.getIcon("/resources/copyright18x18.png"); // 18x18
-  public static final Icon Copyright32x32 = IconLoader.getIcon("/resources/copyright32x32.png"); // 32x32
+  private static Icon load(String path) {
+    return IconLoader.getIcon(path, CopyrightIcons.class);
+  }
+
+  public static final Icon Copyright18x18 = load("/resources/copyright18x18.png"); // 18x18
+  public static final Icon Copyright32x32 = load("/resources/copyright32x32.png"); // 32x32
 }

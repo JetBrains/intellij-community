@@ -1,8 +1,10 @@
 package org.jetbrains.android.refactoring;
 
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -13,14 +15,17 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.android.dom.resources.ResourceNameConverter;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Eugene.Kudelevsky
@@ -31,19 +36,22 @@ class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
   private final Map<AndroidAttributeInfo, String> myAttributeValues;
   private final StyleRefData myParentStyleRef;
   private final XmlTag myStyleTag;
+  private final AndroidInlineTestConfig myTestConfig;
 
   protected AndroidInlineAllStyleUsagesProcessor(@NotNull Project project,
                                                  @NotNull PsiElement styleElement,
                                                  @NotNull XmlTag styleTag,
                                                  @NotNull String styleName,
                                                  @NotNull Map<AndroidAttributeInfo, String> attributeValues,
-                                                 @Nullable StyleRefData parentStyleRef) {
+                                                 @Nullable StyleRefData parentStyleRef,
+                                                 @Nullable AndroidInlineTestConfig config) {
     super(project);
     myStyleElement = styleElement;
     myStyleTag = styleTag;
     myStyleName = styleName;
     myAttributeValues = attributeValues;
     myParentStyleRef = parentStyleRef;
+    myTestConfig = config;
   }
 
   @NotNull
@@ -84,6 +92,38 @@ class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
   @Override
   protected void performRefactoring(UsageInfo[] usages) {
     final List<StyleUsageData> inlineInfos = new ArrayList<StyleUsageData>();
+
+    for (UsageInfo usage : usages) {
+      final PsiElement element = usage.getElement();
+      if (element == null) continue;
+
+      final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+      StyleUsageData usageData = tag != null ? AndroidInlineUtil.getStyleUsageData(tag) : null;
+
+      if (usageData != null && usageData.getReference().computeTargetElements().length == 1) {
+        inlineInfos.add(usageData);
+      }
+    }
+
+    for (StyleUsageData info : inlineInfos) {
+      info.inline(myAttributeValues, myParentStyleRef);
+    }
+    myStyleTag.delete();
+  }
+
+  @Override
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+    final UsageInfo[] usages = refUsages.get();
+    final MultiMap<PsiElement, String> conflicts = detectConflicts(usages);
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      myTestConfig.setConflicts(conflicts);
+      return true;
+    }
+    return showConflicts(conflicts, usages);
+  }
+
+  private static MultiMap<PsiElement, String> detectConflicts(UsageInfo[] usages) {
     final List<PsiElement> nonXmlUsages = new ArrayList<PsiElement>();
     final List<PsiElement> unsupportedUsages = new ArrayList<PsiElement>();
     final List<PsiElement> unambiguousUsages = new ArrayList<PsiElement>();
@@ -112,25 +152,9 @@ class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
 
       if (usageData.getReference().computeTargetElements().length > 1) {
         unambiguousUsages.add(element);
-        continue;
       }
-      inlineInfos.add(usageData);
     }
-
-    if (nonXmlUsages.size() > 0 ||
-        unambiguousUsages.size() > 0 ||
-        unsupportedUsages.size() > 0 ||
-        implicitlyInherited.size() > 0) {
-      final String errorMessage = AndroidInlineUtil
-        .buildErrorMessage(myProject, nonXmlUsages, unambiguousUsages, unsupportedUsages, implicitlyInherited);
-      AndroidUtils.reportError(myProject, errorMessage, AndroidBundle.message("android.inline.style.title"));
-      return;
-    }
-
-    for (StyleUsageData info : inlineInfos) {
-      info.inline(myAttributeValues, myParentStyleRef);
-    }
-    myStyleTag.delete();
+    return AndroidInlineUtil.buildConflicts(nonXmlUsages, unambiguousUsages, unsupportedUsages, implicitlyInherited);
   }
 
   @Override

@@ -20,7 +20,6 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
@@ -44,12 +43,13 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.MultiLineTooltipUI;
-import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointChooser;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointNoneItem;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -390,102 +390,19 @@ public abstract class BreakpointPropertiesPanel {
 
   private List<BreakpointItem> getBreakpointItemsExceptMy() {
     List<BreakpointItem> items = new ArrayList<BreakpointItem>();
-    findJavaDebuggerSupport().getBreakpointPanelProvider().provideBreakpointItems(myProject, items);
+    final DebuggerSupport support = DebuggerSupport.getDebuggerSupport(JavaDebuggerSupport.class);
+    support.getBreakpointPanelProvider().provideBreakpointItems(myProject, items);
     for (BreakpointItem item : items) {
       if (item.getBreakpoint() == myBreakpoint) {
         items.remove(item);
         break;
       }
     }
-    items.add(new BreakpointItem() {
-      @Override
-      public Object getBreakpoint() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-      }
-
-      @Override
-      public boolean isEnabled() {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
-      }
-
-      @Override
-      public void setEnabled(boolean state) {
-        //To change body of implemented methods use File | Settings | File Templates.
-      }
-
-      @Override
-      public boolean isDefaultBreakpoint() {
-        return true;
-      }
-
-      @Override
-      protected void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView) {
-        renderer.clear();
-        renderer.append(getDisplayText());
-      }
-
-      @Override
-      public Icon getIcon() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-      }
-
-      @Override
-      public String getDisplayText() {
-        return DebuggerBundle.message("value.none");
-      }
-
-      @Override
-      public boolean navigate() {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
-      }
-
-      @Override
-      public String speedSearchText() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-      }
-
-      @Override
-      public String footerText() {
-        return "";
-      }
-
-      @Override
-      protected void doUpdateDetailView(DetailView panel, boolean editorOnly) {
-        //To change body of implemented methods use File | Settings | File Templates.
-      }
-
-      @Override
-      public boolean allowedToRemove() {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
-      }
-
-      @Override
-      public void removed(Project project) {
-        //To change body of implemented methods use File | Settings | File Templates.
-      }
-
-      @Override
-      public int compareTo(BreakpointItem breakpointItem) {
-        return 1;
-      }
-    });
+    items.add(new BreakpointNoneItem());
     return items;
   }
 
-  private DebuggerSupport findJavaDebuggerSupport() {
-    DebuggerSupport[] supports = DebuggerSupport.getDebuggerSupports();
-    DebuggerSupport support = null;
-    for (DebuggerSupport s : supports) {
-      if (s instanceof JavaDebuggerSupport) {
-        support = s;
-      }
-    }
-    return support;
-  }
-
   private void saveMasterBreakpoint() {
-
-
     Breakpoint masterBreakpoint = (Breakpoint)myMasterBreakpointChooser.getSelectedBreakpoint();
     if (masterBreakpoint == null) {
       getBreakpointManager(myProject).removeBreakpointRule(myBreakpoint);

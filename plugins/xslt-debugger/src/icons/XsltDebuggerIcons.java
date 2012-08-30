@@ -9,10 +9,14 @@ import javax.swing.*;
  * Don't repeat mistakes of others ;-)
  */
 public class XsltDebuggerIcons {
+  private static Icon load(String path) {
+    return IconLoader.getIcon(path, XsltDebuggerIcons.class);
+  }
+
   
   public static class Actions {
-    public static final Icon FilterWhitespace = IconLoader.getIcon("/org/intellij/plugins/xsltDebugger/ui/actions/filterWhitespace.png"); // 16x16
+    public static final Icon FilterWhitespace = load("/org/intellij/plugins/xsltDebugger/ui/actions/filterWhitespace.png"); // 16x16
 
   }
-  public static final Icon XmlComment = IconLoader.getIcon("/org/intellij/plugins/xsltDebugger/ui/xmlComment.png"); // 18x18
+  public static final Icon XmlComment = load("/org/intellij/plugins/xsltDebugger/ui/xmlComment.png"); // 18x18
 }

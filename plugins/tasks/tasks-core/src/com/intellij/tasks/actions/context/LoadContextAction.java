@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.LocalTask;
@@ -37,6 +36,7 @@ import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +50,7 @@ import java.util.*;
 public class LoadContextAction extends BaseTaskAction {
 
   private static final int MAX_ROW_COUNT = 10;
-  private static final Icon SAVED_CONTEXT_ICON = IconLoader.getIcon("/icons/savedContext.png");
+  private static final Icon SAVED_CONTEXT_ICON = TasksCoreIcons.SavedContext;
 
   @Override
   public void actionPerformed(AnActionEvent e) {

@@ -26,7 +26,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -36,6 +35,7 @@ import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ui.tree.TreeUtil;
+import icons.UIDesignerNewIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -148,7 +148,7 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
     myToolWindow =
       ToolWindowManager.getInstance(myProject)
         .registerToolWindow(DesignerBundle.message("designer.toolwindow.name"), false, ToolWindowAnchor.LEFT, myProject, true);
-    myToolWindow.setIcon(IconLoader.getIcon("/com/intellij/designer/icons/toolWindow.png"));
+    myToolWindow.setIcon(UIDesignerNewIcons.ToolWindow);
 
     ((ToolWindowEx)myToolWindow).setTitleActions(createActions());
 
@@ -163,7 +163,7 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
   }
 
   private AnAction[] createActions() {
-    AnAction expandAll = new AnAction("Expand All", null, IconLoader.getIcon("/com/intellij/designer/icons/ExpandAll.png")) {
+    AnAction expandAll = new AnAction("Expand All", null, UIDesignerNewIcons.ExpandAll) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         if (myTreeBuilder != null) {

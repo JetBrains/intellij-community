@@ -331,7 +331,9 @@ public class ExpectedTypesProvider {
     }
 
     @Override public void visitReturnStatement(PsiReturnStatement statement) {
-      final PsiMethod scopeMethod = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
+      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(statement, PsiLambdaExpression.class);
+      final PsiMethod interfaceMethod = lambdaExpression != null ? LambdaUtil.getFunctionalInterfaceMethod(lambdaExpression.getFunctionalInterfaceType()) : null;
+      final PsiMethod scopeMethod = interfaceMethod != null ? interfaceMethod : PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
       if (scopeMethod != null) {
         PsiType type = scopeMethod.getReturnType();
         if (type != null) {

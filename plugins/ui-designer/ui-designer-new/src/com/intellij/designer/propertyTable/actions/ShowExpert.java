@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.util.IconLoader;
+import icons.UIDesignerNewIcons;
 
 import javax.swing.*;
 
@@ -29,7 +29,7 @@ import javax.swing.*;
  * @author Alexander Lobas
  */
 public class ShowExpert extends ToggleAction {
-  private static final Icon ICON = IconLoader.getIcon("/com/intellij/designer/icons/filter.png");
+  private static final Icon ICON = UIDesignerNewIcons.Filter;
 
   private final RadPropertyTable myTable;
 

@@ -42,7 +42,7 @@ public class ExtensionNsConverter extends ResolvingConverter<IdeaPlugin> {
 
     final Collection<String> dependencies = ExtensionDomExtender.getDependencies(ideaPlugin);
     final List<IdeaPlugin> depPlugins = new ArrayList<IdeaPlugin>();
-    for (IdeaPlugin plugin : IdeaPluginConverter.collectAllVisiblePlugins(context.getFile())) {
+    for (IdeaPlugin plugin : IdeaPluginConverter.getAllPlugins(context.getProject())) {
       final String value = plugin.getPluginId();
       if (value != null && dependencies.contains(value)) {
         depPlugins.add(plugin);

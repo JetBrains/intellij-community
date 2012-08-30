@@ -22,9 +22,9 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
+import icons.XpathIcons;
 import org.intellij.lang.xpath.xslt.XsltConfig;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
@@ -73,7 +73,7 @@ public class XsltTreeStructureProvider implements TreeStructureProvider {
   }
 
   private static class XsltFileNode extends PsiFileNode {
-    private static final Icon LINK_OVERLAY = IconLoader.getIcon("/icons/association_small.png");
+    private static final Icon LINK_OVERLAY = XpathIcons.Association_small;
     private final FileAssociationsManager myInstance;
     private final XsltConfig myConfig;
 

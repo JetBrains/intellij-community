@@ -68,7 +68,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   public static void updateAllToolbarsImmediately() {
     try {
       ourLastModification = null;
-      for (ActionToolbarImpl toolbar : new ArrayList<ActionToolbarImpl>(ourToolbars)) {
+      for (ActionToolbarImpl toolbar : ourToolbars) {
         toolbar.updateActionsImmediately();
       }
     }

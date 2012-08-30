@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.breakpoints.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.popup.util.DetailView;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
@@ -42,6 +43,8 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implements XSuspendPolicyPanel.Delegate {
+
+  private DetailView myDetailView;
 
   public boolean showMoreOptions() {
     return myShowMoreOptions;
@@ -97,6 +100,11 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
   private XDebuggerExpressionComboBox myConditionComboBox;
 
   private B myBreakpoint;
+
+  public void setDetailView(DetailView detailView) {
+    myDetailView = detailView;
+    myMasterBreakpointPanel.setDetailView(detailView);
+  }
 
   public XLightBreakpointPropertiesPanel(Project project, XBreakpointManager breakpointManager, B breakpoint, boolean showAllOptions) {
     myBreakpoint = breakpoint;

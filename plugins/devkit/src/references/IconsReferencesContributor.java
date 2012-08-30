@@ -80,19 +80,25 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
             @Override
             public PsiElement resolve() {
               String value = (String)((PsiLiteralExpression)element).getValue();
-              if (value != null && value.startsWith("AllIcons.")) {
+              if (value != null) {
                 List<String> path = StringUtil.split(value, ".");
-                Project project = element.getProject();
-                PsiClass cur = JavaPsiFacade.getInstance(project).findClass("com.intellij.icons.AllIcons",
-                                                                            GlobalSearchScope.projectScope(project));
-                if (cur == null) return null;
+                if (path.size() > 1 && path.get(0).endsWith("Icons")) {
+                  Project project = element.getProject();
+                  PsiClass cur = JavaPsiFacade.getInstance(project).findClass(fqnIconsClass(path.get(0)),
+                                                                              GlobalSearchScope.projectScope(project));
+                  if (cur == null) {
+                    return null;
+                  }
 
-                for (int i = 1; i < path.size() - 1; i++) {
-                  cur = cur.findInnerClassByName(path.get(i), false);
-                  if (cur == null) return null;
+                  for (int i = 1; i < path.size() - 1; i++) {
+                    cur = cur.findInnerClassByName(path.get(i), false);
+                    if (cur == null) {
+                      return null;
+                    }
+                  }
+
+                  return cur.findFieldByName(path.get(path.size() - 1), false);
                 }
-
-                return cur.findFieldByName(path.get(path.size() - 1), false);
               }
 
               return null;
@@ -105,9 +111,10 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
                 String fqn = ((PsiField)field).getContainingClass().getQualifiedName();
 
                 if (fqn.startsWith("com.intellij.icons.")) {
-                  String newValue = "\"" + fqn.substring("com.intellij.icons.".length()) + "." + newElementName + "\"";
-                  return getElement().replace(
-                    JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(newValue, element.getParent()));
+                  return replace(newElementName, fqn, "com.intellij.icons.", element);
+                }
+                else if (fqn.startsWith("icons.")) {
+                  return replace(newElementName, fqn, "icons.", element);
                 }
               }
 
@@ -119,15 +126,22 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
               if (element instanceof PsiField) {
                 String fqn = ((PsiField)element).getContainingClass().getQualifiedName();
 
+                String newElementName = ((PsiField)element).getName();
                 if (fqn.startsWith("com.intellij.icons.")) {
-                  String newElementName = ((PsiField)element).getName();
-                  String newValue = "\"" + fqn.substring("com.intellij.icons.".length()) + "." + newElementName + "\"";
-                  return getElement().replace(
-                    JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(newValue, getElement().getParent()));
+                  return replace(newElementName, fqn, "com.intellij.icons.", getElement());
+                }
+                else if (fqn.startsWith("icons.")) {
+                  return replace(newElementName, fqn, "icons.", getElement());
                 }
               }
 
               return super.bindToElement(element);
+            }
+
+            private PsiElement replace(String newElementName, String fqn, String pckg, PsiElement container) {
+              String newValue = "\"" + fqn.substring(pckg.length()) + "." + newElementName + "\"";
+              return getElement().replace(
+                JavaPsiFacade.getElementFactory(container.getProject()).createExpressionFromText(newValue, container.getParent()));
             }
 
             @NotNull
@@ -176,24 +190,27 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
             @Override
             public PsiElement resolve() {
               String value = ((XmlAttributeValue)element).getValue();
-              if (value.startsWith("AllIcons.")) {
-                List<String> path = StringUtil.split(value, ".");
-                Project project = element.getProject();
-                PsiClass cur = JavaPsiFacade.getInstance(project).findClass("com.intellij.icons.AllIcons",
-                                                                           GlobalSearchScope.projectScope(project));
-                if (cur == null) return null;
-
-                for (int i = 1; i < path.size() - 1; i++) {
-                  cur = cur.findInnerClassByName(path.get(i), false);
-                  if (cur == null) return null;
-                }
-
-                return cur.findFieldByName(path.get(path.size() - 1), false);
-              }
-              else if (value.startsWith("/")) {
+              if (value.startsWith("/")) {
                 FileReference lastRef = new FileReferenceSet(element).getLastReference();
                 return lastRef != null ? lastRef.resolve() : null;
               }
+              else {
+                List<String> path = StringUtil.split(value, ".");
+                if (path.size() > 1 && path.get(0).endsWith("Icons")) {
+                  Project project = element.getProject();
+                  PsiClass cur = JavaPsiFacade.getInstance(project).findClass(fqnIconsClass(path.get(0)),
+                                                                             GlobalSearchScope.projectScope(project));
+                  if (cur == null) return null;
+
+                  for (int i = 1; i < path.size() - 1; i++) {
+                    cur = cur.findInnerClassByName(path.get(i), false);
+                    if (cur == null) return null;
+                  }
+
+                  return cur.findFieldByName(path.get(path.size() - 1), false);
+                }
+              }
+
               return null;
             }
 
@@ -208,9 +225,10 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
                 String fqn = ((PsiField)element).getContainingClass().getQualifiedName();
 
                 if (fqn.startsWith("com.intellij.icons.")) {
-                  XmlAttribute parent = (XmlAttribute)getElement().getParent();
-                  parent.setValue(fqn.substring("com.intellij.icons.".length()) + "." + newElementName);
-                  return parent.getValueElement();
+                  return replace(fqn, newElementName, "com.intellij.icons.");
+                }
+                else if (fqn.startsWith("icons.")) {
+                  return replace(fqn, newElementName, "icons.");
                 }
               }
 
@@ -226,14 +244,22 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
               else if (element instanceof PsiField) {
                 String fqn = ((PsiField)element).getContainingClass().getQualifiedName();
 
+                String newName = ((PsiField)element).getName();
                 if (fqn.startsWith("com.intellij.icons.")) {
-                  XmlAttribute parent = (XmlAttribute)getElement().getParent();
-                  parent.setValue(fqn.substring("com.intellij.icons.".length()) + "." + ((PsiField)element).getName());
-                  return parent.getValueElement();
+                  return replace(fqn, newName, "com.intellij.icons.");
+                }
+                else if (fqn.startsWith("icons.")) {
+                  return replace(fqn, newName, "icons.");
                 }
               }
 
               return super.bindToElement(element);
+            }
+
+            private PsiElement replace(String fqn, String newName, String pckg) {
+              XmlAttribute parent = (XmlAttribute)getElement().getParent();
+              parent.setValue(fqn.substring(pckg.length()) + "." + newName);
+              return parent.getValueElement();
             }
 
             @NotNull
@@ -245,6 +271,10 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
         };
       }
     });
+  }
+
+  private static String fqnIconsClass(String className) {
+    return "AllIcons".equals(className) ? "com.intellij.icons.AllIcons" : "icons." + className;
   }
 
   public static boolean isIdeaProject(@Nullable Project project) {

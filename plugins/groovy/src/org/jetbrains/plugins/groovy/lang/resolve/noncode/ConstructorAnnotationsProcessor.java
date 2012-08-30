@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 
 import java.util.*;
 
@@ -107,8 +108,9 @@ public class ConstructorAnnotationsProcessor extends AstTransformContributor {
                                     boolean includeProperties,
                                     boolean includeFields, boolean optional, Set<String> excludes) {
 
+    PsiMethod[] methods = CollectClassMembersUtil.getMethods(psiClass, false);
     if (includeProperties) {
-      for (PsiMethod method : psiClass.getMethods()) {
+      for (PsiMethod method : methods) {
         if (!method.hasModifierProperty(PsiModifier.STATIC) && PropertyUtil.isSimplePropertySetter(method)) {
           final String name = PropertyUtil.getPropertyNameBySetter(method);
           if (!excludes.contains(name)) {
@@ -120,11 +122,11 @@ public class ConstructorAnnotationsProcessor extends AstTransformContributor {
       }
     }
 
-    final Map<String,PsiMethod> properties = PropertyUtil.getAllProperties(psiClass, true, false, false);
-    for (PsiField field : psiClass.getFields()) {
+    final Map<String,PsiMethod> properties = PropertyUtil.getAllProperties(true, false, methods);
+    for (PsiField field : CollectClassMembersUtil.getFields(psiClass, false)) {
       final String name = field.getName();
       if (includeFields ||
-          includeProperties && field.hasModifierProperty(PsiModifier.FINAL) && field instanceof GrField && ((GrField)field).isProperty()) {
+          includeProperties && field instanceof GrField && ((GrField)field).isProperty()) {
         if (!excludes.contains(name) && !field.hasModifierProperty(PsiModifier.STATIC) && !properties.containsKey(name)) {
           fieldsConstructor.addParameter(new GrLightParameter(name, field.getType(), fieldsConstructor).setOptional(optional));
         }

@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -50,6 +49,7 @@ import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,8 +92,8 @@ public final class ComponentTree extends Tree implements DataProvider {
   private final StartInplaceEditingAction myStartInplaceEditingAction;
   private final MyDeleteProvider myDeleteProvider = new MyDeleteProvider();
 
-  private final Icon myButtonGroupIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/buttonGroup.png");
-  private final Icon myInspectionSuppressionIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/inspectionSuppression.png");
+  private final Icon myButtonGroupIcon = UIDesignerIcons.ButtonGroup;
+  private final Icon myInspectionSuppressionIcon = UIDesignerIcons.InspectionSuppression;
 
   @NonNls private static final String ourHelpID = "guiDesigner.uiTour.compsTree";
   private final Project myProject;
@@ -365,12 +365,12 @@ public final class ComponentTree extends Tree implements DataProvider {
         icon = item.getSmallIcon();
       }
       else {
-        icon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/unknown-small.png");
+        icon = UIDesignerIcons.Unknown_small;
       }
       return icon;
     }
     else {
-      return IconLoader.getIcon("/com/intellij/uiDesigner/icons/error-small.png");
+      return UIDesignerIcons.Error_small;
     }
   }
 
