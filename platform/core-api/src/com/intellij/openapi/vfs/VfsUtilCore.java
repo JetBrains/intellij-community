@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -202,6 +201,7 @@ public class VfsUtilCore {
       }
 
       Iterable<VirtualFile> childrenIterable = null;
+      VirtualFile[] children = null;
 
       final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
       try {
@@ -209,7 +209,7 @@ public class VfsUtilCore {
         if (!visitor.depthLimitReached()) {
           childrenIterable = visitor.getChildrenIterable(file);
           if (childrenIterable == null) {
-            childrenIterable = Arrays.asList(file.getChildren());
+            children = file.getChildren();
           }
         }
       }
@@ -219,6 +219,12 @@ public class VfsUtilCore {
 
       if (childrenIterable != null) {
         for (VirtualFile child : childrenIterable) {
+          Result result = visitChildrenRecursively(child, visitor);
+          if (result.skipToParent != null && result.skipToParent != child) return result;
+        }
+      }
+      else if (children != null) {
+        for (VirtualFile child : children) {
           Result result = visitChildrenRecursively(child, visitor);
           if (result.skipToParent != null && result.skipToParent != child) return result;
         }
