@@ -9,6 +9,10 @@ import javax.swing.*;
  * Don't repeat mistakes of others ;-)
  */
 public class PythonHelpersIcons {
-  public static final Icon Keybd_closed = IconLoader.getIcon("/coverage/htmlfiles/keybd_closed.png"); // 35x12
-  public static final Icon Keybd_open = IconLoader.getIcon("/coverage/htmlfiles/keybd_open.png"); // 35x12
+  private static Icon load(String path) {
+    return IconLoader.getIcon(path, PythonHelpersIcons.class);
+  }
+
+  public static final Icon Keybd_closed = load("/coverage/htmlfiles/keybd_closed.png"); // 35x12
+  public static final Icon Keybd_open = load("/coverage/htmlfiles/keybd_open.png"); // 35x12
 }

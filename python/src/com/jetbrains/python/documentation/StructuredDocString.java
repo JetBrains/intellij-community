@@ -33,6 +33,11 @@ public abstract class StructuredDocString {
   public static String[] RAISES_TAGS = new String[] { "raises", "raise", "except", "exception" };
   public static String[] RETURN_TAGS = new String[] { "return", "returns" };
 
+  public static String PARAMETER = "parameter";
+  public static String PARAMETER_TYPE = "parameter_type";
+  public static String KEYWORD = "keyword";
+  public static String VARIABLE = "variable";
+
   @Nullable
   public static StructuredDocString parse(String text) {
     if (text == null) {

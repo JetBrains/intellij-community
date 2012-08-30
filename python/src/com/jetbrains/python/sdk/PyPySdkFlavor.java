@@ -1,10 +1,10 @@
 package com.jetbrains.python.sdk;
 
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.psi.LanguageLevel;
+import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -77,6 +77,6 @@ public class PyPySdkFlavor extends PythonSdkFlavor {
 
   @Override
   public Icon getIcon() {
-    return IconLoader.getIcon("/com/jetbrains/python/icons/pypy.png");
+    return PythonIcons.Python.Icons.Pypy;
   }
 }

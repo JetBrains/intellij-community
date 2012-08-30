@@ -476,4 +476,8 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testKWArg() {
     assertResolvesTo(PyClass.class, "timedelta");
   }
+
+  public void testReferenceInDocstring() {
+    assertResolvesTo(PyClass.class, "datetime");
+  }
 }

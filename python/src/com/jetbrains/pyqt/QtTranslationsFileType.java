@@ -1,7 +1,7 @@
 package com.jetbrains.pyqt;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.IconLoader;
+import icons.PythonIcons;
 
 /**
  * @author yole
@@ -10,7 +10,7 @@ public class QtTranslationsFileType extends QtFileType implements FileType {
   public static QtTranslationsFileType INSTANCE = new QtTranslationsFileType();
 
   protected QtTranslationsFileType() {
-    super("Qt translations file", "Qt Linguist translations files", "ts", IconLoader.getIcon("/com/jetbrains/pyqt/tsFile.png"));
+    super("Qt translations file", "Qt Linguist translations files", "ts", PythonIcons.Pyqt.TsFile);
   }
 
   protected String getToolName() {
