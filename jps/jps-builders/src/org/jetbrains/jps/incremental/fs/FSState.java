@@ -73,7 +73,7 @@ public class FSState {
       int targetCount = in.readInt();
       while (targetCount-- > 0) {
         final String id = IOUtil.readString(in);
-        BuildTargetType type = types.get(id);
+        BuildTargetType type = types.get(typeId);
         if (type != null) {
           BuildTarget target = type.createTarget(id);
           getDelta(target).load(in);

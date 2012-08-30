@@ -1,6 +1,8 @@
 package org.jetbrains.jps.model.java;
 
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.jps.model.module.JpsDependenciesEnumerator;
+import org.jetbrains.jps.model.module.JpsDependencyElement;
 
 /**
  * @author nik
@@ -18,6 +20,9 @@ public interface JpsJavaDependenciesEnumerator extends JpsDependenciesEnumerator
 
   @Override
   JpsJavaDependenciesEnumerator recursively();
+
+  @Override
+  JpsJavaDependenciesEnumerator satisfying(Condition<JpsDependencyElement> condition);
 
   JpsJavaDependenciesEnumerator includedIn(JpsJavaClasspathKind classpathKind);
 
