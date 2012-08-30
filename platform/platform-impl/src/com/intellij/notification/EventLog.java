@@ -65,7 +65,7 @@ import java.util.regex.Pattern;
 /**
  * @author peter
  */
-public class EventLog implements Notifications {
+public class EventLog {
   public static final String LOG_REQUESTOR = "Internal log requestor";
   public static final String LOG_TOOL_WINDOW_ID = "Event Log";
   public static final String HELP_ID = "reference.toolwindows.event.log";
@@ -76,18 +76,28 @@ public class EventLog implements Notifications {
   private static final Set<String> NEW_LINES = CollectionFactory.hashSet("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>");
 
   public EventLog() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, this);
-  }
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, new Notifications() {
+      @Override
+      public void notify(@NotNull Notification notification) {
+        final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+        if (openProjects.length == 0) {
+          myModel.addNotification(notification);
+        }
+        for (Project p : openProjects) {
+          getProjectComponent(p).printNotification(notification);
+        }
+      }
 
-  @Override
-  public void notify(@NotNull Notification notification) {
-    final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    if (openProjects.length == 0) {
-      myModel.addNotification(notification);
-    }
-    for (Project p : openProjects) {
-      getProjectComponent(p).printNotification(notification);
-    }
+      @Override
+      public void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType) {
+      }
+
+      @Override
+      public void register(@NotNull String groupDisplayName,
+                           @NotNull NotificationDisplayType defaultDisplayType,
+                           boolean shouldLog) {
+      }
+    });
   }
 
   public static void expire(@NotNull Notification notification) {
@@ -99,16 +109,6 @@ public class EventLog implements Notifications {
 
   private static EventLog getApplicationComponent() {
     return ApplicationManager.getApplication().getComponent(EventLog.class);
-  }
-
-  @Override
-  public void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType) {
-  }
-
-  @Override
-  public void register(@NotNull String groupDisplayName,
-                       @NotNull NotificationDisplayType defaultDisplayType,
-                       boolean shouldLog) {
   }
 
   @NotNull
