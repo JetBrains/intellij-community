@@ -137,12 +137,14 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     addLibrary();
     myFixture.configureByFiles("lib/p/TestPrimitive.java", "content/anno/p/annotations.xml");
     doDeannotate("lib/p/TestDeannotation.java", "Annotate method 'get' as @NotNull", "Annotate method 'get' as @Nullable");
+    myFixture.checkResultByFile("content/anno/p/annotations.xml", "content/anno/p/annotationsDeannotation_after.xml", false);
   }
 
   public void testDeannotation1() throws Throwable {
     addLibrary();
     myFixture.configureByFiles("lib/p/TestPrimitive.java", "content/anno/p/annotations.xml");
     doDeannotate("lib/p/TestDeannotation1.java", "Annotate parameter 'ss' as @NotNull", "Annotate parameter 'ss' as @Nullable");
+    myFixture.checkResultByFile("content/anno/p/annotations.xml", "content/anno/p/annotationsDeannotation1_after.xml", false);
   }
 
   private void doDeannotate(@NonNls final String testPath, String hint1, String hint2) throws Throwable {

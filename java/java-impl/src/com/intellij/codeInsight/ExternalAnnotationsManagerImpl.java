@@ -367,11 +367,11 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
     return processExistingExternalAnnotations(listOwner, annotationFQN, new Processor<XmlTag>() {
       @Override
       public boolean process(XmlTag annotationTag) {
-        annotationTag.delete();
         PsiElement parent = annotationTag.getParent();
+        annotationTag.delete();
         if (parent instanceof XmlTag) {
           if (((XmlTag)parent).getSubTags().length == 0) {
-            annotationTag.delete();
+            parent.delete();
           }
         }
         return true;
