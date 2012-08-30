@@ -20,19 +20,37 @@ import com.intellij.util.ThrowableRunnable;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class FileUtilPerformanceTest {
+  private String myTestPath = "/a/b/c/./d///e/../f/g/h/i/j/";
+  private String myCanonicalPath = "/a/b/c/d/f/g/h/i/j";
+
   @Test
   public void toCanonicalPath() throws Exception {
-    final String testPath = "/a/b/c/./d///e/../f/g/h/i/j/";
-    assertEquals("/a/b/c/d/f/g/h/i/j", FileUtil.toCanonicalPath(testPath));
+    assertEquals(myCanonicalPath, FileUtil.toCanonicalPath(myTestPath));
 
     PlatformTestUtil.startPerformanceTest("", 1000, new ThrowableRunnable() {
       @Override
       public void run() throws Throwable {
         for (int i = 0; i < 1000000; ++i) {
-          final String canonicalPath = FileUtil.toCanonicalPath(testPath, '/');
+          final String canonicalPath = FileUtil.toCanonicalPath(myTestPath, '/');
           assert canonicalPath != null && canonicalPath.length() == 18 : canonicalPath;
+        }
+      }
+    }).cpuBound().assertTiming();
+  }
+
+  @Test
+  public void isAncestor() throws Exception {
+    assertTrue(FileUtil.isAncestor(myTestPath, myCanonicalPath, false));
+
+    PlatformTestUtil.startPerformanceTest("", 4000, new ThrowableRunnable() {
+      @Override
+      public void run() throws Throwable {
+        for (int i = 0; i < 1000000; ++i) {
+          assert FileUtil.isAncestor(myTestPath, myCanonicalPath, false);
+          assert !FileUtil.isAncestor(myTestPath, myCanonicalPath, true);
         }
       }
     }).cpuBound().assertTiming();

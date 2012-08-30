@@ -99,31 +99,34 @@ public class FileUtil extends FileUtilRt {
     return new File(path).isAbsolute();
   }
 
-  public static boolean isAncestor(@NotNull final String ancestor, @NotNull final String descendant, final boolean strict) {
-    return isAncestor(new File(toSystemDependentName(ancestor)), new File(toSystemDependentName(descendant)), strict);
-  }
-
   /**
    * Check if the {@code ancestor} is an ancestor of {@code file}.
    *
-   * @param ancestor the file
-   * @param file     the file
-   * @param strict   if {@code false} then this method returns {@code true} if {@code ancestor}
-   *                 and {@code file} are equal
-   * @return {@code true} if {@code ancestor} is parent of {@code file}; {@code false} otherwise
+   * @param ancestor supposed ancestor.
+   * @param file     supposed descendant.
+   * @param strict   if {@code false} then this method returns {@code true} if {@code ancestor} equals to {@code file}.
+   * @return {@code true} if {@code ancestor} is parent of {@code file}; {@code false} otherwise.
    */
   public static boolean isAncestor(@NotNull File ancestor, @NotNull File file, boolean strict) {
-    File parent = strict ? getParentFile(file) : file;
-    while (true) {
-      if (parent == null) {
-        return false;
-      }
-      // Do not user file.equals as it incorrectly works on MacOS
-      if (pathsEqual(parent.getPath(), ancestor.getPath())) {
-        return true;
-      }
-      parent = getParentFile(parent);
+    return isAncestor(ancestor.getPath(), file.getPath(), strict);
+  }
+
+  public static boolean isAncestor(@NotNull String ancestor, @NotNull String descendant, boolean strict) {
+    String ancestorPath = toCanonicalPath(ancestor);
+    String filePath = toCanonicalPath(descendant);
+
+    if (ancestorPath == null || filePath == null) {
+      return false;
     }
+
+    boolean startsWith = SystemInfo.isFileSystemCaseSensitive ? StringUtil.startsWith(filePath, ancestorPath)
+                                                              : StringUtil.startsWithIgnoreCase(filePath, ancestorPath);
+    if (!startsWith) {
+      return false;
+    }
+
+    return filePath.length() > ancestorPath.length() && filePath.charAt(ancestorPath.length()) == '/' ||
+           !strict && filePath.length() == ancestorPath.length();
   }
 
   /**
