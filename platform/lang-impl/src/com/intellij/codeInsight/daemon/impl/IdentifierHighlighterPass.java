@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,10 @@ import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
+import com.intellij.find.FindManager;
+import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.find.findUsages.FindUsagesManager;
+import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -42,7 +46,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -108,20 +111,21 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     
     if (myTarget != null) {
       final ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(myTarget);
-      final PsiElement finalMyTarget = myTarget;
-      ReferencesSearch.search(myTarget, new LocalSearchScope(myFile)).forEach(new Processor<PsiReference>() {
-        @Override
-        public boolean process(final PsiReference psiReference) {
-          final List<TextRange> textRanges = HighlightUsagesHandler.getRangesToHighlight(psiReference);
-          if (detector == null || detector.getReferenceAccess(finalMyTarget, psiReference) == ReadWriteAccessDetector.Access.Read) {
-            myReadAccessRanges.addAll(textRanges);
-          }
-          else {
-            myWriteAccessRanges.addAll(textRanges);
-          }
-          return true;
+      final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(myTarget.getProject())).getFindUsagesManager();
+      final FindUsagesHandler findUsagesHandler = findUsagesManager.getFindUsagesHandler(myTarget, true);
+      final LocalSearchScope scope = new LocalSearchScope(myFile);
+      Collection<PsiReference> refs = findUsagesHandler != null
+                                ? findUsagesHandler.findReferencesToHighlight(myTarget, scope)
+                                : ReferencesSearch.search(myTarget, scope).findAll();
+      for (PsiReference psiReference : refs) {
+        final List<TextRange> textRanges = HighlightUsagesHandler.getRangesToHighlight(psiReference);
+        if (detector == null || detector.getReferenceAccess(myTarget, psiReference) == ReadWriteAccessDetector.Access.Read) {
+          myReadAccessRanges.addAll(textRanges);
         }
-      });
+        else {
+          myWriteAccessRanges.addAll(textRanges);
+        }
+      }
 
       final TextRange declRange = HighlightUsagesHandler.getNameIdentifierRange(myFile, myTarget);
       if (declRange != null) {
