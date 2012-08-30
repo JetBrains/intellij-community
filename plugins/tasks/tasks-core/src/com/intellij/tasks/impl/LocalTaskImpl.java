@@ -23,6 +23,7 @@ import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,11 +41,11 @@ public class LocalTaskImpl extends LocalTask {
 
   @NonNls static final String DEFAULT_TASK_ID = "Default";
 
-  private final static Icon BUG_ICON = IconLoader.getIcon("/icons/bug.png", LocalTask.class);
-  private final static Icon EXCEPTION_ICON = IconLoader.getIcon("/icons/exception.png", LocalTask.class);
-  private final static Icon FEATURE_ICON = IconLoader.getIcon("/icons/feature.png", LocalTask.class);
-  private final static Icon OTHER_ICON = IconLoader.getIcon("/icons/other.png", LocalTask.class);
-  private final static Icon UNKNOWN_ICON = IconLoader.getIcon("/icons/unknown.png", LocalTask.class);
+  private final static Icon BUG_ICON = TasksCoreIcons.Bug;
+  private final static Icon EXCEPTION_ICON = TasksCoreIcons.Exception;
+  private final static Icon FEATURE_ICON = TasksCoreIcons.Feature;
+  private final static Icon OTHER_ICON = TasksCoreIcons.Other;
+  private final static Icon UNKNOWN_ICON = TasksCoreIcons.Unknown;
 
   private String myId = "";
   private String mySummary = "";

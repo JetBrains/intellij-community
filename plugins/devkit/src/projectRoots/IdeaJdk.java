@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
@@ -35,6 +34,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
+import icons.DevkitIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,9 +54,9 @@ import java.util.List;
  * Date: Nov 22, 2004
  */
 public class IdeaJdk extends SdkType implements JavaSdkType {
-  private static final Icon ADD_SDK = IconLoader.getIcon("/add_sdk.png");
-  private static final Icon SDK_OPEN = IconLoader.getIcon("/sdk_open.png");
-  private static final Icon SDK_CLOSED = IconLoader.getIcon("/sdk_closed.png");
+  private static final Icon ADD_SDK = DevkitIcons.Add_sdk;
+  private static final Icon SDK_OPEN = DevkitIcons.Sdk_open;
+  private static final Icon SDK_CLOSED = DevkitIcons.Sdk_closed;
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.projectRoots.IdeaJdk");
   @NonNls private static final String LIB_DIR_NAME = "lib";

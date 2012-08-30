@@ -27,7 +27,6 @@ import com.android.resources.ScreenSize;
 import com.android.resources.UiMode;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
@@ -42,14 +41,15 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import icons.AndroidIcons;
 import org.jetbrains.android.dom.manifest.Activity;
 import org.jetbrains.android.dom.manifest.Application;
 import org.jetbrains.android.dom.manifest.Manifest;
@@ -74,11 +74,11 @@ import java.util.List;
  * @author Eugene.Kudelevsky
  */
 class AndroidLayoutPreviewToolWindowForm implements Disposable {
-  private static final Icon ZOOM_TO_FIT_ICON = IconLoader.getIcon("/icons/zoomFit.png");
-  private static final Icon ZOOM_IN_ICON = IconLoader.getIcon("/icons/zoomIn.png");
-  private static final Icon ZOOM_OUT_ICON = IconLoader.getIcon("/icons/zoomOut.png");
-  private static final Icon ZOOM_ACTUAL_ICON = IconLoader.getIcon("/icons/zoomActual.png");
-  private static final Icon REFRESH_ICON = IconLoader.getIcon("/icons/refreshPreview.png");
+  private static final Icon ZOOM_TO_FIT_ICON = AndroidIcons.ZoomFit;
+  private static final Icon ZOOM_IN_ICON = AndroidIcons.ZoomIn;
+  private static final Icon ZOOM_OUT_ICON = AndroidIcons.ZoomOut;
+  private static final Icon ZOOM_ACTUAL_ICON = AndroidIcons.ZoomActual;
+  private static final Icon REFRESH_ICON = AndroidIcons.RefreshPreview;
 
   private static final String CUSTOM_DEVICE_STRING = "Edit...";
 

@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.IconLoader;
+import icons.JetgroovyIcons;
 
 import javax.swing.*;
 
@@ -11,13 +11,13 @@ import javax.swing.*;
 public interface MvcIcons {
   String ICONS_PATH = "/icons/mvc/";
 
-  Icon CONTROLLER = IconLoader.getIcon(ICONS_PATH + "controller.png");
-  Icon SERVICE = IconLoader.getIcon(ICONS_PATH + "service.png");
-  Icon DOMAIN_CLASS = IconLoader.getIcon(ICONS_PATH + "domain_class.png");
-  Icon CONFIG_FOLDER = IconLoader.getIcon(ICONS_PATH + "config_folder_closed.png");
-  Icon ACTION_NODE = IconLoader.getIcon(ICONS_PATH + "action_method.png");
+  Icon CONTROLLER = JetgroovyIcons.Mvc.Controller;
+  Icon SERVICE = JetgroovyIcons.Mvc.Service;
+  Icon DOMAIN_CLASS = JetgroovyIcons.Mvc.Domain_class;
+  Icon CONFIG_FOLDER = JetgroovyIcons.Mvc.Config_folder_closed;
+  Icon ACTION_NODE = JetgroovyIcons.Mvc.Action_method;
   Icon CONTROLLERS_FOLDER = AllIcons.Nodes.KeymapTools;
-  Icon DOMAIN_CLASSES_FOLDER = IconLoader.getIcon(ICONS_PATH + "modelsNode.png");
-  Icon PLUGINS_REFRESH = IconLoader.getIcon(ICONS_PATH + "refresh.png");
-  Icon PLUGIN = IconLoader.getIcon(ICONS_PATH + "groovy_mvc_plugin.png");
+  Icon DOMAIN_CLASSES_FOLDER = JetgroovyIcons.Mvc.ModelsNode;
+  Icon PLUGINS_REFRESH = JetgroovyIcons.Mvc.Refresh;
+  Icon PLUGIN = JetgroovyIcons.Mvc.Groovy_mvc_plugin;
 }

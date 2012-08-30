@@ -31,16 +31,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
 import com.theoryinpractice.testng.model.TestData;
+import icons.TestngIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class TestNGConfigurationType implements ConfigurationType
 {
-  public static final Icon ICON = IconLoader.getIcon("/resources/testNG.png");
+  public static final Icon ICON = TestngIcons.TestNG;
   private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
 
     private final ConfigurationFactory myFactory;

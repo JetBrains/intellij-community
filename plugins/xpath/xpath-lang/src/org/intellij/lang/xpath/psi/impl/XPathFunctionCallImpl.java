@@ -18,13 +18,13 @@ package org.intellij.lang.xpath.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.IncorrectOperationException;
+import icons.XpathIcons;
 import org.intellij.lang.xpath.XPath2ElementTypes;
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.context.ContextProvider;
@@ -217,7 +217,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
       }
 
       public Icon getIcon(int i) {
-        return IconLoader.getIcon("/icons/function.png");
+        return XpathIcons.Function;
       }
 
       public void accept(@NotNull PsiElementVisitor visitor) {

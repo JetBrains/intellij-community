@@ -32,7 +32,7 @@ import org.jetbrains.idea.maven.dom.MavenDomElement;
  * 4.0.0
  * </pre>
  */
-@Presentation(typeName = "Plugin", icon = "/images/mavenPlugin.png")
+@Presentation(typeName = "Plugin", icon = "MavenIcons.MavenPlugin")
 public interface MavenDomPlugin extends MavenDomElement, MavenDomArtifactCoordinates {
   @Required(value = false, nonEmpty = true)
   GenericDomValue<String> getGroupId();

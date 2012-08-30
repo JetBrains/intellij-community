@@ -1,12 +1,12 @@
 package com.intellij.tasks.github;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.tasks.impl.BaseRepositoryType;
 import com.intellij.util.Consumer;
+import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,7 +16,7 @@ import java.util.EnumSet;
  * @author Dennis.Ushakov
  */
 public class GitHubRepositoryType extends BaseRepositoryType<GitHubRepository> {
-  static final Icon ICON = IconLoader.getIcon("/icons/github.png");
+  static final Icon ICON = TasksCoreIcons.Github;
 
   @NotNull
   @Override

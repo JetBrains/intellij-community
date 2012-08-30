@@ -17,19 +17,18 @@ package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
+import icons.XpathIcons;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class AssociationsGroup extends ActionGroup {
 
     public AssociationsGroup() {
-        getTemplatePresentation().setIcon(IconLoader.getIcon("/icons/association.png"));
+        getTemplatePresentation().setIcon(XpathIcons.Association);
     }
 
     @NotNull

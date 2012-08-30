@@ -1,8 +1,8 @@
 package com.intellij.tasks.mantis;
 
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.BaseRepositoryType;
+import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -12,7 +12,7 @@ import javax.swing.*;
  */
 public class MantisRepositoryType extends BaseRepositoryType<MantisRepository> {
   
-  private static final Icon ICON = IconLoader.getIcon("/icons/mantis.png");
+  private static final Icon ICON = TasksCoreIcons.Mantis;
 
   @NotNull
   @Override

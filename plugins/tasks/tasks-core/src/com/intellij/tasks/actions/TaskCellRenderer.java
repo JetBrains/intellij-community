@@ -1,5 +1,6 @@
 package com.intellij.tasks.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -15,6 +16,7 @@ import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import icons.TasksCoreIcons;
 
 import javax.swing.*;
 import java.awt.*;
@@ -59,7 +61,7 @@ public class TaskCellRenderer extends DefaultListCellRenderer implements Matcher
       panel.add(c, BorderLayout.CENTER);
     } else if (GotoTaskAction.CREATE_NEW_TASK_ACTION == value) {
       final SimpleColoredComponent c = new SimpleColoredComponent();
-      c.setIcon(LayeredIcon.create(IconLoader.getIcon("/icons/unknown.png"), IconLoader.getIcon("/actions/new.png")));
+      c.setIcon(LayeredIcon.create(TasksCoreIcons.Unknown, AllIcons.Actions.New));
       c.append(GotoTaskAction.CREATE_NEW_TASK_ACTION.getActionText());
       panel.add(c, BorderLayout.CENTER);
     } else if (ChooseByNameBase.NON_PREFIX_SEPARATOR == value) {

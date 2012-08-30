@@ -28,7 +28,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,6 +37,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import icons.DevkitIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -56,7 +56,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
   private final String myFilename;
   private final Module myModule;  
   @NonNls private static final String TEMPLATE_NAME = "InspectionDescription.html";
-  private static final Icon NEW_HTML_ICON = IconLoader.getIcon("/new_html.png");
+  private static final Icon NEW_HTML_ICON = DevkitIcons.New_html;
   private final boolean isIntention;
 
   public CreateHtmlDescriptionFix(String filename, Module module, boolean isIntention) {

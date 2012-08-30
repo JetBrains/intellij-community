@@ -23,8 +23,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ThrowableRunnable;
+import icons.AndroidDesignerIcons;
 
 import javax.swing.*;
 import java.util.List;
@@ -33,9 +33,9 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class OrientationAction extends AnAction {
-  private static final Icon myHorizontalIcon = IconLoader.getIcon("/icons/LinearLayout.png");
-  private static final Icon myVerticalIcon = IconLoader.getIcon("/icons/LinearLayout2.png");
-  private static final Icon myHorizontalOverrideIcon = IconLoader.getIcon("/icons/LinearLayout3.png");
+  private static final Icon myHorizontalIcon = AndroidDesignerIcons.LinearLayout;
+  private static final Icon myVerticalIcon = AndroidDesignerIcons.LinearLayout2;
+  private static final Icon myHorizontalOverrideIcon = AndroidDesignerIcons.LinearLayout3;
 
   private final DesignerEditorPanel myDesigner;
   private final List<RadComponent> myComponents;

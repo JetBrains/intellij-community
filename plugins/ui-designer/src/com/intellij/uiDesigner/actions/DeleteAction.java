@@ -19,18 +19,18 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.uiDesigner.CaptionSelection;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import icons.UIDesignerIcons;
 
 /**
  * @author yole
 */
 public final class DeleteAction extends AnAction {
   public DeleteAction() {
-    getTemplatePresentation().setIcon(IconLoader.getIcon("/com/intellij/uiDesigner/icons/deleteCell.png"));
+    getTemplatePresentation().setIcon(UIDesignerIcons.DeleteCell);
   }
 
   public void actionPerformed(final AnActionEvent e) {

@@ -40,7 +40,7 @@
     <action id="Android.CreateResourceDirectory" class="org.jetbrains.android.actions.CreateResourceDirectoryAction">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Android.CreateResourcesActionGroup"/>
     </action>
-    <group id="AndroidToolsGroup" popup="true" text="Android" icon="/icons/android.png"
+    <group id="AndroidToolsGroup" popup="true" text="Android" icon="AndroidIcons.Android"
            class="org.jetbrains.android.actions.AndroidToolsActionGroup">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
@@ -79,7 +79,7 @@
             class="org.jetbrains.android.actions.AndroidConnectDebuggerAction"
             text="Attach debugger to Android process"
             description="Attach debugger to Android process"
-            icon="/icons/attachDebugger.png">
+            icon="AndroidIcons.AttachDebugger">
       <add-to-group group-id="ToolbarRunGroup" anchor="after" relative-to-action="RunnerActions"/>
     </action>
     <action id="AndroidExtractStyleAction" class="org.jetbrains.android.refactoring.AndroidExtractStyleAction" text="St_yle..."
@@ -199,7 +199,7 @@
     <facet.toolWindow id="Android"
                       facetIdList="android"
                       anchor="bottom"
-                      icon="/icons/android.png"
+                      icon="AndroidIcons.Android"
                       factoryClass="org.jetbrains.android.logcat.AndroidLogcatToolWindowFactory"/>
     <projectService serviceInterface="org.jetbrains.android.logcat.AndroidLogcatFiltersPreferences"
                     serviceImplementation="org.jetbrains.android.logcat.AndroidLogcatFiltersPreferences"/>

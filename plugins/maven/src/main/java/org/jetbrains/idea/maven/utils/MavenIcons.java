@@ -16,28 +16,27 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
 public class MavenIcons {
-  public static final Icon MAVEN_ICON = IconLoader.getIcon("/images/mavenLogo.png");
-  public static final Icon MAVEN_PROJECT_ICON = IconLoader.getIcon("/images/mavenProject.png");
+  public static final Icon MAVEN_ICON = icons.MavenIcons.MavenLogo;
+  public static final Icon MAVEN_PROJECT_ICON = icons.MavenIcons.MavenProject;
 
-  public static final Icon CLOSED_PROFILES_ICON = IconLoader.getIcon("/images/profilesClosed.png");
-  public static final Icon CLOSED_PHASES_ICON = IconLoader.getIcon("/images/phasesClosed.png");
-  public static final Icon PHASE_ICON = IconLoader.getIcon("/images/phase.png");
-  public static final Icon CLOSED_PLUGINS_ICON = IconLoader.getIcon("/images/phasesClosed.png");
-  public static final Icon PLUGIN_ICON = IconLoader.getIcon("/images/mavenPlugin.png");
-  public static final Icon REPOSITORY_ICON = IconLoader.getIcon("/images/mavenPlugin.png");
-  public static final Icon PLUGIN_GOAL_ICON = IconLoader.getIcon("/images/pluginGoal.png");
+  public static final Icon CLOSED_PROFILES_ICON = icons.MavenIcons.ProfilesClosed;
+  public static final Icon CLOSED_PHASES_ICON = icons.MavenIcons.PhasesClosed;
+  public static final Icon PHASE_ICON = icons.MavenIcons.Phase;
+  public static final Icon CLOSED_PLUGINS_ICON = icons.MavenIcons.PhasesClosed;
+  public static final Icon PLUGIN_ICON = icons.MavenIcons.MavenPlugin;
+  public static final Icon REPOSITORY_ICON = icons.MavenIcons.MavenPlugin;
+  public static final Icon PLUGIN_GOAL_ICON = icons.MavenIcons.PluginGoal;
   public static final Icon CLOSED_DEPENDENCIES_ICON = AllIcons.Nodes.PpLibFolder;
   public static final Icon DEPENDENCY_ICON = AllIcons.Nodes.PpLib;
-  public static final Icon CLOSED_MODULES_ICON = IconLoader.getIcon("/images/modulesClosed.png");
+  public static final Icon CLOSED_MODULES_ICON = icons.MavenIcons.ModulesClosed;
 
-  public static final Icon OVERRIDING_DEPENDENCY = IconLoader.getIcon("/images/overridingDependency.png");
-  public static final Icon OVERRIDEN_DEPENDENCY = IconLoader.getIcon("/images/overridenDependency.png");
+  public static final Icon OVERRIDING_DEPENDENCY = icons.MavenIcons.OverridingDependency;
+  public static final Icon OVERRIDEN_DEPENDENCY = icons.MavenIcons.OverridenDependency;
 
-  public static final Icon PARENT_PROJECT = IconLoader.getIcon("/images/parentProject.png");
-  public static final Icon CHILDREN_PROJECTS = IconLoader.getIcon("/images/childrenProjects.png");
+  public static final Icon PARENT_PROJECT = icons.MavenIcons.ParentProject;
+  public static final Icon CHILDREN_PROJECTS = icons.MavenIcons.ChildrenProjects;
 }

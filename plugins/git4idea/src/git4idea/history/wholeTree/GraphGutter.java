@@ -16,12 +16,12 @@
 package git4idea.history.wholeTree;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Gray;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import icons.Git4ideaIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -479,10 +479,10 @@ public class GraphGutter {
     }
   }
 
-  private final static Icon[] ourIcons = new Icon[] {IconLoader.getIcon("/icons/ball0.png"), IconLoader.getIcon("/icons/ball1.png"),
-    IconLoader.getIcon("/icons/ball2.png"), IconLoader.getIcon("/icons/ball3.png"), IconLoader.getIcon("/icons/ball4.png"),
-    IconLoader.getIcon("/icons/ball5.png"), IconLoader.getIcon("/icons/ball6.png"), IconLoader.getIcon("/icons/ball7.png")};
-  private final static Icon ourGrey = IconLoader.getIcon("/icons/greyball.png");
+  private final static Icon[] ourIcons = new Icon[] {Git4ideaIcons.Ball0, Git4ideaIcons.Ball1,
+    Git4ideaIcons.Ball2, Git4ideaIcons.Ball3, Git4ideaIcons.Ball4,
+    Git4ideaIcons.Ball5, Git4ideaIcons.Ball6, Git4ideaIcons.Ball7};
+  private final static Icon ourGrey = Git4ideaIcons.Greyball;
 
   public static enum PresentationStyle {
     multicolour() {

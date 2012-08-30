@@ -30,7 +30,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryKind;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -41,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import gnu.trove.TIntArrayList;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,8 +64,8 @@ import java.util.regex.Pattern;
  * @author peter
  */
 public class GriffonFramework extends MvcFramework {
-  public static final Icon GRIFFON_ICON = IconLoader.getIcon("/icons/griffon/griffon.png");
-  public static final Icon GRIFFON_ICON_13 = IconLoader.getIcon("/icons/griffon/griffonToolWindow.png");
+  public static final Icon GRIFFON_ICON = JetgroovyIcons.Griffon.Griffon;
+  public static final Icon GRIFFON_ICON_13 = JetgroovyIcons.Griffon.GriffonToolWindow;
 
   @NonNls private static final String GRIFFON_COMMON_PLUGINS = "-griffonPlugins";
   private static final String GLOBAL_PLUGINS_MODULE_NAME = "GriffonGlobalPlugins";

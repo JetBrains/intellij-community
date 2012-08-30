@@ -17,12 +17,12 @@ package com.intellij.uiDesigner.wizard;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
+import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -72,7 +72,7 @@ final class FormPropertyTableCellRenderer extends ColoredTableCellRenderer{
       icon = item.getSmallIcon();
     }
     else {
-      icon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/unknown-small.png");
+      icon = UIDesignerIcons.Unknown_small;
     }
     setIcon(icon);
 

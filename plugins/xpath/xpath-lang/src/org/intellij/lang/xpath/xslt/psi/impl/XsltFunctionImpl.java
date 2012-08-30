@@ -16,12 +16,12 @@
 package org.intellij.lang.xpath.xslt.psi.impl;
 
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
+import icons.XpathIcons;
 import org.intellij.lang.xpath.context.functions.Function;
 import org.intellij.lang.xpath.context.functions.FunctionImpl;
 import org.intellij.lang.xpath.context.functions.Parameter;
@@ -79,7 +79,7 @@ public class XsltFunctionImpl extends XsltElementImpl implements XsltFunction, I
 
   @Override
   public Icon getIcon(boolean open) {
-    return IconLoader.getIcon("/icons/function.png");
+    return XpathIcons.Function;
   }
 
   @Override

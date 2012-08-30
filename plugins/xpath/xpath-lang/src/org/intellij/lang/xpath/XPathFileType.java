@@ -17,7 +17,7 @@ package org.intellij.lang.xpath;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.util.IconLoader;
+import icons.XpathIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -47,6 +47,6 @@ public final class XPathFileType extends LanguageFileType {
     }
 
     public Icon getIcon() {
-        return IconLoader.getIcon("/icons/xpath.png");
+        return XpathIcons.Xpath;
     }
 }

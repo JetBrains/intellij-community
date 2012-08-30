@@ -69,6 +69,7 @@ import git4idea.history.browser.*;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.branch.GitBranchUiUtil;
+import icons.Git4ideaIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +94,7 @@ import java.util.List;
  */
 public class GitLogUI implements Disposable {
   private final static Logger LOG = Logger.getInstance("#git4idea.history.wholeTree.GitLogUI");
-  static final Icon ourMarkIcon = IconLoader.getIcon("/icons/star.png");
+  static final Icon ourMarkIcon = Git4ideaIcons.Star;
   public static final SimpleTextAttributes HIGHLIGHT_TEXT_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_SEARCH_MATCH, UIUtil.getTableForeground());
   public static final String GIT_LOG_TABLE_PLACE = "git log table";
@@ -1657,7 +1658,7 @@ public class GitLogUI implements Disposable {
     private final Set<AbstractHash> myIdsInProgress;
 
     private MyCherryPick() {
-      super("Cherry-pick", "Cherry-pick", IconLoader.getIcon("/icons/cherryPick.png"));
+      super("Cherry-pick", "Cherry-pick", Git4ideaIcons.CherryPick);
       myIdsInProgress = new HashSet<AbstractHash>();
     }
 
@@ -1928,7 +1929,7 @@ public class GitLogUI implements Disposable {
     private final GitLogSettings myInstance;
 
     public MyShowTreeAction() {
-      super(SHOW_GRAPH_TITLE, SHOW_GRAPH_DESCRIPTION, IconLoader.getIcon("/icons/branch.png"));
+      super(SHOW_GRAPH_TITLE, SHOW_GRAPH_DESCRIPTION, Git4ideaIcons.Branch);
       myInstance = GitLogSettings.getInstance(myProject);
       myIsSelected = myInstance.isShowTree();
     }
