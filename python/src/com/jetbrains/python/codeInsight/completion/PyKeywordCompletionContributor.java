@@ -289,13 +289,8 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   private static final PsiElementPattern.Capture<PsiElement> AFTER_IF = afterStatement(psiElement(PyIfStatement.class));
   private static final PsiElementPattern.Capture<PsiElement> AFTER_TRY = afterStatement(psiElement(PyTryExceptStatement.class));
 
-  /*
-  private static final FilterPattern AFTER_LOOP_NO_ELSE = new FilterPattern(new PrecededByFilter(
-    psiElement()
-      .withChild(StandardPatterns.or(psiElement(PyWhileStatement.class), psiElement(PyForStatement.class)))
-      .withLastChild(StandardPatterns.not(psiElement(PyElsePart.class)))
-  ));
-  */
+  private static final PsiElementPattern.Capture<PsiElement> AFTER_LOOP_NO_ELSE =
+    afterStatement(psiElement(PyLoopStatement.class).withLastChild(StandardPatterns.not(psiElement(PyElsePart.class))));
 
   private static final PsiElementPattern.Capture<PsiElement> AFTER_COND_STMT_NO_ELSE =
     afterStatement(psiElement().withChild(psiElement(PyConditionalStatementPart.class))
@@ -485,7 +480,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       CompletionType.BASIC, psiElement()
       .withLanguage(PythonLanguage.getInstance())
       .and(FIRST_ON_LINE)
-      .andOr(IN_COND_STMT, IN_TRY_BODY, IN_EXCEPT_BODY, AFTER_COND_STMT_NO_ELSE, AFTER_TRY_NO_ELSE)
+      .andOr(IN_COND_STMT, IN_TRY_BODY, IN_EXCEPT_BODY, AFTER_COND_STMT_NO_ELSE, AFTER_LOOP_NO_ELSE, AFTER_TRY_NO_ELSE)
         //.andNot(RIGHT_AFTER_COLON)
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       ,
