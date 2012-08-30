@@ -25,6 +25,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
@@ -60,6 +61,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -98,6 +100,15 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
       public void rootsChanged(ModuleRootEvent event) {
         dropCache();
         notifyChangedDramatically();
+      }
+    });
+
+    final MyVirtualFileListener fileListener = new MyVirtualFileListener();
+    VirtualFileManager.getInstance().addVirtualFileListener(fileListener);
+    Disposer.register(myPsiManager.getProject(), new Disposable() {
+      @Override
+      public void dispose() {
+        VirtualFileManager.getInstance().removeVirtualFileListener(fileListener);
       }
     });
   }
@@ -735,6 +746,40 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
     @Override
     protected boolean shouldSaveOptionsOnCancel() {
       return true;
+    }
+  }
+
+  private class MyVirtualFileListener extends VirtualFileAdapter {
+    private void processEvent(VirtualFileEvent event) {
+      if (event.isFromRefresh() && ANNOTATIONS_XML.equals(event.getFileName())) {
+        dropCache();
+        notifyChangedDramatically();
+      }
+    }
+
+    @Override
+    public void contentsChanged(VirtualFileEvent event) {
+      processEvent(event);
+    }
+
+    @Override
+    public void fileCreated(VirtualFileEvent event) {
+      processEvent(event);
+    }
+
+    @Override
+    public void fileDeleted(VirtualFileEvent event) {
+      processEvent(event);
+    }
+
+    @Override
+    public void fileMoved(VirtualFileMoveEvent event) {
+      processEvent(event);
+    }
+
+    @Override
+    public void fileCopied(VirtualFileCopyEvent event) {
+      processEvent(event);
     }
   }
 }
