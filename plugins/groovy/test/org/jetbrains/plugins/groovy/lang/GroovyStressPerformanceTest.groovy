@@ -161,6 +161,20 @@ class Foo implements Bar {
   void someMethod(int a = 1) {}
 }"""
     measureHighlighting(text, 200)
+  }
 
+  public void "test using SSA variables in a for loop"() {
+    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+    def text = """
+def foo(List<File list) {
+  for (file in list) {
+${
+"   println bar(file)\n" * 10
+}
+  }
+}
+def bar(File file) { file.path }
+"""
+    measureHighlighting(text, 300)
   }
 }
