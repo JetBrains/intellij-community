@@ -209,22 +209,6 @@ public class FileAttributesReadingTest {
   }
 
   @Test
-  public void selfLink() throws Exception {
-    assumeTrue(SystemInfo.areSymLinksSupported);
-
-    final File dir = FileUtil.createTempDirectory(myTempDirectory, "test.", ".dir");
-    final File link = IoTestUtil.createTempLink(dir.getPath(), new File(dir, "link").getPath());
-
-    final FileAttributes attributes = getAttributes(link);
-    assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
-    assertEquals(FileAttributes.SYM_LINK, attributes.flags);
-    assertTimestampsEqual(dir.lastModified(), attributes.lastModified);
-
-    final String target = FileSystemUtil.resolveSymLink(link);
-    assertEquals(dir.getPath(), target);
-  }
-
-  @Test
   public void junction() throws Exception {
     assumeTrue(SystemInfo.isWindows);
 
@@ -251,7 +235,7 @@ public class FileAttributesReadingTest {
     final File file = new File("C:\\Documents and Settings\\desktop.ini");
     assumeTrue(file.exists());
 
-    final FileAttributes attributes = getAttributes(file, false);
+    final FileAttributes attributes = getAttributes(file);
     assertEquals(FileAttributes.Type.FILE, attributes.type);
     assertEquals(FileAttributes.HIDDEN, attributes.flags);
     assertEquals(file.length(), attributes.length);
@@ -318,30 +302,9 @@ public class FileAttributesReadingTest {
 
   @NotNull
   private static FileAttributes getAttributes(@NotNull final File file) {
-    return getAttributes(file, true);
-  }
-
-  @NotNull
-  private static FileAttributes getAttributes(@NotNull final File file, final boolean checkList) {
     final FileAttributes attributes = FileSystemUtil.getAttributes(file);
     assertNotNull(attributes);
     System.out.println(attributes);
-
-    if (SystemInfo.isWindows && checkList) {
-      final String parent = file.getParent();
-      if (parent != null) {
-        final FileInfo[] infos = IdeaWin32.getInstance().listChildren(parent);
-        assertNotNull(infos);
-        for (FileInfo info : infos) {
-          if (file.getName().equals(info.getName())) {
-            assertEquals(attributes, info.toFileAttributes());
-            return attributes;
-          }
-        }
-        fail(file + " not listed");
-      }
-    }
-
     return attributes;
   }
 

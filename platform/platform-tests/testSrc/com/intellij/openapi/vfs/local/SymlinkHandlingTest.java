@@ -109,14 +109,11 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
     assertEquals(upDir.getPath(), upLinkVFile.getCanonicalPath());
     assertVisitedPaths(upDir.getPath(), upLinkVFile.getPath());
 
-    final File repeatedLinksFile = new File(upDir.getPath() + StringUtil.repeat(File.separator + upLinkFile.getName(), 4));
-    assertTrue(repeatedLinksFile.getPath(), repeatedLinksFile.isDirectory());
-    final VirtualFile repeatedLinksVFile = refreshAndFind(repeatedLinksFile);
-    assertNotNull(repeatedLinksFile.getPath(), repeatedLinksVFile);
-    assertTrue(repeatedLinksVFile.isSymLink());
-    assertTrue(repeatedLinksVFile.isDirectory());
-    assertEquals(upDir.getPath(), repeatedLinksVFile.getCanonicalPath());
-    assertEquals(upLinkVFile.getCanonicalFile(), repeatedLinksVFile.getCanonicalFile());
+    final File nestedLinksFile = new File(upDir.getPath() + StringUtil.repeat(File.separator + upLinkFile.getName(), 4));
+    assertTrue(nestedLinksFile.getPath(), nestedLinksFile.isDirectory());
+    final VirtualFile nestedLinksVFile = refreshAndFind(nestedLinksFile);
+    assertNotNull(nestedLinksFile.getPath(), nestedLinksVFile);
+    assertEquals(upLinkVFile.getCanonicalFile(), nestedLinksVFile.getCanonicalFile());
   }
 
   public void testMutualRecursiveLinks() throws Exception {
