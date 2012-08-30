@@ -54,6 +54,9 @@ public class JavaRefactoringElementDescriptionProvider implements ElementDescrip
     }
 
     if (element instanceof PsiParameter) {
+      if (((PsiParameter)element).getDeclarationScope() instanceof PsiForeachStatement) {
+        return RefactoringBundle.message("local.variable.description", CommonRefactoringUtil.htmlEmphasize(((PsiVariable)element).getName()));
+      }
       return RefactoringBundle.message("parameter.description", CommonRefactoringUtil.htmlEmphasize(((PsiParameter)element).getName()));
     }
 
