@@ -839,7 +839,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
   }
 
-  private static class ColorPickerDialog extends DialogWrapper {
+  static class ColorPickerDialog extends DialogWrapper {
 
     private final Color myPreselectedColor;
     private ColorPicker myColorPicker;
@@ -1155,10 +1155,10 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
 
     public void pickDone() {
-      cancelPipette();
       PointerInfo pointerInfo = MouseInfo.getPointerInfo();
       Point location = pointerInfo.getLocation();
       Color pixelColor = myRobot.getPixelColor(location.x + myPickOffset.x, location.y + myPickOffset.y);
+      cancelPipette();
       if (myColorListener != null) {
         myColorListener.colorChanged(pixelColor, this);
         myOldColor = pixelColor;
