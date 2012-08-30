@@ -9,5 +9,9 @@ import javax.swing.*;
  * Don't repeat mistakes of others ;-)
  */
 public class GoogleAppEngineIcons {
-  public static final Icon AppEngine = IconLoader.getIcon("/icons/appEngine.png"); // 16x16
+  private static Icon load(String path) {
+    return IconLoader.getIcon(path, GoogleAppEngineIcons.class);
+  }
+
+  public static final Icon AppEngine = load("/icons/appEngine.png"); // 16x16
 }
