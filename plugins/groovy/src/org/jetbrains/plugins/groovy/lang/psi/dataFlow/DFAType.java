@@ -115,7 +115,7 @@ public class DFAType {
   }
 
   @Nullable
-  public PsiType getType() {
+  public PsiType getResultType() {
     if (mixins.size() == 0) return primary;
 
     List<PsiType> types = new ArrayList<PsiType>();
