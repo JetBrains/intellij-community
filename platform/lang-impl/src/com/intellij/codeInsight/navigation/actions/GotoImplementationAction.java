@@ -24,14 +24,17 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.search.searches.DefinitionsSearch;
 
 public class GotoImplementationAction extends BaseCodeInsightAction implements DumbAware {
+  @Override
   protected CodeInsightActionHandler getHandler(){
     return new GotoImplementationHandler();
   }
 
+  @Override
   protected boolean isValidForLookup() {
     return true;
   }
 
+  @Override
   public void update(final AnActionEvent event) {
     if (!DefinitionsSearch.INSTANCE.hasAnyExecutors()) {
       event.getPresentation().setVisible(false);

@@ -20,10 +20,12 @@ import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiClassListCellRenderer extends PsiElementListCellRenderer<PsiClass> {
+  @Override
   public String getElementText(PsiClass element) {
     return ClassPresentationUtil.getNameForClass(element, false);
   }
 
+  @Override
   protected String getContainerText(PsiClass element, final String name) {
     return getContainerTextStatic(element);
   }
@@ -33,12 +35,13 @@ public class PsiClassListCellRenderer extends PsiElementListCellRenderer<PsiClas
     PsiFile file = element.getContainingFile();
     if (file instanceof PsiClassOwner) {
       String packageName = ((PsiClassOwner)file).getPackageName();
-      if (packageName.length() == 0) return null;
+      if (packageName.isEmpty()) return null;
       return "(" + packageName + ")";
     }
     return null;
   }
 
+  @Override
   protected int getIconFlags() {
     return 0;
   }

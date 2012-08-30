@@ -43,7 +43,6 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,13 +53,15 @@ import java.util.*;
 import java.util.List;
 
 public abstract class GotoTargetHandler implements CodeInsightActionHandler {
-  private static PsiElementListCellRenderer ourDefaultTargetElementRenderer = new DefaultPsiElementListCellRenderer();
-  private DefaultListCellRenderer myActionElementRenderer = new ActionCellRenderer();
+  private static final PsiElementListCellRenderer ourDefaultTargetElementRenderer = new DefaultPsiElementListCellRenderer();
+  private final DefaultListCellRenderer myActionElementRenderer = new ActionCellRenderer();
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(getFeatureUsedKey());
 
@@ -116,7 +117,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     Collections.addAll(allElements, targets);
     allElements.addAll(additionalActions);
 
-    final JBListWithHintProvider list = new JBListWithHintProvider(new CollectionListModel(allElements)) {
+    final JBListWithHintProvider list = new JBListWithHintProvider(new CollectionListModel<Object>(allElements)) {
       @Override
       protected PsiElement getPsiElementForHint(final Object selectedValue) {
         return selectedValue instanceof PsiElement ? (PsiElement) selectedValue : null;
@@ -136,6 +137,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     });
 
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         int[] ids = list.getSelectedIndices();
         if (ids == null || ids.length == 0) return;
@@ -289,7 +291,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
         final String name = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
           @Override
           public String compute() {
-            return  ((PsiNamedElement)element).getName();
+            return ((PsiNamedElement)element).getName();
           }
         });
         myNames.add(name);
@@ -304,6 +306,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   }
 
   private static class DefaultPsiElementListCellRenderer extends PsiElementListCellRenderer {
+    @Override
     public String getElementText(final PsiElement element) {
       if (element instanceof PsiNamedElement) {
         String name = ((PsiNamedElement)element).getName();
@@ -314,6 +317,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       return element.getContainingFile().getName();
     }
 
+    @Override
     protected String getContainerText(final PsiElement element, final String name) {
       if (element instanceof NavigationItem) {
         final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
@@ -323,12 +327,13 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       return null;
     }
 
+    @Override
     protected int getIconFlags() {
       return 0;
     }
   }
 
-  private class ActionCellRenderer extends DefaultListCellRenderer {
+  private static class ActionCellRenderer extends DefaultListCellRenderer {
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);

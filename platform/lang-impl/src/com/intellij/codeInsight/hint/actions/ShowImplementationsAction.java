@@ -17,10 +17,10 @@ package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.codeInsight.navigation.ImplementationSearcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
@@ -41,7 +41,7 @@ import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupPositionManager;
@@ -64,6 +64,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     setInjectedContext(true);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     performForContext(e.getDataContext());
   }
@@ -96,10 +97,6 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     PsiFile containingFile = element != null ? element.getContainingFile() : file;
     if (containingFile == null || !containingFile.getViewProvider().isPhysical()) return;
 
-    String text = "";
-    PsiElement[] impls = new PsiElement[0];
-    PsiReference ref = null;
-
     final PsiElement adjustedElement =
       TargetElementUtilBase.getInstance().adjustElement(editor, TargetElementUtilBase.getInstance().getAllAccepted(), element, null);
     if (adjustedElement != null) {
@@ -108,6 +105,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       element = DocumentationManager.getInstance(project).getElementFromLookup(editor, file);
     }
 
+    PsiReference ref = null;
     if (editor != null) {
       ref = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
       if (element == null && ref != null) {
@@ -115,6 +113,8 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       }
     }
 
+    String text = "";
+    PsiElement[] impls = new PsiElement[0];
     if (element != null) {
       //if (element instanceof PsiPackage) return;
 
@@ -146,17 +146,18 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   private static ImplementationSearcher createImplementationsSearcher() {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      return new ImplementationSearcher.FirstImplementationsSearcher() {
-        protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, final int offset) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return new ImplementationSearcher() {
+        @Override
+        protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, int offset) {
           return ShowImplementationsAction.filterElements(targetElements);
         }
       };
     }
     else {
-      return new ImplementationSearcher() {
+      return new ImplementationSearcher.FirstImplementationsSearcher() {
         @Override
-        protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, int offset) {
+        protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, final int offset) {
           return ShowImplementationsAction.filterElements(targetElements);
         }
       };
@@ -213,6 +214,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     final ImplementationViewComponent component = new ImplementationViewComponent(impls, index);
     if (component.hasElementsToShow()) {
       final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(project) {
+        @Override
         public void updatePopup(Object lookupItemObject) {
           final PsiElement element = lookupItemObject instanceof PsiElement ? (PsiElement)lookupItemObject : DocumentationManager.getInstance(project).getElementFromLookup(editor, file);
           updateElementImplementations(element, editor, project, file);
@@ -302,7 +304,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         break;
       }
     }
-    return PsiUtilBase.toPsiElementArray(unique);
+    return PsiUtilCore.toPsiElementArray(unique);
   }
 
   @Override
@@ -341,12 +343,12 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       final int startIdx = elements.length - includeSelfIdx;
       final PsiElement[] result = new PsiElement[data.size() + includeSelfIdx];
       System.arraycopy(elements, 0, result, 0, elements.length);
-      System.arraycopy(data.toArray(PsiElement.EMPTY_ARRAY), startIdx, result, elements.length, data.size() - startIdx);
+      System.arraycopy(PsiUtilCore.toPsiElementArray(data), startIdx, result, elements.length, data.size() - startIdx);
       myComponent.update(result, myComponent.getIndex());
     }
 
     @Override
-    public void run(final @NotNull ProgressIndicator indicator) {
+    public void run(@NotNull final ProgressIndicator indicator) {
       super.run(indicator);
       myElements =
         getSelfAndImplementations(myEditor, myElement, new ImplementationSearcher.BackgroundableImplementationSearcher() {

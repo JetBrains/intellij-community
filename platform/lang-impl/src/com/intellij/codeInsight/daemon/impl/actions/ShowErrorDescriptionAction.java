@@ -30,6 +30,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public class ShowErrorDescriptionAction extends BaseCodeInsightAction implements DumbAware {
   private static int width;
@@ -58,7 +59,7 @@ public class ShowErrorDescriptionAction extends BaseCodeInsightAction implements
   }
 
   @Override
-  public void beforeActionPerformedUpdate(final AnActionEvent e) {
+  public void beforeActionPerformedUpdate(@NotNull final AnActionEvent e) {
     super.beforeActionPerformedUpdate(e);
     changeState();
   }

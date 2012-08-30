@@ -95,6 +95,7 @@ public class GroovyMarkerTypes {
       return builder.toString();
     }
   }, new LineMarkerNavigator() {
+    @Override
     public void browse(MouseEvent e, PsiElement element) {
       PsiElement parent = element.getParent();
       if (!(parent instanceof GrField)) return;
@@ -104,7 +105,7 @@ public class GroovyMarkerTypes {
       for (GrAccessorMethod method : accessors) {
         Collections.addAll(superMethods, method.findSuperMethods(false));
       }
-      if (superMethods.size() == 0) return;
+      if (superMethods.isEmpty()) return;
       final PsiMethod[] supers = ContainerUtil.toArray(superMethods, new PsiMethod[superMethods.size()]);
       boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(supers);
       PsiElementListNavigator.openTargets(e, supers, DaemonBundle.message("navigation.title.super.method", field.getName()),
@@ -153,6 +154,7 @@ public class GroovyMarkerTypes {
 
       final CommonProcessors.CollectProcessor<PsiMethod> collectProcessor = new CommonProcessors.CollectProcessor<PsiMethod>(new THashSet<PsiMethod>());
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        @Override
         public void run() {
           for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors(field)) {
             OverridingMethodsSearch.search(method, true).forEach(collectProcessor);
@@ -173,13 +175,14 @@ public class GroovyMarkerTypes {
   }
   );
   public static final MarkerType OVERRIDING_METHOD = new MarkerType(new NullableFunction<PsiElement, String>() {
+      @Override
       public String fun(PsiElement element) {
         PsiElement parent = element.getParent();
         if (!(parent instanceof GrMethod)) return null;
         GrMethod method = (GrMethod)parent;
 
         Set<PsiMethod> superMethods = collectSuperMethods(method);
-        if (superMethods.size() == 0) return null;
+        if (superMethods.isEmpty()) return null;
 
         PsiMethod superMethod = superMethods.iterator().next();
         boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
@@ -196,13 +199,14 @@ public class GroovyMarkerTypes {
         return GutterIconTooltipHelper.composeText(superMethods, "", DaemonBundle.message(key));
       }
     }, new LineMarkerNavigator(){
+      @Override
       public void browse(MouseEvent e, PsiElement element) {
         PsiElement parent = element.getParent();
         if (!(parent instanceof GrMethod)) return;
         GrMethod method = (GrMethod)parent;
 
         Set<PsiMethod> superMethods = collectSuperMethods(method);
-        if (superMethods.size() == 0) return;
+        if (superMethods.isEmpty()) return;
         PsiElementListNavigator.openTargets(e, superMethods.toArray(new NavigatablePsiElement[superMethods.size()]),
                     DaemonBundle.message("navigation.title.super.method", method.getName()),
                     new MethodCellRenderer(true));
@@ -210,6 +214,7 @@ public class GroovyMarkerTypes {
       }
     });
   public static final MarkerType OVERRIDEN_METHOD = new MarkerType(new NullableFunction<PsiElement, String>() {
+      @Override
       public String fun(PsiElement element) {
         PsiElement parent = element.getParent();
         if (!(parent instanceof GrMethod)) return null;
@@ -238,6 +243,7 @@ public class GroovyMarkerTypes {
         return GutterIconTooltipHelper.composeText(overridings, start, pattern);
       }
     }, new LineMarkerNavigator(){
+      @Override
       public void browse(MouseEvent e, PsiElement element) {
         PsiElement parent = element.getParent();
         if (!(parent instanceof GrMethod)) return;
@@ -252,6 +258,7 @@ public class GroovyMarkerTypes {
         final PsiElementProcessor.CollectElementsWithLimit<PsiMethod> collectProcessor =
           new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(2, new THashSet<PsiMethod>());
         if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+          @Override
           public void run() {
             for (GrMethod m : PsiImplUtil.getMethodOrReflectedMethods(method)) {
               OverridingMethodsSearch.search(m, true).forEach(new ReadActionProcessor<PsiMethod>() {
@@ -333,7 +340,7 @@ public class GroovyMarkerTypes {
     }
 
     @Override
-    public void run(final @NotNull ProgressIndicator indicator) {
+    public void run(@NotNull final ProgressIndicator indicator) {
       super.run(indicator);
       for (PsiMethod method : PsiImplUtil.getMethodOrReflectedMethods(myMethod)) {
         OverridingMethodsSearch.search(method, true).forEach(

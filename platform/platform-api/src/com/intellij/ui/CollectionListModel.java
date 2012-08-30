@@ -17,6 +17,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.EditableModel;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,10 +37,12 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
     myItems = new ArrayList<T>(Arrays.asList(items));
   }
 
+  @Override
   public int getSize() {
     return myItems.size();
   }
 
+  @Override
   public T getElementAt(final int index) {
     return myItems.get(index);
   }
@@ -51,8 +54,7 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
   }
 
   public void add(@NotNull final List<? extends T> elements) {
-    if (elements.isEmpty())
-      return;
+    if (elements.isEmpty()) return;
     int i = myItems.size();
     myItems.addAll(elements);
     fireIntervalAdded(this, i, i + elements.size() - 1);
@@ -121,6 +123,7 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
     return true;
   }
 
+  @NonNls
   @Override
   public String toString() {
     return getClass().getName() + " (" + getSize() + " elements)";
