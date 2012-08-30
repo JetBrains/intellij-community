@@ -23,8 +23,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.*;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -40,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstru
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ArgumentInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsDfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsSemilattice;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -137,19 +136,19 @@ public class TypeInferenceHelper {
 
   @Nullable
   private static DFAType getInferredType(@NotNull String varName, @NotNull Instruction instruction, @NotNull Instruction[] flow, @NotNull GrControlFlowOwner scope) {
-    final Pair<ReachingDefinitionsDfaInstance, List<TIntObjectHashMap<TIntHashSet>>> pair = getDefUseMaps(scope);
+    final Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> pair = getDefUseMaps(scope);
 
-    List<TIntObjectHashMap<TIntHashSet>> dfaResult = pair.second;
+    List<DefinitionMap> dfaResult = pair.second;
     if (dfaResult == null) return null;
 
     final int varIndex = pair.first.getVarIndex(varName);
 
-    final TIntObjectHashMap<TIntHashSet> allDefs = dfaResult.get(instruction.num());
-    final TIntHashSet varDefs = allDefs.get(varIndex);
+    final DefinitionMap allDefs = dfaResult.get(instruction.num());
+    final int[] varDefs = allDefs.getDefinitions(varIndex);
     if (varDefs == null) return null;
 
     DFAType result = null;
-    for (int defIndex : varDefs.toArray()) {
+    for (int defIndex : varDefs) {
       DFAType defType = getDefinitionType(flow[defIndex], flow, scope);
 
       if (defType != null) {
@@ -163,27 +162,27 @@ public class TypeInferenceHelper {
     return result;
   }
 
-  private static Pair<ReachingDefinitionsDfaInstance, List<TIntObjectHashMap<TIntHashSet>>> getDefUseMaps(final GrControlFlowOwner scope) {
-    return CachedValuesManager.getManager(scope.getProject()).getCachedValue(scope, new CachedValueProvider<Pair<ReachingDefinitionsDfaInstance, List<TIntObjectHashMap<TIntHashSet>>>>() {
+  private static Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> getDefUseMaps(final GrControlFlowOwner scope) {
+    return CachedValuesManager.getManager(scope.getProject()).getCachedValue(scope, new CachedValueProvider<Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>>>() {
       @Override
-      public Result<Pair<ReachingDefinitionsDfaInstance, List<TIntObjectHashMap<TIntHashSet>>>> compute() {
+      public Result<Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>>> compute() {
         final Instruction[] flow = scope.getControlFlow();
         final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow) {
           @Override
-          public void fun(TIntObjectHashMap<TIntHashSet> m, Instruction instruction) {
+          public void fun(DefinitionMap m, Instruction instruction) {
             if (instruction instanceof InstanceOfInstruction) {
               final InstanceOfInstruction instanceOfInstruction = (InstanceOfInstruction)instruction;
               ReadWriteVariableInstruction i = instanceOfInstruction.getInstructionToMixin(flow);
               if (i != null) {
                 int varIndex = getVarIndex(i.getVariableName());
                 if (varIndex >= 0) {
-                  registerDef(m, instruction, varIndex);
+                  m.registerDef(instruction, varIndex);
                 }
               }
             }
             else if (instruction instanceof ArgumentInstruction) {
               final int varIndex = getVarIndex(((ArgumentInstruction)instruction).getVariableName());
-              registerDef(m, instruction, varIndex);
+              m.registerDef(instruction, varIndex);
             }
             else {
               super.fun(m, instruction);
@@ -191,8 +190,8 @@ public class TypeInferenceHelper {
           }
         };
         final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
-        final DFAEngine<TIntObjectHashMap<TIntHashSet>> engine = new DFAEngine<TIntObjectHashMap<TIntHashSet>>(flow, dfaInstance, lattice);
-        final List<TIntObjectHashMap<TIntHashSet>> dfaResult = engine.performDFAWithTimeout();
+        final DFAEngine<DefinitionMap> engine = new DFAEngine<DefinitionMap>(flow, dfaInstance, lattice);
+        final List<DefinitionMap> dfaResult = engine.performDFAWithTimeout();
         return Result.create(Pair.create(dfaInstance, dfaResult), PsiModificationTracker.MODIFICATION_COUNT);
       }
     });
