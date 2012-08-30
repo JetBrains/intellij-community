@@ -420,7 +420,7 @@ public class GrClassImplUtil {
                                                boolean includeSyntheticAccessors) {
     if (!checkBases) {
       List<PsiMethod> result = new ArrayList<PsiMethod>();
-      for (PsiMethod method : includeSyntheticAccessors ? grType.getMethods() : grType.getGroovyMethods()) {
+      for (PsiMethod method : CollectClassMembersUtil.getMethods(grType, includeSyntheticAccessors)) {
         if (name.equals(method.getName())) result.add(method);
       }
 
@@ -514,7 +514,7 @@ public class GrClassImplUtil {
   @Nullable
   public static PsiField findFieldByName(GrTypeDefinition grType, String name, boolean checkBases, boolean includeSynthetic) {
     if (!checkBases) {
-      for (GrField field : includeSynthetic ? grType.getFields() : grType.getCodeFields()) {
+      for (PsiField field : CollectClassMembersUtil.getFields(grType, includeSynthetic)) {
         if (name.equals(field.getName())) return field;
       }
 

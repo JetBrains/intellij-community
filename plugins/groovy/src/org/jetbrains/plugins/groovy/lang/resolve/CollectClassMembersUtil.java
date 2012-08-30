@@ -97,9 +97,7 @@ public class CollectClassMembersUtil {
 
     if (!visitedClasses.add(aClass)) return;
 
-    for (PsiField field : includeSynthetic || !(aClass instanceof GrTypeDefinition)
-                          ? aClass.getFields()
-                          : ((GrTypeDefinition)aClass).getCodeFields()) {
+    for (PsiField field : getFields(aClass, includeSynthetic)) {
       String name = field.getName();
       if (!allFields.containsKey(name)) {
         allFields.put(name, new CandidateInfo(field, substitutor));
@@ -116,9 +114,7 @@ public class CollectClassMembersUtil {
       }
     }
 
-    for (PsiMethod method : includeSynthetic || !(aClass instanceof GrTypeDefinition)
-                            ? aClass.getMethods()
-                            : ((GrTypeDefinition)aClass).getGroovyMethods()) {
+    for (PsiMethod method : getMethods(aClass, includeSynthetic)) {
       addMethod(allMethods, method, substitutor);
     }
 
@@ -139,6 +135,14 @@ public class CollectClassMembersUtil {
                      shouldProcessInnerClasses && !(aClass instanceof GrAnonymousClassDefinition));
       }
     }
+  }
+
+  public static PsiField[] getFields(PsiClass aClass, boolean includeSynthetic) {
+    return includeSynthetic || !(aClass instanceof GrTypeDefinition) ? aClass.getFields() : ((GrTypeDefinition)aClass).getCodeFields();
+  }
+
+  public static PsiMethod[] getMethods(PsiClass aClass, boolean includeSynthetic) {
+    return includeSynthetic || !(aClass instanceof GrTypeDefinition) ? aClass.getMethods() : ((GrTypeDefinition)aClass).getGroovyMethods();
   }
 
   private static boolean hasExplicitVisibilityModifiers(PsiField field) {
