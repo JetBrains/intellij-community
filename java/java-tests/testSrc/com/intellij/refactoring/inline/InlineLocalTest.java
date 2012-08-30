@@ -132,6 +132,15 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
+  public void testAssignmentToArrayElement() throws Exception {
+    doTest(true, "Cannot perform refactoring.\n" +
+                 "Variable 'arr' is accessed for writing.");
+  }
+
+  public void testArrayIndex() throws Exception {
+    doTest(true);
+  }
+
   public void testNonEqAssignment() throws Exception {
     doTest(false, "Cannot perform refactoring.\n" +
                   "Variable 'x' is accessed for writing.");
