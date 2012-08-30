@@ -549,11 +549,19 @@ public class PyBlock implements ASTBlock {
     }
 
     ASTNode lastChild = getLastNonSpaceChild(_node, false);
-    if (lastChild != null && lastChild.getElementType() == PyElementTypes.STATEMENT_LIST) {
-      // only multiline statement lists are considered incomplete
-      ASTNode statementListPrev = lastChild.getTreePrev();
-      if (statementListPrev != null && statementListPrev.getText().indexOf('\n') >= 0) {
-        return true;
+    if (lastChild != null) {
+      if (lastChild.getElementType() == PyElementTypes.STATEMENT_LIST) {
+        // only multiline statement lists are considered incomplete
+        ASTNode statementListPrev = lastChild.getTreePrev();
+        if (statementListPrev != null && statementListPrev.getText().indexOf('\n') >= 0) {
+          return true;
+        }
+      }
+      if (lastChild.getElementType() == PyElementTypes.BINARY_EXPRESSION) {
+        PyBinaryExpression binaryExpression = (PyBinaryExpression) lastChild.getPsi();
+        if (binaryExpression.getRightExpression() == null) {
+          return true;
+        }
       }
     }
 
