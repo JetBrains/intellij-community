@@ -38,6 +38,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.AnnotationTargetsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Processor;
@@ -50,9 +51,7 @@ public class UsedIconsListingAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
 
-    final Set<String> answer = new HashSet<String>();
     final MultiMap<String, PsiExpression> calls = new MultiMap<String, PsiExpression>();
-
 
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     Processor<PsiReference> consumer = new Processor<PsiReference>() {
@@ -65,6 +64,10 @@ public class UsedIconsListingAction extends AnAction {
 
         PsiFile file = reference.getElement().getContainingFile();
         if ("AllIcons.java".equals(file.getName())) return true;
+
+        PsiClass container = PsiUtil.getTopLevelClass(reference.getElement());
+        if (container != null && container.getQualifiedName().startsWith("icons.")) return true;
+
         for (PsiExpression arg : call.getArgumentList().getExpressions()) {
           if (arg instanceof PsiLiteralExpression) {
             Object value = ((PsiLiteralExpression)arg).getValue();
@@ -98,7 +101,6 @@ public class UsedIconsListingAction extends AnAction {
           }
 
           calls.putValue(str, call);
-          answer.add(str);
         }
       }
     };
@@ -122,23 +124,7 @@ public class UsedIconsListingAction extends AnAction {
       MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
     }
 
-    List<PsiClass> iconClasses = new ArrayList<PsiClass>();
-    iconClasses.add(psiFacade.findClass("com.intellij.icons.AllIcons", allScope));
-    for (PsiClass iconClass : psiFacade.findPackage("icons").getClasses(allScope)) {
-      if (iconClass.getName().endsWith("Icons")) {
-        iconClasses.add(iconClass);
-      }
-    }
-
-
-    final HashMap<String, String> mappings = new HashMap<String, String>();
-    for (PsiClass iconClass : iconClasses) {
-      int size = mappings.size();
-      collectFields(iconClass, "", mappings);
-      System.out.println("Found " + (mappings.size() - size) + " icons in " + iconClass.getQualifiedName());
-    }
-
-    final List<XmlAttribute> victims = new ArrayList<XmlAttribute>();
+    final List<XmlAttribute> xmlAttributes = new ArrayList<XmlAttribute>();
 
     PsiSearchHelper.SERVICE.getInstance(project).processAllFilesWithWordInText(
       "icon",
@@ -159,10 +145,7 @@ public class UsedIconsListingAction extends AnAction {
 
               String icon = tag.getAttributeValue("icon");
               if (icon != null) {
-                answer.add(icon);
-                if (mappings.containsKey(icon)) {
-                  victims.add(tag.getAttribute("icon"));
-                }
+                xmlAttributes.add(tag.getAttribute("icon"));
               }
             }
           });
@@ -172,19 +155,6 @@ public class UsedIconsListingAction extends AnAction {
 
       true
     );
-
-    for (final XmlAttribute victim : victims) {
-      String value = victim.getValue();
-      final String replacement = mappings.get(value);
-      if (replacement != null) {
-        new WriteCommandAction<Void>(project, victim.getContainingFile()) {
-          @Override
-          protected void run(Result<Void> result) throws Throwable {
-            victim.setValue(replacement);
-          }
-        }.execute();
-      }
-    }
 
     PsiClass presentation = psiFacade.findClass("com.intellij.ide.presentation.Presentation",
                                                 allScope);
@@ -206,22 +176,54 @@ public class UsedIconsListingAction extends AnAction {
       }
     });
 
-
-    if (true /*do replacements*/) {
-      ArrayList<String> sorted = new ArrayList<String>(answer);
-      Collections.sort(sorted);
-
-      for (String icon : sorted) {
-        System.out.println(icon);
+    doReplacements(project, calls, xmlAttributes, annotations, psiFacade.findClass("com.intellij.icons.AllIcons", allScope));
+    for (PsiClass iconClass : psiFacade.findPackage("icons").getClasses(allScope)) {
+      if (iconClass.getName().endsWith("Icons")) {
+        doReplacements(project, calls, xmlAttributes, annotations, iconClass);
       }
+    }
+  }
 
-      final JVMElementFactory factory = JVMElementFactories.getFactory(JavaLanguage.INSTANCE, project);
-      for (Map.Entry<String, Collection<PsiExpression>> entry : calls.entrySet()) {
-        String path = entry.getKey();
-        final String replacement = mappings.get(path);
-        if (replacement != null) {
-          for (final PsiExpression call : entry.getValue()) {
-            new WriteCommandAction(project, call.getContainingFile()) {
+  private static void doReplacements(final Project project,
+                                     MultiMap<String, PsiExpression> calls,
+                                     List<XmlAttribute> xmlAttributes,
+                                     MultiMap<String, PsiAnnotation> annotations,
+                                     PsiClass iconClass) {
+    final HashMap<String, String> mappings = new HashMap<String, String>();
+    int size = mappings.size();
+    collectFields(iconClass, "", mappings);
+    System.out.println("Found " + (mappings.size() - size) + " icons in " + iconClass.getQualifiedName());
+
+    GlobalSearchScope useScope = (GlobalSearchScope)iconClass.getUseScope();
+
+    for (final XmlAttribute att : xmlAttributes) {
+      if (!att.isValid()) continue;
+      String value = att.getValue();
+      final String replacement = mappings.get(value);
+      if (replacement != null) {
+        final PsiFile file = att.getContainingFile();
+        if (useScope.contains(file.getVirtualFile())) {
+          new WriteCommandAction<Void>(project, file) {
+            @Override
+            protected void run(Result<Void> result) throws Throwable {
+              att.setValue(replacement);
+            }
+          }.execute();
+        }
+      }
+    }
+
+    final JVMElementFactory factory = JVMElementFactories.getFactory(JavaLanguage.INSTANCE, project);
+    for (Map.Entry<String, Collection<PsiExpression>> entry : calls.entrySet()) {
+      String path = entry.getKey();
+      final String replacement = mappings.get(path);
+      if (replacement != null) {
+        for (final PsiExpression call : entry.getValue()) {
+          if (!call.isValid()) continue;
+
+          final PsiFile file = call.getContainingFile();
+          if (useScope.contains(file.getVirtualFile())) {
+            new WriteCommandAction(project, file) {
               @Override
               protected void run(Result result) throws Throwable {
                 if (call instanceof PsiLiteralExpression) {
@@ -238,14 +240,19 @@ public class UsedIconsListingAction extends AnAction {
           }
         }
       }
+    }
 
-      for (Map.Entry<String, Collection<PsiAnnotation>> entry : annotations.entrySet()) {
-        String path = entry.getKey();
-        final String replacement = mappings.get(path);
-        if (replacement != null) {
-          for (final PsiAnnotation annotation : entry.getValue()) {
-            if (annotation instanceof PsiCompiledElement) continue;
-            new WriteCommandAction(project, annotation.getContainingFile()) {
+    for (Map.Entry<String, Collection<PsiAnnotation>> entry : annotations.entrySet()) {
+      String path = entry.getKey();
+      final String replacement = mappings.get(path);
+      if (replacement != null) {
+        for (final PsiAnnotation annotation : entry.getValue()) {
+          if (annotation instanceof PsiCompiledElement) continue;
+          if (!annotation.isValid()) continue;
+
+          PsiFile file = annotation.getContainingFile();
+          if (useScope.contains(file.getVirtualFile())) {
+            new WriteCommandAction(project, file) {
               @Override
               protected void run(Result result) throws Throwable {
                 annotation.getNode();
@@ -261,7 +268,7 @@ public class UsedIconsListingAction extends AnAction {
     }
   }
 
-  private void collectFields(PsiClass klass, String prefix, Map<String, String> mapping) {
+  private static void collectFields(PsiClass klass, String prefix, Map<String, String> mapping) {
     String thePrefix = prefix + klass.getName() + ".";
 
     for (PsiClass inner : klass.getInnerClasses()) {

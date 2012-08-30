@@ -17,6 +17,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -33,6 +34,7 @@ import java.awt.image.BufferedImage;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 
 public final class IconLoader {
@@ -81,9 +83,10 @@ public final class IconLoader {
   }
 
   @Nullable
-  private static Icon getReflectiveIcon(String path) {
+  private static Icon getReflectiveIcon(String path, ClassLoader classLoader) {
     try {
-      Class cur = Class.forName("com.intellij.icons." + path.substring(0, path.lastIndexOf('.')).replace('.', '$'));
+      String pckg = path.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.";
+      Class cur = Class.forName(pckg + path.substring(0, path.lastIndexOf('.')).replace('.', '$'), true, classLoader);
       Field field = cur.getField(path.substring(path.lastIndexOf('.') + 1));
 
       return (Icon)field.get(null);
@@ -138,7 +141,7 @@ public final class IconLoader {
 
   @Nullable
   public static Icon findIcon(@NotNull final String path, @NotNull final Class aClass, boolean computeNow) {
-    if (path.startsWith("AllIcons.")) return getReflectiveIcon(path);
+    if (isReflectivePath(path)) return getReflectiveIcon(path, aClass.getClassLoader());
 
     final ByClass icon = new ByClass(aClass, path);
 
@@ -147,6 +150,11 @@ public final class IconLoader {
     }
 
     return icon;
+  }
+
+  private static boolean isReflectivePath(String path) {
+    List<String> paths = StringUtil.split(path, ".");
+    return paths.size() > 1 && paths.get(0).endsWith("Icons");
   }
 
   @Nullable
@@ -161,11 +169,11 @@ public final class IconLoader {
   }
 
   @Nullable
-  public static Icon findIcon(final String path, final ClassLoader aClassLoader) {
-    if (path.startsWith("AllIcons.")) return getReflectiveIcon(path);
+  public static Icon findIcon(final String path, final ClassLoader classLoader) {
+    if (isReflectivePath(path)) return getReflectiveIcon(path, classLoader);
     if (!path.startsWith("/")) return null;
 
-    final URL url = aClassLoader.getResource(path.substring(1));
+    final URL url = classLoader.getResource(path.substring(1));
     return findIcon(url);
   }
 
