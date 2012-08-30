@@ -36,6 +36,7 @@ import java.util.List;
 public class AddAnnotationFixTest extends UsefulTestCase {
   private CodeInsightTestFixture myFixture;
   private Module myModule;
+  private Project myProject;
 
   public AddAnnotationFixTest() {
     IdeaTestCase.initPlatformPrefix();
@@ -54,6 +55,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
 
     myFixture.setUp();
     myModule = builder.getFixture().getModule();
+    myProject = myFixture.getProject();
   }
 
   @Override
@@ -62,6 +64,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     myFixture.tearDown();
     myFixture = null;
     myModule = null;
+    myProject = null;
   }
 
   private void addDefaultLibrary() {
@@ -92,17 +95,16 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     addDefaultLibrary();
     myFixture.configureByFiles("lib/p/TestPrimitive.java", "content/anno/p/annotations.xml");
     myFixture.configureByFiles("lib/p/Test.java");
-    final Project project = myFixture.getProject();
     final PsiFile file = myFixture.getFile();
     final Editor editor = myFixture.getEditor();
 
     final IntentionAction fix = myFixture.findSingleIntention("Annotate method 'get' as @NotNull");
-    assertTrue(fix.isAvailable(project, editor, file));
+    assertTrue(fix.isAvailable(myProject, editor, file));
 
-    new WriteCommandAction(project){
+    new WriteCommandAction(myProject){
       @Override
       protected void run(final Result result) throws Throwable {
-        fix.invoke(project, editor, file);
+        fix.invoke(myProject, editor, file);
       }
     }.execute();
 
@@ -112,7 +114,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     assertNotNull(psiElement);
     final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(psiElement, PsiModifierListOwner.class);
     assertNotNull(listOwner);
-    assertNotNull(ExternalAnnotationsManager.getInstance(project).findExternalAnnotation(listOwner, AnnotationUtil.NOT_NULL));
+    assertNotNull(ExternalAnnotationsManager.getInstance(myProject).findExternalAnnotation(listOwner, AnnotationUtil.NOT_NULL));
 
     myFixture.checkResultByFile("content/anno/p/annotations.xml", "content/anno/p/annotationsAnnotateLibrary_after.xml", false);
   }
@@ -132,14 +134,13 @@ public class AddAnnotationFixTest extends UsefulTestCase {
   public void testAnnotated() throws Throwable {
     PsiFile psiFile = myFixture.configureByFile("lib/p/TestAnnotated.java");
     PsiTestUtil.addSourceRoot(myModule, psiFile.getVirtualFile().getParent());
-    final Project project = myFixture.getProject();
     final PsiFile file = myFixture.getFile();
     final Editor editor = myFixture.getEditor();
     assertNotAvailable("Annotate method 'get' as @NotNull");
     assertNotAvailable("Annotate method 'get' as @Nullable");
 
     final DeannotateIntentionAction deannotateFix = new DeannotateIntentionAction();
-    assertFalse(deannotateFix.isAvailable(project, editor, file));
+    assertFalse(deannotateFix.isAvailable(myProject, editor, file));
   }
 
   public void testDeannotation() throws Throwable {
@@ -158,7 +159,6 @@ public class AddAnnotationFixTest extends UsefulTestCase {
 
   private void doDeannotate(@NonNls final String testPath, String hint1, String hint2) throws Throwable {
     myFixture.configureByFile(testPath);
-    final Project project = myFixture.getProject();
     final PsiFile file = myFixture.getFile();
     final Editor editor = myFixture.getEditor();
 
@@ -166,12 +166,12 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     assertNotAvailable(hint2);
 
     final DeannotateIntentionAction deannotateFix = new DeannotateIntentionAction();
-    assertTrue(deannotateFix.isAvailable(project, editor, file));
+    assertTrue(deannotateFix.isAvailable(myProject, editor, file));
 
-    new WriteCommandAction(project){
+    new WriteCommandAction(myProject){
       @Override
       protected void run(final Result result) throws Throwable {
-        ExternalAnnotationsManager.getInstance(project).deannotate(DeannotateIntentionAction.getContainer(editor, file), AnnotationUtil.NOT_NULL);
+        ExternalAnnotationsManager.getInstance(myProject).deannotate(DeannotateIntentionAction.getContainer(editor, file), AnnotationUtil.NOT_NULL);
       }
     }.execute();
 
@@ -183,7 +183,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     fix = myFixture.findSingleIntention(hint2);
     assertNotNull(fix);
 
-    assertFalse(deannotateFix.isAvailable(project, editor, file));
+    assertFalse(deannotateFix.isAvailable(myProject, editor, file));
   }
 
   public void testReadingOldPersistenceFormat() throws Throwable {
@@ -192,7 +192,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     myFixture.configureByFiles("lib/persistence/Test.java");
 
 
-    ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(myFixture.getProject());
+    ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(myProject);
     PsiMethod method = ((PsiJavaFile)myFixture.getFile()).getClasses()[0].getMethods()[0];
     PsiParameter parameter = method.getParameterList().getParameters()[0];
 
@@ -224,15 +224,15 @@ public class AddAnnotationFixTest extends UsefulTestCase {
                                "/content/annoMultiRoot/root2/multiRoot/annotations.xml");
     myFixture.configureByFiles("lib/multiRoot/Test.java");
 
-    final ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(myFixture.getProject());
+    final ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(myProject);
     final PsiMethod method = ((PsiJavaFile)myFixture.getFile()).getClasses()[0].getMethods()[0];
     final PsiParameter parameter = method.getParameterList().getParameters()[0];
 
     assertMethodAndParameterAnnotationsValues(manager, method, parameter, "\"foo\"");
 
     final PsiAnnotation annotationFromText =
-      JavaPsiFacade.getElementFactory(myFixture.getProject()).createAnnotationFromText("@Annotation(value=\"bar\")", null);
-    new WriteCommandAction(myFixture.getProject()) {
+      JavaPsiFacade.getElementFactory(myProject).createAnnotationFromText("@Annotation(value=\"bar\")", null);
+    new WriteCommandAction(myProject) {
       @Override
       protected void run(final Result result) throws Throwable {
         manager.editExternalAnnotation(method, AnnotationUtil.NULLABLE, annotationFromText.getParameterList().getAttributes());
