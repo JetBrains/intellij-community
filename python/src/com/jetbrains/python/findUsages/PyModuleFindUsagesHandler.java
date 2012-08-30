@@ -6,10 +6,19 @@ import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author yole
@@ -45,5 +54,16 @@ public class PyModuleFindUsagesHandler extends FindUsagesHandler {
         coloredComponent.append(myElement.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
     };
+  }
+
+  @Override
+  public Collection<PsiReference> findReferencesToHighlight(PsiElement target, SearchScope searchScope) {
+    if (target instanceof PyFile && PyNames.INIT_DOT_PY.equals(((PyFile)target).getName())) {
+      List<PsiReference> result = new ArrayList<PsiReference>();
+      result.addAll(super.findReferencesToHighlight(target, searchScope));
+      result.addAll(ReferencesSearch.search(PyUtil.turnInitIntoDir(target), searchScope, false).findAll());
+      return result;
+    }
+    return super.findReferencesToHighlight(target, searchScope);
   }
 }
