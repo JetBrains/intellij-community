@@ -18,6 +18,7 @@ package com.intellij.ui.treeStructure.filtered;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.SimpleNode;
 import org.jetbrains.annotations.NotNull;
@@ -152,6 +153,12 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
   @Override
   public boolean hasSomethingToCommit() {
     return myBaseStructure.hasSomethingToCommit();
+  }
+
+  @NotNull
+  @Override
+  public ActionCallback asyncCommit() {
+    return myBaseStructure.asyncCommit();
   }
 
   public class FilteringNode extends SimpleNode {

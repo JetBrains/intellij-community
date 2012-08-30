@@ -21,7 +21,9 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractProjectTreeStructure extends ProjectAbstractTreeStructureBase implements ViewSettings {
   private final AbstractTreeNode myRoot;
@@ -46,6 +48,12 @@ public abstract class AbstractProjectTreeStructure extends ProjectAbstractTreeSt
   @Override
   public final void commit() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+  }
+
+  @NotNull
+  @Override
+  public ActionCallback asyncCommit() {
+    return asyncCommitDocuments(myProject);
   }
 
   @Override

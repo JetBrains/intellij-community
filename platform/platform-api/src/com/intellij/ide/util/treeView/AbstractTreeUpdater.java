@@ -204,9 +204,14 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
 
       @Override
       public void run() {
-        if (myTreeBuilder.getTreeStructure().hasSomethingToCommit()) {
-          myTreeBuilder.getTreeStructure().commit();
-          reQueueViewUpdateIfNeeded();
+        AbstractTreeStructure structure = myTreeBuilder.getTreeStructure();
+        if (structure.hasSomethingToCommit()) {
+          structure.asyncCommit().doWhenDone(new Runnable() {
+            @Override
+            public void run() {
+              reQueueViewUpdateIfNeeded();
+            }
+          });
           return;
         }
         try {
@@ -222,7 +227,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     });
   }
 
-  private void queue(Update update) {
+  private void queue(@NotNull Update update) {
     if (isReleased()) return;
 
     myUpdateQueue.queue(update);
