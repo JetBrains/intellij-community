@@ -9,6 +9,10 @@ import javax.swing.*;
  * Don't repeat mistakes of others ;-)
  */
 public class IntentionPowerPackPluginIcons {
-  public static final Icon IPPIcon = IconLoader.getIcon("/IPPIcon.png"); // 32x32
-  public static final Icon IPPIconold = IconLoader.getIcon("/IPPIconold.png"); // 32x32
+  private static Icon load(String path) {
+    return IconLoader.getIcon(path, IntentionPowerPackPluginIcons.class);
+  }
+
+  public static final Icon IPPIcon = load("/IPPIcon.png"); // 32x32
+  public static final Icon IPPIconold = load("/IPPIconold.png"); // 32x32
 }

@@ -54,6 +54,7 @@ public class UsedIconsListingAction extends AnAction {
     final MultiMap<String, PsiExpression> calls = new MultiMap<String, PsiExpression>();
 
 
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     Processor<PsiReference> consumer = new Processor<PsiReference>() {
       @Override
       public boolean process(PsiReference reference) {
@@ -70,7 +71,7 @@ public class UsedIconsListingAction extends AnAction {
             processValue(value, call, file);
           }
           else {
-            Object value = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper().computeConstantExpression(arg, false);
+            Object value = psiFacade.getConstantEvaluationHelper().computeConstantExpression(arg, false);
             processValue(value, call, file);
           }
         }
@@ -102,29 +103,40 @@ public class UsedIconsListingAction extends AnAction {
       }
     };
 
+    GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
     PsiClass iconLoader =
-      JavaPsiFacade.getInstance(project).findClass("com.intellij.openapi.util.IconLoader", GlobalSearchScope.allScope(project));
+      psiFacade.findClass("com.intellij.openapi.util.IconLoader", allScope);
 
     PsiMethod getIconMethod = iconLoader.findMethodsByName("getIcon", false)[0];
     PsiMethod findIconMethod = iconLoader.findMethodsByName("findIcon", false)[0];
-    if (false) {
+    if (true) {
       MethodReferencesSearch.search(getIconMethod, false).forEach(consumer);
       MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
     }
 
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    if (false) {
-      PsiClass javaeeIcons = JavaPsiFacade.getInstance(project).findClass("com.intellij.javaee.oss.JavaeeIcons", GlobalSearchScope.allScope(project));
+    if (true) {
+      PsiClass javaeeIcons = psiFacade.findClass("com.intellij.javaee.oss.JavaeeIcons", allScope);
       MethodReferencesSearch.search(javaeeIcons.findMethodsByName("getIcon", false)[0], false).forEach(consumer);
 
       MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
     }
 
-    PsiClass allIcons =
-      JavaPsiFacade.getInstance(project).findClass("com.intellij.icons.AllIcons", GlobalSearchScope.allScope(project));
+    List<PsiClass> iconClasses = new ArrayList<PsiClass>();
+    iconClasses.add(psiFacade.findClass("com.intellij.icons.AllIcons", allScope));
+    for (PsiClass iconClass : psiFacade.findPackage("icons").getClasses(allScope)) {
+      if (iconClass.getName().endsWith("Icons")) {
+        iconClasses.add(iconClass);
+      }
+    }
+
 
     final HashMap<String, String> mappings = new HashMap<String, String>();
-    collectFields(allIcons, "", mappings);
+    for (PsiClass iconClass : iconClasses) {
+      int size = mappings.size();
+      collectFields(iconClass, "", mappings);
+      System.out.println("Found " + (mappings.size() - size) + " icons in " + iconClass.getQualifiedName());
+    }
 
     final List<XmlAttribute> victims = new ArrayList<XmlAttribute>();
 
@@ -174,8 +186,8 @@ public class UsedIconsListingAction extends AnAction {
       }
     }
 
-    PsiClass presentation = JavaPsiFacade.getInstance(project).findClass("com.intellij.ide.presentation.Presentation",
-                                                                         GlobalSearchScope.allScope(project));
+    PsiClass presentation = psiFacade.findClass("com.intellij.ide.presentation.Presentation",
+                                                allScope);
     final MultiMap<String, PsiAnnotation> annotations = new MultiMap<String, PsiAnnotation>();
     AnnotationTargetsSearch.search(presentation).forEach(new Processor<PsiModifierListOwner>() {
       @Override
@@ -217,7 +229,8 @@ public class UsedIconsListingAction extends AnAction {
                 }
                 else {
                   JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
-                  PsiElement expr = factory.createExpressionFromText("com.intellij.icons." + replacement, call);
+                  String packageName = replacement.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.";
+                  PsiElement expr = factory.createExpressionFromText(packageName + replacement, call);
                   styleManager.shortenClassReferences(call.replace(expr));
                 }
               }

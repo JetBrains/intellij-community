@@ -9,5 +9,9 @@ import javax.swing.*;
  * Don't repeat mistakes of others ;-)
  */
 public class RegExpSupportIcons {
-  public static final Icon Regexp_filetype_icon = IconLoader.getIcon("/org/intellij/lang/regexp/regexp-filetype-icon.png"); // 11x16
+  private static Icon load(String path) {
+    return IconLoader.getIcon(path, RegExpSupportIcons.class);
+  }
+
+  public static final Icon Regexp_filetype_icon = load("/org/intellij/lang/regexp/regexp-filetype-icon.png"); // 11x16
 }
