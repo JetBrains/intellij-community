@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -87,6 +88,16 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   protected void setLanguageLevel(@Nullable LanguageLevel languageLevel) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
+  }
+
+  protected void runWithLanguageLevel(@NotNull LanguageLevel languageLevel, @NotNull Runnable action) {
+    setLanguageLevel(languageLevel);
+    try {
+      action.run();
+    }
+    finally {
+      setLanguageLevel(null);
+    }
   }
 
   protected static void assertNotParsed(PyFile file) {

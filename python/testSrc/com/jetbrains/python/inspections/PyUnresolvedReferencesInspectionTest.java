@@ -1,6 +1,7 @@
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -188,6 +189,16 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
   // PY-7315
   public void testImportUsedInDocString() {
     doTest();
+  }
+
+  // PY-6745
+  public void testQualNameAttribute() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
+      }
+    });
   }
 
   private void doTest() {

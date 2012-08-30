@@ -16,6 +16,7 @@ public class MacPythonSdkFlavor extends CPythonSdkFlavor {
   }
 
   public static MacPythonSdkFlavor INSTANCE = new MacPythonSdkFlavor();
+  private static final String[] POSSIBLE_BINARY_NAMES = {"python", "python2", "python3"};
 
   @Override
   public Collection<String> suggestHomePaths() {
@@ -36,10 +37,15 @@ public class MacPythonSdkFlavor extends CPythonSdkFlavor {
         final String dir_name = dir.getName().toLowerCase();
         if (dir.isDirectory()) {
           if ("Current".equals(dir_name) || dir_name.startsWith("2") || dir_name.startsWith("3")) {
-            VirtualFile bin_dir = dir.findChild("bin");
-            if (bin_dir != null && bin_dir.isDirectory()) {
-              VirtualFile python_exe = bin_dir.findChild("python");
-              if (python_exe != null) candidates.add(python_exe.getPath());
+            final VirtualFile binDir = dir.findChild("bin");
+            if (binDir != null && binDir.isDirectory()) {
+              for (String name : POSSIBLE_BINARY_NAMES) {
+                final VirtualFile child = binDir.findChild(name);
+                if (child != null) {
+                  candidates.add(child.getPath());
+                  break;
+                }
+              }
             }
           }
         }

@@ -28,7 +28,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -46,6 +45,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
+import icons.PythonIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +84,7 @@ public class PythonSdkType extends SdkType {
   }
 
   public Icon getIcon() {
-    return IconLoader.getIcon("/com/jetbrains/python/icons/python.png");
+    return PythonIcons.Python.Icons.Python;
   }
 
   @NotNull

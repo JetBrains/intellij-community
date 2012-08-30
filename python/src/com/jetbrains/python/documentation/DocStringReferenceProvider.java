@@ -43,14 +43,14 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         StructuredDocString docString = StructuredDocString.parse(text);
         if (docString != null) {
           result.addAll(referencesFromNames(element, offset, docString,
-                                            docString.getTagArguments(StructuredDocString.PARAM_TAGS), "parameter"));
+                                            docString.getTagArguments(StructuredDocString.PARAM_TAGS), StructuredDocString.PARAMETER));
           result.addAll(referencesFromNames(element, offset, docString,
-                                            docString.getTagArguments(StructuredDocString.PARAM_TYPE_TAGS), "parameter_type"));
+                                            docString.getTagArguments(StructuredDocString.PARAM_TYPE_TAGS), StructuredDocString.PARAMETER_TYPE));
           result.addAll(referencesFromNames(element, offset, docString,
-                                            docString.getKeywordArgumentSubstrings(), "keyword"));
+                                            docString.getKeywordArgumentSubstrings(), StructuredDocString.KEYWORD));
 
           result.addAll(referencesFromNames(element, offset, docString,
-                                            docString.getTagArguments(StructuredDocString.VARIABLE_TAGS), "variable"));
+                                            docString.getTagArguments(StructuredDocString.VARIABLE_TAGS), StructuredDocString.VARIABLE));
         }
         return result.toArray(new PsiReference[result.size()]);
       }
@@ -69,9 +69,11 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
       if (PyNames.isIdentifier(s)) {
         result.add(new DocStringParameterReference(element, name.getTextRange().shiftRight(offset), refType));
       }
-      final Substring type = docString.getParamTypeSubstring(s);
-      if (type != null) {
-        result.addAll(parseTypeReferences(element, type, offset));
+      if (!refType.equals(StructuredDocString.PARAMETER_TYPE)) {
+        final Substring type = docString.getParamTypeSubstring(s);
+        if (type != null) {
+          result.addAll(parseTypeReferences(element, type, offset));
+        }
       }
     }
     final Substring rtype = docString.getReturnTypeSubstring();

@@ -1,6 +1,6 @@
 package com.jetbrains.python;
 
-import com.intellij.openapi.util.IconLoader;
+import icons.PythonIcons;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -13,7 +13,7 @@ import javax.swing.*;
 public interface PyIcons {
   @NonNls String DATA_ROOT = "icons/"; /*"/com/jetbrains/python/PyIcons";*/
 
-  Icon PRIVATE = IconLoader.getIcon(DATA_ROOT + "nodes/lock.png");
-  Icon PREDEFINED = IconLoader.getIcon(DATA_ROOT + "nodes/cyan-dot.png");
-  Icon INVISIBLE = IconLoader.getIcon(DATA_ROOT + "nodes/red-inv-triangle.png");
+  Icon PRIVATE = PythonIcons.Python.Icons.Nodes.Lock;
+  Icon PREDEFINED = PythonIcons.Python.Icons.Nodes.Cyan_dot;
+  Icon INVISIBLE = PythonIcons.Python.Icons.Nodes.Red_inv_triangle;
 }

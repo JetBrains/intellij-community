@@ -6,7 +6,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
+import icons.PythonIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +29,7 @@ public class PythonConfigurationType implements ConfigurationType {
     return null;
   }
 
-  private final Icon _icon = IconLoader.getIcon("/com/jetbrains/python/icons/python.png");
+  private final Icon _icon = PythonIcons.Python.Icons.Python;
 
   private static class PythonConfigurationFactory extends ConfigurationFactory {
     protected PythonConfigurationFactory(ConfigurationType configurationType) {

@@ -480,4 +480,8 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testShadowingTargetExpression() {
     assertResolvesTo(PyTargetExpression.class, "lab");
   }
+
+  public void testReferenceInDocstring() {
+    assertResolvesTo(PyClass.class, "datetime");
+  }
 }
