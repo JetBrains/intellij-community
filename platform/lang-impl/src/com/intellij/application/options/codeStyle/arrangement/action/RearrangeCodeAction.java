@@ -18,6 +18,7 @@ package com.intellij.application.options.codeStyle.arrangement.action;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -55,12 +56,12 @@ public class RearrangeCodeAction extends AnAction {
     Document document = editor.getDocument();
     documentManager.commitDocument(document);
     
-    PsiFile file = documentManager.getPsiFile(document);
+    final PsiFile file = documentManager.getPsiFile(document);
     if (file == null) {
       return;
     }
 
-    List<TextRange> ranges = new ArrayList<TextRange>();
+    final List<TextRange> ranges = new ArrayList<TextRange>();
     SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
       ranges.add(TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()));
@@ -76,9 +77,14 @@ public class RearrangeCodeAction extends AnAction {
       ranges.add(TextRange.create(0, document.getTextLength()));
     }
     
-    ArrangementEngine engine = ServiceManager.getService(project, ArrangementEngine.class);
+    final ArrangementEngine engine = ServiceManager.getService(project, ArrangementEngine.class);
     try {
-      engine.arrange(file, ranges);
+      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+        @Override
+        public void run() {
+          engine.arrange(file, ranges); 
+        }
+      }, getTemplatePresentation().getText(), null);
     }
     finally {
       documentManager.commitDocument(document);
