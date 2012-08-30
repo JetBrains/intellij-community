@@ -46,6 +46,8 @@ import java.util.Set;
  * @author ilyas
  */
 public class LibrariesUtil {
+  public static final String SOME_GROOVY_CLASS = "org.codehaus.groovy.control.CompilationUnit";
+
   private LibrariesUtil() {
   }
 
@@ -108,19 +110,28 @@ public class LibrariesUtil {
   }
 
   @Nullable
-  public static String getGroovyHomePath(@NotNull Module module) {
-    final PsiClass[] classes = JavaPsiFacade.getInstance(module.getProject())
-      .findClasses("org.codehaus.groovy.control.CompilationUnit", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
-    for (PsiClass cUnit : classes) {
-      final VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(cUnit.getContainingFile().getVirtualFile());
+  public static VirtualFile findJarWithClass(@NotNull Module module, final String classQName) {
+    GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
+    for (PsiClass psiClass : JavaPsiFacade.getInstance(module.getProject()).findClasses(classQName, scope)) {
+      final VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(psiClass.getContainingFile().getVirtualFile());
       if (local != null) {
-        final VirtualFile parent = local.getParent();
-        if (parent != null) {
-          if (("lib".equals(parent.getName()) || "embeddable".equals(parent.getName())) && parent.getParent() != null) {
-            return parent.getParent().getPath();
-          }
-          return parent.getPath();
+        return local;
+      }
+    }
+    return null;
+  }
+
+
+  @Nullable
+  public static String getGroovyHomePath(@NotNull Module module) {
+    final VirtualFile local = findJarWithClass(module, SOME_GROOVY_CLASS);
+    if (local != null) {
+      final VirtualFile parent = local.getParent();
+      if (parent != null) {
+        if (("lib".equals(parent.getName()) || "embeddable".equals(parent.getName())) && parent.getParent() != null) {
+          return parent.getParent().getPath();
         }
+        return parent.getPath();
       }
     }
 

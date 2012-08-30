@@ -36,6 +36,8 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
 
+import static com.intellij.util.containers.CollectionFactory.ar;
+
 /**
  * @author ilyas
  */
@@ -80,18 +82,7 @@ public class GantRunner extends GroovyScriptRunner {
   public void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
     String gantHome = GantUtils.getSDKInstallPath(module, configuration.getProject());
 
-    final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(gantHome + "/lib/", GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
-    if (groovyJars.length > 0) {
-      params.getClassPath().add(groovyJars[0].getAbsolutePath());
-    } else if (module != null) {
-      final String groovyHome = LibrariesUtil.getGroovyHomePath(module);
-      if (groovyHome != null) {
-        for (File groovyLibJar : GroovyUtils.getFilesInDirectoryByPattern(groovyHome + "/lib/", ".*\\.jar")) {
-          params.getClassPath().add(groovyLibJar);
-        }
-      }
-    }
-
+    addGroovyAndAntJars(params, module, gantHome);
 
     setToolsJar(params);
 
@@ -133,4 +124,34 @@ public class GantRunner extends GroovyScriptRunner {
     params.getProgramParametersList().addParametersString(configuration.getScriptParameters());
   }
 
+  private static void addGroovyAndAntJars(JavaParameters params, Module module, String gantHome) {
+    final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(gantHome + "/lib/", GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
+    if (groovyJars.length > 0) {
+      params.getClassPath().add(groovyJars[0].getAbsolutePath());
+      return;
+    }
+
+    if (module == null) {
+      return;
+    }
+
+    final String groovyHome = LibrariesUtil.getGroovyHomePath(module);
+    if (groovyHome != null) {
+      File[] libJars = GroovyUtils.getFilesInDirectoryByPattern(groovyHome + "/lib/", ".*\\.jar");
+      if (libJars.length > 0) {
+        params.getClassPath().addAllFiles(libJars);
+        return;
+      }
+    }
+
+    String[] characteristicClasses = ar(
+      LibrariesUtil.SOME_GROOVY_CLASS, "org.apache.tools.ant.BuildException",
+      "org.apache.tools.ant.launch.AntMain", "org.apache.commons.cli.ParseException");
+    for (String someClass : characteristicClasses) {
+      VirtualFile jar = LibrariesUtil.findJarWithClass(module, someClass);
+      if (jar != null) {
+        params.getClassPath().add(jar);
+      }
+    }
+  }
 }
