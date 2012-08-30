@@ -230,7 +230,7 @@ public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManage
           boolean focusWnd = Registry.is("debugger.mayBringFrameToFrontOnBreakpoint");
           ProjectUtil.focusProjectWindow(getProject(), focusWnd);
           if (!focusWnd) {
-            AppIcon.getInstance().requestAttention(true);
+            AppIcon.getInstance().requestAttention(myProject, true);
           }
         }
       });

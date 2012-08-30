@@ -206,13 +206,13 @@ public class CompilerTask extends Task.Backgroundable {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           public void run() {
             AppIcon appIcon = AppIcon.getInstance();
-            if (appIcon.hideProgress(APP_ICON_ID)) {
+            if (appIcon.hideProgress(myProject, APP_ICON_ID)) {
               if (myErrorCount > 0) {
-                appIcon.setErrorBadge(String.valueOf(myErrorCount));
-                appIcon.requestAttention(true);
+                appIcon.setErrorBadge(myProject, String.valueOf(myErrorCount));
+                appIcon.requestAttention(myProject, true);
               } else {
-                appIcon.setOkBadge(true);
-                appIcon.requestAttention(false);
+                appIcon.setOkBadge(myProject, true);
+                appIcon.requestAttention(myProject, false);
               }
             }
           }
@@ -234,7 +234,7 @@ public class CompilerTask extends Task.Backgroundable {
         updateProgressText();
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           public void run() {
-            AppIcon.getInstance().setProgress(APP_ICON_ID, AppIconScheme.Progress.BUILD, fraction, true);
+            AppIcon.getInstance().setProgress(myProject, APP_ICON_ID, AppIconScheme.Progress.BUILD, fraction, true);
           }
         });
       }
@@ -608,8 +608,8 @@ public class CompilerTask extends Task.Backgroundable {
             if (myIndicator.isRunning()) {
               cancel();
             }
-            if (AppIcon.getInstance().hideProgress("compiler")) {
-              AppIcon.getInstance().setErrorBadge(null);
+            if (AppIcon.getInstance().hideProgress(myProject, "compiler")) {
+              AppIcon.getInstance().setErrorBadge(myProject, null);
             }
           }
         }

@@ -298,7 +298,7 @@ public class DumbServiceImpl extends DumbService {
                 lastFraction = fraction;
                 UIUtil.invokeLaterIfNeeded(new Runnable() {
                   public void run() {
-                    AppIcon.getInstance().setProgress("indexUpdate", AppIconScheme.Progress.INDEXING, fraction, true);
+                    AppIcon.getInstance().setProgress(myProject, "indexUpdate", AppIconScheme.Progress.INDEXING, fraction, true);
                   }
                 });
               }
@@ -308,9 +308,9 @@ public class DumbServiceImpl extends DumbService {
                 UIUtil.invokeLaterIfNeeded(new Runnable() {
                   public void run() {
                     AppIcon appIcon = AppIcon.getInstance();
-                    if (appIcon.hideProgress("indexUpdate")) {
-                      appIcon.requestAttention(false);
-                      appIcon.setOkBadge(true);
+                    if (appIcon.hideProgress(myProject, "indexUpdate")) {
+                      appIcon.requestAttention(myProject, false);
+                      appIcon.setOkBadge(myProject, true);
                     }
                   }
                 });

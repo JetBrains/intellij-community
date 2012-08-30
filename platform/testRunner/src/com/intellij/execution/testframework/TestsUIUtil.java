@@ -129,30 +129,30 @@ public class TestsUIUtil {
     return new TestResultPresentation(proxy).getPresentation().getText();
   }
 
-  public static void showIconProgress(int n, final int maximum, final int problemsCounter) {
+  public static void showIconProgress(Project project, int n, final int maximum, final int problemsCounter) {
     AppIcon icon = AppIcon.getInstance();
     if (n < maximum) {
-      if (icon.setProgress(TESTS, AppIconScheme.Progress.TESTS, (double)n / (double)maximum, problemsCounter == 0)) {
+      if (icon.setProgress(project, TESTS, AppIconScheme.Progress.TESTS, (double)n / (double)maximum, problemsCounter == 0)) {
         if (problemsCounter > 0) {
-          icon.setErrorBadge(String.valueOf(problemsCounter));
+          icon.setErrorBadge(project, String.valueOf(problemsCounter));
         }
       }
     } else {
-      if (icon.hideProgress(TESTS)) {
+      if (icon.hideProgress(project, TESTS)) {
         if (problemsCounter > 0) {
-          icon.setErrorBadge(String.valueOf(problemsCounter));
-          icon.requestAttention(true);
+          icon.setErrorBadge(project, String.valueOf(problemsCounter));
+          icon.requestAttention(project, true);
         } else {
-          icon.setOkBadge(true);
-          icon.requestAttention(false);
+          icon.setOkBadge(project, true);
+          icon.requestAttention(project, false);
         }
       }
     }
   }
 
-  public static void clearIconProgress() {
-    AppIcon.getInstance().hideProgress(TESTS);
-    AppIcon.getInstance().setErrorBadge(null);
+  public static void clearIconProgress(Project project) {
+    AppIcon.getInstance().hideProgress(project, TESTS);
+    AppIcon.getInstance().setErrorBadge(project, null);
   }
 
   private static class TestResultPresentation {

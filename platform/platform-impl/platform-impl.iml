@@ -33,6 +33,7 @@
     <orderEntry type="module" module-name="projectModel-impl" />
     <orderEntry type="library" name="Snappy-Java" level="project" />
     <orderEntry type="library" name="Netty" level="project" />
+    <orderEntry type="library" name="Sanselan" level="project" />
   </component>
 </module>
 
