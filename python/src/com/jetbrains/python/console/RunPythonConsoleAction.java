@@ -14,7 +14,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PythonSdkType;
+import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
 
   public RunPythonConsoleAction() {
     super();
-    getTemplatePresentation().setIcon(IconLoader.getIcon("/com/jetbrains/python/icons/python.png"));
+    getTemplatePresentation().setIcon(PythonIcons.Python.Icons.Python);
   }
 
   @Override

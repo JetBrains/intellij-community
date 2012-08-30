@@ -1,7 +1,7 @@
 package com.jetbrains.rest;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.util.IconLoader;
+import icons.RestIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +40,7 @@ public class RestFileType extends LanguageFileType {
 
   @Nullable
   public Icon getIcon() {
-    return IconLoader.getIcon("/com/jetbrains/rest/res/rst.png", RestFileType.class);
+    return RestIcons.Rst;
   }
 }
 

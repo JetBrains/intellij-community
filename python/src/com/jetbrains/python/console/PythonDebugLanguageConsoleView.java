@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.IconLoader;
+import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -218,7 +218,7 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
 
     public ShowDebugConsoleAction(final PythonDebugLanguageConsoleView console) {
       super(ExecutionBundle.message("run.configuration.show.command.line.action.name"), null,
-            IconLoader.getIcon("/com/jetbrains/python/icons/debug/commandLine.png"));
+            PythonIcons.Python.Icons.Debug.CommandLine);
       myConsole = console;
     }
 

@@ -2,7 +2,7 @@ package com.jetbrains.python;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.util.IconLoader;
+import icons.PythonIcons;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -12,9 +12,9 @@ import javax.swing.*;
  */
 public abstract class PythonModuleTypeBase<T extends ModuleBuilder> extends ModuleType<T> {
   @NonNls public static final String PYTHON_MODULE = "PYTHON_MODULE";
-  private final Icon myBigIcon = IconLoader.getIcon("/com/jetbrains/python/icons/python_24.png");
-  private final Icon myOpenIcon = IconLoader.getIcon("/com/jetbrains/python/icons/pythonOpen.png");
-  private final Icon myClosedIcon = IconLoader.getIcon("/com/jetbrains/python/icons/pythonClosed.png");
+  private final Icon myBigIcon = PythonIcons.Python.Icons.Python_24;
+  private final Icon myOpenIcon = PythonIcons.Python.Icons.PythonOpen;
+  private final Icon myClosedIcon = PythonIcons.Python.Icons.PythonClosed;
 
   protected PythonModuleTypeBase() {
     super(PYTHON_MODULE);

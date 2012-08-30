@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.impl;
 import com.google.common.collect.Maps;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,6 +29,7 @@ import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkType;
+import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,9 +44,9 @@ import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsMo
  * Implements PyFunction.
  */
 public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> implements PyFunction {
-  private static final Icon PROPERTY_GETTER = IconLoader.findIcon("/com/jetbrains/python/icons/propertyGetter.png");
-  private static final Icon PROPERTY_SETTER = IconLoader.findIcon("/com/jetbrains/python/icons/propertySetter.png");
-  private static final Icon PROPERTY_DELETER = IconLoader.findIcon("/com/jetbrains/python/icons/propertyDeleter.png");
+  private static final Icon PROPERTY_GETTER = PythonIcons.Python.Icons.PropertyGetter;
+  private static final Icon PROPERTY_SETTER = PythonIcons.Python.Icons.PropertySetter;
+  private static final Icon PROPERTY_DELETER = PythonIcons.Python.Icons.PropertyDeleter;
 
   public PyFunctionImpl(ASTNode astNode) {
     super(astNode);

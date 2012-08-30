@@ -9,12 +9,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.util.indexing.FileContent;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.module.PythonModuleType;
 import com.jetbrains.python.sdk.PythonSdkType;
+import icons.PythonIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +26,7 @@ import java.util.List;
  * @author yole
  */
 public class PythonFacetType extends FacetType<PythonFacet, PythonFacetConfiguration> {
-  public static final Icon ICON = IconLoader.getIcon("/com/jetbrains/python/icons/python.png");
+  public static final Icon ICON = PythonIcons.Python.Icons.Python;
 
   @NonNls
   private static final String ID = "Python";
