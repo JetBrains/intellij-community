@@ -4,12 +4,14 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.DeannotateIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -20,6 +22,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,15 +31,21 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class AddAnnotationFixTest extends UsefulTestCase {
   private CodeInsightTestFixture myFixture;
   private Module myModule;
   private Project myProject;
+  private boolean myExpectedEventWasProduced = false;
+  private boolean myUnexpectedEventWasProduced = false;
+  private MessageBusConnection myBusConnection = null;
 
   public AddAnnotationFixTest() {
     IdeaTestCase.initPlatformPrefix();
@@ -65,6 +74,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     myFixture = null;
     myModule = null;
     myProject = null;
+    assertNull(myBusConnection);
   }
 
   private void addDefaultLibrary() {
@@ -90,6 +100,53 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     });
   }
 
+  @NotNull
+  private PsiModifierListOwner getOwner() {
+    CaretModel caretModel = myFixture.getEditor().getCaretModel();
+    int position = caretModel.getOffset();
+    PsiElement element = myFixture.getFile().findElementAt(position);
+    assert element != null;
+    PsiModifierListOwner container = AddAnnotationFix.getContainer(element);
+    assert container != null;
+    return container;
+  }
+
+  private void startListening(@NotNull final List<Trinity<PsiModifierListOwner, String, Boolean>> expectedSequence) {
+    myBusConnection = myProject.getMessageBus().connect();
+    myBusConnection.subscribe(ExternalAnnotationsManager.TOPIC, new DefaultAnnotationsListener() {
+      private int index = 0;
+
+      @Override
+      public void afterExternalAnnotationChanging(@NotNull PsiModifierListOwner owner, @NotNull String annotationFQName,
+                                                  boolean successful) {
+        if (index < expectedSequence.size() && expectedSequence.get(index).first == owner
+            && expectedSequence.get(index).second.equals(annotationFQName) && expectedSequence.get(index).third == successful) {
+          index++;
+          myExpectedEventWasProduced = true;
+        }
+        else {
+          super.afterExternalAnnotationChanging(owner, annotationFQName, successful);
+        }
+      }
+    });
+  }
+
+  private void startListening(@NotNull final PsiModifierListOwner expectedOwner, @NotNull final String expectedAnnotationFQName,
+                              final boolean expectedSuccessful) {
+    startListening(Arrays.asList(Trinity.create(expectedOwner, expectedAnnotationFQName, expectedSuccessful)));
+  }
+
+  private void stopListeningAndCheckEvents() {
+    myBusConnection.disconnect();
+    myBusConnection = null;
+
+    assertTrue(myExpectedEventWasProduced);
+    assertFalse(myUnexpectedEventWasProduced);
+
+    myExpectedEventWasProduced = false;
+    myUnexpectedEventWasProduced = false;
+  }
+
   public void testAnnotateLibrary() throws Throwable {
 
     addDefaultLibrary();
@@ -101,6 +158,14 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     final IntentionAction fix = myFixture.findSingleIntention("Annotate method 'get' as @NotNull");
     assertTrue(fix.isAvailable(myProject, editor, file));
 
+    // expecting other @Nullable annotations to be removed, and default @NotNull to be added
+    List<Trinity<PsiModifierListOwner, String, Boolean>> expectedSequence
+      = new ArrayList<Trinity<PsiModifierListOwner, String, Boolean>>();
+    for (String notNull : NullableNotNullManager.getInstance(myProject).getNullables()) {
+      expectedSequence.add(Trinity.create(getOwner(), notNull, false));
+    }
+    expectedSequence.add(Trinity.create(getOwner(), AnnotationUtil.NOT_NULL, true));
+    startListening(expectedSequence);
     new WriteCommandAction(myProject){
       @Override
       protected void run(final Result result) throws Throwable {
@@ -115,6 +180,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(psiElement, PsiModifierListOwner.class);
     assertNotNull(listOwner);
     assertNotNull(ExternalAnnotationsManager.getInstance(myProject).findExternalAnnotation(listOwner, AnnotationUtil.NOT_NULL));
+    stopListeningAndCheckEvents();
 
     myFixture.checkResultByFile("content/anno/p/annotations.xml", "content/anno/p/annotationsAnnotateLibrary_after.xml", false);
   }
@@ -168,12 +234,15 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     final DeannotateIntentionAction deannotateFix = new DeannotateIntentionAction();
     assertTrue(deannotateFix.isAvailable(myProject, editor, file));
 
+    final PsiModifierListOwner container = DeannotateIntentionAction.getContainer(editor, file);
+    startListening(container, AnnotationUtil.NOT_NULL, true);
     new WriteCommandAction(myProject){
       @Override
       protected void run(final Result result) throws Throwable {
-        ExternalAnnotationsManager.getInstance(myProject).deannotate(DeannotateIntentionAction.getContainer(editor, file), AnnotationUtil.NOT_NULL);
+        ExternalAnnotationsManager.getInstance(myProject).deannotate(container, AnnotationUtil.NOT_NULL);
       }
     }.execute();
+    stopListeningAndCheckEvents();
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -232,13 +301,24 @@ public class AddAnnotationFixTest extends UsefulTestCase {
 
     final PsiAnnotation annotationFromText =
       JavaPsiFacade.getElementFactory(myProject).createAnnotationFromText("@Annotation(value=\"bar\")", null);
+
+    startListening(method, AnnotationUtil.NULLABLE, true);
     new WriteCommandAction(myProject) {
       @Override
       protected void run(final Result result) throws Throwable {
         manager.editExternalAnnotation(method, AnnotationUtil.NULLABLE, annotationFromText.getParameterList().getAttributes());
+      }
+    }.execute();
+    stopListeningAndCheckEvents();
+
+    startListening(parameter, AnnotationUtil.NOT_NULL, true);
+    new WriteCommandAction(myProject) {
+      @Override
+      protected void run(final Result result) throws Throwable {
         manager.editExternalAnnotation(parameter, AnnotationUtil.NOT_NULL, annotationFromText.getParameterList().getAttributes());
       }
     }.execute();
+    stopListeningAndCheckEvents();
 
     assertMethodAndParameterAnnotationsValues(manager, method, parameter, "\"bar\"");
 
@@ -246,5 +326,21 @@ public class AddAnnotationFixTest extends UsefulTestCase {
                                 "content/annoMultiRoot/root1/multiRoot/annotations_after.xml", false);
     myFixture.checkResultByFile("content/annoMultiRoot/root2/multiRoot/annotations.xml",
                                 "content/annoMultiRoot/root2/multiRoot/annotations_after.xml", false);
+  }
+
+  private class DefaultAnnotationsListener extends ExternalAnnotationsListener.Adapter {
+    @Override
+    public void afterExternalAnnotationChanging(@NotNull PsiModifierListOwner owner, @NotNull String annotationFQName,
+                                                boolean successful) {
+      System.err.println("Unexpected ExternalAnnotationsListener.afterExternalAnnotationChanging event produced");
+      System.err.println("owner = [" + owner + "], annotationFQName = [" + annotationFQName + "], successful = [" + successful + "]");
+      myUnexpectedEventWasProduced = true;
+    }
+
+    @Override
+    public void externalAnnotationsChangedDramatically() {
+      System.err.println("Unexpected ExternalAnnotationsListener.externalAnnotationsChangedDramatically event produced");
+      myUnexpectedEventWasProduced = true;
+    }
   }
 }
