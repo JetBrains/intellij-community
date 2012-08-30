@@ -15,10 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom.references;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Sergey Evdokimov
