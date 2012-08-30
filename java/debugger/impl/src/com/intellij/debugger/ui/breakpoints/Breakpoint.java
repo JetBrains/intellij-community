@@ -61,7 +61,9 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
     super(project);
     myLogMessage = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "");
     //noinspection AbstractMethodCallInConstructor
-    SUSPEND_POLICY = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().getDefaultSuspendPolicy(getCategory());
+    final BreakpointDefaults defaults = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().getBreakpointDefaults(getCategory());
+    SUSPEND_POLICY = defaults.getSuspendPolicy();
+    CONDITION_ENABLED = defaults.isConditionEnabled();
   }
 
   public abstract PsiClass getPsiClass();

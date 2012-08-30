@@ -239,11 +239,8 @@ public abstract class BreakpointPropertiesPanel {
     updateSuspendPolicyRbFont();
     final ItemListener suspendPolicyChangeListener = new ItemListener() {
       public void itemStateChanged(final ItemEvent e) {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          final String defaultPolicy =
-              getBreakpointManager(myProject).getDefaultSuspendPolicy(breakpointCategory);
-          myMakeDefaultButton.setEnabled(!defaultPolicy.equals(getSelectedSuspendPolicy()));                 
-        }
+        final BreakpointDefaults defaults = getBreakpointManager(myProject).getBreakpointDefaults(breakpointCategory);
+        myMakeDefaultButton.setEnabled(!defaults.getSuspendPolicy().equals(getSelectedSuspendPolicy()) || defaults.isConditionEnabled() != myConditionCheckbox.isSelected());
       }
     };
 
@@ -258,13 +255,13 @@ public abstract class BreakpointPropertiesPanel {
 
     mySuspendAllRadio.addItemListener(suspendPolicyChangeListener);
     mySuspendThreadRadio.addItemListener(suspendPolicyChangeListener);
-
+    myConditionCheckbox.addItemListener(suspendPolicyChangeListener);
 
     myMakeDefaultButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         final BreakpointManager breakpointManager = getBreakpointManager(myProject);
         final String suspendPolicy = getSelectedSuspendPolicy();
-        breakpointManager.setDefaultSuspendPolicy(breakpointCategory, suspendPolicy);
+        breakpointManager.setBreakpointDefaults(breakpointCategory, new BreakpointDefaults(suspendPolicy, myConditionCheckbox.isSelected()));
         updateSuspendPolicyRbFont();
         if (DebuggerSettings.SUSPEND_THREAD.equals(suspendPolicy)) {
           mySuspendThreadRadio.requestFocus();
@@ -437,7 +434,7 @@ public abstract class BreakpointPropertiesPanel {
   }
 
   private void updateSuspendPolicyRbFont() {
-    final String defPolicy = getBreakpointManager(myProject).getDefaultSuspendPolicy(myBreakpointCategory);
+    final String defPolicy = getBreakpointManager(myProject).getBreakpointDefaults(myBreakpointCategory).getSuspendPolicy();
     
     final Font font = mySuspendAllRadio.getFont().deriveFont(Font.PLAIN);
     final Font boldFont = font.deriveFont(Font.BOLD);
@@ -486,9 +483,9 @@ public abstract class BreakpointPropertiesPanel {
     PsiElement context = breakpoint.getEvaluationElement();
     myPassCountCheckbox.setSelected(breakpoint.COUNT_FILTER_ENABLED);
 
-    myConditionCheckbox.setSelected(breakpoint.CONDITION_ENABLED || breakpoint.getCondition() == null || breakpoint.getCondition().isEmpty());
+    myConditionCheckbox.setSelected(breakpoint.CONDITION_ENABLED);
 
-    myConditionCombo.setEnabled(myBreakpoint.CONDITION_ENABLED);
+    myConditionCombo.setEnabled(breakpoint.CONDITION_ENABLED);
 
     myConditionCombo.setText(breakpoint.getCondition() != null ? breakpoint.getCondition() : emptyText());
 
