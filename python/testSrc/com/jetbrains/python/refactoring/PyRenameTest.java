@@ -95,6 +95,10 @@ public class PyRenameTest extends PyTestCase {
     doTest("bar");
   }
 
+  public void testRenameShadowingVariable() {  // PY-7342
+    doTest("bar");
+  }
+
   public void testRenameProperty() {  // PY-5948
     setLanguageLevel(LanguageLevel.PYTHON26);
     try {

@@ -199,7 +199,7 @@ public class PySkeletonGenerator {
     return new ListBinariesResult(generatorVersion, binaries);
   }
 
-  public boolean deleteOrLog(File item) {
+  public boolean deleteOrLog(@NotNull File item) {
     boolean deleted = item.delete();
     if (!deleted) LOG.warn("Failed to delete skeleton file " + item.getAbsolutePath());
     return deleted;

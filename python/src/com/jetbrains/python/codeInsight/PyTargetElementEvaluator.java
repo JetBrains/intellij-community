@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
@@ -32,8 +33,9 @@ public class PyTargetElementEvaluator implements TargetElementEvaluator {
     PsiElement result = ref.resolve();
     while (result instanceof PyReferenceExpression || result instanceof PyTargetExpression) {
       PsiElement nextResult = ((PyQualifiedExpression) result).getReference(PyResolveContext.noImplicits()).resolve();
-      if (nextResult != null && nextResult != result && PsiTreeUtil.getParentOfType(element, ScopeOwner.class) ==
-                                                        PsiTreeUtil.getParentOfType(result, ScopeOwner.class)) {
+      if (nextResult != null && nextResult != result &&
+          PsiTreeUtil.getParentOfType(element, ScopeOwner.class) == PsiTreeUtil.getParentOfType(result, ScopeOwner.class) &&
+          (nextResult instanceof PyReferenceExpression || nextResult instanceof PyTargetExpression || nextResult instanceof PyParameter)) {
         result = nextResult;
       }
       else {
