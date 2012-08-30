@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.IdeFrame;
 import com.sun.jna.Function;
@@ -85,6 +86,10 @@ class Win7TaskBar {
   }
 
   private static void initialize() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
     Ole32 ole32 = Ole32.INSTANCE;
     ole32.CoInitializeEx(Pointer.NULL, 0);
 
@@ -104,16 +109,28 @@ class Win7TaskBar {
   }
 
   static void setProgress(IdeFrame frame, double value, boolean isOk) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
     WinDef.HWND handle = getHandle(frame);
     mySetProgressState.invokeInt(new Object[]{myInterfacePointer, handle, isOk ? TBPF_NORMAL : TBPF_ERROR});
     mySetProgressValue.invokeInt(new Object[]{myInterfacePointer, handle, new WinDef.ULONGLONG((long)(value * 100)), TOTAL_PROGRESS});
   }
 
   static void hideProgress(IdeFrame frame) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
     mySetProgressState.invokeInt(new Object[]{myInterfacePointer, getHandle(frame), TBPF_NOPROGRESS});
   }
 
   static void setOverlayIcon(IdeFrame frame, Object icon, boolean dispose) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
     if (icon == null) {
       icon = Pointer.NULL;
     }
@@ -124,6 +141,10 @@ class Win7TaskBar {
   }
 
   static Object createIcon(byte[] ico) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return new Object();
+    }
+
     MyMemory memory = new MyMemory(ico.length);
 
     try {
@@ -142,10 +163,14 @@ class Win7TaskBar {
   }
 
   static void attention(IdeFrame frame, boolean critical) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
     User32Ex.INSTANCE.FlashWindow(getHandle(frame), true);
   }
 
-  static WinDef.HWND getHandle(IdeFrame frame) {
+  private static WinDef.HWND getHandle(IdeFrame frame) {
     try {
       ComponentPeer peer = ((Component)frame).getPeer();
       Method getHWnd = peer.getClass().getMethod("getHWnd");
