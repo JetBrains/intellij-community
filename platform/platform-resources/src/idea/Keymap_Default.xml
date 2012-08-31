@@ -85,9 +85,6 @@
   <action id="ReformatCode">
     <keyboard-shortcut first-keystroke="control alt L"/>
   </action>
-  <action id="RearrangeCode">
-    <keyboard-shortcut first-keystroke="control alt R"/>
-  </action>
   <action id="Generate">
     <keyboard-shortcut first-keystroke="alt INSERT"/>
   </action>
