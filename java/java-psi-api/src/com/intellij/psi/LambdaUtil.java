@@ -76,6 +76,7 @@ public class LambdaUtil {
 
   public static boolean isLambdaFullyInferred(PsiLambdaExpression expression, PsiType functionalInterfaceType) {
     if (expression.getParameterList().getParametersCount() > 0 || getFunctionalInterfaceReturnType(functionalInterfaceType) != PsiType.VOID) {   //todo check that void lambdas without params check
+      if (functionalInterfaceType instanceof PsiClassType && ((PsiClassType)functionalInterfaceType).isRaw()) return false;
       return !dependsOnTypeParams(functionalInterfaceType, expression);
     }
     return true;
@@ -144,8 +145,8 @@ public class LambdaUtil {
           return false;
         }
 
-        if (!lambdaFormalType
-          .isAssignableFrom(GenericsUtil.eliminateWildcards(resolveResult.getSubstitutor().substitute(methodSignature.getSubstitutor().substitute(methodParameterType))))) {
+        if (!TypeConversionUtil.erasure(lambdaFormalType)
+          .isAssignableFrom(TypeConversionUtil.erasure(GenericsUtil.eliminateWildcards(resolveResult.getSubstitutor().substitute(methodSignature.getSubstitutor().substitute(methodParameterType)))))) {
           return false;
         }
       }
@@ -433,6 +434,9 @@ public class LambdaUtil {
         final PsiElement gParent = parent.getParent();
         if (gParent instanceof PsiCallExpression) {
           myMethod = ((PsiCallExpression)gParent).resolveMethod();
+          if (myMethod != null && PsiTreeUtil.isAncestor(myMethod, expression, false)) {
+            myMethod = null;
+          }
         }
       }
     }
