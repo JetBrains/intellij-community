@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -48,9 +49,11 @@ class WhiteSpace {
 
   private final int myStart;
   private       int myEnd;
-
+  
   private int mySpaces;
   private int myIndentSpaces;
+  private int myInitialLastLinesSpaces;
+  private int myInitialLastLinesTabs;
 
   private CharSequence myInitial;
   private int          myFlags;
@@ -130,6 +133,9 @@ class WhiteSpace {
     } else {
       refreshStateOnEndOffsetDecrease(oldText, newEndOffset, oldEndOffset, options.TAB_SIZE);
     }
+    IndentInside indent = IndentInside.getLastLineIndent(myInitial);
+    myInitialLastLinesSpaces = indent.whiteSpaces;
+    myInitialLastLinesTabs = indent.tabs;
 
     if (getLineFeeds() > 0) myFlags |= CONTAINS_LF_INITIALLY;
     else myFlags &= ~CONTAINS_LF_INITIALLY;
@@ -611,6 +617,11 @@ class WhiteSpace {
 
     }
     return result;
+  }
+
+  @NotNull
+  public IndentInside getInitialLastLineIndent() {
+    return new IndentInside(myInitialLastLinesSpaces, myInitialLastLinesTabs); 
   }
 
   private static void appendNonWhitespaces(StringBuilder result, CharSequence[] lines, int currentLine) {
