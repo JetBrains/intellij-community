@@ -16,6 +16,7 @@
 package org.intellij.images.fileTypes;
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -39,7 +40,7 @@ public class ImageDocumentationProvider extends AbstractDocumentationProvider {
 
     if (element instanceof PsiFileSystemItem && !((PsiFileSystemItem)element).isDirectory()) {
       final VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
-      if (file instanceof VirtualFileWithId) {
+      if (file instanceof VirtualFileWithId && !DumbService.isDumb(element.getProject())) {
         ImageInfoIndex.processValues(file, new FileBasedIndex.ValueProcessor<ImageInfoIndex.ImageInfo>() {
           public boolean process(VirtualFile file, ImageInfoIndex.ImageInfo value) {
             int imageWidth = value.width;
