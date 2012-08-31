@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import org.jetbrains.annotations.NotNull;
@@ -146,7 +147,8 @@ public class ImportToggleAliasIntention implements IntentionAction {
       final PsiElement referee = reference.getReference().resolve();
       if (referee != null && imported_name != null) {
         final Collection<PsiReference> references = new ArrayList<PsiReference>();
-        PsiTreeUtil.processElements(file, new PsiElementProcessor() {
+        ScopeOwner scope = PsiTreeUtil.getParentOfType(state.myImportElement, ScopeOwner.class);
+        PsiTreeUtil.processElements(scope, new PsiElementProcessor() {
           public boolean execute(@NotNull PsiElement element) {
             if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null) {
               PyReferenceExpression ref = (PyReferenceExpression)element;
