@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,22 @@
 
 package com.intellij.formatting;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
-import java.io.LineNumberReader;
-import java.io.StringReader;
 
 class IndentInside {
   public int whiteSpaces = 0;
   public int tabs = 0;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatProcessor");
+
+  public IndentInside() {
+  }
+
+  public IndentInside(int whiteSpaces, int tabs) {
+    this.whiteSpaces = whiteSpaces;
+    this.tabs = tabs;
+  }
 
   public boolean equals(final Object o) {
     if (this == o) return true;
@@ -55,13 +59,14 @@ class IndentInside {
     return whiteSpaces + tabs * options.TAB_SIZE;
   }
 
-  static IndentInside getLastLineIndent(final String text) {
-    String lastLine = getLastLine(text);
-    if (lastLine == null) return new IndentInside();
+  @NotNull
+  static IndentInside getLastLineIndent(@NotNull final CharSequence text) {
+    CharSequence lastLine = getLastLine(text);
     return createIndentOn(lastLine);
   }
 
-  static IndentInside createIndentOn(@Nullable final String lastLine) {
+  @NotNull
+  static IndentInside createIndentOn(@Nullable final CharSequence lastLine) {
     final IndentInside result = new IndentInside();
     if (lastLine == null) {
       return result;
@@ -73,19 +78,17 @@ class IndentInside {
     return result;
   }
 
-  @Nullable static String getLastLine(final String text) {
-    if (text.endsWith("\n")) return "";
-    final LineNumberReader lineNumberReader = new LineNumberReader(new StringReader(text));
-    String line;
-    String result = null;
-    try {
-      while ((line = lineNumberReader.readLine()) != null) {
-        result = line;
-      }
+  @NotNull
+  static CharSequence getLastLine(@NotNull final CharSequence text) {
+    int i = CharArrayUtil.shiftBackwardUntil(text, text.length() - 1, "\n");
+    if (i < 0) {
+      return text;
     }
-    catch (IOException e) {
-      LOG.assertTrue(false);
+    else if (i >= text.length() - 1) {
+      return "";
     }
-    return result;
+    else {
+      return text.subSequence(i + 1, text.length());
+    }
   }
 }

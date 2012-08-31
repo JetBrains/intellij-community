@@ -393,12 +393,14 @@ class FormatProcessor {
     if (block.isLeaf() && whiteSpace.containsLineFeeds() && block.containsLineFeeds()) {
       final TextRange currentBlockRange = shiftRange(block.getTextRange(), shift);
 
-      IndentInside lastLineIndent = block.getLastLineIndent();
+      IndentInside oldBlockIndent = whiteSpace.getInitialLastLineIndent();
       IndentInside whiteSpaceIndent = IndentInside.createIndentOn(IndentInside.getLastLine(newWhiteSpace));
-      final int shiftInside = calcShift(lastLineIndent, whiteSpaceIndent, options);
+      final int shiftInside = calcShift(oldBlockIndent, whiteSpaceIndent, options);
 
-      final TextRange newBlockRange = model.shiftIndentInsideRange(currentBlockRange, shiftInside);
-      shift += newBlockRange.getLength() - block.getLength();
+      if (shiftInside != 0) {
+        final TextRange newBlockRange = model.shiftIndentInsideRange(currentBlockRange, shiftInside);
+        shift += newBlockRange.getLength() - block.getLength();
+      }
     }
     return shift;
   }
