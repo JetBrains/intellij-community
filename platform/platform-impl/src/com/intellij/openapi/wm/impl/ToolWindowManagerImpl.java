@@ -1500,7 +1500,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   ToolWindowAnchor getToolWindowAnchor(final String id) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     checkId(id);
     return getInfo(id).getAnchor();
   }
