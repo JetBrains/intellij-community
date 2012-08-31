@@ -31,6 +31,10 @@ public class LanguageTokenSeparatorGenerators extends LanguageExtension<TokenSep
       @Override
       public ASTNode generateWhitespaceBetweenTokens(ASTNode left, ASTNode right) {
         Language l = PsiUtilCore.getNotAnyLanguage(left);
+        Language rightLang = PsiUtilCore.getNotAnyLanguage(right);
+        if (rightLang.isKindOf(l)) {
+          l = rightLang; // get more precise lexer
+        }
         final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
         if (parserDefinition != null) {
           PsiManager manager = right.getTreeParent().getPsi().getManager();

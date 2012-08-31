@@ -280,7 +280,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
               continueSearch = false;
             }
             pingEDT.ping();
-            //rebuildPopup(usageView, usages, table, popup, presentation, popupPosition);
             return continueSearch;
           }
         }
@@ -579,14 +578,14 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       }.registerCustomShortcutSet(new CustomShortcutSet(shortcut.getFirstKeyStroke()), table);
     }
 
-    InplaceButton button = createSettingsButton(handler, popupPosition, editor, maxUsages, new Runnable() {
+    InplaceButton settingsButton = createSettingsButton(handler, popupPosition, editor, maxUsages, new Runnable() {
       @Override
       public void run() {
         popup[0].cancel();
       }
     });
 
-    ActiveComponent iconComp = new ActiveComponent() {
+    ActiveComponent spinningProgress = new ActiveComponent() {
       @Override
       public void setActive(boolean active) {
       }
@@ -596,7 +595,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         return processIcon;
       }
     };
-    builder.setCommandButton(new CompositeActiveComponent(iconComp, button));
+    builder.setCommandButton(new CompositeActiveComponent(spinningProgress, settingsButton));
 
     DefaultActionGroup toolbar = new DefaultActionGroup();
     usageView.addFilteringActions(toolbar);
@@ -631,7 +630,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     myWidth = (int)(toolBar.getPreferredSize().getWidth()
                   + new JLabel(getFullTitle(usages, title, hadMoreSeparator, visibleNodes.size() - 1)).getPreferredSize().getWidth()
-                  + button.getPreferredSize().getWidth());
+                  + settingsButton.getPreferredSize().getWidth());
     myWidth = -1;
     for (AnAction action : toolbar.getChildren(null)) {
       action.unregisterCustomShortcutSet(usageView.getComponent());

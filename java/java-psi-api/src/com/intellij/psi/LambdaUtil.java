@@ -76,6 +76,7 @@ public class LambdaUtil {
 
   public static boolean isLambdaFullyInferred(PsiLambdaExpression expression, PsiType functionalInterfaceType) {
     if (expression.getParameterList().getParametersCount() > 0 || getFunctionalInterfaceReturnType(functionalInterfaceType) != PsiType.VOID) {   //todo check that void lambdas without params check
+      if (functionalInterfaceType instanceof PsiClassType && ((PsiClassType)functionalInterfaceType).isRaw()) return false;
       return !dependsOnTypeParams(functionalInterfaceType, expression);
     }
     return true;
@@ -144,8 +145,8 @@ public class LambdaUtil {
           return false;
         }
 
-        if (!lambdaFormalType
-          .isAssignableFrom(GenericsUtil.eliminateWildcards(resolveResult.getSubstitutor().substitute(methodSignature.getSubstitutor().substitute(methodParameterType))))) {
+        if (!TypeConversionUtil.erasure(lambdaFormalType)
+          .isAssignableFrom(TypeConversionUtil.erasure(GenericsUtil.eliminateWildcards(resolveResult.getSubstitutor().substitute(methodSignature.getSubstitutor().substitute(methodParameterType)))))) {
           return false;
         }
       }
@@ -216,12 +217,12 @@ public class LambdaUtil {
   private static List<MethodSignature> findFunctionCandidates(PsiClass psiClass) {
     if (psiClass.isInterface()) {
       final List<MethodSignature> methods = new ArrayList<MethodSignature>();
-      final PsiMethod[] psiClassMethods = psiClass.getAllMethods();
-      for (PsiMethod psiMethod : psiClassMethods) {
+      final Collection<HierarchicalMethodSignature> visibleSignatures = psiClass.getVisibleSignatures();
+      for (HierarchicalMethodSignature signature : visibleSignatures) {
+        final PsiMethod psiMethod = signature.getMethod();
         if (!psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) continue;
-        final PsiClass methodContainingClass = psiMethod.getContainingClass();
-        if (!overridesPublicObjectMethod(psiMethod)) {
-          methods.add(getMethodSignature(psiMethod, psiClass, methodContainingClass));
+        if (!overridesPublicObjectMethod(psiMethod) && !PsiUtil.isExtensionMethod(psiMethod)) {
+          methods.add(signature);
         }
       }
 
@@ -289,7 +290,7 @@ public class LambdaUtil {
                                                     final PsiLambdaExpression lambdaExpression,
                                                     final PsiExpression expression) {
     final PsiParameter[] lambdaParams = lambdaExpression.getParameterList().getParameters(); 
-    LOG.assertTrue(lambdaParams.length == methodParameters.length, "lambda params: " + lambdaExpression.getParameterList().getText() + "; method params: " + Arrays.toString(methodParameters));
+    if (lambdaParams.length != methodParameters.length) return false;
     final boolean [] independent = new boolean[]{true};
     expression.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
@@ -389,7 +390,7 @@ public class LambdaUtil {
         if (type == null) {
           type = getFunctionalInterfaceType(lambdaExpression, false);
         }
-        final PsiClassType.ClassResolveResult resolveResult = type instanceof PsiClassType ? ((PsiClassType)type).resolveGenerics() : null;
+        final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(type);
         if (resolveResult != null) {
           final PsiMethod method = getFunctionalInterfaceMethod(type);
           if (method != null) {
@@ -433,6 +434,9 @@ public class LambdaUtil {
         final PsiElement gParent = parent.getParent();
         if (gParent instanceof PsiCallExpression) {
           myMethod = ((PsiCallExpression)gParent).resolveMethod();
+          if (myMethod != null && PsiTreeUtil.isAncestor(myMethod, expression, false)) {
+            myMethod = null;
+          }
         }
       }
     }

@@ -1,4 +1,4 @@
-package org.jetbrains.jps.model.serialization;
+package org.jetbrains.jps.model.serialization.library;
 
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
@@ -14,6 +14,7 @@ import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
+import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 
 import java.util.ArrayList;
 import java.util.Arrays;

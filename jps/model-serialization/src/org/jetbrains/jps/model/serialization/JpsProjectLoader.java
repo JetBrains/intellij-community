@@ -12,6 +12,10 @@ import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.artifact.JpsArtifactSerializer;
 import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
+import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
+import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerializer;
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -162,7 +166,8 @@ public class JpsProjectLoader extends JpsLoaderBase {
     final String typeId = moduleRoot.getAttributeValue("type");
     final JpsModulePropertiesSerializer<?> serializer = getModulePropertiesSerializer(typeId);
     final JpsModule module = createModule(name, moduleRoot, serializer);
-    JpsModuleSerializer.loadRootModel(module, JDomSerializationUtil.findComponent(moduleRoot, "NewModuleRootManager"), projectSdkType);
+    JpsModuleRootModelSerializer
+      .loadRootModel(module, JDomSerializationUtil.findComponent(moduleRoot, "NewModuleRootManager"), projectSdkType);
     final String moduleDirPath = file.getParent();
     JpsFacetSerializer.loadFacets(module, JDomSerializationUtil.findComponent(moduleRoot, "FacetManager"),
                                   FileUtil.toSystemIndependentName(moduleDirPath));

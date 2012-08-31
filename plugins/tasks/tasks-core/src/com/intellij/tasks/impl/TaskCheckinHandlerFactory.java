@@ -59,7 +59,9 @@ public class TaskCheckinHandlerFactory extends CheckinHandlerFactory {
             SwingUtilities.invokeLater(new Runnable() {
               @Override
               public void run() {
-                WorkingContextManager.getInstance(project).saveContext(localTask);
+                if (!project.isDisposed()) {
+                  WorkingContextManager.getInstance(project).saveContext(localTask);
+                }
               }
             });
           }

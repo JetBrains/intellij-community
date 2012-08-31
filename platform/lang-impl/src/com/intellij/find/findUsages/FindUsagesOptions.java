@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2011 JetBrains s.r.o.
  *
@@ -26,6 +25,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,13 +80,13 @@ public class FindUsagesOptions extends UserDataHolderBase implements Cloneable {
   }
 
   public int hashCode() {
-    int result;
-    result = (searchScope != null ? searchScope.hashCode() : 0);
+    int result = searchScope == null ? 0 : searchScope.hashCode();
     result = 31 * result + (isSearchForTextOccurrences ? 1 : 0);
     result = 31 * result + (isUsages ? 1 : 0);
     return result;
   }
 
+  @NonNls
   @Override
   public String toString() {
     return getClass().getSimpleName() + "{" +

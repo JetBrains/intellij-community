@@ -203,13 +203,14 @@
           <group id="ShowRecentFindUsagesGroup" class="com.intellij.find.impl.ShowRecentFindUsagesGroup" popup="true"/>
         </group>
         <group id="Macros" popup="true">
-          <group id="StanardMacroActions">
+          <group id="StandardMacroActions">
             <action id="PlaybackLastMacro" class="com.intellij.ide.actionMacro.actions.PlaybackLastMacroAction"/>
             <action id="StartStopMacroRecording" class="com.intellij.ide.actionMacro.actions.StartStopMacroRecordingAction"/>
             <action id="EditMacros" class="com.intellij.ide.actionMacro.actions.EditMacrosAction"/>
+            <action id="PlaySavedMacrosAction" class="com.intellij.ide.actionMacro.actions.PlaySavedMacros"/>
           </group>
           <separator/>
-          <group id="PlaySavedMacroActions" class="com.intellij.ide.actionMacro.actions.MacrosGroup"/>
+          <group id="MacrosGroup" class="com.intellij.ide.actionMacro.actions.MacrosGroup"/>
         </group>
         <reference ref="EditorToggleColumnMode"/>
         <group id="EditSelectGroup">

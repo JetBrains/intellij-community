@@ -66,18 +66,17 @@ import java.util.*;
  * @author peter
  */
 public class JavaFindUsagesHandler extends FindUsagesHandler{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.find.findUsages.DefaultFindUsagesHandler");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.find.findUsages.JavaFindUsagesHandler");
   public static final String ACTION_STRING = FindBundle.message("find.super.method.warning.action.verb");
 
   private final PsiElement[] myElementsToSearch;
   private final JavaFindUsagesHandlerFactory myFactory;
 
-  public JavaFindUsagesHandler(@NotNull PsiElement psiElement, JavaFindUsagesHandlerFactory factory) {
+  public JavaFindUsagesHandler(@NotNull PsiElement psiElement, @NotNull JavaFindUsagesHandlerFactory factory) {
     this(psiElement, PsiElement.EMPTY_ARRAY, factory);
   }
 
-
-  public JavaFindUsagesHandler(@NotNull PsiElement psiElement, @NotNull PsiElement[] elementsToSearch, JavaFindUsagesHandlerFactory factory) {
+  public JavaFindUsagesHandler(@NotNull PsiElement psiElement, @NotNull PsiElement[] elementsToSearch, @NotNull JavaFindUsagesHandlerFactory factory) {
     super(psiElement);
     myElementsToSearch = elementsToSearch;
     myFactory = factory;
@@ -714,14 +713,14 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
 
 
   @Override
-  protected boolean isSearchForTextOccurencesAvailable(PsiElement psiElement, boolean isSingleFile) {
+  protected boolean isSearchForTextOccurencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
     if (isSingleFile) return false;
     return new JavaNonCodeSearchElementDescriptionProvider().getElementDescription(psiElement, NonCodeSearchDescriptionLocation.NON_JAVA) != null;
 
   }
 
   @Override
-  public Collection<PsiReference> findReferencesToHighlight(final PsiElement target, final SearchScope searchScope) {
+  public Collection<PsiReference> findReferencesToHighlight(@NotNull final PsiElement target, final SearchScope searchScope) {
     if (target instanceof PsiMethod) {
       final PsiMethod[] superMethods = ((PsiMethod)target).findDeepestSuperMethods();
       if (superMethods.length == 0) {

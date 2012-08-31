@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2009 JetBrains s.r.o.
  *
@@ -18,12 +17,13 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 public class FindUsagesUtil {
   private FindUsagesUtil() {
   }
 
-  public static boolean isSearchForTextOccurrencesAvailable(PsiElement element, boolean isSingleFile, FindUsagesHandler handler) {
+  public static boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement element, boolean isSingleFile, FindUsagesHandler handler) {
     return !isSingleFile && handler != null && handler.isSearchForTextOccurencesAvailable(element, isSingleFile);
   }
 }

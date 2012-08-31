@@ -133,7 +133,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
                            @NotNull JavaElementArrangementEntry target)
   {
     if (previous == null) {
-      return 0;
+      return -1;
     }
 
     CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
@@ -152,7 +152,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
         else {
           return commonSettings.BLANK_LINES_AROUND_METHOD;
         }
-      default: return 0;
+      default: return commonSettings.BLANK_LINES_AROUND_CLASS;
     }
   }
 

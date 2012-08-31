@@ -174,7 +174,6 @@ public abstract class PsiType implements PsiAnnotationOwner {
    * @param visitor the visitor to accept the type.
    * @return the value returned by the visitor.
    */
-  @Nullable
   public abstract <A> A accept(@NotNull PsiTypeVisitor<A> visitor);
 
   /**

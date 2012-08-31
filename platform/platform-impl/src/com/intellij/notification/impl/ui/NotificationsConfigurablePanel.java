@@ -173,7 +173,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       });
 
       final TableColumn logColumn = getColumnModel().getColumn(LOG_COLUMN);
-      logColumn.setMaxWidth(new JComboBox().getPreferredSize().width);
+      logColumn.setMaxWidth(logColumn.getPreferredWidth());
 
       getEmptyText().setText("No notifications configured");
     }

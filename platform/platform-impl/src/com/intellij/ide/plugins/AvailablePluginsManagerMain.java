@@ -86,9 +86,9 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     pluginsModel = new AvailablePluginsTableModel();
     pluginTable = new PluginTable(pluginsModel);
     pluginTable.getTableHeader().setReorderingAllowed(false);
-    pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_DOWNLOADS, 60);
-    pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_DATE, 60);
-    pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_RATE, 70);
+    pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_DOWNLOADS, 70);
+    pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_DATE, 50);
+    pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_RATE, 60);
 
     return ScrollPaneFactory.createScrollPane(pluginTable);
   }

@@ -10,6 +10,10 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.artifact.JpsArtifactPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementSerializer;
 import org.jetbrains.jps.model.serialization.facet.JpsFacetConfigurationSerializer;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryPropertiesSerializer;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryRootTypeSerializer;
+import org.jetbrains.jps.model.serialization.library.JpsSdkPropertiesSerializer;
+import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerializer;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.Collections;

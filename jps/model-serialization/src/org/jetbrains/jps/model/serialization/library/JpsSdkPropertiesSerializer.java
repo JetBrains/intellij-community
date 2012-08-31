@@ -1,10 +1,11 @@
-package org.jetbrains.jps.model.serialization;
+package org.jetbrains.jps.model.serialization.library;
 
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
+import org.jetbrains.jps.model.serialization.JpsElementPropertiesSerializer;
 
 /**
  * @author nik

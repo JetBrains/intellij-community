@@ -30,7 +30,7 @@ import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.serialization.JpsModuleSerializer;
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension;
 
 /**
@@ -40,7 +40,7 @@ import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtensio
 public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements LibraryOrderEntry, ClonableOrderEntry, WritableOrderEntry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryImpl");
   private final Library myLibrary;
-  @NonNls public static final String ENTRY_TYPE = JpsModuleSerializer.MODULE_LIBRARY_TYPE;
+  @NonNls public static final String ENTRY_TYPE = JpsModuleRootModelSerializer.MODULE_LIBRARY_TYPE;
   private boolean myExported;
   @NonNls public static final String EXPORTED_ATTR = JpsJavaModelSerializerExtension.EXPORTED_ATTRIBUTE;
 

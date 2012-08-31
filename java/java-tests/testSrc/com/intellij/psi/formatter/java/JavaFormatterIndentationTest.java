@@ -503,4 +503,17 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "// This is a line comment"
     );
   }
+
+  public void testMultilineComment() {
+    // IDEA-90860
+    String text =
+      "\n" +
+      "/*\n" +
+      " * comment\n" +
+      " */\n" +
+      "\n" +
+      "class Test {\n" +
+      "}";
+    doTextTest(text, text);
+  }
 }

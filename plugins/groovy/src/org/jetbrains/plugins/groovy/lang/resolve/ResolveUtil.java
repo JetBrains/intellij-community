@@ -25,6 +25,7 @@ import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.*;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -55,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -86,60 +87,80 @@ public class ResolveUtil {
    *
    * @param place - place to start tree walk up
    * @param processor
-   * @param processNonCodeMethods - this parameter tells us if we need non code members. But non code members are started to process only after we walk up any code block or script
+   * @param processNonCodeMethods - this parameter tells us if we need non code members
    * @return
    */
-  public static boolean treeWalkUp(@NotNull GroovyPsiElement place, PsiScopeProcessor processor, boolean processNonCodeMethods) {
-    PsiElement lastParent = null;
-    PsiElement run = place;
+  public static boolean treeWalkUp(@NotNull final GroovyPsiElement place, final PsiScopeProcessor processor, boolean processNonCodeMethods) {
+    ClassHint hint = processor.getHint(ClassHint.KEY);
+    if (hint != null) {
+      return new DeclarationCacheKey(getNameHint(processor), hint, processNonCodeMethods).processCachedDeclarations(place, processor);
+    }
 
-    final Project project = place.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    
-    boolean doProcessNonCodeMembers = false;
-    boolean isJavaResolver = false;
-    while (run != null) {
-
-      //hack for walking up in java code
-      //java's processDeclarations don't check names so we should do it manually
-      if (!isJavaResolver && run.getLanguage() != GroovyFileType.GROOVY_LANGUAGE) {
-        isJavaResolver = true;
-        if (processor.getHint(NameHint.KEY) != null) {
-          processor = new JavaResolverProcessor(processor);
+    final PsiScopeProcessor nonCodeProcessor = processNonCodeMethods ? processor : null;
+    return PsiTreeUtil.treeWalkUp(place, null, new PairProcessor<PsiElement, PsiElement>() {
+      @Override
+      public boolean process(PsiElement scope, PsiElement lastParent) {
+        if (!doProcessDeclarations(place, lastParent, scope, substituteProcessor(processor, scope), nonCodeProcessor)) {
+          return false;
         }
+        issueLevelChangeEvents(processor, scope);
+        return true;
       }
+    });
+  }
 
-      if (!run.processDeclarations(processor, ResolveState.initial(), lastParent, place)) return false;
-      if (processNonCodeMethods) {
-        if (!doProcessNonCodeMembers) {
-          if (run instanceof GrCodeBlock) doProcessNonCodeMembers = true;
-          else if (run instanceof GrStatement && run.getContext() instanceof GroovyFile) doProcessNonCodeMembers = true;
-        }
-        if (doProcessNonCodeMembers) {
-          if (run instanceof GrTypeDefinition) {
-            if (!processNonCodeMembers(factory.createType(((GrTypeDefinition)run)), processor, place, ResolveState.initial())) return false;
-          }
-          else if ((run instanceof GroovyFileBase) && ((GroovyFileBase)run).isScript()) {
-            final PsiClass psiClass = ((GroovyFileBase)run).getScriptClass();
-            if (psiClass != null) {
-              if (!processNonCodeMembers(factory.createType(psiClass), processor, place, ResolveState.initial())) return false;
-            }
-          }
-          else if (run instanceof GrClosableBlock) {
-            PsiClass superClass = getLiteralSuperClass((GrClosableBlock)run);
-            if (superClass != null && !superClass.processDeclarations(processor, ResolveState.initial(), null, place)) return false;
+  static boolean doProcessDeclarations(GroovyPsiElement place,
+                                       PsiElement lastParent,
+                                       PsiElement scope,
+                                       @NotNull PsiScopeProcessor plainProcessor, @Nullable PsiScopeProcessor nonCodeProcessor) {
+    if (!scope.processDeclarations(plainProcessor, ResolveState.initial(), lastParent, place)) return false;
+    if (nonCodeProcessor != null && !processScopeNonCodeMethods(place, nonCodeProcessor, scope)) return false;
+    return true;
+  }
 
-            if (!GdkMethodUtil.categoryIteration((GrClosableBlock)run, processor, ResolveState.initial())) return false;
-            if (!GdkMethodUtil.withIteration((GrClosableBlock)run, processor)) return false;
-          }
-        }
-      }
-      lastParent = run;
-      run = run.getContext();
-      processor.handleEvent(JavaScopeProcessorEvent.CHANGE_LEVEL, null);
+  static void issueLevelChangeEvents(PsiScopeProcessor processor, PsiElement run) {
+    processor.handleEvent(JavaScopeProcessorEvent.CHANGE_LEVEL, null);
+    if (run instanceof GrClosableBlock && GrClosableBlock.OWNER_NAME.equals(getNameHint(processor))) {
+      processor.handleEvent(DECLARATION_SCOPE_PASSED, run);
+    }
+    if (run instanceof GrMethod) {
+      processor.handleEvent(DECLARATION_SCOPE_PASSED, run);
+    }
+  }
+
+  static PsiScopeProcessor substituteProcessor(PsiScopeProcessor processor, PsiElement scope) {
+    //hack for walking up in java code
+    //java's processDeclarations don't check names so we should do it manually
+    if (scope.getLanguage() != GroovyFileType.GROOVY_LANGUAGE && processor.getHint(NameHint.KEY) != null) {
+      return new JavaResolverProcessor(processor);
+    }
+    return processor;
+  }
+
+  static boolean processScopeNonCodeMethods(GroovyPsiElement place, PsiScopeProcessor processor, PsiElement scope) {
+    if (scope instanceof GrTypeDefinition) {
+      return processNonCodeMembers(createPsiType((GrTypeDefinition)scope), processor, place, ResolveState.initial());
+    }
+
+    if (scope instanceof GroovyFileBase && ((GroovyFileBase)scope).isScript()) {
+      final PsiClass psiClass = ((GroovyFileBase)scope).getScriptClass();
+      return psiClass == null || processNonCodeMembers(createPsiType(psiClass), processor, place, ResolveState.initial());
+    }
+
+    if (scope instanceof GrClosableBlock) {
+      PsiClass superClass = getLiteralSuperClass((GrClosableBlock)scope);
+      if (superClass != null && !superClass.processDeclarations(processor, ResolveState.initial(), null, place)) return false;
+
+      if (!GdkMethodUtil.categoryIteration((GrClosableBlock)scope, processor, ResolveState.initial())) return false;
+      if (!GdkMethodUtil.withIteration((GrClosableBlock)scope, processor)) return false;
     }
 
     return true;
+  }
+
+  private static PsiClassType createPsiType(PsiClass psiClass) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
+    return factory.createType(psiClass);
   }
 
   public static boolean processChildren(PsiElement element,

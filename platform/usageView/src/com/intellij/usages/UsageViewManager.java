@@ -18,7 +18,6 @@ package com.intellij.usages;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
@@ -46,27 +45,27 @@ public abstract class UsageViewManager {
 
   @Nullable ("in case no usages found or usage view not shown for one usage")
   public abstract UsageView searchAndShowUsages(@NotNull UsageTarget[] searchFor,
-                                @NotNull Factory<UsageSearcher> searcherFactory,
-                                boolean showPanelIfOnlyOneUsage,
-                                boolean showNotFoundMessage,
-                                @NotNull UsageViewPresentation presentation,
-                                UsageViewStateListener listener);
+                                                @NotNull Factory<UsageSearcher> searcherFactory,
+                                                boolean showPanelIfOnlyOneUsage,
+                                                boolean showNotFoundMessage,
+                                                @NotNull UsageViewPresentation presentation,
+                                                @Nullable UsageViewStateListener listener);
 
   public interface UsageViewStateListener {
-    void usageViewCreated(UsageView usageView);
-    void findingUsagesFinished(final UsageView usageView);
+    void usageViewCreated(@NotNull UsageView usageView);
+    void findingUsagesFinished(@NotNull UsageView usageView);
   }
 
   public abstract void searchAndShowUsages(@NotNull UsageTarget[] searchFor,
-                           @NotNull Factory<UsageSearcher> searcherFactory,
-                           @NotNull FindUsagesProcessPresentation processPresentation,
-                           @NotNull UsageViewPresentation presentation,
-                           UsageViewStateListener listener);
+                                           @NotNull Factory<UsageSearcher> searcherFactory,
+                                           @NotNull FindUsagesProcessPresentation processPresentation,
+                                           @NotNull UsageViewPresentation presentation,
+                                           @Nullable UsageViewStateListener listener);
 
   @Nullable
   public abstract UsageView getSelectedUsageView();
 
-  public static boolean isSelfUsage(final Usage usage, final UsageTarget[] searchForTarget) {
+  public static boolean isSelfUsage(@NotNull final Usage usage, @NotNull final UsageTarget[] searchForTarget) {
     if (!(usage instanceof PsiElementUsage)) return false;
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
@@ -86,7 +85,7 @@ public abstract class UsageViewManager {
     });
   }
 
-  public static boolean isSelfUsage(PsiElement element, PsiElement psiElement) {
+  private static boolean isSelfUsage(@NotNull PsiElement element, PsiElement psiElement) {
     return element.getParent() == psiElement; // self usage might be configurable
   }
 }

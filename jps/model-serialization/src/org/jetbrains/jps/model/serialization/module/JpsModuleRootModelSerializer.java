@@ -1,4 +1,4 @@
-package org.jetbrains.jps.model.serialization;
+package org.jetbrains.jps.model.serialization.module;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -15,6 +15,9 @@ import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
+import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,7 +28,7 @@ import static com.intellij.openapi.util.JDOMUtil.getChildren;
 /**
  * @author nik
  */
-public class JpsModuleSerializer {
+public class JpsModuleRootModelSerializer {
   public static final String URL_ATTRIBUTE = "url";
   public static final String CONTENT_TAG = "content";
   public static final String SOURCE_FOLDER_TAG = "sourceFolder";

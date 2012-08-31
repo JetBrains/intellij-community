@@ -9,6 +9,8 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 import java.io.File;
 import java.io.IOException;
@@ -91,7 +93,7 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
   private static void doTestSaveModule(JpsModule module, final String moduleFilePath) {
     try {
       Element actual = JDomSerializationUtil.createComponentElement("NewModuleRootManager");
-      JpsModuleSerializer.saveRootModel(module, actual);
+      JpsModuleRootModelSerializer.saveRootModel(module, actual);
       File imlFile = getFileInSampleProject(moduleFilePath);
       Element rootElement = loadModuleRootTag(imlFile);
       Element expected = JDomSerializationUtil.findComponent(rootElement, "NewModuleRootManager");

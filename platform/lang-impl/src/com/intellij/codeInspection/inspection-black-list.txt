@@ -130,7 +130,6 @@ com.siyeh.ig.errorhandling.TooBroadThrowsInspection
 com.siyeh.ig.errorhandling.UnusedCatchParameterInspection
 com.siyeh.ig.finalization.FinalizeCallsSuperFinalizeInspection
 com.siyeh.ig.finalization.FinalizeInspection
-com.siyeh.ig.imports.StaticImportInspection
 com.siyeh.ig.inheritance.InterfaceNeverImplementedInspection
 com.siyeh.ig.inheritance.NonProtectedConstructorInAbstractClassInspection
 com.siyeh.ig.inheritance.RefusedBequestInspection

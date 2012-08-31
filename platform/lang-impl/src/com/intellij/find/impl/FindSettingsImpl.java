@@ -311,7 +311,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
 
   @Override
   public void addDirectory(String s) {
-    if (s == null || s.length() == 0){
+    if (s == null || s.isEmpty()){
       return;
     }
     addStringToList(s, RECENT_DIR_STRINGS, MAX_RECENT_SIZE);
@@ -345,7 +345,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   @Override
   public void setFileMask(String _fileMask) {
     FILE_MASK = _fileMask;
-    if (_fileMask != null && _fileMask.length() > 0) {
+    if (_fileMask != null && !_fileMask.isEmpty()) {
       addStringToList(_fileMask, RECENT_FILE_MASKS, MAX_RECENT_SIZE);
     }
   }

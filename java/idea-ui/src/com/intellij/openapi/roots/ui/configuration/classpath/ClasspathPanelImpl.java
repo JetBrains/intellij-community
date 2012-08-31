@@ -99,8 +99,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     myEntryTable = new JBTable(myModel);
     myEntryTable.setShowGrid(false);
     myEntryTable.setDragEnabled(false);
-    myEntryTable.setShowHorizontalLines(false);
-    myEntryTable.setShowVerticalLines(false);
     myEntryTable.setIntercellSpacing(new Dimension(0, 0));
 
     myEntryTable.setDefaultRenderer(ClasspathTableItem.class, new TableItemRenderer(getStructureConfigurableContext()));
@@ -152,7 +150,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         }
       }
     };
-
     setFixedColumnWidth(ClasspathTableModel.EXPORT_COLUMN, ClasspathTableModel.EXPORT_COLUMN_NAME);
     setFixedColumnWidth(ClasspathTableModel.SCOPE_COLUMN, DependencyScope.COMPILE.toString() + "     ");  // leave space for combobox border
 
@@ -246,13 +243,9 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   }
 
   private void setFixedColumnWidth(final int columnIndex, final String textToMeasure) {
-    final FontMetrics fontMetrics = myEntryTable.getFontMetrics(myEntryTable.getFont());
-    final int width = fontMetrics.stringWidth(" " + textToMeasure + " ") + 4;
-    final TableColumn checkboxColumn = myEntryTable.getTableHeader().getColumnModel().getColumn(columnIndex);
-    checkboxColumn.setWidth(width);
-    checkboxColumn.setPreferredWidth(width);
-    checkboxColumn.setMaxWidth(width);
-    checkboxColumn.setMinWidth(width);
+    final TableColumn column = myEntryTable.getTableHeader().getColumnModel().getColumn(columnIndex);
+    column.setResizable(false);
+    column.setMaxWidth(column.getPreferredWidth());
   }
 
   @Override

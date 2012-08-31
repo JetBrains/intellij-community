@@ -197,6 +197,7 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
                 .execute(genItem.mySdkLocation, genItem.myAndroidTarget, sourceFile.getPath(), genRootPath,
                          depFolderOsPath,
                          genItem.myRawDirPath));
+            AndroidCompileUtil.markDirty(outputRootDirectory, true);
 
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {

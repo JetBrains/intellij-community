@@ -187,7 +187,7 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
     }
 
     if (toRefresh) {
-      outputRootDirectory.refresh(false, true);
+      AndroidCompileUtil.markDirtyAndRefresh(outputRootDirectory, true);
     }
     return result.toArray(new GenerationItem[result.size()]);
   }

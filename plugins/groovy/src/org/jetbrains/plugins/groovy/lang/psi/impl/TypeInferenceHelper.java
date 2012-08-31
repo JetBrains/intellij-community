@@ -43,10 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefin
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsSemilattice;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author ven
@@ -72,9 +69,9 @@ public class TypeInferenceHelper {
           return getInitializerType(refExpr);
         }
 
-        final DFAType type = getInferredType(refExpr.getReferenceName(), instruction, flow, scope);
+        final DFAType type = getInferredType(refExpr.getReferenceName(), instruction, flow, scope, new HashSet<MixinTypeInstruction>());
         if (type == null) return null;
-        return type.getType();
+        return type.getResultType();
       }
 
     });
@@ -89,8 +86,8 @@ public class TypeInferenceHelper {
     Instruction instruction = findInstructionAt(place, flow);
     if (instruction == null) return null;
 
-    final DFAType type = getInferredType(variableName, instruction, flow, scope);
-    return type != null ? type.getType() : null;
+    final DFAType type = getInferredType(variableName, instruction, flow, scope, new HashSet<MixinTypeInstruction>());
+    return type != null ? type.getResultType() : null;
   }
 
   public static boolean isTooComplexTooAnalyze(GrControlFlowOwner scope) {
@@ -135,7 +132,7 @@ public class TypeInferenceHelper {
   }
 
   @Nullable
-  private static DFAType getInferredType(@NotNull String varName, @NotNull Instruction instruction, @NotNull Instruction[] flow, @NotNull GrControlFlowOwner scope) {
+  private static DFAType getInferredType(@NotNull String varName, @NotNull Instruction instruction, @NotNull Instruction[] flow, @NotNull GrControlFlowOwner scope, Set<MixinTypeInstruction> trace) {
     final Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> pair = getDefUseMaps(scope);
 
     List<DefinitionMap> dfaResult = pair.second;
@@ -149,7 +146,7 @@ public class TypeInferenceHelper {
 
     DFAType result = null;
     for (int defIndex : varDefs) {
-      DFAType defType = getDefinitionType(flow[defIndex], flow, scope);
+      DFAType defType = getDefinitionType(flow[defIndex], flow, scope, trace);
 
       if (defType != null) {
         defType = defType.negate(instruction);
@@ -198,7 +195,7 @@ public class TypeInferenceHelper {
   }
 
   @Nullable
-  private static DFAType getDefinitionType(Instruction instruction, Instruction[] flow, GrControlFlowOwner scope) {
+  private static DFAType getDefinitionType(Instruction instruction, Instruction[] flow, GrControlFlowOwner scope, Set<MixinTypeInstruction> trace) {
     if (instruction instanceof ReadWriteVariableInstruction && ((ReadWriteVariableInstruction) instruction).isWrite()) {
       final PsiElement element = instruction.getElement();
       if (element != null) {
@@ -206,34 +203,37 @@ public class TypeInferenceHelper {
       }
     }
     if (instruction instanceof MixinTypeInstruction) {
-      return mixinType((MixinTypeInstruction)instruction, flow, scope);
+      return mixinType((MixinTypeInstruction)instruction, flow, scope, trace);
     }
     return null;
   }
 
   @Nullable
-  private static DFAType mixinType(final MixinTypeInstruction instruction, final Instruction[] flow, final GrControlFlowOwner scope) {
-    return RecursionManager.doPreventingRecursion(instruction, false, new NullableComputable<DFAType>() {
-      @Override
-      @Nullable
-      public DFAType compute() {
-        String varName = instruction.getVariableName();
-        if (varName == null) return null;
-        ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(flow);
-        if (originalInstr == null) {
-          LOG.error(scope.getContainingFile().getName() + ":" + scope.getText());
-        }
+  private static DFAType mixinType(final MixinTypeInstruction instruction, final Instruction[] flow, final GrControlFlowOwner scope, Set<MixinTypeInstruction> trace) {
+    if (!trace.add(instruction)) {
+      return null;
+    }
 
-        DFAType original = getInferredType(varName, originalInstr, flow, scope);
-        final PsiType mixin = instruction.inferMixinType();
-        if (mixin == null) return original;
-        if (original == null) {
-          original = DFAType.create(null);
-        }
-        original.addMixin(mixin, instruction.getConditionInstruction());
-        return original;
-      }
-    });
+    String varName = instruction.getVariableName();
+    if (varName == null) {
+      return null;
+    }
+    ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(flow);
+    if (originalInstr == null) {
+      LOG.error(scope.getContainingFile().getName() + ":" + scope.getText());
+    }
+
+    DFAType original = getInferredType(varName, originalInstr, flow, scope, trace);
+    final PsiType mixin = instruction.inferMixinType();
+    if (mixin == null) {
+      return original;
+    }
+    if (original == null) {
+      original = DFAType.create(null);
+    }
+    original.addMixin(mixin, instruction.getConditionInstruction());
+    trace.remove(instruction);
+    return original;
   }
 
 

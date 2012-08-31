@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
   private LeafBlockWrapper myPreviousBlock;
   private LeafBlockWrapper myNextBlock;
   private SpacingImpl mySpaceProperty;
-  private IndentInside myLastLineIndent;
   private String myDebugInfo;
 
   /**
@@ -97,12 +96,6 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     final boolean isLeaf = block.isLeaf();
     flagsValue |= isLeaf ? LEAF : 0;
 
-    if (isLeaf && containsLineFeeds) {
-      myLastLineIndent = IndentInside.getLastLineIndent(model.getText(textRange).toString());
-    } else {
-      myLastLineIndent = null;
-    }
-
     myFlags = flagsValue;
   }
 
@@ -157,7 +150,6 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     myPreviousBlock = null;
     myNextBlock = null;
     mySpaceProperty = null;
-    myLastLineIndent = null;
   }
 
   /**
@@ -216,10 +208,6 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
 
   public final boolean isLeaf() {
     return (myFlags & LEAF) != 0;
-  }
-
-  public IndentInside getLastLineIndent() {
-    return myLastLineIndent;
   }
 
   public boolean contains(final int offset) {

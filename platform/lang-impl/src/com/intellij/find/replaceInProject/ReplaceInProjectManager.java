@@ -150,13 +150,13 @@ public class ReplaceInProjectManager {
     manager.searchAndShowUsages(new UsageTarget[]{new FindInProjectUtil.StringUsageTarget(findModelCopy.getStringToFind())},
                                 usageSearcherFactory, processPresentation, presentation, new UsageViewManager.UsageViewStateListener() {
         @Override
-        public void usageViewCreated(UsageView usageView) {
+        public void usageViewCreated(@NotNull UsageView usageView) {
           context[0] = new ReplaceContext(usageView, findModelCopy);
           addReplaceActions(context[0]);
         }
 
         @Override
-        public void findingUsagesFinished(final UsageView usageView) {
+        public void findingUsagesFinished(@NotNull final UsageView usageView) {
           if (context[0] != null && findManager.getFindInProjectModel().isPromptOnReplace()) {
             SwingUtilities.invokeLater(new Runnable() {
               @Override

@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.codeStyle.arrangement
 
+import org.junit.Before
+
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.*
 /**
  * @author Denis Zhdanov
@@ -22,6 +24,13 @@ import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.
  */
 class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
 
+  @Before
+  void setUp() {
+    super.setUp()
+    commonSettings.BLANK_LINES_AROUND_METHOD = 0
+    commonSettings.BLANK_LINES_AROUND_CLASS = 0
+  }
+  
   void testFieldsBeforeMethods() {
     doTest(
             '''\
