@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.vfs;
 
+/**
+ * @author max
+ */
 public class InvalidVirtualFileAccessException extends RuntimeException {
   public InvalidVirtualFileAccessException(final VirtualFile file) {
     super("Accessing invalid virtual file: " + file.getUrl());

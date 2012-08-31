@@ -214,7 +214,7 @@ public class VfsUtilCore {
         }
       }
       catch (InvalidVirtualFileAccessException e) {
-        LOG.warn("Ignoring: " + e.getMessage());
+        LOG.info("Ignoring: " + e.getMessage());
         return VirtualFileVisitor.CONTINUE;
       }
 
