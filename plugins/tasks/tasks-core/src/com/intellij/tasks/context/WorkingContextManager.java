@@ -61,6 +61,7 @@ public class WorkingContextManager {
       return (int)(o2.getTime() - o1.getTime());
     }
   };
+  private final Object myLock = new Object();
 
   public static WorkingContextManager getInstance(Project project) {
     return ServiceManager.getService(project, WorkingContextManager.class);
@@ -224,15 +225,17 @@ public class WorkingContextManager {
   private void pack(int max, int delta, String zipPostfix) {
     try {
       JBZipFile archive = getTasksArchive(zipPostfix);
-      List<JBZipEntry> entries = archive.getEntries();
-      if (entries.size() > max + delta) {
-        JBZipEntry[] array = entries.toArray(new JBZipEntry[entries.size()]);
-        Arrays.sort(array, ENTRY_COMPARATOR);
-        for (int i = array.length - 1; i >= max; i--) {
-          archive.eraseEntry(array[i]);
+      synchronized (myLock) {
+        List<JBZipEntry> entries = archive.getEntries();
+        if (entries.size() > max + delta) {
+          JBZipEntry[] array = entries.toArray(new JBZipEntry[entries.size()]);
+          Arrays.sort(array, ENTRY_COMPARATOR);
+          for (int i = array.length - 1; i >= max; i--) {
+            archive.eraseEntry(array[i]);
+          }
         }
+        archive.close();
       }
-      archive.close();
     }
     catch (IOException e) {
       LOG.error(e);
