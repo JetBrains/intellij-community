@@ -1,6 +1,7 @@
 package org.jetbrains.jps.model.serialization.java;
 
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElementFactory;
@@ -121,13 +122,12 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   private static void loadJavaModuleExtension(JpsModule module, Element rootModelComponent) {
     final JpsJavaModuleExtension extension = getService().getOrCreateModuleExtension(module);
     final Element outputTag = rootModelComponent.getChild(OUTPUT_TAG);
-    if (outputTag != null) {
-      extension.setOutputUrl(outputTag.getAttributeValue(URL_ATTRIBUTE));
-    }
+    String outputUrl = outputTag != null ? outputTag.getAttributeValue(URL_ATTRIBUTE) : null;
+    extension.setOutputUrl(outputUrl);
     final Element testOutputTag = rootModelComponent.getChild(TEST_OUTPUT_TAG);
-    if (testOutputTag != null) {
-      extension.setTestOutputUrl(testOutputTag.getAttributeValue(URL_ATTRIBUTE));
-    }
+    String testOutputUrl = testOutputTag != null ? testOutputTag.getAttributeValue(URL_ATTRIBUTE) : null;
+    extension.setTestOutputUrl(StringUtil.isEmpty(testOutputUrl) ? outputUrl : testOutputUrl);
+
     extension.setInheritOutput(Boolean.parseBoolean(rootModelComponent.getAttributeValue(INHERIT_COMPILER_OUTPUT_ATTRIBUTE)));
     extension.setExcludeOutput(rootModelComponent.getChild(EXCLUDE_OUTPUT_TAG) != null);
 
