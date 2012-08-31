@@ -96,7 +96,7 @@ public class EditorFoldingInfo {
     myFoldRegionToSmartPointerMap.clear();
   }
 
-  public static void resetInfo(final Editor editor) {
+  public static void resetInfo(@NotNull Editor editor) {
     EditorFoldingInfo info = editor.getUserData(KEY);
     if (info != null) {
       info.dispose();
