@@ -1,7 +1,8 @@
 package org.jetbrains.jps.model.module.impl;
 
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleDependency;
@@ -13,6 +14,8 @@ import org.jetbrains.jps.model.module.JpsModuleReference;
 public class JpsModuleDependencyImpl extends JpsDependencyElementBase<JpsModuleDependencyImpl> implements JpsModuleDependency {
   private static final JpsElementChildRole<JpsModuleReference>
     MODULE_REFERENCE_CHILD_ROLE = JpsElementChildRoleBase.create("module reference");
+
+  private volatile Ref<JpsModule> myCachedModule = null;
 
   public JpsModuleDependencyImpl(final JpsModuleReference moduleReference) {
     super();
@@ -31,7 +34,12 @@ public class JpsModuleDependencyImpl extends JpsDependencyElementBase<JpsModuleD
 
   @Override
   public JpsModule getModule() {
-    return getModuleReference().resolve();
+    Ref<JpsModule> moduleRef = myCachedModule;
+    if (moduleRef == null) {
+      moduleRef = new Ref<JpsModule>(getModuleReference().resolve());
+      myCachedModule = moduleRef;
+    }
+    return moduleRef.get();
   }
 
   @NotNull
