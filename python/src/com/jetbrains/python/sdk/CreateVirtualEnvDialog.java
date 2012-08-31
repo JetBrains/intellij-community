@@ -34,7 +34,8 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
   private TextFieldWithBrowseButton myDestination;
   private JTextField myName;
   private JBCheckBox mySitePackagesCheckBox;
-  private JBCheckBox myAssociateCheckbox;
+  private JBCheckBox myMakeAvailableToAllProjectsCheckbox;
+  private JBCheckBox mySetAsProjectInterpreterCheckbox;
   private Project myProject;
   private String myInitialPath;
 
@@ -45,13 +46,13 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     setTitle("Create Virtual Environment");
     updateSdkList(sdk, allSdks);
 
-    myAssociateCheckbox.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
+    myMakeAvailableToAllProjectsCheckbox.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
     if (project.isDefault()) {
-      myAssociateCheckbox.setSelected(false);
-      myAssociateCheckbox.setVisible(false);
+      myMakeAvailableToAllProjectsCheckbox.setSelected(true);
+      myMakeAvailableToAllProjectsCheckbox.setVisible(false);
     }
     else if (isNewProject) {
-      myAssociateCheckbox.setText("Associate this virtual environment with the project being created");
+      mySetAsProjectInterpreterCheckbox.setText("Set as project interpreter for the project being created");
     }
 
     setOKActionEnabled(false);
@@ -206,7 +207,11 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
   }
 
   public boolean associateWithProject() {
-    return myAssociateCheckbox.isSelected();
+    return !myMakeAvailableToAllProjectsCheckbox.isSelected();
+  }
+
+  public boolean setAsProjectInterpreter() {
+    return mySetAsProjectInterpreterCheckbox.isSelected();
   }
 
   @Override

@@ -484,6 +484,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       if (level.isOlderThan(LanguageLevel.PYTHON33)) {
         registerProblem(node, "Python versions < 3.3 do not support this syntax. Delegating to a subgenerator is available since " +
                               "Python 3.3; use explicit iteration over subgenerator instead.");
+        break;
       }
     }
   }

@@ -269,6 +269,11 @@ public class PyIntentionTest extends PyTestCase {
     doDocStubTest();
   }
 
+  // PY-7383
+  public void testYieldFrom() {
+    doTest(PyBundle.message("INTN.yield.from"), LanguageLevel.PYTHON33);
+  }
+
   private void doDocStubTest() {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     codeInsightSettings.JAVADOC_STUB_ON_ENTER = true;

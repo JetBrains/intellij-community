@@ -426,6 +426,15 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
+  public void visitPyYieldExpression(PyYieldExpression node) {
+    myBuilder.startNode(node);
+    final PyExpression expression = node.getExpression();
+    if (expression != null) {
+      expression.accept(this);
+    }
+  }
+
+  @Override
   public void visitPyRaiseStatement(final PyRaiseStatement node) {
     myBuilder.startNode(node);
     final PyExpression[] expressions = node.getExpressions();

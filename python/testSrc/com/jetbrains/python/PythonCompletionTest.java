@@ -606,4 +606,10 @@ public class PythonCompletionTest extends PyTestCase {
                             "    pass\n" +
                             "except IOError <caret>").contains("as"));
   }
+
+  public void testElseInFor() {  // PY-6755
+    assertTrue(doTestByText("for item in range(10):\n" +
+                            "    pass\n" +
+                            "el<caret>").contains("else"));
+  }
 }
