@@ -15,8 +15,7 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
@@ -35,6 +34,8 @@ import static com.intellij.openapi.vfs.VirtualFileVisitor.Result;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.VisitorException;
 
 public class VfsUtilCore {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtilCore");
+
   /**
    * Checks whether the <code>ancestor {@link com.intellij.openapi.vfs.VirtualFile}</code> is parent of <code>file
    * {@link com.intellij.openapi.vfs.VirtualFile}</code>.
@@ -203,7 +204,6 @@ public class VfsUtilCore {
       Iterable<VirtualFile> childrenIterable = null;
       VirtualFile[] children = null;
 
-      final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
       try {
         if (!file.isValid() || !visitor.allowVisitChildren(file)) return VirtualFileVisitor.CONTINUE;
         if (!visitor.depthLimitReached()) {
@@ -213,8 +213,9 @@ public class VfsUtilCore {
           }
         }
       }
-      finally {
-        token.finish();
+      catch (InvalidVirtualFileAccessException e) {
+        LOG.warn("Ignoring: " + e.getMessage());
+        return VirtualFileVisitor.CONTINUE;
       }
 
       if (childrenIterable != null) {
