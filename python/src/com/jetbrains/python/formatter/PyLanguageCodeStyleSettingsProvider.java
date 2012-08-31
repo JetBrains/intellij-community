@@ -122,5 +122,9 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                 "    'long_string_constant2')";
   @SuppressWarnings("FieldCanBeLocal")
   private static String INDENT_SETTINGS_PREVIEW = "def foo():\n" +
-                                                  "    print 'bar'";
+                                                  "    print 'bar'\n\n" +
+                                                  "def long_function_name(\n" +
+                                                  "        var_one, var_two, var_three,\n" +
+                                                  "        var_four):\n" +
+                                                  "    print(var_one)";
 }
