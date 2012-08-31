@@ -233,7 +233,7 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
     }
 
     if (toRefresh) {
-      outputRootDirectory.refresh(false, true);
+      AndroidCompileUtil.markDirtyAndRefresh(outputRootDirectory, true);
     }
     return results.toArray(new GenerationItem[results.size()]);
   }

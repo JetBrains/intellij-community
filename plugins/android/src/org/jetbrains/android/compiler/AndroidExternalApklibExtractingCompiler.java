@@ -108,7 +108,7 @@ public class AndroidExternalApklibExtractingCompiler implements SourceGenerating
       
       final VirtualFile vSrcRoot = LocalFileSystem.getInstance().findFileByIoFile(srcRoot);
       if (vSrcRoot != null) {
-        vSrcRoot.getParent().refresh(false, true);
+        AndroidCompileUtil.markDirtyAndRefresh(vSrcRoot, true);
         AndroidUtils.collectFiles(vSrcRoot, visited, generatedVFiles);
       }
     }

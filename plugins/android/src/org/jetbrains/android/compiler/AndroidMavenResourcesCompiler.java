@@ -15,7 +15,6 @@
  */
 package org.jetbrains.android.compiler;
 
-import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
@@ -77,10 +76,10 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
       for (GenerationItem item : generationItems) {
         File generatedFile = ((MyGenerationItem)item).myGeneratedFile;
         if (generatedFile != null) {
-          CompilerUtil.refreshIOFile(generatedFile);
-          VirtualFile generatedVFile = LocalFileSystem.getInstance().findFileByIoFile(generatedFile);
-          if (generatedVFile != null) {
-            generatedVFiles.add(generatedVFile);
+          final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(generatedFile);
+          if (vFile != null) {
+            AndroidCompileUtil.markDirtyAndRefresh(vFile, false);
+            generatedVFiles.add(vFile);
           }
         }
       }
