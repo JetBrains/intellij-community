@@ -151,6 +151,14 @@ class BuildMessageDispatcher extends SimpleChannelHandler {
     }
   }
 
+  @Override
+  public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
+    final Throwable cause = e.getCause();
+    if (cause != null) {
+      LOG.info(cause);
+    }
+    ctx.sendUpstream(e);
+  }
 
   @Override
   public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
