@@ -16,13 +16,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -38,9 +37,11 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstru
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ArgumentInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsDfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsSemilattice;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypesSemilattice;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.*;
@@ -50,8 +51,24 @@ import java.util.*;
  */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class TypeInferenceHelper {
-
   private static final Logger LOG = Logger.getInstance(TypeInferenceHelper.class);
+  private static final ThreadLocal<InferenceContext> ourInferenceContext = new ThreadLocal<InferenceContext>();
+
+  public static <T> T doInference(Map<String, PsiType> bindings, Computable<T> computation) {
+    InferenceContext old = ourInferenceContext.get();
+    ourInferenceContext.set(new InferenceContext.PartialContext(bindings));
+    try {
+      return computation.compute();
+    }
+    finally {
+      ourInferenceContext.set(old);
+    }
+  }
+
+  public static InferenceContext getCurrentContext() {
+    InferenceContext context = ourInferenceContext.get();
+    return context != null ? context : InferenceContext.TOP_CONTEXT;
+  }
 
   @Nullable
   public static PsiType getInferredType(@NotNull final GrReferenceExpression refExpr) {
@@ -73,7 +90,6 @@ public class TypeInferenceHelper {
         if (type == null) return null;
         return type.getResultType();
       }
-
     });
   }
 
@@ -88,6 +104,34 @@ public class TypeInferenceHelper {
 
     final DFAType type = getInferredType(variableName, instruction, flow, scope, new HashSet<MixinTypeInstruction>());
     return type != null ? type.getResultType() : null;
+  }
+
+
+  @Nullable
+  public static PsiType getInferredTypeNew(@NotNull final GrReferenceExpression refExpr) {
+    final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(refExpr);
+    if (scope == null) return null;
+
+    final Instruction[] flow = scope.getControlFlow();
+    return inferVariableType(refExpr.getReferenceName(), scope, flow, findInstruction(refExpr, flow));
+  }
+
+  @Nullable
+  public static PsiType getInferredTypeNew(@NotNull PsiElement place, String variableName) {
+    final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(place);
+    if (scope == null) return null;
+
+    final Instruction[] flow = scope.getControlFlow();
+    return inferVariableType(variableName, scope, flow, findInstructionAt(place, flow));
+  }
+
+  private static PsiType inferVariableType(String variableName, GrControlFlowOwner scope, Instruction[] flow, Instruction instruction) {
+    if (instruction == null) return null;
+
+    ArrayList<Map<String, PsiType>> list = performTypeDfa(scope, flow);
+    if (list == null) return null;
+
+    return list.get(instruction.num()).get(variableName);
   }
 
   public static boolean isTooComplexTooAnalyze(GrControlFlowOwner scope) {
@@ -298,31 +342,58 @@ public class TypeInferenceHelper {
     return null;
   }
 
-  /*@Nullable
-  private static PsiType getInferredType(@NotNull String varName,
-                                         @NotNull Instruction instruction,
-                                         @NotNull GrControlFlowOwner scope) {
-    final ArrayList<Map<String, DFAType>> dfaResult = getDefUseMaps(scope);
-
-    if (dfaResult == null) return null;
-
-
-    final Map<String, DFAType> allDefs = dfaResult.get(instruction.num());
-    final DFAType dfaType = allDefs.get(varName);
-    if (dfaType == null) return null;
-
-    return dfaType.getType();
+  @Nullable
+  private static ArrayList<Map<String, PsiType>> performTypeDfa(GrControlFlowOwner owner, Instruction[] flow) {
+    final TypeDfaInstance dfaInstance = new TypeDfaInstance(owner);
+    final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
+    final DFAEngine<Map<String, PsiType>> engine = new DFAEngine<Map<String, PsiType>>(flow, dfaInstance, semilattice);
+    return engine.performDFAWithTimeout();
   }
 
-  private static ArrayList<Map<String, DFAType>> getDefUseMaps(final GrControlFlowOwner scope) {
-    return CachedValuesManager.getManager(scope.getProject()).getCachedValue(scope, new CachedValueProvider<ArrayList<Map<String, DFAType>>>() {
-      @Override
-      public Result<ArrayList<Map<String, DFAType>>> compute() {
-        final Instruction[] flow = scope.getControlFlow();
-        final DFAEngine<Map<String, DFAType>> engine = new DFAEngine<Map<String, DFAType>>(flow, new TypeDFAInstance(), new TypesSemilattice(scope.getManager()));
-        final ArrayList<Map<String, DFAType>> result = engine.performDFAWithTimeout();
-        return Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
+  static class TypeDfaInstance implements DfaInstance<Map<String, PsiType>> {
+    private final PsiElement scope;
+
+    TypeDfaInstance(PsiElement scope) {
+      this.scope = scope;
+    }
+
+    public void fun(final Map<String, PsiType> map, final Instruction instruction) {
+      if (instruction instanceof ReadWriteVariableInstruction && ((ReadWriteVariableInstruction) instruction).isWrite()) {
+        final PsiElement element = instruction.getElement();
+        if (element != null) {
+          map.put(((ReadWriteVariableInstruction)instruction).getVariableName(), doInference(map, new Computable<PsiType>() {
+            @Override
+            public PsiType compute() {
+              return TypesUtil.boxPrimitiveType(getInitializerType(element), scope.getManager(), scope.getResolveScope());
+            }
+          }));
+        }
       }
-    });
-  }*/
+      if (instruction instanceof ArgumentInstruction) {
+        final String varName = ((MixinTypeInstruction)instruction).getVariableName();
+        map.put(varName, doInference(map, new Computable<PsiType>() {
+          @Override
+          public PsiType compute() {
+            PsiType original = map.get(varName);
+            final PsiType mixin = ((MixinTypeInstruction)instruction).inferMixinType();
+            if (mixin == null) return original;
+            if (original == null) return mixin;
+            return PsiIntersectionType.createIntersection(original, mixin);
+          }
+        }));
+      }
+    }
+
+    @NotNull
+    public Map<String, PsiType> initial() {
+      return ContainerUtil.newHashMap();
+    }
+
+    public boolean isForward() {
+      return true;
+    }
+
+  }
+
+
 }

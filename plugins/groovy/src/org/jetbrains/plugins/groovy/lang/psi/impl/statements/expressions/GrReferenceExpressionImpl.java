@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -314,13 +315,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     assert upToArgument == null;
 
-    return CachedValuesManager.getManager(getProject())
-      .getCachedValue(this, new CachedValueProvider<Pair<Boolean, GroovyResolveResult[]>>() {
-        @Override
-        public Result<Pair<Boolean, GroovyResolveResult[]>> compute() {
-          return Result.create(doResolveByShape(false, null), PsiModificationTracker.MODIFICATION_COUNT);
-        }
-      });
+    return TypeInferenceHelper.getCurrentContext().getCachedValue(this, new NullableComputable<Pair<Boolean, GroovyResolveResult[]>>() {
+      @Override
+      public Pair<Boolean, GroovyResolveResult[]> compute() {
+        return doResolveByShape(false, null);
+      }
+    });
   }
 
   private Pair<Boolean, GroovyResolveResult[]> doResolveByShape(boolean allVariants, @Nullable GrExpression upToArgument) {
@@ -593,7 +593,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       if (result!=null) return result;
 
 
-      final PsiType inferred = refExpr.getQualifier() == null ? TypeInferenceHelper.getInferredType(refExpr) : null;
+      final PsiType inferred = refExpr.getQualifier() == null ? TypeInferenceHelper.getCurrentContext().getVariableType(refExpr) : null;
       final PsiType nominal = refExpr.getNominalType();
       if (inferred == null || PsiType.NULL.equals(inferred)) {
         if (nominal == null) {
@@ -772,7 +772,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   public GroovyResolveResult advancedResolve() {
-    ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, POLY_RESOLVER, true, false);
+    ResolveResult[] results = TypeInferenceHelper.getCurrentContext().multiResolve(this, false, POLY_RESOLVER);
     return results.length == 1 ? (GroovyResolveResult)results[0] : GroovyResolveResult.EMPTY_RESULT;
   }
 

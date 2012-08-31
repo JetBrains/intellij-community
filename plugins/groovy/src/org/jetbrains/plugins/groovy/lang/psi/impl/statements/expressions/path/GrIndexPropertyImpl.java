@@ -242,7 +242,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    return (GroovyResolveResult[])ResolveCache.getInstance(getProject()).resolveWithCaching(myReference, RESOLVER, false, incompleteCode);
+    return TypeInferenceHelper.getCurrentContext().multiResolve(myReference, incompleteCode, RESOLVER);
   }
 
   public PsiType getType() {
