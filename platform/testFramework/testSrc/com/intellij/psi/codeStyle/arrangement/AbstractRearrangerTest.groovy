@@ -21,13 +21,11 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 /**
@@ -51,23 +49,27 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
     super.tearDown()
   }
 
-  protected StdArrangementRule rule(@NotNull ArrangementMatchCondition condition) {
+  @NotNull
+  protected CommonCodeStyleSettings getCommonSettings() {
+    CodeStyleSettingsManager.getInstance(myFixture.project).currentSettings.getCommonSettings(language)
+  }
+  
+  @NotNull
+  protected StdArrangementRule rule(@NotNull Object ... conditions) {
+    def condition
+    if (conditions.length == 1) {
+      condition = atom(conditions[0])
+    }
+    else {
+      condition = ArrangementUtil.and(conditions.collect { atom(it) } as ArrangementMatchCondition[])
+    }
+    
     new StdArrangementRule(new StdArrangementEntryMatcher(condition))
   }
   
   @NotNull
   protected ArrangementAtomMatchCondition atom(@NotNull Object condition) {
-    def type;
-    if (condition in ArrangementEntryType) {
-      type = ArrangementSettingType.TYPE;
-    }
-    else if (condition in ArrangementModifier) {
-      type = ArrangementSettingType.MODIFIER
-    }
-    else {
-      throw new IllegalArgumentException("Unexpected condition of type '${condition.class}': $condition")
-    }
-    new ArrangementAtomMatchCondition(type, condition)
+    new ArrangementAtomMatchCondition(ArrangementUtil.parseType(condition), condition)
   }
   
   protected void doTest(@NotNull String initial,

@@ -18,9 +18,10 @@ package com.intellij.psi.codeStyle.arrangement.engine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -30,7 +31,11 @@ import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.text.CharArrayUtil;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -53,13 +58,12 @@ public class ArrangementEngine {
       return;
     }
 
-    Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(file.getLanguage());
+    final Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(file.getLanguage());
     if (rearranger == null) {
       return;
     }
 
-    CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings();
-    final Ref<List<? extends ArrangementRule>> rulesRef = new Ref<List<? extends ArrangementRule>>();
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings();
     List<? extends ArrangementRule> arrangementRules = settings.getCommonSettings(file.getLanguage()).getArrangementRules();
     if (arrangementRules.isEmpty() && rearranger instanceof ArrangementStandardSettingsAware) {
       List<StdArrangementRule> defaultRules = ((ArrangementStandardSettingsAware)rearranger).getDefaultRules();
@@ -70,11 +74,7 @@ public class ArrangementEngine {
     if (arrangementRules.isEmpty()) {
       return;
     }
-    else {
-      rulesRef.set(arrangementRules);
-    }
     
-    final Collection<? extends ArrangementEntry> entriesToProcess = rearranger.parse(file, document, ranges);
     final DocumentEx documentEx;
     if (document instanceof DocumentEx && !((DocumentEx)document).isInBulkUpdate()) {
       documentEx = (DocumentEx)document;
@@ -83,6 +83,8 @@ public class ArrangementEngine {
       documentEx = null;
     }
 
+    final Context<? extends ArrangementEntry> context = Context.from(rearranger, document, file, ranges, arrangementRules, settings);
+
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -90,7 +92,7 @@ public class ArrangementEngine {
           documentEx.setInBulkUpdate(true);
         }
         try {
-          doArrange(document, rulesRef.get(), entriesToProcess);
+          doArrange(context);
         }
         finally {
           if (documentEx != null) {
@@ -101,10 +103,8 @@ public class ArrangementEngine {
     });
   }
 
-  private static void doArrange(@NotNull final Document document,
-                                @NotNull List<? extends ArrangementRule> arrangementRules,
-                                @NotNull Collection<? extends ArrangementEntry> entriesToProcess)
-  {
+  @SuppressWarnings("unchecked")
+  private static <E extends ArrangementEntry> void doArrange(Context<E> context) {
     // The general idea is to process entries bottom-up where every processed group belongs to the same parent. We may not bother
     // with entries text ranges then. We use a list and a stack for achieving that than.
     //
@@ -115,8 +115,9 @@ public class ArrangementEngine {
     //
     //    --------------------------
     //    Stage 1:
-    //      list: Entry1 Entry2
-    //      stack: [0, 0, 2]
+    //      list: Entry1 Entry2    <-- entries to process
+    //      stack: [0, 0, 2]       <-- holds current iteration info at the following format:
+    //                                 (start entry index at the auxiliary list (inclusive); current index; end index (exclusive))
     //    --------------------------
     //    Stage 2:
     //      list: Entry1 Entry2 Entry11 Entry12
@@ -161,17 +162,17 @@ public class ArrangementEngine {
     //      stack: [0, 2, 2]
     //    --------------------------
     //      arrange 'Entry1 Entry2'
-    
+
     List<ArrangementEntry> entries = new ArrayList<ArrangementEntry>();
     Stack<StackEntry> stack = new Stack<StackEntry>();
-    entries.addAll(entriesToProcess);
-    stack.push(new StackEntry(0, entriesToProcess.size()));
+    entries.addAll(context.entries);
+    stack.push(new StackEntry(0, context.entries.size()));
     while (!stack.isEmpty()) {
       StackEntry stackEntry = stack.peek();
       if (stackEntry.current >= stackEntry.end) {
-        List<ArrangementEntry> subEntries = entries.subList(stackEntry.start, stackEntry.end);
+        List<E> subEntries = (List<E>)entries.subList(stackEntry.start, stackEntry.end);
         if (subEntries.size() > 1) {
-          doArrange(arrangementRules, subEntries, document);
+          doArrange(subEntries, context);
         }
         subEntries.clear();
         stack.pop();
@@ -187,15 +188,15 @@ public class ArrangementEngine {
     }
   }
 
-  private static void doArrange(@NotNull List<? extends  ArrangementRule> rules,
-                                @NotNull List<? extends  ArrangementEntry> entries,
-                                @NotNull Document document)
+  @SuppressWarnings("unchecked")
+  private static <E extends ArrangementEntry> void doArrange(@NotNull List<E> entries,
+                                                             @NotNull Context<E> context)
   {
-    List<ArrangementEntry> arranged = new ArrayList<ArrangementEntry>();
-    Set<ArrangementEntry> unprocessed = new LinkedHashSet<ArrangementEntry>(entries);
+    List<E> arranged = new ArrayList<E>();
+    Set<E> unprocessed = new LinkedHashSet<E>(entries);
 
-    for (ArrangementRule rule : rules) {
-      for (ArrangementEntry entry : entries) {
+    for (ArrangementRule rule : context.rules) {
+      for (E entry : entries) {
         if (entry.canBeMatched() && unprocessed.contains(entry) && rule.getMatcher().isMatched(entry)) {
           arranged.add(entry);
           unprocessed.remove(entry);
@@ -203,35 +204,152 @@ public class ArrangementEngine {
       }
     }
     arranged.addAll(unprocessed);
-
-    if (arranged.equals(entries)) {
-      return;
-    }
     
+    context.prepare(arranged);
     // We apply changes from the last position to the first position in order not to bother with offsets shifts.
-    ArrangementEntry parent = entries.get(0).getParent();
-    final String initial;
-    final int shift;
-    if (parent == null) {
-      initial = document.getCharsSequence().toString();
-      shift = 0;
-    }
-    else {
-      initial = document.getCharsSequence().subSequence(parent.getStartOffset(), parent.getEndOffset()).toString();
-      shift = parent.getStartOffset();
-    }
     for (int i = arranged.size() - 1; i >= 0; i--) {
-      ArrangementEntry arrangedEntry = arranged.get(i);
-      ArrangementEntry initialEntry = entries.get(i);
-      if (!arrangedEntry.equals(initialEntry)) {
-        String text = initial.substring(arrangedEntry.getStartOffset() - shift, arrangedEntry.getEndOffset() - shift);
-        document.replaceString(initialEntry.getStartOffset(), initialEntry.getEndOffset(), text);
+      E arrangedEntry = arranged.get(i);
+      E initialEntry = entries.get(i);
+      context.replace(initialEntry, arrangedEntry, (E)arrangedEntry.getParent(), i > 0 ? arranged.get(i - 1) : null);
+    }
+  }
+
+  private static class Context<E extends ArrangementEntry> {
+
+    @NotNull public final Rearranger<E>                   rearranger;
+    @NotNull public final Collection<E>                   entries;
+    @NotNull public final Document                        document;
+    @NotNull public final List<? extends ArrangementRule> rules;
+    @NotNull public final CodeStyleSettings               mySettings;
+
+    /** Holds information on how many symbols was added to the initial entry text during the processing. */
+    @NotNull private final TObjectIntHashMap<ArrangementEntry> myExtraSizes = new TObjectIntHashMap<ArrangementEntry>();
+    @NotNull private String myParentText;
+    private          int    myParentShift;
+
+    private Context(@NotNull Rearranger<E> rearranger,
+                    @NotNull Collection<E> entries,
+                    @NotNull Document document,
+                    @NotNull List<? extends ArrangementRule> rules,
+                    @NotNull CodeStyleSettings settings)
+    {
+      this.rearranger = rearranger;
+      this.entries = entries;
+      this.document = document;
+      this.rules = rules;
+      mySettings = settings;
+    }
+
+    public static <T extends ArrangementEntry> Context<T> from(@NotNull Rearranger<T> rearranger,
+                                                               @NotNull Document document,
+                                                               @NotNull PsiElement root,
+                                                               @NotNull Collection<TextRange> ranges,
+                                                               @NotNull List<? extends ArrangementRule> rules,
+                                                               @NotNull CodeStyleSettings settings)
+    {
+      Collection<T> entries = rearranger.parse(root, document, ranges);
+      return new Context<T>(rearranger, entries, document, rules, settings);
+    }
+
+    public void prepare(@NotNull List<E> arrangedEntries) {
+      if (arrangedEntries.isEmpty()) {
+        return;
+      }
+      E parent = arrangedEntries.get(0);
+      if (parent == null) {
+        myParentText = document.getText();
+        myParentShift = 0;
+      }
+      else {
+        int endOffset = parent.getEndOffset();
+        if (myExtraSizes.containsKey(parent)) {
+          endOffset += myExtraSizes.get(parent);
+        }
+        myParentText = document.getCharsSequence().subSequence(parent.getStartOffset(), endOffset).toString();
+        myParentShift = parent.getStartOffset();
+      }
+    }
+
+    /**
+     * Replaces given 'old entry' by the given 'new entry'.
+     *
+     * @param oldEntry  entry which range should be replaced by the given 'new entry'
+     * @param newEntry  entry which text should replace given 'old entry' range
+     * @param parent    parent entry for the given entries
+     * @param previous  previous entry for the 'new entry' (if any)
+     */
+    @SuppressWarnings("AssignmentToForLoopParameter")
+    public void replace(@NotNull E oldEntry, @NotNull E newEntry, @Nullable E parent, @Nullable E previous) {
+      // Calculate blank lines before the arrangement.
+      int blankLinesBefore = 0;
+      TIntArrayList lineFeedOffsets = new TIntArrayList();
+      int oldStartLine = document.getLineNumber(oldEntry.getStartOffset());
+      if (oldStartLine > 0) {
+        int lastLineFeed = document.getLineStartOffset(oldStartLine) - 1;
+        lineFeedOffsets.add(lastLineFeed);
+        for (int i = lastLineFeed - 1 - myParentShift; i >= 0; i--) {
+          i = CharArrayUtil.shiftBackward(myParentText, i, " \t");
+          if (myParentText.charAt(i) == '\n') {
+            blankLinesBefore++;
+            lineFeedOffsets.add(i + myParentShift);
+          }
+          else {
+            break;
+          }
+        }
+      }
+
+      int desiredBlankLinesNumber = rearranger.getBlankLines(mySettings, parent, previous, newEntry);
+      if (desiredBlankLinesNumber == blankLinesBefore && newEntry.equals(oldEntry)) {
+        return;
+      }
+
+      String newEntryText = myParentText.substring(newEntry.getStartOffset() - myParentShift, newEntry.getEndOffset() - myParentShift);
+      int lineFeedsDiff = desiredBlankLinesNumber - blankLinesBefore;
+      if (lineFeedsDiff == 0) {
+        document.replaceString(oldEntry.getStartOffset(), oldEntry.getEndOffset(), newEntryText);
+        return;
+      }
+      
+      int oldEndOffset = oldEntry.getEndOffset();
+      if (myExtraSizes.containsKey(oldEntry)) {
+        oldEndOffset += myExtraSizes.get(oldEntry);
+      }
+      if (lineFeedsDiff > 0) {
+        StringBuilder buffer = new StringBuilder(StringUtil.repeat("\n", lineFeedsDiff));
+        buffer.append(newEntryText);
+        document.replaceString(oldEntry.getStartOffset(), oldEndOffset, buffer);
+        for (ArrangementEntry entry = newEntry; entry != null; entry = entry.getParent()) {
+          if (myExtraSizes.containsKey(entry)) {
+            myExtraSizes.put(entry, myExtraSizes.get(entry) + lineFeedsDiff);
+          }
+          else {
+            myExtraSizes.put(entry, lineFeedsDiff);
+          }
+        }
+      }
+      else if (desiredBlankLinesNumber == blankLinesBefore) {
+        document.replaceString(oldEntry.getStartOffset(), oldEndOffset, newEntryText);
+      }
+      else {
+        // Cut exceeding blank lines.
+        int blankLinesToCut = blankLinesBefore - desiredBlankLinesNumber;
+        int replacementStartOffset = lineFeedOffsets.get(lineFeedOffsets.size() - blankLinesToCut);
+        document.replaceString(replacementStartOffset, oldEndOffset, newEntryText);
+      }
+      for (ArrangementEntry entry = newEntry; entry != null; entry = entry.getParent()) {
+        if (myExtraSizes.containsKey(entry)) {
+          myExtraSizes.put(entry, myExtraSizes.get(entry) + lineFeedsDiff);
+        }
+        else {
+          myExtraSizes.put(entry, lineFeedsDiff);
+        }
       }
     }
   }
-  
+
   private static class StackEntry {
-    
+
     public int start;
     public int current;
     public int end;

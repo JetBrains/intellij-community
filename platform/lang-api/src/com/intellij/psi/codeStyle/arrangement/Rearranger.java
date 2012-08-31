@@ -19,7 +19,9 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -46,4 +48,15 @@ public interface Rearranger<E extends ArrangementEntry> {
    */
   @NotNull
   Collection<E> parse(@NotNull PsiElement root, @NotNull Document document, @NotNull Collection<TextRange> ranges);
+
+  /**
+   * Allows to answer how many blank lines should be inserted before the target arrangement entry which position is changed.
+   * 
+   * @param settings  code style settings to use (it's assumed that returned result is derived from 'blank lines' code style settings)
+   * @param parent    target entry's parent (if available)
+   * @param previous  previous entry (if available)
+   * @param target    target entry which blank lines number the caller is interested in
+   * @return          number of blank lines to insert before the target entry
+   */
+  int getBlankLines(@NotNull CodeStyleSettings settings, @Nullable E parent, @Nullable E previous, @NotNull E target);
 }
