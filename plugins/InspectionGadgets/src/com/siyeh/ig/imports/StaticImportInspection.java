@@ -273,14 +273,12 @@ public class StaticImportInspection extends BaseInspection {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (!(aClass.getParent() instanceof PsiJavaFile)) {
+      final PsiElement parent = aClass.getParent();
+      if (!(parent instanceof PsiJavaFile)) {
         return;
       }
-      if (JspPsiUtil.isInJspFile(aClass.getContainingFile())) {
-        return;
-      }
-      final PsiJavaFile file = (PsiJavaFile)aClass.getParent();
-      if (file == null) {
+      final PsiJavaFile file = (PsiJavaFile)parent;
+      if (JspPsiUtil.isInJspFile(file)) {
         return;
       }
       if (!file.getClasses()[0].equals(aClass)) {
@@ -301,28 +299,23 @@ public class StaticImportInspection extends BaseInspection {
       }
     }
 
-    private boolean shouldReportImportStatement(PsiImportStatementBase importStatement) {
+    private boolean shouldReportImportStatement(PsiImportStaticStatement importStatement) {
       final PsiJavaCodeReferenceElement importReference = importStatement.getImportReference();
       if (importReference == null) {
         return false;
       }
-      final PsiElement target;
-      if (importReference instanceof PsiImportStaticReferenceElement) {
-        final PsiImportStaticReferenceElement importStaticReferenceElement = (PsiImportStaticReferenceElement)importReference;
-        final PsiJavaCodeReferenceElement classReference = importStaticReferenceElement.getClassReference();
-        target = classReference.resolve();
-      } else {
-        target = importReference.resolve();
-      }
-      if (target instanceof PsiClass) {
-        PsiClass aClass = (PsiClass)target;
-        while (aClass != null) {
-          final String qualifiedName = aClass.getQualifiedName();
-          if (allowedClasses.contains(qualifiedName)) {
-            return false;
-          }
-          aClass = aClass.getContainingClass();
+      PsiClass targetClass = importStatement.resolveTargetClass();
+      boolean checked = false;
+      while (targetClass != null) {
+        final String qualifiedName = targetClass.getQualifiedName();
+        if (allowedClasses.contains(qualifiedName)) {
+          return false;
         }
+        if (checked) {
+          break;
+        }
+        targetClass = targetClass.getContainingClass();
+        checked = true;
       }
       if (importStatement.isOnDemand()) {
         return true;
