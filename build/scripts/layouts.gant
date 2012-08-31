@@ -204,7 +204,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
 public def layoutCommunityPlugins(String home) {
   dir("plugins") {
-    def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "eclipse", "hg4idea", "github", "ui-designer-new"]
+    def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "hg4idea", "github", "ui-designer-new"]
 
     simplePlugins.each {
       layoutPlugin it
@@ -362,6 +362,11 @@ public def layoutCommunityPlugins(String home) {
         jar("devkit-jps-plugin.jar") {
           module("devkit-jps-plugin")
         }
+      }
+    }
+    layoutPlugin("eclipse") {
+      jar("eclipse-jps-plugin.jar") {
+        module("eclipse-jps-plugin")
       }
     }
 

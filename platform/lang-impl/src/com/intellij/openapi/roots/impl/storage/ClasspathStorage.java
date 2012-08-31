@@ -50,6 +50,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,8 +70,8 @@ public class ClasspathStorage implements StateStorage {
 
   public static final String DEFAULT_STORAGE_DESCR = ProjectBundle.message("project.roots.classpath.format.default.descr");
 
-  @NonNls public static final String CLASSPATH_OPTION = "classpath";
-  @NonNls public static final String CLASSPATH_DIR_OPTION = "classpath-dir";
+  @NonNls public static final String CLASSPATH_OPTION = JpsProjectLoader.CLASSPATH_ATTRIBUTE;
+  @NonNls public static final String CLASSPATH_DIR_OPTION = JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE;
 
   @NonNls private static final String COMPONENT_TAG = "component";
   private Object mySession;

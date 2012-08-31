@@ -18,6 +18,7 @@ import org.jetbrains.jps.model.serialization.artifact.JpsArtifactSerializer;
 import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
+import org.jetbrains.jps.model.serialization.module.JpsModuleClasspathSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 import org.jetbrains.jps.service.SharedThreadPool;
@@ -36,6 +37,8 @@ import java.util.concurrent.Future;
  */
 public class JpsProjectLoader extends JpsLoaderBase {
   private static final BoundedTaskExecutor ourThreadPool = new BoundedTaskExecutor(SharedThreadPool.getInstance(), Runtime.getRuntime().availableProcessors());
+  public static final String CLASSPATH_ATTRIBUTE = "classpath";
+  public static final String CLASSPATH_DIR_ATTRIBUTE = "classpath-dir";
   private final JpsProject myProject;
   private final Map<String, String> myPathVariables;
 
@@ -169,11 +172,23 @@ public class JpsProjectLoader extends JpsLoaderBase {
     final String typeId = moduleRoot.getAttributeValue("type");
     final JpsModulePropertiesSerializer<?> serializer = getModulePropertiesSerializer(typeId);
     final JpsModule module = createModule(name, moduleRoot, serializer);
-    JpsModuleRootModelSerializer
-      .loadRootModel(module, JDomSerializationUtil.findComponent(moduleRoot, "NewModuleRootManager"), projectSdkType);
-    final String moduleDirPath = file.getParent();
-    JpsFacetSerializer.loadFacets(module, JDomSerializationUtil.findComponent(moduleRoot, "FacetManager"),
-                                  FileUtil.toSystemIndependentName(moduleDirPath));
+
+    String baseModulePath = FileUtil.toSystemIndependentName(file.getParent());
+    String classpath = moduleRoot.getAttributeValue(CLASSPATH_ATTRIBUTE);
+    if (classpath == null) {
+      JpsModuleRootModelSerializer.loadRootModel(module, JDomSerializationUtil.findComponent(moduleRoot, "NewModuleRootManager"),
+                                                 projectSdkType);
+    }
+    else {
+      for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
+        JpsModuleClasspathSerializer classpathSerializer = extension.getClasspathSerializer();
+        if (classpathSerializer != null && classpathSerializer.getClasspathId().equals(classpath)) {
+          String classpathDir = moduleRoot.getAttributeValue(CLASSPATH_DIR_ATTRIBUTE);
+          classpathSerializer.loadClasspath(module, classpathDir, baseModulePath);
+        }
+      }
+    }
+    JpsFacetSerializer.loadFacets(module, JDomSerializationUtil.findComponent(moduleRoot, "FacetManager"), baseModulePath);
     return module;
   }
 

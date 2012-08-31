@@ -40,8 +40,8 @@ import org.jdom.output.EclipseJDOMUtil;
 import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
-import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
 import org.jetbrains.idea.eclipse.conversion.*;
+import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,9 +64,9 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
     final List<Module> modules = new ArrayList<Module>();
     final List<Module> incompatibleModules = new ArrayList<Module>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      if (!EclipseClasspathStorageProvider.ID.equals(ClasspathStorage.getStorageType(module))) {
+      if (!JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID.equals(ClasspathStorage.getStorageType(module))) {
         try {
-          ClasspathStorage.getProvider(EclipseClasspathStorageProvider.ID).assertCompatible(ModuleRootManager.getInstance(module));
+          ClasspathStorage.getProvider(JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID).assertCompatible(ModuleRootManager.getInstance(module));
           modules.add(module);
         }
         catch (ConfigurationException e1) {
@@ -100,7 +100,7 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
     if (dialog.isOK()) {
       if (dialog.isLink()) {
         for (Module module : dialog.getSelectedModules()) {
-          ClasspathStorage.setStorageType(ModuleRootManager.getInstance(module), EclipseClasspathStorageProvider.ID);
+          ClasspathStorage.setStorageType(ModuleRootManager.getInstance(module), JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID);
         }
       }
       else {

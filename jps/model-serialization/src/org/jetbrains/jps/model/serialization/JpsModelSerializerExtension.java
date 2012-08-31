@@ -13,6 +13,7 @@ import org.jetbrains.jps.model.serialization.facet.JpsFacetConfigurationSerializ
 import org.jetbrains.jps.model.serialization.library.JpsLibraryPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryRootTypeSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsSdkPropertiesSerializer;
+import org.jetbrains.jps.model.serialization.module.JpsModuleClasspathSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerializer;
 import org.jetbrains.jps.service.JpsServiceManager;
 
@@ -93,5 +94,10 @@ public abstract class JpsModelSerializerExtension {
 
   public List<? extends JpsArtifactPropertiesSerializer<?>> getArtifactTypePropertiesSerializers() {
     return Collections.emptyList();
+  }
+
+  @Nullable
+  public JpsModuleClasspathSerializer getClasspathSerializer() {
+    return null;
   }
 }
