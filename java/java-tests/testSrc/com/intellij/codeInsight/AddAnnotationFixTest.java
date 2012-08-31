@@ -4,6 +4,7 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.DeannotateIntentionAction;
@@ -20,10 +21,15 @@ import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.ModuleRootEventImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestCase;
@@ -134,6 +140,24 @@ public class AddAnnotationFixTest extends UsefulTestCase {
   private void startListening(@NotNull final PsiModifierListOwner expectedOwner, @NotNull final String expectedAnnotationFQName,
                               final boolean expectedSuccessful) {
     startListening(Arrays.asList(Trinity.create(expectedOwner, expectedAnnotationFQName, expectedSuccessful)));
+  }
+
+  private void startListeningForDramaticChanges() {
+    myBusConnection = myProject.getMessageBus().connect();
+    myBusConnection.subscribe(ExternalAnnotationsManager.TOPIC, new DefaultAnnotationsListener() {
+      private boolean notifiedOnce;
+
+      @Override
+      public void externalAnnotationsChangedDramatically() {
+        if (!notifiedOnce) {
+          myExpectedEventWasProduced = true;
+          notifiedOnce = true;
+        }
+        else {
+          super.externalAnnotationsChangedDramatically();
+        }
+      }
+    });
   }
 
   private void stopListeningAndCheckEvents() {
@@ -356,6 +380,31 @@ public class AddAnnotationFixTest extends UsefulTestCase {
       @Override
       protected void run(final Result result) throws Throwable {
         ExternalAnnotationsManager.getInstance(myProject).deannotate(method, AnnotationUtil.NOT_NULL);
+      }
+    }.execute();
+    stopListeningAndCheckEvents();
+  }
+
+  public void testListenerNotifiedOnDramaticChanges() {
+    addDefaultLibrary();
+    myFixture.configureByFiles("/content/anno/p/annotations.xml");
+    myFixture.configureByFiles("lib/p/Test.java");
+
+    ExternalAnnotationsManager.getInstance(myProject).findExternalAnnotation(getOwner(), AnnotationUtil.NOT_NULL); // force creating service
+
+    startListeningForDramaticChanges();
+    myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, true));
+    stopListeningAndCheckEvents();
+
+    startListeningForDramaticChanges();
+    new WriteCommandAction(myProject){
+      @Override
+      protected void run(final Result result) throws Throwable {
+        VirtualFile file = LocalFileSystem.getInstance().findFileByPath(myFixture.getTempDirPath() + "/content/anno/p/annotations.xml");
+        assert file != null;
+        String newText = "  " + StreamUtil.readText(file.getInputStream()) + "      "; // adding newspace to the beginning and end of file
+        FileUtil.writeToFile(VfsUtil.virtualToIoFile(file), newText); // writing using java.io.File to make this change external
+        file.refresh(false, false);
       }
     }.execute();
     stopListeningAndCheckEvents();
