@@ -156,8 +156,6 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
       if (!ResolveUtil.processElement(processor, parameter, state)) return false;
     }
 
-    processor.handleEvent(ResolveUtil.DECLARATION_SCOPE_PASSED, this);
-
     return true;
   }
 

@@ -49,7 +49,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticPara
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 
@@ -127,10 +126,6 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   private boolean processOwner(PsiScopeProcessor processor, ResolveState state) {
-    if (processor instanceof PropertyResolverProcessor && OWNER_NAME.equals(((PropertyResolverProcessor)processor).getName())) {
-      processor.handleEvent(ResolveUtil.DECLARATION_SCOPE_PASSED, this);
-    }
-
     String nameHint = ResolveUtil.getNameHint(processor);
     if (nameHint == null || nameHint.equals(OWNER_NAME)) {
       if (!processor.execute(getOwner(), state)) return false;

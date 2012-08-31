@@ -55,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -109,7 +110,16 @@ public class ResolveUtil {
         }
       }
 
+      if (run instanceof GrClosableBlock && GrClosableBlock.OWNER_NAME.equals(getNameHint(processor))) {
+        processor.handleEvent(DECLARATION_SCOPE_PASSED, run);
+      }
+
       if (!run.processDeclarations(processor, ResolveState.initial(), lastParent, place)) return false;
+
+      if (run instanceof GrMethod) {
+        processor.handleEvent(DECLARATION_SCOPE_PASSED, run);
+      }
+
       if (processNonCodeMethods) {
         if (!doProcessNonCodeMembers) {
           if (run instanceof GrCodeBlock) doProcessNonCodeMembers = true;
