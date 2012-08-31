@@ -166,7 +166,7 @@ public class PyOverrideImplementUtil {
       final PyNamedParameter pyNamedParameter = parameter.getAsNamed();
       if (pyNamedParameter != null) {
         String repr = pyNamedParameter.getRepr(false);
-        parameters.add(hadStar ? pyNamedParameter.getName() + "=" + repr : repr);
+        parameters.add(hadStar && !pyNamedParameter.isKeywordContainer() ? pyNamedParameter.getName() + "=" + repr : repr);
         if (pyNamedParameter.isPositionalContainer()) {
           hadStar = true;
         }

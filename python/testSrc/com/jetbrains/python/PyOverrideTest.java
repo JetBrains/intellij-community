@@ -93,4 +93,8 @@ public class PyOverrideTest extends PyTestCase {
   public void testStarArgs() {  // PY-6455
     doTest3k();
   }
+
+  public void testKwargs() {  // PY-7401
+    doTest3k();
+  }
 }
