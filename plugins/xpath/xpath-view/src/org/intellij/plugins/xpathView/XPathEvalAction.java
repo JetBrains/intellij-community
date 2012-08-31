@@ -321,11 +321,11 @@ public class XPathEvalAction extends XPathAction {
                 processPresentation,
                 presentation,
                 new UsageViewManager.UsageViewStateListener() {
-                    public void usageViewCreated(UsageView usageView) {
+                    public void usageViewCreated(@NotNull UsageView usageView) {
                         usageView.addButtonToLowerPane(editAction, "&Edit Expression");
                     }
 
-                    public void findingUsagesFinished(UsageView usageView) {
+                    public void findingUsagesFinished(@NotNull UsageView usageView) {
                     }
                 });
     }
