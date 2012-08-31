@@ -53,8 +53,12 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
 
   @Override
   public PsiManagerEx getManager() {
-    final PsiElement parent = getParent();
-    if (parent == null) throw new PsiInvalidElementAccessException(this);
+    PsiElement parent;
+    for (parent = this; parent.getParent() instanceof ASTDelegatePsiElement; parent = parent.getParent()) {
+    }
+    parent = parent.getParent();
+    if (parent == null)
+      throw new PsiInvalidElementAccessException(this);
     return (PsiManagerEx)parent.getManager();
   }
 
