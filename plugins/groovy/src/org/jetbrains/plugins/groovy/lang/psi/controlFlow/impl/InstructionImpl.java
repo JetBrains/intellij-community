@@ -35,7 +35,7 @@ public class InstructionImpl implements Instruction {
   private final LinkedHashSet<InstructionImpl> mySuccessors = new LinkedHashSet<InstructionImpl>(1);
   private LinkedHashSet<NegatingGotoInstruction> myNegations;
 
-  PsiElement myPsiElement;
+  protected final PsiElement myPsiElement;
   private int myNumber = -1;
 
   @Nullable
