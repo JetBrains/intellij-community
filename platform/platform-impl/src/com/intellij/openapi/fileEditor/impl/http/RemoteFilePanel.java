@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.net.HTTPProxySettingsDialog;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
@@ -153,17 +154,25 @@ public class RemoteFilePanel implements PropertyChangeListener {
   }
 
   public void selectNotify() {
-    myProgressUpdatesQueue.showNotify();
-    if (myFileEditor != null) {
-      myFileEditor.selectNotify();
-    }
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        myProgressUpdatesQueue.showNotify();
+        if (myFileEditor != null) {
+          myFileEditor.selectNotify();
+        }
+      }
+    });
   }
 
   public void deselectNotify() {
-    myProgressUpdatesQueue.hideNotify();
-    if (myFileEditor != null) {
-      myFileEditor.deselectNotify();
-    }
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        myProgressUpdatesQueue.hideNotify();
+        if (myFileEditor != null) {
+          myFileEditor.deselectNotify();
+        }
+      }
+    });
   }
 
   public void dispose() {
