@@ -358,7 +358,11 @@ public class PyUtil {
   @NotNull
   public static List<PyClass> getAllSuperClasses(@NotNull PyClass pyClass) {
     List<PyClass> superClasses = new ArrayList<PyClass>();
-    for (PyClass ancestor : pyClass.iterateAncestorClasses()) superClasses.add(ancestor);
+    for (PyClass ancestor : pyClass.iterateAncestorClasses()) {
+      if (!PyNames.FAKE_OLD_BASE.equals(ancestor.getName())) {
+        superClasses.add(ancestor);
+      }
+    }
     return superClasses;
   }
 

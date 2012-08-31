@@ -5,11 +5,13 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,44 +27,64 @@ public class PyGotoSuperHandler implements CodeInsightActionHandler {
 
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-    if (element == null) {
-      return;
-    }
-    PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-    if (function != null) {
-      final Collection<PyFunction> superFunctions = getAllSuperMethodsByName(function);
-      if (!superFunctions.isEmpty()) {
-        PyFunction[] superFunctionsArray = superFunctions.toArray(new PyFunction[superFunctions.size()]);
-        if (superFunctionsArray.length == 1) {
-          superFunctionsArray[0].navigate(true);
+    PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
+    if (pyClass != null) {
+      PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class, false, PyClass.class);
+      if (function != null) {
+        gotoSuperFunctions(editor, function, pyClass);
+      }
+      else {
+        PyTargetExpression classAttr = PsiTreeUtil.getParentOfType(element, PyTargetExpression.class, false, PyClass.class);
+        if (classAttr != null) {
+          gotoSuperClassAttributes(editor, classAttr, pyClass);
         }
         else {
-          NavigationUtil.getPsiElementPopup(superFunctionsArray, CodeInsightBundle.message("goto.super.method.chooser.title"))
-            .showInBestPositionFor(editor);
-        }
-      }
-    }
-    else {
-      PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
-      if (pyClass != null) {
-        List<PyClass> superClasses = PyUtil.getAllSuperClasses(pyClass);
-        if (superClasses.size() != 0) {
-          if (superClasses.size() == 1) {
-            superClasses.get(0).navigate(true);
-          }
-          else {
-            NavigationUtil.getPsiElementPopup(superClasses.toArray(new PyClass[superClasses.size()]), "Choose superclass")
-              .showInBestPositionFor(editor);
-          }
+          navigateOrChoose(editor, PyUtil.getAllSuperClasses(pyClass), "Choose superclass");
         }
       }
     }
   }
 
-  private static Collection<PyFunction> getAllSuperMethodsByName(@NotNull final PyFunction method) {
-    final PyClass pyClass = method.getContainingClass();
+  private static void gotoSuperFunctions(Editor editor, PyFunction function, PyClass pyClass) {
+    final Collection<PyFunction> superFunctions = getAllSuperMethodsByName(function, pyClass);
+    navigateOrChoose(editor, superFunctions, CodeInsightBundle.message("goto.super.method.chooser.title"));
+  }
+
+  private static void gotoSuperClassAttributes(Editor editor, PyTargetExpression attr, PyClass pyClass) {
+    final Collection<PyTargetExpression> attrs = getAllSuperAttributesByName(attr, pyClass);
+    navigateOrChoose(editor, attrs, "Choose superclass attribute");
+  }
+
+  private static void navigateOrChoose(Editor editor, Collection<? extends NavigatablePsiElement> superElements, final String title) {
+    if (!superElements.isEmpty()) {
+      NavigatablePsiElement[] superElementArray = superElements.toArray(new NavigatablePsiElement[superElements.size()]);
+      if (superElementArray.length == 1) {
+        superElementArray[0].navigate(true);
+      }
+      else {
+        NavigationUtil.getPsiElementPopup(superElementArray, title).showInBestPositionFor(editor);
+      }
+    }
+  }
+
+  private static Collection<PyTargetExpression> getAllSuperAttributesByName(@NotNull final PyTargetExpression classAttr, PyClass pyClass) {
+    final String name = classAttr.getName();
+    if (name == null) {
+      return Collections.emptyList();
+    }
+    final List<PyTargetExpression> result = new ArrayList<PyTargetExpression>();
+    for (PyClass aClass: pyClass.iterateAncestorClasses()) {
+      final PyTargetExpression superAttr = aClass.findClassAttribute(name, false);
+      if (superAttr != null) {
+        result.add(superAttr);
+      }
+    }
+    return result;
+  }
+
+  private static Collection<PyFunction> getAllSuperMethodsByName(@NotNull final PyFunction method, PyClass pyClass) {
     final String name = method.getName();
-    if (pyClass == null || name == null) {
+    if (name == null) {
       return Collections.emptyList();
     }
     final List<PyFunction> result = new ArrayList<PyFunction>();
