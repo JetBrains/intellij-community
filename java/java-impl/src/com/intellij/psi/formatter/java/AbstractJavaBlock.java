@@ -114,7 +114,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                               AlignmentInColumnsHelper alignmentInColumnsHelper) {
     super(node, wrap, createBlockAlignment(alignmentStrategy, node));
     mySettings = settings;
-    myIndentSettings = settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA);
+    myIndentSettings = settings.getIndentOptions();
     myIndent = indent;
     myWrapManager = wrapManager;
     myAlignmentStrategy = alignmentStrategy;
