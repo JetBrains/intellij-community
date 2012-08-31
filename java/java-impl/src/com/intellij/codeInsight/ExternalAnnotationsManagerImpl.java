@@ -312,7 +312,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
 
   private void annotateExternally(@NotNull final VirtualFile root,
                                   @NotNull final PsiModifierListOwner listOwner,
-                                  @NotNull Project project,
+                                  @NotNull final Project project,
                                   @NotNull final String packageName,
                                   @NotNull final String annotationFQName,
                                   @NotNull final PsiFile fromFile,
@@ -344,22 +344,22 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
             annotateExternally(listOwner, annotationFQName, existingXml, fromFile, value);
           }
         }
+
+        UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction() {
+          @Override
+          public void undo() throws UnexpectedUndoException {
+            dropCache();
+            notifyChangedDramatically();
+          }
+
+          @Override
+          public void redo() throws UnexpectedUndoException {
+            dropCache();
+            notifyChangedDramatically();
+          }
+        });
       }
     }.execute();
-
-    UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction() {
-      @Override
-      public void undo() throws UnexpectedUndoException {
-        dropCache();
-        notifyChangedDramatically();
-      }
-
-      @Override
-      public void redo() throws UnexpectedUndoException {
-        dropCache();
-        notifyChangedDramatically();
-      }
-    });
   }
 
   @Override
