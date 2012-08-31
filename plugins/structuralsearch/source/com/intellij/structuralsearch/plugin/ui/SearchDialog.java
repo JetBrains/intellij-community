@@ -47,6 +47,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -567,12 +568,12 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       processPresentation,
       presentation,
       new UsageViewManager.UsageViewStateListener() {
-        public void usageViewCreated(UsageView usageView) {
+        public void usageViewCreated(@NotNull UsageView usageView) {
           context.setUsageView(usageView);
           configureActions(context);
         }
 
-        public void findingUsagesFinished(final UsageView usageView) {
+        public void findingUsagesFinished(@NotNull final UsageView usageView) {
         }
       }
     );
