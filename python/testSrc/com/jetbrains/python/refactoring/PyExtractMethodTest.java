@@ -245,4 +245,9 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testYield33() {
     doTest("bar", LanguageLevel.PYTHON33);
   }
+
+  // PY-7399
+  public void testYieldFrom33() {
+    doTest("bar", LanguageLevel.PYTHON33);
+  }
 }

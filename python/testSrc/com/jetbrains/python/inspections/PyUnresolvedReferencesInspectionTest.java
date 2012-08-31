@@ -201,6 +201,26 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
     });
   }
 
+  // PY-7389
+  public void testComprehensionScope27() {
+    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
+      }
+    });
+  }
+
+  // PY-7389
+  public void testComprehensionScope33() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
+      }
+    });
+  }
+
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
