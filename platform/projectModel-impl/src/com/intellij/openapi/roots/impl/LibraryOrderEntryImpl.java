@@ -30,6 +30,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.JpsModuleSerializer;
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension;
 
 /**
  *  @author dsl
@@ -40,11 +42,11 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   @Nullable private String myLibraryName; // is non-null if myLibrary == null
   @Nullable private String myLibraryLevel; // is non-null if myLibraryLevel == null
   private boolean myExported;
-  @NonNls static final String ENTRY_TYPE = "library";
-  @NonNls private static final String NAME_ATTR = "name";
-  @NonNls private static final String LEVEL_ATTR = "level";
+  @NonNls static final String ENTRY_TYPE = JpsModuleSerializer.LIBRARY_TYPE;
+  @NonNls private static final String NAME_ATTR = JpsModuleSerializer.NAME_ATTRIBUTE;
+  @NonNls private static final String LEVEL_ATTR = JpsModuleSerializer.LEVEL_ATTRIBUTE;
   private final MyOrderEntryLibraryTableListener myLibraryListener = new MyOrderEntryLibraryTableListener();
-  @NonNls private static final String EXPORTED_ATTR = "exported";
+  @NonNls private static final String EXPORTED_ATTR = JpsJavaModelSerializerExtension.EXPORTED_ATTRIBUTE;
 
   LibraryOrderEntryImpl(@NotNull Library library, @NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) {
     super(rootModel, projectRootManager);

@@ -33,6 +33,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.JpsModuleSerializer;
 
 import java.util.*;
 
@@ -42,10 +43,10 @@ import java.util.*;
 public class ContentEntryImpl extends RootModelComponentBase implements ContentEntry, ClonableContentEntry, Comparable<ContentEntryImpl> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleContentEntryImpl");
   @NotNull private final VirtualFilePointer myRoot;
-  @NonNls public static final String ELEMENT_NAME = "content";
+  @NonNls public static final String ELEMENT_NAME = JpsModuleSerializer.CONTENT_TAG;
   private final Set<SourceFolder> mySourceFolders = new LinkedHashSet<SourceFolder>();
   private final Set<ExcludeFolder> myExcludeFolders = new TreeSet<ExcludeFolder>(ContentFolderComparator.INSTANCE);
-  @NonNls public static final String URL_ATTRIBUTE = "url";
+  @NonNls public static final String URL_ATTRIBUTE = JpsModuleSerializer.URL_ATTRIBUTE;
 
   ContentEntryImpl(@NotNull VirtualFile file, @NotNull RootModelImpl m) {
     this(file.getUrl(), m);

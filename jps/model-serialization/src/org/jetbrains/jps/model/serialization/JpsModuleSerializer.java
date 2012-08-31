@@ -26,26 +26,26 @@ import static com.intellij.openapi.util.JDOMUtil.getChildren;
  * @author nik
  */
 public class JpsModuleSerializer {
-  private static final String URL_ATTRIBUTE = "url";
-  private static final String CONTENT_TAG = "content";
-  private static final String SOURCE_FOLDER_TAG = "sourceFolder";
-  private static final String PACKAGE_PREFIX_ATTRIBUTE = "packagePrefix";
-  private static final String IS_TEST_SOURCE_ATTRIBUTE = "isTestSource";
-  private static final String EXCLUDE_FOLDER_TAG = "excludeFolder";
-  private static final String ORDER_ENTRY_TAG = "orderEntry";
-  private static final String TYPE_ATTRIBUTE = "type";
-  private static final String SOURCE_FOLDER_TYPE = "sourceFolder";
-  private static final String JDK_TYPE = "jdk";
-  private static final String JDK_NAME_ATTRIBUTE = "jdkName";
-  private static final String JDK_TYPE_ATTRIBUTE = "jdkType";
-  private static final String INHERITED_JDK_TYPE = "inheritedJdk";
-  private static final String LIBRARY_TYPE = "library";
-  private static final String NAME_ATTRIBUTE = "name";
-  private static final String LEVEL_ATTRIBUTE = "level";
-  private static final String LIBRARY_TAG = "library";
-  private static final String MODULE_LIBRARY_TYPE = "module-library";
-  private static final String MODULE_TYPE = "module";
-  private static final String MODULE_NAME_ATTRIBUTE = "module-name";
+  public static final String URL_ATTRIBUTE = "url";
+  public static final String CONTENT_TAG = "content";
+  public static final String SOURCE_FOLDER_TAG = "sourceFolder";
+  public static final String PACKAGE_PREFIX_ATTRIBUTE = "packagePrefix";
+  public static final String IS_TEST_SOURCE_ATTRIBUTE = "isTestSource";
+  public static final String EXCLUDE_FOLDER_TAG = "excludeFolder";
+  public static final String ORDER_ENTRY_TAG = "orderEntry";
+  public static final String TYPE_ATTRIBUTE = "type";
+  public static final String SOURCE_FOLDER_TYPE = "sourceFolder";
+  public static final String JDK_TYPE = "jdk";
+  public static final String JDK_NAME_ATTRIBUTE = "jdkName";
+  public static final String JDK_TYPE_ATTRIBUTE = "jdkType";
+  public static final String INHERITED_JDK_TYPE = "inheritedJdk";
+  public static final String LIBRARY_TYPE = "library";
+  public static final String NAME_ATTRIBUTE = "name";
+  public static final String LEVEL_ATTRIBUTE = "level";
+  public static final String LIBRARY_TAG = "library";
+  public static final String MODULE_LIBRARY_TYPE = "module-library";
+  public static final String MODULE_TYPE = "module";
+  public static final String MODULE_NAME_ATTRIBUTE = "module-name";
   private static final String GENERATED_LIBRARY_NAME_PREFIX = "#";
 
   public static void loadRootModel(JpsModule module, Element rootModelComponent, JpsSdkType<?> projectSdkType) {

@@ -30,6 +30,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.JpsModuleSerializer;
 
 /**
  * @author dsl
@@ -38,9 +39,9 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
                                                                                   ClonableOrderEntry,
                                                                                   ModuleJdkOrderEntry,
                                                                                   ProjectJdkTable.Listener {
-  @NonNls public static final String ENTRY_TYPE = "jdk";
-  @NonNls public static final String JDK_NAME_ATTR = "jdkName";
-  @NonNls public static final String JDK_TYPE_ATTR = "jdkType";
+  @NonNls public static final String ENTRY_TYPE = JpsModuleSerializer.JDK_TYPE;
+  @NonNls public static final String JDK_NAME_ATTR = JpsModuleSerializer.JDK_NAME_ATTRIBUTE;
+  @NonNls public static final String JDK_TYPE_ATTR = JpsModuleSerializer.JDK_TYPE_ATTRIBUTE;
 
   @Nullable private Sdk myJdk;
   private String myJdkName;

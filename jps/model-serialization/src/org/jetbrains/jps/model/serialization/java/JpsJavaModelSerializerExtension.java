@@ -24,20 +24,20 @@ import java.util.List;
  * @author nik
  */
 public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension {
-  private static final String EXPORTED_ATTRIBUTE = "exported";
-  private static final String SCOPE_ATTRIBUTE = "scope";
-  private static final String OUTPUT_TAG = "output";
-  private static final String URL_ATTRIBUTE = "url";
-  private static final String LANGUAGE_LEVEL_ATTRIBUTE = "languageLevel";
-  private static final String EXPLODED_TAG = "exploded";
-  private static final String EXCLUDE_EXPLODED_TAG = "exclude-exploded";
-  private static final String TEST_OUTPUT_TAG = "output-test";
-  private static final String INHERIT_COMPILER_OUTPUT_ATTRIBUTE = "inherit-compiler-output";
-  private static final String EXCLUDE_OUTPUT_TAG = "exclude-output";
+  public static final String EXPORTED_ATTRIBUTE = "exported";
+  public static final String SCOPE_ATTRIBUTE = "scope";
+  public static final String OUTPUT_TAG = "output";
+  public static final String URL_ATTRIBUTE = "url";
+  public static final String LANGUAGE_LEVEL_ATTRIBUTE = "languageLevel";
+  public static final String EXPLODED_TAG = "exploded";
+  public static final String EXCLUDE_EXPLODED_TAG = "exclude-exploded";
+  public static final String TEST_OUTPUT_TAG = "output-test";
+  public static final String INHERIT_COMPILER_OUTPUT_ATTRIBUTE = "inherit-compiler-output";
+  public static final String EXCLUDE_OUTPUT_TAG = "exclude-output";
   private static final String ANNOTATION_PATHS_TAG = "annotation-paths";
   private static final String JAVADOC_PATHS_TAG = "javadoc-paths";
   private static final String MODULE_LANGUAGE_LEVEL_ATTRIBUTE = "LANGUAGE_LEVEL";
-  private static final String ROOT_TAG = "root";
+  public static final String ROOT_TAG = "root";
 
   @Override
   public void loadRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {

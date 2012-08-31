@@ -36,16 +36,17 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
-  @NonNls private static final String OUTPUT_TAG = "output";
-  @NonNls private static final String TEST_OUTPUT_TAG = "output-test";
-  @NonNls private static final String ATTRIBUTE_URL = "url";
-  @NonNls private static final String INHERIT_COMPILER_OUTPUT = "inherit-compiler-output";
-  @NonNls private static final String EXCLUDE_OUTPUT_TAG = "exclude-output";
+  @NonNls private static final String OUTPUT_TAG = JpsJavaModelSerializerExtension.OUTPUT_TAG;
+  @NonNls private static final String TEST_OUTPUT_TAG = JpsJavaModelSerializerExtension.TEST_OUTPUT_TAG;
+  @NonNls private static final String ATTRIBUTE_URL = JpsJavaModelSerializerExtension.URL_ATTRIBUTE;
+  @NonNls private static final String INHERIT_COMPILER_OUTPUT = JpsJavaModelSerializerExtension.INHERIT_COMPILER_OUTPUT_ATTRIBUTE;
+  @NonNls private static final String EXCLUDE_OUTPUT_TAG = JpsJavaModelSerializerExtension.EXCLUDE_OUTPUT_TAG;
 
   private String myCompilerOutput;
   private VirtualFilePointer myCompilerOutputPointer;

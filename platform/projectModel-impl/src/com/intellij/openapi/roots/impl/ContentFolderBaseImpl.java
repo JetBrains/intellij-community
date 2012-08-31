@@ -27,12 +27,13 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.JpsModuleSerializer;
 
 /**
  *  @author dsl
  */
 public abstract class ContentFolderBaseImpl extends RootModelComponentBase implements ContentFolder, Comparable<ContentFolderBaseImpl> {
-  @NonNls public static final String URL_ATTRIBUTE = "url";
+  @NonNls public static final String URL_ATTRIBUTE = JpsModuleSerializer.URL_ATTRIBUTE;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleContentFolderBaseImpl");
 
