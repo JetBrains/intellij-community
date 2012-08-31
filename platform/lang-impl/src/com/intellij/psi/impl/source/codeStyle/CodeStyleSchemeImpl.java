@@ -53,7 +53,7 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
   private Element myRootElement;
   private String myParentSchemeName;
   private final boolean myIsDefault;
-  private CodeStyleSettings myCodeStyleSettings;
+  private volatile CodeStyleSettings myCodeStyleSettings;
   private final ExternalInfo myExternalInfo = new ExternalInfo();
 
   public CodeStyleSchemeImpl(String name, String parentSchemeName, Element rootElement) {

@@ -25,6 +25,7 @@ import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,8 +41,7 @@ import java.io.File;
   )}
 )
 public class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements PersistentStateComponent<Element>, NamedComponent {
-
-  public final static String CODE_STYLE_SCHEMES_FILE = "code.style.schemes.xml";
+  @NonNls static final String CODE_STYLE_SCHEMES_FILE = "code.style.schemes.xml";
 
   private boolean isLoaded;
 
@@ -64,7 +64,7 @@ public class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements
   public void loadState(Element state) {
     init();
     XmlSerializer.deserializeInto(this, state);
-    this.isLoaded = true;
+    isLoaded = true;
     updateCurrentScheme();
   }
 
@@ -76,7 +76,7 @@ public class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements
 
   @Override
   public boolean isLoaded() {
-    return this.isLoaded;
+    return isLoaded;
   }
 
   @Override
@@ -86,7 +86,7 @@ public class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements
     if (legacySettings != null) {
       CURRENT_SCHEME_NAME = legacySettings.CURRENT_SCHEME_NAME;
     }
-    this.isLoaded = true;
+    isLoaded = true;
     updateCurrentScheme();
   }
 

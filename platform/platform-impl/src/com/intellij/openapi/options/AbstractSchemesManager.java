@@ -32,9 +32,10 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.AbstractSchemesManager");
 
   protected final List<T> mySchemes = new ArrayList<T>();
-  private T myCurrentScheme;
+  private volatile T myCurrentScheme;
   private String myCurrentSchemeName;
 
+  @Override
   public void addNewScheme(@NotNull final T scheme, final boolean replaceExisting) {
     int toReplace = -1;
     boolean newSchemeIsShared = isShared(scheme);
@@ -80,17 +81,20 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     return result;
   }
 
+  @Override
   public void clearAllSchemes() {
     for (T t : getAllSchemes()) {
       removeScheme(t);
     }
   }
 
+  @Override
   @NotNull
   public List<T> getAllSchemes() {
     return Collections.unmodifiableList(new ArrayList<T>(mySchemes));
   }
 
+  @Override
   @Nullable
   public T findSchemeByName(final String schemeName) {
     for (T scheme : mySchemes) {
@@ -102,34 +106,26 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     return null;
   }
 
+  @Override
   public abstract void save() throws WriteExternalException;
 
+  @Override
   public void setCurrentSchemeName(final String schemeName) {
     myCurrentSchemeName = schemeName;
-    if (schemeName != null) {
-      T found = findSchemeByName(schemeName);
-      if (found != null) {
-        myCurrentScheme =  found;
-      }
-      else {
-        myCurrentScheme =  null;
-      }
-    }
-    else {
-      myCurrentScheme =  null;
-    }
+    myCurrentScheme = schemeName == null ? null : findSchemeByName(schemeName);
   }
 
+  @Override
   @Nullable
   public T getCurrentScheme() {
-    if (myCurrentScheme == null) {
+    T currentScheme = myCurrentScheme;
+    if (currentScheme == null) {
       return null;
     }
-    else  {
-      return findSchemeByName(myCurrentScheme.getName());
-    }
+    return findSchemeByName(currentScheme.getName());
   }
 
+  @Override
   public void removeScheme(final T scheme) {
     String schemeName = scheme.getName();
     Scheme toDelete = findSchemeToDelete(schemeName);
@@ -153,6 +149,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   }
 
 
+  @Override
   @NotNull
   public Collection<String> getAllSchemeNames() {
     return getAllSchemeNames(mySchemes);
@@ -175,6 +172,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     }
   }
 
+  @Override
   @NotNull
   public Collection<SharedScheme<E>> loadSharedSchemes() {
     return loadSharedSchemes(getAllSchemes());

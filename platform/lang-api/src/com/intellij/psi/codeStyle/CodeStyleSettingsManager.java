@@ -28,21 +28,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CodeStyleSettingsManager implements PersistentStateComponent<Element> {
-
   private static final Logger LOG = Logger.getInstance("#" + CodeStyleSettingsManager.class.getName());
 
-  public CodeStyleSettings PER_PROJECT_SETTINGS = null;
-  public boolean USE_PER_PROJECT_SETTINGS = false;
-  private CodeStyleSettings myTemporarySettings;
-  private boolean myIsLoaded = false;
+  public volatile CodeStyleSettings PER_PROJECT_SETTINGS = null;
+  public volatile boolean USE_PER_PROJECT_SETTINGS = false;
+  private volatile CodeStyleSettings myTemporarySettings;
+  private volatile boolean myIsLoaded = false;
 
-  public static CodeStyleSettingsManager getInstance(Project project) {
+  public static CodeStyleSettingsManager getInstance(@NotNull Project project) {
     ProjectCodeStyleSettingsManager projectSettingsManager = ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
     if (!projectSettingsManager.isLoaded()) {
-      LegacyCodeStyleSettingsManager legacySettingsManager = ServiceManager.getService(project, LegacyCodeStyleSettingsManager.class);
-      if (legacySettingsManager != null && legacySettingsManager.getState() != null) {
-        projectSettingsManager.loadState(legacySettingsManager.getState());
-        LOG.info("Imported old project code style settings.");
+      synchronized (projectSettingsManager) {
+        if (!projectSettingsManager.isLoaded()) {
+          LegacyCodeStyleSettingsManager legacySettingsManager = ServiceManager.getService(project, LegacyCodeStyleSettingsManager.class);
+          if (legacySettingsManager != null && legacySettingsManager.getState() != null) {
+            projectSettingsManager.loadState(legacySettingsManager.getState());
+            LOG.info("Imported old project code style settings.");
+          }
+        }
       }
     }
     return projectSettingsManager;
@@ -58,26 +61,29 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   public CodeStyleSettingsManager() {}
 
   @NotNull
-  public static CodeStyleSettings getSettings(final @Nullable Project project) {
+  public static CodeStyleSettings getSettings(@Nullable final Project project) {
     final CodeStyleSettingsManager instance = project == null || project.isDefault() ? getInstance() : getInstance(project);
     return instance.getCurrentSettings();
   }
 
   @NotNull
   public CodeStyleSettings getCurrentSettings() {
-    if (myTemporarySettings != null) return myTemporarySettings;
-    if (USE_PER_PROJECT_SETTINGS && PER_PROJECT_SETTINGS != null) return PER_PROJECT_SETTINGS;
+    CodeStyleSettings temporarySettings = myTemporarySettings;
+    if (temporarySettings != null) return temporarySettings;
+    CodeStyleSettings projectSettings = PER_PROJECT_SETTINGS;
+    if (USE_PER_PROJECT_SETTINGS && projectSettings != null) return projectSettings;
     return CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings();
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  private void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  private void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CodeStyleSettingsManager>(this, new CodeStyleSettingsManager()));
   }
 
+  @Override
   public Element getState() {
     Element result = new Element("state");
     try {
@@ -89,6 +95,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     return result;
   }
 
+  @Override
   public void loadState(Element state) {
     try {
       readExternal(state);
@@ -99,17 +106,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     }
   }
 
-  public void disposeComponent() {}
-  public void initComponent() {}
-  public void projectOpened() {}
-  public void projectClosed() {}
-
-  @NotNull
-  public String getComponentName() {
-    return "CodeStyleSettingsManager";
-  }
-
-  public void setTemporarySettings(CodeStyleSettings settings) {
+  public void setTemporarySettings(@NotNull CodeStyleSettings settings) {
     myTemporarySettings = settings;
   }
 
