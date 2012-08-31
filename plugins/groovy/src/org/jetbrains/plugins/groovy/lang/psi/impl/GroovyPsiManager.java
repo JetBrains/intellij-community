@@ -63,6 +63,7 @@ public class GroovyPsiManager {
   private static final Set<String> ourPopularClasses = ContainerUtil.newHashSet(GROOVY_LANG_CLOSURE,
                                                                                 DEFAULT_BASE_CLASS_NAME,
                                                                                 GROOVY_OBJECT_SUPPORT,
+                                                                                GROOVY_LANG_SCRIPT,
                                                                                 JAVA_UTIL_LIST,
                                                                                 JAVA_UTIL_COLLECTION,
                                                                                 JAVA_LANG_STRING);
