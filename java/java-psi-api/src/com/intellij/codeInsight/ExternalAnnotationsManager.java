@@ -51,6 +51,7 @@ public abstract class ExternalAnnotationsManager {
   @Nullable
   public abstract PsiAnnotation findExternalAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
+  // Method used in Kotlin plugin
   public abstract boolean isExternalAnnotationWritable(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
   @Nullable
@@ -63,6 +64,7 @@ public abstract class ExternalAnnotationsManager {
 
   public abstract boolean deannotate(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
+  // Method used in Kotlin plugin when it is necessary to leave external annotation, but modify its arguments
   public abstract boolean editExternalAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN,
                                                  @Nullable PsiNameValuePair[] value);
 
