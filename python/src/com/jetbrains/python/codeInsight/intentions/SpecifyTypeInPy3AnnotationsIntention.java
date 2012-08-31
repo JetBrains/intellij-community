@@ -45,11 +45,8 @@ public class SpecifyTypeInPy3AnnotationsIntention implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!LanguageLevel.forElement(file).isPy3K()) return false;
 
-    PyExpression problemElement = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset() - 1),
-                                                              PyNamedParameter.class);
-    if (problemElement == null)
-      problemElement = PsiTreeUtil.getTopmostParentOfType(file.findElementAt(editor.getCaretModel().getOffset() - 1),
-                                                          PyQualifiedExpression.class);
+    PyExpression problemElement = PyUtil.findProblemElement(editor, file, PyNamedParameter.class, PyQualifiedExpression.class);
+
     if (problemElement == null) return false;
     if (problemElement instanceof PyQualifiedExpression) {
       final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
@@ -98,9 +95,7 @@ public class SpecifyTypeInPy3AnnotationsIntention implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PyExpression problemElement = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset() - 1), PyNamedParameter.class);
-    if (problemElement == null)
-      problemElement = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()-1), PyExpression.class);
+    PyExpression problemElement = PyUtil.findProblemElement(editor, file, PyNamedParameter.class, PyQualifiedExpression.class);
     if (problemElement != null) {
       String name = problemElement.getName();
       PsiReference reference = problemElement.getReference();

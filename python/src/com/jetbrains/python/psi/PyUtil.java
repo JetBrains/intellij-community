@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -1039,9 +1040,6 @@ public class PyUtil {
     else if (expression instanceof PySequenceExpression) {
       valuesLength = ((PySequenceExpression)expression).getElements().length;
     }
-    else if (expression instanceof PyDictLiteralExpression) {
-      valuesLength = ((PyDictLiteralExpression)expression).getElements().length;
-    }
     else if (expression instanceof PyStringLiteralExpression) {
       valuesLength = ((PyStringLiteralExpression)expression).getStringValue().length();
     }
@@ -1105,5 +1103,18 @@ public class PyUtil {
     }
     return null;
   }
+
+  @Nullable
+  public static <T extends PyExpression> T findProblemElement(Editor editor, PsiFile file, @NotNull final Class<? extends T>... classes) {
+    for (Class claz : classes) {
+      PsiElement problemElement = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset() - 1), claz);
+      if (problemElement != null) return (T)problemElement;
+
+      problemElement = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), claz);
+      if (problemElement != null) return (T)problemElement;
+    }
+    return null;
+  }
+
 }
 

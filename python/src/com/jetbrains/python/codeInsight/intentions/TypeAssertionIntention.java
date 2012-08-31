@@ -41,8 +41,7 @@ public class TypeAssertionIntention implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    PyExpression problemElement =
-      PsiTreeUtil.getTopmostParentOfType(file.findElementAt(editor.getCaretModel().getOffset()-1), PyQualifiedExpression.class);
+    PyExpression problemElement = PyUtil.findProblemElement(editor, file, PyQualifiedExpression.class);
     if (problemElement == null) return false;
     if (problemElement instanceof PyQualifiedExpression) {
       final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
@@ -63,8 +62,7 @@ public class TypeAssertionIntention implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PyExpression problemElement = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()-1),
-                                                                              PyExpression.class);
+    PyExpression problemElement = PyUtil.findProblemElement(editor, file, PyQualifiedExpression.class);
     if (problemElement != null) {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 

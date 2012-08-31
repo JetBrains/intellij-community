@@ -253,6 +253,10 @@ public class PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.insert.assertion"));
   }
 
+  public void testTypeAssertion2() {
+    doTest(PyBundle.message("INTN.insert.assertion"));
+  }
+
   public void testDocStub() {
     doDocStubTest();
   }
