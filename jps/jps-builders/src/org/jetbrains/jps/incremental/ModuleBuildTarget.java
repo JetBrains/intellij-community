@@ -34,7 +34,7 @@ public class ModuleBuildTarget extends BuildTarget {
     if (this == o) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    if (o == null || !(o instanceof ModuleBuildTarget)) {
       return false;
     }
 
