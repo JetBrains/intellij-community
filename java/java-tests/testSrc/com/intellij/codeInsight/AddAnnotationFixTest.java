@@ -328,6 +328,39 @@ public class AddAnnotationFixTest extends UsefulTestCase {
                                 "content/annoMultiRoot/root2/multiRoot/annotations_after.xml", false);
   }
 
+  public void testListenerNotifiedWhenOperationsFail() {
+    addLibrary(); // no annotation roots: all operations should fail
+    myFixture.configureByFiles("lib/p/Test.java");
+    final PsiMethod method = ((PsiJavaFile)myFixture.getFile()).getClasses()[0].getMethods()[0];
+
+    startListening(method, AnnotationUtil.NOT_NULL, false);
+    new WriteCommandAction(myProject){
+      @Override
+      protected void run(final Result result) throws Throwable {
+        ExternalAnnotationsManager.getInstance(myProject).annotateExternally(method, AnnotationUtil.NOT_NULL, myFixture.getFile(), null);
+      }
+    }.execute();
+    stopListeningAndCheckEvents();
+
+    startListening(method, AnnotationUtil.NOT_NULL, false);
+    new WriteCommandAction(myProject){
+      @Override
+      protected void run(final Result result) throws Throwable {
+        ExternalAnnotationsManager.getInstance(myProject).editExternalAnnotation(method, AnnotationUtil.NOT_NULL, null);
+      }
+    }.execute();
+    stopListeningAndCheckEvents();
+
+    startListening(method, AnnotationUtil.NOT_NULL, false);
+    new WriteCommandAction(myProject){
+      @Override
+      protected void run(final Result result) throws Throwable {
+        ExternalAnnotationsManager.getInstance(myProject).deannotate(method, AnnotationUtil.NOT_NULL);
+      }
+    }.execute();
+    stopListeningAndCheckEvents();
+  }
+
   private class DefaultAnnotationsListener extends ExternalAnnotationsListener.Adapter {
     @Override
     public void afterExternalAnnotationChanging(@NotNull PsiModifierListOwner owner, @NotNull String annotationFQName,
