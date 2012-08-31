@@ -25,6 +25,7 @@ import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.S
 public class JavaRearrangerBlankLinesTest extends AbstractJavaRearrangerTest {
   
   void testPreserveRelativeBlankLines() {
+    commonSettings.BLANK_LINES_AROUND_CLASS = 2
     commonSettings.BLANK_LINES_AROUND_FIELD = 1
     commonSettings.BLANK_LINES_AROUND_METHOD = 2
     commonSettings.BLANK_LINES_AROUND_FIELD_IN_INTERFACE = 2
@@ -33,11 +34,11 @@ public class JavaRearrangerBlankLinesTest extends AbstractJavaRearrangerTest {
             '''\
 class Test {
   private void method1() {}
-  
+
   public void method2() {}
 
   private int i;
-  
+
   public int j;
   public static int k;
 }
@@ -62,12 +63,18 @@ interface MyInterface {
 
   void test2();
 }
+
+
 class Test {
   public static int k;
+
   public int j;
+
   private int i;
-  
+
+
   public void method2() {}
+
 
   private void method1() {}
 }''',

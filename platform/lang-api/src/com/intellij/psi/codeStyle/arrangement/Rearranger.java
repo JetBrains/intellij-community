@@ -56,7 +56,8 @@ public interface Rearranger<E extends ArrangementEntry> {
    * @param parent    target entry's parent (if available)
    * @param previous  previous entry (if available)
    * @param target    target entry which blank lines number the caller is interested in
-   * @return          number of blank lines to insert before the target entry
+   * @return          number of blank lines to insert before the target entry;
+   *                  negative as an indication that no blank lines adjustment is necessary
    */
   int getBlankLines(@NotNull CodeStyleSettings settings, @Nullable E parent, @Nullable E previous, @NotNull E target);
 }

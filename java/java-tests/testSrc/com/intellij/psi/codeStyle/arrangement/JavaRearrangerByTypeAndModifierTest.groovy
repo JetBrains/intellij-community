@@ -24,6 +24,9 @@ import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.*
 class JavaRearrangerByTypeAndModifierTest extends AbstractJavaRearrangerTest {
 
   void testComplex() {
+    commonSettings.BLANK_LINES_AROUND_METHOD = 0
+    commonSettings.BLANK_LINES_AROUND_CLASS = 0
+    
     doTest(
             '''\
 class Test {
