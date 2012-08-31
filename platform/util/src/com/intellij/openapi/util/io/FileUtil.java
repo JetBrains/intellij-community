@@ -662,7 +662,7 @@ public class FileUtil extends FileUtilRt {
 
     for (int i = start; i < path.length(); ++i) {
       final char c = path.charAt(i);
-      if (c == separatorChar) {
+      if (c == separatorChar || c == '/') {
         if (!separator) {
           if (dots == 1) {
           }
