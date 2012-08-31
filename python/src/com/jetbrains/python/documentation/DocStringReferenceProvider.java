@@ -69,7 +69,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
       if (PyNames.isIdentifier(s)) {
         result.add(new DocStringParameterReference(element, name.getTextRange().shiftRight(offset), refType));
       }
-      if (!refType.equals(StructuredDocString.PARAMETER_TYPE)) {
+      if (refType.equals(StructuredDocString.PARAMETER_TYPE)) {
         final Substring type = docString.getParamTypeSubstring(s);
         if (type != null) {
           result.addAll(parseTypeReferences(element, type, offset));
