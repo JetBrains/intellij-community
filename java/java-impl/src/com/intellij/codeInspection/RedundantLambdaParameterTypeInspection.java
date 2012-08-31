@@ -72,30 +72,35 @@ public class RedundantLambdaParameterTypeInspection extends BaseJavaLocalInspect
         if (parameters.length == 0) return;
         final PsiType functionalInterfaceType = LambdaUtil.getFunctionalInterfaceType(expression, false);
         if (functionalInterfaceType != null) {
-          if (!LambdaUtil.isLambdaFullyInferred(expression, functionalInterfaceType)) {
-            final PsiElement parent = expression.getParent();
-            if (parent instanceof PsiExpressionList) {
-              final PsiElement gParent = parent.getParent();
-              if (gParent instanceof PsiCallExpression && ((PsiCallExpression)gParent).getTypeArguments().length == 0) {
-                final PsiMethod method = ((PsiCallExpression)gParent).resolveMethod();
-                if (method == null) return;
-                final int idx = LambdaUtil.getLambdaIdx((PsiExpressionList)parent, expression);
-                if (idx < 0) return;
+          final PsiElement parent = expression.getParent();
+          if (parent instanceof PsiExpressionList) {
+            final PsiElement gParent = parent.getParent();
+            if (gParent instanceof PsiCallExpression && ((PsiCallExpression)gParent).getTypeArguments().length == 0) {
+              final PsiMethod method = ((PsiCallExpression)gParent).resolveMethod();
+              if (method == null) return;
+              final int idx = LambdaUtil.getLambdaIdx((PsiExpressionList)parent, expression);
+              if (idx < 0) return;
 
-                final PsiTypeParameter[] typeParameters = method.getTypeParameters();
-                final PsiExpression[] arguments = ((PsiExpressionList)parent).getExpressions();
-                final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(holder.getProject());
-                arguments[idx] = javaPsiFacade.getElementFactory().createExpressionFromText("null", expression);
-                final PsiSubstitutor substitutor = javaPsiFacade.getResolveHelper()
-                  .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, PsiSubstitutor.EMPTY,
-                                      gParent, DefaultParameterTypeInferencePolicy.INSTANCE);
-
-                for (PsiTypeParameter parameter : typeParameters) {
-                  final PsiType psiType = substitutor.substitute(parameter);
-                  if (psiType == null || LambdaUtil.dependsOnTypeParams(psiType, expression, parameter)) return;
+              final PsiTypeParameter[] typeParameters = method.getTypeParameters();
+              final PsiExpression[] arguments = ((PsiExpressionList)parent).getExpressions();
+              final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(holder.getProject());
+              arguments[idx] = javaPsiFacade.getElementFactory().createExpressionFromText("(" + StringUtil.join(expression.getParameterList().getParameters(), new Function<PsiParameter, String>() {
+                @Override
+                public String fun(PsiParameter parameter) {
+                  return parameter.getName();
                 }
+              }, ", ") + ") -> {}", expression);
+              final PsiSubstitutor substitutor = javaPsiFacade.getResolveHelper()
+                .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, PsiSubstitutor.EMPTY,
+                                    gParent, DefaultParameterTypeInferencePolicy.INSTANCE);
+
+              for (PsiTypeParameter parameter : typeParameters) {
+                final PsiType psiType = substitutor.substitute(parameter);
+                if (psiType == null || LambdaUtil.dependsOnTypeParams(psiType, expression, parameter)) return;
               }
             }
+          } else if (!LambdaUtil.isLambdaFullyInferred(expression, functionalInterfaceType)) {
+            return;
           }
           holder.registerProblem(expression.getParameterList(), "Redundant parameter type declarations",
                                  ProblemHighlightType.LIKE_UNUSED_SYMBOL, new RemoveTypeDeclarationsFix());
