@@ -15,14 +15,17 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.find.FindManager;
 import com.intellij.find.SearchInBackgroundOption;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -40,6 +43,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
@@ -49,11 +53,12 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.RangeBlinker;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,14 +75,16 @@ public class UsageViewManagerImpl extends UsageViewManager {
   private final Project myProject;
   private static final Key<UsageView> USAGE_VIEW_KEY = Key.create("USAGE_VIEW");
   
-
-  public UsageViewManagerImpl(Project project) {
+  public UsageViewManagerImpl(@NotNull Project project) {
     myProject = project;
   }
 
   @Override
   @NotNull
-  public UsageView createUsageView(@NotNull UsageTarget[] targets, @NotNull Usage[] usages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> usageSearcherFactory) {
+  public UsageView createUsageView(@NotNull UsageTarget[] targets,
+                                   @NotNull Usage[] usages,
+                                   @NotNull UsageViewPresentation presentation,
+                                   Factory<UsageSearcher> usageSearcherFactory) {
     UsageViewImpl usageView = new UsageViewImpl(myProject, presentation, targets, usageSearcherFactory);
     appendUsages(usages, usageView);
     usageView.setSearchInProgress(false);
@@ -86,7 +93,10 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
   @Override
   @NotNull
-  public UsageView showUsages(@NotNull UsageTarget[] searchedFor, @NotNull Usage[] foundUsages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> factory) {
+  public UsageView showUsages(@NotNull UsageTarget[] searchedFor,
+                              @NotNull Usage[] foundUsages,
+                              @NotNull UsageViewPresentation presentation,
+                              Factory<UsageSearcher> factory) {
     UsageView usageView = createUsageView(searchedFor, foundUsages, presentation, factory);
     addContent((UsageViewImpl)usageView, presentation);
     showToolWindow(true);
@@ -99,7 +109,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return showUsages(searchedFor, foundUsages, presentation, null);
   }
 
-  private void addContent(UsageViewImpl usageView, UsageViewPresentation presentation) {
+  private void addContent(@NotNull UsageViewImpl usageView, @NotNull UsageViewPresentation presentation) {
     Content content = com.intellij.usageView.UsageViewManager.getInstance(myProject).addContent(
       presentation.getTabText(),
       presentation.getTabName(),
@@ -117,8 +127,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
   public UsageView searchAndShowUsages(@NotNull final UsageTarget[] searchFor,
                                        @NotNull final Factory<UsageSearcher> searcherFactory,
                                        final boolean showPanelIfOnlyOneUsage,
-                                       final boolean showNotFoundMessage, @NotNull final UsageViewPresentation presentation,
-                                       final UsageViewStateListener listener) {
+                                       final boolean showNotFoundMessage,
+                                       @NotNull final UsageViewPresentation presentation,
+                                       @Nullable final UsageViewStateListener listener) {
     final AtomicReference<UsageViewImpl> usageView = new AtomicReference<UsageViewImpl>();
 
     final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
@@ -152,8 +163,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                   @NotNull Factory<UsageSearcher> searcherFactory,
                                   @NotNull FindUsagesProcessPresentation processPresentation,
                                   @NotNull UsageViewPresentation presentation,
-                                  UsageViewStateListener listener
-                                       ) {
+                                  @Nullable UsageViewStateListener listener) {
     final AtomicReference<UsageViewImpl> usageView = new AtomicReference<UsageViewImpl>();
     final SearchForUsagesRunnable runnable = new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, listener);
     final Factory<ProgressIndicator> progressIndicatorFactory = processPresentation.getProgressIndicatorFactory();
@@ -192,7 +202,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return null;
   }
 
-  public static String getProgressTitle(UsageViewPresentation presentation) {
+  @NotNull
+  public static String getProgressTitle(@NotNull UsageViewPresentation presentation) {
     final String scopeText = presentation.getScopeText();
     if (scopeText == null) {
       return UsageViewBundle.message("progress.searching.for", StringUtil.capitalize(presentation.getUsagesString()));
@@ -208,7 +219,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     }
   }
 
-  private static void appendUsages(@NotNull final Usage[] foundUsages, final UsageViewImpl usageView) {
+  private static void appendUsages(@NotNull final Usage[] foundUsages, @NotNull final UsageViewImpl usageView) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
       public void run() {
@@ -221,7 +232,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
 
   public void showTooManyUsagesWarning(final ProgressIndicator indicator,
-                                       final CountDownLatch waitWhileUserClick,
+                                       @NotNull final CountDownLatch waitWhileUserClick,
                                        final int usageCount,
                                        final UsageViewImpl usageView) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -250,12 +261,12 @@ public class UsageViewManagerImpl extends UsageViewManager {
     private final UsageViewStateListener myListener;
     private volatile boolean mySearchHasBeenCancelled;
 
-    private SearchForUsagesRunnable(@NotNull final AtomicReference<UsageViewImpl> usageView,
-                                    @NotNull final UsageViewPresentation presentation,
-                                    @NotNull final UsageTarget[] searchFor,
-                                    @NotNull final Factory<UsageSearcher> searcherFactory,
+    private SearchForUsagesRunnable(@NotNull AtomicReference<UsageViewImpl> usageView,
+                                    @NotNull UsageViewPresentation presentation,
+                                    @NotNull UsageTarget[] searchFor,
+                                    @NotNull Factory<UsageSearcher> searcherFactory,
                                     @NotNull FindUsagesProcessPresentation processPresentation,
-                                    final UsageViewStateListener listener) {
+                                    @Nullable UsageViewStateListener listener) {
       myUsageViewRef = usageView;
       myPresentation = presentation;
       mySearchFor = searchFor;
@@ -286,12 +297,12 @@ public class UsageViewManagerImpl extends UsageViewManager {
       return null;
     }
 
-    private void openView(final UsageViewImpl usageView) {
+    private void openView(@NotNull final UsageViewImpl usageView) {
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
           addContent(usageView, myPresentation);
-          if (myListener!=null) {
+          if (myListener != null) {
             myListener.usageViewCreated(usageView);
           }
           showToolWindow(false);
@@ -301,11 +312,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
     @Override
     public void run() {
-      //long start = System.currentTimeMillis();
       AtomicBoolean findUsagesStartedShown = new AtomicBoolean();
       searchUsages(findUsagesStartedShown);
       endSearchForUsages(findUsagesStartedShown);
-      //System.out.println("Usage search took " + (System.currentTimeMillis() - start));
     }
 
     private void searchUsages(@NotNull final AtomicBoolean findStartedBalloonShown) {
@@ -401,8 +410,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
               if (notFoundActions == null || notFoundActions.isEmpty()) {
                 ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, MessageType.INFO,
-                                                                         XmlStringUtil.escapeString(message),
-                                                                         AllIcons.Actions.Find, null);
+                                                                         "<html>"+message+".<br>" + createOptionsHtml() + "</html>",
+                                                                         AllIcons.Actions.Find, createGotToOptionsListener(mySearchFor));
                 findStartedBalloonShown.set(false);
               }
               else {
@@ -434,6 +443,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
               usage.navigate(true);
               flashUsageScriptaculously(usage);
             }
+            ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, MessageType.INFO,
+                                                                     "<html>Only one usage found.<br>" + createOptionsHtml() + "</html>",
+                                                                     AllIcons.Actions.Find, createGotToOptionsListener(mySearchFor));
           }
         }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
@@ -473,7 +485,27 @@ public class UsageViewManagerImpl extends UsageViewManager {
     }
   }
 
-  private static void flashUsageScriptaculously(final Usage usage) {
+  @NotNull
+  private HyperlinkListener createGotToOptionsListener(@NotNull final UsageTarget[] targets) {
+    return new HyperlinkAdapter() {
+      @Override
+      protected void hyperlinkActivated(HyperlinkEvent e) {
+        FindManager.getInstance(myProject).showSettingsAndFindUsages(targets);
+      }
+    };
+  }
+
+  @NotNull
+  private static String createOptionsHtml() {
+    String shortcutText = "";
+    KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut();
+    if (shortcut != null) {
+      shortcutText = "&nbsp;(" + KeymapUtil.getShortcutText(shortcut) + ")";
+    }
+    return "<a href='xxx'>Find Options...</a>" + shortcutText;
+  }
+
+  private static void flashUsageScriptaculously(@NotNull final Usage usage) {
     if (!(usage instanceof UsageInfo2UsageAdapter)) {
       return;
     }
@@ -490,5 +522,4 @@ public class UsageViewManagerImpl extends UsageViewManager {
     rangeBlinker.resetMarkers(segments);
     rangeBlinker.startBlinking();
   }
-
 }
