@@ -80,10 +80,11 @@ public class ArgumentInstruction extends InstructionImpl implements MixinTypeIns
 
   private static GrCall findCall(PsiElement element) {
     PsiElement parent = element.getParent().getParent();
-    LOG.assertTrue(parent instanceof GrCall, "elemText: " + element.getText() +
-                                             "\nParent = " + (element.getParent() == null ? "null" : element.getParent().getClass()) +
-                                             "\nPParent" + (parent == null ? "null" : parent.getClass()));
-
+    if (!(parent instanceof GrCall)) {
+      LOG.error("elemText: " + element.getText() +
+                "\nParent = " + (element.getParent() == null ? "null" : element.getParent().getClass()) +
+                "\nPParent" + (parent == null ? "null" : parent.getClass()));
+    }
     return (GrCall)parent;
   }
 
