@@ -148,7 +148,9 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
             XmlDoctype xmlDoctype = (XmlDoctype)element;
             final String dtdUri = XmlUtil.getDtdUri(xmlDoctype);
             if (dtdUri != null) {
-              final XmlFile xmlFile = XmlUtil.findNamespace(XmlUtil.getContainingFile(element), dtdUri);
+              XmlFile file = XmlUtil.getContainingFile(element);
+              if (file == null) return true;
+              final XmlFile xmlFile = XmlUtil.findNamespace(file, dtdUri);
               if (xmlFile != null) {
                 if (xmlFile != targetElement) {
                   deps.add(xmlFile);
