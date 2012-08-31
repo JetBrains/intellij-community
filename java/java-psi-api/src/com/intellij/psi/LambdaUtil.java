@@ -389,7 +389,7 @@ public class LambdaUtil {
         if (type == null) {
           type = getFunctionalInterfaceType(lambdaExpression, false);
         }
-        final PsiClassType.ClassResolveResult resolveResult = type instanceof PsiClassType ? ((PsiClassType)type).resolveGenerics() : null;
+        final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(type);
         if (resolveResult != null) {
           final PsiMethod method = getFunctionalInterfaceMethod(type);
           if (method != null) {

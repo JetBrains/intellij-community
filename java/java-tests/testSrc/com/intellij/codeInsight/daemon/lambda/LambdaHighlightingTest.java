@@ -88,6 +88,10 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testDefaultMethod() throws Exception {
     doTest();
   }
+
+  public void testLambdaOnVarargPlace() throws Exception {
+    doTest();
+  }
   
   public void testNoInferenceResult() throws Exception {
     doTest();
