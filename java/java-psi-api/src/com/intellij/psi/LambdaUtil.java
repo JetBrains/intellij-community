@@ -289,7 +289,7 @@ public class LambdaUtil {
                                                     final PsiLambdaExpression lambdaExpression,
                                                     final PsiExpression expression) {
     final PsiParameter[] lambdaParams = lambdaExpression.getParameterList().getParameters(); 
-    LOG.assertTrue(lambdaParams.length == methodParameters.length, "lambda params: " + lambdaExpression.getParameterList().getText() + "; method params: " + Arrays.toString(methodParameters));
+    if (lambdaParams.length != methodParameters.length) return false;
     final boolean [] independent = new boolean[]{true};
     expression.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
