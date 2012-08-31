@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.noncode;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightFieldBuilder;
+import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -51,13 +52,12 @@ public class GrCollectionTypeMembersProvider extends NonCodeMembersContributor {
     ResolveUtil.processAllDeclarations(collectionType, fieldSearcher, state, place);
   }
 
-  private static class FieldSearcher implements PsiScopeProcessor, ClassHint, ElementClassHint {
+  private static class FieldSearcher extends DelegatingScopeProcessor implements ClassHint, ElementClassHint {
     final PsiClass collectionClass;
-    final PsiScopeProcessor processor;
 
     public FieldSearcher(PsiScopeProcessor processor, PsiClass collectionClass) {
+      super(processor);
       this.collectionClass = collectionClass;
-      this.processor = processor;
     }
 
     @Override
@@ -73,21 +73,16 @@ public class GrCollectionTypeMembersProvider extends NonCodeMembersContributor {
         }
         LightFieldBuilder lightField = new LightFieldBuilder(((PsiField)element).getName(), typeText, element).setContainingClass(
           collectionClass);
-        return processor.execute(lightField, state);
+        return super.execute(lightField, state);
       }
       return true;
     }
 
     @Override
     public <T> T getHint(@NotNull Key<T> hintKey) {
-      if (hintKey == NameHint.KEY) return processor.getHint(hintKey);
+      if (hintKey == NameHint.KEY) return super.getHint(hintKey);
       if (hintKey == ClassHint.KEY || hintKey == ElementClassHint.KEY) return (T)this;
       return null;
-    }
-
-    @Override
-    public void handleEvent(Event event, Object associated) {
-      processor.handleEvent(event, associated);
     }
 
     @Override
