@@ -15,8 +15,7 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Function;
@@ -31,6 +30,8 @@ import java.util.Collection;
 import java.util.List;
 
 public class VfsUtilCore {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtilCore");
+
   /**
    * Checks whether the <code>ancestor {@link com.intellij.openapi.vfs.VirtualFile}</code> is parent of <code>file
    * {@link com.intellij.openapi.vfs.VirtualFile}</code>.
@@ -176,15 +177,15 @@ public class VfsUtilCore {
 
     VirtualFile[] children = null;
 
-    AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
     try {
       if (!file.isValid()) return;
       if (!file.isSymLink() || visitor.followSymLinks() && !isInvalidLink(file)) {
         children = file.getChildren();
       }
     }
-    finally {
-      token.finish();
+    catch (InvalidVirtualFileAccessException e) {
+      LOG.info("Ignoring: " + e.getMessage());
+      return;
     }
 
     if (children != null) {
