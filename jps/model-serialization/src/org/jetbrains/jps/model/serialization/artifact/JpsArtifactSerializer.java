@@ -11,7 +11,7 @@ import org.jetbrains.jps.model.artifact.*;
 import org.jetbrains.jps.model.artifact.elements.*;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.module.JpsModuleReference;
-import org.jetbrains.jps.model.serialization.JpsLibraryTableSerializer;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 
 /**

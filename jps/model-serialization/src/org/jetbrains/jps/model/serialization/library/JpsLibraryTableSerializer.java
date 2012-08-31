@@ -1,4 +1,4 @@
-package org.jetbrains.jps.model.serialization;
+package org.jetbrains.jps.model.serialization.library;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.containers.MultiMap;
@@ -10,6 +10,7 @@ import org.jetbrains.jps.model.java.JpsJavaLibraryType;
 import org.jetbrains.jps.model.library.*;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModuleReference;
+import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 
 import java.util.*;
 

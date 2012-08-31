@@ -1,4 +1,4 @@
-package org.jetbrains.jps.model.serialization;
+package org.jetbrains.jps.model.serialization.library;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.library.JpsOrderRootType;

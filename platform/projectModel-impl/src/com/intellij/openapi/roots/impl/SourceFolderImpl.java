@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.serialization.JpsModuleSerializer;
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 /**
  *  @author dsl
@@ -33,8 +33,8 @@ import org.jetbrains.jps.model.serialization.JpsModuleSerializer;
 public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFolder, ClonableContentFolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleSourceFolderImpl");
   private final boolean myIsTestSource;
-  @NonNls public static final String ELEMENT_NAME = JpsModuleSerializer.SOURCE_FOLDER_TAG;
-  @NonNls public static final String TEST_SOURCE_ATTR = JpsModuleSerializer.IS_TEST_SOURCE_ATTRIBUTE;
+  @NonNls public static final String ELEMENT_NAME = JpsModuleRootModelSerializer.SOURCE_FOLDER_TAG;
+  @NonNls public static final String TEST_SOURCE_ATTR = JpsModuleRootModelSerializer.IS_TEST_SOURCE_ATTRIBUTE;
   private String myPackagePrefix;
   static final String DEFAULT_PACKAGE_PREFIX = "";
 
@@ -60,7 +60,7 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
     final String testSource = element.getAttributeValue(TEST_SOURCE_ATTR);
     if (testSource == null) throw new InvalidDataException();
     myIsTestSource = Boolean.valueOf(testSource).booleanValue();
-    final String packagePrefix = element.getAttributeValue(JpsModuleSerializer.PACKAGE_PREFIX_ATTRIBUTE);
+    final String packagePrefix = element.getAttributeValue(JpsModuleRootModelSerializer.PACKAGE_PREFIX_ATTRIBUTE);
     if (packagePrefix != null) {
       myPackagePrefix = packagePrefix;
     }
@@ -94,7 +94,7 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
     writeFolder(element, ELEMENT_NAME);
     element.setAttribute(TEST_SOURCE_ATTR, Boolean.toString(myIsTestSource));
     if (!DEFAULT_PACKAGE_PREFIX.equals(myPackagePrefix)) {
-      element.setAttribute(JpsModuleSerializer.PACKAGE_PREFIX_ATTRIBUTE, myPackagePrefix);
+      element.setAttribute(JpsModuleRootModelSerializer.PACKAGE_PREFIX_ATTRIBUTE, myPackagePrefix);
     }
   }
 
