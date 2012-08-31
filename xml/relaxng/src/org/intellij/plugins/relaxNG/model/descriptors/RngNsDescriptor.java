@@ -18,6 +18,7 @@ package org.intellij.plugins.relaxNG.model.descriptors;
 
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
@@ -245,6 +246,9 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
 
   public Object[] getDependences() {
     if (myPattern != null) {
+      if (DumbService.isDumb(myElement.getProject())) {
+        return new Object[] { ModificationTracker.EVER_CHANGED, ExternalResourceManager.getInstance()};
+      }
       final Object[] a = { myElement, ExternalResourceManager.getInstance() };
       final PsiElementProcessor.CollectElements<XmlFile> processor = new PsiElementProcessor.CollectElements<XmlFile>();
       RelaxIncludeIndex.processForwardDependencies(myFile, processor);
@@ -253,9 +257,8 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
       } else {
         return a;
       }
-    } else {
-      return new Object[]{ ModificationTracker.EVER_CHANGED };
     }
+    return new Object[]{ ModificationTracker.EVER_CHANGED };
   }
 
   public synchronized void init(PsiElement element) {
