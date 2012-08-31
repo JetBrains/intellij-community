@@ -216,12 +216,12 @@ public class LambdaUtil {
   private static List<MethodSignature> findFunctionCandidates(PsiClass psiClass) {
     if (psiClass.isInterface()) {
       final List<MethodSignature> methods = new ArrayList<MethodSignature>();
-      final PsiMethod[] psiClassMethods = psiClass.getAllMethods();
-      for (PsiMethod psiMethod : psiClassMethods) {
+      final Collection<HierarchicalMethodSignature> visibleSignatures = psiClass.getVisibleSignatures();
+      for (HierarchicalMethodSignature signature : visibleSignatures) {
+        final PsiMethod psiMethod = signature.getMethod();
         if (!psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) continue;
-        final PsiClass methodContainingClass = psiMethod.getContainingClass();
-        if (!overridesPublicObjectMethod(psiMethod)) {
-          methods.add(getMethodSignature(psiMethod, psiClass, methodContainingClass));
+        if (!overridesPublicObjectMethod(psiMethod) && !PsiUtil.isExtensionMethod(psiMethod)) {
+          methods.add(signature);
         }
       }
 

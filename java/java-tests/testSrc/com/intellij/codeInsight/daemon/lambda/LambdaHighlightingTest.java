@@ -85,7 +85,9 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
   
- 
+  public void testDefaultMethod() throws Exception {
+    doTest();
+  }
   
   public void testNoInferenceResult() throws Exception {
     doTest();
