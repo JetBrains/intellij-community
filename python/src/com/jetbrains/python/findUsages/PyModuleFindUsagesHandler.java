@@ -49,7 +49,7 @@ public class PyModuleFindUsagesHandler extends FindUsagesHandler {
                                       isSingleFile,
                                       this) {
       @Override
-      public void configureLabelComponent(final SimpleColoredComponent coloredComponent) {
+      public void configureLabelComponent(@NotNull final SimpleColoredComponent coloredComponent) {
         coloredComponent.append(myElement instanceof PsiDirectory ? "Package " : "Module ");
         coloredComponent.append(myElement.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
