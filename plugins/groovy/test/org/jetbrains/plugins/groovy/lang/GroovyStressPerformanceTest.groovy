@@ -163,18 +163,46 @@ class Foo implements Bar {
     measureHighlighting(text, 200)
   }
 
-  public void "test using SSA variables in a for loop"() {
+  public void "test using non-reassigned for loop parameters"() {
     RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     def text = """
-def foo(List<File list) {
+def foo(List<File> list) {
   for (file in list) {
 ${
-"   println bar(file)\n" * 10
+"   println bar(file)\n" * 20
 }
   }
 }
 def bar(File file) { file.path }
 """
-    measureHighlighting(text, 300)
+    measureHighlighting(text, 2000)
+  }
+
+  public void "test using SSA variables in a for loop"() {
+    //todo RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+    def text = """
+def foo(List<String> list, SomeClass sc) {
+  List<String> result
+  for (s in list) {
+${
+'''
+    bar(s, result)
+    bar2(s, result, sc)
+    bar3(foo:s, bar:result, sc)
+    sc.someMethod(s)
+''' * 2
+    }
+  }
+}
+def bar(String s, List<String> result) { result << s }
+def bar2(String s, List<String> result) { result << s }
+def bar2(int s, List<String> result, SomeClass sc) { result << s as String }
+def bar3(Map args, List<String> result, SomeClass sc) { result << s as String }
+
+class SomeClass {
+  void someMethod(String s) {}
+}
+"""
+    measureHighlighting(text, 1500)
   }
 }
