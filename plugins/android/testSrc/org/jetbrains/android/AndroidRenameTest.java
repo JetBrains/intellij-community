@@ -339,6 +339,15 @@ public class AndroidRenameTest extends AndroidTestCase {
     myFixture.checkResultByFile(BASE_PATH + "layout_widget_after.xml");
   }
 
+  public void testRenameWidget1() throws Throwable {
+    createManifest();
+    myFixture.copyFileToProject(BASE_PATH + "MyWidget.java", "src/p1/p2/MyWidget.java");
+    VirtualFile file = myFixture.copyFileToProject(BASE_PATH + "layout_widget.xml", "res/layout/layout_widget.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    checkAndRename("MyWidget1");
+    myFixture.checkResultByFile(BASE_PATH + "layout_widget_after.xml");
+  }
+
   public void testRenameWidgetPackage1() throws Throwable {
     createManifest();
     myFixture.copyFileToProject(BASE_PATH + "MyWidget.java", "src/p1/p2/MyWidget.java");
