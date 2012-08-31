@@ -593,13 +593,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       if (result!=null) return result;
 
 
-      final PsiType inferred = refExpr.getQualifier() == null ? TypeInferenceHelper.getCurrentContext().getVariableType(refExpr) : null;
+      final PsiElement resolved = refExpr.resolve();
+      final PsiType inferred = refExpr.getQualifier() == null && !(resolved instanceof PsiClass) ?
+                               TypeInferenceHelper.getCurrentContext().getVariableType(refExpr) :
+                               null;
       final PsiType nominal = refExpr.getNominalType();
       if (inferred == null || PsiType.NULL.equals(inferred)) {
         if (nominal == null) {
           //inside nested closure we could still try to infer from variable initializer. Not sound, but makes sense
-          assert refExpr.isValid();
-          final PsiElement resolved = refExpr.resolve();
           if (resolved instanceof GrVariable) {
             assert resolved.isValid();
             return ((GrVariable)resolved).getTypeGroovy();
@@ -611,7 +612,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
       if (nominal == null) return inferred;
       if (!TypeConversionUtil.isAssignable(nominal, inferred, false)) {
-        final PsiElement resolved = refExpr.resolve();
         if (resolved instanceof GrVariable && ((GrVariable)resolved).getTypeElementGroovy() != null) {
           return nominal;
         }
@@ -621,7 +621,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   public PsiType getType() {
-    return GroovyPsiManager.getInstance(getProject()).getType(this, TYPES_CALCULATOR);
+    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPES_CALCULATOR);
   }
 
   public GrExpression replaceWithExpression(@NotNull GrExpression newExpr, boolean removeUnnecessaryParentheses) {

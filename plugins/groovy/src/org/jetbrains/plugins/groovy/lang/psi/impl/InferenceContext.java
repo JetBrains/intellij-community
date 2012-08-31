@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -64,6 +65,12 @@ public interface InferenceContext {
       ResolveResult[] results = ResolveCache.getInstance(ref.getElement().getProject()).resolveWithCaching(ref, resolver, true, incomplete);
       return results.length == 0 ? GroovyResolveResult.EMPTY_ARRAY : (GroovyResolveResult[])results;
     }
+
+    @Nullable
+    @Override
+    public <T extends GroovyPsiElement> PsiType getExpressionType(T element, Function<T, PsiType> calculator) {
+      return GroovyPsiManager.getInstance(element.getProject()).getType(element, calculator);
+    }
   };
 
   @Nullable
@@ -72,6 +79,9 @@ public interface InferenceContext {
   <T> T getCachedValue(@NotNull GroovyPsiElement element, Computable<T> computable);
 
   <T extends PsiPolyVariantReference> GroovyResolveResult[] multiResolve(@NotNull T ref, boolean incomplete, ResolveCache.PolyVariantResolver<T> resolver);
+
+  @Nullable
+  <T extends GroovyPsiElement> PsiType getExpressionType(T element, Function<T, PsiType> calculator);
 
   class PartialContext implements InferenceContext {
     private final Map<String, PsiType> myTypes;
@@ -117,6 +127,18 @@ public interface InferenceContext {
           return (GroovyResolveResult[])resolver.resolve(ref, incomplete);
         }
       }, Pair.create(incomplete, resolver.getClass()));
+    }
+
+    @Nullable
+    @Override
+    public <T extends GroovyPsiElement> PsiType getExpressionType(final T element, final Function<T, PsiType> calculator) {
+      return _getCachedValue(element, new Computable<PsiType>() {
+        @Override
+        public PsiType compute() {
+          PsiType type = calculator.fun(element);
+          return type == PsiType.NULL ? null : type;
+        }
+      }, "type");
     }
   }
 

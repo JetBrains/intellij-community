@@ -19,27 +19,18 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 
 /**
  * @author ven
  */
 public class GrInstanceofExpressionImpl extends GrExpressionImpl implements GrInstanceOfExpression {
-
-  private static final Function<GrInstanceofExpressionImpl,PsiType> TYPE_CALCULATOR = new Function<GrInstanceofExpressionImpl, PsiType>() {
-    @Override
-    public PsiType fun(GrInstanceofExpressionImpl expression) {
-      return expression.getTypeByFQName(CommonClassNames.JAVA_LANG_BOOLEAN);
-    }
-  };
 
   public GrInstanceofExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -54,7 +45,7 @@ public class GrInstanceofExpressionImpl extends GrExpressionImpl implements GrIn
   }
 
   public PsiType getType() {
-    return GroovyPsiManager.getInstance(getProject()).getType(this, TYPE_CALCULATOR);
+    return getTypeByFQName(CommonClassNames.JAVA_LANG_BOOLEAN);
   }
 
   @Nullable

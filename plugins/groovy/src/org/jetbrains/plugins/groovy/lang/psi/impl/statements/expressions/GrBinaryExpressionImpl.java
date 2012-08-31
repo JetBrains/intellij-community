@@ -33,7 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -121,7 +120,7 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
 
   @Override
   public PsiType getType() {
-    return GroovyPsiManager.getInstance(getProject()).getType(this, TYPE_CALCULATOR);
+    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPE_CALCULATOR);
   }
 
   @Nullable

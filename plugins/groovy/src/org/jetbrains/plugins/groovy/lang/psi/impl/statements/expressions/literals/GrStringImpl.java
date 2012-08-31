@@ -17,36 +17,24 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.List;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_GSTRING;
 
 /**
  * @author ilyas
  */
 public class GrStringImpl extends GrAbstractLiteral implements GrString {
-  private static final Function<GrStringImpl,PsiType> TYPE_CALCULATOR = new Function<GrStringImpl, PsiType>() {
-    @Override
-    public PsiType fun(GrStringImpl grString) {
-      if (grString.findChildByClass(GrStringInjection.class) != null) {
-        return grString.getTypeByFQName(GroovyCommonClassNames.GROOVY_LANG_GSTRING);
-      }
-      else {
-        return grString.getTypeByFQName(CommonClassNames.JAVA_LANG_STRING);
-      }
-    }
-  };
 
   public GrStringImpl(@NotNull ASTNode node) {
     super(node);
@@ -57,7 +45,7 @@ public class GrStringImpl extends GrAbstractLiteral implements GrString {
   }
 
   public PsiType getType() {
-    return GroovyPsiManager.getInstance(getProject()).getType(this, TYPE_CALCULATOR);
+    return getTypeByFQName(findChildByClass(GrStringInjection.class) != null ? GROOVY_LANG_GSTRING : JAVA_LANG_STRING);
   }
 
   public boolean isPlainString() {

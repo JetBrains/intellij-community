@@ -54,7 +54,7 @@ public class TypeInferenceHelper {
   private static final Logger LOG = Logger.getInstance(TypeInferenceHelper.class);
   private static final ThreadLocal<InferenceContext> ourInferenceContext = new ThreadLocal<InferenceContext>();
 
-  public static <T> T doInference(Map<String, PsiType> bindings, Computable<T> computation) {
+  private static <T> T doInference(Map<String, PsiType> bindings, Computable<T> computation) {
     InferenceContext old = ourInferenceContext.get();
     ourInferenceContext.set(new InferenceContext.PartialContext(bindings));
     try {
@@ -125,6 +125,7 @@ public class TypeInferenceHelper {
     return inferVariableType(variableName, scope, flow, findInstructionAt(place, flow));
   }
 
+  @Nullable
   private static PsiType inferVariableType(String variableName, GrControlFlowOwner scope, Instruction[] flow, Instruction instruction) {
     if (instruction == null) return null;
 

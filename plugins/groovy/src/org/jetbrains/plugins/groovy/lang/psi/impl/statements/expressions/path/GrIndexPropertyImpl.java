@@ -246,7 +246,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
   }
 
   public PsiType getType() {
-    return GroovyPsiManager.getInstance(getProject()).getType(this, TYPE_CALCULATOR);
+    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPE_CALCULATOR);
   }
 
   @Override
