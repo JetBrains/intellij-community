@@ -25,6 +25,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageViewUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -34,13 +35,15 @@ import javax.swing.*;
 public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
   protected final PsiElement myPsiElement;
 
-  public CommonFindUsagesDialog(PsiElement element,
-                                Project project,
-                                FindUsagesOptions findUsagesOptions,
+  public CommonFindUsagesDialog(@NotNull PsiElement element,
+                                @NotNull Project project,
+                                @NotNull FindUsagesOptions findUsagesOptions,
                                 boolean toShowInNewTab,
                                 boolean mustOpenInNewTab,
-                                boolean isSingleFile, FindUsagesHandler handler) {
-    super(project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, isTextSearch(element, isSingleFile, handler), !isSingleFile && !element.getManager().isInProject(element));
+                                boolean isSingleFile,
+                                FindUsagesHandler handler) {
+    super(project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, isTextSearch(element, isSingleFile, handler),
+          !isSingleFile && !element.getManager().isInProject(element));
     myPsiElement = element;
     init();
   }
@@ -52,7 +55,7 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
   @Override
   protected boolean isInFileOnly() {
     return super.isInFileOnly() ||
-           myPsiElement != null && PsiSearchHelper.SERVICE.getInstance(myPsiElement.getProject()).getUseScope(myPsiElement)instanceof LocalSearchScope;
+           PsiSearchHelper.SERVICE.getInstance(myPsiElement.getProject()).getUseScope(myPsiElement) instanceof LocalSearchScope;
   }
 
   @Override
@@ -61,7 +64,7 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
   }
 
   @Override
-  public void configureLabelComponent(final SimpleColoredComponent coloredComponent) {
+  public void configureLabelComponent(@NotNull SimpleColoredComponent coloredComponent) {
     coloredComponent.append(StringUtil.capitalize(UsageViewUtil.getType(myPsiElement)));
     coloredComponent.append(" ");
     coloredComponent.append(UsageViewUtil.getDescriptiveName(myPsiElement), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);

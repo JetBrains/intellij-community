@@ -17,37 +17,31 @@ package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.StateRestoringCheckBox;
-import com.intellij.usageView.UsageViewUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> extends AbstractFindUsagesDialog {
-  protected final PsiElement myPsiElement;
+public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> extends CommonFindUsagesDialog {
   private StateRestoringCheckBox myCbIncludeOverloadedMethods;
   private boolean myIncludeOverloadedMethodsAvailable = false;
 
-  protected JavaFindUsagesDialog(PsiElement element, Project project, FindUsagesOptions findUsagesOptions, boolean toShowInNewTab, boolean mustOpenInNewTab,
+  protected JavaFindUsagesDialog(@NotNull PsiElement element,
+                                 @NotNull Project project,
+                                 @NotNull FindUsagesOptions findUsagesOptions,
+                                 boolean toShowInNewTab,
+                                 boolean mustOpenInNewTab,
                                  boolean isSingleFile,
                                  FindUsagesHandler handler) {
-    super(project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, isTextSearch(element, isSingleFile, handler), !isSingleFile && !element.getManager().isInProject(element));
-    myPsiElement = element;
+    super(element, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, handler);
     myIncludeOverloadedMethodsAvailable = element instanceof PsiMethod && MethodSignatureUtil.hasOverloads((PsiMethod)element);
     init();
   }
 
-  private static boolean isTextSearch(PsiElement element, boolean isSingleFile, FindUsagesHandler handler) {
-    return FindUsagesUtil.isSearchForTextOccurrencesAvailable(element, isSingleFile, handler);
-  }
 
   public void calcFindUsagesOptions(T options) {
     if (options instanceof JavaMethodFindUsagesOptions) {
@@ -85,26 +79,8 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
     }
   }
 
-  @Override
-  protected boolean isInFileOnly() {
-    return super.isInFileOnly() ||
-           myPsiElement != null && PsiSearchHelper.SERVICE.getInstance(myPsiElement.getProject()).getUseScope(myPsiElement)instanceof LocalSearchScope;
-  }
-
-  @Override
-  public void configureLabelComponent(final SimpleColoredComponent coloredComponent) {
-    coloredComponent.append(StringUtil.capitalize(UsageViewUtil.getType(myPsiElement)));
-    coloredComponent.append(" ");
-    coloredComponent.append(UsageViewUtil.getDescriptiveName(myPsiElement));
-  }
-
   protected final PsiElement getPsiElement() {
     return myPsiElement;
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(FindUsagesManager.getHelpID(myPsiElement));
   }
 
   protected T getFindUsagesOptions() {

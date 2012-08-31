@@ -253,7 +253,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     if (handler == null) return;
 
     boolean singleFile = scopeFile != null;
-    final AbstractFindUsagesDialog dialog = handler.getFindUsagesDialog(singleFile, shouldOpenInNewTab(), mustOpenInNewTab());
+    AbstractFindUsagesDialog dialog = handler.getFindUsagesDialog(singleFile, shouldOpenInNewTab(), mustOpenInNewTab());
     if (showDialog) {
       dialog.show();
       if (!dialog.isOK()) return;
