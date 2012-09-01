@@ -36,4 +36,5 @@ public class TasksCoreIcons {
   public static final Icon Unknown = load("/icons/unknown.png"); // 16x16
   public static final Icon Web = load("/icons/web.png"); // 16x16
   public static final Icon Youtrack = load("/icons/youtrack.png"); // 16x16
+  public static final Icon FogBugz = load("/icons/fogbugz.png"); // 16x16
 }
