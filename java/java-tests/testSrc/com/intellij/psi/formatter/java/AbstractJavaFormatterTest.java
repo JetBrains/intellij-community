@@ -16,6 +16,7 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -153,7 +154,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
           }
         });
       }
-    }, "", "");
+    }, action == Action.REFORMAT ? ReformatCodeProcessor.COMMAND_NAME : "", "");
 
 
     if (document == null) {

@@ -90,6 +90,9 @@ class RncBlock implements Block {
 
   @Nullable
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
+    if (child1 == null) {
+      return null;
+    }
     final ASTNode lnode = ((RncBlock)child1).myNode;
     final PsiElement lpsi = lnode.getPsi();
     final PsiElement rpsi = ((RncBlock)child2).myNode.getPsi();
@@ -98,8 +101,9 @@ class RncBlock implements Block {
       return makeNewline();
     }
     if ((lpsi instanceof RncDecl || lpsi instanceof RncDefine ||
-            lnode.getElementType() == RncElementTypes.START) &&
-            (rpsi instanceof RncDefine || rpsi instanceof RncGrammar)) {
+         lnode.getElementType() == RncElementTypes.START) &&
+        (rpsi instanceof RncDefine || rpsi instanceof RncGrammar))
+    {
       return makeNewline();
     }
     return null;

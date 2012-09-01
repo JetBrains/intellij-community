@@ -1,4 +1,3 @@
-
 public class Foo {
     public void foo(boolean a, int x,
                     int y, int z) {
