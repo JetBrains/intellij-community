@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -41,7 +43,7 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  public static <K, V> HashMap<K, V> newHashMap(Map<K, V> map) {
+  public static <K, V> HashMap<K, V> newHashMap(@NotNull Map<K, V> map) {
     return new com.intellij.util.containers.HashMap<K, V>(map);
   }
 
@@ -64,8 +66,18 @@ public class ContainerUtilRt {
   }
 
   @NotNull
+  public static <K extends Comparable, V> TreeMap<K, V> newTreeMap(@NotNull Map<K, V> map) {
+    return new TreeMap<K, V>(map);
+  }
+
+  @NotNull
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap() {
-    return new LinkedHashMap<K, V>();
+    return new com.intellij.util.containers.LinkedHashMap<K, V>();
+  }
+
+  @NotNull
+  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Map<K, V> map) {
+    return new com.intellij.util.containers.LinkedHashMap<K, V>(map);
   }
 
   @NotNull
@@ -120,11 +132,11 @@ public class ContainerUtilRt {
     return 5 + size + size / 5;
   }
 
-  private static <T, LT extends List<T>> LT copy(LT list, @NotNull Iterable<? extends T> elements) {
-    for (T anIterable : elements) {
-      list.add(anIterable);
+  private static <T, C extends Collection<T>> C copy(C collection, @NotNull Iterable<? extends T> elements) {
+    for (T element : elements) {
+      collection.add(element);
     }
-    return list;
+    return collection;
   }
 
   @NotNull
@@ -138,12 +150,16 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  public static <T> HashSet<T> newHashSet(Iterable<? extends T> iterable) {
-    return newHashSet(iterable.iterator());
+  public static <T> HashSet<T> newHashSet(@NotNull Iterable<? extends T> elements) {
+    if (elements instanceof Collection) {
+      @SuppressWarnings("unchecked") Collection<? extends T> collection = (Collection<? extends T>)elements;
+      return new com.intellij.util.containers.HashSet<T>(collection);
+    }
+    return newHashSet(elements.iterator());
   }
 
   @NotNull
-  public static <T> HashSet<T> newHashSet(Iterator<? extends T> iterator) {
+  public static <T> HashSet<T> newHashSet(@NotNull Iterator<? extends T> iterator) {
     HashSet<T> set = newHashSet();
     while (iterator.hasNext()) set.add(iterator.next());
     return set;
@@ -151,12 +167,7 @@ public class ContainerUtilRt {
 
   @NotNull
   public static <T> LinkedHashSet<T> newLinkedHashSet() {
-    return new LinkedHashSet<T>();
-  }
-
-  @NotNull
-  public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull Collection<T> elements) {
-    return new LinkedHashSet<T>(elements);
+    return new com.intellij.util.containers.LinkedHashSet<T>();
   }
 
   @NotNull
@@ -165,22 +176,33 @@ public class ContainerUtilRt {
   }
 
   @NotNull
+  public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull Iterable<? extends T> elements) {
+    if (elements instanceof Collection) {
+      @SuppressWarnings("unchecked") Collection<? extends T> collection = (Collection<? extends T>)elements;
+      return new com.intellij.util.containers.LinkedHashSet<T>(collection);
+    }
+    return copy(ContainerUtilRt.<T>newLinkedHashSet(), elements);
+  }
+
+  @NotNull
   public static <T> TreeSet<T> newTreeSet() {
     return new TreeSet<T>();
   }
 
   @NotNull
-  public static <T> TreeSet<T> newTreeSet(@NotNull Collection<T> elements) {
-    return new TreeSet<T>(elements);
+  public static <T> TreeSet<T> newTreeSet(T... elements) {
+    TreeSet<T> set = newTreeSet();
+    Collections.addAll(set, elements);
+    return set;
   }
 
   @NotNull
-  public static <T> TreeSet<T> newTreeSet(@NotNull T... elements) {
-    return newTreeSet(Arrays.asList(elements));
+  public static <T> TreeSet<T> newTreeSet(@NotNull Iterable<? extends T> elements) {
+    return copy(ContainerUtilRt.<T>newTreeSet(), elements);
   }
 
   @NotNull
-  public static <T> TreeSet<T> newTreeSet(Comparator<? super T> comparator) {
+  public static <T> TreeSet<T> newTreeSet(@Nullable Comparator<? super T> comparator) {
     return new TreeSet<T>(comparator);
   }
 
@@ -190,8 +212,8 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  public static <T> Stack<T> newStack(Collection<T> initial) {
-    return new Stack<T>(initial);
+  public static <T> Stack<T> newStack(Collection<T> elements) {
+    return new Stack<T>(elements);
   }
 
   @NotNull
