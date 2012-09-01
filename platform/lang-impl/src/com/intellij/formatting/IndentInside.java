@@ -91,4 +91,9 @@ class IndentInside {
       return text.subSequence(i + 1, text.length());
     }
   }
+
+  @Override
+  public String toString() {
+    return String.format("spaces: %d, tabs: %d", whiteSpaces, tabs);
+  }
 }
