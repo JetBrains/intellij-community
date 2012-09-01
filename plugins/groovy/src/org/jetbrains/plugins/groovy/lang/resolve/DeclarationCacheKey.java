@@ -25,7 +25,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PairProcessor;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -184,7 +183,7 @@ class DeclarationCacheKey {
   }
 
   private class MyCollectProcessor extends ResolverProcessor {
-    final List<Pair<PsiElement, ResolveState>> declarations = CollectionFactory.arrayList();
+    final List<Pair<PsiElement, ResolveState>> declarations = ContainerUtil.newArrayList();
 
     public MyCollectProcessor(PsiElement scope) {
       super(DeclarationCacheKey.this.name, DeclarationCacheKey.this.kinds, scope, PsiType.EMPTY_ARRAY);
