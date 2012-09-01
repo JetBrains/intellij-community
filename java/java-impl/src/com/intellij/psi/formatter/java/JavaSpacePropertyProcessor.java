@@ -72,7 +72,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
     if (myChild1 == null) {
       // Given node corresponds to the first document block.
-      createSpaceInCode(false);
+      if (FormatterUtil.isFormatterCalledExplicitly()) {
+        createSpaceInCode(false);
+      }
       return;
     }
 
