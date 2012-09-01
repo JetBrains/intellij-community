@@ -99,6 +99,11 @@ public class DeleteToWordStartAction extends TextComponentEditorAction {
           if (Character.isWhitespace(previous)) {
             break;
           }
+          else if (offset < endOffset - 1 && !Character.isJavaIdentifierPart(text.charAt(offset + 1))) {
+            // Handle a situation like ' "one", "two", [caret] '. We want to delete up to the previous literal end here.
+            editor.getCaretModel().moveToOffset(offset + 1);
+            break;
+          }
           if (myQuotesNumber.get(current) % 2 == 0) {
             // Was 'one "two" [caret]', now 'one "two[caret]"', we want to get 'one [caret]"two"'
             EditorActionUtil.moveCaretToPreviousWord(editor, false);
