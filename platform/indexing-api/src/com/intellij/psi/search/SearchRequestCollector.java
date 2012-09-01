@@ -19,7 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -30,9 +30,9 @@ import java.util.List;
 */
 public class SearchRequestCollector {
   private final Object lock = new Object();
-  private final List<PsiSearchRequest> myWordRequests = CollectionFactory.arrayList();
-  private final List<QuerySearchRequest> myQueryRequests = CollectionFactory.arrayList();
-  private final List<Processor<Processor<PsiReference>>> myCustomSearchActions = CollectionFactory.arrayList();
+  private final List<PsiSearchRequest> myWordRequests = ContainerUtil.newArrayList();
+  private final List<QuerySearchRequest> myQueryRequests = ContainerUtil.newArrayList();
+  private final List<Processor<Processor<PsiReference>>> myCustomSearchActions = ContainerUtil.newArrayList();
   private final SearchSession mySession;
 
   public SearchRequestCollector(SearchSession session) {

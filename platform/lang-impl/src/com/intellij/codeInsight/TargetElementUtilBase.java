@@ -45,7 +45,7 @@ import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -227,7 +227,7 @@ public class TargetElementUtilBase {
   public PsiElement getNamedElement(@Nullable final PsiElement element, final int offsetInElement) {
     if (element == null) return null;
 
-    final List<PomTarget> targets = CollectionFactory.arrayList();
+    final List<PomTarget> targets = ContainerUtil.newArrayList();
     final Consumer<PomTarget> consumer = new Consumer<PomTarget>() {
       public void consume(PomTarget target) {
         if (target instanceof PsiDeclaredTarget) {

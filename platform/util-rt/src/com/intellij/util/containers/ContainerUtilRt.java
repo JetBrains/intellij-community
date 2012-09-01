@@ -31,7 +31,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * @since 12.0
  */
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "UnusedDeclaration"})
 public class ContainerUtilRt {
   private static final int ARRAY_COPY_THRESHOLD = 20;
 
@@ -43,6 +43,19 @@ public class ContainerUtilRt {
   @NotNull
   public static <K, V> HashMap<K, V> newHashMap(Map<K, V> map) {
     return new com.intellij.util.containers.HashMap<K, V>(map);
+  }
+
+  @NotNull
+  public static <K, V> Map<K, V> newHashMap(@NotNull List<K> keys, @NotNull List<V> values) {
+    if (keys.size() != values.size()) {
+      throw new IllegalArgumentException(keys + " should have same length as " + values);
+    }
+
+    Map<K, V> map = newHashMap();
+    for (int i = 0; i < keys.size(); ++i) {
+      map.put(keys.get(i), values.get(i));
+    }
+    return map;
   }
 
   @NotNull
@@ -61,21 +74,54 @@ public class ContainerUtilRt {
   }
 
   @NotNull
+  public static <T> LinkedList<T> newLinkedList(T... elements) {
+    final LinkedList<T> list = newLinkedList();
+    Collections.addAll(list, elements);
+    return list;
+  }
+
+  @NotNull
+  public static <T> LinkedList<T> newLinkedList(@NotNull Iterable<? extends T> elements) {
+    return copy(ContainerUtilRt.<T>newLinkedList(), elements);
+  }
+
+  @NotNull
   public static <T> ArrayList<T> newArrayList() {
     return new ArrayList<T>();
   }
 
   @NotNull
-  public static <E> ArrayList<E> newArrayList(E... array) {
-    ArrayList<E> list = new ArrayList<E>(computeArrayListCapacity(array.length));
-    Collections.addAll(list, array);
+  public static <T> ArrayList<T> newArrayList(T... elements) {
+    ArrayList<T> list = newArrayListWithCapacity(elements.length);
+    Collections.addAll(list, elements);
     return list;
   }
 
   @NotNull
-  public static <E> ArrayList<E> newArrayList(Iterable<? extends E> iterable) {
-    ArrayList<E> list = newArrayList();
-    for (E anIterable : iterable) {
+  public static <T> ArrayList<T> newArrayList(@NotNull Iterable<? extends T> elements) {
+    if (elements instanceof Collection) {
+      @SuppressWarnings("unchecked") Collection<? extends T> collection = (Collection<? extends T>)elements;
+      return new ArrayList<T>(collection);
+    }
+    return copy(ContainerUtilRt.<T>newArrayList(), elements);
+  }
+
+  @NotNull
+  public static <T> ArrayList<T> newArrayListWithExpectedSize(int size) {
+    return new ArrayList<T>(size);
+  }
+
+  @NotNull
+  public static <T> ArrayList<T> newArrayListWithCapacity(int size) {
+    return new ArrayList<T>(computeArrayListCapacity(size));
+  }
+
+  private static int computeArrayListCapacity(int size) {
+    return 5 + size + size / 5;
+  }
+
+  private static <T, LT extends List<T>> LT copy(LT list, @NotNull Iterable<? extends T> elements) {
+    for (T anIterable : elements) {
       list.add(anIterable);
     }
     return list;
@@ -88,9 +134,7 @@ public class ContainerUtilRt {
 
   @NotNull
   public static <T> HashSet<T> newHashSet(T... elements) {
-    HashSet<T> set = newHashSet();
-    Collections.addAll(set, elements);
-    return set;
+    return new com.intellij.util.containers.HashSet<T>(Arrays.asList(elements));
   }
 
   @NotNull
@@ -106,27 +150,38 @@ public class ContainerUtilRt {
   }
 
   @NotNull
+  public static <T> LinkedHashSet<T> newLinkedHashSet() {
+    return new LinkedHashSet<T>();
+  }
+
+  @NotNull
+  public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull Collection<T> elements) {
+    return new LinkedHashSet<T>(elements);
+  }
+
+  @NotNull
+  public static <T> LinkedHashSet<T> newLinkedHashSet(T... elements) {
+    return newLinkedHashSet(Arrays.asList(elements));
+  }
+
+  @NotNull
   public static <T> TreeSet<T> newTreeSet() {
     return new TreeSet<T>();
   }
 
   @NotNull
+  public static <T> TreeSet<T> newTreeSet(@NotNull Collection<T> elements) {
+    return new TreeSet<T>(elements);
+  }
+
+  @NotNull
+  public static <T> TreeSet<T> newTreeSet(@NotNull T... elements) {
+    return newTreeSet(Arrays.asList(elements));
+  }
+
+  @NotNull
   public static <T> TreeSet<T> newTreeSet(Comparator<? super T> comparator) {
     return new TreeSet<T>(comparator);
-  }
-
-  @NotNull
-  public static <T> ArrayList<T> newArrayListWithExpectedSize(int size) {
-    return new ArrayList<T>(size);
-  }
-
-  @NotNull
-  public static <T> ArrayList<T> newArrayListWithCapacity(int size) {
-    return new ArrayList<T>(computeArrayListCapacity(size));
-  }
-
-  private static int computeArrayListCapacity(int size) {
-    return 5 + size + size / 5;
   }
 
   @NotNull

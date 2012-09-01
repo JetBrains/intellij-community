@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -37,6 +36,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
@@ -950,7 +950,7 @@ public class GenericsHighlightUtil {
   @Nullable
   public static Collection<HighlightInfo> checkCatchParameterIsClass(PsiParameter parameter) {
     if (!(parameter.getDeclarationScope() instanceof PsiCatchSection)) return null;
-    final Collection<HighlightInfo> result = CollectionFactory.arrayList();
+    final Collection<HighlightInfo> result = ContainerUtil.newArrayList();
 
     final List<PsiTypeElement> typeElements = PsiUtil.getParameterTypeElements(parameter);
     for (PsiTypeElement typeElement : typeElements) {

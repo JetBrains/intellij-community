@@ -44,7 +44,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
@@ -92,7 +91,7 @@ public class MvcModuleStructureUtil {
 
     root.refresh(false, true);
 
-    final List<Consumer<ContentEntry>> actions = CollectionFactory.arrayList();
+    final List<Consumer<ContentEntry>> actions = ContainerUtil.newArrayList();
 
     for (final String src : structure.getSourceFolders()) {
       addSourceFolder(root, src, false, actions, sourceRoots);
@@ -269,7 +268,7 @@ public class MvcModuleStructureUtil {
       appRoot.refresh(false, false);
     }
 
-    List<Consumer<ModifiableRootModel>> actions = CollectionFactory.arrayList();
+    List<Consumer<ModifiableRootModel>> actions = ContainerUtil.newArrayList();
     removeInvalidSourceRoots(actions, structure);
     cleanupDefaultLibrary(structure.myModule, actions, appRoots, structure.getUserLibraryName());
     moveupLibrariesFromMavenPlugin(structure.myModule, actions);
@@ -336,8 +335,8 @@ public class MvcModuleStructureUtil {
   }
 
   private static void removeInvalidSourceRoots(List<Consumer<ModifiableRootModel>> actions, MvcProjectStructure structure) {
-    final Set<SourceFolder> toRemove = CollectionFactory.troveSet();
-    final Set<ContentEntry> toRemoveContent = CollectionFactory.troveSet();
+    final Set<SourceFolder> toRemove = ContainerUtil.newTroveSet();
+    final Set<ContentEntry> toRemoveContent = ContainerUtil.newTroveSet();
     for (ContentEntry entry : ModuleRootManager.getInstance(structure.myModule).getContentEntries()) {
       final VirtualFile file = entry.getFile();
       if (file == null || !structure.isValidContentRoot(file)) {

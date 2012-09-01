@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.psi.PropertyUtils;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
@@ -100,7 +99,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   private static Set<IdeaPlugin> getVisiblePlugins(IdeaPlugin ideaPlugin) {
-    Set<IdeaPlugin> result = CollectionFactory.hashSet();
+    Set<IdeaPlugin> result = ContainerUtil.newHashSet();
     MultiMap<String, IdeaPlugin> byId = getPluginMap(ideaPlugin.getManager().getProject());
     collectDependencies(ideaPlugin, result, byId);
     //noinspection NullableProblems

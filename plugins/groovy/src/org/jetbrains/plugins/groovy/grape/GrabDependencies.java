@@ -57,7 +57,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.*;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -260,7 +259,7 @@ public class GrabDependencies implements IntentionAction {
         if (jarRoot != null) {
           OrderRootType rootType = OrderRootType.CLASSES;
           String libName = "Grab:" + jar.getName();
-          for (String classifier : CollectionFactory.ar("sources", "source", "src")) {
+          for (String classifier : ContainerUtil.ar("sources", "source", "src")) {
             if (libName.endsWith("-" + classifier + ".jar")) {
               rootType = OrderRootType.SOURCES;
               libName = StringUtil.trimEnd(libName, "-" + classifier + ".jar") + ".jar";

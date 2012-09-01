@@ -46,14 +46,14 @@ import java.util.Map;
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized", "UnusedDeclaration"})
 public class SimpleColoredComponent extends JComponent implements Accessible {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SimpleColoredComponent");
+
   public static final Color STYLE_SEARCH_MATCH_BACKGROUND = new Color(250, 250, 250, 140);
+  public static final int FRAGMENT_ICON = -2;
 
   private final ArrayList<String> myFragments;
   private final ArrayList<SimpleTextAttributes> myAttributes;
   private ArrayList<Object> myFragmentTags = null;
   
-  public static final int FRAGMENT_ICON = -2;
-
   /**
    * Component's icon. It can be <code>null</code>.
    */

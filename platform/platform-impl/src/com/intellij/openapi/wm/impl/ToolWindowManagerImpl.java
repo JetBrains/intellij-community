@@ -56,7 +56,7 @@ import com.intellij.ui.switcher.QuickAccessSettings;
 import com.intellij.ui.switcher.SwitchManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.UIUtil;
@@ -93,7 +93,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final Map<String, FloatingDecorator> myId2FloatingDecorator;
   private final Map<String, StripeButton> myId2StripeButton;
   private final Map<String, FocusWatcher> myId2FocusWatcher;
-  private final Set<String> myDumbAwareIds = Collections.synchronizedSet(CollectionFactory.<String>troveSet());
+  private final Set<String> myDumbAwareIds = Collections.synchronizedSet(ContainerUtil.<String>newTroveSet());
 
   private final EditorComponentFocusWatcher myEditorComponentFocusWatcher;
   private final MyToolWindowPropertyChangeListener myToolWindowPropertyChangeListener;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +50,7 @@ public abstract class GotoActionBase extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.GotoActionBase");
 
   protected static Class myInAction = null;
-  private static final Map<Class, Pair<String, Integer>> ourLastStrings = CollectionFactory.hashMap();
+  private static final Map<Class, Pair<String, Integer>> ourLastStrings = ContainerUtil.newHashMap();
 
 
   public final void actionPerformed(AnActionEvent e) {

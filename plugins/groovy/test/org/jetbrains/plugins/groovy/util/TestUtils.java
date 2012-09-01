@@ -1,5 +1,6 @@
 /*
- * Copyright 2000-2008 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,7 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.junit.Assert;
 
@@ -154,7 +155,7 @@ public abstract class TestUtils {
 
     Assert.assertNotNull(lookupElements);
 
-    Set<String> missedVariants = CollectionFactory.hashSet(expectedVariants);
+    Set<String> missedVariants = ContainerUtil.newHashSet(expectedVariants);
 
     for (LookupElement lookupElement : lookupElements) {
       String lookupString = lookupElement.getLookupString();

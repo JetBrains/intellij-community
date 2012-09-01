@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +59,7 @@ import java.util.regex.Pattern;
 public class MavenDomUtil {
 
   // see http://maven.apache.org/settings.html
-  private static final Set<String> SUBTAGS_IN_SETTINGS_FILE = CollectionFactory.hashSet("localRepository", "interactiveMode",
+  private static final Set<String> SUBTAGS_IN_SETTINGS_FILE = ContainerUtil.newHashSet("localRepository", "interactiveMode",
                                                                                        "usePluginRegistry", "offline", "pluginGroups",
                                                                                        "servers", "mirrors", "proxies", "profiles",
                                                                                        "activeProfiles");

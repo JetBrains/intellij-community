@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.TextRange;
@@ -26,7 +23,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NonNls;
 
@@ -34,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * @author max
  * @author peter
  * @author Konstantin Bulenkov
  */
@@ -504,10 +502,10 @@ public class NameUtilTest extends UsefulTestCase {
     final List<MinusculeMatcher> matching = new ArrayList<MinusculeMatcher>();
     final List<MinusculeMatcher> nonMatching = new ArrayList<MinusculeMatcher>();
 
-    for (String s : CollectionFactory.ar("*", "*i", "*a", "*u", "T", "ti", longName, longName.substring(0, 20))) {
+    for (String s : ContainerUtil.ar("*", "*i", "*a", "*u", "T", "ti", longName, longName.substring(0, 20))) {
       matching.add(new MinusculeMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
-    for (String s : CollectionFactory.ar("A", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "tag")) {
+    for (String s : ContainerUtil.ar("A", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "tag")) {
       nonMatching.add(new MinusculeMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
 

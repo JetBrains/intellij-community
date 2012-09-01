@@ -32,12 +32,19 @@ import java.lang.reflect.Array;
 import java.util.*;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "unchecked", "MethodOverridesStaticMethodOfSuperclass","UnusedDeclaration"})
 public class ContainerUtil extends ContainerUtilRt {
   private static final int INSERTION_SORT_THRESHOLD = 10;
+
+  @NotNull
+  public static <T> T[] ar(T... elements) {
+    return elements;
+  }
 
   @NotNull
   public static <K, V> HashMap<K, V> newHashMap() {
@@ -47,6 +54,11 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <K, V> HashMap<K, V> newHashMap(Map<K, V> map) {
     return ContainerUtilRt.newHashMap(map);
+  }
+
+  @NotNull
+  public static <K, V> Map<K, V> newHashMap(@NotNull List<K> keys, @NotNull List<V> values) {
+    return ContainerUtilRt.newHashMap(keys, values);
   }
 
   @NotNull
@@ -60,8 +72,28 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  public static <K, V> THashMap<K, V> newTroveMap() {
+    return new THashMap<K, V>();
+  }
+
+  @NotNull
+  public static <K, V> IdentityHashMap<K, V> newIdentityHashMap() {
+    return new IdentityHashMap<K, V>();
+  }
+
+  @NotNull
   public static <T> LinkedList<T> newLinkedList() {
     return ContainerUtilRt.newLinkedList();
+  }
+
+  @NotNull
+  public static <T> LinkedList<T> newLinkedList(T... elements) {
+    return ContainerUtilRt.newLinkedList(elements);
+  }
+
+  @NotNull
+  public static <T> LinkedList<T> newLinkedList(@NotNull Iterable<? extends T> elements) {
+    return ContainerUtilRt.newLinkedList(elements);
   }
 
   @NotNull
@@ -75,8 +107,40 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
-  public static <E> ArrayList<E> newArrayList(Iterable<? extends E> iterable) {
+  public static <E> ArrayList<E> newArrayList(@NotNull Iterable<? extends E> iterable) {
     return ContainerUtilRt.newArrayList(iterable);
+  }
+
+  @NotNull
+  public static <T> ArrayList<T> newArrayListWithExpectedSize(int size) {
+    return ContainerUtilRt.newArrayListWithExpectedSize(size);
+  }
+
+  @NotNull
+  public static <T> ArrayList<T> newArrayListWithCapacity(int size) {
+    return ContainerUtilRt.newArrayListWithCapacity(size);
+  }
+
+  @NotNull
+  public static <T> List<T> newArrayList(@NotNull final T[] elements, final int start, final int end) {
+    if (start < 0 || start > end || end > elements.length) {
+      throw new IllegalArgumentException("start:" + start + " end:" + end + " length:" + elements.length);
+    }
+
+    return new AbstractList<T>() {
+      private final int size = end - start;
+
+      @Override
+      public T get(final int index) {
+        if (index < 0 || index >= size) throw new IndexOutOfBoundsException("index:" + index + " size:" + size);
+        return elements[start + index];
+      }
+
+      @Override
+      public int size() {
+        return size;
+      }
+    };
   }
 
   @NotNull
@@ -100,23 +164,65 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  public static <T> LinkedHashSet<T> newLinkedHashSet() {
+    return ContainerUtilRt.newLinkedHashSet();
+  }
+
+  @NotNull
+  public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull Collection<T> elements) {
+    return ContainerUtilRt.newLinkedHashSet(elements);
+  }
+
+  @NotNull
+  public static <T> LinkedHashSet<T> newLinkedHashSet(T... elements) {
+    return ContainerUtilRt.newLinkedHashSet(elements);
+  }
+
+  @NotNull
+  public static <T> THashSet<T> newTroveSet() {
+    return new THashSet<T>();
+  }
+
+  @NotNull
+  public static <T> THashSet<T> newTroveSet(T... elements) {
+    return newTroveSet(Arrays.asList(elements));
+  }
+
+  @NotNull
+  public static <T> THashSet<T> newTroveSet(@NotNull Collection<T> elements) {
+    return new THashSet<T>(elements);
+  }
+
+  @NotNull
+  public static <K> THashSet<K> newIdentityTroveSet() {
+    @SuppressWarnings("unchecked") final TObjectHashingStrategy<K> identity = TObjectHashingStrategy.IDENTITY;
+    return new THashSet<K>(identity);
+  }
+
+  @NotNull
+  public static <K> THashSet<K> newIdentityTroveSet(int initialCapacity) {
+    @SuppressWarnings("unchecked") final TObjectHashingStrategy<K> identity = TObjectHashingStrategy.IDENTITY;
+    return new THashSet<K>(initialCapacity, identity);
+  }
+
+  @NotNull
   public static <T> TreeSet<T> newTreeSet() {
     return ContainerUtilRt.newTreeSet();
   }
 
   @NotNull
+  public static <T> TreeSet<T> newTreeSet(@NotNull Collection<T> elements) {
+    return ContainerUtilRt.newTreeSet(elements);
+  }
+
+  @NotNull
+  public static <T> TreeSet<T> newTreeSet(@NotNull T... elements) {
+    return ContainerUtilRt.newTreeSet(elements);
+  }
+
+  @NotNull
   public static <T> TreeSet<T> newTreeSet(Comparator<? super T> comparator) {
     return ContainerUtilRt.newTreeSet(comparator);
-  }
-
-  @NotNull
-  public static <T> ArrayList<T> newArrayListWithExpectedSize(int size) {
-    return ContainerUtilRt.newArrayListWithExpectedSize(size);
-  }
-
-  @NotNull
-  public static <T> ArrayList<T> newArrayListWithCapacity(int size) {
-    return ContainerUtilRt.newArrayListWithCapacity(size);
   }
 
   @NotNull

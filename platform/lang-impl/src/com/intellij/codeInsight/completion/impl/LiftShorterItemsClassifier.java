@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.LinkedHashMap;
 
-import static com.intellij.util.containers.CollectionFactory.identityHashMap;
-import static com.intellij.util.containers.CollectionFactory.identityTroveSet;
+import static com.intellij.util.containers.ContainerUtil.newIdentityHashMap;
+import static com.intellij.util.containers.ContainerUtil.newIdentityTroveSet;
 
 /**
 * @author peter
@@ -46,9 +47,9 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
       return new ArrayList<LookupElement>(1);
     }
   };
-  private final Map<LookupElement, FList<LookupElement>> myToLiftForSorting = identityHashMap();
-  private final Map<LookupElement, FList<LookupElement>> myToLiftForPreselection = identityHashMap();
-  private final IdentityHashMap<FList<LookupElement>, IdentityHashMap<LookupElement, FList<LookupElement>>> myPrepends = identityHashMap();
+  private final Map<LookupElement, FList<LookupElement>> myToLiftForSorting = newIdentityHashMap();
+  private final Map<LookupElement, FList<LookupElement>> myToLiftForPreselection = newIdentityHashMap();
+  private final IdentityHashMap<FList<LookupElement>, IdentityHashMap<LookupElement, FList<LookupElement>>> myPrepends = newIdentityHashMap();
   private final Classifier<LookupElement> myNext;
   private final LiftingCondition myCondition;
   private int myCount = 0;
@@ -93,7 +94,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   private FList<LookupElement> prependOrReuse(FList<LookupElement> tail, LookupElement head) {
     IdentityHashMap<LookupElement, FList<LookupElement>> cache = myPrepends.get(tail);
     if (cache == null) {
-      myPrepends.put(tail, cache = identityHashMap());
+      myPrepends.put(tail, cache = newIdentityHashMap());
     }
     FList<LookupElement> result = cache.get(head);
     if (result == null) {
@@ -134,7 +135,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
 
   private Iterable<LookupElement> liftShorterElements(final Iterable<LookupElement> source,
                                                       @Nullable final THashSet<LookupElement> lifted, final ProcessingContext context) {
-    final Set<LookupElement> srcSet = identityTroveSet(source instanceof Collection ? ((Collection)source).size() : myCount);
+    final Set<LookupElement> srcSet = newIdentityTroveSet(source instanceof Collection ? ((Collection)source).size() : myCount);
     ContainerUtil.addAll(srcSet, source);
 
     if (srcSet.size() < 2) {
@@ -146,8 +147,8 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
 
   @Override
   public void describeItems(LinkedHashMap<LookupElement, StringBuilder> map, ProcessingContext context) {
-    final THashSet<LookupElement> lifted = identityTroveSet();
-    CollectionFactory.arrayList(liftShorterElements(new ArrayList<LookupElement>(map.keySet()), lifted, context));
+    final THashSet<LookupElement> lifted = newIdentityTroveSet();
+    ContainerUtil.newArrayList(liftShorterElements(new ArrayList<LookupElement>(map.keySet()), lifted, context));
     if (!lifted.isEmpty()) {
       for (LookupElement element : map.keySet()) {
         final StringBuilder builder = map.get(element);
@@ -185,8 +186,8 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
 
     @Override
     public Iterator<LookupElement> iterator() {
-      final Set<LookupElement> processed = identityTroveSet(mySrcSet.size());
-      final Set<FList<LookupElement>> arraysProcessed = identityTroveSet();
+      final Set<LookupElement> processed = newIdentityTroveSet(mySrcSet.size());
+      final Set<FList<LookupElement>> arraysProcessed = newIdentityTroveSet();
 
       final boolean forSorting = myContext.get(CompletionLookupArranger.PURE_RELEVANCE) != Boolean.TRUE;
       final Iterable<LookupElement> next = myNext.classify(mySource, myContext);

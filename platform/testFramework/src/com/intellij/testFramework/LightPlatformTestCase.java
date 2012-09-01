@@ -88,7 +88,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.IndexableFileSet;
 import com.intellij.util.messages.MessageBusConnection;
@@ -812,7 +812,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
       final String[] myUrls = mySdk.getRootProvider().getUrls(OrderRootType.CLASSES);
       final String[] newUrls = newSdk.getRootProvider().getUrls(OrderRootType.CLASSES);
-      return CollectionFactory.hashSet(myUrls).equals(CollectionFactory.hashSet(newUrls));
+      return ContainerUtil.newHashSet(myUrls).equals(ContainerUtil.newHashSet(newUrls));
     }
   }
 }

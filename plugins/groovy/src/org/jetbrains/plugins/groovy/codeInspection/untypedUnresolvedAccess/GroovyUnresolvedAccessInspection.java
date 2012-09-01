@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess;
 
 import com.intellij.psi.*;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
@@ -111,7 +111,7 @@ public class GroovyUnresolvedAccessInspection extends BaseInspection {
     boolean gpp = GppTypeConverter.hasTypedContext(target) && GppTypeConverter.hasTypedContext(refExpr);
     if (refExpr.getParent() instanceof GrCall) {
       List<PsiMethod> toSearch =
-        CollectionFactory.arrayList(target.findMethodsByName(gpp ? "invokeUnresolvedMethod" : "invokeMethod", true));
+        ContainerUtil.newArrayList(target.findMethodsByName(gpp ? "invokeUnresolvedMethod" : "invokeMethod", true));
       for (Iterator<PsiMethod> iterator = toSearch.iterator(); iterator.hasNext(); ) {
         PsiMethod method = iterator.next();
         if (!gpp &&
@@ -124,7 +124,7 @@ public class GroovyUnresolvedAccessInspection extends BaseInspection {
     }
 
     if (PsiUtil.isLValue(refExpr)) {
-      List<PsiMethod> toSearch = CollectionFactory.arrayList(target.findMethodsByName(gpp ? "setUnresolvedProperty" : "setProperty", true));
+      List<PsiMethod> toSearch = ContainerUtil.newArrayList(target.findMethodsByName(gpp ? "setUnresolvedProperty" : "setProperty", true));
       for (Iterator<PsiMethod> iterator = toSearch.iterator(); iterator.hasNext(); ) {
         PsiMethod method = iterator.next();
         if (method.getParameterList().getParametersCount() != 2 || (!gpp && !method.getParameterList().getParameters()[1].getType()
@@ -135,7 +135,7 @@ public class GroovyUnresolvedAccessInspection extends BaseInspection {
       return toSearch;
     }
 
-    List<PsiMethod> toSearch = CollectionFactory.arrayList(target.findMethodsByName(gpp ? "getUnresolvedProperty" : "getProperty", true));
+    List<PsiMethod> toSearch = ContainerUtil.newArrayList(target.findMethodsByName(gpp ? "getUnresolvedProperty" : "getProperty", true));
     for (Iterator<PsiMethod> iterator = toSearch.iterator(); iterator.hasNext(); ) {
       if (iterator.next().getParameterList().getParametersCount() != 1) {
         iterator.remove();

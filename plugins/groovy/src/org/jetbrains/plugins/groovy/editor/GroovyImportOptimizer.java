@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TObjectIntHashMap;
@@ -351,7 +350,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         }
       });
 
-      List<GrImportStatement> explicated = CollectionFactory.arrayList();
+      List<GrImportStatement> explicated = ContainerUtil.newArrayList();
       for (String importedClass : importedClasses) {
         final String parentName = StringUtil.getPackageName(importedClass);
         if (!annotations.containsKey(importedClass) && !aliased.containsKey(importedClass)) {

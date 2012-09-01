@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -167,7 +167,7 @@ public class StubGenerator implements ClassItemGenerator {
       return Collections.emptySet();
     }
 
-    final Set<String> result = CollectionFactory.troveSet(ArrayUtil.EMPTY_STRING_ARRAY);
+    final Set<String> result = ContainerUtil.newTroveSet(ArrayUtil.EMPTY_STRING_ARRAY);
     for (PsiClassType type : chainedConstructor.getThrowsList().getReferencedTypes()) {
       StringBuilder builder = new StringBuilder();
       writeType(builder, substitutor.substitute(type), constructor, classNameProvider);

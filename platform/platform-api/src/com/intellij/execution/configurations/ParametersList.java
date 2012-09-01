@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -393,7 +392,7 @@ public class ParametersList implements Cloneable {
     public static List<String> decode(@NotNull String parameterString) {
       parameterString = parameterString.trim();
 
-      final ArrayList<String> params = CollectionFactory.arrayList();
+      final ArrayList<String> params = ContainerUtil.newArrayList();
       final StringBuilder token = new StringBuilder(128);
       boolean inQuotes = false;
       boolean escapedQuote = false;

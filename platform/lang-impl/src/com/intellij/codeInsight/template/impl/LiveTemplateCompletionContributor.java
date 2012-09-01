@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,7 +94,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
   private static List<TemplateImpl> listApplicableTemplates(PsiFile file, int offset) {
     Set<TemplateContextType> contextTypes = TemplateManagerImpl.getApplicableContextTypes(file, offset);
 
-    final ArrayList<TemplateImpl> result = CollectionFactory.arrayList();
+    final ArrayList<TemplateImpl> result = ContainerUtil.newArrayList();
     for (final TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
       if (!template.isDeactivated() && !template.isSelectionTemplate() && TemplateManagerImpl.isApplicable(template, contextTypes)) {
         result.add(template);

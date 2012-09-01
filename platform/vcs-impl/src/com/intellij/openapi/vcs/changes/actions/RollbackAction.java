@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import com.intellij.openapi.vcs.changes.ui.RollbackProgressModifier;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.RollbackUtil;
 import org.jetbrains.annotations.Nullable;
@@ -168,7 +168,7 @@ public class RollbackAction extends AnAction implements DumbAware {
   @Nullable
   private static List<Change> getChanges(final Project project, final AnActionEvent e) {
     final ChangesCheckHelper helper = new ChangesCheckHelper(project, e);
-    if (helper.isChangesSet() && helper.getChanges() != null) return CollectionFactory.arrayList(helper.getChanges());
+    if (helper.isChangesSet() && helper.getChanges() != null) return ContainerUtil.newArrayList(helper.getChanges());
 
     final VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     if (virtualFiles != null && virtualFiles.length > 0) {
