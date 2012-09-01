@@ -527,6 +527,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   @Override
   public void setConsoleFontSize(int fontSize) {
     myConsoleFontSize = fontSize;
+    initFonts();
   }
 
   @Override
