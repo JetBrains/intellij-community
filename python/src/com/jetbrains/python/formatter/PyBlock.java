@@ -329,7 +329,7 @@ public class PyBlock implements ASTBlock {
   }
 
   @Nullable
-  public Spacing getSpacing(Block child1, Block child2) {
+  public Spacing getSpacing(Block child1, @NotNull Block child2) {
     return myContext.getSpacingBuilder().getSpacing(this, child1, child2);
   }
 
