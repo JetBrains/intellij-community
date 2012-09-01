@@ -99,7 +99,8 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
   
   private void processStatement(PsiStatement statement, PsiStatement blockCandidate, int options) {
     if (blockCandidate instanceof PsiBlockStatement || blockCandidate == null) return;
-    boolean forceNewLine = !FormatterUtil.isFormatterCalledExplicitly() && !ApplicationManager.getApplication().isUnitTestMode();
+    boolean forceNewLine = !FormatterUtil.isFormatterCalledExplicitly() && !ApplicationManager.getApplication().isUnitTestMode()
+                           && !myPostProcessor.getSettings().KEEP_CONTROL_STATEMENT_IN_ONE_LINE;
     if (forceNewLine
         || options == CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
         || (options == CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE && PostFormatProcessorHelper.isMultiline(statement)))
