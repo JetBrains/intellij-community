@@ -16,7 +16,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -380,7 +382,12 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     addNodeAndCheckPending(throwInstruction);
 
     interruptFlow();
-    final PsiType type = exception.getNominalType();
+    final PsiType type = RecursionManager.doPreventingRecursion(exception, true, new NullableComputable<PsiType>() {
+      @Override
+      public PsiType compute() {
+        return exception.getNominalType();
+      }
+    });
     if (type != null) {
       ExceptionInfo info = findCatch(type);
       if (info != null) {
