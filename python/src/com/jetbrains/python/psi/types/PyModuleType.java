@@ -282,11 +282,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       PyFile pyFile = (PyFile)file;
       PsiElement moduleBase = PyUtil.isPackage(myModule) ? myModule.getContainingDirectory() : myModule;
       for (PyImportElement importElement : pyFile.getImportTargets()) {
-        PsiElement target = importElement.resolve();
+        PsiElement target = PyUtil.turnInitIntoDir(importElement.resolve());
         if (target != null && PsiTreeUtil.isAncestor(moduleBase, target, true)) {
-          if (target instanceof PsiFile && PyUtil.isPackage((PsiFile)target)) {
-            continue;
-          }
           LookupElement element = null;
           if (target instanceof PsiFileSystemItem) {
             element = buildFileLookupElement((PsiFileSystemItem) target, existingNames);
