@@ -383,7 +383,13 @@ final class BuildSession implements Runnable, CanceledStatus {
           cause = error;
         }
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        cause.printStackTrace(new PrintStream(out));
+        final PrintStream stream = new PrintStream(out);
+        try {
+          cause.printStackTrace(stream);
+        }
+        finally {
+          stream.close();
+        }
 
         final StringBuilder messageText = new StringBuilder();
         messageText.append("Internal error: (").append(cause.getClass().getName()).append(") ").append(cause.getMessage());
