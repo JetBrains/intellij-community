@@ -9,10 +9,7 @@ import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -34,9 +31,9 @@ public class PyGotoSuperHandler implements CodeInsightActionHandler {
         gotoSuperFunctions(editor, function, pyClass);
       }
       else {
-        PyTargetExpression classAttr = PsiTreeUtil.getParentOfType(element, PyTargetExpression.class, false, PyClass.class);
-        if (classAttr != null) {
-          gotoSuperClassAttributes(editor, classAttr, pyClass);
+        final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class, false, PyClass.class);
+        if (assignment != null && assignment.getTargets()[0] instanceof PyTargetExpression) {
+          gotoSuperClassAttributes(editor, (PyTargetExpression) assignment.getTargets()[0], pyClass);
         }
         else {
           navigateOrChoose(editor, PyUtil.getAllSuperClasses(pyClass), "Choose superclass");
