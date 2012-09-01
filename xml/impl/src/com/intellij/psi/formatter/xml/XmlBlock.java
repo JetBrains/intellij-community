@@ -223,7 +223,7 @@ public class XmlBlock extends AbstractXmlBlock {
     }
   }
 
-  public Spacing getSpacing(Block child1, Block child2) {
+  public Spacing getSpacing(Block child1, @NotNull Block child2) {
     if (!(child1 instanceof AbstractBlock) || !(child2 instanceof AbstractBlock)) {
       return null;
     }

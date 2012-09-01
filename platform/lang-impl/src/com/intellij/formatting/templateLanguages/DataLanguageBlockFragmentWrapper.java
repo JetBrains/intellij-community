@@ -61,7 +61,7 @@ public class DataLanguageBlockFragmentWrapper implements Block {
   }
 
   @Nullable
-  public Spacing getSpacing(Block child1, Block child2) {
+  public Spacing getSpacing(Block child1, @NotNull Block child2) {
     return Spacing.getReadOnlySpacing();
   }
 

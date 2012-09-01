@@ -33,7 +33,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
       "class Foo {\n" +
       "}",
       "/**\n" +
-      " * Here is one-line java-doc\n" +
+      " * Here is one-line java-doc \n" +
       " * comment\n" +
       " */\n" +
       "class Foo {\n" +

@@ -83,7 +83,8 @@ public interface Block {
    * Returns a spacing object indicating what spaces and/or line breaks are added between two
    * specified children of this block.
    *
-   * @param child1 the first child for which spacing is requested.
+   * @param child1 the first child for which spacing is requested;
+   *               <code>null</code> if given <code>'child2'</code> block is the first document block
    * @param child2 the second child for which spacing is requested.
    * @return the spacing instance, or null if no special spacing is required. If null is returned,
    *         the formatter does not insert or delete spaces between the child blocks, but may insert
@@ -92,7 +93,7 @@ public interface Block {
    * @see Spacing#getReadOnlySpacing()
    */
   @Nullable
-  Spacing getSpacing(Block child1, Block child2);
+  Spacing getSpacing(@Nullable Block child1, @NotNull Block child2);
 
   /**
    * Returns the alignment and indent attributes which are applied to a new block inserted at

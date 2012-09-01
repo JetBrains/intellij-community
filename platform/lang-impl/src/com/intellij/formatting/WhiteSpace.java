@@ -387,7 +387,6 @@ class WhiteSpace {
               setLineFeeds(spaceProperty.getPrefLineFeeds());
             }
           }
-
         } else if (isFirst()) {
           setLineFeeds(0);
           mySpaces = 0;

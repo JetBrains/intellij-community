@@ -1,4 +1,3 @@
-
 class C {
     public static final C1 ourC =
             new C2(new C3(),

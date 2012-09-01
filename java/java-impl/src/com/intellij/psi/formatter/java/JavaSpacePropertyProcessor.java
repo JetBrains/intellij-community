@@ -70,6 +70,12 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     init(child);
     mySettings = settings;
 
+    if (myChild1 == null) {
+      // Given node corresponds to the first document block.
+      createSpaceInCode(false);
+      return;
+    }
+
     final PsiElement myChild1Psi1 = myChild1.getPsi();
     final PsiElement myChild1Psi2 = myChild2.getPsi();
     if (myChild1Psi1 == null || myChild1Psi1.getLanguage() != JavaLanguage.INSTANCE ||

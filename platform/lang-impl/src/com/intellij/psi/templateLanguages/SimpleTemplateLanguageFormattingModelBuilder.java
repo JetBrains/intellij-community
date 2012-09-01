@@ -57,7 +57,7 @@ public class SimpleTemplateLanguageFormattingModelBuilder implements FormattingM
       }
 
       @Override
-      public Spacing getSpacing(final Block child1, final Block child2) {
+      public Spacing getSpacing(final Block child1, @NotNull final Block child2) {
         return Spacing.getReadOnlySpacing();
       }
 

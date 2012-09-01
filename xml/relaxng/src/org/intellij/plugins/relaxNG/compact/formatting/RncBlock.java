@@ -89,7 +89,7 @@ class RncBlock implements Block {
   }
 
   @Nullable
-  public Spacing getSpacing(Block child1, Block child2) {
+  public Spacing getSpacing(Block child1, @NotNull Block child2) {
     final ASTNode lnode = ((RncBlock)child1).myNode;
     final PsiElement lpsi = lnode.getPsi();
     final PsiElement rpsi = ((RncBlock)child2).myNode.getPsi();

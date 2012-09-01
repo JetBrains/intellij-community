@@ -20,7 +20,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -161,9 +160,9 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
       fail("Don't expect the document to be null");
       return;
     }
-    assertEquals(prepareText(textAfter), prepareText(document.getText()));
+    assertEquals(textAfter, document.getText());
     manager.commitDocument(document);
-    assertEquals(prepareText(textAfter), prepareText(file.getText()));
+    assertEquals(textAfter, file.getText());
 
   }
 
@@ -181,31 +180,6 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
       "class Foo{\n" + before + '\n' + "}",
       "class Foo {\n" + StringUtil.shiftIndentInside(after, 4, false) + '\n' + "}"
     );
-  }
-
-  private static String prepareText(String actual) {
-    if (actual.startsWith("\n")) {
-      actual = actual.substring(1);
-    }
-    if (actual.startsWith("\n")) {
-      actual = actual.substring(1);
-    }
-
-    // Strip trailing spaces
-    final Document doc = EditorFactory.getInstance().createDocument(actual);
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            ((DocumentImpl)doc).stripTrailingSpaces();
-          }
-        });
-      }
-    }, "formatting", null);
-
-    return doc.getText();
   }
 
   private static String loadFile(String name) throws Exception {

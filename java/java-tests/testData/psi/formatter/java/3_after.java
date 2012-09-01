@@ -1,4 +1,3 @@
-
 public class A {
     private void foo() {
         Runnable a = new Runnable() {

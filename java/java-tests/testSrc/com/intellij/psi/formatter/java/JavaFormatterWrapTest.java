@@ -179,12 +179,12 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "     public String s = \"this is a string that is long enough to be wrapped\"\n" +
       "}",
       "class TestClass {\n" +
-      "    // Single line comment that is long enough\n" +
+      "    // Single line comment that is long enough \n" +
       "    // to exceed right margin\n" +
-      "    /* Multi line comment that is long enough\n" +
+      "    /* Multi line comment that is long enough \n" +
       "    to exceed right margin*/\n" +
       "    /**\n" +
-      "     * Javadoc comment that is long enough to\n" +
+      "     * Javadoc comment that is long enough to \n" +
       "     * exceed right margin\n" +
       "     */\n" +
       "    public String s = \"this is a string that is\" +\n" +
@@ -205,7 +205,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "\t \t   //This is a comment\n" +
       "}",
       "class TestClass {\n" +
-      "\t//This is a\n" +
+      "\t//This is a \n" +
       "\t// comment\n" +
       "}"
     );
@@ -231,7 +231,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     doTextTest(
       initial,
       "class TestClass {\n" +
-      "    //This is a\n" +
+      "    //This is a \n" +
       "    // comment\n" +
       "    //This is another comment\n" +
       "}"
