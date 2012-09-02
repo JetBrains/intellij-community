@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.util.io.win32;
 
-import org.intellij.lang.annotations.MagicConstant;
+import com.intellij.openapi.util.io.FileAttributes;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.util.BitUtil.isSet;
 
 /**
  * Do not use this class directly.
@@ -24,25 +27,36 @@ import org.intellij.lang.annotations.MagicConstant;
  * @since 12.0
  */
 public class FileInfo {
-  public static final int BROKEN_SYMLINK = -1;
+  private static final int BROKEN_SYMLINK = -1;
+  private static final int FILE_ATTRIBUTE_READONLY = 0x0001;
+  private static final int FILE_ATTRIBUTE_HIDDEN = 0x0002;
+  private static final int FILE_ATTRIBUTE_DIRECTORY = 0x0010;
+  private static final int FILE_ATTRIBUTE_DEVICE = 0x0040;
+  private static final int FILE_ATTRIBUTE_REPARSE_POINT = 0x0400;  // is set only for symlinks
 
-  public static final int FILE_ATTRIBUTE_READONLY = 0x0001;
-  public static final int FILE_ATTRIBUTE_HIDDEN = 0x0002;
-  public static final int FILE_ATTRIBUTE_DIRECTORY = 0x0010;
-  public static final int FILE_ATTRIBUTE_DEVICE = 0x0040;
-  public static final int FILE_ATTRIBUTE_REPARSE_POINT = 0x0400;  // is set only for symlinks
+  private String name;
+  private int attributes;
+  private long timestamp;
+  private long length;
 
-  public String name;
-  @MagicConstant(flagsFromClass = FileInfo.class)
-  public int attributes;
-  public long timestamp;
-  public long length;
-
-  public long getTimestamp() {
-    return timestamp / 10000 - 11644473600000l;
+  public String getName() {
+    return name;
   }
 
   public String toString() {
     return name;
+  }
+
+  @NotNull
+  public FileAttributes toFileAttributes() {
+    if (attributes == BROKEN_SYMLINK) return FileAttributes.BROKEN_SYMLINK;
+
+    final boolean isDirectory = isSet(attributes, FILE_ATTRIBUTE_DIRECTORY);
+    final boolean isSpecial = isSet(attributes, FILE_ATTRIBUTE_DEVICE);
+    final boolean isSymlink = isSet(attributes, FILE_ATTRIBUTE_REPARSE_POINT);
+    final boolean isHidden = isSet(attributes, FILE_ATTRIBUTE_HIDDEN);
+    final boolean isWritable = !isSet(attributes, FILE_ATTRIBUTE_READONLY);
+    final long javaTimestamp = timestamp / 10000 - 11644473600000l;
+    return new FileAttributes(isDirectory, isSpecial, isSymlink, isHidden, length, javaTimestamp, isWritable);
   }
 }
