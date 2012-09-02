@@ -225,8 +225,9 @@ public class FSState {
 
   private boolean hasWorkToDoWithModules() {
     for (Map.Entry<BuildTarget, FilesDelta> entry : myDeltas.entrySet()) {
-      if (!myInitialScanPerformed.contains(entry.getKey())) return true;
-      if (entry.getValue().hasChanges()) return true;
+      if (!myInitialScanPerformed.contains(entry.getKey()) || entry.getValue().hasChanges()) {
+        return true;
+      }
     }
     return false;
   }
@@ -237,5 +238,13 @@ public class FSState {
 
   public boolean markInitialScanPerformed(String artifactName) {
     return myArtifactInitialScanPerformed.add(artifactName);
+  }
+
+  public boolean isInitialScanPerformed(ModuleBuildTarget target) {
+    return myInitialScanPerformed.contains(target);
+  }
+
+  public boolean isInitialScanPerformed(String artifactName) {
+    return myArtifactInitialScanPerformed.contains(artifactName);
   }
 }
