@@ -35,7 +35,6 @@ public class IdeaWin32 {
 
   private static final String PATH_PREFIX = "\\\\?\\";
   private static final int PREFIX_SIZE = PATH_PREFIX.length();
-  private static final String PATH_SUFFIX =  "\\*.*";
   private static final int MAX_PATH = 260;
 
   private static final IdeaWin32 ourInstance;
@@ -108,7 +107,7 @@ public class IdeaWin32 {
 
   @Nullable
   public FileInfo[] listChildren(@NotNull final String path) {
-    return listChildren0(path(path) + PATH_SUFFIX);
+    return listChildren0(path(path));
   }
 
   private static String path(final String path) {

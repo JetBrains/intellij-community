@@ -31,13 +31,6 @@ static jclass getFileInfoClass(JNIEnv *env) {
     return env->FindClass("com/intellij/openapi/util/io/win32/FileInfo");
 }
 
-static HANDLE FindFileInner(JNIEnv *env, jstring path, LPWIN32_FIND_DATA lpData) {
-    const jchar* str = env->GetStringChars(path, 0);
-    const HANDLE h = FindFirstFile((LPCWSTR)str, lpData);
-    env->ReleaseStringChars(path, str);
-    return h;
-}
-
 static bool CopyObjectArray(JNIEnv *env, jobjectArray dst, jobjectArray src, jint count) {
     for (int i = 0; i < count; i++) {
         jobject p = env->GetObjectArrayElement(src, i);
@@ -142,11 +135,12 @@ JNIEXPORT void JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_initIDs
 
 
 JNIEXPORT jobject JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_getInfo0(JNIEnv *env, jobject method, jstring path) {
+    const jchar* pathStr = env->GetStringChars(path, 0);
+
     WIN32_FILE_ATTRIBUTE_DATA attrData;
-    const jchar* str = env->GetStringChars(path, 0);
-    BOOL res = GetFileAttributesEx((LPCWSTR)str, GetFileExInfoStandard, &attrData);
-    env->ReleaseStringChars(path, str);
+    BOOL res = GetFileAttributesEx((LPCWSTR)pathStr, GetFileExInfoStandard, &attrData);
     if (!res) {
+        env->ReleaseStringChars(path, pathStr);
         return NULL;
     }
 
@@ -159,7 +153,7 @@ JNIEXPORT jobject JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_getI
 
     if (IS_SET(attrData.dwFileAttributes, FILE_ATTRIBUTE_REPARSE_POINT)) {
         WIN32_FIND_DATA findData;
-        HANDLE h = FindFileInner(env, path, &findData);
+        HANDLE h = FindFirstFile((LPCWSTR)pathStr, &findData);
         if (h != INVALID_HANDLE_VALUE) {
             FindClose(h);
             data.dwFileAttributes = findData.dwFileAttributes;
@@ -169,6 +163,8 @@ JNIEXPORT jobject JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_getI
             data.nFileSizeHigh = findData.nFileSizeHigh;
         }
     }
+
+    env->ReleaseStringChars(path, pathStr);
 
     jclass fileInfoClass = getFileInfoClass(env);
     if (fileInfoClass == NULL) {
@@ -184,58 +180,65 @@ JNIEXPORT jstring JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_reso
         return NULL;  // XP
     }
 
-    WIN32_FIND_DATA data;
-    HANDLE h = FindFileInner(env, path, &data);
-    if (h == INVALID_HANDLE_VALUE) {
-        return NULL;
-    }
-    FindClose(h);	
-
-    if (!IS_SET(data.dwFileAttributes, FILE_ATTRIBUTE_REPARSE_POINT) || !IS_SET(data.dwReserved0, IO_REPARSE_TAG_SYMLINK)) {
-        return NULL;
-    }
-
-    const jchar* str = env->GetStringChars(path, 0);
-    HANDLE th = CreateFile((LPCWSTR)str, 0, FILE_SHARE_ATTRIBUTES, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
-    env->ReleaseStringChars(path, str);
-    if (th == INVALID_HANDLE_VALUE) {
-        return NULL;
-    }
-
+    const jchar* pathStr = env->GetStringChars(path, 0);
     jstring result = NULL;
 
-    TCHAR name[MAX_PATH];
-    DWORD len = __GetFinalPathNameByHandle(th, name, MAX_PATH, 0);
-    if (len > 0) {
-        if (len < MAX_PATH) {
-            result = env->NewString((jchar *)name, len);
-        }
-        else {
-            TCHAR *name = (TCHAR *)malloc(sizeof(TCHAR) * (len + 1));
-            if (name != NULL) {
-                len = __GetFinalPathNameByHandle(th, name, len, 0);
+    WIN32_FIND_DATA data;
+    HANDLE h = FindFirstFile((LPCWSTR)pathStr, &data);
+    if (h != INVALID_HANDLE_VALUE) {
+        FindClose(h);
+
+        if (IS_SET(data.dwFileAttributes, FILE_ATTRIBUTE_REPARSE_POINT) && IS_SET(data.dwReserved0, IO_REPARSE_TAG_SYMLINK)) {
+            HANDLE th = CreateFile((LPCWSTR)pathStr, 0, FILE_SHARE_ATTRIBUTES, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+            if (th != INVALID_HANDLE_VALUE) {
+                TCHAR name[MAX_PATH];
+                DWORD len = __GetFinalPathNameByHandle(th, name, MAX_PATH, 0);
                 if (len > 0) {
-                    result = env->NewString((jchar *)name, len);
+                    if (len < MAX_PATH) {
+                        result = env->NewString((jchar *)name, len);
+                    }
+                    else {
+                        TCHAR *name = (TCHAR *)malloc(sizeof(TCHAR) * (len + 1));
+                        if (name != NULL) {
+                            len = __GetFinalPathNameByHandle(th, name, len, 0);
+                            if (len > 0) {
+                                result = env->NewString((jchar *)name, len);
+                            }
+                            free(name);
+                        }
+                    }
                 }
-                free(name);
+                CloseHandle(th);
+
             }
         }
     }
 
-    CloseHandle(th);
+    env->ReleaseStringChars(path, pathStr);
     return result;
 }
 
 
 JNIEXPORT jobjectArray JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_listChildren0(JNIEnv *env, jobject method, jstring path) {
-    WIN32_FIND_DATA data;
-    HANDLE h = FindFileInner(env, path, &data);
-    if (h == INVALID_HANDLE_VALUE) {
+    jclass fileInfoClass = getFileInfoClass(env);
+    if (fileInfoClass == NULL) {
         return NULL;
     }
 
-    jclass fileInfoClass = getFileInfoClass(env);
-    if (fileInfoClass == NULL) {
+    size_t pathLen = env->GetStringLength(path) + 3;
+    wchar_t* pathStr = (wchar_t *)malloc(pathLen * sizeof(wchar_t));
+    if (pathStr == NULL) {
+        return NULL;
+    }
+    const jchar* str = env->GetStringChars(path, 0);
+    wcscpy_s(pathStr, pathLen, (LPCWSTR)str);
+    wcscat_s(pathStr, pathLen, L"\\*");
+    env->ReleaseStringChars(path, str);
+
+    WIN32_FIND_DATA data;
+    HANDLE h = FindFirstFile((LPCWSTR)pathStr, &data);
+    if (h == INVALID_HANDLE_VALUE) {
+        free(pathStr);
         return NULL;
     }
 
@@ -261,17 +264,20 @@ JNIEXPORT jobjectArray JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32
     }
     while (FindNextFile(h, &data));
 
-    FindClose(h);	
+    free(pathStr);
+    FindClose(h);
 
     old = rv;
     rv = env->NewObjectArray(len, fileInfoClass, NULL);
     if (rv == NULL || !CopyObjectArray(env, rv, old, len)) {
         goto error;
     }
+
     return rv;
 
 error:
-    FindClose(h);	
+    free(pathStr);
+    FindClose(h);
     return NULL;
 }
 
