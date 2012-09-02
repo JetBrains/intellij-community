@@ -85,7 +85,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
       return separator;
     }
 
-    final Component component = new JComboBox().getRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    final Component component = myOriginalRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     if (component instanceof JLabel) {
       final JLabel label = (JLabel)component;
       label.setIcon(myIcon);
