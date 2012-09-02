@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.DataOutputStream;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.Channels;

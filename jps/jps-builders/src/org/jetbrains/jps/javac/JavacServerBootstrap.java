@@ -11,10 +11,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
+import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  * @author Eugene Zhuravlev
@@ -83,7 +85,12 @@ public class JavacServerBootstrap {
     builder.directory(workingDir);
 
     final Process process = builder.start();
-    final BaseOSProcessHandler processHandler = new BaseOSProcessHandler(process, null, null);
+    final BaseOSProcessHandler processHandler = new BaseOSProcessHandler(process, null, null) {
+      @Override
+      protected Future<?> executeOnPooledThread(Runnable task) {
+        return SharedThreadPool.getInstance().executeOnPooledThread(task);
+      }
+    };
     configureProcessHandler(processHandler);
 
     return processHandler;

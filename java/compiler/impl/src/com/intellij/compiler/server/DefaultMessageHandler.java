@@ -29,13 +29,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.cls.ClsUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.Channels;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
-import org.jetbrains.jps.api.SequentialTaskExecutor;
 
 import java.util.Collection;
 import java.util.HashSet;

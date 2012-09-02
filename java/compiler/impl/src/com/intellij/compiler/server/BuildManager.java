@@ -61,6 +61,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import gnu.trove.THashSet;
@@ -78,7 +79,10 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepend
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.jps.api.*;
+import org.jetbrains.jps.api.CmdlineProtoUtil;
+import org.jetbrains.jps.api.CmdlineRemoteProto;
+import org.jetbrains.jps.api.GlobalOptions;
+import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 

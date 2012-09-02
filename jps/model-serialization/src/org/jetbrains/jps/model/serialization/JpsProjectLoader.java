@@ -3,10 +3,14 @@ package org.jetbrains.jps.model.serialization;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaModuleType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -16,6 +20,7 @@ import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
+import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -24,15 +29,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
  * @author nik
  */
 public class JpsProjectLoader extends JpsLoaderBase {
-  private static final ExecutorService ourThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+  private static final BoundedTaskExecutor ourThreadPool = new BoundedTaskExecutor(SharedThreadPool.getInstance(), Runtime.getRuntime().availableProcessors());
   private final JpsProject myProject;
   private final Map<String, String> myPathVariables;
 

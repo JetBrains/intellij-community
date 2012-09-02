@@ -28,11 +28,13 @@ import org.jetbrains.jps.javac.OutputFileObject;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 
 /**
  * @author Eugene Zhuravlev
@@ -100,11 +102,20 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       );
 
       final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmd));
-      GroovycOSProcessHandler handler = GroovycOSProcessHandler.runGroovyc(process, new Consumer<String>() {
+      final Consumer<String> updater = new Consumer<String>() {
         public void consume(String s) {
           context.processMessage(new ProgressMessage(s));
         }
-      });
+      };
+      final GroovycOSProcessHandler handler = new GroovycOSProcessHandler(process, updater) {
+        @Override
+        protected Future<?> executeOnPooledThread(Runnable task) {
+          return SharedThreadPool.getInstance().executeOnPooledThread(task);
+        }
+      };
+
+      handler.startNotify();
+      handler.waitFor();
 
       if (!context.isProjectRebuild() && handler.shouldRetry()) {
         if (CHUNK_REBUILD_ORDERED.get(context) != null) {
