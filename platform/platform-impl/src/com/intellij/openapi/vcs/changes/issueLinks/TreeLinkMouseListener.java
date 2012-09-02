@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes.issueLinks;
 
-import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.Nullable;
@@ -69,18 +68,6 @@ public class TreeLinkMouseListener extends LinkMouseListenerBase {
     }
     showTooltip(tree, e, haveTooltip);
     return tag;
-  }
-
-  public static class BrowserLauncher implements Runnable {
-    private final String myUrl;
-
-    public BrowserLauncher(final String url) {
-      myUrl = url;
-    }
-
-    public void run() {
-      BrowserUtil.launchBrowser(myUrl);
-    }
   }
 
   public interface HaveTooltip {
