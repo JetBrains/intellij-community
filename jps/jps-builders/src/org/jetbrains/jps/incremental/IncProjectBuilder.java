@@ -11,10 +11,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.jps.*;
+import org.jetbrains.jps.api.BoundedTaskExecutor;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
-import org.jetbrains.jps.api.SharedBuilderThreadPool;
+import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
@@ -50,7 +51,17 @@ public class IncProjectBuilder {
   public static final String BUILD_NAME = "EXTERNAL BUILD";
   private static final String CLASSPATH_INDEX_FINE_NAME = "classpath.index";
   private static final boolean GENERATE_CLASSPATH_INDEX = Boolean.parseBoolean(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION, "false"));
-  private static final boolean PARALLEL_BUILD_ENABLED = Boolean.parseBoolean(System.getProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "false"));
+  private static final int MAX_BUILDER_THREADS;
+  static {
+    int maxThreads = 4;
+    try {
+      maxThreads = Math.max(2, Integer.parseInt(System.getProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, "4")));
+    }
+    catch (NumberFormatException ignored) {
+    }
+    MAX_BUILDER_THREADS = maxThreads;
+  }
+  private final BoundedTaskExecutor myParallelBuildExecutor = new BoundedTaskExecutor(SharedThreadPool.getInstance(), Math.min(MAX_BUILDER_THREADS, Math.max(2, Runtime.getRuntime().availableProcessors())));
 
   private final ProjectDescriptor myProjectDescriptor;
   private final BuilderRegistry myBuilderRegistry;
@@ -191,7 +202,7 @@ public class IncProjectBuilder {
   private void runBuild(CompileContextImpl context, boolean forceCleanCaches) throws ProjectBuildException {
     context.setDone(0.0f);
 
-    LOG.info("Building project '" + context.getProjectDescriptor().project.getProjectName() + "'; isRebuild:" + context.isProjectRebuild() + "; isMake:" + context.isMake() + " parallel compilation:" + PARALLEL_BUILD_ENABLED);
+    LOG.info("Building project '" + context.getProjectDescriptor().project.getProjectName() + "'; isRebuild:" + context.isProjectRebuild() + "; isMake:" + context.isMake() + " parallel compilation:" + BuildRunner.PARALLEL_BUILD_ENABLED);
 
     for (ProjectLevelBuilder builder : myBuilderRegistry.getProjectLevelBuilders()) {
       builder.buildStarted(context);
@@ -405,7 +416,7 @@ public class IncProjectBuilder {
     final CompileScope scope = context.getScope();
     final ProjectDescriptor pd = context.getProjectDescriptor();
     try {
-      if (PARALLEL_BUILD_ENABLED) {
+      if (BuildRunner.PARALLEL_BUILD_ENABLED) {
         final List<ChunkGroup> chunkGroups = buildChunkGroups(context, chunks);
         for (ChunkGroup group : chunkGroups) {
           final List<ModuleChunk> groupChunks = group.getChunks();
@@ -431,7 +442,7 @@ public class IncProjectBuilder {
 
               for (final ModuleChunk chunk : groupChunks) {
                 final CompileContext chunkLocalContext = createContextWrapper(context);
-                SharedBuilderThreadPool.INSTANCE.submitBuildTask(new Runnable() {
+                myParallelBuildExecutor.execute(new Runnable() {
                   @Override
                   public void run() {
                     try {
