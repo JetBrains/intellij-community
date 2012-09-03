@@ -33,6 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.structuralsearch.plugin.replace.ui.NavigateSearchResultsDialog;
 import com.intellij.structuralsearch.plugin.ui.actions.DoSearchAction;
@@ -57,6 +58,7 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 // Class to show the user the request for search
@@ -86,7 +88,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
   protected SearchModel model;
   private JCheckBox openInNewTab;
-  private Alarm myAlarm;
+  private final Alarm myAlarm;
 
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
   protected final ExistingTemplatesComponent existingTemplatesComponent;
@@ -145,8 +147,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   protected boolean isChanged(Configuration configuration) {
-    if (configuration.getMatchOptions().getSearchPattern() == null) return false;
-    return !searchCriteriaEdit.getDocument().getText().equals(configuration.getMatchOptions().getSearchPattern());
+    return configuration.getMatchOptions().getSearchPattern() != null &&
+           !searchCriteriaEdit.getDocument().getText().equals(configuration.getMatchOptions().getSearchPattern());
   }
 
   public void setSearchPattern(final Configuration config) {
@@ -181,9 +183,11 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     }
 
     editor.getDocument().addDocumentListener(new DocumentListener() {
+      @Override
       public void beforeDocumentChange(final DocumentEvent event) {
       }
 
+      @Override
       public void documentChanged(final DocumentEvent event) {
         initiateValidation();
       }
@@ -196,11 +200,14 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(new Runnable() {
 
+      @Override
       public void run() {
         try {
           GuiUtils.invokeAndWait(new Runnable() {
+            @Override
             public void run() {
               ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                @Override
                 public void run() {
                   if (!isValid()) {
                     getOKAction().setEnabled(false);
@@ -312,6 +319,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     fileTypes.setSelectedItem(ourFtSearchVariant);
     fileTypes.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         if (e.getStateChange() == ItemEvent.SELECTED) initiateValidation();
       }
@@ -480,6 +488,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     setTitle(getDefaultTitle() + " - " + configuration.getName());
   }
 
+  @Override
   public Configuration createConfiguration() {
     SearchConfiguration configuration = new SearchConfiguration();
     configuration.setName(USER_DEFINED);
@@ -528,8 +537,10 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     processPresentation.setProgressIndicatorFactory(
       new Factory<ProgressIndicator>() {
+        @Override
         public ProgressIndicator create() {
           return new FindProgressIndicator(searchContext.getProject(), presentation.getScopeText()) {
+            @Override
             public void cancel() {
               context.getCommand().stopAsyncSearch();
               super.cancel();
@@ -545,6 +556,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
           putValue(FindUsagesProcessPresentation.NAME_WITH_MNEMONIC_KEY, SSRBundle.message("edit.query.button"));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
           UIUtil.invokeAction(config, searchContext);
         }
@@ -557,8 +569,10 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
         context.getTarget()
       },
       new Factory<UsageSearcher>() {
+        @Override
         public UsageSearcher create() {
           return new UsageSearcher() {
+            @Override
             public void generate(final Processor<Usage> processor) {
               context.getCommand().findUsages(processor);
             }
@@ -568,12 +582,14 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       processPresentation,
       presentation,
       new UsageViewManager.UsageViewStateListener() {
+        @Override
         public void usageViewCreated(@NotNull UsageView usageView) {
           context.setUsageView(usageView);
           configureActions(context);
         }
 
-        public void findingUsagesFinished(@NotNull final UsageView usageView) {
+        @Override
+        public void findingUsagesFinished(final UsageView usageView) {
         }
       }
     );
@@ -582,8 +598,10 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   protected void configureActions(final UsageViewContext context) {
     context.getUsageView().addButtonToLowerPane(
       new Runnable() {
+        @Override
         public void run() {
           SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
               UIUtil.invokeAction(context.getConfiguration(), searchContext);
             }
@@ -613,6 +631,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     return 4;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myContentPanel = new JPanel(new BorderLayout());
     myEditorPanel = createEditorContent();
@@ -659,6 +678,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       );
 
       myScopeChooserCombo.getComboBox().addItemListener(new ItemListener() {
+        @Override
         public void itemStateChanged(ItemEvent e) {
           initiateValidation();
         }
@@ -685,12 +705,13 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
 
+  @Override
   protected JComponent createSouthPanel() {
     final JPanel statusPanel = new JPanel(new BorderLayout());
     statusPanel.add(super.createSouthPanel(), BorderLayout.NORTH);
     statusPanel.add(statusText = new JLabel(SSRBundle.message("status.message")), BorderLayout.WEST);
     final String s = SSRBundle.message("status.mnemonic");
-    if (s.length() > 0) statusText.setDisplayedMnemonic(s.charAt(0));
+    if (!s.isEmpty()) statusText.setDisplayedMnemonic(s.charAt(0));
     statusPanel.add(status = new JLabel(), BorderLayout.CENTER);
 
     return statusPanel;
@@ -707,6 +728,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
           putValue(NAME, SSRBundle.message("save.template.text.button"));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
           String name = showSaveTemplateAsDialog();
 
@@ -748,6 +770,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
             putValue(NAME, SSRBundle.message("edit.variables.button"));
           }
 
+          @Override
           public void actionPerformed(ActionEvent e) {
             EditVarConstraintsDialog.setProject(searchContext.getProject());
             new EditVarConstraintsDialog(
@@ -774,6 +797,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
             putValue(NAME, SSRBundle.message("history.button"));
           }
 
+          @Override
           public void actionPerformed(ActionEvent e) {
             SelectTemplateDialog dialog = new SelectTemplateDialog(searchContext.getProject(), true, isReplaceDialog());
             dialog.show();
@@ -801,6 +825,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
             putValue(NAME, SSRBundle.message("copy.existing.template.button"));
           }
 
+          @Override
           public void actionPerformed(ActionEvent e) {
             SelectTemplateDialog dialog = new SelectTemplateDialog(searchContext.getProject(), false, isReplaceDialog());
             dialog.show();
@@ -820,7 +845,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     return panel;
   }
 
-  protected java.util.List<Variable> getVariablesFromListeners() {
+  protected List<Variable> getVariablesFromListeners() {
     return getVarsFrom(searchCriteriaEdit);
   }
 
@@ -844,6 +869,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     return false;
   }
 
+  @Override
   public void show() {
     Configuration.setActiveCreator(this);
     searchCriteriaEdit.putUserData(
@@ -883,11 +909,13 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     super.show();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return searchCriteriaEdit.getContentComponent();
   }
 
   // Performs ok action
+  @Override
   protected void doOKAction() {
     SearchScope selectedScope = getSelectedScope();
     if (selectedScope == null) return;
@@ -929,8 +957,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   private SearchScope getSelectedScope() {
-    SearchScope selectedScope = myScopeChooserCombo.getSelectedScope();
-    return selectedScope;
+    return myScopeChooserCombo.getSelectedScope();
   }
 
   protected boolean isValid() {
@@ -938,7 +965,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     boolean result = true;
 
     try {
-      Matcher.validate(searchContext.getProject(), model.getConfig().getMatchOptions());
+      MatcherImpl.validate(searchContext.getProject(), model.getConfig().getMatchOptions());
     }
     catch (MalformedPatternException ex) {
       if (myRunFindActionOnClose) {
@@ -1024,14 +1051,17 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     return false;
   }
 
+  @Override
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.structuralsearch.plugin.ui.SearchDialog";
   }
 
+  @Override
   public void dispose() {
     Configuration.setActiveCreator(null);
     disposeEditorContent();
@@ -1053,6 +1083,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     EditorFactory.getInstance().releaseEditor(searchCriteriaEdit);
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp("find.structuredSearch");
   }
