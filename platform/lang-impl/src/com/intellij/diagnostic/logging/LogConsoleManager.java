@@ -21,11 +21,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 
+import java.io.Reader;
+
 /**
  * User: anna
  * Date: 01-Feb-2006
  */
 public interface LogConsoleManager extends AdditionalTabComponentManager {
   void addLogConsole(final String name, final String path, @NotNull Charset charset, final long skippedContent);
-  void removeLogConsole(final String path);
+  void addLogConsole(final String name, Reader reader, final String id);
+  void removeLogConsole(final String pathOrId);
 }

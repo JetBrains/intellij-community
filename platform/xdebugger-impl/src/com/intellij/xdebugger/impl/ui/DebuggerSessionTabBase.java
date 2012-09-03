@@ -48,7 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.nio.charset.Charset;
+import java.io.Reader;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -56,24 +56,17 @@ import java.util.Map;
 /**
  * @author nik
  */
-public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManager, Disposable {
-  @NotNull private final Project myProject;
+public abstract class DebuggerSessionTabBase extends LogConsoleManagerBase implements DebuggerLogConsoleManager {
   @NotNull private final LogFilesManager myManager;
 
   @NotNull final String mySessionName;
   @NotNull protected final RunnerLayoutUi myUi;
 
-  @NotNull private final Map<AdditionalTabComponent, Content> myAdditionalContent = new HashMap<AdditionalTabComponent, Content>();
-  @NotNull private final Map<AdditionalTabComponent, ContentManagerListener> myContentListeners =
-    new HashMap<AdditionalTabComponent, ContentManagerListener>();
-  
-  protected ExecutionEnvironment myEnvironment;
-
   protected ExecutionConsole myConsole;
   protected RunContentDescriptor myRunContentDescriptor;
 
   public DebuggerSessionTabBase(Project project, @NotNull String runnerId, @NotNull final String sessionName) {
-    myProject = project;
+    super(project);
     myManager = new LogFilesManager(project, this, this);
 
     mySessionName = sessionName;
@@ -88,6 +81,24 @@ public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManage
   }
 
   public abstract RunContentDescriptor getRunContentDescriptor();
+
+  @Override
+  public ProcessHandler getProcessHandler() {
+    return getRunContentDescriptor().getProcessHandler();
+  }
+
+  @Override
+  protected Content createLogContent(AdditionalTabComponent tabComponent, String id, Icon icon) {
+    Content result = super.createLogContent(tabComponent, id, icon);
+    result.setCloseable(false);
+    result.setDescription(tabComponent.getTooltip());
+    return result;
+  }
+
+  @Override
+  protected Icon getDefaultIcon() {
+    return AllIcons.FileTypes.Text;
+  }
 
   @NotNull
   public RunnerLayoutUi getUi() {
@@ -111,42 +122,6 @@ public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManage
     return myManager;
   }
 
-  // TODO[oleg]: talk to nick
-  public void setEnvironment(@NotNull final ExecutionEnvironment env) {
-    myEnvironment = env;
-  }
-
-  public void addLogConsole(final String name, final String path, @NotNull final Charset charset, final long skippedContent, Icon icon) {
-    final Ref<Content> content = new Ref<Content>();
-    addLogConsole(new LogConsoleImpl(myProject, new File(path), charset, skippedContent, name, false) {
-      public boolean isActive() {
-        final Content logContent = content.get();
-        return logContent != null && logContent.isSelected();
-      }
-    }, icon, content);
-  }
-
-  private void addLogConsole(final LogConsoleBase logConsole, Icon icon, Ref<Content> content) {
-    logConsole.attachStopLogConsoleTrackingListener(getRunContentDescriptor().getProcessHandler());
-    // Attach custom log handlers
-    if (myEnvironment != null && myEnvironment.getRunProfile() instanceof RunConfigurationBase) {
-      ((RunConfigurationBase)myEnvironment.getRunProfile()).customizeLogConsole(logConsole);
-    }
-
-    content.set(addLogComponent(logConsole, icon));
-    final ContentManagerAdapter l = new ContentManagerAdapter() {
-      public void selectionChanged(final ContentManagerEvent event) {
-        logConsole.activate();
-      }
-    };
-    myContentListeners.put(logConsole, l);
-    getUi().addListener(l, this);
-  }
-
-  public void addLogConsole(String name, String path, @NotNull Charset charset, long skippedContent) {
-    addLogConsole(name, path, charset, skippedContent, AllIcons.FileTypes.Text);
-  }
-
   protected void attachNotificationTo(final Content content) {
     if (myConsole instanceof ObservableConsoleView) {
       ObservableConsoleView observable = (ObservableConsoleView)myConsole;
@@ -160,67 +135,6 @@ public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManage
     }
   }
 
-  @Nullable
-  public static String getLogContentId(@NotNull String tabTitle) {
-    return "Log-" + tabTitle;
-  }
-
-  public void removeLogConsole(final String path) {
-    LogConsoleImpl componentToRemove = null;
-    for (AdditionalTabComponent tabComponent : myAdditionalContent.keySet()) {
-      if (tabComponent instanceof LogConsoleImpl) {
-        final LogConsoleImpl console = (LogConsoleImpl)tabComponent;
-        if (Comparing.strEqual(console.getPath(), path)) {
-          componentToRemove = console;
-          break;
-        }
-      }
-    }
-    if (componentToRemove != null) {
-      getUi().removeListener(myContentListeners.remove(componentToRemove));
-      removeAdditionalTabComponent(componentToRemove);
-    }
-  }
-
-  public void addAdditionalTabComponent(AdditionalTabComponent tabComponent, String id, Icon icon) {
-    addLogComponent(tabComponent, id, icon);
-  }
-
-  public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent, final String id) {
-    addLogComponent(tabComponent, id);
-  }
-
-  private void addLogComponent(AdditionalTabComponent component, String id) {
-    addLogComponent(component, id, AllIcons.FileTypes.Text);
-  }
-
-  private Content addLogComponent(AdditionalTabComponent tabComponent, Icon icon) {
-    @NonNls final String id = getLogContentId(tabComponent.getTabTitle());
-    return addLogComponent(tabComponent, id, icon);
-  }
-
-  private Content addLogComponent(final AdditionalTabComponent tabComponent, String id, Icon icon) {
-    final Content logContent = getUi().createContent(id, (ComponentWithActions)tabComponent, tabComponent.getTabTitle(), icon,
-                                                     tabComponent.getPreferredFocusableComponent());
-    logContent.setCloseable(false);
-    logContent.setDescription(tabComponent.getTooltip());
-    myAdditionalContent.put(tabComponent, logContent);
-    getUi().addContent(logContent);
-    Disposer.register(this, new Disposable() {
-      public void dispose() {
-        removeAdditionalTabComponent(tabComponent);
-      }
-    });
-
-    return logContent;
-  }
-
-  public void removeAdditionalTabComponent(AdditionalTabComponent component) {
-    Disposer.dispose(component);
-    final Content content = myAdditionalContent.remove(component);
-    getUi().removeContent(content, true);
-  }
-
   public void toFront() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ExecutionManager.getInstance(getProject()).getContentManager().toFrontRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
@@ -230,17 +144,10 @@ public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManage
           boolean focusWnd = Registry.is("debugger.mayBringFrameToFrontOnBreakpoint");
           ProjectUtil.focusProjectWindow(getProject(), focusWnd);
           if (!focusWnd) {
-            AppIcon.getInstance().requestAttention(myProject, true);
+            AppIcon.getInstance().requestAttention(getProject(), true);
           }
         }
       });
     }
-  }
-
-  protected Project getProject() {
-    return myProject;
-  }
-
-  public void dispose() {
   }
 }
