@@ -186,7 +186,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       @Override
       public void consume(FindModel findModel) {
         String stringToFind = findModel.getStringToFind();
-        if (stringToFind.length() == 0) {
+        if (stringToFind.isEmpty()) {
           return;
         }
         FindSettings.getInstance().addStringToFind(stringToFind);
@@ -262,7 +262,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     if (header instanceof EditorSearchComponent) {
       final EditorSearchComponent searchComponent = (EditorSearchComponent)header;
       final String textInField = searchComponent.getTextInField();
-      if (!Comparing.equal(textInField, myFindInFileModel.getStringToFind()) && textInField.length() > 0) {
+      if (!Comparing.equal(textInField, myFindInFileModel.getStringToFind()) && !textInField.isEmpty()) {
         FindModel patched = new FindModel();
         patched.copyFrom(myFindNextModel);
         patched.setStringToFind(textInField);
@@ -352,7 +352,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
                                          @Nullable VirtualFile file) {
     FindModel model = normalizeIfMultilined(findmodel);
     String toFind = model.getStringToFind();
-    if (toFind.length() == 0){
+    if (toFind.isEmpty()){
       return NOT_FOUND_RESULT;
     }
 
@@ -598,7 +598,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return toReplace;
   }
 
-  private String getStringToReplaceByRegexp(@NotNull final FindModel model, @NotNull String text, int startOffset) throws MalformedReplacementStringException{
+  private static String getStringToReplaceByRegexp(@NotNull final FindModel model, @NotNull String text, int startOffset) throws MalformedReplacementStringException{
     Matcher matcher = compileRegExp(model, text);
 
     if (model.isForward()){
@@ -630,7 +630,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
   }
 
-  private String getStringToReplaceByRegexp0(String foundString, final FindModel model) throws MalformedReplacementStringException{
+  private static String getStringToReplaceByRegexp0(String foundString, final FindModel model) throws MalformedReplacementStringException{
     String toFind = model.getStringToFind();
     String toReplace = model.getStringToReplace();
     Pattern pattern;
@@ -663,7 +663,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   }
 
   private static String replaceWithCaseRespect(String toReplace, String foundString) {
-    if (foundString.length() == 0 || toReplace.length() == 0) return toReplace;
+    if (foundString.isEmpty() || toReplace.isEmpty()) return toReplace;
     StringBuilder buffer = new StringBuilder();
 
     if (Character.isUpperCase(foundString.charAt(0))) {
@@ -751,7 +751,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return findNextUsageInFile(fileEditor, SearchResults.Direction.DOWN);
   }
 
-  private boolean findNextUsageInFile(FileEditor fileEditor, SearchResults.Direction direction) {
+  private boolean findNextUsageInFile(@NotNull FileEditor fileEditor, @NotNull SearchResults.Direction direction) {
     if (fileEditor instanceof TextEditor) {
       TextEditor textEditor = (TextEditor)fileEditor;
       Editor editor = textEditor.getEditor();
@@ -767,9 +767,8 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
     if (direction == SearchResults.Direction.DOWN) {
       return myFindUsagesManager.findNextUsageInFile(fileEditor);
-    } else {
-      return myFindUsagesManager.findPreviousUsageInFile(fileEditor);
     }
+    return myFindUsagesManager.findPreviousUsageInFile(fileEditor);
   }
 
   @Override
@@ -797,11 +796,11 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       editor.getSelectionModel().setSelection(highlighterToSelect.getStartOffset(), highlighterToSelect.getEndOffset());
       editor.getCaretModel().moveToOffset(highlighterToSelect.getStartOffset());
       ScrollType scrollType;
-      if (!secondPass) {
-        scrollType = isForward ? ScrollType.CENTER_DOWN : ScrollType.CENTER_UP;
+      if (secondPass) {
+        scrollType = isForward ? ScrollType.CENTER_UP : ScrollType.CENTER_DOWN;
       }
       else {
-        scrollType = isForward ? ScrollType.CENTER_UP : ScrollType.CENTER_DOWN;
+        scrollType = isForward ? ScrollType.CENTER_DOWN : ScrollType.CENTER_UP;
       }
       editor.getScrollingModel().scrollToCaret(scrollType);
       editor.putUserData(HIGHLIGHTER_WAS_NOT_FOUND_KEY, null);
@@ -814,21 +813,21 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       if (isForward) {
         AnAction action=ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT);
         String shortcutsText=KeymapUtil.getFirstKeyboardShortcutText(action);
-        if (shortcutsText.length() > 0) {
-          message = FindBundle.message("find.search.again.from.top.hotkey.message", message, shortcutsText);
+        if (shortcutsText.isEmpty()) {
+          message = FindBundle.message("find.search.again.from.top.action.message", message);
         }
         else {
-          message = FindBundle.message("find.search.again.from.top.action.message", message);
+          message = FindBundle.message("find.search.again.from.top.hotkey.message", message, shortcutsText);
         }
       }
       else {
         AnAction action=ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_PREVIOUS);
         String shortcutsText=KeymapUtil.getFirstKeyboardShortcutText(action);
-        if (shortcutsText.length() > 0) {
-          message = FindBundle.message("find.search.again.from.bottom.hotkey.message", message, shortcutsText);
+        if (shortcutsText.isEmpty()) {
+          message = FindBundle.message("find.search.again.from.bottom.action.message", message);
         }
         else {
-          message = FindBundle.message("find.search.again.from.bottom.action.message", message);
+          message = FindBundle.message("find.search.again.from.bottom.hotkey.message", message, shortcutsText);
         }
       }
       JComponent component = HintUtil.createInformationLabel(message);
@@ -836,7 +835,8 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.UNDER, HintManager.HIDE_BY_ANY_KEY |
                                                                                         HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0, false);
       return true;
-    } else if (!secondPass) {
+    }
+    if (!secondPass) {
       offset = isForward ? 0 : editor.getDocument().getTextLength();
       return highlightNextHighlighter(highlighters, editor, offset, isForward, true);
     }
