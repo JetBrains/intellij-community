@@ -130,7 +130,7 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
           Point mouseScreenLocation = MouseInfo.getPointerInfo().getLocation();
           myCloseButtonHovered = buttonBounds.contains(mouseScreenLocation);
         }
-        Color color = mySelected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTabbedPaneBackground();
+        Color color = mySelected ? UIUtil.getTreeSelectionBackground() : UIUtil.getPanelBackground();
         Rectangle bounds = getBounds();
         g.setColor(color);
         g.fillRoundRect(0, 0, bounds.width, bounds.height, arcSize, arcSize);
