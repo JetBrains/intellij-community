@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BuilderService;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
@@ -56,7 +57,7 @@ public class FSState {
     }
   }
 
-  public void load(DataInputStream in) throws IOException {
+  public void load(DataInputStream in, ProjectDescriptor projectDescriptor) throws IOException {
     Map<String, BuildTargetType> types = new HashMap<String, BuildTargetType>();
     for (BuilderService service : JpsServiceManager.getInstance().getExtensions(BuilderService.class)) {
       for (BuildTargetType type : service.getTargetTypes()) {
@@ -74,13 +75,17 @@ public class FSState {
       while (targetCount-- > 0) {
         final String id = IOUtil.readString(in);
         BuildTargetType type = types.get(typeId);
+        boolean loaded = false;
         if (type != null) {
-          BuildTarget target = type.createTarget(id);
-          getDelta(target).load(in);
-          myInitialScanPerformed.add(target);
+          BuildTarget target = type.createTarget(id, projectDescriptor);
+          if (target != null) {
+            getDelta(target).load(in);
+            myInitialScanPerformed.add(target);
+            loaded = true;
+          }
         }
-        else {
-          LOG.info("Unknown build type id: " + typeId);
+        if (!loaded) {
+          LOG.info("Skipping unknown target (typeId=" + typeId + ", type=" + type + ", id=" + id + ")");
           new FilesDelta().load(in);
         }
       }

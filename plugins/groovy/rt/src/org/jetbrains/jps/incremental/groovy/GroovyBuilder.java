@@ -181,7 +181,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   @Nullable private static Map<JpsModule, String> getCanonicalModuleOutputs(CompileContext context, ModuleChunk chunk) {
     Map<JpsModule, String> finalOutputs = new HashMap<JpsModule, String>();
-    for (RealModuleBuildTarget target : chunk.getTargets()) {
+    for (ModuleBuildTarget target : chunk.getTargets()) {
       File moduleOutputDir = context.getProjectPaths().getModuleOutputDir(target.getModule(), target.isTests());
       if (moduleOutputDir == null) {
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Output directory not specified for module " + target.getModuleName()));
@@ -297,7 +297,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   private static Map<String, String> buildClassToSourceMap(ModuleChunk chunk, CompileContext context, Set<String> toCompilePaths, Map<JpsModule, String> finalOutputs) throws IOException {
     final Map<String, String> class2Src = new HashMap<String, String>();
-    for (RealModuleBuildTarget target : chunk.getTargets()) {
+    for (ModuleBuildTarget target : chunk.getTargets()) {
       String moduleOutputPath = finalOutputs.get(target.getModule());
       final SourceToOutputMapping srcToOut = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target.getModuleName(), target.isTests());
       for (String src : srcToOut.getKeys()) {

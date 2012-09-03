@@ -21,6 +21,7 @@ import org.jetbrains.jps.incremental.fs.FSState;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
@@ -147,17 +148,14 @@ final class BuildSession implements Runnable, CanceledStatus {
     final BuildFSState fsState = new BuildFSState(false);
 
     try {
-      final boolean shouldApplyEvent = loadFsState(fsState, dataStorageRoot, myInitialFSDelta);
-      if (shouldApplyEvent && myBuildType == BuildType.MAKE && !containsChanges(myInitialFSDelta) && !fsState.hasWorkToDo()) {
-        applyFSEvent(null, myInitialFSDelta);
-        return;
-      }
       if (!dataStorageRoot.exists()) {
         // invoked the very first time for this project. Force full rebuild
         myBuildType = BuildType.PROJECT_REBUILD;
       }
       ProjectDescriptor pd = myBuildRunner.load(msgHandler, dataStorageRoot, fsState);
       myProjectDescriptor = pd;
+
+      final boolean shouldApplyEvent = loadFsState(fsState, dataStorageRoot, myInitialFSDelta, myProjectDescriptor);
       if (shouldApplyEvent) {
         applyFSEvent(myProjectDescriptor, myInitialFSDelta);
       }
@@ -323,7 +321,10 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
   }
 
-  private boolean loadFsState(final BuildFSState fsState, File dataStorageRoot, CmdlineRemoteProto.Message.ControllerMessage.FSEvent initialEvent) {
+  private boolean loadFsState(final BuildFSState fsState,
+                              File dataStorageRoot,
+                              CmdlineRemoteProto.Message.ControllerMessage.FSEvent initialEvent,
+                              ProjectDescriptor projectDescriptor) {
     boolean shouldApplyEvent = false;
     final File file = new File(dataStorageRoot, FS_STATE_FILE);
     try {
@@ -342,7 +343,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         if (version == FSState.VERSION) {
           final long savedOrdinal = in.readLong();
           if (initialEvent != null && (savedOrdinal + 1L == initialEvent.getOrdinal())) {
-            fsState.load(in);
+            fsState.load(in, projectDescriptor);
             myLastEventOrdinal = savedOrdinal;
             shouldApplyEvent = true;
             //applyFSEvent(pd, initialEvent);

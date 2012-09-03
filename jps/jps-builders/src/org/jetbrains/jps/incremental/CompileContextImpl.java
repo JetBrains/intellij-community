@@ -141,11 +141,11 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public void markNonIncremental(RealModuleBuildTarget target) {
+  public void markNonIncremental(ModuleBuildTarget target) {
     if (!isCompilingTests()) {
-      myNonIncrementalModules.add(new RealModuleBuildTarget(target.getModule(), JavaModuleBuildTargetType.PRODUCTION));
+      myNonIncrementalModules.add(new ModuleBuildTarget(target.getModule(), JavaModuleBuildTargetType.PRODUCTION));
     }
-    myNonIncrementalModules.add(new RealModuleBuildTarget(target.getModule(), JavaModuleBuildTargetType.TEST));
+    myNonIncrementalModules.add(new ModuleBuildTarget(target.getModule(), JavaModuleBuildTargetType.TEST));
   }
 
   @Override
@@ -184,7 +184,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public void clearNonIncrementalMark(RealModuleBuildTarget target) {
+  public void clearNonIncrementalMark(ModuleBuildTarget target) {
     myNonIncrementalModules.remove(target);
   }
 

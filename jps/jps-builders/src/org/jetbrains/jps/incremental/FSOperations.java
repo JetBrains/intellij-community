@@ -54,15 +54,15 @@ public class FSOperations {
   public static void markDirty(CompileContext context, final ModuleChunk chunk) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     pd.fsState.clearContextRoundData(context);
-    for (RealModuleBuildTarget target : chunk.getTargets()) {
+    for (ModuleBuildTarget target : chunk.getTargets()) {
       markDirtyFiles(context, target, pd.timestamps.getStorage(), true, target.isTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, null);
     }
   }
 
   public static void markDirtyRecursively(CompileContext context, ModuleChunk chunk) throws IOException {
     Set<JpsModule> modules = chunk.getModules();
-    Set<RealModuleBuildTarget> targets = chunk.getTargets();
-    final Set<RealModuleBuildTarget> dirtyTargets = new HashSet<RealModuleBuildTarget>(targets);
+    Set<ModuleBuildTarget> targets = chunk.getTargets();
+    final Set<ModuleBuildTarget> dirtyTargets = new HashSet<ModuleBuildTarget>(targets);
 
     // now mark all modules that depend on dirty modules
     final JpsJavaClasspathKind classpathKind = JpsJavaClasspathKind.compile(chunk.isTests());
@@ -86,13 +86,13 @@ public class FSOperations {
     }
 
     final Timestamps timestamps = context.getProjectDescriptor().timestamps.getStorage();
-    for (RealModuleBuildTarget target : dirtyTargets) {
+    for (ModuleBuildTarget target : dirtyTargets) {
       markDirtyFiles(context, target, timestamps, true, target.isTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.BOTH, null);
     }
 
     if (context.isMake()) {
       // mark as non-incremental only the module that triggered non-incremental change
-      for (RealModuleBuildTarget target : targets) {
+      for (ModuleBuildTarget target : targets) {
         context.markNonIncremental(target);
       }
     }
@@ -125,7 +125,7 @@ public class FSOperations {
                                              final Condition<JpsModule> moduleFilter,
                                              final FileProcessor processor) throws IOException {
     final BuildFSState fsState = context.getProjectDescriptor().fsState;
-    for (RealModuleBuildTarget target : chunk.getTargets()) {
+    for (ModuleBuildTarget target : chunk.getTargets()) {
       if (moduleFilter.value(target.getModule())) {
         fsState.processFilesToRecompile(context, target, processor);
       }
@@ -133,7 +133,7 @@ public class FSOperations {
   }
 
   static void markDirtyFiles(CompileContext context,
-                             RealModuleBuildTarget target,
+                             ModuleBuildTarget target,
                              final Timestamps tsStorage,
                              final boolean forceMarkDirty,
                              @NotNull final DirtyMarkScope scope,

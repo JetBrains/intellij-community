@@ -1,9 +1,12 @@
 package org.jetbrains.jps.builders.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.model.module.JpsModule;
 
 /**
  * @author nik
@@ -18,9 +21,11 @@ public class JavaModuleBuildTargetType extends BuildTargetType {
     myTests = tests;
   }
 
+  @Nullable
   @Override
-  public BuildTarget createTarget(@NotNull String targetId) {
-    return new ModuleBuildTarget(targetId, this);
+  public BuildTarget createTarget(@NotNull String targetId, @NotNull ProjectDescriptor projectDescriptor) {
+    JpsModule module = projectDescriptor.rootsIndex.getModuleByName(targetId);
+    return module != null ? new ModuleBuildTarget(module, this) : null;
   }
 
   public boolean isTests() {

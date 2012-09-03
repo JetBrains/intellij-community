@@ -53,7 +53,7 @@ public abstract class CompileScope {
   public abstract boolean isRecompilationForced(@NotNull BuildTarget target);
 
   public final boolean isAffected(ModuleChunk chunk) {
-    for (RealModuleBuildTarget target : chunk.getTargets()) {
+    for (ModuleBuildTarget target : chunk.getTargets()) {
       if (isAffected(target)) {
         return true;
       }

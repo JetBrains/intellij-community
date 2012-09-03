@@ -4,7 +4,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
-import org.jetbrains.jps.incremental.RealModuleBuildTarget;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -24,14 +24,14 @@ public class ModuleChunk {
   };
   private Set<JpsModule> myModules;
   private final boolean myTests;
-  private Set<RealModuleBuildTarget> myTargets;
+  private Set<ModuleBuildTarget> myTargets;
 
   public ModuleChunk(Set<JpsModule> modules, boolean tests) {
     myModules = modules;
     myTests = tests;
-    myTargets = new LinkedHashSet<RealModuleBuildTarget>();
+    myTargets = new LinkedHashSet<ModuleBuildTarget>();
     for (JpsModule module : modules) {
-      myTargets.add(new RealModuleBuildTarget(module, JavaModuleBuildTargetType.getInstance(tests)));
+      myTargets.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.getInstance(tests)));
     }
   }
 
@@ -48,7 +48,7 @@ public class ModuleChunk {
     return myTests;
   }
 
-  public Set<RealModuleBuildTarget> getTargets() {
+  public Set<ModuleBuildTarget> getTargets() {
     return myTargets;
   }
 

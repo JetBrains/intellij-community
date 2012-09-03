@@ -600,7 +600,7 @@ public class IncProjectBuilder {
 
   private static void createClasspathIndex(final ModuleChunk chunk) {
     final Set<File> outputPaths = new LinkedHashSet<File>();
-    for (RealModuleBuildTarget target : chunk.getTargets()) {
+    for (ModuleBuildTarget target : chunk.getTargets()) {
       final File outputDir = JpsJavaExtensionService.getInstance().getOutputDirectory(target.getModule(), target.isTests());
       if (outputDir != null) {
         outputPaths.add(outputDir);
@@ -902,7 +902,7 @@ public class IncProjectBuilder {
 
     if (!Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled()) {
       boolean marked = false;
-      for (RealModuleBuildTarget target : chunk.getTargets()) {
+      for (ModuleBuildTarget target : chunk.getTargets()) {
         if (context.isMake()) {
           // ensure non-incremental flag cleared
           context.clearNonIncrementalMark(target);
@@ -928,7 +928,7 @@ public class IncProjectBuilder {
   private static void ensureFSStateInitialized(CompileContext context, ModuleChunk chunk) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final Timestamps timestamps = pd.timestamps.getStorage();
-    for (RealModuleBuildTarget target : chunk.getTargets()) {
+    for (ModuleBuildTarget target : chunk.getTargets()) {
       if (context.isProjectRebuild()) {
         FSOperations.markDirtyFiles(context, target, timestamps, true,
                                     target.isTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION, null);
@@ -954,7 +954,7 @@ public class IncProjectBuilder {
     }
   }
 
-  private static void initModuleFSState(CompileContext context, RealModuleBuildTarget target) throws IOException {
+  private static void initModuleFSState(CompileContext context, ModuleBuildTarget target) throws IOException {
     boolean forceMarkDirty = false;
     final File currentOutput = context.getProjectPaths().getModuleOutputDir(target.getModule(), target.isTests());
     final ProjectDescriptor pd = context.getProjectDescriptor();
@@ -987,7 +987,7 @@ public class IncProjectBuilder {
     }
   }
 
-  private static void updateOutputRootsLayout(CompileContext context, RealModuleBuildTarget target) throws IOException {
+  private static void updateOutputRootsLayout(CompileContext context, ModuleBuildTarget target) throws IOException {
     final File currentOutput = context.getProjectPaths().getModuleOutputDir(target.getModule(), target.isTests());
     if (currentOutput == null) {
       return;

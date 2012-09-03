@@ -28,8 +28,8 @@ public class ModulesAndFilesScope extends CompileScope {
     myFiles = files;
     myTargets = new HashSet<BuildTarget>();
     for (JpsModule module : targets) {
-      myTargets.add(new RealModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION));
-      myTargets.add(new RealModuleBuildTarget(module, JavaModuleBuildTargetType.TEST));
+      myTargets.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION));
+      myTargets.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.TEST));
     }
   }
 

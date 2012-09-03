@@ -846,7 +846,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
     final Map<File, Set<File>> map = new LinkedHashMap<File, Set<File>>();
-    for (RealModuleBuildTarget target : chunk.getTargets()) {
+    for (ModuleBuildTarget target : chunk.getTargets()) {
       final File outputDir = JpsJavaExtensionService.getInstance().getOutputDirectory(target.getModule(), target.isTests());
       if (outputDir == null) {
         continue;

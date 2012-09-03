@@ -28,9 +28,9 @@ public class ModulesScope extends CompileScope {
     super(project, jpsProject, artifacts, isForcedCompilation, includeTests);
     myTargets = new HashSet<BuildTarget>();
     for (JpsModule module : modules) {
-      myTargets.add(new RealModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION));
+      myTargets.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION));
       if (includeTests) {
-        myTargets.add(new RealModuleBuildTarget(module, JavaModuleBuildTargetType.TEST));
+        myTargets.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.TEST));
       }
     }
   }
