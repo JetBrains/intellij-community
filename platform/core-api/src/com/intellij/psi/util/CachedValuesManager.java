@@ -91,16 +91,17 @@ public abstract class CachedValuesManager {
                                                                  boolean trackValue);
 
   public <T, D extends UserDataHolder> T getCachedValue(@NotNull D dataHolder, @NotNull CachedValueProvider<T> provider) {
-    return getCachedValue(dataHolder, getKey(provider), provider, false);
+    return getCachedValue(dataHolder, this.<T>getKeyForClass(provider.getClass()), provider, false);
   }
 
   private final ConcurrentMap<String, Key<CachedValue>> keyForProvider = new ConcurrentHashMap<String, Key<CachedValue>>();
-  private <T> Key<CachedValue<T>> getKey(@NotNull CachedValueProvider<T> provider) {
-    String name = provider.getClass().getName();
+  public <T> Key<CachedValue<T>> getKeyForClass(final Class<?> providerClass) {
+    String name = providerClass.getName();
     Key<CachedValue> key = keyForProvider.get(name);
     if (key == null) {
       key = ConcurrencyUtil.cacheOrGet(keyForProvider, name, Key.<CachedValue>create(name));
     }
+    //noinspection unchecked
     return (Key)key;
   }
 }

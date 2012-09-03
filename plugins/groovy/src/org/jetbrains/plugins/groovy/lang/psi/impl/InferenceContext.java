@@ -16,12 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -50,13 +52,15 @@ public interface InferenceContext {
 
     @Override
     public <T> T getCachedValue(@NotNull GroovyPsiElement element, final Computable<T> computable) {
-      return CachedValuesManager.getManager(element.getProject()).getCachedValue(element, new CachedValueProvider<T>() {
+      CachedValuesManager manager = CachedValuesManager.getManager(element.getProject());
+      Key<CachedValue<T>> key = manager.getKeyForClass(computable.getClass());
+      return manager.getCachedValue(element, key, new CachedValueProvider<T>() {
         @Nullable
         @Override
         public Result<T> compute() {
           return Result.create(computable.compute(), PsiModificationTracker.MODIFICATION_COUNT);
         }
-      });
+      }, false);
     }
 
     @Override

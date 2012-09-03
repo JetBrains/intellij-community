@@ -452,9 +452,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Override
   public GroovyResolveResult[] resolveByShape() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<GroovyResolveResult[]>() {
+    return TypeInferenceHelper.getCurrentContext().getCachedValue(this, new Computable<GroovyResolveResult[]>() {
       @Override
-      public Result<GroovyResolveResult[]> compute() {
+      public GroovyResolveResult[] compute() {
         GroovyResolveResult[] value =
           RecursionManager.doPreventingRecursion(GrReferenceExpressionImpl.this, true, new Computable<GroovyResolveResult[]>() {
             @Override
@@ -462,10 +462,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
               return doPolyResolve(false, false);
             }
           });
-        if (value == null) {
-          value = GroovyResolveResult.EMPTY_ARRAY;
-        }
-        return Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
+        return value == null ? GroovyResolveResult.EMPTY_ARRAY : value;
       }
     });
   }
@@ -779,7 +776,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @NotNull
   public GroovyResolveResult[] multiResolve(boolean incomplete) {  //incomplete means we do not take arguments into consideration
-    final ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, POLY_RESOLVER, true, incomplete);
+    final ResolveResult[] results = TypeInferenceHelper.getCurrentContext().multiResolve(this, incomplete, POLY_RESOLVER);
     return results.length == 0 ? GroovyResolveResult.EMPTY_ARRAY : (GroovyResolveResult[])results;
   }
 
