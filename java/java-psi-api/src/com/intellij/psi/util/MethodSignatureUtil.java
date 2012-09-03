@@ -271,6 +271,7 @@ public class MethodSignatureUtil {
   }
 
   public static boolean areParametersErasureEqual(PsiMethod method1, PsiMethod method2) {
+    if (method1.getParameterList().getParametersCount() != method2.getParameterList().getParametersCount()) return false;
     return areSignaturesErasureEqual(method1.getSignature(PsiSubstitutor.EMPTY), method2.getSignature(PsiSubstitutor.EMPTY));
   }
 

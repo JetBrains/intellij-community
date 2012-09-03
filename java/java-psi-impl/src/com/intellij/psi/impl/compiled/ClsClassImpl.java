@@ -571,6 +571,8 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
       if (!(parent instanceof PsiClassOwner)) return null;
 
       PsiClassOwner fileNavigationElement = (PsiClassOwner)parent.getNavigationElement();
+      if (fileNavigationElement == parent) return null;
+
       for (PsiClass aClass : fileNavigationElement.getClasses()) {
         if (name.equals(aClass.getName())) return aClass;
       }
@@ -602,19 +604,19 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
     }
 
     PsiClass aClass = getSourceMirrorClass();
-    return aClass != null && aClass != this ? aClass.getNavigationElement() : this;
+    return aClass != null ? aClass.getNavigationElement() : this;
   }
 
   @Override
   public ItemPresentation getPresentation() {
     PsiClass aClass = getSourceMirrorClass();
-    return aClass != null && aClass != this ? aClass.getPresentation() : ItemPresentationProviders.getItemPresentation(this);
+    return aClass != null ? aClass.getPresentation() : ItemPresentationProviders.getItemPresentation(this);
   }
 
   @Override
   public Icon getElementIcon(final int flags) {
     PsiClass aClass = getSourceMirrorClass();
-    return aClass != null && aClass != this ? aClass.getIcon(flags) : PsiClassImplUtil.getClassIcon(flags, this);
+    return aClass != null ? aClass.getIcon(flags) : PsiClassImplUtil.getClassIcon(flags, this);
   }
 
   @Override

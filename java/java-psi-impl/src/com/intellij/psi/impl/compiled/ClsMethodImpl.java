@@ -42,6 +42,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -363,16 +364,16 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
     return true;
   }
 
-  @NotNull
+  @Nullable
   public PsiMethod getSourceMirrorMethod() {
     PsiClass sourceClassMirror = ((ClsClassImpl)getParent()).getSourceMirrorClass();
-    if (sourceClassMirror == null) return this;
+    if (sourceClassMirror == null) return null;
     for (PsiMethod sourceMethod : sourceClassMirror.findMethodsByName(getName(), false)) {
       if (MethodSignatureUtil.areParametersErasureEqual(this, sourceMethod)) {
         return sourceMethod;
       }
     }
-    return this;
+    return null;
   }
 
   @Override
@@ -386,7 +387,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
     }
 
     final PsiMethod method = getSourceMirrorMethod();
-    return method != this ? method.getNavigationElement() : this;
+    return method != null ? method.getNavigationElement() : this;
   }
 
   @Override

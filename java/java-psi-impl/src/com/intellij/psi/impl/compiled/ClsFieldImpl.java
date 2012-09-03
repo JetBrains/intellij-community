@@ -257,7 +257,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
 
     PsiClass sourceClassMirror = ((ClsClassImpl)getParent()).getSourceMirrorClass();
     PsiElement sourceFieldMirror = sourceClassMirror != null ? sourceClassMirror.findFieldByName(getName(), false) : null;
-    return sourceFieldMirror != null && sourceFieldMirror != this ? sourceFieldMirror.getNavigationElement() : this;
+    return sourceFieldMirror != null ? sourceFieldMirror.getNavigationElement() : this;
   }
 
   @Override
