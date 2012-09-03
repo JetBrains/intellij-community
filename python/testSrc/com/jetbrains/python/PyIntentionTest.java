@@ -241,6 +241,10 @@ public class PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.specify.return.type"));
   }
 
+  public void testTypeInDocstring2() {
+    doTest(PyBundle.message("INTN.specify.return.type"));
+  }
+
   public void testTypeInPy3Annotation() {      //PY-7045
     doTest(PyBundle.message("INTN.specify.type.in.annotation"), LanguageLevel.PYTHON32);
   }
