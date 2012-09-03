@@ -37,7 +37,7 @@ public class AppEngineUtil {
   }
 
   public static void setupAppEngineArtifactCombobox(@NotNull Project project, final @NotNull JComboBox comboBox, final boolean withAppEngineFacetOnly) {
-    comboBox.setRenderer(new ListCellRendererWrapper<Artifact>(comboBox) {
+    comboBox.setRenderer(new ListCellRendererWrapper<Artifact>() {
       @Override
       public void customize(JList list, Artifact value, int index, boolean selected, boolean hasFocus) {
         if (value != null) {
