@@ -268,7 +268,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     contexts = new JComboBox(new DefaultComboBoxModel());
 
     dialects = new JComboBox(new DefaultComboBoxModel());
-    dialects.setRenderer(new ListCellRendererWrapper(dialects.getRenderer()) {
+    dialects.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value == null) {
