@@ -149,6 +149,10 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   public void testLambdaExpr() throws Exception {
     doTest(true);
   }
+  
+  public void testLambdaExprAsRefQualifier() throws Exception {
+    doTest(true);
+  }
 
   private void doTest(final boolean inlineDef, String conflictMessage) throws Exception {
     try {
