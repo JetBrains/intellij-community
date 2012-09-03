@@ -20,25 +20,41 @@ package com.intellij.openapi.vcs.changes;
  *         Date: 7/5/11
  *         Time: 3:35 PM
  */
-public class TransparentlyFailedValue<T, E extends Exception> {
+public class TransparentlyFailedValue<T, E extends Exception> implements TransparentlyFailedValueI<T,E> {
   private T t;
   private E e;
+  private RuntimeException myRuntime;
 
+  @Override
   public void set(final T t) {
     this.t = t;
   }
 
+  @Override
   public void fail(final E e) {
     this.e = e;
   }
 
+  @Override
+  public void failRuntime(final RuntimeException e) {
+    myRuntime = e;
+  }
+
+  @Override
   public T get() throws E {
     if (this.e != null) throw this.e;
+    if (myRuntime != null) throw myRuntime;
     return this.t;
   }
 
   public void take(final TransparentlyFailedValue<T,E> value) {
     this.t = value.t;
     this.e = value.e;
+    myRuntime = value.myRuntime;
+  }
+
+  @Override
+  public boolean haveSomething() {
+    return e != null || myRuntime != null || t != null;
   }
 }
