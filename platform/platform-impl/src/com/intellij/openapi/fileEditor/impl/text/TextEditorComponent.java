@@ -63,7 +63,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider{
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.TextEditorComponent");
 
   private final Project myProject;
-  private final VirtualFile myFile;
+  @NotNull private final VirtualFile myFile;
   private final TextEditorImpl myTextEditor;
   /**
    * Document to be edited
@@ -74,7 +74,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider{
   private final MyDocumentListener myDocumentListener;
   private final MyEditorPropertyChangeListener myEditorPropertyChangeListener;
   private final MyVirtualFileListener myVirtualFileListener;
-  private final Editor myEditor;
+  @NotNull private final Editor myEditor;
 
   /**
    * Whether the editor's document is modified or not
@@ -156,6 +156,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider{
   /**
    * @return most recently used editor. This method never returns <code>null</code>.
    */
+  @NotNull
   Editor getEditor(){
     return myEditor;
   }
@@ -164,6 +165,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider{
    * @return created editor. This editor should be released by {@link #disposeEditor(Editor) }
    * method.
    */
+  @NotNull
   private Editor createEditor(){
     Editor editor = EditorFactory.getInstance().createEditor(myDocument, myProject);
     ((EditorMarkupModel) editor.getMarkupModel()).setErrorStripeVisible(true);
@@ -184,7 +186,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider{
    * Disposes resources allocated by the specified editor view and registeres all
    * it's listeners
    */
-  private void disposeEditor(final Editor editor){
+  private void disposeEditor(@NotNull Editor editor){
     EditorFactory.getInstance().releaseEditor(editor);
     editor.removeEditorMouseListener(myEditorMouseListener);
     ((EditorEx)editor).removePropertyChangeListener(myEditorPropertyChangeListener);
@@ -266,6 +268,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider{
     return myEditor;
   }
 
+  @Override
   public Object getData(final String dataId) {
     final Editor e = validateCurrentEditor();
     if (e == null) return null;
@@ -288,6 +291,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider{
    * Shows popup menu
    */
   private static final class MyEditorMouseListener extends EditorPopupHandler {
+    @Override
     public void invokePopup(final EditorMouseEvent event) {
       if (!event.isConsumed() && event.getArea() == EditorMouseEventArea.EDITING_AREA) {
         ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_POPUP);
@@ -314,12 +318,14 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider{
 
     public MyDocumentListener() {
       myUpdateRunnable = new Runnable() {
+        @Override
         public void run() {
           updateModifiedProperty();
         }
       };
     }
 
+    @Override
     public void documentChanged(DocumentEvent e) {
       // document's timestamp is changed later on undo or PSI changes
       ApplicationManager.getApplication().invokeLater(myUpdateRunnable);
@@ -330,6 +336,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider{
    * Gets event about insert/overwrite modes
    */
   private final class MyEditorPropertyChangeListener implements PropertyChangeListener {
+    @Override
     public void propertyChange(final PropertyChangeEvent e) {
       assertThread();
       final String propertyName = e.getPropertyName();
@@ -344,9 +351,11 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider{
    * to also change highlighter.
    */
   private final class MyFileTypeListener implements FileTypeListener {
+    @Override
     public void beforeFileTypesChanged(FileTypeEvent event) {
     }
 
+    @Override
     public void fileTypesChanged(final FileTypeEvent event) {
       assertThread();
       // File can be invalid after file type changing. The editor should be removed
@@ -362,6 +371,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider{
    * Updates "valid" property and highlighters (if necessary)
    */
   private final class MyVirtualFileListener extends VirtualFileAdapter{
+    @Override
     public void propertyChanged(final VirtualFilePropertyEvent e) {
       if(VirtualFile.PROP_NAME.equals(e.getPropertyName())){
         // File can be invalidated after file changes name (extension also
@@ -373,6 +383,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider{
       }
     }
 
+    @Override
     public void contentsChanged(VirtualFileEvent event){
       if (event.isFromSave()){ // commit
         assertThread();
@@ -385,6 +396,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider{
     }
   }
 
+  @NotNull
   public VirtualFile getFile() {
     return myFile;
   }

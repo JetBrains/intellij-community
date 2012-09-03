@@ -52,19 +52,23 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
 
   public void initFolding() {}
 
+  @Override
   public void dispose(){
     myComponent.dispose();
   }
 
+  @Override
   @NotNull
   public TextEditorComponent getComponent() {
     return myComponent;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent(){
     return getActiveEditor().getContentComponent();
   }
 
+  @Override
   @NotNull
   public Editor getEditor(){
     return getActiveEditor();
@@ -73,36 +77,44 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   /**
    * @see TextEditorComponent#getEditor()
    */
+  @NotNull
   private Editor getActiveEditor() {
     return myComponent.getEditor();
   }
 
+  @Override
   @NotNull
   public String getName() {
     return "Text";
   }
 
+  @Override
   @NotNull
   public FileEditorState getState(@NotNull FileEditorStateLevel level) {
     return myProvider.getStateImpl(myProject, getActiveEditor(), level);
   }
 
+  @Override
   public void setState(@NotNull final FileEditorState state) {
     myProvider.setStateImpl(myProject, getActiveEditor(), (TextEditorState)state);
   }
 
+  @Override
   public boolean isModified() {
     return myComponent.isModified();
   }
 
+  @Override
   public boolean isValid() {
     return myComponent.isEditorValid();
   }
 
+  @Override
   public void selectNotify() {
     myComponent.selectNotify();
   }
 
+  @Override
   public void deselectNotify() {
     myComponent.deselectNotify();
   }
@@ -115,22 +127,27 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     myChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
   }
 
+  @Override
   public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener) {
     myChangeSupport.addPropertyChangeListener(listener);
   }
 
+  @Override
   public void removePropertyChangeListener(@NotNull final PropertyChangeListener listener) {
     myChangeSupport.removePropertyChangeListener(listener);
   }
 
+  @Override
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
     return null;
   }
 
+  @Override
   public FileEditorLocation getCurrentLocation() {
     return new TextEditorLocation(getEditor().getCaretModel().getLogicalPosition(), this);
   }
 
+  @Override
   public StructureViewBuilder getStructureViewBuilder() {
     Document document = myComponent.getEditor().getDocument();
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
@@ -138,11 +155,13 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.getFileType(), file, myProject);
   }
 
+  @Override
   public boolean canNavigateTo(@NotNull final Navigatable navigatable) {
     return navigatable instanceof OpenFileDescriptor && (((OpenFileDescriptor)navigatable).getOffset() >= 0 ||
                                                          ((OpenFileDescriptor)navigatable).getLine() != -1);
   }
 
+  @Override
   public void navigateTo(@NotNull final Navigatable navigatable) {
     OpenFileDescriptor d = (OpenFileDescriptor)navigatable;
     d.navigateIn(getEditor());
