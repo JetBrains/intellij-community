@@ -197,19 +197,21 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
 
         while (true) {
           PsiBuilder.Marker maybeExprMarker = builder.mark();
+          final boolean isYieldExpr = builder.getTokenType() == PyTokenTypes.YIELD_KEYWORD;
           if (!getExpressionParser().parseYieldOrTupleExpression(false)) {
             maybeExprMarker.drop();
             builder.error(EXPRESSION_EXPECTED);
             break;
           }
           if (builder.getTokenType() == PyTokenTypes.EQ) {
-            maybeExprMarker.rollbackTo();
-            final int rollbackOffset = builder.getCurrentOffset();
-            getExpressionParser().parseExpression(false, true);
-            final int offsetAfterExpr = builder.getCurrentOffset();
-            if (builder.getTokenType() != PyTokenTypes.EQ) {
-              LOG.error("'=' after rollback expected", builder.getTokenType() + "; " +
-                                                       builder.getOriginalText().subSequence(rollbackOffset, offsetAfterExpr).toString());
+            if (isYieldExpr) {
+              maybeExprMarker.drop();
+              builder.error("Cannot assign to 'yield' expression");
+            }
+            else {
+              maybeExprMarker.rollbackTo();
+              getExpressionParser().parseExpression(false, true);
+              LOG.assertTrue(builder.getTokenType() == PyTokenTypes.EQ, builder.getTokenType());
             }
             builder.advanceLexer();
           }
