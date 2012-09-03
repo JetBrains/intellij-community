@@ -321,14 +321,14 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "}                                             \n" +
       ");                                                       ",
       "foo(\"long string as the first argument\", new Runnable() {\n" +
-      "            public void run() {                          \n" +
-      "            }                                            \n" +
-      "        },                                               \n" +
-      "        new Runnable() {                                 \n" +
-      "            public void run() {                          \n" +
-      "            }                                            \n" +
-      "        }                                                \n" +
-      ");                                                       "
+      "            public void run() {\n" +
+      "            }\n" +
+      "        },\n" +
+      "        new Runnable() {\n" +
+      "            public void run() {\n" +
+      "            }\n" +
+      "        }\n" +
+      ");"
     );
     
     doMethodTest(
@@ -343,7 +343,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "    @Override\n" +
       "    public void run() {\n" +
       "    }\n" +
-      "}); "
+      "});"
     );
     
     doMethodTest(
@@ -502,5 +502,18 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "             */\n" +
       "// This is a line comment"
     );
+  }
+
+  public void testMultilineCommentAtFileStart() {
+    // IDEA-90860
+    String text =
+      "\n" +
+      "/*\n" +
+      " * comment\n" +
+      " */\n" +
+      "\n" +
+      "class Test {\n" +
+      "}";
+    doTextTest(text, text);
   }
 }

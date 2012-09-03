@@ -347,7 +347,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       }
     }
     myFileTypeComboBox.setModel(new CollectionComboBoxModel(ContainerUtil.newArrayList(mySourceWrappers), lastUsed));
-    myFileTypeComboBox.setRenderer(new ListCellRendererWrapper<SourceWrapper>(myFileTypeComboBox.getRenderer()) {
+    myFileTypeComboBox.setRenderer(new ListCellRendererWrapper<SourceWrapper>() {
       @Override
       public void customize(JList list, SourceWrapper value, int index, boolean selected, boolean hasFocus) {
         if (value != null) {
@@ -381,14 +381,14 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       myFileTypeComboBox.setSelectedIndex(0);
     }
 
-    myDialectComboBox.setRenderer(new ListCellRendererWrapper<Language>(myDialectComboBox.getRenderer()) {
+    myDialectComboBox.setRenderer(new ListCellRendererWrapper<Language>() {
       @Override
       public void customize(final JList list, final Language value, final int index, final boolean selected, final boolean hasFocus) {
         setText(value != null ? value.getDisplayName() : "<default>");
       }
     });
     myDialectComboBox.addFocusListener(new AutoExpandFocusListener(myDialectComboBox));
-    myExtensionComboBox.setRenderer(new ListCellRendererWrapper<String>(myExtensionComboBox.getRenderer()) {
+    myExtensionComboBox.setRenderer(new ListCellRendererWrapper<String>() {
       @Override
       public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
         if (value != null) setText("." + value);

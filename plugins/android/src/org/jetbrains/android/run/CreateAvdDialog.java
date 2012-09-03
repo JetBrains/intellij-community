@@ -188,20 +188,20 @@ public class CreateAvdDialog extends DialogWrapper {
         }
       }
     });
-    mySkinField.setRenderer(new ListCellRendererWrapper(mySkinField.getRenderer()) {
+    mySkinField.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         String presentation = value != null ? getSkinPresentation((String)value) : null;
         setText(presentation);
       }
     });
-    myTargetBox.setRenderer(new ListCellRendererWrapper<IAndroidTarget>(myTargetBox.getRenderer()) {
+    myTargetBox.setRenderer(new ListCellRendererWrapper<IAndroidTarget>() {
       @Override
       public void customize(JList list, IAndroidTarget value, int index, boolean selected, boolean hasFocus) {
         setText(AndroidSdkUtils.getPresentableTargetName(value));
       }
     });
-    myAbiCombo.setRenderer(new ListCellRendererWrapper<String>(myAbiCombo.getRenderer()) {
+    myAbiCombo.setRenderer(new ListCellRendererWrapper<String>() {
       @Override
       public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
         if (value != null) {

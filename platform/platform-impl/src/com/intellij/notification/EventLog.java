@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ import com.intellij.openapi.wm.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.text.CharArrayUtil;
@@ -73,7 +72,7 @@ public class EventLog {
   private static final String A_CLOSING = "</a>";
   private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");
   private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=[\"\']([^>]*)[\"\'][^>]*>");
-  private static final Set<String> NEW_LINES = CollectionFactory.hashSet("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>");
+  private static final Set<String> NEW_LINES = ContainerUtil.newHashSet("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>");
 
   public EventLog() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, new Notifications() {

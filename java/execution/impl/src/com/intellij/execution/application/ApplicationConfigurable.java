@@ -32,6 +32,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.ui.PanelWithAnchor;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +65,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     ClassBrowser.createApplicationClassBrowser(project, myModuleSelector).setField(getMainClassField());
     myVersionDetector = new JreVersionDetector();
 
-    setAnchor(myModule.getAnchor());
+    myAnchor = UIUtil.mergeComponentsWithAnchor(myMainClass, myCommonProgramParameters, myAlternativeJREPanel, myModule);
   }
 
   public void applyEditorTo(final ApplicationConfiguration configuration) throws ConfigurationException {

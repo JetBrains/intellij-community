@@ -204,6 +204,7 @@ public abstract class FindManager {
    *
    * @param element the element to find the usages for.
    * @param showDialog true if find usages settings dialog needs to be shown.
+   * @since idea 12
    */
   public abstract void findUsages(@NotNull PsiElement element, boolean showDialog);
 

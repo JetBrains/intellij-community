@@ -67,7 +67,7 @@ public class ReassignVariableUtil {
           model.addElement(proc.getResult(i));
         }
         final JList list = new JBList(model);
-        list.setCellRenderer(new ListCellRendererWrapper(new DefaultListCellRenderer()) {
+        list.setCellRenderer(new ListCellRendererWrapper() {
           @Override
           public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
             if (value instanceof PsiVariable) {

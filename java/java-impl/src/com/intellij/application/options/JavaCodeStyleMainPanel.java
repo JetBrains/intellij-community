@@ -34,9 +34,7 @@ public class JavaCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
     super.initTabs(settings);
     addTab(new JavaDocFormattingPanel(settings));
     addTab(new CodeStyleImportsPanelWrapper(settings));
-    if (Boolean.getBoolean("show.arrangement.options")) {
-      addTab(new JavaArrangementPanel(settings));
-    }
+    addTab(new JavaArrangementPanel(settings));
     for (CodeStyleSettingsProvider provider : Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME)) {
       if (provider.getLanguage() == JavaLanguage.INSTANCE && !provider.hasSettingsPage()) {
         createTab(provider);

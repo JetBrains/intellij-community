@@ -101,7 +101,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
     myTreeTabs.addTab(new TabInfo(tree).setText(name).setObject(tree).setActions(group, ActionPlaces.UNKNOWN));
   }
 
-  private class ClearAction extends AnAction {
+  private static class ClearAction extends AnAction {
     private final DisposerTree myTree;
 
     private ClearAction(DisposerTree tree) {
@@ -114,6 +114,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       e.getPresentation().setIcon(AllIcons.Debugger.Watch);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       myTree.clear();
     }
@@ -166,6 +167,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       ((DisposerTree)info.getObject()).getTree().getSelectionModel().removeTreeSelectionListener(this);
     }
 
+    @Override
     public void valueChanged(TreeSelectionEvent e) {
       updateText();
     }
@@ -204,6 +206,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
         e.getPresentation().setEnabled(myAllocation.getDocument().getLength() > 0);
       }
 
+      @Override
       public void actionPerformed(AnActionEvent e) {
         try {
           CopyPasteManager.getInstance().setContents(new TextTransferrable(myAllocation.getText(), myAllocation.getText()));
@@ -249,16 +252,19 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       Disposer.register(parent, this);
     }
 
+    @Override
     public boolean shouldBeShowing(DisposerNode value) {
       return value.getValue().getModification() > myModificationToFilter;
     }
 
+    @Override
     public void objectRegistered(@NotNull Object node) {
       queueUpdate();
     }
 
 
 
+    @Override
     public void objectExecuted(@NotNull Object node) {
       queueUpdate();
     }
@@ -272,6 +278,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       });
     }
 
+    @Override
     public void dispose() {
       Disposer.getTree().removeListener(this);
     }
@@ -292,6 +299,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
     }
   }
 
+  @Override
   public JComponent getComponent() {
     if (myComponent == null) {
       initUi();
@@ -300,10 +308,12 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
     return myComponent;
   }
 
+  @Override
   public String getName() {
     return "Disposer";
   }
 
+  @Override
   public void dispose() {
   }
 
@@ -316,17 +326,21 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       myRoot = new DisposerNode(tree, null);
     }
 
+    @Override
     public List<TreeStructureProvider> getProviders() {
       return null;
     }
 
+    @Override
     public Object getRootElement() {
       return myRoot;
     }
 
+    @Override
     public void commit() {
     }
 
+    @Override
     public boolean hasSomethingToCommit() {
       return false;
     }
@@ -340,14 +354,15 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       myTree = tree;
     }
 
+    @Override
     @NotNull
     public Collection<? extends AbstractTreeNode> getChildren() {
       final ObjectNode value = getValue();
       if (value != null) {
         final Collection subnodes = value.getChildren();
         final ArrayList<DisposerNode> children = new ArrayList<DisposerNode>(subnodes.size());
-        for (Iterator iterator = subnodes.iterator(); iterator.hasNext();) {
-          children.add(new DisposerNode(myTree, (ObjectNode)iterator.next()));
+        for (Object subnode : subnodes) {
+          children.add(new DisposerNode(myTree, (ObjectNode)subnode));
         }
         return children;
       }
@@ -372,6 +387,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       return true;
     }
 
+    @Override
     protected void update(PresentationData presentation) {
       if (getValue() != null) {
         final Object object = getValue().getObject();
@@ -398,6 +414,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
     }
   }
 
+  @Override
   public void disposeUiResources() {
     myComponent = null;
   }

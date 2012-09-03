@@ -53,7 +53,7 @@ public final class SourceToOutputMapping extends AbstractStateStorage<String, Co
     return super.getState(FileUtil.toSystemIndependentName(srcPath));
   }
 
-  protected static Collection<String> normalizePaths(Collection<String> outputs) {
+  private static Collection<String> normalizePaths(Collection<String> outputs) {
     Collection<String> normalized = new ArrayList<String>(outputs.size());
     for (String out : outputs) {
       normalized.add(FileUtil.toSystemIndependentName(out));

@@ -40,7 +40,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.SideBorder;
@@ -52,6 +52,7 @@ import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -177,7 +178,7 @@ public class ImplementationViewComponent extends JPanel {
     update(elements, new PairFunction<PsiElement[], List<FileDescriptor>, Boolean>() {
       @Override
       public Boolean fun(final PsiElement[] psiElements, final List<FileDescriptor> fileDescriptors) {
-        if (psiElements == null || psiElements.length == 0) return false;
+        if (psiElements.length == 0) return false;
         myElements = psiElements;
 
         myIndex = index < myElements.length ? index : 0;
@@ -201,6 +202,7 @@ public class ImplementationViewComponent extends JPanel {
           updateRenderer(project);
 
           myFileChooser.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
               int index = myFileChooser.getSelectedIndex();
               if (myIndex != index) {
@@ -246,7 +248,7 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   private void updateRenderer(final Project project) {
-    myFileChooser.setRenderer(new ListCellRendererWrapper<FileDescriptor>(myFileChooser.getRenderer()) {
+    myFileChooser.setRenderer(new ListCellRendererWrapper<FileDescriptor>() {
       @Override
       public void customize(JList list, FileDescriptor value, int index, boolean selected, boolean hasFocus) {
         final PsiFile file = value.myFile;
@@ -270,11 +272,11 @@ public class ImplementationViewComponent extends JPanel {
     return result;
   }
 
-  public void update(final PsiElement[] elements, final int index) {
+  public void update(@NotNull final PsiElement[] elements, final int index) {
     update(elements, new PairFunction<PsiElement[], List<FileDescriptor>, Boolean>() {
       @Override
       public Boolean fun(PsiElement[] psiElements, List<FileDescriptor> fileDescriptors) {
-        if (psiElements == null || psiElements.length == 0) return false;
+        if (psiElements.length == 0) return false;
         
         final Project project = psiElements[0].getProject();
         myElements = psiElements;
@@ -326,7 +328,7 @@ public class ImplementationViewComponent extends JPanel {
     
   }
   
-  private static void update(final PsiElement[] elements, final PairFunction<PsiElement[], List<FileDescriptor>, Boolean> fun) {
+  private static void update(@NotNull PsiElement[] elements, @NotNull PairFunction<PsiElement[], List<FileDescriptor>, Boolean> fun) {
     List<PsiElement> candidates = new ArrayList<PsiElement>(elements.length);
     List<FileDescriptor> files = new ArrayList<FileDescriptor>(elements.length);
     final Set<String> names = new HashSet<String>();
@@ -343,7 +345,7 @@ public class ImplementationViewComponent extends JPanel {
       candidates.add(element.getNavigationElement());
     }
     
-    fun.fun(PsiUtilBase.toPsiElementArray(candidates), files);
+    fun.fun(PsiUtilCore.toPsiElementArray(candidates), files);
   }
   
   private static Icon getIconForFile(PsiFile psiFile) {
@@ -405,8 +407,10 @@ public class ImplementationViewComponent extends JPanel {
     final String newText = getNewText(elt);
     if (newText == null || Comparing.strEqual(newText, myEditor.getDocument().getText())) return;
     CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             Document fragmentDoc = myEditor.getDocument();
             fragmentDoc.setReadOnly(false);
@@ -445,6 +449,7 @@ public class ImplementationViewComponent extends JPanel {
     return psiFile.getOriginalFile();
   }
 
+  @Override
   public void removeNotify() {
     super.removeNotify();
     EditorFactory.getInstance().releaseEditor(myEditor);
@@ -507,11 +512,13 @@ public class ImplementationViewComponent extends JPanel {
       super(CodeInsightBundle.message("quick.definition.back"), null, AllIcons.Actions.Back);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       goBack();
     }
 
 
+    @Override
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(myIndex > 0);
@@ -523,10 +530,12 @@ public class ImplementationViewComponent extends JPanel {
       super(CodeInsightBundle.message("quick.definition.forward"), null, AllIcons.Actions.Forward);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       goForward();
     }
 
+    @Override
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(myElements != null && myIndex < myElements.length - 1);
@@ -560,10 +569,12 @@ public class ImplementationViewComponent extends JPanel {
       myFocusEditor = focusEditor;
     }
 
+    @Override
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(myFileChooser == null || !myFileChooser.isPopupVisible());
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       PsiElement element = myElements[myIndex];
       PsiElement navigationElement = element.getNavigationElement();
@@ -617,6 +628,6 @@ public class ImplementationViewComponent extends JPanel {
         result.add(element);
       }
     }
-    return PsiUtilBase.toPsiElementArray(result);
+    return PsiUtilCore.toPsiElementArray(result);
   }
 }

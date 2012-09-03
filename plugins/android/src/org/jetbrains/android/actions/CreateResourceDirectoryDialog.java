@@ -50,7 +50,7 @@ public abstract class CreateResourceDirectoryDialog extends DialogWrapper {
     super(project);
 
     myResourceTypeComboBox.setModel(new EnumComboBoxModel<ResourceFolderType>(ResourceFolderType.class));
-    myResourceTypeComboBox.setRenderer(new ListCellRendererWrapper(myResourceTypeComboBox.getRenderer()) {
+    myResourceTypeComboBox.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof ResourceFolderType) {

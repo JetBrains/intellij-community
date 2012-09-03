@@ -70,6 +70,11 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
   @Override
   public JavaModuleFixtureBuilder addLibrary(String libraryName, String... classPath) {
     final HashMap<OrderRootType, String[]> map = new HashMap<OrderRootType, String[]>();
+    for (String path : classPath) {
+      if (!new File(path).exists()) {
+        System.out.println(path + " not exists");
+      }
+    }
     map.put(OrderRootType.CLASSES, classPath);
     myLibraries.add(new Lib(libraryName, map));
     return this;

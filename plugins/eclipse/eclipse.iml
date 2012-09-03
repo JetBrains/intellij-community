@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="idea-ui" />
     <orderEntry type="module" module-name="annotations" />
     <orderEntry type="module" module-name="java-impl" />
+    <orderEntry type="module" module-name="eclipse-jps-plugin" />
   </component>
 </module>
 

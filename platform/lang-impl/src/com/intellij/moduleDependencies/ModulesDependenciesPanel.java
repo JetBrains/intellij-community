@@ -533,7 +533,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
       }
       MyUserObject node = (MyUserObject)userObject;
       Module module = node.getModule();
-      setIcon(ModuleType.get(module).getNodeIcon(expanded));
+      setIcon(ModuleType.get(module).getIcon());
       if (node.isInCycle()){
         append(module.getName(), SimpleTextAttributes.ERROR_ATTRIBUTES);
       } else {

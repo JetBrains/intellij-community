@@ -33,7 +33,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -56,7 +56,7 @@ import java.util.regex.Pattern;
 public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   private static final Key<List<String>> FILES_TO_DELETE_KEY = Key.create(MavenResourceCompiler.class.getSimpleName() + ".FILES_TO_DELETE");
 
-  private static final Set<String> DEFAULT_NON_FILTERED_EXTENSIONS = CollectionFactory.hashSet("jpg", "jpeg", "gif", "bmp", "png");
+  private static final Set<String> DEFAULT_NON_FILTERED_EXTENSIONS = ContainerUtil.newHashSet("jpg", "jpeg", "gif", "bmp", "png");
 
   private Map<String, Set<String>> myOutputItemsCache = new THashMap<String, Set<String>>();
 

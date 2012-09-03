@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -79,7 +79,7 @@ public class GrStubUtils {
   }
 
   public static String[] getAnnotationNames(PsiModifierListOwner psi) {
-    List<String> annoNames = CollectionFactory.arrayList();
+    List<String> annoNames = ContainerUtil.newArrayList();
     final PsiModifierList modifierList = psi.getModifierList();
     if (modifierList instanceof GrModifierList) {
       for (GrAnnotation annotation : ((GrModifierList)modifierList).getAnnotations()) {

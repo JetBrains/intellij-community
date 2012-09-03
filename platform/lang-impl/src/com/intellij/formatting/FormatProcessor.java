@@ -393,12 +393,14 @@ class FormatProcessor {
     if (block.isLeaf() && whiteSpace.containsLineFeeds() && block.containsLineFeeds()) {
       final TextRange currentBlockRange = shiftRange(block.getTextRange(), shift);
 
-      IndentInside lastLineIndent = block.getLastLineIndent();
+      IndentInside oldBlockIndent = whiteSpace.getInitialLastLineIndent();
       IndentInside whiteSpaceIndent = IndentInside.createIndentOn(IndentInside.getLastLine(newWhiteSpace));
-      final int shiftInside = calcShift(lastLineIndent, whiteSpaceIndent, options);
+      final int shiftInside = calcShift(oldBlockIndent, whiteSpaceIndent, options);
 
-      final TextRange newBlockRange = model.shiftIndentInsideRange(currentBlockRange, shiftInside);
-      shift += newBlockRange.getLength() - block.getLength();
+      if (shiftInside != 0 || !oldBlockIndent.equals(whiteSpaceIndent)) {
+        final TextRange newBlockRange = model.shiftIndentInsideRange(currentBlockRange, shiftInside);
+        shift += newBlockRange.getLength() - block.getLength();
+      }
     }
     return shift;
   }
@@ -1185,20 +1187,10 @@ class FormatProcessor {
   {
     if (lastLineIndent.equals(whiteSpaceIndent)) return 0;
     if (options.USE_TAB_CHARACTER) {
-      if (lastLineIndent.whiteSpaces > 0) {
-        return whiteSpaceIndent.getSpacesCount(options);
-      }
-      else {
-        return whiteSpaceIndent.tabs - lastLineIndent.tabs;
-      }
+      return whiteSpaceIndent.tabs - lastLineIndent.getTabsCount(options);
     }
     else {
-      if (lastLineIndent.tabs > 0) {
-        return whiteSpaceIndent.getTabsCount(options);
-      }
-      else {
-        return whiteSpaceIndent.whiteSpaces - lastLineIndent.whiteSpaces;
-      }
+      return whiteSpaceIndent.whiteSpaces - lastLineIndent.getSpacesCount(options);
     }
   }
 
@@ -1410,7 +1402,7 @@ class FormatProcessor {
         blockWrapper,
         myShift,
         blockWrapper.getWhiteSpace().generateWhiteSpace(getIndentOptionsToUse(blockWrapper, myDefaultIndentOption)),
-        myJavaIndentOptions
+        myDefaultIndentOption
       );
       myProgressCallback.afterApplyingChange(blockWrapper);
       // block could be gc'd

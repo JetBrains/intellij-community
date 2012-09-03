@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -58,7 +59,7 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
   }
 
   @Override
-  public void queue(Update update) {
+  public void queue(@NotNull Update update) {
     boolean passThrough = false;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       passThrough = isPassThrough();

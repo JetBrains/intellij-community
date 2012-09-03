@@ -101,7 +101,7 @@ class EditLogFilterDialog extends DialogWrapper {
     myPidFieldWrapper.add(myPidField);
 
     myLogLevelCombo.setModel(new EnumComboBoxModel<Log.LogLevel>(Log.LogLevel.class));
-    myLogLevelCombo.setRenderer(new ListCellRendererWrapper(myLogLevelCombo.getRenderer()) {
+    myLogLevelCombo.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value != null) {

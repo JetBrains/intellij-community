@@ -5,8 +5,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactsBuildData;
-import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.*;
 import java.util.Collection;
@@ -26,8 +27,7 @@ public class BuildDataManager implements StorageOwner {
   private static final String MAPPINGS_STORAGE = "mappings";
 
   private final Object mySourceToOutputLock = new Object();
-  private final Map<String, SourceToOutputMapping> myProductionSourceToOutputs = new HashMap<String, SourceToOutputMapping>();
-  private final Map<String, SourceToOutputMapping> myTestSourceToOutputs = new HashMap<String, SourceToOutputMapping>();
+  private final Map<BuildTarget, SourceToOutputMapping> mySourceToOutputs = new HashMap<BuildTarget, SourceToOutputMapping>();
 
   private final SourceToFormMapping mySrcToFormMap;
   private final ArtifactsBuildData myArtifactsBuildData;
@@ -49,15 +49,15 @@ public class BuildDataManager implements StorageOwner {
     return new File(myDataStorageRoot, "output-roots");
   }
 
-  public SourceToOutputMapping getSourceToOutputMap(final String moduleName, final boolean testSources) throws IOException {
-    String lowerCaseModuleName = moduleName.toLowerCase(Locale.US);
-    final Map<String, SourceToOutputMapping> storageMap = testSources ? myTestSourceToOutputs : myProductionSourceToOutputs;
+  public SourceToOutputMapping getSourceToOutputMap(final ModuleBuildTarget target) throws IOException {
+    final boolean testSources = target.isTests();
     SourceToOutputMapping mapping;
     synchronized (mySourceToOutputLock) {
-      mapping = storageMap.get(lowerCaseModuleName);
+      mapping = mySourceToOutputs.get(target);
       if (mapping == null) {
+        String lowerCaseModuleName = target.getModuleName().toLowerCase(Locale.US);
         mapping = new SourceToOutputMapping(new File(getSourceToOutputRoot(lowerCaseModuleName, testSources), "data"));
-        storageMap.put(lowerCaseModuleName, mapping);
+        mySourceToOutputs.put(target, mapping);
       }
     }
     return mapping;
@@ -122,12 +122,7 @@ public class BuildDataManager implements StorageOwner {
   public void flush(boolean memoryCachesOnly) {
     myArtifactsBuildData.flush(memoryCachesOnly);
     synchronized (mySourceToOutputLock) {
-      for (Map.Entry<String, SourceToOutputMapping> entry : myProductionSourceToOutputs.entrySet()) {
-        final SourceToOutputMapping mapping = entry.getValue();
-        mapping.flush(memoryCachesOnly);
-      }
-      for (Map.Entry<String, SourceToOutputMapping> entry : myTestSourceToOutputs.entrySet()) {
-        final SourceToOutputMapping mapping = entry.getValue();
+      for (SourceToOutputMapping mapping : mySourceToOutputs.values()) {
         mapping.flush(memoryCachesOnly);
       }
     }
@@ -179,13 +174,11 @@ public class BuildDataManager implements StorageOwner {
     }
   }
 
-  public void closeSourceToOutputStorages(Collection<ModuleChunk> chunks, boolean testSources) throws IOException {
-    final Map<String, SourceToOutputMapping> storageMap = testSources? myTestSourceToOutputs : myProductionSourceToOutputs;
+  public void closeSourceToOutputStorages(Collection<ModuleChunk> chunks) throws IOException {
     synchronized (mySourceToOutputLock) {
       for (ModuleChunk chunk : chunks) {
-        for (JpsModule module : chunk.getModules()) {
-          final String moduleName = module.getName().toLowerCase(Locale.US);
-          final SourceToOutputMapping mapping = storageMap.remove(moduleName);
+        for (ModuleBuildTarget target : chunk.getTargets()) {
+          final SourceToOutputMapping mapping = mySourceToOutputs.remove(target);
           if (mapping != null) {
             mapping.close();
           }
@@ -197,19 +190,9 @@ public class BuildDataManager implements StorageOwner {
   private void closeSourceToOutputStorages() throws IOException {
     IOException ex = null;
     try {
-      for (Map.Entry<String, SourceToOutputMapping> entry : myProductionSourceToOutputs.entrySet()) {
+      for (SourceToOutputMapping mapping : mySourceToOutputs.values()) {
         try {
-          entry.getValue().close();
-        }
-        catch (IOException e) {
-          if (e != null) {
-            ex = e;
-          }
-        }
-      }
-      for (Map.Entry<String, SourceToOutputMapping> entry : myTestSourceToOutputs.entrySet()) {
-        try {
-          entry.getValue().close();
+          mapping.close();
         }
         catch (IOException e) {
           if (e != null) {
@@ -219,8 +202,7 @@ public class BuildDataManager implements StorageOwner {
       }
     }
     finally {
-      myProductionSourceToOutputs.clear();
-      myTestSourceToOutputs.clear();
+      mySourceToOutputs.clear();
     }
     if (ex != null) {
       throw ex;

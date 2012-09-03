@@ -118,7 +118,7 @@ public final class InjectedLanguageBlockWrapper implements Block {
   }
 
   @Override
-  @Nullable public Spacing getSpacing(final Block child1, final Block child2) {
+  @Nullable public Spacing getSpacing(final Block child1, @NotNull final Block child2) {
     int shift = 0;
     Block child1ToUse = child1;
     Block child2ToUse = child2;

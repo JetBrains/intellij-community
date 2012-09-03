@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.DataOutputStream;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.Channels;
@@ -146,21 +147,13 @@ final class BuildSession implements Runnable, CanceledStatus {
     final BuildFSState fsState = new BuildFSState(false);
 
     try {
-      final boolean shouldApplyEvent = loadFsState(fsState, dataStorageRoot, myInitialFSDelta);
-      if (shouldApplyEvent && myBuildType == BuildType.MAKE && !containsChanges(myInitialFSDelta) && !fsState.hasWorkToDo()) {
-        applyFSEvent(null, myInitialFSDelta);
-        return;
-      }
       if (!dataStorageRoot.exists()) {
         // invoked the very first time for this project. Force full rebuild
         myBuildType = BuildType.PROJECT_REBUILD;
       }
-      ProjectDescriptor pd = myBuildRunner.load(msgHandler, dataStorageRoot, fsState);
+      final ProjectDescriptor pd = myBuildRunner.load(msgHandler, dataStorageRoot, fsState);
       myProjectDescriptor = pd;
-      if (shouldApplyEvent) {
-        applyFSEvent(myProjectDescriptor, myInitialFSDelta);
-      }
-
+      loadFsState(fsState, dataStorageRoot, myInitialFSDelta, pd);
 
       // free memory
       myInitialFSDelta = null;
@@ -322,7 +315,10 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
   }
 
-  private boolean loadFsState(final BuildFSState fsState, File dataStorageRoot, CmdlineRemoteProto.Message.ControllerMessage.FSEvent initialEvent) {
+  private void loadFsState(final BuildFSState fsState,
+                           File dataStorageRoot,
+                           CmdlineRemoteProto.Message.ControllerMessage.FSEvent initialEvent,
+                           ProjectDescriptor pd) {
     boolean shouldApplyEvent = false;
     final File file = new File(dataStorageRoot, FS_STATE_FILE);
     try {
@@ -337,18 +333,19 @@ final class BuildSession implements Runnable, CanceledStatus {
 
       final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
       try {
-        int version = in.readInt();
+        final int version = in.readInt();
         if (version == FSState.VERSION) {
           final long savedOrdinal = in.readLong();
           if (initialEvent != null && (savedOrdinal + 1L == initialEvent.getOrdinal())) {
-            fsState.load(in);
+            fsState.load(in, pd);
             myLastEventOrdinal = savedOrdinal;
             shouldApplyEvent = true;
-            //applyFSEvent(pd, initialEvent);
           }
         }
-
-        if (!shouldApplyEvent) {
+        if (shouldApplyEvent) {
+          applyFSEvent(pd, initialEvent);
+        }
+        else {
           // either the first start or some events were lost, forcing scan
           fsState.clearAll();
           myLastEventOrdinal = initialEvent != null? initialEvent.getOrdinal() : 0L;
@@ -357,8 +354,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       finally {
         in.close();
       }
-      return shouldApplyEvent; // successfully initialized
-
+      return; // successfully initialized
     }
     catch (FileNotFoundException ignored) {
     }
@@ -367,7 +363,6 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
     myLastEventOrdinal = initialEvent != null? initialEvent.getOrdinal() : 0L;
     fsState.clearAll();
-    return shouldApplyEvent;
   }
 
   private static boolean containsChanges(CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
@@ -383,7 +378,13 @@ final class BuildSession implements Runnable, CanceledStatus {
           cause = error;
         }
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        cause.printStackTrace(new PrintStream(out));
+        final PrintStream stream = new PrintStream(out);
+        try {
+          cause.printStackTrace(stream);
+        }
+        finally {
+          stream.close();
+        }
 
         final StringBuilder messageText = new StringBuilder();
         messageText.append("Internal error: (").append(cause.getClass().getName()).append(") ").append(cause.getMessage());

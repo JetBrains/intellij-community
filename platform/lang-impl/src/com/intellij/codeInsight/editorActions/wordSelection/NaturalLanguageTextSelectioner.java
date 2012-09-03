@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPlainText;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.Set;
 
 public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBase {
-  private static final Set<Character> NATURAL = CollectionFactory.troveSet('(', ')', '.', ',', ':', ';', '!', '?', '$', '@', '%', '\"', '\'', '<', '>', '[', ']');
-  private static final Set<Character> SENTENCE_END = CollectionFactory.troveSet('.', '!', '?');
+  private static final Set<Character> NATURAL = ContainerUtil.newTroveSet('(', ')', '.', ',', ':', ';', '!', '?', '$', '@', '%', '\"', '\'', '<', '>', '[', ']');
+  private static final Set<Character> SENTENCE_END = ContainerUtil.newTroveSet('.', '!', '?');
 
   public boolean canSelect(PsiElement e) {
     return e instanceof PsiPlainText || e instanceof PsiComment;

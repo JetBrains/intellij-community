@@ -63,10 +63,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrReflectedMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -141,7 +138,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
       //todo uncomment when EAP is on
       //LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread()); //this is a potentially long action
     }
-    return GroovyPsiManager.getInstance(getProject()).getType(this, ourTypesCalculator);
+    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, ourTypesCalculator);
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
@@ -155,8 +152,6 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     for (final GrParameter parameter : getParameters()) {
       if (!ResolveUtil.processElement(processor, parameter, state)) return false;
     }
-
-    processor.handleEvent(ResolveUtil.DECLARATION_SCOPE_PASSED, this);
 
     return true;
   }

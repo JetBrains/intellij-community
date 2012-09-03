@@ -25,7 +25,11 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -38,6 +42,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class ReformatCodeAction extends AnAction implements DumbAware {
   private static final @NonNls String HELP_ID = "editing.codeReformatting";
@@ -144,6 +150,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     boolean optimizeImports = ReformatFilesDialog.isOptmizeImportsOptionOn();
     boolean processWholeFile = false;
     boolean processChangedTextOnly = false;
+    boolean rearrangeEntries = ReformatFilesDialog.isRearrangeEntriesOptionOn();
     final boolean showDialog = EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG;
     if (showDialog || (file == null && dir != null)) {
       final LayoutCodeDialog dialog = new LayoutCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), file, dir,
@@ -154,6 +161,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG = showDialogAtFuture;
       updateShowDialogSetting(dialog, "\"Reformat Code\" dialog disabled");
       optimizeImports = dialog.isOptimizeImports();
+      rearrangeEntries = dialog.isRearrangeEntries();
       processWholeFile = dialog.isProcessWholeFile();
       processChangedTextOnly = dialog.isProcessOnlyChangedText();
       
@@ -167,7 +175,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
         return;
       }
     }
-
+    
     final TextRange range;
     if (!processWholeFile && editor != null && editor.getSelectionModel().hasSelection()){
       range = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
@@ -186,6 +194,26 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
     else {
       new ReformatCodeProcessor(project, file, range, processChangedTextOnly).run();
+    }
+
+    if (rearrangeEntries && file != null && editor != null) {
+      final ArrangementEngine engine = ServiceManager.getService(project, ArrangementEngine.class);
+      try {
+        final PsiFile finalFile = file;
+        SelectionModel selectionModel = editor.getSelectionModel();
+        final TextRange rangeToUse = selectionModel.hasSelection()
+                                     ? TextRange.from(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd())
+                                     : TextRange.from(0, editor.getDocument().getTextLength());
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          @Override
+          public void run() {
+            engine.arrange(finalFile, Collections.singleton(rangeToUse));
+          }
+        }, getTemplatePresentation().getText(), null);
+      }
+      finally {
+        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      }
     }
   }
 

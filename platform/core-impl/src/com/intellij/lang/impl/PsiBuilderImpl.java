@@ -38,10 +38,7 @@ import com.intellij.util.CharTable;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.TripleFunction;
-import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.LimitedPool;
-import com.intellij.util.containers.Stack;
+import com.intellij.util.containers.*;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
@@ -1074,7 +1071,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
     final StartMarker rootMarker = (StartMarker)myProduction.get(0);
     rootMarker.myParent = rootMarker.myFirstChild = rootMarker.myLastChild = rootMarker.myNext = null;
     StartMarker curNode = rootMarker;
-    final Stack<StartMarker> nodes = new Stack<StartMarker>();
+    final Stack<StartMarker> nodes = ContainerUtil.newStack();
     nodes.push(rootMarker);
 
     @SuppressWarnings({"MultipleVariablesInDeclaration"}) int lastErrorIndex = -1, maxDepth = 0, curDepth = 0;
@@ -1107,12 +1104,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
     }
 
     if (myCurrentLexeme < myLexemeCount) {
-      final List<IElementType> missed = CollectionFactory.arrayList(myLexTypes, myCurrentLexeme, myLexemeCount);
+      final List<IElementType> missed = ContainerUtil.newArrayList(myLexTypes, myCurrentLexeme, myLexemeCount);
       LOG.error("Tokens " + missed + " were not inserted into the tree. " +(myFile != null? myFile.getLanguage()+", ":"")+"Text:\n" + myText);
     }
 
     if (rootMarker.myDoneMarker.myLexemeIndex < myLexemeCount) {
-      final List<IElementType> missed = CollectionFactory.arrayList(myLexTypes, rootMarker.myDoneMarker.myLexemeIndex, myLexemeCount);
+      final List<IElementType> missed = ContainerUtil.newArrayList(myLexTypes, rootMarker.myDoneMarker.myLexemeIndex, myLexemeCount);
       LOG.error("Tokens " + missed + " are outside of root element \"" + rootMarker.myType + "\". Text:\n" + myText);
     }
 
@@ -1686,7 +1683,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
       myFile = (PsiFile)value;
       return;
     }
-    if (myUserData == null) myUserData = CollectionFactory.hashMap();
+    if (myUserData == null) myUserData = ContainerUtil.newHashMap();
     myUserData.put(key, value);
   }
 }

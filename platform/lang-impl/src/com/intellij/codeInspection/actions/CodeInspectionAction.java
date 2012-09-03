@@ -91,7 +91,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     final AdditionalPanel panel = new AdditionalPanel();
     final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
     final JComboBox profiles = panel.myBrowseProfilesCombo.getComboBox();
-    profiles.setRenderer(new ListCellRendererWrapper(profiles.getRenderer()) {
+    profiles.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof Profile) {

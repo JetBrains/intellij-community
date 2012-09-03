@@ -175,12 +175,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       };
     }
     else {
-      afterUpdate = new Runnable() {
-        @Override
-        public void run() {
-          cb.setDone();
-        }
-      };
+      afterUpdate = cb.createSetDoneRunnable();
     }
     if (getTreeBuilder() != null) {
       getTreeBuilder().addSubtreeToUpdate(getTreeBuilder().getRootNode(), afterUpdate);

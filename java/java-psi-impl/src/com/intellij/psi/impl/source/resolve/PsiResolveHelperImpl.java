@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.resolve;
 
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -186,6 +185,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     PsiType upperBound = PsiType.NULL;
     if (paramTypes.length > 0) {
       sortLambdaExpressionsLast(paramTypes, argTypes);
+      boolean rawType = false;
+      boolean nullPassed = false;
       for (int j = 0; j < argTypes.length; j++) {
         PsiType argumentType = argTypes[j];
         if (argumentType == null) continue;
@@ -193,6 +194,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
 
         PsiType parameterType = paramTypes[j];
         if (parameterType == null) break;
+        rawType |= parameterType instanceof PsiClassType && ((PsiClassType)parameterType).isRaw();
+        nullPassed |= argumentType == PsiType.NULL;
 
         if (parameterType instanceof PsiEllipsisType) {
           parameterType = ((PsiEllipsisType)parameterType).getComponentType();
@@ -203,6 +206,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         final Pair<PsiType,ConstraintType> currentSubstitution;
         if (argumentType instanceof PsiLambdaExpressionType) {
           currentSubstitution = inferSubstitutionFromLambda(typeParameter, (PsiLambdaExpressionType)argumentType, lowerBound);
+          if (rawType && currentSubstitution == FAILED_INFERENCE || nullPassed && currentSubstitution == null) return new Pair<PsiType, ConstraintType>(null, ConstraintType.EQUALS);
         } else {
           currentSubstitution = getSubstitutionForTypeParameterConstraint(typeParameter, parameterType,
                                                                           argumentType, true, PsiUtil.getLanguageLevel(typeParameter));
@@ -592,7 +596,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       if (constraintFromFormalParams != null) return constraintFromFormalParams;
 
       final PsiParameter[] methodParameters = method.getParameterList().getParameters();
-      final PsiSubstitutor subst = resolveResult.getSubstitutor();
+      final PsiSubstitutor subst = 
+        TypeConversionUtil.getSuperClassSubstitutor(method.getContainingClass(), resolveResult.getElement(), resolveResult.getSubstitutor());
       final boolean methodParamsDependOnTypeParams = methodParamsDependOnTypeParams(lambdaExpression, methodParameters, subst, typeParam);
       final PsiType returnType = subst.substitute(method.getReturnType());
       if (returnType != null && returnType != PsiType.VOID) {
@@ -624,7 +629,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
           }
 
           final Pair<PsiType, ConstraintType> returnExprConstraint =
-            getSubstitutionForTypeParameterConstraint(typeParam, returnType, exprType, false, PsiUtil.getLanguageLevel(method));
+            getSubstitutionForTypeParameterConstraint(typeParam, returnType, exprType, true, PsiUtil.getLanguageLevel(method));
           if (returnExprConstraint != null) {
             if (returnExprConstraint == FAILED_INFERENCE) return returnExprConstraint;
             if (constraint != null) {
@@ -891,8 +896,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
               return getFailedInferenceConstraint(typeParameter);
             }
             final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
-            if (method == null || methodParamsDependOnTypeParams((PsiLambdaExpression)expression, method.getParameterList().getParameters(), 
-                                                                 PsiUtil.resolveGenericsClassInType(functionalInterfaceType).getSubstitutor(), typeParameter)) {
+
+            final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+            if (method == null || methodParamsDependOnTypeParams((PsiLambdaExpression)expression, method.getParameterList().getParameters(),
+                                                                 TypeConversionUtil.getSuperClassSubstitutor(method.getContainingClass(), resolveResult.getElement(), resolveResult.getSubstitutor()), typeParameter)) {
               return getFailedInferenceConstraint(typeParameter);
             }
           }

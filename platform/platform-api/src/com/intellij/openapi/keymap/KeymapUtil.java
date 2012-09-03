@@ -171,14 +171,15 @@ public class KeymapUtil {
     }
 
     final String keyModifiersText = KeyEvent.getKeyModifiersText(modifiers);
-    if (!keyModifiersText.isEmpty()) {
-      return keyModifiersText + "+";
-    } else {
+    if (keyModifiersText.isEmpty()) {
       return keyModifiersText;
+    }
+    else {
+      return keyModifiersText + "+";
     }
   }
 
-  public static String getFirstKeyboardShortcutText(AnAction action) {
+  public static String getFirstKeyboardShortcutText(@NotNull AnAction action) {
     Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
     for (Shortcut shortcut : shortcuts) {
       if (shortcut instanceof KeyboardShortcut) {

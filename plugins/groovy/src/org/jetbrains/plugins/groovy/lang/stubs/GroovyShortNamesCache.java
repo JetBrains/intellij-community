@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.psi.stubs.StubIndexImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
@@ -109,7 +108,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   private Collection<PsiClass> getAllScriptClasses(String shortName, GlobalSearchScope scope) {
-    final ArrayList<PsiClass> result = CollectionFactory.arrayList();
+    final ArrayList<PsiClass> result = ContainerUtil.newArrayList();
     for (GroovyFile file : StubIndex.getInstance().get(GrScriptClassNameIndex.KEY, shortName, myProject, new GrSourceFilterScope(scope))) {
       ContainerUtil.addIfNotNull(file.getScriptClass(), result);
     }

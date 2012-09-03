@@ -178,7 +178,7 @@ public class ChooseModulesDialog extends DialogWrapper {
       myCellRenderer = new ColoredListCellRenderer() {
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           final Module module = ((Module)value);
-          setIcon(ModuleType.get(module).getNodeIcon(false));
+          setIcon(ModuleType.get(module).getIcon());
           append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
           final XmlFile pluginXml = PluginModuleType.getPluginXml(module);

@@ -69,7 +69,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     add(settingsPanel, BorderLayout.CENTER);
     setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 4));
 
-    myEffectsCombo.setRenderer(new ListCellRendererWrapper<String>(myEffectsCombo.getRenderer()) {
+    myEffectsCombo.setRenderer(new ListCellRendererWrapper<String>() {
       @Override
       public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
         setText(value != null ? value : "Invalid");

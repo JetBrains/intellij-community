@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 /**
  *  @author dsl
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 public class ExcludeFolderImpl extends ContentFolderBaseImpl implements ClonableContentFolder,
                                                                         UserDefinedExcludeFolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleExcludeFolderImpl");
-  @NonNls public static final String ELEMENT_NAME = "excludeFolder";
+  @NonNls public static final String ELEMENT_NAME = JpsModuleRootModelSerializer.EXCLUDE_FOLDER_TAG;
 
   ExcludeFolderImpl(@NotNull VirtualFile file, @NotNull ContentEntryImpl contentEntry) {
     super(file, contentEntry);

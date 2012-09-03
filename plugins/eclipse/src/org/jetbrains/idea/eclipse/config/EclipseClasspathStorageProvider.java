@@ -39,6 +39,7 @@ import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.conversion.*;
+import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,12 +51,11 @@ import java.util.Set;
  * @author Vladislav.Kaznacheev
  */
 public class EclipseClasspathStorageProvider implements ClasspathStorageProvider {
-  @NonNls public static final String ID = "eclipse";
   public static final String DESCR = EclipseBundle.message("eclipse.classpath.storage.description");
 
   @NonNls
   public String getID() {
-    return ID;
+    return JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID;
   }
 
   @Nls
@@ -144,7 +144,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   }
 
   public void moduleRenamed(final Module module, String newName) {
-    if (ClasspathStorage.getStorageType(module).equals(ID)) {
+    if (ClasspathStorage.getStorageType(module).equals(JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID)) {
       try {
         final CachedXmlDocumentSet documentSet = getFileCache(module);
 

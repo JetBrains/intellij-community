@@ -288,7 +288,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
   private static final class MyLafComboBoxRenderer extends ListCellRendererWrapper<UIManager.LookAndFeelInfo> {
     public MyLafComboBoxRenderer(final ListCellRenderer listCellRenderer) {
-      super(listCellRenderer);
+      super();
     }
 
     @Override

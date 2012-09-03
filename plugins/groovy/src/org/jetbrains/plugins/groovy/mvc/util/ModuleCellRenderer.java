@@ -15,9 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.mvc.util;
 
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.ui.ListCellRendererWrapper;
 
 import javax.swing.*;
 
@@ -26,13 +26,13 @@ import javax.swing.*;
  */
 public class ModuleCellRenderer extends ListCellRendererWrapper<Module> {
   public ModuleCellRenderer(ListCellRenderer renderer) {
-    super(renderer);
+    super();
   }
 
   @Override
   public void customize(JList list, Module module, int index, boolean selected, boolean hasFocus) {
     if (module != null) {
-      setIcon(ModuleType.get(module).getNodeIcon(false));
+      setIcon(ModuleType.get(module).getIcon());
       setText(module.getName());
     }
   }

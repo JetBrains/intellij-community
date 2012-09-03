@@ -99,12 +99,7 @@ public class ToggleActionCommand extends AbstractCommand {
 
         Boolean state = (Boolean)event.getPresentation().getClientProperty(ToggleAction.SELECTED_PROPERTY);
         if (state.booleanValue() != on) {
-          ActionManager.getInstance().tryToExecute(action, inputEvent, null, ActionPlaces.UNKNOWN, true).doWhenProcessed(new Runnable() {
-            @Override
-            public void run() {
-              result.setDone();
-            }
-          });
+          ActionManager.getInstance().tryToExecute(action, inputEvent, null, ActionPlaces.UNKNOWN, true).doWhenProcessed(result.createSetDoneRunnable());
         }
         else {
           result.setDone();

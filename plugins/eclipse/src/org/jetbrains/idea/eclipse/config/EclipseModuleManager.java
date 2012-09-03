@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -154,7 +155,7 @@ public class EclipseModuleManager implements PersistentStateComponent<Element>{
   }
 
   public Element getState() {
-    if (!ClasspathStorage.getStorageType(myModule).equals(EclipseClasspathStorageProvider.ID)) {
+    if (!ClasspathStorage.getStorageType(myModule).equals(JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID)) {
       if (!myEclipseUrls.isEmpty() || !myEclipseVariablePaths.isEmpty() || myForceConfigureJDK || !myUnknownCons.isEmpty()) {
         Element root = new Element("EclipseModuleSettings");
         for (String eclipseUrl : myEclipseUrls) {

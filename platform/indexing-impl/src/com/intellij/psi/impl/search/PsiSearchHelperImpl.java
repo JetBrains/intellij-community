@@ -40,7 +40,6 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.codeInsight.CommentUtilCore;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -475,7 +474,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @Override
   public boolean processRequests(@NotNull SearchRequestCollector collector, @NotNull Processor<PsiReference> processor) {
-    Map<SearchRequestCollector, Processor<PsiReference>> collectors = CollectionFactory.hashMap();
+    Map<SearchRequestCollector, Processor<PsiReference>> collectors = ContainerUtil.newHashMap();
     collectors.put(collector, processor);
 
     appendCollectorsFromQueryRequests(collectors);
@@ -483,8 +482,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     ProgressIndicator progress = ProgressIndicatorProvider.getInstance().getProgressIndicator();
     do {
       final MultiMap<Set<IdIndexEntry>, RequestWithProcessor> globals = new MultiMap<Set<IdIndexEntry>, RequestWithProcessor>();
-      final List<Computable<Boolean>> customs = CollectionFactory.arrayList();
-      final LinkedHashSet<RequestWithProcessor> locals = CollectionFactory.linkedHashSet();
+      final List<Computable<Boolean>> customs = ContainerUtil.newArrayList();
+      final LinkedHashSet<RequestWithProcessor> locals = ContainerUtil.newLinkedHashSet();
       distributePrimitives(collectors, locals, globals, customs);
 
       if (!processGlobalRequestsOptimized(globals, progress)) {

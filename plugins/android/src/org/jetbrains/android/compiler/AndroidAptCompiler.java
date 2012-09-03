@@ -131,6 +131,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
               // we use copyDir instead of moveDirWithContent here, because tmp directory may be located on other disk and
               // moveDirWithContent doesn't work for such case
               FileUtil.copyDir(tmpOutputDir, genRootDir);
+              AndroidCompileUtil.markDirty(outputRootDirectory, true);
             }
             results.add(aptItem);
           }

@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
@@ -26,10 +25,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ComboboxSpeedSearch;
-import com.intellij.ui.FieldPanel;
-import com.intellij.ui.PanelWithAnchor;
-import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -123,11 +119,11 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     myDebugCB.setEnabled(true);
     myDebugCB.setSelected(false);
 
-    myModulesBox.setRenderer(new ListCellRendererWrapper<Module>(myModulesBox.getRenderer()) {
+    myModulesBox.setRenderer(new ListCellRendererWrapper<Module>() {
       @Override
       public void customize(JList list, Module module, int index, boolean selected, boolean hasFocus) {
         if (module != null) {
-          setIcon(ModuleType.get(module).getNodeIcon(false));
+          setIcon(ModuleType.get(module).getIcon());
           setText(module.getName());
         }
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Chunk;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
@@ -253,7 +252,7 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
   }
 
   private static List<VirtualFile> writeStubs(VirtualFile outputRootDirectory, Map<String, CharSequence> output, VirtualFile src) {
-    final ArrayList<VirtualFile> stubs = CollectionFactory.arrayList();
+    final ArrayList<VirtualFile> stubs = ContainerUtil.newArrayList();
     for (String relativePath : output.keySet()) {
       final File stubFile = new File(outputRootDirectory.getPath(), relativePath);
       FileUtil.createIfDoesntExist(stubFile);

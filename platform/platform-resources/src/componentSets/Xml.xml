@@ -7,7 +7,7 @@
     <component>
       <interface-class>com.intellij.pom.xml.XmlAspect</interface-class>
       <implementation-class>com.intellij.pom.xml.impl.XmlAspectImpl</implementation-class>
-      <loadForDefaultProject/>
+      <!--<loadForDefaultProject/>-->
     </component>
 
     <component>

@@ -12,6 +12,7 @@
     <action id="ContextHelp" class="com.intellij.ide.actions.ContextHelpAction"/>
     <action id="RunGc" class="com.intellij.ide.actions.RunGcAction"/>
     <action id="ShowPopupMenu" class="com.intellij.ide.actions.ShowPopupMenuAction"/>
+    <action id="ShowColorPicker" class="com.intellij.ui.ShowColorPickerAction" text="Show Color Picker"/>
 
     <action id="NextEditorTab" class="com.intellij.openapi.fileEditor.impl.SelectNextEditorTabAction"/>
     <action id="PreviousEditorTab" class="com.intellij.openapi.fileEditor.impl.SelectPreviousEditorTabAction"/>
@@ -202,13 +203,14 @@
           <group id="ShowRecentFindUsagesGroup" class="com.intellij.find.impl.ShowRecentFindUsagesGroup" popup="true"/>
         </group>
         <group id="Macros" popup="true">
-          <group id="StanardMacroActions">
+          <group id="StandardMacroActions">
             <action id="PlaybackLastMacro" class="com.intellij.ide.actionMacro.actions.PlaybackLastMacroAction"/>
             <action id="StartStopMacroRecording" class="com.intellij.ide.actionMacro.actions.StartStopMacroRecordingAction"/>
             <action id="EditMacros" class="com.intellij.ide.actionMacro.actions.EditMacrosAction"/>
+            <action id="PlaySavedMacrosAction" class="com.intellij.ide.actionMacro.actions.PlaySavedMacros"/>
           </group>
           <separator/>
-          <group id="PlaySavedMacroActions" class="com.intellij.ide.actionMacro.actions.MacrosGroup"/>
+          <group id="MacrosGroup" class="com.intellij.ide.actionMacro.actions.MacrosGroup"/>
         </group>
         <reference ref="EditorToggleColumnMode"/>
         <group id="EditSelectGroup">

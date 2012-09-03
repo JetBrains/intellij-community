@@ -44,7 +44,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 
-import static com.intellij.util.containers.CollectionFactory.hashMap;
+import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static java.util.Arrays.asList;
 
 public class CreateDesktopEntryAction extends DumbAwareAction {
@@ -151,8 +151,8 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
     final String wmClass = AppUIUtil.getFrameClass();
 
     final String content = ExecUtil.loadTemplate(CreateDesktopEntryAction.class.getClassLoader(), "entry.desktop",
-                                                 hashMap(asList("$NAME$", "$SCRIPT$", "$ICON$", "$WM_CLASS$"),
-                                                         asList(name, execPath, iconPath, wmClass)));
+                                                 newHashMap(asList("$NAME$", "$SCRIPT$", "$ICON$", "$WM_CLASS$"),
+                                                            asList(name, execPath, iconPath, wmClass)));
 
     final String entryName = wmClass + ".desktop";
     final File entryFile = new File(FileUtil.getTempDirectory(), entryName);

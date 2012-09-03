@@ -16,8 +16,8 @@
 package org.intellij.lang.xpath.completion;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
+import icons.XpathIcons;
 import org.intellij.lang.xpath.context.functions.Function;
 
 import javax.swing.*;
@@ -53,7 +53,7 @@ public class FunctionLookup extends AbstractLookup implements Iconable {
     }
 
     public Icon getIcon(int flags) {
-        return IconLoader.getIcon("/icons/function.png");
+        return XpathIcons.Function;
     }
 
   @Override

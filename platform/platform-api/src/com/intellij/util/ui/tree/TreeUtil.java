@@ -29,6 +29,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Range;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +44,7 @@ import java.util.List;
 
 public final class TreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.tree.TreeUtil");
-  @NotNull private static final String TREE_UTIL_SCROLL_TIME_STAMP = "TreeUtil.scrollTimeStamp";
+  @NonNls @NotNull private static final String TREE_UTIL_SCROLL_TIME_STAMP = "TreeUtil.scrollTimeStamp";
 
   private TreeUtil() {}
 
@@ -509,6 +510,7 @@ public final class TreeUtil {
     }
 
     Runnable selectRunnable = new Runnable() {
+      @Override
       public void run() {
         if (!tree.isRowSelected(row)) {
           if (addToSelection) {
@@ -556,7 +558,7 @@ public final class TreeUtil {
         tree.getCellRenderer().getTreeCellRendererComponent(tree, path.getLastPathComponent(), true, true, false, row, false);
 
       if (comp instanceof SimpleColoredComponent) {
-        final SimpleColoredComponent renderer = ((SimpleColoredComponent)comp);
+        final SimpleColoredComponent renderer = (SimpleColoredComponent)comp;
         final Dimension scrollableSize = renderer.computePreferredSize(true);
         bounds.width = scrollableSize.width;
       }
@@ -585,11 +587,13 @@ public final class TreeUtil {
 
       final Rectangle b1 = bounds;
       final Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           if (scroll) {
             AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(tree);
             if (builder != null) {
               builder.getReady(TreeUtil.class).doWhenDone(new Runnable() {
+                @Override
                 public void run() {
                   tree.scrollRectToVisible(b1);  
                 }
@@ -672,21 +676,25 @@ public final class TreeUtil {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static void installActions(@NotNull final JTree tree) {
     tree.getActionMap().put("scrollUpChangeSelection", new AbstractAction() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         movePageUp(tree);
       }
     });
     tree.getActionMap().put("scrollDownChangeSelection", new AbstractAction() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         movePageDown(tree);
       }
     });
     tree.getActionMap().put("selectPrevious", new AbstractAction() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         moveUp(tree);
       }
     });
     tree.getActionMap().put("selectNext", new AbstractAction() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         moveDown(tree);
       }
@@ -746,9 +754,12 @@ public final class TreeUtil {
 
   @NotNull
   public static ArrayList<TreeNode> childrenToArray(@NotNull final TreeNode node) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final ArrayList<TreeNode> result = new ArrayList<TreeNode>();
     for(int i = 0; i < node.getChildCount(); i++){
-      result.add(node.getChildAt(i));
+      TreeNode child = node.getChildAt(i);
+      LOG.assertTrue(child != null);
+      result.add(child);
     }
     return result;
   }
@@ -756,6 +767,7 @@ public final class TreeUtil {
   public static void expandRootChildIfOnlyOne(@Nullable final JTree tree) {
     if (tree == null) return;
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         final DefaultMutableTreeNode root = (DefaultMutableTreeNode)tree.getModel().getRoot();
         tree.expandPath(new TreePath(new Object[]{root}));
@@ -886,7 +898,7 @@ public final class TreeUtil {
       int totalChildIndent = basicTreeUI.getLeftChildIndent() + basicTreeUI.getRightChildIndent();
 
       if (leftToRight) {
-        boxLeftX += ((path.getPathCount() + depthOffset - 2) * totalChildIndent + basicTreeUI.getLeftChildIndent()) -
+        boxLeftX += (path.getPathCount() + depthOffset - 2) * totalChildIndent + basicTreeUI.getLeftChildIndent() -
             boxWidth / 2;
       }
       int boxRightX = boxLeftX + boxWidth;
@@ -898,18 +910,10 @@ public final class TreeUtil {
 
   public static int getDepthOffset(@NotNull JTree aTree) {
     if (aTree.isRootVisible()) {
-      if (aTree.getShowsRootHandles()) {
-        return 1;
-      }
-      else {
-        return 0;
-      }
-    }
-    else if (!aTree.getShowsRootHandles()) {
-      return -1;
+      return aTree.getShowsRootHandles() ? 1 : 0;
     }
     else {
-      return 0;
+      return aTree.getShowsRootHandles() ? 0 : -1;
     }
   }
 

@@ -1,4 +1,3 @@
-
 class TestFormat {
     public void test(boolean isA, boolean isB, boolean isC) {
         if (isA)

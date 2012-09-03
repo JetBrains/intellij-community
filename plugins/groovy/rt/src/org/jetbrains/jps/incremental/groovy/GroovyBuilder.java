@@ -25,15 +25,16 @@ import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.javac.OutputFileObject;
-import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 
 /**
  * @author Eugene Zhuravlev
@@ -101,11 +102,20 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       );
 
       final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmd));
-      GroovycOSProcessHandler handler = GroovycOSProcessHandler.runGroovyc(process, new Consumer<String>() {
+      final Consumer<String> updater = new Consumer<String>() {
         public void consume(String s) {
           context.processMessage(new ProgressMessage(s));
         }
-      });
+      };
+      final GroovycOSProcessHandler handler = new GroovycOSProcessHandler(process, updater) {
+        @Override
+        protected Future<?> executeOnPooledThread(Runnable task) {
+          return SharedThreadPool.getInstance().executeOnPooledThread(task);
+        }
+      };
+
+      handler.startNotify();
+      handler.waitFor();
 
       if (!context.isProjectRebuild() && handler.shouldRetry()) {
         if (CHUNK_REBUILD_ORDERED.get(context) != null) {
@@ -171,7 +181,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   @Nullable private static Map<JpsModule, String> getCanonicalModuleOutputs(CompileContext context, ModuleChunk chunk) {
     Map<JpsModule, String> finalOutputs = new HashMap<JpsModule, String>();
-    for (RealModuleBuildTarget target : chunk.getTargets()) {
+    for (ModuleBuildTarget target : chunk.getTargets()) {
       File moduleOutputDir = context.getProjectPaths().getModuleOutputDir(target.getModule(), target.isTests());
       if (moduleOutputDir == null) {
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Output directory not specified for module " + target.getModuleName()));
@@ -225,7 +235,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     assert patterns != null;
     final List<File> toCompile = new ArrayList<File>();
     FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
-      public boolean apply(JpsModule module, File file, String sourceRoot) throws IOException {
+      public boolean apply(ModuleBuildTarget target, File file, String sourceRoot) throws IOException {
         final String path = file.getPath();
         if (isGroovyFile(path) && !patterns.isResourceFile(file, sourceRoot)) { //todo file type check
           toCompile.add(file);
@@ -254,7 +264,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         final RootDescriptor moduleAndRoot = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, new File(sourcePath));
         if (moduleAndRoot != null) {
           final String moduleName = moduleAndRoot.module;
-          context.getProjectDescriptor().dataManager.getSourceToOutputMap(moduleName, moduleAndRoot.isTestRoot).appendData(sourcePath, outputPath);
+          context.getProjectDescriptor().dataManager.getSourceToOutputMap(moduleAndRoot.target).appendData(sourcePath, outputPath);
           String moduleOutputPath = generationOutputs.get(context.getProjectDescriptor().rootsIndex.getModuleByName(moduleName));
           generatedEvent.add(moduleOutputPath, FileUtil.getRelativePath(moduleOutputPath, outputPath, '/'));
         }
@@ -275,10 +285,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     // IMPORTANT! must be the first in classpath
     cp.add(ClasspathBootstrap.getResourcePath(GroovyCompilerWrapper.class).getPath());
 
-    for (File file : context.getProjectPaths().getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.isTests()), false)) {
-      cp.add(FileUtil.toCanonicalPath(file.getPath()));
-    }
-    for (File file : context.getProjectPaths().getClasspathFiles(chunk, JpsJavaClasspathKind.runtime(chunk.isTests()), false)) {
+    for (File file : context.getProjectPaths().getCompilationClasspathFiles(chunk, chunk.isTests(), false, false)) {
       cp.add(FileUtil.toCanonicalPath(file.getPath()));
     }
     return new ArrayList<String>(cp);
@@ -290,9 +297,9 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   private static Map<String, String> buildClassToSourceMap(ModuleChunk chunk, CompileContext context, Set<String> toCompilePaths, Map<JpsModule, String> finalOutputs) throws IOException {
     final Map<String, String> class2Src = new HashMap<String, String>();
-    for (RealModuleBuildTarget target : chunk.getTargets()) {
+    for (ModuleBuildTarget target : chunk.getTargets()) {
       String moduleOutputPath = finalOutputs.get(target.getModule());
-      final SourceToOutputMapping srcToOut = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target.getModuleName(), target.isTests());
+      final SourceToOutputMapping srcToOut = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
       for (String src : srcToOut.getKeys()) {
         if (!toCompilePaths.contains(src) && isGroovyFile(src) &&
             !context.getProjectDescriptor().project.getCompilerConfiguration().getExcludes().isExcluded(new File(src))) {

@@ -64,7 +64,6 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
 
     FileUtil.copyDir(baseDir, workDir);
 
-    Utils.setSystemRoot(workDir);
     String outputPath = getAbsolutePath("out");
     JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myJpsProject).setOutputUrl(JpsPathUtil.pathToUrl(outputPath));
   }

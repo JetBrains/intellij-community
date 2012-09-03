@@ -20,12 +20,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import org.jetbrains.annotations.Nullable;
+import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -42,7 +42,7 @@ public class ChooseLocaleAction extends ComboBoxAction {
   public ChooseLocaleAction() {
     getTemplatePresentation().setText("");
     getTemplatePresentation().setDescription(UIDesignerBundle.message("choose.locale.description"));
-    getTemplatePresentation().setIcon(IconLoader.getIcon("/com/intellij/uiDesigner/icons/chooseLocale.png"));
+    getTemplatePresentation().setIcon(UIDesignerIcons.ChooseLocale);
   }
 
   @Override public JComponent createCustomComponent(Presentation presentation) {

@@ -15,34 +15,20 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
-/**
- * <p>Replacement for {@link ColoredListCellRenderer}, L&F friendly.
- *
- * <p>From {@link #customize(javax.swing.JList, Object, int, boolean, boolean)},
- * text fragments should be added via {@link #append(String, SimpleTextAttributes)}.<br>
- * Note that not all styles from SimpleTextAttributes are supported, see method code for details.
- *
- * <p>Alternatively, item can be rendered by {@link com.intellij.openapi.roots.ui.CellAppearanceEx#customize(HtmlListCellRenderer)}.
- *
- * @param <T> type of list items.
- */
+import static com.intellij.ui.SimpleColoredComponent.formatLink;
+import static com.intellij.ui.SimpleColoredComponent.formatText;
+
 public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T> {
   private StringBuilder myText;
 
-  /**
-   * Default JComboBox cell renderer should be passed here.
-   * @param listCellRenderer Default cell renderer ({@link javax.swing.JComboBox#getRenderer()}).
-   */
-  public HtmlListCellRenderer(final ListCellRenderer listCellRenderer) {
-    super(listCellRenderer);
-  }
+  public HtmlListCellRenderer() { }
+
+  public HtmlListCellRenderer(@SuppressWarnings("UnusedParameters") final ListCellRenderer listCellRenderer) { }
 
   @Override
   public final void customize(final JList list, final T value, final int index, final boolean selected, final boolean hasFocus) {
@@ -72,19 +58,11 @@ public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T>
   }
 
   public void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes) {
-    if (fragment.length() > 0) {
-      myText.append("<span");
-      formatStyle(myText, attributes);
-      myText.append('>').append(StringUtil.escapeXml(fragment)).append("</span>");
-    }
+    formatText(myText, fragment, attributes);
   }
 
   public void appendLink(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, @NotNull final String url) {
-    if (fragment.length() > 0) {
-      myText.append("<a href=\"").append(StringUtil.replace(url, "\"", "%22")).append("\"");
-      formatStyle(myText, attributes);
-      myText.append('>').append(StringUtil.escapeXml(fragment)).append("</a>");
-    }
+    formatLink(myText, fragment, attributes, url);
   }
 
   public void append(@NotNull final SimpleColoredText text) {
@@ -93,36 +71,6 @@ public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T>
       String fragment = text.getTexts().get(i);
       SimpleTextAttributes attributes = text.getAttributes().get(i);
       append(fragment, attributes);
-    }
-  }
-
-  private static void formatStyle(final StringBuilder builder, final SimpleTextAttributes attributes) {
-    final Color fgColor = attributes.getFgColor();
-    final Color bgColor = attributes.getBgColor();
-    final int style = attributes.getStyle();
-
-    final int pos = builder.length();
-    if (fgColor != null) {
-      builder.append("color:#").append(Integer.toString(fgColor.getRGB() & 0xFFFFFF, 16)).append(';');
-    }
-    if (bgColor != null) {
-      builder.append("background-color:#").append(Integer.toString(bgColor.getRGB() & 0xFFFFFF, 16)).append(';');
-    }
-    if ((style & SimpleTextAttributes.STYLE_BOLD) != 0) {
-      builder.append("font-weight:bold;");
-    }
-    if ((style & SimpleTextAttributes.STYLE_ITALIC) != 0) {
-      builder.append("font-style:italic;");
-    }
-    if ((style & SimpleTextAttributes.STYLE_UNDERLINE) != 0) {
-      builder.append("text-decoration:underline;");
-    }
-    else if ((style & SimpleTextAttributes.STYLE_STRIKEOUT) != 0) {
-      builder.append("text-decoration:line-through;");
-    }
-    if (builder.length() > pos) {
-      builder.insert(pos, " style=\"");
-      builder.append('"');
     }
   }
 }

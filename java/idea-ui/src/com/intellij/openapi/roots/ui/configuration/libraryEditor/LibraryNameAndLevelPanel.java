@@ -50,7 +50,7 @@ public class LibraryNameAndLevelPanel {
       levels.put(LibrariesContainer.LibraryLevel.GLOBAL, ProjectBundle.message("combobox.item.global.library"));
       levels.put(LibrariesContainer.LibraryLevel.PROJECT, ProjectBundle.message("combobox.item.project.library"));
       levels.put(LibrariesContainer.LibraryLevel.MODULE, ProjectBundle.message("combobox.item.module.library"));
-      myLevelComboBox.setRenderer(new ListCellRendererWrapper(myLevelComboBox.getRenderer()) {
+      myLevelComboBox.setRenderer(new ListCellRendererWrapper() {
         @Override
         public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           if (value instanceof LibrariesContainer.LibraryLevel) {

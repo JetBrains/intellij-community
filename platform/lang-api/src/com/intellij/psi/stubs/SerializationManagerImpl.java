@@ -158,7 +158,7 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
   }
 
   @Override
-  public Stub deserialize(InputStream stream) {
+  public Stub deserialize(InputStream stream) throws SerializerNotFoundException {
     initSerializers();
 
     try {

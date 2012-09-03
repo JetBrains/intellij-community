@@ -1,4 +1,3 @@
-
 class X {
     void Y() {
 z:

@@ -27,6 +27,7 @@ import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 import java.util.ArrayList;
 
@@ -34,7 +35,7 @@ import java.util.ArrayList;
  *  @author dsl
  */
 public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements ModuleSourceOrderEntry, WritableOrderEntry, ClonableOrderEntry {
-  @NonNls static final String ENTRY_TYPE = "sourceFolder";
+  @NonNls static final String ENTRY_TYPE = JpsModuleRootModelSerializer.SOURCE_FOLDER_TYPE;
   @NonNls private static final String ATTRIBUTE_FOR_TESTS = "forTests";
 
   ModuleSourceOrderEntryImpl(RootModelImpl rootModel) {

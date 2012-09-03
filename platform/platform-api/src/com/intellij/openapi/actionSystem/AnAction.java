@@ -162,6 +162,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   public final void registerCustomShortcutSet(@NotNull ShortcutSet shortcutSet, @NotNull final JComponent component, @NotNull Disposable parentDisposable) {
     registerCustomShortcutSet(shortcutSet, component);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         unregisterCustomShortcutSet(component);
       }
@@ -191,7 +192,7 @@ public abstract class AnAction implements PossiblyDumbAware {
     copyShortcutFrom(sourceAction);
   }
 
-  public final void copyShortcutFrom(final AnAction sourceAction) {
+  public final void copyShortcutFrom(@NotNull AnAction sourceAction) {
     myShortcutSet = sourceAction.myShortcutSet;
   }
 
@@ -235,7 +236,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param e Carries information on the invocation place and data available
    */
-  public void beforeActionPerformedUpdate(AnActionEvent e) {
+  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
     boolean worksInInjected = isInInjectedContext();
     e.setInjectedContext(worksInInjected);
     update(e);
@@ -251,11 +252,13 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @return template presentation
    */
+  @NotNull
   public final Presentation getTemplatePresentation() {
-    if (myTemplatePresentation == null){
-      myTemplatePresentation = new Presentation();
+    Presentation presentation = myTemplatePresentation;
+    if (presentation == null){
+      myTemplatePresentation = presentation = new Presentation();
     }
-    return myTemplatePresentation;
+    return presentation;
   }
 
   /**
@@ -269,13 +272,13 @@ public abstract class AnAction implements PossiblyDumbAware {
     myShortcutSet = shortcutSet;
   }
 
-  public static String createTooltipText(String s, AnAction action) {
-    String toolTipText = s != null ? s : "";
+  public static String createTooltipText(String s, @NotNull AnAction action) {
+    String toolTipText = s == null ? "" : s;
     while (StringUtil.endsWithChar(toolTipText, '.')) {
       toolTipText = toolTipText.substring(0, toolTipText.length() - 1);
     }
     String shortcutsText = KeymapUtil.getFirstKeyboardShortcutText(action);
-    if (shortcutsText.length() > 0) {
+    if (!shortcutsText.isEmpty()) {
       toolTipText += " (" + shortcutsText + ")";
     }
     return toolTipText;
@@ -309,12 +312,12 @@ public abstract class AnAction implements PossiblyDumbAware {
     return this instanceof TransparentUpdate;
   }
 
+  @Override
   public boolean isDumbAware() {
     return this instanceof DumbAware;
   }
 
   public interface TransparentUpdate {
-
   }
 
   @Nullable

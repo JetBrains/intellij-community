@@ -22,10 +22,10 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.ide.util.ChooseElementsDialog;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.ide.util.ChooseElementsDialog;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -51,7 +51,7 @@ public class ChooseModulesDialog extends ChooseElementsDialog<Module> {
   }
 
   protected Icon getItemIcon(final Module item) {
-    return ModuleType.get(item).getNodeIcon(false);
+    return ModuleType.get(item).getIcon();
   }
 
   protected String getItemText(final Module item) {

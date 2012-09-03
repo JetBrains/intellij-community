@@ -18,6 +18,7 @@ package com.intellij.ide.todo;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -30,6 +31,7 @@ public class CurrentFileTodosTreeBuilder extends TodoTreeBuilder{
     super(tree,treeModel,project);
   }
 
+  @NotNull
   protected TodoTreeStructure createTreeStructure(){
     return new CurrentFileTodosTreeStructure(myProject);
   }

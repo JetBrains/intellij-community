@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,11 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * <strong>NOTE:</strong> causes UI defects (particularly under GTK+ and Nimbus LAFs) when used for combo boxes.
- * Consider using {@link com.intellij.ui.HtmlListCellRenderer} instead.
- *
  * @author Vladimir Kondratyev
  */
 public abstract class ColoredListCellRenderer extends SimpleColoredComponent implements ListCellRenderer {
+  private final ListCellRenderer myDefaultGtkRenderer = UIUtil.isUnderGTKLookAndFeel() ? new JComboBox().getRenderer() : null;
+
   protected boolean mySelected;
   protected Color myForeground;
   protected Color mySelectionForeground;
@@ -38,11 +37,7 @@ public abstract class ColoredListCellRenderer extends SimpleColoredComponent imp
     getIpad().right = UIUtil.getListCellHPadding();
   }
 
-  public Component getListCellRendererComponent(JList list,
-                                                Object value,
-                                                int index,
-                                                boolean selected,
-                                                boolean hasFocus) {
+  public Component getListCellRendererComponent(JList list, Object value, int index, boolean selected, boolean hasFocus) {
     clear();
 
     mySelected = selected;
@@ -66,6 +61,13 @@ public abstract class ColoredListCellRenderer extends SimpleColoredComponent imp
     setPaintFocusBorder(hasFocus);
 
     customizeCellRenderer(list, value, index, selected, hasFocus);
+
+    if (myDefaultGtkRenderer != null && list.getModel() instanceof ComboBoxModel) {
+      final Component component = myDefaultGtkRenderer.getListCellRendererComponent(list, value, index, selected, hasFocus);
+      if (component instanceof JLabel) {
+        return formatToLabel((JLabel)component);
+      }
+    }
     return this;
   }
 

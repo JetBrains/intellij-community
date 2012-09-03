@@ -61,9 +61,9 @@ public abstract class WolfTheProblemSolver implements ProjectComponent {
   public abstract boolean hasSyntaxErrors(final VirtualFile file);
 
   public abstract static class ProblemListener {
-    public void problemsAppeared(VirtualFile file) {}
-    public void problemsChanged(VirtualFile file) {}
-    public void problemsDisappeared(VirtualFile file) {}
+    public void problemsAppeared(@NotNull VirtualFile file) {}
+    public void problemsChanged(@NotNull VirtualFile file) {}
+    public void problemsDisappeared(@NotNull VirtualFile file) {}
   }
 
   public abstract void addProblemListener(@NotNull ProblemListener listener);

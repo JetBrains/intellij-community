@@ -27,7 +27,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Processor;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntProcedure;
 import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.Nls;
@@ -48,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsDfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsSemilattice;
 
@@ -82,8 +82,8 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
     final Instruction[] flow = owner.getControlFlow();
     final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow);
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
-    final DFAEngine<TIntObjectHashMap<TIntHashSet>> engine = new DFAEngine<TIntObjectHashMap<TIntHashSet>>(flow, dfaInstance, lattice);
-    final List<TIntObjectHashMap<TIntHashSet>> dfaResult = engine.performDFAWithTimeout();
+    final DFAEngine<DefinitionMap> engine = new DFAEngine<DefinitionMap>(flow, dfaInstance, lattice);
+    final List<DefinitionMap> dfaResult = engine.performDFAWithTimeout();
     if (dfaResult == null) {
       return;
     }
@@ -101,7 +101,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
         final ReadWriteVariableInstruction varInst = (ReadWriteVariableInstruction) instruction;
         if (!varInst.isWrite()) {
           final String varName = varInst.getVariableName();
-          TIntObjectHashMap<TIntHashSet> e = dfaResult.get(i);
+          DefinitionMap e = dfaResult.get(i);
           e.forEachValue(new TObjectProcedure<TIntHashSet>() {
             public boolean execute(TIntHashSet reaching) {
               reaching.forEach(new TIntProcedure() {

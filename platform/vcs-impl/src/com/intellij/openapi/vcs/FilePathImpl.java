@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -181,8 +181,11 @@ public class FilePathImpl implements FilePath {
 
   @Override
   public boolean isUnder(FilePath parent, boolean strict) {
-    if (myVirtualFile != null && parent.getVirtualFile() != null) {
-      return VfsUtil.isAncestor(parent.getVirtualFile(), myVirtualFile, strict);
+    if (myVirtualFile != null) {
+      final VirtualFile parentFile = parent.getVirtualFile();
+      if (parentFile != null) {
+        return VfsUtilCore.isAncestor(parentFile, myVirtualFile, strict);
+      }
     }
     return FileUtil.isAncestor(parent.getIOFile(), getIOFile(), strict);
   }

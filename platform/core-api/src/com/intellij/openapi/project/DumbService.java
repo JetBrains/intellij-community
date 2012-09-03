@@ -22,7 +22,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -92,7 +91,8 @@ public abstract class DumbService {
     return INSTANCE_KEY.getValue(project);
   }
 
-  public <T> List<T> filterByDumbAwareness(@Nullable Collection<T> collection) {
+  @NotNull
+  public <T> List<T> filterByDumbAwareness(@NotNull Collection<T> collection) {
     if (isDumb()) {
       final ArrayList<T> result = new ArrayList<T>(collection);
       for (Iterator<T> iterator = result.iterator(); iterator.hasNext();) {
@@ -134,9 +134,8 @@ public abstract class DumbService {
   public static boolean isDumbAware(Object o) {
     if (o instanceof PossiblyDumbAware) {
       return ((PossiblyDumbAware)o).isDumbAware();
-    } else {
-      return o instanceof DumbAware;
     }
+    return o instanceof DumbAware;
   }
 
   /**

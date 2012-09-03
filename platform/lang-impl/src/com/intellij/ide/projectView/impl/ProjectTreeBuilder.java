@@ -23,6 +23,7 @@ import com.intellij.ide.bookmarks.BookmarksListener;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ModalityState;
@@ -41,6 +42,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -51,18 +53,15 @@ import java.util.Enumeration;
 import java.util.Set;
 
 public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
-  private final ProjectViewPsiTreeChangeListener myPsiTreeChangeListener;
-  private final MyFileStatusListener myFileStatusListener;
-
-  private final CopyPasteUtil.DefaultCopyPasteListener myCopyPasteListener;
-  private final WolfTheProblemSolver.ProblemListener myProblemListener;
-
-  public ProjectTreeBuilder(final Project project, JTree tree, DefaultTreeModel treeModel, Comparator<NodeDescriptor> comparator, ProjectAbstractTreeStructureBase treeStructure) {
+  public ProjectTreeBuilder(@NotNull Project project,
+                            @NotNull JTree tree,
+                            @NotNull DefaultTreeModel treeModel,
+                            @Nullable Comparator<NodeDescriptor> comparator,
+                            @NotNull ProjectAbstractTreeStructureBase treeStructure) {
     super(project, tree, treeModel, treeStructure, comparator);
 
     final MessageBusConnection connection = project.getMessageBus().connect(this);
 
-    myPsiTreeChangeListener = createPsiTreeChangeListener(myProject);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
@@ -72,27 +71,15 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
 
     connection.subscribe(BookmarksListener.TOPIC, new MyBookmarksListener());
 
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
-    myFileStatusListener = new MyFileStatusListener();
-    FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
-    myCopyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(getUpdater());
-    CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
+    PsiManager.getInstance(project).addPsiTreeChangeListener(createPsiTreeChangeListener(project), this);
+    FileStatusManager.getInstance(project).addFileStatusListener(new MyFileStatusListener(), this);
+    CopyPasteManager.getInstance().addContentChangedListener(new CopyPasteUtil.DefaultCopyPasteListener(getUpdater()), this);
 
-    myProblemListener = new MyProblemListener();
-    WolfTheProblemSolver.getInstance(project).addProblemListener(myProblemListener);
+    WolfTheProblemSolver.getInstance(project).addProblemListener(new MyProblemListener(), this);
 
     setCanYieldUpdate(true);
 
     initRootNode();
-  }
-
-  @Override
-  public final void dispose() {
-    super.dispose();
-    PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
-    FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
-    CopyPasteManager.getInstance().removeContentChangedListener(myCopyPasteListener);
-    WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
   }
 
   /**
@@ -122,7 +109,8 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
 
     @Override
     protected boolean isFlattenPackages(){
-      return ((AbstractProjectTreeStructure)getTreeStructure()).isFlattenPackages();
+      AbstractTreeStructure structure = getTreeStructure();
+      return structure instanceof AbstractProjectTreeStructure && ((AbstractProjectTreeStructure)structure).isFlattenPackages();
     }
   }
 
@@ -142,7 +130,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
       updateForFile(b.getFile());
     }
 
-    private void updateForFile(VirtualFile file) {
+    private void updateForFile(@NotNull VirtualFile file) {
       PsiElement element = findPsi(file);
       if (element != null) {
         queueUpdateFrom(element, false);
@@ -164,15 +152,8 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
 
   private PsiElement findPsi(@NotNull VirtualFile vFile) {
     if (!vFile.isValid()) return null;
-    PsiElement element;
     PsiManager psiManager = PsiManager.getInstance(myProject);
-    if (vFile.isDirectory()) {
-      element = psiManager.findDirectory(vFile);
-    }
-    else {
-      element = psiManager.findFile(vFile);
-    }
-    return element;
+    return vFile.isDirectory() ? psiManager.findDirectory(vFile) : psiManager.findFile(vFile);
   }
 
   private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
@@ -180,16 +161,16 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     private final Collection<VirtualFile> myFilesToRefresh = new THashSet<VirtualFile>();
 
     @Override
-    public void problemsAppeared(VirtualFile file) {
+    public void problemsAppeared(@NotNull VirtualFile file) {
       queueUpdate(file);
     }
 
     @Override
-    public void problemsDisappeared(VirtualFile file) {
+    public void problemsDisappeared(@NotNull VirtualFile file) {
       queueUpdate(file);
     }
 
-    private void queueUpdate(final VirtualFile fileToRefresh) {
+    private void queueUpdate(@NotNull VirtualFile fileToRefresh) {
       synchronized (myFilesToRefresh) {
         if (myFilesToRefresh.add(fileToRefresh)) {
           myUpdateProblemAlarm.cancelAllRequests();
@@ -215,7 +196,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     }
   }
 
-  private void updateNodesContaining(final Collection<VirtualFile> filesToRefresh, final DefaultMutableTreeNode rootNode) {
+  private void updateNodesContaining(@NotNull Collection<VirtualFile> filesToRefresh, @NotNull DefaultMutableTreeNode rootNode) {
     if (!(rootNode.getUserObject() instanceof ProjectViewNode)) return;
     ProjectViewNode node = (ProjectViewNode)rootNode.getUserObject();
     Collection<VirtualFile> containingFiles = null;

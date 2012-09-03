@@ -95,6 +95,11 @@ public class ConsoleViewUtil {
       public Font getFont(EditorFontType key) {
         return super.getFont(EditorFontType.getConsoleType(key));
       }
+
+      @Override
+      public void setEditorFontSize(int fontSize) {
+        setConsoleFontSize(fontSize);
+      }
     };
   }
 

@@ -29,7 +29,7 @@ import javax.swing.*;
 public final class BorderTypeEditor extends ComboBoxPropertyEditor<BorderType> {
   public BorderTypeEditor(){
     myCbx.setModel(new DefaultComboBoxModel(BorderType.getAllTypes()));
-    myCbx.setRenderer(new ListCellRendererWrapper<BorderType>(myCbx.getRenderer()) {
+    myCbx.setRenderer(new ListCellRendererWrapper<BorderType>() {
       @Override
       public void customize(JList list, BorderType value, int index, boolean selected, boolean hasFocus) {
         final BorderType type = value != null ? value : BorderType.NONE;

@@ -147,7 +147,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
 
     @Override
     public Icon getIcon(boolean isOpen) {
-      return myModule.isDisposed() ? null : ModuleType.get(myModule).getNodeIcon(isOpen);
+      return myModule.isDisposed() ? null : ModuleType.get(myModule).getIcon();
     }
 
     @Override

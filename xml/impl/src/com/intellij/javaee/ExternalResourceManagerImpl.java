@@ -30,7 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlSchemaProvider;
@@ -125,7 +125,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     Map<String, T> map = resources.get(version);
     if (map == null) {
       if (create) {
-        map = CollectionFactory.hashMap();
+        map = ContainerUtil.newHashMap();
         resources.put(version, map);
       }
       else if (version == null || !version.equals(DEFAULT_VERSION)) {

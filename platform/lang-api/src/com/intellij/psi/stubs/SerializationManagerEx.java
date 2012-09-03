@@ -29,7 +29,7 @@ public abstract class SerializationManagerEx extends SerializationManager {
 
   public abstract void serialize(Stub rootStub, OutputStream stream);
 
-  public abstract Stub deserialize(InputStream stream);
+  public abstract Stub deserialize(InputStream stream) throws SerializerNotFoundException;
 
   public abstract boolean isNameStorageCorrupted();
 

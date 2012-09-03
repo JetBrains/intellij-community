@@ -58,7 +58,7 @@ public class WorkingContextManager {
   private static final String CONTEXT_ZIP_POSTFIX = ".contexts.zip";
   private static final Comparator<JBZipEntry> ENTRY_COMPARATOR = new Comparator<JBZipEntry>() {
     public int compare(JBZipEntry o1, JBZipEntry o2) {
-      return (int)(o2.getTime() - o1.getTime());
+      return Long.signum(o2.getTime() - o1.getTime());
     }
   };
 

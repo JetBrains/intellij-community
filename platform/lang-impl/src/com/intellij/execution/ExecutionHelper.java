@@ -294,7 +294,7 @@ public class ExecutionHelper {
     else if (consoles.size() > 1) {
       final JList list = new JBList(consoles);
       final Icon icon = DefaultRunExecutor.getRunExecutorInstance().getIcon();
-      list.setCellRenderer(new ListCellRendererWrapper<RunContentDescriptor>(list.getCellRenderer()) {
+      list.setCellRenderer(new ListCellRendererWrapper<RunContentDescriptor>() {
         @Override
         public void customize(final JList list,
                               final RunContentDescriptor value,

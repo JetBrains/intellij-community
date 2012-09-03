@@ -15,7 +15,6 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
@@ -28,6 +27,7 @@ import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -160,13 +160,13 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
 
   private static class ModuleListRenderer extends ListCellRendererWrapper<Module> {
     public ModuleListRenderer(JComboBox comboBox) {
-      super(comboBox);
+      super();
     }
 
     @Override
     public void customize(JList list, Module value, int index, boolean selected, boolean hasFocus) {
       if (value != null) {
-        setIcon(ModuleType.get(value).getNodeIcon(false));
+        setIcon(ModuleType.get(value).getIcon());
         setText(value.getName());
       }
       else {

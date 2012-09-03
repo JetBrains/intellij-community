@@ -26,12 +26,13 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 /**
  * @author dsl
  */
 public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements InheritedJdkOrderEntry, ClonableOrderEntry, WritableOrderEntry {
-  @NonNls public static final String ENTRY_TYPE = "inheritedJdk";
+  @NonNls public static final String ENTRY_TYPE = JpsModuleRootModelSerializer.INHERITED_JDK_TYPE;
   private final MyJdkTableListener myJdkTableListener = new MyJdkTableListener();
   private final MyProjectJdkListener myListener = new MyProjectJdkListener();
 

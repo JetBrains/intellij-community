@@ -62,6 +62,7 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
 
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
     myModelListener = new ModelListener() {
+      @Override
       public void onModelChanged() {
         addRootToUpdate();
       }
@@ -76,6 +77,7 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
     setCanYieldUpdate(!ApplicationManager.getApplication().isUnitTestMode());
   }
 
+  @Override
   public final void dispose() {
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
     CopyPasteManager.getInstance().removeContentChangedListener(myCopyPasteListener);
@@ -83,10 +85,12 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
     super.dispose();
   }
 
+  @Override
   protected final boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
     return ((AbstractTreeNode)nodeDescriptor).isAlwaysShowPlus();
   }
 
+  @Override
   protected final boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     StructureViewModel model = myStructureModel;
     if (model instanceof TreeModelWrapper) {
@@ -111,6 +115,7 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
     return super.isAutoExpandNode(parent == null ? nodeDescriptor : parent);
   }
 
+  @Override
   protected final boolean isSmartExpand() {
     StructureViewModel model = myStructureModel;
     if (model instanceof TreeModelWrapper) {
@@ -122,6 +127,7 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
     return false;
   }
 
+  @Override
   @NotNull
   protected final ProgressIndicator createProgressIndicator() {
     return new StatusBarProgress();
@@ -136,6 +142,7 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
       myOutOfCodeBlockModificationCount = myModificationTracker.getOutOfCodeBlockModificationCount();
     }
 
+    @Override
     public void childRemoved(@NotNull PsiTreeChangeEvent event) {
       PsiElement child = event.getOldChild();
       if (child instanceof PsiWhiteSpace) return; //optimization
@@ -143,12 +150,14 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
       childrenChanged();
     }
 
+    @Override
     public void childAdded(@NotNull PsiTreeChangeEvent event) {
       PsiElement child = event.getNewChild();
       if (child instanceof PsiWhiteSpace) return; //optimization
       childrenChanged();
     }
 
+    @Override
     public void childReplaced(@NotNull PsiTreeChangeEvent event) {
       /** Test comment */
       PsiElement oldChild = event.getOldChild();
@@ -157,10 +166,12 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
       childrenChanged();
     }
 
+    @Override
     public void childMoved(@NotNull PsiTreeChangeEvent event) {
       childrenChanged();
     }
 
+    @Override
     public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
       childrenChanged();
     }
@@ -172,6 +183,7 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
       setupUpdateAlarm();
     }
 
+    @Override
     public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
       childrenChanged();
     }
@@ -180,6 +192,7 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
   private void setupUpdateAlarm() {
     myUpdateAlarm.cancelAllRequests();
     myUpdateAlarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         if (!isDisposed() && !myProject.isDisposed()) {
           addRootToUpdate();
@@ -189,14 +202,18 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
   }
 
   final void addRootToUpdate() {
-    AbstractTreeStructure structure = getTreeStructure();
-    if (structure.hasSomethingToCommit()) {
-      structure.commit();
-    }
-    ((SmartTreeStructure)structure).rebuildTree();
-    getUpdater().addSubtreeToUpdate(getRootNode());
+    final AbstractTreeStructure structure = getTreeStructure();
+    structure.asyncCommit().doWhenDone(new Runnable() {
+      @Override
+      public void run() {
+        ((SmartTreeStructure)structure).rebuildTree();
+        getUpdater().addSubtreeToUpdate(getRootNode());
+      }
+    });
   }
 
+  @Override
+  @NotNull
   protected final AbstractTreeNode createSearchingTreeNodeWrapper() {
     return new StructureViewComponent.StructureViewTreeElementWrapper(null,null, null);
   }

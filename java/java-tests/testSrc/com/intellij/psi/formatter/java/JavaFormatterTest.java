@@ -242,8 +242,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
     settings.ALIGN_MULTILINE_BINARY_OPERATION = true;
     settings.ALIGN_MULTILINE_ASSIGNMENT = true;
-    doTextTest(text, "\n" +
-                     "class Foo {\n" +
+    doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
                      "        xxx = aaa + bbb\n" +
                      "              + ccc + eee + ddd;\n" +
@@ -252,8 +251,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
     settings.ALIGN_MULTILINE_BINARY_OPERATION = true;
     settings.ALIGN_MULTILINE_ASSIGNMENT = false;
-    doTextTest(text, "\n" +
-                     "class Foo {\n" +
+    doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
                      "        xxx = aaa + bbb\n" +
                      "              + ccc + eee + ddd;\n" +
@@ -263,8 +261,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
     settings.ALIGN_MULTILINE_BINARY_OPERATION = false;
     settings.ALIGN_MULTILINE_ASSIGNMENT = true;
-    doTextTest(text, "\n" +
-                     "class Foo {\n" +
+    doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
                      "        xxx = aaa + bbb\n" +
                      "                + ccc + eee + ddd;\n" +
@@ -274,8 +271,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
     settings.ALIGN_MULTILINE_ASSIGNMENT = false;
     settings.ALIGN_MULTILINE_BINARY_OPERATION = false;
-    doTextTest(text, "\n" +
-                     "class Foo {\n" +
+    doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
                      "        xxx = aaa + bbb\n" +
                      "                + ccc + eee + ddd;\n" +
@@ -285,8 +281,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
     settings.ALIGN_MULTILINE_ASSIGNMENT = false;
     settings.ALIGN_MULTILINE_BINARY_OPERATION = false;
 
-    doTextTest(text, "\n" +
-                     "class Foo {\n" +
+    doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
                      "        xxx = aaa + bbb\n" +
                      "                + ccc + eee + ddd;\n" +
@@ -297,7 +292,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
     settings.ALIGN_MULTILINE_BINARY_OPERATION = true;
 
     doTextTest("class Foo {\n" + "    void foo () {\n" + "        xxx = aaa + bbb \n" + "        - ccc + eee + ddd;\n" + "    }\n" + "}",
-               "\nclass Foo {\n" +
+               "class Foo {\n" +
                "    void foo() {\n" +
                "        xxx = aaa + bbb\n" +
                "              - ccc + eee + ddd;\n" +
@@ -305,7 +300,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
                "}");
 
     doTextTest("class Foo {\n" + "    void foo () {\n" + "        xxx = aaa + bbb \n" + "        * ccc + eee + ddd;\n" + "    }\n" + "}",
-               "\nclass Foo {\n" +
+               "class Foo {\n" +
                "    void foo() {\n" +
                "        xxx = aaa + bbb\n" +
                "                    * ccc + eee + ddd;\n" +
@@ -347,7 +342,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
     doTextTest("class Foo {\n" + "    void foo () {\n" + "String s = \"abc\" +\n" + "\"def\";" + "    }\n" + "}",
 
-               "\nclass Foo {\n" +
+               "class Foo {\n" +
                "    void foo() {\n" +
                "        String s = \"abc\" +\n" +
                "                \"def\";\n" +
@@ -379,8 +374,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
     settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
     settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-    doTextTest(text, "\n" +
-                     "class Foo {\n" +
+    doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
                      "        if (a) {\n" +
                      "            int i = 0;\n" +
@@ -390,8 +384,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
     settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
-    doTextTest(text, "\n" +
-                     "class Foo {\n" +
+    doTextTest(text, "class Foo {\n" +
                      "    void foo()\n" +
                      "    {\n" +
                      "        if (a)\n" +
@@ -404,8 +397,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
     settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
     settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
-    doTextTest(text, "\n" +
-                     "class Foo {\n" +
+    doTextTest(text, "class Foo {\n" +
                      "    void foo()\n" +
                      "        {\n" +
                      "        if (a)\n" +
@@ -417,8 +409,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
     settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
     settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-    doTextTest(text, "\n" +
-                     "class Foo {\n" +
+    doTextTest(text, "class Foo {\n" +
                      "    void foo()\n" +
                      "        {\n" +
                      "        if (a) {\n" +
@@ -430,8 +421,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
     settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2;
     settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2;
-    doTextTest(text, "\n" +
-                     "class Foo {\n" +
+    doTextTest(text, "class Foo {\n" +
                      "    void foo()\n" +
                      "        {\n" +
                      "            if (a)\n" +
@@ -538,7 +528,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
   public void testTwoJavaDocs() throws Exception {
     doTextTest("/**\n" + " * \n" + " */\n" + "        class Test {\n" + "    /**\n" + "     */\n" + "     public void foo();\n" + "}",
-               "/**\n" + " * \n" + " */\n" + "class Test {\n" + "    /**\n" + "     */\n" + "    public void foo();\n" + "}");
+               "/**\n" + " *\n" + " */\n" + "class Test {\n" + "    /**\n" + "     */\n" + "    public void foo();\n" + "}");
   }
 
   public void testJavaDocLinksWithParameterNames() throws Exception {
@@ -595,7 +585,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
   public void testDocComment() throws Exception {
     doTextTest("public class TestClass {\n" + "/**\n" + "* \n" + "*/\n" + "    public void f1() {\n" + "    }\n" + "}",
-               "public class TestClass {\n" + "    /**\n" + "     * \n" + "     */\n" + "    public void f1() {\n" + "    }\n" + "}");
+               "public class TestClass {\n" + "    /**\n" + "     *\n" + "     */\n" + "    public void f1() {\n" + "    }\n" + "}");
   }
 
   public void testDocComment2() throws Exception {

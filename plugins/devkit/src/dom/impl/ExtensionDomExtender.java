@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,9 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.psi.PropertyUtils;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.LinkedMultiMap;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
@@ -80,34 +81,48 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
     if (ideaPlugin == null) return;
 
-    String prefix = extensions.getDefaultExtensionNs().getStringValue();
-    if (prefix == null) prefix = extensions.getXmlns().getStringValue();
-    if (prefix != null) {
-      prefix += ".";
-    } else {
-      prefix = "";
+    String prefix = getEpPrefix(extensions);
+    for (IdeaPlugin plugin : getVisiblePlugins(ideaPlugin)) {
+      final String pluginId = StringUtil.notNullize(plugin.getPluginId(), "com.intellij");
+      for (ExtensionPoints points : plugin.getExtensionPoints()) {
+        for (ExtensionPoint point : points.getExtensionPoints()) {
+          registerExtensionPoint(registrar, point, prefix, pluginId);
+        }
+      }
     }
-
-    registerExtensions(prefix, ideaPlugin, registrar, CollectionFactory.<IdeaPlugin>hashSet());
   }
 
-  private static void registerExtensions(final String prefix, final IdeaPlugin ideaPlugin, final DomExtensionsRegistrar registrar, Set<IdeaPlugin> visited) {
-    if (!visited.add(ideaPlugin)) {
+  private static String getEpPrefix(Extensions extensions) {
+    String prefix = extensions.getDefaultExtensionNs().getStringValue();
+    if (prefix == null) prefix = extensions.getXmlns().getStringValue();
+    return prefix != null ? prefix + "." : "";
+  }
+
+  private static Set<IdeaPlugin> getVisiblePlugins(IdeaPlugin ideaPlugin) {
+    Set<IdeaPlugin> result = ContainerUtil.newHashSet();
+    MultiMap<String, IdeaPlugin> byId = getPluginMap(ideaPlugin.getManager().getProject());
+    collectDependencies(ideaPlugin, result, byId);
+    //noinspection NullableProblems
+    result.addAll(byId.get(null));
+    return result;
+  }
+
+  private static MultiMap<String, IdeaPlugin> getPluginMap(final Project project) {
+    MultiMap<String, IdeaPlugin> byId = new LinkedMultiMap<String, IdeaPlugin>();
+    for (IdeaPlugin each : IdeaPluginConverter.getAllPlugins(project)) {
+      byId.putValue(each.getPluginId(), each);
+    }
+    return byId;
+  }
+
+  private static void collectDependencies(final IdeaPlugin ideaPlugin, Set<IdeaPlugin> result, final MultiMap<String, IdeaPlugin> byId) {
+    if (!result.add(ideaPlugin)) {
       return;
     }
 
-    final String pluginId = StringUtil.notNullize(ideaPlugin.getPluginId(), "com.intellij");
-    for (ExtensionPoints points : ideaPlugin.getExtensionPoints()) {
-      for (ExtensionPoint point : points.getExtensionPoints()) {
-        registerExtensionPoint(registrar, point, prefix, pluginId);
-      }
-    }
-    final Collection<String> dependencies = getDependencies(ideaPlugin);
-    for (IdeaPlugin anotherPlugin : IdeaPluginConverter.collectAllVisiblePlugins(DomUtil.getFile(ideaPlugin))) {
-      final String value = anotherPlugin.getPluginId();
-      // value == null for "included" platform plugins like DomPlugin.xml, XmlPlugin.xml, etc.
-      if (value == null || dependencies.contains(value)) {
-        registerExtensions(prefix, anotherPlugin, registrar, visited);
+    for (String id : getDependencies(ideaPlugin)) {
+      for (IdeaPlugin dep : byId.get(id)) {
+        collectDependencies(dep, result, byId);
       }
     }
   }

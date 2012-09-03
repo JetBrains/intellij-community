@@ -45,7 +45,7 @@ public class LayoutManagerProperty extends Property<RadContainer, String> {
 
   private static class LayoutManagerEditor extends ComboBoxPropertyEditor<String> {
     public LayoutManagerEditor() {
-      myCbx.setRenderer(new ListCellRendererWrapper<String>(myCbx.getRenderer()) {
+      myCbx.setRenderer(new ListCellRendererWrapper<String>() {
         @Override
         public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
           setText(LayoutManagerRegistry.getLayoutManagerDisplayName(value));

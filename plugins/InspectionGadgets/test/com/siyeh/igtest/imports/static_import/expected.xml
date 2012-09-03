@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Simple.java</file>
+    <line>3</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Static import</problem_class>
+    <description>Static import &lt;code&gt;import static java.lang.Math.*;&lt;/code&gt;  #loc</description>
+  </problem>
+</problems>

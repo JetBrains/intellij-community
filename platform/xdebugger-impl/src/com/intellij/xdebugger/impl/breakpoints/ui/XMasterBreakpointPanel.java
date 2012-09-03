@@ -18,9 +18,12 @@ package com.intellij.xdebugger.impl.breakpoints.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.popup.util.DetailView;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
+import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.impl.XDebuggerSupport;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
@@ -28,16 +31,11 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: zajac
- * Date: 16.06.11
- * Time: 21:26
- * To change this template use File | Settings | File Templates.
- */
 public class XMasterBreakpointPanel<B extends XBreakpoint<?>> extends XBreakpointPropertiesSubPanel<B> {
   private JPanel myMasterBreakpointComboBoxPanel;
   private JPanel myAfterBreakpointHitPanel;
@@ -45,42 +43,34 @@ public class XMasterBreakpointPanel<B extends XBreakpoint<?>> extends XBreakpoin
   private JPanel myContentPane;
   private JPanel myMainPanel;
 
-  private ComboBox myMasterBreakpointComboBox;
+  private BreakpointChooser myMasterBreakpointChooser;
   private XDependentBreakpointManager myDependentBreakpointManager;
 
-  private static class BreakpointsListCellRenderer<B extends XBreakpoint<?>> extends DefaultListCellRenderer {
-    public Component getListCellRendererComponent(final JList list,
-                                                  final Object value,
-                                                  final int index,
-                                                  final boolean isSelected,
-                                                  final boolean cellHasFocus) {
-      Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      if (value != null) {
-        B breakpoint = (B)value;
-        setText(XBreakpointUtil.getDisplayText(breakpoint));
-        setIcon(breakpoint.getType().getEnabledIcon());
+  private java.util.List<BreakpointItem> getBreakpointItemsExceptMy() {
+    java.util.List<BreakpointItem> items = new ArrayList<BreakpointItem>();
+    DebuggerSupport.getDebuggerSupport(XDebuggerSupport.class).getBreakpointPanelProvider().provideBreakpointItems(myProject, items);
+    for (BreakpointItem item : items) {
+      if (item.getBreakpoint() == myBreakpoint) {
+        items.remove(item);
+        break;
       }
-      else {
-        setText(XDebuggerBundle.message("xbreakpoint.master.breakpoint.none"));
-        setIcon(null);
-      }
-      return component;
     }
+    items.add(new BreakpointNoneItem());
+    return items;
   }
 
   @Override
   public void init(Project project, XBreakpointManager breakpointManager, @NotNull B breakpoint) {
     super.init(project, breakpointManager, breakpoint);
     myDependentBreakpointManager = ((XBreakpointManagerImpl)breakpointManager).getDependentBreakpointManager();
-    myMasterBreakpointComboBox = new ComboBox(300);
-    myMasterBreakpointComboBoxPanel.add(myMasterBreakpointComboBox, BorderLayout.CENTER);
-    myMasterBreakpointComboBox.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
+    myMasterBreakpointChooser = new BreakpointChooser(project, new BreakpointChooser.Delegate() {
+      @Override
+      public void breakpointChosen(Project project, BreakpointItem breakpointItem) {
         updateAfterBreakpointHitPanel();
       }
-    });
-    myMasterBreakpointComboBox.setRenderer(new BreakpointsListCellRenderer<B>());
-    fillMasterBreakpointComboBox();
+    }, null, getBreakpointItemsExceptMy());
+
+    myMasterBreakpointComboBoxPanel.add(myMasterBreakpointChooser.getComponent(), BorderLayout.CENTER);
   }
 
   @Override
@@ -93,19 +83,8 @@ public class XMasterBreakpointPanel<B extends XBreakpoint<?>> extends XBreakpoin
     return false;
   }
 
-  private void fillMasterBreakpointComboBox() {
-    myMasterBreakpointComboBox.removeAllItems();
-    myMasterBreakpointComboBox.addItem(null);
-    for (B breakpoint : myBreakpointManager.getBreakpoints(XBreakpointUtil.getType(myBreakpoint))) {
-      if (breakpoint != myBreakpoint) {
-        myMasterBreakpointComboBox.addItem(breakpoint);
-      }
-    }
-  }
-
-
   private void updateAfterBreakpointHitPanel() {
-    boolean enable = myMasterBreakpointComboBox.getSelectedItem() != null;
+    boolean enable = myMasterBreakpointChooser.getSelectedBreakpoint() != null;
     GuiUtils.enableChildren(enable, myAfterBreakpointHitPanel);
   }
 
@@ -113,7 +92,7 @@ public class XMasterBreakpointPanel<B extends XBreakpoint<?>> extends XBreakpoin
   void loadProperties() {
     XBreakpoint<?> masterBreakpoint = myDependentBreakpointManager.getMasterBreakpoint(myBreakpoint);
     if (masterBreakpoint != null) {
-      myMasterBreakpointComboBox.setSelectedItem(masterBreakpoint);
+      myMasterBreakpointChooser.setSelectesBreakpoint(masterBreakpoint);
       myLeaveEnabledRadioButton.setSelected(myDependentBreakpointManager.isLeaveEnabled(myBreakpoint));
     }
     updateAfterBreakpointHitPanel();
@@ -122,12 +101,16 @@ public class XMasterBreakpointPanel<B extends XBreakpoint<?>> extends XBreakpoin
 
   @Override
   void saveProperties() {
-    XBreakpoint<?> masterBreakpoint = (XBreakpoint<?>)myMasterBreakpointComboBox.getSelectedItem();
+    XBreakpoint<?> masterBreakpoint = (XBreakpoint<?>)myMasterBreakpointChooser.getSelectedBreakpoint();
     if (masterBreakpoint == null) {
       myDependentBreakpointManager.clearMasterBreakpoint(myBreakpoint);
     }
     else {
       myDependentBreakpointManager.setMasterBreakpoint(myBreakpoint, masterBreakpoint, myLeaveEnabledRadioButton.isSelected());
     }
+  }
+
+  public void setDetailView(DetailView detailView) {
+    myMasterBreakpointChooser.setDetailView(detailView);
   }
 }

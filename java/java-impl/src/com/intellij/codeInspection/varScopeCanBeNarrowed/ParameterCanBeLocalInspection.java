@@ -65,7 +65,7 @@ public class ParameterCanBeLocalInspection extends BaseJavaLocalInspectionTool {
     final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
     for (PsiParameter parameter : getWriteBeforeRead(parameters, body)) {
       final PsiIdentifier identifier = parameter.getNameIdentifier();
-      if (identifier != null) {
+      if (identifier != null && identifier.isPhysical()) {
         result.add(createProblem(manager, identifier, isOnTheFly));
       }
     }

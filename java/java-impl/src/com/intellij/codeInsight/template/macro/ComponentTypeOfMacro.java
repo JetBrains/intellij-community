@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -42,7 +42,7 @@ public class ComponentTypeOfMacro extends Macro {
     LookupElement[] lookupItems = params[0].calculateLookupItems(context);
     if (lookupItems == null) return null;
 
-    List<LookupElement> result = CollectionFactory.arrayList();
+    List<LookupElement> result = ContainerUtil.newArrayList();
     for (LookupElement element : lookupItems) {
       PsiTypeLookupItem lookupItem = element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY);
       if (lookupItem != null) {

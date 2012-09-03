@@ -26,7 +26,7 @@ import java.util.Arrays;
 /**
  * @author ven
  */
-public class ReachingDefinitionsDfaInstance implements DfaInstance<TIntObjectHashMap<TIntHashSet>> {
+public class ReachingDefinitionsDfaInstance implements DfaInstance<DefinitionMap> {
   private final TObjectIntHashMap<String> myVarToIndexMap = new TObjectIntHashMap<String>();
   private final Instruction[] myFlow;
 
@@ -48,30 +48,21 @@ public class ReachingDefinitionsDfaInstance implements DfaInstance<TIntObjectHas
   }
 
 
-  public void fun(TIntObjectHashMap<TIntHashSet> m, Instruction instruction) {
+  public void fun(DefinitionMap m, Instruction instruction) {
     if (instruction instanceof ReadWriteVariableInstruction) {
       final ReadWriteVariableInstruction varInsn = (ReadWriteVariableInstruction) instruction;
       final String name = varInsn.getVariableName();
       assert myVarToIndexMap.containsKey(name) : name + "; " + Arrays.asList(myFlow).contains(instruction);
       final int num = myVarToIndexMap.get(name);
       if (varInsn.isWrite()) {
-        registerDef(m, varInsn, num);
+        m.registerDef(varInsn, num);
       }
     }
   }
 
-  protected static void registerDef(TIntObjectHashMap<TIntHashSet> m, Instruction varInsn, int num) {
-    TIntHashSet defs = m.get(num);
-    if (defs == null) {
-      defs = new TIntHashSet();
-      m.put(num, defs);
-    } else defs.clear();
-    defs.add(varInsn.num());
-  }
-
   @NotNull
-  public TIntObjectHashMap<TIntHashSet> initial() {
-    return new TIntObjectHashMap<TIntHashSet>();
+  public DefinitionMap initial() {
+    return new DefinitionMap();
   }
 
   public boolean isForward() {

@@ -21,10 +21,10 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import icons.Svn4ideaIcons;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.BranchConfigurationDialog;
@@ -43,7 +43,7 @@ public class ConfigureBranchesAction extends AnAction implements DumbAware {
 
     presentation.setText(SvnBundle.message("configure.branches.item"));
     presentation.setDescription(SvnBundle.message("configure.branches.item"));
-    presentation.setIcon(IconLoader.getIcon("/icons/ConfigureBranches.png"));
+    presentation.setIcon(Svn4ideaIcons.ConfigureBranches);
 
     presentation.setVisible(true);
     

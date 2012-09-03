@@ -16,7 +16,6 @@
 package org.intellij.lang.xpath.xslt.run;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -271,7 +270,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
 
       final Module[] modules = ModuleManager.getInstance(project).getModules();
       myModule.setModel(new DefaultComboBoxModel(ArrayUtil.mergeArrays(new Object[]{"<default>"}, modules)));
-      myModule.setRenderer(new ListCellRendererWrapper(myModule) {
+      myModule.setRenderer(new ListCellRendererWrapper() {
         @Override
         public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           if (value instanceof Module) {
@@ -281,7 +280,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
                 return module.getName();
               }
             }));
-            setIcon(ModuleType.get(module).getNodeIcon(true));
+            setIcon(ModuleType.get(module).getIcon());
           }
           else if (value instanceof String) {
             setText((String)value);
@@ -303,7 +302,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         myJdkChoice.setEnabled(false);
         myJDK.setEnabled(false);
       }
-      myJDK.setRenderer(new ListCellRendererWrapper<Sdk>(myJDK) {
+      myJDK.setRenderer(new ListCellRendererWrapper<Sdk>() {
         @Override
         public void customize(JList list, final Sdk jdk, int index, boolean isSelected, boolean cellHasFocus) {
           if (jdk != null) {

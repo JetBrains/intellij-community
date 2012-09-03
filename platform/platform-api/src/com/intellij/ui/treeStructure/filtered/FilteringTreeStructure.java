@@ -18,6 +18,7 @@ package com.intellij.ui.treeStructure.filtered;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.SimpleNode;
 import org.jetbrains.annotations.NotNull;
@@ -32,17 +33,17 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
   private final AbstractTreeStructure myBaseStructure;
   protected final FilteringNode myRoot;
   protected final HashSet<FilteringNode> myLeaves = new HashSet<FilteringNode>();
-  private Map<FilteringNode, List<FilteringNode>> myNodesCache = new HashMap<FilteringNode, List<FilteringNode>>();
+  private final Map<FilteringNode, List<FilteringNode>> myNodesCache = new HashMap<FilteringNode, List<FilteringNode>>();
 
   protected enum State {UNKNOWN, VISIBLE, HIDDEN}
 
   private final Map<Object, FilteringNode> myDescriptors2Nodes = new HashMap<Object, FilteringNode>();
 
-  public FilteringTreeStructure(ElementFilter filter, AbstractTreeStructure originalStructure) {
+  public FilteringTreeStructure(@NotNull ElementFilter filter, @NotNull AbstractTreeStructure originalStructure) {
     this(filter, originalStructure, true);
   }
 
-  public FilteringTreeStructure(ElementFilter filter, AbstractTreeStructure originalStructure, boolean initNow) {
+  public FilteringTreeStructure(@NotNull ElementFilter filter, @NotNull AbstractTreeStructure originalStructure, boolean initNow) {
     //noinspection unchecked
     myFilter = filter;
     myBaseStructure = originalStructure;
@@ -118,37 +119,46 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     return myDescriptors2Nodes.get(nodeObject);
   }
 
+  @Override
   public FilteringNode getRootElement() {
     return myRoot;
   }
 
+  @Override
   public Object[] getChildElements(Object element) {
     return ((FilteringNode) element).getChildren();
   }
 
+  @Override
   public Object getParentElement(Object element) {
     return ((FilteringNode) element).getParent();
   }
 
   @Override
   public boolean isAlwaysLeaf(Object element) {
-    if (element instanceof FilteringNode) {
-      return ((FilteringNode)element).isAlwaysLeaf();
-    }
-    return false;
+    return element instanceof FilteringNode && ((FilteringNode)element).isAlwaysLeaf();
   }
 
+  @Override
   @NotNull
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
     return (FilteringNode)element;
   }
 
+  @Override
   public void commit() {
     myBaseStructure.commit();
   }
 
+  @Override
   public boolean hasSomethingToCommit() {
     return myBaseStructure.hasSomethingToCommit();
+  }
+
+  @NotNull
+  @Override
+  public ActionCallback asyncCommit() {
+    return myBaseStructure.asyncCommit();
   }
 
   public class FilteringNode extends SimpleNode {
@@ -184,20 +194,12 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
 
     @Override
     public boolean isContentHighlighted() {
-      if (myDelegate instanceof SimpleNode) {
-        return ((SimpleNode)myDelegate).isContentHighlighted();
-      }
-
-      return false;
+      return myDelegate instanceof SimpleNode && ((SimpleNode)myDelegate).isContentHighlighted();
     }
 
     @Override
     public boolean isHighlightableContentNode(final PresentableNodeDescriptor kid) {
-      if (myDelegate instanceof PresentableNodeDescriptor) {
-        return ((PresentableNodeDescriptor)myDelegate).isHighlightableContentNode(kid);
-      }
-
-      return false;
+      return myDelegate instanceof PresentableNodeDescriptor && ((PresentableNodeDescriptor)myDelegate).isHighlightableContentNode(kid);
     }
 
 
@@ -207,6 +209,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
       // DO NOTHING
     }
 
+    @Override
     protected void doUpdate() {
       clearColoredText();
       if (myDelegate instanceof PresentableNodeDescriptor) {
@@ -245,6 +248,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
       return super.getWeight();
     }
 
+    @Override
     @NotNull
     public Object[] getEqualityObjects() {
       return new Object[]{myDelegate};

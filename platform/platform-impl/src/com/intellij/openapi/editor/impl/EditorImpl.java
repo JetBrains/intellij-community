@@ -5781,6 +5781,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public void setConsoleFontSize(int fontSize) {
       getGlobal().setConsoleFontSize(fontSize);
+      reinitSettings();
     }
 
     @Override

@@ -39,17 +39,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 
@@ -127,10 +123,6 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   private boolean processOwner(PsiScopeProcessor processor, ResolveState state) {
-    if (processor instanceof PropertyResolverProcessor && OWNER_NAME.equals(((PropertyResolverProcessor)processor).getName())) {
-      processor.handleEvent(ResolveUtil.DECLARATION_SCOPE_PASSED, this);
-    }
-
     String nameHint = ResolveUtil.getNameHint(processor);
     if (nameHint == null || nameHint.equals(OWNER_NAME)) {
       if (!processor.execute(getOwner(), state)) return false;
@@ -270,7 +262,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
   @Nullable
   public PsiType getReturnType() {
-    return GroovyPsiManager.getInstance(getProject()).getType(this, ourTypesCalculator);
+    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, ourTypesCalculator);
   }
 
   @Override

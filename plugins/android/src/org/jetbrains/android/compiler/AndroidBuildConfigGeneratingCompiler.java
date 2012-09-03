@@ -113,7 +113,7 @@ public class AndroidBuildConfigGeneratingCompiler implements SourceGeneratingCom
     }
 
     if (result.size() > 0) {
-      outputRootDirectory.refresh(false, true);
+      AndroidCompileUtil.markDirtyAndRefresh(outputRootDirectory, true);
     }
     return result.toArray(new GenerationItem[result.size()]);
   }

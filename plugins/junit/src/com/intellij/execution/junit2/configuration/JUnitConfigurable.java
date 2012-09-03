@@ -147,7 +147,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     aModel.addElement(JUnitConfigurationModel.CLASS);
     aModel.addElement(JUnitConfigurationModel.METHOD);
     myTypeChooser.setModel(aModel);
-    myTypeChooser.setRenderer(new ListCellRendererWrapper<Integer>(myTypeChooser) {
+    myTypeChooser.setRenderer(new ListCellRendererWrapper<Integer>() {
       @Override
       public void customize(JList list, Integer value, int index, boolean selected, boolean hasFocus) {
         switch (value) {

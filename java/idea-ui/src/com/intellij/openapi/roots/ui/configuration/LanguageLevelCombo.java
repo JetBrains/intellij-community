@@ -34,7 +34,7 @@ public class LanguageLevelCombo extends ComboBox {
     for (LanguageLevel level : LanguageLevel.values()) {
       addItem(level);
     }
-    setRenderer(new ListCellRendererWrapper(getRenderer()) {
+    setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
         if (value instanceof LanguageLevel) {

@@ -39,7 +39,7 @@ public class FileTypeRenderer extends ListCellRendererWrapper<FileType> {
   }
 
   public FileTypeRenderer(final ListCellRenderer renderer, final FileTypeListProvider fileTypeListProvider) {
-    super(renderer);
+    super();
     myFileTypeListProvider = fileTypeListProvider;
   }
 

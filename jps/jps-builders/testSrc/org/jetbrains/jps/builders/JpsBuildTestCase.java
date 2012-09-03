@@ -38,15 +38,15 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   protected JpsProject myJpsProject;
   protected JpsModel myModel;
   protected Project myProject;
+  private File myDataStorageRoot;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     myProject = new Project();
-    myProject.setProjectName(getProjectName());
     myModel = JpsElementFactory.getInstance().createModel();
     myJpsProject = myModel.getProject();
-    Utils.setSystemRoot(FileUtil.createTempDirectory("compile-server", null));
+    myDataStorageRoot = FileUtil.createTempDirectory("compile-server-" + getProjectName(), null);
   }
 
   protected JpsSdk<JpsDummyElement> addJdk(final String name) {
@@ -72,9 +72,8 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
 
   protected ProjectDescriptor createProjectDescriptor(final BuildLoggingManager buildLoggingManager) {
     try {
-      final File dataStorageRoot = Utils.getDataStorageRoot(myProject);
-      ProjectTimestamps timestamps = new ProjectTimestamps(dataStorageRoot);
-      BuildDataManager dataManager = new BuildDataManager(dataStorageRoot, true);
+      ProjectTimestamps timestamps = new ProjectTimestamps(myDataStorageRoot);
+      BuildDataManager dataManager = new BuildDataManager(myDataStorageRoot, true);
       return new ProjectDescriptor(myProject, myModel, new BuildFSState(true), timestamps, dataManager, buildLoggingManager);
     }
     catch (IOException e) {

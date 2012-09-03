@@ -60,7 +60,7 @@ public class CodeStyleSchemesPanel{
         }
       }
     });
-    myCombo.setRenderer(new ListCellRendererWrapper(myCombo.getRenderer()) {
+    myCombo.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
         Font font = myDefaultComboFont;

@@ -65,7 +65,7 @@ public class NavBarPresentation {
   public static Icon getIcon(final Object object, final boolean open) {
     if (!NavBarModel.isValid(object)) return null;
     if (object instanceof Project) return AllIcons.Nodes.Project;
-    if (object instanceof Module) return ModuleType.get(((Module)object)).getNodeIcon(false);
+    if (object instanceof Module) return ModuleType.get(((Module)object)).getIcon();
     try {
       if (object instanceof PsiElement) {
         Icon icon = ApplicationManager.getApplication().runReadAction(new Computable<Icon>() {
@@ -88,7 +88,7 @@ public class NavBarPresentation {
       return ((SdkType) sdkType).getIcon();
     }
     if (object instanceof LibraryOrderEntry) return AllIcons.Nodes.PpLibFolder;
-    if (object instanceof ModuleOrderEntry) return ModuleType.get(((ModuleOrderEntry)object).getModule()).getNodeIcon(false);
+    if (object instanceof ModuleOrderEntry) return ModuleType.get(((ModuleOrderEntry)object).getModule()).getIcon();
     return null;
   }
 

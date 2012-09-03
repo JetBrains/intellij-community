@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public class VirtualFileEvent extends EventObject {
   private long myOldModificationStamp;
   private long myNewModificationStamp;
 
-  public VirtualFileEvent(@Nullable Object requestor, @NotNull VirtualFile file, @NotNull String fileName, VirtualFile parent){
+  public VirtualFileEvent(@Nullable Object requestor, @NotNull VirtualFile file, @NotNull String fileName, @Nullable VirtualFile parent) {
     super(file);
     myRequestor = requestor != null ? requestor : file.getUserData(VirtualFile.REQUESTOR_MARKER);
     myFile = file;
@@ -42,7 +42,11 @@ public class VirtualFileEvent extends EventObject {
     myParent = parent;
   }
 
-  public VirtualFileEvent(@Nullable Object requestor, @NotNull VirtualFile file, VirtualFile parent, long oldModificationStamp, long newModificationStamp){
+  public VirtualFileEvent(@Nullable Object requestor,
+                          @NotNull VirtualFile file,
+                          @Nullable VirtualFile parent,
+                          long oldModificationStamp,
+                          long newModificationStamp) {
     super(file);
     myFile = file;
     myFileName = file.getName();
@@ -76,7 +80,7 @@ public class VirtualFileEvent extends EventObject {
    * Returns the parent of the virtual file.
    *
    * @return the parent, or null if the file is a root directory or it was not possible to determine the parent
-   * (depends on the specific VFS implementation).
+   *         (depends on the specific VFS implementation).
    */
   @Nullable
   public VirtualFile getParent() {
@@ -100,7 +104,7 @@ public class VirtualFileEvent extends EventObject {
    * @return the modification stamp of the file before the event.
    * @see com.intellij.openapi.vfs.VirtualFile#getModificationStamp()
    */
-  public long getOldModificationStamp(){
+  public long getOldModificationStamp() {
     return myOldModificationStamp;
   }
 

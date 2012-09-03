@@ -15,24 +15,18 @@
  */
 package com.intellij.psi.codeStyle.arrangement
 
-import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.lang.java.JavaLanguage
-
-import static com.intellij.psi.codeStyle.arrangement.ArrangementUtil.and
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.*
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.*
 /**
  * @author Denis Zhdanov
  * @since 8/28/12 6:42 PM
  */
-class JavaRearrangerByTypeAndModifierTest extends AbstractRearrangerTest {
-
-  JavaRearrangerByTypeAndModifierTest() {
-    fileType = JavaFileType.INSTANCE
-    language = JavaLanguage.INSTANCE
-  }
+class JavaRearrangerByTypeAndModifierTest extends AbstractJavaRearrangerTest {
 
   void testComplex() {
+    commonSettings.BLANK_LINES_AROUND_METHOD = 0
+    commonSettings.BLANK_LINES_AROUND_CLASS = 0
+    
     doTest(
             '''\
 class Test {
@@ -62,17 +56,17 @@ class Test {
    public class PublicInner {}
    protected static class ProtectedStaticInner {}
 }''',
-            [rule(and(atom(FIELD), atom(PUBLIC), atom(STATIC))),
-             rule(and(atom(FIELD), atom(PUBLIC))),
-             rule(and(atom(FIELD), atom(VOLATILE))),
-             rule(and(atom(FIELD), atom(PRIVATE))),
-             rule(and(atom(METHOD), atom(ABSTRACT))),
-             rule(and(atom(METHOD), atom(PUBLIC))),
-             rule(atom(METHOD)),
-             rule(atom(INTERFACE)),
-             rule(atom(ENUM)),
-             rule(and(atom(CLASS), atom(PUBLIC))),
-             rule(atom(CLASS))]
+            [rule(FIELD, PUBLIC, STATIC),
+             rule(FIELD, PUBLIC),
+             rule(FIELD, VOLATILE),
+             rule(FIELD, PRIVATE),
+             rule(METHOD, ABSTRACT),
+             rule(METHOD, PUBLIC),
+             rule(METHOD),
+             rule(INTERFACE),
+             rule(ENUM),
+             rule(CLASS, PUBLIC),
+             rule(CLASS)]
     )
   }
 }

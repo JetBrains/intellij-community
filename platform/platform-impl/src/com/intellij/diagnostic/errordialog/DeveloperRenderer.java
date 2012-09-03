@@ -22,7 +22,7 @@ import javax.swing.*;
 
 class DeveloperRenderer extends ListCellRendererWrapper {
   DeveloperRenderer(ListCellRenderer listCellRenderer) {
-    super(listCellRenderer);
+    super();
   }
 
   @Override

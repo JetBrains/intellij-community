@@ -24,7 +24,7 @@ public class AddImportActionTest extends LightCodeInsightFixtureTestCase {
 
   public void testMap15() {
     IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_5)
-    myFixture.configureByText 'a.java', '''
+    myFixture.configureByText 'a.java', '''\
 public class Foo {
     void foo() {
         Ma<caret>p<> l;
@@ -50,7 +50,7 @@ public class Foo {
 
   public void testMapLatestLanguageLevel() {
     IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.HIGHEST)
-    myFixture.configureByText 'a.java', '''
+    myFixture.configureByText 'a.java', '''\
 public class Foo {
     void foo() {
         Ma<caret>p<> l;
@@ -71,7 +71,7 @@ public class Foo {
   public void testStringValue() {
     myFixture.addClass 'package java.lang; class StringValue {}'
     myFixture.addClass 'package foo; public class StringValue {}'
-    myFixture.configureByText 'a.java', '''
+    myFixture.configureByText 'a.java', '''\
 public class Foo {
     String<caret>Value sv;
 }
@@ -90,7 +90,7 @@ public class Foo {
     myFixture.addClass 'package foo; public class Log {}'
     myFixture.addClass 'package bar; public class Log {}'
     myFixture.addClass 'package bar; public class LogFactory { public static Log log(){} }'
-    myFixture.configureByText 'a.java', '''
+    myFixture.configureByText 'a.java', '''\
 public class Foo {
     Lo<caret>g l = bar.LogFactory.log();
 }

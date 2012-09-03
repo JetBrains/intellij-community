@@ -34,10 +34,12 @@ import java.util.Collections;
 import java.util.Map;
 
 public class GotoImplementationHandler extends GotoTargetHandler {
+  @Override
   protected String getFeatureUsedKey() {
     return "navigation.goto.implementation";
   }
 
+  @Override
   @Nullable
   public GotoData getSourceAndTargetElements(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
@@ -55,6 +57,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return gotoData;
   }
 
+  @Override
   protected String getChooserTitle(PsiElement sourceElement, String name, int length) {
     return CodeInsightBundle.message("goto.implementation.chooserTitle", name, length);
   }
@@ -65,9 +68,9 @@ public class GotoImplementationHandler extends GotoTargetHandler {
   }
 
   private class ImplementationsUpdaterTask extends ListBackgroundUpdaterTask {
-    private Editor myEditor;
-    private int myOffset;
-    private GotoData myGotoData;
+    private final Editor myEditor;
+    private final int myOffset;
+    private final GotoData myGotoData;
     private final Map<Object, PsiElementListCellRenderer> renderers = new HashMap<Object, PsiElementListCellRenderer>();
 
     public ImplementationsUpdaterTask(GotoData gotoData, Editor editor, int offset) {
@@ -78,7 +81,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     }
 
     @Override
-    public void run(final @NotNull ProgressIndicator indicator) {
+    public void run(@NotNull final ProgressIndicator indicator) {
       super.run(indicator);
       for (PsiElement element : myGotoData.targets) {
         if (!updateComponent(element, createComparator(renderers, myGotoData))) {
@@ -86,6 +89,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
         }
       }
       new ImplementationSearcher.BackgroundableImplementationSearcher() {
+        @Override
         protected void processElement(PsiElement element) {
           if (myGotoData.addTarget(element)) {
             if (!updateComponent(element, createComparator(renderers, myGotoData))) {

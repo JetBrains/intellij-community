@@ -60,7 +60,7 @@ public class ModuleNode extends PackageDependenciesNode implements NavigatableWi
   }
 
   public Icon getIcon() {
-    return myModule == null || myModule.isDisposed() ? super.getIcon() : ModuleType.get(myModule).getNodeIcon(false);
+    return myModule == null || myModule.isDisposed() ? super.getIcon() : ModuleType.get(myModule).getIcon();
   }
 
   public String toString() {

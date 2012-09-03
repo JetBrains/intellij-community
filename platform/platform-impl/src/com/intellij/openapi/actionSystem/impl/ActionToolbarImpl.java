@@ -55,7 +55,6 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.ConcurrentModificationException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -63,17 +62,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionToolbarImpl");
 
   private static List<ActionToolbarImpl> ourToolbars = new LinkedList<ActionToolbarImpl>();
-  private static Throwable ourLastModification = null;
 
   public static void updateAllToolbarsImmediately() {
-    try {
-      ourLastModification = null;
-      for (ActionToolbarImpl toolbar : new ArrayList<ActionToolbarImpl>(ourToolbars)) {
-        toolbar.updateActionsImmediately();
-      }
-    }
-    catch (ConcurrentModificationException e) {
-      LOG.error(ourLastModification == null? e : ourLastModification);
+    for (ActionToolbarImpl toolbar : new ArrayList<ActionToolbarImpl>(ourToolbars)) {
+      toolbar.updateActionsImmediately();
     }
   }
 
@@ -178,7 +170,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   @Override
   public void addNotify() {
     super.addNotify();
-    ourLastModification = new ConcurrentModificationException();
     ourToolbars.add(this);
     myActionManager.addTimerListener(500, myWeakTimerListener);
     myActionManager.addTransparentTimerListener(500, myWeakTimerListener);
@@ -199,7 +190,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   @Override
   public void removeNotify() {
     super.removeNotify();
-    ourLastModification = new ConcurrentModificationException();
     ourToolbars.remove(this);
     myActionManager.removeTimerListener(myWeakTimerListener);
     myActionManager.removeTransparentTimerListener(myWeakTimerListener);
@@ -484,7 +474,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
       for (final Rectangle r : bounds) {
         if (r.height < maxHeight) {
-          r.y = r.y + (maxHeight - r.height) / 2;
+          r.y += (maxHeight - r.height) / 2;
         }
       }
 
@@ -555,7 +545,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         // Lay components out
         int xOffset = insets.left;
         int yOffset = insets.top;
-        // Calculate max size of a row. It's not possible to make more then 3 row toolbar
+        // Calculate max size of a row. It's not possible to make more than 3 row toolbar
         final int maxRowWidth = Math.max(sizeToFit.width, componentCount * maxWidth / 3);
         for (int i = 0; i < componentCount; i++) {
           if (xOffset + maxWidth > maxRowWidth) { // place component at new row
@@ -1185,14 +1175,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     ArrayList<AnAction> result = new ArrayList<AnAction>();
 
     ArrayList<AnAction> secondary = new ArrayList<AnAction>();
-    if (myActionGroup != null) {
-      AnAction[] kids = myActionGroup.getChildren(null);
-      for (AnAction each : kids) {
-        if (myActionGroup.isPrimary(each)) {
-          result.add(each);
-        } else {
-          secondary.add(each);
-        }
+    AnAction[] kids = myActionGroup.getChildren(null);
+    for (AnAction each : kids) {
+      if (myActionGroup.isPrimary(each)) {
+        result.add(each);
+      } else {
+        secondary.add(each);
       }
     }
     result.add(new Separator());

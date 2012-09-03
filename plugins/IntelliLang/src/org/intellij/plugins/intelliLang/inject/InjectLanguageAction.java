@@ -117,7 +117,7 @@ public class InjectLanguageAction implements IntentionAction {
     Arrays.sort(langIds);
 
     final JList list = new JBList(langIds);
-    list.setCellRenderer(new ListCellRendererWrapper<String>(list.getCellRenderer()) {
+    list.setCellRenderer(new ListCellRendererWrapper<String>() {
       @Override
       public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
         final Language language = InjectedLanguage.findLanguageById(value);

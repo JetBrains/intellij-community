@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.NonNls;
+
 public class SimpleTimerTask {
 
   private final long myTargetTime;
@@ -56,8 +58,11 @@ public class SimpleTimerTask {
     return myTargetTime;
   }
 
+  @NonNls
   @Override
   public String toString() {
-    return "targetTime=" + myTargetTime + " cancelled=" + myCancelled + " runnable=" + myRunnable;
+    synchronized (LOCK) {
+      return "targetTime=" + myTargetTime + " cancelled=" + myCancelled + " runnable=" + myRunnable;
+    }
   }
 }

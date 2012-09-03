@@ -16,8 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -30,8 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.createSignature;
 
@@ -48,41 +46,101 @@ public class ArgumentInstruction extends InstructionImpl implements MixinTypeIns
   @Nullable
   public PsiType inferMixinType() {
     PsiElement element = getElement();
-    LOG.assertTrue(element instanceof GrReferenceExpression);
+    GrCall call = findCall(element);
+    GrExpression[] arguments = call.getExpressionArguments();
+    boolean hasNamed = call.getNamedArguments().length > 0;
 
-    PsiElement parent = element.getParent().getParent();
-    LOG.assertTrue(parent instanceof GrCall, "elemText: " + element.getText() +
-                                             "\nParent = " + (element.getParent() == null ? "null" : element.getParent().getClass()) +
-                                             "\nPParent" + (parent == null ? "null" : parent.getClass()));
+    GroovyResolveResult[] variants = getCallVariantsWithoutUsingArgumentTypes(call, arguments);
+    if (variants.length == 0) return null;
 
-    GrCall call = (GrCall)parent;
+    int index = ArrayUtil.indexOf(arguments, element) + (hasNamed ? 1 : 0);
+    return findParameterTypeIfSameInAllOverloads(hasNamed, variants, index);
+  }
 
-    int index = ArrayUtil.indexOf(call.getExpressionArguments(), element);
-    if (call.getNamedArguments().length > 0) index++;
+  @Nullable
+  private static PsiType findParameterTypeIfSameInAllOverloads(boolean hasNamed, GroovyResolveResult[] variants, int index) {
+    PsiType result = findParameterTypeUnambiguously(index, hasNamed, variants[0]);
+    if (result == null) return null;
 
-    GroovyResolveResult[] variants = call.getCallVariants((GrReferenceExpression)element);
-
-    PsiType result = null;
-    for (GroovyResolveResult variant : variants) {
-      GrClosureSignature signature = createSignature(variant);
-      if (signature == null) continue;
-
-      if (GrClosureSignatureUtil.mapParametersToArguments(signature, call) != null && !haveNullParameters(call)) {
+    for (int i = 1; i < variants.length; i++) {
+      GroovyResolveResult variant = variants[i];
+      if (!result.equals(findParameterTypeUnambiguously(index, hasNamed, variant))) {
         return null;
       }
-      GrClosureParameter[] parameters = signature.getParameters();
-      if (index >= parameters.length) continue;
-
-      result = TypesUtil.getLeastUpperBoundNullable(result, parameters[index].getType(), element.getManager());
     }
     return result;
   }
 
-  private static boolean haveNullParameters(GrCall call) {
-    for (GrExpression argument : call.getExpressionArguments()) {
-      if (argument.getType() == null) return true;
+  private static GroovyResolveResult[] getCallVariantsWithoutUsingArgumentTypes(GrCall call, GrExpression[] arguments) {
+    // we should be careful so that resolve doesn't use the type of the arguments at all,
+    // as we're right now calculating at least one of them
+    GrExpression firstArg = arguments.length == 0 ? null : arguments[0];
+    return call.getCallVariants(firstArg);
+  }
+
+  private static GrCall findCall(PsiElement element) {
+    PsiElement parent = element.getParent().getParent();
+    if (!(parent instanceof GrCall)) {
+      LOG.error("elemText: " + element.getText() +
+                "\nParent = " + (element.getParent() == null ? "null" : element.getParent().getClass()) +
+                "\nPParent" + (parent == null ? "null" : parent.getClass()));
     }
-    return false;
+    return (GrCall)parent;
+  }
+
+  @Nullable
+  private static PsiType findParameterTypeUnambiguously(int index, boolean hasNamed, GroovyResolveResult variant) {
+    GrClosureSignature signature = createSignature(variant);
+    if (signature == null || signature.getParameterCount() <= index) return null;
+
+    GrClosureParameter[] parameters = signature.getParameters();
+    if (hasNamed && !InheritanceUtil.isInheritor(parameters[0].getType(), CommonClassNames.JAVA_UTIL_MAP)) return null;
+
+    for (int i = 0; i <= index; i++) {
+      if (parameters[i].isOptional()) {
+        return null;
+      }
+    }
+
+    PsiType result = parameters[index].getType();
+    return result == null || dependsOnTypeParameters(result) ? null : result;
+  }
+
+  private static Boolean dependsOnTypeParameters(PsiType result) {
+    return result.accept(new PsiTypeVisitor<Boolean>() {
+      @Nullable
+      @Override
+      public Boolean visitClassType(PsiClassType classType) {
+        if (classType.resolve() instanceof PsiTypeParameter) {
+          return true;
+        }
+        for (PsiType type : classType.getParameters()) {
+          if (type.accept(this)) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      @Nullable
+      @Override
+      public Boolean visitArrayType(PsiArrayType arrayType) {
+        return arrayType.getComponentType().accept(this);
+      }
+
+      @Nullable
+      @Override
+      public Boolean visitWildcardType(PsiWildcardType wildcardType) {
+        PsiType bound = wildcardType.getBound();
+        return bound != null && bound.accept(this);
+      }
+
+      @Nullable
+      @Override
+      public Boolean visitType(PsiType type) {
+        return false;
+      }
+    });
   }
 
   @Override
@@ -97,6 +155,7 @@ public class ArgumentInstruction extends InstructionImpl implements MixinTypeIns
   }
 
   public String getVariableName() {
+    //noinspection ConstantConditions
     return ((GrReferenceExpression)getElement()).getReferenceName();
   }
 

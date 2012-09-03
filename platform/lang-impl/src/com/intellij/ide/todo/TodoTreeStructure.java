@@ -21,10 +21,12 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoPattern;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -123,14 +125,23 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
     return element == getRootElement() || element == mySummaryElement;
   }
 
+  @Override
   public final void commit() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
   }
 
+  @Override
   public boolean hasSomethingToCommit() {
     return PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments();
   }
 
+  @NotNull
+  @Override
+  public ActionCallback asyncCommit() {
+    return asyncCommitDocuments(myProject);
+  }
+
+  @Override
   public final Object getRootElement(){
     return myRootElement;
   }
@@ -147,6 +158,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
     return myTodoFilter;
   }
 
+  @Override
   public List<TreeStructureProvider> getProviders() {
     return Collections.emptyList();
   }
@@ -155,6 +167,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
     myAreModulesShown = state;
   }
 
+  @Override
   public boolean isModulesShown() {
     return myAreModulesShown;
   }

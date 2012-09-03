@@ -47,11 +47,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 public class CodeFoldingManagerImpl extends CodeFoldingManager implements ProjectComponent {
   private final Project myProject;
 
-  private final WeakList<Document> myDocumentsWithFoldingInfo = new WeakList<Document>();
+  private final List<Document> myDocumentsWithFoldingInfo = new WeakList<Document>();
 
   private final Key<DocumentFoldingInfo> FOLDING_INFO_IN_DOCUMENT_KEY = Key.create("FOLDING_INFO_IN_DOCUMENT_KEY");
   private static final Key<Boolean> FOLDING_STATE_INFO_IN_DOCUMENT_KEY = Key.create("FOLDING_STATE_IN_DOCUMENT");
@@ -59,19 +60,23 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   CodeFoldingManagerImpl(Project project) {
     myProject = project;
     project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
+      @Override
       public void updateStarted(@NotNull final Document doc) {
         resetFoldingInfo(doc);
       }
     });
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "CodeFoldingManagerImpl";
   }
 
+  @Override
   public void initComponent() { }
 
+  @Override
   public void disposeComponent() {
     for (Document document : myDocumentsWithFoldingInfo) {
       if (document != null) {
@@ -80,11 +85,13 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     }
   }
 
+  @Override
   public void projectOpened() {
     final EditorMouseMotionAdapter myMouseMotionListener = new EditorMouseMotionAdapter() {
       LightweightHint myCurrentHint = null;
       FoldRegion myCurrentFold = null;
 
+      @Override
       public void mouseMoved(EditorMouseEvent e) {
         if (myProject.isDisposed()) return;
         HintManager hintManager = HintManager.getInstance();
@@ -168,6 +175,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     };
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
+      @Override
       public void run() {
         EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(myMouseMotionListener, myProject);
       }
@@ -175,7 +183,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   }
 
   @Override
-  public void releaseFoldings(Editor editor) {
+  public void releaseFoldings(@NotNull Editor editor) {
     final Project project = editor.getProject();
     if (project != null && !project.equals(myProject)) return;
 
@@ -192,7 +200,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   }
 
   @Override
-  public void buildInitialFoldings(final Editor editor) {
+  public void buildInitialFoldings(@NotNull final Editor editor) {
     final Project project = editor.getProject();
     if (project == null || !project.equals(myProject)) return;
 
@@ -207,6 +215,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
     Runnable operation = new Runnable() {
+      @Override
       public void run() {
         Runnable runnable = updateFoldRegions(editor, true, true);
         if (runnable != null) {
@@ -228,18 +237,22 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
   }
 
+  @Override
   public void projectClosed() {
   }
   
+  @Override
   @Nullable
   public FoldRegion findFoldRegion(@NotNull Editor editor, int startOffset, int endOffset) {
     return FoldingUtil.findFoldRegion(editor, startOffset, endOffset);
   }
 
+  @Override
   public FoldRegion[] getFoldRegionsAtOffset(@NotNull Editor editor, int offset) {
     return FoldingUtil.getFoldRegionsAtOffset(editor, offset);
   }
 
+  @Override
   public void updateFoldRegions(@NotNull Editor editor) {
     updateFoldRegions(editor, false);
   }
@@ -262,6 +275,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
     final FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
     editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
+      @Override
       public void run() {
         EditorFoldingInfo foldingInfo = EditorFoldingInfo.get(editor);
         for (FoldRegion region : regions) {
@@ -274,6 +288,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     });
   }
 
+  @Override
   @Nullable
   public Runnable updateFoldRegionsAsync(@NotNull Editor editor, boolean firstTime) {
     return updateFoldRegions(editor, firstTime, false);
@@ -291,27 +306,32 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     }
   }
 
+  @Override
   public CodeFoldingState saveFoldingState(@NotNull Editor editor) {
     DocumentFoldingInfo info = getDocumentFoldingInfo(editor.getDocument());
     info.loadFromEditor(editor);
     return info;
   }
 
+  @Override
   public void restoreFoldingState(@NotNull Editor editor, @NotNull CodeFoldingState state) {
     ((DocumentFoldingInfo)state).setToEditor(editor);
   }
 
+  @Override
   public void writeFoldingState(@NotNull CodeFoldingState state, @NotNull Element element) throws WriteExternalException {
     ((DocumentFoldingInfo)state).writeExternal(element);
   }
 
+  @Override
   public CodeFoldingState readFoldingState(@NotNull Element element, @NotNull Document document) {
     DocumentFoldingInfo info = getDocumentFoldingInfo(document);
     info.readExternal(element);
     return info;
   }
 
-  private DocumentFoldingInfo getDocumentFoldingInfo(Document document) {
+  @NotNull
+  private DocumentFoldingInfo getDocumentFoldingInfo(@NotNull Document document) {
     DocumentFoldingInfo info = document.getUserData(FOLDING_INFO_IN_DOCUMENT_KEY);
     if (info == null) {
       info = new DocumentFoldingInfo(myProject, document);

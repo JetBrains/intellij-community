@@ -34,6 +34,7 @@ import org.intellij.plugins.xpathView.support.XPathSupport;
 import org.intellij.plugins.xpathView.ui.InputExpressionDialog;
 import org.jaxen.JaxenException;
 import org.jaxen.XPathSyntaxException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
@@ -106,11 +107,11 @@ public class FindByXPathAction extends AnAction {
             }
         };
         final UsageViewManager.UsageViewStateListener stateListener = new UsageViewManager.UsageViewStateListener() {
-            public void usageViewCreated(UsageView usageView) {
+            public void usageViewCreated(@NotNull UsageView usageView) {
                 usageView.addButtonToLowerPane(new MyEditExpressionAction(project, module), "&Edit Expression");
             }
 
-            public void findingUsagesFinished(UsageView usageView) {
+            public void findingUsagesFinished(@NotNull UsageView usageView) {
             }
         };
         UsageViewManager.getInstance(project).searchAndShowUsages(

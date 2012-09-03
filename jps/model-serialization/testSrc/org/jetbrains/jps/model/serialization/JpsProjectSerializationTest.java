@@ -4,10 +4,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
 import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,11 +26,13 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
   public void testLoadProject() {
     loadProject(SAMPLE_PROJECT_PATH);
     List<JpsModule> modules = myProject.getModules();
-    assertEquals(2, modules.size());
+    assertEquals(3, modules.size());
     JpsModule main = modules.get(0);
     assertEquals("main", main.getName());
     JpsModule util = modules.get(1);
     assertEquals("util", util.getName());
+    JpsModule xxx = modules.get(2);
+    assertEquals("xxx", xxx.getName());
 
     List<JpsLibrary> libraries = myProject.getLibraryCollection().getLibraries();
     assertEquals(3, libraries.size());
@@ -47,15 +52,18 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     JpsSdkReference<?> projectSdkReference = inheritedSdkDependency.getSdkReference();
     assertNotNull(projectSdkReference);
     assertEquals("1.6", projectSdkReference.getSdkName());
+
+    assertEquals(getUrl("xxx/output"), JpsJavaExtensionService.getInstance().getOutputUrl(xxx, true));
+    assertEquals(getUrl("xxx/output"), JpsJavaExtensionService.getInstance().getOutputUrl(xxx, false));
   }
 
   public void testSaveProject() {
     loadProject(SAMPLE_PROJECT_PATH);
-    JpsModule main = myProject.getModules().get(0);
-    doTestSaveModule(main, "main.iml");
-
-    JpsModule util = myProject.getModules().get(1);
-    doTestSaveModule(util, "util/util.iml");
+    List<JpsModule> modules = myProject.getModules();
+    doTestSaveModule(modules.get(0), "main.iml");
+    doTestSaveModule(modules.get(1), "util/util.iml");
+    //tod[nik] remember that test output root wasn't specified and doesn't save it to avoid unnecessary modifications of iml files
+    //doTestSaveModule(modules.get(2), "xxx/xxx.iml");
 
     File[] libs = getFileInSampleProject(".idea/libraries").listFiles();
     assertNotNull(libs);
@@ -85,7 +93,7 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
   private static void doTestSaveModule(JpsModule module, final String moduleFilePath) {
     try {
       Element actual = JDomSerializationUtil.createComponentElement("NewModuleRootManager");
-      JpsModuleSerializer.saveRootModel(module, actual);
+      JpsModuleRootModelSerializer.saveRootModel(module, actual);
       File imlFile = getFileInSampleProject(moduleFilePath);
       Element rootElement = loadModuleRootTag(imlFile);
       Element expected = JDomSerializationUtil.findComponent(rootElement, "NewModuleRootManager");

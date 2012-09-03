@@ -20,26 +20,19 @@ public abstract class CompileScope {
   private final JpsProject myJpsProject;
   private final Set<JpsArtifact> myArtifacts;
   protected final boolean myForcedCompilation;
-  private boolean myIncludeTests;
 
   protected CompileScope(@NotNull Project project,
                          JpsProject jpsProject,
                          Set<JpsArtifact> artifacts,
-                         boolean forcedCompilation,
-                         boolean tests) {
+                         boolean forcedCompilation) {
     myProject = project;
     myJpsProject = jpsProject;
     myArtifacts = artifacts;
     myForcedCompilation = forcedCompilation;
-    myIncludeTests = tests;
   }
 
   public boolean isAffected(JpsArtifact artifact) {
     return myArtifacts.contains(artifact);
-  }
-
-  public boolean isIncludeTests() {
-    return myIncludeTests;
   }
 
   public boolean isRecompilationForced(JpsArtifact artifact) {
@@ -53,7 +46,7 @@ public abstract class CompileScope {
   public abstract boolean isRecompilationForced(@NotNull BuildTarget target);
 
   public final boolean isAffected(ModuleChunk chunk) {
-    for (RealModuleBuildTarget target : chunk.getTargets()) {
+    for (ModuleBuildTarget target : chunk.getTargets()) {
       if (isAffected(target)) {
         return true;
       }

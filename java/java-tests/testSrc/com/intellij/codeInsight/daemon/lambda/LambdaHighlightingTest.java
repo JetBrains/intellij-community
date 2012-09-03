@@ -68,6 +68,10 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInferenceOnMethodCallSite() throws Exception {
     doTest();
   }
+
+  public void testInferFromTypeArgs() throws Exception {
+    doTest();
+  }
   
   public void testAmbiguity1() throws Exception {
     doTest();
@@ -85,7 +89,17 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
   
- 
+  public void testDefaultMethod() throws Exception {
+    doTest();
+  }
+
+  public void testLambdaOnVarargPlace() throws Exception {
+    doTest();
+  }
+
+  public void testLambdaRawOrNot() throws Exception {
+    doTest();
+  }
   
   public void testNoInferenceResult() throws Exception {
     doTest();

@@ -111,7 +111,7 @@ public class DetectedFrameworksComponent {
 
   private class GroupByListCellRenderer extends ListCellRendererWrapper<GroupByOption> {
     public GroupByListCellRenderer() {
-      super(DetectedFrameworksComponent.this.myGroupByComboBox);
+      super();
     }
 
     @Override

@@ -117,7 +117,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return panel;
   }
 
-  public abstract void configureLabelComponent(final SimpleColoredComponent coloredComponent);
+  public abstract void configureLabelComponent(@NotNull SimpleColoredComponent coloredComponent);
 
   @Override
   protected JComponent createCenterPanel() {

@@ -233,7 +233,7 @@ public class UnscrambleDialog extends DialogWrapper {
     for (final UnscrambleSupport unscrambleSupport : unscrambleComponents) {
       myUnscrambleChooser.addItem(unscrambleSupport);
     }
-    myUnscrambleChooser.setRenderer(new ListCellRendererWrapper<UnscrambleSupport>(myUnscrambleChooser.getRenderer()) {
+    myUnscrambleChooser.setRenderer(new ListCellRendererWrapper<UnscrambleSupport>() {
       @Override
       public void customize(JList list, UnscrambleSupport unscrambleSupport, int index, boolean selected, boolean hasFocus) {
         setText(unscrambleSupport == null ? IdeBundle.message("unscramble.no.unscrambler.item") : unscrambleSupport.getPresentableName());

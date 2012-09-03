@@ -39,7 +39,7 @@ import com.intellij.psi.impl.cache.impl.todo.TodoIndexers;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileContent;
@@ -131,7 +131,7 @@ public abstract class PlatformIdTableBuilding {
     @NotNull
     @Override
     public Map<TodoIndexEntry, Integer> map(FileContent inputData) {
-      Map<TodoIndexEntry, Integer> result = CollectionFactory.troveMap();
+      Map<TodoIndexEntry, Integer> result = ContainerUtil.newTroveMap();
       for (DataIndexer<TodoIndexEntry, Integer, FileContent> indexer : indexers) {
         for (Map.Entry<TodoIndexEntry, Integer> entry : indexer.map(inputData).entrySet()) {
           TodoIndexEntry key = entry.getKey();

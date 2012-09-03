@@ -3,15 +3,25 @@ package org.jetbrains.jps.model.serialization;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaModuleType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.artifact.JpsArtifactSerializer;
 import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
+import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
+import org.jetbrains.jps.model.serialization.module.JpsModuleClasspathSerializer;
+import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerializer;
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
+import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -20,15 +30,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
  * @author nik
  */
 public class JpsProjectLoader extends JpsLoaderBase {
-  private static final ExecutorService ourThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+  private static final BoundedTaskExecutor ourThreadPool = new BoundedTaskExecutor(SharedThreadPool.getInstance(), Runtime.getRuntime().availableProcessors());
+  public static final String CLASSPATH_ATTRIBUTE = "classpath";
+  public static final String CLASSPATH_DIR_ATTRIBUTE = "classpath-dir";
   private final JpsProject myProject;
   private final Map<String, String> myPathVariables;
 
@@ -162,10 +172,23 @@ public class JpsProjectLoader extends JpsLoaderBase {
     final String typeId = moduleRoot.getAttributeValue("type");
     final JpsModulePropertiesSerializer<?> serializer = getModulePropertiesSerializer(typeId);
     final JpsModule module = createModule(name, moduleRoot, serializer);
-    JpsModuleSerializer.loadRootModel(module, JDomSerializationUtil.findComponent(moduleRoot, "NewModuleRootManager"), projectSdkType);
-    final String moduleDirPath = file.getParent();
-    JpsFacetSerializer.loadFacets(module, JDomSerializationUtil.findComponent(moduleRoot, "FacetManager"),
-                                  FileUtil.toSystemIndependentName(moduleDirPath));
+
+    String baseModulePath = FileUtil.toSystemIndependentName(file.getParent());
+    String classpath = moduleRoot.getAttributeValue(CLASSPATH_ATTRIBUTE);
+    if (classpath == null) {
+      JpsModuleRootModelSerializer.loadRootModel(module, JDomSerializationUtil.findComponent(moduleRoot, "NewModuleRootManager"),
+                                                 projectSdkType);
+    }
+    else {
+      for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
+        JpsModuleClasspathSerializer classpathSerializer = extension.getClasspathSerializer();
+        if (classpathSerializer != null && classpathSerializer.getClasspathId().equals(classpath)) {
+          String classpathDir = moduleRoot.getAttributeValue(CLASSPATH_DIR_ATTRIBUTE);
+          classpathSerializer.loadClasspath(module, classpathDir, baseModulePath);
+        }
+      }
+    }
+    JpsFacetSerializer.loadFacets(module, JDomSerializationUtil.findComponent(moduleRoot, "FacetManager"), baseModulePath);
     return module;
   }
 

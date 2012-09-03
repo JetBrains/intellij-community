@@ -15,10 +15,13 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,14 +49,14 @@ import java.util.Map;
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized", "UnusedDeclaration"})
 public class SimpleColoredComponent extends JComponent implements Accessible {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SimpleColoredComponent");
+
   public static final Color STYLE_SEARCH_MATCH_BACKGROUND = new Color(250, 250, 250, 140);
+  public static final int FRAGMENT_ICON = -2;
 
   private final ArrayList<String> myFragments;
   private final ArrayList<SimpleTextAttributes> myAttributes;
   private ArrayList<Object> myFragmentTags = null;
   
-  public static final int FRAGMENT_ICON = -2;
-
   /**
    * Component's icon. It can be <code>null</code>.
    */
@@ -425,6 +428,79 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     return -1;
   }
 
+  protected JLabel formatToLabel(@NotNull JLabel label) {
+    label.setIcon(myIcon);
+
+    if (myFragments.size() > 0) {
+      final StringBuilder text = StringBuilderSpinAllocator.alloc();
+      text.append("<html><body style=\"white-space:nowrap\">");
+
+      for (int i = 0; i < myFragments.size(); i++) {
+        final String fragment = myFragments.get(i);
+        final SimpleTextAttributes attributes = myAttributes.get(i);
+        final Object tag = getFragmentTag(i);
+        if (tag instanceof BrowserLauncherTag) {
+          formatLink(text, fragment, attributes, ((BrowserLauncherTag)tag).myUrl);
+        }
+        else {
+          formatText(text, fragment, attributes);
+        }
+      }
+
+      text.append("</body></html>");
+      label.setText(text.toString());
+      StringBuilderSpinAllocator.dispose(text);
+    }
+
+    return label;
+  }
+
+  static void formatText(@NotNull StringBuilder builder, @NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
+    if (fragment.length() > 0) {
+      builder.append("<span");
+      formatStyle(builder, attributes);
+      builder.append('>').append(StringUtil.escapeXml(fragment)).append("</span>");
+    }
+  }
+
+  static void formatLink(@NotNull StringBuilder builder, @NotNull String fragment, @NotNull SimpleTextAttributes attributes, @NotNull String url) {
+    if (fragment.length() > 0) {
+      builder.append("<a href=\"").append(StringUtil.replace(url, "\"", "%22")).append("\"");
+      formatStyle(builder, attributes);
+      builder.append('>').append(StringUtil.escapeXml(fragment)).append("</a>");
+    }
+  }
+
+  private static void formatStyle(final StringBuilder builder, final SimpleTextAttributes attributes) {
+    final Color fgColor = attributes.getFgColor();
+    final Color bgColor = attributes.getBgColor();
+    final int style = attributes.getStyle();
+
+    final int pos = builder.length();
+    if (fgColor != null) {
+      builder.append("color:#").append(Integer.toString(fgColor.getRGB() & 0xFFFFFF, 16)).append(';');
+    }
+    if (bgColor != null) {
+      builder.append("background-color:#").append(Integer.toString(bgColor.getRGB() & 0xFFFFFF, 16)).append(';');
+    }
+    if ((style & SimpleTextAttributes.STYLE_BOLD) != 0) {
+      builder.append("font-weight:bold;");
+    }
+    if ((style & SimpleTextAttributes.STYLE_ITALIC) != 0) {
+      builder.append("font-style:italic;");
+    }
+    if ((style & SimpleTextAttributes.STYLE_UNDERLINE) != 0) {
+      builder.append("text-decoration:underline;");
+    }
+    else if ((style & SimpleTextAttributes.STYLE_STRIKEOUT) != 0) {
+      builder.append("text-decoration:line-through;");
+    }
+    if (builder.length() > pos) {
+      builder.insert(pos, " style=\"");
+      builder.append('"');
+    }
+  }
+
   protected void paintComponent(final Graphics g) {
     try {
       _doPaint(g);
@@ -439,7 +515,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     checkCanPaint(g);
     doPaint((Graphics2D)g);
   }
-  
+
   protected void doPaint(final Graphics2D g) {
     int offset = 0;
     final Icon icon = myIcon; // guard against concurrent modification (IDEADEV-12635)
@@ -454,7 +530,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
       doPaintIcon(g, icon, offset);
     }
   }
-  
 
   private void doPaintTextBackground(Graphics2D g, int offset) {
     if (isOpaque() || shouldDrawBackground()) {
@@ -764,6 +839,18 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     @Override
     public Locale getLocale() throws IllegalComponentStateException {
       return Locale.getDefault();
+    }
+  }
+
+  public static class BrowserLauncherTag implements Runnable {
+    private final String myUrl;
+
+    public BrowserLauncherTag(@NotNull String url) {
+      myUrl = url;
+    }
+
+    public void run() {
+      BrowserUtil.launchBrowser(myUrl);
     }
   }
 }

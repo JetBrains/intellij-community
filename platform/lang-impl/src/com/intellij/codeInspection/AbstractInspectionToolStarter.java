@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.application.ApplicationStarter;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.sampullara.cli.Args;
 import org.jetbrains.annotations.NotNull;
 
@@ -99,7 +99,7 @@ public abstract class AbstractInspectionToolStarter implements ApplicationStarte
       buff.append(" no arguments");
     }
     else {
-      final String argString = ParametersList.join(CollectionFactory.arrayList(args, 1, args.length));
+      final String argString = ParametersList.join(ContainerUtil.newArrayList(args, 1, args.length));
       buff.append(argString);
     }
   }

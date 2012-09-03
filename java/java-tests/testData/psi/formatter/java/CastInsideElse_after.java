@@ -1,4 +1,3 @@
-
 class Foo {
   public void foo() {
     if (a) {

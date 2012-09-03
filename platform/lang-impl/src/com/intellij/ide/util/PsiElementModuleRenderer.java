@@ -103,7 +103,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
       setIcon(AllIcons.Nodes.TestSourceFolder);
     }
     else {
-      setIcon(ModuleType.get(module).getNodeIcon(false));
+      setIcon(ModuleType.get(module).getIcon());
     }
   }
 

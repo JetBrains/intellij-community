@@ -9,6 +9,10 @@ import javax.swing.*;
  * Don't repeat mistakes of others ;-)
  */
 public class IntelliLangIcons {
-  public static final Icon Icon = IconLoader.getIcon("/org/intellij/plugins/intelliLang/icon.png"); // 32x32
-  public static final Icon Icon_small = IconLoader.getIcon("/org/intellij/plugins/intelliLang/icon_small.png"); // 16x16
+  private static Icon load(String path) {
+    return IconLoader.getIcon(path, IntelliLangIcons.class);
+  }
+
+  public static final Icon Icon = load("/org/intellij/plugins/intelliLang/icon.png"); // 32x32
+  public static final Icon Icon_small = load("/org/intellij/plugins/intelliLang/icon_small.png"); // 16x16
 }

@@ -15,13 +15,13 @@
  */
 package com.intellij.uiDesigner.propertyInspector.renderers;
 
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.lw.ColorDescriptor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
+import icons.UIDesignerIcons;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,7 +32,7 @@ import java.awt.*;
  */
 public class ColorRenderer extends ColoredListCellRenderer implements PropertyRenderer<ColorDescriptor> {
   private ColorDescriptor myColorDescriptor;
-  private final Icon myEmptyIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/empty.png");
+  private final Icon myEmptyIcon = UIDesignerIcons.Empty;
 
   public ColorRenderer() {
     setOpaque(true);

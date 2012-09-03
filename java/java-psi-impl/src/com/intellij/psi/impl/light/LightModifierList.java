@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +40,7 @@ public class LightModifierList extends LightElement implements PsiModifierList {
 
   public LightModifierList(PsiManager manager, final Language language, String... modifiers) {
     super(manager, language);
-    myModifiers = CollectionFactory.troveSet(modifiers);
+    myModifiers = ContainerUtil.newTroveSet(modifiers);
   }
 
   public void addModifier(String modifier) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
@@ -126,7 +125,7 @@ public class AntTasksProvider {
       final Map<List<URL>, SoftReference<AntClassLoader>> map = CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Map<List<URL>, SoftReference<AntClassLoader>>>() {
         @Override
         public Result<Map<List<URL>, SoftReference<AntClassLoader>>> compute() {
-          final Map<List<URL>, SoftReference<AntClassLoader>> map = CollectionFactory.hashMap();
+          final Map<List<URL>, SoftReference<AntClassLoader>> map = ContainerUtil.newHashMap();
           return Result.create(map, ProjectRootManager.getInstance(project));
         }
       });

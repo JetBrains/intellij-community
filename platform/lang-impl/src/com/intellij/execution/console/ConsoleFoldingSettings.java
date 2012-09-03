@@ -16,7 +16,7 @@
 package com.intellij.execution.console;
 
 import com.intellij.openapi.components.*;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -70,7 +70,7 @@ public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleF
   }
 
   private void writeDiff(List<String> added, List<String> removed, boolean negated) {
-    Set<String> baseline = CollectionFactory.troveSet();
+    Set<String> baseline = ContainerUtil.newTroveSet();
     for (CustomizableConsoleFoldingBean regexp : CustomizableConsoleFoldingBean.EP_NAME.getExtensions()) {
       if (regexp.negate == negated) {
         baseline.add(regexp.substring);

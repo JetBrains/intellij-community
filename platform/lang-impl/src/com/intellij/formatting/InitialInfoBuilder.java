@@ -215,7 +215,7 @@ class InitialInfoBuilder {
     final int subBlocksCount = subBlocks.size();
     int childBlockIndex = state.getIndexOfChildBlockToProcess();
     final Block block = subBlocks.get(childBlockIndex);
-    if (state.previousBlock != null) {
+    if (state.previousBlock != null || (myCurrentWhiteSpace != null && myCurrentWhiteSpace.isIsFirstWhiteSpace())) {
       myCurrentSpaceProperty = (SpacingImpl)state.parentBlock.getSpacing(state.previousBlock, block);
     }
 

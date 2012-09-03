@@ -25,11 +25,11 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import icons.MavenIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +46,7 @@ import java.util.List;
  */
 public class MavenRunConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
-  private static final Icon ICON = IconLoader.getIcon("/images/phase.png");
+  private static final Icon ICON = MavenIcons.Phase;
   private static final int MAX_NAME_LENGTH = 40;
 
   public static MavenRunConfigurationType getInstance() {

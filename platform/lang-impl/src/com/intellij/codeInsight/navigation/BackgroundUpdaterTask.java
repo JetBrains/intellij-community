@@ -39,9 +39,9 @@ import java.util.List;
 public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   protected AbstractPopup myPopup;
   protected T myComponent;
-  private List<PsiElement> myData = new ArrayList<PsiElement>();
+  private final List<PsiElement> myData = new ArrayList<PsiElement>();
 
-  private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Object lock = new Object();
 
   private volatile boolean myCanceled = false;
@@ -61,7 +61,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     super(project, title, canBeCancelled, backgroundOption);
   }
 
-  public void init(AbstractPopup popup, T component) {
+  public void init(@NotNull AbstractPopup popup, T component) {
     myPopup = popup;
     myComponent = component;
 

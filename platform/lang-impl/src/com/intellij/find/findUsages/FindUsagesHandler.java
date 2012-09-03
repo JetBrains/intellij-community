@@ -193,11 +193,11 @@ public abstract class FindUsagesHandler {
     return Collections.singleton(element.getText());
   }
 
-  protected boolean isSearchForTextOccurencesAvailable(PsiElement psiElement, boolean isSingleFile) {
+  protected boolean isSearchForTextOccurencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
     return false;
   }
 
-  public Collection<PsiReference> findReferencesToHighlight(PsiElement target, SearchScope searchScope) {
+  public Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target, SearchScope searchScope) {
     return ReferencesSearch.search(target, searchScope, false).findAll();
   }
 }

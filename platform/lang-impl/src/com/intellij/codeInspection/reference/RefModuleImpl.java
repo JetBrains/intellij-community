@@ -58,7 +58,7 @@ public class RefModuleImpl extends RefEntityImpl implements RefModule {
   }
 
   public Icon getIcon(final boolean expanded) {
-    return ModuleType.get(getModule()).getNodeIcon(expanded);
+    return ModuleType.get(getModule()).getIcon();
   }
 
   @Nullable

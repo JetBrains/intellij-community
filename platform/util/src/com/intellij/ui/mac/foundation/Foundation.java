@@ -17,9 +17,7 @@ package com.intellij.ui.mac.foundation;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
-import com.sun.jna.Callback;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
+import com.sun.jna.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -329,6 +327,89 @@ public class Foundation {
 
     public void drain() {
       invoke(myDelegate, "drain");
+    }
+  }
+
+  public static class NSRect extends Structure implements Structure.ByValue {
+    public NSPoint origin;
+    public NSSize size;
+
+    public NSRect(double x, double y, double w, double h) {
+      this.origin = new NSPoint(x, y);
+      this.size = new NSSize(w, h);
+    }
+  }
+
+  public static class NSPoint extends Structure implements Structure.ByValue {
+    public CGFloat x;
+    public CGFloat y;
+
+    @SuppressWarnings("UnusedDeclaration")
+    public NSPoint() {
+      this(0, 0);
+    }
+
+    public NSPoint(double x, double y) {
+      this.x = new CGFloat(x);
+      this.y = new CGFloat(y);
+    }
+  }
+
+  public static class NSSize extends Structure implements Structure.ByValue {
+    public CGFloat width;
+    public CGFloat height;
+
+    @SuppressWarnings("UnusedDeclaration")
+    public NSSize() {
+      this(0, 0);
+    }
+
+    public NSSize(double width, double height) {
+      this.width = new CGFloat(width);
+      this.height = new CGFloat(height);
+    }
+  }
+
+  public static class CGFloat implements NativeMapped {
+    private final double value;
+
+    @SuppressWarnings("UnusedDeclaration")
+    public CGFloat() {
+      this(0);
+    }
+
+    public CGFloat(double d) {
+      value = d;
+    }
+
+    public Object fromNative(Object o, FromNativeContext fromNativeContext) {
+      switch (Native.LONG_SIZE) {
+        case 4:
+          return new CGFloat((Float)o);
+        case 8:
+          return new CGFloat((Double)o);
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object toNative() {
+      switch (Native.LONG_SIZE) {
+        case 4:
+          return (float)value;
+        case 8:
+          return value;
+      }
+      throw new IllegalStateException();
+    }
+
+    public Class<?> nativeType() {
+      switch (Native.LONG_SIZE) {
+        case 4:
+          return Float.class;
+        case 8:
+          return Double.class;
+      }
+      throw new IllegalStateException();
     }
   }
 }

@@ -18,6 +18,7 @@ package com.intellij.util.concurrency;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
 
@@ -51,7 +52,7 @@ public class WorkerThread implements Runnable, Disposable {
     }
   }
 
-  public boolean addTaskFirst(Runnable action) {
+  public boolean addTaskFirst(@NotNull Runnable action) {
     synchronized(myTasks){
       if(myDisposed) return false;
 
@@ -61,6 +62,7 @@ public class WorkerThread implements Runnable, Disposable {
     }
   }
 
+  @Override
   public void dispose() {
     dispose(true);
   }
@@ -94,18 +96,19 @@ public class WorkerThread implements Runnable, Disposable {
     }
   }
 
+  @Override
   public void run() {
-    while(true){
-      while(true){
+    while (true) {
+      while (true) {
         Runnable task;
-        synchronized(myTasks){
+        synchronized (myTasks) {
           if (myTasks.isEmpty()) break;
           task = myTasks.removeFirst();
         }
         task.run();
         try {
           if (mySleep > 0) {
-            Thread.currentThread().sleep(mySleep);
+            Thread.sleep(mySleep);
           }
         }
         catch (InterruptedException e) {
@@ -113,16 +116,16 @@ public class WorkerThread implements Runnable, Disposable {
         }
       }
 
-      synchronized(myTasks){
-        if (myToDispose && myTasks.isEmpty()){
+      synchronized (myTasks) {
+        if (myToDispose && myTasks.isEmpty()) {
           myDisposed = true;
           return;
         }
 
-        try{
+        try {
           myTasks.wait();
         }
-        catch(InterruptedException e){
+        catch (InterruptedException ignored) {
         }
       }
     }

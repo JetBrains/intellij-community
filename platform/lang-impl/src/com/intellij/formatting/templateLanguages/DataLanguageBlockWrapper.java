@@ -118,7 +118,7 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithPar
   }
 
   @Nullable
-  public Spacing getSpacing(Block child1, Block child2) {
+  public Spacing getSpacing(Block child1, @NotNull Block child2) {
     if (child1 instanceof DataLanguageBlockWrapper && child2 instanceof DataLanguageBlockWrapper) {
       return myOriginal.getSpacing(((DataLanguageBlockWrapper)child1).myOriginal, ((DataLanguageBlockWrapper)child2).myOriginal);
     }

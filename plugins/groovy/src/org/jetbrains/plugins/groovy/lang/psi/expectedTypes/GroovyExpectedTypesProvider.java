@@ -15,12 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -49,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -64,16 +65,11 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
  * @author ven
  */
 public class GroovyExpectedTypesProvider {
-  private static final Key<CachedValue<TypeConstraint[]>> CACHED_EXPECTED_TYPES = Key.create("CACHED_EXPECTED_TYPES");
-
-  private GroovyExpectedTypesProvider() {
-  }
 
   public static TypeConstraint[] calculateTypeConstraints(@NotNull final GrExpression expression) {
-    CachedValue<TypeConstraint[]> cached = expression.getUserData(CACHED_EXPECTED_TYPES);
-    if (cached == null) {
-      expression.putUserData(CACHED_EXPECTED_TYPES, cached = CachedValuesManager.getManager(expression.getProject()).createCachedValue(new CachedValueProvider<TypeConstraint[]>() {
-        public Result<TypeConstraint[]> compute() {
+    return TypeInferenceHelper.getCurrentContext().getCachedValue(expression, new Computable<TypeConstraint[]>() {
+      @Override
+      public TypeConstraint[] compute() {
           MyCalculator calculator = new MyCalculator(expression);
           final PsiElement parent = expression.getParent();
           if (parent instanceof GroovyPsiElement) {
@@ -91,14 +87,12 @@ public class GroovyExpectedTypesProvider {
 
           if (!custom.isEmpty()) {
             custom.addAll(0, Arrays.asList(result));
-            return Result.create(custom.toArray(new TypeConstraint[custom.size()]), PsiModificationTracker.MODIFICATION_COUNT);
+            return custom.toArray(new TypeConstraint[custom.size()]);
           }
 
-          return Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
+          return result;
         }
-      }, false));
-    }
-    return cached.getValue();
+      });
   }
 
   public static Set<PsiType> getDefaultExpectedTypes(@NotNull GrExpression element) {

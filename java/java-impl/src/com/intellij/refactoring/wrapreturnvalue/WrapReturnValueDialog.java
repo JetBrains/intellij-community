@@ -199,7 +199,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
     
     final DefaultComboBoxModel model = new DefaultComboBoxModel();
     myFieldsCombo.setModel(model);
-    myFieldsCombo.setRenderer(new ListCellRendererWrapper(myFieldsCombo.getRenderer()) {
+    myFieldsCombo.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof PsiField) {

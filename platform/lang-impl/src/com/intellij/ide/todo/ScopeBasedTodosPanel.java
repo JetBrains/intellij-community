@@ -67,7 +67,7 @@ public class ScopeBasedTodosPanel extends TodoPanel {
     myValidationManager = DependencyValidationManager.getInstance(project);
     myValidationManager.addScopeListener(myScopeListener);
 
-    myScopes.setRenderer(new ListCellRendererWrapper<NamedScope>(myScopes){
+    myScopes.setRenderer(new ListCellRendererWrapper<NamedScope>(){
       @Override
       public void customize(JList list, NamedScope value, int index, boolean selected, boolean hasFocus) {
         setText(value.getName());

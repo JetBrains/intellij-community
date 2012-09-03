@@ -23,11 +23,11 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.*;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -44,7 +44,7 @@ import java.util.*;
  */
 public class ExecutorRegistryImpl extends ExecutorRegistry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ExecutorRegistryImpl");
-  private static final Icon STOP_AND_START_ICON = IconLoader.getIcon("/actions/restart.png");
+  private static final Icon STOP_AND_START_ICON = AllIcons.Actions.Restart;
 
 
   @NonNls public static final String RUNNERS_GROUP = "RunnerActions";

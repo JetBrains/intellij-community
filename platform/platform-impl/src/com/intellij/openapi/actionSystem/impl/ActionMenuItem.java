@@ -246,12 +246,7 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
                 SwingUtilities.invokeLater(new Runnable() {
                   @Override
                   public void run() {
-                    fm.doWhenFocusSettlesDown(new Runnable() {
-                      @Override
-                      public void run() {
-                        typeahead.setDone();
-                      }
-                    });
+                    fm.doWhenFocusSettlesDown(typeahead.createSetDoneRunnable());
                   }
                 });
               }

@@ -33,7 +33,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -48,6 +47,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
+import icons.XpathIcons;
 import org.intellij.plugins.xpathView.eval.EvalExpressionDialog;
 import org.intellij.plugins.xpathView.support.XPathSupport;
 import org.intellij.plugins.xpathView.ui.InputExpressionDialog;
@@ -120,7 +120,7 @@ public class XPathEvalAction extends XPathAction {
 
     private static final Logger LOG = Logger.getInstance("org.intellij.plugins.xpathView.XPathEvalAction");
 
-    private final Icon myIcon = IconLoader.getIcon("/icons/xml.png");
+    private final Icon myIcon = XpathIcons.Xml;
 
     protected void updateToolbar(AnActionEvent event) {
         super.updateToolbar(event);
@@ -321,11 +321,11 @@ public class XPathEvalAction extends XPathAction {
                 processPresentation,
                 presentation,
                 new UsageViewManager.UsageViewStateListener() {
-                    public void usageViewCreated(UsageView usageView) {
+                    public void usageViewCreated(@NotNull UsageView usageView) {
                         usageView.addButtonToLowerPane(editAction, "&Edit Expression");
                     }
 
-                    public void findingUsagesFinished(UsageView usageView) {
+                    public void findingUsagesFinished(@NotNull UsageView usageView) {
                     }
                 });
     }

@@ -153,12 +153,7 @@ public class WindowSystemPlaybackCall {
           return;
         }
 
-        toolWindow.getReady(context).doWhenDone(new Runnable() {
-          @Override
-          public void run() {
-            result.setDone();
-          }
-        }).doWhenRejected(new Runnable() {
+        toolWindow.getReady(context).doWhenDone(result.createSetDoneRunnable()).doWhenRejected(new Runnable() {
           @Override
           public void run() {
             result.setRejected("Cannot activate tool window with id:" + id);

@@ -116,7 +116,7 @@ public class DetectedRootsChooser {
     @Override
     public TableCellEditor getEditor(DetectedRootData o) {
       final ComboBox comboBox = new ComboBox(new CollectionComboBoxModel(Arrays.asList(o.getAllRoots()), o.getSelectedRoot()));
-      comboBox.setRenderer(new ListCellRendererWrapper<DetectedProjectRoot>(comboBox) {
+      comboBox.setRenderer(new ListCellRendererWrapper<DetectedProjectRoot>() {
         @Override
         public void customize(JList list, DetectedProjectRoot value, int index, boolean selected, boolean hasFocus) {
           setText(value.getRootTypeName());

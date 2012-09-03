@@ -254,7 +254,13 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       throws StorageException {
 
       checkNameStorage();
-      final Map<StubIndexKey, Map<Object, StubIdList>> newStubTree = getStubTree(newData);
+      final Map<StubIndexKey, Map<Object, StubIdList>> newStubTree;
+      try {
+        newStubTree = getStubTree(newData);
+      }
+      catch (SerializerNotFoundException e) {
+        throw new StorageException(e);
+      }
 
       final StubIndexImpl stubIndex = getStubIndex();
       final Collection<StubIndexKey> allStubIndices = stubIndex.getAllStubIndexKeys();
@@ -268,7 +274,13 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
           getWriteLock().lock();
 
           final Map<Integer, SerializedStubTree> oldData = readOldData(inputId);
-          final Map<StubIndexKey, Map<Object, StubIdList>> oldStubTree = getStubTree(oldData);
+          final Map<StubIndexKey, Map<Object, StubIdList>> oldStubTree;
+          try {
+            oldStubTree = getStubTree(oldData);
+          }
+          catch (SerializerNotFoundException e) {
+            throw new StorageException(e);
+          }
 
           super.updateWithMap(inputId, newData, oldKeysGetter);
 
@@ -302,7 +314,8 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       }
     }
 
-    private static Map<StubIndexKey, Map<Object, StubIdList>> getStubTree(@NotNull final Map<Integer, SerializedStubTree> data) {
+    private static Map<StubIndexKey, Map<Object, StubIdList>> getStubTree(@NotNull final Map<Integer, SerializedStubTree> data)
+      throws SerializerNotFoundException {
       final Map<StubIndexKey, Map<Object, StubIdList>> stubTree;
       if (!data.isEmpty()) {
         final SerializedStubTree stub = data.values().iterator().next();

@@ -35,8 +35,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -96,7 +96,7 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
   }
 
   public PsiType getType() {
-    return GroovyPsiManager.getInstance(getProject()).getType(this, TYPE_CALCULATOR);
+    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPE_CALCULATOR);
   }
 
   public IElementType getOperationTokenType() {
@@ -123,7 +123,7 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    return (GroovyResolveResult[])ResolveCache.getInstance(getProject()).resolveWithCaching(this, OUR_RESOLVER, false, incompleteCode);
+    return TypeInferenceHelper.getCurrentContext().multiResolve(this, incompleteCode, OUR_RESOLVER);
   }
 
   @Override

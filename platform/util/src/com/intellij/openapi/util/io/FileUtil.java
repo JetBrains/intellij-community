@@ -24,7 +24,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Stack;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.TObjectHashingStrategy;
@@ -100,31 +99,34 @@ public class FileUtil extends FileUtilRt {
     return new File(path).isAbsolute();
   }
 
-  public static boolean isAncestor(@NotNull final String ancestor, @NotNull final String descendant, final boolean strict) {
-    return isAncestor(new File(toSystemDependentName(ancestor)), new File(toSystemDependentName(descendant)), strict);
-  }
-
   /**
    * Check if the {@code ancestor} is an ancestor of {@code file}.
    *
-   * @param ancestor the file
-   * @param file     the file
-   * @param strict   if {@code false} then this method returns {@code true} if {@code ancestor}
-   *                 and {@code file} are equal
-   * @return {@code true} if {@code ancestor} is parent of {@code file}; {@code false} otherwise
+   * @param ancestor supposed ancestor.
+   * @param file     supposed descendant.
+   * @param strict   if {@code false} then this method returns {@code true} if {@code ancestor} equals to {@code file}.
+   * @return {@code true} if {@code ancestor} is parent of {@code file}; {@code false} otherwise.
    */
   public static boolean isAncestor(@NotNull File ancestor, @NotNull File file, boolean strict) {
-    File parent = strict ? getParentFile(file) : file;
-    while (true) {
-      if (parent == null) {
-        return false;
-      }
-      // Do not user file.equals as it incorrectly works on MacOS
-      if (pathsEqual(parent.getPath(), ancestor.getPath())) {
-        return true;
-      }
-      parent = getParentFile(parent);
+    return isAncestor(ancestor.getPath(), file.getPath(), strict);
+  }
+
+  public static boolean isAncestor(@NotNull String ancestor, @NotNull String descendant, boolean strict) {
+    String ancestorPath = toCanonicalPath(ancestor);
+    String filePath = toCanonicalPath(descendant);
+
+    if (ancestorPath == null || filePath == null) {
+      return false;
     }
+
+    boolean startsWith = SystemInfo.isFileSystemCaseSensitive ? StringUtil.startsWith(filePath, ancestorPath)
+                                                              : StringUtil.startsWithIgnoreCase(filePath, ancestorPath);
+    if (!startsWith) {
+      return false;
+    }
+
+    return filePath.length() > ancestorPath.length() && filePath.charAt(ancestorPath.length()) == '/' ||
+           !strict && filePath.length() == ancestorPath.length();
   }
 
   /**
@@ -631,52 +633,103 @@ public class FileUtil extends FileUtilRt {
     return (SystemInfo.isFileSystemCaseSensitive ? name : name.toLowerCase()).replace('\\', '/');
   }
 
+  /**
+   * Converts given path to canonical representation by eliminating '.'s, traversing '..'s, and omitting duplicate separators.
+   * Please note that this method is symlink-unfriendly (i.e. result of "/path/to/link/../next" most probably will differ from
+   * what {@link java.io.File#getCanonicalPath()} will return) - so use with care.
+   */
   @Nullable
   public static String toCanonicalPath(@Nullable String path) {
     return toCanonicalPath(path, File.separatorChar);
   }
 
   @Nullable
-  public static String toCanonicalPath(@Nullable String path, final char separator) {
+  public static String toCanonicalPath(@Nullable String path, final char separatorChar) {
     if (path == null || path.isEmpty()) {
       return path;
     }
 
-    path = path.replace(separator, '/');
-    final StringTokenizer tok = new StringTokenizer(path, "/");
-    final Stack<String> stack = new Stack<String>();
-    while (tok.hasMoreTokens()) {
-      final String token = tok.nextToken();
-      if ("..".equals(token)) {
-        if (!stack.isEmpty()) {
-          stack.pop();
+    final StringBuilder result = new StringBuilder(path.length());
+    int start = 0;
+    boolean separator = false;
+    int dots = 0;
+
+    if (SystemInfo.isWindows && separatorChar == '\\' && path.startsWith("\\\\")) {
+      result.append("\\\\");
+      start = 2;
+      separator = true;
+    }
+
+    for (int i = start; i < path.length(); ++i) {
+      final char c = path.charAt(i);
+      if (c == separatorChar || c == '/') {
+        if (!separator) {
+          if (dots == 1) {
+          }
+          else if (dots == 2) {
+            traverse(result, path);
+          }
+          else {
+            StringUtil.repeatSymbol(result, '.', dots);
+            result.append('/');
+          }
+          dots = 0;
         }
+        separator = true;
       }
-      else if (!token.isEmpty() && !".".equals(token)) {
-        stack.push(token);
+      else {
+        if (c == '.') {
+          if (separator || dots > 0) {
+            ++dots;
+          }
+          else {
+            result.append(c);
+          }
+        }
+        else {
+          if (dots > 0) {
+            StringUtil.repeatSymbol(result, '.', dots);
+            dots = 0;
+          }
+          result.append(c);
+        }
+        separator = false;
       }
     }
 
-    final StringBuilder result = new StringBuilder(path.length());
-    if (path.charAt(0) == '/') {
-      result.append("/");
+    if (dots > 0) {
+      traverse(result, path);
     }
-    else if (separator == '\\' &&
-             path.length() > 1 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':' &&
-             (stack.isEmpty() || !path.startsWith(stack.get(0)))) {
-      result.append(path.substring(0, 2));
-      if (!stack.isEmpty()) {
-        result.append('/');
+
+    if (StringUtil.endsWithChar(result, '/')) {
+      int toKeep = pathRootEnd(result) + 1;
+      if (toKeep < 0 || toKeep < result.length()) {
+        result.deleteCharAt(result.length() - 1);
       }
     }
-    for (int i = 0; i < stack.size(); i++) {
-      String str = stack.get(i);
-      if (i > 0) {
-        result.append('/');
-      }
-      result.append(str);
-    }
+
     return result.toString();
+  }
+
+  private static void traverse(StringBuilder path, String originalPath) {
+    int pos = StringUtil.lastIndexOf(path, '/', 0, path.length() - 1);
+    if (pos < 0) {
+      pos = pathRootEnd(path);
+      if (pos < 0) {
+        throw new IllegalArgumentException("Illegal path: '" + originalPath + "'");
+      }
+    }
+    path.delete(pos + 1, path.length());
+  }
+
+  private static int pathRootEnd(StringBuilder path) {
+    if (path.length() > 0 && path.charAt(0) == '/') {
+      return 0;
+    }
+    else if (path.length() > 2 && path.charAt(1) == ':' && path.charAt(2) == '/') {
+      return 2;
+    }
+    return -1;
   }
 
   @NotNull

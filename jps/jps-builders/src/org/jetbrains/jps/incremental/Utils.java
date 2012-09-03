@@ -5,7 +5,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.Project;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
@@ -35,11 +34,6 @@ public class Utils {
 
   public static void setSystemRoot(File systemRoot) {
     ourSystemRoot = systemRoot;
-  }
-
-  public static File getDataStorageRoot(Project project) {
-    final String name = project.getProjectName().toLowerCase(Locale.US);
-    return new File(ourSystemRoot, name + "_" + Integer.toHexString(project.getLocationHash()));
   }
 
   @Nullable

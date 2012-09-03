@@ -28,6 +28,7 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -936,6 +937,24 @@ public class PsiTreeUtil {
     }
 
     return true;
+  }
+
+  public static boolean treeWalkUp(@NotNull final PsiElement entrance,
+                                   @Nullable final PsiElement maxScope,
+                                   PairProcessor<PsiElement, PsiElement> eachScopeAndLastParent) {
+    PsiElement prevParent = null;
+    PsiElement scope = entrance;
+
+    while (scope != null) {
+      if (!eachScopeAndLastParent.process(scope, prevParent)) return false;
+
+      if (scope == maxScope) break;
+      prevParent = scope;
+      scope = prevParent.getContext();
+    }
+
+    return true;
+
   }
 
   @NotNull

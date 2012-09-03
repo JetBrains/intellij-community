@@ -16,23 +16,23 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.psi.*;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class JavaNonCodeSearchElementDescriptionProvider implements ElementDescriptionProvider {
+  @Override
   public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
     if (!(location instanceof NonCodeSearchDescriptionLocation)) return null;
     NonCodeSearchDescriptionLocation ncdLocation = (NonCodeSearchDescriptionLocation) location;
     if (element instanceof PsiPackage) {
       return ncdLocation.isNonJava() ? ((PsiPackage)element).getQualifiedName() : ((PsiPackage)element).getName();
     }
-    else if (element instanceof PsiClass) {
+    if (element instanceof PsiClass) {
       return ncdLocation.isNonJava() ? ((PsiClass)element).getQualifiedName() : ((PsiClass)element).getName();
     }
-    else if (element instanceof PsiMember) {
+    if (element instanceof PsiMember) {
       PsiMember member = (PsiMember)element;
       String name = member.getName();
       if (name == null) return null;

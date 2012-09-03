@@ -17,10 +17,10 @@ package org.intellij.images.fileTypes.impl;
 
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
+import icons.ImagesIcons;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.vfs.IfsUtil;
@@ -44,7 +44,7 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager implements App
 
   static {
     imageFileType = new ImageFileType();
-    imageFileType.setIcon(IconLoader.getIcon("/org/intellij/images/icons/ImagesFileType.png"));
+    imageFileType.setIcon(ImagesIcons.ImagesFileType);
     imageFileType.setName(IMAGE_FILE_TYPE_NAME);
     imageFileType.setDescription(IMAGE_FILE_TYPE_DESCRIPTION);
   }

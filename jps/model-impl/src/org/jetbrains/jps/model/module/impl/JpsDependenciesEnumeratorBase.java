@@ -1,5 +1,6 @@
 package org.jetbrains.jps.model.module.impl;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
@@ -21,6 +22,7 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
   private boolean myWithoutModuleSourceEntries;
   protected boolean myRecursively;
   protected final Collection<JpsModule> myRootModules;
+  private Condition<JpsDependencyElement> myCondition;
 
   protected JpsDependenciesEnumeratorBase(Collection<JpsModule> rootModules) {
     myRootModules = rootModules;
@@ -51,6 +53,12 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
   }
 
   @Override
+  public Self satisfying(Condition<JpsDependencyElement> condition) {
+    myCondition = condition;
+    return self();
+  }
+
+  @Override
   public Self recursively() {
     myRecursively = true;
     return self();
@@ -65,6 +73,7 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
     return result;
   }
 
+  @Override
   public void processModules(final Consumer<JpsModule> consumer) {
     processDependencies(new Processor<JpsDependencyElement>() {
       @Override
@@ -97,13 +106,17 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
     if (!processed.add(module)) return true;
 
     for (JpsDependencyElement element : module.getDependenciesList().getDependencies()) {
+      if (myCondition != null && !myCondition.value(element)) continue;
+
       if (myWithoutSdk && element instanceof JpsSdkDependency
        || myWithoutLibraries && element instanceof JpsLibraryDependency
        || myWithoutModuleSourceEntries && element instanceof JpsModuleSourceDependency) continue;
+
       if (myWithoutDepModules) {
         if (!myRecursively && element instanceof JpsModuleDependency) continue;
         if (element instanceof JpsModuleSourceDependency && !isEnumerationRootModule(module)) continue;
       }
+
       if (!shouldProcess(module, element)) {
         continue;
       }

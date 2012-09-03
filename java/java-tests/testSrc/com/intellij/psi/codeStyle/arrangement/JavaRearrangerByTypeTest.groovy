@@ -15,20 +15,22 @@
  */
 package com.intellij.psi.codeStyle.arrangement
 
-import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.lang.java.JavaLanguage
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType
+import org.junit.Before
+
+import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.*
 /**
  * @author Denis Zhdanov
  * @since 7/20/12 2:45 PM
  */
-class JavaRearrangerByTypeTest extends AbstractRearrangerTest {
+class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
 
-  JavaRearrangerByTypeTest() {
-    fileType = JavaFileType.INSTANCE
-    language = JavaLanguage.INSTANCE
+  @Before
+  void setUp() {
+    super.setUp()
+    commonSettings.BLANK_LINES_AROUND_METHOD = 0
+    commonSettings.BLANK_LINES_AROUND_CLASS = 0
   }
-
+  
   void testFieldsBeforeMethods() {
     doTest(
             '''\
@@ -53,7 +55,7 @@ class Test2 {
 public void test() {
 }
 }''',
-            [rule(atom(ArrangementEntryType.FIELD))]
+            [rule(FIELD)]
     )
   }
 
@@ -97,7 +99,7 @@ class Test {
     return null;
   }
 }''',
-            [rule(atom(ArrangementEntryType.FIELD))]
+            [rule(FIELD)]
     )
   }
   
@@ -135,7 +137,7 @@ class Test {
      });
    }
 }''',
-            [rule(atom(ArrangementEntryType.FIELD))]
+            [rule(FIELD)]
     )
   }
   
@@ -153,9 +155,9 @@ class Test {
    enum E { ONE, TWO }
    class Inner {}
 }''',
-            [rule(atom(ArrangementEntryType.INTERFACE)),
-             rule(atom(ArrangementEntryType.ENUM)),
-             rule(atom(ArrangementEntryType.CLASS))]
+            [rule(INTERFACE),
+             rule(ENUM),
+             rule(CLASS)]
     )
   }
   
@@ -193,7 +195,7 @@ class Test {
     });
   }
 }''',
-            [rule(atom(ArrangementEntryType.FIELD))]
+            [rule(FIELD)]
     )
   }
 }

@@ -49,7 +49,7 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> impleme
       presentation.addText(getValue().getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
 
-    presentation.setIcon(ModuleType.get(getValue()).getNodeIcon(false));
+    presentation.setIcon(ModuleType.get(getValue()).getIcon());
   }
 
   protected boolean showModuleNameInBold() {

@@ -63,7 +63,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.PairFunction;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -615,7 +615,7 @@ public class JavaCompletionUtil {
   }
 
   public static Set<String> getAllLookupStrings(@NotNull PsiMember member) {
-    Set<String> allLookupStrings = CollectionFactory.linkedHashSet();
+    Set<String> allLookupStrings = ContainerUtil.newLinkedHashSet();
     String name = member.getName();
     allLookupStrings.add(name);
     PsiClass containingClass = member.getContainingClass();

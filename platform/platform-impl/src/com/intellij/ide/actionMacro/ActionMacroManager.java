@@ -96,21 +96,20 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     myActionManager = actionManagerEx;
     myActionManager.addAnActionListener(new AnActionListener() {
       public void beforeActionPerformed(AnAction action, DataContext dataContext, final AnActionEvent event) {
-        if (myIsRecording) {
-          String id = myActionManager.getId(action);
-          //noinspection HardCodedStringLiteral
-          if (id != null && !"StartStopMacroRecording".equals(id)) {
-            myRecordingMacro.appendAction(id);
-            String shortcut = null;
-            if (event.getInputEvent() instanceof KeyEvent) {
-              shortcut = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStrokeForEvent((KeyEvent)event.getInputEvent()));
-            }
-            notifyUser(id + (shortcut != null ? " (" + shortcut + ")" : ""), false);
+        String id = myActionManager.getId(action);
+        if (id == null) return;
+        //noinspection HardCodedStringLiteral
+        if ("StartStopMacroRecording".equals(id)) {
+          myLastActionInputEvent.add(event.getInputEvent());
+        }
+        else if (myIsRecording) {
+          myRecordingMacro.appendAction(id);
+          String shortcut = null;
+          if (event.getInputEvent() instanceof KeyEvent) {
+            shortcut = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStrokeForEvent((KeyEvent)event.getInputEvent()));
           }
-
-          if (id != null) {
-            myLastActionInputEvent.add(event.getInputEvent());
-          }
+          notifyUser(id + (shortcut != null ? " (" + shortcut + ")" : ""), false);
+          myLastActionInputEvent.add(event.getInputEvent());
         }
       }
 

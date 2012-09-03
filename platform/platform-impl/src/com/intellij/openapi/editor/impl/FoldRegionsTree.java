@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +40,7 @@ abstract class FoldRegionsTree {
   private int[] myCachedStartOffsets;
   private int[] myCachedFoldedLines;
   int myCachedLastIndex = -1;
-  private ArrayList<FoldRegion> myRegions = CollectionFactory.arrayList();  //sorted in tree left-to-right topdown traversal order
+  private ArrayList<FoldRegion> myRegions = ContainerUtil.newArrayList();  //sorted in tree left-to-right topdown traversal order
   private static final Comparator<FoldRegion> BY_END_OFFSET = new Comparator<FoldRegion>() {
     @Override
     public int compare(FoldRegion r1, FoldRegion r2) {

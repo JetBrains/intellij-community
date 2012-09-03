@@ -19,11 +19,11 @@
 package org.intellij.images.thumbnail.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import icons.ImagesIcons;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.vfs.IfsUtil;
@@ -37,7 +37,7 @@ import javax.swing.*;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ThumbnailViewImpl implements ThumbnailView {
-  private static final Icon TOOL_WINDOW_ICON = IconLoader.getIcon("/org/intellij/images/icons/ThumbnailToolWindow.png");
+  private static final Icon TOOL_WINDOW_ICON = ImagesIcons.ThumbnailToolWindow;
 
   private final Project project;
   private final ToolWindow toolWindow;

@@ -41,13 +41,12 @@ public class RefreshSessionImpl extends RefreshSession {
   private final boolean myIsAsync;
   private final boolean myIsRecursive;
   private final Runnable myFinishRunnable;
+  private final ModalityState myModalityState;
+  private final Semaphore mySemaphore = new Semaphore();
 
   private List<VirtualFile> myWorkQueue = new ArrayList<VirtualFile>();
   private List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
-  private final Semaphore mySemaphore = new Semaphore();
   private volatile boolean iHaveEventsToFire;
-
-  private final ModalityState myModalityState;
 
   public RefreshSessionImpl(final boolean isAsync, final boolean recursively, final Runnable finishRunnable) {
     this(isAsync, recursively, finishRunnable, ModalityState.NON_MODAL);
@@ -90,7 +89,6 @@ public class RefreshSessionImpl extends RefreshSession {
   }
 
   public void scan() {
-    // TODO: indicator in the status bar...
     List<VirtualFile> workQueue = myWorkQueue;
     myWorkQueue = new ArrayList<VirtualFile>();
     boolean hasEventsToFire = myFinishRunnable != null || !myEvents.isEmpty();

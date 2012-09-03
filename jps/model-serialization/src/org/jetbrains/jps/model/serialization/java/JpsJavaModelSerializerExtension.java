@@ -1,6 +1,7 @@
 package org.jetbrains.jps.model.serialization.java;
 
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElementFactory;
@@ -11,7 +12,7 @@ import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleReference;
-import org.jetbrains.jps.model.serialization.JpsLibraryRootTypeSerializer;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryRootTypeSerializer;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementSerializer;
@@ -23,20 +24,20 @@ import java.util.List;
  * @author nik
  */
 public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension {
-  private static final String EXPORTED_ATTRIBUTE = "exported";
-  private static final String SCOPE_ATTRIBUTE = "scope";
-  private static final String OUTPUT_TAG = "output";
-  private static final String URL_ATTRIBUTE = "url";
-  private static final String LANGUAGE_LEVEL_ATTRIBUTE = "languageLevel";
-  private static final String EXPLODED_TAG = "exploded";
-  private static final String EXCLUDE_EXPLODED_TAG = "exclude-exploded";
-  private static final String TEST_OUTPUT_TAG = "output-test";
-  private static final String INHERIT_COMPILER_OUTPUT_ATTRIBUTE = "inherit-compiler-output";
-  private static final String EXCLUDE_OUTPUT_TAG = "exclude-output";
+  public static final String EXPORTED_ATTRIBUTE = "exported";
+  public static final String SCOPE_ATTRIBUTE = "scope";
+  public static final String OUTPUT_TAG = "output";
+  public static final String URL_ATTRIBUTE = "url";
+  public static final String LANGUAGE_LEVEL_ATTRIBUTE = "languageLevel";
+  public static final String EXPLODED_TAG = "exploded";
+  public static final String EXCLUDE_EXPLODED_TAG = "exclude-exploded";
+  public static final String TEST_OUTPUT_TAG = "output-test";
+  public static final String INHERIT_COMPILER_OUTPUT_ATTRIBUTE = "inherit-compiler-output";
+  public static final String EXCLUDE_OUTPUT_TAG = "exclude-output";
   private static final String ANNOTATION_PATHS_TAG = "annotation-paths";
   private static final String JAVADOC_PATHS_TAG = "javadoc-paths";
   private static final String MODULE_LANGUAGE_LEVEL_ATTRIBUTE = "LANGUAGE_LEVEL";
-  private static final String ROOT_TAG = "root";
+  public static final String ROOT_TAG = "root";
 
   @Override
   public void loadRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {
@@ -121,13 +122,12 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   private static void loadJavaModuleExtension(JpsModule module, Element rootModelComponent) {
     final JpsJavaModuleExtension extension = getService().getOrCreateModuleExtension(module);
     final Element outputTag = rootModelComponent.getChild(OUTPUT_TAG);
-    if (outputTag != null) {
-      extension.setOutputUrl(outputTag.getAttributeValue(URL_ATTRIBUTE));
-    }
+    String outputUrl = outputTag != null ? outputTag.getAttributeValue(URL_ATTRIBUTE) : null;
+    extension.setOutputUrl(outputUrl);
     final Element testOutputTag = rootModelComponent.getChild(TEST_OUTPUT_TAG);
-    if (testOutputTag != null) {
-      extension.setTestOutputUrl(testOutputTag.getAttributeValue(URL_ATTRIBUTE));
-    }
+    String testOutputUrl = testOutputTag != null ? testOutputTag.getAttributeValue(URL_ATTRIBUTE) : null;
+    extension.setTestOutputUrl(StringUtil.isEmpty(testOutputUrl) ? outputUrl : testOutputUrl);
+
     extension.setInheritOutput(Boolean.parseBoolean(rootModelComponent.getAttributeValue(INHERIT_COMPILER_OUTPUT_ATTRIBUTE)));
     extension.setExcludeOutput(rootModelComponent.getChild(EXCLUDE_OUTPUT_TAG) != null);
 

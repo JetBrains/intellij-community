@@ -516,7 +516,7 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
         }
       });
 
-      myComboBox.setRenderer(new ListCellRendererWrapper(myComboBox.getRenderer()) {
+      myComboBox.setRenderer(new ListCellRendererWrapper() {
         @Override
         public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           if (value instanceof ResourceEnum) {

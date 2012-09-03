@@ -92,7 +92,7 @@ public class BreakpointManager implements JDOMExternalizable {
   @Nullable private List<Breakpoint> myBreakpointsListForIteration = null; // another list for breakpoints iteration, unsynchronized access ok
   private final Map<Document, List<BreakpointWithHighlighter>> myDocumentBreakpoints = new HashMap<Document, List<BreakpointWithHighlighter>>();
   private final Map<String, String> myUIProperties = new java.util.HashMap<String, String>();
-  private final Map<Key<? extends Breakpoint>, String> myDefaultSuspendPolicies = new HashMap<Key<? extends Breakpoint>, String>();
+  private final Map<Key<? extends Breakpoint>, BreakpointDefaults> myBreakpointDefaults = new HashMap<Key<? extends Breakpoint>, BreakpointDefaults>();
 
   private BreakpointsConfigurationDialogFactory myBreakpointsConfigurable;
 
@@ -103,6 +103,7 @@ public class BreakpointManager implements JDOMExternalizable {
   @NonNls private static final String MASTER_BREAKPOINT_TAGNAME = "master_breakpoint";
   @NonNls private static final String SLAVE_BREAKPOINT_TAGNAME = "slave_breakpoint";
   @NonNls private static final String DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME = "default_suspend_policy";
+  @NonNls private static final String DEFAULT_CONDITION_STATE_ATTRIBUTE_NAME = "default_condition_enabled";
 
   private void update(@NotNull List<BreakpointWithHighlighter> breakpoints) {
     final TIntHashSet intHash = new TIntHashSet();
@@ -389,20 +390,20 @@ public class BreakpointManager implements JDOMExternalizable {
     return dialog;
   }
 
-  public String getDefaultSuspendPolicy(Key<? extends Breakpoint> category) {
-    final String policy = myDefaultSuspendPolicies.get(category);
-    if (DebuggerSettings.SUSPEND_NONE.equals(policy) || DebuggerSettings.SUSPEND_THREAD.equals(policy)) {
-      return policy;
+  @NotNull
+  public BreakpointDefaults getBreakpointDefaults(Key<? extends Breakpoint> category) {
+    BreakpointDefaults defaults = myBreakpointDefaults.get(category);
+    if (defaults == null) {
+      defaults = new BreakpointDefaults();
     }
-    return DebuggerSettings.SUSPEND_ALL;
+    return defaults;
   }
 
-  public void setDefaultSuspendPolicy(Key<? extends Breakpoint> category, String value) {
-    if (DebuggerSettings.SUSPEND_NONE.equals(value) || DebuggerSettings.SUSPEND_THREAD.equals(value) || DebuggerSettings.SUSPEND_ALL.equals(value)) {
-      myDefaultSuspendPolicies.put(category, value);
-    }
+  public void setBreakpointDefaults(Key<? extends Breakpoint> category, BreakpointDefaults defaults) {
+    myBreakpointDefaults.put(category, defaults);
   }
-  
+
+
   @Nullable
   public RunToCursorBreakpoint addRunToCursorBreakpoint(Document document, int lineIndex, final boolean ignoreBreakpoints) {
     return RunToCursorBreakpoint.create(myProject, document, lineIndex, ignoreBreakpoints);
@@ -577,7 +578,9 @@ public class BreakpointManager implements JDOMExternalizable {
             final Element group = (Element)group1;
             final String categoryName = group.getName();
             final Key<Breakpoint> breakpointCategory = BreakpointCategory.lookup(categoryName);
-            setDefaultSuspendPolicy(breakpointCategory, group.getAttributeValue(DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME));
+            final String defaultPolicy = group.getAttributeValue(DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME);
+            final boolean conditionEnabled = Boolean.parseBoolean(group.getAttributeValue(DEFAULT_CONDITION_STATE_ATTRIBUTE_NAME, "true"));
+            setBreakpointDefaults(breakpointCategory, new BreakpointDefaults(defaultPolicy, conditionEnabled));
             Element anyExceptionBreakpointGroup;
             if (!AnyExceptionBreakpoint.ANY_EXCEPTION_BREAKPOINT.equals(breakpointCategory)) {
               // for compatibility with previous format
@@ -718,9 +721,11 @@ public class BreakpointManager implements JDOMExternalizable {
         try {
           removeInvalidBreakpoints();
           final Map<Key<? extends Breakpoint>, Element> categoryToElementMap = new java.util.HashMap<Key<? extends Breakpoint>, Element>();
-          for (Key<? extends Breakpoint> category : myDefaultSuspendPolicies.keySet()) {
+          for (Key<? extends Breakpoint> category : myBreakpointDefaults.keySet()) {
             final Element group = getCategoryGroupElement(categoryToElementMap, category, parentNode);
-            group.setAttribute(DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME, String.valueOf(getDefaultSuspendPolicy(category)));
+            final BreakpointDefaults defaults = getBreakpointDefaults(category);
+            group.setAttribute(DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME, String.valueOf(defaults.getSuspendPolicy()));
+            group.setAttribute(DEFAULT_CONDITION_STATE_ATTRIBUTE_NAME, String.valueOf(defaults.isConditionEnabled()));
           }
           for (final Breakpoint breakpoint : getBreakpoints()) {
             final Key<? extends Breakpoint> category = breakpoint.getCategory();

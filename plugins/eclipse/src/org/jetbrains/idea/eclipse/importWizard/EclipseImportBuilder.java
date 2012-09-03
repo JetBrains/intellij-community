@@ -58,9 +58,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
-import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
 import org.jetbrains.idea.eclipse.conversion.EclipseUserLibrariesHelper;
+import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
 import javax.swing.*;
 import java.io.File;
@@ -280,7 +280,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
           EclipseClasspathReader.setupOutput(rootModel, path + "/bin");
         }
         ClasspathStorage.setStorageType(rootModel,
-                                      getParameters().linkConverted ? EclipseClasspathStorageProvider.ID : ClasspathStorage.DEFAULT_STORAGE);
+                                      getParameters().linkConverted ? JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID : ClasspathStorage.DEFAULT_STORAGE);
         if (model != null) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {

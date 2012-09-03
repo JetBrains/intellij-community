@@ -18,14 +18,13 @@ package com.intellij.openapi.ui.playback.commands;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
-import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
 
 public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
 
@@ -65,11 +64,7 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
       public void run() {
         TypingTarget typingTarget = findTarget(context);
         if (typingTarget != null) {
-          typingTarget.type(unicode).doWhenDone(new Runnable() {
-            public void run() {
-              result.setDone();
-            }
-          }).doWhenRejected(new Runnable() {
+          typingTarget.type(unicode).doWhenDone(result.createSetDoneRunnable()).doWhenRejected(new Runnable() {
             public void run() {
               typeCodes(context, context.getRobot(), codes).notify(result);
             }

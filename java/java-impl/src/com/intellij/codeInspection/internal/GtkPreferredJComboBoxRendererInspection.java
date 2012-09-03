@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,12 +28,13 @@ import javax.swing.*;
 
 public class GtkPreferredJComboBoxRendererInspection extends InternalInspection {
   private static final String COMBO_BOX_CLASS_NAME = JComboBox.class.getName();
-  private static final String RIGHT_RENDERER_CLASS_NAME = ListCellRendererWrapper.class.getName();
+  private static final String[] RIGHT_RENDERER_CLASS_NAMES =
+    {ListCellRendererWrapper.class.getName(), ColoredListCellRenderer.class.getName()};
   private static final String SETTER_METHOD_NAME = "setRenderer";
 
   private static final String MESSAGE =
-    "Default ListCellRenderer implementations are known to cause UI artifacts under GTK+ Look and Feel, " +
-    "so please use ListCellRendererWrapper instead.";
+    "Default ListCellRenderer implementations are known to cause UI artifacts under GTK+ look&feel, " +
+    "so please use ListCellRendererWrapper or ColoredListCellRenderer instead.";
 
   @NotNull
   public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
@@ -57,8 +59,10 @@ public class GtkPreferredJComboBoxRendererInspection extends InternalInspection 
         final PsiType type = arguments[0].getType();
         if (!(type instanceof PsiClassType)) return;
         final PsiClass rendererClass = ((PsiClassType)type).resolve();
-        final PsiClass rightClass = facade.findClass(RIGHT_RENDERER_CLASS_NAME, GlobalSearchScope.allScope(project));
-        if (InheritanceUtil.isInheritorOrSelf(rendererClass, rightClass, true)) return;
+        for (String rightClassName : RIGHT_RENDERER_CLASS_NAMES) {
+          final PsiClass rightClass = facade.findClass(rightClassName, GlobalSearchScope.allScope(project));
+          if (InheritanceUtil.isInheritorOrSelf(rendererClass, rightClass, true)) return;
+        }
 
         holder.registerProblem(expression, MESSAGE);
       }

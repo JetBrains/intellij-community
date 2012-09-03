@@ -27,7 +27,6 @@ import com.android.resources.ScreenSize;
 import com.android.resources.UiMode;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
@@ -42,14 +41,15 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import icons.AndroidIcons;
 import org.jetbrains.android.dom.manifest.Activity;
 import org.jetbrains.android.dom.manifest.Application;
 import org.jetbrains.android.dom.manifest.Manifest;
@@ -74,11 +74,11 @@ import java.util.List;
  * @author Eugene.Kudelevsky
  */
 class AndroidLayoutPreviewToolWindowForm implements Disposable {
-  private static final Icon ZOOM_TO_FIT_ICON = IconLoader.getIcon("/icons/zoomFit.png");
-  private static final Icon ZOOM_IN_ICON = IconLoader.getIcon("/icons/zoomIn.png");
-  private static final Icon ZOOM_OUT_ICON = IconLoader.getIcon("/icons/zoomOut.png");
-  private static final Icon ZOOM_ACTUAL_ICON = IconLoader.getIcon("/icons/zoomActual.png");
-  private static final Icon REFRESH_ICON = IconLoader.getIcon("/icons/refreshPreview.png");
+  private static final Icon ZOOM_TO_FIT_ICON = AndroidIcons.ZoomFit;
+  private static final Icon ZOOM_IN_ICON = AndroidIcons.ZoomIn;
+  private static final Icon ZOOM_OUT_ICON = AndroidIcons.ZoomOut;
+  private static final Icon ZOOM_ACTUAL_ICON = AndroidIcons.ZoomActual;
+  private static final Icon REFRESH_ICON = AndroidIcons.RefreshPreview;
 
   private static final String CUSTOM_DEVICE_STRING = "Edit...";
 
@@ -157,7 +157,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     myNightCombo = new ComboBox();
     myComboPanel.add(myNightCombo, gb);
 
-    myDevicesCombo.setRenderer(new ListCellRendererWrapper(myDevicesCombo.getRenderer()) {
+    myDevicesCombo.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof LayoutDevice) {
@@ -170,7 +170,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
       }
     });
 
-    myDeviceConfigurationsCombo.setRenderer(new ListCellRendererWrapper(myDeviceConfigurationsCombo.getRenderer()) {
+    myDeviceConfigurationsCombo.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof LayoutDeviceConfiguration) {
@@ -320,7 +320,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     myScrollPane.getVerticalScrollBar().setUnitIncrement(5);
 
     myDockModeCombo.setModel(new DefaultComboBoxModel(UiMode.values()));
-    myDockModeCombo.setRenderer(new ListCellRendererWrapper(myDockModeCombo.getRenderer()) {
+    myDockModeCombo.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         setText(((UiMode)value).getLongDisplayValue());
@@ -335,14 +335,14 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     };
 
     myNightCombo.setModel(new DefaultComboBoxModel(NightMode.values()));
-    myNightCombo.setRenderer(new ListCellRendererWrapper(myNightCombo.getRenderer()) {
+    myNightCombo.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         setText(((NightMode)value).getLongDisplayValue());
       }
     });
 
-    myTargetCombo.setRenderer(new ListCellRendererWrapper(myTargetCombo.getRenderer()) {
+    myTargetCombo.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof IAndroidTarget) {
@@ -998,7 +998,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     }
     myThemeCombo.setModel(new CollectionComboBoxModel(themes, selection));
 
-    myThemeCombo.setRenderer(new ListCellRendererWrapper(myThemeCombo.getRenderer()) {
+    myThemeCombo.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof ThemeData) {

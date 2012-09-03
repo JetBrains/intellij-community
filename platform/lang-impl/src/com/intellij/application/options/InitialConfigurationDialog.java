@@ -82,7 +82,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
     }
 
     myKeymapComboBox.setModel(new DefaultComboBoxModel(keymaps.toArray(new Keymap[keymaps.size()])));
-    myKeymapComboBox.setRenderer(new ListCellRendererWrapper(myKeymapComboBox.getRenderer()) {
+    myKeymapComboBox.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(final JList list, final Object value, final int index, final boolean selected, final boolean cellHasFocus) {
         Keymap keymap = (Keymap)value;
@@ -104,7 +104,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
 
     final EditorColorsScheme[] colorSchemes = EditorColorsManager.getInstance().getAllSchemes();
     myColorSchemeComboBox.setModel(new DefaultComboBoxModel(colorSchemes));
-    myColorSchemeComboBox.setRenderer(new ListCellRendererWrapper(myColorSchemeComboBox.getRenderer()) {
+    myColorSchemeComboBox.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean cellHasFocus) {
         if (value != null) {

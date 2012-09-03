@@ -35,8 +35,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.util.containers.CollectionFactory.arrayList;
-import static com.intellij.util.containers.CollectionFactory.troveMap;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static com.intellij.util.containers.ContainerUtil.newTroveMap;
 
 /**
  * @author cdr
@@ -70,12 +70,12 @@ class UpdateFoldRegionsOperation implements Runnable {
   public void run() {
     EditorFoldingInfo info = EditorFoldingInfo.get(myEditor);
     FoldingModelEx foldingModel = (FoldingModelEx)myEditor.getFoldingModel();
-    Map<TextRange,Boolean> rangeToExpandStatusMap = troveMap();
+    Map<TextRange,Boolean> rangeToExpandStatusMap = newTroveMap();
 
     removeInvalidRegions(info, foldingModel, rangeToExpandStatusMap);
 
-    Map<FoldRegion, Boolean> shouldExpand = troveMap();
-    Map<FoldingGroup, Boolean> groupExpand = troveMap();
+    Map<FoldRegion, Boolean> shouldExpand = newTroveMap();
+    Map<FoldingGroup, Boolean> groupExpand = newTroveMap();
     List<FoldRegion> newRegions = addNewRegions(info, foldingModel, rangeToExpandStatusMap, shouldExpand, groupExpand);
 
     applyExpandStatus(newRegions, shouldExpand, groupExpand);
@@ -99,7 +99,7 @@ class UpdateFoldRegionsOperation implements Runnable {
                                          @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap,
                                          @NotNull Map<FoldRegion, Boolean> shouldExpand,
                                          @NotNull Map<FoldingGroup, Boolean> groupExpand) {
-    List<FoldRegion> newRegions = arrayList();
+    List<FoldRegion> newRegions = newArrayList();
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
     for (PsiElement element : myElementsToFoldMap.keySet()) {
       ProgressManager.checkCanceled();
@@ -156,7 +156,7 @@ class UpdateFoldRegionsOperation implements Runnable {
   private void removeInvalidRegions(@NotNull EditorFoldingInfo info,
                                     @NotNull FoldingModelEx foldingModel,
                                     @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap) {
-    List<FoldRegion> toRemove = arrayList();
+    List<FoldRegion> toRemove = newArrayList();
     InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(myProject);
     for (FoldRegion region : foldingModel.getAllFoldRegions()) {
       PsiElement element = info.getPsiElement(region);

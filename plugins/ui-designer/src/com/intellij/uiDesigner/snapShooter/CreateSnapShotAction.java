@@ -45,7 +45,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
@@ -62,6 +61,7 @@ import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
 import com.intellij.uiDesigner.radComponents.RadComponentFactory;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.util.IncorrectOperationException;
+import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -324,7 +324,7 @@ public class CreateSnapShotAction extends AnAction {
     private final PsiDirectory myDirectory;
     @NonNls private static final String SWING_PACKAGE = "javax.swing.";
 
-    private final Icon myUnknownComponentIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/unknown.png");
+    private final Icon myUnknownComponentIcon = UIDesignerIcons.Unknown;
 
     private MyDialog(Project project, final SnapShotClient client, final PsiDirectory dir) {
       super(project, true);

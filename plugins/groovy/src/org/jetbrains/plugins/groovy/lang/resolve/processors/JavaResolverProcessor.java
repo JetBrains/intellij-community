@@ -15,27 +15,24 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Checks names of processed element because our Groovy processors don't do it
  *
  * @author Max Medvedev
  */
-public class JavaResolverProcessor implements PsiScopeProcessor {
-  private final PsiScopeProcessor myDelegate;
+public class JavaResolverProcessor extends DelegatingScopeProcessor {
   private final NameHint myHint;
 
-
   public JavaResolverProcessor(PsiScopeProcessor delegate) {
-    myDelegate = delegate;
+    super(delegate);
     myHint = delegate.getHint(NameHint.KEY);
   }
 
@@ -50,16 +47,7 @@ public class JavaResolverProcessor implements PsiScopeProcessor {
     }
 
 
-    return myDelegate.execute(element, state);
+    return super.execute(element, state);
   }
 
-  @Override
-  public <T> T getHint(@NotNull Key<T> hintKey) {
-    return myDelegate.getHint(hintKey);
-  }
-
-  @Override
-  public void handleEvent(Event event, @Nullable Object associated) {
-    myDelegate.handleEvent(event, associated);
-  }
 }

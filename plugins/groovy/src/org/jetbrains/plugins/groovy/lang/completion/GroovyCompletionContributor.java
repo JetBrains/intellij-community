@@ -79,7 +79,7 @@ import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.elementType;
-import static com.intellij.util.containers.CollectionFactory.*;
+import static com.intellij.util.containers.ContainerUtil.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.SEPARATORS;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.WHITE_SPACES_OR_COMMENTS;
@@ -404,7 +404,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
   static Runnable completeReference(final CompletionParameters parameters,
                                         GrReferenceElement reference, final InheritorsHolder inheritorsHolder, final PrefixMatcher matcher, final Consumer<LookupElement> _consumer) {
     final Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
-      final Set<LookupElement> added = hashSet();
+      final Set<LookupElement> added = newHashSet();
       @Override
       public void consume(LookupElement element) {
         if (added.add(element)) {
@@ -413,7 +413,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       }
     };
 
-    final Map<PsiModifierListOwner, LookupElement> staticMembers = hashMap();
+    final Map<PsiModifierListOwner, LookupElement> staticMembers = newHashMap();
     final PsiElement qualifier = reference.getQualifier();
     final PsiType qualifierType = qualifier instanceof GrExpression ? ((GrExpression)qualifier).getType() : null;
 
@@ -435,7 +435,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       unresolvedProps = Collections.emptySet();
     }
 
-    final List<LookupElement> zeroPriority = arrayList();
+    final List<LookupElement> zeroPriority = newArrayList();
     reference.processVariants(matcher, parameters, new Consumer<LookupElement>() {
       public void consume(LookupElement lookupElement) {
         Object object = lookupElement.getObject();

@@ -27,7 +27,7 @@ import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
-import org.jetbrains.jps.model.serialization.JpsSdkPropertiesSerializer;
+import org.jetbrains.jps.model.serialization.library.JpsSdkPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.facet.JpsFacetConfigurationSerializer;
 
 import java.util.Arrays;

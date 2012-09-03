@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.intellij.util.containers.CollectionFactory.arrayList;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 /**
  * @author peter
@@ -114,7 +114,7 @@ public class DomApplicationComponent {
   }
 
   public synchronized List<DomFileDescription> getAllFileDescriptions() {
-    final List<DomFileDescription> result = arrayList();
+    final List<DomFileDescription> result = newArrayList();
     for (Set<DomFileDescription> descriptions : myRootTagName2FileDescription.values()) {
       result.addAll(descriptions);
     }

@@ -26,10 +26,8 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final CompileScope myScope;
   private final boolean myIsMake;
   private final boolean myIsProjectRebuild;
-  private final ProjectChunks myProductionChunks;
-  private final ProjectChunks myTestChunks;
+  private final ProjectChunks myChunks;
   private final MessageHandler myDelegateMessageHandler;
-  private volatile boolean myCompilingTests = false;
   private final Set<ModuleBuildTarget> myNonIncrementalModules = new HashSet<ModuleBuildTarget>();
 
   private final ProjectPaths myProjectPaths;
@@ -44,8 +42,6 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   public CompileContextImpl(CompileScope scope,
                             ProjectDescriptor pd, boolean isMake,
                             boolean isProjectRebuild,
-                            ProjectChunks productionChunks,
-                            ProjectChunks testChunks,
                             MessageHandler delegateMessageHandler,
                             Map<String, String> builderParams,
                             CanceledStatus cancelStatus) throws ProjectBuildException {
@@ -56,8 +52,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myScope = scope;
     myIsProjectRebuild = isProjectRebuild;
     myIsMake = !isProjectRebuild && isMake;
-    myProductionChunks = productionChunks;
-    myTestChunks = testChunks;
+    myChunks = new ProjectChunks(pd.jpsProject);
     myDelegateMessageHandler = delegateMessageHandler;
     myProjectPaths = new ProjectPaths(pd.jpsProject);
   }
@@ -68,13 +63,8 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public ProjectChunks getTestChunks() {
-    return myTestChunks;
-  }
-
-  @Override
-  public ProjectChunks getProductionChunks() {
-    return myProductionChunks;
+  public ProjectChunks getChunks() {
+    return myChunks;
   }
 
   @Override
@@ -141,11 +131,11 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public void markNonIncremental(RealModuleBuildTarget target) {
-    if (!isCompilingTests()) {
-      myNonIncrementalModules.add(new RealModuleBuildTarget(target.getModule(), JavaModuleBuildTargetType.PRODUCTION));
+  public void markNonIncremental(ModuleBuildTarget target) {
+    if (!target.isTests()) {
+      myNonIncrementalModules.add(new ModuleBuildTarget(target.getModule(), JavaModuleBuildTargetType.TEST));
     }
-    myNonIncrementalModules.add(new RealModuleBuildTarget(target.getModule(), JavaModuleBuildTargetType.TEST));
+    myNonIncrementalModules.add(target);
   }
 
   @Override
@@ -163,11 +153,6 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public boolean isCompilingTests() {
-    return myCompilingTests;
-  }
-
-  @Override
   public final CanceledStatus getCancelStatus() {
     return myCancelStatus;
   }
@@ -179,12 +164,8 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     }
   }
 
-  void setCompilingTests(boolean compilingTests) {
-    myCompilingTests = compilingTests;
-  }
-
   @Override
-  public void clearNonIncrementalMark(RealModuleBuildTarget target) {
+  public void clearNonIncrementalMark(ModuleBuildTarget target) {
     myNonIncrementalModules.remove(target);
   }
 

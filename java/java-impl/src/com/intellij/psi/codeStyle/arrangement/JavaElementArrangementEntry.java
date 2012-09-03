@@ -36,6 +36,7 @@ public class JavaElementArrangementEntry extends DefaultArrangementEntry
   private final Set<ArrangementModifier> myModifiers = EnumSet.noneOf(ArrangementModifier.class);
 
   @NotNull private final  Set<ArrangementEntryType> myTypes;
+  @NotNull private final  ArrangementEntryType      myType;
   @Nullable private final String                    myName;
 
   public JavaElementArrangementEntry(@Nullable ArrangementEntry parent,
@@ -55,6 +56,7 @@ public class JavaElementArrangementEntry extends DefaultArrangementEntry
                                      boolean canBeArranged)
   {
     super(parent, startOffset, endOffset, canBeArranged);
+    myType = type;
     myTypes = EnumSet.of(type);
     myName = name;
   }
@@ -79,6 +81,11 @@ public class JavaElementArrangementEntry extends DefaultArrangementEntry
   @Override
   public Set<ArrangementEntryType> getTypes() {
     return myTypes;
+  }
+
+  @NotNull
+  public ArrangementEntryType getType() {
+    return myType;
   }
 
   @Override

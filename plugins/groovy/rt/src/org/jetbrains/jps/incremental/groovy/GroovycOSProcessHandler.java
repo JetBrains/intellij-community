@@ -46,7 +46,7 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler");
   private final Consumer<String> myStatusUpdater;
 
-  private GroovycOSProcessHandler(Process process, Consumer<String> statusUpdater) {
+  public GroovycOSProcessHandler(Process process, Consumer<String> statusUpdater) {
     super(process, null, null);
     myStatusUpdater = statusUpdater;
   }

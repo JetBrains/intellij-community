@@ -103,12 +103,12 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
       "void foo() {\n" +
       "}",
       "@Override\n" +
-      "public int hashCode() \n" +
+      "public int hashCode()\n" +
       "{\n" +
       "}\n" +
       "\n" +
       "@Deprecated\n" +
-      "void foo() \n" +
+      "void foo()\n" +
       "{\n" +
       "}"
     );
@@ -147,7 +147,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
     getSettings().CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     
     String text =
-      "class Test \n" +
+      "class Test\n" +
       "{\n" +
       "    void foo() {\n" +
       "        bind(new TypeLiteral<MyType>() {}).toProvider(MyProvider.class);\n" +

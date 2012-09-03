@@ -20,6 +20,7 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -129,6 +130,11 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
 
   public final boolean hasSomethingToCommit() {
     return PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments();
+  }
+  @NotNull
+  @Override
+  public ActionCallback asyncCommit() {
+    return asyncCommitDocuments(myProject);
   }
 
   protected abstract Object[] buildChildren(HierarchyNodeDescriptor descriptor);

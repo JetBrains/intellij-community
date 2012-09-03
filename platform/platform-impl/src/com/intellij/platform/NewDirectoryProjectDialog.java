@@ -141,7 +141,7 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
         return original;
       }
     };
-    return new ListCellRendererWrapper(intermediate) {
+    return new ListCellRendererWrapper() {
       @Override
       public void customize(final JList list, final Object value, final int index, final boolean selected, final boolean cellHasFocus) {
         if (value == null) return;

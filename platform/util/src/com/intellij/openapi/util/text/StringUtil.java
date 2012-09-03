@@ -2338,6 +2338,10 @@ public class StringUtil extends StringUtilRt {
     return StringUtilRt.parseDouble(string, defaultValue);
   }
 
+  public static boolean parseBoolean(final String string, final boolean defaultValue) {
+    return StringUtilRt.parseBoolean(string, defaultValue);
+  }
+
   @NotNull
   public static String getShortName(@NotNull Class aClass) {
     return StringUtilRt.getShortName(aClass);

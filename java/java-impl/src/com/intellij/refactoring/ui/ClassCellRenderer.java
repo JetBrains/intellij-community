@@ -33,7 +33,7 @@ public class ClassCellRenderer extends ListCellRendererWrapper<PsiClass> {
   private final boolean myShowReadOnly;
 
   public ClassCellRenderer(ListCellRenderer original) {
-    super(original);
+    super();
     myShowReadOnly = true;
   }
 

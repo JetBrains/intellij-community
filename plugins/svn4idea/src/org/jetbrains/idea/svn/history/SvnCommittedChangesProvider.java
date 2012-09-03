@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
@@ -41,6 +40,7 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
+import icons.Svn4ideaIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -445,7 +445,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     public void update(final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      presentation.setIcon(IconLoader.getIcon("/icons/ShowIntegratedFrom.png"));
+      presentation.setIcon(Svn4ideaIcons.ShowIntegratedFrom);
       presentation.setText(SvnBundle.message("committed.changes.action.enable.merge.highlighting"));
       presentation.setDescription(SvnBundle.message("committed.changes.action.enable.merge.highlighting.description.text"));
     }

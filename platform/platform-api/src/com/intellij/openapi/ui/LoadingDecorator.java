@@ -75,7 +75,7 @@ public class LoadingDecorator {
 
     final Font font = text.getFont();
     text.setFont(font.deriveFont(font.getStyle(), font.getSize() + 8));
-    text.setForeground(Color.black);
+    //text.setForeground(Color.black);
 
     final int gap = new JLabel().getIconTextGap();
     final NonOpaquePanel result = new NonOpaquePanel(new FlowLayout(FlowLayout.CENTER, gap * 3, 0));

@@ -153,7 +153,7 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
         combo.setSelectedItem(avd);
       }
       else {
-        combo.setRenderer(new ListCellRendererWrapper(combo.getRenderer()) {
+        combo.setRenderer(new ListCellRendererWrapper() {
           @Override
           public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
             if (value == null) {

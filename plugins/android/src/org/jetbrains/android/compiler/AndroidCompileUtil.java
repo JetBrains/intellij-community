@@ -42,6 +42,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
@@ -886,5 +887,23 @@ public class AndroidCompileUtil {
 
   public static void reportException(@NotNull CompileContext context, @NotNull String messagePrefix, @NotNull Exception e) {
     context.addMessage(CompilerMessageCategory.ERROR, messagePrefix + e.getClass().getSimpleName() + ": " + e.getMessage(), null, -1, -1);
+  }
+
+  public static void markDirtyAndRefresh(VirtualFile f, boolean recursively) {
+    markDirty(f, recursively);
+    f.refresh(false, recursively);
+  }
+
+  public static void markDirty(VirtualFile f, boolean recursively) {
+    if (f instanceof NewVirtualFile) {
+      final NewVirtualFile newF = (NewVirtualFile)f;
+
+      if (recursively) {
+        newF.markDirtyRecursively();
+      }
+      else {
+        newF.markDirty();
+      }
+    }
   }
 }

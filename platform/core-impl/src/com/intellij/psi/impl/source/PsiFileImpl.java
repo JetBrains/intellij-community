@@ -174,7 +174,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     FileViewProvider provider = getViewProvider();
     final VirtualFile vFile = provider.getVirtualFile();
     if (!vFile.isValid()) return false;
-    if (!provider.isPhysical()) return true; // "dummy" file
+    if (!provider.isEventSystemEnabled()) return true; // "dummy" file
     if (myManager.getProject().isDisposed()) return false;
     return isPsiUpToDate(vFile);
   }
@@ -182,7 +182,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected boolean isPsiUpToDate(@NotNull VirtualFile vFile) {
     final FileViewProvider provider = myManager.findViewProvider(vFile);
     Language language = getLanguage();
-    if (provider.getPsi(language) == this) {
+    if (provider == null || provider.getPsi(language) == this) { // provider == null in tests
       return true;
     }
     Language baseLanguage = provider.getBaseLanguage();

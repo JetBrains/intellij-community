@@ -176,7 +176,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
       cModel.addElement(level);
     }
     llCombo.setSelectedItem(myEffectiveLanguageLevel != null ? myEffectiveLanguageLevel : LanguageLevel.JDK_1_3);
-    llCombo.setRenderer(new ListCellRendererWrapper(llCombo.getRenderer()) {
+    llCombo.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof LanguageLevel) {

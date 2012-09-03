@@ -234,11 +234,7 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
           mySession = null;
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
             public void run() {
-              tryToInitSessionFromFocus(switchTarget, showSpots).doWhenProcessed(new Runnable() {
-                public void run() {
-                  result.setDone();
-                }
-              });
+              tryToInitSessionFromFocus(switchTarget, showSpots).doWhenProcessed(result.createSetDoneRunnable());
             }
           });
         }

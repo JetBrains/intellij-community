@@ -166,43 +166,43 @@
 
     <action id="Maven.UpdateFolders" class="org.jetbrains.idea.maven.project.actions.UpdateFoldersAction"
             text="Generate Sources and Update Folders For All Projects"
-            icon="/images/updateFolders.png">
+            icon="MavenIcons.UpdateFolders">
     </action>
 
     <action id="Maven.UpdateFoldersForProject" class="org.jetbrains.idea.maven.project.actions.UpdateFoldersForProjectAction"
             text="Generate Sources and Update Folders"
-            icon="/images/updateFolders.png">
+            icon="MavenIcons.UpdateFolders">
     </action>
 
     <action id="Maven.DownloadAllSources" class="org.jetbrains.idea.maven.project.actions.DownloadAllSourcesAction"
             text="Download Sources" description="Download sources for all dependencies"
-            icon="/images/download.png">
+            icon="MavenIcons.Download">
     </action>
 
     <action id="Maven.DownloadAllDocs" class="org.jetbrains.idea.maven.project.actions.DownloadAllDocsAction"
             text="Download Documentation" description="Download documentation for all dependencies"
-            icon="/images/download.png">
+            icon="MavenIcons.Download">
     </action>
 
     <action id="Maven.DownloadAllSourcesAndDocs" class="org.jetbrains.idea.maven.project.actions.DownloadAllSourcesAndDocsAction"
             text="Download Sources and Documentation" description="Download sources and documentation for all dependencies"
-            icon="/images/download.png">
+            icon="MavenIcons.Download">
     </action>
 
     <action id="Maven.DownloadSelectedSourcesAndDocs" class="org.jetbrains.idea.maven.project.actions.DownloadSelectedSourcesAndDocsAction"
             text="Download Sources and Documentation"
             description="Download sources and documentation for all dependencies for selected projects"
-            icon="/images/download.png">
+            icon="MavenIcons.Download">
     </action>
 
     <action id="Maven.DownloadSelectedSources" class="org.jetbrains.idea.maven.project.actions.DownloadSelectedSourcesAction"
             text="Download Sources" description="Download sources for all dependencies for selected projects"
-            icon="/images/download.png">
+            icon="MavenIcons.Download">
     </action>
 
     <action id="Maven.DownloadSelectedDocs" class="org.jetbrains.idea.maven.project.actions.DownloadSelectedDocsAction"
             text="Download Documentation" description="Download documentation for all dependencies for selected projects"
-            icon="/images/download.png">
+            icon="MavenIcons.Download">
     </action>
 
     <action id="Maven.AddManagedFiles"
@@ -265,7 +265,7 @@
     <action id="Maven.ToggleOffline"
             class="org.jetbrains.idea.maven.project.actions.ToggleOfflineAction" text="Toggle Offline Mode"
             description="Toggle offline mode for Maven builds"
-            icon="/images/offlineMode.png">
+            icon="MavenIcons.OfflineMode">
     </action>
 
     <action id="Maven.ToggleSkipTests"
@@ -305,7 +305,7 @@
     </group>
 
     <group id="Maven.DownloadAllGroup" popup="true" class="org.jetbrains.idea.maven.project.actions.DownloadActionGroup"
-           icon="/images/download.png">
+           icon="MavenIcons.Download">
       <reference id="Maven.DownloadAllSources"/>
       <reference id="Maven.DownloadAllDocs"/>
       <reference id="Maven.DownloadAllSourcesAndDocs"/>
@@ -342,7 +342,7 @@
               text="Show Basic Phases Only"
               description="Show basic phases only"
               secondary="true"
-              icon="/images/filterPhases.png"/>
+              icon="MavenIcons.FilterPhases"/>
     </group>
 
     <group id="Maven.DependencyMenu">
@@ -382,7 +382,7 @@
     </group>
 
     <group id="Maven.GlobalProjectMenu" class="org.jetbrains.idea.maven.utils.actions.MavenActionGroup" popup="true" text="Maven"
-           icon="/images/mavenLogo.png">
+           icon="MavenIcons.MavenLogo">
       <add-to-group group-id="EditorPopupMenu" anchor="last"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
       <reference ref="Maven.BaseProjectMenu"/>

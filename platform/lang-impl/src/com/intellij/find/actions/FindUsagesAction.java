@@ -38,7 +38,6 @@ import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
 public class FindUsagesAction extends AnAction {
-
   public FindUsagesAction() {
     setInjectedContext(true);
   }

@@ -166,7 +166,7 @@ public class FileChooserDescriptor implements Cloneable {
   }
 
   protected static Icon dressIcon(final VirtualFile file, final Icon baseIcon) {
-    return file.isSymLink() ? new LayeredIcon(baseIcon, PlatformIcons.SYMLINK_ICON) : baseIcon;
+    return file.isValid() && file.isSymLink() ? new LayeredIcon(baseIcon, PlatformIcons.SYMLINK_ICON) : baseIcon;
   }
 
   public String getName(final VirtualFile file) {

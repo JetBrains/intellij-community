@@ -12,11 +12,13 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.TypeInferenceHelper;
 
 /**
  * @author Maxim.Medvedev
@@ -56,7 +58,7 @@ public abstract class GrThisSuperReferenceExpressionBase extends GrExpressionImp
 
   @Override
   public PsiElement resolve() {
-    final ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, OUR_RESOLVER, false, false);
+    final ResolveResult[] results = TypeInferenceHelper.getCurrentContext().multiResolve(this, false, OUR_RESOLVER);
     if (results.length == 1) return results[0].getElement();
     return null;
   }
@@ -117,7 +119,7 @@ public abstract class GrThisSuperReferenceExpressionBase extends GrExpressionImp
     public ResolveResult[] resolve(@NotNull GrThisSuperReferenceExpressionBase ref, boolean incompleteCode) {
       final PsiElement resolved = ref.resolveInner();
       if (resolved == null) return ResolveResult.EMPTY_ARRAY;
-      return new ResolveResult[]{new GroovyResolveResultImpl(resolved, true)};
+      return new GroovyResolveResult[]{new GroovyResolveResultImpl(resolved, true)};
     }
   }
 }

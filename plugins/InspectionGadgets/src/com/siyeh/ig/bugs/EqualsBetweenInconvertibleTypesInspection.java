@@ -81,8 +81,11 @@ public class EqualsBetweenInconvertibleTypesInspection
       if (comparisonType == null) {
         return;
       }
-      if (TypeConversionUtil.areTypesConvertible(TypeConversionUtil.erasure(comparedType),
-                                                 TypeConversionUtil.erasure(comparisonType))) {
+      final PsiType comparedTypeErasure = TypeConversionUtil.erasure(comparedType);
+      final PsiType comparisonTypeErasure = TypeConversionUtil.erasure(comparisonType);
+      if (comparedTypeErasure == null || 
+          comparisonTypeErasure == null || 
+          TypeConversionUtil.areTypesConvertible(comparedTypeErasure, comparisonTypeErasure)) {
         return;
       }
       registerMethodCallError(expression, comparedType, comparisonType);

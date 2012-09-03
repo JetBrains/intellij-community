@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -744,7 +743,7 @@ public class MavenProject {
 
   @NotNull
   public Set<String> getSupportedPackagings() {
-    Set<String> result = CollectionFactory.hashSet(MavenConstants.TYPE_POM,
+    Set<String> result = ContainerUtil.newHashSet(MavenConstants.TYPE_POM,
                                                   MavenConstants.TYPE_JAR,
                                                   "ejb", "ejb-client", "war", "ear", "bundle", "maven-plugin");
     for (MavenImporter each : getSuitableImporters()) {

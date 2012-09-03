@@ -151,7 +151,7 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
    * @return
    */
   @Nullable
-  public Spacing getSpacing(Block child1, Block child2) {
+  public Spacing getSpacing(Block child1, @NotNull Block child2) {
     if ((child1 instanceof GroovyBlock) && (child2 instanceof GroovyBlock)) {
       if (((GroovyBlock)child1).getNode() == ((GroovyBlock)child2).getNode()) {
         return Spacing.getReadOnlySpacing();

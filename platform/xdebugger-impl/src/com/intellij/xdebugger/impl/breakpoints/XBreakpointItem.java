@@ -40,7 +40,7 @@ class XBreakpointItem extends BreakpointItem {
 
   @Override
   public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
-    setupGenericRenderer(renderer, false);
+    setupGenericRenderer(renderer, true);
   }
 
   @Override
@@ -77,12 +77,11 @@ class XBreakpointItem extends BreakpointItem {
 
   public void doUpdateDetailView(DetailView panel, boolean editorOnly) {
     Project project = ((XBreakpointBase)myBreakpoint).getProject();
+    XLightBreakpointPropertiesPanel<XBreakpoint<?>> propertiesPanel = null;
     if (!editorOnly) {
+      propertiesPanel = new XLightBreakpointPropertiesPanel<XBreakpoint<?>>(project, getManager(), myBreakpoint, true);
 
-      XLightBreakpointPropertiesPanel<XBreakpoint<?>> propertiesPanel =
-        new XLightBreakpointPropertiesPanel<XBreakpoint<?>>(project, getManager(), myBreakpoint, true);
-      propertiesPanel.loadProperties();
-      panel.setDetailPanel(propertiesPanel.getMainPanel());
+      panel.setPropertiesPanel(propertiesPanel.getMainPanel());
     }
 
     XSourcePosition sourcePosition = myBreakpoint.getSourcePosition();
@@ -92,7 +91,14 @@ class XBreakpointItem extends BreakpointItem {
     else {
       panel.clearEditor();
     }
-    panel.getDetailPanel().revalidate();
+
+    if (propertiesPanel != null) {
+      propertiesPanel.setDetailView(panel);
+      propertiesPanel.loadProperties();
+      propertiesPanel.getMainPanel().revalidate();
+
+    }
+
   }
 
   @Override

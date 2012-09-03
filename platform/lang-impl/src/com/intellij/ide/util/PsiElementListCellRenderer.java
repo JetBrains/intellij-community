@@ -58,6 +58,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     super(new BorderLayout());
   }
 
+  @Override
   public void setPatternMatcher(final Matcher matcher) {
     myMatcher = matcher;
   }
@@ -88,6 +89,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       myMatcher = matcher;
     }
 
+    @Override
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       Color bgColor = UIUtil.getListBackground();
       Color color = list.getForeground();
@@ -163,6 +165,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     return attributes;
   }
 
+  @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
     removeAll();
     DefaultListCellRenderer rightRenderer = getRightCellRenderer(value);
@@ -223,6 +226,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   public Comparator<T> getComparator() {
     return new Comparator<T>() {
+      @Override
       public int compare(T o1, T o2) {
         return getComparingObject(o1).compareTo(getComparingObject(o2));
       }
@@ -242,9 +246,10 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   public void installSpeedSearch(PopupChooserBuilder builder, final boolean includeContainerText) {
     builder.setFilteringEnabled(new Function<Object, String>() {
+      @Override
       public String fun(Object o) {
         if (o instanceof PsiElement) {
-          final String elementText = PsiElementListCellRenderer.this.getElementText((T)o);
+          final String elementText = getElementText((T)o);
           if (includeContainerText) {
             return elementText + " " + getContainerText((T)o, elementText);
           }
@@ -263,6 +268,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   @Deprecated
   public void installSpeedSearch(JList list) {
     new ListSpeedSearch(list) {
+      @Override
       protected String getElementText(Object o) {
         if (o instanceof PsiElement) {
           final String elementText = PsiElementListCellRenderer.this.getElementText((T)o);

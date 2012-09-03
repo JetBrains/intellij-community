@@ -27,7 +27,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.ILightStubFileElementType;
 import com.intellij.util.CharTable;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import gnu.trove.TIntStack;
@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 
@@ -74,8 +73,8 @@ public class LightStubBuilder implements StubBuilder {
     return rootStub;
   }
 
+  @SuppressWarnings("unchecked")
   protected StubElement createStubForFile(final PsiFile file, final LighterAST tree) {
-    //noinspection unchecked
     return new PsiFileStubImpl(file);
   }
 
@@ -190,7 +189,7 @@ public class LightStubBuilder implements StubBuilder {
     public List<LighterASTNode> getChildren(@NotNull final LighterASTNode parent) {
       final Ref<LighterASTNode[]> into = new Ref<LighterASTNode[]>();
       final int numKids = myTreeStructure.getChildren(myTreeStructure.prepareForGetChildren(parent), into);
-      return numKids > 0 ? CollectionFactory.arrayList(into.get(), 0, numKids) : Collections.<LighterASTNode>emptyList();
+      return numKids > 0 ? ContainerUtil.newArrayList(into.get(), 0, numKids) : ContainerUtil.<LighterASTNode>emptyList();
     }
   }
 
@@ -220,7 +219,7 @@ public class LightStubBuilder implements StubBuilder {
     public List<LighterASTNode> getChildren(@NotNull final LighterASTNode parent) {
       final ASTNode[] children = ((NodeWrapper)parent).myNode.getChildren(null);
       if (children == null || children.length == 0) {
-        return Collections.emptyList();
+        return ContainerUtil.emptyList();
       }
       final ArrayList<LighterASTNode> result = new ArrayList<LighterASTNode>(children.length);
       for (final ASTNode child : children) {

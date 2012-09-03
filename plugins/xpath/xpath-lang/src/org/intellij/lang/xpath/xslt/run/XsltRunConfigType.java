@@ -19,7 +19,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
+import icons.XpathIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +43,7 @@ public class XsltRunConfigType implements ConfigurationType {
     }
 
     public Icon getIcon() {
-        return IconLoader.getIcon("/icons/xslt.png");
+        return XpathIcons.Xslt;
     }
 
     public ConfigurationFactory[] getConfigurationFactories() {

@@ -39,7 +39,7 @@ public class AndroidSdkComboBoxWithBrowseButton extends ComboboxWithBrowseButton
   public AndroidSdkComboBoxWithBrowseButton() {
     final JComboBox sdkCombobox = getComboBox();
 
-    sdkCombobox.setRenderer(new ListCellRendererWrapper(sdkCombobox.getRenderer()) {
+    sdkCombobox.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof Sdk) {

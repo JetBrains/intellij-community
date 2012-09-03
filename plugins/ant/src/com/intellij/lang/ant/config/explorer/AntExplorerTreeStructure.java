@@ -22,6 +22,7 @@ import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.impl.MetaTarget;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +38,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   private final Object myRoot = new Object();
   private boolean myFilteredTargets = false;
   private static final Comparator<AntBuildTarget> ourTargetComparator = new Comparator<AntBuildTarget>() {
+    @Override
     public int compare(final AntBuildTarget target1, final AntBuildTarget target2) {
       final String name1 = target1.getDisplayName();
       if (name1 == null) return Integer.MIN_VALUE;
@@ -55,6 +57,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     return true;
   }
 
+  @Override
   @NotNull
   public AntNodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
     if (element == myRoot) {
@@ -77,6 +80,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     return null;
   }
 
+  @Override
   public Object[] getChildElements(Object element) {
     final AntConfiguration configuration = AntConfiguration.getInstance(myProject);
     if (element == myRoot) {
@@ -84,7 +88,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
         return new Object[] {AntBundle.message("loading.ant.config.progress")};
       }
       final AntBuildFile[] buildFiles = configuration.getBuildFiles();
-      return (buildFiles.length != 0) ? buildFiles : new Object[]{AntBundle.message("ant.tree.structure.no.build.files.message")};
+      return buildFiles.length != 0 ? buildFiles : new Object[]{AntBundle.message("ant.tree.structure.no.build.files.message")};
     }
 
     if (element instanceof AntBuildFile) {
@@ -102,13 +106,10 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
       return targets.toArray(new AntBuildTarget[targets.size()]);
     }
 
-    if (element instanceof AntBuildTarget) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   @Nullable
   public Object getParentElement(Object element) {
     if (element instanceof AntBuildTarget) {
@@ -125,14 +126,23 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     return null;
   }
 
+  @Override
   public void commit() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
   }
 
+  @Override
   public boolean hasSomethingToCommit() {
     return PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments();
   }
 
+  @NotNull
+  @Override
+  public ActionCallback asyncCommit() {
+    return asyncCommitDocuments(myProject);
+  }
+
+  @Override
   public Object getRootElement() {
     return myRoot;
   }
@@ -146,14 +156,17 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
       super(project, parentDescriptor);
     }
 
+    @Override
     public boolean isAutoExpand() {
       return true;
     }
 
+    @Override
     public Object getElement() {
       return myRoot;
     }
 
+    @Override
     public boolean update() {
       myName = "";
       return false;
@@ -167,14 +180,17 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
       myColor = Color.blue;
     }
 
+    @Override
     public Object getElement() {
       return myName;
     }
 
+    @Override
     public boolean update() {
       return true;
     }
 
+    @Override
     public boolean isAutoExpand() {
       return true;
     }

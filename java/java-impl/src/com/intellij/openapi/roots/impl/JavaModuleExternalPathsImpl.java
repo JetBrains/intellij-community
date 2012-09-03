@@ -26,6 +26,7 @@ import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,7 +35,7 @@ import java.util.Map;
  * @author nik
  */
 public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
-  @NonNls private static final String ROOT_ELEMENT = "root";
+  @NonNls private static final String ROOT_ELEMENT = JpsJavaModelSerializerExtension.ROOT_TAG;
   private final Map<OrderRootType, VirtualFilePointerContainer> myOrderRootPointerContainers = new HashMap<OrderRootType, VirtualFilePointerContainer>();
   private JavaModuleExternalPathsImpl mySource;
 

@@ -51,7 +51,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   private LabeledComponent<JPanel> myWorkingDirectoryComponent;
   private TextFieldWithBrowseButton myWorkingDirectoryField;
   private EnvironmentVariablesComponent myEnvVariablesComponent;
-  protected JComponent anchor;
+  protected JComponent myAnchor;
 
   private Module myModuleContext = null;
   private boolean myHaveModuleContext = false;
@@ -160,11 +160,11 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   }
 
   public JComponent getAnchor() {
-    return anchor;
+    return myAnchor;
   }
 
   public void setAnchor(JComponent anchor) {
-    this.anchor = anchor;
+    this.myAnchor = anchor;
     myProgramParametersComponent.setAnchor(anchor);
     myWorkingDirectoryComponent.setAnchor(anchor);
     myEnvVariablesComponent.setAnchor(anchor);

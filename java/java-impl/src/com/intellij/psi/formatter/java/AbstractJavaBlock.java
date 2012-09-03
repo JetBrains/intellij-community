@@ -114,7 +114,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                               AlignmentInColumnsHelper alignmentInColumnsHelper) {
     super(node, wrap, createBlockAlignment(alignmentStrategy, node));
     mySettings = settings;
-    myIndentSettings = settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA);
+    myIndentSettings = settings.getIndentOptions();
     myIndent = indent;
     myWrapManager = wrapManager;
     myAlignmentStrategy = alignmentStrategy;
@@ -297,7 +297,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   @Nullable
   @Override
-  public Spacing getSpacing(Block child1, Block child2) {
+  public Spacing getSpacing(Block child1, @NotNull Block child2) {
     return JavaSpacePropertyProcessor.getSpacing(getTreeNode(child2), mySettings);
   }
 

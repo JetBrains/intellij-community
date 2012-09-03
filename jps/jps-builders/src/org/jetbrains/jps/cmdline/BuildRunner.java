@@ -32,6 +32,8 @@ import java.util.*;
  */
 public class BuildRunner {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildRunner");
+  public static final boolean PARALLEL_BUILD_ENABLED = Boolean.parseBoolean(System.getProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "false"));
+  private static final boolean STORE_TEMP_CACHES_IN_MEMORY = PARALLEL_BUILD_ENABLED || System.getProperty(GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION) != null;
   private final JpsModelLoader myModelLoader;
   private final Set<String> myModules;
   private final List<String> myArtifacts;
@@ -50,12 +52,11 @@ public class BuildRunner {
   }
 
   public ProjectDescriptor load(MessageHandler msgHandler, File dataStorageRoot, BuildFSState fsState) throws IOException {
-    final boolean inMemoryMappingsDelta = System.getProperty(GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION) != null;
     ProjectTimestamps projectTimestamps = null;
     BuildDataManager dataManager = null;
     try {
       projectTimestamps = new ProjectTimestamps(dataStorageRoot);
-      dataManager = new BuildDataManager(dataStorageRoot, inMemoryMappingsDelta);
+      dataManager = new BuildDataManager(dataStorageRoot, STORE_TEMP_CACHES_IN_MEMORY);
       if (dataManager.versionDiffers()) {
         myForceCleanCaches = true;
         msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Dependency data format has changed, project rebuild required"));
@@ -73,7 +74,7 @@ public class BuildRunner {
       myForceCleanCaches = true;
       FileUtil.delete(dataStorageRoot);
       projectTimestamps = new ProjectTimestamps(dataStorageRoot);
-      dataManager = new BuildDataManager(dataStorageRoot, inMemoryMappingsDelta);
+      dataManager = new BuildDataManager(dataStorageRoot, STORE_TEMP_CACHES_IN_MEMORY);
       // second attempt succeded
       msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
     }
@@ -142,7 +143,7 @@ public class BuildRunner {
 
     final CompileScope compileScope;
     if (buildType == BuildType.PROJECT_REBUILD || (modules.isEmpty() && paths.isEmpty())) {
-      compileScope = new AllProjectScope(pd.project, pd.jpsProject, artifacts, buildType != BuildType.MAKE, includeTests);
+      compileScope = new AllProjectScope(pd.project, pd.jpsProject, artifacts, buildType != BuildType.MAKE);
     }
     else {
       final Set<JpsModule> forcedModules;
@@ -185,7 +186,7 @@ public class BuildRunner {
         compileScope = new ModulesScope(pd.project, pd.jpsProject, forcedModules, artifacts, buildType != BuildType.MAKE, includeTests);
       }
       else {
-        compileScope = new ModulesAndFilesScope(pd.project, pd.jpsProject, forcedModules, filesToCompile, artifacts, buildType != BuildType.MAKE);
+        compileScope = new ModulesAndFilesScope(pd.project, pd.jpsProject, forcedModules, filesToCompile, artifacts, buildType != BuildType.MAKE, includeTests);
       }
     }
     return compileScope;

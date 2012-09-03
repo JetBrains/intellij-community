@@ -18,6 +18,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
@@ -29,7 +30,6 @@ import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
-import org.jetbrains.jps.api.SequentialTaskExecutor;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
@@ -104,7 +104,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
             isTemp = rootDescriptor.isTemp;
             if (!isTemp) {
               try {
-                dataManager.getSourceToOutputMap(rootDescriptor.module, context.isCompilingTests()).appendData(sourcePath, outputPath);
+                dataManager.getSourceToOutputMap(rootDescriptor.target).appendData(sourcePath, outputPath);
               }
               catch (Exception e) {
                 context.processMessage(new CompilerMessage(BUILDER_NAME, e));
@@ -149,7 +149,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final Set<File> formsToCompile = new HashSet<File>();
 
       FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
-        public boolean apply(JpsModule module, File file, String sourceRoot) throws IOException {
+        public boolean apply(ModuleBuildTarget target, File file, String sourceRoot) throws IOException {
           if (JAVA_SOURCES_FILTER.accept(file)) {
             filesToCompile.add(file);
           }
@@ -322,7 +322,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         context.checkCanceled();
 
         if (!forms.isEmpty() || addNotNullAssertions) {
-          final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk, chunk.isTests());
+          final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk);
           final InstrumentationClassFinder finder = createInstrumentationClassFinder(platformCp, classpath, chunkSourcePath, outputSink);
 
           try {
@@ -846,7 +846,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
     final Map<File, Set<File>> map = new LinkedHashMap<File, Set<File>>();
-    for (RealModuleBuildTarget target : chunk.getTargets()) {
+    for (ModuleBuildTarget target : chunk.getTargets()) {
       final File outputDir = JpsJavaExtensionService.getInstance().getOutputDirectory(target.getModule(), target.isTests());
       if (outputDir == null) {
         continue;
@@ -919,7 +919,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     final MyNestedFormLoader nestedFormsLoader =
-      new MyNestedFormLoader(chunkSourcePath, ProjectPaths.getOutputPathsWithDependents(chunk, chunk.isTests()));
+      new MyNestedFormLoader(chunkSourcePath, ProjectPaths.getOutputPathsWithDependents(chunk));
 
     for (File formFile : formsToInstrument) {
       final LwRootContainer rootContainer;

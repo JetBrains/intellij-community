@@ -123,7 +123,6 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
         assertNull(getDomManager().getFileElement(file));
       }
     }).cpuBound().assertTiming();
-    assertFalse(file.getNode().isParsed());
   }
 
   public void testDontParseNamespacedDomFiles() throws Exception {
@@ -137,12 +136,10 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
     XmlFile file = (XmlFile)createFile("a.xml", "<foo xmlns=\"project\"/>");
     assertFalse(file.getNode().isParsed());
     assertNotNull(DomManager.getDomManager(getProject()).getFileElement(file, MyNamespacedElement.class));
-    assertFalse(file.getNode().isParsed());
 
     file = (XmlFile)createFile("a.xml", "<foo xmlns=\"project2\"/>");
     assertFalse(file.getNode().isParsed());
     assertNull(DomManager.getDomManager(getProject()).getFileElement(file, MyNamespacedElement.class));
-    assertFalse(file.getNode().isParsed());
   }
 
   @Namespace("project")

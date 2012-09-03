@@ -172,6 +172,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
     return todoItems == null || todoItems.isEmpty() ? EMPTY_ITEMS : todoItems.toArray(new TodoItem[todoItems.size()]);
   }
 
+  @NotNull
   @Override
   protected TodoTreeStructure createTreeStructure() {
     return new CustomChangelistTodoTreeStructure(myProject, myPsiTodoSearchHelper);

@@ -15,10 +15,13 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
@@ -121,6 +124,36 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     List<JavaElementArrangementEntry> result = new ArrayList<JavaElementArrangementEntry>();
     root.accept(new JavaArrangementVisitor(result, document, ranges));
     return result;
+  }
+
+  @Override
+  public int getBlankLines(@NotNull CodeStyleSettings settings,
+                           @Nullable JavaElementArrangementEntry parent,
+                           @Nullable JavaElementArrangementEntry previous,
+                           @NotNull JavaElementArrangementEntry target)
+  {
+    if (previous == null) {
+      return -1;
+    }
+
+    CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    switch (target.getType()) {
+      case FIELD:
+        if (parent != null && parent.getType() == INTERFACE) {
+          return commonSettings.BLANK_LINES_AROUND_FIELD_IN_INTERFACE;
+        }
+        else {
+          return commonSettings.BLANK_LINES_AROUND_FIELD;
+        }
+      case METHOD:
+        if (parent != null && parent.getType() == INTERFACE) {
+          return commonSettings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE;
+        }
+        else {
+          return commonSettings.BLANK_LINES_AROUND_METHOD;
+        }
+      default: return commonSettings.BLANK_LINES_AROUND_CLASS;
+    }
   }
 
   @Override

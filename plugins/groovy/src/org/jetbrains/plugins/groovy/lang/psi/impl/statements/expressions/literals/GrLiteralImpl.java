@@ -22,8 +22,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -31,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
@@ -46,14 +43,6 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLanguageInjectionHost {
   private static final Logger LOG = Logger.getInstance(GrLiteralImpl.class);
 
-  private static final Function<GrLiteralImpl, PsiType> TYPE_CALCULATOR = new NullableFunction<GrLiteralImpl, PsiType>() {
-    @Override
-    public PsiType fun(GrLiteralImpl grLiteral) {
-      IElementType elemType = getLiteralType(grLiteral);
-      return TypesUtil.getPsiType(grLiteral, elemType);
-    }
-  };
-
   public GrLiteralImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -63,8 +52,8 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
   }
 
   public PsiType getType() {
-    if (getLiteralType(this) == kNULL) return PsiType.NULL;
-    return GroovyPsiManager.getInstance(getProject()).getType(this, TYPE_CALCULATOR);
+    IElementType elemType = getLiteralType(this);
+    return elemType == kNULL ? PsiType.NULL : TypesUtil.getPsiType(this, elemType);
   }
 
   public void accept(GroovyElementVisitor visitor) {

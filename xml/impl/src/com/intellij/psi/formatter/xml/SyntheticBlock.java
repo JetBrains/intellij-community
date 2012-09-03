@@ -46,7 +46,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
     return mySubBlocks;
   }
 
-  public Spacing getSpacing(Block child1, Block child2) {
+  public Spacing getSpacing(Block child1, @NotNull Block child2) {
     if (child1 instanceof ReadOnlyBlock || child2 instanceof ReadOnlyBlock) {
       return Spacing.getReadOnlySpacing();
     }

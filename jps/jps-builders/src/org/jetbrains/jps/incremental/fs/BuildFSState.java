@@ -26,7 +26,7 @@ import java.util.Set;
  */
 public class BuildFSState extends FSState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.BuildFSState");
-  private static final Key<Set<RealModuleBuildTarget>> CONTEXT_TARGETS_KEY = Key.create("_fssfate_context_modules_");
+  private static final Key<Set<ModuleBuildTarget>> CONTEXT_TARGETS_KEY = Key.create("_fssfate_context_modules_");
   private static final Key<FilesDelta> CURRENT_ROUND_DELTA_KEY = Key.create("_current_round_delta_");
   private static final Key<FilesDelta> LAST_ROUND_DELTA_KEY = Key.create("_last_round_delta_");
 
@@ -74,7 +74,7 @@ public class BuildFSState extends FSState {
     if (context == null) {
       return false;
     }
-    Set<? extends ModuleBuildTarget> targets = CONTEXT_TARGETS_KEY.get(context, Collections.<RealModuleBuildTarget>emptySet());
+    Set<? extends ModuleBuildTarget> targets = CONTEXT_TARGETS_KEY.get(context, Collections.<ModuleBuildTarget>emptySet());
     return targets.contains(rd.target);
   }
 
@@ -117,7 +117,7 @@ public class BuildFSState extends FSState {
     setRoundDelta(CURRENT_ROUND_DELTA_KEY, context, new FilesDelta());
   }
 
-  public boolean processFilesToRecompile(CompileContext context, final RealModuleBuildTarget target, final FileProcessor processor) throws IOException {
+  public boolean processFilesToRecompile(CompileContext context, final ModuleBuildTarget target, final FileProcessor processor) throws IOException {
     final Map<File, Set<File>> data = getSourcesToRecompile(context, target);
     final CompilerExcludes excludes = context.getProjectDescriptor().project.getCompilerConfiguration().getExcludes();
     final CompileScope scope = context.getScope();
@@ -131,7 +131,7 @@ public class BuildFSState extends FSState {
           if (excludes.isExcluded(file)) {
             continue;
           }
-          if (!processor.apply(target.getModule(), file, root)) {
+          if (!processor.apply(target, file, root)) {
             return false;
           }
         }
@@ -197,7 +197,7 @@ public class BuildFSState extends FSState {
     return marked;
   }
 
-  private static void setContextTargets(@Nullable CompileContext context, @Nullable Set<RealModuleBuildTarget> targets) {
+  private static void setContextTargets(@Nullable CompileContext context, @Nullable Set<ModuleBuildTarget> targets) {
     if (context != null) {
       CONTEXT_TARGETS_KEY.set(context, targets);
     }

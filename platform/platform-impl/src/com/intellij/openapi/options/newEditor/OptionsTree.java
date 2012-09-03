@@ -230,11 +230,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
   }
 
   private void fireSelected(Configurable configurable, final ActionCallback callback) {
-    myContext.fireSelected(configurable, this).doWhenProcessed(new Runnable() {
-      public void run() {
-        callback.setDone();
-      }
-    });
+    myContext.fireSelected(configurable, this).doWhenProcessed(callback.createSetDoneRunnable());
   }
 
 

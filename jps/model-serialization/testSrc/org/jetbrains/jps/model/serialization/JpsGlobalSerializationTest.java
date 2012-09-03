@@ -5,6 +5,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
 import java.io.File;
 import java.io.IOException;

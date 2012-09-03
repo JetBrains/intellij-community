@@ -100,7 +100,7 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
     }
 
     if (component instanceof JComboBox) {
-      ((JComboBox)component).setRenderer(new ListCellRendererWrapper<NamedScope>(((JComboBox)component).getRenderer()) {
+      ((JComboBox)component).setRenderer(new ListCellRendererWrapper<NamedScope>() {
         @Override
         public void customize(JList list, NamedScope value, int index, boolean selected, boolean hasFocus) {
           setText(value == null ? "" : value.getName());

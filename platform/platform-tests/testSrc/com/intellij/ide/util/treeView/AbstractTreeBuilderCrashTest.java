@@ -153,15 +153,6 @@ public abstract class AbstractTreeBuilderCrashTest extends BaseTreeTestCase  {
       public NodeDescriptor doCreateDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
         return (NodeDescriptor)element;
       }
-
-      @Override
-      public void commit() {
-      }
-
-      @Override
-      public boolean hasSomethingToCommit() {
-        return false;
-      }
     };
 
 
