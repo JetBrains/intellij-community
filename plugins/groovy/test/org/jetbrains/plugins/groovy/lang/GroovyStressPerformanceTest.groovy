@@ -169,7 +169,7 @@ class Foo implements Bar {
 def foo(List<File> list) {
   for (file in list) {
 ${
-"   println bar(file)\n" * 20
+"   println bar(file)\n" * 100
 }
   }
 }
@@ -189,7 +189,7 @@ ${
     bar2(s, result, sc)
     bar3(foo:s, bar:result, sc)
     sc.someMethod(s)
-''' * 20
+''' * 100
     }
   }
 }
@@ -202,6 +202,6 @@ class SomeClass {
   void someMethod(String s) {}
 }
 """
-    measureHighlighting(text, 1500)
+    measureHighlighting(text, 8000)
   }
 }
