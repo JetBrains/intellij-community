@@ -34,6 +34,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Producer;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +44,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
   @NonNls
   private static final String FOLDING_ELEMENT = "folding";
 
+  @Override
   @NotNull
   public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file) {
     if (!accept(project, file)) {
@@ -51,6 +53,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     return new PsiAwareTextEditorImpl(project, file, this);
   }
 
+  @Override
   @NotNull
   public FileEditorState readState(@NotNull final Element element, @NotNull final Project project, @NotNull final VirtualFile file) {
     final TextEditorState state = (TextEditorState)super.readState(element, project, file);
@@ -77,6 +80,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     return state;
   }
 
+  @Override
   public void writeState(@NotNull final FileEditorState _state, @NotNull final Project project, @NotNull final Element element) {
     super.writeState(_state, project, element);
 
@@ -96,7 +100,8 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     }
   }
 
-  protected TextEditorState getStateImpl(final Project project, final Editor editor, @NotNull final FileEditorStateLevel level) {
+  @Override
+  protected TextEditorState getStateImpl(final Project project, @NotNull final Editor editor, @NotNull final FileEditorStateLevel level) {
     final TextEditorState state = super.getStateImpl(project, editor, level);
     // Save folding only on FULL level. It's very expensive to commit document on every
     // type (caused by undo).
@@ -114,22 +119,30 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     return state;
   }
 
+  @Override
   protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state) {
     super.setStateImpl(project, editor, state);
     // Folding
     final CodeFoldingState foldState = state.getFoldingState();
     if (project != null && foldState != null){
-      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-      editor.getFoldingModel().runBatchFoldingOperation(
-        new Runnable() {
-          public void run() {
-            CodeFoldingManager.getInstance(project).restoreFoldingState(editor, foldState);
-          }
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+          editor.getFoldingModel().runBatchFoldingOperation(
+            new Runnable() {
+              @Override
+              public void run() {
+                CodeFoldingManager.getInstance(project).restoreFoldingState(editor, foldState);
+              }
+            }
+          );
         }
-      );
+      });
     }
   }
 
+  @Override
   protected EditorWrapper createWrapperForEditor(final Editor editor) {
     return new PsiAwareEditorWrapper(editor);
   }
@@ -145,6 +158,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
                                 : new TextEditorBackgroundHighlighter(project, editor);
     }
 
+    @Override
     public BackgroundEditorHighlighter getBackgroundHighlighter() {
       return myBackgroundHighlighter;
     }
