@@ -55,8 +55,8 @@ public class PySkeletonRefresher {
   private final static Pattern BLACKLIST_LINE = Pattern.compile("^([^=]+) = (\\d+\\.\\d+) (\\d+)\\s*$");
   // we use the equals sign after filename so that we can freely include space in the filename
 
-  private final static Pattern OUR_VERSION_LINE = Pattern.compile("# from (\\S+) by generator (\\S+)\\s*");
-
+  // XXX: Path (the first component) may contain spaces, this header spec is deprecated
+  private static final Pattern VERSION_LINE_V1 = Pattern.compile("# from (\\S+) by generator (\\S+)\\s*");
 
   private String myExtraSyspath;
   private VirtualFile myPregeneratedSkeletons;
@@ -148,15 +148,6 @@ public class PySkeletonRefresher {
     return mySkeletonsPath;
   }
 
-  @Nullable
-  private static Integer getSkeletonVersion(File file) {
-    final Matcher headerMatcher = getParseHeader(file);
-    if (headerMatcher != null && headerMatcher.matches()) {
-      return fromVersionString(headerMatcher.group(2));
-    }
-    return null;
-  }
-
   List<String> regenerateSkeletons(@Nullable SkeletonVersionChecker cachedChecker,
                                    @Nullable Ref<Boolean> migrationFlag) throws InvalidSdkException {
     final List<String> errorList = new SmartList<String>();
@@ -190,7 +181,8 @@ public class PySkeletonRefresher {
     final String builtinsFileName = PythonSdkType.getBuiltinsFileName(mySdk);
     final File builtinsFile = new File(skeletonsPath, builtinsFileName);
 
-    final boolean oldOrNonExisting = getSkeletonVersion(builtinsFile) == null;
+    final SkeletonHeader oldHeader = readSkeletonHeader(builtinsFile);
+    final boolean oldOrNonExisting = oldHeader == null || oldHeader.getVersion() == 0;
 
     if (migrationFlag != null && !migrationFlag.get() && oldOrNonExisting) {
       migrationFlag.set(true);
@@ -246,8 +238,8 @@ public class PySkeletonRefresher {
       }
     }
 
-    final Integer builtinVersion = getSkeletonVersion(builtinsFile);
-    if (myPregeneratedSkeletons == null && (builtinVersion == null || builtinVersion < myVersionChecker.getBuiltinVersion())) {
+    final SkeletonHeader newHeader = readSkeletonHeader(builtinsFile);
+    if (myPregeneratedSkeletons == null && (newHeader == null || newHeader.getVersion() < myVersionChecker.getBuiltinVersion())) {
       indicate(PyBundle.message("sdk.gen.updating.builtins.$0", readablePath));
       mySkeletonsGenerator.generateBuiltinSkeletons(mySdk);
     }
@@ -284,25 +276,50 @@ public class PySkeletonRefresher {
   }
 
   @Nullable
-  private static Matcher getParseHeader(File infile) {
+  private static SkeletonHeader readSkeletonHeader(@NotNull File file) {
     try {
-      Reader input = new FileReader(infile);
-      LineNumberReader lines = new LineNumberReader(input);
+      final LineNumberReader reader = new LineNumberReader(new FileReader(file));
       try {
         String line = null;
-        for (int i = 0; i < 3; i += 1) { // read three lines, skip first two
-          line = lines.readLine();
-          if (line == null) return null;
+        // Read 3 lines, skip first 2: encoding, module name
+        for (int i = 0; i < 3; i++) {
+          line = reader.readLine();
+          if (line == null) {
+            return null;
+          }
         }
-        return OUR_VERSION_LINE.matcher(line);
+        // Try the old whitespace-unsafe header format v1 first
+        final Matcher matcher = VERSION_LINE_V1.matcher(line);
+        if (matcher.matches()) {
+          return new SkeletonHeader(matcher.group(1), fromVersionString(matcher.group(2)));
+        }
       }
       finally {
-        lines.close();
+        reader.close();
       }
     }
-    catch (IOException ignore) {
+    catch (IOException e) {
     }
     return null;
+  }
+
+  static class SkeletonHeader {
+    @NotNull private final String myFile;
+    private final int myVersion;
+
+    public SkeletonHeader(@NotNull String binaryFile, int version) {
+      myFile = binaryFile;
+      myVersion = version;
+    }
+
+    @NotNull
+    public String getBinaryFile() {
+      return myFile;
+    }
+
+    public int getVersion() {
+      return myVersion;
+    }
   }
 
   private Map<String, Pair<Integer, Long>> loadBlacklist() {
@@ -420,12 +437,11 @@ public class PySkeletonRefresher {
         final String itemName = item.getName();
         if (PyNames.INIT_DOT_PY.equals(itemName) && item.length() == 0) continue; // these are versionless
         if (BLACKLIST_FILE_NAME.equals(itemName)) continue; // don't touch the blacklist
-        Matcher headerMatcher = getParseHeader(item);
-        boolean canLive = headerMatcher != null && headerMatcher.matches();
+        final SkeletonHeader header = readSkeletonHeader(item);
+        boolean canLive = header != null;
         if (canLive) {
-          String sourceName = headerMatcher.group(1);
-          canLive =
-            sourceName != null && (SkeletonVersionChecker.BUILTIN_NAME.equals(sourceName) || mySkeletonsGenerator.exists(sourceName));
+          final String binaryFile = header.getBinaryFile();
+          canLive = SkeletonVersionChecker.BUILTIN_NAME.equals(binaryFile) || mySkeletonsGenerator.exists(binaryFile);
         }
         if (!canLive) {
           mySkeletonsGenerator.deleteOrLog(item);
@@ -524,13 +540,11 @@ public class PySkeletonRefresher {
     final String moduleName = binaryItem.getModule();
 
     final File skeleton = getSkeleton(moduleName, getSkeletonsPath());
-
-    Matcher matcher = getParseHeader(skeleton);
+    final SkeletonHeader header = readSkeletonHeader(skeleton);
     boolean mustRebuild = true; // guilty unless proven fresh enough
-    if (matcher != null && matcher.matches()) {
-      int fileVersion = fromVersionString(matcher.group(2));
+    if (header != null) {
       int requiredVersion = myVersionChecker.getRequiredVersion(moduleName);
-      mustRebuild = fileVersion < requiredVersion;
+      mustRebuild = header.getVersion() < requiredVersion;
     }
     if (!mustRebuild) { // ...but what if the lib was updated?
       mustRebuild = (skeleton.exists() && binaryItem.lastModified() > skeleton.lastModified());
