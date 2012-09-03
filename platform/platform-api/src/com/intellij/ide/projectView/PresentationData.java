@@ -63,17 +63,26 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    * @param locationString  the location of the object (for example, the package of a class). The location
    *                        string is used by some renderers and usually displayed as grayed text next to
    *                        the item name.
-   * @param closedIcon      the icon shown for the node when it is collapsed in a tree, or when it is displayed
+   * @param icon      the icon shown for the node when it is collapsed in a tree, or when it is displayed
  *                        in a non-tree view.
    * @param attributesKey   the attributes for rendering the item text.
    */
-  public PresentationData(String presentableText, String locationString, Icon closedIcon,
+  public PresentationData(String presentableText, String locationString, Icon icon,
                           @Nullable TextAttributesKey attributesKey) {
-    myIcon = closedIcon;
+    myIcon = icon;
     myLocationString = locationString;
     myPresentableText = presentableText;
     myAttributesKey = attributesKey;
   }
+
+  /**
+   * @deprecated Use constructor with single icon instead.
+   */
+  public PresentationData(String presentableText, String locationString, Icon openIcon, Icon closedIcon,
+                          @Nullable TextAttributesKey attributesKey) {
+    this(presentableText, locationString, closedIcon, attributesKey);
+  }
+
 
   /**
    * Creates an instance with no parameters specified.
