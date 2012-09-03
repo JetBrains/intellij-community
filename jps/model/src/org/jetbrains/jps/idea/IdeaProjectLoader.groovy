@@ -88,8 +88,6 @@ public class IdeaProjectLoader {
 
   def loadFromIpr(String path) {
     def iprFile = new File(path).getCanonicalFile()
-    project.projectName = StringUtil.trimEnd(iprFile.getName(), ".ipr")
-    project.locationHash = iprFile.absolutePath.hashCode()
     projectMacroExpander = new ProjectMacroExpander(pathVariables, iprFile.parentFile.absolutePath)
 
     def root = xmlParser.parse(iprFile)
@@ -101,8 +99,6 @@ public class IdeaProjectLoader {
   }
 
   def loadFromDirectoryBased(File dir) {
-    project.projectName = getDirectoryBaseProjectName(dir)
-    project.locationHash = dir.absolutePath.hashCode()
     projectMacroExpander = new ProjectMacroExpander(pathVariables, dir.parentFile.absolutePath)
 
     def encodingsXml = new File(dir, "encodings.xml")
@@ -132,13 +128,6 @@ public class IdeaProjectLoader {
     }
   }
 
-  def getDirectoryBaseProjectName(File dir) {
-    File nameFile = new File(dir, ".name")
-    if (nameFile.isFile()) {
-      return FileUtil.loadFile(nameFile).trim()
-    }
-    return StringUtil.replace(dir.parentFile.name, ":", "")
-  }
 
   boolean isXmlFile(File file) {
     return file.isFile() && StringUtil.endsWithIgnoreCase(file.name, ".xml")

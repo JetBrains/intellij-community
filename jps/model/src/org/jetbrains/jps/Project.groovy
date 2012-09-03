@@ -3,9 +3,6 @@ package org.jetbrains.jps
  * @author max
  */
 class Project {
-  String projectName
-  int locationHash
-
   final Map<String, RunConfiguration> runConfigurations = [:]
   final CompilerConfiguration compilerConfiguration = new CompilerConfiguration()
   final UiDesignerConfiguration uiDesignerConfiguration = new UiDesignerConfiguration()
@@ -18,6 +15,6 @@ class Project {
   }
 
   def String toString() {
-    return "Project '$projectName'"
+    return "Project"
   }
 }

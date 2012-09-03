@@ -201,7 +201,7 @@ public class IncProjectBuilder {
   private void runBuild(CompileContextImpl context, boolean forceCleanCaches) throws ProjectBuildException {
     context.setDone(0.0f);
 
-    LOG.info("Building project '" + context.getProjectDescriptor().project.getProjectName() + "'; isRebuild:" + context.isProjectRebuild() + "; isMake:" + context.isMake() + " parallel compilation:" + BuildRunner.PARALLEL_BUILD_ENABLED);
+    LOG.info("Building project; isRebuild:" + context.isProjectRebuild() + "; isMake:" + context.isMake() + " parallel compilation:" + BuildRunner.PARALLEL_BUILD_ENABLED);
 
     for (ProjectLevelBuilder builder : myBuilderRegistry.getProjectLevelBuilders()) {
       builder.buildStarted(context);
