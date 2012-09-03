@@ -32,7 +32,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDirectory;
@@ -156,7 +156,7 @@ public class ReplaceInProjectManager {
         }
 
         @Override
-        public void findingUsagesFinished(@NotNull final UsageView usageView) {
+        public void findingUsagesFinished(final UsageView usageView) {
           if (context[0] != null && findManager.getFindInProjectModel().isPromptOnReplace()) {
             SwingUtilities.invokeLater(new Runnable() {
               @Override
@@ -381,7 +381,7 @@ public class ReplaceInProjectManager {
     }
 
     if (readOnlyFiles != null) {
-      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(VfsUtil.toVirtualFileArray(readOnlyFiles));
+      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(VfsUtilCore.toVirtualFileArray(readOnlyFiles));
     }
 
     if (hasReadOnlyUsages(selectedUsages)) {

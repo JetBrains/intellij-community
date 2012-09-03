@@ -111,7 +111,7 @@ public class FindByXPathAction extends AnAction {
                 usageView.addButtonToLowerPane(new MyEditExpressionAction(project, module), "&Edit Expression");
             }
 
-            public void findingUsagesFinished(@NotNull UsageView usageView) {
+            public void findingUsagesFinished(UsageView usageView) {
             }
         };
         UsageViewManager.getInstance(project).searchAndShowUsages(

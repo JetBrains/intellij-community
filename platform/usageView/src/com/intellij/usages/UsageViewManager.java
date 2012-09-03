@@ -53,7 +53,7 @@ public abstract class UsageViewManager {
 
   public interface UsageViewStateListener {
     void usageViewCreated(@NotNull UsageView usageView);
-    void findingUsagesFinished(@NotNull UsageView usageView);
+    void findingUsagesFinished(UsageView usageView);
   }
 
   public abstract void searchAndShowUsages(@NotNull UsageTarget[] searchFor,

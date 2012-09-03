@@ -20,7 +20,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -122,6 +122,7 @@ public class XPathEvalAction extends XPathAction {
 
     private final Icon myIcon = XpathIcons.Xml;
 
+    @Override
     protected void updateToolbar(AnActionEvent event) {
         super.updateToolbar(event);
         if (myIcon != null) {
@@ -129,19 +130,21 @@ public class XPathEvalAction extends XPathAction {
         }
     }
 
+    @Override
     protected boolean isEnabledAt(XmlFile xmlFile, int offset) {
         return true;
     }
 
+    @Override
     public void actionPerformed(AnActionEvent event) {
-        final Project project = LangDataKeys.PROJECT.getData(event.getDataContext());
+        final Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
         if (project == null) {
             // no active project
             LOG.debug("No project");
             return;
         }
 
-        Editor editor = LangDataKeys.EDITOR.getData(event.getDataContext());
+        Editor editor = PlatformDataKeys.EDITOR.getData(event.getDataContext());
         if (editor == null) {
             FileEditorManager fem = FileEditorManager.getInstance(project);
             editor = fem.getSelectedTextEditor();
@@ -227,7 +230,7 @@ public class XPathEvalAction extends XPathAction {
 
             if (result instanceof List<?>) {
                 final List<?> list = (List<?>)result;
-                if (list.size() > 0) {
+                if (!list.isEmpty()) {
                     if (cfg.HIGHLIGHT_RESULTS) {
                         highlightResult(contextNode, editor, list);
                     }
@@ -268,6 +271,7 @@ public class XPathEvalAction extends XPathAction {
         //noinspection unchecked
         final List<?> _result = new ArrayList(result);
         final Factory<UsageSearcher> searcherFactory = new Factory<UsageSearcher>() {
+            @Override
             public UsageSearcher create() {
                 return new MyUsageSearcher(_result, xPath, contextNode);
             }
@@ -277,15 +281,18 @@ public class XPathEvalAction extends XPathAction {
         showUsageView(project, usageTarget, searcherFactory, new EditExpressionAction() {
             final Config config = myComponent.getConfig();
 
+            @Override
             protected void execute() {
                 config.OPEN_NEW_TAB = false;
                 XPathEvalAction.this.execute(editor);
             }
 
+            @Override
             protected Object saveState() {
                 return config.OPEN_NEW_TAB;
             }
 
+            @Override
             protected void restoreState(Object o) {
                 if (!config.OPEN_NEW_TAB) config.OPEN_NEW_TAB = Boolean.TRUE.equals(o);
             }
@@ -307,13 +314,14 @@ public class XPathEvalAction extends XPathAction {
 
         final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
         processPresentation.setProgressIndicatorFactory(new Factory<ProgressIndicator>() {
+            @Override
             public ProgressIndicator create() {
                 return new FindProgressIndicator(project, "XML Document(s)");
             }
         });
         processPresentation.setShowPanelIfOnlyOneUsage(true);
         processPresentation.setShowNotFoundMessage(true);
-        final UsageTarget[] usageTargets = new UsageTarget[]{ usageTarget };
+        final UsageTarget[] usageTargets = { usageTarget };
 
         UsageViewManager.getInstance(project).searchAndShowUsages(
                 usageTargets,
@@ -321,11 +329,13 @@ public class XPathEvalAction extends XPathAction {
                 processPresentation,
                 presentation,
                 new UsageViewManager.UsageViewStateListener() {
+                    @Override
                     public void usageViewCreated(@NotNull UsageView usageView) {
                         usageView.addButtonToLowerPane(editAction, "&Edit Expression");
                     }
 
-                    public void findingUsagesFinished(@NotNull UsageView usageView) {
+                    @Override
+                    public void findingUsagesFinished(UsageView usageView) {
                     }
                 });
     }
@@ -368,7 +378,7 @@ public class XPathEvalAction extends XPathAction {
      *
      * @param editor The editor object to apply the highlighting to
      */
-    private void highlightResult(XmlElement contextNode, final @NotNull Editor editor, final List<?> list) {
+    private void highlightResult(XmlElement contextNode, @NotNull final Editor editor, final List<?> list) {
 
         final Config cfg = myComponent.getConfig();
         int lowestOffset = Integer.MAX_VALUE;
@@ -394,6 +404,7 @@ public class XPathEvalAction extends XPathAction {
         }
 
         SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
                 final StatusBar statusBar = WindowManager.getInstance().getStatusBar(editor.getProject());
                 final String s = StringUtil.pluralize("match", list.size());
@@ -418,50 +429,62 @@ public class XPathEvalAction extends XPathAction {
             myItemPresentation = new PresentationData(expression, null, null, null);
         }
 
+        @Override
         public void findUsages() {
             throw new IllegalArgumentException();
         }
 
+        @Override
         public void findUsagesInEditor(@NotNull FileEditor editor) {
             throw new IllegalArgumentException();
         }
 
+      @Override
       public void highlightUsages(PsiFile file, Editor editor, boolean clearHighlights) {
         throw new UnsupportedOperationException();
       }
 
+      @Override
       public boolean isValid() {
             // re-run will become unavailable if the context node is invalid
             return myContextNode == null || myContextNode.isValid();
         }
 
+        @Override
         public boolean isReadOnly() {
             return true;
         }
 
+        @Override
         @Nullable
         public VirtualFile[] getFiles() {
             return null;
         }
 
+        @Override
         public void update() {
         }
 
+        @Override
         public String getName() {
             return "Expression";
         }
 
+        @Override
         public ItemPresentation getPresentation() {
             return myItemPresentation;
         }
 
+        @Override
         public void navigate(boolean requestFocus) {
         }
 
+        @Override
         public boolean canNavigate() {
             return false;
         }
 
+        @Override
         public boolean canNavigateToSource() {
             return false;
         }
@@ -478,12 +501,14 @@ public class XPathEvalAction extends XPathAction {
             myContextNode = contextNode;
         }
 
+        @Override
         public void generate(final Processor<Usage> processor) {
             Runnable runnable = new Runnable() {
+                @Override
                 @SuppressWarnings({"unchecked"})
                 public void run() {
                     final List<?> list;
-                    if (myResult.size() == 0) {
+                    if (myResult.isEmpty()) {
                         try {
                             list = (List<?>)myXPath.selectNodes(myContextNode);
                         } catch (JaxenException e) {
@@ -500,6 +525,7 @@ public class XPathEvalAction extends XPathAction {
                     indicator.setText("Collecting matches...");
 
                     Collections.sort(list, new Comparator() {
+                        @Override
                         public int compare(Object o1, Object o2) {
                             indicator.checkCanceled();
                             if (o1 instanceof PsiElement && o2 instanceof PsiElement) {
@@ -513,7 +539,7 @@ public class XPathEvalAction extends XPathAction {
                         indicator.checkCanceled();
                         Object o = list.get(i);
                         if (o instanceof PsiElement) {
-                            final PsiElement element = ((PsiElement)o);
+                            final PsiElement element = (PsiElement)o;
                             processor.process(new UsageInfo2UsageAdapter(new UsageInfo(element)));
                             indicator.setText2(element.getContainingFile().getName());
                         }
@@ -526,9 +552,11 @@ public class XPathEvalAction extends XPathAction {
         }
     }
 
-    public static abstract class EditExpressionAction implements Runnable {
+    public abstract static class EditExpressionAction implements Runnable {
+        @Override
         public void run() {
             Runnable runnable = new Runnable() {
+                @Override
                 public void run() {
                     final Object o = saveState();
                     try {
