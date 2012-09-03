@@ -154,9 +154,8 @@ public class GitUIUtil {
 
   /**
    * @return a list cell renderer for virtual files (it renders presentable URL)
-   * @param listCellRenderer
    */
-  public static ListCellRenderer getVirtualFileListCellRenderer(final ListCellRenderer listCellRenderer) {
+  public static ListCellRendererWrapper<VirtualFile> getVirtualFileListCellRenderer() {
     return new ListCellRendererWrapper<VirtualFile>() {
       @Override
       public void customize(final JList list, final VirtualFile file, final int index, final boolean selected, final boolean hasFocus) {
@@ -180,13 +179,12 @@ public class GitUIUtil {
    * remote for the branch with bold.
    *
    *
+   *
    * @param defaultRemote a default remote
    * @param fetchUrl      if true, the fetch url is shown
-   * @param listCellRenderer
    * @return a list cell renderer for virtual files (it renders presentable URL
    */
-  public static ListCellRenderer getGitRemoteListCellRenderer(final String defaultRemote, final boolean fetchUrl,
-                                                              final ListCellRenderer listCellRenderer) {
+  public static ListCellRendererWrapper<GitDeprecatedRemote> getGitRemoteListCellRenderer(final String defaultRemote, final boolean fetchUrl) {
     return new ListCellRendererWrapper<GitDeprecatedRemote>() {
       @Override
       public void customize(final JList list, final GitDeprecatedRemote remote, final int index, final boolean selected, final boolean hasFocus) {
@@ -229,7 +227,7 @@ public class GitUIUtil {
     for (VirtualFile root : roots) {
       gitRootChooser.addItem(root);
     }
-    gitRootChooser.setRenderer(getVirtualFileListCellRenderer(gitRootChooser.getRenderer()));
+    gitRootChooser.setRenderer(getVirtualFileListCellRenderer());
     gitRootChooser.setSelectedItem(defaultRoot != null ? defaultRoot : roots.get(0));
     if (currentBranchLabel != null) {
       final ActionListener listener = new ActionListener() {
@@ -358,7 +356,7 @@ public class GitUIUtil {
       if (currentBranch != null) {
         remote = GitConfigUtil.getValue(project, root, "branch." + currentBranch + ".remote");
       }
-      remoteCombobox.setRenderer(getGitRemoteListCellRenderer(remote, fetchUrl, remoteCombobox.getRenderer()));
+      remoteCombobox.setRenderer(getGitRemoteListCellRenderer(remote, fetchUrl));
       GitDeprecatedRemote toSelect = null;
       remoteCombobox.removeAllItems();
       for (GitDeprecatedRemote r : remotes) {
