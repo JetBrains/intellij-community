@@ -629,7 +629,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
           }
 
           final Pair<PsiType, ConstraintType> returnExprConstraint =
-            getSubstitutionForTypeParameterConstraint(typeParam, returnType, exprType, false, PsiUtil.getLanguageLevel(method));
+            getSubstitutionForTypeParameterConstraint(typeParam, returnType, exprType, true, PsiUtil.getLanguageLevel(method));
           if (returnExprConstraint != null) {
             if (returnExprConstraint == FAILED_INFERENCE) return returnExprConstraint;
             if (constraint != null) {

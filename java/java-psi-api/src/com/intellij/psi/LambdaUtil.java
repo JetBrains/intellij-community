@@ -289,6 +289,11 @@ public class LambdaUtil {
   public static boolean isFreeFromTypeInferenceArgs(final PsiParameter[] methodParameters,
                                                     final PsiLambdaExpression lambdaExpression,
                                                     final PsiExpression expression) {
+    if (expression instanceof PsiCallExpression && ((PsiCallExpression)expression).getTypeArguments().length > 0) return true;
+    if (expression instanceof PsiNewExpression) {
+      final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)expression).getClassOrAnonymousClassReference();
+      if (classReference != null && classReference.getTypeParameters().length > 0) return true;
+    }
     final PsiParameter[] lambdaParams = lambdaExpression.getParameterList().getParameters(); 
     if (lambdaParams.length != methodParameters.length) return false;
     final boolean [] independent = new boolean[]{true};
