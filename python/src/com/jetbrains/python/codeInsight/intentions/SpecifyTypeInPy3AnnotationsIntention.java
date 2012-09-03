@@ -50,12 +50,25 @@ public class SpecifyTypeInPy3AnnotationsIntention implements IntentionAction {
     if (elementAt != null && !(elementAt.getNode().getElementType() == PyTokenTypes.IDENTIFIER))
       elementAt = file.findElementAt(editor.getCaretModel().getOffset());
 
-    PyFunction parentFunction = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
-    if (parentFunction != null) {
-      final ASTNode nameNode = parentFunction.getNameNode();
-      if (nameNode != null && nameNode.getPsi() == elementAt) {
-        myText = PyBundle.message("INTN.specify.returt.type.in.annotation");
-        return true;
+    PyCallExpression callExpression = PsiTreeUtil.getParentOfType(elementAt, PyCallExpression.class);
+    if (callExpression != null ) {
+      PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
+      if (assignmentStatement != null) {
+        PyType type = assignmentStatement.getAssignedValue().getType(TypeEvalContext.slow());
+        if (type == null || type instanceof PyReturnTypeReference) {
+          myText = PyBundle.message("INTN.specify.returt.type.in.annotation");
+          return true;
+        }
+      }
+    }
+    else {
+      PyFunction parentFunction = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
+      if (parentFunction != null) {
+        final ASTNode nameNode = parentFunction.getNameNode();
+        if (nameNode != null && nameNode.getPsi() == elementAt) {
+          myText = PyBundle.message("INTN.specify.returt.type.in.annotation");
+          return true;
+        }
       }
     }
 
@@ -159,10 +172,16 @@ public class SpecifyTypeInPy3AnnotationsIntention implements IntentionAction {
       }
       else {
         PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset() - 1);
+        PyCallExpression callExpression = PsiTreeUtil.getParentOfType(elementAt, PyCallExpression.class);
         if (elementAt != null && !(elementAt.getNode().getElementType() == PyTokenTypes.IDENTIFIER))
           elementAt = file.findElementAt(editor.getCaretModel().getOffset());
 
-        callable = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
+
+        if (callExpression != null) {
+          callable = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
+        }
+        else
+          callable = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
       }
       if (callable instanceof PyFunction && ((PyFunction)callable).getAnnotation() == null) {
         final String functionSignature = "def " + callable.getName() + callable.getParameterList().getText();

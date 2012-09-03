@@ -20,6 +20,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyReturnTypeReference;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -50,12 +51,25 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
     if (elementAt != null && !(elementAt.getNode().getElementType() == PyTokenTypes.IDENTIFIER))
       elementAt = file.findElementAt(editor.getCaretModel().getOffset());
 
-    PyFunction parentFunction = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
-    if (parentFunction != null) {
-      final ASTNode nameNode = parentFunction.getNameNode();
-      if (nameNode != null && nameNode.getPsi() == elementAt) {
-        myText = PyBundle.message("INTN.specify.return.type");
-        return true;
+    PyCallExpression callExpression = PsiTreeUtil.getParentOfType(elementAt, PyCallExpression.class);
+    if (callExpression != null ) {
+      PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
+      if (assignmentStatement != null) {
+        PyType type = assignmentStatement.getAssignedValue().getType(TypeEvalContext.slow());
+        if (type == null || type instanceof PyReturnTypeReference) {
+          myText = PyBundle.message("INTN.specify.return.type");
+          return true;
+        }
+      }
+    }
+    else {
+      PyFunction parentFunction = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
+      if (parentFunction != null) {
+        final ASTNode nameNode = parentFunction.getNameNode();
+        if (nameNode != null && nameNode.getPsi() == elementAt) {
+          myText = PyBundle.message("INTN.specify.return.type");
+          return true;
+        }
       }
     }
 
@@ -104,7 +118,20 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
 
     String type = "type";
     String name = "";
+    PyCallExpression callExpression = PsiTreeUtil.getParentOfType(elementAt, PyCallExpression.class);
     PyFunction pyFunction = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
+    PyExpression problemElement = PyUtil.findProblemElement(editor, file, PyNamedParameter.class, PyQualifiedExpression.class);
+    if (callExpression != null ) {
+      PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
+      if (assignmentStatement != null) {
+        PyType pyType = assignmentStatement.getAssignedValue().getType(TypeEvalContext.slow());
+        if (pyType == null || pyType instanceof PyReturnTypeReference) {
+          pyFunction = (PyFunction)callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
+          problemElement = null;
+          type = "rtype";
+        }
+      }
+    }
     if (pyFunction != null) {
       final ASTNode nameNode = pyFunction.getNameNode();
       if (nameNode != null && nameNode.getPsi() == elementAt) {
@@ -119,7 +146,7 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
     }
 
     PsiReference reference = null;
-    PyExpression problemElement = PyUtil.findProblemElement(editor, file, PyNamedParameter.class, PyQualifiedExpression.class);
+
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     if (problemElement != null) {
       name = problemElement.getName();
@@ -137,7 +164,7 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
 
     final ASTNode nameNode = pyFunction.getNameNode();
     if ((pyFunction != null && (problemElement instanceof PyParameter || reference != null && reference.resolve() instanceof PyParameter)) ||
-      elementAt == nameNode.getPsi()) {
+      elementAt == nameNode.getPsi() || callExpression != null) {
       PyStringLiteralExpression docStringExpression = pyFunction.getDocStringExpression();
       int startOffset;
       int endOffset;
