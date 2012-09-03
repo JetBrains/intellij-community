@@ -396,7 +396,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   }
 
   protected static LanguageLevel level(@Nullable final PsiElement context) {
-    return context != null ? PsiUtil.getLanguageLevel(context) : LanguageLevel.HIGHEST;
+    return context != null && context.isValid() ? PsiUtil.getLanguageLevel(context) : LanguageLevel.HIGHEST;
   }
 
   private static IncorrectOperationException newException(final String msg, final DummyHolder holder) {
