@@ -55,8 +55,12 @@ public class PySkeletonRefresher {
   private final static Pattern BLACKLIST_LINE = Pattern.compile("^([^=]+) = (\\d+\\.\\d+) (\\d+)\\s*$");
   // we use the equals sign after filename so that we can freely include space in the filename
 
-  // XXX: Path (the first component) may contain spaces, this header spec is deprecated
+  // Path (the first component) may contain spaces, this header spec is deprecated
   private static final Pattern VERSION_LINE_V1 = Pattern.compile("# from (\\S+) by generator (\\S+)\\s*");
+
+  // Skeleton header spec v2
+  private static final Pattern FROM_LINE_V2 = Pattern.compile("# from (.*)$");
+  private static final Pattern BY_LINE_V2 = Pattern.compile("# by generator (.*)$");
 
   private String myExtraSyspath;
   private VirtualFile myPregeneratedSkeletons;
@@ -289,9 +293,21 @@ public class PySkeletonRefresher {
           }
         }
         // Try the old whitespace-unsafe header format v1 first
-        final Matcher matcher = VERSION_LINE_V1.matcher(line);
-        if (matcher.matches()) {
-          return new SkeletonHeader(matcher.group(1), fromVersionString(matcher.group(2)));
+        final Matcher v1Matcher = VERSION_LINE_V1.matcher(line);
+        if (v1Matcher.matches()) {
+          return new SkeletonHeader(v1Matcher.group(1), fromVersionString(v1Matcher.group(2)));
+        }
+        final Matcher fromMatcher = FROM_LINE_V2.matcher(line);
+        if (fromMatcher.matches()) {
+          final String binaryFile = fromMatcher.group(1);
+          line = reader.readLine();
+          if (line != null) {
+            final Matcher byMatcher = BY_LINE_V2.matcher(line);
+            if (byMatcher.matches()) {
+              final int version = fromVersionString(byMatcher.group(1));
+              return new SkeletonHeader(binaryFile, version);
+            }
+          }
         }
       }
       finally {
