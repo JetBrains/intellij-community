@@ -104,7 +104,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
             isTemp = rootDescriptor.isTemp;
             if (!isTemp) {
               try {
-                dataManager.getSourceToOutputMap(rootDescriptor.module, rootDescriptor.target.isTests()).appendData(sourcePath, outputPath);
+                dataManager.getSourceToOutputMap(rootDescriptor.target).appendData(sourcePath, outputPath);
               }
               catch (Exception e) {
                 context.processMessage(new CompilerMessage(BUILDER_NAME, e));
@@ -149,7 +149,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final Set<File> formsToCompile = new HashSet<File>();
 
       FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
-        public boolean apply(JpsModule module, File file, String sourceRoot) throws IOException {
+        public boolean apply(ModuleBuildTarget target, File file, String sourceRoot) throws IOException {
           if (JAVA_SOURCES_FILTER.accept(file)) {
             filesToCompile.add(file);
           }

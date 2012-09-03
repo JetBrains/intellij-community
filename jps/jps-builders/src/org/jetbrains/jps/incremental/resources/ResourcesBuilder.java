@@ -62,14 +62,14 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
       };
 
       FSOperations.processFilesToRecompile(context, chunk, moduleFilter, new FileProcessor() {
-        public boolean apply(final JpsModule module, final File file, final String sourceRoot) throws IOException {
+        public boolean apply(final ModuleBuildTarget target, final File file, final String sourceRoot) throws IOException {
           if (patterns.isResourceFile(file, sourceRoot)) {
             try {
               context.processMessage(new ProgressMessage("Copying " + file.getPath()));
               doneSomething.set(true);
               copyResource(
-                context, module, file, sourceRoot,
-                context.getProjectDescriptor().dataManager.getSourceToOutputMap(module.getName(), chunk.isTests()), chunk.isTests()
+                context, target.getModule(), file, sourceRoot,
+                context.getProjectDescriptor().dataManager.getSourceToOutputMap(target), target.isTests()
               );
             }
             catch (IOException e) {

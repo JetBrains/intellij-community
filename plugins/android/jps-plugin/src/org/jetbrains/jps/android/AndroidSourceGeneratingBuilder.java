@@ -101,13 +101,13 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       }
     }
 
-    final Map<File, JpsModule> idlFilesToCompile = new HashMap<File, JpsModule>();
-    final Map<File, JpsModule> rsFilesToCompile = new HashMap<File, JpsModule>();
+    final Map<File, ModuleBuildTarget> idlFilesToCompile = new HashMap<File, ModuleBuildTarget>();
+    final Map<File, ModuleBuildTarget> rsFilesToCompile = new HashMap<File, ModuleBuildTarget>();
 
     FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
       @Override
-      public boolean apply(JpsModule module, File file, String sourceRoot) throws IOException {
-        final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
+      public boolean apply(ModuleBuildTarget target, File file, String sourceRoot) throws IOException {
+        final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(target.getModule());
 
         if (extension == null) {
           return true;
@@ -115,10 +115,10 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         final String ext = FileUtil.getExtension(file.getName());
 
         if (AIDL_EXTENSION.equals(ext)) {
-          idlFilesToCompile.put(file, module);
+          idlFilesToCompile.put(file, target);
         }
         else if (RENDERSCRIPT_EXTENSION.equals(ext)) {
-          rsFilesToCompile.put(file, module);
+          rsFilesToCompile.put(file, target);
         }
 
         return true;
@@ -363,7 +363,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   private static boolean runAidlCompiler(@NotNull final CompileContext context,
-                                         @NotNull Map<File, JpsModule> files,
+                                         @NotNull Map<File, ModuleBuildTarget> files,
                                          @NotNull Map<JpsModule, MyModuleData> moduleDataMap) {
     if (files.size() > 0) {
       context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aidl")));
@@ -371,12 +371,12 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
     boolean success = true;
 
-    for (Map.Entry<File, JpsModule> entry : files.entrySet()) {
+    for (Map.Entry<File, ModuleBuildTarget> entry : files.entrySet()) {
       final File file = entry.getKey();
-      final JpsModule module = entry.getValue();
+      final ModuleBuildTarget buildTarget = entry.getValue();
       final String filePath = file.getPath();
 
-      final MyModuleData moduleData = moduleDataMap.get(module);
+      final MyModuleData moduleData = moduleDataMap.get(buildTarget.getModule());
 
       if (!LOG.assertTrue(moduleData != null)) {
         context.processMessage(
@@ -384,7 +384,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         success = false;
         continue;
       }
-      final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module, context.getProjectDescriptor().dataManager);
+      final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(buildTarget.getModule(), context.getProjectDescriptor().dataManager);
       final File aidlOutputDirectory = new File(generatedSourcesDir, AndroidJpsUtil.AIDL_GENERATED_SOURCE_ROOT_NAME);
 
       if (!aidlOutputDirectory.exists() && !aidlOutputDirectory.mkdirs()) {
@@ -398,7 +398,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final IAndroidTarget target = moduleData.getPlatform().getTarget();
 
       try {
-        final File[] sourceRoots = AndroidJpsUtil.getSourceRootsForModuleAndDependencies(module);
+        final File[] sourceRoots = AndroidJpsUtil.getSourceRootsForModuleAndDependencies(buildTarget.getModule());
         final String[] sourceRootPaths = AndroidJpsUtil.toPaths(sourceRoots);
         final String packageName = computePackageForFile(context, file);
 
@@ -421,7 +421,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           success = false;
         }
         else {
-          final SourceToOutputMapping sourceToOutputMap = context.getProjectDescriptor().dataManager.getSourceToOutputMap(module.getName(), false);
+          final SourceToOutputMapping sourceToOutputMap = context.getProjectDescriptor().dataManager.getSourceToOutputMap(buildTarget);
           sourceToOutputMap.update(filePath, outputFilePath);
           FSOperations.markDirty(context, outputFile);
         }
@@ -435,7 +435,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   private static boolean runRenderscriptCompiler(@NotNull final CompileContext context,
-                                                 @NotNull Map<File, JpsModule> files,
+                                                 @NotNull Map<File, ModuleBuildTarget> files,
                                                  @NotNull Map<JpsModule, MyModuleData> moduleDataMap) {
     if (files.size() > 0) {
       context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.renderscript")));
@@ -443,11 +443,11 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
     boolean success = true;
 
-    for (Map.Entry<File, JpsModule> entry : files.entrySet()) {
+    for (Map.Entry<File, ModuleBuildTarget> entry : files.entrySet()) {
       final File file = entry.getKey();
-      final JpsModule module = entry.getValue();
+      final ModuleBuildTarget buildTarget = entry.getValue();
 
-      final MyModuleData moduleData = moduleDataMap.get(module);
+      final MyModuleData moduleData = moduleDataMap.get(buildTarget.getModule());
       if (!LOG.assertTrue(moduleData != null)) {
         context.processMessage(new CompilerMessage(ANDROID_RENDERSCRIPT_COMPILER, BuildMessage.Kind.ERROR,
                                                    AndroidJpsBundle.message("android.jps.internal.error")));
@@ -456,7 +456,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       }
 
       final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
-      final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module, dataManager);
+      final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(buildTarget.getModule(), dataManager);
       final File rsOutputDirectory = new File(generatedSourcesDir, AndroidJpsUtil.RENDERSCRIPT_GENERATED_SOURCE_ROOT_NAME);
       if (!rsOutputDirectory.exists() && !rsOutputDirectory.mkdirs()) {
         context.processMessage(new CompilerMessage(ANDROID_RENDERSCRIPT_COMPILER, BuildMessage.Kind.ERROR, AndroidJpsBundle
@@ -465,7 +465,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         continue;
       }
 
-      final File generatedResourcesDir = AndroidJpsUtil.getGeneratedResourcesStorage(module, dataManager);
+      final File generatedResourcesDir = AndroidJpsUtil.getGeneratedResourcesStorage(buildTarget.getModule(), dataManager);
       final File rawDir = new File(generatedResourcesDir, "raw");
 
       if (!rawDir.exists() && !rawDir.mkdirs()) {
@@ -504,7 +504,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           }
           final List<String> newFilePaths = Arrays.asList(AndroidJpsUtil.toPaths(newFiles.toArray(new File[newFiles.size()])));
 
-          final SourceToOutputMapping sourceToOutputMap = dataManager.getSourceToOutputMap(module.getName(), false);
+          final SourceToOutputMapping sourceToOutputMap = dataManager.getSourceToOutputMap(buildTarget);
           sourceToOutputMap.update(filePath, newFilePaths);
 
           for (File newFile : newFiles) {

@@ -7,6 +7,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.MultiMapBasedOnSet;
 import com.intellij.util.io.MappingFailedException;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.annotations.NotNull;
@@ -269,10 +271,8 @@ public class IncProjectBuilder {
         clearOutputs(context);
       }
       else {
-        for (JpsModule module : context.getProjectDescriptor().jpsProject.getModules()) {
-          final String moduleName = module.getName();
-          clearOutputFiles(context, moduleName, true);
-          clearOutputFiles(context, moduleName, false);
+        for (ModuleBuildTarget target : context.getChunks().getAllTargets()) {
+          clearOutputFiles(context, target);
         }
       }
     }
@@ -295,8 +295,8 @@ public class IncProjectBuilder {
     myProjectDescriptor.fsState.clearAll();
   }
 
-  private static void clearOutputFiles(CompileContext context, final String moduleName, boolean forTests) throws IOException {
-    final SourceToOutputMapping map = context.getProjectDescriptor().dataManager.getSourceToOutputMap(moduleName, forTests);
+  private static void clearOutputFiles(CompileContext context, ModuleBuildTarget target) throws IOException {
+    final SourceToOutputMapping map = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
     for (String srcPath : map.getKeys()) {
       final Collection<String> outs = map.getState(srcPath);
       if (outs != null && !outs.isEmpty()) {
@@ -309,37 +309,29 @@ public class IncProjectBuilder {
   }
 
   private void clearOutputs(CompileContext context) throws ProjectBuildException, IOException {
-    final Collection<JpsModule> modulesToClean = context.getProjectDescriptor().jpsProject.getModules();
-    final Map<File, Set<Pair<String, Boolean>>> rootsToDelete = new HashMap<File, Set<Pair<String, Boolean>>>(); // map: outputRoot-> setOfPairs([module, isTest])
+    final MultiMap<File, ModuleBuildTarget> rootsToDelete = new MultiMapBasedOnSet<File, ModuleBuildTarget>();
     final Set<File> annotationOutputs = new HashSet<File>(); // separate collection because no root intersection checks needed for annotation generated sources
     final Set<File> allSourceRoots = new HashSet<File>();
 
     final ProjectPaths paths = context.getProjectPaths();
 
-    for (JpsModule module : modulesToClean) {
-      final File out = paths.getModuleOutputDir(module, false);
+    for (ModuleBuildTarget target : context.getChunks().getAllTargets()) {
+      final File out = paths.getModuleOutputDir(target.getModule(), target.isTests());
       if (out != null) {
-        appendRootInfo(rootsToDelete, out, module, false);
-      }
-      final File testOut = paths.getModuleOutputDir(module, true);
-      if (testOut != null) {
-        appendRootInfo(rootsToDelete, testOut, module, true);
+        rootsToDelete.putValue(out, target);
       }
 
-      final AnnotationProcessingProfile profile = context.getAnnotationProcessingProfile(module);
+      final AnnotationProcessingProfile profile = context.getAnnotationProcessingProfile(target.getModule());
       if (profile.isEnabled()) {
         File annotationOut =
-          paths.getAnnotationProcessorGeneratedSourcesOutputDir(module, false, profile.getGeneratedSourcesDirName());
-        if (annotationOut != null) {
-          annotationOutputs.add(annotationOut);
-        }
-        annotationOut =
-          paths.getAnnotationProcessorGeneratedSourcesOutputDir(module, true, profile.getGeneratedSourcesDirName());
+          paths.getAnnotationProcessorGeneratedSourcesOutputDir(target.getModule(), target.isTests(), profile.getGeneratedSourcesDirName());
         if (annotationOut != null) {
           annotationOutputs.add(annotationOut);
         }
       }
+    }
 
+    for (JpsModule module : context.getProjectDescriptor().jpsProject.getModules()) {
       final List<RootDescriptor> moduleRoots = context.getProjectDescriptor().rootsIndex.getModuleRoots(context, module);
       for (RootDescriptor d : moduleRoots) {
         allSourceRoots.add(d.root);
@@ -348,7 +340,7 @@ public class IncProjectBuilder {
 
     // check that output and source roots are not overlapping
     final List<File> filesToDelete = new ArrayList<File>();
-    for (Map.Entry<File, Set<Pair<String, Boolean>>> entry : rootsToDelete.entrySet()) {
+    for (Map.Entry<File, Collection<ModuleBuildTarget>> entry : rootsToDelete.entrySet()) {
       context.checkCanceled();
       boolean okToDelete = true;
       final File outputRoot = entry.getKey();
@@ -370,8 +362,8 @@ public class IncProjectBuilder {
       else {
         context.processMessage(new CompilerMessage(BUILD_NAME, BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. The output cannot be cleaned."));
         // clean only those files we are aware of
-        for (Pair<String, Boolean> info : entry.getValue()) {
-          clearOutputFiles(context, info.first, info.second);
+        for (ModuleBuildTarget target : entry.getValue()) {
+          clearOutputFiles(context, target);
         }
       }
     }
@@ -386,13 +378,13 @@ public class IncProjectBuilder {
     );
   }
 
-  private static void appendRootInfo(Map<File, Set<Pair<String, Boolean>>> rootsToDelete, File out, JpsModule module, boolean isTest) {
-    Set<Pair<String, Boolean>> infos = rootsToDelete.get(out);
+  private static void appendRootInfo(Map<File, Set<ModuleBuildTarget>> rootsToDelete, File out, ModuleBuildTarget target) {
+    Set<ModuleBuildTarget> infos = rootsToDelete.get(out);
     if (infos == null) {
-      infos = new HashSet<Pair<String, Boolean>>();
+      infos = new HashSet<ModuleBuildTarget>();
       rootsToDelete.put(out, infos);
     }
-    infos.add(Pair.create(module.getName(), isTest));
+    infos.add(target);
   }
 
   private static void runTasks(CompileContext context, final List<BuildTask> tasks) throws ProjectBuildException {
@@ -636,7 +628,7 @@ public class IncProjectBuilder {
         }
         removedSources.put(target, deletedPaths);
 
-        final SourceToOutputMapping sourceToOutputStorage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target.getModuleName(), target.isTests());
+        final SourceToOutputMapping sourceToOutputStorage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
         // actually delete outputs associated with removed paths
         for (String deletedSource : deletedPaths) {
           // deleting outputs corresponding to non-existing source
@@ -786,19 +778,18 @@ public class IncProjectBuilder {
 
   private static void syncOutputFiles(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
-    final boolean compilingTests = chunk.isTests();
     try {
       final Collection<String> allOutputs = new LinkedList<String>();
 
       FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
-        private final Map<JpsModule, SourceToOutputMapping> storageMap = new HashMap<JpsModule, SourceToOutputMapping>();
+        private final Map<ModuleBuildTarget, SourceToOutputMapping> storageMap = new HashMap<ModuleBuildTarget, SourceToOutputMapping>();
 
         @Override
-        public boolean apply(JpsModule module, File file, String sourceRoot) throws IOException {
-          SourceToOutputMapping srcToOut = storageMap.get(module);
+        public boolean apply(ModuleBuildTarget target, File file, String sourceRoot) throws IOException {
+          SourceToOutputMapping srcToOut = storageMap.get(target);
           if (srcToOut == null) {
-            srcToOut = dataManager.getSourceToOutputMap(module.getName(), compilingTests);
-            storageMap.put(module, srcToOut);
+            srcToOut = dataManager.getSourceToOutputMap(target);
+            storageMap.put(target, srcToOut);
           }
           final String srcPath = FileUtil.toSystemIndependentName(file.getPath());
           final Collection<String> outputs = srcToOut.getState(srcPath);
@@ -959,7 +950,7 @@ public class IncProjectBuilder {
     // handle deleted paths
     final BuildFSState fsState = pd.fsState;
     fsState.clearDeletedPaths(target);
-    final SourceToOutputMapping sourceToOutputMap = pd.dataManager.getSourceToOutputMap(target.getModuleName(), target.isTests());
+    final SourceToOutputMapping sourceToOutputMap = pd.dataManager.getSourceToOutputMap(target);
     for (final Iterator<String> it = sourceToOutputMap.getKeysIterator(); it.hasNext();) {
       final String path = it.next();
       // can check if the file exists

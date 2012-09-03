@@ -1,7 +1,5 @@
 package org.jetbrains.jps.incremental;
 
-import org.jetbrains.jps.model.module.JpsModule;
-
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -38,7 +36,7 @@ public class FilesCollector implements FileProcessor{
     return myContainer;
   }
 
-  public boolean apply(JpsModule module, File file, String sourceRoot) throws IOException {
+  public boolean apply(ModuleBuildTarget target, File file, String sourceRoot) throws IOException {
     if (myFilter.accept(file)) {
       myContainer.add(file);
     }

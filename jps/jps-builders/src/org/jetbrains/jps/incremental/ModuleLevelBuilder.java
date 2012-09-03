@@ -247,8 +247,7 @@ public abstract class ModuleLevelBuilder extends Builder {
       for (ModuleBuildTarget target : chunk.getTargets()) {
         final Collection<String> paths = map.remove(target);
         if (paths != null) {
-          final SourceToOutputMapping storage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target.getModuleName(),
-                                                                                                                target.isTests());
+          final SourceToOutputMapping storage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
           for (String path : paths) {
             storage.remove(path);
           }

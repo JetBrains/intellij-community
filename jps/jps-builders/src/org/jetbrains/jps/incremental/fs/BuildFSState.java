@@ -131,7 +131,7 @@ public class BuildFSState extends FSState {
           if (excludes.isExcluded(file)) {
             continue;
           }
-          if (!processor.apply(target.getModule(), file, root)) {
+          if (!processor.apply(target, file, root)) {
             return false;
           }
         }

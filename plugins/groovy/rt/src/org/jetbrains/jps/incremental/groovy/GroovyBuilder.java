@@ -235,7 +235,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     assert patterns != null;
     final List<File> toCompile = new ArrayList<File>();
     FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
-      public boolean apply(JpsModule module, File file, String sourceRoot) throws IOException {
+      public boolean apply(ModuleBuildTarget target, File file, String sourceRoot) throws IOException {
         final String path = file.getPath();
         if (isGroovyFile(path) && !patterns.isResourceFile(file, sourceRoot)) { //todo file type check
           toCompile.add(file);
@@ -264,7 +264,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         final RootDescriptor moduleAndRoot = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, new File(sourcePath));
         if (moduleAndRoot != null) {
           final String moduleName = moduleAndRoot.module;
-          context.getProjectDescriptor().dataManager.getSourceToOutputMap(moduleName, moduleAndRoot.isTestRoot).appendData(sourcePath, outputPath);
+          context.getProjectDescriptor().dataManager.getSourceToOutputMap(moduleAndRoot.target).appendData(sourcePath, outputPath);
           String moduleOutputPath = generationOutputs.get(context.getProjectDescriptor().rootsIndex.getModuleByName(moduleName));
           generatedEvent.add(moduleOutputPath, FileUtil.getRelativePath(moduleOutputPath, outputPath, '/'));
         }
@@ -299,7 +299,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     final Map<String, String> class2Src = new HashMap<String, String>();
     for (ModuleBuildTarget target : chunk.getTargets()) {
       String moduleOutputPath = finalOutputs.get(target.getModule());
-      final SourceToOutputMapping srcToOut = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target.getModuleName(), target.isTests());
+      final SourceToOutputMapping srcToOut = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
       for (String src : srcToOut.getKeys()) {
         if (!toCompilePaths.contains(src) && isGroovyFile(src) &&
             !context.getProjectDescriptor().project.getCompilerConfiguration().getExcludes().isExcluded(new File(src))) {
