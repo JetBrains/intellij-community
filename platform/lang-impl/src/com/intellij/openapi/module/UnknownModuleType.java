@@ -49,7 +49,7 @@ public class UnknownModuleType extends ModuleType {
   }
 
   public Icon getNodeIcon(boolean isOpened) {
-    return myModuleType.getNodeIcon(isOpened);
+    return myModuleType.getIcon();
   }
 
   public ModuleWizardStep[] createWizardSteps(final WizardContext wizardContext, final ModuleBuilder moduleBuilder, final ModulesProvider modulesProvider) {

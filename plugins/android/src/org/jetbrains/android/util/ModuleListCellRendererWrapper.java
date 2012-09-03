@@ -32,6 +32,6 @@ public class ModuleListCellRendererWrapper extends ListCellRendererWrapper<Modul
   @Override
   public void customize(JList list, Module module, int index, boolean selected, boolean hasFocus) {
     setText(module.getName());
-    setIcon(ModuleType.get(module).getNodeIcon(false));
+    setIcon(ModuleType.get(module).getIcon());
   }
 }

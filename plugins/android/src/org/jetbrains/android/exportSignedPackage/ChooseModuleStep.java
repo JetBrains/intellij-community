@@ -16,12 +16,12 @@
 
 package org.jetbrains.android.exportSignedPackage;
 
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 
@@ -63,7 +63,7 @@ class ChooseModuleStep extends ExportSignedPackageWizardStep {
       public void customize(JList list, AndroidFacet value, int index, boolean selected, boolean hasFocus) {
         final Module module = value.getModule();
         setText(module.getName());
-        setIcon(ModuleType.get(module).getNodeIcon(false));
+        setIcon(ModuleType.get(module).getIcon());
       }
     });
     myModuleCombo.addActionListener(new ActionListener() {

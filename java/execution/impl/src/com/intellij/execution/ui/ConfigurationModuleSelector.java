@@ -17,7 +17,6 @@ package com.intellij.execution.ui;
 
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -25,6 +24,7 @@ import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.ComboboxSpeedSearch;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.SortedComboBoxModel;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +72,7 @@ public class ConfigurationModuleSelector {
       public void customize(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
         if (value instanceof Module) {
           final Module module = (Module)value;
-          setIcon(ModuleType.get(module).getNodeIcon(true));
+          setIcon(ModuleType.get(module).getIcon());
           setText(module.getName());
         }
         else if (value == null) {

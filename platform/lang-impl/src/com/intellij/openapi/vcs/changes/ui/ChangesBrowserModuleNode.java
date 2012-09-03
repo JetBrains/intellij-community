@@ -18,10 +18,10 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.ui.SimpleTextAttributes;
 
 /**
@@ -39,9 +39,9 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
     renderer.append(module.isDisposed() ? "" : module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     appendCount(renderer);
     if (module.isDisposed()) {
-      renderer.setIcon(ModuleType.EMPTY.getNodeIcon(expanded));
+      renderer.setIcon(ModuleType.EMPTY.getIcon());
     } else {
-      renderer.setIcon(ModuleType.get(module).getNodeIcon(expanded));
+      renderer.setIcon(ModuleType.get(module).getIcon());
     }
   }
 

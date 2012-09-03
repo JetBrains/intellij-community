@@ -184,7 +184,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   @Nullable
   protected Icon getElementIcon(Object element) {
     if (element instanceof ModuleDescriptor) {
-      return ((ModuleDescriptor)element).getModuleType().getNodeIcon(false);
+      return ((ModuleDescriptor)element).getModuleType().getIcon();
     }
     if (element instanceof LibraryDescriptor) {
       return PlatformIcons.LIBRARY_ICON;

@@ -81,7 +81,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
       return new SimpleTextCellAppearance(presentableName, icon, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES);
     }
     else if (orderEntry instanceof ModuleOrderEntry) {
-      final Icon icon = ModuleType.get(((ModuleOrderEntry)orderEntry).getModule()).getNodeIcon(false);
+      final Icon icon = ModuleType.get(((ModuleOrderEntry)orderEntry).getModule()).getIcon();
       return SimpleTextCellAppearance.regular(orderEntry.getPresentableName(), icon);
     }
     else {
@@ -169,7 +169,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
   @NotNull
   @Override
   public CellAppearanceEx forModule(@NotNull final Module module) {
-    return SimpleTextCellAppearance.regular(module.getName(), ModuleType.get(module).getNodeIcon(false));
+    return SimpleTextCellAppearance.regular(module.getName(), ModuleType.get(module).getIcon());
   }
 
   @NotNull

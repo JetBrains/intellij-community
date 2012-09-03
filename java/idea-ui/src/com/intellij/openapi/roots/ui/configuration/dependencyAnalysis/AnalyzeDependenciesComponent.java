@@ -608,7 +608,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
           return new CellAppearanceEx() {
             @Override
             public void customize(@NotNull SimpleColoredComponent component) {
-              component.setIcon(ModuleType.get(myModule).getNodeIcon(false));
+              component.setIcon(ModuleType.get(myModule).getIcon());
               component.append("<This Module>", SimpleTextAttributes.SYNTHETIC_ATTRIBUTES);
             }
 

@@ -37,7 +37,7 @@ class AddModuleDependencyAction extends AddItemPopupAction<Module> {
                                    int actionIndex,
                                    StructureConfigurableContext context) {
     super(classpathPanel, actionIndex, ProjectBundle.message("classpath.add.module.dependency.action"),
-          StdModuleTypes.JAVA.getNodeIcon(false));
+          StdModuleTypes.JAVA.getIcon());
     myContext = context;
     myClasspathPanel = classpathPanel;
   }

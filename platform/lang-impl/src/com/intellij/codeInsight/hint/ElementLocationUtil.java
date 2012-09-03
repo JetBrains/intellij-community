@@ -49,7 +49,7 @@ public class ElementLocationUtil {
 
       if (module != null) {
         label.setText(module.getName());
-        label.setIcon(ModuleType.get(module).getNodeIcon(false));
+        label.setIcon(ModuleType.get(module).getIcon());
       }
       else {
         final List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(vfile);

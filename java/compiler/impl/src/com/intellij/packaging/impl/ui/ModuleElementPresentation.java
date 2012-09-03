@@ -71,7 +71,7 @@ public class ModuleElementPresentation extends TreeNodePresentation {
       presentationData.setIcon(PlatformIcons.TEST_SOURCE_FOLDER);
     }
     else if (module != null) {
-      presentationData.setIcon(ModuleType.get(module).getNodeIcon(false));
+      presentationData.setIcon(ModuleType.get(module).getIcon());
     }
     String moduleName;
     if (module != null) {

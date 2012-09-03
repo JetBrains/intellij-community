@@ -97,7 +97,7 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
     EditorColorsScheme colorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
     myHighlightedRegions.add(
       new HighlightedRegion(nameEndOffset, newName.length(), colorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES)));
-    presentation.setIcon(ModuleType.get(getValue()).getNodeIcon(false));
+    presentation.setIcon(ModuleType.get(getValue()).getIcon());
     presentation.setPresentableText(newName);
   }
 

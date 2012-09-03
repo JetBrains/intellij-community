@@ -39,7 +39,13 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   public abstract String getName();
   public abstract String getDescription();
   public abstract Icon getBigIcon();
-  public abstract Icon getNodeIcon(boolean isOpened);
+
+  public Icon getIcon() {
+    return getNodeIcon(false);
+  }
+
+  public abstract Icon getNodeIcon(@Deprecated boolean isOpened);
+
 
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, T moduleBuilder, ModulesProvider modulesProvider) {
     return ModuleWizardStep.EMPTY_ARRAY;

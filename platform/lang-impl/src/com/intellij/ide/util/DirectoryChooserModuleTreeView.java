@@ -239,7 +239,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
       else if (value instanceof Module) {
         final Module module = (Module)value;
         append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        setIcon(ModuleType.get(module).getNodeIcon(false));
+        setIcon(ModuleType.get(module).getIcon());
       } else if (value instanceof ModuleGroup) {
         append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);

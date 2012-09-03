@@ -427,7 +427,7 @@ public class ProcessedModulesTable extends JPanel {
       }
       component.setEnabled(ProcessedModulesTable.this.isEnabled());
       if (component instanceof JLabel) {
-        final Icon icon = module != null ? ModuleType.get(module).getNodeIcon(false) : null;
+        final Icon icon = module != null ? ModuleType.get(module).getIcon() : null;
         JLabel label = (JLabel)component;
         label.setIcon(icon);
         label.setDisabledIcon(icon);

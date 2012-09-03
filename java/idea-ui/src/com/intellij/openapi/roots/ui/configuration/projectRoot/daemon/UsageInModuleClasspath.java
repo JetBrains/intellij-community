@@ -65,7 +65,7 @@ public class UsageInModuleClasspath extends ProjectStructureElementUsage {
 
   @Override
   public Icon getIcon() {
-    return ModuleType.get(myModule).getNodeIcon(false);
+    return ModuleType.get(myModule).getIcon();
   }
 
   @Override

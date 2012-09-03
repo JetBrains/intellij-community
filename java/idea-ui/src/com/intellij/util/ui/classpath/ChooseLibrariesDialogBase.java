@@ -302,7 +302,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     protected ModuleDescriptor(final Project project, final NodeDescriptor parentDescriptor, final Module element) {
       super(project, parentDescriptor, element);
       final PresentationData templatePresentation = getTemplatePresentation();
-      templatePresentation.setIcon(ModuleType.get(element).getNodeIcon(false));
+      templatePresentation.setIcon(ModuleType.get(element).getIcon());
       templatePresentation.addText(notEmpty(element.getName()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
 
