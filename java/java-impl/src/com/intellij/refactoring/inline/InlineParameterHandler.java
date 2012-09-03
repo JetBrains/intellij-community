@@ -49,9 +49,15 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("inline.parameter.refactoring");
 
   public boolean canInlineElement(PsiElement element) {
-    return element instanceof PsiParameter &&
-           element.getParent() instanceof PsiParameterList &&
-           element.getLanguage() == JavaLanguage.INSTANCE;
+    if (element instanceof PsiParameter) {
+      final PsiElement parent = element.getParent();
+      if (parent instanceof PsiParameterList &&
+          parent.getParent() instanceof PsiMethod &&
+          element.getLanguage() == JavaLanguage.INSTANCE) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void inlineElement(final Project project, final Editor editor, final PsiElement psiElement) {
