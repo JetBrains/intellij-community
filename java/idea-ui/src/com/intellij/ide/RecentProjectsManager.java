@@ -23,6 +23,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.NotNull;
 
 @State(
   name = "RecentProjectsManager",
@@ -37,11 +38,11 @@ public class RecentProjectsManager extends RecentProjectsManagerBase {
     super(projectManager, messageBus);
   }
 
-  protected String getProjectPath(Project project) {
+  protected String getProjectPath(@NotNull Project project) {
     return project.getPresentableUrl();
   }
 
-  protected void doOpenProject(final String projectPath, Project projectToClose, final boolean forceOpenInNewFrame) {
+  protected void doOpenProject(@NotNull String projectPath, Project projectToClose, boolean forceOpenInNewFrame) {
     ProjectUtil.openProject(projectPath, projectToClose, forceOpenInNewFrame);
   }
 }
