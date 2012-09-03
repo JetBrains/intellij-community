@@ -262,13 +262,13 @@ public class ContainerUtilRt {
     return new CopyOnWriteArrayList<T>(ContainerUtilRt.<T>emptyList());
   }
 
-  public static <T> void addIfNotNull(final T element, @NotNull Collection<T> result) {
+  public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {
     if (element != null) {
       result.add(element);
     }
   }
 
-  public static <T> void addIfNotNull(@NotNull Collection<T> result, @Nullable final T element) {
+  public static <T> void addIfNotNull(@NotNull Collection<T> result, @Nullable T element) {
     if (element != null) {
       result.add(element);
     }

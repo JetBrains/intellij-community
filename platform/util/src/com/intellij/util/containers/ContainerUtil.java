@@ -658,6 +658,11 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  public static <T> List<T> filter(@NotNull Condition<? super T> condition, T... collection) {
+    return findAll(collection, condition);
+  }
+
+  @NotNull
   public static <T> List<T> findAll(@NotNull T[] collection, @NotNull Condition<? super T> condition) {
     return findAll(Arrays.asList(collection), condition);
   }
@@ -1656,11 +1661,11 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.createEmptyCOWList();
   }
 
-  public static <T> void addIfNotNull(final T element, @NotNull Collection<T> result) {
+  public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {
     ContainerUtilRt.addIfNotNull(element, result);
   }
 
-  public static <T> void addIfNotNull(@NotNull Collection<T> result, @Nullable final T element) {
+  public static <T> void addIfNotNull(@NotNull Collection<T> result, @Nullable T element) {
     ContainerUtilRt.addIfNotNull(result, element);
   }
 
