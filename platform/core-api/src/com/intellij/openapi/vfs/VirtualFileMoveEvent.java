@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides data for event which is fired when a virtual file is moved.
@@ -27,7 +28,10 @@ public class VirtualFileMoveEvent extends VirtualFileEvent {
   private final VirtualFile myOldParent;
   private final VirtualFile myNewParent;
 
-  public VirtualFileMoveEvent(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile oldParent, @NotNull VirtualFile newParent){
+  public VirtualFileMoveEvent(@Nullable Object requestor,
+                              @NotNull VirtualFile file,
+                              @NotNull VirtualFile oldParent,
+                              @NotNull VirtualFile newParent) {
     super(requestor, file, file.getName(), file.getParent());
     myOldParent = oldParent;
     myNewParent = newParent;
