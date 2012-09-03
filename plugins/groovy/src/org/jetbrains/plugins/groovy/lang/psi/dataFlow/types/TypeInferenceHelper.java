@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.impl;
+package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.*;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,10 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.InstanceOfInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ArgumentInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
@@ -41,7 +39,8 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsDfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsSemilattice;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypesSemilattice;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.InferenceContext;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.*;
@@ -54,9 +53,9 @@ public class TypeInferenceHelper {
   private static final Logger LOG = Logger.getInstance(TypeInferenceHelper.class);
   private static final ThreadLocal<InferenceContext> ourInferenceContext = new ThreadLocal<InferenceContext>();
 
-  private static <T> T doInference(Map<String, PsiType> bindings, Computable<T> computation) {
+  private static <T> T doInference(TypeDfaState bindings, Computable<T> computation) {
     InferenceContext old = ourInferenceContext.get();
-    ourInferenceContext.set(new InferenceContext.PartialContext(bindings));
+    ourInferenceContext.set(new InferenceContext.PartialContext(bindings.getBindings()));
     try {
       return computation.compute();
     }
@@ -111,7 +110,7 @@ public class TypeInferenceHelper {
     final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(refExpr);
     if (scope == null) return null;
 
-    return inferVariableType(scope).getInferredType(refExpr.getReferenceName(), findInstruction(refExpr, scope.getControlFlow()));
+    return inferVariableTypes(scope).getInferredType(refExpr.getReferenceName(), findInstruction(refExpr, scope.getControlFlow()));
   }
 
   @Nullable
@@ -119,11 +118,11 @@ public class TypeInferenceHelper {
     final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(place);
     if (scope == null) return null;
 
-    return inferVariableType(scope).getInferredType(variableName, findInstructionAt(place, scope.getControlFlow()));
+    return inferVariableTypes(scope).getInferredType(variableName, findInstructionAt(place, scope.getControlFlow()));
   }
 
   @NotNull
-  private static InferenceResult inferVariableType(final GrControlFlowOwner scope) {
+  private static InferenceResult inferVariableTypes(final GrControlFlowOwner scope) {
     return CachedValuesManager.getManager(scope.getProject()).getCachedValue(scope, new CachedValueProvider<InferenceResult>() {
       @Nullable
       @Override
@@ -344,50 +343,63 @@ public class TypeInferenceHelper {
   }
 
   @Nullable
-  private static ArrayList<Map<String, PsiType>> performTypeDfa(GrControlFlowOwner owner, Instruction[] flow) {
+  private static List<Map<String, PsiType>> performTypeDfa(GrControlFlowOwner owner, Instruction[] flow) {
     final TypeDfaInstance dfaInstance = new TypeDfaInstance(owner);
     final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
-    final DFAEngine<Map<String, PsiType>> engine = new DFAEngine<Map<String, PsiType>>(flow, dfaInstance, semilattice);
-    return engine.performDFAWithTimeout();
+    List<TypeDfaState> states = new DFAEngine<TypeDfaState>(flow, dfaInstance, semilattice).performDFAWithTimeout();
+    return states == null ? null : ContainerUtil.map(states, new Function<TypeDfaState, Map<String, PsiType>>() {
+      @Override
+      public Map<String, PsiType> fun(TypeDfaState state) {
+        return state.getBindings();
+      }
+    });
   }
 
-  static class TypeDfaInstance implements DfaInstance<Map<String, PsiType>> {
-    private final PsiElement scope;
+  static class TypeDfaInstance implements DfaInstance<TypeDfaState> {
+    private final PsiElement myScope;
 
     TypeDfaInstance(PsiElement scope) {
-      this.scope = scope;
+      myScope = scope;
     }
 
-    public void fun(final Map<String, PsiType> map, final Instruction instruction) {
-      if (instruction instanceof ReadWriteVariableInstruction && ((ReadWriteVariableInstruction) instruction).isWrite()) {
-        final PsiElement element = instruction.getElement();
-        if (element != null) {
-          map.put(((ReadWriteVariableInstruction)instruction).getVariableName(), doInference(map, new Computable<PsiType>() {
-            @Override
-            public PsiType compute() {
-              return TypesUtil.boxPrimitiveType(getInitializerType(element), scope.getManager(), scope.getResolveScope());
-            }
-          }));
-        }
+    public void fun(final TypeDfaState state, final Instruction instruction) {
+      if (instruction instanceof ReadWriteVariableInstruction) {
+        handleVariableWrite(state, (ReadWriteVariableInstruction)instruction);
       }
-      if (instruction instanceof ArgumentInstruction) {
-        final String varName = ((MixinTypeInstruction)instruction).getVariableName();
-        map.put(varName, doInference(map, new Computable<PsiType>() {
+      else if (instruction instanceof MixinTypeInstruction) {
+        handleMixin(state, (MixinTypeInstruction)instruction);
+      }
+    }
+
+    private static void handleMixin(final TypeDfaState state, final MixinTypeInstruction instruction) {
+      final String varName = instruction.getVariableName();
+      state.putType(varName, doInference(state, new Computable<PsiType>() {
+        @Override
+        public PsiType compute() {
+          PsiType original = state.getBindings().get(varName);
+          final PsiType mixin = instruction.inferMixinType();
+          if (mixin == null) return original;
+          if (original == null) return mixin;
+          return PsiIntersectionType.createIntersection(original, mixin);
+        }
+      }));
+    }
+
+    private void handleVariableWrite(TypeDfaState state, ReadWriteVariableInstruction instruction) {
+      final PsiElement element = instruction.getElement();
+      if (element != null && instruction.isWrite()) {
+        state.putType(instruction.getVariableName(), doInference(state, new Computable<PsiType>() {
           @Override
           public PsiType compute() {
-            PsiType original = map.get(varName);
-            final PsiType mixin = ((MixinTypeInstruction)instruction).inferMixinType();
-            if (mixin == null) return original;
-            if (original == null) return mixin;
-            return PsiIntersectionType.createIntersection(original, mixin);
+            return TypesUtil.boxPrimitiveType(getInitializerType(element), myScope.getManager(), myScope.getResolveScope());
           }
         }));
       }
     }
 
     @NotNull
-    public Map<String, PsiType> initial() {
-      return ContainerUtil.newHashMap();
+    public TypeDfaState initial() {
+      return new TypeDfaState();
     }
 
     public boolean isForward() {

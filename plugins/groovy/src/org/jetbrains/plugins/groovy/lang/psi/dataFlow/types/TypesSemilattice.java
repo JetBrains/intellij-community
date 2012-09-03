@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
@@ -28,54 +28,86 @@ import java.util.Map;
 /**
  * @author ven
  */
-public class TypesSemilattice implements Semilattice<Map<String, PsiType>> {
-  PsiManager myManager;
+public class TypesSemilattice implements Semilattice<TypeDfaState> {
+  private final PsiManager myManager;
 
   public TypesSemilattice(PsiManager manager) {
     myManager = manager;
   }
 
-  public Map<String, PsiType> join(ArrayList<Map<String, PsiType>> ins) {
-    if (ins.size() == 0) return new HashMap<String, PsiType>();
+  public TypeDfaState join(ArrayList<TypeDfaState> ins) {
+    if (ins.size() == 0) return new TypeDfaState();
 
-    Map<String, PsiType> result = new HashMap<String, PsiType>(ins.get(0));
-
+    TypeDfaState result = new TypeDfaState(ins.get(0));
     for (int i = 1; i < ins.size(); i++) {
-      Map<String, PsiType> map = ins.get(i);
-
-      for (Map.Entry<String, PsiType> entry : map.entrySet()) {
-        final String name = entry.getKey();
-        final PsiType t1 = entry.getValue();
-        if (result.containsKey(name)) {
-          final PsiType t2 = result.get(name);
-          if (t1 != null && t2 != null) {
-            result.put(name, TypesUtil.getLeastUpperBound(t1, t2, myManager));
-          }
-          else {
-            result.put(name, null);
-          }
-        }
-      }
+      result.joinState(ins.get(i), myManager);
     }
-
     return result;
   }
 
-  public boolean eq(Map<String, PsiType> e1, Map<String, PsiType> e2) {
-    if (e1.size() != e2.size()) return false;
+  public boolean eq(TypeDfaState e1, TypeDfaState e2) {
+    return e1.contentsEqual(e2);
+  }
+}
 
-    for (Map.Entry<String, PsiType> entry : e1.entrySet()) {
+class TypeDfaState {
+  private final Map<String, PsiType> myVarTypes;
+
+  TypeDfaState() {
+    myVarTypes = ContainerUtil.newHashMap();
+  }
+
+  TypeDfaState(TypeDfaState another) {
+    myVarTypes = ContainerUtil.newHashMap(another.myVarTypes);
+  }
+
+  void joinState(TypeDfaState another, PsiManager manager) {
+    for (Map.Entry<String, PsiType> entry : another.myVarTypes.entrySet()) {
       final String name = entry.getKey();
-      if (!e2.containsKey(name)) return false;
       final PsiType t1 = entry.getValue();
-      final PsiType t2 = e2.get(name);
-      if (t1 == null || t2 == null) {
-        if (t1 != null || t2 != null) return false;
+      if (myVarTypes.containsKey(name)) {
+        final PsiType t2 = myVarTypes.get(name);
+        if (t1 != null && t2 != null) {
+          myVarTypes.put(name, TypesUtil.getLeastUpperBound(t1, t2, manager));
+        }
+        else {
+          myVarTypes.put(name, null);
+        }
       }
-      else {
-        if (!TypeConversionUtil.erasure(t1).equals(TypeConversionUtil.erasure(t2))) return false;
+    }
+  }
+
+  boolean contentsEqual(TypeDfaState another) {
+    if (myVarTypes.size() != another.myVarTypes.size()) {
+      return false;
+    }
+
+    for (String name : myVarTypes.keySet()) {
+      if (!areTypesErasureEqual(another.myVarTypes, name)) {
+        return false;
       }
     }
     return true;
+  }
+
+  private boolean areTypesErasureEqual(Map<String, PsiType> another, String name) {
+    if (!another.containsKey(name)) return false;
+    final PsiType t1 = myVarTypes.get(name);
+    final PsiType t2 = another.get(name);
+    if (t1 == null || t2 == null) {
+      if (t1 != null || t2 != null) return false;
+    }
+    else {
+      if (!TypeConversionUtil.erasure(t1).equals(TypeConversionUtil.erasure(t2))) return false;
+    }
+    return true;
+  }
+
+  Map<String, PsiType> getBindings() {
+    return myVarTypes;
+  }
+
+  void putType(String variableName, PsiType type) {
+    myVarTypes.put(variableName, type);
   }
 }
