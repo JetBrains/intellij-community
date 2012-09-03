@@ -358,30 +358,12 @@ public class DumbServiceImpl extends DumbService {
             }
             finally {
               myProcessedItems += count;
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Scheduling checkNextUpdateFromQueue");
+              }
               UIUtil.invokeLaterIfNeeded(new DumbAwareRunnable() {
                 public void run() {
-                  IndexUpdateRunnable nextUpdateRunnable = null;
-                  try {
-                    nextUpdateRunnable = myUpdatesQueue.isEmpty()? null : myUpdatesQueue.pullFirst();
-                    if (nextUpdateRunnable == null) {
-                      // really terminate the task
-                      myActionQueue.offer(NULL_ACTION);
-                    }
-                    else {
-                      //run next dumb action
-                      // run next action under already existing progress indicator
-                      myActionQueue.offer(new Ref<CacheUpdateRunner>(nextUpdateRunnable.myAction));
-                    }
-                  }
-                  catch (Throwable e) {
-                    myActionQueue.offer(NULL_ACTION);
-                    LOG.info(e);
-                  }
-                  finally {
-                    if (nextUpdateRunnable == null) {
-                      updateFinished();
-                    }
-                  }
+                  checkNextUpdateFromQueue();
                 }
               });
 
@@ -406,6 +388,33 @@ public class DumbServiceImpl extends DumbService {
           while (updateRunner != null);
         }
 
+        private void checkNextUpdateFromQueue() {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Inside checkNextUpdateFromQueue");
+          }
+          IndexUpdateRunnable nextUpdateRunnable = null;
+          try {
+            nextUpdateRunnable = myUpdatesQueue.isEmpty()? null : myUpdatesQueue.pullFirst();
+            if (nextUpdateRunnable == null) {
+              // really terminate the task
+              myActionQueue.offer(NULL_ACTION);
+            }
+            else {
+              //run next dumb action
+              // run next action under already existing progress indicator
+              myActionQueue.offer(new Ref<CacheUpdateRunner>(nextUpdateRunnable.myAction));
+            }
+          }
+          catch (Throwable e) {
+            myActionQueue.offer(NULL_ACTION);
+            LOG.info(e);
+          }
+          finally {
+            if (nextUpdateRunnable == null) {
+              updateFinished();
+            }
+          }
+        }
       });
     }
   }

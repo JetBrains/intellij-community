@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +50,7 @@ public class FileContentQueue {
   private final Queue<FileContent> myPushbackBuffer = new ArrayDeque<FileContent>();
   private volatile boolean myContentLoadingThreadTerminated = false;
 
-  public void queue(final Collection<VirtualFile> files, @Nullable final ProgressIndicator indicator) {
+  public void queue(final Collection<VirtualFile> files, @NotNull final ProgressIndicator indicator) {
     final Runnable contentLoadingRunnable = new Runnable() {
       public void run() {
         try {
@@ -59,7 +58,7 @@ public class FileContentQueue {
             if (indicator != null) {
               indicator.checkCanceled();
             }
-            addLast(file);
+            addLast(file, indicator);
           }
 
           // put end-of-queue marker only if not canceled
@@ -85,11 +84,11 @@ public class FileContentQueue {
     ApplicationManager.getApplication().executeOnPooledThread(contentLoadingRunnable);
   }
 
-  private void addLast(VirtualFile file) throws InterruptedException {
+  private void addLast(VirtualFile file, @NotNull final ProgressIndicator indicator) throws InterruptedException {
     FileContent content = new FileContent(file);
 
     if (file.isValid() && !file.isDirectory()) {
-      if (!doLoadContent(content)) {
+      if (!doLoadContent(content, indicator)) {
         content.setEmptyContent();
       }
     }
@@ -100,17 +99,14 @@ public class FileContentQueue {
     myQueue.put(content);
   }
 
-  private boolean doLoadContent(final FileContent content) throws InterruptedException {
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+  private boolean doLoadContent(final FileContent content, @NotNull final ProgressIndicator indicator) throws InterruptedException {
     final long contentLength = content.getLength();
 
     boolean counterUpdated = false;
     try {
       synchronized (this) {
         while (myTotalSize > SIZE_THRESHOLD) {
-          if (indicator != null) {
-            indicator.checkCanceled();
-          }
+          indicator.checkCanceled();
           wait(300L);
         }
         myTotalSize += contentLength;
@@ -144,21 +140,17 @@ public class FileContentQueue {
   }
 
   @Nullable
-  public FileContent take() {
-
+  public FileContent take(@NotNull ProgressIndicator indicator) {
     FileContent content = doTake();
     if (content != null) {
       final long length = content.getLength();
       while (true) {
-        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        if (indicator != null) {
-          try {
-            indicator.checkCanceled();
-          }
-          catch (ProcessCanceledException e) {
-            pushback(content);
-            throw e;
-          }
+        try {
+          indicator.checkCanceled();
+        }
+        catch (ProcessCanceledException e) {
+          pushback(content);
+          throw e;
         }
         synchronized (this) {
           boolean requestingLargeSize = length > LARGE_SIZE_REQUEST_THRESHOLD;
