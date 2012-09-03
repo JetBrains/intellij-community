@@ -62,13 +62,18 @@ public class RestartAction extends AnAction implements DumbAware, AnAction.Trans
   public void actionPerformed(final AnActionEvent e) {
     Project project = myEnvironment.getProject();
     RunnerAndConfigurationSettings settings = myEnvironment.getRunnerAndConfigurationSettings();
-    if (project == null || settings == null)
+    if (project == null)
       return;
-    ExecutionManager.getInstance(project).restartRunProfile(project,
-                                                            myExecutor,
-                                                            myEnvironment.getExecutionTarget(),
-                                                            settings,
-                                                            myProcessHandler);
+    if (settings != null) {
+      ExecutionManager.getInstance(project).restartRunProfile(project,
+                                                              myExecutor,
+                                                              myEnvironment.getExecutionTarget(),
+                                                              settings,
+                                                              myProcessHandler);
+    }
+    else {
+      restart();
+    }
   }
 
   //Should be used by android framework only
