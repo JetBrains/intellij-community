@@ -8,8 +8,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
@@ -17,6 +15,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,21 +23,26 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class AutoExecutor implements Runnable {
+public class DelayedDocumentWatcher implements Runnable {
   private final Project project;
   private final Alarm alarm;
   private final Consumer<VirtualFile[]> consumer;
   private final int delay;
 
   private final MyDocumentAdapter listener;
-  private boolean listenerAttached;
 
   private final Set<VirtualFile> changedFiles = new THashSet<VirtualFile>();
   private boolean wasRequested;
 
   private final Condition<VirtualFile> documentChangedFilter;
 
-  public AutoExecutor(Project project, Alarm alarm, int delay, Consumer<VirtualFile[]> consumer, Condition<VirtualFile> documentChangedFilter) {
+  private MessageBusConnection messageBusConnection;
+
+  public DelayedDocumentWatcher(Project project,
+                                Alarm alarm,
+                                int delay,
+                                Consumer<VirtualFile[]> consumer,
+                                Condition<VirtualFile> documentChangedFilter) {
     this.project = project;
     this.alarm = alarm;
     this.delay = delay;
@@ -46,34 +50,14 @@ public class AutoExecutor implements Runnable {
     this.documentChangedFilter = documentChangedFilter;
 
     listener = new MyDocumentAdapter();
-
-    project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void before(@NotNull List<? extends VFileEvent> events) {
-      }
-
-      @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
-        for (VFileEvent event : events) {
-          if (event instanceof VFileDeleteEvent) {
-            synchronized (changedFiles) {
-              changedFiles.remove(event.getFile());
-            }
-          }
-        }
-      }
-    });
   }
 
-  private void addVfsListener() {
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
-      @Override
-      public void fileDeleted(VirtualFileEvent event) {
-        synchronized (changedFiles) {
-          changedFiles.remove(event.getFile());
-        }
-      }
-    });
+  public DelayedDocumentWatcher(Project project,
+                                Alarm alarm,
+                                int delay,
+                                Consumer<VirtualFile[]> consumer) {
+    //noinspection unchecked
+    this(project, alarm, delay, consumer, Condition.TRUE);
   }
 
   @Override
@@ -107,16 +91,42 @@ public class AutoExecutor implements Runnable {
   }
 
   public void activate() {
-    if (!listenerAttached) {
-      listenerAttached = true;
-      EditorFactory.getInstance().getEventMulticaster().addDocumentListener(listener, project);
+    if (messageBusConnection != null) {
+      return;
     }
+
+    messageBusConnection = project.getMessageBus().connect();
+    messageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void before(@NotNull List<? extends VFileEvent> events) {
+      }
+
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        for (VFileEvent event : events) {
+          if (event instanceof VFileDeleteEvent) {
+            synchronized (changedFiles) {
+              changedFiles.remove(event.getFile());
+            }
+          }
+        }
+      }
+    });
+
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(listener, project);
   }
 
   public void deactivate() {
-    if (listenerAttached) {
-      listenerAttached = false;
+    if (messageBusConnection == null) {
+      return;
+    }
+
+    try {
       EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(listener);
+    }
+    finally {
+      messageBusConnection.disconnect();
+      messageBusConnection = null;
     }
   }
 
@@ -135,8 +145,8 @@ public class AutoExecutor implements Runnable {
         }
       }
 
-      alarm.cancelRequest(AutoExecutor.this);
-      alarm.addRequest(AutoExecutor.this, delay);
+      alarm.cancelRequest(DelayedDocumentWatcher.this);
+      alarm.addRequest(DelayedDocumentWatcher.this, delay);
     }
   }
 }
