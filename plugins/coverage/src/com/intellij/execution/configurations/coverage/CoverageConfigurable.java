@@ -193,7 +193,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
         runnersModel.addElement(new CoverageRunnerItem(runner));
       }
     }
-    myCoverageRunnerCb.setRenderer(new ListCellRendererWrapper<CoverageRunnerItem>(myCoverageRunnerCb.getRenderer()) {
+    myCoverageRunnerCb.setRenderer(new ListCellRendererWrapper<CoverageRunnerItem>() {
       @Override
       public void customize(JList list, CoverageRunnerItem value, int index, boolean selected, boolean hasFocus) {
         if (value != null) {
