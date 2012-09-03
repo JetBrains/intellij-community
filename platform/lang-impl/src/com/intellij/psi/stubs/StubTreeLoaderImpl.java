@@ -88,32 +88,46 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     }
 
     final int id = Math.abs(FileBasedIndex.getFileId(vFile));
-    if (id > 0) {
-      final List<SerializedStubTree> datas = FileBasedIndex.getInstance().getValues(StubUpdatingIndex.INDEX_ID, id, GlobalSearchScope
-          .fileScope(project, vFile));
-      final int size = datas.size();
-
-      if (size == 1) {
-        Stub stub = datas.get(0).getStub(false);
-        return stub instanceof PsiFileStub ? new StubTree((PsiFileStub)stub) : new ObjectStubTree((ObjectStubBase)stub, true);
-      }
-      else if (size != 0) {
-        LOG.error("Twin stubs: " + vFile.getPresentableUrl() + " has " + size + " stub versions. Should only have one. id=" + id);
-
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            final Document doc = FileDocumentManager.getInstance().getCachedDocument(vFile);
-            if (doc != null) {
-              FileDocumentManager.getInstance().saveDocument(doc);
-            }
-          }
-        }, ModalityState.NON_MODAL);
-
-        FileBasedIndex.getInstance().requestReindex(vFile);
-      }
+    if (id <= 0) {
+      return null;
     }
 
+    final List<SerializedStubTree> datas = FileBasedIndex.getInstance().getValues(StubUpdatingIndex.INDEX_ID, id, GlobalSearchScope
+        .fileScope(project, vFile));
+    final int size = datas.size();
+
+    if (size == 1) {
+      Stub stub;
+      try {
+        stub = datas.get(0).getStub(false);
+      }
+      catch (SerializerNotFoundException e) {
+        return processError(vFile, "No stub serializer: " + vFile.getPresentableUrl() + ": " + e.getMessage(), e);
+      }
+      return stub instanceof PsiFileStub ? new StubTree((PsiFileStub)stub) : new ObjectStubTree((ObjectStubBase)stub, true);
+    }
+    else if (size != 0) {
+      return processError(vFile, "Twin stubs: " + vFile.getPresentableUrl() + " has " + size + " stub versions. Should only have one. id=" + id,
+                          null);
+    }
+
+    return null;
+  }
+
+  private static ObjectStubTree processError(final VirtualFile vFile, String message, @Nullable Exception e) {
+    LOG.error(message, e);
+
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        final Document doc = FileDocumentManager.getInstance().getCachedDocument(vFile);
+        if (doc != null) {
+          FileDocumentManager.getInstance().saveDocument(doc);
+        }
+      }
+    }, ModalityState.NON_MODAL);
+
+    FileBasedIndex.getInstance().requestReindex(vFile);
     return null;
   }
 

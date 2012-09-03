@@ -15,25 +15,13 @@
  */
 package com.intellij.psi.stubs;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-
 /**
- * Author: dmitrylomov
+ * @author Dmitry Avdeev
+ *         Date: 8/31/12
  */
-public abstract class SerializationManagerEx extends SerializationManager {
+public class SerializerNotFoundException extends Exception {
 
-  public static SerializationManagerEx getInstanceEx() {
-    return (SerializationManagerEx) SerializationManager.getInstance();
+  public SerializerNotFoundException(String message) {
+    super(message);
   }
-
-  public abstract void serialize(Stub rootStub, OutputStream stream);
-
-  public abstract Stub deserialize(InputStream stream) throws SerializerNotFoundException;
-
-  public abstract boolean isNameStorageCorrupted();
-
-  public abstract void repairNameStorage();
-
-  public abstract void flushNameStorage();
 }

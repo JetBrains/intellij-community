@@ -48,7 +48,7 @@ public class SerializedStubTree {
   }
 
   // willIndexStub is one time optimization hint, once can safely pass false
-  public Stub getStub(boolean willIndexStub) {
+  public Stub getStub(boolean willIndexStub) throws SerializerNotFoundException {
     Stub stubElement = myStubElement;
     if (stubElement != null) {
       // not null myStubElement means we just built SerializedStubTree for indexing,

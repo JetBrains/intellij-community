@@ -155,7 +155,7 @@ public class StubSerializationHelper {
 
   private final RecentStringInterner myStringInterner = new RecentStringInterner(8192);
 
-  public Stub deserialize(InputStream stream) throws IOException {
+  public Stub deserialize(InputStream stream) throws IOException, SerializerNotFoundException {
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator();
     StubInputStream inputStream = new StubInputStream(stream, storage);
     final int size = DataInputOutputUtil.readINT(inputStream);
@@ -171,11 +171,11 @@ public class StubSerializationHelper {
     return deserialize(inputStream, null);
   }
 
-  private Stub deserialize(StubInputStream stream, Stub parentStub) throws IOException {
+  private Stub deserialize(StubInputStream stream, @Nullable Stub parentStub) throws IOException, SerializerNotFoundException {
     final int id = DataInputOutputUtil.readINT(stream);
     final ObjectStubSerializer serializer = getClassById(id);
     if (serializer == null) {
-      LOG.error("No serializer registered for stub: ID=" + id + "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() : "null"));
+      throw new SerializerNotFoundException("No serializer registered for stub: ID=" + id + "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() : "null"));
     }
 
     Stub stub = serializer.deserialize(stream, parentStub);
