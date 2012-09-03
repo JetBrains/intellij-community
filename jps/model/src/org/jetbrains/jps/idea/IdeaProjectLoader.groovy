@@ -95,7 +95,6 @@ public class IdeaProjectLoader {
     loadProjectFileEncodings(root)
     loadWorkspaceConfiguration(new File(iprFile.parentFile, iprFile.name[0..-4]+"iws"))
     loadUiDesignerConfiguration(root)
-    loadRunConfigurations(getComponent(root, "ProjectRunConfigurationManager"))
   }
 
   def loadFromDirectoryBased(File dir) {
@@ -115,16 +114,6 @@ public class IdeaProjectLoader {
     def uiDesignerXml = new File(dir, "uiDesigner.xml")
     if (uiDesignerXml.exists()) {
       loadUiDesignerConfiguration(xmlParser.parse(uiDesignerXml))
-    }
-
-    def runConfFolder = new File(dir, "runConfigurations")
-    if (runConfFolder.isDirectory()) {
-      runConfFolder.eachFile {File file ->
-        if (isXmlFile(file)) {
-          def runConfManager = xmlParser.parse(file);
-          loadRunConfigurations(runConfManager);
-        }
-      }
     }
   }
 
@@ -287,15 +276,6 @@ public class IdeaProjectLoader {
     }
   }
 
-  def loadRunConfigurations(Node runConfManager) {
-    if (runConfManager == null) return;
-
-    runConfManager.configuration.each {Node confTag ->
-      def name = confTag.'@name';
-      RunConfiguration runConf = new RunConfiguration(project, projectMacroExpander, confTag);
-      project.runConfigurations[name] = runConf;
-    }
-  }
 
   Node getComponent(Node root, String name) {
     return root.component.find {it."@name" == name}

@@ -3,7 +3,6 @@ package org.jetbrains.jps
  * @author max
  */
 class Project {
-  final Map<String, RunConfiguration> runConfigurations = [:]
   final CompilerConfiguration compilerConfiguration = new CompilerConfiguration()
   final UiDesignerConfiguration uiDesignerConfiguration = new UiDesignerConfiguration()
   final IgnoredFilePatterns ignoredFilePatterns = new IgnoredFilePatterns()
