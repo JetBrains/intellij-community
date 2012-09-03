@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.util.HgUtil;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -203,7 +204,7 @@ public class HgVFSListener extends VcsVFSListener {
    * <p>NB: we don't use {@link #needConfirmDeletion(com.intellij.openapi.vfs.VirtualFile)},
    * because it is executed in EDT, while we need to access hg log, which should be done in background. Starting a Task.Modal for
    * each file is ineffective, so we start it once (in {@link #executeDelete()} for all files.</p
-   * 
+   *
    * @return true if remove confirmation is needed.
    */
   private boolean isDeleteCofirmationNeeded(FilePath filePath) {
@@ -267,15 +268,16 @@ public class HgVFSListener extends VcsVFSListener {
                                         VcsConfiguration.getInstance(myProject).getAddRemoveOption(),
                                         movedFiles) {
       protected void process(final MovedFileInfo file) throws VcsException {
-        final FilePath source = VcsUtil.getFilePath(file.myOldPath);
-        final FilePath target = VcsUtil.getFilePath(file.myNewPath);
-        VirtualFile sourceRoot = VcsUtil.getVcsRootFor(myProject, source);
-        VirtualFile targetRoot = VcsUtil.getVcsRootFor(myProject, target);
+        final FilePath caseSensitiveSource =new FilePathImpl(new File(file.myOldPath), new File(file.myOldPath).isDirectory());
+        final FilePath caseSensitiveTarget = new FilePathImpl(new File(file.myNewPath), new File(file.myNewPath).isDirectory());
+
+        VirtualFile sourceRoot = VcsUtil.getVcsRootFor(myProject, caseSensitiveSource);
+        VirtualFile targetRoot = VcsUtil.getVcsRootFor(myProject, caseSensitiveTarget);
         if (sourceRoot != null && targetRoot != null) {
-          (new HgMoveCommand(myProject)).execute(new HgFile(sourceRoot, source), new HgFile(targetRoot, target));
+          (new HgMoveCommand(myProject)).execute(new HgFile(sourceRoot, caseSensitiveSource), new HgFile(targetRoot, caseSensitiveTarget));
         }
-        dirtyScopeManager.fileDirty(source);
-        dirtyScopeManager.fileDirty(target);
+        dirtyScopeManager.fileDirty(caseSensitiveSource);
+        dirtyScopeManager.fileDirty(caseSensitiveTarget);
       }
 
     }).queue();
