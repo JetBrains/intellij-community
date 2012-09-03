@@ -24,7 +24,9 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.io.fs.FileSystem;
@@ -34,7 +36,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -706,5 +711,21 @@ public class VfsUtil extends VfsUtilCore {
     }
     final int index = urlOrPath.lastIndexOf(VFS_PATH_SEPARATOR);
     return index < 0 ? null : urlOrPath.substring(index+1);
+  }
+
+  public static void markDirtyAndRefresh(boolean async, boolean recursive, VirtualFile... files) {
+    List<VirtualFile> list = ContainerUtil.newArrayList(files);
+    for (VirtualFile file : list) {
+      if (file instanceof NewVirtualFile) {
+        if (recursive) {
+          ((NewVirtualFile)file).markDirtyRecursively();
+        }
+        else {
+          ((NewVirtualFile)file).markDirty();
+        }
+      }
+    }
+
+    LocalFileSystem.getInstance().refreshFiles(list, async, recursive, null);
   }
 }
