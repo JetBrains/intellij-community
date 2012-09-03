@@ -203,7 +203,7 @@ public class GroovyShellAction extends DumbAwareAction {
 
   private static class GroovyConsoleView extends LanguageConsoleViewImpl {
     protected GroovyConsoleView(final Project project) {
-      super(project, new LanguageConsoleImpl(project, "Groovy Console", GroovyFileType.GROOVY_LANGUAGE));
+      super(new LanguageConsoleImpl(project, "Groovy Console", GroovyFileType.GROOVY_LANGUAGE));
     }
   }
 }

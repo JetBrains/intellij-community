@@ -41,13 +41,10 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
-import com.intellij.openapi.editor.impl.EditorHeaderComponent;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -55,24 +52,24 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
-import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.FocusManager;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
@@ -94,9 +91,11 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private final EditorEx myConsoleEditor;
   private final EditorEx myHistoryViewer;
   private final Document myEditorDocument;
-  protected PsiFile myFile;
-  private final JPanel myPanel = new JPanel(new MyLayout());
+  private final LightVirtualFile myVirtualFile;
 
+  protected PsiFile myFile; // will change on language change
+
+  private final JPanel myPanel = new JPanel(new MyLayout());
   private String myTitle;
   @Nullable
   private String myPrompt = "> ";
@@ -120,24 +119,35 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     }
   };
 
-  public LanguageConsoleImpl(final Project project, String title, final Language language) {
+  public LanguageConsoleImpl(Project project, String title, Language language) {
     this(project, title, language, true);
   }
 
-  public LanguageConsoleImpl(final Project project, String title, final Language language, boolean initComponents) {
+  public LanguageConsoleImpl(Project project, String title, Language language, boolean initComponents) {
+    this(project, title, new LightVirtualFile(title, language, ""), initComponents);
+  }
+
+  public LanguageConsoleImpl(Project project, String title, LightVirtualFile lightFile, boolean initComponents) {
     myProject = project;
     myTitle = title;
-    installEditorFactoryListener();
-    final EditorFactory editorFactory = EditorFactory.getInstance();
+    myVirtualFile = lightFile;
+    EditorFactory editorFactory = EditorFactory.getInstance();
     myHistoryFile = new LightVirtualFile(getTitle() + ".history.txt", FileTypes.PLAIN_TEXT, "");
-    myEditorDocument = editorFactory.createDocument("");
-    setLanguage(language);
+    myEditorDocument = FileDocumentManager.getInstance().getDocument(lightFile);
+    reparsePsiFile();
     myConsoleEditor = (EditorEx)editorFactory.createEditor(myEditorDocument, myProject);
     myConsoleEditor.addFocusListener(myFocusListener);
     myCurrentEditor = myConsoleEditor;
     myHistoryViewer = (EditorEx)editorFactory.createViewer(((EditorFactoryImpl)editorFactory).createDocument(true), myProject);
     myUpdateQueue = new MergingUpdateQueue("ConsoleUpdateQueue", 300, true, null);
     Disposer.register(this, myUpdateQueue);
+
+    UiNotifyConnector.doWhenFirstShown(myPanel, new Runnable() {
+      @Override
+      public void run() {
+        installEditorFactoryListener();
+      }
+    });
 
     if (initComponents) {
       initComponents();
@@ -178,11 +188,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   public void setConsoleEditorEnabled(boolean consoleEditorEnabled) {
     if (isConsoleEditorEnabled() == consoleEditorEnabled) return;
-    final VirtualFile virtualFile = myFile.getVirtualFile();
-    assert virtualFile != null;
     final FileEditorManagerEx fileManager = FileEditorManagerEx.getInstanceEx(getProject());
     if (consoleEditorEnabled) {
-      fileManager.closeFile(virtualFile);
+      fileManager.closeFile(myVirtualFile);
       myPanel.removeAll();
       myPanel.add(myHistoryViewer.getComponent());
       myPanel.add(myConsoleEditor.getComponent());
@@ -203,7 +211,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       editorWindow = fileManager.getCurrentWindow();
     }
     if (editorWindow != null) {
-      editorWindow.setFilePinned(myFile.getVirtualFile(), true);
+      editorWindow.setFilePinned(myVirtualFile, true);
     }
   }
 
@@ -222,7 +230,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myHistoryViewer.getComponent().setMinimumSize(new Dimension(0, 0));
     myHistoryViewer.getComponent().setPreferredSize(new Dimension(0, 0));
     myConsoleEditor.getSettings().setAdditionalLinesCount(2);
-    myConsoleEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFile.getVirtualFile()));
+    myConsoleEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myVirtualFile));
     myHistoryViewer.setCaretEnabled(false);
     myConsoleEditor.setHorizontalScrollbarVisible(true);
     final VisibleAreaListener areaListener = new VisibleAreaListener() {
@@ -342,6 +350,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   public PsiFile getFile() {
     return myFile;
+  }
+
+  public VirtualFile getVirtualFile() {
+    return myVirtualFile;
   }
 
   public EditorEx getHistoryViewer() {
@@ -547,12 +559,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     editorFactory.releaseEditor(myConsoleEditor);
     editorFactory.releaseEditor(myHistoryViewer);
 
-    final VirtualFile virtualFile = myFile.getVirtualFile();
-    assert virtualFile != null;
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
-    final boolean isOpen = editorManager.isFileOpen(virtualFile);
+    final boolean isOpen = editorManager.isFileOpen(myVirtualFile);
     if (isOpen) {
-      editorManager.closeFile(virtualFile);
+      editorManager.closeFile(myVirtualFile);
     }
   }
 
@@ -561,16 +571,16 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       sink.put(OpenFileDescriptor.NAVIGATE_IN_EDITOR, myConsoleEditor);
       return;
     }
-    final Object o =
-      ((FileEditorManagerImpl)FileEditorManager.getInstance(getProject())).getData(key.getName(), myConsoleEditor, myFile.getVirtualFile());
+    FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
+    final Object o = ((FileEditorManagerImpl)editorManager).getData(key.getName(), myConsoleEditor, myVirtualFile);
     sink.put(key, o);
   }
 
   private void installEditorFactoryListener() {
-    myProject.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+    final FileEditorManagerAdapter fileEditorListener = new FileEditorManagerAdapter() {
       @Override
       public void fileOpened(FileEditorManager source, VirtualFile file) {
-        if (!Comparing.equal(file, myFile.getVirtualFile()) || myConsoleEditor == null) return;
+        if (!Comparing.equal(file, myVirtualFile) || myConsoleEditor == null) return;
         Editor selectedTextEditor = source.getSelectedTextEditor();
         for (FileEditor fileEditor : source.getAllEditors(file)) {
           if (!(fileEditor instanceof TextEditor)) continue;
@@ -592,13 +602,22 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
       @Override
       public void fileClosed(FileEditorManager source, VirtualFile file) {
-        if (!Comparing.equal(file, myFile.getVirtualFile())) return;
+        if (!Comparing.equal(file, myVirtualFile)) return;
         if (myUiUpdateRunnable != null && !Boolean.TRUE.equals(file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) {
-          if (myCurrentEditor.isDisposed()) myCurrentEditor = null;
+          if (myCurrentEditor != null && myCurrentEditor.isDisposed()) myCurrentEditor = null;
           ApplicationManager.getApplication().runReadAction(myUiUpdateRunnable);
         }
       }
-    });
+    };
+    myProject.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, fileEditorListener);
+    if (FileEditorManager.getInstance(getProject()).isFileOpen(myVirtualFile)) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          fileEditorListener.fileOpened(FileEditorManager.getInstance(getProject()), myVirtualFile);
+        }
+      });
+    }
   }
 
   public Editor getCurrentEditor() {
@@ -606,38 +625,18 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   public void setLanguage(Language language) {
-    final PsiFile prevFile = myFile;
-    if (prevFile != null) {
-      final VirtualFile file = prevFile.getVirtualFile();
-      assert file instanceof LightVirtualFile;
-      ((LightVirtualFile)file).setValid(false);
-      ((PsiManagerEx)prevFile.getManager()).getFileManager().setViewProvider(file, null);
-    }
-
-    @NonNls final String name = getTitle();
-    final LightVirtualFile newVFile = new LightVirtualFile(name, language, "");
-    myFile = setDocumentFileAndInitPsi(myProject, myEditorDocument, newVFile);
-
-    if (prevFile != null) {
-      final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(getProject());
-      final VirtualFile file = prevFile.getVirtualFile();
-      boolean openEditor = !isConsoleEditorEnabled();
-      if (file != null && openEditor) {
-        final FileEditor prevEditor = editorManager.getSelectedEditor(file);
-        final boolean focusEditor;
-        final int offset;
-        if (prevEditor != null) {
-          offset = prevEditor instanceof TextEditor ? ((TextEditor)prevEditor).getEditor().getCaretModel().getOffset() : 0;
-          final Component owner = FocusManager.getCurrentManager().getFocusOwner();
-          focusEditor = owner != null && SwingUtilities.isDescendingFrom(owner, prevEditor.getComponent());
-        }
-        else {
-          focusEditor = false;
-          offset = 0;
-        }
-        editorManager.closeFile(file);
-        editorManager.openTextEditor(new OpenFileDescriptor(getProject(), newVFile, offset), focusEditor);
+    int offset = getCurrentEditor().getCaretModel().getOffset();
+    myVirtualFile.setLanguage(language);
+    // setViewProvider() call is required otherwise psiFile will stay the same!
+    FileManager fileManager = ((PsiManagerEx)PsiManager.getInstance(myProject)).getFileManager();
+    fileManager.setViewProvider(myVirtualFile, fileManager.createFileViewProvider(myVirtualFile, true));
+    reparsePsiFile();
+    if (!isConsoleEditorEnabled()) {
+      FileEditorManagerEx editorManagerEx = FileEditorManagerEx.getInstanceEx(myProject);
+      for (EditorWindow window : editorManagerEx.getWindows()) {
+        editorManagerEx.closeFile(myVirtualFile, window);
       }
+      editorManagerEx.openTextEditor(new OpenFileDescriptor(myProject, myVirtualFile, offset), true);
     }
   }
 
@@ -713,19 +712,11 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     }
   }
 
-  // hack-utility method for setting PSI for existing document
-  public static PsiFile setDocumentFileAndInitPsi(final Project project, final Document document, final LightVirtualFile newVFile) {
-    newVFile.setContent(document, document.getText(), false);
-    FileDocumentManagerImpl.registerDocument(document, newVFile);
-    final PsiFile psiFile =
-      ((PsiFileFactoryImpl)PsiFileFactory.getInstance(project)).trySetupPsiForFile(newVFile, newVFile.getLanguage(), true, false);
-    if (psiFile == null) {
-      throw new AssertionError(
-        "PSI=null for light file: name=" + newVFile.getName() + ", language=" + newVFile.getLanguage().getDisplayName());
-    }
-    PsiDocumentManagerImpl.cachePsi(document, psiFile);
-    FileContentUtil.reparseFiles(project, Collections.<VirtualFile>singletonList(newVFile), false);
-    return psiFile;
+  private void reparsePsiFile() {
+    myVirtualFile.setContent(myEditorDocument, myEditorDocument.getText(), false);
+    FileContentUtil.reparseFiles(myProject, Collections.<VirtualFile>singletonList(myVirtualFile), false);
+    myFile = ObjectUtils.assertNotNull(PsiManager.getInstance(myProject).findFile(myVirtualFile));
+    PsiDocumentManagerImpl.cachePsi(myEditorDocument, myFile);
   }
 
   private class MyLayout extends AbstractLayoutManager {
