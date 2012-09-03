@@ -51,7 +51,7 @@ public class RefCountHolder {
   private final AtomicReference<ProgressIndicator> myState = new AtomicReference<ProgressIndicator>(VIRGIN);
   private static final ProgressIndicator VIRGIN = new DaemonProgressIndicator(); // just created or cleared
   private static final ProgressIndicator READY = new DaemonProgressIndicator();
-  private volatile boolean analyzed;
+  private volatile ProgressIndicator analyzedUnder;
 
   private static class HolderReference extends SoftReference<RefCountHolder> {
     @SuppressWarnings("UnusedDeclaration")
@@ -281,7 +281,8 @@ public class RefCountHolder {
       return false;
     }
     log("a: changed " + old + "->" + indicator);
-    analyzed = false;
+    analyzedUnder = null;
+    boolean completed = false;
     try {
       if (dirtyScope != null) {
         if (dirtyScope.equals(file.getTextRange())) {
@@ -293,12 +294,14 @@ public class RefCountHolder {
       }
 
       analyze.run();
-      analyzed = true;
+      analyzedUnder = indicator;
+      completed = true;
     }
     finally {
-      boolean set = myState.compareAndSet(indicator, analyzed ? READY : VIRGIN);
+      ProgressIndicator resultState = completed ? READY : VIRGIN;
+      boolean set = myState.compareAndSet(indicator, resultState);
       assert set : myState.get();
-      log("a: changed back " + indicator + "->" + (analyzed ? READY : VIRGIN));
+      log("a: changed after analyze" + indicator + "->" + resultState);
     }
     return true;
   }
@@ -315,7 +318,9 @@ public class RefCountHolder {
     }
     log("r: changed " + old + "->" + indicator);
     try {
-      assert analyzed;
+      if (analyzedUnder != indicator) {
+        return false;
+      }
       analyze.run();
     }
     finally {
