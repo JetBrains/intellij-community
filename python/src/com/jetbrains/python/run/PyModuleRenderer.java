@@ -21,7 +21,7 @@ public class PyModuleRenderer extends HtmlListCellRenderer<Module> {
       append("[none]", SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
     else {
-      setIcon(ModuleType.get(module).getNodeIcon(false));
+      setIcon(ModuleType.get(module).getIcon());
       append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }

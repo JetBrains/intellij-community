@@ -12,9 +12,6 @@ import javax.swing.*;
  */
 public abstract class PythonModuleTypeBase<T extends ModuleBuilder> extends ModuleType<T> {
   @NonNls public static final String PYTHON_MODULE = "PYTHON_MODULE";
-  private final Icon myBigIcon = PythonIcons.Python.Icons.Python_24;
-  private final Icon myOpenIcon = PythonIcons.Python.Icons.PythonOpen;
-  private final Icon myClosedIcon = PythonIcons.Python.Icons.PythonClosed;
 
   protected PythonModuleTypeBase() {
     super(PYTHON_MODULE);
@@ -29,10 +26,10 @@ public abstract class PythonModuleTypeBase<T extends ModuleBuilder> extends Modu
   }
 
   public Icon getBigIcon() {
-    return myBigIcon;
+    return PythonIcons.Python.Icons.Python_24;
   }
 
   public Icon getNodeIcon(final boolean isOpened) {
-    return isOpened ? myOpenIcon : myClosedIcon;
+    return PythonIcons.Python.Icons.PythonClosed;
   }
 }
