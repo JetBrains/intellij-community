@@ -129,6 +129,9 @@ public class LambdaUtil {
   public static boolean isAcceptable(PsiLambdaExpression lambdaExpression, final PsiType leftType) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(leftType);
     final PsiClass psiClass = resolveResult.getElement();
+    if (psiClass instanceof PsiAnonymousClass) {
+      return isAcceptable(lambdaExpression, ((PsiAnonymousClass)psiClass).getBaseClassType());
+    }
     final MethodSignature methodSignature = getFunction(psiClass);
     if (methodSignature == null) return false;
     final PsiParameter[] lambdaParameters = lambdaExpression.getParameterList().getParameters();
@@ -331,7 +334,12 @@ public class LambdaUtil {
   @Nullable
   public static PsiType getFunctionalInterfaceType(PsiElement expression, final boolean tryToSubstitute) {
     PsiElement parent = expression.getParent();
-    while (parent instanceof PsiParenthesizedExpression) {
+    PsiElement element = expression;
+    while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiConditionalExpression) {
+      if (parent instanceof PsiConditionalExpression && 
+          ((PsiConditionalExpression)parent).getThenExpression() != element &&
+          ((PsiConditionalExpression)parent).getElseExpression() != element) break;
+      element = parent;
       parent = parent.getParent();
     }
     if (parent instanceof PsiArrayInitializerExpression) {

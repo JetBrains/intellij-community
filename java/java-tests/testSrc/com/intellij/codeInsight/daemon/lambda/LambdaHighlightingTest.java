@@ -120,6 +120,10 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUnhandledException() throws Exception {
     doTest();
   }
+
+  public void testConditionalExpr() throws Exception {
+    doTest();
+  }
   
   private void doTest() throws Exception {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);

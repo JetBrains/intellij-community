@@ -18,6 +18,7 @@ package com.intellij.psi.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -644,8 +645,17 @@ public class TypeConversionUtil {
 
     // todo[r.sh] implement
     if (right instanceof PsiMethodReferenceType && left instanceof PsiClassType) return true;
-    if (right instanceof PsiLambdaExpressionType && left instanceof PsiClassType) {
-      return LambdaUtil.isAcceptable(((PsiLambdaExpressionType)right).getExpression(), left);
+    if (right instanceof PsiLambdaExpressionType) {
+      final PsiLambdaExpression rLambdaExpression = ((PsiLambdaExpressionType)right).getExpression();
+      if (left instanceof PsiClassType) {
+        return LambdaUtil.isAcceptable(rLambdaExpression, left);
+      }
+      if (left instanceof PsiLambdaExpressionType) {
+        final PsiLambdaExpression lLambdaExpression = ((PsiLambdaExpressionType)left).getExpression();
+        final PsiType rType = rLambdaExpression.getFunctionalInterfaceType();
+        final PsiType lType = lLambdaExpression.getFunctionalInterfaceType();
+        return Comparing.equal(rType, lType);
+      }
     }
 
     if (left instanceof PsiIntersectionType) {
