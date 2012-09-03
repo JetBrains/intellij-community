@@ -74,9 +74,24 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaLocalInspectionTool 
           final String functionalInterfaceErrorMessage = LambdaUtil.checkInterfaceFunctional(baseClassType);
           if (functionalInterfaceErrorMessage == null) {
             final PsiMethod[] methods = aClass.getMethods();
-            if (methods.length == 1 && methods[0].getBody() != null) {
-              holder.registerProblem(aClass.getBaseClassReference(), "Anonymous #ref #loc can be replaced with lambda",
-                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithLambdaFix());
+            if (methods.length == 1) {
+              final PsiCodeBlock body = methods[0].getBody();
+              if (body != null) {
+                final boolean [] recursive = new boolean[1];
+                body.accept(new JavaRecursiveElementWalkingVisitor() {
+                  @Override
+                  public void visitMethodCallExpression(PsiMethodCallExpression methodCallExpression) {
+                    super.visitMethodCallExpression(methodCallExpression);
+                    if (methodCallExpression.resolveMethod() == methods[0]) {
+                      recursive[0] = true;
+                    }
+                  }
+                });
+                if (!recursive[0]) {
+                  holder.registerProblem(aClass.getBaseClassReference(), "Anonymous #ref #loc can be replaced with lambda",
+                                         ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithLambdaFix());
+                }
+              }
             }
           }
         }
