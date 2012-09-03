@@ -30,6 +30,8 @@ import java.awt.*;
  * @since 30.09.2010
  */
 public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
+  private final ListCellRenderer myDefaultRenderer = new JComboBox().getRenderer();
+
   private boolean mySeparator;
   private Icon myIcon;
   private String myText;
@@ -70,7 +72,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
       return separator;
     }
 
-    final Component component = new JComboBox().getRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    final Component component = myDefaultRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     if (component instanceof JLabel) {
       final JLabel label = (JLabel)component;
       label.setIcon(myIcon);
