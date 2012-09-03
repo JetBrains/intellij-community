@@ -1,6 +1,8 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
@@ -15,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.MethodUsagesSearcher");
   public MethodUsagesSearcher() {
     super(true);
   }
@@ -41,8 +44,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
     if (PsiUtil.isAnnotationMethod(method) &&
         PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(method.getName()) &&
         method.getParameterList().getParametersCount() == 0) {
-      ReferencesSearch.search(method.getContainingClass(), p.getScope()).forEach(PsiAnnotationMethodReferencesSearcher.createImplicitDefaultAnnotationMethodConsumer(
-        consumer));
+      ReferencesSearch.search(aClass, p.getScope()).forEach(PsiAnnotationMethodReferencesSearcher.createImplicitDefaultAnnotationMethodConsumer( consumer));
     }
 
     boolean needStrictSignatureSearch = strictSignatureSearch && (aClass instanceof PsiAnonymousClass
@@ -56,6 +58,10 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
     }
 
     final String textToSearch = method.getName();
+    if (StringUtil.isEmpty(textToSearch)) {
+      PsiFile file = aClass.getContainingFile();
+      LOG.error("Cannot search for the method with empty name: "+method+"; class:"+aClass+"; file: "+ file+"; "+(file == null ? null : file.getVirtualFile()));
+    }
     final PsiMethod[] methods = strictSignatureSearch ? new PsiMethod[]{method} : aClass.findMethodsByName(textToSearch, false);
 
     SearchScope accessScope = methods[0].getUseScope();
