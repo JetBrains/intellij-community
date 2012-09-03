@@ -169,8 +169,8 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
     return !isEmpty();
   }
 
+  @NotNull
   @Override
-  @NotNull("it's not null during highlighting")
   public AnnotationSession getCurrentAnnotationSession() {
     return myAnnotationSession;
   }
