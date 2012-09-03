@@ -16,7 +16,9 @@ import com.intellij.openapi.project.Project;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class HgMoveCommand {
 
@@ -28,8 +30,13 @@ public class HgMoveCommand {
 
   public void execute(HgFile source, HgFile target) {
     if (source.getRepo().equals(target.getRepo())) {
-      new HgCommandExecutor(project).executeInCurrentThread(source.getRepo(), "rename",
-        Arrays.asList("--after", source.getRelativePath(), target.getRelativePath()));
+      List<String> args = new ArrayList<String>();
+
+      // This dirty hack allows IDEA to bypass the case-insensivity of Windows.
+      if (target.getFile().exists() && !source.getFile().exists()) args.add(0, "--after");
+      args.addAll(Arrays.asList(source.getRelativePath(), target.getRelativePath()));
+
+      new HgCommandExecutor(project).executeInCurrentThread(source.getRepo(), "mv", args);
     }
   }
 
