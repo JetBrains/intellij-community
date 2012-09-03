@@ -199,7 +199,12 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
   public void onTestFinished(@NotNull final TestFinishedEvent testFinishedEvent) {
     SMRunnerUtil.addToInvokeLater(new Runnable() {
       public void run() {
-        doFinishNode(testFinishedEvent, false);
+        SMTestProxy testProxy = getProxyToFinish(testFinishedEvent);
+        if (testProxy != null) {
+          testProxy.setDuration(testFinishedEvent.getDuration());
+          testProxy.setFinished();
+          fireOnTestFinished(testProxy);
+        }
       }
     });
   }
@@ -207,25 +212,24 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
   public void onSuiteFinished(@NotNull final TestSuiteFinishedEvent suiteFinishedEvent) {
     SMRunnerUtil.addToInvokeLater(new Runnable() {
       public void run() {
-        doFinishNode(suiteFinishedEvent, true);
+        SMTestProxy suiteProxy = getProxyToFinish(suiteFinishedEvent);
+        if (suiteProxy != null) {
+          suiteProxy.setFinished();
+          fireOnSuiteFinished(suiteProxy);
+        }
       }
     });
   }
 
-  private void doFinishNode(@NotNull TreeNodeEvent treeNodeEvent, boolean suite) {
+  @Nullable
+  private SMTestProxy getProxyToFinish(@NotNull TreeNodeEvent treeNodeEvent) {
     Node finishedNode = findNode(treeNodeEvent);
     if (finishedNode == null) {
-      String nodeType = suite ? "Suite" : "Test";
-      logProblem("Trying to finish not started " + nodeType + ": " + treeNodeEvent);
-      return;
+      logProblem("Trying to finish not started node: " + treeNodeEvent);
+      return null;
     }
     stopRunningNode(finishedNode, State.FINISHED, treeNodeEvent);
-    finishedNode.getProxy().setFinished();
-    if (suite) {
-      fireOnSuiteFinished(finishedNode.getProxy());
-    } else {
-      fireOnTestFinished(finishedNode.getProxy());
-    }
+    return finishedNode.getProxy();
   }
 
   public void onUncapturedOutput(@NotNull final String text, final Key outputType) {
