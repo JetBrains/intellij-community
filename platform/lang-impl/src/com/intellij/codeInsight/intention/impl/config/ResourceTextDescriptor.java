@@ -33,10 +33,12 @@ public class ResourceTextDescriptor implements TextDescriptor {
     myUrl = url;
   }
 
+  @Override
   public String getText() throws IOException {
     return ResourceUtil.loadText(myUrl);
   }
 
+  @Override
   public String getFileName() {
     return StringUtil.trimEnd(new File(myUrl.getFile()).getName(), IntentionActionMetaData.EXAMPLE_USAGE_URL_SUFFIX);
   }

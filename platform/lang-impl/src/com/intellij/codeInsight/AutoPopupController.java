@@ -61,20 +61,24 @@ public class AutoPopupController implements Disposable {
 
   private void setupListeners() {
     ActionManagerEx.getInstanceEx().addAnActionListener(new AnActionListener() {
+      @Override
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         cancelAllRequest();
       }
 
+      @Override
       public void beforeEditorTyping(char c, DataContext dataContext) {
         cancelAllRequest();
       }
 
 
+      @Override
       public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
       }
     }, this);
 
     IdeEventQueue.getInstance().addActivityListener(new Runnable() {
+      @Override
       public void run() {
         cancelAllRequest();
       }
@@ -163,6 +167,7 @@ public class AutoPopupController implements Disposable {
 
       final PsiFile file1 = file;
       final Runnable request = new Runnable(){
+        @Override
         public void run(){
           if (myProject.isDisposed() || DumbService.isDumb(myProject) || editor.isDisposed()) return;
           documentManager.commitAllDocuments();
@@ -179,6 +184,7 @@ public class AutoPopupController implements Disposable {
     }
   }
 
+  @Override
   public void dispose() {
   }
 }

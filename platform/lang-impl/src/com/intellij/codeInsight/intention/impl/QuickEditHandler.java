@@ -102,6 +102,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     myNewDocument = PsiDocumentManager.getInstance(project).getDocument(myNewFile);
     assert myNewDocument != null;
     EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(myNewDocument, new ReadonlyFragmentModificationHandler() {
+      @Override
       public void handle(final ReadOnlyFragmentModificationException e) {
         //nothing
       }
@@ -277,6 +278,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     final Map<PsiLanguageInjectionHost, Set<Map.Entry<SmartPsiElementPointer, Pair<RangeMarker, RangeMarker>>>> map = ContainerUtil
       .classify(myMarkers.entrySet().iterator(),
                 new Convertor<Map.Entry<SmartPsiElementPointer, Pair<RangeMarker, RangeMarker>>, PsiLanguageInjectionHost>() {
+                  @Override
                   public PsiLanguageInjectionHost convert(final Map.Entry<SmartPsiElementPointer, Pair<RangeMarker, RangeMarker>> o) {
                     final PsiElement element = o.getKey().getElement();
                     return (PsiLanguageInjectionHost)element;

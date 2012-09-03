@@ -56,22 +56,27 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     myProject = project;
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "HighlightManager";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   public void projectOpened() {
     AnActionListener anActionListener = new MyAnActionListener();
     ActionManagerEx.getInstanceEx().addAnActionListener(anActionListener, myProject);
 
     DocumentListener documentListener = new DocumentAdapter() {
+      @Override
       public void documentChanged(DocumentEvent event) {
         Document document = event.getDocument();
         Editor[] editors = EditorFactory.getInstance().getEditors(document);
@@ -97,6 +102,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(documentListener, myProject);
   }
 
+  @Override
   public void projectClosed() {
   }
 
@@ -131,6 +137,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     return highlighter;
   }
 
+  @Override
   public boolean removeSegmentHighlighter(@NotNull Editor editor, @NotNull RangeHighlighter highlighter) {
     Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, false);
     if (map == null) return false;
@@ -144,6 +151,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     return true;
   }
 
+  @Override
   public void addOccurrenceHighlights(@NotNull Editor editor,
                                       @NotNull PsiReference[] occurrences,
                                       @NotNull TextAttributes attributes,
@@ -178,6 +186,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     editor.getScrollingModel().scrollVertically(verticalScrollOffset);
   }
 
+  @Override
   public void addElementsOccurrenceHighlights(@NotNull Editor editor,
                                               @NotNull PsiElement[] elements,
                                               @NotNull TextAttributes attributes,
@@ -186,6 +195,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     addOccurrenceHighlights(editor, elements, attributes, hideByTextChange, outHighlighters);
   }
 
+  @Override
   public void addOccurrenceHighlight(@NotNull Editor editor,
                                      int start,
                                      int end,
@@ -202,6 +212,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     }
   }
 
+  @Override
   public void addRangeHighlight(@NotNull Editor editor,
                                 int startOffset,
                                 int endOffset,
@@ -211,6 +222,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     addRangeHighlight(editor, startOffset, endOffset, attributes, hideByTextChange, false, highlighters);
   }
 
+  @Override
   public void addRangeHighlight(@NotNull Editor editor,
                                 int startOffset,
                                 int endOffset,
@@ -231,6 +243,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     addOccurrenceHighlight(editor, startOffset, endOffset, attributes, flags, highlighters, scrollmarkColor);
   }
 
+  @Override
   public void addOccurrenceHighlights(@NotNull Editor editor,
                                       @NotNull PsiElement[] elements,
                                       @NotNull TextAttributes attributes,
@@ -284,14 +297,17 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
   }
 
   private class MyAnActionListener implements AnActionListener {
+    @Override
     public void beforeActionPerformed(AnAction action, final DataContext dataContext, AnActionEvent event) {
       requestHideHighlights(dataContext);
     }
 
 
+    @Override
     public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
     }
 
+    @Override
     public void beforeEditorTyping(char c, DataContext dataContext) {
       requestHideHighlights(dataContext);
     }

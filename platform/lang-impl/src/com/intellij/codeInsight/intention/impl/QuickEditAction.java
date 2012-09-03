@@ -52,6 +52,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
   public static final Key<QuickEditHandler> QUICK_EDIT_HANDLER = Key.create("QUICK_EDIT_HANDLER");
   private String myLastLanguageName;
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return getRangePair(file, editor) != null;
   }
@@ -66,6 +67,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     if (injections == null || injections.isEmpty()) return null;
     final int offsetInElement = offset - host.getTextRange().getStartOffset();
     final Pair<PsiElement, TextRange> rangePair = ContainerUtil.find(injections, new Condition<Pair<PsiElement, TextRange>>() {
+      @Override
       public boolean value(final Pair<PsiElement, TextRange> pair) {
         return pair.second.containsRange(offsetInElement, offsetInElement);
       }
@@ -76,6 +78,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     return rangePair;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     final int offset = editor.getCaretModel().getOffset();
     final Pair<PsiElement, TextRange> pair = getRangePair(file, editor);
@@ -88,6 +91,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
@@ -112,11 +116,13 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     return null;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return "Edit "+ StringUtil.notNullize(myLastLanguageName, "Injected")+" Fragment";
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return "Edit Injected Fragment";

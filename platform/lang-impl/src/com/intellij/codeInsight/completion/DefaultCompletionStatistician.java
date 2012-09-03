@@ -23,6 +23,7 @@ import com.intellij.psi.statistics.StatisticsInfo;
  */
 public class DefaultCompletionStatistician extends CompletionStatistician{
 
+  @Override
   public StatisticsInfo serialize(final LookupElement element, final CompletionLocation location) {
     return new StatisticsInfo("completion#" + location.getCompletionParameters().getOriginalFile().getLanguage(), element.getLookupString());
   }

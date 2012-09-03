@@ -32,6 +32,7 @@ public class PsiElementResult implements Result {
     return myPointer != null ? myPointer.getElement() : null;
   }
 
+  @Override
   public boolean equalsToText(String text, PsiElement context) {
     return text.equals(toString());
   }
@@ -44,6 +45,7 @@ public class PsiElementResult implements Result {
     return null;
   }
 
+  @Override
   public void handleFocused(final PsiFile psiFile, final Document document, final int segmentStart, final int segmentEnd) {
   }
 }

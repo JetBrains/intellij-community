@@ -25,6 +25,7 @@ public class LiveTemplateLookupActionProvider implements LookupActionProvider{
           final Project project = lookup.getEditor().getProject();
           assert project != null;
           ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
             public void run() {
               if (project.isDisposed()) return;
 

@@ -97,6 +97,7 @@ public class CodeInsightUtilBase {
       psiFile.isWritable() ? null : FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
     if (!ReadonlyStatusHandler.ensureFilesWritable(project, file)) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (editor != null && editor.getComponent().isDisplayable()) {
             HintManager.getInstance()

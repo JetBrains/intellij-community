@@ -26,10 +26,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PlainTextLineSelectioner extends ExtendWordSelectionHandlerBase {
+  @Override
   public boolean canSelect(PsiElement e) {
     return e instanceof PsiPlainText;
   }
 
+  @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     return selectPlainTextLine(e, editorText, cursorOffset);
   }

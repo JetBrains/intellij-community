@@ -53,6 +53,7 @@ public class FoldingUpdate {
   private static final Key<String> CODE_FOLDING_FILE_EXTENSION_KEY = Key.create("code folding file extension");
 
   private static final Comparator<PsiElement> COMPARE_BY_OFFSET = new Comparator<PsiElement>() {
+    @Override
     public int compare(PsiElement element, PsiElement element1) {
       int startOffsetDiff = element.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
       return startOffsetDiff == 0 ? element.getTextRange().getEndOffset() - element1.getTextRange().getEndOffset() : startOffsetDiff;
@@ -93,6 +94,7 @@ public class FoldingUpdate {
     
     return CachedValuesManager.getManager(project).getParameterizedCachedValue(
       editor, CODE_FOLDING_KEY, new ParameterizedCachedValueProvider<Runnable, Pair<Boolean, Boolean>>() {
+      @Override
       public CachedValueProvider.Result<Runnable> compute(Pair<Boolean,Boolean> param) {
         Document document = editor.getDocument();
         PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
@@ -115,6 +117,7 @@ public class FoldingUpdate {
 
     final UpdateFoldRegionsOperation operation = new UpdateFoldRegionsOperation(project, editor, file, elementsToFoldMap, applyDefaultState, false);
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
       }
@@ -170,6 +173,7 @@ public class FoldingUpdate {
     }
 
     return new Runnable() {
+      @Override
       public void run() {
         for (int i = 0; i < injectedEditors.size(); i++) {
           EditorWindow injectedEditor = injectedEditors.get(i);

@@ -55,11 +55,14 @@ class IntentionUsagePanel extends JPanel{
   public void reset(final String usageText, final FileType fileType) {
     reinitViews();
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (myEditor.isDisposed()) return;
         CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+          @Override
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
               public void run() {
                 configureByText(usageText, fileType);
               }

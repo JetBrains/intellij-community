@@ -35,6 +35,7 @@ public class CollapseRegionAction extends EditorAction {
         final int line = editor.getCaretModel().getLogicalPosition().line;
 
         Runnable processor = new Runnable() {
+          @Override
           public void run() {
             FoldRegion region = FoldingUtil.findFoldRegionStartingAtLine(editor, line);
             if (region != null && region.isExpanded()){

@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 public class AutoIndentLinesHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.AutoIndentLinesHandler");
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -92,6 +93,7 @@ public class AutoIndentLinesHandler implements CodeInsightActionHandler {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

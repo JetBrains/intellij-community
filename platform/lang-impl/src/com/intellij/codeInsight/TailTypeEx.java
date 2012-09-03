@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NonNls;
  */
 public class TailTypeEx {
   public static final TailType SMART_LPARENTH = new TailType() {
+    @Override
     public int processTail(final Editor editor, int tailOffset) {
       tailOffset = insertChar(editor, tailOffset, '(');
       return moveCaret(editor, insertChar(editor, tailOffset, ')'), -1);

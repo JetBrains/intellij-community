@@ -41,14 +41,17 @@ import java.util.Set;
 
 public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware {
 
+  @Override
   protected CodeInsightActionHandler getHandler(){
     return this;
   }
 
+  @Override
   protected boolean isValidForLookup() {
     return true;
   }
 
+  @Override
   public void update(final AnActionEvent event) {
     if (Extensions.getExtensions(TypeDeclarationProvider.EP_NAME).length == 0) {
       event.getPresentation().setVisible(false);
@@ -58,6 +61,7 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
     }
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -87,6 +91,7 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

@@ -56,43 +56,53 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     myOffset = offset;
   }
 
+  @Override
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   public PsiFile getFile() {
     return myFile;
   }
 
+  @Override
   public int getOffset() {
     return myOffset;
   }
 
+  @Override
   public int getParameterListStart() {
     return myParameterListStart;
   }
 
+  @Override
   @NotNull
   public Editor getEditor() {
     return myEditor;
   }
 
+  @Override
   public PsiElement getHighlightedElement() {
     return myHighlightedElement;
   }
 
+  @Override
   public void setHighlightedElement(PsiElement element) {
     myHighlightedElement = element;
   }
 
+  @Override
   public void setItemsToShow(Object[] items) {
     myItems = items;
   }
 
+  @Override
   public Object[] getItemsToShow() {
     return myItems;
   }
 
+  @Override
   public void showHint(PsiElement element, int offset, ParameterInfoHandler handler) {
     final Object[] itemsToShow = getItemsToShow();
     if (itemsToShow == null || itemsToShow.length == 0) return;
@@ -121,6 +131,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     final Pair<Point, Short> pos = provider.getBestPointPosition(hint, element, elementStart, true, HintManager.UNDER);
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (editor.isDisposed()) return;
 
@@ -217,6 +228,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
       myEditor = editor;
     }
 
+    @Override
     @NotNull
     public Pair<Point, Short> getBestPointPosition(LightweightHint hint,
                                                    final PsiElement list,

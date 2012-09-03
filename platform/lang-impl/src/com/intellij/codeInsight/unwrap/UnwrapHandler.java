@@ -50,10 +50,12 @@ import java.util.List;
 public class UnwrapHandler implements CodeInsightActionHandler {
   public static final int HIGHLIGHTER_LEVEL = HighlighterLayer.SELECTION + 1;
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     List<AnAction> options = collectOptions(project, editor, file);
     selectOption(options, editor, file);
@@ -104,6 +106,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     list.setVisibleRowCount(options.size());
 
     list.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         int index = list.getSelectedIndex();
         if (index < 0) return;
@@ -123,6 +126,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
         .setResizable(false)
         .setRequestFocus(true)
         .setItemChoosenCallback(new Runnable() {
+          @Override
           public void run() {
             MyUnwrapAction a = (MyUnwrapAction)options.get(list.getSelectedIndex());
             a.actionPerformed(null);
@@ -160,13 +164,16 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       myElement = element;
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       final PsiFile file = myElement.getContainingFile();
       if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+        @Override
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               try {
                 UnwrapDescriptor d = getUnwrapDescription(file);
@@ -199,6 +206,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
 
     private void restoreCaretPosition(final PsiFile file) {
       ((TreeElement)file.getNode()).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+        @Override
         protected void visitNode(TreeElement element) {
           PsiElement el = element.getPsi();
           Integer offset = el.getCopyableUserData(CARET_POS_KEY);

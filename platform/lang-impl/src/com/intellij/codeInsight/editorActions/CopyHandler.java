@@ -41,6 +41,7 @@ public class CopyHandler extends EditorActionHandler {
     myOriginalAction = originalHandler;
   }
 
+  @Override
   public void execute(final Editor editor, final DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
     if (project == null){

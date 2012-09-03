@@ -28,24 +28,29 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class EnumMacro extends Macro {
+  @Override
   public String getName() {
     return "enum";
   }
 
+  @Override
   public String getPresentableName() {
     return CodeInsightBundle.message("macro.enum");
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     if (params.length == 0) return null;
     return params[0].calculateResult(context);
   }
 
+  @Override
   public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     if (params.length == 0) return null;
     return params[0].calculateQuickResult(context);
   }
 
+  @Override
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     if (params.length ==0) return null;
     Set<LookupElement> set = new LinkedHashSet<LookupElement>();

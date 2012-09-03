@@ -50,16 +50,19 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     return ServiceManager.getService(CodeInsightSettings.class);
   }
 
+  @Override
   @NotNull
   public File[] getExportFiles() {
     return new File[]{PathManager.getOptionsFile(EXTERNAL_FILE_NAME)};
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return CodeInsightBundle.message("codeinsight.settings");
   }
 
+  @Override
   @Nullable
   public CodeInsightSettings clone() {
     try {
@@ -140,6 +143,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     elementValueAttribute = "NAME")
   public String[] EXCLUDED_PACKAGES = ArrayUtil.EMPTY_STRING_ARRAY;
 
+  @Override
   public void loadState(final Element state) {
     try {
       XmlSerializer.deserializeInto(this, state);
@@ -149,6 +153,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     }
   }
 
+  @Override
   public Element getState() {
     Element element = new Element("state");
     writeExternal(element);

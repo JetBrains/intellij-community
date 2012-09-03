@@ -77,6 +77,7 @@ public class DefaultCompletionContributor extends CompletionContributor {
     return null;
   }
 
+  @Override
   public String handleEmptyLookup(@NotNull final CompletionParameters parameters, final Editor editor) {
     return LangBundle.message("completion.no.suggestions");
   }

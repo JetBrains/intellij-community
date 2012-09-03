@@ -32,6 +32,7 @@ public abstract class LineStartEndWithSelectionHandler extends EditorActionHandl
     myIsHomeHandler = isHomeHandler;
   }
 
+  @Override
   public void execute(Editor editor, DataContext dataContext) {
     final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
     if (templateState != null && !templateState.isFinished()) {

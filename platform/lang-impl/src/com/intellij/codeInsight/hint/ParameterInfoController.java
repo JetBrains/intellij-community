@@ -88,18 +88,22 @@ public class ParameterInfoController {
 
   public Object[] getSelectedElements() {
     ParameterInfoContext context = new ParameterInfoContext() {
+      @Override
       public Project getProject() {
         return myProject;
       }
 
+      @Override
       public PsiFile getFile() {
         return myComponent.getParameterOwner().getContainingFile();
       }
 
+      @Override
       public int getOffset() {
         return myEditor.getCaretModel().getOffset();
       }
 
+      @Override
       @NotNull
       public Editor getEditor() {
         return myEditor;
@@ -169,6 +173,7 @@ public class ParameterInfoController {
     allControllers.add(this);
 
     myEditorCaretListener = new CaretListener(){
+      @Override
       public void caretPositionChanged(CaretEvent e) {
         if (!myHandler.tracksParameterIndex()) {
           myAlarm.cancelAllRequests();
@@ -201,6 +206,7 @@ public class ParameterInfoController {
     myEditor.getCaretModel().addCaretListener(myEditorCaretListener);
 
     myEditorDocumentListener = new DocumentAdapter(){
+      @Override
       public void documentChanged(DocumentEvent e) {
         if (!myHandler.tracksParameterIndex()) {
           myAlarm.cancelAllRequests();
@@ -228,6 +234,7 @@ public class ParameterInfoController {
     myEditor.getDocument().addDocumentListener(myEditorDocumentListener);
 
     myLookupListener = new PropertyChangeListener() {
+      @Override
       public void propertyChange(PropertyChangeEvent evt) {
         if (LookupManager.PROP_ACTIVE_LOOKUP.equals(evt.getPropertyName())){
           final LookupImpl lookup = (LookupImpl)evt.getNewValue();
@@ -271,6 +278,7 @@ public class ParameterInfoController {
 
   private void addAlarmRequest(){
     Runnable request = new Runnable(){
+      @Override
       public void run(){
         if (!myDisposed && !myProject.isDisposed()) updateComponent();
       }
@@ -374,56 +382,69 @@ public class ParameterInfoController {
       myFile = file;
     }
 
+    @Override
     public int getParameterListStart() {
       return myLbraceMarker.getStartOffset();
     }
 
+    @Override
     public int getOffset() {
       return myOffset;
     }
 
+    @Override
     public Project getProject() {
       return myProject;
     }
 
+    @Override
     public PsiFile getFile() {
       return myFile;
     }
 
+    @Override
     @NotNull
     public Editor getEditor() {
       return myEditor;
     }
 
+    @Override
     public void removeHint() {
       myHint.hide();
       dispose();
     }
 
+    @Override
     public void setParameterOwner(final PsiElement o) {
       myComponent.setParameterOwner(o);
     }
 
+    @Override
     public PsiElement getParameterOwner() {
       return myComponent.getParameterOwner();
     }
 
+    @Override
     public void setHighlightedParameter(final Object method) {
       myComponent.setHighlightedParameter(method);
     }
 
+    @Override
     public void setCurrentParameter(final int index) {
       myComponent.setCurrentParameterIndex(index);
     }
 
+    @Override
     public boolean isUIComponentEnabled(int index) {
       return myComponent.isEnabled(index);
     }
 
+    @Override
     public void setUIComponentEnabled(int index, boolean b) {
       myComponent.setEnabled(index, b);
     }
 
+    @Override
     public Object[] getObjectsToView() {
       return myComponent.getObjects();
     }

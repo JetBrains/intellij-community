@@ -30,6 +30,7 @@ public class VariableNode extends Expression {
     myInitialValue = initialValue;
   }
 
+  @Override
   public Result calculateResult(ExpressionContext context) {
     Result ret = null;
     if (myInitialValue != null){
@@ -41,6 +42,7 @@ public class VariableNode extends Expression {
     return ret;
   }
 
+  @Override
   public Result calculateQuickResult(ExpressionContext context) {
     Result ret = null;
     if (myInitialValue != null){
@@ -52,6 +54,7 @@ public class VariableNode extends Expression {
     return ret;
   }
 
+  @Override
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
     if (myInitialValue == null){
       return null;

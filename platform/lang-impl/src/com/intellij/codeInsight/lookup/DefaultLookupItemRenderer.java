@@ -33,6 +33,7 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
   public static final DefaultLookupItemRenderer INSTANCE = new DefaultLookupItemRenderer();
   private static final Icon SAMPLE_ICON = PlatformIcons.CLASS_ICON;
 
+  @Override
   public void renderElement(final LookupItem item, final LookupElementPresentation presentation) {
     presentation.setIcon(getRawIcon(item, presentation.isReal()));
 

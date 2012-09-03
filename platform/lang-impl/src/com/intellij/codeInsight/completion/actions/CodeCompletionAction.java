@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
  */
 public class CodeCompletionAction extends BaseCodeCompletionAction {
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_BASIC);
     invokeCompletion(e, CompletionType.BASIC, 1);

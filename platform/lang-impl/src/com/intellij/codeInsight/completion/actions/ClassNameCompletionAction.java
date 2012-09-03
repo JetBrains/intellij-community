@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 
 public class ClassNameCompletionAction extends BaseCodeCompletionAction{
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     invokeCompletion(e, CompletionType.BASIC, 2);
   }

@@ -30,6 +30,7 @@ public class ColorPreviewComponent extends JComponent {
     setOpaque(true);
   }
 
+  @Override
   public void paintComponent(final Graphics g) {
     final Graphics2D g2 = (Graphics2D)g;
 
@@ -42,6 +43,7 @@ public class ColorPreviewComponent extends JComponent {
     g2.drawRect(0, 0, r.width - 1, r.height - 1);
   }
 
+  @Override
   public Dimension getPreferredSize() {
     return new Dimension(70, 25);
   }

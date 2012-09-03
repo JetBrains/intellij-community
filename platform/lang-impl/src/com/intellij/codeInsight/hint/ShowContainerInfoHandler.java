@@ -39,6 +39,7 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
   private static final Key<WeakReference<LightweightHint>> MY_LAST_HINT_KEY = Key.create("MY_LAST_HINT_KEY");
   private static final Key<PsiElement> CONTAINER_KEY = Key.create("CONTAINER_KEY");
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -96,6 +97,7 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
     }
     final PsiElement _container = container;
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         LightweightHint hint = EditorFragmentComponent.showEditorFragmentHint(editor, range, true, true);
         if (hint != null) {
@@ -106,6 +108,7 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
     });
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 
 public class GenerateAction extends DumbAwareAction implements PreloadableAction {
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
 
@@ -40,6 +41,7 @@ public class GenerateAction extends DumbAwareAction implements PreloadableAction
     popup.showInBestPositionFor(dataContext);
   }
 
+  @Override
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
@@ -63,6 +65,7 @@ public class GenerateAction extends DumbAwareAction implements PreloadableAction
     return (DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_GENERATE);
   }
 
+  @Override
   public void preload() {
     ((ActionManagerImpl) ActionManager.getInstance()).preloadActionGroup(IdeActions.GROUP_GENERATE);
   }

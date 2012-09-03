@@ -32,6 +32,7 @@ public class InvokeActionResult implements Result{
     return myAction;
   }
 
+  @Override
   public boolean equalsToText(String text, PsiElement context) {
     return true; //no text result will be provided anyway
   }
@@ -40,6 +41,7 @@ public class InvokeActionResult implements Result{
     return "";
   }
 
+  @Override
   public void handleFocused(final PsiFile psiFile, final Document document, final int segmentStart, final int segmentEnd) {
     myAction.run();
   }

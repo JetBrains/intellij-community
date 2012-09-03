@@ -110,6 +110,7 @@ public class LookupCellRenderer implements ListCellRenderer {
   }
 
   private boolean myIsSelected = false;
+  @Override
   public Component getListCellRendererComponent(
       final JList list,
       Object value,
@@ -388,6 +389,7 @@ public class LookupCellRenderer implements ListCellRenderer {
       myUpdateExtender = updateExtender;
     }
 
+    @Override
     public void paint(Graphics g){
       if (!myLookup.isFocused() && myLookup.isCompletion()) {
         ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f));

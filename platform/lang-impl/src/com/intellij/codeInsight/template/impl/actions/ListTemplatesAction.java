@@ -22,6 +22,7 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.template.impl.ListTemplatesHandler;
 
 public class ListTemplatesAction extends BaseCodeInsightAction{
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return new ListTemplatesHandler();
   }

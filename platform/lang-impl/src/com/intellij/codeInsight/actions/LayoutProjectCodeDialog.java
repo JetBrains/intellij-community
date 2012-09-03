@@ -60,6 +60,7 @@ public class LayoutProjectCodeDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     if (!mySuggestOptimizeImports) return new JLabel(myText);
     JPanel panel = new JPanel(new GridLayout(3, 1));
@@ -78,14 +79,17 @@ public class LayoutProjectCodeDialog extends DialogWrapper {
     return panel;
   }
   
+  @Override
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HELP_ID);
   }
 
+  @Override
   protected void doOKAction() {
     super.doOKAction();
     if (mySuggestOptimizeImports) {

@@ -39,6 +39,7 @@ public class ExpandAllRegionsAction extends EditorAction {
 
         CodeFoldingManager.getInstance(project).updateFoldRegions(editor);
         editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
+          @Override
           public void run() {
             boolean anythingDone = false;
             FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();

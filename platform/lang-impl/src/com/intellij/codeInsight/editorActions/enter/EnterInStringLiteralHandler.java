@@ -34,6 +34,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
 
 public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
+  @Override
   public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull Ref<Integer> caretOffsetRef,
                                 @NotNull final Ref<Integer> caretAdvanceRef, @NotNull final DataContext dataContext,
                                 final EditorActionHandler originalHandler) {

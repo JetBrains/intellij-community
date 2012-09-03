@@ -61,15 +61,18 @@ import java.util.Collections;
 
 public class GotoDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.actions.GotoDeclarationAction");
+  @Override
   protected CodeInsightActionHandler getHandler() {
     String s = "/java/lang/Object.class";
     return this;
   }
 
+  @Override
   protected boolean isValidForLookup() {
     return true;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -108,6 +111,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   private static void chooseAmbiguousTarget(final Editor editor, int offset, PsiElement[] elements) {
     PsiElementProcessor<PsiElement> navigateProcessor = new PsiElementProcessor<PsiElement>() {
+      @Override
       public boolean execute(@NotNull final PsiElement element) {
         Navigatable navigatable = EditSourceUtil.getDescriptor(element);
         if (navigatable != null && navigatable.canNavigate()) {
@@ -173,6 +177,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return TargetElementUtilBase.getInstance().getTargetCandidates(reference);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

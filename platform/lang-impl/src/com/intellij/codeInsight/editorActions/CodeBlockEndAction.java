@@ -38,6 +38,7 @@ public class CodeBlockEndAction extends EditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       if (project != null) {

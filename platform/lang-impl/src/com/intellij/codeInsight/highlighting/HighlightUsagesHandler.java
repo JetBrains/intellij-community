@@ -201,6 +201,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       myClearHighlights = clearHighlights;
     }
 
+    @Override
     public void run() {
       highlightReferences(myProject, myTarget, myRefs, myEditor, myFile, myClearHighlights);
       setStatusText(myProject, getElementName(myTarget), myRefs.size(), myClearHighlights);
@@ -339,11 +340,13 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     if (editor instanceof EditorWindow) editor = ((EditorWindow)editor).getDelegate();
     RangeHighlighter[] highlighters = ((HighlightManagerImpl)highlightManager).getHighlighters(editor);
     Arrays.sort(highlighters, new Comparator<RangeHighlighter>() {
+      @Override
       public int compare(RangeHighlighter o1, RangeHighlighter o2) {
         return o1.getStartOffset() - o2.getStartOffset();
       }
     });
     Collections.sort(rangesToHighlight, new Comparator<TextRange>() {
+      @Override
       public int compare(TextRange o1, TextRange o2) {
         return o1.getStartOffset() - o2.getStartOffset();
       }

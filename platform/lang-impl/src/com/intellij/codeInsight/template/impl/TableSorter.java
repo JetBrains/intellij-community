@@ -67,6 +67,7 @@ public class TableSorter extends TableMap {
     setModel(model);
   }
 
+  @Override
   public void setModel(TableModel model) {
     super.setModel(model);
     reallocateIndexes();
@@ -208,6 +209,7 @@ public class TableSorter extends TableMap {
     }
   }
 
+  @Override
   public void tableChanged(TableModelEvent e) {
     //System.out.println("Sorter: tableChanged");
     reallocateIndexes();
@@ -302,11 +304,13 @@ order diminishes - it may drop very quickly.  */
   // The mapping only affects the contents of the data rows.
   // Pass all requests to these rows through the mapping array: "indexes".
 
+  @Override
   public Object getValueAt(int aRow, int aColumn) {
     checkModel();
     return model.getValueAt(indexes[aRow], aColumn);
   }
 
+  @Override
   public void setValueAt(Object aValue, int aRow, int aColumn) {
     checkModel();
     model.setValueAt(aValue, indexes[aRow], aColumn);

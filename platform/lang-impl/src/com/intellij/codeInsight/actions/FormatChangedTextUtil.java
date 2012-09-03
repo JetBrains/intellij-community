@@ -146,6 +146,7 @@ public class FormatChangedTextUtil {
    */
   public static boolean hasChanges(@NotNull final Project project) {
     final ModifiableModuleModel moduleModel = new ReadAction<ModifiableModuleModel>() {
+      @Override
       protected void run(Result<ModifiableModuleModel> result) throws Throwable {
         result.setResult(ModuleManager.getInstance(project).getModifiableModel());
       }

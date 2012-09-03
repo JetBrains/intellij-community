@@ -45,6 +45,7 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
   @Nullable
   public abstract Comparable getWeight(T t);
 
+  @Override
   public void addElement(T t) {
     myNext.addElement(t);
   }

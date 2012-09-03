@@ -62,6 +62,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     myOriginalHandler = originalAction;
   }
 
+  @Override
   public void execute(final Editor editor, final DataContext dataContext, final Producer<Transferable> transferableProvider) {
     if (editor.isViewer()) return;
     final Document document = editor.getDocument();
@@ -117,6 +118,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
   }
 
+  @Override
   public void execute(final Editor editor, final DataContext dataContext) {
     execute(editor, dataContext, new Producer<Transferable>() {
       @Override
@@ -207,6 +209,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
       ApplicationManager.getApplication().runWriteAction(
         new Runnable() {
+          @Override
           public void run() {
             EditorModificationUtil.insertStringAtCaret(editor, text1, false, true);
           }
@@ -237,6 +240,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
         final int indentOptions1 = indentOptions;
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
+            @Override
             public void run() {
               switch (indentOptions1) {
                 case CodeInsightSettings.INDENT_BLOCK:

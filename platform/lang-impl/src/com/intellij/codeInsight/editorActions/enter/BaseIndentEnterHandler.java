@@ -69,6 +69,7 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     myWhitespaceTokens = whitespaceTokens;
   }
 
+  @Override
   public Result preprocessEnter(
     @NotNull final PsiFile file,
     @NotNull final Editor editor,

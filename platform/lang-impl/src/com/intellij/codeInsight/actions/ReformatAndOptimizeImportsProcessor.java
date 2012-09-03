@@ -72,6 +72,7 @@ public class ReformatAndOptimizeImportsProcessor extends AbstractLayoutCodeProce
     myReformatCodeProcessor = new ReformatCodeProcessor(project, file, null, processChangedTextOnly);
   }
 
+  @Override
   @NotNull
   protected FutureTask<Boolean> preprocessFile(@NotNull PsiFile file, boolean processChangedTextOnly) throws IncorrectOperationException {
     final FutureTask<Boolean> reformatTask = myReformatCodeProcessor.preprocessFile(file, processChangedTextOnly);

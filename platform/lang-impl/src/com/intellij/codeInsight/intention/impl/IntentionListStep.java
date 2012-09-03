@@ -64,10 +64,12 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
   private final PsiFile myFile;
   private final Project myProject;
   private static final TObjectHashingStrategy<IntentionActionWithTextCaching> ACTION_TEXT_AND_CLASS_EQUALS = new TObjectHashingStrategy<IntentionActionWithTextCaching>() {
+    @Override
     public int computeHashCode(final IntentionActionWithTextCaching object) {
       return object.getText().hashCode();
     }
 
+    @Override
     public boolean equals(final IntentionActionWithTextCaching o1, final IntentionActionWithTextCaching o2) {
       return o1.getAction().getClass() == o2.getAction().getClass() && o1.getText().equals(o2.getText());
     }
@@ -192,14 +194,17 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     return cachedAction;
   }
 
+  @Override
   public String getTitle() {
     return null;
   }
 
+  @Override
   public boolean isSelectable(final IntentionActionWithTextCaching action) {
     return true;
   }
 
+  @Override
   public PopupStep onChosen(final IntentionActionWithTextCaching action, final boolean finalChoice) {
     if (finalChoice && !(action.getAction() instanceof EmptyIntentionAction)) {
       applyAction(action);
@@ -213,15 +218,18 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     return FINAL_CHOICE;
   }
 
+  @Override
   public Runnable getFinalRunnable() {
     return myFinalRunnable;
   }
 
   private void applyAction(final IntentionActionWithTextCaching cachedAction) {
     myFinalRunnable = new Runnable() {
+      @Override
       public void run() {
         HintManager.getInstance().hideAllHints();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (myProject.isDisposed()) return;
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -250,6 +258,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     }
 
     return new IntentionListStep(myIntentionHintComponent, intentions,myEditor, myFile, myProject){
+      @Override
       public String getTitle() {
         return title;
       }
@@ -260,10 +269,12 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     return optionIntention instanceof Iconable ? ((Iconable)optionIntention).getIcon(0) : null;
   }
 
+  @Override
   public boolean hasSubstep(final IntentionActionWithTextCaching action) {
     return action.getOptionIntentions().size() + action.getOptionErrorFixes().size() > 0;
   }
 
+  @Override
   @NotNull
   public List<IntentionActionWithTextCaching> getValues() {
     List<IntentionActionWithTextCaching> result = new ArrayList<IntentionActionWithTextCaching>(myCachedErrorFixes);
@@ -271,6 +282,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     result.addAll(myCachedIntentions);
     result.addAll(myCachedGutters);
     Collections.sort(result, new Comparator<IntentionActionWithTextCaching>() {
+      @Override
       public int compare(final IntentionActionWithTextCaching o1, final IntentionActionWithTextCaching o2) {
         int weight1 = getWeight(o1);
         int weight2 = getWeight(o2);
@@ -325,6 +337,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     }
   }
 
+  @Override
   @NotNull
   public String getTextFor(final IntentionActionWithTextCaching action) {
     final String text = action.getAction().getText();
@@ -334,6 +347,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     return text;
   }
 
+  @Override
   public Icon getIconFor(final IntentionActionWithTextCaching value) {
     if (value.getIcon() != null) {
       return value.getIcon();
@@ -366,13 +380,16 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     }
   }
 
+  @Override
   public void canceled() {
     if (myIntentionHintComponent != null) {
       myIntentionHintComponent.canceled(this);
     }
   }
 
+  @Override
   public int getDefaultOptionIndex() { return 0; }
+  @Override
   public ListSeparator getSeparatorAbove(final IntentionActionWithTextCaching value) {
     List<IntentionActionWithTextCaching> values = getValues();
     int index = values.indexOf(value);
@@ -384,13 +401,20 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     }
     return null;
   }
+  @Override
   public boolean isMnemonicsNavigationEnabled() { return false; }
+  @Override
   public MnemonicNavigationFilter<IntentionActionWithTextCaching> getMnemonicNavigationFilter() { return null; }
+  @Override
   public boolean isSpeedSearchEnabled() { return true; }
+  @Override
   public boolean isAutoSelectionEnabled() { return false; }
+  @Override
   public SpeedSearchFilter<IntentionActionWithTextCaching> getSpeedSearchFilter() { return this; }
 
   //speed search filter
+  @Override
   public boolean canBeHidden(final IntentionActionWithTextCaching value) { return true;}
+  @Override
   public String getIndexedString(final IntentionActionWithTextCaching value) { return getTextFor(value);}
 }

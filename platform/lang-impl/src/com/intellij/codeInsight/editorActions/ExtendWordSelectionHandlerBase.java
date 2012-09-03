@@ -31,8 +31,10 @@ import java.util.List;
  */
 public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelectionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase");
+  @Override
   public abstract boolean canSelect(PsiElement e);
 
+  @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
 
     final TextRange originalRange = e.getTextRange();

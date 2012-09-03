@@ -33,10 +33,12 @@ public class EnterHandler extends BaseEnterHandler {
     myOriginalHandler = originalHandler;
   }
 
+  @Override
   public boolean isEnabled(Editor editor, DataContext dataContext) {
     return myOriginalHandler.isEnabled(editor, dataContext);
   }
 
+  @Override
   public void executeWriteAction(Editor editor, DataContext dataContext) {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 

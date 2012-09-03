@@ -60,6 +60,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     super(project, files, PROGRESS_TEXT, commandName, postRunnable, false);
   }
 
+  @Override
   @NotNull
   protected FutureTask<Boolean> preprocessFile(@NotNull final PsiFile file, boolean processChangedTextOnly) throws IncorrectOperationException {
     final Set<ImportOptimizer> optimizers = LanguageImportStatements.INSTANCE.forFile(file);

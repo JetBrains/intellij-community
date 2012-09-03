@@ -25,10 +25,12 @@ import com.intellij.codeInsight.template.Template;
  * @author yole
  */
 public class TemplateLookupRenderer implements ElementLookupRenderer<Template> {
+  @Override
   public boolean handlesItem(final Object element) {
     return element instanceof Template;
   }
 
+  @Override
   public void renderElement(final LookupItem item, final Template element, final LookupElementPresentation presentation) {
     presentation.setItemText(element.getKey());
     presentation.setTypeText(element.getDescription());

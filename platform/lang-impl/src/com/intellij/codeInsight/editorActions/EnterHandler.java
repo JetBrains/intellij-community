@@ -59,14 +59,17 @@ public class EnterHandler extends BaseEnterHandler {
     myOriginalHandler = originalHandler;
   }
 
+  @Override
   public boolean isEnabled(Editor editor, DataContext dataContext) {
     return myOriginalHandler.isEnabled(editor, dataContext);
   }
 
+  @Override
   public void executeWriteAction(final Editor editor, final DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project != null && !project.isDefault()) {
       PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(new Runnable() {
+        @Override
         public void run() {
           executeWriteActionInner(editor, dataContext, project);
         }
@@ -314,6 +317,7 @@ public class EnterHandler extends BaseEnterHandler {
       myForceIndent = forceIndent;
     }
 
+    @Override
     public void run() {
       CaretModel caretModel = myEditor.getCaretModel();
       try {

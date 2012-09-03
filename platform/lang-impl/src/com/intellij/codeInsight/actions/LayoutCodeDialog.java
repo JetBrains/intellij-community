@@ -70,6 +70,7 @@ public class LayoutCodeDialog extends DialogWrapper {
     myHelpId = helpId;
   }
 
+  @Override
   protected void init() {
     super.init();
 
@@ -90,6 +91,7 @@ public class LayoutCodeDialog extends DialogWrapper {
     myCbArrangeEntries.setSelected(PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.REARRANGE_ENTRIES_KEY, false));
 
     ItemListener listener = new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         updateState();
       }
@@ -123,6 +125,7 @@ public class LayoutCodeDialog extends DialogWrapper {
     myRbDirectory.setEnabled(!myDoNotAskMeCheckBox.isSelected());
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(4, 8, 8, 0));
@@ -197,6 +200,7 @@ public class LayoutCodeDialog extends DialogWrapper {
     JComponent southPanel = super.createSouthPanel();
     myDoNotAskMeCheckBox = new JCheckBox(CommonBundle.message("dialog.options.do.not.show"));
     myDoNotAskMeCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateState();
       }
@@ -204,10 +208,12 @@ public class LayoutCodeDialog extends DialogWrapper {
     return OptionsDialog.addDoNotShowCheckBox(southPanel, myDoNotAskMeCheckBox);
   }
 
+  @Override
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(myHelpId);
   }
@@ -244,6 +250,7 @@ public class LayoutCodeDialog extends DialogWrapper {
     return myDoNotAskMeCheckBox.isEnabled() && myDoNotAskMeCheckBox.isSelected();
   }
 
+  @Override
   protected void doOKAction() {
     super.doOKAction();
     PropertiesComponent.getInstance().setValue(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, Boolean.toString(isOptimizeImports()));

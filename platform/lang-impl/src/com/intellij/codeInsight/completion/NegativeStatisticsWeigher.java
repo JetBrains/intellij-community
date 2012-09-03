@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 */
 public class NegativeStatisticsWeigher extends CompletionWeigher {
 
+  @Override
   public Comparable weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
     return 0;
   }

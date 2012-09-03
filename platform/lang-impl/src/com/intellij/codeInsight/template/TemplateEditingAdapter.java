@@ -23,18 +23,23 @@ import com.intellij.codeInsight.template.impl.TemplateState;
  */
 public abstract class TemplateEditingAdapter implements TemplateEditingListener {
 
+  @Override
   public void beforeTemplateFinished(final TemplateState state, final Template template) {
   }
 
+  @Override
   public void templateFinished(Template template, boolean brokenOff) {
   }
 
+  @Override
   public void templateCancelled(Template template) {
   }
 
+  @Override
   public void currentVariableChanged(TemplateState templateState, Template template, int oldIndex, int newIndex) {
   }
 
+  @Override
   public void waitingForInput(Template template) {
   }
 }

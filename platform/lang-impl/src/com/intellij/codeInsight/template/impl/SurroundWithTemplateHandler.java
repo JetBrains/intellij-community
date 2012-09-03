@@ -41,6 +41,7 @@ import java.util.Set;
  * @author mike
  */
 public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     DefaultActionGroup group = createActionGroup(project, editor, file);
     if (group == null) return;
@@ -82,6 +83,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
     return group;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

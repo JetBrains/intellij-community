@@ -229,6 +229,7 @@ public class TargetElementUtilBase {
 
     final List<PomTarget> targets = ContainerUtil.newArrayList();
     final Consumer<PomTarget> consumer = new Consumer<PomTarget>() {
+      @Override
       public void consume(PomTarget target) {
         if (target instanceof PsiDeclaredTarget) {
           final PsiDeclaredTarget declaredTarget = (PsiDeclaredTarget)target;

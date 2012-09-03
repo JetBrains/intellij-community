@@ -40,10 +40,12 @@ import java.awt.*;
 import java.util.Set;
 
 public class ShowParameterInfoHandler implements CodeInsightActionHandler {
+  @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     invoke(project, editor, file, -1, null);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
@@ -106,6 +108,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     final Pair<Point, Short> pos = ShowParameterInfoContext.chooseBestHintPosition(project, editor, -1, -1, hint, true, HintManager.DEFAULT);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (!editor.getComponent().isShowing()) return;
         hintManager.showEditorHint(hint, editor, pos.getFirst(),

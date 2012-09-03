@@ -117,6 +117,7 @@ public class TemplateEditorUtil {
       templateLexer = new MergingLexerAdapter(templateLexer, TOKENS_TO_MERGE);
 
       myLexer = new CompositeLexer(originalLexer, templateLexer) {
+        @Override
         protected IElementType getCompositeTokenType(IElementType type1, IElementType type2) {
           if (type2 == TemplateTokenType.VARIABLE) {
             return type2;
@@ -128,11 +129,13 @@ public class TemplateEditorUtil {
       };
     }
 
+    @Override
     @NotNull
     public Lexer getHighlightingLexer() {
       return myLexer;
     }
 
+    @Override
     @NotNull
     public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
       if (tokenType == TemplateTokenType.VARIABLE) {

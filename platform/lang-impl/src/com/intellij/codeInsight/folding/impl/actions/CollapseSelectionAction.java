@@ -25,6 +25,7 @@ import com.intellij.openapi.project.DumbAware;
  * @author ven
  */
 public class CollapseSelectionAction extends BaseCodeInsightAction implements DumbAware {
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return new CollapseSelectionHandler();
   }

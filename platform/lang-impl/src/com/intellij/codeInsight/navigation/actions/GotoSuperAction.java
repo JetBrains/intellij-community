@@ -33,10 +33,12 @@ public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsigh
 
   @NonNls public static final String FEATURE_ID = "navigation.goto.super";
 
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return this;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -49,10 +51,12 @@ public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsigh
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
 
+  @Override
   public void update(final AnActionEvent event) {
     if (CodeInsightActions.GOTO_SUPER.hasAnyExtensions()) {
       event.getPresentation().setVisible(true);

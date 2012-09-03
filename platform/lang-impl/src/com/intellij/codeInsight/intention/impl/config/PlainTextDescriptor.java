@@ -33,12 +33,14 @@ public class PlainTextDescriptor implements TextDescriptor {
     myFileName = fileName;
   }
 
+  @Override
   @NotNull
   public String getText() throws IOException {
     return myText;
   }
 
-  @NotNull 
+  @Override
+  @NotNull
   public String getFileName() {
     return myFileName;
   }

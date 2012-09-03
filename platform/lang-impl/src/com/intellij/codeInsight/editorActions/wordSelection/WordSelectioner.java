@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 public class WordSelectioner extends AbstractWordSelectioner {
   private static final ExtensionPointName<Condition<PsiElement>> EP_NAME = ExtensionPointName.create("com.intellij.basicWordSelectionFilter");
 
+  @Override
   public boolean canSelect(PsiElement e) {
     if (e instanceof PsiComment || e instanceof PsiWhiteSpace) {
       return false;

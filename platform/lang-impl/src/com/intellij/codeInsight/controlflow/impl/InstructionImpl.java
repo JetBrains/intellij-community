@@ -35,6 +35,7 @@ public class InstructionImpl implements Instruction {
   protected final PsiElement myElement;
   private final int myNumber;
 
+  @Override
   @Nullable
   public final PsiElement getElement() {
     return myElement;
@@ -45,10 +46,12 @@ public class InstructionImpl implements Instruction {
     myNumber = builder.instructionCount++;
   }
 
+  @Override
   public final Collection<Instruction> allSucc() {
     return mySucc;
   }
 
+  @Override
   public final Collection<Instruction> allPred() {
     return myPred;
   }
@@ -65,12 +68,14 @@ public class InstructionImpl implements Instruction {
     return builder.toString();
   }
 
+  @Override
   public String getElementPresentation() {
     final StringBuffer buffer = new StringBuffer();
     buffer.append("element: ").append(myElement);
     return buffer.toString();
   }
 
+  @Override
   public final int num() {
     return myNumber;
   }

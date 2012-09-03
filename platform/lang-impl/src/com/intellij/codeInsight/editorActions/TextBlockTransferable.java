@@ -56,10 +56,12 @@ class TextBlockTransferable implements Transferable {
     myTransferDataFlavors = dataFlavors.toArray(new DataFlavor[dataFlavors.size()]);
   }
 
+  @Override
   public DataFlavor[] getTransferDataFlavors() {
     return myTransferDataFlavors;
   }
 
+  @Override
   public boolean isDataFlavorSupported(DataFlavor flavor) {
     DataFlavor[] flavors = getTransferDataFlavors();
     for (DataFlavor flavor1 : flavors) {
@@ -70,6 +72,7 @@ class TextBlockTransferable implements Transferable {
     return false;
   }
 
+  @Override
   public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
     try {
       for(TextBlockTransferableData data: myExtraData) {

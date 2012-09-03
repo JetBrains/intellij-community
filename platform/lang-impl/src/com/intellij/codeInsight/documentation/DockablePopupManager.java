@@ -105,10 +105,12 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     });
 
     new UiNotifyConnector(component, new Activatable() {
+      @Override
       public void showNotify() {
         restartAutoUpdate(myDefaultAutoUpdateDocumentation);
       }
 
+      @Override
       public void hideNotify() {
         restartAutoUpdate(false);
       }
@@ -150,6 +152,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     if (state && myToolWindow != null) {
       if (myAutoUpdateRequest == null) {
         myAutoUpdateRequest = new Runnable() {
+          @Override
           public void run() {
             if (myProject.isDisposed()) return;
 

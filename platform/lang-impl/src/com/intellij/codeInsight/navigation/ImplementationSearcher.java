@@ -83,6 +83,7 @@ public class ImplementationSearcher {
   protected PsiElement[] searchDefinitions(final PsiElement element) {
     final PsiElement[][] result = new PsiElement[1][];
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
       public void run() {
         try {
           result[0] = DefinitionsSearch.search(element).toArray(PsiElement.EMPTY_ARRAY);
@@ -116,6 +117,7 @@ public class ImplementationSearcher {
       final PsiElement[][] result = new PsiElement[1][];
       final PsiElementProcessor.CollectElementsWithLimit<PsiElement> collectProcessor = new PsiElementProcessor.CollectElementsWithLimit<PsiElement>(2, new THashSet<PsiElement>());
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        @Override
         public void run() {
           try {
             DefinitionsSearch.search(element).forEach(new PsiElementProcessorAdapter<PsiElement>(collectProcessor));

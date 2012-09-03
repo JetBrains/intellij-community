@@ -22,6 +22,7 @@ public class IndentTransferableData implements TextBlockTransferableData, Serial
     return myOffset;
   }
 
+  @Override
   public DataFlavor getFlavor() {
     return getDataFlavorStatic();
   }
@@ -42,18 +43,22 @@ public class IndentTransferableData implements TextBlockTransferableData, Serial
     return ourFlavor;
   }
 
+  @Override
   public int getOffsetCount() {
     return 0;
   }
 
+  @Override
   public int getOffsets(int[] offsets, int index) {
     return index;
   }
 
+  @Override
   public int setOffsets(int[] offsets, int index) {
     return index;
   }
 
+  @Override
   protected IndentTransferableData clone() {
     return new IndentTransferableData(myOffset);
   }

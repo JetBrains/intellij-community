@@ -36,6 +36,7 @@ public class CollapseAllRegionsAction extends EditorAction {
 
         CodeFoldingManager.getInstance(project).updateFoldRegions(editor);
         editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
+          @Override
           public void run() {
             for (FoldRegion region : editor.getFoldingModel().getAllFoldRegions()) {
               region.setExpanded(false);

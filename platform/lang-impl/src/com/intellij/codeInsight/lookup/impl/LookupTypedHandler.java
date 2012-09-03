@@ -79,6 +79,7 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
       }
 
       if (!lookup.performGuardedChange(new Runnable() {
+        @Override
         public void run() {
           EditorModificationUtil.deleteSelectedText(editor);
         }
@@ -90,6 +91,7 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
         long modificationStamp = document.getModificationStamp();
 
         if (!lookup.performGuardedChange(new Runnable() {
+          @Override
           public void run() {
             EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(charTyped), true);
           }
@@ -224,6 +226,7 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
       @Override
       public void run() {
         lookup.performGuardedChange(new Runnable() {
+          @Override
           public void run() {
             EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(charTyped), true);
           }

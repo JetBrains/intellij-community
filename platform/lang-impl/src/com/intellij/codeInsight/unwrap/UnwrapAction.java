@@ -28,10 +28,12 @@ public class UnwrapAction extends BaseCodeInsightAction{
     setEnabledInModalContext(true);
   }
 
+  @Override
   protected CodeInsightActionHandler getHandler(){
     return new UnwrapHandler();
   }
 
+  @Override
   protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
     return !LanguageUnwrappers.INSTANCE.allForLanguage(file.getLanguage()).isEmpty();
   }

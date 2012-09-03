@@ -34,6 +34,7 @@ import java.util.ArrayList;
 
 
 public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<FoldingTransferableData> {
+  @Override
   public FoldingTransferableData collectTransferableData(final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
     // might be slow
     //CodeFoldingManager.getInstance(file.getManager().getProject()).updateFoldRegions(editor);
@@ -58,6 +59,7 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<Folding
     return new FoldingTransferableData(list.toArray(new FoldingTransferableData.FoldingData[list.size()]));
   }
 
+  @Override
   @Nullable
   public FoldingTransferableData extractTransferableData(final Transferable content) {
     FoldingTransferableData foldingData = null;
@@ -80,6 +82,7 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<Folding
     return null;
   }
 
+  @Override
   public void processTransferableData(final Project project,
                                       final Editor editor,
                                       final RangeMarker bounds,
@@ -90,6 +93,7 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<Folding
     foldingManager.updateFoldRegions(editor, true);
 
     Runnable operation = new Runnable() {
+      @Override
       public void run() {
         for (FoldingTransferableData.FoldingData data : value.getData()) {
           FoldRegion region = foldingManager.findFoldRegion(editor, data.startOffset + bounds.getStartOffset(), data.endOffset + bounds.getStartOffset());

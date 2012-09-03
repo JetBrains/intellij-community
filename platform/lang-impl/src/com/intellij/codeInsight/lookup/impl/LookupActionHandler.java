@@ -48,6 +48,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     return LookupManager.getActiveLookup(editor) == null;
   }
 
+  @Override
   public void execute(Editor editor, DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (lookup == null || !lookup.isAvailableToUser() || myRequireFocusedLookup && !lookup.isFocused()) {
@@ -65,6 +66,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   protected abstract void executeInLookup(LookupImpl lookup, DataContext context);
 
+  @Override
   public boolean isEnabled(Editor editor, DataContext dataContext) {
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     return lookup != null || myOriginalHandler.isEnabled(editor, dataContext);
@@ -76,6 +78,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       super(originalHandler, false);
     }
 
+    @Override
     protected void executeInLookup(final LookupImpl lookup, DataContext context) {
       executeDown(lookup);
     }
@@ -132,6 +135,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       super(originalHandler, false);
     }
 
+    @Override
     protected void executeInLookup(final LookupImpl lookup, DataContext context) {
       if (!executeUp(lookup)) {
         myOriginalHandler.execute(lookup.getEditor(), context);
@@ -159,6 +163,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       super(originalHandler, false);
     }
 
+    @Override
     protected void executeInLookup(final LookupImpl lookup, DataContext context) {
       lookup.setFocused(true);
       ListScrollingUtil.movePageDown(lookup.getList());
@@ -170,6 +175,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       super(originalHandler, false);
     }
 
+    @Override
     protected void executeInLookup(final LookupImpl lookup, DataContext context) {
       lookup.setFocused(true);
       ListScrollingUtil.movePageUp(lookup.getList());

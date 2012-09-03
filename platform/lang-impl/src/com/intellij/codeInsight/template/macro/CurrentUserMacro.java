@@ -26,6 +26,7 @@ public class CurrentUserMacro extends SimpleMacro {
     super("user");
   }
 
+  @Override
   protected String evaluate() {
     return SystemProperties.getUserName();
   }

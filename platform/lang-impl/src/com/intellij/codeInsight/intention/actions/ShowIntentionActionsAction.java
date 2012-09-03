@@ -34,6 +34,7 @@ public class ShowIntentionActionsAction extends BaseCodeInsightAction implements
     return true;
   }
 
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return new ShowIntentionActionsHandler();
   }

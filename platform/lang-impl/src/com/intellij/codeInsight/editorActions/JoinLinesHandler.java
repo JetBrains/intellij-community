@@ -66,6 +66,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
     return new TextRange(start, end);
   }
 
+  @Override
   public void executeWriteAction(final Editor editor, final DataContext dataContext) {
     if (!(editor.getDocument() instanceof DocumentEx)) {
       myOriginalHandler.execute(editor, dataContext);

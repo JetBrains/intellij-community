@@ -57,22 +57,27 @@ class EditVariableDialog extends DialogWrapper {
     setOKButtonText(CommonBundle.getOkButtonText());
   }
 
+  @Override
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp("editing.templates.defineTemplates.editTemplVars");
   }
 
+  @Override
   protected String getDimensionServiceKey(){
     return "#com.intellij.codeInsight.template.impl.EditVariableDialog";
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTable;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return createVariablesTable();
   }
@@ -103,6 +108,7 @@ class EditVariableDialog extends DialogWrapper {
     JComboBox comboField = new JComboBox();
     Macro[] macros = MacroFactory.getMacros();
     Arrays.sort(macros, new Comparator<Macro> () {
+      @Override
       public int compare(Macro m1, Macro m2) {
         return m1.getPresentableName().compareTo(m2.getPresentableName());
       }
@@ -140,6 +146,7 @@ class EditVariableDialog extends DialogWrapper {
     return decorator.createPanel();
   }
 
+  @Override
   protected void doOKAction() {
     if (myTable.isEditing()) {
       TableCellEditor editor = myTable.getCellEditor();
@@ -173,8 +180,10 @@ class EditVariableDialog extends DialogWrapper {
 
   private void updateTemplateTextByVarNameChange(final Variable oldVar, final Variable newVar) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         CommandProcessor.getInstance().executeCommand(null, new Runnable() {
+          @Override
           public void run() {
             Document document = myEditor.getDocument();
             String templateText = document.getText();
@@ -193,14 +202,17 @@ class EditVariableDialog extends DialogWrapper {
       myNames = names;
     }
 
+    @Override
     public int getColumnCount() {
       return myNames.length;
     }
 
+    @Override
     public int getRowCount() {
       return myVariables.size();
     }
 
+    @Override
     public Object getValueAt(int row, int col) {
       Variable variable = myVariables.get(row);
       if (col == 0) {
@@ -217,10 +229,12 @@ class EditVariableDialog extends DialogWrapper {
       }
     }
 
+    @Override
     public String getColumnName(int column) {
       return myNames[column];
     }
 
+    @Override
     public Class getColumnClass(int c) {
       if (c <= 2) {
         return String.class;
@@ -230,10 +244,12 @@ class EditVariableDialog extends DialogWrapper {
       }
     }
 
+    @Override
     public boolean isCellEditable(int row, int col) {
       return true;
     }
 
+    @Override
     public void setValueAt(Object aValue, int row, int col) {
       Variable variable = myVariables.get(row);
       if (col == 0) {

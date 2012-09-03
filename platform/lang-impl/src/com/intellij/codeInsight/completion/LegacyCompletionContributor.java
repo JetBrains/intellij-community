@@ -42,6 +42,7 @@ public class LegacyCompletionContributor extends CompletionContributor {
   public LegacyCompletionContributor() {
     final PsiElementPattern.Capture<PsiElement> everywhere = PlatformPatterns.psiElement();
     extend(CompletionType.BASIC, everywhere, new CompletionProvider<CompletionParameters>() {
+      @Override
       public void addCompletions(@NotNull final CompletionParameters parameters,
                                  final ProcessingContext matchingContext,
                                  @NotNull final CompletionResultSet _result) {
@@ -75,6 +76,7 @@ public class LegacyCompletionContributor extends CompletionContributor {
                                           final CompletionData completionData) {
     final Ref<Boolean> hasVariants = Ref.create(false);
     processReferences(parameters, result, new PairConsumer<PsiReference, CompletionResultSet>() {
+      @Override
       public void consume(final PsiReference reference, final CompletionResultSet resultSet) {
         final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
         completionData

@@ -113,6 +113,7 @@ public class CompletionUtil {
   @Deprecated
   public static void registerCompletionData(FileType fileType, final CompletionData completionData) {
     registerCompletionData(fileType, new NotNullLazyValue<CompletionData>() {
+      @Override
       @NotNull
       protected CompletionData compute() {
         return completionData;

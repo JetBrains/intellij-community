@@ -59,6 +59,7 @@ public abstract class IntentionSettingsTree {
 
   private void initTree() {
     myTree = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer(true) {
+      @Override
       public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         if (!(value instanceof CheckedTreeNode)) return;
         CheckedTreeNode node = (CheckedTreeNode)value;
@@ -78,6 +79,7 @@ public abstract class IntentionSettingsTree {
     }, new CheckedTreeNode(null));
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         TreePath path = e.getPath();
         Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
@@ -160,6 +162,7 @@ public abstract class IntentionSettingsTree {
   private static List<IntentionActionMetaData> sort(final List<IntentionActionMetaData> intentionsToShow) {
     List<IntentionActionMetaData> copy = new ArrayList<IntentionActionMetaData>(intentionsToShow);
     Collections.sort(copy, new Comparator<IntentionActionMetaData>() {
+      @Override
       public int compare(final IntentionActionMetaData data1, final IntentionActionMetaData data2) {
         String[] category1 = data1.myCategory;
         String[] category2 = data2.myCategory;
@@ -189,6 +192,7 @@ public abstract class IntentionSettingsTree {
     else {
       root.setChecked(false);
       visitChildren(root, new CheckedNodeVisitor() {
+        @Override
         public void visit(CheckedTreeNode node) {
           if (resetCheckMark(node)) {
             root.setChecked(true);
@@ -202,6 +206,7 @@ public abstract class IntentionSettingsTree {
   private static CheckedTreeNode findChild(CheckedTreeNode node, final String name) {
     final Ref<CheckedTreeNode> found = new Ref<CheckedTreeNode>();
     visitChildren(node, new CheckedNodeVisitor() {
+      @Override
       public void visit(CheckedTreeNode node) {
         String text = getNodeText(node);
         if (name.equals(text)) {
@@ -215,6 +220,7 @@ public abstract class IntentionSettingsTree {
   private static CheckedTreeNode findChildRecursively(CheckedTreeNode node, final String name) {
     final Ref<CheckedTreeNode> found = new Ref<CheckedTreeNode>();
     visitChildren(node, new CheckedNodeVisitor() {
+      @Override
       public void visit(CheckedTreeNode node) {
         if (found.get() != null) return;
         final Object userObject = node.getUserObject();
@@ -262,6 +268,7 @@ public abstract class IntentionSettingsTree {
     }
     else {
       visitChildren(root, new CheckedNodeVisitor() {
+        @Override
         public void visit(CheckedTreeNode node) {
           refreshCheckStatus(node);
         }
@@ -278,6 +285,7 @@ public abstract class IntentionSettingsTree {
     }
     else {
       visitChildren(root, new CheckedNodeVisitor() {
+        @Override
         public void visit(CheckedTreeNode node) {
           apply(node);
         }
@@ -299,6 +307,7 @@ public abstract class IntentionSettingsTree {
     else {
       final boolean[] modified = new boolean[] { false };
       visitChildren(root, new CheckedNodeVisitor() {
+        @Override
         public void visit(CheckedTreeNode node) {
           modified[0] |= isModified(node);
         }
@@ -337,6 +346,7 @@ public abstract class IntentionSettingsTree {
       super("INTENTION_FILTER_HISTORY", 10);
     }
 
+    @Override
     public void filter() {
       final String filter = getFilter();
       if (filter != null && filter.length() > 0) {
@@ -351,6 +361,7 @@ public abstract class IntentionSettingsTree {
         TreeUtil.restoreExpandedPaths(myTree, expandedPaths);
       }
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           myTree.setSelectionRow(0);
           myTree.requestFocus();
@@ -363,6 +374,7 @@ public abstract class IntentionSettingsTree {
       }
     }
 
+    @Override
     protected void onlineFilter() {
       final String filter = getFilter();
       if (filter != null && filter.length() > 0) {

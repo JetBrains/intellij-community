@@ -30,27 +30,33 @@ import javax.swing.*;
 public class LiveTemplatesConfigurable extends BaseConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private TemplateListPanel myPanel;
 
+  @Override
   public boolean isModified() {
     return myPanel != null && myPanel.isModified();
   }
 
+  @Override
   public JComponent createComponent() {
     myPanel = new TemplateListPanel();
     return myPanel;
   }
 
+  @Override
   public String getDisplayName() {
     return CodeInsightBundle.message("templates.settings.page.title");
   }
 
+  @Override
   public void reset() {
     myPanel.reset();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myPanel.apply();
   }
 
+  @Override
   public void disposeUIResources() {
     if (myPanel != null) {
       Disposer.dispose(myPanel);
@@ -58,16 +64,19 @@ public class LiveTemplatesConfigurable extends BaseConfigurable implements Searc
     myPanel = null;
   }
 
+  @Override
   @NotNull
   public String getHelpTopic() {
     return "editing.templates";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   @Nullable
   public Runnable enableSearch(String option) {
     return null;

@@ -32,6 +32,7 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
   @NonNls public static final String HELP_ID = "preferences.intentionPowerPack";
   public static final String DISPLAY_NAME = CodeInsightBundle.message("intention.settings");
 
+  @Override
   public JComponent createComponent() {
     if (myPanel == null) {
       myPanel = new IntentionSettingsPanel();
@@ -41,6 +42,7 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
     return component;
   }
 
+  @Override
   public void initUi() {
     if (myPanel == null) {
       myPanel = new IntentionSettingsPanel();
@@ -48,38 +50,47 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
     myPanel.initUi();
   }
 
+  @Override
   public JComponent getToolbar() {
     return myPanel.getToolbar();
   }
 
+  @Override
   public JComponent getMaster() {
     return myPanel.getMaster();
   }
 
+  @Override
   public DetailsComponent getDetails() {
     return myPanel.getDetails();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myPanel.getIntentionTree();
   }
 
+  @Override
   public boolean isModified() {
     return myPanel != null && myPanel.isModified();
   }
 
+  @Override
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   public void reset() {
     myPanel.reset();
   }
 
+  @Override
   public void apply() {
     myPanel.apply();
   }
 
+  @Override
   public void disposeUIResources() {
     if (myPanel != null) {
       myPanel.dispose();
@@ -87,14 +98,17 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
     myPanel = null;
   }
 
+  @Override
   public String getHelpTopic() {
     return HELP_ID;
   }
 
+  @Override
   public Runnable enableSearch(String option) {
     return myPanel.showOption(this, option);
   }
 
+  @Override
   @NotNull
   public String getId() {
     return HELP_ID;

@@ -37,6 +37,7 @@ import java.util.List;
  */
 public abstract class BraceMatcherBasedSelectioner extends ExtendWordSelectionHandlerBase {
 
+  @Override
   public List<TextRange> select(final PsiElement e, final CharSequence editorText, final int cursorOffset, final Editor editor) {
     final VirtualFile file = e.getContainingFile().getVirtualFile();
     final FileType fileType = file == null? null : file.getFileType();

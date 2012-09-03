@@ -95,6 +95,7 @@ public class Variable implements Cloneable {
     myAlwaysStopAt = alwaysStopAt;
   }
 
+  @Override
   public Object clone() {
     return new Variable(myName, myExpressionString, myDefaultValueString, myAlwaysStopAt);
   }

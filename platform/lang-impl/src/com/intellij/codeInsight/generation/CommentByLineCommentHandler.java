@@ -67,6 +67,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
   private Map<SelfManagingCommenter, CommenterDataHolder> myCommenterStateMap;
   private CodeStyleManager myCodeStyleManager;
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     myProject = project;
     myFile = file.getViewProvider().getPsi(file.getViewProvider().getBaseLanguage());
@@ -184,6 +185,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     return true;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }
@@ -215,25 +217,30 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       blockSuitableCommenter = new Commenter() {
         final SyntaxTable mySyntaxTable = ((CustomSyntaxTableFileType)myFile.getFileType()).getSyntaxTable();
 
+        @Override
         @Nullable
         public String getLineCommentPrefix() {
           return mySyntaxTable.getLineComment();
         }
 
+        @Override
         @Nullable
         public String getBlockCommentPrefix() {
           return mySyntaxTable.getStartComment();
         }
 
+        @Override
         @Nullable
         public String getBlockCommentSuffix() {
           return mySyntaxTable.getEndComment();
         }
 
+        @Override
         public String getCommentedBlockCommentPrefix() {
           return null;
         }
 
+        @Override
         public String getCommentedBlockCommentSuffix() {
           return null;
         }

@@ -62,10 +62,12 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler");
   private static final String CHOOSER_TITLE = CodeInsightBundle.message("surround.with.chooser.title");
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     invoke(project, editor, file, null);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }
@@ -277,6 +279,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
       myElements = elements;
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       new WriteCommandAction(myProject) {
         @Override
@@ -292,6 +295,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
       super("Configure Live Templates...");
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       ShowSettingsUtil.getInstance().showSettingsDialog(e.getData(PlatformDataKeys.PROJECT), "Live Templates");
     }

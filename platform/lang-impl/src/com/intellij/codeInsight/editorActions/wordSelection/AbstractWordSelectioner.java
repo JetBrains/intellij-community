@@ -29,10 +29,12 @@ import java.util.List;
  * @author yole
  */
 public abstract class AbstractWordSelectioner extends ExtendWordSelectionHandlerBase {
+  @Override
   public boolean canSelect(final PsiElement e) {
     return false;
   }
 
+  @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     List<TextRange> ranges;
     if (canSelect(e)) {

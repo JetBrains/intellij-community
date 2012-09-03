@@ -55,6 +55,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     myProject = project;
   }
 
+  @Override
   public void disposeComponent() {
     for (Disposable disposable : myDisposables) {
       Disposer.dispose(disposable);
@@ -62,14 +63,18 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     myDisposables.clear();
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   public void projectOpened() {
     final EditorFactoryListener myEditorFactoryListener = new EditorFactoryAdapter() {
+      @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         Editor editor = event.getEditor();
         if (editor.getProject() != null && editor.getProject() != myProject) return;
@@ -94,10 +99,12 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     myDisposables.remove(tState);
   }
 
+  @Override
   public Template createTemplate(@NotNull String key, String group) {
     return new TemplateImpl(key, group);
   }
 
+  @Override
   public Template createTemplate(@NotNull String key, String group, String text) {
     return new TemplateImpl(key, text, group);
   }
@@ -123,6 +130,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return state;
   }
 
+  @Override
   public boolean startTemplate(@NotNull Editor editor, char shortcutChar) {
     Runnable runnable = prepareTemplate(editor, shortcutChar, null);
     if (runnable != null) {
@@ -131,14 +139,17 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return runnable != null;
   }
 
+  @Override
   public void startTemplate(@NotNull final Editor editor, @NotNull Template template) {
     startTemplate(editor, template, null);
   }
 
+  @Override
   public void startTemplate(@NotNull Editor editor, String selectionString, @NotNull Template template) {
     startTemplate(editor, selectionString, template, true, null, null, null);
   }
 
+  @Override
   public void startTemplate(@NotNull Editor editor,
                             @NotNull Template template,
                             TemplateEditingListener listener,
@@ -161,9 +172,11 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
       templateState.addTemplateStateListener(listener);
     }
     Runnable r = new Runnable() {
+      @Override
       public void run() {
         if (selectionString != null) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               EditorModificationUtil.deleteSelectedText(editor);
             }
@@ -191,10 +204,12 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return ApplicationManager.getApplication().isUnitTestMode() && !myTemplateTesting;
   }
 
+  @Override
   public void startTemplate(@NotNull final Editor editor, @NotNull final Template template, TemplateEditingListener listener) {
     startTemplate(editor, null, template, true, listener, null, null);
   }
 
+  @Override
   public void startTemplate(@NotNull final Editor editor,
                             @NotNull final Template template,
                             boolean inSeparateCommand,
@@ -261,6 +276,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
             CharSequence text = editor.getDocument().getCharsSequence();
             if (template2argument == null || !containsTemplateStartingBefore(template2argument, offsetBeforeKey, caretOffset, text)) {
               return new Runnable() {
+                @Override
                 public void run() {
                   customLiveTemplate.expand(key, callback);
                 }
@@ -327,6 +343,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     }
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         PsiDocumentManager.getInstance(myProject).commitDocument(document);
       }
@@ -356,6 +373,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     }
 
     return new Runnable() {
+      @Override
       public void run() {
         if (template2argument.size() == 1) {
           TemplateImpl template = template2argument.keySet().iterator().next();
@@ -421,6 +439,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     final TemplateState templateState = initTemplateState(editor);
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         editor.getDocument().deleteString(templateStart, caretOffset);
         editor.getCaretModel().moveToOffset(templateStart);
@@ -500,11 +519,13 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return Extensions.getExtensions(TemplateContextType.EP_NAME);
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "TemplateManager";
   }
 
+  @Override
   @Nullable
   public Template getActiveTemplate(@NotNull Editor editor) {
     final TemplateState templateState = getTemplateState(editor);
@@ -553,6 +574,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     final Document document = file.getViewProvider().getDocument();
     assert document != null;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         document.replaceString(startOffset, endOffset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
       }

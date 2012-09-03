@@ -40,22 +40,27 @@ public abstract class BaseCompleteMacro extends Macro {
     myName = name;
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public String getPresentableName() {
     return myName + "()";
   }
 
+  @Override
   @NotNull
   public String getDefaultValue() {
     return "a";
   }
 
+  @Override
   public final Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
     return new InvokeActionResult(
       new Runnable() {
+        @Override
         public void run() {
           invokeCompletion(context);
         }
@@ -74,6 +79,7 @@ public abstract class BaseCompleteMacro extends Macro {
         if (project.isDisposed() || editor.isDisposed() || psiFile == null || !psiFile.isValid()) return;
 
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          @Override
           public void run() {
             invokeCompletionHandler(project, editor);
             Lookup lookup = LookupManager.getInstance(project).getActiveLookup();
@@ -110,6 +116,7 @@ public abstract class BaseCompleteMacro extends Macro {
       myContext = context;
     }
 
+    @Override
     public void itemSelected(LookupEvent event) {
       LookupElement item = event.getItem();
       if (item == null) return;
@@ -130,6 +137,7 @@ public abstract class BaseCompleteMacro extends Macro {
         @Override
         public void run() {
           new WriteCommandAction(project) {
+            @Override
             protected void run(com.intellij.openapi.application.Result result) throws Throwable {
               final Editor editor = myContext.getEditor();
               if (editor != null) {

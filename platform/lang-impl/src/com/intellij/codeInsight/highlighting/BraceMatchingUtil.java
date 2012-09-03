@@ -412,34 +412,42 @@ public class BraceMatchingUtil {
   }
 
   private static class DefaultBraceMatcher implements BraceMatcher {
+    @Override
     public int getBraceTokenGroupId(final IElementType tokenType) {
       return UNDEFINED_TOKEN_GROUP;
     }
 
+    @Override
     public boolean isLBraceToken(final HighlighterIterator iterator, final CharSequence fileText, final FileType fileType) {
       return false;
     }
 
+    @Override
     public boolean isRBraceToken(final HighlighterIterator iterator, final CharSequence fileText, final FileType fileType) {
       return false;
     }
 
+    @Override
     public boolean isPairBraces(final IElementType tokenType, final IElementType tokenType2) {
       return false;
     }
 
+    @Override
     public boolean isStructuralBrace(final HighlighterIterator iterator, final CharSequence text, final FileType fileType) {
       return false;
     }
 
+    @Override
     public IElementType getOppositeBraceTokenType(@NotNull final IElementType type) {
       return null;
     }
 
+    @Override
     public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
       return true;
     }
 
+    @Override
     public int getCodeConstructStart(final PsiFile file, final int openingBraceOffset) {
       return openingBraceOffset;
     }

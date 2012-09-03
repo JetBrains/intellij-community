@@ -29,15 +29,18 @@ public class SelectionNode extends Expression {
   public SelectionNode() {
   }
 
+  @Override
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
     return LookupElement.EMPTY_ARRAY;
   }
 
+  @Override
   public Result calculateQuickResult(ExpressionContext context) {
     final String selection = context.getProperty(ExpressionContext.SELECTION);
     return new TextResult(selection == null ? "" : selection);
   }
 
+  @Override
   public Result calculateResult(ExpressionContext context) {
     return calculateQuickResult(context);
   }

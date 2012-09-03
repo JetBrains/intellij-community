@@ -47,6 +47,7 @@ public class ComboEditorCompletionContributor extends CompletionContributor{
           if (o instanceof String) {
             resultSet.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create((String)o).withInsertHandler(
               new InsertHandler<LookupElement>() {
+                @Override
                 public void handleInsert(final InsertionContext context, final LookupElement item) {
                   final Document document = context.getEditor().getDocument();
                   document.deleteString(context.getEditor().getCaretModel().getOffset(), document.getTextLength());

@@ -34,6 +34,7 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
   protected static final char ELEMENTS_SEPARATOR = ';';
   protected static final String ELEMENT_TOKENS_SEPARATOR = "#";
 
+  @Override
   @Nullable
   public PsiElement restoreBySignature(@NotNull PsiFile file, @NotNull String signature, @Nullable StringBuilder processingInfoStorage) {
     int semicolonIndex = signature.indexOf(ELEMENTS_SEPARATOR);

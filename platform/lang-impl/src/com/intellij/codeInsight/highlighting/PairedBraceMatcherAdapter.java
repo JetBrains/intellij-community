@@ -39,6 +39,7 @@ public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher {
     myLanguage = language;
   }
 
+  @Override
   public int getBraceTokenGroupId(IElementType tokenType) {
     final BracePair[] pairs = myMatcher.getPairs();
     for (BracePair pair : pairs) {
@@ -57,14 +58,17 @@ public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher {
     return null;
   }
 
+  @Override
   public boolean isLBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
     return findPair(true, iterator, fileText, fileType) != null;
   }
 
+  @Override
   public boolean isRBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
     return findPair(false, iterator, fileText, fileType) != null;
   }
 
+  @Override
   public IElementType getOppositeBraceTokenType(@NotNull final IElementType type) {
     final BracePair[] pairs = myMatcher.getPairs();
     for (BracePair pair : pairs) {
@@ -75,6 +79,7 @@ public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher {
     return null;
   }
 
+  @Override
   public boolean isPairBraces(IElementType tokenType, IElementType tokenType2) {
     final BracePair[] pairs = myMatcher.getPairs();
     for (BracePair pair : pairs) {
@@ -86,6 +91,7 @@ public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher {
     return false;
   }
 
+  @Override
   public boolean isStructuralBrace(HighlighterIterator iterator, CharSequence text, FileType fileType) {
     final IElementType tokenType = iterator.getTokenType();
     final BracePair[] pairs = myMatcher.getPairs();
@@ -95,14 +101,17 @@ public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher {
     return false;
   }
 
+  @Override
   public boolean isPairedBracesAllowedBeforeType(@NotNull IElementType lbraceType, @Nullable IElementType contextType) {
     return myMatcher.isPairedBracesAllowedBeforeType(lbraceType, contextType);
   }
 
+  @Override
   public int getCodeConstructStart(final PsiFile file, int openingBraceOffset) {
     return myMatcher.getCodeConstructStart(file, openingBraceOffset);
   }
 
+  @Override
   @NotNull
   public List<IElementType> getOppositeBraceTokenTypes(@NotNull IElementType type) {
     List<IElementType> result = null;

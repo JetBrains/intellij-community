@@ -40,20 +40,24 @@ class LazyEditor extends UserDataHolderBase implements Editor {
     return myEditor;
   }
 
+  @Override
   @NotNull
   public Document getDocument() {
     return getEditor().getDocument();
   }
 
+  @Override
   public boolean isViewer() {
     return getEditor().isViewer();
   }
 
+  @Override
   @NotNull
   public JComponent getComponent() {
     return getEditor().getComponent();
   }
 
+  @Override
   @NotNull
   public JComponent getContentComponent() {
     return getEditor().getContentComponent();
@@ -69,154 +73,187 @@ class LazyEditor extends UserDataHolderBase implements Editor {
     return getEditor().getInsets();
   }
 
+  @Override
   @NotNull
   public SelectionModel getSelectionModel() {
     return getEditor().getSelectionModel();
   }
 
+  @Override
   @NotNull
   public MarkupModel getMarkupModel() {
     return getEditor().getMarkupModel();
   }
 
+  @Override
   @NotNull
   public FoldingModel getFoldingModel() {
     return getEditor().getFoldingModel();
   }
 
+  @Override
   @NotNull
   public ScrollingModel getScrollingModel() {
     return getEditor().getScrollingModel();
   }
 
+  @Override
   @NotNull
   public CaretModel getCaretModel() {
     return getEditor().getCaretModel();
   }
 
+  @Override
   @NotNull
   public SoftWrapModel getSoftWrapModel() {
     return getEditor().getSoftWrapModel();
   }
 
+  @Override
   @NotNull
   public EditorSettings getSettings() {
     return getEditor().getSettings();
   }
 
+  @Override
   @NotNull
   public EditorColorsScheme getColorsScheme() {
     return getEditor().getColorsScheme();
   }
 
+  @Override
   public int getLineHeight() {
     return getEditor().getLineHeight();
   }
 
+  @Override
   @NotNull
   public Point logicalPositionToXY(@NotNull final LogicalPosition pos) {
     return getEditor().logicalPositionToXY(pos);
   }
 
+  @Override
   public int logicalPositionToOffset(@NotNull final LogicalPosition pos) {
     return getEditor().logicalPositionToOffset(pos);
   }
 
+  @Override
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull final LogicalPosition logicalPos) {
     return getEditor().logicalToVisualPosition(logicalPos);
   }
 
+  @Override
   @NotNull
   public Point visualPositionToXY(@NotNull final VisualPosition visible) {
     return getEditor().visualPositionToXY(visible);
   }
 
+  @Override
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull final VisualPosition visiblePos) {
     return getEditor().visualToLogicalPosition(visiblePos);
   }
 
+  @Override
   @NotNull
   public LogicalPosition offsetToLogicalPosition(final int offset) {
     return getEditor().offsetToLogicalPosition(offset);
   }
 
+  @Override
   @NotNull
   public VisualPosition offsetToVisualPosition(final int offset) {
     return getEditor().offsetToVisualPosition(offset);
   }
 
+  @Override
   @NotNull
   public LogicalPosition xyToLogicalPosition(@NotNull final Point p) {
     return getEditor().xyToLogicalPosition(p);
   }
 
+  @Override
   @NotNull
   public VisualPosition xyToVisualPosition(@NotNull final Point p) {
     return getEditor().xyToVisualPosition(p);
   }
 
+  @Override
   public void addEditorMouseListener(@NotNull final EditorMouseListener listener) {
     getEditor().addEditorMouseListener(listener);
   }
 
+  @Override
   public void removeEditorMouseListener(@NotNull final EditorMouseListener listener) {
     getEditor().removeEditorMouseListener(listener);
   }
 
+  @Override
   public void addEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
     getEditor().addEditorMouseMotionListener(listener);
   }
 
+  @Override
   public void removeEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
     getEditor().removeEditorMouseMotionListener(listener);
   }
 
+  @Override
   public boolean isDisposed() {
     return getEditor().isDisposed();
   }
 
+  @Override
   @Nullable
   public Project getProject() {
     return getEditor().getProject();
   }
 
+  @Override
   public boolean isInsertMode() {
     return getEditor().isInsertMode();
   }
 
+  @Override
   public boolean isColumnMode() {
     return getEditor().isColumnMode();
   }
 
+  @Override
   public boolean isOneLineMode() {
     return getEditor().isOneLineMode();
   }
 
+  @Override
   @NotNull
   public EditorGutter getGutter() {
     return getEditor().getGutter();
   }
 
+  @Override
   @Nullable
   public EditorMouseEventArea getMouseEventArea(@NotNull final MouseEvent e) {
     return getEditor().getMouseEventArea(e);
   }
 
+  @Override
   public void setHeaderComponent(@Nullable final JComponent header) {
     getEditor().setHeaderComponent(header);
   }
 
+  @Override
   public boolean hasHeaderComponent() {
     return getEditor().hasHeaderComponent();
   }
 
+  @Override
   @Nullable
   public JComponent getHeaderComponent() {
     return getEditor().getHeaderComponent();
   }
 
+  @Override
   @NotNull
   public IndentsModel getIndentsModel() {
     return getEditor().getIndentsModel();

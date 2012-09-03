@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 public class OverrideMethodsHandler implements CodeInsightActionHandler{
+  @Override
   public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)){
       return;
@@ -40,6 +41,7 @@ public class OverrideMethodsHandler implements CodeInsightActionHandler{
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

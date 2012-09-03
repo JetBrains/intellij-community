@@ -41,6 +41,7 @@ public class NextVariableAction extends EditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
       CommandProcessor.getInstance().setCurrentCommandName(CodeInsightBundle.message("template.next.variable.command"));
@@ -48,6 +49,7 @@ public class NextVariableAction extends EditorAction {
     }
   }
 
+  @Override
   public void update(Editor editor, Presentation presentation, DataContext dataContext) {
     TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
     presentation.setEnabled(templateState != null && !templateState.isFinished() && templateState.isToProcessTab());

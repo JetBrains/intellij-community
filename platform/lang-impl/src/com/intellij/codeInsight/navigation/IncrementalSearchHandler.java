@@ -133,6 +133,7 @@ public class IncrementalSearchHandler {
     final Document document = editor.getDocument();
 
     final LightweightHint hint = new LightweightHint(panel) {
+      @Override
       public void hide() {
         PerHintSearchData data = getUserData(SEARCH_DATA_IN_HINT_KEY);
         LOG.assertTrue(data != null);
@@ -159,6 +160,7 @@ public class IncrementalSearchHandler {
     };
 
     documentListener[0] = new DocumentAdapter() {
+      @Override
       public void documentChanged(DocumentEvent e) {
         if (!hint.isVisible()) return;
         hint.hide();
@@ -167,6 +169,7 @@ public class IncrementalSearchHandler {
     document.addDocumentListener(documentListener[0]);
 
     caretListener[0] = new CaretListener() {
+      @Override
       public void caretPositionChanged(CaretEvent e) {
         PerHintSearchData data = hint.getUserData(SEARCH_DATA_IN_HINT_KEY);
         if (data != null && data.ignoreCaretMove) return;
@@ -336,6 +339,7 @@ public class IncrementalSearchHandler {
       myLeft = left;
     }
 
+    @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
       Dimension lSize = myLeft.getPreferredSize();
@@ -352,6 +356,7 @@ public class IncrementalSearchHandler {
       super(originalHandler);
     }
 
+    @Override
     public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
@@ -380,6 +385,7 @@ public class IncrementalSearchHandler {
       myOriginalHandler = originalAction;
     }
 
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
@@ -405,6 +411,7 @@ public class IncrementalSearchHandler {
       myOriginalHandler = originalHandler;
     }
 
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
@@ -423,6 +430,7 @@ public class IncrementalSearchHandler {
       }
     }
 
+    @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       return data != null && data.hint != null || myOriginalHandler.isEnabled(editor, dataContext);
@@ -436,6 +444,7 @@ public class IncrementalSearchHandler {
       myOriginalHandler = originalHandler;
     }
 
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
@@ -454,6 +463,7 @@ public class IncrementalSearchHandler {
       }
     }
 
+    @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       return data != null && data.hint != null || myOriginalHandler.isEnabled(editor, dataContext);

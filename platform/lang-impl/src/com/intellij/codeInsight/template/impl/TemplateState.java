@@ -105,6 +105,7 @@ public class TemplateState implements Disposable {
 
   private void initListeners() {
     myEditorDocumentListener = new DocumentAdapter() {
+      @Override
       public void beforeDocumentChange(DocumentEvent e) {
         myDocumentChanged = true;
       }
@@ -113,6 +114,7 @@ public class TemplateState implements Disposable {
     myCommandListener = new CommandAdapter() {
       boolean started = false;
 
+      @Override
       public void commandStarted(CommandEvent event) {
         if (myEditor != null) {
           final int offset = myEditor.getCaretModel().getOffset();
@@ -123,9 +125,11 @@ public class TemplateState implements Disposable {
         started = true;
       }
 
+      @Override
       public void beforeCommandFinished(CommandEvent event) {
         if (started) {
           Runnable runnable = new Runnable() {
+            @Override
             public void run() {
               afterChangedUpdate();
             }
@@ -144,6 +148,7 @@ public class TemplateState implements Disposable {
     CommandProcessor.getInstance().addCommandListener(myCommandListener);
   }
 
+  @Override
   public synchronized void dispose() {
     if (myEditorDocumentListener != null) {
       myDocument.removeDocumentListener(myEditorDocumentListener);
@@ -278,6 +283,7 @@ public class TemplateState implements Disposable {
     DocumentReference[] refs =
       myDocument == null ? null : new DocumentReference[]{DocumentReferenceManager.getInstance().create(myDocument)};
     UndoManager.getInstance(myProject).undoableActionPerformed(new BasicUndoableAction(refs) {
+      @Override
       public void undo() {
         if (myDocument != null) {
           fireTemplateCancelled();
@@ -288,6 +294,7 @@ public class TemplateState implements Disposable {
         }
       }
 
+      @Override
       public void redo() {
         //TODO:
         // throw new UnexpectedUndoException("Not implemented");
@@ -334,6 +341,7 @@ public class TemplateState implements Disposable {
 
   private void processAllExpressions(final TemplateImpl template) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         if (!template.isInline()) myDocument.insertString(myTemplateRange.getStartOffset(), template.getTemplateText());
         for (int i = 0; i < template.getSegmentsCount(); i++) {
@@ -377,6 +385,7 @@ public class TemplateState implements Disposable {
     }
     final RangeMarker finalRangeMarker = rangeMarker;
     final Runnable action = new Runnable() {
+      @Override
       public void run() {
         IntArrayList indices = initEmptyVariables();
         mySegments.setSegmentsGreedy(false);
@@ -391,6 +400,7 @@ public class TemplateState implements Disposable {
 
   private void shortenReferences() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
         if (file != null) {
@@ -520,11 +530,13 @@ public class TemplateState implements Disposable {
     lookup.refreshUi(true, true);
     ourLookupShown = true;
     lookup.addLookupListener(new LookupAdapter() {
+      @Override
       public void lookupCanceled(LookupEvent event) {
         lookup.removeLookupListener(this);
         ourLookupShown = false;
       }
 
+      @Override
       public void itemSelected(LookupEvent event) {
         lookup.removeLookupListener(this);
         if (isFinished()) return;
@@ -558,6 +570,7 @@ public class TemplateState implements Disposable {
       }
       else {
         new WriteCommandAction(myProject) {
+          @Override
           protected void run(com.intellij.openapi.application.Result result) throws Throwable {
             item.handleInsert(context);
           }
@@ -577,6 +590,7 @@ public class TemplateState implements Disposable {
     }
 
     new WriteCommandAction(myProject) {
+      @Override
       protected void run(com.intellij.openapi.application.Result result) throws Throwable {
         nextTab();
       }
@@ -602,6 +616,7 @@ public class TemplateState implements Disposable {
     }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         BitSet calcedSegments = new BitSet();
         int maxAttempts = (myTemplate.getVariableCount() + 1) * 3;
@@ -743,6 +758,7 @@ public class TemplateState implements Disposable {
     if (nextVariableNumber == -1) {
       calcResults(false);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           reformat(null);
         }
@@ -764,18 +780,22 @@ public class TemplateState implements Disposable {
 
   private ExpressionContext createExpressionContext(final int start) {
     return new ExpressionContext() {
+      @Override
       public Project getProject() {
         return myProject;
       }
 
+      @Override
       public Editor getEditor() {
         return myEditor;
       }
 
+      @Override
       public int getStartOffset() {
         return start;
       }
 
+      @Override
       public int getTemplateStartOffset() {
         if (myTemplateRange == null) {
           return -1;
@@ -783,6 +803,7 @@ public class TemplateState implements Disposable {
         return myTemplateRange.getStartOffset();
       }
 
+      @Override
       public int getTemplateEndOffset() {
         if (myTemplateRange == null) {
           return -1;
@@ -790,6 +811,7 @@ public class TemplateState implements Disposable {
         return myTemplateRange.getEndOffset();
       }
 
+      @Override
       public <T> T getProperty(Key<T> key) {
         return (T)myProperties.get(key);
       }

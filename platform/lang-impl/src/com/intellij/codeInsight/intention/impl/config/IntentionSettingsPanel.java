@@ -47,10 +47,12 @@ public class IntentionSettingsPanel implements MasterDetails {
 
   public IntentionSettingsPanel() {
     myIntentionSettingsTree = new IntentionSettingsTree() {
+      @Override
       protected void selectionChanged(Object selected) {
         if (selected instanceof IntentionActionMetaData) {
           final IntentionActionMetaData actionMetaData = (IntentionActionMetaData)selected;
           final Runnable runnable = new Runnable() {
+            @Override
             public void run() {
               intentionSelected(actionMetaData);
               if (myDetailsComponent != null) {
@@ -72,6 +74,7 @@ public class IntentionSettingsPanel implements MasterDetails {
         }
       }
 
+      @Override
       protected List<IntentionActionMetaData> filterModel(String filter, final boolean force) {
         final List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
         if (filter == null || filter.length() == 0) return list;
@@ -112,25 +115,30 @@ public class IntentionSettingsPanel implements MasterDetails {
   public void reset() {
     myIntentionSettingsTree.reset();
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         myIntentionDescriptionPanel.init(myPanel.getWidth() / 2);
       }
     });
   }
 
+  @Override
   public void initUi() {
     myDetailsComponent = new DetailsComponent();
     myDetailsComponent.setContent(myDescriptionPanel);
   }
 
+  @Override
   public JComponent getToolbar() {
     return myIntentionSettingsTree.getToolbarPanel();
   }
 
+  @Override
   public JComponent getMaster() {
     return myTreePanel;
   }
 
+  @Override
   public DetailsComponent getDetails() {
     return myDetailsComponent;
   }
@@ -208,6 +216,7 @@ public class IntentionSettingsPanel implements MasterDetails {
 
   public Runnable showOption(final SearchableConfigurable configurable, final String option) {
     return new Runnable() {
+      @Override
       public void run() {
         myIntentionSettingsTree.filter(myIntentionSettingsTree.filterModel(option, true));
         myIntentionSettingsTree.setFilter(option);

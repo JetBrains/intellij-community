@@ -51,6 +51,7 @@ public class ReformatFilesDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }
@@ -63,6 +64,7 @@ public class ReformatFilesDialog extends DialogWrapper {
     return myOnlyChangedText.isEnabled() && myOnlyChangedText.isSelected();
   }
 
+  @Override
   protected void doOKAction() {
     super.doOKAction();
     PropertiesComponent.getInstance().setValue(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, Boolean.toString(myOptimizeImports.isSelected()));

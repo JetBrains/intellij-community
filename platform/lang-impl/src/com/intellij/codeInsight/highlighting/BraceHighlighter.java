@@ -43,13 +43,16 @@ public class BraceHighlighter extends AbstractProjectComponent {
     super(project);
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "BraceHighlighter";
   }
 
+  @Override
   public void projectOpened() {
     StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
+      @Override
       public void run() {
         doinit();
       }
@@ -60,6 +63,7 @@ public class BraceHighlighter extends AbstractProjectComponent {
     final EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
 
     CaretListener myCaretListener = new CaretListener() {
+      @Override
       public void caretPositionChanged(CaretEvent e) {
         myAlarm.cancelAllRequests();
         Editor editor = e.getEditor();
@@ -80,6 +84,7 @@ public class BraceHighlighter extends AbstractProjectComponent {
     eventMulticaster.addCaretListener(myCaretListener, myProject);
 
     final SelectionListener mySelectionListener = new SelectionListener() {
+      @Override
       public void selectionChanged(SelectionEvent e) {
         myAlarm.cancelAllRequests();
         Editor editor = e.getEditor();
@@ -99,6 +104,7 @@ public class BraceHighlighter extends AbstractProjectComponent {
     eventMulticaster.addSelectionListener(mySelectionListener, myProject);
 
     DocumentListener documentListener = new DocumentAdapter() {
+      @Override
       public void documentChanged(DocumentEvent e) {
         myAlarm.cancelAllRequests();
         Editor[] editors = EditorFactory.getInstance().getEditors(e.getDocument(), myProject);
@@ -110,10 +116,12 @@ public class BraceHighlighter extends AbstractProjectComponent {
     eventMulticaster.addDocumentListener(documentListener, myProject);
 
     final FocusChangeListener myFocusChangeListener = new FocusChangeListener() {
+      @Override
       public void focusLost(Editor editor) {
         clearBraces(editor);
       }
 
+      @Override
       public void focusGained(Editor editor) {
         updateBraces(editor, myAlarm);
       }
@@ -123,6 +131,7 @@ public class BraceHighlighter extends AbstractProjectComponent {
     final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
 
     fileEditorManager.addFileEditorManagerListener(new FileEditorManagerAdapter() {
+      @Override
       public void selectionChanged(FileEditorManagerEvent e) {
         myAlarm.cancelAllRequests();
       }
@@ -134,6 +143,7 @@ public class BraceHighlighter extends AbstractProjectComponent {
     if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) return;
 
     BraceHighlightingHandler.lookForInjectedAndMatchBracesInOtherThread(editor, alarm, new Processor<BraceHighlightingHandler>() {
+      @Override
       public boolean process(final BraceHighlightingHandler handler) {
         handler.updateBraces();
         return false;
@@ -143,6 +153,7 @@ public class BraceHighlighter extends AbstractProjectComponent {
 
   private void clearBraces(@NotNull final Editor editor) {
     BraceHighlightingHandler.lookForInjectedAndMatchBracesInOtherThread(editor, myAlarm, new Processor<BraceHighlightingHandler>() {
+      @Override
       public boolean process(final BraceHighlightingHandler handler) {
         handler.clearBraceHighlighters();
         return false;

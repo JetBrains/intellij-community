@@ -101,6 +101,7 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
     return (isBracket(c1) && isBracket(c2)) || (isQuote(c1) && isQuote(c2));
   }
 
+  @Override
   public Result beforeCharTyped(final char charTyped, final Project project, final Editor editor, final PsiFile file, final FileType fileType) {
     // TODO[oleg] remove this hack when API changes
     if (myReplacedTextRange != null) {
