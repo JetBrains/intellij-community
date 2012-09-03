@@ -455,6 +455,7 @@ public class PythonSdkType extends SdkType {
         sdkModificator.removeAllRoots();
         try {
           updateSdkRootsFromSysPath(sdk, sdkModificator, indicator);
+          updateUserAddedPaths(sdk, sdkModificator, indicator);
           if (!ApplicationManager.getApplication().isUnitTestMode()) {
             refreshSkeletonsOfSDK(project, sdk, getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath()), null);
             PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
@@ -550,6 +551,22 @@ public class PythonSdkType extends SdkType {
     }
   }
 
+  public static void updateUserAddedPaths(Sdk sdk, SdkModificator sdkModificator, ProgressIndicator indicator)
+    throws InvalidSdkException {
+    Application application = ApplicationManager.getApplication();
+    boolean not_in_unit_test_mode = (application != null && !application.isUnitTestMode());
+
+    if (indicator != null) {
+      indicator.setText("Adding user-added roots");
+    }
+    SdkAdditionalData data = sdk.getSdkAdditionalData();
+    if (data instanceof PythonSdkAdditionalData) {
+      for (VirtualFile file : ((PythonSdkAdditionalData)data).getAddedPaths()) {
+        addSdkRoot(sdkModificator, file);
+      }
+    }
+  }
+
   private static void addSkeletonsRoot(@NotNull SdkModificator sdkModificator, String bin_path) {
     @NonNls final String skeletonsPath = getSkeletonsPath(PathManager.getSystemPath(), bin_path);
     new File(skeletonsPath).mkdirs();
@@ -572,21 +589,26 @@ public class PythonSdkType extends SdkType {
   public static void addSdkRoot(SdkModificator sdkModificator, String path) {
     VirtualFile child = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     if (child != null) {
-      @NonNls String suffix = child.getExtension();
-      if (suffix != null) suffix = suffix.toLowerCase(); // Why on earth empty suffix is null and not ""?
-      if ((!child.isDirectory()) && ("zip".equals(suffix) || "egg".equals(suffix))) {
-        // a .zip / .egg file must have its root extracted first
-        child = JarFileSystem.getInstance().getJarRootForLocalFile(child);
-      }
-      if (child != null) {
-        // NOTE: Files marked as library sources are not considered part of project source. Since the directory of the project the
-        // user is working on is included in PYTHONPATH with many configurations (e.g. virtualenv), we must not mark SDK paths as
-        // library sources, only as classes.
-        sdkModificator.addRoot(child, OrderRootType.CLASSES);
-      }
+      addSdkRoot(sdkModificator, child);
     }
     else {
       LOG.info("Bogus sys.path entry " + path);
+    }
+  }
+
+  private static void addSdkRoot(@NotNull SdkModificator sdkModificator, @NotNull VirtualFile child) {
+    @NonNls String suffix = child.getExtension();
+    if (suffix != null) suffix = suffix.toLowerCase(); // Why on earth empty suffix is null and not ""?
+    VirtualFile toAdd = child;
+    if ((!child.isDirectory()) && ("zip".equals(suffix) || "egg".equals(suffix))) {
+      // a .zip / .egg file must have its root extracted first
+      toAdd = JarFileSystem.getInstance().getJarRootForLocalFile(child);
+    }
+    if (toAdd != null) {
+      // NOTE: Files marked as library sources are not considered part of project source. Since the directory of the project the
+      // user is working on is included in PYTHONPATH with many configurations (e.g. virtualenv), we must not mark SDK paths as
+      // library sources, only as classes.
+      sdkModificator.addRoot(toAdd, OrderRootType.CLASSES);
     }
   }
 
@@ -706,7 +728,8 @@ public class PythonSdkType extends SdkType {
     refreshSkeletonsOfSDK(project, sdk, findSkeletonsPath(sdk), new Ref<Boolean>(false));
   }
 
-  static void refreshSkeletonsOfSDK(@Nullable Project project, @NotNull Sdk sdk, String skeletonsPath, @Nullable Ref<Boolean> migrationFlag) throws InvalidSdkException {
+  static void refreshSkeletonsOfSDK(@Nullable Project project, @NotNull Sdk sdk, String skeletonsPath, @Nullable Ref<Boolean> migrationFlag)
+    throws InvalidSdkException {
     final Map<String, List<String>> errors = new TreeMap<String, List<String>>();
     final List<String> failedSdks = new SmartList<String>();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
