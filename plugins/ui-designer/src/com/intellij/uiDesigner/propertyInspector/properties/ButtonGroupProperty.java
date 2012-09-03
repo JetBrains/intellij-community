@@ -81,7 +81,7 @@ public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> 
     private RadComponent myComponent;
 
     public MyPropertyEditor() {
-      myCbx.setRenderer(new ListCellRendererWrapper<RadButtonGroup>(myCbx.getRenderer()) {
+      myCbx.setRenderer(new ListCellRendererWrapper<RadButtonGroup>() {
         @Override
         public void customize(JList list, RadButtonGroup value, int index, boolean selected, boolean hasFocus) {
           if (value == null) {

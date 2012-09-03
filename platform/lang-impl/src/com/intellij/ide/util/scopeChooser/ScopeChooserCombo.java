@@ -483,7 +483,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
   private static class ScopeDescriptionWithDelimiterRenderer extends ListCellRendererWrapper<ScopeDescriptor> {
     public ScopeDescriptionWithDelimiterRenderer(final ListCellRenderer original) {
-      super(original);
+      super();
     }
 
     @Override

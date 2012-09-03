@@ -73,7 +73,7 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
     myReplaceFieldsCb = new JComboBox(new Integer[]{IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL,
       IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE,
       IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE});
-    myReplaceFieldsCb.setRenderer(new ListCellRendererWrapper<Integer>(myReplaceFieldsCb) {
+    myReplaceFieldsCb.setRenderer(new ListCellRendererWrapper<Integer>() {
       @Override
       public void customize(JList list, Integer value, int index, boolean selected, boolean hasFocus) {
         switch (value) {

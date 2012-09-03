@@ -55,7 +55,7 @@ public class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
     Arrays.sort(languageIDs);
 
     myLanguage.setModel(new DefaultComboBoxModel(languageIDs));
-    myLanguage.setRenderer(new HtmlListCellRenderer<String>(myLanguage.getRenderer()) {
+    myLanguage.setRenderer(new HtmlListCellRenderer<String>() {
       final Set<String> IDs = new HashSet<String>(Arrays.asList(languageIDs));
 
       @Override

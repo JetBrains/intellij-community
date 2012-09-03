@@ -58,7 +58,7 @@ class ChooseModuleStep extends ExportSignedPackageWizardStep {
     }
 
     myModuleCombo.setModel(new CollectionComboBoxModel(facets, selection));
-    myModuleCombo.setRenderer(new ListCellRendererWrapper<AndroidFacet>(myModuleCombo.getRenderer()) {
+    myModuleCombo.setRenderer(new ListCellRendererWrapper<AndroidFacet>() {
       @Override
       public void customize(JList list, AndroidFacet value, int index, boolean selected, boolean hasFocus) {
         final Module module = value.getModule();

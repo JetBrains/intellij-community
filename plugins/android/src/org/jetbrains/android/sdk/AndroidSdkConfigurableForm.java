@@ -54,7 +54,7 @@ class AndroidSdkConfigurableForm {
   public AndroidSdkConfigurableForm(@NotNull SdkModel sdkModel, @NotNull final SdkModificator sdkModificator) {
     mySdkModel = sdkModel;
     myInternalJdkComboBox.setModel(myJdksModel);
-    myInternalJdkComboBox.setRenderer(new ListCellRendererWrapper(myInternalJdkComboBox.getRenderer()) {
+    myInternalJdkComboBox.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof Sdk) {
@@ -64,7 +64,7 @@ class AndroidSdkConfigurableForm {
     });
     myBuildTargetComboBox.setModel(myBuildTargetsModel);
 
-    myBuildTargetComboBox.setRenderer(new ListCellRendererWrapper(myBuildTargetComboBox.getRenderer()) {
+    myBuildTargetComboBox.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof IAndroidTarget) {

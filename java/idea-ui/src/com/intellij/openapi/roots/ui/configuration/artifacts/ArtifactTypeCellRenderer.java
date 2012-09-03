@@ -25,7 +25,7 @@ import javax.swing.*;
  */
 public class ArtifactTypeCellRenderer extends ListCellRendererWrapper<ArtifactType> {
   public ArtifactTypeCellRenderer(final ListCellRenderer listCellRenderer) {
-    super(listCellRenderer);
+    super();
   }
 
   @Override

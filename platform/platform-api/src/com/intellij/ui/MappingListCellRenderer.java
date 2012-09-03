@@ -22,7 +22,7 @@ public class MappingListCellRenderer extends ListCellRendererWrapper {
   private final Map<Object, String> myValueMap;
 
   public MappingListCellRenderer(final ListCellRenderer original, final Map<Object, String> valueMap) {
-    super(original);
+    super();
     myValueMap = valueMap;
   }
 

@@ -67,7 +67,7 @@ public class ConfigurationModuleSelector {
       }
     };
     myModulesList.setModel(myModules);
-    myModulesList.setRenderer(new ListCellRendererWrapper(myModulesList.getRenderer()) {
+    myModulesList.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
         if (value instanceof Module) {

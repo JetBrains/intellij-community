@@ -72,7 +72,7 @@ public class MavenImportingSettingsForm {
     myUpdateFoldersOnImportPhaseComboBox.setModel(new DefaultComboBoxModel(MavenImportingSettings.UPDATE_FOLDERS_PHASES));
 
     myGeneratedSourcesComboBox.setModel(new EnumComboBoxModel<MavenImportingSettings.GeneratedSourcesFolder>(MavenImportingSettings.GeneratedSourcesFolder.class));
-    myGeneratedSourcesComboBox.setRenderer(new ListCellRendererWrapper(myGeneratedSourcesComboBox.getRenderer()) {
+    myGeneratedSourcesComboBox.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof MavenImportingSettings.GeneratedSourcesFolder) {

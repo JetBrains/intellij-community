@@ -81,7 +81,7 @@ public class SelectTemplateDialog extends DialogWrapper{
     }
     if(myCbxTemplates == null){
       myCbxTemplates = new JComboBox(model);
-      myCbxTemplates.setRenderer(new ListCellRendererWrapper<FileTemplate>(myCbxTemplates.getRenderer()) {
+      myCbxTemplates.setRenderer(new ListCellRendererWrapper<FileTemplate>() {
         @Override
         public void customize(JList list, FileTemplate fileTemplate, int index, boolean selected, boolean hasFocus) {
           if (fileTemplate != null) {

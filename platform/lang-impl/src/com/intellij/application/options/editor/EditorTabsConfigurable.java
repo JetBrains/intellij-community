@@ -219,7 +219,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
 
   private static final class MyTabsPlacementComboBoxRenderer extends ListCellRendererWrapper<Integer> {
     public MyTabsPlacementComboBoxRenderer(final ListCellRenderer listCellRenderer) {
-      super(listCellRenderer);
+      super();
     }
 
     @Override

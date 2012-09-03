@@ -32,7 +32,7 @@ public class GitRepositoryComboboxListCellRenderer extends ListCellRendererWrapp
   private static final DefaultListCellRenderer DEFAULT_RENDERER = new DefaultListCellRenderer();
 
   public GitRepositoryComboboxListCellRenderer(final JComboBox comboBox) {
-    super(comboBox);
+    super();
   }
 
   @Override

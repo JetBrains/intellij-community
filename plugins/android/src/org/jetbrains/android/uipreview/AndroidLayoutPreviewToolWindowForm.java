@@ -157,7 +157,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     myNightCombo = new ComboBox();
     myComboPanel.add(myNightCombo, gb);
 
-    myDevicesCombo.setRenderer(new ListCellRendererWrapper(myDevicesCombo.getRenderer()) {
+    myDevicesCombo.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof LayoutDevice) {
@@ -170,7 +170,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
       }
     });
 
-    myDeviceConfigurationsCombo.setRenderer(new ListCellRendererWrapper(myDeviceConfigurationsCombo.getRenderer()) {
+    myDeviceConfigurationsCombo.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof LayoutDeviceConfiguration) {
@@ -320,7 +320,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     myScrollPane.getVerticalScrollBar().setUnitIncrement(5);
 
     myDockModeCombo.setModel(new DefaultComboBoxModel(UiMode.values()));
-    myDockModeCombo.setRenderer(new ListCellRendererWrapper(myDockModeCombo.getRenderer()) {
+    myDockModeCombo.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         setText(((UiMode)value).getLongDisplayValue());
@@ -335,14 +335,14 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     };
 
     myNightCombo.setModel(new DefaultComboBoxModel(NightMode.values()));
-    myNightCombo.setRenderer(new ListCellRendererWrapper(myNightCombo.getRenderer()) {
+    myNightCombo.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         setText(((NightMode)value).getLongDisplayValue());
       }
     });
 
-    myTargetCombo.setRenderer(new ListCellRendererWrapper(myTargetCombo.getRenderer()) {
+    myTargetCombo.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof IAndroidTarget) {
@@ -998,7 +998,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     }
     myThemeCombo.setModel(new CollectionComboBoxModel(themes, selection));
 
-    myThemeCombo.setRenderer(new ListCellRendererWrapper(myThemeCombo.getRenderer()) {
+    myThemeCombo.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof ThemeData) {

@@ -276,7 +276,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   }
 
   public JComponent createComponent() {
-    myProfiles.setRenderer(new ListCellRendererWrapper<Profile>(myProfiles.getRenderer()) {
+    myProfiles.setRenderer(new ListCellRendererWrapper<Profile>() {
       @Override
       public void customize(final JList list, final Profile value, final int index, final boolean selected, final boolean hasFocus) {
         final String profileName = value.getName();

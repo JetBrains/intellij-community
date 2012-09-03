@@ -131,7 +131,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
                                                               GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     wholePanel.add(myInternalJres, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.EAST,
                                                           GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
-    myInternalJres.setRenderer(new ListCellRendererWrapper(myInternalJres.getRenderer()) {
+    myInternalJres.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof Sdk) {

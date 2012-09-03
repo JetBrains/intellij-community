@@ -28,7 +28,7 @@ import javax.swing.*;
  */
 public class ProjectJdkListRenderer extends HtmlListCellRenderer {
   public ProjectJdkListRenderer(final ListCellRenderer listCellRenderer) {
-    super(listCellRenderer);
+    super();
   }
 
   @Override

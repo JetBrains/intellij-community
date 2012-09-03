@@ -52,7 +52,7 @@ public class ModulesCombobox extends ComboBox {
         return super.getElementText(element);
       }
     };
-    setRenderer(new ListCellRendererWrapper<Module>(this) {
+    setRenderer(new ListCellRendererWrapper<Module>() {
       @Override
       public void customize(JList list, Module value, int index, boolean selected, boolean hasFocus) {
         if (value != null) {

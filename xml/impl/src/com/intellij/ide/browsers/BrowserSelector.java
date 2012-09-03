@@ -55,7 +55,7 @@ public class BrowserSelector {
     });
 
     final JComboBox comboBox = myBrowserComboWithBrowse.getComboBox();
-    comboBox.setRenderer(new ListCellRendererWrapper<BrowsersConfiguration.BrowserFamily>(comboBox.getRenderer()) {
+    comboBox.setRenderer(new ListCellRendererWrapper<BrowsersConfiguration.BrowserFamily>() {
       @Override
       public void customize(JList list,
                             BrowsersConfiguration.BrowserFamily value,

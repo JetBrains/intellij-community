@@ -25,7 +25,7 @@ import javax.swing.*;
  */
 public class ThreadComboBoxRenderer extends ListCellRendererWrapper<XExecutionStack> {
   public ThreadComboBoxRenderer(JComboBox comboBox) {
-    super(comboBox);
+    super();
   }
 
   @Override

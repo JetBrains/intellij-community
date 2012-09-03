@@ -57,7 +57,7 @@ public class ExternalToolsCheckinHandlerFactory extends CheckinHandlerFactory {
         ComboboxWithBrowseButton listComponent = new ComboboxWithBrowseButton();
         final JComboBox comboBox = listComponent.getComboBox();
         comboBox.setModel(new CollectionComboBoxModel(getComboBoxElements(), null));
-        comboBox.setRenderer(new ListCellRendererWrapper<Object>(comboBox) {
+        comboBox.setRenderer(new ListCellRendererWrapper<Object>() {
           @Override
           public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
             if (value instanceof ToolsGroup) {

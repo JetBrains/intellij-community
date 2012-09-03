@@ -87,7 +87,7 @@ public class ProjectSettingsPanel {
     myScopeMappingTable = new TableView<ScopeSetting>(myScopeMappingModel);
 
     fillCopyrightProfiles();
-    myProfilesComboBox.setRenderer(new ListCellRendererWrapper<CopyrightProfile>(myProfilesComboBox.getRenderer()) {
+    myProfilesComboBox.setRenderer(new ListCellRendererWrapper<CopyrightProfile>() {
       @Override
       public void customize(JList list, CopyrightProfile value, int index, boolean selected, boolean hasFocus) {
         if (value == null) {

@@ -24,7 +24,7 @@ import javax.swing.*;
 
 public class DebuggerComboBoxRenderer extends ListCellRendererWrapper {
   public DebuggerComboBoxRenderer(final ListCellRenderer listCellRenderer) {
-    super(listCellRenderer);
+    super();
   }
 
   @Override

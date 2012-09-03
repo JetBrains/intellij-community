@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.refactoring.ui;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UpDownHandler;
 
@@ -68,7 +67,7 @@ public class ComboBoxVisibilityPanel<V> extends VisibilityPanelBase<V> {
   }
 
   protected ListCellRendererWrapper getRenderer() {
-    return new ListCellRendererWrapper(myComboBox) {
+    return new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         setText(myNamesMap.get((V)value));

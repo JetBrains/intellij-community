@@ -51,7 +51,7 @@ public class FileTypePatternDialog {
       for (Language language : languages) {
         model.addElement(language);
       }
-      myLanguageCombo.setRenderer(new ListCellRendererWrapper(myLanguageCombo.getRenderer()) {
+      myLanguageCombo.setRenderer(new ListCellRendererWrapper() {
         @Override
         public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           setText(value == null ? "" : ((Language) value).getDisplayName());

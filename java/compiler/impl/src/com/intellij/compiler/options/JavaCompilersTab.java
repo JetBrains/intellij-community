@@ -74,7 +74,7 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
       myContentPanel.add(configurable.createComponent(), compiler.getId());
     }
     myCompiler.setModel(new DefaultComboBoxModel(new Vector(compilers)));
-    myCompiler.setRenderer(new ListCellRendererWrapper<BackendCompiler>(myCompiler.getRenderer()) {
+    myCompiler.setRenderer(new ListCellRendererWrapper<BackendCompiler>() {
       @Override
       public void customize(final JList list, final BackendCompiler value, final int index, final boolean selected, final boolean hasFocus) {
         setText(value != null ? value.getPresentableName() : "");

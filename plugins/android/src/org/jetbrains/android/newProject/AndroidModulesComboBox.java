@@ -32,7 +32,7 @@ import java.util.List;
  */
 public class AndroidModulesComboBox extends JComboBox {
   public AndroidModulesComboBox() {
-    setRenderer(new ListCellRendererWrapper(getRenderer()) {
+    setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof Module) {

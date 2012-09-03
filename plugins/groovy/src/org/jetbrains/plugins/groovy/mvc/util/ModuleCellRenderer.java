@@ -26,7 +26,7 @@ import javax.swing.*;
  */
 public class ModuleCellRenderer extends ListCellRendererWrapper<Module> {
   public ModuleCellRenderer(ListCellRenderer renderer) {
-    super(renderer);
+    super();
   }
 
   @Override

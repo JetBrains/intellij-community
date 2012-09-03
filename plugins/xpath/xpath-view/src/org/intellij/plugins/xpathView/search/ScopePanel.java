@@ -92,7 +92,7 @@ public class ScopePanel extends JPanel implements Disposable{
         myCustomScope.setSelected(scope.getScopeType() == SearchScope.ScopeType.CUSTOM);
 
         myModuleSelection.setModel(createModel(ModuleManager.getInstance(myProject).getModules()));
-        myModuleSelection.setRenderer(new ListCellRendererWrapper<Module>(myModuleSelection) {
+        myModuleSelection.setRenderer(new ListCellRendererWrapper<Module>() {
           @Override
           public void customize(JList list, Module m, int index, boolean selected, boolean hasFocus) {
             if (m != null) {

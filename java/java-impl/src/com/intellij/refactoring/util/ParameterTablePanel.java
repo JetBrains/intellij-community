@@ -127,7 +127,7 @@ public abstract class ParameterTablePanel extends JPanel {
     myTypeRendererCombo = new JComboBox(getVariableData());
     myTypeRendererCombo.setOpaque(true);
     myTypeRendererCombo.setBorder(null);
-    myTypeRendererCombo.setRenderer(new ListCellRendererWrapper<VariableData>(myTypeRendererCombo.getRenderer()) {
+    myTypeRendererCombo.setRenderer(new ListCellRendererWrapper<VariableData>() {
       @Override
       public void customize(JList list, VariableData value, int index, boolean selected, boolean hasFocus) {
         if (value != null) {

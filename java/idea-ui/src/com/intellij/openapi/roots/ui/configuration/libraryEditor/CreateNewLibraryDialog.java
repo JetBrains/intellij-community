@@ -50,7 +50,7 @@ public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
     }
     myLibraryLevelCombobox = new ComboBox(model);
     myLibraryLevelCombobox.setSelectedIndex(selectedTable);
-    myLibraryLevelCombobox.setRenderer(new ListCellRendererWrapper(myLibraryLevelCombobox.getRenderer()) {
+    myLibraryLevelCombobox.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof LibraryTable) {

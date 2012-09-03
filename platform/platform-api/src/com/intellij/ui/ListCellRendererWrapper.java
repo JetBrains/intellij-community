@@ -30,7 +30,6 @@ import java.awt.*;
  * @since 30.09.2010
  */
 public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
-  private final ListCellRenderer myOriginalRenderer;
   private boolean mySeparator;
   private Icon myIcon;
   private String myText;
@@ -39,29 +38,15 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
   private Color myBackground;
   private Font myFont;
 
-  /**
-   * A combo box for which this cell renderer is created should be passed here.
-   *
-   * @param comboBox The combo box for which this cell renderer is created.
-   */
-  public ListCellRendererWrapper(final JComboBox comboBox) {
-    myOriginalRenderer = comboBox.getRenderer();
-  }
+  public ListCellRendererWrapper() { }
 
-  /**
-   * Default JComboBox cell renderer should be passed here.
-   *
-   * @param listCellRenderer Default cell renderer ({@link javax.swing.JComboBox#getRenderer()}).
-   */
-  public ListCellRendererWrapper(final ListCellRenderer listCellRenderer) {
-    myOriginalRenderer = listCellRenderer;
-  }
+  /** @deprecated please use {@linkplain #ListCellRendererWrapper()} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration") public ListCellRendererWrapper(final JComboBox comboBox) { }
 
-  public final Component getListCellRendererComponent(final JList list,
-                                                      final Object value,
-                                                      final int index,
-                                                      final boolean isSelected,
-                                                      final boolean cellHasFocus) {
+  /** @deprecated please use {@linkplain #ListCellRendererWrapper()} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration") public ListCellRendererWrapper(final ListCellRenderer listCellRenderer) { }
+
+  public final Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
     mySeparator = false;
     myIcon = null;
     myText = null;
@@ -85,7 +70,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
       return separator;
     }
 
-    final Component component = myOriginalRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    final Component component = new JComboBox().getRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     if (component instanceof JLabel) {
       final JLabel label = (JLabel)component;
       label.setIcon(myIcon);

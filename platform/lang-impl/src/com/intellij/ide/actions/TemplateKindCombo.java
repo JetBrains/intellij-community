@@ -35,7 +35,7 @@ public class TemplateKindCombo extends ComboboxWithBrowseButton {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.TemplateKindCombo");
 
   public TemplateKindCombo() {
-    getComboBox().setRenderer(new ListCellRendererWrapper(getComboBox().getRenderer()) {
+    getComboBox().setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(final JList list, final Object value, final int index, final boolean selected, final boolean cellHasFocus) {
         if (value instanceof Trinity) {

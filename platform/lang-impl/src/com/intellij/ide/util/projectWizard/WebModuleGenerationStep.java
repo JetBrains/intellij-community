@@ -89,7 +89,7 @@ public class WebModuleGenerationStep extends ModuleWizardStep {
     generatorList.setModel(listModel);
     generatorList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     generatorList.getExpandableItemsHandler().setEnabled(false);
-    generatorList.setCellRenderer(new ListCellRendererWrapper<DirectoryProjectGenerator>(generatorList.getCellRenderer()) {
+    generatorList.setCellRenderer(new ListCellRendererWrapper<DirectoryProjectGenerator>() {
       @Override
       public void customize(JList list,
                             DirectoryProjectGenerator value,

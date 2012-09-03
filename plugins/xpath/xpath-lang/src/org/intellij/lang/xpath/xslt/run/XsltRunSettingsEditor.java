@@ -271,7 +271,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
 
       final Module[] modules = ModuleManager.getInstance(project).getModules();
       myModule.setModel(new DefaultComboBoxModel(ArrayUtil.mergeArrays(new Object[]{"<default>"}, modules)));
-      myModule.setRenderer(new ListCellRendererWrapper(myModule) {
+      myModule.setRenderer(new ListCellRendererWrapper() {
         @Override
         public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           if (value instanceof Module) {
@@ -303,7 +303,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         myJdkChoice.setEnabled(false);
         myJDK.setEnabled(false);
       }
-      myJDK.setRenderer(new ListCellRendererWrapper<Sdk>(myJDK) {
+      myJDK.setRenderer(new ListCellRendererWrapper<Sdk>() {
         @Override
         public void customize(JList list, final Sdk jdk, int index, boolean isSelected, boolean cellHasFocus) {
           if (jdk != null) {

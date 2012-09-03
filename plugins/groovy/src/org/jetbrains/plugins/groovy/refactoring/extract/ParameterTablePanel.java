@@ -98,7 +98,7 @@ public abstract class ParameterTablePanel extends JPanel {
     myTypeRendererCombo.setOpaque(true);
     myTypeRendererCombo.setBorder(null);
 
-    myTypeRendererCombo.setRenderer(new ListCellRendererWrapper<ParameterInfo>(myTypeRendererCombo.getRenderer()) {
+    myTypeRendererCombo.setRenderer(new ListCellRendererWrapper<ParameterInfo>() {
       @Override
       public void customize(JList list, ParameterInfo info, int index, boolean selected, boolean hasFocus) {
         PsiType type = info.getType();

@@ -801,7 +801,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   private static final class MyKeymapRenderer extends ListCellRendererWrapper<Keymap> {
     public MyKeymapRenderer(final ListCellRenderer listCellRenderer) {
-      super(listCellRenderer);
+      super();
     }
 
     @Override

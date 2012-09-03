@@ -248,7 +248,7 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   private void updateRenderer(final Project project) {
-    myFileChooser.setRenderer(new ListCellRendererWrapper<FileDescriptor>(myFileChooser.getRenderer()) {
+    myFileChooser.setRenderer(new ListCellRendererWrapper<FileDescriptor>() {
       @Override
       public void customize(JList list, FileDescriptor value, int index, boolean selected, boolean hasFocus) {
         final PsiFile file = value.myFile;

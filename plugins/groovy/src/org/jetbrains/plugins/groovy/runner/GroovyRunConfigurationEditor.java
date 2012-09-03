@@ -123,7 +123,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     myDebugCB.setEnabled(true);
     myDebugCB.setSelected(false);
 
-    myModulesBox.setRenderer(new ListCellRendererWrapper<Module>(myModulesBox.getRenderer()) {
+    myModulesBox.setRenderer(new ListCellRendererWrapper<Module>() {
       @Override
       public void customize(JList list, Module module, int index, boolean selected, boolean hasFocus) {
         if (module != null) {

@@ -32,16 +32,16 @@ public class SdkListCellRenderer extends HtmlListCellRenderer<Sdk> {
   private boolean myShowHomePath;
 
   public SdkListCellRenderer(final ListCellRenderer listCellRenderer) {
-    super(listCellRenderer);
+    super();
   }
 
   public SdkListCellRenderer(final String nullText, final ListCellRenderer listCellRenderer) {
-    super(listCellRenderer);
+    super();
     myNullText = nullText;
   }
 
   public SdkListCellRenderer(final String nullText, final boolean showHomePath, final ListCellRenderer listCellRenderer) {
-    super(listCellRenderer);
+    super();
     myNullText = nullText;
     myShowHomePath = showHomePath;
   }

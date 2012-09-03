@@ -95,7 +95,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       }
     };
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    getComboBox().setRenderer(new ListCellRendererWrapper<DirectoryChooser.ItemWrapper>(getComboBox().getRenderer()) {
+    getComboBox().setRenderer(new ListCellRendererWrapper<DirectoryChooser.ItemWrapper>() {
       @Override
       public void customize(JList list,
                             DirectoryChooser.ItemWrapper itemWrapper,

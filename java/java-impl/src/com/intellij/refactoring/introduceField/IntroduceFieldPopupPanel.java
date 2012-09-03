@@ -146,7 +146,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
       JComboBox initializersCombo = new JComboBox(myInitialisersPlaceModel);
       KeyboardComboSwitcher.setupActions(initializersCombo, myParentClass.getProject());
       initLabel.setLabelFor(initializersCombo);
-      initializersCombo.setRenderer(new ListCellRendererWrapper<BaseExpressionToFieldHandler.InitializationPlace>(initializersCombo) {
+      initializersCombo.setRenderer(new ListCellRendererWrapper<BaseExpressionToFieldHandler.InitializationPlace>() {
         @Override
         public void customize(JList list,
                               BaseExpressionToFieldHandler.InitializationPlace value,

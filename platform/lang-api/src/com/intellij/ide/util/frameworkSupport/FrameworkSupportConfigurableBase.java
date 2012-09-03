@@ -66,7 +66,7 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
         }
       }
       myVersionComboBox.setPrototypeDisplayValue(maxValue + "_");
-      myVersionComboBox.setRenderer(new ListCellRendererWrapper(myVersionComboBox.getRenderer()) {
+      myVersionComboBox.setRenderer(new ListCellRendererWrapper() {
         @Override
         public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           if (value instanceof FrameworkVersion) {

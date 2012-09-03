@@ -157,7 +157,7 @@ public class GitUIUtil {
    * @param listCellRenderer
    */
   public static ListCellRenderer getVirtualFileListCellRenderer(final ListCellRenderer listCellRenderer) {
-    return new ListCellRendererWrapper<VirtualFile>(listCellRenderer) {
+    return new ListCellRendererWrapper<VirtualFile>() {
       @Override
       public void customize(final JList list, final VirtualFile file, final int index, final boolean selected, final boolean hasFocus) {
         setText(file == null || !file.isValid() ? "(invalid)" : file.getPresentableUrl());
@@ -187,7 +187,7 @@ public class GitUIUtil {
    */
   public static ListCellRenderer getGitRemoteListCellRenderer(final String defaultRemote, final boolean fetchUrl,
                                                               final ListCellRenderer listCellRenderer) {
-    return new ListCellRendererWrapper<GitDeprecatedRemote>(listCellRenderer) {
+    return new ListCellRendererWrapper<GitDeprecatedRemote>() {
       @Override
       public void customize(final JList list, final GitDeprecatedRemote remote, final int index, final boolean selected, final boolean hasFocus) {
         final String text;

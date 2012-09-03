@@ -155,7 +155,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
         updateLogConsole();
       }
     });
-    myDeviceCombo.setRenderer(new ListCellRendererWrapper(myDeviceCombo.getRenderer()) {
+    myDeviceCombo.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value == null) {

@@ -23,27 +23,12 @@ import javax.swing.*;
 import static com.intellij.ui.SimpleColoredComponent.formatLink;
 import static com.intellij.ui.SimpleColoredComponent.formatText;
 
-/**
- * <p>Replacement for {@link ColoredListCellRenderer}, L&F friendly.
- *
- * <p>From {@link #customize(javax.swing.JList, Object, int, boolean, boolean)},
- * text fragments should be added via {@link #append(String, SimpleTextAttributes)}.<br>
- * Note that not all styles from SimpleTextAttributes are supported, see method code for details.
- *
- * <p>Alternatively, item can be rendered by {@link com.intellij.openapi.roots.ui.CellAppearanceEx#customize(HtmlListCellRenderer)}.
- *
- * @param <T> type of list items.
- */
 public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T> {
   private StringBuilder myText;
 
-  /**
-   * Default JComboBox cell renderer should be passed here.
-   * @param listCellRenderer Default cell renderer ({@link javax.swing.JComboBox#getRenderer()}).
-   */
-  public HtmlListCellRenderer(final ListCellRenderer listCellRenderer) {
-    super(listCellRenderer);
-  }
+  public HtmlListCellRenderer() { }
+
+  public HtmlListCellRenderer(@SuppressWarnings("UnusedParameters") final ListCellRenderer listCellRenderer) { }
 
   @Override
   public final void customize(final JList list, final T value, final int index, final boolean selected, final boolean hasFocus) {
