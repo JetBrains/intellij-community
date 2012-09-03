@@ -21,7 +21,6 @@ import org.jetbrains.jps.incremental.fs.FSState;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.Timestamps;
-import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
@@ -152,14 +151,9 @@ final class BuildSession implements Runnable, CanceledStatus {
         // invoked the very first time for this project. Force full rebuild
         myBuildType = BuildType.PROJECT_REBUILD;
       }
-      ProjectDescriptor pd = myBuildRunner.load(msgHandler, dataStorageRoot, fsState);
+      final ProjectDescriptor pd = myBuildRunner.load(msgHandler, dataStorageRoot, fsState);
       myProjectDescriptor = pd;
-
-      final boolean shouldApplyEvent = loadFsState(fsState, dataStorageRoot, myInitialFSDelta, myProjectDescriptor);
-      if (shouldApplyEvent) {
-        applyFSEvent(myProjectDescriptor, myInitialFSDelta);
-      }
-
+      loadFsState(fsState, dataStorageRoot, myInitialFSDelta, pd);
 
       // free memory
       myInitialFSDelta = null;
@@ -321,10 +315,10 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
   }
 
-  private boolean loadFsState(final BuildFSState fsState,
-                              File dataStorageRoot,
-                              CmdlineRemoteProto.Message.ControllerMessage.FSEvent initialEvent,
-                              ProjectDescriptor projectDescriptor) {
+  private void loadFsState(final BuildFSState fsState,
+                           File dataStorageRoot,
+                           CmdlineRemoteProto.Message.ControllerMessage.FSEvent initialEvent,
+                           ProjectDescriptor pd) {
     boolean shouldApplyEvent = false;
     final File file = new File(dataStorageRoot, FS_STATE_FILE);
     try {
@@ -339,18 +333,19 @@ final class BuildSession implements Runnable, CanceledStatus {
 
       final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
       try {
-        int version = in.readInt();
+        final int version = in.readInt();
         if (version == FSState.VERSION) {
           final long savedOrdinal = in.readLong();
           if (initialEvent != null && (savedOrdinal + 1L == initialEvent.getOrdinal())) {
-            fsState.load(in, projectDescriptor);
+            fsState.load(in, pd);
             myLastEventOrdinal = savedOrdinal;
             shouldApplyEvent = true;
-            //applyFSEvent(pd, initialEvent);
           }
         }
-
-        if (!shouldApplyEvent) {
+        if (shouldApplyEvent) {
+          applyFSEvent(pd, initialEvent);
+        }
+        else {
           // either the first start or some events were lost, forcing scan
           fsState.clearAll();
           myLastEventOrdinal = initialEvent != null? initialEvent.getOrdinal() : 0L;
@@ -359,8 +354,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       finally {
         in.close();
       }
-      return shouldApplyEvent; // successfully initialized
-
+      return; // successfully initialized
     }
     catch (FileNotFoundException ignored) {
     }
@@ -369,7 +363,6 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
     myLastEventOrdinal = initialEvent != null? initialEvent.getOrdinal() : 0L;
     fsState.clearAll();
-    return shouldApplyEvent;
   }
 
   private static boolean containsChanges(CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
