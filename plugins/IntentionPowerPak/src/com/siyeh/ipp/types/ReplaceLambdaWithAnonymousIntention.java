@@ -23,6 +23,7 @@ import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -91,7 +92,7 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
       }
     }
     blockFromText = psiElementFactory.createCodeBlockFromText(blockFromText.getText(), null);
-    newExpression = (PsiNewExpression)lambdaExpression.replace(newExpression);
+    newExpression = (PsiNewExpression)JavaCodeStyleManager.getInstance(lambdaExpression.getProject()).shortenClassReferences(lambdaExpression.replace(newExpression));
 
     final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
     LOG.assertTrue(anonymousClass != null);
