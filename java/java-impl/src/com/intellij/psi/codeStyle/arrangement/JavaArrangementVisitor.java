@@ -203,5 +203,8 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
         entry.addModifier(MODIFIERS.get(modifier));
       }
     }
+    if (modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+      entry.addModifier(ArrangementModifier.PACKAGE_PRIVATE);
+    }
   }
 }

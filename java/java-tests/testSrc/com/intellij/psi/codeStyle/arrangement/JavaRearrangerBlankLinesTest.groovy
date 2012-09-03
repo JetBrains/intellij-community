@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle.arrangement
 
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.*
+import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PACKAGE_PRIVATE
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PUBLIC
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.STATIC
 /**
@@ -85,6 +86,38 @@ class Test {
              rule(FIELD),
              rule(METHOD, PUBLIC),
              rule(METHOD)]
+    )
+  }
+
+  void testCutBlankLines() {
+    commonSettings.BLANK_LINES_AROUND_FIELD = 0
+    commonSettings.BLANK_LINES_AROUND_METHOD = 1
+    doTest(
+            '''\
+class Test {
+
+    void test1() {
+    }
+    
+    void test2() {
+    }
+    
+    int i;
+    int j;
+}''',
+            '''\
+class Test {
+
+    int i;
+    int j;
+    
+    void test1() {
+    }
+
+    void test2() {
+    }
+}''',
+            [rule(FIELD, PACKAGE_PRIVATE), rule(METHOD)]
     )
   }
 }

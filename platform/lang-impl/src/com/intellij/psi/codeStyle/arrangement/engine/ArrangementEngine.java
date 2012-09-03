@@ -329,7 +329,7 @@ public class ArrangementEngine {
       }
       else {
         // Cut exceeding blank lines.
-        int replacementStartOffset = lineFeedOffsets.get(lineFeedOffsets.size() + lineFeedsDiff);
+        int replacementStartOffset = lineFeedOffsets.get(-lineFeedsDiff) + 1;
         document.replaceString(replacementStartOffset, oldWrapper.getEndOffset(), newEntryText);
       }
       
