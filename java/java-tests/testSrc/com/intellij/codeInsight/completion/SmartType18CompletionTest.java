@@ -43,6 +43,14 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testExpectedReturnTypeWithSubstitution() {
+    doTest();
+  }
+
+  public void testExpectedReturnType1() {
+    doTest();
+  }
+
   private void doTest() {
     configureByFile("/" + getTestName(false) + ".java");
     assertNotNull(myItems);
