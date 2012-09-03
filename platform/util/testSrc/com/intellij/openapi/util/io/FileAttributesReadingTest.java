@@ -310,7 +310,7 @@ public class FileAttributesReadingTest {
     assertTrue(target.length() > 0);
     assertTimestampsEqual(attributes.lastModified - 5000, target.lastModified());
 
-    attributes = getAttributes(link);
+    attributes = getAttributes(link, SystemInfo.areSymLinksSupported);  // ignore XP
     assertEquals(FileAttributes.Type.FILE, attributes.type);
     assertEquals(target.length(), attributes.length);
     assertTimestampsEqual(target.lastModified(), attributes.lastModified);
