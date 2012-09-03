@@ -60,6 +60,7 @@ import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.PatchedWeakReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -145,7 +146,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (pointer instanceof FileElement) {
       return (FileElement)pointer;
     }
-    else if (pointer instanceof Reference) {
+    if (pointer instanceof Reference) {
       FileElement treeElement = (FileElement)((Reference)pointer).get();
       if (treeElement != null) return treeElement;
 
@@ -170,23 +171,22 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public boolean isValid() {
-    final VirtualFile vFile = getViewProvider().getVirtualFile();
+    FileViewProvider provider = getViewProvider();
+    final VirtualFile vFile = provider.getVirtualFile();
     if (!vFile.isValid()) return false;
-    if (!getViewProvider().isPhysical()) return true; // "dummy" file
+    if (!provider.isEventSystemEnabled()) return true; // "dummy" file
+    if (myManager.getProject().isDisposed()) return false;
     return isPsiUpToDate(vFile);
-
-    //FileViewProvider viewProvider = getViewProvider();
-    //if (!viewProvider.isPhysical()) return true; // "dummy" file
-    //final VirtualFile vFile = viewProvider.getVirtualFile();
-    //if (!vFile.isValid() || !isPsiUpToDate(vFile)) return false;
-    //PsiManager manager = getManager();
-    //boolean valid = manager != null && !manager.getProject().isDisposed();
-    //return valid;
   }
 
-  protected boolean isPsiUpToDate(VirtualFile vFile) {
+  protected boolean isPsiUpToDate(@NotNull VirtualFile vFile) {
     final FileViewProvider provider = myManager.findViewProvider(vFile);
-    return provider.getPsi(getLanguage()) == this || provider.getPsi(provider.getBaseLanguage()) == this;
+    Language language = getLanguage();
+    if (provider == null || provider.getPsi(language) == this) { // provider == null in tests
+      return true;
+    }
+    Language baseLanguage = provider.getBaseLanguage();
+    return baseLanguage != language && provider.getPsi(baseLanguage) == this;
   }
 
   @Override
@@ -976,14 +976,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       if (tree == null) {
         IElementType contentElementType = getContentElementType();
         if (!(contentElementType instanceof IStubFileElementType)) {
-          final StringBuilder builder = new StringBuilder();
-          builder.append("ContentElementType: ").append(contentElementType).append("; file: ").append(this);
-          builder.append("\n\t").append("Boolean.TRUE.equals(getUserData(BUILDING_STUB)) = ").append(Boolean.TRUE.equals(getUserData(BUILDING_STUB)));
-          builder.append("\n\t").append("getTreeElementNoLock() = ").append(getTreeElementNoLock());
-          final VirtualFile vFile = getVirtualFile();
-          builder.append("\n\t").append("vFile instanceof VirtualFileWithId = ").append(vFile instanceof VirtualFileWithId);
-          builder.append("\n\t").append("StubUpdatingIndex.canHaveStub(vFile) = ").append(StubTreeLoader.getInstance().canHaveStub(vFile));
-          LOG.error(builder.toString());
+          VirtualFile vFile = getVirtualFile();
+          @NonNls String builder = "ContentElementType: " + contentElementType + "; file: " + this +
+          "\n\t" + "Boolean.TRUE.equals(getUserData(BUILDING_STUB)) = " + Boolean.TRUE.equals(getUserData(BUILDING_STUB)) +
+          "\n\t" + "getTreeElementNoLock() = " + getTreeElementNoLock() +
+          "\n\t" + "vFile instanceof VirtualFileWithId = " + (vFile instanceof VirtualFileWithId) +
+          "\n\t" + "StubUpdatingIndex.canHaveStub(vFile) = " + StubTreeLoader.getInstance().canHaveStub(vFile);
+          LOG.error(builder);
         }
         final StubElement currentStubTree = ((IStubFileElementType)contentElementType).getBuilder().buildStubTree(this);
         tree = new StubTree((PsiFileStub)currentStubTree);
