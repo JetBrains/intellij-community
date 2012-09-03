@@ -292,7 +292,17 @@ public class LambdaUtil {
     if (expression instanceof PsiCallExpression && ((PsiCallExpression)expression).getTypeArguments().length > 0) return true;
     if (expression instanceof PsiNewExpression) {
       final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)expression).getClassOrAnonymousClassReference();
-      if (classReference != null && classReference.getTypeParameters().length > 0) return true;
+      if (classReference != null) {
+        final PsiReferenceParameterList parameterList = classReference.getParameterList();
+        if (parameterList != null) {
+          final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
+          if (typeParameterElements.length > 0) {
+            if (!(typeParameterElements[0].getType() instanceof PsiDiamondType)){
+              return true;
+            }
+          }
+        }
+      }
     }
     final PsiParameter[] lambdaParams = lambdaExpression.getParameterList().getParameters(); 
     if (lambdaParams.length != methodParameters.length) return false;
