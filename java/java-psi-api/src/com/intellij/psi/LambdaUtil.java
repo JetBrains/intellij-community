@@ -250,7 +250,7 @@ public class LambdaUtil {
     return null;
   }
 
-  public static int getLambdaIdx(PsiExpressionList expressionList, final PsiLambdaExpression element) {
+  public static int getLambdaIdx(PsiExpressionList expressionList, final PsiElement element) {
     PsiExpression[] expressions = expressionList.getExpressions();
     for (int i = 0; i < expressions.length; i++) {
       PsiExpression expression = expressions[i];
@@ -329,7 +329,7 @@ public class LambdaUtil {
   }
 
   @Nullable
-  public static PsiType getFunctionalInterfaceType(PsiLambdaExpression expression, final boolean tryToSubstitute) {
+  public static PsiType getFunctionalInterfaceType(PsiElement expression, final boolean tryToSubstitute) {
     PsiElement parent = expression.getParent();
     while (parent instanceof PsiParenthesizedExpression) {
       parent = parent.getParent();

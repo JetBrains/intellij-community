@@ -33,6 +33,7 @@ public class RedundantCast18Test extends InspectionTestCase {
   }
 
   public void testLambdaContext() throws Exception { doTest(); }
+  public void testExpectedSupertype() throws Exception { doTest(); }
 
   protected Sdk getTestProjectSdk() {
     Sdk sdk = JavaSdkImpl.getMockJdk17();

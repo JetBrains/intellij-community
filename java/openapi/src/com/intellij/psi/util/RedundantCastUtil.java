@@ -362,13 +362,13 @@ public class RedundantCastUtil {
 
       PsiElement expr = deparenthesizeExpression(operand);
 
+      final PsiType topCastType = typeCast.getType();
       if (expr instanceof PsiTypeCastExpression) {
         PsiTypeElement typeElement = ((PsiTypeCastExpression)expr).getCastType();
         if (typeElement == null) return;
         PsiType castType = typeElement.getType();
         final PsiExpression innerOperand = ((PsiTypeCastExpression)expr).getOperand();
         final PsiType operandType = innerOperand != null ? innerOperand.getType() : null;
-        final PsiType topCastType = typeCast.getType();
         if (!(castType instanceof PsiPrimitiveType)) {
           if (operandType != null && topCastType != null && TypeConversionUtil.areTypesConvertible(operandType, topCastType)) {
             addToResults((PsiTypeCastExpression)expr);
@@ -389,8 +389,13 @@ public class RedundantCastUtil {
           }
         } else if (parent instanceof PsiSynchronizedStatement && (expr instanceof PsiExpression && ((PsiExpression)expr).getType() instanceof PsiPrimitiveType)) {
           return;
-        } else if (expr instanceof PsiLambdaExpression && parent instanceof PsiParenthesizedExpression && parent.getParent() instanceof PsiReferenceExpression) {
-          return;
+        } else if (expr instanceof PsiLambdaExpression) {
+          if (parent instanceof PsiParenthesizedExpression && parent.getParent() instanceof PsiReferenceExpression) {
+            return;
+          }
+
+          final PsiType functionalInterfaceType = LambdaUtil.getFunctionalInterfaceType(typeCast, true);
+          if (topCastType != null && functionalInterfaceType != null && !TypeConversionUtil.isAssignable(topCastType, functionalInterfaceType, false)) return;
         }
         processAlreadyHasTypeCast(typeCast);
       }
