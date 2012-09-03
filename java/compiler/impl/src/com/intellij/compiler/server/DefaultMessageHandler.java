@@ -37,10 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Executor;
 
 /**
@@ -97,7 +94,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     final boolean accessChanged = task.getIsAccessChanged();
     final boolean isRemoved = task.getIsFieldRemoved();
     final Ref<Boolean> isSuccess = Ref.create(Boolean.TRUE);
-    final Set<String> affectedPaths = new HashSet<String>();
+    final Set<String> affectedPaths = Collections.synchronizedSet(new HashSet<String>()); // PsiSearchHelper runs multiple threads
     try {
       if (isDumbMode()) {
         // do not wait until dumb mode finishes
