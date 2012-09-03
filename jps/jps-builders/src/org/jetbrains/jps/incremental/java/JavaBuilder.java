@@ -104,7 +104,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
             isTemp = rootDescriptor.isTemp;
             if (!isTemp) {
               try {
-                dataManager.getSourceToOutputMap(rootDescriptor.module, context.isCompilingTests()).appendData(sourcePath, outputPath);
+                dataManager.getSourceToOutputMap(rootDescriptor.module, rootDescriptor.target.isTests()).appendData(sourcePath, outputPath);
               }
               catch (Exception e) {
                 context.processMessage(new CompilerMessage(BUILDER_NAME, e));

@@ -1,9 +1,16 @@
 package org.jetbrains.jps.incremental;
 
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
@@ -11,12 +18,12 @@ import org.jetbrains.jps.model.module.JpsModule;
 public class ModuleBuildTarget extends BuildTarget {
   private final JpsModule myModule;
   private final String myModuleName;
-  private final boolean myTests;
+  private final JavaModuleBuildTargetType myTargetType;
 
   public ModuleBuildTarget(@NotNull JpsModule module, JavaModuleBuildTargetType targetType) {
     super(targetType);
+    myTargetType = targetType;
     myModuleName = module.getName();
-    myTests = targetType.isTests();
     myModule = module;
   }
 
@@ -30,12 +37,31 @@ public class ModuleBuildTarget extends BuildTarget {
   }
 
   public boolean isTests() {
-    return myTests;
+    return myTargetType.isTests();
   }
 
   @Override
   public String getId() {
     return myModuleName;
+  }
+
+  @Override
+  public Collection<ModuleBuildTarget> computeDependencies() {
+    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(myModule).compileOnly();
+    if (!isTests()) {
+      enumerator.productionOnly();
+    }
+    final List<ModuleBuildTarget> dependencies = new ArrayList<ModuleBuildTarget>();
+    enumerator.processModules(new Consumer<JpsModule>() {
+      @Override
+      public void consume(JpsModule module) {
+        dependencies.add(new ModuleBuildTarget(module, myTargetType));
+      }
+    });
+    if (isTests()) {
+      dependencies.add(new ModuleBuildTarget(myModule, JavaModuleBuildTargetType.PRODUCTION));
+    }
+    return dependencies;
   }
 
   @Override
@@ -48,11 +74,11 @@ public class ModuleBuildTarget extends BuildTarget {
     }
 
     ModuleBuildTarget target = (ModuleBuildTarget)o;
-    return myTests == target.myTests && myModuleName.equals(target.myModuleName);
+    return myTargetType == target.myTargetType && myModuleName.equals(target.myModuleName);
   }
 
   @Override
   public int hashCode() {
-    return 31 * myModuleName.hashCode() + (myTests ? 1 : 0);
+    return 31 * myModuleName.hashCode() + myTargetType.hashCode();
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.MappingFailedException;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.annotations.NotNull;
@@ -68,8 +69,6 @@ public class IncProjectBuilder {
   private final Map<String, String> myBuilderParams;
   private final CanceledStatus myCancelStatus;
   @Nullable private final Callbacks.ConstantAffectionResolver myConstantSearch;
-  private ProjectChunks myProductionChunks;
-  private ProjectChunks myTestChunks;
   private final List<MessageHandler> myMessageHandlers = new ArrayList<MessageHandler>();
   private final MessageHandler myMessageDispatcher = new MessageHandler() {
     public void processMessage(BuildMessage msg) {
@@ -91,8 +90,6 @@ public class IncProjectBuilder {
     myBuilderParams = builderParams;
     myCancelStatus = cs;
     myConstantSearch = constantSearch;
-    myProductionChunks = new ProjectChunks(pd.jpsProject, false);
-    myTestChunks = new ProjectChunks(pd.jpsProject, true);
     myTotalModulesWork = (float)pd.rootsIndex.getTotalModuleCount() * 2;  /* multiply by 2 to reflect production and test sources */
     myTotalModuleLevelBuilderCount = builderRegistry.getModuleLevelBuilderCount();
   }
@@ -219,15 +216,8 @@ public class IncProjectBuilder {
       context.processMessage(new ProgressMessage("Running 'before' tasks"));
       runTasks(context, myBuilderRegistry.getBeforeTasks());
 
-      context.setCompilingTests(false);
-      context.processMessage(new ProgressMessage("Checking production sources"));
-      buildChunks(context, myProductionChunks);
-
-      if (context.getScope().isIncludeTests()) {
-        context.setCompilingTests(true);
-        context.processMessage(new ProgressMessage("Checking test sources"));
-        buildChunks(context, myTestChunks);
-      }
+      context.processMessage(new ProgressMessage("Checking sources"));
+      buildChunks(context, context.getChunks());
 
       context.processMessage(new ProgressMessage("Building project"));
       runProjectLevelBuilders(context);
@@ -264,8 +254,7 @@ public class IncProjectBuilder {
   }
 
   private CompileContextImpl createContext(CompileScope scope, boolean isMake, final boolean isProjectRebuild) throws ProjectBuildException {
-    final CompileContextImpl context = new CompileContextImpl(
-      scope, myProjectDescriptor, isMake, isProjectRebuild, myProductionChunks, myTestChunks, myMessageDispatcher,
+    final CompileContextImpl context = new CompileContextImpl(scope, myProjectDescriptor, isMake, isProjectRebuild, myMessageDispatcher,
       myBuilderParams, myCancelStatus
     );
     ModuleLevelBuilder.CONSTANT_SEARCH_SERVICE.set(context, myConstantSearch);
@@ -417,7 +406,7 @@ public class IncProjectBuilder {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     try {
       if (BuildRunner.PARALLEL_BUILD_ENABLED) {
-        final List<ChunkGroup> chunkGroups = buildChunkGroups(context, chunks);
+        final List<ChunkGroup> chunkGroups = buildChunkGroups(chunks);
         for (ChunkGroup group : chunkGroups) {
           final List<ModuleChunk> groupChunks = group.getChunks();
           final int chunkCount = groupChunks.size();
@@ -482,7 +471,7 @@ public class IncProjectBuilder {
             }
           }
           finally {
-            pd.dataManager.closeSourceToOutputStorages(groupChunks, context.isCompilingTests());
+            pd.dataManager.closeSourceToOutputStorages(groupChunks);
             pd.dataManager.flush(true);
           }
         }
@@ -494,7 +483,7 @@ public class IncProjectBuilder {
             _buildChunk(context, scope, chunk);
           }
           finally {
-            pd.dataManager.closeSourceToOutputStorages(Collections.singleton(chunk), chunk.isTests());
+            pd.dataManager.closeSourceToOutputStorages(Collections.singleton(chunk));
             pd.dataManager.flush(true);
           }
         }
@@ -853,19 +842,13 @@ public class IncProjectBuilder {
     }
   }
 
-  private static List<ChunkGroup> buildChunkGroups(CompileContext context, ProjectChunks chunks) {
+  private static List<ChunkGroup> buildChunkGroups(ProjectChunks chunks) {
     final List<ModuleChunk> allChunks = chunks.getChunkList();
 
     // building aux dependencies map
-    final Map<JpsModule, Set<JpsModule>> depsMap = new HashMap<JpsModule, Set<JpsModule>>();
-    final boolean compilingTests = context.isCompilingTests();
-    for (JpsModule module : context.getProjectDescriptor().jpsProject.getModules()) {
-      Set<JpsModule> dependent = depsMap.get(module);
-      if (dependent == null) {
-        dependent = ProjectPaths.getModulesWithDependentsRecursively(module, compilingTests);
-        dependent.remove(module);
-        depsMap.put(module, dependent);
-      }
+    final Map<ModuleBuildTarget, Set<ModuleBuildTarget>> depsMap = new HashMap<ModuleBuildTarget, Set<ModuleBuildTarget>>();
+    for (ModuleBuildTarget target : chunks.getAllTargets()) {
+      depsMap.put(target, chunks.getDependenciesRecursively(target));
     }
 
     final List<ChunkGroup> groups = new ArrayList<ChunkGroup>();
@@ -882,11 +865,11 @@ public class IncProjectBuilder {
   }
 
 
-  public static boolean dependsOnGroup(ModuleChunk chunk, ChunkGroup group, Map<JpsModule, Set<JpsModule>> depsMap) {
+  public static boolean dependsOnGroup(ModuleChunk chunk, ChunkGroup group, Map<ModuleBuildTarget, Set<ModuleBuildTarget>> depsMap) {
     for (ModuleChunk groupChunk : group.getChunks()) {
-      final Set<JpsModule> groupChunkModules = groupChunk.getModules();
-      for (JpsModule module : chunk.getModules()) {
-        if (Utils.intersects(depsMap.get(module), groupChunkModules)) {
+      final Set<ModuleBuildTarget> groupChunkTargets = groupChunk.getTargets();
+      for (ModuleBuildTarget target : chunk.getTargets()) {
+        if (ContainerUtil.intersects(depsMap.get(target), groupChunkTargets)) {
           return true;
         }
       }

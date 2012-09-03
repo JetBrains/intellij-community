@@ -143,7 +143,7 @@ public class BuildRunner {
 
     final CompileScope compileScope;
     if (buildType == BuildType.PROJECT_REBUILD || (modules.isEmpty() && paths.isEmpty())) {
-      compileScope = new AllProjectScope(pd.project, pd.jpsProject, artifacts, buildType != BuildType.MAKE, includeTests);
+      compileScope = new AllProjectScope(pd.project, pd.jpsProject, artifacts, buildType != BuildType.MAKE);
     }
     else {
       final Set<JpsModule> forcedModules;
@@ -186,7 +186,7 @@ public class BuildRunner {
         compileScope = new ModulesScope(pd.project, pd.jpsProject, forcedModules, artifacts, buildType != BuildType.MAKE, includeTests);
       }
       else {
-        compileScope = new ModulesAndFilesScope(pd.project, pd.jpsProject, forcedModules, filesToCompile, artifacts, buildType != BuildType.MAKE);
+        compileScope = new ModulesAndFilesScope(pd.project, pd.jpsProject, forcedModules, filesToCompile, artifacts, buildType != BuildType.MAKE, includeTests);
       }
     }
     return compileScope;

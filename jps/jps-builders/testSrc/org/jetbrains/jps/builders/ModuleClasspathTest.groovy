@@ -2,7 +2,9 @@ package org.jetbrains.jps.builders
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.ProjectPaths
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.builders.rebuild.JpsRebuildTestCase
+import org.jetbrains.jps.incremental.ModuleBuildTarget
 /**
  * @author nik
  */
@@ -59,7 +61,7 @@ public class ModuleClasspathTest extends JpsRebuildTestCase {
 
   private ModuleChunk createChunk(String moduleName) {
     def module = myJpsProject.modules.find {it.name == moduleName}
-    return new ModuleChunk([module] as Set, false)
+    return new ModuleChunk([new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION)] as Set, false)
   }
 
   private def assertClasspath(List<String> expected, List<String> classpath) {

@@ -33,8 +33,6 @@ public interface CompileContext extends UserDataHolder, MessageHandler {
 
   void removeBuildListener(BuildListener listener);
 
-  boolean isCompilingTests();
-
   @NotNull
   AnnotationProcessingProfile getAnnotationProcessingProfile(JpsModule module);
 
@@ -49,9 +47,7 @@ public interface CompileContext extends UserDataHolder, MessageHandler {
 
   void setDone(float done);
 
-  ProjectChunks getTestChunks();
-
-  ProjectChunks getProductionChunks();
+  ProjectChunks getChunks();
 
   long getCompilationStartStamp();
 

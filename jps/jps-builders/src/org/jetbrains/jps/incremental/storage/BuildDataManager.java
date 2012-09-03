@@ -5,8 +5,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactsBuildData;
-import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.*;
 import java.util.Collection;
@@ -179,12 +179,12 @@ public class BuildDataManager implements StorageOwner {
     }
   }
 
-  public void closeSourceToOutputStorages(Collection<ModuleChunk> chunks, boolean testSources) throws IOException {
-    final Map<String, SourceToOutputMapping> storageMap = testSources? myTestSourceToOutputs : myProductionSourceToOutputs;
+  public void closeSourceToOutputStorages(Collection<ModuleChunk> chunks) throws IOException {
     synchronized (mySourceToOutputLock) {
       for (ModuleChunk chunk : chunks) {
-        for (JpsModule module : chunk.getModules()) {
-          final String moduleName = module.getName().toLowerCase(Locale.US);
+        for (ModuleBuildTarget target : chunk.getTargets()) {
+          final Map<String, SourceToOutputMapping> storageMap = target.isTests() ? myTestSourceToOutputs : myProductionSourceToOutputs;
+          final String moduleName = target.getModuleName().toLowerCase(Locale.US);
           final SourceToOutputMapping mapping = storageMap.remove(moduleName);
           if (mapping != null) {
             mapping.close();

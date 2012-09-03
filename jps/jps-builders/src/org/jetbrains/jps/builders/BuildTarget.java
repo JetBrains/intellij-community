@@ -1,5 +1,7 @@
 package org.jetbrains.jps.builders;
 
+import java.util.Collection;
+
 /**
  * @author nik
  */
@@ -15,4 +17,6 @@ public abstract class BuildTarget {
   public final BuildTargetType getTargetType() {
     return myTargetType;
   }
+
+  public abstract Collection<? extends BuildTarget> computeDependencies();
 }

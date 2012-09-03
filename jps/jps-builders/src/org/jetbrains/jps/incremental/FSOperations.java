@@ -13,7 +13,8 @@ import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleType;
 
 import java.io.File;
 import java.io.IOException;
@@ -66,7 +67,7 @@ public class FSOperations {
 
     // now mark all modules that depend on dirty modules
     final JpsJavaClasspathKind classpathKind = JpsJavaClasspathKind.compile(chunk.isTests());
-    final ProjectChunks chunks = chunk.isTests()? context.getTestChunks() : context.getProductionChunks();
+    final ProjectChunks chunks = context.getChunks();
     boolean found = false;
     for (ModuleChunk moduleChunk : chunks.getChunkList()) {
       if (!found) {

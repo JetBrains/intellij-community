@@ -23,13 +23,15 @@ public class ModulesAndFilesScope extends CompileScope {
   private final Map<BuildTarget, Set<File>> myFiles;
 
   public ModulesAndFilesScope(Project project, JpsProject jpsProject, Collection<JpsModule> targets, Map<BuildTarget, Set<File>> files,
-                              Set<JpsArtifact> artifacts, boolean isForcedCompilation) {
-    super(project, jpsProject, artifacts, isForcedCompilation, true);
+                              Set<JpsArtifact> artifacts, boolean isForcedCompilation, boolean includeTests) {
+    super(project, jpsProject, artifacts, isForcedCompilation);
     myFiles = files;
     myTargets = new HashSet<BuildTarget>();
     for (JpsModule module : targets) {
       myTargets.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION));
-      myTargets.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.TEST));
+      if (includeTests) {
+        myTargets.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.TEST));
+      }
     }
   }
 

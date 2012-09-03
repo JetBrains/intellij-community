@@ -15,12 +15,7 @@ import java.util.Set;
  */
 public class AllProjectScope extends CompileScope {
   public AllProjectScope(Project project, JpsProject jpsProject, Set<JpsArtifact> artifacts, boolean forcedCompilation) {
-    this(project, jpsProject, artifacts, forcedCompilation, true);
-  }
-
-  public AllProjectScope(Project project, JpsProject jpsProject, Set<JpsArtifact> artifacts, boolean forcedCompilation,
-                         final boolean includeTests) {
-    super(project, jpsProject, artifacts, forcedCompilation, includeTests);
+    super(project, jpsProject, artifacts, forcedCompilation);
   }
 
   public boolean isRecompilationForced(@NotNull BuildTarget target) {

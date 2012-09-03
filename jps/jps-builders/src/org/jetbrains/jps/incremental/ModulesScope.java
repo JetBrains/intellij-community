@@ -25,7 +25,7 @@ public class ModulesScope extends CompileScope {
                       Set<JpsArtifact> artifacts,
                       boolean isForcedCompilation,
                       boolean includeTests) {
-    super(project, jpsProject, artifacts, isForcedCompilation, includeTests);
+    super(project, jpsProject, artifacts, isForcedCompilation);
     myTargets = new HashSet<BuildTarget>();
     for (JpsModule module : modules) {
       myTargets.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION));
