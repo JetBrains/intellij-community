@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
@@ -57,6 +58,16 @@ public class DFAType {
     Mixin negate() {
       return new Mixin(ID, myType, myCondition, !myNegated);
     }
+
+    @Override
+    public String toString() {
+      return "Mixin{" +
+             "ID=" + ID +
+             ", myType=" + myType +
+             ", myCondition=" + myCondition +
+             ", myNegated=" + myNegated +
+             '}';
+    }
   }
 
   private final PsiType primary;
@@ -68,6 +79,10 @@ public class DFAType {
   }
 
   public void addMixin(@Nullable PsiType mixin, ConditionInstruction instruction) {
+    if (mixin == null) {
+      return;
+    }
+
     mixins.add(new Mixin(mixin, instruction, false));
   }
 
@@ -136,7 +151,7 @@ public class DFAType {
   }
 
   private static boolean eq(PsiType t1, PsiType t2) {
-    return !TypeConversionUtil.erasure(t1).equals(TypeConversionUtil.erasure(t2));
+    return Comparing.equal(TypeConversionUtil.erasure(t1), TypeConversionUtil.erasure(t2));
   }
 
   @Nullable
@@ -152,5 +167,13 @@ public class DFAType {
       }
     }
     return type;
+  }
+
+  @Override
+  public String toString() {
+    return "DFAType{" +
+           "primary=" + primary +
+           ", mixins=" + mixins +
+           '}';
   }
 }

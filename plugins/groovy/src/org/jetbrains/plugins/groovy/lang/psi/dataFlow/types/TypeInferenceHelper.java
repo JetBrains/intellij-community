@@ -18,10 +18,8 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.*;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +29,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.InstanceOfInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ArgumentInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
@@ -53,9 +54,9 @@ public class TypeInferenceHelper {
   private static final Logger LOG = Logger.getInstance(TypeInferenceHelper.class);
   private static final ThreadLocal<InferenceContext> ourInferenceContext = new ThreadLocal<InferenceContext>();
 
-  private static <T> T doInference(TypeDfaState bindings, Computable<T> computation) {
+  private static <T> T doInference(Map<String, PsiType> bindings, Computable<T> computation) {
     InferenceContext old = ourInferenceContext.get();
-    ourInferenceContext.set(new InferenceContext.PartialContext(bindings.getBindings()));
+    ourInferenceContext.set(new InferenceContext.PartialContext(bindings));
     try {
       return computation.compute();
     }
@@ -70,7 +71,7 @@ public class TypeInferenceHelper {
   }
 
   @Nullable
-  public static PsiType getInferredType(@NotNull final GrReferenceExpression refExpr) {
+  public static PsiType getInferredTypeOld(@NotNull final GrReferenceExpression refExpr) {
     return RecursionManager.doPreventingRecursion(refExpr, true, new NullableComputable<PsiType>() {
       @Override
       public PsiType compute() {
@@ -92,7 +93,7 @@ public class TypeInferenceHelper {
   }
 
   @Nullable
-  public static PsiType getInferredType(@NotNull PsiElement place, String variableName) {
+  public static PsiType getInferredTypeOld(@NotNull PsiElement place, String variableName) {
     final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(place);
     if (scope == null) return null;
 
@@ -106,7 +107,7 @@ public class TypeInferenceHelper {
 
 
   @Nullable
-  public static PsiType getInferredTypeNew(@NotNull final GrReferenceExpression refExpr) {
+  public static PsiType getInferredType(@NotNull final GrReferenceExpression refExpr) {
     final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(refExpr);
     if (scope == null) return null;
 
@@ -114,7 +115,7 @@ public class TypeInferenceHelper {
   }
 
   @Nullable
-  public static PsiType getInferredTypeNew(@NotNull PsiElement place, String variableName) {
+  public static PsiType getInferredType(@NotNull PsiElement place, String variableName) {
     final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(place);
     if (scope == null) return null;
 
@@ -344,22 +345,25 @@ public class TypeInferenceHelper {
 
   @Nullable
   private static List<Map<String, PsiType>> performTypeDfa(GrControlFlowOwner owner, Instruction[] flow) {
-    final TypeDfaInstance dfaInstance = new TypeDfaInstance(owner);
+    final TypeDfaInstance dfaInstance = new TypeDfaInstance(owner, flow);
     final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
     List<TypeDfaState> states = new DFAEngine<TypeDfaState>(flow, dfaInstance, semilattice).performDFAWithTimeout();
-    return states == null ? null : ContainerUtil.map(states, new Function<TypeDfaState, Map<String, PsiType>>() {
-      @Override
-      public Map<String, PsiType> fun(TypeDfaState state) {
-        return state.getBindings();
-      }
-    });
+    if (states == null) return null;
+
+    List<Map<String, PsiType>> result = ContainerUtil.newArrayList();
+    for (int i = 0; i < states.size(); i++) {
+      result.add(states.get(i).getBindings(flow[i]));
+    }
+    return result;
   }
 
   static class TypeDfaInstance implements DfaInstance<TypeDfaState> {
-    private final PsiElement myScope;
+    private final GrControlFlowOwner myScope;
+    private final Instruction[] myFlow;
 
-    TypeDfaInstance(PsiElement scope) {
+    TypeDfaInstance(GrControlFlowOwner scope, Instruction[] flow) {
       myScope = scope;
+      myFlow = flow;
     }
 
     public void fun(final TypeDfaState state, final Instruction instruction) {
@@ -371,16 +375,19 @@ public class TypeInferenceHelper {
       }
     }
 
-    private static void handleMixin(final TypeDfaState state, final MixinTypeInstruction instruction) {
+    private void handleMixin(final TypeDfaState state, final MixinTypeInstruction instruction) {
       final String varName = instruction.getVariableName();
-      state.putType(varName, doInference(state, new Computable<PsiType>() {
+      if (varName == null) return;
+
+      state.putType(varName, doInference(state.getBindings(instruction), new NullableComputable<DFAType>() {
         @Override
-        public PsiType compute() {
-          PsiType original = state.getBindings().get(varName);
-          final PsiType mixin = instruction.inferMixinType();
-          if (mixin == null) return original;
-          if (original == null) return mixin;
-          return PsiIntersectionType.createIntersection(original, mixin);
+        public DFAType compute() {
+          ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(myFlow);
+          assert originalInstr != null && !originalInstr.isWrite();
+
+          DFAType original = state.getVariableType(varName).negate(originalInstr);
+          original.addMixin(instruction.inferMixinType(), instruction.getConditionInstruction());
+          return original;
         }
       }));
     }
@@ -388,10 +395,10 @@ public class TypeInferenceHelper {
     private void handleVariableWrite(TypeDfaState state, ReadWriteVariableInstruction instruction) {
       final PsiElement element = instruction.getElement();
       if (element != null && instruction.isWrite()) {
-        state.putType(instruction.getVariableName(), doInference(state, new Computable<PsiType>() {
+        state.putType(instruction.getVariableName(), doInference(state.getBindings(instruction), new Computable<DFAType>() {
           @Override
-          public PsiType compute() {
-            return TypesUtil.boxPrimitiveType(getInitializerType(element), myScope.getManager(), myScope.getResolveScope());
+          public DFAType compute() {
+            return DFAType.create(TypesUtil.boxPrimitiveType(getInitializerType(element), myScope.getManager(), myScope.getResolveScope()));
           }
         }));
       }

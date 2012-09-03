@@ -179,7 +179,6 @@ def bar(File file) { file.path }
   }
 
   public void "test using SSA variables in a for loop"() {
-    //todo RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     def text = """
 def foo(List<String> list, SomeClass sc) {
   List<String> result
@@ -190,7 +189,7 @@ ${
     bar2(s, result, sc)
     bar3(foo:s, bar:result, sc)
     sc.someMethod(s)
-''' * 2
+''' * 20
     }
   }
 }

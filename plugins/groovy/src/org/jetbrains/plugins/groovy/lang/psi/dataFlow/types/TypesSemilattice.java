@@ -17,12 +17,14 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -51,7 +53,7 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
 }
 
 class TypeDfaState {
-  private final Map<String, PsiType> myVarTypes;
+  private final Map<String, DFAType> myVarTypes;
 
   TypeDfaState() {
     myVarTypes = ContainerUtil.newHashMap();
@@ -62,13 +64,13 @@ class TypeDfaState {
   }
 
   void joinState(TypeDfaState another, PsiManager manager) {
-    for (Map.Entry<String, PsiType> entry : another.myVarTypes.entrySet()) {
+    for (Map.Entry<String, DFAType> entry : another.myVarTypes.entrySet()) {
       final String name = entry.getKey();
-      final PsiType t1 = entry.getValue();
+      final DFAType t1 = entry.getValue();
       if (myVarTypes.containsKey(name)) {
-        final PsiType t2 = myVarTypes.get(name);
+        final DFAType t2 = myVarTypes.get(name);
         if (t1 != null && t2 != null) {
-          myVarTypes.put(name, TypesUtil.getLeastUpperBound(t1, t2, manager));
+          myVarTypes.put(name, DFAType.create(t1, t2, manager));
         }
         else {
           myVarTypes.put(name, null);
@@ -78,36 +80,30 @@ class TypeDfaState {
   }
 
   boolean contentsEqual(TypeDfaState another) {
-    if (myVarTypes.size() != another.myVarTypes.size()) {
-      return false;
-    }
-
-    for (String name : myVarTypes.keySet()) {
-      if (!areTypesErasureEqual(another.myVarTypes, name)) {
-        return false;
-      }
-    }
-    return true;
+    return myVarTypes.equals(another.myVarTypes);
   }
 
-  private boolean areTypesErasureEqual(Map<String, PsiType> another, String name) {
-    if (!another.containsKey(name)) return false;
-    final PsiType t1 = myVarTypes.get(name);
-    final PsiType t2 = another.get(name);
-    if (t1 == null || t2 == null) {
-      if (t1 != null || t2 != null) return false;
-    }
-    else {
-      if (!TypeConversionUtil.erasure(t1).equals(TypeConversionUtil.erasure(t2))) return false;
-    }
-    return true;
+  @NotNull
+  DFAType getVariableType(String variableName) {
+    DFAType type = myVarTypes.get(variableName);
+    return type == null ? DFAType.create(null) : type;
   }
 
-  Map<String, PsiType> getBindings() {
-    return myVarTypes;
+  Map<String, PsiType> getBindings(Instruction instruction) {
+    HashMap<String,PsiType> map = ContainerUtil.newHashMap();
+    for (Map.Entry<String, DFAType> entry : myVarTypes.entrySet()) {
+      DFAType value = entry.getValue();
+      map.put(entry.getKey(), value == null ? null : value.negate(instruction).getResultType());
+    }
+    return map;
   }
 
-  void putType(String variableName, PsiType type) {
+  void putType(String variableName, DFAType type) {
     myVarTypes.put(variableName, type);
+  }
+
+  @Override
+  public String toString() {
+    return "TypeDfaState{" + myVarTypes + '}';
   }
 }
