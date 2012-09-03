@@ -87,8 +87,7 @@ public class TypeInferenceHelper {
         }
 
         final DFAType type = getInferredType(refExpr.getReferenceName(), instruction, flow, scope, new HashSet<MixinTypeInstruction>());
-        if (type == null) return null;
-        return type.getResultType();
+        return type == null ? null : type.getResultType();
       }
     });
   }
@@ -112,8 +111,7 @@ public class TypeInferenceHelper {
     final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(refExpr);
     if (scope == null) return null;
 
-    final Instruction[] flow = scope.getControlFlow();
-    return inferVariableType(refExpr.getReferenceName(), scope, flow, findInstruction(refExpr, flow));
+    return inferVariableType(scope).getInferredType(refExpr.getReferenceName(), findInstruction(refExpr, scope.getControlFlow()));
   }
 
   @Nullable
@@ -121,18 +119,20 @@ public class TypeInferenceHelper {
     final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(place);
     if (scope == null) return null;
 
-    final Instruction[] flow = scope.getControlFlow();
-    return inferVariableType(variableName, scope, flow, findInstructionAt(place, flow));
+    return inferVariableType(scope).getInferredType(variableName, findInstructionAt(place, scope.getControlFlow()));
   }
 
-  @Nullable
-  private static PsiType inferVariableType(String variableName, GrControlFlowOwner scope, Instruction[] flow, Instruction instruction) {
-    if (instruction == null) return null;
-
-    ArrayList<Map<String, PsiType>> list = performTypeDfa(scope, flow);
-    if (list == null) return null;
-
-    return list.get(instruction.num()).get(variableName);
+  @NotNull
+  private static InferenceResult inferVariableType(final GrControlFlowOwner scope) {
+    return CachedValuesManager.getManager(scope.getProject()).getCachedValue(scope, new CachedValueProvider<InferenceResult>() {
+      @Nullable
+      @Override
+      public Result<InferenceResult> compute() {
+        Instruction[] flow = scope.getControlFlow();
+        List<Map<String, PsiType>> list = performTypeDfa(scope, flow);
+        return Result.create(new InferenceResult(flow, list), PsiModificationTracker.MODIFICATION_COUNT);
+      }
+    });
   }
 
   public static boolean isTooComplexTooAnalyze(GrControlFlowOwner scope) {
@@ -396,5 +396,23 @@ public class TypeInferenceHelper {
 
   }
 
+  private static class InferenceResult {
+    final Instruction[] flow;
+    final List<Map<String, PsiType>> varTypes;
+
+    InferenceResult(Instruction[] flow, @Nullable List<Map<String, PsiType>> varTypes) {
+      this.flow = flow;
+      this.varTypes = varTypes;
+    }
+
+    @Nullable
+    private PsiType getInferredType(String variableName, Instruction instruction) {
+      if (instruction == null || varTypes == null) return null;
+
+      return varTypes.get(instruction.num()).get(variableName);
+    }
+
+  }
 
 }
+
