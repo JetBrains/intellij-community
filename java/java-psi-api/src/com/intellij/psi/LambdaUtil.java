@@ -334,7 +334,12 @@ public class LambdaUtil {
     while (parent instanceof PsiParenthesizedExpression) {
       parent = parent.getParent();
     }
-    if (parent instanceof PsiTypeCastExpression) {
+    if (parent instanceof PsiArrayInitializerExpression) {
+      final PsiType psiType = ((PsiArrayInitializerExpression)parent).getType();
+      if (psiType instanceof PsiArrayType) {
+        return ((PsiArrayType)psiType).getComponentType();
+      }
+    } else if (parent instanceof PsiTypeCastExpression) {
       return ((PsiTypeCastExpression)parent).getType();
     }
     else if (parent instanceof PsiVariable) {
