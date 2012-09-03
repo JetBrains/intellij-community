@@ -15,18 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.RedundantLambdaParameterTypeInspection;
-
-
-public class RedundantLambdaParameterTypeInspectionTest extends LightQuickFixTestCase {
-  @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new RedundantLambdaParameterTypeInspection(),
-    };
-  }
-
+public class RedundantLambdaParameterTypeIntentionTest extends LightQuickFixTestCase {
   public void test() throws Exception { doAllTests(); }
 
   @Override
