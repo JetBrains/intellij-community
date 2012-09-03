@@ -152,6 +152,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private final FileTreeAccessFilter myJavaFilesFilter = new FileTreeAccessFilter();
   private boolean myAllowDirt;
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public CodeInsightTestFixtureImpl(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirTestFixture) {
     myProjectFixture = projectFixture;
     myTempDirFixture = tempDirTestFixture;
@@ -174,7 +175,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public VirtualFile copyFileToProject(@NonNls final String sourceFilePath, @NonNls final String targetPath) {
-    File fromFile = new File(getTestDataPath() + "/" + sourceFilePath);
+    final String testDataPath = getTestDataPath();
+    assert testDataPath != null : "test data path not specified";
+
+    File fromFile = new File(testDataPath + "/" + sourceFilePath);
     if (!fromFile.exists()) {
       fromFile = new File(sourceFilePath);
     }
@@ -184,49 +188,53 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       if (fromVFile == null) {
         fromVFile = myTempDirFixture.getFile(sourceFilePath);
       }
-      assert fromVFile != null : "can't find test data file " + sourceFilePath + " (" + getTestDataPath() + ")";
+      assert fromVFile != null : "can't find test data file " + sourceFilePath + " (" + testDataPath + ")";
       return myTempDirFixture.copyFile(fromVFile, targetPath);
     }
 
-    final File destFile = new File(getTempDirPath() + "/" + targetPath);
-    if (!destFile.exists()) {
+    final File targetFile = new File(getTempDirPath() + "/" + targetPath);
+    if (!targetFile.exists()) {
       if (fromFile.isDirectory()) {
-        assert destFile.mkdirs() : destFile;
+        assert targetFile.mkdirs() : targetFile;
       }
       else {
         if (!fromFile.exists()) {
-          fail("Cannot find source file: '"+sourceFilePath+"'. getTestDataPath()='"+getTestDataPath()+"'. getHomePath()='"+getHomePath()+"'.");
+          fail("Cannot find source file: '" + sourceFilePath + "'. getTestDataPath()='" + testDataPath + "'. " +
+               "getHomePath()='" + getHomePath() + "'.");
         }
         try {
-          FileUtil.copy(fromFile, destFile);
+          FileUtil.copy(fromFile, targetFile);
         }
         catch (IOException e) {
-          throw new RuntimeException("Cannot copy " + fromFile + " to " + destFile, e);
+          throw new RuntimeException("Cannot copy " + fromFile + " to " + targetFile, e);
         }
       }
     }
 
-    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destFile);
-    assert file != null : destFile;
+    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
+    assert file != null : targetFile;
     return file;
   }
 
   @Override
   public VirtualFile copyDirectoryToProject(@NonNls final String sourceFilePath, @NonNls final String targetPath) {
-    assert getTestDataPath() != null : "test data path not specified";
-    final File fromFile = new File(getTestDataPath() + "/" + sourceFilePath);
+    final String testDataPath = getTestDataPath();
+    assert testDataPath != null : "test data path not specified";
+
+    final File fromFile = new File(testDataPath + "/" + sourceFilePath);
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
       return myTempDirFixture.copyAll(fromFile.getPath(), targetPath);
     }
     else {
-      final File destFile = new File(getTempDirPath() + "/" + targetPath);
+      final File targetFile = new File(getTempDirPath() + "/" + targetPath);
       try {
-        FileUtil.copyDir(fromFile, destFile);
+        FileUtil.copyDir(fromFile, targetFile);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
       }
-      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destFile);
+
+      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
       Assert.assertNotNull(file);
       file.refresh(false, true);
       return file;
