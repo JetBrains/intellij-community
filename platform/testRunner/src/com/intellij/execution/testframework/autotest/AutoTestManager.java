@@ -1,21 +1,17 @@
 package com.intellij.execution.testframework.autotest;
 
+import com.intellij.execution.AutoExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.WeakList;
 
 import java.util.Collection;
@@ -24,14 +20,9 @@ import java.util.Collection;
  * @author yole
  */
 public class AutoTestManager {
-  private final Project myProject;
-  private final PsiAwareFileEditorManagerImpl myManager;
-  private final Alarm myAutoTestAlarm;
+  private final AutoExecutor myAutoExecutor;
 
   private static final int AUTOTEST_DELAY = 10000;
-  private final Runnable myRunTestsRunnable;
-  private boolean myListenerAttached;
-  private final MyDocumentAdapter myListener;
 
   public static AutoTestManager getInstance(Project project) {
     return ServiceManager.getService(project, AutoTestManager.class);
@@ -39,18 +30,21 @@ public class AutoTestManager {
 
   private final Collection<Content> myEnabledDescriptors = new WeakList<Content>();
 
-  public AutoTestManager(Project project, FileEditorManager manager) {
-    myProject = project;
-    myManager = manager instanceof PsiAwareFileEditorManagerImpl ?
-                (PsiAwareFileEditorManagerImpl)manager :
-                null;
-    myAutoTestAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
-    myRunTestsRunnable = new Runnable() {
-      public void run() {
-        runAutoTests();
+  public AutoTestManager(Project project) {
+    myAutoExecutor = new AutoExecutor(project, new Alarm(Alarm.ThreadToUse.SWING_THREAD, project), AUTOTEST_DELAY, new Consumer<VirtualFile[]>() {
+      @Override
+      public void consume(VirtualFile[] files) {
+        for (Content content : myEnabledDescriptors) {
+          runAutoTest(content);
+        }
       }
-    };
-    myListener = new MyDocumentAdapter();
+    }, new Condition<VirtualFile>() {
+      @Override
+      public boolean value(VirtualFile file) {
+        // Vladimir.Krivosheev — I don't know, why AutoTestManager checks it, but old behavior is preserved
+        return FileEditorManager.getInstance(myAutoExecutor.getProject()).isFileOpen(file);
+      }
+    });
   }
 
   public void setAutoTestEnabled(RunContentDescriptor descriptor, boolean enabled) {
@@ -59,36 +53,18 @@ public class AutoTestManager {
       if (!myEnabledDescriptors.contains(content)) {
         myEnabledDescriptors.add(content);
       }
-      if (!myListenerAttached) {
-        myListenerAttached = true;
-        EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myListener, myProject);
-      }
+      myAutoExecutor.activate();
     }
     else {
       myEnabledDescriptors.remove(content);
-      if (myEnabledDescriptors.isEmpty() && myListenerAttached) {
-        myListenerAttached = false;
-        EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(myListener);
+      if (myEnabledDescriptors.isEmpty()) {
+        myAutoExecutor.deactivate();
       }
     }
   }
 
   public boolean isAutoTestEnabled(RunContentDescriptor descriptor) {
     return myEnabledDescriptors.contains(descriptor.getAttachedContent());
-  }
-
-  public void runAutoTests() {
-    if (myManager != null) {
-      for (FileEditor editor : myManager.getAllEditors()) {
-        final VirtualFile file = myManager.getFile(editor);
-        if (file != null && myManager.isProblem(file)) {
-          return;
-        }
-      }
-    }
-    for (Content content : myEnabledDescriptors) {
-      runAutoTest(content);
-    }
   }
 
   private static void runAutoTest(Content content) {
@@ -105,19 +81,5 @@ public class AutoTestManager {
       return;
     }
     restarter.run();
-  }
-
-  private class MyDocumentAdapter extends DocumentAdapter {
-    public void documentChanged(DocumentEvent event) {
-      final Document document = event.getDocument();
-      final VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
-      if (vFile != null) {
-        final FileEditor[] editors = FileEditorManager.getInstance(myProject).getEditors(vFile);
-        if (editors.length > 0) {
-          myAutoTestAlarm.cancelAllRequests();
-          myAutoTestAlarm.addRequest(myRunTestsRunnable, AUTOTEST_DELAY);
-        }
-      }
-    }
   }
 }
