@@ -7557,8 +7557,8 @@
     <option name="find" path="ActionManager" hit="Find Usages in File" />
     <option name="in" path="ActionManager" hit="Find Usages in File" />
     <option name="usages" path="ActionManager" hit="Find Usages in File" />
-    <option name="find" path="ActionManager" hit="Find Usages..." />
-    <option name="usages" path="ActionManager" hit="Find Usages..." />
+    <option name="find" path="ActionManager" hit="Find Usages" />
+    <option name="usages" path="ActionManager" hit="Find Usages" />
     <option name="at" path="ActionManager" hit="Find Word at Caret" />
     <option name="caret" path="ActionManager" hit="Find Word at Caret" />
     <option name="find" path="ActionManager" hit="Find Word at Caret" />
