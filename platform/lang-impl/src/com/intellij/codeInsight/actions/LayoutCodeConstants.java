@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,9 @@ import org.jetbrains.annotations.NonNls;
 public class LayoutCodeConstants {
 
   public static final @NonNls String OPTIMIZE_IMPORTS_KEY     = "LayoutCode.optimizeImports";
+  public static final @NonNls String REARRANGE_ENTRIES_KEY    = "LayoutCode.rearrangeEntries";
   public static final @NonNls String PROCESS_CHANGED_TEXT_KEY = "LayoutCode.processChangedText";
-  
+
   private LayoutCodeConstants() {
   }
 }
