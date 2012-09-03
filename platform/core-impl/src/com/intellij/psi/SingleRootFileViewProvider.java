@@ -41,6 +41,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 import com.intellij.psi.impl.file.PsiLargeFileImpl;
+import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -134,7 +135,11 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   @Nullable
   public final PsiFile getPsi(@NotNull Language target) {
     if (!isPhysical()) {
-      ((PsiManagerEx)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
+      FileManager fileManager = ((PsiManagerEx)myManager).getFileManager();
+      VirtualFile virtualFile = getVirtualFile();
+      if (fileManager.findCachedViewProvider(virtualFile) == null) {
+        fileManager.setViewProvider(virtualFile, this);
+      }
     }
     return getPsiInner(target);
   }
