@@ -12,7 +12,7 @@ import javax.swing.*;
 */
 public class PyModuleRenderer extends HtmlListCellRenderer<Module> {
   public PyModuleRenderer(final ListCellRenderer renderer) {
-    super(renderer);
+    super();
   }
 
   @Override
