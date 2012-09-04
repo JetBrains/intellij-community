@@ -408,7 +408,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       @Override
       public void recalculationEnds() {
-        if (myCaretModel.isUpToDate()) {
+        if (myCaretModel.isUpToDate()
+            // There is a possible sequence of actions:
+            //   1. Caret is inside expanded fold region;
+            //   2. The region is collapsed;
+            //   3. Soft wrap model is notified on fold model state change;
+            //   4. This method is called on soft wrap recalculation end;
+            //   5. Caret is moved to the current offset (which is inside fold region);
+            //   6. The fold region is automatically expanded;
+            // That's why we don't refresh caret position if it's inside collapsed fold region.
+            && myFoldingModel.getCollapsedRegionAtOffset(myCaretModel.getOffset()) == null)
+        {
           myCaretModel.moveToOffset(myCaretModel.getOffset());
           myScrollingModel.scrollToCaret(ScrollType.RELATIVE);
         }
