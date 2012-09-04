@@ -2,7 +2,6 @@ package com.intellij.appengine.gwt;
 
 import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.appengine.server.integration.AppEngineServerData;
-import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.gwt.facet.GwtFacet;
@@ -10,6 +9,7 @@ import com.intellij.gwt.run.GwtDevModeServer;
 import com.intellij.javaee.appServerIntegrations.ApplicationServer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import icons.GoogleAppEngineIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,7 +28,7 @@ public class AppEngineGwtServer extends GwtDevModeServer {
 
   @Override
   public Icon getIcon() {
-    return AppEngineUtil.APP_ENGINE_ICON;
+    return GoogleAppEngineIcons.AppEngine;
   }
 
   @Override

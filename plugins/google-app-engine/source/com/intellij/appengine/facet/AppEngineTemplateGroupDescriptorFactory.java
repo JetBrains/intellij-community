@@ -1,10 +1,10 @@
 package com.intellij.appengine.facet;
 
-import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory;
-import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
-import com.intellij.appengine.util.AppEngineUtil;
+import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptor;
+import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import icons.GoogleAppEngineIcons;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -19,6 +19,6 @@ public class AppEngineTemplateGroupDescriptorFactory implements FileTemplateGrou
     final FileTemplateDescriptor appEngineXml = new FileTemplateDescriptor(APP_ENGINE_WEB_XML_TEMPLATE, StdFileTypes.XML.getIcon());
     final FileTemplateDescriptor jdoConfigXml = new FileTemplateDescriptor(APP_ENGINE_JDO_CONFIG_TEMPLATE, StdFileTypes.XML.getIcon());
     final FileTemplateDescriptor jpaConfigXml = new FileTemplateDescriptor(APP_ENGINE_JPA_CONFIG_TEMPLATE, StdFileTypes.XML.getIcon());
-    return new FileTemplateGroupDescriptor("Google App Engine", AppEngineUtil.APP_ENGINE_ICON, appEngineXml, jdoConfigXml, jpaConfigXml);
+    return new FileTemplateGroupDescriptor("Google App Engine", GoogleAppEngineIcons.AppEngine, appEngineXml, jdoConfigXml, jpaConfigXml);
   }
 }

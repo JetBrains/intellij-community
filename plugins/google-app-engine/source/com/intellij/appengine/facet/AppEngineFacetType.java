@@ -1,12 +1,12 @@
 package com.intellij.appengine.facet;
 
-import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
 import com.intellij.javaee.web.facet.WebFacet;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import icons.GoogleAppEngineIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +43,6 @@ public class AppEngineFacetType extends FacetType<AppEngineFacet,  AppEngineFace
 
   @Override
   public Icon getIcon() {
-    return AppEngineUtil.APP_ENGINE_ICON;
+    return GoogleAppEngineIcons.AppEngine;
   }
 }

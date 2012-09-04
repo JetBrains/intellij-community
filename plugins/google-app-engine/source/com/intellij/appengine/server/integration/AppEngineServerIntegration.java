@@ -1,10 +1,10 @@
 package com.intellij.appengine.server.integration;
 
-import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.javaee.appServerIntegrations.AppServerIntegration;
 import com.intellij.javaee.appServerIntegrations.ApplicationServerHelper;
 import com.intellij.javaee.appServerIntegrations.ApplicationServerPersistentDataEditor;
 import com.intellij.javaee.openapi.ex.AppServerIntegrationsManager;
+import icons.GoogleAppEngineIcons;
 
 import javax.swing.*;
 
@@ -23,7 +23,7 @@ public class AppEngineServerIntegration extends AppServerIntegration {
   }
 
   public Icon getIcon() {
-    return AppEngineUtil.APP_ENGINE_ICON;
+    return GoogleAppEngineIcons.AppEngine;
   }
 
   public String getPresentableName() {

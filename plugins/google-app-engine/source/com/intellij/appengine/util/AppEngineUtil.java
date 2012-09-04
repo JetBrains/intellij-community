@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.ui.ListCellRendererWrapper;
-import icons.GoogleAppEngineIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +27,6 @@ import java.util.List;
  * @author nik
  */
 public class AppEngineUtil {
-  public static final Icon APP_ENGINE_ICON = GoogleAppEngineIcons.AppEngine;
   @NonNls public static final String APP_ENGINE_WEB_XML_NAME = "appengine-web.xml";
   @NonNls public static final String JDO_CONFIG_XML_NAME = "jdoconfig.xml";
   @NonNls public static final String JPA_CONFIG_XML_NAME = "persistence.xml";
