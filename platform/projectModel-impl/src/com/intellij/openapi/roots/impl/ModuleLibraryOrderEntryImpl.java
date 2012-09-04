@@ -74,30 +74,31 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
   }
 
   @Override
-  public void dispose() {
-    super.dispose();
-  }
-
   protected RootProvider getRootProvider() {
     return myLibrary.getRootProvider();
   }
 
+  @Override
   public Library getLibrary() {
     return myLibrary;
   }
 
+  @Override
   public boolean isModuleLevel() {
     return true;
   }
 
+  @Override
   public String getLibraryName() {
     return myLibrary.getName();
   }
 
+  @Override
   public String getLibraryLevel() {
     return LibraryTableImplUtil.MODULE_LEVEL;
   }
 
+  @Override
   public String getPresentableName() {
     final String name = myLibrary.getName();
     if (name != null) {
@@ -119,24 +120,29 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
     }
   }
 
+  @Override
   public boolean isValid() {
     return !isDisposed() && myLibrary != null;
   }
 
+  @Override
   public <R> R accept(RootPolicy<R> policy, R initialValue) {
     return policy.visitLibraryOrderEntry(this, initialValue);
   }
 
+  @Override
   public boolean isSynthetic() {
     return true;
   }
 
+  @Override
   public OrderEntry cloneEntry(RootModelImpl rootModel,
                                ProjectRootManagerImpl projectRootManager,
                                VirtualFilePointerManager filePointerManager) {
     return new ModuleLibraryOrderEntryImpl(myLibrary, rootModel, myExported, myScope);
   }
 
+  @Override
   public void writeExternal(Element rootElement) throws WriteExternalException {
     final Element element = OrderEntryFactory.createOrderEntryElement(ENTRY_TYPE);
     if (myExported) {
@@ -148,19 +154,23 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
   }
 
 
+  @Override
   public boolean isExported() {
     return myExported;
   }
 
+  @Override
   public void setExported(boolean value) {
     myExported = value;
   }
 
+  @Override
   @NotNull
   public DependencyScope getScope() {
     return myScope;
   }
 
+  @Override
   public void setScope(@NotNull DependencyScope scope) {
     myScope = scope;
   }

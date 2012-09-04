@@ -33,10 +33,11 @@ public abstract class OrderEntryBaseImpl extends RootModelComponentBase implemen
     super(rootModel);
   }
 
-  public void setIndex(int index) {
+  void setIndex(int index) {
     myIndex = index;
   }
 
+  @Override
   public int compareTo(@NotNull OrderEntry orderEntry) {
     LOG.assertTrue(orderEntry.getOwnerModule() == getOwnerModule());
     return myIndex - ((OrderEntryBaseImpl)orderEntry).myIndex;
@@ -48,12 +49,12 @@ public abstract class OrderEntryBaseImpl extends RootModelComponentBase implemen
 
   @Override
   @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
-  public boolean equals(Object obj) {
+  public final boolean equals(Object obj) {
     return obj == this;
   }
 
   @Override
-  public int hashCode() {
+  public final int hashCode() {
     return hc;
   }
 

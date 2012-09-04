@@ -36,11 +36,13 @@ import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * @author yole
@@ -63,7 +65,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     final ProjectFileIndex idx = ProjectRootManager.getInstance(project).getFileIndex();
 
     if (vFile == null || !idx.isInLibrarySource(vFile)) return psiClass;
-    final List<OrderEntry> orderEntries = idx.getOrderEntriesForFile(vFile);
+    final Set<OrderEntry> orderEntries = new THashSet<OrderEntry>(idx.getOrderEntriesForFile(vFile));
     final String fqn = psiClass.getQualifiedName();
     if (fqn == null) return psiClass;
 
@@ -105,7 +107,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     PsiClass[] classes = clsFile.getClasses();
     if (classes.length == 0) return clsFile;
     String sourceFileName = ((ClsClassImpl)classes[0]).getSourceFileName();
-    String relativeFilePath = packageName.length() == 0 ? sourceFileName : packageName.replace('.', '/') + '/' + sourceFileName;
+    String relativeFilePath = packageName.isEmpty() ? sourceFileName : packageName.replace('.', '/') + '/' + sourceFileName;
 
     final VirtualFile vFile = clsFile.getContainingFile().getVirtualFile();
     ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(clsFile.getProject());
@@ -159,7 +161,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     for (VirtualFile child : children) {
       if (StdFileTypes.CLASS.equals(child.getFileType())) {
         final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(child);
-        if (psiFile instanceof PsiJavaFile) return ((PsiJavaFile)psiFile);
+        if (psiFile instanceof PsiJavaFile) return (PsiJavaFile)psiFile;
       }
     }
     return null;
@@ -214,27 +216,21 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       if (member instanceof PsiEnumConstant) {
         return 1;
       }
-      else {
-        return ((PsiField)member).hasModifierProperty(PsiModifier.STATIC) ? settings.STATIC_FIELDS_ORDER_WEIGHT + 1
-                                                                          : settings.FIELDS_ORDER_WEIGHT + 1;
-      }
+      return ((PsiField)member).hasModifierProperty(PsiModifier.STATIC) ? settings.STATIC_FIELDS_ORDER_WEIGHT + 1
+                                                                        : settings.FIELDS_ORDER_WEIGHT + 1;
     }
-    else if (member instanceof PsiMethod) {
+    if (member instanceof PsiMethod) {
       if (((PsiMethod)member).isConstructor()) {
         return settings.CONSTRUCTORS_ORDER_WEIGHT + 1;
       }
-      else {
-        return ((PsiMethod)member).hasModifierProperty(PsiModifier.STATIC) ? settings.STATIC_METHODS_ORDER_WEIGHT + 1
-                                                                           : settings.METHODS_ORDER_WEIGHT + 1;
-      }
+      return ((PsiMethod)member).hasModifierProperty(PsiModifier.STATIC) ? settings.STATIC_METHODS_ORDER_WEIGHT + 1
+                                                                         : settings.METHODS_ORDER_WEIGHT + 1;
     }
-    else if (member instanceof PsiClass) {
+    if (member instanceof PsiClass) {
       return ((PsiClass)member).hasModifierProperty(PsiModifier.STATIC) ? settings.STATIC_INNER_CLASSES_ORDER_WEIGHT + 1
                                                                         : settings.INNER_CLASSES_ORDER_WEIGHT + 1;
     }
-    else {
-      return -1;
-    }
+    return -1;
   }
 
   @Override
