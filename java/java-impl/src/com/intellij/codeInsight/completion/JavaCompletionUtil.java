@@ -791,7 +791,9 @@ public class JavaCompletionUtil {
     final char completionChar = context.getCompletionChar();
     final PsiFile file = context.getFile();
 
-    final TailType tailType = completionChar == '(' ? TailType.NONE : completionChar == ':' ? TailType.COND_EXPR_COLON : LookupItem.handleCompletionChar(context.getEditor(), item, completionChar);
+    final TailType tailType = completionChar == '(' ? TailType.NONE :
+                              completionChar == ':' ? TailType.COND_EXPR_COLON :
+                              LookupItem.handleCompletionChar(context.getEditor(), item, completionChar);
     final boolean hasTail = tailType != TailType.NONE && tailType != TailType.UNKNOWN;
     final boolean smart = completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR;
 
@@ -819,25 +821,31 @@ public class JavaCompletionUtil {
       AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(editor, overloadsMatter ? null : (PsiElement)item.getObject());
     }
 
-    if (smart || needRightParenth) {
-      TailType toInsert = tailType;
-      LookupItem lookupItem = item.as(LookupItem.CLASS_CONDITION_KEY);
-      if (lookupItem == null || lookupItem.getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
-        if (!hasTail && item.getObject() instanceof PsiMethod && ((PsiMethod)item.getObject()).getReturnType() == PsiType.VOID) {
-          PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
-          if (psiElement().beforeLeaf(psiElement().withText(".")).accepts(file.findElementAt(context.getTailOffset() - 1))) {
-            return;
-          }
-          toInsert = TailType.SEMICOLON;
+    if (smart || !needRightParenth || !insertTail(context, item, tailType, hasTail)) {
+      return;
+    }
+
+    if (completionChar == '.') {
+      AutoPopupController.getInstance(file.getProject()).autoPopupMemberLookup(context.getEditor(), null);
+    } else if (completionChar == ',') {
+      AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(context.getEditor(), null);
+    }
+  }
+
+  private static boolean insertTail(InsertionContext context, LookupElement item, TailType tailType, boolean hasTail) {
+    TailType toInsert = tailType;
+    LookupItem<?> lookupItem = item.as(LookupItem.CLASS_CONDITION_KEY);
+    if (lookupItem == null || lookupItem.getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
+      if (!hasTail && item.getObject() instanceof PsiMethod && ((PsiMethod)item.getObject()).getReturnType() == PsiType.VOID) {
+        PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
+        if (psiElement().beforeLeaf(psiElement().withText(".")).accepts(context.getFile().findElementAt(context.getTailOffset() - 1))) {
+          return false;
         }
-      }
-      toInsert.processTail(editor, context.getTailOffset());
-      if (completionChar == '.') {
-        AutoPopupController.getInstance(file.getProject()).autoPopupMemberLookup(context.getEditor(), null);
-      } else if (completionChar == ',') {
-        AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(context.getEditor(), null);
+        toInsert = TailType.SEMICOLON;
       }
     }
+    toInsert.processTail(context.getEditor(), context.getTailOffset());
+    return true;
   }
 
   //need to shorten references in type argument list

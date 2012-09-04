@@ -731,6 +731,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
             return;
           }
         }
+        if (c == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
+          if (_performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT)) {
+            return;
+          }
+        }
 
         CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
           @Override

@@ -713,26 +713,7 @@ public class CodeCompletionHandlerBase {
         PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
 
         if (context.shouldAddCompletionChar()) {
-          int tailOffset = context.getTailOffset();
-          if (tailOffset < 0) {
-            LOG.info("tailOffset<0 after inserting " + item + " of " + item.getClass() + "; invalidated at: " + context.invalidateTrace + "\n--------");
-          }
-          else {
-            editor.getCaretModel().moveToOffset(tailOffset);
-          }
-          if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-            final Language language = PsiUtilBase.getLanguageInEditor(editor, project);
-            final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.forKey(language);
-            if (processors.size() > 0) {
-              for (SmartEnterProcessor processor : processors) {
-                processor.process(project, editor, indicator.getParameters().getOriginalFile());
-              }
-            }
-          }
-          else {
-            DataContext dataContext = DataManager.getInstance().getDataContext(editor.getContentComponent());
-            EditorActionManager.getInstance().getTypedAction().getHandler().execute(editor, completionChar, dataContext);
-          }
+          addCompletionChar(project, context, item, editor, indicator, completionChar);
         }
         context.stopWatching();
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
@@ -740,6 +721,32 @@ public class CodeCompletionHandlerBase {
     });
     update.addSparedChars(indicator, item, context, completionChar);
     return context;
+  }
+
+  private static void addCompletionChar(Project project,
+                                        WatchingInsertionContext context,
+                                        LookupElement item,
+                                        Editor editor, CompletionProgressIndicator indicator, char completionChar) {
+    int tailOffset = context.getTailOffset();
+    if (tailOffset < 0) {
+      LOG.info("tailOffset<0 after inserting " + item + " of " + item.getClass() + "; invalidated at: " + context.invalidateTrace + "\n--------");
+    }
+    else {
+      editor.getCaretModel().moveToOffset(tailOffset);
+    }
+    if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
+      final Language language = PsiUtilBase.getLanguageInEditor(editor, project);
+      final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.forKey(language);
+      if (processors.size() > 0) {
+        for (SmartEnterProcessor processor : processors) {
+          processor.process(project, editor, indicator.getParameters().getOriginalFile());
+        }
+      }
+    }
+    else {
+      DataContext dataContext = DataManager.getInstance().getDataContext(editor.getContentComponent());
+      EditorActionManager.getInstance().getTypedAction().getHandler().execute(editor, completionChar, dataContext);
+    }
   }
 
   public static final Key<SoftReference<Pair<PsiFile, Document>>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
