@@ -565,7 +565,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
     }
 
-    protected void setPackageName(VirtualFile dir, String newPackageName) {
+    protected void setPackageName(VirtualFile dir, @Nullable String newPackageName) {
       assert dir != null;
 
       String oldPackageName = myDirToPackageName.get(dir);
