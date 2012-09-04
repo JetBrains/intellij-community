@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -114,11 +115,11 @@ public final class Annotation implements Segment {
    *
    * @param fix the quick fix implementation.
    */
-  public void registerFix(IntentionAction fix) {
+  public void registerFix(@NotNull IntentionAction fix) {
     registerFix(fix, null);
   }
 
-  public void registerFix(IntentionAction fix, TextRange range) {
+  public void registerFix(@NotNull IntentionAction fix, TextRange range) {
     registerFix(fix,range, null);
   }
 
@@ -130,7 +131,7 @@ public final class Annotation implements Segment {
    * @param range the text range (relative to the document) where the quick fix is available.
    */
   @Deprecated
-  public void registerFix(IntentionAction fix, TextRange range, List<IntentionAction> options, String displayName) {
+  public void registerFix(@NotNull IntentionAction fix, TextRange range, List<IntentionAction> options, String displayName) {
     if (range == null) {
       range = new TextRange(myStartOffset, myEndOffset);
     }
@@ -147,7 +148,7 @@ public final class Annotation implements Segment {
    * @param fix   the quick fix implementation.
    * @param range the text range (relative to the document) where the quick fix is available.
    */
-  public void registerFix(final IntentionAction fix, @Nullable TextRange range, @Nullable final HighlightDisplayKey key) {
+  public void registerFix(@NotNull IntentionAction fix, @Nullable TextRange range, @Nullable final HighlightDisplayKey key) {
     if (range == null) {
       range = new TextRange(myStartOffset, myEndOffset);
     }
@@ -161,7 +162,7 @@ public final class Annotation implements Segment {
    * Registers a quickfix which would be available during batch mode only, 
    * in particular during com.intellij.codeInspection.DefaultHighlightVisitorBasedInspection run 
    */
-  public <T extends IntentionAction & LocalQuickFix> void registerBatchFix(final T fix, @Nullable TextRange range, @Nullable final HighlightDisplayKey key) {
+  public <T extends IntentionAction & LocalQuickFix> void registerBatchFix(@NotNull T fix, @Nullable TextRange range, @Nullable final HighlightDisplayKey key) {
     if (range == null) {
       range = new TextRange(myStartOffset, myEndOffset);
     }
@@ -175,7 +176,7 @@ public final class Annotation implements Segment {
   /**
    * Register a quickfix which would be available onTheFly and in the batch mode. Should implement both IntentionAction and LocalQuickFix.
    */
-  public <T extends IntentionAction & LocalQuickFix> void registerUniversalFix(final T fix, @Nullable TextRange range, @Nullable final HighlightDisplayKey key) {
+  public <T extends IntentionAction & LocalQuickFix> void registerUniversalFix(@NotNull T fix, @Nullable TextRange range, @Nullable final HighlightDisplayKey key) {
     registerBatchFix(fix, range, key);
     registerFix(fix, range, key);
   }
