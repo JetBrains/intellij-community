@@ -48,10 +48,8 @@ public class BuildoutFacetType extends FacetType<BuildoutFacet, BuildoutFacetCon
     return (BuildoutFacetType)FacetTypeRegistry.getInstance().findFacetType(ID);
   }
 
-  public final static Icon BUILDOUT_ICON = PythonIcons.Python.Icons.Buildout.Buildout;
-
   @Override
   public Icon getIcon() {
-    return BUILDOUT_ICON;
+    return PythonIcons.Python.Icons.Buildout.Buildout;
   }
 }
