@@ -8,7 +8,7 @@ import org.jetbrains.jps.model.JpsGlobal;
  * @author nik
  */
 public abstract class JpsGlobalExtensionSerializer extends JpsElementExtensionSerializerBase<JpsGlobal> {
-  protected JpsGlobalExtensionSerializer(@NotNull String componentName, @Nullable String configFileName) {
-    super(componentName, configFileName);
+  protected JpsGlobalExtensionSerializer(@Nullable String configFileName, @NotNull String componentName) {
+    super(configFileName, componentName);
   }
 }

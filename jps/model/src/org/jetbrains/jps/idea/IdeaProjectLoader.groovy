@@ -1,7 +1,9 @@
 package org.jetbrains.jps.idea
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.jps.*
+import org.jetbrains.jps.AnnotationProcessingProfile
+import org.jetbrains.jps.CompilerConfiguration
+import org.jetbrains.jps.JpsPathUtil
+import org.jetbrains.jps.Project
 /**
  * @author max
  */
@@ -92,17 +94,11 @@ public class IdeaProjectLoader {
 
     def root = xmlParser.parse(iprFile)
     loadCompilerConfiguration(root)
-    loadProjectFileEncodings(root)
     loadWorkspaceConfiguration(new File(iprFile.parentFile, iprFile.name[0..-4]+"iws"))
   }
 
   def loadFromDirectoryBased(File dir) {
     projectMacroExpander = new ProjectMacroExpander(pathVariables, dir.parentFile.absolutePath)
-
-    def encodingsXml = new File(dir, "encodings.xml")
-    if (encodingsXml.exists()) {
-      loadProjectFileEncodings(xmlParser.parse(encodingsXml))
-    }
 
     def compilerXml = new File(dir, "compiler.xml")
     if (compilerXml.exists()) {
@@ -240,26 +236,6 @@ public class IdeaProjectLoader {
     }
     return pattern
   }
-
-  private def loadProjectFileEncodings(Node root) {
-    def componentTag = getComponent(root, "Encoding");
-    if (componentTag == null) return;
-    componentTag.file?.each {Node fileNode ->
-      String url = fileNode."@url";
-      String charset = fileNode."@charset";
-
-      if (!StringUtil.isEmptyOrSpaces(charset)) {
-        if ("PROJECT".equals(url)) {
-          project.projectCharset = charset;
-        }
-        else {
-          def path = projectMacroExpander.expandMacros(JpsPathUtil.urlToPath(url));
-          project.filePathToCharset[FileUtil.toCanonicalPath(path)] = charset;
-        }
-      }
-    }
-  }
-
 
   Node getComponent(Node root, String name) {
     return root.component.find {it."@name" == name}

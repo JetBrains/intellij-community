@@ -57,7 +57,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.SavingRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Alarm;
@@ -578,11 +577,6 @@ public class BuildManager implements ApplicationComponent{
           cmdBuilder.addPathVariable(CmdlineProtoUtil.createPair(var, value));
         }
       }
-    }
-
-    final String defaultCharset = EncodingManager.getInstance().getDefaultCharsetName();
-    if (!StringUtil.isEmpty(defaultCharset)) {
-      cmdBuilder.setGlobalEncoding(defaultCharset);
     }
 
     final String ignoredFilesList = FileTypeManager.getInstance().getIgnoredFilesList();

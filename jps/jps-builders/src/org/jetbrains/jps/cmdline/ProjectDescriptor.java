@@ -8,6 +8,7 @@ import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
+import org.jetbrains.jps.model.JpsEncodingConfigurationService;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
@@ -52,7 +53,7 @@ public final class ProjectDescriptor {
     rootsIndex = new ModuleRootsIndex(jpsProject, dataManager);
     myArtifactRootsIndex = new ArtifactRootsIndex(jpsModel, project, dataManager, rootsIndex);
     myProjectJavaSdks = new HashSet<JpsSdk<?>>();
-    myEncodingConfiguration = new CompilerEncodingConfiguration(project.getFilePathToCharset(), project.getProjectCharset(), rootsIndex);
+    myEncodingConfiguration = new CompilerEncodingConfiguration(jpsModel, rootsIndex);
     for (JpsModule module : jpsProject.getModules()) {
       final JpsSdk<?> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
       if (sdk != null && !myProjectJavaSdks.contains(sdk) && sdk.getVersionString() != null && sdk.getHomePath() != null) {

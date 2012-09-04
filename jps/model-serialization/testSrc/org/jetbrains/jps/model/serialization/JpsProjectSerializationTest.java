@@ -3,6 +3,8 @@ package org.jetbrains.jps.model.serialization;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
+import org.jetbrains.jps.model.JpsEncodingConfigurationService;
+import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
@@ -55,6 +57,16 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
 
     assertEquals(getUrl("xxx/output"), JpsJavaExtensionService.getInstance().getOutputUrl(xxx, true));
     assertEquals(getUrl("xxx/output"), JpsJavaExtensionService.getInstance().getOutputUrl(xxx, false));
+  }
+
+  public void testLoadEncoding() {
+    loadProject(SAMPLE_PROJECT_PATH);
+    JpsEncodingConfigurationService service = JpsEncodingConfigurationService.getInstance();
+    assertEquals("UTF-8", service.getProjectEncoding(myModel));
+    JpsEncodingProjectConfiguration configuration = service.getEncodingConfiguration(myProject);
+    assertNotNull(configuration);
+    assertEquals("UTF-8", configuration.getProjectEncoding());
+    assertEquals("windows-1251", configuration.getEncoding(getUrl("util")));
   }
 
   public void testSaveProject() {
