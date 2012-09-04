@@ -368,8 +368,49 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   @Override
-  public void copyText(int srcStart, int srcEnd, int dstStart, int dstEnd) {
-    replaceString(dstStart, dstEnd, getCharsSequence().subSequence(srcStart, srcEnd));
+  public void moveText(int srcStart, int srcEnd, int dstStart, int dstEnd) {
+    assertBounds(srcStart, srcEnd);
+    assertBounds(dstStart, dstEnd);
+
+    if (srcStart == dstStart && srcEnd == dstEnd) {
+      return;
+    }
+
+    CharSequence replacement = getCharsSequence().subSequence(srcStart, srcEnd);
+    
+    // Handle a situation when target ranges don't cross.
+    if (srcEnd <= dstStart || srcStart >= dstEnd) {
+      replaceString(dstStart, dstEnd, replacement);
+      int shift = 0;
+      if (dstStart < srcStart) {
+        shift = (dstEnd - dstStart) - (srcEnd - srcStart);
+      }
+      deleteString(srcStart + shift, srcEnd + shift);
+      return;
+    }
+    
+    // _____|__________|__________|________|_____
+    //   DstStart   SrcStart   DstEnd   SrcEnd
+    if (dstStart <= srcStart && dstEnd <= srcEnd) {
+      if (dstEnd < srcEnd) {
+        deleteString(dstEnd, srcEnd);
+      }
+      replaceString(dstStart, dstEnd, replacement);
+    }
+    // _____|__________|__________|________|_____
+    //   DstStart   SrcStart   SrcEnd   DstEnd
+    //                     OR
+    // _____|__________|__________|________|_____
+    //   SrcStart   DstStart   DstEnd   SrcEnd
+    else if ((dstStart <= srcStart && dstEnd > srcEnd) || (dstStart > srcStart && dstEnd <= srcEnd)) {
+      replaceString(dstStart, dstEnd, replacement);
+    }
+    // _____|__________|__________|________|_____
+    //   SrcStart   DstStart   SrcEnd   DstEnd
+    else {
+      replaceString(dstStart, dstEnd, replacement);
+      deleteString(srcStart, dstStart);
+    }
   }
 
   @Override

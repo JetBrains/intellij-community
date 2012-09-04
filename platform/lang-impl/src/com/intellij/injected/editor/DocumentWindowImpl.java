@@ -391,8 +391,9 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   @Override
-  public void copyText(int srcStart, int srcEnd, int dstStart, int dstEnd) {
-    replaceString(dstStart, dstEnd, getCharsSequence().subSequence(srcStart, srcEnd));
+  public void moveText(int srcStart, int srcEnd, int dstStart, int dstEnd) {
+    // TODO den implement
+    throw new UnsupportedOperationException();
   }
 
   @Override

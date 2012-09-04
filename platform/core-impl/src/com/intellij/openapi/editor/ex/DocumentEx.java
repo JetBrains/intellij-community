@@ -37,18 +37,18 @@ public interface DocumentEx extends Document {
   void replaceText(@NotNull CharSequence chars, long newModificationStamp);
 
   /**
-   * Replaces <code>[dstStart; dstEnd)</code> range by the text from the <code>[src start; src end)</code> range.
+   * Moves text from the <code>[src start; src end)</code> range to the <code>[dstStart; dstEnd)</code> range.
    * <p/>
-   * The benefit to use this method over usual {@link #replaceString(int, int, CharSequence)} is that
-   * {@link #createRangeMarker(int, int, boolean) range markers} from the <code>[srcStart; srcEnd)</code> range have
+   * The benefit to use this method over usual {@link #deleteString(int, int)} and {@link #replaceString(int, int, CharSequence)}
+   * is that {@link #createRangeMarker(int, int, boolean) range markers} from the <code>[srcStart; srcEnd)</code> range have
    * a chance to be preserved.
    * 
-   * @param srcStart  start offset of the text to copy (inclusive)
-   * @param srcEnd    end offset of the text to copy (exclusive)
+   * @param srcStart  start offset of the text to move (inclusive)
+   * @param srcEnd    end offset of the text to move (exclusive)
    * @param dstStart  start offset of the range which text should be replaced (inclusive)
    * @param dstEnd    end offset of the range which text should be replaced (exclusive)
    */
-  void copyText(int srcStart, int srcEnd, int dstStart, int dstEnd);
+  void moveText(int srcStart, int srcEnd, int dstStart, int dstEnd);
 
   int getListenersCount();
 
