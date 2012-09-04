@@ -716,6 +716,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     Document doc = getCachedDocument(event.getFile());
     if (doc != null) {
       myTrailingSpacesStripper.documentDeleted(doc);
+      if (!event.isFromRefresh()) {
+        removeFromUnsaved(doc);
+      }
     }
   }
 
