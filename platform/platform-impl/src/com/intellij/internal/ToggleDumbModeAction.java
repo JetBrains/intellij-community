@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.TimeoutUtil;
 
 import java.util.Arrays;
 
@@ -51,11 +52,7 @@ public class ToggleDumbModeAction extends AnAction implements DumbAware {
 
         public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
           while (myDumb) {
-            try {
-              Thread.sleep(100);
-            }
-            catch (InterruptedException e1) {
-            }
+            TimeoutUtil.sleep(100);
           }
           return VirtualFile.EMPTY_ARRAY;
         }
@@ -85,5 +82,4 @@ public class ToggleDumbModeAction extends AnAction implements DumbAware {
       presentation.setText("Enter dumb mode");
     }
   }
-
 }

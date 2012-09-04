@@ -1,5 +1,4 @@
 /*
-/*
  * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.indexing;
 
 import com.intellij.ide.caches.CacheUpdater;
@@ -23,17 +21,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CollectingContentIterator;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 29, 2008
+ * @since Jan 29, 2008
  */
 public class UnindexedFilesUpdater implements CacheUpdater {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.UnindexedFilesUpdater");
+
   private final FileBasedIndexImpl myIndex;
   private final Project myProject;
   private long myStarted;
@@ -55,9 +54,10 @@ public class UnindexedFilesUpdater implements CacheUpdater {
     FileBasedIndex.getInstance().iterateIndexableFiles(finder, myProject, indicator);
     LOG.info("Indexable files iterated in " + (System.currentTimeMillis() - l) + " ms");
     List<VirtualFile> files = finder.getFiles();
+
     LOG.info("Unindexed files update started: " + files.size() + " files to update");
     myStarted = System.currentTimeMillis();
-    return VfsUtil.toVirtualFileArray(files);
+    return VfsUtilCore.toVirtualFileArray(files);
   }
 
   @Override

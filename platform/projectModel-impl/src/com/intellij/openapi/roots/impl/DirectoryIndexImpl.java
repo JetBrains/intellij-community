@@ -115,7 +115,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     return myInitialized;
   }
 
-  public  void initialize() {
+  public void initialize() {
     if (myInitialized) {
       LOG.error("Directory index is already initialized.");
       return;
@@ -675,10 +675,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       MultiMap<VirtualFile, OrderEntry> libClassRootEntries = new MultiMap<VirtualFile, OrderEntry>();
       MultiMap<VirtualFile, OrderEntry> libSourceRootEntries = new MultiMap<VirtualFile, OrderEntry>();
       for (Module module : modules) {
-        initOrderEntries(module,
-                         depEntries,
-                         libClassRootEntries,
-                         libSourceRootEntries, progress);
+        initOrderEntries(module, depEntries, libClassRootEntries, libSourceRootEntries, progress);
       }
       fillMapWithOrderEntries(depEntries, libClassRootEntries, libSourceRootEntries, progress);
 
