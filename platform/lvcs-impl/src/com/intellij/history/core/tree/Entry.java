@@ -21,6 +21,7 @@ import com.intellij.history.core.Paths;
 import com.intellij.history.core.StreamUtil;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -161,6 +162,7 @@ public abstract class Entry {
     return result;
   }
 
+  @NotNull
   public abstract Entry copy();
 
   public void setName(String newName) {

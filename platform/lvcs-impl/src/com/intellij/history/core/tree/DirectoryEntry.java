@@ -19,6 +19,7 @@ package com.intellij.history.core.tree;
 import com.intellij.history.core.StreamUtil;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.utils.LocalHistoryLog;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -110,6 +111,7 @@ public class DirectoryEntry extends Entry {
     return !entriesWithUnavailableContent.isEmpty();
   }
 
+  @NotNull
   @Override
   public DirectoryEntry copy() {
     DirectoryEntry result = copyEntry();
