@@ -15,13 +15,12 @@
  */
 package com.theoryinpractice.testng.referenceContributor;
 
+import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
@@ -73,10 +72,11 @@ public class TestNGSuiteTest extends LightCodeInsightFixtureTestCase {
           myFixture.addClass("package org.testng.annotations; public @interface Test {}");
           myFixture.addClass("package o; @Test public class MyTest { public void testMe(){} }");
           myFixture.addFileToProject("subPack/test-unit.xml", "<suite>" +
-                                                  "<test>" +
-                                                    "<classes></classes>" +
-                                                  "</test>" +
-                                                "</suite>");
+                                                              "<test>" +
+                                                              "<classes></classes>" +
+                                                              "</test>" +
+                                                              "</suite>");
+          myFixture.enableInspections(new XmlPathReferenceInspection());
           myFixture.testHighlighting("testng.xml");
         }
         catch (Exception e) {

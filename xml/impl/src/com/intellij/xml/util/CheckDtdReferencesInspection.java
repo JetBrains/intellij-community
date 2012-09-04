@@ -19,7 +19,6 @@ package com.intellij.xml.util;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
-import com.intellij.codeInsight.dataflow.map.MapSemilattice;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInspection.*;
@@ -29,7 +28,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
@@ -110,7 +108,7 @@ public class CheckDtdReferencesInspection extends XmlSuppressableInspectionTool 
           final String image = ref.getCanonicalText();
           if (image.equals("-") || image.equals("O")) continue;
         }
-        holder.registerProblem(ref, XmlHighlightVisitor.getErrorDescription(ref), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+        holder.registerProblem(ref);
       }
     }
   }

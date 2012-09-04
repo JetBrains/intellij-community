@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspection;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddXsiSchemaLocationForExtResourceAction;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -953,7 +954,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       new RequiredAttributesInspection(),
       new XmlDuplicatedIdInspection(),
       new CheckDtdReferencesInspection(),
-      new XmlUnboundNsPrefixInspection()
+      new XmlUnboundNsPrefixInspection(),
+      new XmlPathReferenceInspection()
     };
   }
 
@@ -1588,6 +1590,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doTestWithLocations(null, "xsd");
   }
 
+  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testDtdElementRefs() throws Exception {
     doTestWithLocations(
       new String[] [] {

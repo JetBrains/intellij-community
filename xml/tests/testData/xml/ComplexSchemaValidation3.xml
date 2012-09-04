@@ -10,7 +10,7 @@
           http://schemas.niku.com/2002/service service-2002-02.xsd
           ">
   <page id="calendar.actionitemProperties" space="calendar.organizerHome" template="union.appPage">
-    <xi:include href="<error>portlets</error>/<error>actionitemTOC.xml</error>"/>
+    <<error descr="An 'include' failed, and no 'fallback' element was found.">xi:include</error> href="<error descr="Cannot resolve directory 'portlets'">portlets</error>/<error descr="Cannot resolve file 'actionitemTOC.xml'">actionitemTOC.xml</error>"/>
     <portlet id="calendar.actionitemProperties" view="actionitem/actionitemProperties.xsl"/>
     <pageAction id="calendar.actionitemProperties" policyId="">
       <retrieveService type="xbl" componentId="calendar" description="actionitem/actionitemProperties.xbl" portletId="calendar.actionitemProperties"/>

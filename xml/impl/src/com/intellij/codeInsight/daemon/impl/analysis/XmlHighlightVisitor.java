@@ -41,6 +41,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
@@ -556,9 +557,10 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   @Override public void visitXmlAttributeValue(XmlAttributeValue value) {
+    checkReferences(value);
+
     final PsiElement parent = value.getParent();
     if (!(parent instanceof XmlAttribute)) {
-      checkReferences(value);
       return;
     }
 
@@ -577,11 +579,8 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
             getTagProblemInfoType(tag),
             value,
             error));
-        return;
       }
     }
-
-    checkReferences(value);
   }
 
   private void checkReferences(PsiElement value) {
@@ -594,7 +593,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     for (int i = start; i < references.length; ++i) {
       PsiReference reference = references[i];
       ProgressManager.checkCanceled();
-      if (reference == null) {
+      if (reference instanceof FileReferenceOwner) {
         continue;
       }
       if (!hasBadResolve(reference, false)) {

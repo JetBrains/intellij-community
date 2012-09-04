@@ -359,7 +359,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   @Override
   public PsiFileSystemItem resolve() {
     ResolveResult[] resolveResults = multiResolve(false);
-    return resolveResults.length == 1 ? (PsiFileSystemItem)resolveResults[0].getElement() : null;
+   return resolveResults.length == 1 ? (PsiFileSystemItem)resolveResults[0].getElement() : null;
   }
 
   @Nullable
@@ -533,11 +533,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   protected PsiElement rename(final String newName) throws IncorrectOperationException {
     final TextRange range = new TextRange(myFileReferenceSet.getStartInElement(), getRangeInElement().getEndOffset());
     PsiElement element = getElement();
-    final ElementManipulator<PsiElement> manipulator = CachingReference.getManipulator(element);
-    if (manipulator == null) {
-      throw new IncorrectOperationException("Manipulator not defined for: " + element + " of class " + element.getClass());
-    }
-    return manipulator.handleContentChange(element, range, newName);
+    return CachingReference.getManipulator(element).handleContentChange(element, range, newName);
   }
 
   @Override
@@ -559,7 +555,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   public String getUnresolvedMessagePattern() {
     return LangBundle.message("error.cannot.resolve")
            + " " + (isLast() ? LangBundle.message("terms.file") : LangBundle.message("terms.directory"))
-           + " ''" + StringUtil.escapePattern(StringUtil.notNullize(decode(getCanonicalText()))) + "''";
+           + " '" + StringUtil.escapePattern(StringUtil.notNullize(decode(getCanonicalText()))) + "'";
   }
 
   public final boolean isLast() {

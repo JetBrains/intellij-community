@@ -15,11 +15,9 @@
  */
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -27,8 +25,6 @@ import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-
-import java.text.MessageFormat;
 
 /**
  * @author Eugene.Kudelevsky
@@ -57,25 +53,8 @@ public class HtmlUnknownTargetInspection extends HtmlLocalInspectionTool {
       if (valueElement != null) {
         PsiReference[] refs = valueElement.getReferences();
         for (PsiReference ref : refs) {
-          if (ref instanceof EmptyResolveMessageProvider && XmlHighlightVisitor.hasBadResolve(ref, false)) {
-
-            PsiElement element = ref.getElement();
-            if (element != null && element.getTextLength() == 0) {
-              continue;
-            }
-
-            String messagePattern = ((EmptyResolveMessageProvider)ref).getUnresolvedMessagePattern();
-            String description;
-            try {
-              description = MessageFormat.format(messagePattern, ref.getCanonicalText());
-            }
-            catch (IllegalArgumentException ex) {
-              description = messagePattern;
-            }
-            if (description != null) {
-              description += " #loc";
-            }
-            holder.registerProblem(ref, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          if (XmlHighlightVisitor.hasBadResolve(ref, false)) {
+            holder.registerProblem(ref, ProblemsHolder.unresolvedReferenceMessage(ref), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
         }
       }

@@ -26,14 +26,12 @@ public abstract class PathReferenceProviderBase implements PathReferenceProvider
     final TextRange range = manipulator.getRangeInElement(psiElement);
     int offset = range.getStartOffset();
     int endOffset = range.getEndOffset();
-    boolean dynamicContext = false;
     final String elementText = psiElement.getText();
     for (DynamicContextProvider provider: Extensions.getExtensions(DynamicContextProvider.EP_NAME)) {
       final int dynamicOffset = provider.getOffset(psiElement, offset, elementText);
       if (dynamicOffset == -1) {
         return false;
       } else if (dynamicOffset != offset) {
-        dynamicContext = true;
         offset = dynamicOffset;
       }
     }
@@ -44,7 +42,7 @@ public abstract class PathReferenceProviderBase implements PathReferenceProvider
     }
     try {
       final String text = elementText.substring(offset, endOffset);
-      return createReferences(psiElement, offset, text, references, soft || dynamicContext);
+      return createReferences(psiElement, offset, text, references, soft);
     } catch (StringIndexOutOfBoundsException e) {
       LOG.error("Cannot process string: '" + psiElement.getParent().getParent().getText() + "'", e);
       return false;
