@@ -29,8 +29,6 @@ public class PythonTestConfigurationType implements ConfigurationType {
     return ConfigurationTypeUtil.findConfigurationType(PythonTestConfigurationType.class);
   }
 
-  private static final Icon ICON = PythonIcons.Python.Icons.PythonTests;
-
   private static class PythonUnitTestConfigurationFactory extends ConfigurationFactory {
     protected PythonUnitTestConfigurationFactory(ConfigurationType configurationType) {
       super(configurationType);
@@ -123,7 +121,7 @@ public class PythonTestConfigurationType implements ConfigurationType {
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return PythonIcons.Python.Icons.PythonTests;
   }
 
   @NotNull

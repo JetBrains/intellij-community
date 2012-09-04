@@ -29,8 +29,6 @@ public class PythonConfigurationType implements ConfigurationType {
     return null;
   }
 
-  private final Icon _icon = PythonIcons.Python.Icons.Python;
-
   private static class PythonConfigurationFactory extends ConfigurationFactory {
     protected PythonConfigurationFactory(ConfigurationType configurationType) {
       super(configurationType);
@@ -50,7 +48,7 @@ public class PythonConfigurationType implements ConfigurationType {
   }
 
   public Icon getIcon() {
-    return _icon;
+    return PythonIcons.Python.Icons.Python;
   }
 
   public ConfigurationFactory[] getConfigurationFactories() {

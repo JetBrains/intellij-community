@@ -26,7 +26,6 @@ import java.util.List;
  * @author yole
  */
 public class PythonFacetType extends FacetType<PythonFacet, PythonFacetConfiguration> {
-  public static final Icon ICON = PythonIcons.Python.Icons.Python;
 
   @NonNls
   private static final String ID = "Python";
@@ -58,7 +57,7 @@ public class PythonFacetType extends FacetType<PythonFacet, PythonFacetConfigura
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return PythonIcons.Python.Icons.Python;
   }
 
   public static class PythonFrameworkDetector extends FacetBasedFrameworkDetector<PythonFacet, PythonFacetConfiguration> {
