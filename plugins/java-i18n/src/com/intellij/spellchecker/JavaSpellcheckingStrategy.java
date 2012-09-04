@@ -15,6 +15,7 @@
  */
 package com.intellij.spellchecker;
 
+import com.intellij.codeInspection.SuppressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiMethod;
@@ -40,7 +41,12 @@ public class JavaSpellcheckingStrategy extends SpellcheckingStrategy {
   public Tokenizer getTokenizer(PsiElement element) {
     if (element instanceof PsiMethod) return myMethodNameTokenizer;
     if (element instanceof PsiDocComment) return myDocCommentTokenizer;
-    if (element instanceof PsiLiteralExpression) return myLiteralExpressionTokenizer;
+    if (element instanceof PsiLiteralExpression) {
+      if (SuppressManager.isSuppressedInspectionName((PsiLiteralExpression)element)){
+        return EMPTY_TOKENIZER;
+      }
+      return myLiteralExpressionTokenizer;
+    }
     if (element instanceof PsiNamedElement) return myNamedElementTokenizer;
     return super.getTokenizer(element);
   }

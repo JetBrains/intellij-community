@@ -17,6 +17,7 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.EntryPointsManager;
@@ -428,7 +429,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
     @Override
     public void visitAnnotation(PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
-      if (Comparing.strEqual(annotation.getQualifiedName(), "java.lang.SuppressWarnings")) {
+      if (Comparing.strEqual(annotation.getQualifiedName(), SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME)) {
         final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(annotation, PsiModifierListOwner.class);
         if (listOwner != null) {
           final RefElementImpl element = (RefElementImpl)myRefManager.getReference(listOwner);

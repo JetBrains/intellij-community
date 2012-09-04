@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.maturity;
 
+import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiAnnotation;
@@ -72,7 +73,7 @@ public class SuppressionAnnotationInspection extends BaseInspection {
       }
       @NonNls final String text = reference.getText();
       if ("SuppressWarnings".equals(text) ||
-          "java.lang.SuppressWarnings".equals(text)) {
+          SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME.equals(text)) {
         registerError(annotation);
       }
     }

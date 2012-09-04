@@ -59,8 +59,8 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
     myReplaceOtherSuppressionIds = replaceOtherSuppressionIds;
   }
 
-  protected final void replaceSuppressionComment(@NotNull final PsiElement comment,
-                                                 @NotNull final String oldSuppressionCommentText) {
+  protected final void replaceSuppressionComment(@NotNull final PsiElement comment) {
+    final String oldSuppressionCommentText = comment.getText();
     final String prefix = getLineCommentPrefix(comment);
     assert prefix != null && oldSuppressionCommentText.startsWith(prefix) : "Unexpected suppression comment " + oldSuppressionCommentText;
 
@@ -77,7 +77,7 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
   }
 
   @Nullable
-  protected String getLineCommentPrefix(final PsiElement comment) {
+  protected static String getLineCommentPrefix(final PsiElement comment) {
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(comment.getLanguage());
     assert commenter != null;
 
@@ -109,15 +109,9 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
     final List<? extends PsiElement> comments = getCommentsFor(container);
     if (comments != null) {
       for (PsiElement comment : comments) {
-        if (comment instanceof PsiComment) {
-          String text = comment.getText();
-          final String lineCommentPrefix = getLineCommentPrefix(comment);
-          assert lineCommentPrefix != null;
-
-          if (text.startsWith(lineCommentPrefix + SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME)) {
-            replaceSuppressionComment(comment, text);
-            return;
-          }
+        if (comment instanceof PsiComment && isSuppressionComment(comment)) {
+          replaceSuppressionComment(comment);
+          return;
         }
       }
     }
@@ -129,6 +123,12 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
       editor.getCaretModel().moveToOffset(container.getTextRange().getStartOffset());
     }
     UndoUtil.markPsiFileForUndo(element.getContainingFile());
+  }
+
+  public static boolean isSuppressionComment(PsiElement comment) {
+    final String lineCommentPrefix = getLineCommentPrefix(comment);
+    assert lineCommentPrefix != null;
+    return comment.getText().startsWith(lineCommentPrefix + SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME);
   }
 
   @Nullable

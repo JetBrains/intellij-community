@@ -22,9 +22,8 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.psi.PsiDocCommentOwner;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,4 +61,9 @@ public abstract class SuppressManager {
   public abstract boolean canHave15Suppressions(@NotNull PsiElement file);
 
   public abstract boolean alreadyHas14Suppressions(@NotNull PsiDocCommentOwner commentOwner);
+
+  public static boolean isSuppressedInspectionName(PsiLiteralExpression expression) {
+    PsiAnnotation annotation = PsiTreeUtil.getParentOfType(expression, PsiAnnotation.class, true, PsiCodeBlock.class, PsiField.class);
+    return annotation != null && SUPPRESS_INSPECTIONS_ANNOTATION_NAME.equals(annotation.getQualifiedName());
+  }
 }
