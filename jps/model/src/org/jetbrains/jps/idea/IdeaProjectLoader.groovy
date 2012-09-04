@@ -94,7 +94,6 @@ public class IdeaProjectLoader {
     loadCompilerConfiguration(root)
     loadProjectFileEncodings(root)
     loadWorkspaceConfiguration(new File(iprFile.parentFile, iprFile.name[0..-4]+"iws"))
-    loadUiDesignerConfiguration(root)
   }
 
   def loadFromDirectoryBased(File dir) {
@@ -110,16 +109,6 @@ public class IdeaProjectLoader {
       loadCompilerConfiguration(xmlParser.parse(compilerXml))
     }
     loadWorkspaceConfiguration(new File(dir, "workspace.xml"))
-
-    def uiDesignerXml = new File(dir, "uiDesigner.xml")
-    if (uiDesignerXml.exists()) {
-      loadUiDesignerConfiguration(xmlParser.parse(uiDesignerXml))
-    }
-  }
-
-
-  boolean isXmlFile(File file) {
-    return file.isFile() && StringUtil.endsWithIgnoreCase(file.name, ".xml")
   }
 
   private def loadWorkspaceConfiguration(File workspaceFile) {
@@ -220,11 +209,6 @@ public class IdeaProjectLoader {
     if (addNotNullTag != null) {
       project.compilerConfiguration.addNotNullAssertions = parseBoolean(addNotNullTag."@enabled", true);
     }
-  }
-
-  private def loadUiDesignerConfiguration(Node root) {
-    def options = loadOptions(getComponent(root, "uidesigner-configuration"))
-    project.uiDesignerConfiguration.copyFormsRuntimeToOutput = parseBoolean(options["COPY_FORMS_RUNTIME_TO_OUTPUT"], true)
   }
 
   private File getFileByUrl(final String url) {

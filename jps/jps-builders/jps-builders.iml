@@ -36,6 +36,7 @@
     <orderEntry type="module" module-name="jps-model-api" />
     <orderEntry type="module" module-name="jps-model-serialization" />
     <orderEntry type="module" module-name="jps-model-impl" />
+    <orderEntry type="module" module-name="ui-designer-jps-plugin" />
   </component>
 </module>
 

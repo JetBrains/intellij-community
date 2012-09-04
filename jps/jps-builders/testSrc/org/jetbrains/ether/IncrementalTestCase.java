@@ -18,6 +18,7 @@ package org.jetbrains.ether;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Processor;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
@@ -33,10 +34,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.Collections;
 
 /**
@@ -50,7 +48,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   private JpsSdk<JpsDummyElement> myJdk;
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  protected IncrementalTestCase(final String name) throws Exception {
+  protected IncrementalTestCase(final String name) {
     setName(name);
     groupName = name;
   }
@@ -90,15 +88,29 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     final File[] files = baseDir.listFiles(new FileFilter() {
       public boolean accept(final File pathname) {
         final String name = pathname.getName();
-
         return name.endsWith(".java.new") || name.endsWith(".java.remove");
+      }
+    });
+    FileUtil.processFilesRecursively(baseDir, new Processor<File>() {
+      @Override
+      public boolean process(File file) {
+        try {
+          if (file.getName().endsWith(".form.new")) {
+            String relativePath = StringUtil.trimEnd(FileUtil.getRelativePath(baseDir, file), ".new");
+            FileUtil.copyContent(file, new File(workDir, relativePath));
+          }
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        return true;
       }
     });
 
     for (File input : files) {
       final String name = input.getName();
 
-      final boolean copy = name.endsWith(".java.new");
+      final boolean copy = name.endsWith(".new");
       final String postfix = name.substring(0, name.length() - (copy ? ".new" : ".remove").length());
       final int pathSep = postfix.indexOf("$");
       final String baseName = pathSep == -1 ? postfix : postfix.substring(pathSep + 1);
@@ -114,7 +126,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     }
   }
 
-  public void doTest() throws Exception {
+  public BuildResult doTest() throws Exception {
     if (new File(workDir, ".idea").exists()) {
       getOrCreateJdk();
       loadProject(workDir.getAbsolutePath());
@@ -123,7 +135,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
       addModule();
     }
 
-    doTestBuild();
+    return doTestBuild();
   }
 
   protected JpsModule addModule() {
@@ -157,7 +169,11 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
 
       makeDump.close();
 
-      final String expected = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(baseDir.getAbsolutePath() + ".log")));
+      File logFile = new File(baseDir.getAbsolutePath() + ".log");
+      if (!logFile.exists()) {
+        logFile = new File(baseDir, "build.log");
+      }
+      final String expected = StringUtil.convertLineSeparators(FileUtil.loadFile(logFile));
       final String actual = javaBuilderLogger.myLog.toString();
 
       assertEquals(expected, actual);
