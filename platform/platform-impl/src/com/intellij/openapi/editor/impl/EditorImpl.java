@@ -756,9 +756,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.setTransferHandler(new MyTransferHandler());
     myEditorComponent.setAutoscrolls(true);
 
-/*  Default mode till 1.4.0
- *   myScrollPane.getViewport().setScrollMode(JViewport.BLIT_SCROLL_MODE);
- */
+   /*  Default mode till 1.4.0
+    *   myScrollPane.getViewport().setScrollMode(JViewport.BLIT_SCROLL_MODE);
+    */
 
     if (mayShowToolbar()) {
       JLayeredPane layeredPane = new JLayeredPane() {
