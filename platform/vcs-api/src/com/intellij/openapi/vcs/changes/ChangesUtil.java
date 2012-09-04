@@ -244,8 +244,11 @@ public class ChangesUtil {
     }
     if (parent == null) {
       File ioFile = file.getIOFile();
+      final LocalFileSystem lfs = LocalFileSystem.getInstance();
       do {
-        parent = LocalFileSystem.getInstance().findFileByIoFile(ioFile);
+        parent = lfs.findFileByIoFile(ioFile);
+        if (parent != null) break;
+        parent = lfs.refreshAndFindFileByIoFile(ioFile);
         if (parent != null) break;
         ioFile = ioFile.getParentFile();
         if (ioFile == null) return null;
