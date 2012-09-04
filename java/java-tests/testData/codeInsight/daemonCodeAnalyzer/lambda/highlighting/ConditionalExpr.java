@@ -37,3 +37,15 @@ class Test {
   }
 }
 
+class Test1 {
+  interface I<T, V> {
+    V _(T t);
+  }
+
+  static <V> void bar(I<String, V> ii, I<V, String> ik){}
+
+  {
+    bar(s -> s.equals("") ? 0 : 1, i -> "");
+  }
+}
+
