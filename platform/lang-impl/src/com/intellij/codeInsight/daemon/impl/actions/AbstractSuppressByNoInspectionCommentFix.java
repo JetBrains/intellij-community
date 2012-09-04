@@ -126,8 +126,8 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
   }
 
   public static boolean isSuppressionComment(PsiElement comment) {
-    final String lineCommentPrefix = getLineCommentPrefix(comment);
-    return lineCommentPrefix != null && comment.getText().startsWith(lineCommentPrefix + SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME);
+    final String prefix = getLineCommentPrefix(comment);
+    return prefix != null && comment.getText().startsWith(prefix + SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME);
   }
 
   @Nullable
