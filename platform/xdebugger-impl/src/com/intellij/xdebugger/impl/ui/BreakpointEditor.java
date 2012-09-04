@@ -15,10 +15,10 @@
  */
 package com.intellij.xdebugger.impl.ui;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CompositeShortcutSet;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 
@@ -75,6 +75,14 @@ public class BreakpointEditor {
     });
 
     final AnAction doneAction = new AnAction() {
+      @Override
+      public void update(AnActionEvent e) {
+        super.update(e);
+        boolean lookup = LookupManager.getInstance(getEventProject(e)).getActiveLookup() != null;
+        Editor editor = e.getData(PlatformDataKeys.EDITOR);
+        e.getPresentation().setEnabled(!lookup && (editor == null || StringUtil.isEmpty(editor.getSelectionModel().getSelectedText())) );
+      }
+
       public void actionPerformed(AnActionEvent e) {
         done();
       }
