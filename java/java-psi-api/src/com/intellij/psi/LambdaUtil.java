@@ -312,6 +312,18 @@ public class LambdaUtil {
     final boolean [] independent = new boolean[]{true};
     expression.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
+      public void visitConditionalExpression(PsiConditionalExpression expression) {
+        final PsiExpression thenExpression = expression.getThenExpression();
+        if (thenExpression != null) {
+          thenExpression.accept(this);
+        }
+        final PsiExpression elseExpression = expression.getElseExpression();
+        if (elseExpression != null) {
+          elseExpression.accept(this);
+        }
+      }
+
+      @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         int usedParamIdx = -1;

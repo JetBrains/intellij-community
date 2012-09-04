@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+abstract class DeleteTryWithEmptyFinally {
+    abstract OutputStream open();
 
-package com.intellij.openapi.project;
-
-import com.intellij.openapi.actionSystem.AnAction;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-
-/**
- * @author nik
- */
-public abstract class DumbAwareAction extends AnAction implements DumbAware {
-  protected DumbAwareAction() {
-  }
-
-  protected DumbAwareAction(String text) {
-    super(text);
-  }
-
-  protected DumbAwareAction(String text, @Nullable String description, @Nullable Icon icon) {
-    super(text, description, icon);
-  }
+    void m() throws IOException {
+        try (OutputStream stream = open()) {
+            stream.write(0xCAFEBABE);
+        } <caret>finally {
+        }
+    }
 }
