@@ -140,7 +140,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
         if (childNode.getTextRange().getLength() > 0) {
           final Indent indent = GroovyIndentProcessor.getChildIndent(myBlock, childNode);
           if (myAlignment != null) {
-            myAlignmentProvider.addPair(myNode, childNode, true);
+            myAlignmentProvider.addPair(myNode, childNode, false);
           }
           subBlocks.add(new GroovyBlock(childNode, indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider));
         }
