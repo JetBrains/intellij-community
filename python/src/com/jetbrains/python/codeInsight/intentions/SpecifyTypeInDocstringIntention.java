@@ -6,6 +6,8 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -215,12 +217,23 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
       }
       assert docStringExpression != null;
       int textOffSet = docStringExpression.getTextOffset();
-      editor.getCaretModel().moveToOffset(textOffSet);
+
 
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(docStringExpression);
+
       builder.replaceRange(TextRange.create(startOffset, endOffset), PyNames.OBJECT);
       Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
-      TemplateManager.getInstance(project).startTemplate(editor, template);
+
+      OpenFileDescriptor descriptor = new OpenFileDescriptor(
+        project,
+        pyFunction.getContainingFile().getVirtualFile(),
+        pyFunction.getTextOffset() + pyFunction.getTextLength()
+      );
+      Editor targetEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+      if (targetEditor != null) {
+        targetEditor.getCaretModel().moveToOffset(textOffSet);
+        TemplateManager.getInstance(project).startTemplate(targetEditor, template);
+      }
     }
   }
 
