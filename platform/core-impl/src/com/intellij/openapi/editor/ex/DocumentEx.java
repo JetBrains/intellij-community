@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,20 @@ public interface DocumentEx extends Document {
   void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener);
 
   void replaceText(@NotNull CharSequence chars, long newModificationStamp);
+
+  /**
+   * Replaces <code>[dstStart; dstEnd)</code> range by the text from the <code>[src start; src end)</code> range.
+   * <p/>
+   * The benefit to use this method over usual {@link #replaceString(int, int, CharSequence)} is that
+   * {@link #createRangeMarker(int, int, boolean) range markers} from the <code>[srcStart; srcEnd)</code> range have
+   * a chance to be preserved.
+   * 
+   * @param srcStart  start offset of the text to copy (inclusive)
+   * @param srcEnd    end offset of the text to copy (exclusive)
+   * @param dstStart  start offset of the range which text should be replaced (inclusive)
+   * @param dstEnd    end offset of the range which text should be replaced (exclusive)
+   */
+  void copyText(int srcStart, int srcEnd, int dstStart, int dstEnd);
 
   int getListenersCount();
 
