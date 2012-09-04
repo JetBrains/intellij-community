@@ -120,7 +120,7 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
 
     String type = "type";
     String name = "";
-    PyCallExpression callExpression = PsiTreeUtil.getParentOfType(elementAt, PyCallExpression.class);
+    PyCallExpression callExpression = PyUtil.findProblemElement(editor, file, PyCallExpression.class);
     PyFunction pyFunction = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
     PyExpression problemElement = PyUtil.findProblemElement(editor, file, PyNamedParameter.class, PyQualifiedExpression.class);
     if (callExpression != null ) {

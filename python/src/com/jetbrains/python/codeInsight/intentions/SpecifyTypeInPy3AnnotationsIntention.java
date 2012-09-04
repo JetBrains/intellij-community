@@ -171,10 +171,12 @@ public class SpecifyTypeInPy3AnnotationsIntention implements IntentionAction {
         }
       }
       else {
-        PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset() - 1);
-        PyCallExpression callExpression = PsiTreeUtil.getParentOfType(elementAt, PyCallExpression.class);
+        int offset = editor.getCaretModel().getOffset();
+        PsiElement elementAt = file.findElementAt(offset - 1);
+
+        PyCallExpression callExpression = PyUtil.findProblemElement(editor, file, PyCallExpression.class);
         if (elementAt != null && !(elementAt.getNode().getElementType() == PyTokenTypes.IDENTIFIER))
-          elementAt = file.findElementAt(editor.getCaretModel().getOffset());
+          elementAt = file.findElementAt(offset);
 
 
         if (callExpression != null) {
