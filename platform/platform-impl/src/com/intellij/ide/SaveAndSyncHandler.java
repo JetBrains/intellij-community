@@ -29,7 +29,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -200,9 +199,7 @@ public class SaveAndSyncHandler implements ApplicationComponent {
 
     if (!files.isEmpty()) {
       // refresh open files synchronously so it doesn't wait for potentially longish refresh request in the queue to finish
-      RefreshSession session = RefreshQueue.getInstance().createSession(false, false, null);
-      session.addAllFiles(files);
-      session.launch();
+      RefreshQueue.getInstance().refresh(false, false, null, files);
     }
   }
   

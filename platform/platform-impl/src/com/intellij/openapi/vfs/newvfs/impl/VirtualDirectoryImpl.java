@@ -28,11 +28,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ArrayUtil;
@@ -102,9 +104,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
     }
     else if (doRefresh && delegate.isDirectory(result) != result.isDirectory()) {
-      final RefreshSession session = RefreshQueue.getInstance().createSession(false, false, null);
-      session.addFile(result);
-      session.launch();
+      RefreshQueue.getInstance().refresh(false, false, null, result);
       result = doFindChild(name, ensureCanonicalName, delegate);
       if (result == NULL_VIRTUAL_FILE) {
         result = createAndFindChildWithEventFire(name);
