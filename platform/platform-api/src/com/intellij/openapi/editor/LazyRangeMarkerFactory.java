@@ -18,6 +18,7 @@ package com.intellij.openapi.editor;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -35,10 +36,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * Date: Mar 17, 2009
- */
 public class LazyRangeMarkerFactory extends AbstractProjectComponent {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.LazyRangeMarkerFactory");
+
   private final ConcurrentMap<VirtualFile,WeakList<LazyMarker>> myMarkers = new ConcurrentWeakHashMap<VirtualFile, WeakList<LazyMarker>>();
 
   public LazyRangeMarkerFactory(@NotNull Project project, @NotNull final FileDocumentManager fileDocumentManager) {
@@ -115,7 +115,7 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
   }
 
   private abstract static class LazyMarker extends UserDataHolderBase implements RangeMarker{
-    private RangeMarker myDelegate = null;
+    private RangeMarker myDelegate;
     private final VirtualFile myFile;
     protected final int myInitialOffset;
 
@@ -133,6 +133,9 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
     public final RangeMarker ensureDelegate() {
       if (myDelegate == null) {
         Document document = FileDocumentManager.getInstance().getDocument(myFile);
+        if (document == null) {
+          LOG.error("Document is null for "+myFile+"; valid:"+myFile.isValid()+"; type:"+myFile.getFileType()+"; marker.isValid():"+isValid());
+        }
         myDelegate = createDelegate(myFile, document);
       }
       return myDelegate;
