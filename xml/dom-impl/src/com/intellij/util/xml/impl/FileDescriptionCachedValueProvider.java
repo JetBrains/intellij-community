@@ -30,7 +30,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.stubs.FileStub;
-import com.intellij.util.xml.stubs.builder.DomStubBuilder;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,7 +116,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
     FileStub stub = null;
     if (description.hasStubs() && file instanceof VirtualFileWithId) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
-      if (!DomStubBuilder.isStubBuilding(myXmlFile)) {
+      if (!XmlUtil.isStubBuilding(myXmlFile)) {
         ObjectStubTree stubTree = StubTreeLoader.getInstance().readOrBuild(myXmlFile.getProject(), file, myXmlFile);
         if (stubTree != null) {
           stub = (FileStub)stubTree.getRoot();

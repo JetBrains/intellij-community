@@ -149,6 +149,7 @@ public class XmlUtil {
   public static final Key<PsiAnchor> ORIGINAL_ELEMENT = Key.create("ORIGINAL_ELEMENT");
 
   public static final String XHTML4_SCHEMA_LOCATION;
+  public final static Key<Boolean> BUILDING_DOM_STUBS = Key.create("building dom stubs...");
 
   private XmlUtil() {
   }
@@ -602,6 +603,10 @@ public class XmlUtil {
       return tagName;
     }
     return tagName.subSequence(pos + 1, tagName.length());
+  }
+
+  public static boolean isStubBuilding(PsiFile file) {
+    return Boolean.TRUE.equals(file.getUserData(BUILDING_DOM_STUBS));
   }
 
   private static class XmlElementProcessor {
