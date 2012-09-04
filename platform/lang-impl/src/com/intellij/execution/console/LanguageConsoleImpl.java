@@ -65,7 +65,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,7 +141,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myUpdateQueue = new MergingUpdateQueue("ConsoleUpdateQueue", 300, true, null);
     Disposer.register(this, myUpdateQueue);
 
-    UiNotifyConnector.doWhenFirstShown(myPanel, new Runnable() {
+    // action shortcuts are not yet registered
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         installEditorFactoryListener();
@@ -610,13 +610,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       }
     };
     myProject.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, fileEditorListener);
-    if (FileEditorManager.getInstance(getProject()).isFileOpen(myVirtualFile)) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          fileEditorListener.fileOpened(FileEditorManager.getInstance(getProject()), myVirtualFile);
-        }
-      });
+    FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
+    if (editorManager.isFileOpen(myVirtualFile)) {
+      fileEditorListener.fileOpened(editorManager, myVirtualFile);
     }
   }
 
