@@ -14,6 +14,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -110,7 +111,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
     Set<String> seenFileNames = new HashSet<String>(); // true import names
 
     PsiFile existingImportFile = addCandidatesFromExistingImports(node, refText, fix, seenFileNames);
-    if (fix.getCandidatesCount() == 0) {
+    if (fix.getCandidatesCount() == 0 || fix.hasProjectImports() || Registry.is("python.import.always.ask")) {
       // maybe some unimported file has it, too
       ProgressManager.checkCanceled(); // before expensive index searches
       addSymbolImportCandidates(node, refText, fix, seenFileNames, existingImportFile);
