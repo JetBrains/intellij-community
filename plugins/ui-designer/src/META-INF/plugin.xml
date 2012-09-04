@@ -126,6 +126,7 @@
 
     <compiler implementation="com.intellij.uiDesigner.make.Form2ByteCodeCompiler"/>
     <compiler implementation="com.intellij.uiDesigner.make.Form2SourceCompiler"/>
+    <compileServer.plugin classpath="jps/ui-designer-jps-plugin.jar"/>
 
     <psi.referenceContributor language="TEXT" implementation="com.intellij.uiDesigner.binding.FormReferenceContributor"/>
 
