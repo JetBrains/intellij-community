@@ -51,7 +51,7 @@ public class SpecifyTypeInPy3AnnotationsIntention implements IntentionAction {
       elementAt = file.findElementAt(editor.getCaretModel().getOffset());
 
     PyCallExpression callExpression = PsiTreeUtil.getParentOfType(elementAt, PyCallExpression.class);
-    if (callExpression != null ) {
+    if (callExpression != null && callExpression.resolveCalleeFunction(PyResolveContext.defaultContext()) != null) {
       PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
       if (assignmentStatement != null) {
         PyType type = assignmentStatement.getAssignedValue().getType(TypeEvalContext.slow());
