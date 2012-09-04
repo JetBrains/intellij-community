@@ -4,7 +4,6 @@ package org.jetbrains.jps
  */
 class Project {
   final CompilerConfiguration compilerConfiguration = new CompilerConfiguration()
-  final IgnoredFilePatterns ignoredFilePatterns = new IgnoredFilePatterns()
 
   def Project() {
   }

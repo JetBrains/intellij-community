@@ -23,4 +23,7 @@ public interface JpsGlobal extends JpsCompositeElement, JpsReferenceableElement<
 
   @NotNull
   JpsLibraryCollection getLibraryCollection();
+
+  @NotNull
+  JpsFileTypesConfiguration getFileTypesConfiguration();
 }

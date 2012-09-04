@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
+import org.jetbrains.jps.incremental.IgnoredFilePatterns;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.ProjectLevelBuilder;
@@ -519,7 +520,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
                                 ? outputFilePath + RELEASE_SUFFIX
                                 : outputFilePath;
 
-      final IgnoredFilePatterns ignoredFilePatterns = context.getProjectDescriptor().project.getIgnoredFilePatterns();
+      final IgnoredFilePatterns ignoredFilePatterns = context.getProjectDescriptor().rootsIndex.getIgnoredFilePatterns();
 
       final Map<AndroidCompilerMessageKind, List<String>> messages = AndroidApt
         .packageResources(target, -1, manifestFile.getPath(), resourceDirPaths, assetsDirPaths, outputPath, null,

@@ -23,17 +23,13 @@ public class JpsModelLoaderImpl implements JpsModelLoader {
   private final String myProjectPath;
   private final String myGlobalOptionsPath;
   private final Map<String, String> myPathVars;
-  private final String myIgnorePatterns;
   private final ParameterizedRunnable<JpsModel> myModelInitializer;
 
-  public JpsModelLoaderImpl(String projectPath,
-                            String globalOptionsPath,
-                            Map<String, String> pathVars,
-                            String ignorePatterns, ParameterizedRunnable<JpsModel> initializer) {
+  public JpsModelLoaderImpl(String projectPath, String globalOptionsPath, Map<String, String> pathVars,
+                            ParameterizedRunnable<JpsModel> initializer) {
     myProjectPath = projectPath;
     myGlobalOptionsPath = globalOptionsPath;
     myPathVars = pathVars;
-    myIgnorePatterns = ignorePatterns;
     myModelInitializer = initializer;
   }
 
@@ -73,7 +69,6 @@ public class JpsModelLoaderImpl implements JpsModelLoader {
 
       final String loadPath = isDirectoryBased(projectFile) ? new File(projectFile, IDEA_PROJECT_DIRNAME).getPath() : myProjectPath;
       IdeaProjectLoader.loadFromPath(project, loadPath, myPathVars, null, new SystemOutErrorReporter(false));
-      project.getIgnoredFilePatterns().loadFromString(myIgnorePatterns);
       return project;
     }
     finally {

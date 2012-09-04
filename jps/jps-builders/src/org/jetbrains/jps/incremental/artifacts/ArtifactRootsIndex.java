@@ -31,7 +31,7 @@ public class ArtifactRootsIndex {
     ArtifactsBuildData data = manager.getArtifactsBuildData();
     for (JpsArtifact artifact : JpsBuilderArtifactService.getInstance().getArtifacts(model, true)) {
       int artifactId = data.getArtifactId(artifact);
-      ArtifactInstructionsBuilderImpl builder = new ArtifactInstructionsBuilderImpl(rootsIndex, project.getIgnoredFilePatterns(), artifactId, artifact.getName());
+      ArtifactInstructionsBuilderImpl builder = new ArtifactInstructionsBuilderImpl(rootsIndex, artifactId, artifact.getName());
       final JpsCompositePackagingElement rootElement = artifact.getRootElement();
       ArtifactInstructionsBuilderContext context = new ArtifactInstructionsBuilderContextImpl(model, rootsIndex, new ProjectPaths(model.getProject()));
       String outputPath = StringUtil.notNullize(artifact.getOutputPath());//todo[nik] implement simplified instructions generation which only collect roots

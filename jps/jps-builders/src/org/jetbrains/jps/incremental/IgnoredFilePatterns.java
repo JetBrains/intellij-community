@@ -1,4 +1,4 @@
-package org.jetbrains.jps;
+package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,8 +16,8 @@ public class IgnoredFilePatterns {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.IgnoredFilePatterns");
   private List<Pattern> myPatterns = new ArrayList<Pattern>();
 
-  public IgnoredFilePatterns() {
-    loadFromString("CVS;SCCS;RCS;rcs;.DS_Store;.svn;.pyc;.pyo;*.pyc;*.pyo;.git;*.hprof;_svn;.hg;*.lib;*~;__pycache__;.bundle;vssver.scc;vssver2.scc;*.rbc;");
+  public IgnoredFilePatterns(final String ignoredPatternString) {
+    loadFromString(ignoredPatternString);
   }
 
   public void loadFromString(String patterns) {

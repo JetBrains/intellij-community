@@ -1,5 +1,6 @@
 package org.jetbrains.jps.model.serialization;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -14,6 +15,7 @@ import java.io.IOException;
  * @author nik
  */
 public abstract class JpsLoaderBase {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.model.serialization.JpsLoaderBase");
   private final JpsMacroExpander myMacroExpander;
 
   protected JpsLoaderBase(JpsMacroExpander macroExpander) {
@@ -35,6 +37,9 @@ public abstract class JpsLoaderBase {
       if (componentTag != null) {
         serializer.loadExtension(element, componentTag);
       }
+    }
+    else {
+      LOG.debug("Cannot load component " + serializer.getComponentName() + ": " + configFile + " doesn't exist");
     }
   }
 

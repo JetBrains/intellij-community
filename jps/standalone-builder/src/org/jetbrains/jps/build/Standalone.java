@@ -94,7 +94,7 @@ public class Standalone {
 
     Map<String, String> pathVars = new HashMap<String, String>();
     pathVars.put("USER_HOME", System.getProperty("user.home"));
-    JpsModelLoaderImpl loader = new JpsModelLoaderImpl(projectPath, globalOptionsPath, pathVars, "", initializer);
+    JpsModelLoaderImpl loader = new JpsModelLoaderImpl(projectPath, globalOptionsPath, pathVars, initializer);
     BuildType buildType = incremental ? BuildType.MAKE : BuildType.PROJECT_REBUILD;
     Set<String> modulesSet = new HashSet<String>(Arrays.asList(modules));
     List<String> artifactsList = Arrays.asList(artifacts);

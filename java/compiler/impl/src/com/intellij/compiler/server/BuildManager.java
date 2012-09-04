@@ -33,7 +33,6 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -579,8 +578,6 @@ public class BuildManager implements ApplicationComponent{
       }
     }
 
-    final String ignoredFilesList = FileTypeManager.getInstance().getIgnoredFilesList();
-    cmdBuilder.setIgnoredFilesPatterns(ignoredFilesList);
     return cmdBuilder.build();
   }
 

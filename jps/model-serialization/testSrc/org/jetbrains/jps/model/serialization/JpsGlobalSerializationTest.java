@@ -42,4 +42,9 @@ public class JpsGlobalSerializationTest extends JpsSerializationTestCase {
     loadGlobalSettings(OPTIONS_DIR);
     assertEquals("windows-1251", JpsEncodingConfigurationService.getInstance().getGlobalEncoding(myModel.getGlobal()));
   }
+
+  public void testLoadIgnoredFiles() {
+    loadGlobalSettings(OPTIONS_DIR);
+    assertEquals("CVS;.svn;", myModel.getGlobal().getFileTypesConfiguration().getIgnoredPatternString());
+  }
 }
