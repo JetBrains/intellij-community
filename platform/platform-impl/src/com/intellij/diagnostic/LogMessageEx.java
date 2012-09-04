@@ -108,7 +108,7 @@ public class LogMessageEx extends LogMessage {
                                              @Nullable final String title,
                                              @Nullable final String notificationText,
                                              final Collection<Attachment> attachments) {
-    return new IdeaLoggingEvent(userMessage, new Throwable() {
+    final Throwable throwable = new Throwable() {
       @Override
       public void printStackTrace(PrintWriter s) {
         s.print(details);
@@ -118,7 +118,9 @@ public class LogMessageEx extends LogMessage {
       public void printStackTrace(PrintStream s) {
         s.print(details);
       }
-    }) {
+    };
+
+    return new IdeaLoggingEvent(userMessage, throwable) {
       @Override
       public Object getData() {
         final LogMessageEx logMessageEx = new LogMessageEx(this, title != null ? title : userMessage, notificationText);
@@ -131,6 +133,13 @@ public class LogMessageEx extends LogMessage {
   }
 
   public static void error(@NotNull Logger logger, @NotNull String message, @NotNull String... attachmentText) {
+    error(logger, message, new Throwable(), attachmentText);
+  }
+
+  public static void error(@NotNull Logger logger,
+                           @NotNull String message,
+                           @NotNull Throwable cause,
+                           @NotNull String... attachmentText) {
     StringBuilder detailsBuffer = new StringBuilder();
     for (String detail : attachmentText) {
       detailsBuffer.append(detail).append(",");
@@ -139,9 +148,9 @@ public class LogMessageEx extends LogMessage {
       detailsBuffer.setLength(detailsBuffer.length() - 1);
     }
     Attachment attachment = detailsBuffer.length() > 0 ? new Attachment("current-context.txt", detailsBuffer.toString()) : null;
-    logger.error(createEvent(message, ExceptionUtil.getThrowableText(new Throwable()), null, null, attachment));
+    logger.error(createEvent(message, ExceptionUtil.getThrowableText(cause), null, null, attachment));
   }
-  
+
   /**
    * @param userMessage      user-friendly message description (short, single line if possible)
    * @param details          technical details (exception stack trace etc.)
