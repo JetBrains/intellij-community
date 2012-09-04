@@ -1,6 +1,6 @@
 package com.intellij.execution.testframework.autotest;
 
-import com.intellij.execution.AutoExecutor;
+import com.intellij.execution.DelayedDocumentWatcher;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
@@ -20,18 +20,17 @@ import java.util.Collection;
  * @author yole
  */
 public class AutoTestManager {
-  private final AutoExecutor myAutoExecutor;
-
   private static final int AUTOTEST_DELAY = 10000;
+
+  private final DelayedDocumentWatcher myDocumentWatcher;
+  private final Collection<Content> myEnabledDescriptors = new WeakList<Content>();
 
   public static AutoTestManager getInstance(Project project) {
     return ServiceManager.getService(project, AutoTestManager.class);
   }
 
-  private final Collection<Content> myEnabledDescriptors = new WeakList<Content>();
-
   public AutoTestManager(Project project) {
-    myAutoExecutor = new AutoExecutor(project, new Alarm(Alarm.ThreadToUse.SWING_THREAD, project), AUTOTEST_DELAY, new Consumer<VirtualFile[]>() {
+    myDocumentWatcher = new DelayedDocumentWatcher(project, new Alarm(Alarm.ThreadToUse.SWING_THREAD, project), AUTOTEST_DELAY, new Consumer<VirtualFile[]>() {
       @Override
       public void consume(VirtualFile[] files) {
         for (Content content : myEnabledDescriptors) {
@@ -42,7 +41,7 @@ public class AutoTestManager {
       @Override
       public boolean value(VirtualFile file) {
         // Vladimir.Krivosheev — I don't know, why AutoTestManager checks it, but old behavior is preserved
-        return FileEditorManager.getInstance(myAutoExecutor.getProject()).isFileOpen(file);
+        return FileEditorManager.getInstance(myDocumentWatcher.getProject()).isFileOpen(file);
       }
     });
   }
@@ -53,12 +52,12 @@ public class AutoTestManager {
       if (!myEnabledDescriptors.contains(content)) {
         myEnabledDescriptors.add(content);
       }
-      myAutoExecutor.activate();
+      myDocumentWatcher.activate();
     }
     else {
       myEnabledDescriptors.remove(content);
       if (myEnabledDescriptors.isEmpty()) {
-        myAutoExecutor.deactivate();
+        myDocumentWatcher.deactivate();
       }
     }
   }
