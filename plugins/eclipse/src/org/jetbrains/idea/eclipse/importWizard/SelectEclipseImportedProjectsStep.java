@@ -36,7 +36,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<String> {
-  private static final Icon ICON_CONFLICT = AllIcons.Actions.Cancel;
 
   Set<String> duplicateNames;
 
@@ -81,7 +80,7 @@ class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<Strin
 
   @Nullable
   protected Icon getElementIcon(final String item) {
-    return isInConflict(item) ? ICON_CONFLICT : null;
+    return isInConflict(item) ? AllIcons.Actions.Cancel : null;
   }
 
   public void updateStep() {

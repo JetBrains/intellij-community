@@ -22,9 +22,9 @@ import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.util.ProcessingContext;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
@@ -101,7 +101,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
         lookup.withItemTextForeground(DefaultHighlighter.MAP_KEY_COLOR);
       }
       else {
-        lookup = lookup.withIcon(GroovyIcons.DYNAMIC);
+        lookup = lookup.withIcon(JetgroovyIcons.Groovy.DynamicProperty);
       }
       
       result.addElement(lookup);

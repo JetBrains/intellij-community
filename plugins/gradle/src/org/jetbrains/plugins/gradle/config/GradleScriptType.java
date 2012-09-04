@@ -38,7 +38,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.NonClasspathDirectoryScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.ui.GradleIcons;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
@@ -80,7 +79,7 @@ public class GradleScriptType extends GroovyScriptType {
   @NotNull
   @Override
   public Icon getScriptIcon() {
-    return GradleIcons.GRADLE_ICON;
+    return icons.GradleIcons.Gradle;
   }
 
   @Override
@@ -162,7 +161,7 @@ public class GradleScriptType extends GroovyScriptType {
           int result = Messages.showOkCancelDialog(
             GradleBundle.message("gradle.run.no.sdk.text"),
             GradleBundle.message("gradle.run.no.sdk.title"),
-            GradleIcons.GRADLE_ICON
+            icons.GradleIcons.Gradle
           );
           if (result == 0) {
             ShowSettingsUtil.getInstance().editConfigurable(project, new GradleConfigurable(project));

@@ -4,10 +4,10 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiElement;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.mvc.MvcIcons;
 
 /**
  * @author Dmitry Krasilschikov
@@ -27,7 +27,7 @@ public class DomainClassNode extends ClassNode {
   @Override
   protected void updateImpl(final PresentationData data) {
     super.updateImpl(data);
-    data.setIcon(MvcIcons.DOMAIN_CLASS);
+    data.setIcon(JetgroovyIcons.Mvc.Domain_class);
   }
 
   @Override

@@ -34,10 +34,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
@@ -49,22 +49,23 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
   public static final String GROOVY_ANNOTATION = "GroovyAnnotation.groovy";
 
   public NewGroovyClassAction() {
-    super(GroovyBundle.message("newclass.menu.action.text"), GroovyBundle.message("newclass.menu.action.description"), GroovyIcons.CLASS, true);
+    super(GroovyBundle.message("newclass.menu.action.text"), GroovyBundle.message("newclass.menu.action.description"),
+          JetgroovyIcons.Groovy.Class, true);
   }
 
   @Override
   protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(GroovyBundle.message("newclass.dlg.title"))
-      .addKind("Class", GroovyIcons.CLASS, GROOVY_CLASS)
-      .addKind("Interface", GroovyIcons.INTERFACE, GROOVY_INTERFACE)
-      .addKind("Enum", GroovyIcons.ENUM, GROOVY_ENUM)
-      .addKind("Annotation", GroovyIcons.ANNOTATION_TYPE, GROOVY_ANNOTATION);
+      .addKind("Class", JetgroovyIcons.Groovy.Class, GROOVY_CLASS)
+      .addKind("Interface", JetgroovyIcons.Groovy.Interface, GROOVY_INTERFACE)
+      .addKind("Enum", JetgroovyIcons.Groovy.Enum, GROOVY_ENUM)
+      .addKind("Annotation", JetgroovyIcons.Groovy.AnnotationType, GROOVY_ANNOTATION);
 
     for (FileTemplate template : FileTemplateManager.getInstance().getAllTemplates()) {
       FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
       if (fileType.equals(GroovyFileType.GROOVY_FILE_TYPE) && JavaDirectoryService.getInstance().getPackage(directory) != null) {
-        builder.addKind(template.getName(), GroovyIcons.CLASS, template.getName());
+        builder.addKind(template.getName(), JetgroovyIcons.Groovy.Class, template.getName());
       }
     }
   }

@@ -37,7 +37,6 @@ import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
-import org.jetbrains.idea.maven.utils.MavenIcons;
 import org.jetbrains.idea.maven.utils.MavenPluginInfo;
 import org.jetbrains.idea.maven.utils.Strings;
 
@@ -112,7 +111,7 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
 
             cachedElements = new ArrayList<LookupElement>(goals.size());
             for (String goal : goals) {
-              cachedElements.add(LookupElementBuilder.create(goal).withIcon(MavenIcons.PHASE_ICON));
+              cachedElements.add(LookupElementBuilder.create(goal).withIcon(icons.MavenIcons.Phase));
             }
 
             myCachedElements = cachedElements;

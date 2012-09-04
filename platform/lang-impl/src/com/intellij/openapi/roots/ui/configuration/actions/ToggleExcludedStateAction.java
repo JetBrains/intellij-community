@@ -16,13 +16,13 @@
 
 package com.intellij.openapi.roots.ui.configuration.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryEditor;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryTreeEditor;
-import com.intellij.openapi.roots.ui.configuration.IconSet;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
@@ -40,7 +40,7 @@ public class ToggleExcludedStateAction extends ContentEntryEditingAction {
     final Presentation templatePresentation = getTemplatePresentation();
     templatePresentation.setText(ProjectBundle.message("module.toggle.excluded.action"));
     templatePresentation.setDescription(ProjectBundle.message("module.toggle.excluded.action.description"));
-    templatePresentation.setIcon(IconSet.EXCLUDE_FOLDER);
+    templatePresentation.setIcon(AllIcons.Modules.ExcludeRoot);
   }
 
   @Override

@@ -41,10 +41,6 @@ public class ThumbnailComponentUI extends ComponentUI {
     @NonNls
     private static final String THUMBNAIL_COMPONENT_ERROR_STRING = "ThumbnailComponent.errorString";
 
-    private static final Icon BLANK_ICON = ImagesIcons.ThumbnailBlank;
-    private static final Icon DIRECTORY_ICON = ImagesIcons.ThumbnailDirectory;
-    private static final Icon ERROR_ICON = Messages.getErrorIcon();
-
     private static final Color LINE_COLOR = new Color(0x8E, 0xA8, 0xCE);
     private static final Color PNG_COLOR = new Color(0x80, 0x00, 0x80);
     private static final Color GIF_COLOR = new Color(0x00, 0x80, 0x00);
@@ -77,7 +73,7 @@ public class ThumbnailComponentUI extends ComponentUI {
 
     private void paintDirectory(Graphics g, ThumbnailComponent tc) {
         // Paint directory icon
-        DIRECTORY_ICON.paintIcon(tc, g, 5, 5);
+        ImagesIcons.ThumbnailDirectory.paintIcon(tc, g, 5, 5);
 
         int imagesCount = tc.getImagesCount();
         if (imagesCount > 0) {
@@ -87,13 +83,14 @@ public class ThumbnailComponentUI extends ComponentUI {
             FontMetrics fontMetrics = g.getFontMetrics(font);
             g.setColor(Color.BLACK);
             g.setFont(font);
-            g.drawString(title, 5 + (DIRECTORY_ICON.getIconWidth() - fontMetrics.stringWidth(title)) / 2, DIRECTORY_ICON.getIconHeight() / 2 + fontMetrics.getAscent());
+            g.drawString(title, 5 + (ImagesIcons.ThumbnailDirectory.getIconWidth() - fontMetrics.stringWidth(title)) / 2, ImagesIcons.ThumbnailDirectory
+                                                                                                                            .getIconHeight() / 2 + fontMetrics.getAscent());
         }
     }
 
     private void paintImageThumbnail(Graphics g, ThumbnailComponent tc) {
         // Paint blank
-        BLANK_ICON.paintIcon(tc, g, 5, 5);
+        ImagesIcons.ThumbnailBlank.paintIcon(tc, g, 5, 5);
 
         ImageComponent imageComponent = tc.getImageComponent();
         ImageDocument document = imageComponent.getDocument();
@@ -117,7 +114,7 @@ public class ThumbnailComponentUI extends ComponentUI {
         ImageComponent imageComponent = tc.getImageComponent();
         BufferedImage image = imageComponent.getDocument().getValue();
 
-        int blankHeight = BLANK_ICON.getIconHeight();
+        int blankHeight = ImagesIcons.ThumbnailBlank.getIconHeight();
 
         // Paint image info (and reduce height of text from available height)
         blankHeight -= paintImageCaps(g, image);
@@ -146,8 +143,8 @@ public class ThumbnailComponentUI extends ComponentUI {
 
         String format = tc.getFormat().toUpperCase();
         int stringWidth = fontMetrics.stringWidth(format);
-        int x = BLANK_ICON.getIconWidth() - stringWidth + 2;
-        int y = BLANK_ICON.getIconHeight() - fontMetrics.getHeight() + 4;
+        int x = ImagesIcons.ThumbnailBlank.getIconWidth() - stringWidth + 2;
+        int y = ImagesIcons.ThumbnailBlank.getIconHeight() - fontMetrics.getHeight() + 4;
         g.setColor(LINE_COLOR);
         g.drawLine(x - 3, y - 1, x + stringWidth + 1, y - 1);
         g.drawLine(x - 4, y, x - 4, y + fontMetrics.getHeight() - 1);
@@ -178,7 +175,7 @@ public class ThumbnailComponentUI extends ComponentUI {
     private void paintThumbnail(Graphics g, ImageComponent imageComponent, int blankHeight) {
 
         // Zoom image by available size
-        int maxWidth = BLANK_ICON.getIconWidth() - 10;
+        int maxWidth = ImagesIcons.ThumbnailBlank.getIconWidth() - 10;
         int maxHeight = blankHeight - 10;
 
         BufferedImage image = imageComponent.getDocument().getValue();
@@ -201,8 +198,8 @@ public class ThumbnailComponentUI extends ComponentUI {
         imageComponent.setCanvasSize(imageWidth, imageHeight);
         Dimension size = imageComponent.getSize();
 
-        int x = 5 + (BLANK_ICON.getIconWidth() - size.width) / 2;
-        int y = 5 + (BLANK_ICON.getIconHeight() - size.height) / 2;
+        int x = 5 + (ImagesIcons.ThumbnailBlank.getIconWidth() - size.width) / 2;
+        int y = 5 + (ImagesIcons.ThumbnailBlank.getIconHeight() - size.height) / 2;
 
 
         imageComponent.paint(g.create(x, y, size.width, size.height));
@@ -217,19 +214,20 @@ public class ThumbnailComponentUI extends ComponentUI {
 
         String fileName = tc.getFileName();
         String title = fileName;
-        while (fontMetrics.stringWidth(title) > BLANK_ICON.getIconWidth() - 8) {
+        while (fontMetrics.stringWidth(title) > ImagesIcons.ThumbnailBlank.getIconWidth() - 8) {
             title = title.substring(0, title.length() - 1);
         }
 
         if (fileName.equals(title)) {
             // Center
-            g.drawString(fileName, 6 + (BLANK_ICON.getIconWidth() - 2 - fontMetrics.stringWidth(title)) / 2, BLANK_ICON.getIconHeight() + 8 + fontMetrics.getAscent());
+            g.drawString(fileName, 6 + (ImagesIcons.ThumbnailBlank.getIconWidth() - 2 - fontMetrics.stringWidth(title)) / 2, ImagesIcons.ThumbnailBlank
+                                                                                                                               .getIconHeight() + 8 + fontMetrics.getAscent());
         } else {
             int dotsWidth = fontMetrics.stringWidth(DOTS);
-            while (fontMetrics.stringWidth(title) > BLANK_ICON.getIconWidth() - 8 - dotsWidth) {
+            while (fontMetrics.stringWidth(title) > ImagesIcons.ThumbnailBlank.getIconWidth() - 8 - dotsWidth) {
                 title = title.substring(0, title.length() - 1);
             }
-            g.drawString(title + DOTS, 6, BLANK_ICON.getIconHeight() + 8 + fontMetrics.getAscent());
+            g.drawString(title + DOTS, 6, ImagesIcons.ThumbnailBlank.getIconHeight() + 8 + fontMetrics.getAscent());
         }
     }
 
@@ -241,7 +239,7 @@ public class ThumbnailComponentUI extends ComponentUI {
         g.drawString(
                 tc.getFileSizeText(),
                 8,
-                BLANK_ICON.getIconHeight() + 4 - fontMetrics.getHeight() + fontMetrics.getAscent()
+                ImagesIcons.ThumbnailBlank.getIconHeight() + 4 - fontMetrics.getHeight() + fontMetrics.getAscent()
         );
     }
 
@@ -249,11 +247,11 @@ public class ThumbnailComponentUI extends ComponentUI {
         Font font = getSmallFont();
         FontMetrics fontMetrics = g.getFontMetrics(font);
 
-        ERROR_ICON.paintIcon(
-                tc,
-                g,
-                5 + (BLANK_ICON.getIconWidth() - ERROR_ICON.getIconWidth()) / 2,
-                5 + (BLANK_ICON.getIconHeight() - ERROR_ICON.getIconHeight()) / 2
+        Messages.getErrorIcon().paintIcon(
+          tc,
+          g,
+          5 + (ImagesIcons.ThumbnailBlank.getIconWidth() - Messages.getErrorIcon().getIconWidth()) / 2,
+          5 + (ImagesIcons.ThumbnailBlank.getIconHeight() - Messages.getErrorIcon().getIconHeight()) / 2
         );
 
         // Error
@@ -276,8 +274,8 @@ public class ThumbnailComponentUI extends ComponentUI {
         Font labelFont = UIUtil.getLabelFont();
         FontMetrics fontMetrics = c.getFontMetrics(labelFont);
         return new Dimension(
-                BLANK_ICON.getIconWidth() + 10,
-                BLANK_ICON.getIconHeight() + fontMetrics.getHeight() + 15
+                ImagesIcons.ThumbnailBlank.getIconWidth() + 10,
+                ImagesIcons.ThumbnailBlank.getIconHeight() + fontMetrics.getHeight() + 15
         );
     }
 

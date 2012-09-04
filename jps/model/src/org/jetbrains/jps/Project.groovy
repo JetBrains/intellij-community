@@ -6,9 +6,6 @@ class Project {
   final CompilerConfiguration compilerConfiguration = new CompilerConfiguration()
   final IgnoredFilePatterns ignoredFilePatterns = new IgnoredFilePatterns()
 
-  String projectCharset; // contains project charset, if not specified default charset will be used (used by compilers)
-  Map<String, String> filePathToCharset = [:];
-
   def Project() {
   }
 

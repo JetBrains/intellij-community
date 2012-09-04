@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProviderBase;
@@ -48,7 +49,7 @@ public class GantLibraryPresentationProvider extends GroovyLibraryPresentationPr
 
   @NotNull
   public Icon getIcon() {
-    return GantIcons.GANT_SDK_ICON;
+    return JetgroovyIcons.Groovy.Gant_sdk;
   }
 
   @Override

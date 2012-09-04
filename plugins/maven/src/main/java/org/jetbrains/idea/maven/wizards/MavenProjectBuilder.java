@@ -65,7 +65,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   }
 
   public Icon getIcon() {
-    return MavenIcons.MAVEN_ICON;
+    return icons.MavenIcons.MavenLogo;
   }
 
   public void cleanup() {

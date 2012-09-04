@@ -36,10 +36,10 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PairFunction;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -106,7 +106,7 @@ public class MethodOrClosureScopeChooser {
         }
         else {
           LOG.assertTrue(value instanceof GrClosableBlock);
-          setIcon(GroovyIcons.GROOVY_ICON_16x16);
+          setIcon(JetgroovyIcons.Groovy.Groovy_16x16);
           text = "{...}";
         }
         setText(text);

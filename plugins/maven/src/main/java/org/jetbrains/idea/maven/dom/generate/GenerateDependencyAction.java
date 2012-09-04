@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom.generate;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -32,7 +33,6 @@ import org.jetbrains.idea.maven.indices.MavenArtifactSearchDialog;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenIcons;
 
 import java.util.List;
 
@@ -61,7 +61,7 @@ public class GenerateDependencyAction extends GenerateDomElementAction {
             }
           }.execute().getResultObject();
         }
-      }, MavenIcons.DEPENDENCY_ICON);
+      }, AllIcons.Nodes.PpLib);
   }
 
   @Override

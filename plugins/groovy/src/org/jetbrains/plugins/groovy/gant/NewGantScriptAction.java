@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
@@ -34,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 public class NewGantScriptAction extends NewGroovyActionBase {
 
   public NewGantScriptAction() {
-    super("Gant Script", "Create new Gant Script", GantIcons.GANT_ICON_16x16);
+    super("Gant Script", "Create new Gant Script", JetgroovyIcons.Groovy.Gant_16x16);
   }
 
   protected String getActionName(PsiDirectory directory, String newName) {

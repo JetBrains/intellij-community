@@ -66,7 +66,6 @@ final class BuildSession implements Runnable, CanceledStatus {
     for (CmdlineRemoteProto.Message.KeyValuePair variable : globals.getPathVariableList()) {
       pathVars.put(variable.getKey(), variable.getValue());
     }
-    String globalEncoding = globals.hasGlobalEncoding() ? globals.getGlobalEncoding() : null;
     String ignorePatterns = globals.hasIgnoredFilesPatterns() ? globals.getIgnoredFilesPatterns() : null;
 
     // session params
@@ -81,7 +80,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       builderParams.put(pair.getKey(), pair.getValue());
     }
     myInitialFSDelta = delta;
-    JpsModelLoaderImpl loader = new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, pathVars, globalEncoding, ignorePatterns, null);
+    JpsModelLoaderImpl loader = new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, pathVars, ignorePatterns, null);
     myBuildRunner = new BuildRunner(loader, modules, artifacts, filePaths, builderParams);
   }
 

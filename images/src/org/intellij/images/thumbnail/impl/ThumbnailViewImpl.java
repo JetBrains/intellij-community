@@ -37,7 +37,6 @@ import javax.swing.*;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ThumbnailViewImpl implements ThumbnailView {
-  private static final Icon TOOL_WINDOW_ICON = ImagesIcons.ThumbnailToolWindow;
 
   private final Project project;
   private final ToolWindow toolWindow;
@@ -52,7 +51,7 @@ final class ThumbnailViewImpl implements ThumbnailView {
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
     myThubmnailViewUi = new ThumbnailViewUI(this);
     toolWindow = windowManager.registerToolWindow(TOOLWINDOW_ID, myThubmnailViewUi, ToolWindowAnchor.BOTTOM);
-    toolWindow.setIcon(TOOL_WINDOW_ICON);
+    toolWindow.setIcon(ImagesIcons.ThumbnailToolWindow);
     setVisible(false);
   }
 

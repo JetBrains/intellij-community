@@ -46,7 +46,6 @@ import java.util.Collections;
 import java.util.List;
 
 class AssociationsEditor {
-  private static final Icon LINK_OVERLAY = XpathIcons.Association_small;
   @NonNls private static final String DIVIDER_PROPORTION = "dividerProportion";
 
   private JPanel myComponent;
@@ -387,7 +386,7 @@ class AssociationsEditor {
       public MyNodeDescriptor(NodeDescriptor<PsiFileNode> nodeDescriptor) {
         super(nodeDescriptor.getProject(), null);
         myName = nodeDescriptor.toString();
-        setIcon(LayeredIcon.create(nodeDescriptor.getIcon(), LINK_OVERLAY));
+        setIcon(LayeredIcon.create(nodeDescriptor.getIcon(), XpathIcons.Association_small));
         myColor = nodeDescriptor.getColor();
         myNode = nodeDescriptor.getElement();
       }

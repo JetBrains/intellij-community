@@ -17,8 +17,8 @@ package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
@@ -96,7 +96,7 @@ public abstract class GroovyScriptTypeDetector {
     @NotNull
     @Override
     public Icon getScriptIcon() {
-      return GroovyIcons.GROOVY_ICON_16x16;
+      return JetgroovyIcons.Groovy.Groovy_16x16;
     }
 
     @Override

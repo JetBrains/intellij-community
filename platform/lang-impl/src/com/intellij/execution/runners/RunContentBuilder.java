@@ -15,7 +15,9 @@
  */
 package com.intellij.execution.runners;
 
-import com.intellij.diagnostic.logging.*;
+import com.intellij.diagnostic.logging.LogConsoleManagerBase;
+import com.intellij.diagnostic.logging.LogFilesManager;
+import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
@@ -31,21 +33,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManagerAdapter;
-import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author dyoma
@@ -55,7 +50,6 @@ public class RunContentBuilder extends LogConsoleManagerBase {
 
   private final ProgramRunner myRunner;
   private final ArrayList<AnAction> myRunnerActions = new ArrayList<AnAction>();
-  private final Icon myRerunIcon = AllIcons.Actions.RefreshUsages;
   private final boolean myReuseProhibited = false;
   private ExecutionResult myExecutionResult;
 
@@ -161,7 +155,7 @@ public class RunContentBuilder extends LogConsoleManagerBase {
   private ActionGroup createActionToolbar(final RunContentDescriptor contentDescriptor, final JComponent component) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
 
-    final RestartAction restartAction = new RestartAction(myExecutor, myRunner, getProcessHandler(), myRerunIcon, contentDescriptor, getEnvironment());
+    final RestartAction restartAction = new RestartAction(myExecutor, myRunner, getProcessHandler(), AllIcons.Actions.RefreshUsages, contentDescriptor, getEnvironment());
     restartAction.registerShortcut(component);
     actionGroup.add(restartAction);
     contentDescriptor.setRestarter(new Runnable() {

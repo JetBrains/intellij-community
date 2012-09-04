@@ -26,9 +26,9 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
@@ -258,11 +258,11 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   @Nullable
   public Icon getIcon(int flags) {
-    Icon superIcon = GroovyIcons.FIELD;
+    Icon superIcon = JetgroovyIcons.Groovy.Field;
     if (!isProperty()) return superIcon;
     LayeredIcon rowIcon = new LayeredIcon(2);
     rowIcon.setIcon(superIcon, 0);
-    rowIcon.setIcon(GroovyIcons.DEF, 1);
+    rowIcon.setIcon(JetgroovyIcons.Groovy.Def, 1);
     return rowIcon;
   }
 

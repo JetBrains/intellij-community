@@ -28,7 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.hash.LinkedHashMap;
-import org.jetbrains.plugins.groovy.GroovyIcons;
+import icons.JetgroovyIcons;
 import org.jetbrains.plugins.groovy.mvc.projectView.*;
 
 import javax.swing.*;
@@ -62,12 +62,12 @@ public class GriffonToolWindowFactory extends MvcToolWindowDescriptor {
     // add standard source folder
     final PsiDirectory srcMain = findDirectory(project, root, "src/main");
     if (srcMain != null) {
-      result.add(new TopLevelDirectoryNode(module, srcMain, viewSettings, "Project Sources", GroovyIcons.GROOVY_ICON_16x16,
+      result.add(new TopLevelDirectoryNode(module, srcMain, viewSettings, "Project Sources", JetgroovyIcons.Groovy.Groovy_16x16,
                                            AbstractMvcPsiNodeDescriptor.SRC_FOLDERS));
     }
     final PsiDirectory srcCli = findDirectory(project, root, "src/cli");
     if (srcCli != null) {
-      result.add(new TopLevelDirectoryNode(module, srcCli, viewSettings, "Build Sources", GroovyIcons.GROOVY_ICON_16x16,
+      result.add(new TopLevelDirectoryNode(module, srcCli, viewSettings, "Build Sources", JetgroovyIcons.Groovy.Groovy_16x16,
                                            AbstractMvcPsiNodeDescriptor.SRC_FOLDERS));
     }
 
@@ -112,7 +112,7 @@ public class GriffonToolWindowFactory extends MvcToolWindowDescriptor {
 
   @Override
   public Icon getModuleNodeIcon() {
-    return GriffonFramework.GRIFFON_ICON;
+    return JetgroovyIcons.Griffon.Griffon;
   }
 
   private static final Map<String, GriffonDirectoryMetadata> DIRECTORY_METADATA = new LinkedHashMap<String, GriffonDirectoryMetadata>();

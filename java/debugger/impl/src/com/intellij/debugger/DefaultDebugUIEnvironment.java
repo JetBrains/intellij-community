@@ -28,11 +28,11 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.actionSystem.Constraints;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -109,7 +109,7 @@ public class DefaultDebugUIEnvironment implements DebugUIEnvironment {
     RestartAction restartAction = new RestartAction(myExecutor,
                                                     myRunner,
                                                     processHandler,
-                                                    XDebuggerUIConstants.DEBUG_AGAIN_ICON,
+                                                    AllIcons.Actions.StartDebugger,
                                                     content,
                                                     myExecutionEnvironment);
     actionGroup.add(restartAction, Constraints.FIRST);

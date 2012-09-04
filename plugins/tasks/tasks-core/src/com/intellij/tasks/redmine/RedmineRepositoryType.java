@@ -14,7 +14,6 @@ import javax.swing.*;
  * @author Dennis.Ushakov
  */
 public class RedmineRepositoryType extends BaseRepositoryType<RedmineRepository> {
-  static final Icon ICON = TasksCoreIcons.Redmine;
 
   @NotNull
   @Override
@@ -24,7 +23,7 @@ public class RedmineRepositoryType extends BaseRepositoryType<RedmineRepository>
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return TasksCoreIcons.Redmine;
   }
 
   @NotNull

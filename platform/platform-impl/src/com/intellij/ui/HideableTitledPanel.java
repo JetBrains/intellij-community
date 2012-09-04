@@ -5,14 +5,15 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author evgeny zakrevsky
  */
 public class HideableTitledPanel extends JPanel {
-  private final static Icon OFF_ICON = AllIcons.General.ComboArrowRight;
-  private final static Icon ON_ICON = AllIcons.General.ComboArrowDown;
 
   private TitledSeparatorWithMnemonic myTitledSeparator;
   private boolean myOn;
@@ -62,7 +63,7 @@ public class HideableTitledPanel extends JPanel {
 
   protected void on() {
     myOn = true;
-    myTitledSeparator.getLabel().setIcon(ON_ICON);
+    myTitledSeparator.getLabel().setIcon(AllIcons.General.ComboArrowDown);
     myTitledSeparator.getLabel().setIconTextGap(5);
     myContent.setVisible(true);
     adjustWindow();
@@ -72,8 +73,8 @@ public class HideableTitledPanel extends JPanel {
 
   protected void off() {
     myOn = false;
-    myTitledSeparator.getLabel().setIcon(OFF_ICON);
-    myTitledSeparator.getLabel().setIconTextGap(5 + ON_ICON.getIconWidth() - OFF_ICON.getIconWidth());
+    myTitledSeparator.getLabel().setIcon(AllIcons.General.ComboArrowRight);
+    myTitledSeparator.getLabel().setIconTextGap(5 + AllIcons.General.ComboArrowDown.getIconWidth() - AllIcons.General.ComboArrowRight.getIconWidth());
     myContent.setVisible(false);
     myPreviousContentSize = myContent.getSize();
     adjustWindow();

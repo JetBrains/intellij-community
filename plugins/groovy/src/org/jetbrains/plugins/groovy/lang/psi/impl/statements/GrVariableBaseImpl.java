@@ -29,10 +29,10 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -293,7 +293,7 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
 
   @Nullable
   public Icon getIcon(int flags) {
-    return GroovyIcons.VARIABLE;
+    return JetgroovyIcons.Groovy.Variable;
   }
 
   public PsiType getTypeNoResolve() {

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.navigator;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -494,7 +495,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     public ProjectsGroupNode(MavenSimpleNode parent) {
       super(parent);
-      setUniformIcon(MavenIcons.CLOSED_MODULES_ICON);
+      setUniformIcon(icons.MavenIcons.ModulesClosed);
     }
 
     @Override
@@ -555,7 +556,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     public ProfilesNode(MavenSimpleNode parent) {
       super(parent);
-      setUniformIcon(MavenIcons.CLOSED_PROFILES_ICON);
+      setUniformIcon(icons.MavenIcons.ProfilesClosed);
     }
 
     protected List<? extends MavenSimpleNode> doGetChildren() {
@@ -641,7 +642,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       myDependenciesNode = new DependenciesNode(this, mavenProject);
       myModulesNode = new ModulesNode(this);
 
-      setUniformIcon(MavenIcons.MAVEN_PROJECT_ICON);
+      setUniformIcon(icons.MavenIcons.MavenProject);
       updateProject();
     }
 
@@ -791,7 +792,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   public class ModulesNode extends ProjectsGroupNode {
     public ModulesNode(ProjectNode parent) {
       super(parent);
-      setUniformIcon(MavenIcons.CLOSED_MODULES_ICON);
+      setUniformIcon(icons.MavenIcons.ModulesClosed);
     }
 
     @Override
@@ -822,7 +823,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       myMavenProject = findParent(ProjectNode.class).getMavenProject();
       myGoal = goal;
       myDisplayName = displayName;
-      setUniformIcon(MavenIcons.PHASE_ICON);
+      setUniformIcon(icons.MavenIcons.Phase);
     }
 
     public String getProjectPath() {
@@ -886,7 +887,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       for (String goal : PHASES) {
         myGoalNodes.add(new StandardGoalNode(this, goal));
       }
-      setUniformIcon(MavenIcons.CLOSED_PHASES_ICON);
+      setUniformIcon(icons.MavenIcons.PhasesClosed);
     }
 
     @Override
@@ -916,7 +917,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     public PluginsNode(ProjectNode parent) {
       super(parent);
-      setUniformIcon(MavenIcons.CLOSED_PLUGINS_ICON);
+      setUniformIcon(icons.MavenIcons.PhasesClosed);
     }
 
     @Override
@@ -966,7 +967,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       super(parent);
       myPlugin = plugin;
 
-      setUniformIcon(MavenIcons.PLUGIN_ICON);
+      setUniformIcon(icons.MavenIcons.MavenPlugin);
       updatePlugin();
     }
 
@@ -1017,7 +1018,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   public class PluginGoalNode extends GoalNode {
     public PluginGoalNode(PluginNode parent, String goal, String displayName) {
       super(parent, goal, displayName);
-      setUniformIcon(MavenIcons.PLUGIN_GOAL_ICON);
+      setUniformIcon(icons.MavenIcons.PluginGoal);
     }
   }
 
@@ -1069,7 +1070,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   public class DependenciesNode extends BaseDependenciesNode {
     public DependenciesNode(ProjectNode parent, MavenProject mavenProject) {
       super(parent, mavenProject);
-      setUniformIcon(MavenIcons.CLOSED_DEPENDENCIES_ICON);
+      setUniformIcon(AllIcons.Nodes.PpLibFolder);
     }
 
     @Override
@@ -1090,7 +1091,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       super(parent, mavenProject);
       myArtifactNode = artifactNode;
       myArtifact = artifactNode.getArtifact();
-      setUniformIcon(MavenIcons.DEPENDENCY_ICON);
+      setUniformIcon(AllIcons.Nodes.PpLib);
     }
 
     public MavenArtifact getArtifact() {

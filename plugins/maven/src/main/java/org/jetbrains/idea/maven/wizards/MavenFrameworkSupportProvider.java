@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenIcons;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -90,6 +89,6 @@ public class MavenFrameworkSupportProvider extends FrameworkSupportProvider {
 
   @Override
   public Icon getIcon() {
-    return MavenIcons.MAVEN_ICON;
+    return icons.MavenIcons.MavenLogo;
   }
 }

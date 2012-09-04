@@ -27,7 +27,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.utils.MavenIcons;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import javax.swing.*;
@@ -316,7 +315,7 @@ public class MavenArtifactSearchPanel extends JPanel {
 
     protected void formatSearchResult(JTree tree, MavenArtifactSearchResult searchResult, boolean selected) {
       MavenArtifactInfo info = searchResult.versions.get(0);
-      myLeftComponent.setIcon(MavenIcons.DEPENDENCY_ICON);
+      myLeftComponent.setIcon(AllIcons.Nodes.PpLib);
       appendArtifactInfo(myLeftComponent, info, selected);
     }
 

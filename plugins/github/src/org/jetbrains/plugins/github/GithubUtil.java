@@ -33,12 +33,10 @@ import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
-import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,8 +49,6 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 public class GithubUtil {
-
-  public static final Icon GITHUB_ICON = GithubIcons.Github_icon;
 
   public static final Logger LOG = Logger.getInstance("github");
 

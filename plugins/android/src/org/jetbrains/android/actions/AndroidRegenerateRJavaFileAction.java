@@ -25,12 +25,12 @@ import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import icons.AndroidIcons;
 import org.jetbrains.android.compiler.AndroidAptCompiler;
 import org.jetbrains.android.compiler.AndroidAutogeneratorMode;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +40,7 @@ import java.util.List;
  */
 public class AndroidRegenerateRJavaFileAction extends AnAction {
   public AndroidRegenerateRJavaFileAction() {
-    super(AndroidBundle.message("android.actions.regenerate.r.java.file.title"), null, AndroidUtils.ANDROID_ICON);
+    super(AndroidBundle.message("android.actions.regenerate.r.java.file.title"), null, AndroidIcons.Android);
   }
 
   @Override

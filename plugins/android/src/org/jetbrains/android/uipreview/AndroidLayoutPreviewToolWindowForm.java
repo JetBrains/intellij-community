@@ -74,12 +74,6 @@ import java.util.List;
  * @author Eugene.Kudelevsky
  */
 class AndroidLayoutPreviewToolWindowForm implements Disposable {
-  private static final Icon ZOOM_TO_FIT_ICON = AndroidIcons.ZoomFit;
-  private static final Icon ZOOM_IN_ICON = AndroidIcons.ZoomIn;
-  private static final Icon ZOOM_OUT_ICON = AndroidIcons.ZoomOut;
-  private static final Icon ZOOM_ACTUAL_ICON = AndroidIcons.ZoomActual;
-  private static final Icon REFRESH_ICON = AndroidIcons.RefreshPreview;
-
   private static final String CUSTOM_DEVICE_STRING = "Edit...";
 
   private JPanel myContentPanel;
@@ -1263,7 +1257,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
 
   private class MyZoomInAction extends AnAction {
     MyZoomInAction() {
-      super(AndroidBundle.message("android.layout.preview.zoom.in.action.text"), null, ZOOM_IN_ICON);
+      super(AndroidBundle.message("android.layout.preview.zoom.in.action.text"), null, AndroidIcons.ZoomIn);
     }
 
     @Override
@@ -1280,7 +1274,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
 
   private class MyZoomOutAction extends AnAction {
     MyZoomOutAction() {
-      super(AndroidBundle.message("android.layout.preview.zoom.out.action.text"), null, ZOOM_OUT_ICON);
+      super(AndroidBundle.message("android.layout.preview.zoom.out.action.text"), null, AndroidIcons.ZoomOut);
     }
 
     @Override
@@ -1297,7 +1291,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
 
   private class MyZoomActualAction extends AnAction {
     MyZoomActualAction() {
-      super(AndroidBundle.message("android.layout.preview.zoom.actual.action.text"), null, ZOOM_ACTUAL_ICON);
+      super(AndroidBundle.message("android.layout.preview.zoom.actual.action.text"), null, AndroidIcons.ZoomActual);
     }
 
     @Override
@@ -1309,7 +1303,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
 
   private class MyZoomToFitAction extends ToggleAction {
     MyZoomToFitAction() {
-      super(AndroidBundle.message("android.layout.preview.zoom.to.fit.action.text"), null, ZOOM_TO_FIT_ICON);
+      super(AndroidBundle.message("android.layout.preview.zoom.to.fit.action.text"), null, AndroidIcons.ZoomFit);
     }
 
     @Override
@@ -1326,7 +1320,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
 
   private class MyRefreshAction extends AnAction {
     MyRefreshAction() {
-      super(AndroidBundle.message("android.layout.preview.refresh.action.text"), null, REFRESH_ICON);
+      super(AndroidBundle.message("android.layout.preview.refresh.action.text"), null, AndroidIcons.RefreshPreview);
     }
 
     @Override

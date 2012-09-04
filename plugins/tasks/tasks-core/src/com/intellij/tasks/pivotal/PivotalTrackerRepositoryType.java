@@ -16,7 +16,6 @@ import java.util.EnumSet;
  * @author Dennis.Ushakov
  */
 public class PivotalTrackerRepositoryType extends BaseRepositoryType<PivotalTrackerRepository> {
-  static final Icon ICON = TasksCoreIcons.Pivotal;
 
   @NotNull
   @Override
@@ -26,7 +25,7 @@ public class PivotalTrackerRepositoryType extends BaseRepositoryType<PivotalTrac
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return TasksCoreIcons.Pivotal;
   }
 
   @NotNull

@@ -20,7 +20,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.RenameableFakePsiElement;
-import org.jetbrains.idea.maven.utils.MavenIcons;
 
 import javax.swing.*;
 
@@ -57,7 +56,7 @@ public class MavenPsiElementWrapper extends RenameableFakePsiElement {
   }
 
   public Icon getIcon() {
-    return MavenIcons.MAVEN_ICON;
+    return icons.MavenIcons.MavenLogo;
   }
 
   @Override

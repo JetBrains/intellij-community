@@ -32,7 +32,6 @@ import java.awt.*;
  */
 public class ColorRenderer extends ColoredListCellRenderer implements PropertyRenderer<ColorDescriptor> {
   private ColorDescriptor myColorDescriptor;
-  private final Icon myEmptyIcon = UIDesignerIcons.Empty;
 
   public ColorRenderer() {
     setOpaque(true);
@@ -46,7 +45,7 @@ public class ColorRenderer extends ColoredListCellRenderer implements PropertyRe
   private void prepareComponent(final ColorDescriptor value, final boolean selected) {
     myColorDescriptor = value;
     clear();
-    setIcon(myEmptyIcon);
+    setIcon(UIDesignerIcons.Empty);
     setBackground(selected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground());
     if (myColorDescriptor != null) {
       append(myColorDescriptor.toString(),

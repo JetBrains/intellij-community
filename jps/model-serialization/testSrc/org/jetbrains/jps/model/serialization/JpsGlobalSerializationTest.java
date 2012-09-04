@@ -4,6 +4,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.jps.model.JpsEncodingConfigurationService;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
@@ -35,5 +36,10 @@ public class JpsGlobalSerializationTest extends JpsSerializationTestCase {
     File jdkTableFile = new File(getTestDataFileAbsolutePath(OPTIONS_DIR), "jdk.table.xml");
     Element expected = JDomSerializationUtil.findComponent(JDOMUtil.loadDocument(jdkTableFile).getRootElement(), "ProjectJdkTable");
     PlatformTestUtil.assertElementsEqual(expected, actual);
+  }
+
+  public void testLoadEncoding() {
+    loadGlobalSettings(OPTIONS_DIR);
+    assertEquals("windows-1251", JpsEncodingConfigurationService.getInstance().getGlobalEncoding(myModel.getGlobal()));
   }
 }

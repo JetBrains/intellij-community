@@ -14,6 +14,6 @@ public abstract class JpsProjectExtensionSerializer extends JpsElementExtensionS
    * @param componentName name of the component
    */
   public JpsProjectExtensionSerializer(@Nullable String configFileName, @NotNull String componentName) {
-    super(componentName, configFileName);
+    super(configFileName, componentName);
   }
 }

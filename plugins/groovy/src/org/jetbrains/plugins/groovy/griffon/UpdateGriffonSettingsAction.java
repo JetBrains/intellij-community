@@ -16,10 +16,10 @@ package org.jetbrains.plugins.groovy.griffon;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.Module;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.mvc.MvcActionBase;
 import org.jetbrains.plugins.groovy.mvc.MvcFramework;
-import org.jetbrains.plugins.groovy.mvc.MvcIcons;
 
 /**
  * @author peter
@@ -38,7 +38,7 @@ public class UpdateGriffonSettingsAction extends MvcActionBase {
 
   @Override
   protected void updateView(AnActionEvent event, @NotNull MvcFramework framework, @NotNull Module module) {
-    event.getPresentation().setIcon(MvcIcons.PLUGINS_REFRESH);
+    event.getPresentation().setIcon(JetgroovyIcons.Mvc.Refresh);
   }
 
 }

@@ -30,8 +30,6 @@ import javax.swing.*;
  */
 public class TracRepositoryType extends BaseRepositoryType<TracRepository> {
 
-  private static final Icon ICON = TasksCoreIcons.Trac;
-
   @NotNull
   @Override
   public String getName() {
@@ -40,7 +38,7 @@ public class TracRepositoryType extends BaseRepositoryType<TracRepository> {
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return TasksCoreIcons.Trac;
   }
 
   @NotNull

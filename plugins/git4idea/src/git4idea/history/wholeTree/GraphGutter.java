@@ -375,7 +375,7 @@ public class GraphGutter {
           if (inCurrentBranch) {
             icon = myStyle.getNodeIcon(correctedWire);
           } else {
-            icon = ourGrey;
+            icon = Git4ideaIcons.Greyball;
           }
 
           icon.paintIcon(this, graphics, startXPoint + 1, upBound + myRowHeight/2 - 3);
@@ -482,7 +482,6 @@ public class GraphGutter {
   private final static Icon[] ourIcons = new Icon[] {Git4ideaIcons.Ball0, Git4ideaIcons.Ball1,
     Git4ideaIcons.Ball2, Git4ideaIcons.Ball3, Git4ideaIcons.Ball4,
     Git4ideaIcons.Ball5, Git4ideaIcons.Ball6, Git4ideaIcons.Ball7};
-  private final static Icon ourGrey = Git4ideaIcons.Greyball;
 
   public static enum PresentationStyle {
     multicolour() {

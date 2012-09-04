@@ -511,6 +511,7 @@ public class AllIcons {
     }
     
     public static class Inspector {
+      public static final Icon Empty = IconLoader.getIcon("/icons/inspector/empty.gif"); // 9x9
       public static final Icon SortByCategory = IconLoader.getIcon("/icons/inspector/sortByCategory.png"); // 16x16
       public static final Icon SortByName = IconLoader.getIcon("/icons/inspector/sortByName.png"); // 16x16
       public static final Icon UseFilter = IconLoader.getIcon("/icons/inspector/useFilter.png"); // 16x16
@@ -637,6 +638,7 @@ public class AllIcons {
   
   public static class Mac {
     public static final Icon AppIconOk512 = IconLoader.getIcon("/mac/appIconOk512.png"); // 55x55
+    public static final Icon Text = IconLoader.getIcon("/mac/text.gif"); // 32x32
     public static final Icon Tree_white_down_arrow = IconLoader.getIcon("/mac/tree_white_down_arrow.png"); // 11x11
     public static final Icon Tree_white_right_arrow = IconLoader.getIcon("/mac/tree_white_right_arrow.png"); // 11x11
 

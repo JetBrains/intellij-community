@@ -27,8 +27,8 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
-import com.theoryinpractice.testng.configuration.TestNGConfigurationType;
 import com.theoryinpractice.testng.util.TestNGUtil;
+import icons.TestngIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +46,7 @@ public class TestNGFramework extends JavaTestFramework {
   @NotNull
   @Override
   public Icon getIcon() {
-    return TestNGConfigurationType.ICON;
+    return TestngIcons.TestNG;
   }
 
   protected String getMarkerClassFQName() {

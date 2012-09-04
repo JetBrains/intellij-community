@@ -20,7 +20,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.android.util.AndroidUtils;
+import icons.AndroidIcons;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,7 +54,7 @@ public class AndroidRunConfigurationType implements ConfigurationType {
   }
 
   public Icon getIcon() {
-    return AndroidUtils.ANDROID_ICON;
+    return AndroidIcons.Android;
   }
 
   @NotNull

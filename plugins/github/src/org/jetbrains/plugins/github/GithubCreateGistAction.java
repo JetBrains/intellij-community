@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.tasks.github.GithubApiUtil;
 import git4idea.GitVcs;
 import git4idea.Notificator;
+import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.ui.GitHubCreateGistDialog;
@@ -51,7 +52,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(GithubCreateGistAction.class);
 
   protected GithubCreateGistAction() {
-    super("Create Gist...", "Create github gist", GithubUtil.GITHUB_ICON);
+    super("Create Gist...", "Create github gist", GithubIcons.Github_icon);
   }
 
   @Override
