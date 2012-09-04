@@ -162,34 +162,35 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
 
     final StateStorageManager stateStorageManager = getStateStorageManager();
+    final LocalFileSystem fs = LocalFileSystem.getInstance();
 
     final File file = new File(filePath);
     if (!isIprPath(file)) {
+      myScheme = StorageScheme.DIRECTORY_BASED;
+
       final File dirStore = file.isDirectory() ? new File(file, Project.DIRECTORY_STORE_FOLDER)
                                                : new File(file.getParentFile(), Project.DIRECTORY_STORE_FOLDER);
-      FileBasedStorage.syncRefreshPathRecursively(dirStore.getPath(), null);
-
-      myScheme = StorageScheme.DIRECTORY_BASED;
       stateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.PROJECT_FILE), new File(dirStore, "misc.xml").getPath());
 
       final File ws = new File(dirStore, "workspace.xml");
       stateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.WORKSPACE_FILE), ws.getPath());
-
       if (!ws.exists() && !file.isDirectory()) {
         useOldWsContent(filePath, ws);
       }
 
       stateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.PROJECT_CONFIG_DIR), dirStore.getPath());
+
+      VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByIoFile(dirStore));
     }
     else {
-      LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
-
       myScheme = StorageScheme.DEFAULT;
+
       stateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.PROJECT_FILE), filePath);
 
       final String workspacePath = composeWsPath(filePath);
-      LocalFileSystem.getInstance().refreshAndFindFileByPath(workspacePath);
       stateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.WORKSPACE_FILE), workspacePath);
+
+      VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByPath(filePath), fs.refreshAndFindFileByPath(workspacePath));
     }
     
     myCachedLocation = null;
@@ -197,8 +198,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   private static boolean isIprPath(final File file) {
-    final String name = file.getName();
-    return name.indexOf(".") > 0 && ProjectFileType.DEFAULT_EXTENSION.equals(FileUtil.getExtension(name));
+    return ProjectFileType.DEFAULT_EXTENSION.equals(FileUtil.getExtension(file.getName()));
   }
 
   private static String composeWsPath(String filePath) {
@@ -283,7 +283,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   public String getProjectName() {
     if (myScheme == StorageScheme.DIRECTORY_BASED) {
       final VirtualFile baseDir = getProjectBaseDir();
-      assert baseDir != null : "project file: " + getProjectFile();
+      assert baseDir != null : "scheme=" + myScheme + " project file=" + getProjectFilePath();
 
       final VirtualFile ideaDir = baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
       if (ideaDir != null && ideaDir.isValid()) {

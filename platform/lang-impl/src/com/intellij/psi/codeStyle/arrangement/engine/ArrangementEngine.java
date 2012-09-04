@@ -39,6 +39,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
+ * Encapsulates generic functionality of arranging file elements by the predefined rules.
+ * <p/>
+ * I.e. the general idea is to have a language-specific rules hidden by generic arrangement API and common arrangement
+ * engine which works on top of that API and performs the arrangement.
+ * 
  * @author Denis Zhdanov
  * @since 7/20/12 1:56 PM
  */

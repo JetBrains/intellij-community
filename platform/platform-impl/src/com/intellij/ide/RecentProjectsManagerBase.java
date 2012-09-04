@@ -230,13 +230,13 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
   }
 
   @Nullable
-  protected abstract String getProjectPath(Project project);
+  protected abstract String getProjectPath(@NotNull Project project);
 
-  protected abstract void doOpenProject(String projectPath, Project projectToClose, final boolean forceOpenInNewFrame);
+  protected abstract void doOpenProject(@NotNull String projectPath, @Nullable Project projectToClose, boolean forceOpenInNewFrame);
 
   public static boolean isValidProjectPath(String projectPath) {
     final File file = new File(projectPath);
-    return file.exists() && (!file.isDirectory() || new File(file, ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).exists());
+    return file.exists() && (!file.isDirectory() || new File(file, Project.DIRECTORY_STORE_FOLDER).exists());
   }
 
   private class MyProjectManagerListener extends ProjectManagerAdapter {
@@ -310,7 +310,9 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
         List<String> openPaths = myState.openPaths;
         if (!openPaths.isEmpty()) {
           for (String openPath : openPaths) {
-            if (isValidProjectPath(openPath)) doOpenProject(openPath, null, true);
+            if (isValidProjectPath(openPath)) {
+              doOpenProject(openPath, null, true);
+            }
           }
         }
         else {

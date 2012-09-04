@@ -29,7 +29,6 @@ import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
@@ -86,8 +85,6 @@ public class FileBasedStorage extends XmlElementStorage {
 
     VirtualFileTracker virtualFileTracker = (VirtualFileTracker)picoContainer.getComponentInstanceOfType(VirtualFileTracker.class);
     MessageBus messageBus = (MessageBus)picoContainer.getComponentInstanceOfType(MessageBus.class);
-
-
     if (virtualFileTracker != null && messageBus != null) {
       final String path = myFile.getAbsolutePath();
       final String fileUrl = LocalFileSystem.PROTOCOL_PREFIX + path.replace(File.separatorChar, '/');
@@ -114,17 +111,11 @@ public class FileBasedStorage extends XmlElementStorage {
     }
   }
 
-  public static void syncRefreshPathRecursively(String configDirectoryPath, @Nullable final String excludeDir) {
+  private static void syncRefreshPathRecursively(@NotNull String configDirectoryPath, @Nullable final String excludeDir) {
     VirtualFile configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(configDirectoryPath);
-
     if (configDir != null) {
       requestAllChildren(configDir, excludeDir);
-
-      if (configDir instanceof NewVirtualFile) {
-        ((NewVirtualFile)configDir).markDirtyRecursively();
-      }
-
-      configDir.refresh(false, true);
+      VfsUtil.markDirtyAndRefresh(false, true, false, configDir);
     }
   }
 
@@ -188,7 +179,8 @@ public class FileBasedStorage extends XmlElementStorage {
       boolean needsSave = needsSave();
       if (needsSave) {
         if (LOG.isDebugEnabled()) {
-          LOG.info("File " + myFileSpec + " needs save; hash=" + myUpToDateHash + "; currentHash=" + calcHash() + "; content needs save=" + physicalContentNeedsSave());
+          LOG.info("File " + myFileSpec + " needs save; hash=" + myUpToDateHash + "; currentHash=" + calcHash() + "; " +
+                   "content needs save=" + physicalContentNeedsSave());
         }
         return getAllStorageFiles();
       }
@@ -201,7 +193,6 @@ public class FileBasedStorage extends XmlElementStorage {
     public List<IFile> getAllStorageFiles() {
       return Collections.singletonList(myFile);
     }
-
   }
 
   @Override
