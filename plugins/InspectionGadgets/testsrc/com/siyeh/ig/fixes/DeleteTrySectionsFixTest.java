@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,16 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.errorhandling.CaughtExceptionImmediatelyRethrownInspection;
+import com.siyeh.ig.errorhandling.EmptyFinallyBlockInspection;
 
-public class DeleteCatchSectionFixTest extends IGQuickFixesTestCase {
+public class DeleteTrySectionsFixTest extends IGQuickFixesTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new CaughtExceptionImmediatelyRethrownInspection());
+    myFixture.enableInspections(new CaughtExceptionImmediatelyRethrownInspection(), new EmptyFinallyBlockInspection());
   }
 
   @Override
@@ -30,11 +32,19 @@ public class DeleteCatchSectionFixTest extends IGQuickFixesTestCase {
     return "tryCatch";
   }
 
-  public void testDeleteTryStatement() throws Exception {
-    doTest("deleteTryStatement", "Remove 'try catch' statement");
+  public void testDeleteTryStatement() {
+    doTest(InspectionGadgetsBundle.message("remove.try.catch.quickfix"));
   }
 
-  public void testDeleteEmptyTryStatement() throws Exception {
-    doTest("deleteEmptyTryStatement", "Remove 'try catch' statement");
+  public void testDeleteEmptyTryStatement() {
+    doTest(InspectionGadgetsBundle.message("remove.try.catch.quickfix"));
+  }
+
+  public void testDeleteEmptyFinally() {
+    doTest(InspectionGadgetsBundle.message("remove.finally.block.quickfix"));
+  }
+
+  public void testDeleteTryWithEmptyFinally() {
+    doTest(InspectionGadgetsBundle.message("remove.try.finally.block.quickfix"));
   }
 }
