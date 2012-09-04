@@ -60,11 +60,7 @@ public class DirectoryIndexComponent extends DirectoryIndexImpl {
   }
 
   private void subscribeToFileChanges() {
-    myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
-      @Override
-      public void beforeFileTypesChanged(FileTypeEvent event) {
-      }
-
+    myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener.Adapter() {
       @Override
       public void fileTypesChanged(FileTypeEvent event) {
         doInitialize();

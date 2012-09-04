@@ -161,6 +161,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
     connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
       @Nullable private Map<FileType, Set<String>> myTypeToExtensionMap;
+
       @Override
       public void beforeFileTypesChanged(final FileTypeEvent event) {
         cleanupProcessedFlag();
