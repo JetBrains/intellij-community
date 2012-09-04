@@ -33,7 +33,7 @@ import java.awt.*;
  */
 public class MultiRowFlowPanel extends JPanel {
 
-  private final int maximumWidth = Toolkit.getDefaultToolkit().getScreenSize().width / 2;
+  private final int maximumWidth = GraphicsEnvironment.isHeadless() ? 400 : Toolkit.getDefaultToolkit().getScreenSize().width / 2;
 
   public MultiRowFlowPanel(@JdkConstants.FlowLayoutAlignment int align, int hGap, int vGap) {
     super(new FlowLayout(align, getGapToUse(hGap), getGapToUse(vGap)));
