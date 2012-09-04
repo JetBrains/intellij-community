@@ -94,7 +94,6 @@ import java.util.List;
  */
 public class GitLogUI implements Disposable {
   private final static Logger LOG = Logger.getInstance("#git4idea.history.wholeTree.GitLogUI");
-  static final Icon ourMarkIcon = Git4ideaIcons.Star;
   public static final SimpleTextAttributes HIGHLIGHT_TEXT_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_SEARCH_MATCH, UIUtil.getTableForeground());
   public static final String GIT_LOG_TABLE_PLACE = "git log table";
@@ -1287,8 +1286,8 @@ public class GitLogUI implements Disposable {
         final int tagsSize = commit.getTags().size();
 
         if (marked) {
-          myPanel.add(new JLabel(ourMarkIcon));
-          myCurrentWidth += ourMarkIcon.getIconWidth();
+          myPanel.add(new JLabel(Git4ideaIcons.Star));
+          myCurrentWidth += Git4ideaIcons.Star.getIconWidth();
         }
         if (localSize + remoteSize > 0) {
           final CommitI commitI = myTableModel.getCommitAt(row);
@@ -2354,7 +2353,7 @@ public class GitLogUI implements Disposable {
 
   public class MyToggleCommitMark extends DumbAwareAction {
     public MyToggleCommitMark() {
-      super("Mark", "Mark", ourMarkIcon);
+      super("Mark", "Mark", Git4ideaIcons.Star);
     }
 
     @Override

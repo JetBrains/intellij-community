@@ -23,13 +23,10 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import icons.UIDesignerNewIcons;
 
-import javax.swing.*;
-
 /**
  * @author Alexander Lobas
  */
 public class ShowExpert extends ToggleAction {
-  private static final Icon ICON = UIDesignerNewIcons.Filter;
 
   private final RadPropertyTable myTable;
 
@@ -40,7 +37,7 @@ public class ShowExpert extends ToggleAction {
     String text = DesignerBundle.message("designer.properties.show.expert");
     presentation.setText(text);
     presentation.setDescription(text);
-    presentation.setIcon(ICON);
+    presentation.setIcon(UIDesignerNewIcons.Filter);
   }
 
   @Override
@@ -52,7 +49,7 @@ public class ShowExpert extends ToggleAction {
       presentation.setIcon(null);
     }
     else {
-      presentation.setIcon(ICON);
+      presentation.setIcon(UIDesignerNewIcons.Filter);
     }
   }
 

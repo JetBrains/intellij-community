@@ -25,11 +25,11 @@ public class MavenFileTemplateGroupFactory implements FileTemplateGroupDescripto
   public static final String MAVEN_SETTINGS_XML_TEMPLATE = "Maven Settings.xml";
 
   public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
-    FileTemplateGroupDescriptor group = new FileTemplateGroupDescriptor("Maven", MavenIcons.MAVEN_ICON);
+    FileTemplateGroupDescriptor group = new FileTemplateGroupDescriptor("Maven", icons.MavenIcons.MavenLogo);
 
-    group.addTemplate(new FileTemplateDescriptor(MAVEN_PROJECT_XML_TEMPLATE, MavenIcons.MAVEN_ICON));
-    group.addTemplate(new FileTemplateDescriptor(MAVEN_PROFILES_XML_TEMPLATE, MavenIcons.MAVEN_ICON));
-    group.addTemplate(new FileTemplateDescriptor(MAVEN_SETTINGS_XML_TEMPLATE, MavenIcons.MAVEN_ICON));
+    group.addTemplate(new FileTemplateDescriptor(MAVEN_PROJECT_XML_TEMPLATE, icons.MavenIcons.MavenLogo));
+    group.addTemplate(new FileTemplateDescriptor(MAVEN_PROFILES_XML_TEMPLATE, icons.MavenIcons.MavenLogo));
+    group.addTemplate(new FileTemplateDescriptor(MAVEN_SETTINGS_XML_TEMPLATE, icons.MavenIcons.MavenLogo));
 
     return group;
   }

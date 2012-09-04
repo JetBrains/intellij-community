@@ -15,6 +15,7 @@ import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -215,7 +216,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
 
       @Override
       public Icon getIcon() {
-        return GitHubRepositoryType.ICON;
+        return TasksCoreIcons.Github;
       }
 
       @NotNull

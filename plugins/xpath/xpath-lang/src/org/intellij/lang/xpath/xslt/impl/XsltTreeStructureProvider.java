@@ -73,7 +73,6 @@ public class XsltTreeStructureProvider implements TreeStructureProvider {
   }
 
   private static class XsltFileNode extends PsiFileNode {
-    private static final Icon LINK_OVERLAY = XpathIcons.Association_small;
     private final FileAssociationsManager myInstance;
     private final XsltConfig myConfig;
 
@@ -89,7 +88,7 @@ public class XsltTreeStructureProvider implements TreeStructureProvider {
 
       Icon icon = XsltSupport.createXsltIcon(presentationData.getIcon(false));
       if (psiFiles.length > 0) {
-        icon = LayeredIcon.create(icon, LINK_OVERLAY);
+        icon = LayeredIcon.create(icon, XpathIcons.Association_small);
       }
       presentationData.setIcon(icon);
     }

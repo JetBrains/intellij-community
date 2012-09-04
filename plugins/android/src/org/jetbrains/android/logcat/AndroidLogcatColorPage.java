@@ -22,8 +22,8 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import icons.AndroidIcons;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -70,7 +70,7 @@ public class AndroidLogcatColorPage implements ColorSettingsPage {
   }
 
   public Icon getIcon() {
-    return AndroidUtils.ANDROID_ICON;
+    return AndroidIcons.Android;
   }
 
   @NotNull

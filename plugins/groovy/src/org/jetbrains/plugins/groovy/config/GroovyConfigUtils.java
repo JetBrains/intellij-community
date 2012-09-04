@@ -30,11 +30,11 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
@@ -147,7 +147,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
       final Library library = libraries[0];
       int result = Messages
         .showOkCancelDialog(GroovyBundle.message("groovy.like.library.found.text", module.getName(), library.getName(), getSDKLibVersion(library)),
-                            GroovyBundle.message("groovy.like.library.found"), GroovyIcons.GROOVY_ICON_32x32);
+                            GroovyBundle.message("groovy.like.library.found"), JetgroovyIcons.Groovy.Groovy_32x32);
       if (result == 0) {
         AccessToken accessToken = WriteAction.start();
 

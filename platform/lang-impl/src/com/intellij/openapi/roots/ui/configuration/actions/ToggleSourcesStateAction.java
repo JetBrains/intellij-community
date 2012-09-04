@@ -16,13 +16,13 @@
 
 package com.intellij.openapi.roots.ui.configuration.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryEditor;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryTreeEditor;
-import com.intellij.openapi.roots.ui.configuration.IconSet;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
@@ -43,12 +43,12 @@ public class ToggleSourcesStateAction extends ContentEntryEditingAction {
     if (editTestSources) {
       templatePresentation.setText(ProjectBundle.message("module.toggle.test.sources.action"));
       templatePresentation.setDescription(ProjectBundle.message("module.toggle.test.sources.action.description"));
-      templatePresentation.setIcon(IconSet.TEST_ROOT_FOLDER);
+      templatePresentation.setIcon(AllIcons.Modules.TestRoot);
     }
     else {
       templatePresentation.setText(ProjectBundle.message("module.toggle.sources.action"));
       templatePresentation.setDescription(ProjectBundle.message("module.toggle.sources.action.description"));
-      templatePresentation.setIcon(IconSet.SOURCE_ROOT_FOLDER);
+      templatePresentation.setIcon(AllIcons.Modules.SourceRoot);
     }
   }
 

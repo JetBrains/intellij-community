@@ -27,9 +27,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import icons.AndroidIcons;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidUtils;
 
 /**
  * @author Eugene.Kudelevsky
@@ -38,7 +38,7 @@ public class NewAndroidComponentAction extends AnAction {
 
   protected NewAndroidComponentAction() {
     super(AndroidBundle.message("android.new.component.action.title"), AndroidBundle.message("android.new.component.action.description"),
-          AndroidUtils.ANDROID_ICON);
+          AndroidIcons.Android);
   }
 
   public void update(AnActionEvent e) {

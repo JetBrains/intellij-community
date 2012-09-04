@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom.generate;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -29,14 +30,13 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependencies;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.utils.MavenIcons;
 
 import java.util.List;
 import java.util.Set;
 
 public class GenerateManagedDependencyAction extends GenerateDomElementAction {
   public GenerateManagedDependencyAction() {
-    super(new MavenOverridingDependencyGenerateProvider(), MavenIcons.DEPENDENCY_ICON);
+    super(new MavenOverridingDependencyGenerateProvider(), AllIcons.Nodes.PpLib);
   }
 
   @Override

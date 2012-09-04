@@ -18,10 +18,10 @@ package org.jetbrains.plugins.groovy.util.dynamicMembers;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.IncorrectOperationException;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -75,7 +75,7 @@ public class GrDynamicPropertyImpl extends LightElement implements GrField {
 
   @Override
   public Icon getIcon(int flags) {
-    return GroovyIcons.PROPERTY;
+    return JetgroovyIcons.Groovy.Property;
   }
 
   @Override

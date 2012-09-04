@@ -11,8 +11,6 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  */
 public class MantisRepositoryType extends BaseRepositoryType<MantisRepository> {
-  
-  private static final Icon ICON = TasksCoreIcons.Mantis;
 
   @NotNull
   @Override
@@ -22,7 +20,7 @@ public class MantisRepositoryType extends BaseRepositoryType<MantisRepository> {
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return TasksCoreIcons.Mantis;
   }
 
   @NotNull

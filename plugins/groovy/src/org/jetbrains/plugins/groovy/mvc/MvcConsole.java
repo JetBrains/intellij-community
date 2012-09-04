@@ -50,10 +50,10 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.SmartList;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 
 import javax.swing.*;
 import java.awt.*;
@@ -93,7 +93,7 @@ public class MvcConsole implements Disposable {
     Disposer.register(this, myConsole);
 
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(TOOL_WINDOW_ID, false, ToolWindowAnchor.BOTTOM, this, true);
-    myToolWindow.setIcon(GroovyIcons.GROOVY_ICON_13x13);
+    myToolWindow.setIcon(JetgroovyIcons.Groovy.Groovy_13x13);
 
     myContent = setUpToolWindow();
   }
@@ -312,7 +312,7 @@ public class MvcConsole implements Disposable {
     myKillAction.setHandler(handler);
 
     final MvcFramework framework = MvcFramework.getInstance(module);
-    myToolWindow.setIcon(framework == null ? GroovyIcons.GROOVY_ICON_13x13 : framework.getToolWindowIcon());
+    myToolWindow.setIcon(framework == null ? JetgroovyIcons.Groovy.Groovy_13x13 : framework.getToolWindowIcon());
 
     myContent.setDisplayName((framework == null ? "" : framework.getDisplayName() + ":") + "Executing...");
     myConsole.scrollToEnd();

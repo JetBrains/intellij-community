@@ -17,6 +17,7 @@ public class TasksCoreIcons {
   public static final Icon Exception = load("/icons/exception.png"); // 16x16
   public static final Icon Feature = load("/icons/feature.png"); // 16x16
   public static final Icon Github = load("/icons/github.png"); // 16x16
+  public static final Icon Lighthouse = load("/icons/lighthouse.gif"); // 16x16
   public static final Icon Mantis = load("/icons/mantis.png"); // 16x16
   public static final Icon Navigate = load("/icons/navigate.png"); // 16x16
   public static final Icon Other = load("/icons/other.png"); // 16x16

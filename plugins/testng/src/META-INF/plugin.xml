@@ -2,7 +2,7 @@
     <name>TestNG-J</name>
     <description>TestNG Integration</description>
     <version>8.0</version>
-    <vendor logo="/resources/testng.gif">Theory In Practice</vendor>
+    <vendor logo="/resources/testNG.png">Theory In Practice</vendor>
     <depends>com.intellij.java-i18n</depends>
     <extensions defaultExtensionNs="com.intellij">
         <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>

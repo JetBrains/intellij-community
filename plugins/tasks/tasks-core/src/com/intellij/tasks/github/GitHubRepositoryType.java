@@ -16,7 +16,6 @@ import java.util.EnumSet;
  * @author Dennis.Ushakov
  */
 public class GitHubRepositoryType extends BaseRepositoryType<GitHubRepository> {
-  static final Icon ICON = TasksCoreIcons.Github;
 
   @NotNull
   @Override
@@ -26,7 +25,7 @@ public class GitHubRepositoryType extends BaseRepositoryType<GitHubRepository> {
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return TasksCoreIcons.Github;
   }
 
   @NotNull

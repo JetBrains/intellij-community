@@ -29,7 +29,6 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
-import org.jetbrains.idea.maven.utils.MavenIcons;
 import org.jetbrains.idea.maven.utils.MavenPluginInfo;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
@@ -40,7 +39,7 @@ import java.util.*;
 public class MavenKeymapExtension implements KeymapExtension {
   public KeymapGroup createGroup(Condition<AnAction> condition, Project project) {
     KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(TasksBundle.message("maven.tasks.action.group.name"),
-                                                                      MavenIcons.CLOSED_PHASES_ICON
+                                                                      icons.MavenIcons.PhasesClosed
     );
     if (project == null) return result;
 
@@ -84,7 +83,7 @@ public class MavenKeymapExtension implements KeymapExtension {
       Set<Pair<String, String>> goalsToActionIds = each.getValue();
       if (goalsToActionIds.isEmpty()) continue;
       KeymapGroup group = KeymapGroupFactory.getInstance().createGroup(mavenProject.getDisplayName(),
-                                                                       MavenIcons.CLOSED_PHASES_ICON
+                                                                       icons.MavenIcons.PhasesClosed
       );
       result.addGroup(group);
       for (Pair<String, String> eachGoalToActionId : goalsToActionIds) {
@@ -171,7 +170,7 @@ public class MavenKeymapExtension implements KeymapExtension {
       myGoal = goal;
       Presentation template = getTemplatePresentation();
       template.setText(goal, false);
-      template.setIcon(MavenIcons.PHASE_ICON);
+      template.setIcon(icons.MavenIcons.Phase);
     }
 
     public void actionPerformed(AnActionEvent e) {

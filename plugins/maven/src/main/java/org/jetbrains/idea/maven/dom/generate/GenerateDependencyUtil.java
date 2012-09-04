@@ -19,6 +19,7 @@ import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.generation.MemberChooserObject;
 import com.intellij.codeInsight.generation.MemberChooserObjectBase;
 import com.intellij.codeInsight.generation.PsiElementMemberChooserObject;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.utils.MavenIcons;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,7 +56,7 @@ public class GenerateDependencyUtil {
     MemberChooser<MavenDomProjectModelMember> chooser =
       new MemberChooser<MavenDomProjectModelMember>(memberCandidates, true, true, project) {
         protected ShowContainersAction getShowContainersAction() {
-          return new ShowContainersAction(MavenDomBundle.message("chooser.show.project.files"), MavenIcons.MAVEN_PROJECT_ICON);
+          return new ShowContainersAction(MavenDomBundle.message("chooser.show.project.files"), icons.MavenIcons.MavenProject);
         }
 
         protected String getAllContainersNodeName() {
@@ -86,7 +86,7 @@ public class GenerateDependencyUtil {
     private final MavenDomDependency myDependency;
 
     public MavenDomProjectModelMember(final MavenDomDependency dependency) {
-      super(dependency.toString(), MavenIcons.DEPENDENCY_ICON);
+      super(dependency.toString(), AllIcons.Nodes.PpLib);
       myDependency = dependency;
     }
 
@@ -134,7 +134,7 @@ public class GenerateDependencyUtil {
     private static class MavenDomProjectModelFileMemberChooserObjectBase extends PsiElementMemberChooserObject {
 
       public MavenDomProjectModelFileMemberChooserObjectBase(@NotNull final PsiFile psiFile, @Nullable String projectName) {
-        super(psiFile, StringUtil.isEmptyOrSpaces(projectName) ? psiFile.getName() : projectName, MavenIcons.MAVEN_PROJECT_ICON);
+        super(psiFile, StringUtil.isEmptyOrSpaces(projectName) ? psiFile.getName() : projectName, icons.MavenIcons.MavenProject);
       }
     }
   }

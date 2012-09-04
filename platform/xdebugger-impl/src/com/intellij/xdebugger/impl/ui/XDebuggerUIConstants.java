@@ -43,12 +43,6 @@ public class XDebuggerUIConstants {
   public static final SimpleTextAttributes ERROR_MESSAGE_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.red);
   @NonNls public static final String EQ_TEXT = " = ";
 
-  public static final Icon DEBUG_AGAIN_ICON = AllIcons.Actions.StartDebugger;
-  public static final Icon FRAMES_TAB_ICON = AllIcons.Debugger.Frame;
-  public static final Icon THREADS_TAB_ICON = AllIcons.Debugger.Threads;
-  public static final Icon VARIABLES_TAB_ICON = AllIcons.Debugger.Value;
-  public static final Icon WATCHES_TAB_ICON = AllIcons.Debugger.Watches;
-  public static final Icon CONSOLE_TAB_ICON = AllIcons.Debugger.Console;
   public static final SimpleTextAttributes TYPE_ATTRIBUTES = SimpleTextAttributes.GRAY_ATTRIBUTES;
   public static final String LAYOUT_VIEW_BREAKPOINT_CONDITION = "breakpoint";
 

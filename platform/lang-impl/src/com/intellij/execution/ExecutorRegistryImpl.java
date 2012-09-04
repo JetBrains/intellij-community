@@ -23,7 +23,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
 /**
@@ -44,7 +42,6 @@ import java.util.*;
  */
 public class ExecutorRegistryImpl extends ExecutorRegistry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ExecutorRegistryImpl");
-  private static final Icon STOP_AND_START_ICON = AllIcons.Actions.Restart;
 
 
   @NonNls public static final String RUNNERS_GROUP = "RunnerActions";

@@ -56,6 +56,7 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
 import git4idea.util.GitUIUtil;
+import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 
@@ -70,7 +71,7 @@ public class GithubShareAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(GithubShareAction.class.getName());
 
   public GithubShareAction() {
-    super("Share project on GitHub", "Easily share project on GitHub", GithubUtil.GITHUB_ICON);
+    super("Share project on GitHub", "Easily share project on GitHub", GithubIcons.Github_icon);
   }
 
   public void update(AnActionEvent e) {

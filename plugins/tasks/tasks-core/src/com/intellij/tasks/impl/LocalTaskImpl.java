@@ -41,12 +41,6 @@ public class LocalTaskImpl extends LocalTask {
 
   @NonNls static final String DEFAULT_TASK_ID = "Default";
 
-  private final static Icon BUG_ICON = TasksCoreIcons.Bug;
-  private final static Icon EXCEPTION_ICON = TasksCoreIcons.Exception;
-  private final static Icon FEATURE_ICON = TasksCoreIcons.Feature;
-  private final static Icon OTHER_ICON = TasksCoreIcons.Other;
-  private final static Icon UNKNOWN_ICON = TasksCoreIcons.Unknown;
-
   private String myId = "";
   private String mySummary = "";
   private boolean myActive;
@@ -227,14 +221,14 @@ public class LocalTaskImpl extends LocalTask {
     }
     switch (myType) {
       case BUG:
-        return BUG_ICON;
+        return TasksCoreIcons.Bug;
       case EXCEPTION:
-        return EXCEPTION_ICON;
+        return TasksCoreIcons.Exception;
       case FEATURE:
-        return FEATURE_ICON;
+        return TasksCoreIcons.Feature;
       default:
       case OTHER:
-        return isIssue() ? OTHER_ICON : UNKNOWN_ICON;
+        return isIssue() ? TasksCoreIcons.Other : TasksCoreIcons.Unknown;
     }
   }
 

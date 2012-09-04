@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.NonClasspathDirectoryScope;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,7 @@ public class GantScriptType extends GroovyScriptType {
 
   @NotNull
   public Icon getScriptIcon() {
-    return GantIcons.GANT_ICON_16x16;
+    return JetgroovyIcons.Groovy.Gant_16x16;
   }
 
   @Override

@@ -58,6 +58,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlTag;
+import icons.AndroidIcons;
 import org.jetbrains.android.AndroidFileTemplateProvider;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.dom.resources.ResourceElement;
@@ -724,7 +725,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
   }
 
   public Icon getBigIcon() {
-    return AndroidUtils.ANDROID_ICON_24;
+    return AndroidIcons.Android24;
   }
 
   public String getDescription() {

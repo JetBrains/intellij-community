@@ -24,7 +24,6 @@ import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.utils.MavenIcons;
 
 import javax.swing.*;
 
@@ -73,6 +72,6 @@ public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperti
 
   @Override
   public Icon getIcon() {
-    return MavenIcons.MAVEN_ICON;
+    return icons.MavenIcons.MavenLogo;
   }
 }

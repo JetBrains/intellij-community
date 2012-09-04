@@ -34,7 +34,6 @@ import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.utils.MavenIcons;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -71,7 +70,7 @@ public class MavenDomGutterAnnotator implements Annotator {
 
     @Override
     protected Icon getIcon(PsiElement element) {
-      return MavenIcons.MAVEN_PROJECT_ICON;
+      return icons.MavenIcons.MavenProject;
     }
 
     @Override
@@ -106,7 +105,7 @@ public class MavenDomGutterAnnotator implements Annotator {
     final Set<MavenDomDependency> children = getDependencyUsages(dependency);
     if (children.size() > 0) {
       final NavigationGutterIconBuilder<MavenDomDependency> iconBuilder =
-        NavigationGutterIconBuilder.create(MavenIcons.OVERRIDEN_DEPENDENCY, CONVERTER);
+        NavigationGutterIconBuilder.create(icons.MavenIcons.OverridenDependency, CONVERTER);
       iconBuilder.
         setTargets(children).
         setPopupTitle(MavenDomBundle.message("navigate.parent.dependency.title")).
@@ -124,7 +123,7 @@ public class MavenDomGutterAnnotator implements Annotator {
     if (children.size() > 0) {
 
       final NavigationGutterIconBuilder<MavenDomDependency> iconBuilder =
-        NavigationGutterIconBuilder.create(MavenIcons.OVERRIDING_DEPENDENCY, CONVERTER);
+        NavigationGutterIconBuilder.create(icons.MavenIcons.OverridingDependency, CONVERTER);
       iconBuilder.
         setTargets(children).
         setTooltipText(MavenDomBundle.message("overriden.dependency.title")).
@@ -174,7 +173,7 @@ public class MavenDomGutterAnnotator implements Annotator {
     MavenDomProjectModel parent = MavenDomProjectProcessorUtils.findParent(mavenDomParent, mavenDomParent.getManager().getProject());
 
     if (parent != null) {
-      NavigationGutterIconBuilder.create(MavenIcons.PARENT_PROJECT, MAVEN_PROJECT_CONVERTER).
+      NavigationGutterIconBuilder.create(icons.MavenIcons.ParentProject, MAVEN_PROJECT_CONVERTER).
         setTargets(parent).
         setTooltipText(MavenDomBundle.message("parent.pom.title")).
         install(holder, mavenDomParent.getXmlElement());
@@ -187,7 +186,7 @@ public class MavenDomGutterAnnotator implements Annotator {
       Set<MavenDomProjectModel> children = MavenDomProjectProcessorUtils.getChildrenProjects(model);
 
       if (children.size() > 0) {
-        NavigationGutterIconBuilder.create(MavenIcons.CHILDREN_PROJECTS, MAVEN_PROJECT_CONVERTER).
+        NavigationGutterIconBuilder.create(icons.MavenIcons.ChildrenProjects, MAVEN_PROJECT_CONVERTER).
           setTargets(children).
           setCellRenderer(RENDERER).
           setPopupTitle(MavenDomBundle.message("navigate.children.poms.title")).

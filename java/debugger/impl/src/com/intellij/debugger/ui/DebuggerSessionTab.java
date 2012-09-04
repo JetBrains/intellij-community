@@ -143,14 +143,14 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
     // watches
     Content watches = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchPanel, XDebuggerBundle.message("debugger.session.tab.watches.title"),
-                                         XDebuggerUIConstants.WATCHES_TAB_ICON, null);
+                                         AllIcons.Debugger.Watches, null);
     watches.setCloseable(false);
     watches.setAlertIcon(breakpointAlert);
     myUi.addContent(watches, 0, PlaceInGrid.right, false);
 
     // frames
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, myFramesPanel, XDebuggerBundle.message("debugger.session.tab.frames.title"),
-                                               XDebuggerUIConstants.FRAMES_TAB_ICON, myFramesPanel.getFramesList());
+                                               AllIcons.Debugger.Frame, myFramesPanel.getFramesList());
     framesContent.setCloseable(false);
     framesContent.setAlertIcon(breakpointAlert);
 
@@ -160,14 +160,15 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     myVariablesPanel = new VariablesPanel(getProject(), myStateManager, this);
     myVariablesPanel.getFrameTree().setAutoVariablesMode(debuggerSettings.AUTO_VARIABLES_MODE);
     Content vars = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, myVariablesPanel, XDebuggerBundle.message("debugger.session.tab.variables.title"),
-                                      XDebuggerUIConstants.VARIABLES_TAB_ICON, null);
+                                      AllIcons.Debugger.Value, null);
     vars.setCloseable(false);
     vars.setAlertIcon(breakpointAlert);
     myUi.addContent(vars, 0, PlaceInGrid.center, false);
 
     // threads
     myThreadsPanel = new ThreadsPanel(project, getContextManager());
-    Content threadsContent = myUi.createContent(DebuggerContentInfo.THREADS_CONTENT, myThreadsPanel, XDebuggerBundle.message("debugger.session.tab.threads.title"), XDebuggerUIConstants.THREADS_TAB_ICON, null);
+    Content threadsContent = myUi.createContent(DebuggerContentInfo.THREADS_CONTENT, myThreadsPanel, XDebuggerBundle.message("debugger.session.tab.threads.title"),
+                                                AllIcons.Debugger.Threads, null);
     threadsContent.setCloseable(false);
     //threadsContent.setAlertIcon(breakpointAlert);
 
@@ -234,7 +235,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     if (console == null) {
       console = myUi.createContent(DebuggerContentInfo.CONSOLE_CONTENT, myConsole.getComponent(),
                                            XDebuggerBundle.message("debugger.session.tab.console.content.name"),
-                                           XDebuggerUIConstants.CONSOLE_TAB_ICON, myConsole.getPreferredFocusableComponent());
+                                           AllIcons.Debugger.Console, myConsole.getPreferredFocusableComponent());
 
       console.setCloseable(false);
       myUi.addContent(console, 1, PlaceInGrid.bottom, false);

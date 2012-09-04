@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -57,7 +58,7 @@ public class GantRunner extends GroovyScriptRunner {
     if (!(GantUtils.getSDKInstallPath(module, project).length() > 0)) {
       int result = Messages
         .showOkCancelDialog("Gant is not configured. Do you want to configure it?", "Configure Gant SDK",
-                            GantIcons.GANT_ICON_16x16);
+                            JetgroovyIcons.Groovy.Gant_16x16);
       if (result == 0) {
         ShowSettingsUtil.getInstance().editConfigurable(project, new GantConfigurable(project));
       }

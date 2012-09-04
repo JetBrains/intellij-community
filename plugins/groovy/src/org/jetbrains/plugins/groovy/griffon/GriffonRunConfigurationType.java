@@ -21,6 +21,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +49,7 @@ public class GriffonRunConfigurationType implements ConfigurationType {
   }
 
   public Icon getIcon() {
-    return GriffonFramework.GRIFFON_ICON;
+    return JetgroovyIcons.Griffon.Griffon;
   }
 
   @NonNls

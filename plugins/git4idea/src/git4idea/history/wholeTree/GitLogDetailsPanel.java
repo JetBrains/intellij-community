@@ -31,7 +31,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.UIVcsUtil;
 import git4idea.history.browser.CachedRefs;
 import git4idea.history.browser.GitCommit;
-import git4idea.history.browser.SymbolicRefsI;
+import icons.Git4ideaIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -183,7 +183,7 @@ public class GitLogDetailsPanel {
     final String currentBranch = myCommit.getCurrentBranch();
     myMarksPanel.removeAll();
     if (myMarkProcessor.process(myCommit.getShortHash())) {
-      myMarksPanel.add(new JLabel(GitLogUI.ourMarkIcon));
+      myMarksPanel.add(new JLabel(Git4ideaIcons.Star));
     }
     for (String s : myCommit.getLocalBranches()) {
       myMarksPanel.add(new JLabel(new CaptionIcon(GitLogUI.Colors.local, font, s, myMarksPanel, CaptionIcon.Form.SQUARE, false,

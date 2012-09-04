@@ -56,7 +56,6 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
   private final String myFilename;
   private final Module myModule;  
   @NonNls private static final String TEMPLATE_NAME = "InspectionDescription.html";
-  private static final Icon NEW_HTML_ICON = DevkitIcons.New_html;
   private final boolean isIntention;
 
   public CreateHtmlDescriptionFix(String filename, Module module, boolean isIntention) {
@@ -156,7 +155,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
   }
 
   public Icon getIcon(int flags) {
-    return NEW_HTML_ICON;
+    return DevkitIcons.New_html;
   }
 
   private VirtualFile[] prepare(VirtualFile[] roots) {

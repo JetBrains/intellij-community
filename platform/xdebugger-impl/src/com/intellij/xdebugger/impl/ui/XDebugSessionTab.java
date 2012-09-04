@@ -29,6 +29,7 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -72,7 +73,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   private Content createConsoleContent() {
     Content result = myUi.createContent(DebuggerContentInfo.CONSOLE_CONTENT, myConsole.getComponent(),
                                         XDebuggerBundle.message("debugger.session.tab.console.content.name"),
-                                        XDebuggerUIConstants.CONSOLE_TAB_ICON,
+                                        AllIcons.Debugger.Console,
                                         myConsole.getPreferredFocusableComponent());
     result.setCloseable(false);
     return result;
@@ -83,7 +84,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myViews.add(variablesView);
     Content result = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, variablesView.getPanel(),
                                         XDebuggerBundle.message("debugger.session.tab.variables.title"),
-                                        XDebuggerUIConstants.VARIABLES_TAB_ICON, null);
+                                        AllIcons.Debugger.Value, null);
     result.setCloseable(false);
 
     ActionGroup group = getActionGroup(XDebuggerActions.VARIABLES_TREE_TOOLBAR_GROUP);
@@ -96,7 +97,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myWatchesView = new XWatchesView(session, this, sessionData);
     myViews.add(myWatchesView);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getMainPanel(),
-                                         XDebuggerBundle.message("debugger.session.tab.watches.title"), XDebuggerUIConstants.WATCHES_TAB_ICON, null);
+                                         XDebuggerBundle.message("debugger.session.tab.watches.title"), AllIcons.Debugger.Watches, null);
     watchesContent.setCloseable(false);
 
     return watchesContent;
@@ -106,7 +107,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     final XFramesView framesView = new XFramesView(session, this);
     myViews.add(framesView);
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
-                                               XDebuggerBundle.message("debugger.session.tab.frames.title"), XDebuggerUIConstants.FRAMES_TAB_ICON, null);
+                                               XDebuggerBundle.message("debugger.session.tab.frames.title"), AllIcons.Debugger.Frame, null);
     framesContent.setCloseable(false);
 
     return framesContent;
@@ -151,7 +152,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     DefaultActionGroup leftToolbar = new DefaultActionGroup();
     final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
     if (runner != null && env != null) {
-      RestartAction restartAction = new RestartAction(executor, runner, myRunContentDescriptor.getProcessHandler(), XDebuggerUIConstants.DEBUG_AGAIN_ICON,
+      RestartAction restartAction = new RestartAction(executor, runner, myRunContentDescriptor.getProcessHandler(),
+                                                      AllIcons.Actions.StartDebugger,
                                                      myRunContentDescriptor, env);
       leftToolbar.add(restartAction);
       restartAction.registerShortcut(myUi.getComponent());

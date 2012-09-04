@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
+import icons.GithubIcons;
 
 /**
  * @author Kirill Likhodedov
@@ -27,7 +28,7 @@ import git4idea.repo.GitRepository;
 abstract class GithubShowCommitInBrowserAction extends DumbAwareAction {
 
   public GithubShowCommitInBrowserAction() {
-    super("Open in Browser", "Open the selected commit in browser", GithubUtil.GITHUB_ICON);
+    super("Open in Browser", "Open the selected commit in browser", GithubIcons.Github_icon);
   }
 
   protected static void openInBrowser(Project project, GitRepository repository, String revisionHash) {

@@ -33,10 +33,10 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
@@ -64,7 +64,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrReflectedMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -274,7 +277,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
 
   @Override
   public Icon getIcon(int flags) {
-    RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(GroovyIcons.METHOD, this, false);
+    RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(JetgroovyIcons.Groovy.Method, this, false);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 

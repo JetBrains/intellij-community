@@ -14,10 +14,8 @@ import javax.swing.*;
  */
 public class XmlPropertiesIconProvider extends IconProvider {
 
-  private static final Icon ICON = PropertiesIcons.XmlProperties;
-
   @Override
   public Icon getIcon(@NotNull PsiElement element, int flags) {
-    return element instanceof XmlFile && XmlPropertiesFile.getPropertiesFile((XmlFile)element) != null ? ICON : null;
+    return element instanceof XmlFile && XmlPropertiesFile.getPropertiesFile((XmlFile)element) != null ? PropertiesIcons.XmlProperties : null;
   }
 }

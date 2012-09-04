@@ -27,7 +27,6 @@ import org.jetbrains.idea.maven.dom.model.MavenDomParent;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.navigator.SelectMavenProjectDialog;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.utils.MavenIcons;
 
 public class GenerateParentAction extends GenerateDomElementAction {
   public GenerateParentAction() {
@@ -50,7 +49,7 @@ public class GenerateParentAction extends GenerateDomElementAction {
         protected boolean isAvailableForModel(MavenDomProjectModel mavenModel) {
           return !DomUtil.hasXml(mavenModel.getMavenParent());
         }
-      }, MavenIcons.MAVEN_PROJECT_ICON);
+      }, icons.MavenIcons.MavenProject);
   }
 
   @Override

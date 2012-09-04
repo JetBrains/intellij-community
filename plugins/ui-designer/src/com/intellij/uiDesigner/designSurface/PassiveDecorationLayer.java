@@ -97,12 +97,8 @@ class PassiveDecorationLayer extends JComponent{
     );
   }
 
-  private static class IconHolder {
-    private static final Icon ourDragIcon = UIDesignerIcons.Drag;
-  }
-
   private static Icon getDragIcon() {
-    return IconHolder.ourDragIcon;
+    return UIDesignerIcons.Drag;
   }
 
   public void paint(final Graphics g){

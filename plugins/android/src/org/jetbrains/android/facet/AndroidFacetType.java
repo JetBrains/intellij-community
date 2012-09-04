@@ -20,7 +20,7 @@ import com.intellij.facet.FacetType;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import org.jetbrains.android.util.AndroidUtils;
+import icons.AndroidIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +55,6 @@ public class AndroidFacetType extends FacetType<AndroidFacet, AndroidFacetConfig
   }
 
   public Icon getIcon() {
-    return AndroidUtils.ANDROID_ICON;
+    return AndroidIcons.Android;
   }
 }

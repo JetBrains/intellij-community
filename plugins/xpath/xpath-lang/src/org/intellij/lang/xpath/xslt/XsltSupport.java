@@ -48,7 +48,6 @@ public class XsltSupport {
     public static final String PLUGIN_EXTENSIONS_NS = "urn:idea:xslt-plugin#extensions";
     public static final Key<ParameterizedCachedValue<XsltChecker.LanguageLevel, PsiFile>> FORCE_XSLT_KEY = Key.create("FORCE_XSLT");
 
-    private static final Icon XSLT_OVERLAY = XpathIcons.Xslt_filetype_overlay;
     private static final Map<String, String> XPATH_ATTR_MAP = new THashMap<String, String>(10);
     private static final Map<String, Set<String>> XPATH_AVT_MAP = new THashMap<String, Set<String>>(10);
 
@@ -335,7 +334,7 @@ public class XsltSupport {
     }
 
     public static Icon createXsltIcon(Icon icon) {
-        return LayeredIcon.create(icon, XSLT_OVERLAY);
+        return LayeredIcon.create(icon, XpathIcons.Xslt_filetype_overlay);
     }
 
     private static class XsltSupportProvider implements ParameterizedCachedValueProvider<XsltChecker.LanguageLevel, PsiFile> {

@@ -16,9 +16,9 @@
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import icons.EclipseIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,9 +31,6 @@ import javax.swing.*;
  * Author: Vladislav.Kaznacheev
  */
 public class EclipseFileType implements FileType {
-  public static final Icon eclipseIcon = IconLoader.getIcon("/images/eclipse.gif");
-
-
   @NotNull
   @NonNls
   public String getName() {
@@ -53,7 +50,7 @@ public class EclipseFileType implements FileType {
 
   @Nullable
   public Icon getIcon() {
-    return eclipseIcon;
+    return EclipseIcons.Eclipse;
   }
 
   public boolean isBinary() {

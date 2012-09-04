@@ -31,10 +31,10 @@ import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.tree.TreeUtil;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DClassElement;
@@ -350,7 +350,7 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
 
   @Nullable
   public Icon getIcon(boolean open) {
-    return GroovyIcons.METHOD;
+    return JetgroovyIcons.Groovy.Method;
   }
 
   public GrMethod getMethod() {

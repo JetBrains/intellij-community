@@ -21,9 +21,9 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 
 import javax.swing.*;
 
@@ -43,7 +43,7 @@ public class GroovyScriptRunConfigurationType implements ConfigurationType {
   }
 
   public Icon getIcon() {
-    return GroovyIcons.GROOVY_ICON_16x16;
+    return JetgroovyIcons.Groovy.Groovy_16x16;
   }
 
   @NonNls

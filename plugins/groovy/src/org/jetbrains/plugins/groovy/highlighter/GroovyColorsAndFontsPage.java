@@ -20,10 +20,10 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -40,7 +40,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
 
   @Nullable
   public Icon getIcon() {
-    return GroovyIcons.GROOVY_ICON_16x16;
+    return JetgroovyIcons.Groovy.Groovy_16x16;
   }
 
   @NotNull

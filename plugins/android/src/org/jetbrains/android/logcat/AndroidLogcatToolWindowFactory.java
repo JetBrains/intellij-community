@@ -38,12 +38,12 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.messages.MessageBusConnection;
+import icons.AndroidIcons;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +57,7 @@ public class AndroidLogcatToolWindowFactory implements ToolWindowFactory {
   public static final String TOOL_WINDOW_ID = AndroidBundle.message("android.logcat.title");
 
   public void createToolWindowContent(final Project project, final ToolWindow toolWindow) {
-    toolWindow.setIcon(AndroidUtils.ANDROID_TOOLWINDOW_ICON);
+    toolWindow.setIcon(AndroidIcons.AndroidToolWindow);
     toolWindow.setAvailable(true, null);
     toolWindow.setToHideOnEmptyContent(true);
     toolWindow.setTitle(TOOL_WINDOW_ID);

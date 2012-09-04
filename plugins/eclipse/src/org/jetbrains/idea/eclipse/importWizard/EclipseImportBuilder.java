@@ -40,7 +40,6 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -51,6 +50,7 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.Function;
 import gnu.trove.THashSet;
+import icons.EclipseIcons;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +68,6 @@ import java.io.IOException;
 import java.util.*;
 
 public class EclipseImportBuilder extends ProjectImportBuilder<String> implements EclipseProjectWizardContext {
-  private static final Icon eclipseIcon = IconLoader.getIcon("/images/eclipse.gif");
   private static final Logger LOG = Logger.getInstance("#" + EclipseImportBuilder.class.getName());
 
   public static class Parameters {
@@ -89,7 +88,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
   }
 
   public Icon getIcon() {
-    return eclipseIcon;
+    return EclipseIcons.Eclipse;
   }
 
   @Nullable
@@ -375,7 +374,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
 
         public Icon getIcon(final VirtualFile file) {
-          return looksLikeEclipse(file) ? dressIcon(file, eclipseIcon) : super.getIcon(file);
+          return looksLikeEclipse(file) ? dressIcon(file, EclipseIcons.Eclipse) : super.getIcon(file);
         }
 
         private boolean looksLikeEclipse(final VirtualFile file) {

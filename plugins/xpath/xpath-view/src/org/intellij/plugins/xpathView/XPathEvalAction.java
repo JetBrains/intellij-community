@@ -120,13 +120,11 @@ public class XPathEvalAction extends XPathAction {
 
     private static final Logger LOG = Logger.getInstance("org.intellij.plugins.xpathView.XPathEvalAction");
 
-    private final Icon myIcon = XpathIcons.Xml;
-
-    @Override
+  @Override
     protected void updateToolbar(AnActionEvent event) {
         super.updateToolbar(event);
-        if (myIcon != null) {
-            event.getPresentation().setIcon(myIcon);
+        if (XpathIcons.Xml != null) {
+            event.getPresentation().setIcon(XpathIcons.Xml);
         }
     }
 

@@ -31,6 +31,7 @@ import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
@@ -48,7 +49,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(GithubOpenInBrowserAction.class.getName());
 
   protected GithubOpenInBrowserAction() {
-    super("Open in browser", "Open corresponding GitHub link in browser", GITHUB_ICON);
+    super("Open in browser", "Open corresponding GitHub link in browser", GithubIcons.Github_icon);
   }
 
   @Override
