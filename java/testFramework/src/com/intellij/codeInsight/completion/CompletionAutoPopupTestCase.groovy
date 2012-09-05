@@ -23,49 +23,15 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
  * @author peter
  */
 abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCase {
-  private CompletionAutoPopupTester myTester
+  protected CompletionAutoPopupTester myTester
 
   @Override protected void setUp() {
-    edt { superSetUp() }
-    myTester = new CompletionAutoPopupTester(myFixture)
-  }
-  void superSetUp() {
     super.setUp()
-  }
-  void superTearDown() {
-    super.tearDown()
-  }
-
-  @Override protected void tearDown() {
-    edt { superTearDown() }
-  }
-
-  protected void doHighlighting() {
-    edt { myFixture.doHighlighting() }
+    myTester = new CompletionAutoPopupTester(myFixture)
   }
 
   void type(String s) {
     myTester.typeWithPauses(s)
-  }
-
-  protected void joinCompletion() {
-    myTester.joinCompletion()
-  }
-
-  protected def joinCommit(Closure c1={}) {
-    myTester.joinCommit(c1)
-  }
-
-  protected void joinAutopopup() {
-    myTester.joinAutopopup()
-  }
-
-  protected def joinAlarm() {
-    myTester.joinAlarm()
-  }
-
-  @Override protected void runTest() {
-    myTester.runWithAutoPopupEnabled { runTestBare() }
   }
 
   @Override protected boolean runInDispatchThread() {
@@ -73,7 +39,7 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
   }
 
   @Override protected void invokeTestRunnable(Runnable runnable) {
-    runnable.run()
+    myTester.runWithAutoPopupEnabled(runnable)
   }
 
   LookupImpl getLookup() {
