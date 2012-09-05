@@ -162,7 +162,6 @@ public class TypedHandler extends TypedActionHandlerBase {
     }
 
     final TypedHandlerDelegate[] delegates = Extensions.getExtensions(TypedHandlerDelegate.EP_NAME);
-    AutoPopupController autoPopupController = AutoPopupController.getInstance(project);
 
     boolean handled = false;
     for(TypedHandlerDelegate delegate: delegates) {
@@ -174,13 +173,8 @@ public class TypedHandler extends TypedActionHandlerBase {
     }
 
     if (!handled) {
-      if (charTyped == '.') {
-        autoPopupController.autoPopupMemberLookup(editor, null);
-      }
-
-      if ((charTyped == '(' || charTyped == ',') && !isInsideStringLiteral(editor, file)) {
-        autoPopupController.autoPopupParameterInfo(editor, null);
-      }
+      autoPopupCompletion(editor, charTyped, project);
+      autoPopupParameterInfo(editor, charTyped, project, file);
     }
 
     if (!editor.isInsertMode()){
@@ -239,6 +233,18 @@ public class TypedHandler extends TypedActionHandlerBase {
     }
     if ('{' == charTyped) {
       indentOpenedBrace(project, editor);
+    }
+  }
+
+  private static void autoPopupParameterInfo(Editor editor, char charTyped, Project project, PsiFile file) {
+    if ((charTyped == '(' || charTyped == ',') && !isInsideStringLiteral(editor, file)) {
+      AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null);
+    }
+  }
+
+  public static void autoPopupCompletion(Editor editor, char charTyped, Project project) {
+    if (charTyped == '.') {
+      AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
     }
   }
 
