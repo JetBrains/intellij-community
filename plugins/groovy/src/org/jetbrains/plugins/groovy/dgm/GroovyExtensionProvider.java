@@ -71,7 +71,7 @@ public class GroovyExtensionProvider {
   }
 
   private static void collectClasses(IProperty pr, List<String> classes) {
-    String value = pr.getValue();
+    String value = pr.getUnescapedValue();
     if (value == null) return;
     value = value.trim();
     String[] qnames = value.split("\\s*,\\s*");

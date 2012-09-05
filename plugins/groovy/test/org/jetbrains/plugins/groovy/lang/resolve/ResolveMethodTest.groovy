@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 public class ResolveMethodTest extends GroovyResolveTestCase {
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "resolve/method/";
+    return TestUtils.testDataPath + "resolve/method/";
   }
 
 
@@ -178,7 +178,7 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(type instanceof PsiClassType);
     PsiClass clazz = ((PsiClassType) type).resolve();
     assertNotNull(clazz);
-    assertEquals("java.util.List", clazz.getQualifiedName());
+    assertEquals("java.util.ArrayList", clazz.getQualifiedName());
   }
 
 
@@ -1063,9 +1063,23 @@ class StringExt {
 "".su<caret>b()''')
 
     myFixture.addFileToProject("META-INF/services/org.codehaus.groovy.runtime.ExtensionModule", """\
-extensionClasses=pack.StringExt
+extensionClasses=\\
+  pack.StringExt
 """)
 
     assertNotNull(ref.resolve())
+  }
+
+  void testInitializerOfScriptField() {
+    addGroovyTransformField()
+    def ref = configureByText('''\
+import groovy.transform.Field
+
+def xx(){5}
+
+@Field
+def aa = 5 + x<caret>x()
+''')
+    assertInstanceOf(ref.resolve(), GrMethod)
   }
 }
