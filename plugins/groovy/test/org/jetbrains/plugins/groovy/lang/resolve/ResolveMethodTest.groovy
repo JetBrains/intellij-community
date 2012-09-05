@@ -178,7 +178,7 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(type instanceof PsiClassType);
     PsiClass clazz = ((PsiClassType) type).resolve();
     assertNotNull(clazz);
-    assertEquals("java.util.ArrayList", clazz.getQualifiedName());
+    assertEquals("java.util.List", clazz.getQualifiedName());
   }
 
 
@@ -887,82 +887,9 @@ i<caret>s(create())
     assertEquals 'Other', resolved.containingClass.name
   }
 
-  public void testStaticallyImportedMethodsVsCurrentClassMethod() {
-    myFixture.addClass('''\
-package p;
-class Other {
-  public static Object is(Object m){}
-}''')
 
-    def ref = configureByText('''\
-import static p.Other.is
 
-class A {
-  public boolean is(String o){true}
 
-  public foo() {
-    print i<caret>s('abc')
-  }
-}
-
-''')
-
-    def resolved = ref.resolve()
-    assertInstanceOf resolved, PsiMethod
-    assertEquals 'Other', resolved.containingClass.name
-  }
-
-  public void testInapplicableStaticallyImportedMethodsVsCurrentClassMethod() {
-    myFixture.addClass('''\
-package p;
-class Other {
-  public static Object is(String m){}
-}''')
-
-    def ref = configureByText('''\
-import static p.Other.is
-
-class A {
-  public boolean is(Object o){true}
-
-  public foo() {
-    print i<caret>s(new Object())
-  }
-}
-
-''')
-
-    def resolved = ref.resolve()
-    assertInstanceOf resolved, PsiMethod
-    assertEquals 'A', resolved.containingClass.name
-  }
-
-  public void testInferArgumentTypeFromMethod1() {
-    def ref = configureByText('''\
-def bar(String s) {}
-
-def foo(Integer a) {
-    bar(a)
-
-    a.subst<caret>ring(2)
-}
-''')
-    assertNotNull(ref.resolve())
-  }
-
-  public void testInferArgumentTypeFromMethod2() {
-    def ref = configureByText('''\
-def bar(String s) {}
-
-def foo(Integer a) {
-  while(true) {
-    bar(a)
-    a.subst<caret>ring(2)
-  }
-}
-''')
-    assertNotNull(ref.resolve())
-  }
 
   public void testInferArgumentTypeFromMethod3() {
     def ref = configureByText('''\
@@ -990,67 +917,6 @@ def foo(Integer a) {
 ''')
     assertNotNull(ref.resolve())
   }
-
-  public void testStaticImportFromSuperClass() {
-    def ref = configureByText('''\
-import static Derived.fo<caret>o
-
-class Base {
-    static foo(){print 'foo'}
-}
-
-class Derived extends Base {
-}
-
-foo()
-''')
-
-    assertNotNull(ref.resolve())
-  }
-
-  public void testUsageOfStaticImportFromSuperClass() {
-    def ref = configureByText('''\
-import static Derived.foo
-
-class Base {
-    static foo(){print 'foo'}
-}
-
-class Derived extends Base {
-}
-
-fo<caret>o()
-''')
-
-    assertNotNull(ref.resolve())
-  }
-
-  public void testMixin() {
-    def ref = configureByText('''\
-@Mixin([Category1, Category2])
-class A {
-  def test1(){}
-}
-
-
-@Category(A)
-class Category1 {
-  boolean foo() {
-    true
-
-  }
-}
-
-@Category(A)
-class Category2 {
-  void bar() {
-    fo<caret>o()
-  }
-}
-''')
-    assertNotNull(ref.resolve())
-  }
-
 
   void testGroovyExtensions() {
     def ref = configureByText('pack._a.groovy', '''\
