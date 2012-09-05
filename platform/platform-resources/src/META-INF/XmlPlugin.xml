@@ -360,6 +360,10 @@
     <localInspection language="XML" implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection"
                      displayName="File path resolving in XML"
                      groupName="XML" enabledByDefault="true" level="ERROR"/>
+    <localInspection language="XML" shortName="HtmlUnknownTarget" bundle="messages.XmlBundle" key="html.inspections.unknown.target" groupName="HTML"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownTargetInspection"/>
+
 
     <globalInspection shortName="XmlHighlighting" displayName="XML highlighting" groupName="General" enabledByDefault="true" level="ERROR"
                       implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitorBasedInspection"/>

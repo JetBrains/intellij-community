@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection.htmlInspections;
+package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import org.jetbrains.annotations.NotNull;
 
 /**
