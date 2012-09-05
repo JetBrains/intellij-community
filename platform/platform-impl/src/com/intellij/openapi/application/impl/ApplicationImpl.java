@@ -99,6 +99,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private final String myName;
 
   private final ReentrantWriterPreferenceReadWriteLock myActionsLock = new ReentrantWriterPreferenceReadWriteLock();
+  //private final AppLock myActionsLock = new AppLockImpl();
+
   private final Stack<Class> myWriteActionsStack = new Stack<Class>(); // accessed from EDT only, no need to sync
 
   private volatile Runnable myExceptionalThreadWithReadAccessRunnable;
@@ -912,13 +914,21 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public void runReadAction(@NotNull final Runnable action) {
-    final AccessToken token = acquireReadActionLockImpl(false);
-
-    try {
+    assertReadActionAllowed();
+    if (isReadAccessAllowed()) {
       action.run();
     }
-    finally {
-      token.finish();
+    else {
+      try {
+        myActionsLock.readLock().acquire();
+        action.run();
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeInterruptedException(e);
+      }
+      finally {
+        myActionsLock.readLock().release();
+      }
     }
   }
 
@@ -941,13 +951,21 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public <T> T runReadAction(@NotNull final Computable<T> computation) {
-    final AccessToken token = acquireReadActionLockImpl(false);
-
-    try {
+    assertReadActionAllowed();
+    if (isReadAccessAllowed()) {
       return computation.compute();
     }
-    finally {
-      token.finish();
+    else {
+      try {
+        myActionsLock.readLock().acquire();
+        return computation.compute();
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeInterruptedException(e);
+      }
+      finally {
+        myActionsLock.readLock().release();
+      }
     }
   }
 
@@ -1021,7 +1039,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return ourDispatchThread == currentThread ||
            isExceptionalThreadWithReadAccess() ||
            myActionsLock.isReadLockAcquired() ||
-           myActionsLock.isWriteLockAcquired() ||
            isDispatchThread();
   }
 
@@ -1161,15 +1178,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public AccessToken acquireReadActionLock() {
-    return acquireReadActionLockImpl(true);
-  }
-
-  private AccessToken acquireReadActionLockImpl(boolean explicit) {
     /** if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
      * see {@link com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock#allowReader()} */
     if (isReadAccessAllowed()) return AccessToken.EMPTY_ACCESS_TOKEN;
 
-    return new ReadAccessToken(explicit);
+    return new ReadAccessToken();
   }
 
   @Override
@@ -1238,14 +1251,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private class ReadAccessToken extends AccessToken {
-    private final boolean myExplicit;
-
-    ReadAccessToken(boolean explicit) {
-      myExplicit = explicit;
-      LOG.assertTrue(!Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing readAction");
+    private ReadAccessToken() {
+      assertReadActionAllowed();
       try {
         myActionsLock.readLock().acquire();
-        if (myExplicit) acquired();
+        acquired();
       }
       catch (InterruptedException e) {
         throw new RuntimeInterruptedException(e);
@@ -1255,8 +1265,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     @Override
     public void finish() {
       myActionsLock.readLock().release();
-      if (myExplicit) released();
+      released();
     }
+  }
+
+  private static void assertReadActionAllowed() {
+    LOG.assertTrue(!Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing readAction");
   }
 
   @Override
