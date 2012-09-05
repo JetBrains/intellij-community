@@ -173,7 +173,7 @@ public class XmlNamespacesTest extends CodeInsightFixtureTestCase {
                                        "        xsi:schemaLocation=\"http://www.w3.org/2001/XMLSchema http://www.w3.org/2001/XMLSchema.xsd\n" +
                                        "                http://www.w3.org/2001/XInclude http://www.w3.org/2001/XInclude.xsd\">\n" +
                                        "\n" +
-                                       "    <include xmlns=\"http://www.w3.org/2001/XInclude\" href=\"<error descr=\"Cannot resolve file 'a.xml'\">a.xml</error>\"/>\n" +
+                                       "    <<error descr=\"An 'include' failed, and no 'fallback' element was found.\">include</error> xmlns=\"http://www.w3.org/2001/XInclude\" href=\"<error descr=\"Cannot resolve file 'a.xml'\">a.xml</error>\"/>\n" +
                                        "</x:all>");
     myFixture.testHighlighting();
   }
