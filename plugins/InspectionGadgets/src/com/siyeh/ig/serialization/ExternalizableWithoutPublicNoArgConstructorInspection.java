@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,8 +132,7 @@ public class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseI
     }
 
     private static boolean isExternalizable(PsiClass aClass) {
-      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(aClass.getProject());
-      final PsiClass externalizableClass = psiFacade.findClass("java.io.Externalizable", aClass.getResolveScope());
+      final PsiClass externalizableClass = ClassUtils.findClass("java.io.Externalizable", aClass);
       return externalizableClass != null && aClass.isInheritor(externalizableClass, true);
     }
   }
