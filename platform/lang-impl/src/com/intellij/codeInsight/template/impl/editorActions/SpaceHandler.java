@@ -31,6 +31,7 @@ public class SpaceHandler extends TypedActionHandlerBase {
     super(originalHandler);
   }
 
+  @Override
   public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
     if (charTyped != ' ') {
       if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);

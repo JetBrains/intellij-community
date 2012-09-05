@@ -25,6 +25,7 @@ import com.intellij.psi.statistics.StatisticsManager;
  */
 public class DecoratorCompletionStatistician extends CompletionStatistician{
 
+  @Override
   public StatisticsInfo serialize(final LookupElement element, final CompletionLocation location) {
     if (element instanceof LookupElementDecorator) {
       return StatisticsManager.serialize(CompletionService.STATISTICS_KEY, ((LookupElementDecorator)element).getDelegate(), location);

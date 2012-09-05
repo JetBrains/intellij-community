@@ -48,7 +48,6 @@ import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.utils.MavenIcons;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
@@ -311,18 +310,18 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     final String prefix = prefixLength == 0 ? null : myText.substring(0, prefixLength);
 
     PsiDirectory baseDir = getBaseDir(mavenProject);
-    addVariant(result, "basedir", baseDir, prefix, MavenIcons.MAVEN_ICON);
+    addVariant(result, "basedir", baseDir, prefix, icons.MavenIcons.MavenLogo);
     if (prefix == null) {
-      result.add(createLookupElement(baseDir, "project.baseUri", MavenIcons.MAVEN_ICON));
-      result.add(createLookupElement(baseDir, "pom.baseUri", MavenIcons.MAVEN_ICON));
-      result.add(LookupElementBuilder.create(TIMESTAMP_PROP).withIcon(MavenIcons.MAVEN_ICON));
+      result.add(createLookupElement(baseDir, "project.baseUri", icons.MavenIcons.MavenLogo));
+      result.add(createLookupElement(baseDir, "pom.baseUri", icons.MavenIcons.MavenLogo));
+      result.add(LookupElementBuilder.create(TIMESTAMP_PROP).withIcon(icons.MavenIcons.MavenLogo));
     }
 
     processSchema(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, new SchemaProcessor<Object>() {
       @Override
       public Object process(@NotNull String property, XmlElementDescriptor descriptor) {
         if (property.startsWith("project.")) {
-          addVariant(result, property.substring("project.".length()), descriptor, prefix, MavenIcons.MAVEN_ICON);
+          addVariant(result, property.substring("project.".length()), descriptor, prefix, icons.MavenIcons.MavenLogo);
         }
         return null;
       }
@@ -331,7 +330,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     processSchema(MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL, new SchemaProcessor<Object>(){
       @Override
       public Object process(@NotNull String property, XmlElementDescriptor descriptor) {
-        result.add(createLookupElement(descriptor, property, MavenIcons.MAVEN_ICON));
+        result.add(createLookupElement(descriptor, property, icons.MavenIcons.MavenLogo));
         return null;
       }
     });

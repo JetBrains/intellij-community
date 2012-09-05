@@ -151,14 +151,17 @@ public class DFAMap<V> {
     }
     if (myK != null) {
       return Collections.singleton(new Map.Entry<String, V>() {
+        @Override
         public String getKey() {
           return myK;
         }
 
+        @Override
         public V getValue() {
           return myV;
         }
 
+        @Override
         public V setValue(V value) {
           throw new UnsupportedOperationException();
         }

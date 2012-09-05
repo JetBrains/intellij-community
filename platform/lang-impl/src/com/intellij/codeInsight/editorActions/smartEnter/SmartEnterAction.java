@@ -52,10 +52,12 @@ public class SmartEnterAction extends EditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       return getEnterHandler().isEnabled(editor, dataContext);
     }
 
+    @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       if (project == null || editor.isOneLineMode()) {

@@ -25,6 +25,7 @@ import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +75,7 @@ public class GroovyFileType extends LanguageFileType {
   }
 
   public Icon getIcon() {
-    return GroovyIcons.GROOVY_ICON_16x16;
+    return JetgroovyIcons.Groovy.Groovy_16x16;
   }
 
   public boolean isJVMDebuggingSupported() {

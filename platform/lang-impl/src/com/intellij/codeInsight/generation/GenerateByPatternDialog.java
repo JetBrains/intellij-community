@@ -117,6 +117,7 @@ public class GenerateByPatternDialog extends DialogWrapper {
 
   private void updateDetails(final PatternDescriptor descriptor) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final Template template = descriptor.getTemplate();
         if (template instanceof TemplateImpl) {

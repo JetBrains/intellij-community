@@ -17,13 +17,15 @@ package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.psi.PsiReference;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.xml.GenericDomValue;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,7 +35,7 @@ class DomElementResolveProblemDescriptorImpl extends DomElementProblemDescriptor
   @NotNull private final PsiReference myReference;
 
   public DomElementResolveProblemDescriptorImpl(@NotNull final GenericDomValue domElement, @NotNull final PsiReference reference, LocalQuickFix... quickFixes) {
-     super(domElement, XmlHighlightVisitor.getErrorDescription(reference), HighlightSeverity.ERROR, quickFixes);
+     super(domElement, reference instanceof FileReference ? ProblemsHolder.unresolvedReferenceMessage(reference) : XmlHighlightVisitor.getErrorDescription(reference), HighlightSeverity.ERROR, quickFixes);
      myReference = reference;
   }
 

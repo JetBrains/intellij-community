@@ -3,7 +3,7 @@ package org.jetbrains.jps.incremental.artifacts.instructions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.IgnoredFilePatterns;
+import org.jetbrains.jps.incremental.IgnoredFilePatterns;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
 
 import java.io.File;
@@ -20,14 +20,12 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
   private final Map<String, JarInfo> myJarByPath;
   private final List<Pair<ArtifactRootDescriptor, DestinationInfo>> myInstructions;
   private final ModuleRootsIndex myRootsIndex;
-  private final IgnoredFilePatterns myIgnoredFilePatterns;
   private final int myArtifactId;
   private final String myArtifactName;
   private int myRootIndex;
 
-  public ArtifactInstructionsBuilderImpl(ModuleRootsIndex rootsIndex, IgnoredFilePatterns patterns, int artifactId, String artifactName) {
+  public ArtifactInstructionsBuilderImpl(ModuleRootsIndex rootsIndex, int artifactId, String artifactName) {
     myRootsIndex = rootsIndex;
-    myIgnoredFilePatterns = patterns;
     myArtifactId = artifactId;
     myArtifactName = artifactName;
     myJarByPath = new HashMap<String, JarInfo>();
@@ -35,7 +33,7 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
   }
 
   public IgnoredFilePatterns getIgnoredFilePatterns() {
-    return myIgnoredFilePatterns;
+    return myRootsIndex.getIgnoredFilePatterns();
   }
 
   public boolean addDestination(@NotNull ArtifactRootDescriptor descriptor, @NotNull DestinationInfo destinationInfo) {

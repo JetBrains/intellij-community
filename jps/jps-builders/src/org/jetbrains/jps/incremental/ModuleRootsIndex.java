@@ -9,7 +9,7 @@ import org.jetbrains.jps.builders.AdditionalRootsProviderService;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
-import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
@@ -29,12 +29,14 @@ public class ModuleRootsIndex {
   private final int myTotalModuleCount;
   private final Set<File> myExcludedRoots = new HashSet<File>();
   private final Map<JpsModule, List<File>> myModuleToExcludesMap = new HashMap<JpsModule, List<File>>();
+  private final IgnoredFilePatterns myIgnoredFilePatterns;
 
   private static final Key<Map<File, RootDescriptor>> ROOT_DESCRIPTOR_MAP = Key.create("_root_to_descriptor_map");
   private static final Key<Map<JpsModule, List<RootDescriptor>>> MODULE_ROOT_MAP = Key.create("_module_to_root_map");
 
-  public ModuleRootsIndex(JpsProject project, BuildDataManager dataManager) {
-    final Collection<JpsModule> allModules = project.getModules();
+  public ModuleRootsIndex(JpsModel model, BuildDataManager dataManager) {
+    myIgnoredFilePatterns = new IgnoredFilePatterns(model.getGlobal().getFileTypesConfiguration().getIgnoredPatternString());
+    final Collection<JpsModule> allModules = model.getProject().getModules();
     myTotalModuleCount = allModules.size();
     final Iterable<AdditionalRootsProviderService> rootsProviders = JpsServiceManager.getInstance().getExtensions(AdditionalRootsProviderService.class);
     for (final JpsModule module : allModules) {
@@ -101,6 +103,10 @@ public class ModuleRootsIndex {
         }
       }
     }
+  }
+
+  public IgnoredFilePatterns getIgnoredFilePatterns() {
+    return myIgnoredFilePatterns;
   }
 
   public int getTotalModuleCount() {

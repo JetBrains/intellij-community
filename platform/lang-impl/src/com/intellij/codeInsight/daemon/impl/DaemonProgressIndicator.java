@@ -78,4 +78,14 @@ public class DaemonProgressIndicator extends ProgressIndicatorBase {
   public static void setDebug(boolean debug) {
     DaemonProgressIndicator.debug = debug;
   }
+
+  @Override
+  public final boolean equals(Object obj) {
+    return super.equals(obj);
+  }
+
+  @Override
+  public final int hashCode() {
+    return super.hashCode();
+  }
 }

@@ -43,6 +43,7 @@ public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Ru
 
   protected abstract void selected(T... classes);
 
+  @Override
   public void run() {
     if (myClasses.length == 1) {
       //TODO: cdr this place should produce at least warning
@@ -69,6 +70,7 @@ public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Ru
       renderer.installSpeedSearch(builder);
 
       final Runnable callback = new Runnable() {
+        @Override
         public void run() {
           int idx = myList.getSelectedIndex();
           if (idx < 0) return;
@@ -82,6 +84,7 @@ public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Ru
       };
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           builder.
             setTitle(myTitle).

@@ -55,10 +55,12 @@ public class LookupValueFactory {
       myName = name;
       myIcon = icon;
     }
+    @Override
     public String getPresentation() {
       return myName;
     }
 
+    @Override
     public Icon getIcon(int flags) {
       return myIcon;
     }
@@ -82,15 +84,18 @@ public class LookupValueFactory {
       myHint = hint;
     }
 
+    @Override
     public String getTypeHint() {
       return myHint;
     }
 
+    @Override
     @Nullable
     public Color getColorHint() {
       return null;
     }
 
+    @Override
     public boolean isBold() {
       return false;
     }
@@ -104,6 +109,7 @@ public class LookupValueFactory {
       myTail = tail;
     }
 
+    @Override
     public String getTailText() {
       return myTail;
     }

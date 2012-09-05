@@ -71,6 +71,7 @@ public class CompletionServiceImpl extends CompletionService{
     return completion == null ? null : completion.getLookup().getAdvertisementText();
   }
 
+  @Override
   public void setAdvertisementText(@Nullable final String text) {
     final CompletionProgressIndicator completion = getCompletionService().getCurrentCompletion();
     if (completion != null) {
@@ -78,6 +79,7 @@ public class CompletionServiceImpl extends CompletionService{
     }
   }
 
+  @Override
   public CompletionResultSet createResultSet(final CompletionParameters parameters, final Consumer<CompletionResult> consumer,
                                              @NotNull final CompletionContributor contributor) {
     final PsiElement position = parameters.getPosition();
@@ -124,6 +126,7 @@ public class CompletionServiceImpl extends CompletionService{
       myOriginal = original;
     }
 
+    @Override
     public void addElement(@NotNull final LookupElement element) {
       CompletionResult matched = CompletionResult.wrap(element, getPrefixMatcher(), mySorter);
       if (matched != null) {
@@ -131,6 +134,7 @@ public class CompletionServiceImpl extends CompletionService{
       }
     }
 
+    @Override
     @NotNull
     public CompletionResultSet withPrefixMatcher(@NotNull final PrefixMatcher matcher) {
       return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, matcher, myContributor, myParameters, mySorter, myProcess, this);
@@ -144,6 +148,7 @@ public class CompletionServiceImpl extends CompletionService{
       }
     }
 
+    @Override
     @NotNull
     public CompletionResultSet withPrefixMatcher(@NotNull final String prefix) {
       return withPrefixMatcher(new CamelHumpMatcher(prefix));
@@ -223,6 +228,7 @@ public class CompletionServiceImpl extends CompletionService{
     return ourPhase;
   }
 
+  @Override
   public CompletionSorterImpl defaultSorter(CompletionParameters parameters, final PrefixMatcher matcher) {
     final CompletionLocation location = new CompletionLocation(parameters);
 
@@ -260,6 +266,7 @@ public class CompletionServiceImpl extends CompletionService{
     });
   }
 
+  @Override
   public CompletionSorterImpl emptySorter() {
     return new CompletionSorterImpl(new ArrayList<ClassifierFactory<LookupElement>>());
   }

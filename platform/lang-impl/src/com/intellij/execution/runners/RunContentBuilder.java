@@ -15,7 +15,9 @@
  */
 package com.intellij.execution.runners;
 
-import com.intellij.diagnostic.logging.*;
+import com.intellij.diagnostic.logging.LogConsoleManagerBase;
+import com.intellij.diagnostic.logging.LogFilesManager;
+import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
@@ -27,51 +29,37 @@ import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ContextHelpAction;
-import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManagerAdapter;
-import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import java.io.File;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author dyoma
  */
-public class RunContentBuilder implements LogConsoleManager, Disposable  {
+public class RunContentBuilder extends LogConsoleManagerBase {
   @NonNls private static final String JAVA_RUNNER = "JavaRunner";
-  
+
   private final ProgramRunner myRunner;
-  private final Project myProject;
-  private final CompositeDisposable myDisposeables = new CompositeDisposable();
   private final ArrayList<AnAction> myRunnerActions = new ArrayList<AnAction>();
-  private final Icon myRerunIcon = AllIcons.Actions.RefreshUsages;
   private final boolean myReuseProhibited = false;
   private ExecutionResult myExecutionResult;
 
   private final LogFilesManager myManager;
 
   private RunnerLayoutUi myUi;
-  private final Map<AdditionalTabComponent, Content> myAdditionalContent = new HashMap<AdditionalTabComponent, Content>();
   private final Executor myExecutor;
-  private ExecutionEnvironment myEnvironment;
 
   public RunContentBuilder(final Project project, final ProgramRunner runner, Executor executor) {
-    myProject = project;
+    super(project);
     myRunner = runner;
     myExecutor = executor;
     myManager = new LogFilesManager(project, this, this);
@@ -86,7 +74,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
   }
 
   public void setEnvironment(@NotNull final ExecutionEnvironment env) {
-    myEnvironment = env;
+    super.setEnvironment(env);
     final RunProfile profile = env.getRunProfile();
     if (profile instanceof RunConfigurationBase) {
       myManager.registerFileMatcher((RunConfigurationBase)profile);
@@ -97,21 +85,17 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     myRunnerActions.add(action);
   }
 
-  @Override
-  public void dispose() {
-    Disposer.dispose(myDisposeables);
-  }
-
   private RunContentDescriptor createDescriptor() {
     if (myExecutionResult == null) {
       throw new IllegalStateException("Missing ExecutionResult");
     }
 
-    if (myEnvironment == null) {
+    ExecutionEnvironment environment = getEnvironment();
+    if (environment == null) {
       throw new IllegalStateException("Missing ExecutionEnvironment");
     }
 
-    final RunProfile profile = myEnvironment.getRunProfile();
+    final RunProfile profile = environment.getRunProfile();
 
     final ExecutionConsole console = myExecutionResult.getExecutionConsole();
     String runnerType = JAVA_RUNNER;
@@ -121,7 +105,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
         runnerType = JAVA_RUNNER + "." + id;
       }
     }
-    myUi = RunnerLayoutUi.Factory.getInstance(myProject).create(runnerType, myExecutor.getId(), profile.getName(), this);
+    myUi = RunnerLayoutUi.Factory.getInstance(getProject()).create(runnerType, myExecutor.getId(), profile.getName(), this);
     myUi.getOptions().setMoveToGridActionEnabled(false).setMinimizeActionEnabled(false);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -168,42 +152,10 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     consoleContent.setActions(consoleActions, ActionPlaces.UNKNOWN, console.getComponent());
   }
 
-  @Override
-  public void addLogConsole(final String name, final String path, @NotNull Charset charset, final long skippedContent) {
-    final LogConsoleImpl log = new LogConsoleImpl(myProject, new File(path), charset, skippedContent, name, false){
-      @Override
-      public boolean isActive() {
-        final Content content = myUi.findContent(path);
-        return content != null && content.isSelected();
-      }
-    };
-    if (myEnvironment.getRunProfile() instanceof RunConfigurationBase) {
-      ((RunConfigurationBase) myEnvironment.getRunProfile()).customizeLogConsole(log);
-    }
-    log.attachStopLogConsoleTrackingListener(myExecutionResult.getProcessHandler());
-    addAdditionalTabComponent(log, path);
-
-    myUi.addListener(new ContentManagerAdapter() {
-      @Override
-      public void selectionChanged(final ContentManagerEvent event) {
-        log.stateChanged(new ChangeEvent(myUi));
-      }
-    }, log);
-  }
-
-  @Override
-  public void removeLogConsole(final String path) {
-    final Content content = myUi.findContent(path);
-    if (content != null) {
-      final LogConsoleImpl log = (LogConsoleImpl)content.getComponent();
-      removeAdditionalTabComponent(log);
-    }
-  }
-
   private ActionGroup createActionToolbar(final RunContentDescriptor contentDescriptor, final JComponent component) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
 
-    final RestartAction restartAction = new RestartAction(myExecutor, myRunner, getProcessHandler(), myRerunIcon, contentDescriptor, myEnvironment);
+    final RestartAction restartAction = new RestartAction(myExecutor, myRunner, getProcessHandler(), AllIcons.Actions.RefreshUsages, contentDescriptor, getEnvironment());
     restartAction.registerShortcut(component);
     actionGroup.add(restartAction);
     contentDescriptor.setRestarter(new Runnable() {
@@ -244,7 +196,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     actionGroup.add(myUi.getOptions().getLayoutActions());
     actionGroup.addSeparator();
     actionGroup.add(PinToolwindowTabAction.getPinAction());
-    actionGroup.add(new CloseAction(myExecutor, contentDescriptor, myProject));
+    actionGroup.add(new CloseAction(myExecutor, contentDescriptor, getProject()));
     actionGroup.add(new ContextHelpAction(myExecutor.getHelpId()));
     return actionGroup;
   }
@@ -263,30 +215,13 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
   }
 
   @Override
-  public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent, final String id) {
-    final Content content = myUi.createContent(id, (ComponentWithActions)tabComponent, tabComponent.getTabTitle(),
-                                               AllIcons.Debugger.Console, tabComponent.getPreferredFocusableComponent());
-
-
-
-    myUi.addContent(content);
-    myAdditionalContent.put(tabComponent, content);
-
-    myDisposeables.add(new Disposable(){
-      @Override
-      public void dispose() {
-        if (!myUi.isDisposed()) {
-          removeAdditionalTabComponent(tabComponent);
-        }
-      }
-    });
+  protected RunnerLayoutUi getUi() {
+    return myUi;
   }
 
   @Override
-  public void removeAdditionalTabComponent(AdditionalTabComponent component) {
-    Disposer.dispose(component);
-    final Content content = myAdditionalContent.remove(component);
-    myUi.removeContent(content, true);
+  protected Icon getDefaultIcon() {
+    return AllIcons.Debugger.Console;
   }
 
   private static class MyRunContentDescriptor extends RunContentDescriptor {

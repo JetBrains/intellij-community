@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 
 public class CodeCompletionGroup extends DefaultActionGroup implements DumbAware {
 
+  @Override
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();

@@ -214,7 +214,13 @@ public def layoutCommunityPlugins(String home) {
     layoutPlugin("InspectionGadgets", "InspectionGadgetsPlugin")
     layoutPlugin("IntentionPowerPack", "IntentionPowerPackPlugin")
     layoutPlugin("ToString", "generate-tostring", "toString")
-    layoutPlugin("uiDesigner", "ui-designer", "uiDesigner")
+    layoutPlugin("uiDesigner", "ui-designer", "uiDesigner") {
+      dir("jps") {
+        jar("ui-designer-jps-plugin.jar") {
+          module("ui-designer-jps-plugin")
+        }
+      }
+    }
 
     layoutPlugin("maven") {
       jar("maven-server-api.jar") {

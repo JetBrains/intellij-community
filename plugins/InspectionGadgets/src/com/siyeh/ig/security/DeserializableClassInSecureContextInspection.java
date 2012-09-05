@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.security;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -24,36 +25,34 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class DeserializableClassInSecureContextInspection
-  extends BaseInspection {
+public class DeserializableClassInSecureContextInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "deserializable.class.in.secure.context.display.name");
+    return InspectionGadgetsBundle.message("deserializable.class.in.secure.context.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "deserializable.class.in.secure.context.problem.descriptor");
+    return InspectionGadgetsBundle.message("deserializable.class.in.secure.context.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new DeserializableClassInSecureContextVisitor();
   }
 
-  private static class DeserializableClassInSecureContextVisitor
-    extends BaseInspectionVisitor {
+  private static class DeserializableClassInSecureContextVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
       // no call to super, so it doesn't drill down
-      if (aClass.isInterface() || aClass.isAnnotationType() ||
-          aClass.isEnum()) {
+      if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
         return;
       }
-      if (!SerializationUtils.isSerializable(aClass)) {
+      if (aClass instanceof PsiTypeParameter || !SerializationUtils.isSerializable(aClass)) {
         return;
       }
       final PsiMethod[] methods = aClass.getMethods();

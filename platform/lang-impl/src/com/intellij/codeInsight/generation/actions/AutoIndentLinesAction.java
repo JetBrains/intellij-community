@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
 public class AutoIndentLinesAction extends BaseCodeInsightAction implements DumbAware {
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return new AutoIndentLinesHandler();
   }
@@ -36,6 +37,7 @@ public class AutoIndentLinesAction extends BaseCodeInsightAction implements Dumb
     return false;
   }
 
+  @Override
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
     final FileType fileType = file.getFileType();
     return fileType instanceof LanguageFileType &&

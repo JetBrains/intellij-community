@@ -152,6 +152,7 @@ public class ImagePreviewComponent extends JPanel {
       }
     }
 
+    @Override
     public void paint(final Graphics g) {
       super.paint(g);
       Rectangle r = getBounds();
@@ -161,14 +162,17 @@ public class ImagePreviewComponent extends JPanel {
       g.drawImage(myImage, 0, 0, r.width > width ? width : r.width, r.height > height ? height : r.height, this);
     }
 
+    @Override
     public Dimension getPreferredSize() {
       return myPreferredSize;
     }
 
+    @Override
     public Dimension getMinimumSize() {
       return getPreferredSize();
     }
 
+    @Override
     public Dimension getMaximumSize() {
       return getPreferredSize();
     }

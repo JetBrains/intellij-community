@@ -26,10 +26,10 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
@@ -37,15 +37,16 @@ public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFil
   private static final String GROOVY_DSL_SCRIPT_TMPL = "GroovyDslScript.gdsl";
 
   public NewScriptAction() {
-    super(GroovyBundle.message("newscript.menu.action.text"), GroovyBundle.message("newscript.menu.action.description"), GroovyIcons.GROOVY_ICON_16x16, false);
+    super(GroovyBundle.message("newscript.menu.action.text"), GroovyBundle.message("newscript.menu.action.description"),
+          JetgroovyIcons.Groovy.Groovy_16x16, false);
   }
 
   @Override
   protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(GroovyBundle.message("newscript.dlg.prompt"))
-      .addKind("Groovy script", GroovyIcons.GROOVY_ICON_16x16, "GroovyScript.groovy")
-      .addKind("GroovyDSL script", GroovyIcons.GROOVY_ICON_16x16, GROOVY_DSL_SCRIPT_TMPL);
+      .addKind("Groovy script", JetgroovyIcons.Groovy.Groovy_16x16, "GroovyScript.groovy")
+      .addKind("GroovyDSL script", JetgroovyIcons.Groovy.Groovy_16x16, GROOVY_DSL_SCRIPT_TMPL);
   }
 
   @Override

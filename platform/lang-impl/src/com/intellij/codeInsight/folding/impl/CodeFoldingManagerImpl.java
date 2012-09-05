@@ -20,6 +20,7 @@ import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
@@ -34,12 +35,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.containers.WeakList;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -184,6 +187,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   @Override
   public void releaseFoldings(@NotNull Editor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final Project project = editor.getProject();
     if (project != null && !project.equals(myProject)) return;
 
@@ -201,6 +205,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   @Override
   public void buildInitialFoldings(@NotNull final Editor editor) {
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(editor.getComponent());
     final Project project = editor.getProject();
     if (project == null || !project.equals(myProject)) return;
 
@@ -222,16 +227,22 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
           runnable.run();
         }
 
-        DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
-        Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
-        for (Editor otherEditor : editors) {
-          if (otherEditor == editor) continue;
-          documentFoldingInfo.loadFromEditor(otherEditor);
-          break;
-        }
-        documentFoldingInfo.setToEditor(editor);
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            if (myProject.isDisposed() || editor.isDisposed()) return;
+            DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
+            Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
+            for (Editor otherEditor : editors) {
+              if (otherEditor == editor) continue;
+              documentFoldingInfo.loadFromEditor(otherEditor);
+              break;
+            }
+            documentFoldingInfo.setToEditor(editor);
 
-        documentFoldingInfo.clear();
+            documentFoldingInfo.clear();
+          }
+        });
       }
     };
     editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
@@ -295,7 +306,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   }
 
   @Nullable
-  private Runnable updateFoldRegions(Editor editor, boolean applyDefaultState, boolean quick) {
+  private Runnable updateFoldRegions(@NotNull Editor editor, boolean applyDefaultState, boolean quick) {
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
     if (file != null) {
       editor.getDocument().putUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY, Boolean.TRUE);
@@ -308,6 +319,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   @Override
   public CodeFoldingState saveFoldingState(@NotNull Editor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     DocumentFoldingInfo info = getDocumentFoldingInfo(editor.getDocument());
     info.loadFromEditor(editor);
     return info;
@@ -315,6 +327,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   @Override
   public void restoreFoldingState(@NotNull Editor editor, @NotNull CodeFoldingState state) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ((DocumentFoldingInfo)state).setToEditor(editor);
   }
 
@@ -335,8 +348,11 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     DocumentFoldingInfo info = document.getUserData(FOLDING_INFO_IN_DOCUMENT_KEY);
     if (info == null) {
       info = new DocumentFoldingInfo(myProject, document);
-      document.putUserData(FOLDING_INFO_IN_DOCUMENT_KEY, info);
-      myDocumentsWithFoldingInfo.add(document);
+      DocumentFoldingInfo written = ((UserDataHolderEx)document).putUserDataIfAbsent(FOLDING_INFO_IN_DOCUMENT_KEY, info);
+      if (written != info) {
+        myDocumentsWithFoldingInfo.add(document);
+        info = written;
+      }
     }
     return info;
   }

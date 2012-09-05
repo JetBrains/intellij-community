@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.continuation.*;
@@ -377,7 +376,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     for (FilePath filePath : directlyAffected) {
       lfs.refreshAndFindFileByIoFile(filePath.getIOFile());
     }
-    final RefreshSession session = RefreshQueue.getInstance().createSession(false, true, new Runnable() {
+    RefreshQueue.getInstance().refresh(false, true, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
@@ -389,9 +388,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
               changeListManager.invokeAfterUpdate(new Runnable() {
                   @Override
                   public void run() {
-                    if (targetChangelistMover != null) {
-                      targetChangelistMover.consume(directlyAffected);
-                    }
+                    targetChangelistMover.consume(directlyAffected);
                     scheduleProjectFilesReload.run();
                     if (context != null) {
                       context.ping();
@@ -418,9 +415,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
           }
         });
       }
-    });
-    session.addAllFiles(indirectlyAffected);
-    session.launch();
+    }, indirectlyAffected);
   }
 
   @Nullable

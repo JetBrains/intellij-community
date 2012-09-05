@@ -64,8 +64,7 @@ import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 public class ControlFlowUtils {
   private static final Logger LOG = Logger.getInstance(ControlFlowUtils.class);
 
-  public static boolean statementMayCompleteNormally(
-      @Nullable GrStatement statement) {
+  public static boolean statementMayCompleteNormally(@Nullable GrStatement statement) {
     if (statement == null) {
       return true;
     }
@@ -74,46 +73,48 @@ public class ControlFlowUtils {
         statement instanceof GrReturnStatement ||
         statement instanceof GrThrowStatement) {
       return false;
-    } else if (statement instanceof GrForStatement) {
-      return forStatementMayReturnNormally((GrForStatement) statement);
-    } else if (statement instanceof GrWhileStatement) {
-      return whileStatementMayReturnNormally(
-          (GrWhileStatement) statement);
-    } else if (statement instanceof GrBlockStatement) {
-      return blockMayCompleteNormally((GrBlockStatement) statement);
-    } else if (statement instanceof GrSynchronizedStatement) {
-      final GrSynchronizedStatement syncStatement = (GrSynchronizedStatement) statement;
+    }
+    else if (statement instanceof GrForStatement) {
+      return forStatementMayReturnNormally((GrForStatement)statement);
+    }
+    else if (statement instanceof GrWhileStatement) {
+      return whileStatementMayReturnNormally((GrWhileStatement)statement);
+    }
+    else if (statement instanceof GrBlockStatement) {
+      return blockMayCompleteNormally((GrBlockStatement)statement);
+    }
+    else if (statement instanceof GrSynchronizedStatement) {
+      final GrSynchronizedStatement syncStatement = (GrSynchronizedStatement)statement;
       return openBlockMayCompleteNormally(syncStatement.getBody());
-    } else if (statement instanceof GrLabeledStatement) {
-      return labeledStatementMayCompleteNormally(
-          (GrLabeledStatement) statement);
-    } else if (statement instanceof GrIfStatement) {
-      return ifStatementMayReturnNormally((GrIfStatement) statement);
-    } else if (statement instanceof GrTryCatchStatement) {
-      return tryStatementMayReturnNormally((GrTryCatchStatement) statement);
-    } else if (statement instanceof GrSwitchStatement) {
-      return switchStatementMayReturnNormally(
-          (GrSwitchStatement) statement);
-    } else   // other statement type
-    {
+    }
+    else if (statement instanceof GrLabeledStatement) {
+      return labeledStatementMayCompleteNormally((GrLabeledStatement)statement);
+    }
+    else if (statement instanceof GrIfStatement) {
+      return ifStatementMayReturnNormally((GrIfStatement)statement);
+    }
+    else if (statement instanceof GrTryCatchStatement) {
+      return tryStatementMayReturnNormally((GrTryCatchStatement)statement);
+    }
+    else if (statement instanceof GrSwitchStatement) {
+      return switchStatementMayReturnNormally((GrSwitchStatement)statement);
+    }
+    // other statement type
+    else {
       return true;
     }
   }
 
-  private static boolean whileStatementMayReturnNormally(
-      @NotNull GrWhileStatement loopStatement) {
+  private static boolean whileStatementMayReturnNormally(@NotNull GrWhileStatement loopStatement) {
     final GrCondition test = loopStatement.getCondition();
-    return !BoolUtils.isTrue(test)
-        || statementIsBreakTarget(loopStatement);
+    return !BoolUtils.isTrue(test) || statementIsBreakTarget(loopStatement);
   }
 
-  private static boolean forStatementMayReturnNormally(
-      @NotNull GrForStatement loopStatement) {
+  private static boolean forStatementMayReturnNormally(@NotNull GrForStatement loopStatement) {
     return true;
   }
 
-  private static boolean switchStatementMayReturnNormally(
-      @NotNull GrSwitchStatement switchStatement) {
+  private static boolean switchStatementMayReturnNormally(@NotNull GrSwitchStatement switchStatement) {
     if (statementIsBreakTarget(switchStatement)) {
       return true;
     }
@@ -140,8 +141,7 @@ public class ControlFlowUtils {
     return statementMayCompleteNormally(statements[statements.length - 1]);
   }
 
-  private static boolean tryStatementMayReturnNormally(
-      @NotNull GrTryCatchStatement tryStatement) {
+  private static boolean tryStatementMayReturnNormally(@NotNull GrTryCatchStatement tryStatement) {
     final GrFinallyClause finallyBlock = tryStatement.getFinallyClause();
     if (finallyBlock != null) {
       if (!openBlockMayCompleteNormally(finallyBlock.getBody())) {
@@ -162,26 +162,21 @@ public class ControlFlowUtils {
     return false;
   }
 
-  private static boolean ifStatementMayReturnNormally(
-      @NotNull GrIfStatement ifStatement) {
+  private static boolean ifStatementMayReturnNormally(@NotNull GrIfStatement ifStatement) {
     final GrStatement thenBranch = ifStatement.getThenBranch();
     if (statementMayCompleteNormally(thenBranch)) {
       return true;
     }
     final GrStatement elseBranch = ifStatement.getElseBranch();
-    return elseBranch == null ||
-        statementMayCompleteNormally(elseBranch);
+    return elseBranch == null || statementMayCompleteNormally(elseBranch);
   }
 
-  private static boolean labeledStatementMayCompleteNormally(
-      @NotNull GrLabeledStatement labeledStatement) {
+  private static boolean labeledStatementMayCompleteNormally(@NotNull GrLabeledStatement labeledStatement) {
     final GrStatement statement = labeledStatement.getStatement();
-    return statementMayCompleteNormally(statement) ||
-        statementIsBreakTarget(statement);
+    return statementMayCompleteNormally(statement) || statementIsBreakTarget(statement);
   }
 
-  public static boolean blockMayCompleteNormally(
-      @Nullable GrBlockStatement block) {
+  public static boolean blockMayCompleteNormally(@Nullable GrBlockStatement block) {
     if (block == null) {
       return true;
     }
@@ -194,8 +189,7 @@ public class ControlFlowUtils {
     return true;
   }
 
-  public static boolean openBlockMayCompleteNormally(
-      @Nullable GrOpenBlock block) {
+  public static boolean openBlockMayCompleteNormally(@Nullable GrOpenBlock block) {
     if (block == null) {
       return true;
     }
@@ -208,22 +202,19 @@ public class ControlFlowUtils {
     return true;
   }
 
-  private static boolean statementIsBreakTarget(
-      @NotNull GrStatement statement) {
+  private static boolean statementIsBreakTarget(@NotNull GrStatement statement) {
     final BreakFinder breakFinder = new BreakFinder(statement);
     statement.accept(breakFinder);
     return breakFinder.breakFound();
   }
 
-  public static boolean statementContainsReturn(
-      @NotNull GrStatement statement) {
+  public static boolean statementContainsReturn(@NotNull GrStatement statement) {
     final ReturnFinder returnFinder = new ReturnFinder();
     statement.accept(returnFinder);
     return returnFinder.returnFound();
   }
 
-  public static boolean statementIsContinueTarget(
-      @NotNull GrStatement statement) {
+  public static boolean statementIsContinueTarget(@NotNull GrStatement statement) {
     final ContinueFinder continueFinder = new ContinueFinder(statement);
     statement.accept(continueFinder);
     return continueFinder.continueFound();
@@ -235,8 +226,7 @@ public class ControlFlowUtils {
   }
 
   public static boolean isInFinallyBlock(@NotNull GroovyPsiElement element) {
-    final GrFinallyClause containingClause =
-        PsiTreeUtil.getParentOfType(element, GrFinallyClause.class);
+    final GrFinallyClause containingClause = PsiTreeUtil.getParentOfType(element, GrFinallyClause.class);
     if (containingClause == null) {
       return false;
     }
@@ -245,8 +235,7 @@ public class ControlFlowUtils {
   }
 
   private static boolean isInWhileStatementBody(@NotNull GroovyPsiElement element) {
-    final GrWhileStatement whileStatement =
-        PsiTreeUtil.getParentOfType(element, GrWhileStatement.class);
+    final GrWhileStatement whileStatement = PsiTreeUtil.getParentOfType(element, GrWhileStatement.class);
     if (whileStatement == null) {
       return false;
     }
@@ -255,8 +244,7 @@ public class ControlFlowUtils {
   }
 
   private static boolean isInForStatementBody(@NotNull GroovyPsiElement element) {
-    final GrForStatement forStatement =
-        PsiTreeUtil.getParentOfType(element, GrForStatement.class);
+    final GrForStatement forStatement = PsiTreeUtil.getParentOfType(element, GrForStatement.class);
     if (forStatement == null) {
       return false;
     }
@@ -267,34 +255,32 @@ public class ControlFlowUtils {
 
   public static GrStatement stripBraces(@NotNull GrStatement branch) {
     if (branch instanceof GrBlockStatement) {
-      final GrBlockStatement block = (GrBlockStatement) branch;
+      final GrBlockStatement block = (GrBlockStatement)branch;
       final GrStatement[] statements = block.getBlock().getStatements();
       if (statements.length == 1) {
         return statements[0];
-      } else {
+      }
+      else {
         return block;
       }
-    } else {
+    }
+    else {
       return branch;
     }
   }
 
-  public static boolean statementCompletesWithStatement(
-      @NotNull GrStatement containingStatement,
-      @NotNull GrStatement statement) {
+  public static boolean statementCompletesWithStatement(@NotNull GrStatement containingStatement,@NotNull GrStatement statement) {
     GroovyPsiElement statementToCheck = statement;
     while (true) {
       if (statementToCheck.equals(containingStatement)) {
         return true;
       }
-      final GroovyPsiElement container =
-          getContainingStatement(statementToCheck);
+      final GroovyPsiElement container = getContainingStatement(statementToCheck);
       if (container == null) {
         return false;
       }
       if (container instanceof GrBlockStatement) {
-        if (!statementIsLastInBlock((GrBlockStatement) container,
-            (GrStatement) statementToCheck)) {
+        if (!statementIsLastInBlock((GrBlockStatement)container, (GrStatement)statementToCheck)) {
           return false;
         }
       }
@@ -305,16 +291,13 @@ public class ControlFlowUtils {
     }
   }
 
-  public static boolean blockCompletesWithStatement(
-      @NotNull GrBlockStatement body,
-      @NotNull GrStatement statement) {
+  public static boolean blockCompletesWithStatement(@NotNull GrBlockStatement body, @NotNull GrStatement statement) {
     GrStatement statementToCheck = statement;
     while (true) {
       if (statementToCheck == null) {
         return false;
       }
-      final GrStatement container =
-          getContainingStatement(statementToCheck);
+      final GrStatement container = getContainingStatement(statementToCheck);
       if (container == null) {
         return false;
       }
@@ -322,17 +305,15 @@ public class ControlFlowUtils {
         return false;
       }
       if (container instanceof GrBlockStatement) {
-        if (!statementIsLastInBlock((GrBlockStatement) container,
-            statementToCheck)) {
+        if (!statementIsLastInBlock((GrBlockStatement)container, statementToCheck)) {
           return false;
         }
         if (container.equals(body)) {
           return true;
         }
-        statementToCheck =
-            PsiTreeUtil.getParentOfType(container,
-                GrStatement.class);
-      } else {
+        statementToCheck = PsiTreeUtil.getParentOfType(container, GrStatement.class);
+      }
+      else {
         statementToCheck = container;
       }
     }
@@ -378,17 +359,13 @@ public class ControlFlowUtils {
     }
   }
 
-  public static boolean closureCompletesWithStatement(
-      @NotNull GrClosableBlock body,
-      @NotNull GrStatement statement) {
+  public static boolean closureCompletesWithStatement(@NotNull GrClosableBlock body,@NotNull GrStatement statement) {
     GroovyPsiElement statementToCheck = statement;
     while (true) {
-      if (!(statementToCheck instanceof GrExpression ||
-          statementToCheck instanceof GrReturnStatement)) {
+      if (!(statementToCheck instanceof GrExpression || statementToCheck instanceof GrReturnStatement)) {
         return false;
       }
-      final GroovyPsiElement container =
-          getContainingStatementOrBlock(statementToCheck);
+      final GroovyPsiElement container = getContainingStatementOrBlock(statementToCheck);
       if (container == null) {
         return false;
       }
@@ -403,7 +380,8 @@ public class ControlFlowUtils {
           return true;
         }
         statementToCheck = PsiTreeUtil.getParentOfType(container, GrStatement.class);
-      } else {
+      }
+      else {
         statementToCheck = container;
       }
     }
@@ -414,19 +392,16 @@ public class ControlFlowUtils {
   }
 
   @Nullable
-  private static GrStatement getContainingStatement(
-      @NotNull GroovyPsiElement statement) {
+  private static GrStatement getContainingStatement(@NotNull GroovyPsiElement statement) {
     return PsiTreeUtil.getParentOfType(statement, GrStatement.class);
   }
 
   @Nullable
-  private static GroovyPsiElement getContainingStatementOrBlock(
-      @NotNull GroovyPsiElement statement) {
+  private static GroovyPsiElement getContainingStatementOrBlock(@NotNull GroovyPsiElement statement) {
     return PsiTreeUtil.getParentOfType(statement, GrStatement.class, GrCodeBlock.class);
   }
 
-  private static boolean statementIsLastInBlock(@NotNull GrBlockStatement block,
-                                                @NotNull GrStatement statement) {
+  private static boolean statementIsLastInBlock(@NotNull GrBlockStatement block, @NotNull GrStatement statement) {
     final GrStatement[] statements = block.getBlock().getStatements();
     for (int i = statements.length - 1; i >= 0; i--) {
       final GrStatement childStatement = statements[i];
@@ -440,8 +415,7 @@ public class ControlFlowUtils {
     return false;
   }
 
-  private static boolean statementIsLastInCodeBlock(@NotNull GrCodeBlock block,
-                                                    @NotNull GrStatement statement) {
+  private static boolean statementIsLastInCodeBlock(@NotNull GrCodeBlock block, @NotNull GrStatement statement) {
     final GrStatement[] statements = block.getStatements();
     for (int i = statements.length - 1; i >= 0; i--) {
       final GrStatement childStatement = statements[i];
@@ -670,9 +644,8 @@ public class ControlFlowUtils {
       assert place != null;
       place = place.getContext();
       if (place == null) return null;
-      if (place instanceof GrClosableBlock) return (GrClosableBlock)place;
+      if (place instanceof GrControlFlowOwner && ((GrControlFlowOwner)place).isTopControlFlowOwner()) return (GrControlFlowOwner)place;
       if (place instanceof GrMethod) return ((GrMethod)place).getBlock();
-      if (place instanceof GroovyFile) return (GroovyFile)place;
       if (place instanceof GrClassInitializer) return ((GrClassInitializer)place).getBlock();
     }
   }

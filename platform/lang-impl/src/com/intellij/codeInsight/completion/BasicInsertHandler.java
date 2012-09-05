@@ -22,6 +22,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
  * @author Mike
  */
 public class BasicInsertHandler<T extends LookupElement> implements InsertHandler<T> {
+  @Override
   public void handleInsert(InsertionContext context, T item) {
 
   }

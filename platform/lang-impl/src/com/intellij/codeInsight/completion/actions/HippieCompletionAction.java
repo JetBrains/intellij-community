@@ -30,11 +30,13 @@ public class HippieCompletionAction extends BaseCodeInsightAction implements Dum
     setEnabledInModalContext(true);
   }
 
+  @Override
   public void actionPerformedImpl(@NotNull Project project, Editor editor) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.hippie");
     super.actionPerformedImpl(project, editor);
   }
 
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return new HippieWordCompletionHandler(true);
   }

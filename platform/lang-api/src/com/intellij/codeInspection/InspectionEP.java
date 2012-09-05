@@ -23,6 +23,7 @@ import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nls;
@@ -47,6 +48,10 @@ public class InspectionEP extends LanguageExtensionPoint {
    */
   @Attribute("shortName")
   public String shortName;
+
+  public String getShortName() {
+    return shortName == null ? InspectionProfileEntry.getShortName(StringUtil.getShortName(implementationClass)) : shortName;
+  }
 
   @Nullable
   @Nls

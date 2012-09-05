@@ -20,6 +20,7 @@ import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.revisions.*;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ public class RevisionsCollector extends ChangeSetsProcessor {
 
   private final List<Revision> myResult = new ArrayList<Revision>();
 
-  public RevisionsCollector(LocalHistoryFacade facade, RootEntry rootEntry, String path, String projectId, @Nullable String pattern) {
+  public RevisionsCollector(LocalHistoryFacade facade, RootEntry rootEntry, @NotNull String path, String projectId, @Nullable String pattern) {
     super(path);
     myFacade = facade;
     myRoot = rootEntry;

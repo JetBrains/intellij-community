@@ -64,9 +64,6 @@ import java.util.regex.Pattern;
  * @author peter
  */
 public class GriffonFramework extends MvcFramework {
-  public static final Icon GRIFFON_ICON = JetgroovyIcons.Griffon.Griffon;
-  public static final Icon GRIFFON_ICON_13 = JetgroovyIcons.Griffon.GriffonToolWindow;
-
   @NonNls private static final String GRIFFON_COMMON_PLUGINS = "-griffonPlugins";
   private static final String GLOBAL_PLUGINS_MODULE_NAME = "GriffonGlobalPlugins";
 
@@ -334,12 +331,12 @@ public class GriffonFramework extends MvcFramework {
 
   @Override
   public Icon getIcon() {
-    return GRIFFON_ICON;
+    return JetgroovyIcons.Griffon.Griffon;
   }
 
   @Override
   public Icon getToolWindowIcon() {
-    return GRIFFON_ICON_13;
+    return JetgroovyIcons.Griffon.GriffonToolWindow;
   }
 
   @Override

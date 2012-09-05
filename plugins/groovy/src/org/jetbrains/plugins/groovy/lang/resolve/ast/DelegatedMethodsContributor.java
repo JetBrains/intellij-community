@@ -26,10 +26,10 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import gnu.trove.THashMap;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -298,7 +298,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
       }
       builder.addParameter(StringUtil.notNullize(originalParameter.getName(), "p" + i), type);
     }
-    builder.setBaseIcon(GroovyIcons.METHOD);
+    builder.setBaseIcon(JetgroovyIcons.Groovy.Method);
 
     return new LightMirrorMethod(builder, method);
   }

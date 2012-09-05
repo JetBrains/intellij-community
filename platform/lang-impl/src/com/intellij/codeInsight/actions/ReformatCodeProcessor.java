@@ -75,6 +75,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     super(project, files, PROGRESS_TEXT, commandName, postRunnable, processChangedTextOnly);
   }
 
+  @Override
   @NotNull
   protected FutureTask<Boolean> preprocessFile(@NotNull final PsiFile file, final boolean processChangedTextOnly)
     throws IncorrectOperationException

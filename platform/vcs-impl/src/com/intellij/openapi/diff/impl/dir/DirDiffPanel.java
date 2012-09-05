@@ -392,7 +392,13 @@ public class DirDiffPanel implements Disposable, DataProvider {
       if (myViewComponent != null) {
         myCurrentElement = object;
         myDiffPanel.add(myViewComponent, BorderLayout.CENTER);
-        DataManager.registerDataProvider(myDiffPanel, myCurrentElement.getDataProvider(project));
+        DataProvider dataProvider = myCurrentElement.getDataProvider(project);
+        if (dataProvider != null) {
+          DataManager.registerDataProvider(myDiffPanel, dataProvider);
+        }
+        else {
+          DataManager.removeDataProvider(myDiffPanel);
+        }
       } else {
         myDiffPanel.add(getErrorLabel(), BorderLayout.CENTER);
       }

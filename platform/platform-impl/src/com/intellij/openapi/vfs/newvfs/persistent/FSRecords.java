@@ -622,25 +622,30 @@ public class FSRecords implements Forceable {
 
   public static int[] listRoots() throws IOException {
     try {
-      r.lock();
-      final DataInputStream input = readAttribute(1, CHILDREN_ATT);
-      if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
-
       try {
-        final int count = DataInputOutputUtil.readINT(input);
-        int[] result = ArrayUtil.newIntArray(count);
-        for (int i = 0; i < count; i++) {
-          DataInputOutputUtil.readINT(input); // Name
-          result[i] = DataInputOutputUtil.readINT(input); // Id
+        r.lock();
+        final DataInputStream input = readAttribute(1, CHILDREN_ATT);
+        if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
+
+        try {
+          final int count = DataInputOutputUtil.readINT(input);
+          int[] result = ArrayUtil.newIntArray(count);
+          for (int i = 0; i < count; i++) {
+            DataInputOutputUtil.readINT(input); // Name
+            result[i] = DataInputOutputUtil.readINT(input); // Id
+          }
+          return result;
         }
-        return result;
+        finally {
+          input.close();
+        }
       }
       finally {
-        input.close();
+        r.unlock();
       }
     }
-    finally {
-      r.unlock();
+    catch (Throwable e) {
+      throw DbConnection.handleError(e);
     }
   }
 
@@ -656,101 +661,111 @@ public class FSRecords implements Forceable {
 
   public static int findRootRecord(String rootUrl) throws IOException {
     try {
-      w.lock();
-      DbConnection.markDirty();
-      final int root = getNames().enumerate(rootUrl);
+      try {
+        w.lock();
+        DbConnection.markDirty();
+        final int root = getNames().enumerate(rootUrl);
 
-      final DataInputStream input = readAttribute(1, CHILDREN_ATT);
-      int[] names = ArrayUtil.EMPTY_INT_ARRAY;
-      int[] ids = ArrayUtil.EMPTY_INT_ARRAY;
+        final DataInputStream input = readAttribute(1, CHILDREN_ATT);
+        int[] names = ArrayUtil.EMPTY_INT_ARRAY;
+        int[] ids = ArrayUtil.EMPTY_INT_ARRAY;
 
-      if (input != null) {
-        try {
-          final int count = DataInputOutputUtil.readINT(input);
-          names = ArrayUtil.newIntArray(count);
-          ids = ArrayUtil.newIntArray(count);
-          for (int i = 0; i < count; i++) {
-            final int name = DataInputOutputUtil.readINT(input);
-            final int id = DataInputOutputUtil.readINT(input);
-            if (name == root) {
-              return id;
+        if (input != null) {
+          try {
+            final int count = DataInputOutputUtil.readINT(input);
+            names = ArrayUtil.newIntArray(count);
+            ids = ArrayUtil.newIntArray(count);
+            for (int i = 0; i < count; i++) {
+              final int name = DataInputOutputUtil.readINT(input);
+              final int id = DataInputOutputUtil.readINT(input);
+              if (name == root) {
+                return id;
+              }
+
+              names[i] = name;
+              ids[i] = id;
             }
-
-            names[i] = name;
-            ids[i] = id;
+          }
+          finally {
+            input.close();
           }
         }
-        finally {
-          input.close();
-        }
-      }
 
-      final DataOutputStream output = writeAttribute(1, CHILDREN_ATT, false);
-      int id;
-      try {
-        id = createRecord();
-        DataInputOutputUtil.writeINT(output, names.length + 1);
-        for (int i = 0; i < names.length; i++) {
-          DataInputOutputUtil.writeINT(output, names[i]);
-          DataInputOutputUtil.writeINT(output, ids[i]);
+        final DataOutputStream output = writeAttribute(1, CHILDREN_ATT, false);
+        int id;
+        try {
+          id = createRecord();
+          DataInputOutputUtil.writeINT(output, names.length + 1);
+          for (int i = 0; i < names.length; i++) {
+            DataInputOutputUtil.writeINT(output, names[i]);
+            DataInputOutputUtil.writeINT(output, ids[i]);
+          }
+          DataInputOutputUtil.writeINT(output, root);
+          DataInputOutputUtil.writeINT(output, id);
         }
-        DataInputOutputUtil.writeINT(output, root);
-        DataInputOutputUtil.writeINT(output, id);
+        finally {
+          output.close();
+        }
+
+        return id;
       }
       finally {
-        output.close();
+        w.unlock();
       }
-
-      return id;
     }
-    finally {
-      w.unlock();
+    catch (Throwable e) {
+      throw DbConnection.handleError(e);
     }
   }
 
   public static void deleteRootRecord(int id) throws IOException {
     try {
-      w.lock();
-      DbConnection.markDirty();
-      final DataInputStream input = readAttribute(1, CHILDREN_ATT);
-      assert input != null;
-      int count;
-      int[] names;
-      int[] ids;
       try {
-        count = DataInputOutputUtil.readINT(input);
+        w.lock();
+        DbConnection.markDirty();
+        final DataInputStream input = readAttribute(1, CHILDREN_ATT);
+        assert input != null;
+        int count;
+        int[] names;
+        int[] ids;
+        try {
+          count = DataInputOutputUtil.readINT(input);
 
-        names = ArrayUtil.newIntArray(count);
-        ids = ArrayUtil.newIntArray(count);
-        for (int i = 0; i < count; i++) {
-          names[i] = DataInputOutputUtil.readINT(input);
-          ids[i] = DataInputOutputUtil.readINT(input);
+          names = ArrayUtil.newIntArray(count);
+          ids = ArrayUtil.newIntArray(count);
+          for (int i = 0; i < count; i++) {
+            names[i] = DataInputOutputUtil.readINT(input);
+            ids[i] = DataInputOutputUtil.readINT(input);
+          }
+        }
+        finally {
+          input.close();
+        }
+
+        final int index = ArrayUtil.find(ids, id);
+        assert index >= 0;
+
+        names = ArrayUtil.remove(names, index);
+        ids = ArrayUtil.remove(ids, index);
+
+        final DataOutputStream output = writeAttribute(1, CHILDREN_ATT, false);
+        try {
+          DataInputOutputUtil.writeINT(output, count - 1);
+          for (int i = 0; i < names.length; i++) {
+            DataInputOutputUtil.writeINT(output, names[i]);
+            DataInputOutputUtil.writeINT(output, ids[i]);
+          }
+        }
+        finally {
+          output.close();
         }
       }
       finally {
-        input.close();
-      }
-
-      final int index = ArrayUtil.find(ids, id);
-      assert index >= 0;
-
-      names = ArrayUtil.remove(names, index);
-      ids = ArrayUtil.remove(ids, index);
-
-      final DataOutputStream output = writeAttribute(1, CHILDREN_ATT, false);
-      try {
-        DataInputOutputUtil.writeINT(output, count - 1);
-        for (int i = 0; i < names.length; i++) {
-          DataInputOutputUtil.writeINT(output, names[i]);
-          DataInputOutputUtil.writeINT(output, ids[i]);
-        }
-      }
-      finally {
-        output.close();
+        w.unlock();
       }
     }
-    finally {
-      w.unlock();
+    catch (Throwable e) {
+      throw DbConnection.handleError(e);
     }
   }
 
@@ -1095,23 +1110,28 @@ public class FSRecords implements Forceable {
   }
 
   @Nullable
-  public static DataInputStream readAttribute(int fileId, String attId) {
+  static DataInputStream readAttributeWithLock(int fileId, String attId) {
     try {
-      synchronized (attId) {
-        int page;
-        try {
-          r.lock();
-          page = findAttributePage(fileId, attId, false);
-          if (page == 0) return null;
-        }
-        finally {
-          r.unlock();
-        }
-        return getAttributesStorage().readStream(page);
+      try {
+        r.lock();
+        return readAttribute(fileId, attId);
+      }
+      finally {
+        r.unlock();
       }
     }
     catch (Throwable e) {
       throw DbConnection.handleError(e);
+    }
+  }
+
+  // should be called under r or w lock
+  @Nullable
+  private static DataInputStream readAttribute(int fileId, String attId) throws IOException {
+    synchronized (attId) {
+      int page = findAttributePage(fileId, attId, false);
+      if (page == 0) return null;
+      return getAttributesStorage().readStream(page);
     }
   }
 

@@ -62,6 +62,8 @@
     <extensionPoint name="xml.xmlTagRuleProvider" interface="com.intellij.xml.XmlTagRuleProvider"/>
     <extensionPoint name="html.embeddedTokenTypesProvider" interface="com.intellij.lexer.HtmlEmbeddedTokenTypesProvider"/>
     <extensionPoint name="xml.html5SchemaProvider" interface="com.intellij.xml.Html5SchemaProvider"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.urlOpener" interface="com.intellij.ide.browsers.UrlOpener"/>
   </extensionPoints>
 
   <project-components>
@@ -355,6 +357,14 @@
     <localInspection language="XML" shortName="XmlUnusedNamespaceDeclaration" displayName="Unused XML schema declaration"
                      groupKey="xml.inspections.group.name" bundle="messages.XmlBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlUnusedNamespaceInspection"/>
+    <localInspection language="XML" implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection"
+                     displayName="File path resolving in XML"
+                     groupName="XML" enabledByDefault="true" level="ERROR"/>
+    <localInspection language="XML" shortName="HtmlUnknownTarget" bundle="messages.XmlBundle" key="html.inspections.unknown.target" groupName="HTML"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInsight.daemon.impl.analysis.HtmlUnknownTargetInspection"/>
+
+
     <globalInspection shortName="XmlHighlighting" displayName="XML highlighting" groupName="General" enabledByDefault="true" level="ERROR"
                       implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitorBasedInspection"/>
 
@@ -428,5 +438,8 @@
 
     <breadcrumbsPresentationProvider implementation="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeBreadcrumbsPresentationProvider"/>
     <daemon.changeLocalityDetector implementation="com.intellij.xml.XmlChangeLocalityDetector"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains">
+    <urlOpener implementation="com.intellij.ide.browsers.impl.UrlOpenerImpl" order="last"/>
   </extensions>
 </idea-plugin>

@@ -20,6 +20,7 @@ import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -90,7 +91,7 @@ public class GantMemberContributor extends NonCodeMembersContributor {
         final String targetName = label.getName();
         if (targetName != null) {
           final PsiNamedElement variable = new LightVariableBuilder(targetName, GroovyCommonClassNames.GROOVY_LANG_CLOSURE, label).
-            setBaseIcon(GantIcons.GANT_TARGET);
+            setBaseIcon(JetgroovyIcons.Groovy.Gant_target);
           if (!ResolveUtil.processElement(processor, variable, state)) {
             return;
           }

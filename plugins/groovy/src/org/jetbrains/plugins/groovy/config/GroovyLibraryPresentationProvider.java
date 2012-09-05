@@ -20,9 +20,9 @@ import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import javax.swing.*;
@@ -52,7 +52,7 @@ public class GroovyLibraryPresentationProvider extends GroovyLibraryPresentation
 
   @NotNull
   public Icon getIcon() {
-    return GroovyIcons.GROOVY_ICON_16x16;
+    return JetgroovyIcons.Groovy.Groovy_16x16;
   }
 
   @Override

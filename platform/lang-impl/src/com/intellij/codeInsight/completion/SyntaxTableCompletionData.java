@@ -44,6 +44,7 @@ public class SyntaxTableCompletionData extends CompletionData{
     registerVariant(variant);
   }
 
+  @Override
   public String findPrefix(PsiElement insertedElement, int offset) {
     String text = insertedElement.getText();
     int offsetInElement = offset - insertedElement.getTextOffset();

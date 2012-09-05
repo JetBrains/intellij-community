@@ -30,10 +30,12 @@ import com.intellij.psi.util.PsiUtilBase;
 
 public class DelegateMethodsAction extends BaseCodeInsightAction {
 
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return new DelegateMethodsHandler();
   }
 
+  @Override
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
     Language language = PsiUtilBase.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
     final LanguageCodeInsightActionHandler codeInsightActionHandler = CodeInsightActions.DELEGATE_METHODS.forLanguage(language);
@@ -43,6 +45,7 @@ public class DelegateMethodsAction extends BaseCodeInsightAction {
     return false;
   }
 
+  @Override
   public void update(final AnActionEvent event) {
     if (CodeInsightActions.DELEGATE_METHODS.hasAnyExtensions()) {
       event.getPresentation().setVisible(true);

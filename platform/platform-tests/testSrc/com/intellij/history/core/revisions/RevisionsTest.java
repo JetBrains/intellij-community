@@ -36,7 +36,7 @@ public class RevisionsTest extends LocalHistoryTestCase {
 
   @Test
   public void testRevisionAfterChangeIsBefore() {
-    Revision r = new ChangeRevision(null, null, null, cs, false);
+    Revision r = new ChangeRevision(null, null, "", cs, false);
     assertEquals("Action", r.getChangeSetName());
     assertEquals(cs.getId(), r.getChangeSetId().intValue());
   }

@@ -24,12 +24,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ConcurrentWeakValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -116,7 +118,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     return result.isEmpty() ? null : result.values().toArray(new PsiAnnotation[result.size()]);
   }
 
-  private final Map<PsiModifierListOwner, Map<String, PsiAnnotation>> cache = new ConcurrentWeakHashMap<PsiModifierListOwner, Map<String, PsiAnnotation>>();
+  private final ConcurrentMap<PsiModifierListOwner, Map<String, PsiAnnotation>> cache = new ConcurrentWeakHashMap<PsiModifierListOwner, Map<String, PsiAnnotation>>();
   @NotNull
   private Map<String, PsiAnnotation> collectExternalAnnotations(@NotNull final PsiModifierListOwner listOwner) {
     if (!hasAnyAnnotationsRoots()) return Collections.emptyMap();
@@ -124,13 +126,13 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     Map<String, PsiAnnotation> map = cache.get(listOwner);
     if (map == null) {
       map = doCollect(listOwner, false);
-      cache.put(listOwner, map);
+      map = ConcurrencyUtil.cacheOrGet(cache, listOwner, map);
     }
     return map;
   }
 
-  protected ConcurrentMap<PsiFile, Pair<MultiMap<String, AnnotationData>, Long>> annotationsFileToDataAndModificationStamp
-    = new ConcurrentWeakHashMap<PsiFile, Pair<MultiMap<String, AnnotationData>, Long>>();
+  private static final MultiMap<String, AnnotationData> EMPTY = new MultiMap<String, AnnotationData>();
+  private ConcurrentMap<PsiFile, Pair<MultiMap<String, AnnotationData>, Long>> annotationsFileToDataAndModificationStamp = new ConcurrentWeakHashMap<PsiFile, Pair<MultiMap<String, AnnotationData>, Long>>();
   @NotNull
   private MultiMap<String, AnnotationData> getDataFromFile(@NotNull PsiFile file) {
     Pair<MultiMap<String, AnnotationData>, Long> cached = annotationsFileToDataAndModificationStamp.get(file);
@@ -138,25 +140,24 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       return cached.getFirst();
     }
     else {
-      MultiMap<String, AnnotationData> data = new MultiMap<String, AnnotationData>();
-      annotationsFileToDataAndModificationStamp.put(file, Pair.create(data, file.getModificationStamp()));
-
       Document document;
       try {
         VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile == null) return data;
+        if (virtualFile == null) return EMPTY;
         document = JDOMUtil.loadDocument(escapeAttributes(StreamUtil.readText(virtualFile.getInputStream())));
       }
       catch (IOException e) {
         LOG.error(e);
-        return data;
+        return EMPTY;
       }
       catch (JDOMException e) {
         LOG.error(e);
-        return data;
+        return EMPTY;
       }
       Element rootElement = document.getRootElement();
-      if (rootElement == null) return data;
+      if (rootElement == null) return EMPTY;
+
+      MultiMap<String, AnnotationData> data = new MultiMap<String, AnnotationData>();
 
       //noinspection unchecked
       for (Element element : (List<Element>) rootElement.getChildren()) {
@@ -165,6 +166,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
         //noinspection unchecked
         for (Element annotationElement : (List<Element>) element.getChildren()) {
           String annotationFQN = annotationElement.getAttributeValue("name");
+          if (StringUtil.isEmpty(annotationFQN)) continue;
           StringBuilder buf = new StringBuilder();
           //noinspection unchecked
           for (Element annotationParameter : (List<Element>) annotationElement.getChildren()) {
@@ -180,16 +182,21 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
         }
       }
 
+      Pair<MultiMap<String, AnnotationData>, Long> pair = Pair.create(data, file.getModificationStamp());
+      pair = ConcurrencyUtil.cacheOrGet(annotationsFileToDataAndModificationStamp, file, pair);
+      data = pair.first;
+
       return data;
     }
   }
 
+  @NotNull
   private Map<String, PsiAnnotation> doCollect(@NotNull PsiModifierListOwner listOwner, boolean onlyWritable) {
     final List<PsiFile> files = findExternalAnnotationsFiles(listOwner);
     if (files == null) {
       return Collections.emptyMap();
     }
-    Map<String, PsiAnnotation> result = new HashMap<String, PsiAnnotation>();
+    Map<String, PsiAnnotation> result = new THashMap<String, PsiAnnotation>();
     String externalName = getExternalName(listOwner, false);
     String oldExternalName = getNormalizedExternalName(listOwner);
 
@@ -203,9 +210,9 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
         if (result.containsKey(annotationData.annotationClassFqName)) continue;
 
         try {
-          result.put(annotationData.annotationClassFqName,
-                     JavaPsiFacade.getInstance(myPsiManager.getProject()).getElementFactory().createAnnotationFromText(
-                       annotationData.annotationText, null));
+          PsiElementFactory factory = JavaPsiFacade.getInstance(myPsiManager.getProject()).getElementFactory();
+          PsiAnnotation annotation = factory.createAnnotationFromText(annotationData.annotationText, null);
+          result.put(annotationData.annotationClassFqName, annotation);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -265,9 +272,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
           if (w1 == w2) {
             return 0;
           }
-          else {
-            return w1 ? -1 : 1;
-          }
+          return w1 ? -1 : 1;
         }
       });
 
@@ -297,12 +302,15 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       char c = invalidXml.charAt(i);
       if (inAttribute && c == '<') {
         buf.append("&lt;");
-      } else if (inAttribute && c == '>') {
+      }
+      else if (inAttribute && c == '>') {
         buf.append("&gt;");
-      } else if (c == '\"' || c == '\'') {
+      }
+      else if (c == '\"' || c == '\'') {
         buf.append('\"');
         inAttribute = !inAttribute;
-      } else {
+      }
+      else {
         buf.append(c);
       }
     }
@@ -310,10 +318,10 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   private static class AnnotationData {
-    public String annotationClassFqName;
-    public String annotationText;
+    @NotNull public String annotationClassFqName;
+    @NotNull public String annotationText;
 
-    private AnnotationData(String annotationClassFqName, String annotationText) {
+    private AnnotationData(@NotNull String annotationClassFqName, @NotNull String annotationText) {
       this.annotationClassFqName = annotationClassFqName;
       this.annotationText = annotationText;
     }

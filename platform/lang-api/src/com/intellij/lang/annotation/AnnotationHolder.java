@@ -178,6 +178,7 @@ public interface AnnotationHolder {
   Annotation createInfoAnnotation(@NotNull TextRange range, @Nullable String message);
 
 
+  @NotNull
   AnnotationSession getCurrentAnnotationSession();
 
   boolean isBatchMode();

@@ -227,7 +227,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   @Nullable
   public Document getCachedDocument(@NotNull VirtualFile file) {
     Reference<Document> reference = file.getUserData(DOCUMENT_KEY);
-    Document document = reference != null ? reference.get() : null;
+    Document document = reference == null ? null : reference.get();
 
     if (document != null && isBinaryWithoutDecompiler(file)) {
       file.putUserData(DOCUMENT_KEY, null);
@@ -716,6 +716,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     Document doc = getCachedDocument(event.getFile());
     if (doc != null) {
       myTrailingSpacesStripper.documentDeleted(doc);
+      if (!event.isFromRefresh()) {
+        removeFromUnsaved(doc);
+      }
     }
   }
 

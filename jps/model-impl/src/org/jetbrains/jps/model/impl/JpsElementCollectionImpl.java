@@ -41,17 +41,7 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
   }
 
   public <X extends E, P extends JpsElement> Iterable<X> getElementsOfType(@NotNull final JpsElementType<P> type) {
-    return new Iterable<X>() {
-      @Override
-      public Iterator<X> iterator() {
-        return new FilteringIterator<E, X>(myElements.iterator(), new Condition<E>() {
-          @Override
-          public boolean value(E e) {
-            return e instanceof JpsTypedElement && ((JpsTypedElement<?>)e).getType().equals(type);
-          }
-        });
-      }
-    };
+    return new JpsElementIterable<X>(type);
   }
 
   @NotNull
@@ -118,6 +108,24 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
     }
     for (E e : toAdd) {
       addChild(e);
+    }
+  }
+
+  private class JpsElementIterable<X extends E> implements Iterable<X> {
+    private final JpsElementType<? extends JpsElement> myType;
+
+    public JpsElementIterable(JpsElementType<? extends JpsElement> type) {
+      myType = type;
+    }
+
+    @Override
+    public Iterator<X> iterator() {
+      return new FilteringIterator<E, X>(myElements.iterator(), new Condition<E>() {
+        @Override
+        public boolean value(E e) {
+          return e instanceof JpsTypedElement && ((JpsTypedElement<?>)e).getType().equals(myType);
+        }
+      });
     }
   }
 }

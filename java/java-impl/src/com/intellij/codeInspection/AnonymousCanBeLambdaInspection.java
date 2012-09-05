@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -68,14 +69,29 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaLocalInspectionTool 
       @Override
       public void visitAnonymousClass(PsiAnonymousClass aClass) {
         super.visitAnonymousClass(aClass);
-        if (PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)&& LambdaUtil.isValidLambdaContext(aClass.getParent().getParent())) {
+        if (PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)) {
           final PsiClassType baseClassType = aClass.getBaseClassType();
           final String functionalInterfaceErrorMessage = LambdaUtil.checkInterfaceFunctional(baseClassType);
           if (functionalInterfaceErrorMessage == null) {
             final PsiMethod[] methods = aClass.getMethods();
-            if (methods.length == 1 && methods[0].getBody() != null) {
-              holder.registerProblem(aClass.getBaseClassReference(), "Anonymous #ref #loc can be replaced with lambda",
-                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithLambdaFix());
+            if (methods.length == 1) {
+              final PsiCodeBlock body = methods[0].getBody();
+              if (body != null) {
+                final boolean [] recursive = new boolean[1];
+                body.accept(new JavaRecursiveElementWalkingVisitor() {
+                  @Override
+                  public void visitMethodCallExpression(PsiMethodCallExpression methodCallExpression) {
+                    super.visitMethodCallExpression(methodCallExpression);
+                    if (methodCallExpression.resolveMethod() == methods[0]) {
+                      recursive[0] = true;
+                    }
+                  }
+                });
+                if (!recursive[0]) {
+                  holder.registerProblem(aClass.getBaseClassReference(), "Anonymous #ref #loc can be replaced with lambda",
+                                         ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithLambdaFix());
+                }
+              }
             }
           }
         }
@@ -103,19 +119,36 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaLocalInspectionTool 
         final PsiAnonymousClass anonymousClass = PsiTreeUtil.getParentOfType(element, PsiAnonymousClass.class);
         LOG.assertTrue(anonymousClass != null);
 
+        boolean validContext = LambdaUtil.isValidLambdaContext(anonymousClass.getParent().getParent());
+        final String canonicalText = anonymousClass.getBaseClassType().getCanonicalText();
         final PsiMethod method = anonymousClass.getMethods()[0];
         LOG.assertTrue(method != null);
 
         final String lambdaWithTypesDeclared = composeLambdaText(method, true);
+        final String withoutTypesDeclared = composeLambdaText(method, false);
+        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
         PsiLambdaExpression lambdaExpression =
-          (PsiLambdaExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText(composeLambdaText(method, false), anonymousClass);
+          (PsiLambdaExpression)elementFactory.createExpressionFromText(withoutTypesDeclared, anonymousClass);
         final PsiNewExpression newExpression = (PsiNewExpression)anonymousClass.getParent();
         lambdaExpression = (PsiLambdaExpression)newExpression.replace(lambdaExpression);
+        if (!validContext) {
+          lambdaExpression.replace(elementFactory.createExpressionFromText("((" + canonicalText + ")" + withoutTypesDeclared + ")", lambdaExpression));
+          return;
+        }
         PsiType interfaceType = lambdaExpression.getFunctionalInterfaceType();
-        if (interfaceType == null || !LambdaUtil.isLambdaFullyInferred(lambdaExpression, interfaceType)) {
-          lambdaExpression.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(lambdaWithTypesDeclared, lambdaExpression));
+        if (isInferenced(lambdaExpression, interfaceType)) {
+          lambdaExpression = (PsiLambdaExpression)lambdaExpression.replace(elementFactory.createExpressionFromText(lambdaWithTypesDeclared, lambdaExpression));
+
+          interfaceType = lambdaExpression.getFunctionalInterfaceType();
+          if (isInferenced(lambdaExpression, interfaceType)) {
+            lambdaExpression.replace(elementFactory.createExpressionFromText("(" + canonicalText + ")" + withoutTypesDeclared, lambdaExpression));
+          }
         }
       }
+    }
+
+    private static boolean isInferenced(PsiLambdaExpression lambdaExpression, PsiType interfaceType) {
+      return interfaceType == null || !LambdaUtil.isLambdaFullyInferred(lambdaExpression, interfaceType) || LambdaUtil.checkInterfaceFunctional(interfaceType) != null;
     }
 
     private static String composeLambdaText(PsiMethod method, final boolean appendType) {

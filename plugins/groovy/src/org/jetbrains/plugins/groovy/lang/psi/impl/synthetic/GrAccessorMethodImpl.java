@@ -21,10 +21,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.impl.light.LightParameterListBuilder;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -74,7 +74,7 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
     }
 
     setNavigationElement(property);
-    setBaseIcon(GroovyIcons.PROPERTY);
+    setBaseIcon(JetgroovyIcons.Groovy.Property);
 
     setContainingClass(myProperty.getContainingClass());
     setMethodKind("AccessorMethod");

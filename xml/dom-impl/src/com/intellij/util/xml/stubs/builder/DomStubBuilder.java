@@ -19,7 +19,6 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -28,17 +27,13 @@ import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.stubs.FileStub;
+import com.intellij.xml.util.XmlUtil;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 8/2/12
  */
 public class DomStubBuilder implements BinaryFileStubBuilder {
-
-  public static boolean isStubBuilding(PsiFile file) {
-    return Boolean.TRUE.equals(file.getUserData(BUILDING_DOM_STUBS));
-  }
-  private final static Key<Boolean> BUILDING_DOM_STUBS = Key.create("building dom stubs...");
 
   private final static Logger LOG = Logger.getInstance(DomStubBuilder.class);
 
@@ -56,7 +51,7 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
     XmlFile xmlFile = (XmlFile)psiFile;
     DomManager manager = DomManager.getDomManager(project);
     try {
-      xmlFile.putUserData(BUILDING_DOM_STUBS, Boolean.TRUE);
+      xmlFile.putUserData(XmlUtil.BUILDING_DOM_STUBS, Boolean.TRUE);
       DomFileElement<? extends DomElement> fileElement = manager.getFileElement(xmlFile);
       if (fileElement == null || !fileElement.getFileDescription().hasStubs()) return null;
 
@@ -70,7 +65,7 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
       return fileStub;
     }
     finally {
-      xmlFile.putUserData(BUILDING_DOM_STUBS, null);
+      xmlFile.putUserData(XmlUtil.BUILDING_DOM_STUBS, null);
     }
   }
 

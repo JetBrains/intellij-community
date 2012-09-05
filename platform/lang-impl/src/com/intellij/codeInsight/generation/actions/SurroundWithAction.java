@@ -32,10 +32,12 @@ public class SurroundWithAction extends BaseCodeInsightAction{
     setEnabledInModalContext(true);
   }
 
+  @Override
   protected CodeInsightActionHandler getHandler(){
     return new SurroundWithHandler();
   }
 
+  @Override
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
     final Language language = file.getLanguage();
     if (!LanguageSurrounders.INSTANCE.allForLanguage(language).isEmpty()) {

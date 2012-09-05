@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,6 +124,12 @@ public class MockDocument implements DocumentEx {
   public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
     myText.replace(startOffset, endOffset, s.toString());
     myModStamp = LocalTimeCounter.currentTime();
+  }
+
+  @Override
+  public void moveText(int srcStart, int srcEnd, int dstStart, int dstEnd) {
+    // TODO den implement
+    throw new UnsupportedOperationException();
   }
 
   @Override

@@ -38,6 +38,7 @@ public class CutHandler extends EditorWriteActionHandler {
     myOriginalHandler = originalHandler;
   }
 
+  @Override
   public void executeWriteAction(Editor editor, DataContext dataContext) {
     Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
     if (project == null) {

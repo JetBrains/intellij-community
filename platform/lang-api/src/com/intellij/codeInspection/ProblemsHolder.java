@@ -136,10 +136,10 @@ public class ProblemsHolder {
   }
 
   public void registerProblem(@NotNull PsiReference reference) {
-    registerProblem(reference, inresolvedReferenceMessage(reference), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+    registerProblem(reference, unresolvedReferenceMessage(reference), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
   }
 
-  public static String inresolvedReferenceMessage(PsiReference reference) {
+  public static String unresolvedReferenceMessage(PsiReference reference) {
     String message;
     if (reference instanceof EmptyResolveMessageProvider) {
       String pattern = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();

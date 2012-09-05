@@ -40,7 +40,6 @@ import javax.swing.*;
 
 public class TestNGConfigurationType implements ConfigurationType
 {
-  public static final Icon ICON = TestngIcons.TestNG;
   private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
 
     private final ConfigurationFactory myFactory;
@@ -98,7 +97,7 @@ public class TestNGConfigurationType implements ConfigurationType
     }
 
     public Icon getIcon() {
-        return ICON;
+        return TestngIcons.TestNG;
     }
 
     public ConfigurationFactory[] getConfigurationFactories() {

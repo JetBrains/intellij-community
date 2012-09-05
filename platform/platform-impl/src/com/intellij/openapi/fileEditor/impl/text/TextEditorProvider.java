@@ -170,7 +170,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     editor.putUserData(TEXT_EDITOR_KEY, textEditor);
   }
 
-  protected TextEditorState getStateImpl(final Project project, final Editor editor, @NotNull FileEditorStateLevel level){
+  protected TextEditorState getStateImpl(final Project project, @NotNull Editor editor, @NotNull FileEditorStateLevel level){
     TextEditorState state = new TextEditorState();
     state.LINE = editor.getCaretModel().getLogicalPosition().line;
     state.COLUMN = editor.getCaretModel().getLogicalPosition().column;

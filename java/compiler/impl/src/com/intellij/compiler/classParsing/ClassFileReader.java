@@ -752,6 +752,16 @@ public class ClassFileReader {
           int length = ClsUtil.readU2(myPtr);
           myPtr.offset += length;
         break;
+
+        case ClsUtil.CONSTANT_MethodHandle:
+          myPtr.offset += 3;
+          break;
+        case ClsUtil.CONSTANT_MethodType:
+          myPtr.offset += 2;
+          break;
+        case ClsUtil.CONSTANT_InvokeDynamic:
+          myPtr.offset += 4;
+          break;
       }
       myCurrentEntryIndex++;
       myCurrentOffset = myPtr.offset;

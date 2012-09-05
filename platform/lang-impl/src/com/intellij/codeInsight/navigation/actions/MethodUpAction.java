@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
 public class MethodUpAction extends BaseCodeInsightAction {
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return new MethodUpHandler();
   }
@@ -37,6 +38,7 @@ public class MethodUpAction extends BaseCodeInsightAction {
     return true;
   }
 
+  @Override
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
     return checkValidForFile(file);
   }

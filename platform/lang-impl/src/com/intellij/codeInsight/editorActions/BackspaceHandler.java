@@ -47,6 +47,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     myOriginalHandler = originalHandler;
   }
 
+  @Override
   public void executeWriteAction(Editor editor, DataContext dataContext) {
     if (!handleBackspace(editor, dataContext, false)) {
       myOriginalHandler.execute(editor, dataContext);

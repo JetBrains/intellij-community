@@ -29,6 +29,7 @@ public class EndHandler extends EditorActionHandler {
     myOriginalHandler = originalHandler;
   }
 
+  @Override
   public void execute(Editor editor, DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (lookup == null || !lookup.isFocused()) {

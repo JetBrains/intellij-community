@@ -23,17 +23,21 @@ import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.HashMap;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class ReplaceLambdaWithAnonymousIntention extends Intention {
@@ -67,10 +71,28 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
     PsiCodeBlock blockFromText = psiElementFactory.createCodeBlockFromText(blockText, lambdaExpression);
     ChangeContextUtil.encodeContextInfo(blockFromText, true);
     PsiNewExpression newExpression = (PsiNewExpression)psiElementFactory.createExpressionFromText("new " + functionalInterfaceType.getCanonicalText() + "(){}", lambdaExpression);
-    PsiClass thisClass = PsiTreeUtil.getParentOfType(lambdaExpression, PsiClass.class, true);
-    ChangeContextUtil.decodeContextInfo(blockFromText, thisClass, RefactoringUtil.createThisExpression(lambdaExpression.getManager(), thisClass));
+    final PsiClass thisClass = PsiTreeUtil.getParentOfType(lambdaExpression, PsiClass.class, true);
+    final String thisClassName = thisClass.getName();
+    if (thisClassName != null) {
+      final PsiThisExpression thisAccessExpr = thisClass instanceof PsiAnonymousClass ? null : RefactoringUtil.createThisExpression(lambdaExpression.getManager(), thisClass);
+      ChangeContextUtil.decodeContextInfo(blockFromText, thisClass, thisAccessExpr);
+      final Map<PsiElement, PsiElement> replacements = new HashMap<PsiElement, PsiElement>();
+      blockFromText.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitSuperExpression(PsiSuperExpression expression) {
+          super.visitSuperExpression(expression);
+          if (expression.getQualifier() == null) {
+            replacements.put(expression, psiElementFactory.createExpressionFromText(thisClassName + "." + expression.getText(), expression));
+          }
+        }
+  
+      });
+      for (PsiElement psiElement : replacements.keySet()) {
+        psiElement.replace(replacements.get(psiElement));
+      }
+    }
     blockFromText = psiElementFactory.createCodeBlockFromText(blockFromText.getText(), null);
-    newExpression = (PsiNewExpression)lambdaExpression.replace(newExpression);
+    newExpression = (PsiNewExpression)JavaCodeStyleManager.getInstance(lambdaExpression.getProject()).shortenClassReferences(lambdaExpression.replace(newExpression));
 
     final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
     LOG.assertTrue(anonymousClass != null);
@@ -132,6 +154,24 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
     public boolean satisfiedBy(PsiElement element) {
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
       if (lambdaExpression != null && PsiTreeUtil.isAncestor(lambdaExpression.getParameterList(), element, false)) {
+        final PsiClass thisClass = PsiTreeUtil.getParentOfType(lambdaExpression, PsiClass.class, true);
+        if (thisClass == null || thisClass instanceof PsiAnonymousClass) {
+          final PsiElement body = lambdaExpression.getBody();
+          if (body == null) return false;
+          final boolean [] disabled = new boolean[1];
+          body.accept(new JavaRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitThisExpression(PsiThisExpression expression) {
+              disabled[0] = true;
+            }
+
+            @Override
+            public void visitSuperExpression(PsiSuperExpression expression) {
+              disabled[0] = true;
+            }
+          });
+          if (disabled[0]) return false;
+        }
         final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
         return functionalInterfaceType != null && LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType) != null && LambdaUtil.isLambdaFullyInferred(lambdaExpression, functionalInterfaceType);
       }

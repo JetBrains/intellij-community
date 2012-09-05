@@ -42,6 +42,7 @@ public class PrevNextParameterHandler extends EditorActionHandler {
     return ParameterInfoController.findArgumentList(file, offset, -1);
   }
 
+  @Override
   public boolean isEnabled(Editor editor, DataContext dataContext) {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
@@ -51,6 +52,7 @@ public class PrevNextParameterHandler extends EditorActionHandler {
     return exprList != null && ParameterInfoController.isAlreadyShown(editor, exprList.getTextRange().getStartOffset());
   }
 
+  @Override
   public void execute(Editor editor, DataContext dataContext) {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     PsiElement exprList = getExpressionList(editor, project);

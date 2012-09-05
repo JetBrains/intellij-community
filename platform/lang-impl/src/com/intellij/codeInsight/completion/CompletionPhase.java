@@ -202,6 +202,7 @@ public abstract class CompletionPhase implements Disposable {
       super(indicator);
       @NotNull Editor editor = indicator.getEditor();
       final HintListener hintListener = new HintListener() {
+        @Override
         public void hintHidden(final EventObject event) {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
         }
@@ -213,11 +214,13 @@ public abstract class CompletionPhase implements Disposable {
         }
       };
       final SelectionListener selectionListener = new SelectionListener() {
+        @Override
         public void selectionChanged(SelectionEvent e) {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
         }
       };
       final CaretListener caretListener = new CaretListener() {
+        @Override
         public void caretPositionChanged(CaretEvent e) {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
         }

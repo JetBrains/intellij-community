@@ -33,10 +33,12 @@ public class CommentByBlockCommentAction extends BaseCodeInsightAction implement
     setEnabledInModalContext(true);
   }
 
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return new CommentByBlockCommentHandler();
   }
 
+  @Override
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
     final FileType fileType = file.getFileType();
     if (fileType instanceof AbstractFileType) {

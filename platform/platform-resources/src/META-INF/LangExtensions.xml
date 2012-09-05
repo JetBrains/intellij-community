@@ -182,6 +182,7 @@
                       serviceImplementation="com.intellij.openapi.roots.impl.libraries.JarDirectoryWatcherFactoryImpl"/>
 
   <applicationService serviceImplementation="com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine"/>
+  <applicationService serviceImplementation="com.intellij.psi.codeStyle.arrangement.MemberOrderService"/>
 
   <projectService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
                   serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>

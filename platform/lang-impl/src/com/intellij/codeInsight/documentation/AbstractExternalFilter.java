@@ -100,6 +100,7 @@ public abstract class AbstractExternalFilter {
         ready.append("\"");
         ready.append(ApplicationManager.getApplication().runReadAction(
             new Computable<String>() {
+              @Override
               public String compute() {
                 return convertReference(root, href);
               }
@@ -115,6 +116,7 @@ public abstract class AbstractExternalFilter {
   }
 
   protected final RefConvertor myIMGConvertor = new RefConvertor(ourIMGselector) {
+    @Override
     protected String convertReference(String root, String href) {
       if (StringUtil.startsWithChar(href, '#')) {
         return DocumentationManager.DOC_ELEMENT_PROTOCOL + root + href;
@@ -184,6 +186,7 @@ public abstract class AbstractExternalFilter {
     if (surl == null) return null;    
     if (MyJavadocFetcher.isFree()) {
       final MyJavadocFetcher fetcher = new MyJavadocFetcher(surl, new MyDocBuilder() {
+        @Override
         public void buildFromStream(String surl, Reader input, StringBuffer result) throws IOException {
           doBuildFromStream(surl, input, result);
         }
@@ -404,6 +407,7 @@ public abstract class AbstractExternalFilter {
       return data.toString();
     }
 
+    @Override
     public void run() {
       try {
         if (surl == null) {

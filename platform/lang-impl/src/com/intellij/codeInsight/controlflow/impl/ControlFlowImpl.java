@@ -28,6 +28,7 @@ public class ControlFlowImpl  implements ControlFlow {
     myInstructions = instructions;
   }
 
+  @Override
   public Instruction[] getInstructions() {
     return myInstructions;
   }

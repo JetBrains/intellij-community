@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy;
 import com.intellij.ide.IconProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
@@ -40,7 +41,7 @@ public class GroovyIconProvider extends IconProvider implements DumbAware {
         if (typeDefinitions.length > 0) {
           return typeDefinitions[0].getIcon(flags);
         }
-        return GroovyIcons.GROOVY_ICON_16x16;
+        return JetgroovyIcons.Groovy.Groovy_16x16;
       }
 
       return GroovyScriptTypeDetector.getScriptType(file).getScriptIcon();

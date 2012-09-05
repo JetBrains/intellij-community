@@ -1023,6 +1023,23 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     }
     assertFalse(fail.get());
   }
+
+  public void testCaretInsideFoldRegionOnCollapse() throws IOException {
+    // IDEA-89874
+    String text = "one two three";
+    init(30, text);
+    int foldStart = text.indexOf("two");
+    addFoldRegion(foldStart, foldStart + "two".length(), "...");
+    myEditor.getCaretModel().moveToOffset(foldStart + 1);
+    FoldRegion foldRegion = getFoldRegion(foldStart);
+    assertNotNull(foldRegion);
+    assertTrue(foldRegion.isExpanded());
+    
+    toggleFoldRegionState(foldRegion, false);
+
+    assertFalse(foldRegion.isExpanded());
+    assertEquals(foldStart, myEditor.getCaretModel().getOffset());
+  }
   
   private void init(final int visibleWidthInColumns, @NotNull String fileText) throws IOException {
     init(visibleWidthInColumns, 7, fileText);

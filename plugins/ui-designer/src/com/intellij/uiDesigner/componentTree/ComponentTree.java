@@ -92,9 +92,6 @@ public final class ComponentTree extends Tree implements DataProvider {
   private final StartInplaceEditingAction myStartInplaceEditingAction;
   private final MyDeleteProvider myDeleteProvider = new MyDeleteProvider();
 
-  private final Icon myButtonGroupIcon = UIDesignerIcons.ButtonGroup;
-  private final Icon myInspectionSuppressionIcon = UIDesignerIcons.InspectionSuppression;
-
   @NonNls private static final String ourHelpID = "guiDesigner.uiTour.compsTree";
   private final Project myProject;
 
@@ -486,10 +483,10 @@ public final class ComponentTree extends Tree implements DataProvider {
           append(fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
         if (node.getUserObject() instanceof SuppressionDescriptor) {
-          setIcon(myInspectionSuppressionIcon);
+          setIcon(UIDesignerIcons.InspectionSuppression);
         }
         else if (node.getUserObject() instanceof ButtonGroupDescriptor) {
-          setIcon(myButtonGroupIcon);
+          setIcon(UIDesignerIcons.ButtonGroup);
         }
       }
     }

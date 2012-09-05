@@ -176,6 +176,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
 
     final CharSequence chars = context.getContainingFile().getViewProvider().getContents(); // ??
     IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor() {
+      @Override
       public void run(final CharSequence chars, @Nullable char[] charsArray, final int start, final int end) {
         if (start > offset || offset > end) {
           words.add(chars.subSequence(start, end).toString());

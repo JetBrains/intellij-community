@@ -18,7 +18,7 @@ package org.jetbrains.jps.incremental.artifacts.instructions;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.IgnoredFilePatterns;
+import org.jetbrains.jps.incremental.IgnoredFilePatterns;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
 import org.jetbrains.jps.incremental.artifacts.JarPathUtil;

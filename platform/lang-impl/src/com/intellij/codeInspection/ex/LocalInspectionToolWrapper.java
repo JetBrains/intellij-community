@@ -207,7 +207,7 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
   }
 
   public String getID() {
-    return myEP == null ? getTool().getID() : myEP.id == null ? myEP.shortName : myEP.id;
+    return myEP == null ? getTool().getID() : myEP.id == null ? myEP.getShortName() : myEP.id;
   }
 
   @Nullable
@@ -225,7 +225,7 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     protected Map<String, LocalInspectionEP> compute() {
       HashMap<String, LocalInspectionEP> map = new HashMap<String, LocalInspectionEP>();
       for (LocalInspectionEP ep : Extensions.getExtensions(LocalInspectionEP.LOCAL_INSPECTION)) {
-        map.put(ep.shortName, ep);
+        map.put(ep.getShortName(), ep);
       }
       return map;
     }

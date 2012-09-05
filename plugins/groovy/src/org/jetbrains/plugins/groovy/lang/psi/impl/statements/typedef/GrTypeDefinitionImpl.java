@@ -40,11 +40,11 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityIcons;
 import com.intellij.util.containers.ContainerUtil;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -670,15 +670,15 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   private Icon getIconInner() {
-    if (isAnnotationType()) return GroovyIcons.ANNOTATION_TYPE;
+    if (isAnnotationType()) return JetgroovyIcons.Groovy.AnnotationType;
 
-    if (isInterface()) return GroovyIcons.INTERFACE;
+    if (isInterface()) return JetgroovyIcons.Groovy.Interface;
 
-    if (isEnum()) return GroovyIcons.ENUM;
+    if (isEnum()) return JetgroovyIcons.Groovy.Enum;
 
-    if (hasModifierProperty(PsiModifier.ABSTRACT)) return GroovyIcons.ABSTRACT_CLASS;
+    if (hasModifierProperty(PsiModifier.ABSTRACT)) return JetgroovyIcons.Groovy.AbstractClass;
 
-    return GroovyIcons.CLASS;
+    return JetgroovyIcons.Groovy.Class;
   }
 
   private boolean isRenameFileOnClassRenaming() {

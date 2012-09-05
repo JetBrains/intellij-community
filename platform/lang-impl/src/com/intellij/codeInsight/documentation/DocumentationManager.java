@@ -99,22 +99,27 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   private static final int ourFlagsForTargetElements = TargetElementUtilBase.getInstance().getAllAccepted();
 
+  @Override
   protected String getToolwindowId() {
     return ToolWindowId.DOCUMENTATION;
   }
 
+  @Override
   protected DocumentationComponent createComponent() {
     return new DocumentationComponent(this, createActions());
   }
 
+  @Override
   protected String getRestorePopupDescription() {
     return "Restore documentation popup behavior";
   }
 
+  @Override
   protected String getAutoUpdateDescription() {
     return "Show documentation for current element automatically";
   }
 
+  @Override
   protected String getAutoUpdateTitle() {
     return "Auto Show Documentation for Selected Element";
   }
@@ -127,6 +132,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     super(project);
     myActionManagerEx = managerEx;
     final AnActionListener actionListener = new AnActionListener() {
+      @Override
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         final JBPopup hint = getDocInfoHint();
         if (hint != null) {
@@ -141,6 +147,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
       }
 
+      @Override
       public void beforeEditorTyping(char c, DataContext dataContext) {
         final JBPopup hint = getDocInfoHint();
         if (hint != null) {
@@ -149,6 +156,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
 
 
+      @Override
       public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
       }
     };
@@ -205,6 +213,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                               @Nullable Runnable closeCallback)
   {
     PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(element.getProject()) {
+      @Override
       public void updatePopup(Object lookupItemObject) {
         if (lookupItemObject instanceof PsiElement) {
           doShowJavaDocInfo((PsiElement)lookupItemObject, false, this, original, false);
@@ -263,6 +272,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     storeOriginalElement(project, originalElement, element);
 
     final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(project) {
+      @Override
       public void updatePopup(Object lookupIteObject) {
         if (lookupIteObject == null) {
           return;
@@ -358,6 +368,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     });
     Processor<JBPopup> pinCallback = new Processor<JBPopup>() {
+      @Override
       public boolean process(JBPopup popup) {
         createToolWindow(element, originalElement);
         popup.cancel();
@@ -368,6 +379,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     final KeyboardShortcut keyboardShortcut = ActionManagerEx.getInstanceEx().getKeyboardShortcut("QuickJavaDoc");
     final List<Pair<ActionListener, KeyStroke>> actions =
       Collections.singletonList(Pair.<ActionListener, KeyStroke>create(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           createToolWindow(element, originalElement);
           final JBPopup hint = getDocInfoHint();
@@ -391,6 +403,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       .setCouldPin(pinCallback)
       .setModalContext(false)
       .setCancelCallback(new Computable<Boolean>() {
+        @Override
         public Boolean compute() {
           if (closeCallback != null) {
             closeCallback.run();
@@ -541,10 +554,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private DocumentationCollector getDefaultCollector(@NotNull final PsiElement element, @Nullable final PsiElement originalElement) {
     return new DocumentationCollector() {
 
+      @Override
       @Nullable
       public String getDocumentation() throws Exception {
         final DocumentationProvider provider = ApplicationManager.getApplication().runReadAction(
             new Computable<DocumentationProvider>() {
+              @Override
               public DocumentationProvider compute() {
                 return getProviderFromElement(element, originalElement);
               }
@@ -553,6 +568,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         if (myParameterInfoController != null) {
           final String doc = ApplicationManager.getApplication().runReadAction(
               new NullableComputable<String>() {
+                @Override
                 public String compute() {
                   return generateParameterInfoDocumentation(provider);
                 }
@@ -563,6 +579,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         if (provider instanceof ExternalDocumentationProvider) {
           final List<String> urls = ApplicationManager.getApplication().runReadAction(
               new NullableComputable<List<String>>() {
+                @Override
                 public List<String> compute() {
                   final SmartPsiElementPointer originalElementPtr = element.getUserData(ORIGINAL_ELEMENT_KEY);
                   final PsiElement originalElement = originalElementPtr != null ? originalElementPtr.getElement() : null;
@@ -580,6 +597,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
         return ApplicationManager.getApplication().runReadAction(
             new Computable<String>() {
+              @Override
               @Nullable
               public String compute() {
                 final SmartPsiElementPointer originalElement = element.getUserData(ORIGINAL_ELEMENT_KEY);
@@ -621,6 +639,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         return null;
       }
 
+      @Override
       @Nullable
       public PsiElement getElement() {
         return element.isValid() ? element : null;
@@ -674,6 +693,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     myUpdateDocAlarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         if (myProject.isDisposed()) return;
         final Throwable[] ex = new Throwable[1];
@@ -689,6 +709,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         if (ex[0] != null) {
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
               String message = ex[0] instanceof IndexNotReadyException
                              ? "Documentation is not available until indices are built."
@@ -701,6 +722,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
 
         final PsiElement element = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
+          @Override
           @Nullable
           public PsiElement compute() {
             return provider.getElement();
@@ -712,6 +734,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         final String documentationText = text;
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
@@ -874,10 +897,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
         fetchDocInfo
           (new DocumentationCollector() {
+            @Override
             public String getDocumentation() throws Exception {
               if (url.startsWith(DOC_ELEMENT_PROTOCOL)) {
                 final List<String> urls = ApplicationManager.getApplication().runReadAction(
                   new NullableComputable<List<String>>() {
+                    @Override
                     public List<String> compute() {
                       final DocumentationProvider provider = getProviderFromElement(psiElement);
                       return provider.getUrlFor(psiElement, getOriginalElement(psiElement));
@@ -892,6 +917,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
               return "";
             }
 
+            @Override
             public PsiElement getElement() {
               //String loc = getElementLocator(docUrl);
               //
@@ -958,10 +984,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return DOCUMENTATION_AUTO_UPDATE_ENABLED;
   }
 
+  @Override
   protected void doUpdateComponent(PsiElement element, PsiElement originalElement, DocumentationComponent component) {
     fetchDocInfo(getDefaultCollector(element, originalElement), component);
   }
   
+  @Override
   protected void doUpdateComponent(Editor editor, PsiFile psiFile) {
     showJavaDocInfo(editor, psiFile, false, true);
   }

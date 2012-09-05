@@ -52,11 +52,11 @@ public class DeleteChange extends StructuralChange {
   }
 
   @Override
-  public void revertOn(RootEntry root) {
+  public void revertOn(RootEntry root, boolean warnOnFileNotFound) {
     String parentPath = Paths.getParentOf(myPath);
     Entry parent = root.findEntry(parentPath);
     if (parent == null) {
-      cannotRevert(parentPath);
+      cannotRevert(parentPath, warnOnFileNotFound);
       return;
     }
     parent.addChild(myDeletedEntry.copy());

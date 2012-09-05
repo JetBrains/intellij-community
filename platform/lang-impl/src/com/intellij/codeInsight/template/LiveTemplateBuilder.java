@@ -107,6 +107,7 @@ public class LiveTemplateBuilder {
       template.addVariable(variable.getName(), variable.getExpressionString(), variable.getDefaultValueString(), variable.isAlwaysStopAt());
     }
     Collections.sort(myVariableOccurences, new Comparator<VarOccurence>() {
+      @Override
       public int compare(VarOccurence o1, VarOccurence o2) {
         if (o1.myOffset < o2.myOffset) {
           return -1;

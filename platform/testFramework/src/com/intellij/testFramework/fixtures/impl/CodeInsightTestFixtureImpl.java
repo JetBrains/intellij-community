@@ -152,6 +152,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private final FileTreeAccessFilter myJavaFilesFilter = new FileTreeAccessFilter();
   private boolean myAllowDirt;
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public CodeInsightTestFixtureImpl(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirTestFixture) {
     myProjectFixture = projectFixture;
     myTempDirFixture = tempDirTestFixture;
@@ -174,7 +175,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public VirtualFile copyFileToProject(@NonNls final String sourceFilePath, @NonNls final String targetPath) {
-    File fromFile = new File(getTestDataPath() + "/" + sourceFilePath);
+    final String testDataPath = getTestDataPath();
+    assert testDataPath != null : "test data path not specified";
+
+    File fromFile = new File(testDataPath + "/" + sourceFilePath);
     if (!fromFile.exists()) {
       fromFile = new File(sourceFilePath);
     }
@@ -184,49 +188,53 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       if (fromVFile == null) {
         fromVFile = myTempDirFixture.getFile(sourceFilePath);
       }
-      assert fromVFile != null : "can't find test data file " + sourceFilePath + " (" + getTestDataPath() + ")";
+      assert fromVFile != null : "can't find test data file " + sourceFilePath + " (" + testDataPath + ")";
       return myTempDirFixture.copyFile(fromVFile, targetPath);
     }
 
-    final File destFile = new File(getTempDirPath() + "/" + targetPath);
-    if (!destFile.exists()) {
+    final File targetFile = new File(getTempDirPath() + "/" + targetPath);
+    if (!targetFile.exists()) {
       if (fromFile.isDirectory()) {
-        assert destFile.mkdirs() : destFile;
+        assert targetFile.mkdirs() : targetFile;
       }
       else {
         if (!fromFile.exists()) {
-          fail("Cannot find source file: '"+sourceFilePath+"'. getTestDataPath()='"+getTestDataPath()+"'. getHomePath()='"+getHomePath()+"'.");
+          fail("Cannot find source file: '" + sourceFilePath + "'. getTestDataPath()='" + testDataPath + "'. " +
+               "getHomePath()='" + getHomePath() + "'.");
         }
         try {
-          FileUtil.copy(fromFile, destFile);
+          FileUtil.copy(fromFile, targetFile);
         }
         catch (IOException e) {
-          throw new RuntimeException("Cannot copy " + fromFile + " to " + destFile, e);
+          throw new RuntimeException("Cannot copy " + fromFile + " to " + targetFile, e);
         }
       }
     }
 
-    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destFile);
-    assert file != null : destFile;
+    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
+    assert file != null : targetFile;
     return file;
   }
 
   @Override
   public VirtualFile copyDirectoryToProject(@NonNls final String sourceFilePath, @NonNls final String targetPath) {
-    assert getTestDataPath() != null : "test data path not specified";
-    final File fromFile = new File(getTestDataPath() + "/" + sourceFilePath);
+    final String testDataPath = getTestDataPath();
+    assert testDataPath != null : "test data path not specified";
+
+    final File fromFile = new File(testDataPath + "/" + sourceFilePath);
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
       return myTempDirFixture.copyAll(fromFile.getPath(), targetPath);
     }
     else {
-      final File destFile = new File(getTempDirPath() + "/" + targetPath);
+      final File targetFile = new File(getTempDirPath() + "/" + targetPath);
       try {
-        FileUtil.copyDir(fromFile, destFile);
+        FileUtil.copyDir(fromFile, targetFile);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
       }
-      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destFile);
+
+      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
       Assert.assertNotNull(file);
       file.refresh(false, true);
       return file;
@@ -723,6 +731,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
             return;
           }
         }
+        if (c == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
+          if (_performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT)) {
+            return;
+          }
+        }
 
         CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
           @Override
@@ -906,21 +919,26 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return addFileToProject(getTempDirPath(), relativePath, fileText);
   }
 
-  protected PsiFile addFileToProject(String rootPath, String relativePath, String fileText) {
-    try {
-      if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
-        final VirtualFile file = myTempDirFixture.createFile(relativePath, fileText);
-        return PsiManager.getInstance(getProject()).findFile(file);
+  protected PsiFile addFileToProject(final String rootPath, final String relativePath, final String fileText) {
+    return new WriteCommandAction<PsiFile>(getProject()) {
+      @Override
+      protected void run(Result<PsiFile> result) throws Throwable {
+        try {
+          if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
+            final VirtualFile file = myTempDirFixture.createFile(relativePath, fileText);
+            result.setResult(PsiManager.getInstance(getProject()).findFile(file));
+          } else {
+            result.setResult(((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(rootPath, relativePath, fileText));
+          }
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        finally {
+          ((PsiModificationTrackerImpl)PsiManager.getInstance(getProject()).getModificationTracker()).incCounter();
+        }
       }
-
-      return ((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(rootPath, relativePath, fileText);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    finally {
-      ((PsiModificationTrackerImpl)PsiManager.getInstance(getProject()).getModificationTracker()).incCounter();
-    }
+    }.execute().getResultObject();
   }
 
   public <T> void registerExtension(final ExtensionsArea area, final ExtensionPointName<T> epName, final T extension) {
@@ -1060,36 +1078,56 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void setUp() throws Exception {
     super.setUp();
 
-    myProjectFixture.setUp();
-    myTempDirFixture.setUp();
-    myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
-    configureInspections(myInspections == null ? LocalInspectionTool.EMPTY_ARRAY : myInspections);
+    edt(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          myProjectFixture.setUp();
+          myTempDirFixture.setUp();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+        myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
+        configureInspections(myInspections == null ? LocalInspectionTool.EMPTY_ARRAY : myInspections);
 
-    DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-    daemonCodeAnalyzer.prepareForTest();
+        DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
+        daemonCodeAnalyzer.prepareForTest();
 
-    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
-    ensureIndexesUpToDate(getProject());
-    ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivities();
+        DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
+        ensureIndexesUpToDate(getProject());
+        ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivities();
+      }
+    });
   }
 
   @Override
   public void tearDown() throws Exception {
-    FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
-    VirtualFile[] openFiles = editorManager.getOpenFiles();
-    for (VirtualFile openFile : openFiles) {
-      editorManager.closeFile(openFile);
-    }
+    edt(new Runnable() {
+      @Override
+      public void run() {
+        FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
+        VirtualFile[] openFiles = editorManager.getOpenFiles();
+        for (VirtualFile openFile : openFiles) {
+          editorManager.closeFile(openFile);
+        }
 
-    myEditor = null;
-    myFile = null;
-    myPsiManager = null;
+        myEditor = null;
+        myFile = null;
+        myPsiManager = null;
 
-    myInspections = null;
-    myAvailableTools.clear();
+        myInspections = null;
+        myAvailableTools.clear();
 
-    myProjectFixture.tearDown();
-    myTempDirFixture.tearDown();
+        try {
+          myProjectFixture.tearDown();
+          myTempDirFixture.tearDown();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
 
     super.tearDown();
   }

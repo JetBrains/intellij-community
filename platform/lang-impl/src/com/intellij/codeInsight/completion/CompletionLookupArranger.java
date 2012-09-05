@@ -162,6 +162,7 @@ public class CompletionLookupArranger extends LookupArranger {
   private static List<LookupElement> sortByPresentation(Iterable<LookupElement> source) {
     ArrayList<LookupElement> result = ContainerUtil.newArrayList(source);
     ContainerUtil.sort(result, new Comparator<LookupElement>() {
+      @Override
       public int compare(LookupElement o1, LookupElement o2) {
         String invariant = PRESENTATION_INVARIANT.get(o1);
         assert invariant != null;

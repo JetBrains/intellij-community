@@ -55,6 +55,7 @@ import java.util.Collections;
 public class ReformatCodeAction extends AnAction implements DumbAware {
   private static final @NonNls String HELP_ID = "editing.codeReformatting";
 
+  @Override
   public void actionPerformed(AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -222,6 +223,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       Notifications.Bus.notify(new Notification("Reformat Code", title,
                                                 "<html>You can re-enable the dialog on the <a href=''>IDE Settings -> Editor</a> pane</html>",
                                                 NotificationType.INFORMATION, new NotificationListener() {
+          @Override
           public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
               final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
@@ -243,6 +245,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     return PsiUtilCore.toPsiFileArray(result);
   }
 
+  @Override
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();

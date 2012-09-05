@@ -33,17 +33,9 @@ public class MergeSourceDetailsAction extends AnAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setIcon(getIcon());
+    e.getPresentation().setIcon(Svn4ideaIcons.MergeSourcesDetails);
     e.getPresentation().setText("Show merge sources details");
     e.getPresentation().setEnabled(enabled(e));
-  }
-
-  private static class IconHolder {
-    private static final Icon myIcon = Svn4ideaIcons.MergeSourcesDetails;
-  }
-
-  private Icon getIcon() {
-    return IconHolder.myIcon;
   }
 
   public void registerSelf(final JComponent comp) {

@@ -170,6 +170,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   public TemplateSettings(SchemesManagerFactory schemesManagerFactory) {
 
     SchemeProcessor<TemplateGroup> processor = new BaseSchemeProcessor<TemplateGroup>() {
+      @Override
       @Nullable
       public TemplateGroup readScheme(final Document schemeContent)
         throws InvalidDataException, IOException, JDOMException {
@@ -178,6 +179,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       }
 
 
+      @Override
       public boolean shouldBeSaved(final TemplateGroup template) {
         for (TemplateImpl t : template.getElements()) {
           if (differsFromDefault(t)) {
@@ -187,6 +189,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
         return false;
       }
 
+      @Override
       public Document writeScheme(final TemplateGroup template) throws WriteExternalException {
         Element templateSetElement = new Element(TEMPLATE_SET);
         templateSetElement.setAttribute(GROUP, template.getName());
@@ -200,6 +203,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
         return new Document(templateSetElement);
       }
 
+      @Override
       public void initScheme(final TemplateGroup scheme) {
         Collection<TemplateImpl> templates = scheme.getElements();
 
@@ -208,12 +212,14 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
         }
       }
 
+      @Override
       public void onSchemeAdded(final TemplateGroup scheme) {
         for (TemplateImpl template : scheme.getElements()) {
           addTemplateImpl(template);
         }
       }
 
+      @Override
       public void onSchemeDeleted(final TemplateGroup scheme) {
         for (TemplateImpl template : scheme.getElements()) {
           removeTemplate(template);
@@ -232,6 +238,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     return !t.equals(def) || !t.contextsEqual(def);
   }
 
+  @Override
   @NotNull
   public File[] getExportFiles() {
     File exportableSettingsFile =
@@ -239,6 +246,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     return new File[]{getTemplateDirectory(true), exportableSettingsFile };
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return CodeInsightBundle.message("templates.export.display.name");
@@ -248,6 +256,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     return ServiceManager.getService(TemplateSettings.class);
   }
 
+  @Override
   public void loadState(Element parentNode) {
     Element element = parentNode.getChild(DEFAULT_SHORTCUT);
     if (element != null) {
@@ -296,6 +305,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     //TODO lesya reload schemes
   }
 
+  @Override
   public Element getState()  {
     Element parentNode = new Element("TemplateSettings");
     Element element = new Element(DEFAULT_SHORTCUT);

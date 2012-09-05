@@ -30,6 +30,7 @@ public class BackspaceHandler extends EditorActionHandler {
     myOriginalHandler = originalHandler;
   }
 
+  @Override
   public void execute(final Editor editor, final DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (lookup == null){

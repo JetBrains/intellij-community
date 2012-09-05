@@ -32,10 +32,10 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
@@ -185,6 +185,11 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return node == null ? null : node.getPsi();
   }
 
+  @Override
+  public boolean isTopControlFlowOwner() {
+    return true;
+  }
+
   private static boolean processDeclarationsInPackage(final PsiScopeProcessor processor,
                                                       ResolveState state,
                                                       PsiElement lastParent,
@@ -235,7 +240,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @Nullable
   public Icon getIcon(int flags) {
-    final Icon baseIcon = isScript() ? GroovyScriptTypeDetector.getScriptType(this).getScriptIcon() : GroovyIcons.GROOVY_ICON_16x16;
+    final Icon baseIcon = isScript() ? GroovyScriptTypeDetector.getScriptType(this).getScriptIcon() : JetgroovyIcons.Groovy.Groovy_16x16;
     return ElementBase.createLayeredIcon(this, baseIcon, ElementBase.transformFlags(this, flags));
   }
 
@@ -254,7 +259,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @Nullable
   private PsiElement getAnchorToInsertImportAfter(GrImportStatement statement) {
-    final GroovyCodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().getCustomSettings(GroovyCodeStyleSettings.class);
+    final GroovyCodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().getCustomSettings(
+      GroovyCodeStyleSettings.class);
     final PackageEntryTable layoutTable = settings.IMPORT_LAYOUT_TABLE;
     final PackageEntry[] entries = layoutTable.getEntries();
 

@@ -29,14 +29,17 @@ public class ConstantNode extends Expression {
     myValue = new TextResult(value);
   }
 
+  @Override
   public Result calculateResult(ExpressionContext context) {
     return myValue;
   }
 
+  @Override
   public Result calculateQuickResult(ExpressionContext context) {
     return myValue;
   }
 
+  @Override
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
     return LookupElement.EMPTY_ARRAY;
   }

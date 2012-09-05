@@ -39,24 +39,29 @@ public class IntentionActionWrapper implements IntentionAction {
     myCategories = categories;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return getDelegate().getText();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getDelegate().getFamilyName();
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return getDelegate().isAvailable(project, editor, file);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     getDelegate().invoke(project, editor, file);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return getDelegate().startInWriteAction();
   }

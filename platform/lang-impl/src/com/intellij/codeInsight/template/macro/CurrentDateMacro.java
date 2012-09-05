@@ -27,6 +27,7 @@ public class CurrentDateMacro extends SimpleMacro {
     super("date");
   }
 
+  @Override
   protected String evaluate() {
     return DateFormatUtil.formatDate(Clock.getTime());
   }

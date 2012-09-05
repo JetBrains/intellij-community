@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>RefusedBequest.java</file>
+    <line>8</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Refused bequest</problem_class>
+    <description>Method &lt;code&gt;size()&lt;/code&gt; ignores defined method in superclass #loc</description>
+  </problem>
+</problems>

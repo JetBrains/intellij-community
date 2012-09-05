@@ -39,6 +39,7 @@ public abstract class TemplateInsertHandler implements InsertHandler {
 
   protected static final Object EXPANDED_TEMPLATE_ATTR = Key.create("EXPANDED_TEMPLATE_ATTR");
 
+  @Override
   public void handleInsert(final InsertionContext context, final LookupElement item) {
     if (isTemplateToBeCompleted(item)) {
       context.setAddCompletionChar(false);
@@ -67,6 +68,7 @@ public abstract class TemplateInsertHandler implements InsertHandler {
     final RangeMarker offsetRangeMarker = document.createRangeMarker(templateStartOffset, templateStartOffset);
 
     TemplateManager.getInstance(editor.getProject()).startTemplate(editor, template, new TemplateEditingAdapter() {
+      @Override
       public void templateFinished(Template template, boolean brokenOff) {
         lookupItem.setAttribute(EXPANDED_TEMPLATE_ATTR, Boolean.TRUE);
 

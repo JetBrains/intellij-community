@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +20,16 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class RefusedBequestInspection extends BaseInspection {
 
-  /**
-   * @noinspection PublicField
-   */
-  public boolean ignoreEmptySuperMethods = false;
+  @SuppressWarnings("PublicField") public boolean ignoreEmptySuperMethods = false;
 
   @Override
   @NotNull
@@ -42,16 +40,14 @@ public class RefusedBequestInspection extends BaseInspection {
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "refused.bequest.problem.descriptor");
+    return InspectionGadgetsBundle.message("refused.bequest.problem.descriptor");
   }
 
   @Override
   public JComponent createOptionsPanel() {
     //noinspection HardCodedStringLiteral
     return new SingleCheckboxOptionsPanel(
-      "<html>" + InspectionGadgetsBundle.message(
-        "refused.bequest.ignore.empty.super.methods.option") +
+      "<html>" + InspectionGadgetsBundle.message("refused.bequest.ignore.empty.super.methods.option") +
       "</html>", this, "ignoreEmptySuperMethods");
   }
 
@@ -72,23 +68,17 @@ public class RefusedBequestInspection extends BaseInspection {
       if (method.getNameIdentifier() == null) {
         return;
       }
-      final PsiMethod leastConcreteSuperMethod =
-        getLeastConcreteSuperMethod(method);
+      final PsiMethod leastConcreteSuperMethod = getLeastConcreteSuperMethod(method);
       if (leastConcreteSuperMethod == null) {
         return;
       }
-      final PsiClass containingClass =
-        leastConcreteSuperMethod.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      final String className = containingClass.getQualifiedName();
-      if (CommonClassNames.JAVA_LANG_OBJECT.equals(className)) {
+      final PsiClass objectClass = ClassUtils.findObjectClass(method);
+      final PsiMethod[] superMethods = method.findSuperMethods(objectClass);
+      if (superMethods.length > 0) {
         return;
       }
       if (ignoreEmptySuperMethods) {
-        final PsiMethod superMethod = (PsiMethod)
-          leastConcreteSuperMethod.getNavigationElement();
+        final PsiMethod superMethod = (PsiMethod)leastConcreteSuperMethod.getNavigationElement();
         if (isTrivial(superMethod)) {
           return;
         }
@@ -119,10 +109,8 @@ public class RefusedBequestInspection extends BaseInspection {
         return true;
       }
       if (statement instanceof PsiReturnStatement) {
-        final PsiReturnStatement returnStatement =
-          (PsiReturnStatement)statement;
-        final PsiExpression returnValue =
-          returnStatement.getReturnValue();
+        final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
+        final PsiExpression returnValue = returnStatement.getReturnValue();
         if (returnValue instanceof PsiLiteralExpression) {
           return true;
         }
@@ -132,23 +120,17 @@ public class RefusedBequestInspection extends BaseInspection {
 
     @Nullable
     private PsiMethod getLeastConcreteSuperMethod(PsiMethod method) {
-      PsiMethod leastConcreteSuperMethod = null;
       final PsiMethod[] superMethods = method.findSuperMethods(true);
       for (final PsiMethod superMethod : superMethods) {
-        final PsiClass containingClass =
-          superMethod.getContainingClass();
-        if (containingClass != null &&
-            !superMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
-            !containingClass.isInterface()) {
-          leastConcreteSuperMethod = superMethod;
-          return leastConcreteSuperMethod;
+        final PsiClass containingClass = superMethod.getContainingClass();
+        if (containingClass != null && !superMethod.hasModifierProperty(PsiModifier.ABSTRACT) && !containingClass.isInterface()) {
+          return superMethod;
         }
       }
-      return leastConcreteSuperMethod;
+      return null;
     }
 
-    private boolean containsSuperCall(@NotNull PsiElement context,
-                                      @NotNull PsiMethod method) {
+    private boolean containsSuperCall(@NotNull PsiElement context, @NotNull PsiMethod method) {
       final SuperCallVisitor visitor = new SuperCallVisitor(method);
       context.accept(visitor);
       return visitor.hasSuperCall();
@@ -166,9 +148,10 @@ public class RefusedBequestInspection extends BaseInspection {
 
     @Override
     public void visitElement(@NotNull PsiElement element) {
-      if (!hasSuperCall) {
-        super.visitElement(element);
+      if (hasSuperCall) {
+        return;
       }
+      super.visitElement(element);
     }
 
     @Override
@@ -178,10 +161,8 @@ public class RefusedBequestInspection extends BaseInspection {
         return;
       }
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
         return;
       }

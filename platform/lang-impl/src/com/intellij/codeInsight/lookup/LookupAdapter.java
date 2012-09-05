@@ -17,12 +17,15 @@
 package com.intellij.codeInsight.lookup;
 
 public abstract class LookupAdapter implements LookupListener{
+  @Override
   public void itemSelected(LookupEvent event){
   }
 
+  @Override
   public void lookupCanceled(LookupEvent event){
   }
 
+  @Override
   public void currentItemChanged(LookupEvent event){
   }
 }

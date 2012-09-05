@@ -90,8 +90,6 @@ import java.util.Map;
  * @author Eugene.Kudelevsky
  */
 public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
-  private static final Icon ANDROID_PREVIEW_ICON = AndroidIcons.AndroidPreview;
-
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.uipreview.AndroidLayoutPreviewToolWindowManager");
 
   private final MergingUpdateQueue myToolWindowUpdateQueue;
@@ -218,7 +216,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     final String toolWindowId = AndroidBundle.message("android.layout.preview.tool.window.title");
     myToolWindow =
       ToolWindowManager.getInstance(myProject).registerToolWindow(toolWindowId, false, ToolWindowAnchor.RIGHT, myProject, true);
-    myToolWindow.setIcon(ANDROID_PREVIEW_ICON);
+    myToolWindow.setIcon(AndroidIcons.AndroidPreview);
 
     ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(new ToolWindowManagerAdapter() {
       private boolean myVisible = false;

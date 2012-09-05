@@ -30,10 +30,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.hash.HashSet;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -170,7 +170,7 @@ public class CompleteReferenceExpression {
 
   @NotNull
   public static LookupElementBuilder createPropertyLookupElement(@NotNull String name, @Nullable PsiType type) {
-    LookupElementBuilder res = LookupElementBuilder.create(name).withIcon(GroovyIcons.PROPERTY);
+    LookupElementBuilder res = LookupElementBuilder.create(name).withIcon(JetgroovyIcons.Groovy.Property);
     if (type != null) {
       res = res.withTypeText(type.getPresentableText());
     }
@@ -211,7 +211,7 @@ public class CompleteReferenceExpression {
 
     LookupElementBuilder builder =
       LookupElementBuilder.create(generatePropertyResolveResult(propName, accessor, propType, resolveResult), propName)
-        .withIcon(GroovyIcons.PROPERTY);
+        .withIcon(JetgroovyIcons.Groovy.Property);
     if (substituted != null) {
       builder = builder.withTypeText(substituted.getPresentableText());
     }
@@ -476,7 +476,7 @@ public class CompleteReferenceExpression {
       if (field.getGetters().length != 0 || field.getSetter() != null || !myPropertyNames.add(field.getName()) || myIsMap) return;
 
       for (LookupElement element : GroovyCompletionUtil.createLookupElements(resolveResult, false, myMatcher, null)) {
-        myConsumer.consume(((LookupElementBuilder)element).withIcon(GroovyIcons.PROPERTY));
+        myConsumer.consume(((LookupElementBuilder)element).withIcon(JetgroovyIcons.Groovy.Property));
       }
 
     }
@@ -513,7 +513,7 @@ public class CompleteReferenceExpression {
         if (myPropertyNames.add(name)) {
           LookupElementBuilder builder = LookupElementBuilder
             .create(generatePropertyResolveResult(name, listenerMethod, null, null), name)
-            .withIcon(GroovyIcons.PROPERTY);
+            .withIcon(JetgroovyIcons.Groovy.Property);
           myConsumer.consume(builder);
         }
       }

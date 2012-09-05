@@ -363,6 +363,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return myList;
   }
 
+  @Override
   public List<LookupElement> getItems() {
     synchronized (myList) {
       return ContainerUtil.findAll(getListModel().toList(), new Condition<LookupElement>() {
@@ -803,6 +804,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   private void addListeners() {
     myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       public void documentChanged(DocumentEvent e) {
         if (!myChangeGuard && !myFinishing) {
           hide();
@@ -811,6 +813,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }, this);
 
     final CaretListener caretListener = new CaretListener() {
+      @Override
       public void caretPositionChanged(CaretEvent e) {
         if (!myChangeGuard && !myFinishing) {
           hide();
@@ -818,6 +821,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       }
     };
     final SelectionListener selectionListener = new SelectionListener() {
+      @Override
       public void selectionChanged(final SelectionEvent e) {
         if (!myChangeGuard && !myFinishing) {
           hide();
@@ -825,6 +829,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       }
     };
     final EditorMouseListener mouseListener = new EditorMouseAdapter() {
+      @Override
       public void mouseClicked(EditorMouseEvent e){
         e.consume();
         hide();
@@ -846,6 +851,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myList.addListSelectionListener(new ListSelectionListener() {
       private LookupElement oldItem = null;
 
+      @Override
       public void valueChanged(ListSelectionEvent e){
         myHintAlarm.cancelAllRequests();
 
@@ -871,6 +877,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
         if (clickCount == 2){
           CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+            @Override
             public void run() {
               finishLookup(NORMAL_SELECT_CHAR);
             }
@@ -928,25 +935,30 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
   }
 
+  @Override
   @Nullable
   public LookupElement getCurrentItem(){
     LookupElement item = (LookupElement)myList.getSelectedValue();
     return item instanceof EmptyLookupItem ? null : item;
   }
 
+  @Override
   public void setCurrentItem(LookupElement item){
     markSelectionTouched();
     myList.setSelectedValue(item, false);
   }
 
+  @Override
   public void addLookupListener(LookupListener listener){
     myListeners.add(listener);
   }
 
+  @Override
   public void removeLookupListener(LookupListener listener){
     myListeners.remove(listener);
   }
 
+  @Override
   public Rectangle getCurrentItemBounds(){
     int index = myList.getSelectedIndex();
     if (index < 0) {
@@ -1068,6 +1080,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   public void replacePrefix(final String presentPrefix, final String newPrefix) {
     if (!performGuardedChange(new Runnable() {
+      @Override
       public void run() {
         EditorModificationUtil.deleteSelectedText(myEditor);
         int offset = myEditor.getCaretModel().getOffset();
@@ -1099,15 +1112,18 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     refreshUi(true, true);
   }
 
+  @Override
   @Nullable
   public PsiFile getPsiFile() {
     return PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
   }
 
+  @Override
   public boolean isCompletion() {
     return myArranger instanceof CompletionLookupArranger;
   }
 
+  @Override
   public PsiElement getPsiElement() {
     PsiFile file = getPsiFile();
     if (file == null) return null;
@@ -1118,6 +1134,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return file.findElementAt(0);
   }
 
+  @Override
   public Editor getEditor() {
     return myEditor;
   }
@@ -1127,14 +1144,17 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myPositionedAbove = positionedAbove;
   }
 
+  @Override
   public boolean isPositionedAboveCaret(){
     return myPositionedAbove != null && myPositionedAbove.booleanValue();
   }
 
+  @Override
   public boolean isSelectionTouched() {
     return mySelectionTouched;
   }
 
+  @Override
   public void hide(){
     hideLookup(true);
   }
@@ -1182,6 +1202,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return staticDisposeTrace;
   }
 
+  @Override
   public void dispose() {
     assert ApplicationManager.getApplication().isDispatchThread();
     assert myHidden;

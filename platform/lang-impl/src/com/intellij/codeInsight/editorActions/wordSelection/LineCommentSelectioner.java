@@ -28,6 +28,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import java.util.List;
 
 public class LineCommentSelectioner extends WordSelectioner {
+  @Override
   public boolean canSelect(PsiElement e) {
     if (e instanceof PsiComment) {
       final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(e.getLanguage());
@@ -37,6 +38,7 @@ public class LineCommentSelectioner extends WordSelectioner {
     return false;
   }
 
+  @Override
   public List<TextRange> select(PsiElement element, CharSequence editorText, int cursorOffset, Editor editor) {
     List<TextRange> result = super.select(element, editorText, cursorOffset, editor);
 

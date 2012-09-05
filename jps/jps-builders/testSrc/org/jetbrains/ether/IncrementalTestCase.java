@@ -18,6 +18,7 @@ package org.jetbrains.ether;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Processor;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
@@ -33,10 +34,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.Collections;
 
 /**
@@ -50,7 +48,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   private JpsSdk<JpsDummyElement> myJdk;
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  protected IncrementalTestCase(final String name) throws Exception {
+  protected IncrementalTestCase(final String name) {
     setName(name);
     groupName = name;
   }
@@ -62,7 +60,13 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     baseDir = new File(PathManagerEx.getTestDataPath() + File.separator + "compileServer" + File.separator + "incremental" + File.separator + groupName + File.separator + getProjectName());
     workDir = FileUtil.createTempDirectory("jps-build", null);
 
-    FileUtil.copyDir(baseDir, workDir);
+    FileUtil.copyDir(baseDir, workDir, new FileFilter() {
+      @Override
+      public boolean accept(File file) {
+        String name = file.getName();
+        return !name.endsWith(".new") && !name.endsWith(".delete");
+      }
+    });
 
     String outputPath = getAbsolutePath("out");
     JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myJpsProject).setOutputUrl(JpsPathUtil.pathToUrl(outputPath));
@@ -87,34 +91,36 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   }
 
   private void modify() throws Exception {
-    final File[] files = baseDir.listFiles(new FileFilter() {
-      public boolean accept(final File pathname) {
-        final String name = pathname.getName();
-
-        return name.endsWith(".java.new") || name.endsWith(".java.remove");
+    FileUtil.processFilesRecursively(baseDir, new Processor<File>() {
+      @Override
+      public boolean process(File file) {
+        try {
+          String name = file.getName();
+          boolean copy = name.endsWith(".new");
+          boolean remove = name.endsWith(".remove");
+          if (copy || remove) {
+            String path = FileUtil.getRelativePath(baseDir, file);
+            assertNotNull(path);
+            if (!path.contains(File.separator)) {
+              path = "src" + File.separator + path;
+            }
+            if (copy) {
+              FileUtil.copyContent(file, new File(workDir, StringUtil.trimEnd(path, ".new")));
+            }
+            if (remove) {
+              FileUtil.delete(new File(workDir, StringUtil.trimEnd(path, ".remove")));
+            }
+          }
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        return true;
       }
     });
-
-    for (File input : files) {
-      final String name = input.getName();
-
-      final boolean copy = name.endsWith(".java.new");
-      final String postfix = name.substring(0, name.length() - (copy ? ".new" : ".remove").length());
-      final int pathSep = postfix.indexOf("$");
-      final String baseName = pathSep == -1 ? postfix : postfix.substring(pathSep + 1);
-      final File path = new File(workDir, (pathSep == -1 ? "src" : postfix.substring(0, pathSep).replace('-', File.separatorChar)));
-      final File output = new File(path, baseName);
-
-      if (copy) {
-        FileUtil.copyContent(input, output);
-      }
-      else {
-        FileUtil.delete(output);
-      }
-    }
   }
 
-  public void doTest() throws Exception {
+  public BuildResult doTest() throws Exception {
     if (new File(workDir, ".idea").exists()) {
       getOrCreateJdk();
       loadProject(workDir.getAbsolutePath());
@@ -123,7 +129,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
       addModule();
     }
 
-    doTestBuild();
+    return doTestBuild();
   }
 
   protected JpsModule addModule() {
@@ -157,7 +163,11 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
 
       makeDump.close();
 
-      final String expected = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(baseDir.getAbsolutePath() + ".log")));
+      File logFile = new File(baseDir.getAbsolutePath() + ".log");
+      if (!logFile.exists()) {
+        logFile = new File(baseDir, "build.log");
+      }
+      final String expected = StringUtil.convertLineSeparators(FileUtil.loadFile(logFile));
       final String actual = javaBuilderLogger.myLog.toString();
 
       assertEquals(expected, actual);

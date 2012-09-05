@@ -72,10 +72,12 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
 
     myConnection = project.getMessageBus().connect(project);
     myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
+      @Override
       public void beforeFileTypesChanged(FileTypeEvent event) {
         beforeRootsChange(true);
       }
 
+      @Override
       public void fileTypesChanged(FileTypeEvent event) {
         rootsChanged(true);
       }

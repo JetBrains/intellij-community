@@ -33,6 +33,7 @@ public class SimpleTokenSetQuoteHandler implements QuoteHandler {
     myLiteralTokenSet = tokenSet;
   }
 
+  @Override
   public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();
 
@@ -45,6 +46,7 @@ public class SimpleTokenSetQuoteHandler implements QuoteHandler {
     return false;
   }
 
+  @Override
   public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
     if (myLiteralTokenSet.contains(iterator.getTokenType())){
       int start = iterator.getStart();
@@ -54,6 +56,7 @@ public class SimpleTokenSetQuoteHandler implements QuoteHandler {
     return false;
   }
 
+  @Override
   public boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset) {
     int start = iterator.getStart();
     try {
@@ -85,6 +88,7 @@ public class SimpleTokenSetQuoteHandler implements QuoteHandler {
     return false;
   }
 
+  @Override
   public boolean isInsideLiteral(HighlighterIterator iterator) {
     return myLiteralTokenSet.contains(iterator.getTokenType());
   }

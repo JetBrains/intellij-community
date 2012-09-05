@@ -135,6 +135,18 @@ public class InlineUtil {
           }
         }
       }
+    } else if (exprType instanceof PsiLambdaExpressionType) {
+      final PsiLambdaExpression expression = ((PsiLambdaExpressionType)exprType).getExpression();
+      if (expression.getParent() instanceof PsiReferenceExpression) {
+        PsiTypeCastExpression cast = (PsiTypeCastExpression)JavaPsiFacade.getElementFactory(expr.getProject()).createExpressionFromText("(t)a", null);
+        PsiTypeElement castTypeElement = cast.getCastType();
+        assert castTypeElement != null;
+        castTypeElement.replace(variable.getTypeElement());
+        final PsiExpression operand = cast.getOperand();
+        assert operand != null;
+        operand.replace(expr);
+        expr = (PsiTypeCastExpression)expr.replace(cast);
+      }
     }
 
     ChangeContextUtil.clearContextInfo(initializer);

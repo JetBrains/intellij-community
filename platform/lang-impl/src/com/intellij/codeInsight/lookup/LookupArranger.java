@@ -109,6 +109,7 @@ public abstract class LookupArranger {
   }
 
   public static class DefaultArranger extends LookupArranger {
+    @Override
     public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction) {
       LinkedHashSet<LookupElement> result = new LinkedHashSet<LookupElement>();
       result.addAll(getPrefixItems(true));

@@ -12,7 +12,7 @@ public abstract class JpsElementExtensionSerializerBase<E extends JpsElement> {
   protected final String myConfigFileName;
   protected String myComponentName;
 
-  protected JpsElementExtensionSerializerBase(@NotNull String componentName, @Nullable String configFileName) {
+  protected JpsElementExtensionSerializerBase(@Nullable String configFileName, @NotNull String componentName) {
     myComponentName = componentName;
     myConfigFileName = configFileName;
   }
@@ -27,7 +27,7 @@ public abstract class JpsElementExtensionSerializerBase<E extends JpsElement> {
     return myComponentName;
   }
 
-  public abstract void loadExtension(@NotNull E element, @NotNull Element componentTag);
+  public abstract void loadExtension(@NotNull E e, @NotNull Element componentTag);
 
-  public abstract void saveExtension(@NotNull E element, @NotNull Element componentTag);
+  public abstract void saveExtension(@NotNull E e, @NotNull Element componentTag);
 }

@@ -35,10 +35,12 @@ public class ConditionalInstructionImpl extends InstructionImpl implements Condi
     myResult = result;
   }
 
+  @Override
   public PsiElement getCondition() {
     return myCondition;
   }
 
+  @Override
   public boolean getResult() {
     return myResult;
   }

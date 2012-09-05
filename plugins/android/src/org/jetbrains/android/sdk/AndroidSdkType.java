@@ -21,10 +21,10 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ArrayUtil;
+import icons.AndroidIcons;
 import org.jdom.Element;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -180,7 +180,7 @@ public class AndroidSdkType extends SdkType implements JavaSdkType {
 
   @Override
   public Icon getIcon() {
-    return AndroidUtils.ANDROID_ICON;
+    return AndroidIcons.Android;
   }
 
   @Override

@@ -97,6 +97,7 @@ public final class TextEditorState implements FileEditorState {
     return LINE + COLUMN;
   }
 
+  @Override
   public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
     if (!(otherState instanceof TextEditorState)) return false;
     TextEditorState other = (TextEditorState)otherState;

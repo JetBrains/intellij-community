@@ -27,6 +27,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public class MethodDownHandler implements CodeInsightActionHandler {
+  @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     LookupManager.getInstance(project).hideActiveLookup();
 
@@ -49,6 +50,7 @@ public class MethodDownHandler implements CodeInsightActionHandler {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

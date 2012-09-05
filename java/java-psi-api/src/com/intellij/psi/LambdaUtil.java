@@ -129,6 +129,9 @@ public class LambdaUtil {
   public static boolean isAcceptable(PsiLambdaExpression lambdaExpression, final PsiType leftType) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(leftType);
     final PsiClass psiClass = resolveResult.getElement();
+    if (psiClass instanceof PsiAnonymousClass) {
+      return isAcceptable(lambdaExpression, ((PsiAnonymousClass)psiClass).getBaseClassType());
+    }
     final MethodSignature methodSignature = getFunction(psiClass);
     if (methodSignature == null) return false;
     final PsiParameter[] lambdaParameters = lambdaExpression.getParameterList().getParameters();
@@ -250,7 +253,7 @@ public class LambdaUtil {
     return null;
   }
 
-  public static int getLambdaIdx(PsiExpressionList expressionList, final PsiLambdaExpression element) {
+  public static int getLambdaIdx(PsiExpressionList expressionList, final PsiElement element) {
     PsiExpression[] expressions = expressionList.getExpressions();
     for (int i = 0; i < expressions.length; i++) {
       PsiExpression expression = expressions[i];
@@ -292,12 +295,34 @@ public class LambdaUtil {
     if (expression instanceof PsiCallExpression && ((PsiCallExpression)expression).getTypeArguments().length > 0) return true;
     if (expression instanceof PsiNewExpression) {
       final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)expression).getClassOrAnonymousClassReference();
-      if (classReference != null && classReference.getTypeParameters().length > 0) return true;
+      if (classReference != null) {
+        final PsiReferenceParameterList parameterList = classReference.getParameterList();
+        if (parameterList != null) {
+          final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
+          if (typeParameterElements.length > 0) {
+            if (!(typeParameterElements[0].getType() instanceof PsiDiamondType)){
+              return true;
+            }
+          }
+        }
+      }
     }
     final PsiParameter[] lambdaParams = lambdaExpression.getParameterList().getParameters(); 
     if (lambdaParams.length != methodParameters.length) return false;
     final boolean [] independent = new boolean[]{true};
     expression.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitConditionalExpression(PsiConditionalExpression expression) {
+        final PsiExpression thenExpression = expression.getThenExpression();
+        if (thenExpression != null) {
+          thenExpression.accept(this);
+        }
+        final PsiExpression elseExpression = expression.getElseExpression();
+        if (elseExpression != null) {
+          elseExpression.accept(this);
+        }
+      }
+
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
@@ -319,12 +344,22 @@ public class LambdaUtil {
   }
 
   @Nullable
-  public static PsiType getFunctionalInterfaceType(PsiLambdaExpression expression, final boolean tryToSubstitute) {
+  public static PsiType getFunctionalInterfaceType(PsiElement expression, final boolean tryToSubstitute) {
     PsiElement parent = expression.getParent();
-    while (parent instanceof PsiParenthesizedExpression) {
+    PsiElement element = expression;
+    while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiConditionalExpression) {
+      if (parent instanceof PsiConditionalExpression && 
+          ((PsiConditionalExpression)parent).getThenExpression() != element &&
+          ((PsiConditionalExpression)parent).getElseExpression() != element) break;
+      element = parent;
       parent = parent.getParent();
     }
-    if (parent instanceof PsiTypeCastExpression) {
+    if (parent instanceof PsiArrayInitializerExpression) {
+      final PsiType psiType = ((PsiArrayInitializerExpression)parent).getType();
+      if (psiType instanceof PsiArrayType) {
+        return ((PsiArrayType)psiType).getComponentType();
+      }
+    } else if (parent instanceof PsiTypeCastExpression) {
       return ((PsiTypeCastExpression)parent).getType();
     }
     else if (parent instanceof PsiVariable) {

@@ -324,8 +324,6 @@ public class CreateSnapShotAction extends AnAction {
     private final PsiDirectory myDirectory;
     @NonNls private static final String SWING_PACKAGE = "javax.swing.";
 
-    private final Icon myUnknownComponentIcon = UIDesignerIcons.Unknown;
-
     private MyDialog(Project project, final SnapShotClient client, final PsiDirectory dir) {
       super(project, true);
       myProject = project;
@@ -383,7 +381,7 @@ public class CreateSnapShotAction extends AnAction {
               setIcon(item.getSmallIcon());
             }
             else {
-              setIcon(myUnknownComponentIcon);
+              setIcon(UIDesignerIcons.Unknown);
             }
           }
         }

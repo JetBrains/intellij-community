@@ -88,7 +88,7 @@ public class JavaEditorFileSwapper extends EditorFileSwapper {
     if (!(clsClass instanceof ClsClassImpl)) return null;
 
     PsiClass sourceClass = ((ClsClassImpl)clsClass).getSourceMirrorClass();
-    if (sourceClass == null || sourceClass == clsClass) return null;
+    if (sourceClass == null) return null;
 
     VirtualFile result = sourceClass.getContainingFile().getVirtualFile();
     assert result != null;

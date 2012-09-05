@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
  */
 public class SmartCodeCompletionAction extends BaseCodeCompletionAction{
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_SMARTTYPE_GENERAL);
     invokeCompletion(e, CompletionType.SMART, 1);

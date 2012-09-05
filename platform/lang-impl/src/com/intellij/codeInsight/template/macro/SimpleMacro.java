@@ -30,25 +30,30 @@ public abstract class SimpleMacro extends Macro {
     myName = name;
   }
 
+  @Override
   @NonNls
   public String getName() {
     return myName;
   }
 
+  @Override
   public String getPresentableName() {
     return myName + "()";
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getDefaultValue() {
     return "11.11.1111";
   }
 
+  @Override
   public Result calculateResult(@NotNull final Expression[] params, final ExpressionContext context) {
     return new TextResult(evaluate());
   }
 
+  @Override
   public Result calculateQuickResult(@NotNull final Expression[] params, final ExpressionContext context) {
     return calculateResult(params, context);
   }

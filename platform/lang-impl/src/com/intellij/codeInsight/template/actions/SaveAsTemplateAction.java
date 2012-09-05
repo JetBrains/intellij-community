@@ -51,6 +51,7 @@ public class SaveAsTemplateAction extends AnAction {
 
   private static final Logger LOG = Logger.getInstance("#" + SaveAsTemplateAction.class.getName());
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
@@ -72,6 +73,7 @@ public class SaveAsTemplateAction extends AnAction {
     if (startOffset >= selection.getEndOffset()) startOffset = selection.getStartOffset();
 
     final PsiElement[] psiElements = PsiTreeUtil.collectElements(file, new PsiElementFilter() {
+      @Override
       public boolean isAccepted(PsiElement element) {
         return selection.contains(element.getTextRange()) && element.getReferences().length > 0;
       }
@@ -82,8 +84,10 @@ public class SaveAsTemplateAction extends AnAction {
                                                                                    selection.getEndOffset()));
     final int offsetDelta = startOffset;
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             Map<RangeMarker, String> rangeToText = new HashMap<RangeMarker, String>();
 
@@ -143,6 +147,7 @@ public class SaveAsTemplateAction extends AnAction {
     });
   }
 
+  @Override
   public void update(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);

@@ -36,38 +36,47 @@ import java.util.List;
 public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   private WolfTheProblemSolver myDelegate;
 
+  @Override
   public boolean isProblemFile(VirtualFile virtualFile) {
     return myDelegate != null && myDelegate.isProblemFile(virtualFile);
   }
 
+  @Override
   public void weHaveGotProblems(@NotNull final VirtualFile virtualFile, @NotNull final List<Problem> problems) {
     if (myDelegate != null) myDelegate.weHaveGotProblems(virtualFile, problems);
   }
 
+  @Override
   public boolean hasProblemFilesBeneath(@NotNull final Condition<VirtualFile> condition) {
     return false;
   }
 
+  @Override
   public boolean hasSyntaxErrors(final VirtualFile file) {
     return myDelegate != null && myDelegate.hasSyntaxErrors(file);
   }
 
+  @Override
   public boolean hasProblemFilesBeneath(@NotNull Module scope) {
     return false;
   }
 
+  @Override
   public void addProblemListener(@NotNull ProblemListener listener) {
     if (myDelegate != null) myDelegate.addProblemListener(listener);
   }
 
+  @Override
   public void addProblemListener(@NotNull ProblemListener listener, @NotNull Disposable parentDisposable) {
     if (myDelegate != null) myDelegate.addProblemListener(listener, parentDisposable);
   }
 
+  @Override
   public void removeProblemListener(@NotNull ProblemListener listener) {
     if (myDelegate != null) myDelegate.removeProblemListener(listener);
   }
 
+  @Override
   public void registerFileHighlightFilter(@NotNull Condition<VirtualFile> filter, @NotNull Disposable parentDisposable) {
   }
 
@@ -76,37 +85,45 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
     if (myDelegate != null) myDelegate.queue(suspiciousFile);
   }
 
+  @Override
   public void projectOpened() {
     if (myDelegate != null) myDelegate.projectOpened();
   }
 
+  @Override
   public void projectClosed() {
     if (myDelegate != null) myDelegate.projectClosed();
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "mockwolf";
   }
 
+  @Override
   public void initComponent() {
 
   }
 
+  @Override
   public void disposeComponent() {
 
   }
 
+  @Override
   public void clearProblems(@NotNull VirtualFile virtualFile) {
     if (myDelegate != null) myDelegate.clearProblems(virtualFile);
   }
 
+  @Override
   public Problem convertToProblem(final VirtualFile virtualFile, final HighlightSeverity severity, final TextRange textRange,
                                   final String messageText) {
     return myDelegate == null ? null : myDelegate.convertToProblem(virtualFile, severity, textRange, messageText);
   }
 
+  @Override
   public Problem convertToProblem(VirtualFile virtualFile, int line, int column, String[] message) {
     return myDelegate == null ? null : myDelegate.convertToProblem(virtualFile, line, column, message);
   }
@@ -115,6 +132,7 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
     myDelegate = delegate;
   }
 
+  @Override
   public void reportProblems(final VirtualFile file, Collection<Problem> problems) {
     if (myDelegate != null) myDelegate.reportProblems(file,problems);
   }

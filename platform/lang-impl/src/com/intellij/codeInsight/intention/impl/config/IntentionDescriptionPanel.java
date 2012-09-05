@@ -75,6 +75,7 @@ public class IntentionDescriptionPanel {
       showUsages(myAfterPanel, myAfterSeparator, myAfterUsagePanels, actionMetaData.getExampleUsagesAfter());
 
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           myPanel.revalidate();
         }
@@ -97,11 +98,13 @@ public class IntentionDescriptionPanel {
       final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
       HyperlinkLabel label = new HyperlinkLabel(CodeInsightBundle.message("powered.by.plugin", pluginDescriptor.getName()));
       label.addHyperlinkListener(new HyperlinkListener() {
+        @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
           final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
           final PluginManagerConfigurable pluginConfigurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
           final Project project = ProjectManager.getInstance().getDefaultProject();
           util.editConfigurable(project, pluginConfigurable, new Runnable(){
+            @Override
             public void run() {
               pluginConfigurable.select(pluginDescriptor);
             }
@@ -129,6 +132,7 @@ public class IntentionDescriptionPanel {
       showUsages(myAfterPanel, myAfterSeparator, myAfterUsagePanels, new ResourceTextDescriptor[]{new ResourceTextDescriptor(afterURL)});
 
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           myPanel.revalidate();
         }

@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.platform.ProjectBaseDirectory;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -46,16 +47,13 @@ public class RecentDirectoryProjectsManager extends RecentProjectsManagerBase {
   }
 
   @Nullable
-  protected String getProjectPath(final Project project) {
+  protected String getProjectPath(@NotNull Project project) {
     final ProjectBaseDirectory baseDir = ProjectBaseDirectory.getInstance(project);
-    VirtualFile baseDirVFile = baseDir.getBaseDir() != null ? baseDir.getBaseDir() : project.getBaseDir();   
-    if (baseDirVFile != null) {
-      return FileUtil.toSystemDependentName(baseDirVFile.getPath());
-    }
-    return null;
+    final VirtualFile baseDirVFile = baseDir.getBaseDir() != null ? baseDir.getBaseDir() : project.getBaseDir();
+    return baseDirVFile != null ? FileUtil.toSystemDependentName(baseDirVFile.getPath()) : null;
   }
 
-  protected void doOpenProject(final String projectPath, final Project projectToClose, final boolean forceOpenInNewFrame) {
+  protected void doOpenProject(@NotNull String projectPath, Project projectToClose, boolean forceOpenInNewFrame) {
     final VirtualFile projectDir = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(projectPath));
     if (projectDir != null) {
       PlatformProjectOpenProcessor.doOpenProject(projectDir, projectToClose, forceOpenInNewFrame, -1, null, true);

@@ -30,10 +30,12 @@ import com.intellij.psi.util.PsiUtilBase;
 
 public class OverrideMethodsAction extends BaseCodeInsightAction {
 
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return new OverrideMethodsHandler();
   }
 
+  @Override
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
     Language language = PsiUtilBase.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
     final LanguageCodeInsightActionHandler codeInsightActionHandler = CodeInsightActions.OVERRIDE_METHOD.forLanguage(language);
@@ -43,6 +45,7 @@ public class OverrideMethodsAction extends BaseCodeInsightAction {
     return false;
   }
 
+  @Override
   public void update(final AnActionEvent event) {
     if (CodeInsightActions.OVERRIDE_METHOD.hasAnyExtensions()) {
       event.getPresentation().setVisible(true);

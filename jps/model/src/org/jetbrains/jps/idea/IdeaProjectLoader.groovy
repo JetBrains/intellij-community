@@ -1,7 +1,9 @@
 package org.jetbrains.jps.idea
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.jps.*
+import org.jetbrains.jps.AnnotationProcessingProfile
+import org.jetbrains.jps.CompilerConfiguration
+import org.jetbrains.jps.JpsPathUtil
+import org.jetbrains.jps.Project
 /**
  * @author max
  */
@@ -92,45 +94,17 @@ public class IdeaProjectLoader {
 
     def root = xmlParser.parse(iprFile)
     loadCompilerConfiguration(root)
-    loadProjectFileEncodings(root)
     loadWorkspaceConfiguration(new File(iprFile.parentFile, iprFile.name[0..-4]+"iws"))
-    loadUiDesignerConfiguration(root)
-    loadRunConfigurations(getComponent(root, "ProjectRunConfigurationManager"))
   }
 
   def loadFromDirectoryBased(File dir) {
     projectMacroExpander = new ProjectMacroExpander(pathVariables, dir.parentFile.absolutePath)
-
-    def encodingsXml = new File(dir, "encodings.xml")
-    if (encodingsXml.exists()) {
-      loadProjectFileEncodings(xmlParser.parse(encodingsXml))
-    }
 
     def compilerXml = new File(dir, "compiler.xml")
     if (compilerXml.exists()) {
       loadCompilerConfiguration(xmlParser.parse(compilerXml))
     }
     loadWorkspaceConfiguration(new File(dir, "workspace.xml"))
-
-    def uiDesignerXml = new File(dir, "uiDesigner.xml")
-    if (uiDesignerXml.exists()) {
-      loadUiDesignerConfiguration(xmlParser.parse(uiDesignerXml))
-    }
-
-    def runConfFolder = new File(dir, "runConfigurations")
-    if (runConfFolder.isDirectory()) {
-      runConfFolder.eachFile {File file ->
-        if (isXmlFile(file)) {
-          def runConfManager = xmlParser.parse(file);
-          loadRunConfigurations(runConfManager);
-        }
-      }
-    }
-  }
-
-
-  boolean isXmlFile(File file) {
-    return file.isFile() && StringUtil.endsWithIgnoreCase(file.name, ".xml")
   }
 
   private def loadWorkspaceConfiguration(File workspaceFile) {
@@ -233,11 +207,6 @@ public class IdeaProjectLoader {
     }
   }
 
-  private def loadUiDesignerConfiguration(Node root) {
-    def options = loadOptions(getComponent(root, "uidesigner-configuration"))
-    project.uiDesignerConfiguration.copyFormsRuntimeToOutput = parseBoolean(options["COPY_FORMS_RUNTIME_TO_OUTPUT"], true)
-  }
-
   private File getFileByUrl(final String url) {
     return new File(FileUtil.toCanonicalPath(projectMacroExpander.expandMacros(JpsPathUtil.urlToPath(url))))
   }
@@ -266,35 +235,6 @@ public class IdeaProjectLoader {
       return pattern.substring(1)
     }
     return pattern
-  }
-
-  private def loadProjectFileEncodings(Node root) {
-    def componentTag = getComponent(root, "Encoding");
-    if (componentTag == null) return;
-    componentTag.file?.each {Node fileNode ->
-      String url = fileNode."@url";
-      String charset = fileNode."@charset";
-
-      if (!StringUtil.isEmptyOrSpaces(charset)) {
-        if ("PROJECT".equals(url)) {
-          project.projectCharset = charset;
-        }
-        else {
-          def path = projectMacroExpander.expandMacros(JpsPathUtil.urlToPath(url));
-          project.filePathToCharset[FileUtil.toCanonicalPath(path)] = charset;
-        }
-      }
-    }
-  }
-
-  def loadRunConfigurations(Node runConfManager) {
-    if (runConfManager == null) return;
-
-    runConfManager.configuration.each {Node confTag ->
-      def name = confTag.'@name';
-      RunConfiguration runConf = new RunConfiguration(project, projectMacroExpander, confTag);
-      project.runConfigurations[name] = runConf;
-    }
   }
 
   Node getComponent(Node root, String name) {

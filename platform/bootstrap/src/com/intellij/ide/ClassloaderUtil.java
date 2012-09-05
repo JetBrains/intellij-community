@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -92,9 +91,6 @@ public class ClassloaderUtil {
       addParentClasspath(classpathElements);
       addIDEALibraries(classpathElements);
       addAdditionalClassPath(classpathElements);
-      if (SystemInfo.isMac) {
-        addDeployJar(classpathElements);
-      }
     }
     catch (IllegalArgumentException e) {
       if (Main.isHeadless()) {
@@ -150,17 +146,6 @@ public class ClassloaderUtil {
       }
     }
     return newClassLoader;
-  }
-
-  private static void addDeployJar(List<URL> classpathElements) {
-      File deployJar = new File("/System/Library/Java/Support/Deploy.bundle/Contents/Home/lib/deploy.jar"); // todo[zajac]
-    if (deployJar.exists()) {
-      try {
-        classpathElements.add(deployJar.toURI().toURL());
-      }
-      catch (MalformedURLException ignore) {
-      }
-    }
   }
 
   public static void filterClassPath(final List<URL> classpathElements) {

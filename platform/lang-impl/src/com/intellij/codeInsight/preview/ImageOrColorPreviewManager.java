@@ -71,9 +71,11 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
     Disposer.register(this, new UiNotifyConnector(editor.getComponent(), myQueue));
   }
 
+  @Override
   public void keyTyped(final KeyEvent e) {
   }
 
+  @Override
   public void keyPressed(final KeyEvent e) {
     if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
       if (myEditor != null) {
@@ -89,6 +91,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
     }
   }
 
+  @Override
   public void keyReleased(final KeyEvent e) {
   }
 
@@ -147,6 +150,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
     }
   }
 
+  @Override
   public void dispose() {
     if (myEditor != null) {
       myEditor.removeEditorMouseMotionListener(this);
@@ -164,6 +168,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
     myHint = null;
   }
 
+  @Override
   public void mouseMoved(EditorMouseEvent e) {
     myQueue.cancelAllUpdates();
     if (myHint == null && e.getMouseEvent().getModifiers() == KeyEvent.SHIFT_MASK) {
@@ -174,6 +179,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
     }
   }
 
+  @Override
   public void mouseDragged(EditorMouseEvent e) {
     // nothing
   }
@@ -208,6 +214,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
       myPoint = point;
     }
 
+    @Override
     public void run() {
       final PsiElement element = myManager.getPsiElementAt(myPoint);
       if (element != null && element.isValid()) {
@@ -232,6 +239,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
       }
     }
 
+    @Override
     public boolean canEat(final Update update) {
       return true;
     }

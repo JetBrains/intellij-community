@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 public class EnterBetweenBracesHandler extends EnterHandlerDelegateAdapter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesHandler");
 
+  @Override
   public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffsetRef, @NotNull final Ref<Integer> caretAdvance,
                                 @NotNull final DataContext dataContext, final EditorActionHandler originalHandler) {
     Document document = editor.getDocument();

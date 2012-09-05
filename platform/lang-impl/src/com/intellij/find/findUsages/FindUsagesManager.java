@@ -74,6 +74,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class FindUsagesManager implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.findParameterUsages.FindUsagesManager");
@@ -101,10 +102,8 @@ public class FindUsagesManager implements JDOMExternalizable {
 
       final SearchData that = (SearchData)o;
 
-      if (!Arrays.equals(myElements, that.myElements)) return false;
-      if (myOptions != null ? !myOptions.equals(that.myOptions) : that.myOptions != null) return false;
-
-      return true;
+      return Arrays.equals(myElements, that.myElements)
+             && (myOptions != null ? myOptions.equals(that.myOptions) : that.myOptions == null);
     }
 
     public int hashCode() {
@@ -491,7 +490,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     final FileEditorLocation currentLocation = fileEditor.getCurrentLocation();
 
     final UsageSearcher usageSearcher = createUsageSearcher(descriptor, handler, findUsagesOptions, scopeFile);
-    final boolean[] usagesWereFound = {false};
+    AtomicBoolean usagesWereFound = new AtomicBoolean();
 
     Usage fUsage = findSiblingUsage(usageSearcher, direction, currentLocation, usagesWereFound, fileEditor);
 
@@ -499,7 +498,7 @@ public class FindUsagesManager implements JDOMExternalizable {
       fUsage.navigate(true);
       fUsage.selectInEditor();
     }
-    else if (!usagesWereFound[0]) {
+    else if (!usagesWereFound.get()) {
       String message = getNoUsagesFoundMessage(descriptor.getPrimaryElements()[0]) + " in " + scopeFile.getName();
       showHintOrStatusBarMessage(message, fileEditor);
     }
@@ -554,9 +553,9 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   private static Usage findSiblingUsage(@NotNull final UsageSearcher usageSearcher,
-                                        FileSearchScope dir,
+                                        @NotNull FileSearchScope dir,
                                         final FileEditorLocation currentLocation,
-                                        @NotNull final boolean[] usagesWereFound,
+                                        @NotNull final AtomicBoolean usagesWereFound,
                                         @NotNull FileEditor fileEditor) {
     if (fileEditor.getUserData(KEY_START_USAGE_AGAIN) != null) {
       dir = dir == FileSearchScope.AFTER_CARET ? FileSearchScope.FROM_START : FileSearchScope.FROM_END;
@@ -564,39 +563,36 @@ public class FindUsagesManager implements JDOMExternalizable {
 
     final FileSearchScope direction = dir;
 
-    final Usage[] foundUsage = {null};
+    final AtomicReference<Usage> foundUsage = new AtomicReference<Usage>();
     usageSearcher.generate(new Processor<Usage>() {
       @Override
       public boolean process(Usage usage) {
-
-        usagesWereFound[0] = true;
-
+        usagesWereFound.set(true);
         if (direction == FileSearchScope.FROM_START) {
-          foundUsage[0] = usage;
+          foundUsage.compareAndSet(null, usage);
           return false;
         }
         if (direction == FileSearchScope.FROM_END) {
-          foundUsage[0] = usage;
+          foundUsage.set(usage);
         }
         else if (direction == FileSearchScope.AFTER_CARET) {
           if (Comparing.compare(usage.getLocation(), currentLocation) > 0) {
-            foundUsage[0] = usage;
+            foundUsage.set(usage);
             return false;
           }
         }
         else if (direction == FileSearchScope.BEFORE_CARET) {
-          if (Comparing.compare(usage.getLocation(), currentLocation) < 0) {
-            if (foundUsage[0] != null) {
-              if (foundUsage[0].getLocation().compareTo(usage.getLocation()) < 0) {
-                foundUsage[0] = usage;
-              }
+          if (Comparing.compare(usage.getLocation(), currentLocation) >= 0) {
+            return false;
+          }
+          while (true) {
+            Usage found = foundUsage.get();
+            if (found == null) {
+              if (foundUsage.compareAndSet(null, usage)) break;
             }
             else {
-              foundUsage[0] = usage;
+              if (Comparing.compare(found.getLocation(), usage.getLocation()) < 0 && foundUsage.compareAndSet(found, usage)) break;
             }
-          }
-          else {
-            return false;
           }
         }
 
@@ -606,7 +602,7 @@ public class FindUsagesManager implements JDOMExternalizable {
 
     fileEditor.putUserData(KEY_START_USAGE_AGAIN, null);
 
-    return foundUsage[0];
+    return foundUsage.get();
   }
 
   private static void convertToUsageTarget(@NotNull List<PsiElement2UsageTargetAdapter> targets, @NotNull PsiElement elementToSearch) {

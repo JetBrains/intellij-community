@@ -233,6 +233,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
 
   public FileEditorLocation getCurrentLocation() {
     return new FileEditorLocation() {
+      @NotNull
       public FileEditor getEditor() {
         return PerspectiveFileEditor.this;
       }

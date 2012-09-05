@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -713,9 +714,17 @@ public class VfsUtil extends VfsUtilCore {
     return index < 0 ? null : urlOrPath.substring(index+1);
   }
 
-  public static void markDirtyAndRefresh(boolean async, boolean recursive, VirtualFile... files) {
-    List<VirtualFile> list = ContainerUtil.newArrayList(files);
+  public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean loadChildren, VirtualFile... files) {
+    List<VirtualFile> list = ContainerUtil.filter(Condition.NOT_NULL, files);
+    if (list.isEmpty()) {
+      return;
+    }
+
     for (VirtualFile file : list) {
+      if (loadChildren) {
+        file.getChildren();
+      }
+
       if (file instanceof NewVirtualFile) {
         if (recursive) {
           ((NewVirtualFile)file).markDirtyRecursively();

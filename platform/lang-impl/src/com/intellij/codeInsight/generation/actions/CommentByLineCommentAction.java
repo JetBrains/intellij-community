@@ -32,10 +32,12 @@ public class CommentByLineCommentAction extends BaseCodeInsightAction implements
     setEnabledInModalContext(true);
   }
 
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return new CommentByLineCommentHandler();
   }
 
+  @Override
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
     final FileType fileType = file.getFileType();
     if (fileType instanceof AbstractFileType) {

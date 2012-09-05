@@ -53,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler");
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     if (editor instanceof EditorWindow) {
@@ -87,6 +88,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
@@ -146,6 +148,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
 
     Pair<PsiFile, Editor> pair = chooseBetweenHostAndInjected(hostFile, hostEditor, new PairProcessor<PsiFile, Editor>() {
+      @Override
       public boolean process(PsiFile psiFile, Editor editor) {
         return availableFor(psiFile, editor, action);
       }
@@ -155,6 +158,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     final PsiFile fileToApply = pair.first;
 
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         try {
           action.invoke(project, editorToApply, fileToApply);
@@ -169,6 +173,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     if (action.startInWriteAction()) {
       final Runnable _runnable = runnable;
       runnable = new Runnable() {
+        @Override
         public void run() {
           ApplicationManager.getApplication().runWriteAction(_runnable);
         }

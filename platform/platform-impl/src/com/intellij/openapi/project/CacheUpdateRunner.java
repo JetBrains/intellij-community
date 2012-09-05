@@ -157,24 +157,7 @@ class CacheUpdateRunner {
           Runnable process = new MyRunnable(innerIndicator, queue, ref, progressUpdater, processInReadAction, application);
           futures[i] = ApplicationManager.getApplication().executeOnPooledThread(getProcessWrapper(process));
         }
-        try {
-          for (Future<?> future : futures) {
-            future.get();
-          }
-
-          boolean allFinished = true;
-          for (Ref ref : finishedRefs) {
-            if (!(Boolean)ref.get()) {
-              allFinished = false;
-              break;
-            }
-          }
-          isFinished.set(allFinished);
-          
-        }
-        catch (Throwable throwable) {
-          LOG.error(throwable);
-        }
+        isFinished.set(waitForAll(finishedRefs, futures));
       }
     }
     finally {
@@ -182,6 +165,28 @@ class CacheUpdateRunner {
     }
 
     return isFinished.get();
+  }
+
+  private static boolean waitForAll(Ref[] finishedRefs, Future<?>[] futures) {
+    try {
+      for (Future<?> future : futures) {
+        future.get();
+      }
+
+      boolean allFinished = true;
+      for (Ref ref : finishedRefs) {
+        if (!(Boolean)ref.get()) {
+          allFinished = false;
+          break;
+        }
+      }
+      return allFinished;
+
+    }
+    catch (Throwable throwable) {
+      LOG.error(throwable);
+    }
+    return false;
   }
 
   private class MyRunnable implements Runnable {
@@ -210,7 +215,7 @@ class CacheUpdateRunner {
         if (myProject.isDisposed()) return;
         if (myInnerIndicator.isCanceled()) return;
 
-        final FileContent fileContent = myQueue.take();
+        final FileContent fileContent = myQueue.take(myInnerIndicator);
         if (fileContent == null) {
           myFinished.set(Boolean.TRUE);
           return;

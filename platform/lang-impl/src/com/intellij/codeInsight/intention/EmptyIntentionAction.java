@@ -36,23 +36,28 @@ public final class EmptyIntentionAction implements IntentionAction, LowPriorityA
     myName = name;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return InspectionsBundle.message("inspection.options.action.text", myName);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return myName;
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return true; //edit inspection settings is always enabled
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

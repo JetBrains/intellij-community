@@ -43,12 +43,15 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
     setInjectedContext(true);
   }
 
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return new CodeInsightActionHandler() {
+      @Override
       public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
         DocumentationManager.getInstance(project).showJavaDocInfo(editor, file, LookupManager.getActiveLookup(editor) == null);
       }
 
+      @Override
       public boolean startInWriteAction() {
         return false;
       }
@@ -56,10 +59,12 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
   }
 
 
+  @Override
   protected boolean isValidForLookup() {
     return true;
   }
 
+  @Override
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
@@ -111,6 +116,7 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
     }
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -130,6 +136,7 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
       else if (project != null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickjavadoc.ctrln");
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          @Override
           public void run() {
             DocumentationManager.getInstance(project).showJavaDocInfo(element, null);
           }

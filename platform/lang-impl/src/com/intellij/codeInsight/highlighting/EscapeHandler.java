@@ -35,6 +35,7 @@ public class EscapeHandler extends EditorActionHandler {
     myOriginalHandler = originalHandler;
   }
 
+  @Override
   public void execute(Editor editor, DataContext dataContext){
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
@@ -55,6 +56,7 @@ public class EscapeHandler extends EditorActionHandler {
     myOriginalHandler.execute(editor, dataContext);
   }
 
+  @Override
   public boolean isEnabled(Editor editor, DataContext dataContext) {
     if (editor.hasHeaderComponent()) return true;
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);

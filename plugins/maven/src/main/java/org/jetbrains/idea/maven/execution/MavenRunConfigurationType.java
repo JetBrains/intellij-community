@@ -46,7 +46,6 @@ import java.util.List;
  */
 public class MavenRunConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
-  private static final Icon ICON = MavenIcons.Phase;
   private static final int MAX_NAME_LENGTH = 40;
 
   public static MavenRunConfigurationType getInstance() {
@@ -107,7 +106,7 @@ public class MavenRunConfigurationType implements ConfigurationType {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return MavenIcons.Phase;
   }
 
   public ConfigurationFactory[] getConfigurationFactories() {

@@ -42,4 +42,9 @@ public class JavaSpellcheckingTest extends SpellcheckerInspectionTestCase {
   public void testJapaneese() throws Throwable {
     doTest(getTestName(false) + ".java", getInspectionTools());
   }
+
+  public void testSuppression() throws Throwable {
+    myFixture.addFileToProject("java/lang/SuppressWarnings.java", "package java.lang; public @interface SuppressWarnings { public String[] value(); }");
+    doTest(getTestName(false) + ".java", getInspectionTools());
+  }
 }

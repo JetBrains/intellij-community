@@ -49,10 +49,10 @@ public final class ProjectDescriptor {
     this.timestamps = timestamps;
     this.dataManager = dataManager;
     myLoggingManager = loggingManager;
-    rootsIndex = new ModuleRootsIndex(jpsProject, dataManager);
+    rootsIndex = new ModuleRootsIndex(jpsModel, dataManager);
     myArtifactRootsIndex = new ArtifactRootsIndex(jpsModel, project, dataManager, rootsIndex);
     myProjectJavaSdks = new HashSet<JpsSdk<?>>();
-    myEncodingConfiguration = new CompilerEncodingConfiguration(project.getFilePathToCharset(), project.getProjectCharset(), rootsIndex);
+    myEncodingConfiguration = new CompilerEncodingConfiguration(jpsModel, rootsIndex);
     for (JpsModule module : jpsProject.getModules()) {
       final JpsSdk<?> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
       if (sdk != null && !myProjectJavaSdks.contains(sdk) && sdk.getVersionString() != null && sdk.getHomePath() != null) {

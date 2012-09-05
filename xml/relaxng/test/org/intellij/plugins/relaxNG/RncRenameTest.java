@@ -30,9 +30,8 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import java.io.File;
 
 /**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 25.07.2007
+ * @author sweinreuter
+ * @since 25.07.2007
  */
 public class RncRenameTest extends HighlightingTestBase {
 
@@ -44,15 +43,15 @@ public class RncRenameTest extends HighlightingTestBase {
     return "rename/rnc";
   }
 
-  public void testRenameDefintion1() throws Throwable {
+  public void testRenameDefinition1() throws Throwable {
     doTestRename("rename-definition-1", "bar");
   }
 
-  public void testRenameDefintion2() throws Throwable {
+  public void testRenameDefinition2() throws Throwable {
     doTestRename("rename-definition-2", "element");
   }
 
-  public void testRenameDefintion3() throws Throwable {
+  public void testRenameDefinition3() throws Throwable {
     doTestRename("rename-definition-3", "bar");
   }
 

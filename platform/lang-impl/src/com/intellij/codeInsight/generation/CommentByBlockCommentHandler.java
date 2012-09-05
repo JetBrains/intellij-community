@@ -58,6 +58,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
   private Document myDocument;
   private CommenterDataHolder mySelfManagedCommenterData;
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     myProject = project;
     myEditor = editor;
@@ -386,6 +387,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     return comment;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

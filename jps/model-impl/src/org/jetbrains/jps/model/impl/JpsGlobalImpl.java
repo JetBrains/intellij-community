@@ -18,6 +18,7 @@ public class JpsGlobalImpl extends JpsRootElementBase<JpsGlobalImpl> implements 
   public JpsGlobalImpl(JpsModel model, JpsEventDispatcher eventDispatcher) {
     super(model, eventDispatcher);
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
+    myContainer.setChild(JpsFileTypesConfigurationImpl.ROLE, new JpsFileTypesConfigurationImpl());
   }
 
   public JpsGlobalImpl(JpsGlobalImpl original, JpsModel model, JpsEventDispatcher eventDispatcher) {
@@ -52,6 +53,12 @@ public class JpsGlobalImpl extends JpsRootElementBase<JpsGlobalImpl> implements 
   @Override
   public JpsLibraryCollection getLibraryCollection() {
     return myLibraryCollection;
+  }
+
+  @NotNull
+  @Override
+  public JpsFileTypesConfiguration getFileTypesConfiguration() {
+    return myContainer.getChild(JpsFileTypesConfigurationImpl.ROLE);
   }
 
   @NotNull

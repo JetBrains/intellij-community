@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.fileChooser.FileElement;
@@ -55,7 +56,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
               if (prefix.length() > 0) {
                 append(" (" + prefix + ")", new SimpleTextAttributes(Font.PLAIN, Color.GRAY));
               }
-              setIcon(updateIcon(contentEntry, file, getIcon(), expanded));
+              setIcon(updateIcon(contentEntry, file, getIcon()));
             }
           }
         }
@@ -72,11 +73,11 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
     return "";
   }
 
-  protected Icon updateIcon(final ContentEntry entry, final VirtualFile file, Icon originalIcon, final boolean expanded) {
+  protected Icon updateIcon(final ContentEntry entry, final VirtualFile file, Icon originalIcon) {
     for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
       final VirtualFile excludePath = excludeFolder.getFile();
       if (excludePath != null && VfsUtilCore.isAncestor(excludePath, file, false)) {
-        return IconSet.getExcludeIcon();
+        return AllIcons.Modules.ExcludeRoot;
       }
     }
 

@@ -11,7 +11,6 @@ import java.util.Collections;
  * @author Dmitry Avdeev
  */
 public abstract class TaskManagerTestCase extends LightCodeInsightFixtureTestCase {
-
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected TaskManagerTestCase() {
     IdeaTestCase.initPlatformPrefix();
@@ -28,8 +27,13 @@ public abstract class TaskManagerTestCase extends LightCodeInsightFixtureTestCas
 
   @Override
   protected void tearDown() throws Exception {
-    myManager.setRepositories(Collections.<TaskRepository>emptyList());
-    removeAllTasks();
+    try {
+      myManager.setRepositories(Collections.<TaskRepository>emptyList());
+      removeAllTasks();
+    }
+    finally {
+      myManager = null;
+    }
     super.tearDown();
   }
 

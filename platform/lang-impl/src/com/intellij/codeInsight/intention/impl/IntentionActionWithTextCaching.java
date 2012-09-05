@@ -97,6 +97,7 @@ class IntentionActionWithTextCaching implements Comparable<IntentionActionWithTe
     return getText();
   }
 
+  @Override
   public int compareTo(final IntentionActionWithTextCaching other) {
     if (myAction instanceof Comparable) {
       return ((Comparable)myAction).compareTo(other.getAction());

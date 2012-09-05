@@ -110,10 +110,12 @@ public class BraceHighlightingHandler {
     if (project == null) return;
     final int offset = editor.getCaretModel().getOffset();
     JobLauncher.getInstance().submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
+      @Override
       public void run() {
         final PsiFile injected;
         try {
           injected = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+            @Override
             public PsiFile compute() {
               if (isReallyDisposed(editor, project)) return null;
               PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
@@ -133,6 +135,7 @@ public class BraceHighlightingHandler {
           throw e;
         }
         ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
+          @Override
           public void run() {
             try {
               if (!isReallyDisposed(editor, project)) {
@@ -171,6 +174,7 @@ public class BraceHighlightingHandler {
     }
     else {
       PsiDocumentManager.getInstance(project).performForCommittedDocument(document, new Runnable() {
+        @Override
         public void run() {
           if (!project.isDisposed() && !editor.isDisposed()) {
             BraceHighlighter.updateBraces(editor, alarm);
@@ -284,6 +288,7 @@ public class BraceHighlightingHandler {
     final int _offset = offset;
     final FileType _fileType = fileType;
     myAlarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         if (!myProject.isDisposed() && !myEditor.isDisposed()) {
           highlightScope(_offset, _fileType);
@@ -403,6 +408,7 @@ public class BraceHighlightingHandler {
       final int endLine = myEditor.offsetToLogicalPosition(rBrace.getEndOffset()).line;
       if (endLine - startLine > 0) {
         final Runnable runnable = new Runnable() {
+          @Override
           public void run() {
             if (myProject.isDisposed() || myEditor.isDisposed()) return;
             Color color = attributes.getBackgroundColor();
@@ -473,6 +479,7 @@ public class BraceHighlightingHandler {
     final int y = braceLocation.y;
     myAlarm.addRequest(
         new Runnable() {
+          @Override
           public void run() {
             if (!myEditor.getComponent().isShowing()) return;
             Rectangle viewRect = myEditor.getScrollingModel().getVisibleArea();
@@ -533,6 +540,7 @@ public class BraceHighlightingHandler {
       myColor = color;
     }
 
+    @Override
     public void paint(Editor editor, Graphics g, Rectangle r) {
       int height = r.height + editor.getLineHeight();
       g.setColor(myColor);

@@ -38,7 +38,6 @@ import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.navigator.SelectMavenGoalDialog;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenIcons;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import javax.swing.*;
@@ -64,7 +63,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
 
   @Override
   public Icon getIcon() {
-    return MavenIcons.MAVEN_ICON;
+    return icons.MavenIcons.MavenLogo;
   }
 
   @Override

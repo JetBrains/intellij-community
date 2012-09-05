@@ -18,7 +18,6 @@ package com.intellij.openapi.project.impl;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.notification.NotificationsManager;
@@ -39,7 +38,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ProjectReloadState;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -52,7 +54,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
@@ -288,8 +289,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private ProjectImpl createProject(@Nullable String projectName, @Nullable String filePath, boolean isDefault, boolean isOptimiseTestLoadSpeed) {
-    return isDefault ? new DefaultProject(this, filePath, isOptimiseTestLoadSpeed, projectName) :
-                                  new ProjectImpl(this, filePath, isOptimiseTestLoadSpeed, projectName);
+    assert isDefault || filePath != null : filePath;
+    return isDefault ? new DefaultProject(this, null, isOptimiseTestLoadSpeed, projectName)
+                     : new ProjectImpl(this, filePath, isOptimiseTestLoadSpeed, projectName);
   }
 
   private static void scheduleDispose(final ProjectImpl project) {
@@ -471,7 +473,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   @Override
   public Project loadAndOpenProject(@NotNull final String filePath) throws IOException {
-
     final Project project = convertAndLoadProject(filePath);
     if (project == null) {
       showWelcomeScreenIfNoProjectOpened();
@@ -487,6 +488,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         }
       });
     }
+
     return project;
   }
 
@@ -535,8 +537,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
    */
   @Nullable
   private Project loadProjectWithProgress(@NotNull final String filePath) throws IOException {
-
-    refreshProjectFiles(filePath);
     final ProjectImpl project = createProject(null, canonicalize(filePath), false, false);
     try {
       myProgressManager.runProcessWithProgressSynchronously(new ThrowableComputable<Project, IOException>() {
@@ -558,36 +558,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return project;
   }
 
-  private static void refreshProjectFiles(final String filePath) {
-    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isDispatchThread()) {
-      final File file = new File(filePath);
-      if (file.isFile()) {
-        VirtualFile projectFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
-        if (projectFile != null) {
-          projectFile.refresh(false, false);
-        }
-
-        File iwsFile = new File(file.getParentFile(), FileUtil.getNameWithoutExtension(file) + WorkspaceFileType.DOT_DEFAULT_EXTENSION);
-        VirtualFile wsFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(iwsFile);
-        if (wsFile != null) {
-          wsFile.refresh(false, false);
-        }
-
-      }
-      else {
-        VirtualFile projectConfigDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(filePath, Project.DIRECTORY_STORE_FOLDER));
-        if (projectConfigDir != null && projectConfigDir.isDirectory()) {
-          projectConfigDir.getChildren();
-          if (projectConfigDir instanceof NewVirtualFile) {
-            ((NewVirtualFile)projectConfigDir).markDirtyRecursively();
-          }
-          projectConfigDir.refresh(false, true);
-
-        }
-      }
-    }
-  }
-
   private static void notifyProjectOpenFailed() {
     ApplicationManager.getApplication().getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed();
   }
@@ -595,11 +565,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private void registerExternalProjectFileListener(VirtualFileManagerEx virtualFileManager) {
     virtualFileManager.addVirtualFileManagerListener(new VirtualFileManagerListener() {
       @Override
-      public void beforeRefreshStart(boolean asynchonous) {
+      public void beforeRefreshStart(boolean asynchronous) {
       }
 
       @Override
-      public void afterRefreshFinish(boolean asynchonous) {
+      public void afterRefreshFinish(boolean asynchronous) {
         scheduleReloadApplicationAndProject();
       }
     });

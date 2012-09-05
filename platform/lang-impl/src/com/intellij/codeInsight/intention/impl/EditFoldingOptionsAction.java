@@ -30,24 +30,29 @@ import org.jetbrains.annotations.NotNull;
  * @author cdr
  */
 public class EditFoldingOptionsAction implements IntentionAction {
+  @Override
   @NotNull
   public String getText() {
     return ApplicationBundle.message("edit.code.folding.options");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return editor.getFoldingModel().isOffsetCollapsed(editor.getCaretModel().getOffset());
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     ShowSettingsUtil.getInstance().editConfigurable(project, new CodeFoldingConfigurable());
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

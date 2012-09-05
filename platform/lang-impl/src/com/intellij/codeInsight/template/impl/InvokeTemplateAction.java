@@ -61,6 +61,7 @@ public class InvokeTemplateAction extends AnAction {
     return myTemplate;
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     perform();
   }

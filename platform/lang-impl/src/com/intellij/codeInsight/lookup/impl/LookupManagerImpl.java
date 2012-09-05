@@ -59,19 +59,23 @@ public class LookupManagerImpl extends LookupManager {
     myProject = project;
 
     bus.connect().subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
+      @Override
       public void hintShown(final Project project, final LightweightHint hint, final int flags) {
         if (project == myProject) {
           Lookup lookup = getActiveLookup();
           if (lookup != null && (flags & HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE) != 0) {
             lookup.addLookupListener(new LookupAdapter() {
+              @Override
               public void currentItemChanged(LookupEvent event) {
                 hint.hide();
               }
 
+              @Override
               public void itemSelected(LookupEvent event) {
                 hint.hide();
               }
 
+              @Override
               public void lookupCanceled(LookupEvent event) {
                 hint.hide();
               }
@@ -95,6 +99,7 @@ public class LookupManagerImpl extends LookupManager {
 
 
     final EditorFactoryAdapter myEditorFactoryListener = new EditorFactoryAdapter() {
+      @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         if (event.getEditor() == myActiveLookupEditor) {
           hideActiveLookup();
@@ -104,6 +109,7 @@ public class LookupManagerImpl extends LookupManager {
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener, myProject);
   }
 
+  @Override
   public LookupEx showLookup(final Editor editor,
                            @NotNull LookupElement[] items,
                            @NotNull final String prefix,
@@ -116,6 +122,7 @@ public class LookupManagerImpl extends LookupManager {
     return lookup != null && lookup.showLookup() ? lookup : null;
   }
 
+  @Override
   public LookupImpl createLookup(final Editor editor,
                                  @NotNull LookupElement[] items,
                                  @NotNull final String prefix,
@@ -150,6 +157,7 @@ public class LookupManagerImpl extends LookupManager {
 
     final Alarm alarm = new Alarm();
     final Runnable request = new Runnable() {
+      @Override
       public void run() {
         if (myActiveLookup == lookup && lookup.getCurrentItem() != null) {
           final CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
@@ -168,14 +176,17 @@ public class LookupManagerImpl extends LookupManager {
     myActiveLookup = lookup;
     myActiveLookupEditor = editor;
     myActiveLookup.addLookupListener(new LookupAdapter() {
+      @Override
       public void itemSelected(LookupEvent event) {
         lookupClosed();
       }
 
+      @Override
       public void lookupCanceled(LookupEvent event) {
         lookupClosed();
       }
 
+      @Override
       public void currentItemChanged(LookupEvent event) {
         alarm.cancelAllRequests();
         if (settings.AUTO_POPUP_JAVADOC_INFO) {
@@ -217,6 +228,7 @@ public class LookupManagerImpl extends LookupManager {
     return myActiveLookup;
   }
 
+  @Override
   public void hideActiveLookup() {
     LookupImpl lookup = myActiveLookup;
     if (lookup != null) {
@@ -226,6 +238,7 @@ public class LookupManagerImpl extends LookupManager {
     }
   }
 
+  @Override
   public LookupEx getActiveLookup() {
     if (myActiveLookup != null && myActiveLookup.isLookupDisposed()) {
       LookupImpl lookup = myActiveLookup;
@@ -236,10 +249,12 @@ public class LookupManagerImpl extends LookupManager {
     return myActiveLookup;
   }
 
+  @Override
   public void addPropertyChangeListener(PropertyChangeListener listener) {
     myPropertyChangeSupport.addPropertyChangeListener(listener);
   }
 
+  @Override
   public void removePropertyChangeListener(PropertyChangeListener listener) {
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }

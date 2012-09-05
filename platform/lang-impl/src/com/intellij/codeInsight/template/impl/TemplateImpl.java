@@ -96,6 +96,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   private boolean isToIndent = true;
 
 
+  @Override
   public void setInline(boolean isInline) {
     myIsInline = isInline;
   }
@@ -118,11 +119,13 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
 
+  @Override
   public void addTextSegment(@NotNull String text) {
     text = StringUtil.convertLineSeparators(text);
     myTemplateText += text;
   }
 
+  @Override
   public void addVariableSegment (String name) {
     mySegments.add(new Segment(name, myTemplateText.length()));
   }
@@ -132,6 +135,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     return addVariable("__Variable" + myVariables.size(), expression, isAlwaysStopAt);
   }
 
+  @Override
   public Variable addVariable(String name,
                               Expression expression,
                               Expression defaultValueExpression,
@@ -146,25 +150,30 @@ public class TemplateImpl extends Template implements SchemeElement {
     return variable;
   }
 
+  @Override
   public void addEndVariable() {
     Segment segment = new Segment(END, myTemplateText.length());
     mySegments.add(segment);
   }
 
+  @Override
   public void addSelectionStartVariable() {
     Segment segment = new Segment(SELECTION_START, myTemplateText.length());
     mySegments.add(segment);
   }
 
+  @Override
   public void addSelectionEndVariable() {
     Segment segment = new Segment(SELECTION_END, myTemplateText.length());
     mySegments.add(segment);
   }
 
+  @Override
   public String getId() {
     return myId;
   }
 
+  @Override
   public TemplateImpl copy() {
     TemplateImpl template = new TemplateImpl(myKey, myString, myGroupName);
     template.myId = myId;
@@ -191,10 +200,12 @@ public class TemplateImpl extends Template implements SchemeElement {
     return isToReformat;
   }
 
+  @Override
   public void setToReformat(boolean toReformat) {
     isToReformat = toReformat;
   }
 
+  @Override
   public void setToIndent(boolean toIndent) {
     isToIndent = toIndent;
   }
@@ -203,10 +214,12 @@ public class TemplateImpl extends Template implements SchemeElement {
     return isToIndent;
   }
 
+  @Override
   public boolean isToShortenLongNames() {
     return isToShortenLongNames;
   }
 
+  @Override
   public void setToShortenLongNames(boolean toShortenLongNames) {
     isToShortenLongNames = toShortenLongNames;
   }
@@ -246,21 +259,25 @@ public class TemplateImpl extends Template implements SchemeElement {
     return -1;
   }
 
+  @Override
   public String getTemplateText() {
     parseSegments();
     return myTemplateText;
   }
 
+  @Override
   public String getSegmentName(int i) {
     parseSegments();
     return mySegments.get(i).name;
   }
 
+  @Override
   public int getSegmentOffset(int i) {
     parseSegments();
     return mySegments.get(i).offset;
   }
 
+  @Override
   public int getSegmentsCount() {
     parseSegments();
     return mySegments.size();
@@ -308,6 +325,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     mySegments = null;
   }
 
+  @Override
   public Variable addVariable(String name, String expression, String defaultValue, boolean isAlwaysStopAt) {
     Variable variable = new Variable(name, expression, defaultValue, isAlwaysStopAt);
     myVariables.add(variable);
@@ -346,6 +364,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     return myVariables.get(i).isAlwaysStopAt();
   }
 
+  @Override
   public String getKey() {
     return myKey;
   }
@@ -363,6 +382,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     myString = string;
   }
 
+  @Override
   public String getDescription() {
     return myDescription;
   }
@@ -383,6 +403,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     return myGroupName;
   }
 
+  @Override
   public void setGroupName(String groupName) {
     myGroupName = groupName;
   }

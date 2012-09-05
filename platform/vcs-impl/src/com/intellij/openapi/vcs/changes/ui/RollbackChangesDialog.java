@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -29,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
@@ -36,6 +39,7 @@ import java.util.List;
  * @author max
  */
 public class RollbackChangesDialog extends DialogWrapper {
+  public static final String DELETE_LOCALLY_ADDED_FILES_KEY = "delete.locally.added.files";
   private final Project myProject;
   private final boolean myRefreshSynchronously;
   private final Runnable myAfterVcsRefreshInAwt;
@@ -112,6 +116,14 @@ public class RollbackChangesDialog extends DialogWrapper {
     for (Change c : changes) {
       if (c.getType() == Change.Type.NEW) {
         myDeleteLocallyAddedFiles = new JCheckBox(VcsBundle.message("changes.checkbox.delete.locally.added.files"));
+        myDeleteLocallyAddedFiles.setSelected(PropertiesComponent.getInstance().isTrueValue(DELETE_LOCALLY_ADDED_FILES_KEY));
+        myDeleteLocallyAddedFiles.addActionListener(new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            final boolean value = myDeleteLocallyAddedFiles.isSelected();
+            PropertiesComponent.getInstance().setValue(DELETE_LOCALLY_ADDED_FILES_KEY, String.valueOf(value));
+          }
+        });
         break;
       }
     }

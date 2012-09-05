@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NonNls;
 public class OptimizeImportsAction extends AnAction {
   private static final @NonNls String HELP_ID = "editing.manageImports";
 
+  @Override
   public void actionPerformed(AnActionEvent event) {
     actionPerformedImpl(event.getDataContext());
   }
@@ -128,6 +129,7 @@ public class OptimizeImportsAction extends AnAction {
     }
   }
 
+  @Override
   public void update(AnActionEvent event){
     if (!LanguageImportStatements.INSTANCE.hasAnyExtensions()) {
       event.getPresentation().setVisible(false);

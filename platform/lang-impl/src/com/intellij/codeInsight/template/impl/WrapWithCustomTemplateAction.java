@@ -51,6 +51,7 @@ public class WrapWithCustomTemplateAction extends AnAction {
   }
 
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final Document document = myEditor.getDocument();
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);

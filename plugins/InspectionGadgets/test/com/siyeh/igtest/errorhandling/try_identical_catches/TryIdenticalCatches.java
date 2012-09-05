@@ -108,4 +108,16 @@ class TryIdenticalCatches {
     } <warning descr="catch branch identical to 'E2' branch">catch (E1 e)</warning> {
     }
   }
+
+  void q() {
+    try {
+      Class.forName("bla").newInstance();
+    } catch (ClassNotFoundException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    } catch (<error descr="Cannot resolve symbol 'InstantiationException'">InstantiationException</error><error descr="Identifier expected"> </error>) {
+      <error descr="Cannot resolve symbol 'e'">e</error>.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    } catch (IllegalAccessException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
+  }
 }

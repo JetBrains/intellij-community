@@ -35,11 +35,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
@@ -140,7 +140,7 @@ public class GroovyCompiler extends GroovyCompilerBase {
                                                   "Do you want to add them to compiler resource list?\n" +
                                                   "(you can do it yourself later in Settings | Compiler | Resource patterns)",
                                                   "AST Transformations Found",
-                                                  GroovyIcons.GROOVY_ICON_32x32);
+                                                  JetgroovyIcons.Groovy.Groovy_32x32);
       if (result == 0) {
         CompilerConfiguration.getInstance(myProject).addResourceFilePattern(AST_TRANSFORM_FILE_NAME);
       } else {

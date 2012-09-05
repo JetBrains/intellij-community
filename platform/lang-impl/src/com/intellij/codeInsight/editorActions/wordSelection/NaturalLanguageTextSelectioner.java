@@ -34,6 +34,7 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
   private static final Set<Character> NATURAL = ContainerUtil.newTroveSet('(', ')', '.', ',', ':', ';', '!', '?', '$', '@', '%', '\"', '\'', '<', '>', '[', ']');
   private static final Set<Character> SENTENCE_END = ContainerUtil.newTroveSet('.', '!', '?');
 
+  @Override
   public boolean canSelect(PsiElement e) {
     return e instanceof PsiPlainText || e instanceof PsiComment;
   }
@@ -104,6 +105,7 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
     return new TextRange(start, end);
   }
 
+  @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     TextRange range = expandSelection(e, editorText, cursorOffset, cursorOffset);
     if (range == null) {

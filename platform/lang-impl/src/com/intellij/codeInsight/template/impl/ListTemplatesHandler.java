@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ListTemplatesHandler implements CodeInsightActionHandler {
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
@@ -131,6 +132,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     lookup.showLookup();
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }
@@ -162,6 +164,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
       myTemplate2Argument = template2Argument;
     }
 
+    @Override
     public void itemSelected(LookupEvent event) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.liveTemplates");
       LookupElement item = event.getItem();
@@ -169,6 +172,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
         final TemplateImpl template = ((LiveTemplateLookupElement)item).getTemplate();
         final String argument = myTemplate2Argument != null ? myTemplate2Argument.get(template) : null;
         new WriteCommandAction(myProject) {
+          @Override
           protected void run(Result result) throws Throwable {
             ((TemplateManagerImpl)TemplateManager.getInstance(myProject)).startTemplateWithPrefix(myEditor, template, null, argument);
           }

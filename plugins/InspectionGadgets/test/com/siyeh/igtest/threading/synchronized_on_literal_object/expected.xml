@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>SynchronizedOnLiteralObject.java</file>
+    <line>9</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Synchronization on an object initialized with a literal</problem_class>
+    <description>Synchronization on Integer &lt;code&gt;myInteger&lt;/code&gt; which is initialized by a literal #loc</description>
+  </problem>
+
+  <problem>
+    <file>SynchronizedOnLiteralObject.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Synchronization on an object initialized with a literal</problem_class>
+    <description>Synchronization on String &lt;code&gt;&quot;asdf&quot;&lt;/code&gt; which is initialized by a literal #loc</description>
+  </problem>
+
+  <problem>
+    <file>SynchronizedOnLiteralObject.java</file>
+    <line>11</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Synchronization on an object initialized with a literal</problem_class>
+    <description>Synchronization on Boolean &lt;code&gt;(Boolean) true&lt;/code&gt; which is initialized by a literal #loc</description>
+  </problem>
+
+  <problem>
+    <file>SynchronizedOnLiteralObject.java</file>
+    <line>12</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Synchronization on an object initialized with a literal</problem_class>
+    <description>Synchronization on Character &lt;code&gt;c&lt;/code&gt; which is initialized by a literal #loc</description>
+  </problem>
+</problems>

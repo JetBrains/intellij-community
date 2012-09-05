@@ -28,14 +28,17 @@ public class FoldingTransferableData implements TextBlockTransferableData, Seria
     myFoldingDatas = foldingDatas;
   }
 
+  @Override
   public DataFlavor getFlavor() {
     return FoldingData.getDataFlavor();
   }
 
+  @Override
   public int getOffsetCount() {
     return myFoldingDatas.length * 2;
   }
 
+  @Override
   public int getOffsets(final int[] offsets, int index) {
     for (FoldingData data : myFoldingDatas) {
       offsets[index++] = data.startOffset;
@@ -44,6 +47,7 @@ public class FoldingTransferableData implements TextBlockTransferableData, Seria
     return index;
   }
 
+  @Override
   public int setOffsets(final int[] offsets, int index) {
     for (FoldingData data : myFoldingDatas) {
       data.startOffset = offsets[index++];
@@ -52,6 +56,7 @@ public class FoldingTransferableData implements TextBlockTransferableData, Seria
     return index;
   }
 
+  @Override
   protected FoldingTransferableData clone() {
     FoldingData[] newFoldingData = new FoldingData[myFoldingDatas.length];
     for (int i = 0; i < myFoldingDatas.length; i++) {
@@ -77,6 +82,7 @@ public class FoldingTransferableData implements TextBlockTransferableData, Seria
       isExpanded = expanded;
     }
 
+    @Override
     public Object clone() {
       try{
         return super.clone();

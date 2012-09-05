@@ -281,6 +281,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
       return myFile;
     }                                                                   
 
+    @Override
     @NotNull
     public String getLookupString() {
       return myName;

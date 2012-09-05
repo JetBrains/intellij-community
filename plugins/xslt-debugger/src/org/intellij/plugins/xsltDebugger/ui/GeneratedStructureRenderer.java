@@ -32,7 +32,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
  * Date: 09.06.2007
  */
 class GeneratedStructureRenderer extends ColoredTreeCellRenderer {
-  private static final Icon XML_COMMENT_ICON = XsltDebuggerIcons.XmlComment;
 
   public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
@@ -74,7 +73,7 @@ class GeneratedStructureRenderer extends ColoredTreeCellRenderer {
           append(clipValue(event.getValue()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
           break;
         case OutputEventQueue.COMMENT:
-          setIcon(XML_COMMENT_ICON);
+          setIcon(XsltDebuggerIcons.XmlComment);
           append("#comment ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           append(event.getValue(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
           break;

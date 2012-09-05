@@ -21,20 +21,24 @@ import com.intellij.codeInsight.template.*;
 import org.jetbrains.annotations.NotNull;
 
 public class LineNumberMacro extends Macro {
+  @Override
   public String getName() {
     return "lineNumber";
   }
 
+  @Override
   public String getPresentableName() {
     return CodeInsightBundle.message("macro.linenumber");
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     final int offset = context.getStartOffset();
     int line = context.getEditor().offsetToLogicalPosition(offset).line + 1;
     return new TextResult("" + line);
   }
 
+  @Override
   public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return calculateResult(params, context);
   }

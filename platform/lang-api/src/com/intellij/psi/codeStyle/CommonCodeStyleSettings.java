@@ -21,7 +21,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.intellij.lang.annotations.MagicConstant;

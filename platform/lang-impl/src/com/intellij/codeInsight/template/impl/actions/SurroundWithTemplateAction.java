@@ -24,6 +24,7 @@ import com.intellij.codeInsight.template.impl.SurroundWithTemplateHandler;
  * @author mike
  */
 public class SurroundWithTemplateAction extends BaseCodeInsightAction {
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return new SurroundWithTemplateHandler();
   }

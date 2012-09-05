@@ -41,6 +41,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressWrapper;
@@ -92,6 +93,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final LookupImpl myLookup;
   private final MergingUpdateQueue myQueue;
   private final Update myUpdate = new Update("update") {
+    @Override
     public void run() {
       updateLookup();
     }
@@ -100,6 +102,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final OffsetMap myOffsetMap;
   private final CopyOnWriteArrayList<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ContainerUtil.createEmptyCOWList();
   private final LookupAdapter myLookupListener = new LookupAdapter() {
+    @Override
     public void itemSelected(LookupEvent event) {
       finishCompletionProcess(false);
 
@@ -112,6 +115,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
 
 
+    @Override
     public void lookupCanceled(final LookupEvent event) {
       finishCompletionProcess(true);
     }
@@ -242,6 +246,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       if (s != null) {
         myLookup.setAdvertisementText(s);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
             public void run() {
               if (isAutopopupCompletion() && !myLookup.isAvailableToUser()) {
                 return;
@@ -437,6 +442,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     CompletionLookupArranger.cancelLastCompletionStatisticsUpdate();
   }
 
+  @Override
   public void stop() {
     super.stop();
 
@@ -444,6 +450,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myFreezeSemaphore.up();
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
         if (!(phase instanceof CompletionPhase.BgCalculation) || phase.indicator != CompletionProgressIndicator.this) return;
@@ -515,6 +522,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
 
     final Boolean aBoolean = new WriteCommandAction<Boolean>(getProject()) {
+      @Override
       protected void run(Result<Boolean> result) throws Throwable {
         if (!explicit) {
           setMergeCommand();
@@ -673,6 +681,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private static LightweightHint showErrorHint(Project project, Editor editor, String text) {
     final LightweightHint[] result = {null};
     final EditorHintListener listener = new EditorHintListener() {
+      @Override
       public void hintShown(final Project project, final LightweightHint hint, final int flags) {
         result[0] = hint;
       }
@@ -717,20 +726,32 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     class CalculateItems implements Runnable {
       @Override
       public void run() {
-        duringCompletion(initContext);
-        ProgressManager.checkCanceled();
-
-        LookupElement[] result = CompletionService.getCompletionService().performCompletion(myParameters, weigher);
-        ProgressManager.checkCanceled();
-
-        weigher.waitFor();
-        ProgressManager.checkCanceled();
-
-        data.set(result);
+        try {
+          data.set(calculateItems(initContext, weigher));
+        }
+        catch (ProcessCanceledException ignore) {
+        }
+        catch (Throwable t) {
+          LOG.error(t);
+          cancel();
+        }
       }
     }
     strategy.startThread(this, new CalculateItems());
     return data;
+  }
+
+  private LookupElement[] calculateItems(CompletionInitializationContext initContext, WeighingDelegate weigher) {
+    duringCompletion(initContext);
+    ProgressManager.checkCanceled();
+
+    LookupElement[] result = CompletionService.getCompletionService().performCompletion(myParameters, weigher);
+    ProgressManager.checkCanceled();
+
+    weigher.waitFor();
+    ProgressManager.checkCanceled();
+
+    return result;
   }
 
   private static class ModifierTracker extends KeyAdapter {
@@ -740,10 +761,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       myContentComponent = contentComponent;
     }
 
+    @Override
     public void keyPressed(KeyEvent e) {
       processModifier(e);
     }
 
+    @Override
     public void keyReleased(KeyEvent e) {
       processModifier(e);
     }

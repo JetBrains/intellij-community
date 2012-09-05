@@ -5,8 +5,12 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
+import org.jetbrains.jps.model.JpsEncodingConfigurationService;
+import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
+import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
@@ -16,15 +20,16 @@ import java.util.*;
  * @author nik
  */
 public class CompilerEncodingConfiguration {
-  private final Map<String, String> myFilePathToCharset;
+  private final Map<String, String> myUrlToCharset;
   private final String myProjectCharset;
   private final ModuleRootsIndex myRootsIndex;
   private Map<String, Set<String>> myModuleCharsetMap;
 
-  public CompilerEncodingConfiguration(Map<String, String> filePathToCharset, String projectCharset, ModuleRootsIndex rootsIndex) {
-    myFilePathToCharset = filePathToCharset;
-    myProjectCharset = projectCharset;
-    myRootsIndex = rootsIndex;
+  public CompilerEncodingConfiguration(JpsModel jpsModel, ModuleRootsIndex index) {
+    JpsEncodingProjectConfiguration configuration = JpsEncodingConfigurationService.getInstance().getEncodingConfiguration(jpsModel.getProject());
+    myUrlToCharset = configuration != null ? configuration.getUrlToEncoding() : Collections.<String, String>emptyMap();
+    myProjectCharset = JpsEncodingConfigurationService.getInstance().getProjectEncoding(jpsModel);
+    myRootsIndex = index;
   }
 
   public Map<String, Set<String>> getModuleCharsetMap() {
@@ -37,10 +42,10 @@ public class CompilerEncodingConfiguration {
   private Map<String, Set<String>> computeModuleCharsetMap() {
     final Map<String, Set<String>> map = new THashMap<String, Set<String>>();
     final List<ModuleLevelBuilder> builders = BuilderRegistry.getInstance().getModuleLevelBuilders();
-    for (Map.Entry<String, String> entry : myFilePathToCharset.entrySet()) {
-      final String filePath = entry.getKey();
+    for (Map.Entry<String, String> entry : myUrlToCharset.entrySet()) {
+      final String fileUrl = entry.getKey();
       final String charset = entry.getValue();
-      File file = new File(FileUtil.toSystemDependentName(filePath));
+      File file = JpsPathUtil.urlToFile(fileUrl);
       if (charset == null || (!file.isDirectory() && !shouldHonorEncodingForCompilation(builders, file))) continue;
 
       final RootDescriptor rootDescriptor = myRootsIndex.getModuleAndRoot(null, file);
@@ -56,7 +61,7 @@ public class CompilerEncodingConfiguration {
         File current = FileUtil.getParentFile(file);
         String parentCharset = null;
         while (current != null) {
-          final String currentCharset = myFilePathToCharset.get(FileUtil.toSystemIndependentName(current.getAbsolutePath()));
+          final String currentCharset = myUrlToCharset.get(FileUtil.toSystemIndependentName(current.getAbsolutePath()));
           if (currentCharset != null) {
             parentCharset = currentCharset;
           }

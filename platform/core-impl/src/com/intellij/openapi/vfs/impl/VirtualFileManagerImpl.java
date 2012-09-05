@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class VirtualFileManagerImpl extends VirtualFileManagerEx {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
 
   private final KeyedExtensionCollector<VirtualFileSystem, String> myCollector =
@@ -51,15 +50,15 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
     };
 
   private final List<VirtualFileSystem> myPhysicalFileSystems = new ArrayList<VirtualFileSystem>();
-
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
   private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = ContainerUtil.createEmptyCOWList();
+  private final FileSystemPersistence myPersistence;
 
   private int myRefreshCount = 0;
-  private final FileSystemPersistence myPersistence;
 
   public VirtualFileManagerImpl(VirtualFileSystem[] fileSystems, MessageBus bus, FileSystemPersistence persistence) {
     myPersistence = persistence;
+
     for (VirtualFileSystem fileSystem : fileSystems) {
       registerFileSystem(fileSystem);
     }
@@ -71,18 +70,12 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
     bus.connect().subscribe(VFS_CHANGES, new BulkVirtualFileListenerAdapter(myVirtualFileListenerMulticaster.getMulticaster()));
   }
 
-  public void registerFileSystem(@NotNull VirtualFileSystem fileSystem) {
+  private void registerFileSystem(@NotNull VirtualFileSystem fileSystem) {
     myCollector.addExplicitExtension(fileSystem.getProtocol(), fileSystem);
     if (!(fileSystem instanceof CachingVirtualFileSystem)) {
       fileSystem.addVirtualFileListener(myVirtualFileListenerMulticaster.getMulticaster());
     }
     myPhysicalFileSystems.add(fileSystem);
-  }
-
-  public void unregisterFileSystem(@NotNull VirtualFileSystem fileSystem) {
-    myCollector.removeExplicitExtension(fileSystem.getProtocol(), fileSystem);
-    fileSystem.removeVirtualFileListener(myVirtualFileListenerMulticaster.getMulticaster());
-    myPhysicalFileSystems.remove(fileSystem);
   }
 
   @Override
@@ -121,19 +114,13 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
     refresh(asynchronous, postAction, ModalityState.NON_MODAL);
   }
 
-  public void refresh(boolean asynchronous, @Nullable Runnable postAction, ModalityState modalityState) {
+  public void refresh(boolean asynchronous, @Nullable Runnable postAction, @NotNull ModalityState modalityState) {
     if (!asynchronous) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
 
+    // todo: get an idea how to deliver changes from local FS to jar fs before they go refresh
     myPersistence.refresh(asynchronous, postAction, modalityState);
-
-    //final VirtualFile[] managedRoots = ManagingFS.getInstance().getRoots();
-    //for (int i = 0; i < managedRoots.length; i++) {
-    //  VirtualFile root = managedRoots[i];
-    //  boolean last = i + 1 == managedRoots.length;
-    //  RefreshQueue.getInstance().refresh(asynchronous, true, last ? postAction : null, root);
-    //}
 
     for (VirtualFileSystem fileSystem : getPhysicalFileSystems()) {
       if (!(fileSystem instanceof CachingVirtualFileSystem)) {
@@ -257,61 +244,58 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
   private static class LoggingListener implements VirtualFileListener {
     @Override
     public void propertyChanged(VirtualFilePropertyEvent event) {
-      LOG.debug("propertyChanged: file = " + event.getFile().getUrl() + ", propertyName = " + event.getPropertyName() + ", oldValue = " +
-                event.getOldValue() + ", newValue = " + event.getNewValue() + ", requestor = " + event.getRequestor());
+      LOG.debug("propertyChanged: file = " + event.getFile() + ", propertyName = " + event.getPropertyName() +
+                ", oldValue = " + event.getOldValue() + ", newValue = " + event.getNewValue() + ", requestor = " + event.getRequestor());
     }
 
     @Override
     public void contentsChanged(VirtualFileEvent event) {
-      LOG.debug("contentsChanged: file = " + event.getFile().getUrl() + ", requestor = " + event.getRequestor());
+      LOG.debug("contentsChanged: file = " + event.getFile() + ", requestor = " + event.getRequestor());
     }
 
     @Override
     public void fileCreated(VirtualFileEvent event) {
-      LOG.debug("fileCreated: file = " + event.getFile().getUrl() + ", requestor = " + event.getRequestor());
+      LOG.debug("fileCreated: file = " + event.getFile() + ", requestor = " + event.getRequestor());
     }
 
     @Override
     public void fileDeleted(VirtualFileEvent event) {
-      final VirtualFile parent = event.getParent();  
-      LOG.debug("fileDeleted: file = " + event.getFile().getName() + ", parent = " + (parent != null ? parent.getUrl() : null) +
-                ", requestor = " + event.getRequestor());
+      LOG.debug("fileDeleted: file = " + event.getFile() + ", parent = " + event.getParent() + ", requestor = " + event.getRequestor());
     }
 
     @Override
     public void fileMoved(VirtualFileMoveEvent event) {
-      LOG.debug("fileMoved: file = " + event.getFile().getUrl() + ", oldParent = " + event.getOldParent() + ", newParent = " +
-                event.getNewParent() + ", requestor = " + event.getRequestor());
+      LOG.debug("fileMoved: file = " + event.getFile() + ", oldParent = " + event.getOldParent() +
+                ", newParent = " + event.getNewParent() + ", requestor = " + event.getRequestor());
     }
 
     @Override
     public void fileCopied(VirtualFileCopyEvent event) {
-      LOG.debug("fileCopied: file = " + event.getFile().getUrl() + "originalFile = " + event.getOriginalFile().getUrl() + ", requestor = " +
-                event.getRequestor());
+      LOG.debug("fileCopied: file = " + event.getFile() + "originalFile = " + event.getOriginalFile() +
+                ", requestor = " + event.getRequestor());
     }
 
     @Override
     public void beforeContentsChange(VirtualFileEvent event) {
-      LOG.debug("beforeContentsChange: file = " + event.getFile().getUrl() + ", requestor = " + event.getRequestor());
+      LOG.debug("beforeContentsChange: file = " + event.getFile() + ", requestor = " + event.getRequestor());
     }
 
     @Override
     public void beforePropertyChange(VirtualFilePropertyEvent event) {
-      LOG.debug("beforePropertyChange: file = " + event.getFile().getUrl() + ", propertyName = " + event.getPropertyName() +
+      LOG.debug("beforePropertyChange: file = " + event.getFile() + ", propertyName = " + event.getPropertyName() +
                 ", oldValue = " + event.getOldValue() + ", newValue = " + event.getNewValue() + ", requestor = " + event.getRequestor());
     }
 
     @Override
     public void beforeFileDeletion(VirtualFileEvent event) {
-      LOG.debug("beforeFileDeletion: file = " + event.getFile().getUrl() + ", requestor = " + event.getRequestor());
-
+      LOG.debug("beforeFileDeletion: file = " + event.getFile() + ", requestor = " + event.getRequestor());
       LOG.assertTrue(event.getFile().isValid());
     }
 
     @Override
     public void beforeFileMovement(VirtualFileMoveEvent event) {
-      LOG.debug("beforeFileMovement: file = " + event.getFile().getUrl() + ", oldParent = " + event.getOldParent() + ", newParent = " +
-                event.getNewParent() + ", requestor = " + event.getRequestor());
+      LOG.debug("beforeFileMovement: file = " + event.getFile() + ", oldParent = " + event.getOldParent() +
+                ", newParent = " + event.getNewParent() + ", requestor = " + event.getRequestor());
     }
   }
 

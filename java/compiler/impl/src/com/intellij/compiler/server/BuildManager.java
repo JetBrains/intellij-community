@@ -33,7 +33,6 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -57,7 +56,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.SavingRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Alarm;
@@ -580,13 +578,6 @@ public class BuildManager implements ApplicationComponent{
       }
     }
 
-    final String defaultCharset = EncodingManager.getInstance().getDefaultCharsetName();
-    if (!StringUtil.isEmpty(defaultCharset)) {
-      cmdBuilder.setGlobalEncoding(defaultCharset);
-    }
-
-    final String ignoredFilesList = FileTypeManager.getInstance().getIgnoredFilesList();
-    cmdBuilder.setIgnoredFilesPatterns(ignoredFilesList);
     return cmdBuilder.build();
   }
 

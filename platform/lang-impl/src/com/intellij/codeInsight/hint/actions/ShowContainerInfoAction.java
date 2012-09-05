@@ -28,15 +28,18 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
 public class ShowContainerInfoAction extends BaseCodeInsightAction{
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return new ShowContainerInfoHandler();
   }
 
+  @Override
   @Nullable
   protected Editor getBaseEditor(final DataContext dataContext, final Project project) {
     return PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE.getData(dataContext);
   }
 
+  @Override
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
     return LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file) instanceof TreeBasedStructureViewBuilder;
   }

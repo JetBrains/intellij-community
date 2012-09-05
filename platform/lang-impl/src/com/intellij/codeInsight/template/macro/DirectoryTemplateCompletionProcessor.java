@@ -24,6 +24,7 @@ import com.intellij.psi.PsiFileSystemItem;
  * @author yole
  */
 public class DirectoryTemplateCompletionProcessor implements TemplateCompletionProcessor {
+  @Override
   public boolean nextTabOnItemSelected(final ExpressionContext context, final LookupElement item) {
     if (item.getObject() instanceof PsiFileSystemItem) {
       final PsiFileSystemItem fileSystemItem = (PsiFileSystemItem)item.getObject();

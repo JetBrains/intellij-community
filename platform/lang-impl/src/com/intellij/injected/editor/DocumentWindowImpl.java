@@ -391,6 +391,12 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   @Override
+  public void moveText(int srcStart, int srcEnd, int dstStart, int dstEnd) {
+    // TODO den implement
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public boolean isWritable() {
     return myDelegate.isWritable();
   }

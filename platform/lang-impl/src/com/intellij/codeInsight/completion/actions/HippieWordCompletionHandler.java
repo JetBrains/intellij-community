@@ -46,6 +46,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     myForward = forward;
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
@@ -189,6 +190,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     final List<CompletionVariant> afterWords = new ArrayList<CompletionVariant>();
 
     IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor() {
+      @Override
       public void run(final CharSequence chars, @Nullable char[] charsArray, final int start, final int end) {
         final int caretOffset = editor.getCaretModel().getOffset();
         if (start <= caretOffset && end >= caretOffset) return; //skip prefix itself
@@ -255,6 +257,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     return data;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

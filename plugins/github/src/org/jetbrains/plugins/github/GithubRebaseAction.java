@@ -39,6 +39,7 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.update.GitFetchResult;
 import git4idea.update.GitFetcher;
+import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
@@ -55,7 +56,7 @@ public class GithubRebaseAction extends DumbAwareAction {
   private static final String CANNOT_PERFORM_GITHUB_REBASE = "Cannot perform github rebase";
 
   public GithubRebaseAction() {
-    super("Rebase my GitHub fork", "Rebase your GitHub forked repository relative to the origin", GithubUtil.GITHUB_ICON);
+    super("Rebase my GitHub fork", "Rebase your GitHub forked repository relative to the origin", GithubIcons.Github_icon);
   }
 
   public void update(AnActionEvent e) {

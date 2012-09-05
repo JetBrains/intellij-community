@@ -49,6 +49,7 @@ public abstract class ChooseItemAction extends EditorAction {
       this.focusedOnly = focusedOnly;
     }
 
+    @Override
     public void execute(@NotNull final Editor editor, final DataContext dataContext) {
       LookupImpl lookup = getLookup(editor);
       if (!lookup.isFocused()) {

@@ -43,6 +43,7 @@ public abstract class StructuralChange extends Change {
     myPath = StreamUtil.readString(in);
   }
 
+  @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
     StreamUtil.writeString(out, myPath);
@@ -60,10 +61,12 @@ public abstract class StructuralChange extends Change {
     return myPath;
   }
 
-  public abstract void revertOn(RootEntry root);
+  public abstract void revertOn(RootEntry root, boolean warnOnFileNotFound);
 
-  protected void cannotRevert(String path) {
-    LocalHistoryLog.LOG.warn("cannot revert " + getClass().getSimpleName() + "->file not found: " + path);
+  protected void cannotRevert(String path, boolean warnOnFileNotFound) {
+    if (warnOnFileNotFound) {
+      LocalHistoryLog.LOG.warn("cannot revert " + getClass().getSimpleName() + "->file not found: " + path);
+    }
   }
 
   public String revertPath(String path) {
@@ -71,7 +74,7 @@ public abstract class StructuralChange extends Change {
 
     String relative = Paths.relativeIfUnder(path, myPath);
     if (relative == null) return path;
-    if (relative.length() == 0) return getOldPath();
+    if (relative.isEmpty()) return getOldPath();
     return Paths.appended(getOldPath(), relative);
   }
 

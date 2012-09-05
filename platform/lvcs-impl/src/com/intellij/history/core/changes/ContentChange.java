@@ -59,10 +59,10 @@ public class ContentChange extends StructuralChange {
   }
 
   @Override
-  public void revertOn(RootEntry root) {
+  public void revertOn(RootEntry root, boolean warnOnFileNotFound) {
     Entry e = root.findEntry(myPath);
     if (e == null) {
-      cannotRevert(myPath);
+      cannotRevert(myPath, warnOnFileNotFound);
       return;
     }
     e.setContent(myOldContent, myOldTimestamp);

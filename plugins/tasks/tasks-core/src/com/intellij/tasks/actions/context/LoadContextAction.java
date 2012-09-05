@@ -50,7 +50,6 @@ import java.util.*;
 public class LoadContextAction extends BaseTaskAction {
 
   private static final int MAX_ROW_COUNT = 10;
-  private static final Icon SAVED_CONTEXT_ICON = TasksCoreIcons.SavedContext;
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -85,7 +84,7 @@ public class LoadContextAction extends BaseTaskAction {
 
           @Override
           Icon getIcon() {
-            return SAVED_CONTEXT_ICON;
+            return TasksCoreIcons.SavedContext;
           }
         };
       }

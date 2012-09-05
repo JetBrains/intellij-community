@@ -57,6 +57,7 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
       return;
     }
     selectTargets(targets, new Consumer<List<T>>() {
+      @Override
       public void consume(final List<T> targets) {
         computeUsages(targets);
         performHighlighting();

@@ -85,6 +85,7 @@ class ParameterInfoComponent extends JPanel{
 
   class MyParameterContext implements ParameterInfoUIContextEx {
     private int i;
+    @Override
     public void setupUIComponentPresentation(String text,
                                              int highlightStartOffset,
                                              int highlightEndOffset,
@@ -96,15 +97,18 @@ class ParameterInfoComponent extends JPanel{
       myPanels[i].setBorder(isLastParameterOwner() ? BACKGROUND_BORDER : BOTTOM_BORDER);
     }
 
+    @Override
     public void setupUIComponentPresentation(final String[] texts, final EnumSet<Flag>[] flags, final Color background) {
       myPanels[i].setup(texts, flags, background);
       myPanels[i].setBorder(isLastParameterOwner() ? BACKGROUND_BORDER : BOTTOM_BORDER);
     }
 
+    @Override
     public boolean isUIComponentEnabled() {
       return isEnabled(i);
     }
 
+    @Override
     public void setUIComponentEnabled(boolean enabled) {
       setEnabled(i, enabled);
     }
@@ -113,14 +117,17 @@ class ParameterInfoComponent extends JPanel{
       return i == myPanels.length - 1;
     }
 
+    @Override
     public int getCurrentParameterIndex() {
       return myCurrentParameterIndex;
     }
 
+    @Override
     public PsiElement getParameterOwner() {
       return myParameterOwner;
     }
 
+    @Override
     public Color getDefaultParameterColor() {
       return myObjects[i].equals(myHighlighted) ? HIGHLIGHTED_BORDER_COLOR : BACKGROUND_COLOR;
     }
@@ -308,6 +315,7 @@ class ParameterInfoComponent extends JPanel{
       myLabel1.setForeground(DISABLED_FOREGROUND_COLOR);
     }
 
+    @Override
     public Dimension getPreferredSize(){
       myLabel1.setFont(BOLD_FONT);
       myLabel3.setFont(BOLD_FONT);

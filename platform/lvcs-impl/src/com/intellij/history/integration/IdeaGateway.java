@@ -152,6 +152,43 @@ public class IdeaGateway {
     doCreateChildren(root, Arrays.asList(ManagingFS.getInstance().getLocalRoots()), false);
     return root;
   }
+  @NotNull
+  public RootEntry createTransientRootEntryForPathOnly(@NotNull String path) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    RootEntry root = new RootEntry();
+    doCreateChildrenForPathOnly(root, path, Arrays.asList(ManagingFS.getInstance().getLocalRoots()));
+    return root;
+  }
+  private void doCreateChildrenForPathOnly(@NotNull DirectoryEntry parent,
+                                           @NotNull String path,
+                                           @NotNull Collection<VirtualFile> children) {
+    for (VirtualFile child : children) {
+      String name = child.getName();
+      if (!path.startsWith(name)) continue;
+      String rest = path.substring(name.length());
+      if (!rest.isEmpty() && rest.charAt(0) != '/') continue;
+      if (!rest.isEmpty() && rest.charAt(0) == '/') {
+        rest = rest.substring(1);
+      }
+      Entry e = doCreateEntryForPathOnly(child, rest);
+      if (e == null) continue;
+      parent.addChild(e);
+    }
+  }
+
+  @Nullable
+  private Entry doCreateEntryForPathOnly(@NotNull VirtualFile file, @NotNull String path) {
+    if (!file.isDirectory()) {
+      if (!isVersioned(file)) return null;
+
+      Pair<StoredContent, Long> contentAndStamps = getActualContentNoAcquire(file);
+      return new FileEntry(file.getName(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
+    }
+    DirectoryEntry newDir = new DirectoryEntry(file.getName());
+    doCreateChildrenForPathOnly(newDir, path, iterateDBChildren(file));
+    if (!isVersioned(file) && newDir.getChildren().isEmpty()) return null;
+    return newDir;
+  }
 
   @Nullable
   public Entry createTransientEntry(@NotNull VirtualFile file) {

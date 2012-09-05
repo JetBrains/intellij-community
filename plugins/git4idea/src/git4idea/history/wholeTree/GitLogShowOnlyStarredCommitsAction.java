@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.OnOff;
+import icons.Git4ideaIcons;
 
 /**
  * Created with IntelliJ IDEA.
@@ -30,7 +31,7 @@ public class GitLogShowOnlyStarredCommitsAction extends ToggleAction implements 
   private final OnOff myOnOff;
 
   public GitLogShowOnlyStarredCommitsAction(final OnOff onOff) {
-    super("Filter Starred", "Filter Starred Commits", GitLogUI.ourMarkIcon);
+    super("Filter Starred", "Filter Starred Commits", Git4ideaIcons.Star);
     myOnOff = onOff;
   }
 

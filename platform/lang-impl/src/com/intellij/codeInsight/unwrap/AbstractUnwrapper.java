@@ -30,15 +30,19 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
     myDescription = description;
   }
 
+  @Override
   public abstract boolean isApplicableTo(PsiElement e);
 
+  @Override
   public void collectElementsToIgnore(PsiElement element, Set<PsiElement> result) {
   }
 
+  @Override
   public String getDescription(PsiElement e) {
     return myDescription;
   }
 
+  @Override
   public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
     try {
       C c = createContext();
@@ -51,6 +55,7 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
     }
   }
 
+  @Override
   public List<PsiElement> unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
     C c = createContext();
     c.myIsEffective = true;

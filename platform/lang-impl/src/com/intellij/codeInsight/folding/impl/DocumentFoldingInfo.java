@@ -62,6 +62,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
   }
 
   void loadFromEditor(@NotNull Editor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(!editor.isDisposed());
     clear();
 
@@ -93,7 +94,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
   }
 
   void setToEditor(@NotNull Editor editor) {
-    LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     if (psiManager.isDisposed()) return;
 

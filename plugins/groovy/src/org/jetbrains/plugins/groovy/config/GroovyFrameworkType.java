@@ -17,8 +17,8 @@ package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.framework.FrameworkTypeEx;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 
 import javax.swing.*;
 
@@ -45,6 +45,6 @@ public class GroovyFrameworkType extends FrameworkTypeEx {
   @NotNull
   @Override
   public Icon getIcon() {
-    return GroovyIcons.GROOVY_ICON_16x16;
+    return JetgroovyIcons.Groovy.Groovy_16x16;
   }
 }

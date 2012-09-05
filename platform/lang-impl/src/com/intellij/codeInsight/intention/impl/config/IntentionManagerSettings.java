@@ -90,6 +90,7 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
     return !myIgnoredActions.contains(action.getFamilyName());
   }
 
+  @Override
   public void loadState(Element element) {
     myIgnoredActions.clear();
     List children = element.getChildren(IGNORE_ACTION_TAG);
@@ -99,6 +100,7 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
     }
   }
 
+  @Override
   public Element getState() {
     Element element = new Element("state");
     for (String name : myIgnoredActions) {
@@ -160,6 +162,7 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
 
     final TextDescriptor description = metaData.getDescription();
     ourRegisterMetaDataAlarm.addRequest(new Runnable(){
+      @Override
       public void run() {
         try {
           SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();

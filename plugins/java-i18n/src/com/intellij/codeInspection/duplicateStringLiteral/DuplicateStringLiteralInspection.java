@@ -202,8 +202,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
 
   private boolean shouldCheck(@NotNull Project project, @NotNull PsiLiteralExpression expression) {
     if (IGNORE_PROPERTY_KEYS && JavaI18nUtil.mustBePropertyKey(project, expression, new THashMap<String, Object>())) return false;
-    PsiAnnotation annotation = PsiTreeUtil.getParentOfType(expression, PsiAnnotation.class, true, PsiCodeBlock.class, PsiField.class);
-    return annotation == null || !"java.lang.SuppressWarnings".equals(annotation.getQualifiedName());
+    return !SuppressManager.isSuppressedInspectionName(expression);
   }
 
   private static void createReplaceFixes(final List<PsiExpression> foundExpr, final PsiLiteralExpression originalExpression,

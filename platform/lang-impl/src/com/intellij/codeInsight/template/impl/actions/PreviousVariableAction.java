@@ -41,6 +41,7 @@ public class PreviousVariableAction extends EditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
       CommandProcessor.getInstance().setCurrentCommandName(CodeInsightBundle.message("template.previous.variable.command"));
@@ -48,6 +49,7 @@ public class PreviousVariableAction extends EditorAction {
     }
   }
 
+  @Override
   public void update(Editor editor, Presentation presentation, DataContext dataContext) {
     final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
     presentation.setEnabled(templateState != null && !templateState.isFinished());

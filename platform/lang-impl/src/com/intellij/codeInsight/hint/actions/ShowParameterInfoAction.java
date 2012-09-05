@@ -31,15 +31,18 @@ public class ShowParameterInfoAction extends BaseCodeInsightAction implements Du
     setEnabledInModalContext(true);
   }
 
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return new ShowParameterInfoHandler();
   }
 
+  @Override
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
     final Language language = PsiUtilBase.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
     return ShowParameterInfoHandler.getHandlers(project, language, file.getViewProvider().getBaseLanguage()) != null;
   }
 
+  @Override
   protected boolean isValidForLookup() {
     return true;
   }

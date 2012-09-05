@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,13 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -186,19 +187,20 @@ public class SaveAndSyncHandler implements ApplicationComponent {
   }
 
   public static void refreshOpenFiles() {
-    // Refresh open files synchronously so it doesn't wait for potentially longish refresh request in the queue to finish
-    final RefreshSession session = RefreshQueue.getInstance().createSession(false, false, null);
-
+    List<VirtualFile> files = ContainerUtil.newArrayList();
     for (Project project : ProjectManagerEx.getInstanceEx().getOpenProjects()) {
-      VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
-      for (VirtualFile file : files) {
+      VirtualFile[] projectFiles = FileEditorManager.getInstance(project).getSelectedFiles();
+      for (VirtualFile file : projectFiles) {
         if (file instanceof NewVirtualFile) {
-          session.addFile(file);
+          files.add(file);
         }
       }
     }
 
-    session.launch();
+    if (!files.isEmpty()) {
+      // refresh open files synchronously so it doesn't wait for potentially longish refresh request in the queue to finish
+      RefreshQueue.getInstance().refresh(false, false, null, files);
+    }
   }
   
   public void blockSaveOnFrameDeactivation() {

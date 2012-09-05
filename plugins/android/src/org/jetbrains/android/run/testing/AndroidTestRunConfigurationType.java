@@ -23,8 +23,8 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.LayeredIcon;
+import icons.AndroidIcons;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,7 +41,7 @@ public class AndroidTestRunConfigurationType implements ConfigurationType {
 
   static {
     LayeredIcon icon = new LayeredIcon(2);
-    icon.setIcon(AndroidUtils.ANDROID_ICON, 0);
+    icon.setIcon(AndroidIcons.Android, 0);
     icon.setIcon(AllIcons.Nodes.JunitTestMark, 1);
     ANDROID_TEST_ICON = icon;
   }

@@ -12,7 +12,6 @@ import javax.swing.*;
  */
 public class GradleIcons {
 
-  public static final Icon GRADLE_ICON       = icons.GradleIcons.Gradle;
   public static final Icon PROJECT_ICON      = getProjectIcon();
 
   private GradleIcons() {

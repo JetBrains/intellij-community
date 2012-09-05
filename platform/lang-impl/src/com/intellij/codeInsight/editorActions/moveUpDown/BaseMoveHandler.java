@@ -38,6 +38,7 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler {
     isDown = down;
   }
 
+  @Override
   public void executeWriteAction(Editor editor, DataContext dataContext) {
     final Project project = editor.getProject();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
@@ -50,6 +51,7 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler {
     }
   }
 
+  @Override
   public boolean isEnabled(Editor editor, DataContext dataContext) {
     if (editor.isViewer() || editor.isOneLineMode()) return false;
     final Project project = editor.getProject();

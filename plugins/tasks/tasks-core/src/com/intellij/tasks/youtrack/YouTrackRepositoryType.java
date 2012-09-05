@@ -16,15 +16,13 @@ import java.util.EnumSet;
  */
 public class YouTrackRepositoryType extends BaseRepositoryType<YouTrackRepository> {
 
-  private static final Icon ICON = TasksCoreIcons.Youtrack;
-
   @NotNull
   public String getName() {
     return "YouTrack";
   }
 
   public Icon getIcon() {
-    return ICON;
+    return TasksCoreIcons.Youtrack;
   }
 
   @NotNull

@@ -41,6 +41,7 @@ public abstract class BaseCodeInsightAction extends CodeInsightAction {
     myLookForInjectedEditor = lookForInjectedEditor;
   }
 
+  @Override
   @Nullable
   protected Editor getEditor(@NotNull final DataContext dataContext, @NotNull final Project project) {
     Editor editor = getBaseEditor(dataContext, project);
@@ -70,6 +71,7 @@ public abstract class BaseCodeInsightAction extends CodeInsightAction {
     return super.getEditor(dataContext, project);
   }
 
+  @Override
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();

@@ -136,7 +136,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     return getCollapsedRegionAtOffset(offset) != null;
   }
 
-  private void assertIsDispatchThread() {
+  private void assertIsDispatchThreadForEditor() {
     ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(myEditor.getComponent());
   }
   private static void assertReadAccess() {
@@ -145,7 +145,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
   @Override
   public void setFoldingEnabled(boolean isEnabled) {
-    assertIsDispatchThread();
+    assertIsDispatchThreadForEditor();
     myIsFoldingEnabled = isEnabled;
   }
 
@@ -163,7 +163,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
   @Override
   public boolean addFoldRegion(@NotNull final FoldRegion region) {
-    assertIsDispatchThread();
+    assertIsDispatchThreadForEditor();
     if (!isFoldingEnabled()) {
       return false;
     }
@@ -198,7 +198,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   private void runBatchFoldingOperation(final Runnable operation, final boolean dontCollapseCaret, final boolean moveCaret) {
-    assertIsDispatchThread();
+    assertIsDispatchThreadForEditor();
     boolean oldDontCollapseCaret = myDoNotCollapseCaret;
     myDoNotCollapseCaret |= dontCollapseCaret;
     boolean oldBatchFlag = myIsBatchFoldingProcessing;
@@ -266,7 +266,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
   @Override
   public void removeFoldRegion(@NotNull final FoldRegion region) {
-    assertIsDispatchThread();
+    assertIsDispatchThreadForEditor();
 
     if (!myIsBatchFoldingProcessing) {
       LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
@@ -289,7 +289,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   public void expandFoldRegion(FoldRegion region) {
-    assertIsDispatchThread();
+    assertIsDispatchThreadForEditor();
     if (region.isExpanded() || region.shouldNeverExpand()) return;
 
     if (!myIsBatchFoldingProcessing) {
@@ -312,7 +312,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   public void collapseFoldRegion(FoldRegion region) {
-    assertIsDispatchThread();
+    assertIsDispatchThreadForEditor();
     if (!region.isExpanded()) return;
 
     if (!myIsBatchFoldingProcessing) {

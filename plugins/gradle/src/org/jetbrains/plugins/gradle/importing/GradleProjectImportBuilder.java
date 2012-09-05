@@ -24,7 +24,6 @@ import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.model.gradle.GradleEntity;
 import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
-import org.jetbrains.plugins.gradle.ui.GradleIcons;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleLog;
@@ -58,7 +57,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
 
   @Override
   public Icon getIcon() {
-    return GradleIcons.GRADLE_ICON;
+    return icons.GradleIcons.Gradle;
   }
 
   @Override

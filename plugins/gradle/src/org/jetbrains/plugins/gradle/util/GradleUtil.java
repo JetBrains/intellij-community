@@ -48,7 +48,10 @@ import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
 import org.jetbrains.plugins.gradle.task.GradleResolveProjectTask;
-import org.jetbrains.plugins.gradle.ui.*;
+import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
+import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
+import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
+import org.jetbrains.plugins.gradle.ui.MatrixControlBuilder;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -84,7 +87,7 @@ public class GradleUtil {
    * <p/>
    * <b>Note:</b> we want to fall back to the standard {@link FileTypeDescriptor} when dedicated gradle file type
    * is introduced (it's processed as groovy file at the moment). We use open project descriptor here in order to show
-   * custom gradle icon at the file chooser ({@link GradleIcons#GRADLE_ICON}, is used at the file chooser dialog via 
+   * custom gradle icon at the file chooser ({@link icons.GradleIcons#Gradle}, is used at the file chooser dialog via
    * the dedicated gradle project open processor).
    */
   public static FileChooserDescriptor getFileChooserDescriptor() {

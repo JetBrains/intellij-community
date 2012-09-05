@@ -33,10 +33,12 @@ public abstract class FileTypeBasedContextType extends TemplateContextType {
     myFileType = fileType;
   }
 
+  @Override
   public boolean isInContext(@NotNull final PsiFile file, final int offset) {
     return myFileType == file.getFileType();
   }
 
+  @Override
   public SyntaxHighlighter createHighlighter() {
     return SyntaxHighlighter.PROVIDER.create(myFileType, null, null);
   }

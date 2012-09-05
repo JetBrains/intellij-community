@@ -107,7 +107,7 @@ public class RefreshQueueImpl extends RefreshQueue {
   }
 
   @Override
-  public void processSingleEvent(VFileEvent event) {
+  public void processSingleEvent(@NotNull VFileEvent event) {
     new RefreshSessionImpl(Collections.singletonList(event)).launch();
   }
 }

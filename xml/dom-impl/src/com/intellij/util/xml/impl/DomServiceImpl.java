@@ -40,7 +40,6 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.structure.DomStructureViewBuilder;
 import com.intellij.util.xml.stubs.FileStub;
-import com.intellij.util.xml.stubs.builder.DomStubBuilder;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +66,7 @@ public class DomServiceImpl extends DomService {
   @NotNull
   private static XmlFileHeader calcXmlFileHeader(final XmlFile file) {
 
-    if (!DomStubBuilder.isStubBuilding(file) && file.getFileType() == XmlFileType.INSTANCE) {
+    if (!XmlUtil.isStubBuilding(file) && file.getFileType() == XmlFileType.INSTANCE) {
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile instanceof VirtualFileWithId) {
         ObjectStubTree tree = StubTreeLoader.getInstance().readFromVFile(file.getProject(), virtualFile);

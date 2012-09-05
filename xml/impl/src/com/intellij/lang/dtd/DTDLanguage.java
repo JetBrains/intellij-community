@@ -16,7 +16,7 @@
 package com.intellij.lang.dtd;
 
 import com.intellij.ide.highlighter.XmlFileHighlighter;
-import com.intellij.lang.Language;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -25,12 +25,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author max
  */
-public class DTDLanguage extends Language {
+public class DTDLanguage extends XMLLanguage {
 
   public static final DTDLanguage INSTANCE = new DTDLanguage();
 
   protected DTDLanguage() {
-    super("DTD", "text/dtd", "text/x-dtd");
+    super(XMLLanguage.INSTANCE, "DTD", "text/dtd", "text/x-dtd");
     SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
       @NotNull
       protected SyntaxHighlighter createHighlighter() {

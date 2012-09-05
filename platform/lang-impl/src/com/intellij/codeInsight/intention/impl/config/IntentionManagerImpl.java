@@ -64,10 +64,12 @@ public class IntentionManagerImpl extends IntentionManager {
     final ExtensionPoint<IntentionActionBean> point = Extensions.getArea(null).getExtensionPoint(EP_INTENTION_ACTIONS);
 
     point.addExtensionPointListener(new ExtensionPointListener<IntentionActionBean>() {
+      @Override
       public void extensionAdded(@NotNull final IntentionActionBean extension, @Nullable final PluginDescriptor pluginDescriptor) {
         registerIntentionFromBean(extension);
       }
 
+      @Override
       public void extensionRemoved(@NotNull final IntentionActionBean extension, @Nullable final PluginDescriptor pluginDescriptor) {
       }
     });
@@ -75,6 +77,7 @@ public class IntentionManagerImpl extends IntentionManager {
 
   private void registerIntentionFromBean(final IntentionActionBean extension) {
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         final String descriptionDirectoryName = extension.getDescriptionDirectoryName();
         final String[] categories = extension.getCategories();
@@ -108,6 +111,7 @@ public class IntentionManagerImpl extends IntentionManager {
     return new IntentionActionWrapper(intentionActionBean,categories);
   }
 
+  @Override
   public void registerIntentionAndMetaData(@NotNull IntentionAction action, @NotNull String... category) {
     registerIntentionAndMetaData(action, category, getDescriptionDirectoryName(action));
   }
@@ -127,11 +131,13 @@ public class IntentionManagerImpl extends IntentionManager {
     return fqn.substring(fqn.lastIndexOf('.') + 1).replaceAll("\\$", "");
   }
 
+  @Override
   public void registerIntentionAndMetaData(@NotNull IntentionAction action, @NotNull String[] category, @NotNull @NonNls String descriptionDirectoryName) {
     addAction(action);
     mySettings.registerIntentionMetaData(action, category, descriptionDirectoryName);
   }
 
+  @Override
   public void registerIntentionAndMetaData(@NotNull final IntentionAction action,
                                            @NotNull final String[] category,
                                            @NotNull final String description,
@@ -161,6 +167,7 @@ public class IntentionManagerImpl extends IntentionManager {
     return result;
   }
 
+  @Override
   @NotNull
   public List<IntentionAction> getStandardIntentionOptions(@NotNull final HighlightDisplayKey displayKey, @NotNull final PsiElement context) {
     List<IntentionAction> options = new ArrayList<IntentionAction>(9);
@@ -170,22 +177,26 @@ public class IntentionManagerImpl extends IntentionManager {
     return options;
   }
 
+  @Override
   @NotNull
   public LocalQuickFix convertToFix(@NotNull final IntentionAction action) {
     if (action instanceof LocalQuickFix) {
       return (LocalQuickFix)action;
     }
     return new LocalQuickFix() {
+      @Override
       @NotNull
       public String getName() {
         return action.getText();
       }
 
+      @Override
       @NotNull
       public String getFamilyName() {
         return action.getFamilyName();
       }
 
+      @Override
       public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
         final PsiFile psiFile = descriptor.getPsiElement().getContainingFile();
         try {
@@ -198,10 +209,12 @@ public class IntentionManagerImpl extends IntentionManager {
     };
   }
 
+  @Override
   public void addAction(@NotNull IntentionAction action) {
     myActions.add(action);
   }
 
+  @Override
   @NotNull
   public IntentionAction[] getIntentionActions() {
     return myActions.toArray(new IntentionAction[myActions.size()]);

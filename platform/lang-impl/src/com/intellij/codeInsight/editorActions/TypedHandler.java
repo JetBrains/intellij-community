@@ -130,6 +130,7 @@ public class TypedHandler extends TypedActionHandlerBase {
     quoteHandlers.put(fileType, quoteHandler);
   }
 
+  @Override
   public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null || editor.isColumnMode()){
@@ -548,6 +549,7 @@ public class TypedHandler extends TypedActionHandlerBase {
       BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(file.getFileType(), iterator);
       if (element.getNode() != null && braceMatcher.isStructuralBrace(iterator, chars, file.getFileType())) {
         final Runnable action = new Runnable() {
+          @Override
           public void run(){
             try{
               int newOffset = CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);

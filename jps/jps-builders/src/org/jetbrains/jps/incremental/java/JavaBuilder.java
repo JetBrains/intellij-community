@@ -45,6 +45,8 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.LanguageLevel;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerConfiguration;
+import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerExtensionService;
 
 import javax.tools.*;
 import java.io.*;
@@ -204,19 +206,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
 
       final JavaBuilderLogger logger = context.getLoggingManager().getJavaBuilderLogger();
-      if (logger.isEnabled()) {
-        if (filesToCompile.size() > 0 && context.isMake()) {
-          logger.log("Compiling files:");
-          final String[] buffer = new String[filesToCompile.size()];
-          int i = 0;
-          for (final File f : filesToCompile) {
-            buffer[i++] = FileUtil.toSystemIndependentName(f.getCanonicalPath());
-          }
-          Arrays.sort(buffer);
-          for (final String s : buffer) {
-            logger.log(s);
-          }
-          logger.log("End of files");
+      if (logger.isEnabled() && context.isMake()) {
+        if (filesToCompile.size() > 0) {
+          logFiles(filesToCompile, logger, "Compiling files:");
+        }
+        if (!formsToCompile.isEmpty()) {
+          logFiles(formsToCompile, logger, "Compiling forms:");
         }
       }
 
@@ -235,6 +230,20 @@ public class JavaBuilder extends ModuleLevelBuilder {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
       throw new ProjectBuildException(message, e);
     }
+  }
+
+  private static void logFiles(Set<File> files, JavaBuilderLogger logger, final String description) throws IOException {
+    logger.log(description);
+    final String[] buffer = new String[files.size()];
+    int i = 0;
+    for (final File f : files) {
+      buffer[i++] = FileUtil.toSystemIndependentName(f.getCanonicalPath());
+    }
+    Arrays.sort(buffer);
+    for (final String s : buffer) {
+      logger.log(s);
+    }
+    logger.log("End of files");
   }
 
   @Override
@@ -330,7 +339,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
               try {
                 context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
                 instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputSink);
-                if (pd.project.getUiDesignerConfiguration().isCopyFormsRuntimeToOutput() && !chunk.isTests()) {
+                JpsUiDesignerConfiguration configuration = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(pd.jpsProject);
+                if (configuration != null && configuration.isCopyFormsRuntimeToOutput() && !chunk.isTests()) {
                   for (JpsModule module : chunk.getModules()) {
                     final File outputDir = paths.getModuleOutputDir(module, false);
                     if (outputDir != null) {

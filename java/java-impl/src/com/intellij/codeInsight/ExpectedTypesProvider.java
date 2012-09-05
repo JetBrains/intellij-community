@@ -330,29 +330,52 @@ public class ExpectedTypesProvider {
       return null;
     }
 
-    @Override public void visitReturnStatement(PsiReturnStatement statement) {
-      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(statement, PsiLambdaExpression.class);
-      final PsiMethod interfaceMethod = lambdaExpression != null ? LambdaUtil.getFunctionalInterfaceMethod(lambdaExpression.getFunctionalInterfaceType()) : null;
-      final PsiMethod scopeMethod = interfaceMethod != null ? interfaceMethod : PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression lambdaExpression) {
+      super.visitLambdaExpression(lambdaExpression);
+      final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
+      final PsiMethod scopeMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
       if (scopeMethod != null) {
-        PsiType type = scopeMethod.getReturnType();
-        if (type != null) {
-          ExpectedTypeInfoImpl info = createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type,
-                                                     TailType.SEMICOLON);
-          if (PropertyUtil.isSimplePropertyAccessor(scopeMethod)) {
-            info.expectedName = new NullableComputable<String>() {
-              @Override
-              public String compute() {
-                return PropertyUtil.getPropertyName(scopeMethod);
-              }
-            };
-          }
+        visitMethodReturnType(scopeMethod, LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType));
+      }
+    }
 
-          myResult = new ExpectedTypeInfo[]{info};
+    @Override public void visitReturnStatement(PsiReturnStatement statement) {
+      final PsiMethod method;
+      final PsiType type;
+      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(statement, PsiLambdaExpression.class);
+      if (lambdaExpression != null) {
+        final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
+        method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
+        type = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
+      }
+      else {
+        method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
+        type = method != null ? method.getReturnType() : null;
+      }
+
+      if (method != null) {
+        visitMethodReturnType(method, type);
+      }
+    }
+
+    private void visitMethodReturnType(final PsiMethod scopeMethod, PsiType type) {
+      if (type != null) {
+        ExpectedTypeInfoImpl info = createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type,
+                                                   TailType.SEMICOLON);
+        if (PropertyUtil.isSimplePropertyAccessor(scopeMethod)) {
+          info.expectedName = new NullableComputable<String>() {
+            @Override
+            public String compute() {
+              return PropertyUtil.getPropertyName(scopeMethod);
+            }
+          };
         }
-        else {
-          myResult = ExpectedTypeInfo.EMPTY_ARRAY;
-        }
+
+        myResult = new ExpectedTypeInfo[]{info};
+      }
+      else {
+        myResult = ExpectedTypeInfo.EMPTY_ARRAY;
       }
     }
 

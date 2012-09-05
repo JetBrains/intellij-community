@@ -120,11 +120,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final HashMap<KeyStroke, ActionListener> myKeyboardActions = new HashMap<KeyStroke, ActionListener>();
   // KeyStroke --> ActionListener
 
+  @Override
   public boolean requestFocusInWindow() {
     return myScrollPane.requestFocusInWindow();
   }
 
 
+  @Override
   public void requestFocus() {
     myScrollPane.requestFocus();
   }
@@ -135,6 +137,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myIsShown = false;
 
     myEditorPane = new JEditorPane(UIUtil.HTML_MIME, "") {
+      @Override
       public Dimension getPreferredScrollableViewportSize() {
         if (getWidth() == 0 || getHeight() == 0) {
           setSize(MAX_WIDTH, MAX_HEIGHT);
@@ -152,6 +155,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         enableEvents(AWTEvent.KEY_EVENT_MASK);
       }
 
+      @Override
       protected void processKeyEvent(KeyEvent e) {
         KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
         ActionListener listener = myKeyboardActions.get(keyStroke);
@@ -215,6 +219,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myScrollPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
 
     final MouseAdapter mouseAdapter = new MouseAdapter() {
+      @Override
       public void mousePressed(MouseEvent e) {
         myManager.requestFocus();
         myShowSettingsButton.hideSettings();
@@ -222,12 +227,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     };
     myEditorPane.addMouseListener(mouseAdapter);
     Disposer.register(this, new Disposable() {
+      @Override
       public void dispose() {
         myEditorPane.removeMouseListener(mouseAdapter);
       }
     });
 
     final FocusAdapter focusAdapter = new FocusAdapter() {
+      @Override
       public void focusLost(FocusEvent e) {
         Component previouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(manager.getProject(getElement()));
 
@@ -239,6 +246,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myEditorPane.addFocusListener(focusAdapter);
 
     Disposer.register(this, new Disposable() {
+      @Override
       public void dispose() {
         myEditorPane.removeFocusListener(focusAdapter);
       }
@@ -313,6 +321,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myControlPanelVisible = false;
 
     final HyperlinkListener hyperlinkListener = new HyperlinkListener() {
+      @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
         HyperlinkEvent.EventType type = e.getEventType();
         if (type == HyperlinkEvent.EventType.ACTIVATED) {
@@ -322,6 +331,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     };
     myEditorPane.addHyperlinkListener(hyperlinkListener);
     Disposer.register(this, new Disposable() {
+      @Override
       public void dispose() {
         myEditorPane.removeHyperlinkListener(hyperlinkListener);
       }
@@ -503,6 +513,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         myEditorPane.scrollRectToVisible(viewRect);
       }
@@ -571,10 +582,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       super(CodeInsightBundle.message("javadoc.action.back"), null, AllIcons.Actions.Back);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       goBack();
     }
 
+    @Override
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(!myBackStack.isEmpty());
@@ -586,10 +599,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       super(CodeInsightBundle.message("javadoc.action.forward"), null, AllIcons.Actions.Forward);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       goForward();
     }
 
+    @Override
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(!myForwardStack.isEmpty());
@@ -602,6 +617,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), null);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       if (myElement != null) {
         final PsiElement element = myElement.getElement();
@@ -626,6 +642,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }
     }
 
+    @Override
     public void update(AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
@@ -649,6 +666,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), myEditorPane);
 
     myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
         int value = scrollBar.getValue() - scrollBar.getUnitIncrement(-1);
@@ -658,6 +676,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     });
 
     myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
         int value = scrollBar.getValue() + scrollBar.getUnitIncrement(+1);
@@ -667,6 +686,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     });
 
     myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
         int value = scrollBar.getValue() - scrollBar.getUnitIncrement(-1);
@@ -676,6 +696,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     });
 
     myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
         int value = scrollBar.getValue() + scrollBar.getUnitIncrement(+1);
@@ -685,6 +706,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     });
 
     myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0), new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
         int value = scrollBar.getValue() - scrollBar.getBlockIncrement(-1);
@@ -694,6 +716,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     });
 
     myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0), new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
         int value = scrollBar.getValue() + scrollBar.getBlockIncrement(+1);
@@ -703,6 +726,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     });
 
     myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0), new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
         scrollBar.setValue(0);
@@ -710,6 +734,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     });
 
     myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, 0), new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
         scrollBar.setValue(scrollBar.getMaximum());
@@ -717,6 +742,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     });
 
     myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, KeyEvent.CTRL_MASK), new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
         scrollBar.setValue(0);
@@ -724,6 +750,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     });
 
     myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, KeyEvent.CTRL_MASK), new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
         scrollBar.setValue(scrollBar.getMaximum());
@@ -735,6 +762,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return myText;
   }
 
+  @Override
   public void dispose() {
     myBackStack.clear();
     myForwardStack.clear();

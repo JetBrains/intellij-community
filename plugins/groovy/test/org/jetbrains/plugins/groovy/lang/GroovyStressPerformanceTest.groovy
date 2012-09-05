@@ -169,7 +169,7 @@ class Foo implements Bar {
 def foo(List<File> list) {
   for (file in list) {
 ${
-"   println bar(file)\n" * 20
+"   println bar(file)\n" * 100
 }
   }
 }
@@ -179,7 +179,6 @@ def bar(File file) { file.path }
   }
 
   public void "test using SSA variables in a for loop"() {
-    //todo RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     def text = """
 def foo(List<String> list, SomeClass sc) {
   List<String> result
@@ -190,7 +189,7 @@ ${
     bar2(s, result, sc)
     bar3(foo:s, bar:result, sc)
     sc.someMethod(s)
-''' * 2
+''' * 100
     }
   }
 }
@@ -203,6 +202,6 @@ class SomeClass {
   void someMethod(String s) {}
 }
 """
-    measureHighlighting(text, 1500)
+    measureHighlighting(text, 8000)
   }
 }

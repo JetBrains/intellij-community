@@ -33,6 +33,7 @@ public class HighlightUsagesAction extends AnAction implements DumbAware {
     setInjectedContext(true);
   }
 
+  @Override
   public void update(final AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
@@ -41,6 +42,7 @@ public class HighlightUsagesAction extends AnAction implements DumbAware {
                             PlatformDataKeys.EDITOR.getData(dataContext) != null);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
@@ -51,6 +53,7 @@ public class HighlightUsagesAction extends AnAction implements DumbAware {
     CommandProcessor.getInstance().executeCommand(
       project,
       new Runnable() {
+        @Override
         public void run() {
           PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
           try {

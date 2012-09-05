@@ -31,7 +31,7 @@ import javax.swing.*;
 public class MavenIconProvider extends IconProvider implements DumbAware {
   @Nullable
   public Icon getIcon(@NotNull final PsiElement element, final int flags) {
-    if (element instanceof PsiFile && MavenDomUtil.isMavenFile((PsiFile)element)) return MavenIcons.MAVEN_ICON;
+    if (element instanceof PsiFile && MavenDomUtil.isMavenFile((PsiFile)element)) return icons.MavenIcons.MavenLogo;
     return null;
   }
 }

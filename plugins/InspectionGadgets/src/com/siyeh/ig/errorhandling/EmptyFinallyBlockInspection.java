@@ -28,12 +28,10 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class EmptyFinallyBlockInspection extends BaseInspection {
-
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "empty.finally.block.display.name");
+    return InspectionGadgetsBundle.message("empty.finally.block.display.name");
   }
 
   @Override
@@ -44,8 +42,7 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "empty.finally.block.problem.descriptor");
+    return InspectionGadgetsBundle.message("empty.finally.block.problem.descriptor");
   }
 
   @Override
@@ -60,19 +57,15 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
   }
 
   private static class RemoveTryFinallyBlockFix extends InspectionGadgetsFix {
-
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "remove.try.finally.block.quickfix");
+      return InspectionGadgetsBundle.message("remove.try.finally.block.quickfix");
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiTryStatement tryStatement =
-        PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
+      final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
       if (tryStatement == null) {
         return;
       }
@@ -81,21 +74,33 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
         return;
       }
       final PsiElement parent = tryStatement.getParent();
+      if (parent == null) {
+        return;
+      }
+
+      final PsiResourceList resources = tryStatement.getResourceList();
+      if (resources != null) {
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+        for (PsiResourceVariable resource : resources.getResourceVariables()) {
+          final PsiStatement statement = factory.createStatementFromText(resource.getText() + ";", parent);
+          parent.addBefore(statement, tryStatement);
+        }
+      }
+
       final PsiElement first = tryBlock.getFirstBodyElement();
       final PsiElement last = tryBlock.getLastBodyElement();
       if (first != null && last != null) {
         parent.addRangeAfter(first, last, tryStatement);
       }
+
       tryStatement.delete();
     }
   }
 
   private static class RemoveFinallyBlockFix extends InspectionGadgetsFix {
-
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "remove.finally.block.quickfix");
+      return InspectionGadgetsBundle.message("remove.finally.block.quickfix");
     }
 
     @Override

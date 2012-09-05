@@ -37,10 +37,12 @@ public class ImageOrColorPreviewProjectComponent extends AbstractProjectComponen
     super(project);
   }
 
+  @Override
   public void projectOpened() {
     FileEditorManager.getInstance(myProject).addFileEditorManagerListener(new MyFileEditorManagerListener(), myProject);
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
@@ -48,6 +50,7 @@ public class ImageOrColorPreviewProjectComponent extends AbstractProjectComponen
   }
 
   private static class MyFileEditorManagerListener extends FileEditorManagerAdapter {
+    @Override
     public void fileOpened(final FileEditorManager source, final VirtualFile file) {
       if (isSuitable(source.getProject(), file)) {
         final FileEditor[] fileEditors = source.getEditors(file);

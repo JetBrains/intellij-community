@@ -18,13 +18,14 @@ package com.intellij.history.core;
 
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public abstract class ChangeSetsProcessor {
-  protected String myPath;
+  @NotNull protected String myPath;
 
-  public ChangeSetsProcessor(String path) {
+  public ChangeSetsProcessor(@NotNull String path) {
     myPath = path;
   }
 

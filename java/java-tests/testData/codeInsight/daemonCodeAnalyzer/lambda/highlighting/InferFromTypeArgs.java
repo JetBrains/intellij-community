@@ -8,6 +8,7 @@ public class BugReportLambdaSquiggles<T> {
 
   static void bar( BugReportLambdaSquiggles<Integer> x) {
     x.flatMap(t1 -> new ArrayList<String>(t1));
+    x.flatMap(t1 -> new ArrayList<>(t1));
   }
 
   interface Mapper<T, U> {

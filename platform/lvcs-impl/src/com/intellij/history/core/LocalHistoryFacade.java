@@ -26,6 +26,7 @@ import com.intellij.history.core.tree.RootEntry;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -89,7 +90,7 @@ public class LocalHistoryFacade {
     return putLabel(new PutLabelChange(myChangeList.nextId(), name, projectId));
   }
 
-  private void addChange(Change c) {
+  private void addChange(@NotNull Change c) {
     beginChangeSet();
     myChangeList.addChange(c);
     fireChangeAdded(c);
@@ -97,13 +98,14 @@ public class LocalHistoryFacade {
   }
 
   @TestOnly
-  public void addChangeInTests(StructuralChange c) {
+  public void addChangeInTests(@NotNull StructuralChange c) {
     addChange(c);
   }
 
-  private LabelImpl putLabel(final PutLabelChange c) {
+  private LabelImpl putLabel(@NotNull final PutLabelChange c) {
     addChange(c);
     return new LabelImpl() {
+      @Override
       public ByteContent getByteContent(RootEntry root, String path) {
         return getByteContentBefore(root, path, c);
       }
@@ -122,7 +124,7 @@ public class LocalHistoryFacade {
 
   private ByteContent getByteContentBefore(RootEntry root, String path, Change change) {
     root = root.copy();
-    revertUpTo(root, "", null, change, false);
+    revertUpTo(root, "", null, change, false, false);
     Entry entry = root.findEntry(path);
     if (entry == null) return new ByteContent(false, null);
     if (entry.isDirectory()) return new ByteContent(true, null);
@@ -151,8 +153,12 @@ public class LocalHistoryFacade {
     myChangeList.accept(v);
   }
 
-  public String revertUpTo(final RootEntry root, String path, final ChangeSet targetChangeSet,
-                           final Change targetChange, final boolean revertTargetChange) {
+  public String revertUpTo(@NotNull final RootEntry root,
+                           @NotNull String path,
+                           final ChangeSet targetChangeSet,
+                           final Change targetChange,
+                           final boolean revertTargetChange,
+                           final boolean warnOnFileNotFound) {
     final String[] result = {path};
     myChangeList.accept(new ChangeVisitor() {
       @Override
@@ -174,7 +180,7 @@ public class LocalHistoryFacade {
       public void visit(StructuralChange c) throws StopVisitingException {
         if (!revertTargetChange && c.equals(targetChange)) stop();
 
-        c.revertOn(root);
+        c.revertOn(root, warnOnFileNotFound);
         result[0] = c.revertPath(result[0]);
 
         if (c.equals(targetChange)) stop();
@@ -184,11 +190,12 @@ public class LocalHistoryFacade {
     return result[0];
   }
 
-  public void addListener(final Listener l, @Nullable Disposable parent) {
+  public void addListener(@NotNull final Listener l, @Nullable Disposable parent) {
     myListeners.add(l);
 
     if (parent != null) {
       Disposer.register(parent, new Disposable() {
+        @Override
         public void dispose() {
           myListeners.remove(l);
         }
@@ -196,7 +203,7 @@ public class LocalHistoryFacade {
     }
   }
 
-  public void removeListener(Listener l) {
+  public void removeListener(@NotNull Listener l) {
     myListeners.remove(l);
   }
 
@@ -212,7 +219,7 @@ public class LocalHistoryFacade {
     }
   }
 
-  public static abstract class Listener {
+  public abstract static class Listener {
     public void changeAdded(Change c) {
     }
 

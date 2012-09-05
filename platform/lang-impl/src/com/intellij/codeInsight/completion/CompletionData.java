@@ -163,6 +163,7 @@ public class CompletionData {
   }
 
   protected final CompletionVariant myGenericVariant = new CompletionVariant() {
+    @Override
     public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupElement> set, final PsiFile file,
                                         final CompletionData completionData) {
       completeReference(reference, position, set, TailType.NONE, file, TrueFilter.INSTANCE, this);
@@ -336,6 +337,7 @@ public class CompletionData {
   protected static PsiReference[] getReferences(final PsiMultiReference multiReference) {
     final PsiReference[] references = multiReference.getReferences();
     final List<PsiReference> hard = ContainerUtil.findAll(references, new Condition<PsiReference>() {
+      @Override
       public boolean value(final PsiReference object) {
         return !object.isSoft();
       }

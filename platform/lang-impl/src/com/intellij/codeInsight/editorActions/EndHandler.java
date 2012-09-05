@@ -39,6 +39,7 @@ public class EndHandler extends EditorActionHandler {
     myOriginalHandler = originalHandler;
   }
 
+  @Override
   public void execute(final Editor editor, DataContext dataContext) {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (!settings.SMART_END_ACTION) {
@@ -92,6 +93,7 @@ public class EndHandler extends EditorActionHandler {
           final AtomicBoolean stopProcessing = new AtomicBoolean(true);
           PsiDocumentManager.getInstance(project).commitAllDocuments();
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
               final String lineIndent = styleManager.getLineIndent(file, caretOffset);

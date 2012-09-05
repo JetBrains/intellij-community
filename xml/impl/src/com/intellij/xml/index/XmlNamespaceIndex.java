@@ -29,10 +29,14 @@ import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -164,7 +168,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
                                     @Nullable final String version,
                                     @NotNull PsiFile file) {
 
-    if (DumbService.isDumb(file.getProject())) return null;
+    if (DumbService.isDumb(file.getProject()) || XmlUtil.isStubBuilding(file)) return null;
 
     IndexedRelevantResource<String,XsdNamespaceBuilder> resource =
       guessSchema(namespace, tagName, version, ModuleUtilCore.findModuleForPsiElement(file));
@@ -176,7 +180,9 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
   @Nullable
   public static XmlFile guessDtd(String dtdUri, @NotNull PsiFile baseFile) {
 
-    if (!dtdUri.endsWith(".dtd") || DumbService.isDumb(baseFile.getProject())) return null;
+    if (!dtdUri.endsWith(".dtd") ||
+        DumbService.isDumb(baseFile.getProject()) ||
+        XmlUtil.isStubBuilding(baseFile)) return null;
 
     String dtdFileName = new File(dtdUri).getName();
     List<IndexedRelevantResource<String, XsdNamespaceBuilder>>

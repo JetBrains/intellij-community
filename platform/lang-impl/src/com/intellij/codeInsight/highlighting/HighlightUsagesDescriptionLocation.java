@@ -32,6 +32,7 @@ public class HighlightUsagesDescriptionLocation extends ElementDescriptionLocati
   @Override
   public ElementDescriptionProvider getDefaultProvider() {
     return new ElementDescriptionProvider() {
+      @Override
       public String getElementDescription(@NotNull PsiElement element, @NotNull ElementDescriptionLocation location) {
         if (element instanceof PsiPresentableMetaData) {
           return ((PsiPresentableMetaData)element).getTypeName();

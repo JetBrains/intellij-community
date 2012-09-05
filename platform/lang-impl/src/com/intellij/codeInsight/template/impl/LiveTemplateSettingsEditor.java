@@ -161,6 +161,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     myTemplateEditor.getDocument().addDocumentListener(
       new DocumentAdapter() {
+        @Override
         public void documentChanged(DocumentEvent e) {
           validateEditVariablesButton();
 
@@ -172,6 +173,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     myEditVariablesButton.addActionListener(
       new ActionListener(){
+        @Override
         public void actionPerformed(ActionEvent e) {
           editVariables();
         }
@@ -302,6 +304,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     panel.add(change, BorderLayout.EAST);
 
     final Runnable updateLabel = new Runnable() {
+      @Override
       public void run() {
         StringBuilder sb = new StringBuilder();
         String oldPrefix = "";
@@ -492,8 +495,10 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     CommandProcessor.getInstance().executeCommand(
       null, new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             final Document document = myTemplateEditor.getDocument();
             document.replaceString(0, document.getTextLength(), myTemplate.getString());

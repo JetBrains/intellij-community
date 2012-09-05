@@ -17,6 +17,7 @@
 package com.intellij.history.core.tree;
 
 import com.intellij.history.core.Paths;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutput;
 import java.io.IOException;
@@ -31,6 +32,8 @@ public class RootEntry extends DirectoryEntry {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
+  @Override
   public RootEntry copy() {
     return (RootEntry)super.copy();
   }

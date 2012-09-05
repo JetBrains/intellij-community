@@ -30,11 +30,13 @@ import com.intellij.openapi.project.Project;
 public class ExpandLiveTemplateByTabAction extends EditorAction {
   public ExpandLiveTemplateByTabAction() {
     super(new EditorWriteActionHandler() {
+      @Override
       public void executeWriteAction(Editor editor, DataContext dataContext) {
         Project project = editor.getProject();
         TemplateManager.getInstance(project).startTemplate(editor, TemplateSettings.TAB_CHAR);
       }
 
+      @Override
       public boolean isEnabled(Editor editor, DataContext dataContext) {
         Project project = editor.getProject();
         return project != null &&

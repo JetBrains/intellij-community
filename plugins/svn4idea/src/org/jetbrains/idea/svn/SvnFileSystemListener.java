@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.MultiMap;
@@ -667,7 +666,8 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     }
     // if refresh asynchronously, local changes would also be notified that they are dirty asynchronously,
     // and commit could be executed while not all changes are visible
-    final RefreshSession session = RefreshQueue.getInstance().createSession(true, true, new Runnable() {
+    filterOutInvalid(myFilesToRefresh);
+    RefreshQueue.getInstance().refresh(true, true, new Runnable() {
       public void run() {
         if (project.isDisposed()) return;
         filterOutInvalid(toRefreshFiles);
@@ -676,10 +676,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
         final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
         vcsDirtyScopeManager.filesDirty(toRefreshFiles, toRefreshDirs);
       }
-    });
-    filterOutInvalid(myFilesToRefresh);
-    session.addAllFiles(myFilesToRefresh);
-    session.launch();
+    }, myFilesToRefresh);
     myFilesToRefresh.clear();
   }
 

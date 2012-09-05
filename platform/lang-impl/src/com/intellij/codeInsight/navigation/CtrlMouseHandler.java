@@ -109,10 +109,12 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private enum BrowseMode {None, Declaration, TypeDeclaration, Implementation}
 
   private final KeyListener myEditorKeyListener = new KeyAdapter() {
+    @Override
     public void keyPressed(final KeyEvent e) {
       handleKey(e);
     }
 
+    @Override
     public void keyReleased(final KeyEvent e) {
       handleKey(e);
     }
@@ -142,6 +144,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   };
 
   private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerAdapter() {
+    @Override
     public void selectionChanged(FileEditorManagerEvent e) {
       disposeHighlighter();
       myTooltipProvider = null;
@@ -149,6 +152,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   };
 
   private final VisibleAreaListener myVisibleAreaListener = new VisibleAreaListener() {
+    @Override
     public void visibleAreaChanged(VisibleAreaEvent e) {
       disposeHighlighter();
       myTooltipProvider = null;
@@ -156,6 +160,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   };
 
   private final EditorMouseAdapter myEditorMouseAdapter = new EditorMouseAdapter() {
+    @Override
     public void mouseReleased(EditorMouseEvent e) {
       disposeHighlighter();
       myTooltipProvider = null;
@@ -163,6 +168,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   };
 
   private final EditorMouseMotionListener myEditorMouseMotionListener = new EditorMouseMotionAdapter() {
+    @Override
     public void mouseMoved(final EditorMouseEvent e) {
       if (e.isConsumed() || !myProject.isInitialized()) {
         return;
@@ -221,6 +227,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   {
     super(project);
     startupManager.registerPostStartupActivity(new DumbAwareRunnable() {
+      @Override
       public void run() {
         EditorEventMulticaster eventMulticaster = editorFactory.getEventMulticaster();
         eventMulticaster.addEditorMouseListener(myEditorMouseAdapter, project);
@@ -239,6 +246,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     myDocAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, myProject);
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "CtrlMouseHandler";
@@ -402,6 +410,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       myTargetElement = targetElement;
     }
 
+    @Override
     @NotNull
     public DocInfo getInfo() {
       AccessToken token = ReadAction.start();
@@ -417,6 +426,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
     }
 
+    @Override
     public boolean isValid(Document document) {
       if (!myTargetElement.isValid()) return false;
       if (!myElementAtPointer.isValid()) return false;
@@ -438,11 +448,13 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       super(elementAtPointer);
     }
     
+    @Override
     @NotNull
     public DocInfo getInfo() {
       return new DocInfo(CodeInsightBundle.message("multiple.implementations.tooltip"), null, null);
     }
 
+    @Override
     public boolean isValid(Document document) {
       return rangesAreCorrect(document);
     }
@@ -497,10 +509,12 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     else if (browseMode == BrowseMode.Implementation) {
       final PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
       PsiElement[] targetElements = new ImplementationSearcher() {
+        @Override
         @NotNull
         protected PsiElement[] searchDefinitions(final PsiElement element) {
           final List<PsiElement> found = new ArrayList<PsiElement>(2);
           DefinitionsSearch.search(element).forEach(new Processor<PsiElement>() {
+            @Override
             public boolean process(final PsiElement psiElement) {
               found.add(psiElement);
               return found.size() != 2;
@@ -693,8 +707,10 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
       if (offset >= selStart && offset < selEnd) return;
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
         public void run() {
           ProgressIndicatorUtils.runWithWriteActionPriority(new Runnable() {
+            @Override
             public void run() {
               doExecute(file, offset);
             }
@@ -715,6 +731,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       if (info == null) return;
 
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (myDisposed || myEditor.isDisposed() || !myEditor.getComponent().isShowing()) return;
           showHint(info);

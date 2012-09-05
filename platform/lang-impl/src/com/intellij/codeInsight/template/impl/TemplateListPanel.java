@@ -68,6 +68,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
   private static final TemplateImpl MOCK_TEMPLATE = new TemplateImpl("mockTemplate-xxx", "mockTemplateGroup-yyy");
   public static final String ABBREVIATION = "<abbreviation>";
   public static final Comparator<TemplateImpl> TEMPLATE_COMPARATOR = new Comparator<TemplateImpl>() {
+    @Override
     public int compare(final TemplateImpl o1, final TemplateImpl o2) {
       return o1.getKey().compareToIgnoreCase(o2.getKey());
     }
@@ -113,6 +114,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     add(splitter, BorderLayout.CENTER);
   }
 
+  @Override
   public void dispose() {
     myCurrentTemplateEditor.dispose();
     myAlarm.cancelAllRequests();
@@ -126,6 +128,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     List<TemplateGroup> groups = new ArrayList<TemplateGroup>(templateSettings.getTemplateGroups());
 
     Collections.sort(groups, new Comparator<TemplateGroup>() {
+      @Override
       public int compare(final TemplateGroup o1, final TemplateGroup o2) {
         return o1.getName().compareToIgnoreCase(o2.getName());
       }
@@ -146,6 +149,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     }
 
     UiNotifyConnector.doWhenFirstShown(this, new Runnable() {
+      @Override
       public void run() {
         updateTemplateDetails(false);
       }
@@ -225,6 +229,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       result.addAll(group.getElements());
     }
     Collections.sort(result, new Comparator<TemplateImpl>(){
+      @Override
       public int compare(final TemplateImpl o1, final TemplateImpl o2) {
         final int groupsEqual = o1.getGroupName().compareToIgnoreCase(o2.getGroupName());
         if (groupsEqual != 0) {
@@ -539,6 +544,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     myTreeRoot = new CheckedTreeNode(null);
 
     myTree = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer(){
+      @Override
       public void customizeRenderer(final JTree tree,
                                         Object value,
                                         final boolean selected,
@@ -592,6 +598,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     myTree.setShowsRootHandles(true);
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener(){
+      @Override
       public void valueChanged(final TreeSelectionEvent e) {
         TemplateSettings templateSettings = TemplateSettings.getInstance();
         TemplateImpl template = getTemplate(getSingleSelectedIndex());
@@ -604,6 +611,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
         if (myUpdateNeeded) {
           myAlarm.cancelAllRequests();
           myAlarm.addRequest(new Runnable() {
+            @Override
             public void run() {
               updateTemplateDetails(false);
             }
@@ -613,6 +621,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     });
 
     myTree.registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent event) {
         myCurrentTemplateEditor.focusKey();
       }
@@ -725,6 +734,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
         @Override
         public void actionPerformed(AnActionEvent e) {
           new SchemesToImportPopup<TemplateGroup, TemplateGroup>(TemplateListPanel.this){
+            @Override
             protected void onSchemeSelected(final TemplateGroup scheme) {
               for (TemplateImpl newTemplate : scheme.getElements()) {
                 for (TemplateImpl existingTemplate : collectAllTemplates()) {

@@ -1956,14 +1956,6 @@ public final class CmdlineRemoteProto {
         org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair getPathVariable(int index);
         int getPathVariableCount();
         
-        // optional string global_encoding = 3;
-        boolean hasGlobalEncoding();
-        String getGlobalEncoding();
-        
-        // optional string ignored_files_patterns = 4;
-        boolean hasIgnoredFilesPatterns();
-        String getIgnoredFilesPatterns();
-        
         // required string global_options_path = 5;
         boolean hasGlobalOptionsPath();
         String getGlobalOptionsPath();
@@ -2008,75 +2000,11 @@ public final class CmdlineRemoteProto {
           return pathVariable_.get(index);
         }
         
-        // optional string global_encoding = 3;
-        public static final int GLOBAL_ENCODING_FIELD_NUMBER = 3;
-        private java.lang.Object globalEncoding_;
-        public boolean hasGlobalEncoding() {
-          return ((bitField0_ & 0x00000001) == 0x00000001);
-        }
-        public String getGlobalEncoding() {
-          java.lang.Object ref = globalEncoding_;
-          if (ref instanceof String) {
-            return (String) ref;
-          } else {
-            com.google.protobuf.ByteString bs = 
-                (com.google.protobuf.ByteString) ref;
-            String s = bs.toStringUtf8();
-            if (com.google.protobuf.Internal.isValidUtf8(bs)) {
-              globalEncoding_ = s;
-            }
-            return s;
-          }
-        }
-        private com.google.protobuf.ByteString getGlobalEncodingBytes() {
-          java.lang.Object ref = globalEncoding_;
-          if (ref instanceof String) {
-            com.google.protobuf.ByteString b = 
-                com.google.protobuf.ByteString.copyFromUtf8((String) ref);
-            globalEncoding_ = b;
-            return b;
-          } else {
-            return (com.google.protobuf.ByteString) ref;
-          }
-        }
-        
-        // optional string ignored_files_patterns = 4;
-        public static final int IGNORED_FILES_PATTERNS_FIELD_NUMBER = 4;
-        private java.lang.Object ignoredFilesPatterns_;
-        public boolean hasIgnoredFilesPatterns() {
-          return ((bitField0_ & 0x00000002) == 0x00000002);
-        }
-        public String getIgnoredFilesPatterns() {
-          java.lang.Object ref = ignoredFilesPatterns_;
-          if (ref instanceof String) {
-            return (String) ref;
-          } else {
-            com.google.protobuf.ByteString bs = 
-                (com.google.protobuf.ByteString) ref;
-            String s = bs.toStringUtf8();
-            if (com.google.protobuf.Internal.isValidUtf8(bs)) {
-              ignoredFilesPatterns_ = s;
-            }
-            return s;
-          }
-        }
-        private com.google.protobuf.ByteString getIgnoredFilesPatternsBytes() {
-          java.lang.Object ref = ignoredFilesPatterns_;
-          if (ref instanceof String) {
-            com.google.protobuf.ByteString b = 
-                com.google.protobuf.ByteString.copyFromUtf8((String) ref);
-            ignoredFilesPatterns_ = b;
-            return b;
-          } else {
-            return (com.google.protobuf.ByteString) ref;
-          }
-        }
-        
         // required string global_options_path = 5;
         public static final int GLOBAL_OPTIONS_PATH_FIELD_NUMBER = 5;
         private java.lang.Object globalOptionsPath_;
         public boolean hasGlobalOptionsPath() {
-          return ((bitField0_ & 0x00000004) == 0x00000004);
+          return ((bitField0_ & 0x00000001) == 0x00000001);
         }
         public String getGlobalOptionsPath() {
           java.lang.Object ref = globalOptionsPath_;
@@ -2106,8 +2034,6 @@ public final class CmdlineRemoteProto {
         
         private void initFields() {
           pathVariable_ = java.util.Collections.emptyList();
-          globalEncoding_ = "";
-          ignoredFilesPatterns_ = "";
           globalOptionsPath_ = "";
         }
         private byte memoizedIsInitialized = -1;
@@ -2136,12 +2062,6 @@ public final class CmdlineRemoteProto {
             output.writeMessage(1, pathVariable_.get(i));
           }
           if (((bitField0_ & 0x00000001) == 0x00000001)) {
-            output.writeBytes(3, getGlobalEncodingBytes());
-          }
-          if (((bitField0_ & 0x00000002) == 0x00000002)) {
-            output.writeBytes(4, getIgnoredFilesPatternsBytes());
-          }
-          if (((bitField0_ & 0x00000004) == 0x00000004)) {
             output.writeBytes(5, getGlobalOptionsPathBytes());
           }
         }
@@ -2157,14 +2077,6 @@ public final class CmdlineRemoteProto {
               .computeMessageSize(1, pathVariable_.get(i));
           }
           if (((bitField0_ & 0x00000001) == 0x00000001)) {
-            size += com.google.protobuf.CodedOutputStream
-              .computeBytesSize(3, getGlobalEncodingBytes());
-          }
-          if (((bitField0_ & 0x00000002) == 0x00000002)) {
-            size += com.google.protobuf.CodedOutputStream
-              .computeBytesSize(4, getIgnoredFilesPatternsBytes());
-          }
-          if (((bitField0_ & 0x00000004) == 0x00000004)) {
             size += com.google.protobuf.CodedOutputStream
               .computeBytesSize(5, getGlobalOptionsPathBytes());
           }
@@ -2272,12 +2184,8 @@ public final class CmdlineRemoteProto {
             super.clear();
             pathVariable_ = java.util.Collections.emptyList();
             bitField0_ = (bitField0_ & ~0x00000001);
-            globalEncoding_ = "";
-            bitField0_ = (bitField0_ & ~0x00000002);
-            ignoredFilesPatterns_ = "";
-            bitField0_ = (bitField0_ & ~0x00000004);
             globalOptionsPath_ = "";
-            bitField0_ = (bitField0_ & ~0x00000008);
+            bitField0_ = (bitField0_ & ~0x00000002);
             return this;
           }
           
@@ -2319,14 +2227,6 @@ public final class CmdlineRemoteProto {
             if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
               to_bitField0_ |= 0x00000001;
             }
-            result.globalEncoding_ = globalEncoding_;
-            if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
-              to_bitField0_ |= 0x00000002;
-            }
-            result.ignoredFilesPatterns_ = ignoredFilesPatterns_;
-            if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
-              to_bitField0_ |= 0x00000004;
-            }
             result.globalOptionsPath_ = globalOptionsPath_;
             result.bitField0_ = to_bitField0_;
             return result;
@@ -2343,12 +2243,6 @@ public final class CmdlineRemoteProto {
                 pathVariable_.addAll(other.pathVariable_);
               }
               
-            }
-            if (other.hasGlobalEncoding()) {
-              setGlobalEncoding(other.getGlobalEncoding());
-            }
-            if (other.hasIgnoredFilesPatterns()) {
-              setIgnoredFilesPatterns(other.getIgnoredFilesPatterns());
             }
             if (other.hasGlobalOptionsPath()) {
               setGlobalOptionsPath(other.getGlobalOptionsPath());
@@ -2393,18 +2287,8 @@ public final class CmdlineRemoteProto {
                   addPathVariable(subBuilder.buildPartial());
                   break;
                 }
-                case 26: {
-                  bitField0_ |= 0x00000002;
-                  globalEncoding_ = input.readBytes();
-                  break;
-                }
-                case 34: {
-                  bitField0_ |= 0x00000004;
-                  ignoredFilesPatterns_ = input.readBytes();
-                  break;
-                }
                 case 42: {
-                  bitField0_ |= 0x00000008;
+                  bitField0_ |= 0x00000002;
                   globalOptionsPath_ = input.readBytes();
                   break;
                 }
@@ -2503,82 +2387,10 @@ public final class CmdlineRemoteProto {
             return this;
           }
           
-          // optional string global_encoding = 3;
-          private java.lang.Object globalEncoding_ = "";
-          public boolean hasGlobalEncoding() {
-            return ((bitField0_ & 0x00000002) == 0x00000002);
-          }
-          public String getGlobalEncoding() {
-            java.lang.Object ref = globalEncoding_;
-            if (!(ref instanceof String)) {
-              String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
-              globalEncoding_ = s;
-              return s;
-            } else {
-              return (String) ref;
-            }
-          }
-          public Builder setGlobalEncoding(String value) {
-            if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-            globalEncoding_ = value;
-            
-            return this;
-          }
-          public Builder clearGlobalEncoding() {
-            bitField0_ = (bitField0_ & ~0x00000002);
-            globalEncoding_ = getDefaultInstance().getGlobalEncoding();
-            
-            return this;
-          }
-          void setGlobalEncoding(com.google.protobuf.ByteString value) {
-            bitField0_ |= 0x00000002;
-            globalEncoding_ = value;
-            
-          }
-          
-          // optional string ignored_files_patterns = 4;
-          private java.lang.Object ignoredFilesPatterns_ = "";
-          public boolean hasIgnoredFilesPatterns() {
-            return ((bitField0_ & 0x00000004) == 0x00000004);
-          }
-          public String getIgnoredFilesPatterns() {
-            java.lang.Object ref = ignoredFilesPatterns_;
-            if (!(ref instanceof String)) {
-              String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
-              ignoredFilesPatterns_ = s;
-              return s;
-            } else {
-              return (String) ref;
-            }
-          }
-          public Builder setIgnoredFilesPatterns(String value) {
-            if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000004;
-            ignoredFilesPatterns_ = value;
-            
-            return this;
-          }
-          public Builder clearIgnoredFilesPatterns() {
-            bitField0_ = (bitField0_ & ~0x00000004);
-            ignoredFilesPatterns_ = getDefaultInstance().getIgnoredFilesPatterns();
-            
-            return this;
-          }
-          void setIgnoredFilesPatterns(com.google.protobuf.ByteString value) {
-            bitField0_ |= 0x00000004;
-            ignoredFilesPatterns_ = value;
-            
-          }
-          
           // required string global_options_path = 5;
           private java.lang.Object globalOptionsPath_ = "";
           public boolean hasGlobalOptionsPath() {
-            return ((bitField0_ & 0x00000008) == 0x00000008);
+            return ((bitField0_ & 0x00000002) == 0x00000002);
           }
           public String getGlobalOptionsPath() {
             java.lang.Object ref = globalOptionsPath_;
@@ -2594,19 +2406,19 @@ public final class CmdlineRemoteProto {
             if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000008;
+  bitField0_ |= 0x00000002;
             globalOptionsPath_ = value;
             
             return this;
           }
           public Builder clearGlobalOptionsPath() {
-            bitField0_ = (bitField0_ & ~0x00000008);
+            bitField0_ = (bitField0_ & ~0x00000002);
             globalOptionsPath_ = getDefaultInstance().getGlobalOptionsPath();
             
             return this;
           }
           void setGlobalOptionsPath(com.google.protobuf.ByteString value) {
-            bitField0_ |= 0x00000008;
+            bitField0_ |= 0x00000002;
             globalOptionsPath_ = value;
             
           }

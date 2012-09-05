@@ -28,6 +28,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
+  @Override
   public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffsetRef, @NotNull final Ref<Integer> caretAdvance,
                                 @NotNull final DataContext dataContext, final EditorActionHandler originalHandler) {
     int caretOffset = caretOffsetRef.get().intValue();

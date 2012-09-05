@@ -478,7 +478,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
     @Override public void visitAnnotation(PsiAnnotation annotation) {
       //prevent from @SuppressWarnings
-      if (!"java.lang.SuppressWarnings".equals(annotation.getQualifiedName())){
+      if (!SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME.equals(annotation.getQualifiedName())){
         super.visitAnnotation(annotation);
       }
     }

@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.fileEditor;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * This interface specifies a location in its file editor.
  * The Comparable interface implementation should present some natural order on locations.
@@ -24,5 +26,6 @@ package com.intellij.openapi.fileEditor;
  * not expected to be compared together.
  */
 public interface FileEditorLocation extends Comparable<FileEditorLocation> {
+  @NotNull
   FileEditor getEditor();
 }
