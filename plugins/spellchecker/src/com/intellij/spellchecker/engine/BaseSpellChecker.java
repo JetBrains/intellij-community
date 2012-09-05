@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.spellchecker.compress.CompressedDictionary;
+import com.intellij.spellchecker.compress.EncodingException;
 import com.intellij.spellchecker.dictionary.Dictionary;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.EditableDictionaryLoader;
@@ -40,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
@@ -270,7 +270,13 @@ public class BaseSpellChecker implements SpellCheckerEngine {
       return true;
     }
 
-    return dictionary.contains(transformed);
+    try {
+      return dictionary.contains(transformed);
+    }
+    catch (EncodingException e) {
+      //System.out.println("e.getMessage() = " + e.getMessage() + " " + transformed);
+      return true;
+    }
   }
 
   public boolean isCorrect(@NotNull String word) {

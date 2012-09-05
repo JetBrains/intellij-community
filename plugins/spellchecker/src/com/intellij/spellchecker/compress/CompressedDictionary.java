@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,23 +121,20 @@ public final class CompressedDictionary implements Dictionary {
     if (word == null) {
       return false;
     }
-    try {
-      UnitBitSet bs = encoder.encode(word, false);
-      if (bs == Encoder.WORD_OF_ENTIRELY_UNKNOWN_LETTERS) return false;  // TODO: polyglot.dic contains word typppo , wtf ?! also make tests for your changes!!!
-      if (bs == null) return false; // fail faster w/o search
-      byte[] compressed = UnitBitSet.getBytes(bs);
-      int index = -1;
-      for (int i = 0; i < lengths.length; i++) {
-        if (lengths[i] == compressed.length) {
-          index = i;
-          break;
-        }
+    UnitBitSet bs = encoder.encode(word, false);
+    if (bs == Encoder.WORD_OF_ENTIRELY_UNKNOWN_LETTERS)
+      throw new EncodingException("WORD_OF_ENTIRELY_UNKNOWN_LETTERS");
+    if (bs == null) return false;
+      //TODO throw new EncodingException("WORD_WITH_SOME_UNKNOWN_LETTERS");
+    byte[] compressed = UnitBitSet.getBytes(bs);
+    int index = -1;
+    for (int i = 0; i < lengths.length; i++) {
+      if (lengths[i] == compressed.length) {
+        index = i;
+        break;
       }
-      return index != -1 && contains(compressed, words[index]);
     }
-    catch (EncodingException ignored) {
-      return false;
-    }
+    return index != -1 && contains(compressed, words[index]);
 
   }
 
@@ -151,10 +148,6 @@ public final class CompressedDictionary implements Dictionary {
 
   public Set<String> getWords() {
     throw new UnsupportedOperationException();
-  }
-
-  public int getAlphabetLength() {
-    return alphabet.getLastIndexUsed();
   }
 
   public int size() {
