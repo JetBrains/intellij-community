@@ -182,6 +182,7 @@ public class FindUtil {
     FindSettings.getInstance().addStringToFind(s);
     findManager.getFindInFileModel().setStringToFind(s);
     findManager.setFindWasPerformed();
+    findManager.clearFindingNextUsageInFile();
     FindModel model = new FindModel();
     model.setStringToFind(s);
     model.setCaseSensitive(true);

@@ -157,6 +157,12 @@ public abstract class FindManager {
   public abstract void setFindWasPerformed();
 
   /**
+   * Explicitly tell FindManager that "Find Next" and "Find Previous" actions should not use
+   * find usages previous results.
+   */
+  public abstract void clearFindingNextUsageInFile();
+
+  /**
    * Sets the model containing the search settings to use for "Find Next" and
    * "Find Previous" operations.
    *
