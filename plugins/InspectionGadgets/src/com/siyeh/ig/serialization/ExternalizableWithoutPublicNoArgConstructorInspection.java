@@ -52,6 +52,10 @@ public class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseI
     final PsiMethod constructor = (PsiMethod)infos[1];
     if (constructor == null) {
       final PsiClass aClass = (PsiClass)infos[0];
+      if (aClass instanceof PsiAnonymousClass) {
+        // can't create constructor for anonymous class
+        return null;
+      }
       return new DelegatingFix(new AddDefaultConstructorFix(aClass, PsiModifier.PUBLIC));
     }
     else {
@@ -73,6 +77,7 @@ public class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseI
 
   private static class MakeConstructorPublicFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("make.constructor.public");
