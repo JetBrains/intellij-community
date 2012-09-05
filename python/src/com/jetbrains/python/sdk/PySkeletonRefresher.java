@@ -51,7 +51,7 @@ public class PySkeletonRefresher {
 
   @Nullable private Project myProject;
   private @Nullable final ProgressIndicator myIndicator;
-  private final Sdk mySdk;
+  @NotNull private final Sdk mySdk;
   private String mySkeletonsPath;
 
   @NonNls public static final String BLACKLIST_FILE_NAME = ".blacklist";
@@ -250,11 +250,9 @@ public class PySkeletonRefresher {
                                        (newHeader == null || newHeader.getVersion() < myVersionChecker.getBuiltinVersion());
     if (mustUpdateBuiltins) {
       indicate(PyBundle.message("sdk.gen.updating.builtins.$0", readablePath));
-      if (mySdk != null) {
-        mySkeletonsGenerator.generateBuiltinSkeletons(mySdk);
-        if (myProject != null) {
-          PythonSdkPathCache.getInstance(myProject, mySdk).clearBuiltins();
-        }
+      mySkeletonsGenerator.generateBuiltinSkeletons(mySdk);
+      if (myProject != null) {
+        PythonSdkPathCache.getInstance(myProject, mySdk).clearBuiltins();
       }
     }
 
@@ -476,7 +474,9 @@ public class PySkeletonRefresher {
         boolean canLive = header != null;
         if (canLive) {
           final String binaryFile = header.getBinaryFile();
-          canLive = SkeletonVersionChecker.BUILTIN_NAME.equals(binaryFile) || mySkeletonsGenerator.exists(binaryFile);
+          final String builtinsFileName = PythonSdkType.getBuiltinsFileName(mySdk);
+          canLive = SkeletonVersionChecker.BUILTIN_NAME.equals(binaryFile) || builtinsFileName.equals(itemName) ||
+                    mySkeletonsGenerator.exists(binaryFile);
         }
         if (!canLive) {
           mySkeletonsGenerator.deleteOrLog(item);
