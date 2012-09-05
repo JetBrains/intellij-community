@@ -28,12 +28,12 @@ public class ChangeListTest extends ChangeListTestCase {
     addChangeSet(facade, "2", createFile(r, "file2"));
 
     RootEntry copy = r.copy();
-    facade.revertUpTo(copy, "", facade.getChangeListInTests().getChangesInTests().get(0), null, true);
+    facade.revertUpTo(copy, "", facade.getChangeListInTests().getChangesInTests().get(0), null, true, true);
     assertTrue(copy.hasEntry("file1"));
     assertFalse(copy.hasEntry("file2"));
 
     copy = r.copy();
-    facade.revertUpTo(copy, null, facade.getChangeListInTests().getChangesInTests().get(1), null, true);
+    facade.revertUpTo(copy, "", facade.getChangeListInTests().getChangesInTests().get(1), null, true, true);
     assertFalse(copy.hasEntry("file1"));
     assertFalse(copy.hasEntry("file2"));
   }
@@ -44,12 +44,12 @@ public class ChangeListTest extends ChangeListTestCase {
     addChangeSet(facade, "2", createFile(r, "file2"));
 
     RootEntry copy = r.copy();
-    facade.revertUpTo(copy, "", facade.getChangeListInTests().getChangesInTests().get(0), null, false);
+    facade.revertUpTo(copy, "", facade.getChangeListInTests().getChangesInTests().get(0), null, false, true);
     assertTrue(copy.hasEntry("file1"));
     assertTrue(copy.hasEntry("file2"));
 
     copy = r.copy();
-    facade.revertUpTo(copy, null, facade.getChangeListInTests().getChangesInTests().get(1), null, false);
+    facade.revertUpTo(copy, "", facade.getChangeListInTests().getChangesInTests().get(1), null, false, true);
     assertTrue(copy.hasEntry("file1"));
     assertFalse(copy.hasEntry("file2"));
   }
@@ -61,19 +61,19 @@ public class ChangeListTest extends ChangeListTestCase {
     add(facade, rename(r, "file2", "file3"));
 
     RootEntry copy = r.copy();
-    assertEquals("file3", facade.revertUpTo(copy, "file3", facade.getChangeListInTests().getChangesInTests().get(0), null, false));
+    assertEquals("file3", facade.revertUpTo(copy, "file3", facade.getChangeListInTests().getChangesInTests().get(0), null, false, true));
     assertTrue(copy.hasEntry("file1"));
     assertFalse(copy.hasEntry("file2"));
     assertTrue(copy.hasEntry("file3"));
 
     copy = r.copy();
-    assertEquals("file2", facade.revertUpTo(copy, "file3", facade.getChangeListInTests().getChangesInTests().get(1), null, false));
+    assertEquals("file2", facade.revertUpTo(copy, "file3", facade.getChangeListInTests().getChangesInTests().get(1), null, false, true));
     assertTrue(copy.hasEntry("file1"));
     assertTrue(copy.hasEntry("file2"));
     assertFalse(copy.hasEntry("file3"));
 
     copy = r.copy();
-    assertEquals("file2", facade.revertUpTo(copy, "file3", facade.getChangeListInTests().getChangesInTests().get(1), null, true));
+    assertEquals("file2", facade.revertUpTo(copy, "file3", facade.getChangeListInTests().getChangesInTests().get(1), null, true, true));
     assertTrue(copy.hasEntry("file1"));
     assertFalse(copy.hasEntry("file2"));
     assertFalse(copy.hasEntry("file3"));
@@ -89,13 +89,15 @@ public class ChangeListTest extends ChangeListTestCase {
     add(facade, rename(r, "root", "root2"));
 
     RootEntry copy = r.copy();
-    assertEquals("root/dir2", facade.revertUpTo(copy, "root2/dir2", facade.getChangeListInTests().getChangesInTests().get(3), null, false));
+    assertEquals("root/dir2", facade.revertUpTo(copy, "root2/dir2", facade.getChangeListInTests().getChangesInTests().get(3), null, false,
+                                                true));
     assertTrue(copy.hasEntry("root/dir2"));
     assertFalse(copy.hasEntry("root/dir1"));
     assertFalse(copy.hasEntry("root1"));
 
     copy = r.copy();
-    assertEquals("root/dir1", facade.revertUpTo(copy, "root2/dir2", facade.getChangeListInTests().getChangesInTests().get(3), null, true));
+    assertEquals("root/dir1", facade.revertUpTo(copy, "root2/dir2", facade.getChangeListInTests().getChangesInTests().get(3), null, true,
+                                                true));
     assertTrue(copy.hasEntry("root/dir1"));
     assertFalse(copy.hasEntry("root/dir2"));
     assertFalse(copy.hasEntry("root1"));

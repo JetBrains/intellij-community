@@ -18,6 +18,7 @@ package com.intellij.history.integration;
 
 import com.intellij.history.*;
 import com.intellij.history.core.*;
+import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -53,10 +54,12 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     return (LocalHistoryImpl)getInstance();
   }
 
+  @Override
   public void initComponent() {
     if (!ApplicationManager.getApplication().isUnitTestMode() && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
 
     myShutdownTask = new Runnable() {
+      @Override
       public void run() {
         disposeComponent();
       }
@@ -121,6 +124,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     return PathManager.getSystemPath();
   }
 
+  @Override
   public void disposeComponent() {
     if (!isInitialized.getAndSet(false)) return;
 
@@ -179,10 +183,13 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
 
   private Label label(final LabelImpl impl) {
     return new Label() {
+      @Override
       public ByteContent getByteContent(final String path) {
         return ApplicationManager.getApplication().runReadAction(new Computable<ByteContent>() {
+          @Override
           public ByteContent compute() {
-            return impl.getByteContent(myGateway.createTransientRootEntry(), path);
+            RootEntry root = myGateway.createTransientRootEntryForPathOnly(path);
+            return impl.getByteContent(root, path);
           }
         });
       }
@@ -195,6 +202,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     if (!isInitialized()) return null;
     if (!myGateway.areContentChangesVersioned(f)) return null;
     return ApplicationManager.getApplication().runReadAction(new Computable<byte[]>() {
+      @Override
       public byte[] compute() {
         return new ByteContentRetriever(myGateway, myVcs, f, c).getResult();
       }
@@ -203,14 +211,14 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
 
   @Override
   public boolean isUnderControl(VirtualFile f) {
-    if (!isInitialized()) return false;
-    return myGateway.isVersioned(f);
+    return isInitialized() && myGateway.isVersioned(f);
   }
 
   private boolean isInitialized() {
     return isInitialized.get();
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
