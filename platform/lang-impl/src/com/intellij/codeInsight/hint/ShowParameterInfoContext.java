@@ -249,11 +249,6 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
       }
       else {
         Point p = HintManagerImpl.getHintPosition(hint, myEditor, pos, HintManager.ABOVE);
-        Dimension hintSize = hint.getComponent().getPreferredSize();
-        JComponent editorComponent = myEditor.getComponent();
-        JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
-        p.x = Math.min(p.x, layeredPane.getWidth() - hintSize.width);
-        p.x = Math.max(p.x, 0);
         position = new Pair<Point, Short>(p, HintManager.ABOVE);
       }
       previousBestPoint = position.getFirst();
