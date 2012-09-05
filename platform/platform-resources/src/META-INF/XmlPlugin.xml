@@ -362,7 +362,7 @@
                      groupName="XML" enabledByDefault="true" level="ERROR"/>
     <localInspection language="XML" shortName="HtmlUnknownTarget" bundle="messages.XmlBundle" key="html.inspections.unknown.target" groupName="HTML"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownTargetInspection"/>
+                     implementationClass="com.intellij.codeInsight.daemon.impl.analysis.HtmlUnknownTargetInspection"/>
 
 
     <globalInspection shortName="XmlHighlighting" displayName="XML highlighting" groupName="General" enabledByDefault="true" level="ERROR"
