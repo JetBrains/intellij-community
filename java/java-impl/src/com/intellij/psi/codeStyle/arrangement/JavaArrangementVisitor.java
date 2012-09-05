@@ -94,7 +94,8 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
 
   @Override
   public void visitMethod(PsiMethod method) {
-    JavaElementArrangementEntry entry = createNewEntry(method.getTextRange(), ArrangementEntryType.METHOD, method.getName(), true);
+    ArrangementEntryType type = method.isConstructor() ? ArrangementEntryType.CONSTRUCTOR : ArrangementEntryType.METHOD;
+    JavaElementArrangementEntry entry = createNewEntry(method.getTextRange(), type, method.getName(), true);
     processEntry(entry, method, method.getBody());
   }
 

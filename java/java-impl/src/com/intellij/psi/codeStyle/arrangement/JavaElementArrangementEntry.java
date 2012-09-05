@@ -58,6 +58,9 @@ public class JavaElementArrangementEntry extends DefaultArrangementEntry
     super(parent, startOffset, endOffset, canBeArranged);
     myType = type;
     myTypes = EnumSet.of(type);
+    if (myType == ArrangementEntryType.CONSTRUCTOR) {
+      myTypes.add(ArrangementEntryType.METHOD);
+    }
     myName = name;
   }
 

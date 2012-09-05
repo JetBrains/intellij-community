@@ -17,16 +17,17 @@ package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The whole arrangement idea is to allow to change file entries order according to the user-provided rules.
@@ -83,15 +84,35 @@ public class MemberOrderService {
     }
 
     ArrangementEntry parentEntry = entries.get(0);
-    List<ArrangementEntry> entriesWithNew = new ArrayList<ArrangementEntry>(parentEntry.getChildren());
+    List<? extends ArrangementEntry> nonArranged = parentEntry.getChildren();
+    List<ArrangementEntry> entriesWithNew = new ArrayList<ArrangementEntry>(nonArranged);
     entriesWithNew.add(memberEntry);
     List<ArrangementEntry> arranged = ArrangementEngine.arrange(entriesWithNew, rules);
     int i = arranged.indexOf(memberEntry);
+    
     if (i <= 0) {
       return context;
     }
 
-    ArrangementEntry anchorEntry = arranged.get(i - 1);
+    ArrangementEntry anchorEntry = null;
+    if (i >= arranged.size() - 1) {
+      anchorEntry = nonArranged.get(nonArranged.size() - 1);
+    }
+    else {
+      Set<ArrangementEntry> entriesBelow = new HashSet<ArrangementEntry>();
+      entriesBelow.addAll(arranged.subList(i + 1, arranged.size()));
+      for (ArrangementEntry entry : nonArranged) {
+        if (entriesBelow.contains(entry)) {
+          break;
+        }
+        anchorEntry = entry;
+      }
+    }
+
+    if (anchorEntry == null) {
+      return context;
+    }
+    
     return context.findElementAt(anchorEntry.getEndOffset() - context.getTextRange().getStartOffset());
   }
 }

@@ -18,6 +18,7 @@ package com.intellij.psi.codeStyle.arrangement
 import org.junit.Before
 
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.*
+import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PUBLIC
 /**
  * @author Denis Zhdanov
  * @since 7/20/12 2:45 PM
@@ -197,5 +198,37 @@ class Test {
 }''',
             [rule(FIELD)]
     )
+  }
+
+  void testMethodsAndConstructors() {
+    doTest('''\
+class Test {
+  abstract void method1();
+  Test() {}
+  abstract void method2();
+}''',
+           '''\
+class Test {
+  Test() {}
+  abstract void method1();
+  abstract void method2();
+}''',
+           [rule(CONSTRUCTOR), rule(METHOD)])
+  }
+
+  void testConstructorAsMethod() {
+    doTest('''\
+class Test {
+  private int i;
+  Test() {}
+  public int j;
+}''',
+           '''\
+class Test {
+  public int j;
+  Test() {}
+  private int i;
+}''',
+           [rule(FIELD, PUBLIC), rule(METHOD), rule(FIELD)])
   }
 }
