@@ -802,7 +802,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       return result.doWhenDone(new Runnable() {
         public void run() {
           myRefilteringNow = false;
-          if (!myContext.isHoldingFilter()) {
+          if (!myContext.isHoldingFilter() && getSelectedElements().isEmpty()) {
             restoreExpandedState(toRestore);
           }
         }
