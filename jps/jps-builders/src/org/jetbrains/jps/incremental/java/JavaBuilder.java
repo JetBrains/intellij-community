@@ -661,7 +661,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, msgBuilder.toString()));
       }
-      if (encoding != null) {
+      if (!StringUtil.isEmpty(encoding)) {
         options.add("-encoding");
         options.add(encoding);
       }

@@ -74,6 +74,7 @@ public class JpsElementContainerImpl implements JpsElementContainer {
   public <T extends JpsElement> void removeChild(@NotNull JpsElementChildRole<T> role) {
     //noinspection unchecked
     final T removed = (T)myElements.remove(role);
+    if (removed == null) return;
     final JpsEventDispatcher eventDispatcher = getEventDispatcher();
     if (eventDispatcher != null) {
       eventDispatcher.fireElementRemoved(removed, role);
