@@ -365,7 +365,7 @@ static bool register_roots(array* new_roots, array* unwatchable, array* mounts) 
 static bool is_watchable(const char* dev, const char* mnt, const char* fs) {
   // don't watch special and network filesystems
   return !(strncmp(mnt, "/dev", 4) == 0 || strncmp(mnt, "/proc", 5) == 0 || strncmp(mnt, "/sys", 4) == 0 ||
-           strcmp(fs, "fuse.gvfs-fuse-daemon") == 0 || strcmp(fs, "cifs") == 0 || strcmp(fs, "nfs") == 0);
+           strncmp(fs, "fuse.", 5) == 0 || strcmp(fs, "cifs") == 0 || strcmp(fs, "nfs") == 0);
 }
 
 #define MTAB_DELIMS " \t"
