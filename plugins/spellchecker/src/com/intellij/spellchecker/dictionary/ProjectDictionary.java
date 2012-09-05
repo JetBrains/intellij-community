@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.spellchecker.dictionary;
 
+import com.intellij.spellchecker.compress.EncodingException;
 import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -59,11 +60,21 @@ public class ProjectDictionary implements EditableDictionary {
     if (word == null || dictionaries == null) {
       return false;
     }
+    int negatives = 0;
     for (Dictionary dictionary : dictionaries) {
-      if (dictionary.contains(word)) {
-        return true;
+      try {
+        if (dictionary.contains(word)) {
+          return true;
+        }
+        else {
+          negatives++;
+        }
+      }
+      catch (EncodingException e) {
+        //System.out.println("e.getMessage() = " + e.getMessage() + " " + word);
       }
     }
+    if (negatives==dictionaries.size()) throw new EncodingException("WORD_OF_ENTIRELY_UNKNOWN_LETTERS_FOR_ALL");
     return false;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ public class EncoderTest extends TestCase {
         Encoder encoder = new Encoder();
         final String wordToTest = "abc";
         final UnitBitSet bitSet = encoder.encode(wordToTest, true);
+        assertNotNull(bitSet);
         assertEquals(3, encoder.getAlphabet().getLastIndexUsed());
         assertEquals(3, bitSet.getUnitValue(0));
         assertEquals(1, bitSet.getUnitValue(1));
@@ -39,6 +40,7 @@ public class EncoderTest extends TestCase {
         Encoder encoder = new Encoder();
         final String wordToTest = "aaa";
         final UnitBitSet bitSet = encoder.encode(wordToTest, true);
+        assertNotNull(bitSet);
         assertEquals(1, encoder.getAlphabet().getLastIndexUsed());
         assertEquals(3, bitSet.getUnitValue(0));
         assertEquals(1, bitSet.getUnitValue(1));
@@ -53,6 +55,7 @@ public class EncoderTest extends TestCase {
         Encoder encoder = new Encoder();
         final String wordToTest = "aba";
         final UnitBitSet bitSet = encoder.encode(wordToTest, true);
+        assertNotNull(bitSet);
         assertEquals(2, encoder.getAlphabet().getLastIndexUsed());
         assertEquals(3, bitSet.getUnitValue(0));
         assertEquals(1, bitSet.getUnitValue(1));
@@ -67,6 +70,7 @@ public class EncoderTest extends TestCase {
         Encoder encoder = new Encoder();
         final String wordToTest1 = "abc";
         final UnitBitSet bitSet = encoder.encode(wordToTest1, true);
+        assertNotNull(bitSet);
         assertEquals(3, encoder.getAlphabet().getLastIndexUsed());
         assertEquals(3, bitSet.getUnitValue(0));
         assertEquals(1, bitSet.getUnitValue(1));
@@ -79,6 +83,7 @@ public class EncoderTest extends TestCase {
         final String wordToTest2 = "cba";
         final UnitBitSet bitSet2 = encoder.encode(wordToTest2, true);
         assertEquals(3, encoder.getAlphabet().getLastIndexUsed());
+        assertNotNull(bitSet);
         assertEquals(3, bitSet2.getUnitValue(0));
         assertEquals(3, bitSet2.getUnitValue(1));
         assertEquals(3, bitSet2.getUnitValue(2));
@@ -94,6 +99,7 @@ public class EncoderTest extends TestCase {
         final String wordToTest1 = "asia";
         //letter 'a' will be added at the end
         final UnitBitSet bitSet = encoder.encode(wordToTest1, true);
+        assertNotNull(bitSet);
         assertEquals(20, encoder.getAlphabet().getLastIndexUsed());
         assertEquals(4, bitSet.getUnitValue(0));
         assertEquals(1, bitSet.getUnitValue(1));
@@ -105,6 +111,13 @@ public class EncoderTest extends TestCase {
         assertEquals(wordToTest1, encoder.decode(bitSet));
 
 
+    }
+
+    public void testUnknown() {
+        Encoder encoder = new Encoder(new Alphabet("abc"));
+        final String wordToTest1 = "def";
+        final UnitBitSet bitSet = encoder.encode(wordToTest1, true);
+        assertEquals(bitSet, Encoder.WORD_OF_ENTIRELY_UNKNOWN_LETTERS);
     }
 
 
