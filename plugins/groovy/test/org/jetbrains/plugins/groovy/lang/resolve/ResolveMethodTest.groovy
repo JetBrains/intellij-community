@@ -14,9 +14,10 @@
  *
  */
 
-package org.jetbrains.plugins.groovy.lang.resolve;
+package org.jetbrains.plugins.groovy.lang.resolve
 
-
+import com.intellij.psi.*
+import com.intellij.psi.util.PropertyUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -28,9 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.psi.*
-import com.intellij.psi.util.PropertyUtil
-
 /**
  * @author ven
  */
@@ -862,5 +860,212 @@ def scriptMethod(String s){}
 ''')
 
     assertNull(ref.resolve())
+  }
+
+  public void testStaticallyImportedMethodsVsDGMMethods() {
+    myFixture.addClass('''\
+package p;
+public class Matcher{}
+''' )
+    myFixture.addClass('''\
+package p;
+class Other {
+  public static Matcher is(Matcher m){}
+  public static Matcher create(){}
+}''')
+
+    def ref = configureByText('''\
+import static p.Other.is
+import static p.Other.create
+
+i<caret>s(create())
+
+''')
+
+    def resolved = ref.resolve()
+    assertInstanceOf resolved, PsiMethod
+    assertEquals 'Other', resolved.containingClass.name
+  }
+
+  public void testStaticallyImportedMethodsVsCurrentClassMethod() {
+    myFixture.addClass('''\
+package p;
+class Other {
+  public static Object is(Object m){}
+}''')
+
+    def ref = configureByText('''\
+import static p.Other.is
+
+class A {
+  public boolean is(String o){true}
+
+  public foo() {
+    print i<caret>s('abc')
+  }
+}
+
+''')
+
+    def resolved = ref.resolve()
+    assertInstanceOf resolved, PsiMethod
+    assertEquals 'Other', resolved.containingClass.name
+  }
+
+  public void testInapplicableStaticallyImportedMethodsVsCurrentClassMethod() {
+    myFixture.addClass('''\
+package p;
+class Other {
+  public static Object is(String m){}
+}''')
+
+    def ref = configureByText('''\
+import static p.Other.is
+
+class A {
+  public boolean is(Object o){true}
+
+  public foo() {
+    print i<caret>s(new Object())
+  }
+}
+
+''')
+
+    def resolved = ref.resolve()
+    assertInstanceOf resolved, PsiMethod
+    assertEquals 'A', resolved.containingClass.name
+  }
+
+  public void testInferArgumentTypeFromMethod1() {
+    def ref = configureByText('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+    bar(a)
+
+    a.subst<caret>ring(2)
+}
+''')
+    assertNotNull(ref.resolve())
+  }
+
+  public void testInferArgumentTypeFromMethod2() {
+    def ref = configureByText('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+  while(true) {
+    bar(a)
+    a.subst<caret>ring(2)
+  }
+}
+''')
+    assertNotNull(ref.resolve())
+  }
+
+  public void testInferArgumentTypeFromMethod3() {
+    def ref = configureByText('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+    bar(a)
+
+    a.int<caret>Value()
+}
+''')
+    assertNotNull(ref.resolve())
+  }
+
+  public void testInferArgumentTypeFromMethod4() {
+    def ref = configureByText('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+  while(true) {
+    bar(a)
+    a.intVal<caret>ue()
+  }
+}
+''')
+    assertNotNull(ref.resolve())
+  }
+
+  public void testStaticImportFromSuperClass() {
+    def ref = configureByText('''\
+import static Derived.fo<caret>o
+
+class Base {
+    static foo(){print 'foo'}
+}
+
+class Derived extends Base {
+}
+
+foo()
+''')
+
+    assertNotNull(ref.resolve())
+  }
+
+  public void testUsageOfStaticImportFromSuperClass() {
+    def ref = configureByText('''\
+import static Derived.foo
+
+class Base {
+    static foo(){print 'foo'}
+}
+
+class Derived extends Base {
+}
+
+fo<caret>o()
+''')
+
+    assertNotNull(ref.resolve())
+  }
+
+  public void testMixin() {
+    def ref = configureByText('''\
+@Mixin([Category1, Category2])
+class A {
+  def test1(){}
+}
+
+
+@Category(A)
+class Category1 {
+  boolean foo() {
+    true
+
+  }
+}
+
+@Category(A)
+class Category2 {
+  void bar() {
+    fo<caret>o()
+  }
+}
+''')
+    assertNotNull(ref.resolve())
+  }
+
+
+  void testGroovyExtensions() {
+    def ref = configureByText('pack._a.groovy', '''\
+package pack
+
+class StringExt {
+  static sub(String s) {}
+}
+
+"".su<caret>b()''')
+
+    myFixture.addFileToProject("META-INF/services/org.codehaus.groovy.runtime.ExtensionModule", """\
+extensionClasses=pack.StringExt
+""")
+
+    assertNotNull(ref.resolve())
   }
 }

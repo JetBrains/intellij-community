@@ -22,11 +22,16 @@ package standardDsls
  */
 
 contributor([:]) {
+  category "org.codehaus.groovy.runtime.DateGroovyMethods"
   category "org.codehaus.groovy.runtime.DefaultGroovyMethods"
   category "org.codehaus.groovy.runtime.DefaultGroovyStaticMethods", true
-  category "org.codehaus.groovy.runtime.DateGroovyMethods"
   category "org.codehaus.groovy.runtime.EncodingGroovyMethods"
+  category "org.codehaus.groovy.runtime.IOGroovyMethods"
+  category "org.codehaus.groovy.runtime.ProcessGroovyMethods"
+  category "org.codehaus.groovy.runtime.ResourceGroovyMethods"
+  category "org.codehaus.groovy.runtime.SocketGroovyMethods"
   category "org.codehaus.groovy.runtime.SqlGroovyMethods"
+  category "org.codehaus.groovy.runtime.StringGroovyMethods"
   category "org.codehaus.groovy.runtime.SwingGroovyMethods"
   category "org.codehaus.groovy.runtime.XmlGroovyMethods"
 }
