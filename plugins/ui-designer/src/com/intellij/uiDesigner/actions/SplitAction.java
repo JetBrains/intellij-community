@@ -19,14 +19,15 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.uiDesigner.CaptionSelection;
 import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import icons.UIDesignerIcons;
 
 /**
  * @author yole
 */
 public final class SplitAction extends RowColumnAction {
   public SplitAction() {
-    super(UIDesignerBundle.message("action.split.column"), "/com/intellij/uiDesigner/icons/splitColumn.png",
-          UIDesignerBundle.message("action.split.row"), "/com/intellij/uiDesigner/icons/splitRow.png");
+    super(UIDesignerBundle.message("action.split.column"), UIDesignerIcons.SplitColumn,
+          UIDesignerBundle.message("action.split.row"), UIDesignerIcons.SplitRow);
   }
 
   protected void actionPerformed(CaptionSelection selection) {

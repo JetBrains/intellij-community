@@ -19,14 +19,15 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.uiDesigner.CaptionSelection;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import icons.UIDesignerIcons;
 
 /**
  * @author yole
 */
 public final class InsertAfterAction extends RowColumnAction {
   public InsertAfterAction() {
-    super(UIDesignerBundle.message("action.insert.column.after.this"), "/com/intellij/uiDesigner/icons/insertColumnRight.png",
-          UIDesignerBundle.message("action.insert.row.after.this"), "/com/intellij/uiDesigner/icons/insertRowBelow.png");
+    super(UIDesignerBundle.message("action.insert.column.after.this"), UIDesignerIcons.InsertColumnRight,
+          UIDesignerBundle.message("action.insert.row.after.this"), UIDesignerIcons.InsertRowBelow);
   }
 
   protected void actionPerformed(final CaptionSelection selection) {

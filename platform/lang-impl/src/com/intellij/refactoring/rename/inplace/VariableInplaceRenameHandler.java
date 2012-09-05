@@ -98,7 +98,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     }
   }
 
-  boolean checkAvailable(final PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
+  protected boolean checkAvailable(final PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
     if (!isAvailableOnDataContext(dataContext)) {
       LOG.error("Recursive invocation");
       RenameHandlerRegistry.getInstance().getRenameHandler(dataContext).invoke(
