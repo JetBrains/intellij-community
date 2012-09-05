@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 Bas Leijdekkers
+ * Copyright 2007-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,50 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
+
+  @SuppressWarnings("PublicField") public boolean warnOnAllPossiblyLiterals = false;
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "synchronized.on.literal.object.name");
+    return InspectionGadgetsBundle.message("synchronized.on.literal.object.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    final PsiType type = (PsiType)infos[0];
-    return InspectionGadgetsBundle.message(
-      "synchronized.on.literal.object.descriptor",
-      type.getPresentableText());
+    final String typeText = ((PsiType)infos[0]).getPresentableText();
+    final int message = ((Integer)infos[1]).intValue();
+    switch (message) {
+      case 1:
+        return InspectionGadgetsBundle.message("synchronized.on.literal.object.problem.descriptor", typeText);
+      case 2:
+        return InspectionGadgetsBundle.message("synchronized.on.direct.literal.object.problem.descriptor", typeText);
+      case 3:
+        return InspectionGadgetsBundle.message("synchronized.on.possibly.literal.object.problem.descriptor", typeText);
+      default:
+        throw new AssertionError();
+    }
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("synchronized.on.literal.object.warn.on.all.option"),
+                                          this, "warnOnAllPossiblyLiterals");
   }
 
   @Override
@@ -45,55 +66,53 @@ public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
     return new SynchronizeOnLiteralVisitor();
   }
 
-  private static class SynchronizeOnLiteralVisitor
-    extends BaseInspectionVisitor {
+  private class SynchronizeOnLiteralVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSynchronizedStatement(
-      @NotNull PsiSynchronizedStatement statement) {
+    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
       final PsiExpression lockExpression = statement.getLockExpression();
+      if (lockExpression == null) {
+        return;
+      }
+      final PsiType type = lockExpression.getType();
+      if (type == null) {
+        return;
+      }
+      if (!type.equalsToText(CommonClassNames.JAVA_LANG_STRING) &&
+          !type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN) &&
+          !type.equalsToText(CommonClassNames.JAVA_LANG_CHARACTER)) {
+        final PsiClassType javaLangNumberType = TypeUtils.getType(CommonClassNames.JAVA_LANG_NUMBER, statement);
+        if (!javaLangNumberType.isAssignableFrom(type)) {
+          return;
+        }
+      }
       if (!(lockExpression instanceof PsiReferenceExpression)) {
+        if (ExpressionUtils.isLiteral(lockExpression)) {
+          registerError(lockExpression, type, Integer.valueOf(2));
+        }
+        else if (warnOnAllPossiblyLiterals) {
+          registerError(lockExpression, type, Integer.valueOf(3));
+        }
         return;
       }
-      if (!isNumberOrStringType(lockExpression)) {
-        return;
-      }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)lockExpression;
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lockExpression;
       final PsiElement target = referenceExpression.resolve();
       if (!(target instanceof PsiVariable)) {
+        if (warnOnAllPossiblyLiterals) {
+          registerError(lockExpression, type, Integer.valueOf(3));
+        }
         return;
       }
       final PsiVariable variable = (PsiVariable)target;
       final PsiExpression initializer = variable.getInitializer();
-      if (!(initializer instanceof PsiLiteralExpression)) {
+      if (!ExpressionUtils.isLiteral(initializer)) {
+        if (warnOnAllPossiblyLiterals) {
+          registerError(lockExpression, type, Integer.valueOf(3));
+        }
         return;
       }
-      registerError(lockExpression, lockExpression.getType());
-    }
-
-    public static boolean isNumberOrStringType(PsiExpression expression) {
-      final PsiType type = expression.getType();
-      if (type == null) {
-        return false;
-      }
-      final Project project = expression.getProject();
-      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-      final PsiClass javaLangNumberClass =
-        psiFacade.findClass(CommonClassNames.JAVA_LANG_NUMBER,
-                            expression.getResolveScope());
-      if (javaLangNumberClass == null) {
-        return false;
-      }
-      final PsiElementFactory elementFactory =
-        psiFacade.getElementFactory();
-      final PsiClassType javaLangNumberType =
-        elementFactory.createType(javaLangNumberClass);
-      return type.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
-             type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN) ||
-             type.equalsToText(CommonClassNames.JAVA_LANG_CHARACTER) ||
-             javaLangNumberType.isAssignableFrom(type);
+      registerError(lockExpression, type, Integer.valueOf(1));
     }
   }
 }
