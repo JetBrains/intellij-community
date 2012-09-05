@@ -51,6 +51,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
+import com.intellij.xml.util.AnchorReference;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -593,9 +594,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     for (int i = start; i < references.length; ++i) {
       PsiReference reference = references[i];
       ProgressManager.checkCanceled();
-      if (reference instanceof FileReferenceOwner) {
-        continue;
-      }
+      if (isUrlReference(reference)) continue;
       if (!hasBadResolve(reference, false)) {
         continue;
       }
@@ -618,9 +617,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
           if (type.getSeverity(null).compareTo(HighlightInfoType.WARNING.getSeverity(null)) > 0 && name.endsWith("stylename")) {
             type = HighlightInfoType.WARNING;
           }
-          else if (name.equals("href") && type.getSeverity(null) == HighlightInfoType.WARNING.getSeverity(null)) {
-            continue;
-          }
         }
       }
       HighlightInfo info = HighlightInfo.createHighlightInfo(
@@ -633,6 +629,13 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       if (reference instanceof QuickFixProvider) ((QuickFixProvider)reference).registerQuickfix(info, reference);
       UnresolvedReferenceQuickFixProvider.registerReferenceFixes(reference, new QuickFixActionRegistrarImpl(info));
     }
+  }
+
+  public static boolean isUrlReference(PsiReference reference) {
+    if (reference instanceof FileReferenceOwner || reference instanceof AnchorReference) {
+      return true;
+    }
+    return false;
   }
 
   public static String getErrorDescription(final PsiReference reference) {

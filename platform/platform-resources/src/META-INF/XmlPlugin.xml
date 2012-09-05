@@ -360,9 +360,6 @@
     <localInspection language="XML" implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection"
                      displayName="File path resolving in XML"
                      groupName="XML" enabledByDefault="true" level="ERROR"/>
-    <localInspection language="XML" implementationClass="com.intellij.codeInsight.daemon.impl.analysis.HtmlPathReferenceInspection"
-                     displayName="File path resolving in XML"
-                     groupName="XML" enabledByDefault="true" level="WARNING"/>
 
     <globalInspection shortName="XmlHighlighting" displayName="XML highlighting" groupName="General" enabledByDefault="true" level="ERROR"
                       implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitorBasedInspection"/>

@@ -15,27 +15,13 @@
  */
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.xml.XmlBundle;
-import com.intellij.xml.util.HtmlUtil;
-import org.jetbrains.annotations.Nls;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class HtmlUnknownTargetInspection extends HtmlLocalInspectionTool {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return XmlBundle.message("html.inspections.unknown.target");
-  }
+public class HtmlUnknownTargetInspection extends XmlPathReferenceInspection {
 
   @NotNull
   @Override
@@ -44,20 +30,7 @@ public class HtmlUnknownTargetInspection extends HtmlLocalInspectionTool {
   }
 
   @Override
-  protected void checkAttribute(@NotNull XmlAttribute attribute, @NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!HtmlUtil.isHtmlTagContainingFile(attribute)) {
-      return;
-    }
-    if (attribute.getLocalName().equalsIgnoreCase("href")) {
-      XmlAttributeValue valueElement = attribute.getValueElement();
-      if (valueElement != null) {
-        PsiReference[] refs = valueElement.getReferences();
-        for (PsiReference ref : refs) {
-          if (XmlHighlightVisitor.hasBadResolve(ref, false)) {
-            holder.registerProblem(ref, ProblemsHolder.unresolvedReferenceMessage(ref), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-          }
-        }
-      }
-    }
+  protected boolean isForHtml() {
+    return true;
   }
 }
