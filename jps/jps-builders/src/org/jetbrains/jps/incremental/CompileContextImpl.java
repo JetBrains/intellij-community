@@ -13,6 +13,9 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.*;
@@ -37,7 +40,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final CanceledStatus myCancelStatus;
   private volatile float myDone = -1.0f;
   private EventDispatcher<BuildListener> myListeners = EventDispatcher.create(BuildListener.class);
-  private Map<JpsModule, AnnotationProcessingProfile> myAnnotationProcessingProfileMap;
+  private Map<JpsModule, ProcessorConfigProfile> myAnnotationProcessingProfileMap;
 
   public CompileContextImpl(CompileScope scope,
                             ProjectDescriptor pd, boolean isMake,
@@ -105,18 +108,18 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
 
   @Override
   @NotNull
-  public AnnotationProcessingProfile getAnnotationProcessingProfile(JpsModule module) {
-    final CompilerConfiguration compilerConfig = getProjectDescriptor().project.getCompilerConfiguration();
-    Map<JpsModule, AnnotationProcessingProfile> map = myAnnotationProcessingProfileMap;
+  public ProcessorConfigProfile getAnnotationProcessingProfile(JpsModule module) {
+    final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(getProjectDescriptor().jpsProject);
+    Map<JpsModule, ProcessorConfigProfile> map = myAnnotationProcessingProfileMap;
     if (map == null) {
-      map = new HashMap<JpsModule, AnnotationProcessingProfile>();
+      map = new HashMap<JpsModule, ProcessorConfigProfile>();
       final Map<String, JpsModule> namesMap = new HashMap<String, JpsModule>();
       for (JpsModule m : getProjectDescriptor().jpsProject.getModules()) {
         namesMap.put(m.getName(), m);
       }
       if (!namesMap.isEmpty()) {
-        for (AnnotationProcessingProfile profile : compilerConfig.getModuleAnnotationProcessingProfiles()) {
-          for (String name : profile.getProcessModule()) {
+        for (ProcessorConfigProfile profile : compilerConfig.getAnnotationProcessingConfigurations()) {
+          for (String name : profile.getModuleNames()) {
             final JpsModule mod = namesMap.get(name);
             if (mod != null) {
               map.put(mod, profile);
@@ -126,8 +129,8 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       }
       myAnnotationProcessingProfileMap = map;
     }
-    final AnnotationProcessingProfile profile = map.get(module);
-    return profile != null? profile : compilerConfig.getDefaultAnnotationProcessingProfile();
+    final ProcessorConfigProfile profile = map.get(module);
+    return profile != null? profile : compilerConfig.getDefaultAnnotationProcessingConfiguration();
   }
 
   @Override

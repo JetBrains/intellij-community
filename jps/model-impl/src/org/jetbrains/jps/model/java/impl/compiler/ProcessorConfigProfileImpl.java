@@ -13,35 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler;
+package org.jetbrains.jps.model.java.impl.compiler;
 
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 
-import java.io.File;
 import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 5/25/12
  */
-public final class ProcessorConfigProfile implements AnnotationProcessingConfiguration {
-  private static final Comparator<String> ALPHA_COMPARATOR = new Comparator<String>() {
-    @Override
-    public int compare(String o1, String o2) {
-      return o1.compareToIgnoreCase(o2);
-    }
-  };
-  private static final String ENTRY = "entry";
-  private static final String NAME = "name";
-  private static final String VALUE = "value";
-  private static final String ENABLED = "enabled";
-  private static final String OPTION = "option";
-  private static final String MODULE = "module";
-
+public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile {
   private String myName = "";
   private boolean myEnabled = false;
   private boolean myObtainProcessorsFromClasspath = true;
@@ -52,129 +36,35 @@ public final class ProcessorConfigProfile implements AnnotationProcessingConfigu
   private String myGeneratedSourcesDirectoryName = null; // null means 'auto'
   private final Set<String> myModuleNames = new HashSet<String>();
 
-  public ProcessorConfigProfile(String name) {
+  public ProcessorConfigProfileImpl(String name) {
     myName = name;
   }
 
-  public ProcessorConfigProfile(ProcessorConfigProfile profile) {
+  public ProcessorConfigProfileImpl(ProcessorConfigProfile profile) {
     initFrom(profile);
   }
 
-  public void readExternal(Element element) {
-    setName(element.getAttributeValue(NAME, ""));
-    setEnabled(Boolean.valueOf(element.getAttributeValue(ENABLED, "false")));
-
-    final Element srcOutput = element.getChild("sourceOutputDir");
-    setGeneratedSourcesDirectoryName(srcOutput != null ? srcOutput.getAttributeValue(NAME) : null);
-
-    clearProcessorOptions();
-    for (Object optionElement : element.getChildren(OPTION)) {
-      final Element elem = (Element)optionElement;
-      final String key = elem.getAttributeValue(NAME);
-      final String value = elem.getAttributeValue(VALUE);
-      if (!StringUtil.isEmptyOrSpaces(key) && value != null) {
-        setOption(key, value);
-      }
-    }
-
-    clearProcessors();
-    for (Object procElement : element.getChildren("processor")) {
-      final String name = ((Element)procElement).getAttributeValue(NAME);
-      if (StringUtil.isEmptyOrSpaces(name)) {
-        addProcessor(name);
-      }
-    }
-
-    final Element pathElement = element.getChild("processorPath");
-    if (pathElement != null) {
-      setObtainProcessorsFromClasspath(Boolean.parseBoolean(pathElement.getAttributeValue("useClasspath", "true")));
-      final StringBuilder pathBuilder = new StringBuilder();
-      for (Object entry : pathElement.getChildren(ENTRY)) {
-        final String path = ((Element)entry).getAttributeValue(NAME);
-        if (!StringUtil.isEmptyOrSpaces(path)) {
-          if (pathBuilder.length() > 0) {
-            pathBuilder.append(File.pathSeparator);
-          }
-          pathBuilder.append(FileUtil.toSystemDependentName(path));
-        }
-      }
-      setProcessorPath(pathBuilder.toString());
-    }
-
-    clearModuleNames();
-    for (Object moduleElement : element.getChildren(MODULE)) {
-      final String name = ((Element)moduleElement).getAttributeValue(NAME);
-      if (!StringUtil.isEmptyOrSpaces(name)) {
-        addModuleName(name);
-      }
-    }
-  }
-
-  public void writeExternal(final Element element) {
-    element.setAttribute(NAME, getName());
-    element.setAttribute(ENABLED, Boolean.toString(isEnabled()));
-
-    final String srcDirName = getGeneratedSourcesDirectoryName();
-    if (srcDirName != null) {
-      addChild(element, "sourceOutputDir").setAttribute(NAME, srcDirName);
-    }
-
-    final Map<String, String> options = getProcessorOptions();
-    if (!options.isEmpty()) {
-      final List<String> keys = new ArrayList<String>(options.keySet());
-      Collections.sort(keys, ALPHA_COMPARATOR);
-      for (String key : keys) {
-        addChild(element, OPTION).setAttribute(NAME, key).setAttribute(VALUE, options.get(key));
-      }
-    }
-
-    final Set<String> processors = getProcessors();
-    if (!processors.isEmpty()) {
-      final List<String> processorList = new ArrayList<String>(processors);
-      Collections.sort(processorList, ALPHA_COMPARATOR);
-      for (String proc : processorList) {
-        addChild(element, "processor").setAttribute(NAME, proc);
-      }
-    }
-
-    final Element pathElement = addChild(element, "processorPath").setAttribute("useClasspath", Boolean.toString(isObtainProcessorsFromClasspath()));
-    final String path = getProcessorPath();
-    if (!StringUtil.isEmpty(path)) {
-      final StringTokenizer tokenizer = new StringTokenizer(path, File.pathSeparator, false);
-      while (tokenizer.hasMoreTokens()) {
-        final String token = tokenizer.nextToken();
-        addChild(pathElement, ENTRY).setAttribute(NAME, FileUtil.toSystemIndependentName(token));
-      }
-    }
-
-    final Set<String> moduleNames = getModuleNames();
-    if (!moduleNames.isEmpty()) {
-      final List<String> names = new ArrayList<String>(moduleNames);
-      Collections.sort(names, ALPHA_COMPARATOR);
-      for (String name : names) {
-        addChild(element, MODULE).setAttribute(NAME, name);
-      }
-    }
-  }
-
+  @Override
   public final void initFrom(ProcessorConfigProfile other) {
-    myName = other.myName;
-    myEnabled = other.myEnabled;
-    myObtainProcessorsFromClasspath = other.myObtainProcessorsFromClasspath;
-    myProcessorPath = other.myProcessorPath;
+    myName = other.getName();
+    myEnabled = other.isEnabled();
+    myObtainProcessorsFromClasspath = other.isObtainProcessorsFromClasspath();
+    myProcessorPath = other.getProcessorPath();
     myProcessors.clear();
-    myProcessors.addAll(other.myProcessors);
+    myProcessors.addAll(other.getProcessors());
     myProcessorOptions.clear();
-    myProcessorOptions.putAll(other.myProcessorOptions);
-    myGeneratedSourcesDirectoryName = other.myGeneratedSourcesDirectoryName;
+    myProcessorOptions.putAll(other.getProcessorOptions());
+    myGeneratedSourcesDirectoryName = other.getGeneratedSourcesDirectoryName();
     myModuleNames.clear();
-    myModuleNames.addAll(other.myModuleNames);
+    myModuleNames.addAll(other.getModuleNames());
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public void setName(String name) {
     myName = name;
   }
@@ -184,6 +74,7 @@ public final class ProcessorConfigProfile implements AnnotationProcessingConfigu
     return myEnabled;
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     myEnabled = enabled;
   }
@@ -194,6 +85,7 @@ public final class ProcessorConfigProfile implements AnnotationProcessingConfigu
     return myProcessorPath;
   }
 
+  @Override
   public void setProcessorPath(@Nullable String processorPath) {
     myProcessorPath = processorPath != null? processorPath : "";
   }
@@ -203,6 +95,7 @@ public final class ProcessorConfigProfile implements AnnotationProcessingConfigu
     return myObtainProcessorsFromClasspath;
   }
 
+  @Override
   public void setObtainProcessorsFromClasspath(boolean value) {
     myObtainProcessorsFromClasspath = value;
   }
@@ -213,43 +106,53 @@ public final class ProcessorConfigProfile implements AnnotationProcessingConfigu
     return myGeneratedSourcesDirectoryName;
   }
 
+  @Override
   public void setGeneratedSourcesDirectoryName(@Nullable String generatedSourcesDirectoryName) {
     myGeneratedSourcesDirectoryName = generatedSourcesDirectoryName;
   }
 
+  @Override
   @NotNull
   public Set<String> getModuleNames() {
     return myModuleNames;
   }
 
+  @Override
   public boolean addModuleName(String name) {
     return myModuleNames.add(name);
   }
 
+  @Override
   public boolean addModuleNames(Collection<String> names) {
     return myModuleNames.addAll(names);
   }
 
+  @Override
   public boolean removeModuleName(String name) {
     return myModuleNames.remove(name);
   }
 
+  @Override
   public boolean removeModuleNames(Collection<String> names) {
     return myModuleNames.removeAll(names);
   }
 
+  @Override
   public void clearModuleNames() {
     myModuleNames.clear();
   }
 
+  @Override
   public void clearProcessors() {
     myProcessors.clear();
   }
 
+  @Override
   public boolean addProcessor(String processor) {
     return myProcessors.add(processor);
   }
 
+  @Override
   public boolean removeProcessor(String processor) {
     return myProcessors.remove(processor);
   }
@@ -266,15 +169,18 @@ public final class ProcessorConfigProfile implements AnnotationProcessingConfigu
     return Collections.unmodifiableMap(myProcessorOptions);
   }
 
+  @Override
   public String setOption(String key, String value) {
     return myProcessorOptions.put(key, value);
   }
 
+  @Override
   @Nullable
   public String getOption(String key) {
     return myProcessorOptions.get(key);
   }
 
+  @Override
   public void clearProcessorOptions() {
     myProcessorOptions.clear();
   }
@@ -284,7 +190,7 @@ public final class ProcessorConfigProfile implements AnnotationProcessingConfigu
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    ProcessorConfigProfile profile = (ProcessorConfigProfile)o;
+    ProcessorConfigProfileImpl profile = (ProcessorConfigProfileImpl)o;
 
     if (myEnabled != profile.myEnabled) return false;
     if (myObtainProcessorsFromClasspath != profile.myObtainProcessorsFromClasspath) return false;
@@ -318,12 +224,6 @@ public final class ProcessorConfigProfile implements AnnotationProcessingConfigu
   @Override
   public String toString() {
     return myName;
-  }
-
-  private static Element addChild(Element parent, final String childName) {
-    final Element child = new Element(childName);
-    parent.addContent(child);
-    return child;
   }
 }
 

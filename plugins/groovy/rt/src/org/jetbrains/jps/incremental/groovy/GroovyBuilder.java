@@ -25,7 +25,9 @@ import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.javac.OutputFileObject;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.service.SharedThreadPool;
@@ -297,12 +299,13 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   private static Map<String, String> buildClassToSourceMap(ModuleChunk chunk, CompileContext context, Set<String> toCompilePaths, Map<JpsModule, String> finalOutputs) throws IOException {
     final Map<String, String> class2Src = new HashMap<String, String>();
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(context.getProjectDescriptor().jpsProject);
     for (ModuleBuildTarget target : chunk.getTargets()) {
       String moduleOutputPath = finalOutputs.get(target.getModule());
       final SourceToOutputMapping srcToOut = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
       for (String src : srcToOut.getKeys()) {
         if (!toCompilePaths.contains(src) && isGroovyFile(src) &&
-            !context.getProjectDescriptor().project.getCompilerConfiguration().getExcludes().isExcluded(new File(src))) {
+            !configuration.getCompilerExcludes().isExcluded(new File(src))) {
           final Collection<String> outs = srcToOut.getState(src);
           if (outs != null) {
             for (String out : outs) {

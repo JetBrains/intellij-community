@@ -32,17 +32,12 @@
       </profile>
     </annotationProcessing>
   </component>
-  <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false" />
-  <component name="ProjectModuleManager">
-    <modules>
-      <module fileurl="file://$PROJECT_DIR$/compilerConfiguration.iml" filepath="$PROJECT_DIR$/compilerConfiguration.iml" />
-    </modules>
-  </component>
-  <component name="ProjectResources">
-    <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
-  </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" assert-keyword="true" jdk-15="true" project-jdk-name="1.6" project-jdk-type="JavaSDK">
-    <output url="file://$PROJECT_DIR$/out" />
+  <component name="JavacSettings">
+    <option name="DEBUGGING_INFO" value="false" />
+    <option name="GENERATE_NO_WARNINGS" value="true" />
+    <option name="DEPRECATION" value="false" />
+    <option name="ADDITIONAL_OPTIONS_STRING" value="-Xlint" />
+    <option name="MAXIMUM_HEAP_SIZE" value="512" />
   </component>
 </project>
 

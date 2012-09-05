@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
@@ -20,12 +21,6 @@ import java.util.List;
  * @author nik
  */
 public abstract class JpsJavaExtensionService {
-  @NotNull
-  public abstract JpsProductionModuleOutputPackagingElement createProductionModuleOutput(@NotNull JpsModuleReference moduleReference);
-
-  @NotNull
-  public abstract JpsTestModuleOutputPackagingElement createTestModuleOutput(@NotNull JpsModuleReference moduleReference);
-
   public static JpsJavaExtensionService getInstance() {
     return JpsServiceManager.getInstance().getService(JpsJavaExtensionService.class);
   }
@@ -37,6 +32,12 @@ public abstract class JpsJavaExtensionService {
   public static JpsJavaDependenciesEnumerator dependencies(JpsProject project) {
     return getInstance().enumerateDependencies(project);
   }
+
+  @NotNull
+  public abstract JpsProductionModuleOutputPackagingElement createProductionModuleOutput(@NotNull JpsModuleReference moduleReference);
+
+  @NotNull
+  public abstract JpsTestModuleOutputPackagingElement createTestModuleOutput(@NotNull JpsModuleReference moduleReference);
 
   public abstract JpsJavaDependenciesEnumerator enumerateDependencies(Collection<JpsModule> modules);
 
@@ -86,4 +87,10 @@ public abstract class JpsJavaExtensionService {
 
   public abstract JpsTypedLibrary<JpsSdk<JpsDummyElement>> addJavaSdk(@NotNull JpsGlobal global, @NotNull String name,
                                                                       @NotNull String homePath);
+
+  @Nullable
+  public abstract JpsJavaCompilerConfiguration getCompilerConfiguration(@NotNull JpsProject project);
+
+  @NotNull
+  public abstract JpsJavaCompilerConfiguration getOrCreateCompilerConfiguration(@NotNull JpsProject project);
 }

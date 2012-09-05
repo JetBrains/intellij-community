@@ -28,6 +28,7 @@ import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.*;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.service.SharedThreadPool;
 
@@ -265,7 +266,8 @@ public class IncProjectBuilder {
 
   private void cleanOutputRoots(CompileContext context) throws ProjectBuildException {
     // whole project is affected
-    final boolean shouldClear = context.getProjectDescriptor().project.getCompilerConfiguration().isClearOutputDirectoryOnRebuild();
+    final boolean shouldClear = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
+      context.getProjectDescriptor().jpsProject).isClearOutputDirectoryOnRebuild();
     try {
       if (shouldClear) {
         clearOutputs(context);
@@ -321,10 +323,10 @@ public class IncProjectBuilder {
         rootsToDelete.putValue(out, target);
       }
 
-      final AnnotationProcessingProfile profile = context.getAnnotationProcessingProfile(target.getModule());
+      final ProcessorConfigProfile profile = context.getAnnotationProcessingProfile(target.getModule());
       if (profile.isEnabled()) {
         File annotationOut =
-          paths.getAnnotationProcessorGeneratedSourcesOutputDir(target.getModule(), target.isTests(), profile.getGeneratedSourcesDirName());
+          paths.getAnnotationProcessorGeneratedSourcesOutputDir(target.getModule(), target.isTests(), profile.getGeneratedSourcesDirectoryName());
         if (annotationOut != null) {
           annotationOutputs.add(annotationOut);
         }
