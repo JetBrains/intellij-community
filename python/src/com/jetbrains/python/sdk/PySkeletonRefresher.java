@@ -470,13 +470,14 @@ public class PySkeletonRefresher {
         final String itemName = item.getName();
         if (PyNames.INIT_DOT_PY.equals(itemName) && item.length() == 0) continue; // these are versionless
         if (BLACKLIST_FILE_NAME.equals(itemName)) continue; // don't touch the blacklist
+        if (PythonSdkType.getBuiltinsFileName(mySdk).equals(itemName)) {
+          continue;
+        }
         final SkeletonHeader header = readSkeletonHeader(item);
         boolean canLive = header != null;
         if (canLive) {
           final String binaryFile = header.getBinaryFile();
-          final String builtinsFileName = PythonSdkType.getBuiltinsFileName(mySdk);
-          canLive = SkeletonVersionChecker.BUILTIN_NAME.equals(binaryFile) || builtinsFileName.equals(itemName) ||
-                    mySkeletonsGenerator.exists(binaryFile);
+          canLive = SkeletonVersionChecker.BUILTIN_NAME.equals(binaryFile) || mySkeletonsGenerator.exists(binaryFile);
         }
         if (!canLive) {
           mySkeletonsGenerator.deleteOrLog(item);
