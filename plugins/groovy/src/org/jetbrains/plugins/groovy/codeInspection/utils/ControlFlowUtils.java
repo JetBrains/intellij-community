@@ -644,9 +644,8 @@ public class ControlFlowUtils {
       assert place != null;
       place = place.getContext();
       if (place == null) return null;
-      if (place instanceof GrClosableBlock) return (GrClosableBlock)place;
+      if (place instanceof GrControlFlowOwner && ((GrControlFlowOwner)place).isTopControlFlowOwner()) return (GrControlFlowOwner)place;
       if (place instanceof GrMethod) return ((GrMethod)place).getBlock();
-      if (place instanceof GroovyFile) return (GroovyFile)place;
       if (place instanceof GrClassInitializer) return ((GrClassInitializer)place).getBlock();
     }
   }
