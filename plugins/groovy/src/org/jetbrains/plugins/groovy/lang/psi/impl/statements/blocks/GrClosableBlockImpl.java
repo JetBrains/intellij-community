@@ -251,4 +251,9 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   public void removeStatement() throws IncorrectOperationException {
     GroovyPsiElementImpl.removeStatement(this);
   }
+
+  @Override
+  public boolean isTopControlFlowOwner() {
+    return true;
+  }
 }

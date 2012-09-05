@@ -613,5 +613,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
     return this;
   }
+
+  @Override
+  public boolean isTopControlFlowOwner() {
+    return true;
+  }
 }
 
