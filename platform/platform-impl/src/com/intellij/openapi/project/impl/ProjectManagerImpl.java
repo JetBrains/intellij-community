@@ -59,6 +59,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.fs.IFile;
@@ -80,8 +81,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
-  private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = false;
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectManagerImpl");
+
   public static final int CURRENT_FORMAT_VERSION = 4;
 
   private static final Key<List<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
@@ -105,7 +106,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private final Alarm myChangedFilesAlarm = new Alarm();
   private final List<Pair<VirtualFile, StateStorage>> myChangedApplicationFiles = new ArrayList<Pair<VirtualFile, StateStorage>>();
   private final AtomicInteger myReloadBlockCount = new AtomicInteger(0);
-  private final Map<Project, String> myProjects = new WeakHashMap<Project, String>();
+  @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<Project, String>();
   private static final int MAX_LEAKY_PROJECTS = 42;
   private final ProgressManager myProgressManager;
   private volatile boolean myDefaultProjectWasDisposed = false;
@@ -126,7 +127,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       @Override
       public void storageFileChanged(final VirtualFileEvent event, @NotNull final StateStorage storage) {
         VirtualFile file = event.getFile();
-        LOG.debug("[RELOAD] Storage file changed: " + file.getPath());
         if (!file.isDirectory() && !(event.getRequestor() instanceof StateStorage.SaveSession)) {
           saveChangedProjectFile(file, null, storage);
         }
@@ -144,7 +144,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
             @Override
             public void storageFileChanged(final VirtualFileEvent event, @NotNull final StateStorage storage) {
               VirtualFile file = event.getFile();
-              LOG.debug("[RELOAD] Storage file changed: " + file.getPath());
               if (!file.isDirectory() && !(event.getRequestor() instanceof StateStorage.SaveSession)) {
                 saveChangedProjectFile(file, project, storage);
               }
@@ -208,22 +207,19 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public void initComponent() {
   }
 
+  private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = false;
+
   @Override
   @Nullable
   public Project newProject(final String projectName, String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
-    filePath = canonicalize(filePath);
+    filePath = toCanonicalName(filePath);
 
+    //noinspection ConstantConditions
     if (LOG_PROJECT_LEAKAGE_IN_TESTS && ApplicationManager.getApplication().isUnitTestMode()) {
       for (int i = 0; i < 42; i++) {
         if (myProjects.size() < MAX_LEAKY_PROJECTS) break;
         System.gc();
-        try {
-          Thread.sleep(100);
-        }
-        catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
-
+        TimeoutUtil.sleep(100);
         System.gc();
       }
 
@@ -236,8 +232,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     ProjectImpl project = createProject(projectName, filePath, false, ApplicationManager.getApplication().isUnitTestMode());
     try {
-      initProject(project, useDefaultProjectSettings ? (ProjectImpl)getDefaultProject() : null
-      );
+      initProject(project, useDefaultProjectSettings ? (ProjectImpl)getDefaultProject() : null);
       if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
         myProjects.put(project, null);
       }
@@ -325,7 +320,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private void doLoadProject(String filePath, ProjectImpl project) throws IOException, StateStorageException {
-    filePath = canonicalize(filePath);
+    filePath = toCanonicalName(filePath);
     final ProgressIndicator indicator = myProgressManager.getProgressIndicator();
     if (indicator != null) {
       indicator.setText(ProjectBundle.message("loading.components.for", FileUtil.toSystemDependentName(filePath)));
@@ -335,7 +330,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @NotNull
-  private static String canonicalize(@NotNull final String filePath) {
+  private static String toCanonicalName(@NotNull final String filePath) {
     try {
       return FileUtil.resolveShortWindowsName(filePath);
     }
@@ -350,6 +345,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public synchronized boolean isDefaultProjectInitialized() {
     return myDefaultProject != null;
   }
+
   @Override
   @NotNull
   public synchronized Project getDefaultProject() {
@@ -510,7 +506,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
    */
   @Nullable
   public Project convertAndLoadProject(String filePath) throws IOException {
-    final String fp = canonicalize(filePath);
+    final String fp = toCanonicalName(filePath);
     final ConversionResult conversionResult = ConversionService.getInstance().convert(fp);
     if (conversionResult.openingIsCanceled()) {
       return null;
@@ -538,7 +534,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
    */
   @Nullable
   private Project loadProjectWithProgress(@NotNull final String filePath) throws IOException {
-    final ProjectImpl project = createProject(null, canonicalize(filePath), false, false);
+    final ProjectImpl project = createProject(null, toCanonicalName(filePath), false, false);
     try {
       myProgressManager.runProcessWithProgressSynchronously(new ThrowableComputable<Project, IOException>() {
         @Override
@@ -595,7 +591,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       }
 
       for (final Project projectToReload : projectsToReload) {
-        reloadProjectImpl(projectToReload, false, false);
+        reloadProjectImpl(projectToReload, false);
       }
     }
   }
@@ -805,7 +801,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private void registerProjectToReload(@Nullable final Project project, final VirtualFile cause, @Nullable final StateStorage storage) {
-    LOG.debug("[RELOAD] Registering project to reload.");
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("[RELOAD] Registering project to reload: " + cause, new Exception());
+    }
 
     if (project != null) {
       synchronized (myChangedProjectFiles) {
@@ -819,16 +817,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       }
     }
     else {
-      // todo[pegov] uncomment & check after X release
-      // do not schedule app reload for project files!
-      //try {
-      //  if(FileUtil.isAncestor(new File(PathManager.getOptionsPathWithoutDialog()), new File(cause.getPath()), false)) {
-          myChangedApplicationFiles.add(new Pair<VirtualFile, StateStorage>(cause, storage));
-        //}
-      //}
-      //catch (IOException e) {
-      //  LOG.info(e.getMessage());
-      //}
+      myChangedApplicationFiles.add(new Pair<VirtualFile, StateStorage>(cause, storage));
     }
 
     myChangedFilesAlarm.cancelAllRequests();
@@ -878,18 +867,15 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   @Override
   public void reloadProject(@NotNull final Project p) {
-    reloadProjectImpl(p, true, false);
+    reloadProjectImpl(p, true);
   }
 
-  public void reloadProjectImpl(final Project p, final boolean clearCopyToRestore, boolean takeMemorySnapshot) {
+  public void reloadProjectImpl(@NotNull final Project p, final boolean clearCopyToRestore) {
     if (clearCopyToRestore) {
       mySavedCopies.clear();
       mySavedTimestamps.clear();
     }
-    reloadProject(p, takeMemorySnapshot);
-  }
 
-  public void reloadProject(@NotNull Project p, final boolean takeMemorySnapshot) {
     final Project[] project = {p};
 
     ProjectReloadState.getInstance(project[0]).onBeforeAutomaticProjectReload();
@@ -932,12 +918,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       }
     }, ModalityState.NON_MODAL);
   }
-
-  /*
-  public boolean isOpeningProject() {
-    return myCountOfProjectsBeingOpen > 0;
-  }
-  */
 
   @Override
   public boolean closeProject(@NotNull final Project project) {
@@ -991,7 +971,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   public static boolean isLight(@NotNull Project project) {
-    return ApplicationManager.getApplication().isUnitTestMode() && project.toString().contains("lighttemp");
+    return ApplicationManager.getApplication().isUnitTestMode() && project.toString().contains("light_temp_");
   }
 
   @Override

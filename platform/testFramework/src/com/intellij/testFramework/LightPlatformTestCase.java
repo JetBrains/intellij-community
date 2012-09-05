@@ -193,7 +193,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   private static void initProject(final LightProjectDescriptor descriptor) throws Exception {
     ourProjectDescriptor = descriptor;
-    final File projectFile = FileUtil.createTempFile("lighttemp", ProjectFileType.DOT_DEFAULT_EXTENSION);
+    final File projectFile = FileUtil.createTempFile("light_temp_", ProjectFileType.DOT_DEFAULT_EXTENSION);
 
     new WriteCommandAction.Simple(null) {
       @Override
