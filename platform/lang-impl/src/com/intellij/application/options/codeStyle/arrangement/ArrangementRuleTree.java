@@ -138,6 +138,7 @@ public class ArrangementRuleTree {
       };
     myTree.setSelectionModel(mySelectionModel);
     myTree.setRootVisible(false);
+    myTree.setRowHeight(0); // Don't insist on the same row height
     mySelectionModel.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
