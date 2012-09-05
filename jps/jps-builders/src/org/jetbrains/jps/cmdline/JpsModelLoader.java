@@ -1,6 +1,5 @@
 package org.jetbrains.jps.cmdline;
 
-import org.jetbrains.jps.Project;
 import org.jetbrains.jps.model.JpsModel;
 
 /**
@@ -8,6 +7,4 @@ import org.jetbrains.jps.model.JpsModel;
  */
 public interface JpsModelLoader {
   JpsModel loadModel();
-
-  Project loadOldProject();
 }

@@ -1,7 +1,6 @@
 package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.Project;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.model.JpsProject;
@@ -22,9 +21,9 @@ public class ModulesAndFilesScope extends CompileScope {
   private final Set<BuildTarget> myTargets;
   private final Map<BuildTarget, Set<File>> myFiles;
 
-  public ModulesAndFilesScope(Project project, JpsProject jpsProject, Collection<JpsModule> targets, Map<BuildTarget, Set<File>> files,
+  public ModulesAndFilesScope(JpsProject jpsProject, Collection<JpsModule> targets, Map<BuildTarget, Set<File>> files,
                               Set<JpsArtifact> artifacts, boolean isForcedCompilation, boolean includeTests) {
-    super(project, jpsProject, artifacts, isForcedCompilation);
+    super(jpsProject, artifacts, isForcedCompilation);
     myFiles = files;
     myTargets = new HashSet<BuildTarget>();
     for (JpsModule module : targets) {

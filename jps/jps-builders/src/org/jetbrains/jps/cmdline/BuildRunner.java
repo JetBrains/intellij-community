@@ -5,7 +5,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Callbacks;
-import org.jetbrains.jps.Project;
 import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
@@ -80,8 +79,7 @@ public class BuildRunner {
     }
 
     final JpsModel jpsModel = myModelLoader.loadModel();
-    final Project project = myModelLoader.loadOldProject();
-    return new ProjectDescriptor(project, jpsModel, fsState, projectTimestamps, dataManager, BuildLoggingManager.DEFAULT);
+    return new ProjectDescriptor(jpsModel, fsState, projectTimestamps, dataManager, BuildLoggingManager.DEFAULT);
   }
 
   public void runBuild(ProjectDescriptor pd, CanceledStatus cs, @Nullable Callbacks.ConstantAffectionResolver constantSearch,
@@ -143,7 +141,7 @@ public class BuildRunner {
 
     final CompileScope compileScope;
     if (buildType == BuildType.PROJECT_REBUILD || (modules.isEmpty() && paths.isEmpty())) {
-      compileScope = new AllProjectScope(pd.project, pd.jpsProject, artifacts, buildType != BuildType.MAKE);
+      compileScope = new AllProjectScope(pd.jpsProject, artifacts, buildType != BuildType.MAKE);
     }
     else {
       final Set<JpsModule> forcedModules;
@@ -183,10 +181,10 @@ public class BuildRunner {
       }
 
       if (filesToCompile.isEmpty()) {
-        compileScope = new ModulesScope(pd.project, pd.jpsProject, forcedModules, artifacts, buildType != BuildType.MAKE, includeTests);
+        compileScope = new ModulesScope(pd.jpsProject, forcedModules, artifacts, buildType != BuildType.MAKE, includeTests);
       }
       else {
-        compileScope = new ModulesAndFilesScope(pd.project, pd.jpsProject, forcedModules, filesToCompile, artifacts, buildType != BuildType.MAKE, includeTests);
+        compileScope = new ModulesAndFilesScope(pd.jpsProject, forcedModules, filesToCompile, artifacts, buildType != BuildType.MAKE, includeTests);
       }
     }
     return compileScope;
