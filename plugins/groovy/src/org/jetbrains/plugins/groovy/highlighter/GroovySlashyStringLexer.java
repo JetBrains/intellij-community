@@ -15,7 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.highlighter;
 
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.lexer.LexerBase;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
@@ -26,6 +28,8 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
  * @author Max Medvedev
  */
 public class GroovySlashyStringLexer extends LexerBase {
+  private static final Logger LOG = Logger.getInstance(GroovySlashyStringLexer.class);
+
   private CharSequence myBuffer;
   private int myStart;
   private int myBufferEnd;
@@ -38,7 +42,9 @@ public class GroovySlashyStringLexer extends LexerBase {
 
   @Override
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
-    assert buffer.length() >= endOffset : "buffer Length: " + buffer.length() + ", endOffset: " + endOffset + "buffer: " + buffer;
+    if (buffer.length()<endOffset) {
+      LogMessageEx.error(LOG, "buffer Length: " + buffer.length() + ", endOffset: " + endOffset, buffer.toString());
+    }
 
     myBuffer = buffer;
     myEnd = startOffset;
