@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -73,8 +74,26 @@ public class ConvertStringToMultilineIntention extends Intention {
 
     buffer.append(quote);
     try {
+      final int offset = editor.getCaretModel().getOffset();
+      final TextRange range = old.getTextRange();
+      int shift;
+
+      if (range.getStartOffset() == offset) {
+        shift = 0;
+      }
+      else if (range.getEndOffset() == offset + 1) {
+        shift = -2;
+      }
+      else {
+        shift = 2;
+      }
+
       final GrExpression newLiteral = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(buffer.toString());
       old.replaceWithExpression(newLiteral, true);
+
+      if (shift != 0) {
+        editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + shift);
+      }
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

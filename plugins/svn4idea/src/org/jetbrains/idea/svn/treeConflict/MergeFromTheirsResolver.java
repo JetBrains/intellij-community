@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -92,12 +91,7 @@ public class MergeFromTheirsResolver {
     myCommittedRevision = revision;
     myOldFilePath = myChange.getBeforeRevision().getFile();
     myNewFilePath = myChange.getAfterRevision().getFile();
-    myBaseForPatch = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        return ChangesUtil.findValidParent(myNewFilePath);
-      }
-    });
+    myBaseForPatch = ChangesUtil.findValidParentAccurately(myNewFilePath);
     myOldPresentation = TreeConflictRefreshablePanel.filePath(myOldFilePath);
     myNewPresentation = TreeConflictRefreshablePanel.filePath(myNewFilePath);
 

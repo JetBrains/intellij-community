@@ -257,12 +257,12 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Nullable
   public AbstractVcs getVcsFor(final FilePath file) {
+    final VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
     return ApplicationManager.getApplication().runReadAction(new Computable<AbstractVcs>() {
       @Nullable
       public AbstractVcs compute() {
         if (!ApplicationManager.getApplication().isUnitTestMode() && !myProject.isInitialized()) return null;
         if (myProject.isDisposed()) throw new ProcessCanceledException();
-        VirtualFile vFile = ChangesUtil.findValidParent(file);
         if (vFile != null) {
           return getVcsFor(vFile);
         }
@@ -300,34 +300,24 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Nullable
   public VirtualFile getVcsRootFor(final FilePath file) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      @Nullable
-      public VirtualFile compute() {
-        if (myProject.isDisposed()) return null;
-        VirtualFile vFile = ChangesUtil.findValidParent(file);
-        if (vFile != null) {
-          return getVcsRootFor(vFile);
-        }
-        return null;
-      }
-    });
+    if (myProject.isDisposed()) return null;
+    VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
+    if (vFile != null) {
+      return getVcsRootFor(vFile);
+    }
+    return null;
   }
 
   @Override
   public VcsRoot getVcsRootObjectFor(final FilePath file) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<VcsRoot>() {
-      @Nullable
-      public VcsRoot compute() {
-        if (myProject.isDisposed()) {
-          return null;
-        }
-        VirtualFile vFile = ChangesUtil.findValidParent(file);
-        if (vFile != null) {
-          return getVcsRootObjectFor(vFile);
-        }
-        return null;
-      }
-    });
+    if (myProject.isDisposed()) {
+      return null;
+    }
+    VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
+    if (vFile != null) {
+      return getVcsRootObjectFor(vFile);
+    }
+    return null;
   }
 
   public void unregisterVcs(AbstractVcs vcs) {
@@ -477,20 +467,15 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Nullable
   public VcsDirectoryMapping getDirectoryMappingFor(final FilePath path) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<VcsDirectoryMapping>() {
-      @Nullable
-      public VcsDirectoryMapping compute() {
-        VirtualFile vFile = ChangesUtil.findValidParent(path);
-        if (vFile != null) {
-          return myMappings.getMappingFor(vFile);
-        }
-        return null;
-      }
-    });
+    VirtualFile vFile = ChangesUtil.findValidParentAccurately(path);
+    if (vFile != null) {
+      return myMappings.getMappingFor(vFile);
+    }
+    return null;
   }
 
   public boolean hasExplicitMapping(final FilePath f) {
-    VirtualFile vFile = ChangesUtil.findValidParent(f);
+    VirtualFile vFile = ChangesUtil.findValidParentAccurately(f);
     if (vFile == null) return false;
     return hasExplicitMapping(vFile);
   }

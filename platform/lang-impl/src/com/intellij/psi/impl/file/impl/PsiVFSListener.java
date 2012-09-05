@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,10 +68,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
       public void run() {
         myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(PsiVFSListener.this));
         myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
-        myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
-          @Override
-          public void beforeFileTypesChanged(FileTypeEvent event) {}
-
+        myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener.Adapter() {
           @Override
           public void fileTypesChanged(FileTypeEvent e) {
             myFileManager.processFileTypesChanged();

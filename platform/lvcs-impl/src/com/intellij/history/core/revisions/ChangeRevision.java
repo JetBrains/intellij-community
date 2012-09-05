@@ -24,13 +24,14 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class ChangeRevision extends Revision {
   private final LocalHistoryFacade myFacade;
   private final RootEntry myRoot;
-  private final String myEntryPath;
+  @NotNull private final String myEntryPath;
   private final long myTimestamp;
   private final Change myChangeToRevert;
 
@@ -42,7 +43,7 @@ public class ChangeRevision extends Revision {
   private final int myLabelColor;
   private final Pair<List<String>, Integer> myAffectedFiles;
 
-  public ChangeRevision(LocalHistoryFacade facade, RootEntry r, String entryPath, ChangeSet changeSet, boolean before) {
+  public ChangeRevision(LocalHistoryFacade facade, RootEntry r, @NotNull String entryPath, ChangeSet changeSet, boolean before) {
     myFacade = facade;
     myRoot = r;
     myEntryPath = entryPath;
@@ -74,7 +75,7 @@ public class ChangeRevision extends Revision {
     RootEntry rootCopy = myRoot.copy();
 
     boolean revertThis = myBefore;
-    String path = myFacade.revertUpTo(rootCopy, myEntryPath, null, myChangeToRevert, revertThis);
+    String path = myFacade.revertUpTo(rootCopy, myEntryPath, null, myChangeToRevert, revertThis, true);
 
     return rootCopy.findEntry(path);
   }

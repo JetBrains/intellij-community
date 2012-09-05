@@ -185,6 +185,11 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return node == null ? null : node.getPsi();
   }
 
+  @Override
+  public boolean isTopControlFlowOwner() {
+    return true;
+  }
+
   private static boolean processDeclarationsInPackage(final PsiScopeProcessor processor,
                                                       ResolveState state,
                                                       PsiElement lastParent,
@@ -254,7 +259,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @Nullable
   private PsiElement getAnchorToInsertImportAfter(GrImportStatement statement) {
-    final GroovyCodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().getCustomSettings(GroovyCodeStyleSettings.class);
+    final GroovyCodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().getCustomSettings(
+      GroovyCodeStyleSettings.class);
     final PackageEntryTable layoutTable = settings.IMPORT_LAYOUT_TABLE;
     final PackageEntry[] entries = layoutTable.getEntries();
 

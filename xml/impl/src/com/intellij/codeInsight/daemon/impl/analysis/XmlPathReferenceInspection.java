@@ -22,8 +22,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.XmlElementVisitor;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlDoctype;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,20 +58,15 @@ public class XmlPathReferenceInspection extends XmlSuppressableInspectionTool {
   private void checkRefs(PsiElement element, ProblemsHolder holder, boolean isOnTheFly) {
     PsiReference[] references = element.getReferences();
     for (PsiReference reference : references) {
-      if (!(reference instanceof FileReferenceOwner) ||
-          XmlHighlightVisitor.skipValidation(element)) {
+      if (!XmlHighlightVisitor.isUrlReference(reference)) {
         continue;
       }
       boolean isHtml = HtmlUtil.isHtmlTagContainingFile(element);
       if (isHtml ^ isForHtml()) {
         continue;
       }
-      if (isHtml) {
-        PsiElement parent = element.getParent();
-        if (parent instanceof XmlAttribute && "href".equals(((XmlAttribute)parent).getLocalName())) {
-          // handled by HtmlUnknownTargetInspection
-          continue;
-        }
+      if (!isHtml && XmlHighlightVisitor.skipValidation(element)) {
+        continue;
       }
       if (XmlHighlightVisitor.hasBadResolve(reference, false)) {
         holder.registerProblem(reference, ProblemsHolder.unresolvedReferenceMessage(reference),

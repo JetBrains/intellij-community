@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -70,12 +71,26 @@ public class Scopes {
       return;
     }
     final Collection<FilePathUnderVcs> dirs = dirt.getDirsForVcs();
-    for (FilePathUnderVcs dir : dirs) {
-      getScope(dir.getVcs()).addDirtyDirRecursively(dir.getPath());
-    }
     final Collection<FilePathUnderVcs> files = dirt.getFilesForVcs();
+
+    final MultiMap<AbstractVcs, FilePath> filesMap = new MultiMap<AbstractVcs, FilePath>();
+    final MultiMap<AbstractVcs, FilePath> dirsMap = new MultiMap<AbstractVcs, FilePath>();
+
+    for (FilePathUnderVcs dir : dirs) {
+      dirsMap.putValue(dir.getVcs(), dir.getPath());
+    }
     for (FilePathUnderVcs file : files) {
-      getScope(file.getVcs()).addDirtyFile(file.getPath());
+      filesMap.putValue(file.getVcs(), file.getPath());
+    }
+    final Set<AbstractVcs> keys = new HashSet<AbstractVcs>(filesMap.keySet());
+    keys.addAll(dirsMap.keySet());
+    for (AbstractVcs key : keys) {
+      Collection<FilePath> dirPaths = dirsMap.get(key);
+      dirPaths = dirPaths == null ? Collections.<FilePath>emptyList() : dirPaths;
+      Collection<FilePath> filePaths = filesMap.get(key);
+      filePaths = filePaths == null ? Collections.<FilePath>emptyList() : filePaths;
+
+      getScope(key).addDirtyData(dirPaths, filePaths);
     }
   }
 

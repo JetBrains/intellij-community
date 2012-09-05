@@ -26,14 +26,15 @@ import org.jetbrains.annotations.Nullable;
 
 public class ExpressionUtils {
 
-  private ExpressionUtils() {
-  }
+  private ExpressionUtils() {}
 
+  @Nullable
   public static Object computeConstantExpression(
     @Nullable PsiExpression expression) {
     return computeConstantExpression(expression, false);
   }
 
+  @Nullable
   public static Object computeConstantExpression(
     @Nullable PsiExpression expression,
     boolean throwConstantEvaluationOverflowException) {
@@ -159,6 +160,27 @@ public class ExpressionUtils {
       return TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, type);
     }
     return false;
+  }
+
+  @Nullable
+  public static PsiLiteralExpression getLiteral(@Nullable PsiExpression expression) {
+    expression = ParenthesesUtils.stripParentheses(expression);
+    if (expression instanceof PsiLiteralExpression) {
+      return (PsiLiteralExpression)expression;
+    }
+    if (!(expression instanceof PsiTypeCastExpression)) {
+      return null;
+    }
+    final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
+    final PsiExpression operand = ParenthesesUtils.stripParentheses(typeCastExpression.getOperand());
+    if (!(operand instanceof PsiLiteralExpression)) {
+      return null;
+    }
+    return (PsiLiteralExpression)operand;
+  }
+
+  public static boolean isLiteral(@Nullable PsiExpression expression) {
+    return getLiteral(expression) != null;
   }
 
   public static boolean isEmptyStringLiteral(@Nullable PsiExpression expression) {

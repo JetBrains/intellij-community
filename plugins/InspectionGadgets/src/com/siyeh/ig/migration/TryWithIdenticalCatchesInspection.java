@@ -82,6 +82,10 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       if (catchSections.length < 2) {
         return;
       }
+      final PsiParameter[] parameters = statement.getCatchBlockParameters();
+      if (catchSections.length != parameters.length) {
+        return;
+      }
       final boolean[] duplicates = new boolean[catchSections.length];
       for (int i = 0; i < catchSections.length - 1; i++) {
         final PsiCatchSection catchSection = catchSections[i];
@@ -99,7 +103,6 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
                                                                  false);
         final DuplicatesFinder finder = new DuplicatesFinder(new PsiElement[]{catchBlock},
                                                              inputVariables, null, Collections.<PsiVariable>emptyList());
-        final PsiParameter[] parameters = statement.getCatchBlockParameters();
         for (int j = i + 1; j < catchSections.length; j++) {
           if (duplicates[j]) {
             continue;

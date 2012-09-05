@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.impl.analysis;
+package com.intellij.ide.browsers;
 
-/**
- * @author Dmitry Avdeev
- *         Date: 9/3/12
- */
-public class HtmlPathReferenceInspection extends XmlPathReferenceInspection {
+import com.intellij.openapi.extensions.ExtensionPointName;
 
-  @Override
-  protected boolean isForHtml() {
-    return true;
-  }
+public abstract class UrlOpener {
+  public static final ExtensionPointName<UrlOpener> EP_NAME = ExtensionPointName.create("org.jetbrains.urlOpener");
+
+  public abstract boolean openUrl(BrowsersConfiguration.BrowserFamily family, String url);
 }

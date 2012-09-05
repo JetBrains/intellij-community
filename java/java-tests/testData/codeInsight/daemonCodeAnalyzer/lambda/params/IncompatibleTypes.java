@@ -1,7 +1,7 @@
 class XXX {
   Runnable bar() {
-    <error descr="Incompatible types. Found: '<lambda expression>', required: 'java.lang.Runnable'">return (o)->{
+    return <error descr="Incompatible parameter types in lambda expression">(o)->{
       System.out.println();
-    };</error>
+    }</error>;
   }
 }

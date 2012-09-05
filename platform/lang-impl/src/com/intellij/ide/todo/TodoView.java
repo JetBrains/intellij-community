@@ -288,10 +288,8 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
     }
   }
 
-  private final class MyFileTypeListener implements FileTypeListener{
-    public void beforeFileTypesChanged(FileTypeEvent event) {
-    }
-
+  private final class MyFileTypeListener extends FileTypeListener.Adapter {
+    @Override
     public void fileTypesChanged(FileTypeEvent e){
       // this invokeLater guaranties that this code will be invoked after
       // PSI gets the same event.

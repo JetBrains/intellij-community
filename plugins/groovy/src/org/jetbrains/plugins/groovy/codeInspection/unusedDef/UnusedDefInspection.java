@@ -17,11 +17,11 @@ package org.jetbrains.plugins.groovy.codeInspection.unusedDef;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -175,7 +175,14 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
       final GroovyPsiElement scope = ControlFlowUtils.findControlFlowOwner(var);
       if (scope == null) {
         PsiFile file = var.getContainingFile();
-        LOG.error(file == null ? "no file??? var of type" + var.getClass().getCanonicalName() : DebugUtil.psiToString(file, true, false));
+        if (file == null) {
+          LogMessageEx.error(LOG, "no file??? var of type" + var.getClass().getCanonicalName());
+          return false;
+        }
+        else {
+          LogMessageEx.error(LOG, "var: " + var.getName() + ", offset:" + var.getTextRange().getStartOffset(), file.getText());
+          return false;
+        }
       }
 
       return ReferencesSearch.search(var, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {

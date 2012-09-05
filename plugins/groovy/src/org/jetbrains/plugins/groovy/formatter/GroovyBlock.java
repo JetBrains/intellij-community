@@ -47,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -114,11 +115,13 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
       }
       catch (AssertionError e) {
         final PsiFile file = myNode.getPsi().getContainingFile();
-        LogMessageEx.error(LOG, "Formatting failed for file " + file.getName(), file.getText());
+        LogMessageEx.error(LOG, "Formatting failed for file " + file.getName(), e, file.getText(), myNode.getText());
+        mySubBlocks = new ArrayList<Block>();
       }
       catch (RuntimeException e) {
         final PsiFile file = myNode.getPsi().getContainingFile();
-        LogMessageEx.error(LOG, "Formatting failed for file " + file.getName(), file.getText());
+        LogMessageEx.error(LOG, "Formatting failed for file " + file.getName(), e, file.getText(), myNode.getText());
+        mySubBlocks = new ArrayList<Block>();
       }
     }
     return  mySubBlocks;

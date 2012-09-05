@@ -927,6 +927,7 @@ public class ListUtils {
     assertEquals("fzazzz", list.get(0).getLookupString());
   }
 
+  public void testSmartEnterWrapsConstructorCall() throws Throwable { doTest(Lookup.COMPLETE_STATEMENT_SELECT_CHAR as String) }
   public void testTabReplacesMethodNameWithLocalVariableName() throws Throwable { doTest('\t'); }
   public void testMethodParameterAnnotationClass() throws Throwable { doTest(); }
   public void testPrimitiveCastOverwrite() throws Throwable { doTest '\t' }

@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
@@ -57,14 +58,11 @@ public class DirectoryIndexComponent extends DirectoryIndexImpl {
   public void initialize() {
     subscribeToFileChanges();
     super.initialize();
+    markContentRootsForRefresh();
   }
 
   private void subscribeToFileChanges() {
-    myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
-      @Override
-      public void beforeFileTypesChanged(FileTypeEvent event) {
-      }
-
+    myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener.Adapter() {
       @Override
       public void fileTypesChanged(FileTypeEvent event) {
         doInitialize();
@@ -79,6 +77,18 @@ public class DirectoryIndexComponent extends DirectoryIndexImpl {
     });
 
     myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new MyVirtualFileListener()));
+  }
+
+  private void markContentRootsForRefresh() {
+    Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    for (Module module : modules) {
+      VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+      for (VirtualFile contentRoot : contentRoots) {
+        if (contentRoot instanceof NewVirtualFile) {
+          ((NewVirtualFile)contentRoot).markDirtyRecursively();
+        }
+      }
+    }
   }
 
   @Override

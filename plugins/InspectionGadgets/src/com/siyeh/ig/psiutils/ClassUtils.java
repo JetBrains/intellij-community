@@ -78,7 +78,16 @@ public class ClassUtils {
     immutableTypes.add("java.util.regex.Pattern");
   }
 
-  private ClassUtils() {
+  private ClassUtils() {}
+
+  @Nullable
+  public static PsiClass findClass(String fqClassName, PsiElement context) {
+    return JavaPsiFacade.getInstance(context.getProject()).findClass(fqClassName, context.getResolveScope());
+  }
+
+  @Nullable
+  public static PsiClass findObjectClass(PsiElement context) {
+    return findClass(CommonClassNames.JAVA_LANG_OBJECT, context);
   }
 
   public static boolean isPrimitive(PsiType type) {

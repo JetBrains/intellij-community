@@ -41,6 +41,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressWrapper;
@@ -725,20 +726,32 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     class CalculateItems implements Runnable {
       @Override
       public void run() {
-        duringCompletion(initContext);
-        ProgressManager.checkCanceled();
-
-        LookupElement[] result = CompletionService.getCompletionService().performCompletion(myParameters, weigher);
-        ProgressManager.checkCanceled();
-
-        weigher.waitFor();
-        ProgressManager.checkCanceled();
-
-        data.set(result);
+        try {
+          data.set(calculateItems(initContext, weigher));
+        }
+        catch (ProcessCanceledException ignore) {
+        }
+        catch (Throwable t) {
+          LOG.error(t);
+          cancel();
+        }
       }
     }
     strategy.startThread(this, new CalculateItems());
     return data;
+  }
+
+  private LookupElement[] calculateItems(CompletionInitializationContext initContext, WeighingDelegate weigher) {
+    duringCompletion(initContext);
+    ProgressManager.checkCanceled();
+
+    LookupElement[] result = CompletionService.getCompletionService().performCompletion(myParameters, weigher);
+    ProgressManager.checkCanceled();
+
+    weigher.waitFor();
+    ProgressManager.checkCanceled();
+
+    return result;
   }
 
   private static class ModifierTracker extends KeyAdapter {

@@ -44,9 +44,9 @@ import java.util.Map;
 /**
  * @author Maxim.Mossienko
  */
-class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
+public class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
   private final String myAnchor;
-  private final PsiReference myFileReference;
+  private final FileReference myFileReference;
   private final PsiElement myElement;
   private final int myOffset;
   private final boolean mySoft;

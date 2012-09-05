@@ -1627,10 +1627,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   /**
    * Gets events from FileTypeManager and updates icons on tabs
    */
-  private final class MyFileTypeListener implements FileTypeListener {
-    public void beforeFileTypesChanged(FileTypeEvent event) {
-    }
-
+  private final class MyFileTypeListener extends FileTypeListener.Adapter {
+    @Override
     public void fileTypesChanged(final FileTypeEvent event) {
       assertDispatchThread();
       final VirtualFile[] openFiles = getOpenFiles();

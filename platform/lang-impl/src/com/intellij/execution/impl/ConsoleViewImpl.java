@@ -893,7 +893,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private void popupInvoked(MouseEvent mouseEvent) {
     final ActionManager actionManager = ActionManager.getInstance();
-    final HyperlinkInfo info = myHyperlinks.getHyperlinkInfoByPoint(mouseEvent.getPoint());
+    final HyperlinkInfo info = myHyperlinks != null ? myHyperlinks.getHyperlinkInfoByPoint(mouseEvent.getPoint()) : null;
     ActionGroup group = null;
     if (info instanceof HyperlinkWithPopupMenuInfo) {
       group = ((HyperlinkWithPopupMenuInfo)info).getPopupMenuGroup(mouseEvent);

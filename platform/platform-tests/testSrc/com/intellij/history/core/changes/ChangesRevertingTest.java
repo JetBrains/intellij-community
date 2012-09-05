@@ -29,7 +29,7 @@ public class ChangesRevertingTest extends LocalHistoryTestCase {
     StructuralChange c = createFile(root, "file");
     assertTrue(root.hasEntry("file"));
 
-    c.revertOn(root);
+    c.revertOn(root, true);
     assertFalse(root.hasEntry("file"));
   }
 
@@ -38,7 +38,7 @@ public class ChangesRevertingTest extends LocalHistoryTestCase {
     StructuralChange c = createDirectory(root, "dir");
     assertTrue(root.hasEntry("dir"));
 
-    c.revertOn(root);
+    c.revertOn(root, true);
     assertFalse(root.hasEntry("dir"));
   }
 
@@ -46,7 +46,7 @@ public class ChangesRevertingTest extends LocalHistoryTestCase {
   public void testCreatingFileUnderDirectory() {
     StructuralChange c = createFile(root, "dir/file", null, -1, false);
 
-    c.revertOn(root);
+    c.revertOn(root, true);
     assertFalse(root.hasEntry("dir/file"));
     assertTrue(root.hasEntry("dir"));
   }
@@ -56,7 +56,7 @@ public class ChangesRevertingTest extends LocalHistoryTestCase {
     createFile(root, "file", "old content", 11L, false);
     StructuralChange c = changeContent(root, "file", "new content", 22L);
 
-    c.revertOn(root);
+    c.revertOn(root, true);
 
     Entry e = root.getEntry("file");
     assertContent("old content", e.getContent());
@@ -70,7 +70,7 @@ public class ChangesRevertingTest extends LocalHistoryTestCase {
 
     assertTrue(root.hasEntry("new file"));
 
-    c.revertOn(root);
+    c.revertOn(root, true);
     assertTrue(root.hasEntry("file"));
     assertFalse(root.hasEntry("new file"));
   }
@@ -84,7 +84,7 @@ public class ChangesRevertingTest extends LocalHistoryTestCase {
     assertFalse(root.hasEntry("dir1/dir2/file"));
     assertTrue(root.hasEntry("dir1/new dir/file"));
 
-    c.revertOn(root);
+    c.revertOn(root, true);
 
     assertTrue(root.hasEntry("dir1/dir2"));
     assertTrue(root.hasEntry("dir1/dir2/file"));
@@ -98,7 +98,7 @@ public class ChangesRevertingTest extends LocalHistoryTestCase {
     StructuralChange c = changeROStatus(root, "f", false);
     assertFalse(root.getEntry("f").isReadOnly());
 
-    c.revertOn(root);
+    c.revertOn(root, true);
     assertTrue(root.getEntry("f").isReadOnly());
   }
 
@@ -113,7 +113,7 @@ public class ChangesRevertingTest extends LocalHistoryTestCase {
     assertTrue(root.hasEntry("dir2/file"));
     assertFalse(root.hasEntry("dir1/file"));
 
-    c.revertOn(root);
+    c.revertOn(root, true);
 
     assertFalse(root.hasEntry("dir2/file"));
     assertTrue(root.hasEntry("dir1/file"));
@@ -130,7 +130,7 @@ public class ChangesRevertingTest extends LocalHistoryTestCase {
     assertTrue(root.hasEntry("root2/dir/file"));
     assertFalse(root.hasEntry("root1/dir"));
 
-    c.revertOn(root);
+    c.revertOn(root, true);
 
     assertTrue(root.hasEntry("root1/dir"));
     assertTrue(root.hasEntry("root1/dir/file"));
@@ -145,7 +145,7 @@ public class ChangesRevertingTest extends LocalHistoryTestCase {
 
     assertFalse(root.hasEntry("file"));
 
-    c.revertOn(root);
+    c.revertOn(root, true);
     assertTrue(root.hasEntry("file"));
 
     Entry e = root.getEntry("file");
@@ -163,7 +163,7 @@ public class ChangesRevertingTest extends LocalHistoryTestCase {
 
     assertFalse(root.hasEntry("file"));
 
-    c.revertOn(root);
+    c.revertOn(root, true);
     assertTrue(root.hasEntry("file"));
 
     Entry restored = root.findEntry("file");
@@ -180,7 +180,7 @@ public class ChangesRevertingTest extends LocalHistoryTestCase {
     StructuralChange c = delete(root, "dir1");
     assertFalse(root.hasEntry("dir1"));
 
-    c.revertOn(root);
+    c.revertOn(root, true);
 
     assertTrue(root.hasEntry("dir1"));
     assertTrue(root.hasEntry("dir1/dir2"));

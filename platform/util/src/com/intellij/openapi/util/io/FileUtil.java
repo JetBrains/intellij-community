@@ -19,11 +19,9 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.TObjectHashingStrategy;
@@ -119,6 +117,10 @@ public class FileUtil extends FileUtilRt {
       return false;
     }
 
+    return isCanonicalAncestor(strict, ancestorPath, filePath);
+  }
+
+  private static boolean isCanonicalAncestor(boolean strict, String ancestorPath, String filePath) {
     boolean startsWith = SystemInfo.isFileSystemCaseSensitive ? StringUtil.startsWith(filePath, ancestorPath)
                                                               : StringUtil.startsWithIgnoreCase(filePath, ancestorPath);
     if (!startsWith) {
@@ -127,6 +129,39 @@ public class FileUtil extends FileUtilRt {
 
     return filePath.length() > ancestorPath.length() && filePath.charAt(ancestorPath.length()) == '/' ||
            !strict && filePath.length() == ancestorPath.length();
+  }
+
+  public static<T> Collection<T> removeAncestors(final Collection<T> files, final Convertor<T, String> convertor,
+                                                 final PairProcessor<String, T> removeProcessor) {
+    if (files.isEmpty()) return files;
+    final TreeMap<String, T> paths = new TreeMap<String, T>();
+    for (T file : files) {
+      final String path = convertor.convert(file);
+      assert path != null;
+      final String canonicalPath = toCanonicalPath(path);
+      paths.put(canonicalPath, file);
+    }
+    final List<Map.Entry<String, T>> ordered = new ArrayList<Map.Entry<String, T>>(paths.entrySet());
+    final List<T> result = new ArrayList<T>(ordered.size());
+    result.add(ordered.get(0).getValue());
+    for (int i = 1; i < ordered.size(); i++) {
+      final Map.Entry<String, T> entry = ordered.get(i);
+      final String child = entry.getKey();
+      boolean parentNotFound = true;
+      for (int j = i - 1; j >= 0; j--) {
+        // possible parents
+        final String parent = ordered.get(j).getKey();
+        if (parent == null) continue;
+        if (isCanonicalAncestor(false, parent, child) && removeProcessor.process(child, entry.getValue())) {
+          parentNotFound = false;
+          break;
+        }
+      }
+      if (parentNotFound) {
+        result.add(entry.getValue());
+      }
+    }
+    return result;
   }
 
   /**

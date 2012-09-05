@@ -20,12 +20,14 @@ import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -379,12 +381,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
       }
     }
     else {
-      final VirtualFile validParent = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-        @Nullable
-        public VirtualFile compute() {
-          return ChangesUtil.findValidParent(filePath);
-        }
-      });
+      final VirtualFile validParent = ChangesUtil.findValidParentAccurately(filePath);
       if (validParent == null) return false;
       localTag = getDirectoryTag(validParent);
     }

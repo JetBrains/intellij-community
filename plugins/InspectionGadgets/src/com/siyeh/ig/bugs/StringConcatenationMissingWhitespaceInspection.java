@@ -21,7 +21,8 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,6 +34,13 @@ public class StringConcatenationMissingWhitespaceInspection extends BaseInspecti
 
   @SuppressWarnings("PublicField")
   public boolean ignoreNonStringLiterals = false;
+
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("string.concatenation.missing.whitespace.display.name");
+  }
 
   @NotNull
   @Override
@@ -75,9 +83,11 @@ public class StringConcatenationMissingWhitespaceInspection extends BaseInspecti
     }
 
     private boolean isMissingWhitespace(PsiExpression lhs, PsiExpression rhs) {
-      if (isLiteral(lhs) && hasStringType(lhs)) {
-        final PsiLiteralExpression literalExpression = (PsiLiteralExpression)lhs;
-        final String value = (String)literalExpression.getValue();
+      final boolean lhsIsString = hasStringType(lhs);
+      final PsiLiteralExpression lhsLiteral = ExpressionUtils.getLiteral(lhs);
+      final PsiLiteralExpression rhsLiteral = ExpressionUtils.getLiteral(rhs);
+      if (lhsLiteral != null && lhsIsString) {
+        final String value = (String)lhsLiteral.getValue();
         if (value == null) {
           return false;
         }
@@ -90,13 +100,13 @@ public class StringConcatenationMissingWhitespaceInspection extends BaseInspecti
           return false;
         }
       }
-      else if (ignoreNonStringLiterals || !isLiteral(rhs) || hasStringType(lhs)) {
+      else if (ignoreNonStringLiterals || rhsLiteral == null || lhsIsString) {
         return false;
       }
-      if (isLiteral(rhs) && hasStringType(rhs)) {
-        final PsiLiteralExpression literalExpression = (PsiLiteralExpression)rhs;
-        final String value = (String)literalExpression.getValue();
-        if ((value == null) || (value.length() == 0)) {
+      final boolean rhsIsString = hasStringType(rhs);
+      if (rhsLiteral != null && rhsIsString) {
+        final String value = (String)rhsLiteral.getValue();
+        if ((value == null) || value.isEmpty()) {
           return false;
         }
         final char c = value.charAt(0);
@@ -104,15 +114,10 @@ public class StringConcatenationMissingWhitespaceInspection extends BaseInspecti
           return false;
         }
       }
-      else if (ignoreNonStringLiterals || hasStringType(rhs)) {
+      else if (ignoreNonStringLiterals || rhsIsString) {
         return false;
       }
       return true;
-    }
-
-    private boolean isLiteral(PsiExpression expression) {
-      expression = ParenthesesUtils.stripParentheses(expression);
-      return expression instanceof PsiLiteralExpression;
     }
 
     private boolean hasStringType(PsiExpression expression) {

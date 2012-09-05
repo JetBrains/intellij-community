@@ -1331,4 +1331,20 @@ class Foo {
     myFixture.checkResult('class <caret>')
   }
 
+  void joinCompletion() {
+    myTester.joinCompletion()
+  }
+
+  protected def joinCommit(Closure c1={}) {
+    myTester.joinCommit(c1)
+  }
+
+  protected void joinAutopopup() {
+    myTester.joinAutopopup()
+  }
+
+  protected def joinAlarm() {
+    myTester.joinAlarm()
+  }
+
 }

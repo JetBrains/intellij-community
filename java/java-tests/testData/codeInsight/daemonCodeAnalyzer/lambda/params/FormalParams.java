@@ -11,8 +11,8 @@ class Foo {
   };
 
   void bazz() {
-    bar<error descr="'bar(I)' in 'Foo' cannot be applied to '(<lambda expression>)'">((String s) -> {
-      System.out.println(s);})</error>;
+    bar((<error descr="Incompatible parameter types in lambda expression">String s</error>) -> {
+      System.out.println(s);});
     bar((int i) -> {System.out.println(i);});
   } 
   void bar(I i){}

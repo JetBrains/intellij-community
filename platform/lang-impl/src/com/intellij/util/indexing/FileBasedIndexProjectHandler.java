@@ -34,7 +34,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ProjectRootManagerComponent;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -124,7 +123,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
     @Override
     public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
       Collection<VirtualFile> files = myIndex.getFilesToUpdate(myProject);
-      return VfsUtil.toVirtualFileArray(files);
+      return VfsUtilCore.toVirtualFileArray(files);
     }
 
     @Override

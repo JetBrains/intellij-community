@@ -41,6 +41,7 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
@@ -255,6 +256,25 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
               final String incompatibleReturnTypesMessage = LambdaUtil.checkReturnTypeCompatible(expression, LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType));
               if (incompatibleReturnTypesMessage != null) {
                 myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, incompatibleReturnTypesMessage));
+              } else {
+                final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
+                if (interfaceMethod != null) {
+                  final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
+                  final PsiParameter[] lambdaParameters = expression.getParameterList().getParameters();
+                  final String incompatibleTypesMessage = "Incompatible parameter types in lambda expression";
+                  if (lambdaParameters.length != parameters.length) {
+                    myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, incompatibleTypesMessage));
+                  } else {
+                    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+                    for (int i = 0; i < lambdaParameters.length; i++) {
+                      PsiParameter lambdaParameter = lambdaParameters[i];
+                      if (!TypeConversionUtil.isAssignable(resolveResult.getSubstitutor().substitute(parameters[i].getType()), lambdaParameter.getType())) {
+                        myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, lambdaParameter, incompatibleTypesMessage));
+                        break;
+                      }
+                    }
+                  }
+                }
               }
             }
           }

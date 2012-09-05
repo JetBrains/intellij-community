@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,9 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
 
   @Override
   public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!file.getManager().isInProject(file)) return false;
+    final PsiManager manager = file.getManager();
+    if (manager == null) return false;
+    if (!manager.isInProject(file)) return false;
     final PsiElement element = getElement(editor, file);
     return element != null && isAvailable(project, editor, element);
   }

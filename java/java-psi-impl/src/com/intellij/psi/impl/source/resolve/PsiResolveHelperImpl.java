@@ -605,7 +605,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         final List<PsiExpression> expressions = lambdaExpression.getReturnExpressions();
         for (final PsiExpression expression : expressions) {
           final boolean independent = LambdaUtil.isFreeFromTypeInferenceArgs(methodParameters, lambdaExpression, expression);
-          if (independent && methodParamsDependOnTypeParams) return FAILED_INFERENCE;
+          if (independent && methodParamsDependOnTypeParams ) {
+            if (lowerBound != PsiType.NULL) {
+              return null;
+            }
+            return FAILED_INFERENCE;
+          }
           if (!independent) {
             if (lowerBound != PsiType.NULL) {
               return null;
