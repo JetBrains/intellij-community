@@ -102,6 +102,7 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(CellConstraints.class));  // jgoodies-forms
     cp.add(getResourcePath(NotNullVerifyingInstrumenter.class));  // not-null
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
+    cp.add(PathManager.findFileInLibDirectory("groovy-all-1.8.5.jar"));//todo[nik,peter] groovy is needed only for groovy builders
 
     final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();
     if (optimizedFileManagerClass != null) {
