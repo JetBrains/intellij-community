@@ -238,7 +238,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   @Nullable
   public DataInputStream readAttribute(@NotNull final VirtualFile file, @NotNull final FileAttribute att) {
-    return FSRecords.readAttribute(getFileId(file), att.getId());
+    return FSRecords.readAttributeWithLock(getFileId(file), att.getId());
   }
 
   @Override
