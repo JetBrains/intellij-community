@@ -704,6 +704,11 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   }
 
   @Override
+  public void clearFindingNextUsageInFile() {
+    myFindUsagesManager.clearFindingNextUsageInFile();
+  }
+
+  @Override
   public void findUsagesInEditor(@NotNull PsiElement element, @NotNull FileEditor fileEditor) {
     if (fileEditor instanceof TextEditor) {
       TextEditor textEditor = (TextEditor)fileEditor;
