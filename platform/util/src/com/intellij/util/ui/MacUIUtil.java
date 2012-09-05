@@ -44,6 +44,46 @@ public class MacUIUtil {
   private MacUIUtil() {
   }
 
+  public static void paintFocusRing(Graphics2D g2d, Color ringColor, Rectangle bounds) {
+    int correction = UIUtil.isUnderDarcula() ? 50 : 0;
+    final Color[] colors = new Color[]{
+      ColorUtil.toAlpha(ringColor, 180 - correction),
+      ColorUtil.toAlpha(ringColor, 120 - correction),
+      ColorUtil.toAlpha(ringColor, 70  - correction),
+      ColorUtil.toAlpha(ringColor, 100 - correction),
+      ColorUtil.toAlpha(ringColor, 50  - correction)
+    };
+
+    final Object oldAntialiasingValue = g2d.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+    final Object oldStrokeControlValue = g2d.getRenderingHint(RenderingHints.KEY_STROKE_CONTROL);
+
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                         USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+
+
+    final Rectangle r = new Rectangle(bounds.x - 3, bounds.y - 3, bounds.width + 6, bounds.height + 6);
+
+    g2d.setColor(colors[0]);
+    g2d.drawRoundRect(r.x + 2, r.y + 2, r.width - 5, r.height - 5, 5, 5);
+
+    g2d.setColor(colors[1]);
+    g2d.drawRoundRect(r.x + 1, r.y + 1, r.width - 3, r.height - 3, 7, 7);
+
+    g2d.setColor(colors[2]);
+    g2d.drawRoundRect(r.x, r.y, r.width - 1, r.height - 1, 9, 9);
+
+    g2d.setColor(colors[3]);
+    g2d.drawRect(r.x + 3, r.y + 3, r.width - 7, r.height - 7);
+
+    g2d.setColor(colors[4]);
+    g2d.drawRect(r.x + 4, r.y + 4, r.width - 9, r.height - 9);
+
+    // restore rendering hints
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAntialiasingValue);
+    g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, oldStrokeControlValue);
+  }
+
   public static void hideCursor() {
     if (SystemInfo.isMac && Registry.is("ide.mac.hide.cursor.when.typing")) {
       Foundation.invoke("NSCursor", "setHiddenUntilMouseMoves:", true);
@@ -133,43 +173,7 @@ public class MacUIUtil {
   }
 
   public static void paintTextFieldFocusRing(@NotNull final Graphics2D g2d, @NotNull final Rectangle bounds) {
-    final Color color = getFocusRingColor();
-    final Color[] colors = new Color[]{
-      ColorUtil.toAlpha(color, 180),
-      ColorUtil.toAlpha(color, 120),
-      ColorUtil.toAlpha(color, 70),
-      ColorUtil.toAlpha(color, 100),
-      ColorUtil.toAlpha(color, 50)
-    };
-
-    final Object oldAntialiasingValue = g2d.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-    final Object oldStrokeControlValue = g2d.getRenderingHint(RenderingHints.KEY_STROKE_CONTROL);
-
-    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                         USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
-
-
-    final Rectangle r = new Rectangle(bounds.x - 3, bounds.y - 3, bounds.width + 6, bounds.height + 6);
-
-    g2d.setColor(colors[0]);
-    g2d.drawRoundRect(r.x + 2, r.y + 2, r.width - 5, r.height - 5, 5, 5);
-
-    g2d.setColor(colors[1]);
-    g2d.drawRoundRect(r.x + 1, r.y + 1, r.width - 3, r.height - 3, 7, 7);
-
-    g2d.setColor(colors[2]);
-    g2d.drawRoundRect(r.x, r.y, r.width - 1, r.height - 1, 9, 9);
-
-    g2d.setColor(colors[3]);
-    g2d.drawRect(r.x + 3, r.y + 3, r.width - 7, r.height - 7);
-
-    g2d.setColor(colors[4]);
-    g2d.drawRect(r.x + 4, r.y + 4, r.width - 9, r.height - 9);
-
-    // restore rendering hints
-    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAntialiasingValue);
-    g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, oldStrokeControlValue);
+    paintFocusRing(g2d, getFocusRingColor(), bounds);
   }
 
   public static void paintComboboxFocusRing(@NotNull final Graphics2D g2d, @NotNull final Rectangle bounds) {
