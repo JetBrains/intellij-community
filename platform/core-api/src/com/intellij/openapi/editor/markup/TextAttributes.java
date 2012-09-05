@@ -75,10 +75,12 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     private static final int EFFECT_BOLD_LINE = 4;
     private static final int EFFECT_BOLD_DOTTED_LINE = 5;
 
+    @Override
     public Object clone() throws CloneNotSupportedException {
       return super.clone();
     }
 
+    @Override
     public void readExternal(Element element) throws InvalidDataException {
       DefaultJDOMExternalizer.readExternal(this, element);
       if (FONT_TYPE < 0 || FONT_TYPE > 3) {
@@ -87,6 +89,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
       }
     }
 
+    @Override
     public void writeExternal(Element element) throws WriteExternalException {
       DefaultJDOMExternalizer.writeExternal(this, element);
     }
@@ -138,11 +141,20 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
   private AttributesFlyweight myAttrs;
 
   public TextAttributes() {
-    myAttrs = AttributesFlyweight.create(null, null, Font.PLAIN, null, EffectType.BOXED, null);
+    this(null, null, null, EffectType.BOXED, Font.PLAIN);
   }
 
   public TextAttributes(Color foregroundColor, Color backgroundColor, Color effectColor, EffectType effectType, @JdkConstants.FontStyle int fontType) {
-    myAttrs = AttributesFlyweight.create(foregroundColor, backgroundColor, fontType, effectColor, effectType, null);
+    setAttributes(foregroundColor, backgroundColor, effectColor, null, effectType, fontType);
+  }
+
+  public void setAttributes(Color foregroundColor,
+                            Color backgroundColor,
+                            Color effectColor,
+                            Color errorStripeColor,
+                            EffectType effectType,
+                            @JdkConstants.FontStyle int fontType) {
+    myAttrs = AttributesFlyweight.create(foregroundColor, backgroundColor, fontType, effectColor, effectType, errorStripeColor);
   }
 
   public boolean isEmpty(){
@@ -212,6 +224,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     myAttrs = myAttrs.withFontType(type);
   }
 
+  @Override
   public TextAttributes clone() {
     TextAttributes cloned = new TextAttributes();
     cloned.myAttrs = myAttrs;
@@ -230,6 +243,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     return myAttrs.hashCode();
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     Externalizable ext = new Externalizable();
     ext.readExternal(element);
@@ -241,6 +255,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
                                          ext.ERROR_STRIPE_COLOR);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     Externalizable ext = new Externalizable();
 
