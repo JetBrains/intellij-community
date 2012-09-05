@@ -75,6 +75,7 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.spock.SpockMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.MixinMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNonCodeMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.dgm.DGMMemberContributor"/>
 
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.DelegatedMethodsContributor"/>
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.AutoExternalizeContributor"/>
