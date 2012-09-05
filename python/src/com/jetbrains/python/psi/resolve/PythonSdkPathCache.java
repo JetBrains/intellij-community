@@ -105,4 +105,8 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
       }
     }
   }
+
+  public void clearBuiltins() {
+    myBuiltins.set(null);
+  }
 }
