@@ -278,6 +278,10 @@ public class PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.yield.from"), LanguageLevel.PYTHON33);
   }
 
+  public void testUnicodeStringConcatToFormat() { //PY-7463
+    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
+  }
+
   private void doDocStubTest() {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     codeInsightSettings.JAVADOC_STUB_ON_ENTER = true;

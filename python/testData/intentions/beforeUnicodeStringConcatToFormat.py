@@ -1,0 +1,1 @@
+u'a' + foo() <caret>+ u'f'
