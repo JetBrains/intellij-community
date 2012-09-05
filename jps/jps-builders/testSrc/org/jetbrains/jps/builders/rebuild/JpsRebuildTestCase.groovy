@@ -92,10 +92,6 @@ abstract class JpsRebuildTestCase extends JpsBuildTestCase {
     initializer()
   }
 
-  def File createTempDir() {
-    return FileUtil.createTempDirectory("jps-build", "");
-  }
-
   def File createTempFile() {
     return FileUtil.createTempFile("jps-build-file", "");
   }
