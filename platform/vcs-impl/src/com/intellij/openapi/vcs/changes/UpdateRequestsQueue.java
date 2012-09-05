@@ -159,7 +159,7 @@ public class UpdateRequestsQueue {
           semaphore.down();
           myWaitingUpdateCompletionSemaphores.add(semaphore);
         }
-        if (!semaphore.waitFor(10000)) {
+        if (!semaphore.waitFor(100*1000)) {
           LOG.error("Too long VCS update");
           return;
         }
