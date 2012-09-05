@@ -1,4 +1,4 @@
-package org.jetbrains.ether;
+package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
 import gnu.trove.TIntHashSet;

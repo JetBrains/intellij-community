@@ -1,10 +1,9 @@
-package org.jetbrains.ether.dependencyView;
+package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.asm4.Type;
-import org.jetbrains.ether.RW;
 
 import java.io.*;
 import java.util.*;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.ether.dependencyView;
+package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUCache;

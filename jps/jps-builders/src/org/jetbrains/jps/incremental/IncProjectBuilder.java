@@ -13,7 +13,7 @@ import com.intellij.util.io.MappingFailedException;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ether.dependencyView.Callbacks;
+import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;

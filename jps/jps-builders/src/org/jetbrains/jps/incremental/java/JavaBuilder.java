@@ -25,8 +25,8 @@ import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.asm4.ClassVisitor;
 import org.jetbrains.asm4.ClassWriter;
 import org.jetbrains.asm4.Opcodes;
-import org.jetbrains.ether.dependencyView.Callbacks;
-import org.jetbrains.ether.dependencyView.Mappings;
+import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
+import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
@@ -288,7 +288,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     final ProjectPaths paths = context.getProjectPaths();
     final ProjectDescriptor pd = context.getProjectDescriptor();
-    final boolean addNotNullAssertions = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(pd.jpsProject).isAddNotNullAssertions();
+    final boolean addNotNullAssertions = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
+      pd.jpsProject).isAddNotNullAssertions();
 
     final Collection<File> classpath =
       paths.getCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);

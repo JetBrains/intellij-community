@@ -1,4 +1,4 @@
-package org.jetbrains.ether.dependencyView;
+package org.jetbrains.jps.builders.java.dependencyView;
 
 public enum ElemType {
   /** Class, interface (including annotation type), or enum declaration */

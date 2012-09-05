@@ -1,4 +1,4 @@
-package org.jetbrains.ether.dependencyView;
+package org.jetbrains.jps.builders.java.dependencyView;
 
 import java.util.Collection;
 

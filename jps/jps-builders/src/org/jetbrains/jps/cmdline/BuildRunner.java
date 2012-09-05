@@ -4,7 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ether.dependencyView.Callbacks;
+import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;

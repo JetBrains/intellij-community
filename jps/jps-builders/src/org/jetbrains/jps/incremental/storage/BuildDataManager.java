@@ -3,7 +3,7 @@ package org.jetbrains.jps.incremental.storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ether.dependencyView.Mappings;
+import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;

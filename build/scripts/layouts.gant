@@ -159,7 +159,6 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
       jar("jps-server.jar") {
         module("jps-builders")
-        module("jps-model")
       }
 
       fileset(dir: "$home/jps/lib") {
@@ -516,7 +515,6 @@ def layout_jps(String target) {
       module("util")
     }
     jar("jps-model.jar") {
-      module("jps-model")
       module("jps-model-api")
       module("jps-model-impl")
       module("jps-model-serialization")

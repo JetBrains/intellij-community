@@ -1,10 +1,9 @@
-package org.jetbrains.ether.dependencyView;
+package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
 import groovyjarjarasm.asm.Opcodes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ether.RW;
 
 import java.io.*;
 import java.lang.annotation.RetentionPolicy;

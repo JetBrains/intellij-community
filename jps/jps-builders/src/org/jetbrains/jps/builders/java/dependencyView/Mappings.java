@@ -1,4 +1,4 @@
-package org.jetbrains.ether.dependencyView;
+package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -62,7 +62,7 @@ public class Mappings {
   private DependencyContext myContext;
   private final int myInitName;
   private final int myEmptyName;
-  private org.jetbrains.ether.dependencyView.Logger<Integer> myDebugS;
+  private org.jetbrains.jps.builders.java.dependencyView.Logger<Integer> myDebugS;
 
   private IntIntMultiMaplet myClassToSubclasses;
   private IntIntMultiMaplet myClassToClassDependency;

@@ -8,7 +8,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="jps-model" exported="" />
     <orderEntry type="module" module-name="util" exported="" />
     <orderEntry type="module" module-name="forms_rt" />
     <orderEntry type="module" module-name="forms-compiler" />

@@ -1,9 +1,8 @@
-package org.jetbrains.ether.dependencyView;
+package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.asm4.Type;
-import org.jetbrains.ether.RW;
 
 import java.io.DataInput;
 import java.io.DataOutput;

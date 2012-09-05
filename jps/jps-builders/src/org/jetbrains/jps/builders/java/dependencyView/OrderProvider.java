@@ -1,6 +1,4 @@
-package org.jetbrains.ether.dependencyView;
-
-import org.intellij.lang.annotations.JdkConstants;
+package org.jetbrains.jps.builders.java.dependencyView;
 
 import java.util.Collections;
 import java.util.LinkedList;
