@@ -23,6 +23,7 @@ import com.jetbrains.python.psi.types.PyReturnTypeReference;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: ktisha
@@ -46,9 +47,11 @@ public class SpecifyTypeInPy3AnnotationsIntention implements IntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!LanguageLevel.forElement(file).isPy3K()) return false;
-    PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset() - 1);
+    int offset = editor.getCaretModel().getOffset();
+    PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, offset);
+
     if (elementAt != null && !(elementAt.getNode().getElementType() == PyTokenTypes.IDENTIFIER))
-      elementAt = file.findElementAt(editor.getCaretModel().getOffset());
+      elementAt = file.findElementAt(offset);
 
     PyCallExpression callExpression = PsiTreeUtil.getParentOfType(elementAt, PyCallExpression.class);
     if (callExpression != null && callExpression.resolveCalleeFunction(PyResolveContext.defaultContext()) != null) {
@@ -98,8 +101,7 @@ public class SpecifyTypeInPy3AnnotationsIntention implements IntentionAction {
         parameter = (PyParameter)problemElement;
       else if (resolvedReference instanceof PyParameter)
         parameter = (PyParameter)resolvedReference;
-      if (parameter instanceof PyNamedParameter && (((PyNamedParameter)parameter).getAnnotation() != null ||
-        parameter.getDefaultValue() != null)) return false;
+      if (parameter instanceof PyNamedParameter && (((PyNamedParameter)parameter).getAnnotation() != null)) return false;
       if (parameter != null)
         return true;
       else {
@@ -146,74 +148,93 @@ public class SpecifyTypeInPy3AnnotationsIntention implements IntentionAction {
       }
     }
 
-    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+    PyExpression defaultParamValue = null;
+    if (parameter instanceof PyNamedParameter)
+      defaultParamValue = parameter.getDefaultValue();
+
     if (parameter != null && name != null) {
-      final PyFunction function =
-        elementGenerator.createFromText(LanguageLevel.forElement(problemElement), PyFunction.class,
-                                        "def foo(" + name + ": object):\n\tpass");
-      final PyNamedParameter namedParameter = function.getParameterList().findParameterByName(name);
-      assert namedParameter != null;
-      parameter = (PyParameter)parameter.replace(namedParameter);
-      parameter = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(parameter);
-      editor.getCaretModel().moveToOffset(parameter.getTextOffset());
-
-      final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(parameter);
-      builder.replaceRange(TextRange.create(parameter.getTextLength()-PyNames.OBJECT.length(), parameter.getTextLength()), PyNames.OBJECT);
-      Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
-      TemplateManager.getInstance(project).startTemplate(editor, template);
+      annotateParameter(project, editor, parameter, name, defaultParamValue);
     }
-    else {    //return type
-      Callable callable = null;
-      if (resolvedReference instanceof PyTargetExpression) {
-        final PyExpression assignedValue = ((PyTargetExpression)resolvedReference).findAssignedValue();
-        if (assignedValue instanceof PyCallExpression) {
-          callable = ((PyCallExpression)assignedValue).resolveCalleeFunction(PyResolveContext.defaultContext());
-        }
+    else {
+      annotateReturnType(project, editor, file, resolvedReference);
+    }
+  }
+
+  private void annotateParameter(Project project, Editor editor, PyParameter parameter, String name, @Nullable PyExpression defaultParamValue) {
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+
+    String defaultParamText = defaultParamValue == null? null: defaultParamValue.getText();
+    final PyNamedParameter namedParameter = elementGenerator.createParameter(name, defaultParamText, PyNames.OBJECT, LanguageLevel.forElement(parameter));
+    assert namedParameter != null;
+    parameter = (PyParameter)parameter.replace(namedParameter);
+    parameter = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(parameter);
+    editor.getCaretModel().moveToOffset(parameter.getTextOffset());
+    PyAnnotation annotation = namedParameter.getAnnotation();
+    PyExpression annotationValue = annotation.getValue();
+
+    final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(parameter);
+    int replacementStart = annotation.getStartOffsetInParent() + annotationValue.getStartOffsetInParent();
+    builder.replaceRange(TextRange.create(replacementStart,
+                                          replacementStart + annotationValue.getTextLength()), PyNames.OBJECT);
+    Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
+    TemplateManager.getInstance(project).startTemplate(editor, template);
+  }
+
+  private void annotateReturnType(Project project,
+                                  Editor editor,
+                                  PsiFile file,
+                                  PsiElement resolvedReference) {
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+    Callable callable = null;
+    if (resolvedReference instanceof PyTargetExpression) {
+      final PyExpression assignedValue = ((PyTargetExpression)resolvedReference).findAssignedValue();
+      if (assignedValue instanceof PyCallExpression) {
+        callable = ((PyCallExpression)assignedValue).resolveCalleeFunction(PyResolveContext.defaultContext());
       }
-      else {
-        int offset = editor.getCaretModel().getOffset();
-        PsiElement elementAt = file.findElementAt(offset - 1);
+    }
+    else {
+      int offset = editor.getCaretModel().getOffset();
+      PsiElement elementAt = file.findElementAt(offset - 1);
 
-        PyCallExpression callExpression = PyUtil.findProblemElement(editor, file, PyCallExpression.class);
-        if (elementAt != null && !(elementAt.getNode().getElementType() == PyTokenTypes.IDENTIFIER))
-          elementAt = file.findElementAt(offset);
+      PyCallExpression callExpression = PyUtil.findProblemElement(editor, file, PyCallExpression.class);
+      if (elementAt != null && !(elementAt.getNode().getElementType() == PyTokenTypes.IDENTIFIER))
+        elementAt = file.findElementAt(offset);
 
 
-        if (callExpression != null) {
-          callable = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
-        }
-        else
-          callable = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
+      if (callExpression != null) {
+        callable = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
       }
-      if (callable instanceof PyFunction && ((PyFunction)callable).getAnnotation() == null) {
-        final String functionSignature = "def " + callable.getName() + callable.getParameterList().getText();
-        String functionText = functionSignature +
-                            " -> object:";
-        for (PyStatement st : ((PyFunction)callable).getStatementList().getStatements()) {
-          functionText = functionText + "\n\t" + st.getText();
-        }
-        final PyFunction function = elementGenerator.createFromText(LanguageLevel.forElement(callable), PyFunction.class,
-                                                                    functionText);
-        callable = (PyFunction)callable.replace(function);
-        callable = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(callable);
+      else
+        callable = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
+    }
+    if (callable instanceof PyFunction && ((PyFunction)callable).getAnnotation() == null) {
+      final String functionSignature = "def " + callable.getName() + callable.getParameterList().getText();
+      String functionText = functionSignature +
+                          " -> object:";
+      for (PyStatement st : ((PyFunction)callable).getStatementList().getStatements()) {
+        functionText = functionText + "\n\t" + st.getText();
+      }
+      final PyFunction function = elementGenerator.createFromText(LanguageLevel.forElement(callable), PyFunction.class,
+                                                                  functionText);
+      callable = (PyFunction)callable.replace(function);
+      callable = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(callable);
 
-        final PyExpression value = ((PyFunction)callable).getAnnotation().getValue();
-        final int offset = value.getTextOffset();
+      final PyExpression value = ((PyFunction)callable).getAnnotation().getValue();
+      final int offset = value.getTextOffset();
 
-        final TemplateBuilder builder = TemplateBuilderFactory.getInstance().
-          createTemplateBuilder(value);
-        builder.replaceRange(TextRange.create(0, PyNames.OBJECT.length()), PyNames.OBJECT);
-        Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
-        OpenFileDescriptor descriptor = new OpenFileDescriptor(
-          project,
-          value.getContainingFile().getVirtualFile(),
-          offset
-        );
-        Editor targetEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-        if (targetEditor != null) {
-          targetEditor.getCaretModel().moveToOffset(offset);
-          TemplateManager.getInstance(project).startTemplate(targetEditor, template);
-        }
+      final TemplateBuilder builder = TemplateBuilderFactory.getInstance().
+        createTemplateBuilder(value);
+      builder.replaceRange(TextRange.create(0, PyNames.OBJECT.length()), PyNames.OBJECT);
+      Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
+      OpenFileDescriptor descriptor = new OpenFileDescriptor(
+        project,
+        value.getContainingFile().getVirtualFile(),
+        offset
+      );
+      Editor targetEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+      if (targetEditor != null) {
+        targetEditor.getCaretModel().moveToOffset(offset);
+        TemplateManager.getInstance(project).startTemplate(targetEditor, template);
       }
     }
   }

@@ -236,7 +236,18 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   static int[] PATH_PARAMETER = {0, 3, 1};
 
   public PyNamedParameter createParameter(@NotNull String name) {
-    return createFromText(LanguageLevel.getDefault(), PyNamedParameter.class, "def f(" + name + "): pass", PATH_PARAMETER);
+    return createParameter(name, null, null, LanguageLevel.getDefault());
+  }
+
+  public PyNamedParameter createParameter(@NotNull String name, @Nullable String defaultValue, @Nullable String annotation,
+                                          @NotNull LanguageLevel languageLevel) {
+    String parameterText = name;
+    if (annotation != null)
+      parameterText += " : " + annotation;
+    if (defaultValue != null)
+      parameterText += " = " + defaultValue;
+
+    return createFromText(languageLevel, PyNamedParameter.class, "def f(" + parameterText + "): pass", PATH_PARAMETER);
   }
 
   @Override

@@ -254,14 +254,22 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testTypeAssertion() {
-    doTest(PyBundle.message("INTN.insert.assertion"));
+    doTestTypeAssertion();
   }
 
   public void testTypeAssertion1() { //PY-7089
-    doTest(PyBundle.message("INTN.insert.assertion"));
+    doTestTypeAssertion();
   }
 
   public void testTypeAssertion2() {
+    doTestTypeAssertion();
+  }
+
+  public void testTypeAnnotation3() {  //PY-7087
+    doTest(PyBundle.message("INTN.specify.type.in.annotation"), LanguageLevel.PYTHON32);
+  }
+
+  private void doTestTypeAssertion() {
     doTest(PyBundle.message("INTN.insert.assertion"));
   }
 

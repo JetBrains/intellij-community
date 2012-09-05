@@ -1120,5 +1120,17 @@ public class PyUtil {
     return null;
   }
 
+  @Nullable
+  public static PsiElement findNonWhitespaceAtOffset(PsiFile psiFile, int caretOffset) {
+    PsiElement element = psiFile.findElementAt(caretOffset);
+    if (element == null) {
+      return null;
+    }
+    while (caretOffset > 0 && element instanceof PsiWhiteSpace) {
+      caretOffset--;
+      element = psiFile.findElementAt(caretOffset);
+    }
+    return element;
+  }
 }
 

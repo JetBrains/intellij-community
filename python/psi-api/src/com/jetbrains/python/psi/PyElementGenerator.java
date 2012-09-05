@@ -75,6 +75,9 @@ public abstract class PyElementGenerator {
   @NotNull
   public abstract <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text, final int[] path);
 
+  public abstract PyNamedParameter createParameter(@NotNull String name, @Nullable String defaultValue, @Nullable String annotation,
+                                                   @NotNull LanguageLevel level);
+
   public abstract PyNamedParameter createParameter(@NotNull String name);
 
   public abstract PyKeywordArgument createKeywordArgument(LanguageLevel languageLevel, String keyword, String value);
