@@ -38,15 +38,15 @@
 
 
     <actions>
-        <action id="UpdateCopyright" class="com.maddyhome.idea.copyright.actions.UpdateCopyrightAction" text="Update Copyright..." description="Generate/Update the copyright notice." icon="CopyrightIcons.Copyright18x18">
+        <action id="UpdateCopyright" class="com.maddyhome.idea.copyright.actions.UpdateCopyrightAction" text="Update Copyright..." description="Generate/Update the copyright notice.">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
             <add-to-group group-id="CodeMenu" anchor="last"/>
             <add-to-group group-id="NavbarPopupMenu" anchor="last"/>
         </action>
-        <action id="GenerateCopyright" class="com.maddyhome.idea.copyright.actions.GenerateCopyrightAction" text="Copyright" description="Generate/Update the copyright notice." icon="CopyrightIcons.Copyright18x18">
+        <action id="GenerateCopyright" class="com.maddyhome.idea.copyright.actions.GenerateCopyrightAction" text="Copyright" description="Generate/Update the copyright notice.">
             <add-to-group group-id="GenerateGroup" anchor="last"/>
         </action>
-        <action id="UpdateFileCopyright" class="com.maddyhome.idea.copyright.actions.GenerateCopyrightAction" text="Update Copyright" description="Generate/Update the copyright notice." icon="CopyrightIcons.Copyright18x18">
+        <action id="UpdateFileCopyright" class="com.maddyhome.idea.copyright.actions.GenerateCopyrightAction" text="Update Copyright" description="Generate/Update the copyright notice.">
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
         </action>
     </actions>
