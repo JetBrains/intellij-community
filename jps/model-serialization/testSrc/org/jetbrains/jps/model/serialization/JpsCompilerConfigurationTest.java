@@ -1,5 +1,6 @@
 package org.jetbrains.jps.model.serialization;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
@@ -25,7 +26,7 @@ public class JpsCompilerConfigurationTest extends JpsSerializationTestCase {
     ProcessorConfigProfile defaultProfile = configuration.getDefaultAnnotationProcessingConfiguration();
     assertTrue(defaultProfile.isEnabled());
     assertFalse(defaultProfile.isObtainProcessorsFromClasspath());
-    assertEquals(JpsPathUtil.urlToPath(getUrl("src")), defaultProfile.getProcessorPath());
+    assertEquals(FileUtil.toSystemDependentName(JpsPathUtil.urlToPath(getUrl("src"))), defaultProfile.getProcessorPath());
     assertEquals("b", defaultProfile.getProcessorOptions().get("a"));
     assertEquals("d", defaultProfile.getProcessorOptions().get("c"));
     assertEquals("gen", defaultProfile.getGeneratedSourcesDirectoryName());
