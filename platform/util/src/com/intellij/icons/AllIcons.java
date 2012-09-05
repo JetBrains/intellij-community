@@ -449,7 +449,9 @@ public class AllIcons {
     public static final Icon TodoDefault = IconLoader.getIcon("/general/todoDefault.png"); // 12x12
     public static final Icon TodoImportant = IconLoader.getIcon("/general/todoImportant.png"); // 12x12
     public static final Icon TodoQuestion = IconLoader.getIcon("/general/todoQuestion.png"); // 12x12
-    @SuppressWarnings("unused") public static final Icon ToolWindowChanges = IconLoader.getIcon("/general/toolWindowChanges.png"); // 13x13
+    
+    @SuppressWarnings("unused")
+    public static final Icon ToolWindowChanges = IconLoader.getIcon("/general/toolWindowChanges.png"); // 13x13
     public static final Icon WarningDialog = IconLoader.getIcon("/general/warningDialog.png"); // 32x32
     public static final Icon Web = IconLoader.getIcon("/general/web.png"); // 13x13
 
