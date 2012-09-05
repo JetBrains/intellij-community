@@ -144,6 +144,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
             @Override
             public void storageFileChanged(final VirtualFileEvent event, @NotNull final StateStorage storage) {
               VirtualFile file = event.getFile();
+              LOG.debug("[RELOAD] Storage file changed: " + file.getPath());
               if (!file.isDirectory() && !(event.getRequestor() instanceof StateStorage.SaveSession)) {
                 saveChangedProjectFile(file, project, storage);
               }
@@ -597,7 +598,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         reloadProjectImpl(projectToReload, false, false);
       }
     }
-
   }
 
   private boolean tryToReloadApplication(){
@@ -797,14 +797,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     registerProjectToReload(project, file, null);
   }
 
-  private void saveChangedProjectFile(final VirtualFile file, final Project project, final StateStorage storage) {
+  private void saveChangedProjectFile(final VirtualFile file, @Nullable final Project project, final StateStorage storage) {
     if (file.exists()) {
       copyToTemp(file);
     }
     registerProjectToReload(project, file, storage);
   }
 
-  private void registerProjectToReload(final Project project, final VirtualFile cause, final StateStorage storage) {
+  private void registerProjectToReload(@Nullable final Project project, final VirtualFile cause, @Nullable final StateStorage storage) {
     LOG.debug("[RELOAD] Registering project to reload.");
 
     if (project != null) {
