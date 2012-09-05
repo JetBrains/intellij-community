@@ -1,9 +1,11 @@
 package com.jetbrains.python.sdk;
 
 import com.google.common.collect.Lists;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -22,6 +24,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -243,9 +246,16 @@ public class PySkeletonRefresher {
     }
 
     final SkeletonHeader newHeader = readSkeletonHeader(builtinsFile);
-    if (myPregeneratedSkeletons == null && (newHeader == null || newHeader.getVersion() < myVersionChecker.getBuiltinVersion())) {
+    final boolean mustUpdateBuiltins = myPregeneratedSkeletons == null &&
+                                       (newHeader == null || newHeader.getVersion() < myVersionChecker.getBuiltinVersion());
+    if (mustUpdateBuiltins) {
       indicate(PyBundle.message("sdk.gen.updating.builtins.$0", readablePath));
-      mySkeletonsGenerator.generateBuiltinSkeletons(mySdk);
+      if (mySdk != null) {
+        mySkeletonsGenerator.generateBuiltinSkeletons(mySdk);
+        if (myProject != null) {
+          PythonSdkPathCache.getInstance(myProject, mySdk).clearBuiltins();
+        }
+      }
     }
 
     if (!binaries.modules.isEmpty()) {
@@ -274,6 +284,15 @@ public class PySkeletonRefresher {
     if (!oldOrNonExisting) {
       indicate(PyBundle.message("sdk.gen.cleaning.$0", readablePath));
       cleanUpSkeletons(skeletonsDir);
+    }
+
+    if (mustUpdateBuiltins) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          DaemonCodeAnalyzer.getInstance(myProject).restart();
+        }
+      });
     }
 
     return errorList;
