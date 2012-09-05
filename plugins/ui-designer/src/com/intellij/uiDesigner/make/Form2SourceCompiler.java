@@ -23,7 +23,7 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -88,9 +88,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
               continue;
             }
             catch (Exception e) {
-              addError(context,
-                       new FormErrorInfo(null, UIDesignerBundle.message("error.cannot.process.form.file", e)),
-                       formFile);
+              addError(context, new FormErrorInfo(null, UIDesignerBundle.message("error.cannot.process.form.file", e)), formFile);
               continue;
             }
 
@@ -101,9 +99,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
             final VirtualFile sourceFile = Form2ByteCodeCompiler.findSourceFile(context, formFile, classToBind);
             if (sourceFile == null) {
               if (scope.belongs(formFile.getUrl())) {
-                addError(context,
-                         new FormErrorInfo(null, UIDesignerBundle.message("error.class.to.bind.does.not.exist", classToBind)),
-                         formFile);
+                addError(context, new FormErrorInfo(null, UIDesignerBundle.message("error.class.to.bind.does.not.exist", classToBind)), formFile);
               }
               continue;
             }
@@ -113,12 +109,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
             final VirtualFile alreadyProcessedForm = class2form.get(classToBind);
             if (alreadyProcessedForm != null) {
               if (inScope) {
-                addError(
-                  context,
-                  new FormErrorInfo(null, UIDesignerBundle.message("error.duplicate.bind",
-                                           classToBind, alreadyProcessedForm.getPresentableUrl())),
-                  formFile
-                );
+                addError(context, new FormErrorInfo(null, UIDesignerBundle.message("error.duplicate.bind", classToBind, alreadyProcessedForm.getPresentableUrl())), formFile);
               }
               continue;
             }
@@ -128,8 +119,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
               continue;
             }
 
-            final ProcessingItem item = new MyInstrumentationItem(sourceFile, formFile);
-            items.add(item);
+            items.add(new MyInstrumentationItem(sourceFile, formFile));
           }
         }
         finally {
@@ -164,7 +154,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       if (GuiDesignerConfiguration.getInstance(project).COPY_FORMS_RUNTIME_TO_OUTPUT) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            final Module module = ModuleUtil.findModuleForFile(formFile, project);
+            final Module module = ModuleUtilCore.findModuleForFile(formFile, project);
             if (module != null && !processedModules.contains(module)) {
               processedModules.add(module);
               final String moduleOutputPath = CompilerPaths.getModuleOutputPath(module, false);
