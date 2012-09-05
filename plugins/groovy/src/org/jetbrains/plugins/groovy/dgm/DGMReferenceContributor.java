@@ -19,7 +19,10 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceSet;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -28,6 +31,8 @@ import java.util.ArrayList;
  * @author Max Medvedev
  */
 public class DGMReferenceContributor extends PsiReferenceContributor {
+
+  private final JavaClassReferenceProvider myProvider = new JavaClassReferenceProvider();
 
   @Override
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
@@ -50,7 +55,8 @@ public class DGMReferenceContributor extends PsiReferenceContributor {
         while ((i = skipWhiteSpace(i, text)) < text.length()) {
           int end = findWhiteSpaceOrComma(i, text);
           if (end <= text.length()) {
-            result.add(new DGMClassReference(element, i, end));
+            JavaClassReferenceSet set = new JavaClassReferenceSet(text.substring(i, end), element, i, true, myProvider);
+            ContainerUtil.addAll(result, set.getAllReferences());
           }
           i = end;
           i = skipWhiteSpace(i, text);
