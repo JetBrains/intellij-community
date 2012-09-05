@@ -173,7 +173,7 @@ public class ExpressionUtils {
     }
     final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
     final PsiExpression operand = ParenthesesUtils.stripParentheses(typeCastExpression.getOperand());
-    if (!(operand instanceof PsiTypeCastExpression)) {
+    if (!(operand instanceof PsiLiteralExpression)) {
       return null;
     }
     return (PsiLiteralExpression)operand;
