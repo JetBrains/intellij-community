@@ -416,30 +416,32 @@ public class SrcFileAnnotator implements Disposable {
         }
         final List<RangeHighlighter> highlighters = rangeHighlighters;
         myUpdateAlarm.cancelAllRequests();
-        myUpdateAlarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            final TIntIntHashMap newToOldLineMapping = getNewToOldLineMapping(suite.getLastCoverageTimeStamp());
-            if (newToOldLineMapping != null) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                public void run() {
-                  for (int line = lineNumber; line <= lastLineNumber; line++) {
-                    final int oldLineNumber = newToOldLineMapping.get(line);
-                    final LineData lineData = executableLines.get(oldLineNumber);
-                    if (lineData != null) {
-                      RangeHighlighter rangeHighlighter =
-                        createRangeHighlighter(suite.getLastCoverageTimeStamp(), markupModel, coverageByTestApplicable, executableLines,
-                                               classNames.get(oldLineNumber), oldLineNumber, line, suite,
-                                               classLines.get(oldLineNumber));
-                      highlighters.add(rangeHighlighter);
+        if (!myUpdateAlarm.isDisposed()) {
+          myUpdateAlarm.addRequest(new Runnable() {
+            @Override
+            public void run() {
+              final TIntIntHashMap newToOldLineMapping = getNewToOldLineMapping(suite.getLastCoverageTimeStamp());
+              if (newToOldLineMapping != null) {
+                ApplicationManager.getApplication().invokeLater(new Runnable() {
+                  public void run() {
+                    for (int line = lineNumber; line <= lastLineNumber; line++) {
+                      final int oldLineNumber = newToOldLineMapping.get(line);
+                      final LineData lineData = executableLines.get(oldLineNumber);
+                      if (lineData != null) {
+                        RangeHighlighter rangeHighlighter =
+                          createRangeHighlighter(suite.getLastCoverageTimeStamp(), markupModel, coverageByTestApplicable, executableLines,
+                                                 classNames.get(oldLineNumber), oldLineNumber, line, suite,
+                                                 classLines.get(oldLineNumber));
+                        highlighters.add(rangeHighlighter);
+                      }
                     }
+                    myFile.putUserData(COVERAGE_HIGHLIGHTERS, highlighters.size() > 0 ? highlighters : null);
                   }
-                  myFile.putUserData(COVERAGE_HIGHLIGHTERS, highlighters.size() > 0 ? highlighters : null);
-                }
-              });
+                });
+              }
             }
-          }
-        }, 100);
+          }, 100);
+        }
       }
     };
     myDocument.addDocumentListener(documentListener);
