@@ -19,7 +19,7 @@ import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.List;
 
 /**
  * Represents a processing unit during 'rearrangement' operation. I.e. entry's position can be changed during the processing.
@@ -54,7 +54,7 @@ public interface ArrangementEntry {
    * @see #getParent() 
    */
   @NotNull
-  Collection<? extends ArrangementEntry> getChildren();
+  List<? extends ArrangementEntry> getChildren();
 
   /**
    * @return    start offset of the current entry (inclusive) within the target document. Rearranger engine uses this information

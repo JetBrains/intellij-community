@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -46,7 +47,7 @@ public class CoreJavaPsiImplementationHelper extends JavaPsiImplementationHelper
   }
 
   @Override
-  public PsiElement getDefaultMemberAnchor(PsiClass psiClass, PsiMember firstPsi) {
+  public PsiElement getDefaultMemberAnchor(@NotNull PsiClass psiClass, @NotNull PsiMember firstPsi) {
     throw new UnsupportedOperationException("TODO");
   }
 

@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Encapsulates language-specific rearrangement logic.
@@ -39,15 +40,28 @@ public interface Rearranger<E extends ArrangementEntry> {
   LanguageExtension<Rearranger<?>> EXTENSION = new LanguageExtension<Rearranger<?>>("com.intellij.lang.rearranger");
 
   /**
+   * Tries to wrap given element to the corresponding arrangement entry.
+   * <p/>
+   * This is useful in a situation when new element is generated and we're deciding where to insert it (e.g. new field is
+   * generated and we want to insert it according to the arrangement rules like 'fields before methods').
+   * 
+   * @param element  element to wrap into format eligible for further processing by arrangement engine
+   * @return         arrangement entry for the given element if it's possible to perform the mapping;
+   *                 <code>null</code> otherwise
+   */
+  @Nullable
+  E wrap(@NotNull PsiElement element);
+  
+  /**
    * Allows to build rearranger-interested data for the given element.
    *
    * @param root      root element which children should be parsed for the rearrangement
    * @param document  document which corresponds to the target PSI tree
    * @param ranges    target offsets ranges to use for filtering given root's children
-   * @return       given root's children which are subject for further rearrangement
+   * @return          given root's children which are subject for further rearrangement
    */
   @NotNull
-  Collection<E> parse(@NotNull PsiElement root, @NotNull Document document, @NotNull Collection<TextRange> ranges);
+  List<E> parse(@NotNull PsiElement root, @Nullable Document document, @NotNull Collection<TextRange> ranges);
 
   /**
    * Allows to answer how many blank lines should be inserted before the target arrangement entry which position is changed.

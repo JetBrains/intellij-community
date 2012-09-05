@@ -114,11 +114,19 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     return result;
   }
 
+  @Nullable
+  @Override
+  public JavaElementArrangementEntry wrap(@NotNull PsiElement element) {
+    List<JavaElementArrangementEntry> result = new ArrayList<JavaElementArrangementEntry>();
+    element.accept(new JavaArrangementVisitor(result, null, Collections.singleton(element.getTextRange())));
+    return result.size() == 1 ? result.get(0) : null;
+  }
+
   @NotNull
   @Override
-  public Collection<JavaElementArrangementEntry> parse(@NotNull PsiElement root,
-                                                       @NotNull Document document,
-                                                       @NotNull Collection<TextRange> ranges)
+  public List<JavaElementArrangementEntry> parse(@NotNull PsiElement root,
+                                                 @Nullable Document document,
+                                                 @NotNull Collection<TextRange> ranges)
   {
     // Following entries are subject to arrangement: class, interface, field, method.
     List<JavaElementArrangementEntry> result = new ArrayList<JavaElementArrangementEntry>();

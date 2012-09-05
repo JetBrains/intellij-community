@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -51,7 +50,7 @@ public class DefaultArrangementEntry implements ArrangementEntry {
 
   @NotNull
   @Override
-  public Collection<? extends ArrangementEntry> getChildren() {
+  public List<? extends ArrangementEntry> getChildren() {
     return myChildren;
   }
 

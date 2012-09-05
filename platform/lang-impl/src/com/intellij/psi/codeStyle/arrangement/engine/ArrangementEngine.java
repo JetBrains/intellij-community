@@ -192,29 +192,52 @@ public class ArrangementEngine {
     }
   }
 
-  @SuppressWarnings("unchecked")
-  private static <E extends ArrangementEntry> void doArrange(@NotNull List<ArrangementEntryWrapper<E>> entries,
-                                                             @NotNull Context<E> context)
+  /**
+   * Arranges (re-orders) given entries according to the given rules.
+   * 
+   * @param entries  entries to arrange
+   * @param rules    rules to use for arrangement
+   * @param <E>      arrangement entry type
+   * @return         arranged list of the given rules
+   */
+  @NotNull
+  public static <E extends ArrangementEntry> List<E> arrange(@NotNull Collection<E> entries,
+                                                             @NotNull List<? extends ArrangementRule> rules)
   {
-    List<ArrangementEntryWrapper<E>> arranged = new ArrayList<ArrangementEntryWrapper<E>>();
-    Set<ArrangementEntryWrapper<E>> unprocessed = new LinkedHashSet<ArrangementEntryWrapper<E>>(entries);
+    List<E> arranged = new ArrayList<E>();
+    Set<E> unprocessed = new LinkedHashSet<E>(entries);
 
-    for (ArrangementRule rule : context.rules) {
-      for (ArrangementEntryWrapper<E> wrapper : entries) {
-        if (wrapper.getEntry().canBeMatched() && unprocessed.contains(wrapper) && rule.getMatcher().isMatched(wrapper.getEntry())) {
-          arranged.add(wrapper);
-          unprocessed.remove(wrapper);
+    for (ArrangementRule rule : rules) {
+      for (E entry : entries) {
+        if (entry.canBeMatched() && unprocessed.contains(entry) && rule.getMatcher().isMatched(entry)) {
+          arranged.add(entry);
+          unprocessed.remove(entry);
         }
       }
     }
     arranged.addAll(unprocessed);
-    
-    context.prepare(arranged);
+    return arranged;
+  }
+  
+  @SuppressWarnings("unchecked")
+  private static <E extends ArrangementEntry> void doArrange(@NotNull List<ArrangementEntryWrapper<E>> wrappers,
+                                                             @NotNull Context<E> context) {
+    if (wrappers.isEmpty()) {
+      return;
+    }
+    Map<E, ArrangementEntryWrapper<E>> map = new LinkedHashMap<E, ArrangementEntryWrapper<E>>();
+    for (ArrangementEntryWrapper<E> wrapper : wrappers) {
+      map.put(wrapper.getEntry(), wrapper);
+    }
+    List<E> arranged = arrange(map.keySet(), context.rules);
+
+
+    context.prepare(wrappers.get(0).getParent());
     // We apply changes from the last position to the first position in order not to bother with offsets shifts.
     for (int i = arranged.size() - 1; i >= 0; i--) {
-      ArrangementEntryWrapper<E> arrangedWrapper = arranged.get(i);
-      ArrangementEntryWrapper<E> initialWrapper = entries.get(i);
-      context.replace(arrangedWrapper, initialWrapper, i > 0 ? arranged.get(i - 1) : null);
+      ArrangementEntryWrapper<E> arrangedWrapper = map.get(arranged.get(i));
+      ArrangementEntryWrapper<E> initialWrapper = wrappers.get(i);
+      context.replace(arrangedWrapper, initialWrapper, i > 0 ? map.get(arranged.get(i - 1)) : null);
     }
   }
 
@@ -264,11 +287,7 @@ public class ArrangementEngine {
       return new Context<T>(rearranger, wrappers, document, rules, settings);
     }
 
-    public void prepare(@NotNull List<ArrangementEntryWrapper<E>> arrangedEntries) {
-      if (arrangedEntries.isEmpty()) {
-        return;
-      }
-      ArrangementEntryWrapper<E> parent = arrangedEntries.get(0).getParent();
+    public void prepare(@Nullable ArrangementEntryWrapper<E> parent) {
       if (parent == null) {
         myParentText = document.getText();
         myParentShift = 0;

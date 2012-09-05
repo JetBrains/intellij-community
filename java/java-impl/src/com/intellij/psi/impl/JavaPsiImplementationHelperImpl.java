@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -32,6 +34,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.arrangement.MemberOrderService;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -174,43 +177,37 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     return importHelper.getDefaultAnchor(list, statement);
   }
 
+  @Nullable
   @Override
-  public PsiElement getDefaultMemberAnchor(PsiClass aClass, PsiMember member) {
+  public PsiElement getDefaultMemberAnchor(@NotNull PsiClass aClass, @NotNull PsiMember member) {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(aClass.getProject());
-
-    int order = getMemberOrderWeight(member, settings);
-    if (order < 0) return null;
-
-    PsiElement lastMember = null;
-    for (PsiElement child = aClass.getFirstChild(); child != null; child = child.getNextSibling()) {
-      int order1 = getMemberOrderWeight(child, settings);
-      if (order1 < 0) continue;
-      if (order1 > order) {
-        if (lastMember != null) {
-          PsiElement nextSibling = lastMember.getNextSibling();
-          while (nextSibling instanceof PsiJavaToken && (nextSibling.getText().equals(",") || nextSibling.getText().equals(";"))) {
-            nextSibling = nextSibling.getNextSibling();
-          }
-          return nextSibling == null ? aClass.getLBrace().getNextSibling() : nextSibling;
-        }
-        else {
-          // The main idea is to avoid to anchor to 'white space' element because that causes reformatting algorithm
-          // to perform incorrectly. The algorithm is encapsulated at PostprocessReformattingAspect.doPostponedFormattingInner().
-          final PsiElement lBrace = aClass.getLBrace();
-          if (lBrace != null) {
-            PsiElement result = lBrace.getNextSibling();
-            while (result instanceof PsiWhiteSpace) {
-              result = result.getNextSibling();
-            }
-            return result;
-          }
-        }
+    MemberOrderService service = ServiceManager.getService(MemberOrderService.class);
+    PsiElement anchor = service.getAnchor(member, settings.getCommonSettings(JavaLanguage.INSTANCE), aClass);
+    
+    if (anchor != null && anchor != aClass) {
+      while (anchor instanceof PsiJavaToken && (anchor.getText().equals(",") || anchor.getText().equals(";"))) {
+        anchor = anchor.getNextSibling();
       }
-      lastMember = child;
+      if (anchor != null) {
+        return anchor;
+      }
     }
+
+    // The main idea is to avoid to anchor to 'white space' element because that causes reformatting algorithm
+    // to perform incorrectly. The algorithm is encapsulated at PostprocessReformattingAspect.doPostponedFormattingInner().
+    final PsiElement lBrace = aClass.getLBrace();
+    if (lBrace != null) {
+      PsiElement result = lBrace.getNextSibling();
+      while (result instanceof PsiWhiteSpace) {
+        result = result.getNextSibling();
+      }
+      return result;
+    }
+    
     return aClass.getRBrace();
   }
-
+  
+  // TODO remove as soon as arrangement sub-system is provided for groovy.
   public static int getMemberOrderWeight(PsiElement member, CodeStyleSettings settings) {
     if (member instanceof PsiField) {
       if (member instanceof PsiEnumConstant) {

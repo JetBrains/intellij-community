@@ -15,10 +15,18 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
+import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * The whole arrangement idea is to allow to change file entries order according to the user-provided rules.
@@ -33,25 +41,57 @@ import org.jetbrains.annotations.Nullable;
  */
 public class MemberOrderService {
   
-  public static final int UNDEFINED_WEIGHT = -1;
-
   /**
-   * Allows to get a given member's weight according to the
+   * Tries to find an element at the given context which should be the previous sibling for the given 'member'element according to the
    * {@link CommonCodeStyleSettings#getArrangementRules() user-defined arrangement rules}.
    * <p/>
-   * That means that we can call this method for different members and derive their relative order by comparing their weights.
+   * E.g. the IDE might generate given 'member' element and wants to know element after which it should be inserted
    * 
-   * @param member    target member which weight should be calculated
+   * @param member    target member which anchor should be calculated
    * @param settings  code style settings to use
-   * @param context   given member's context (if any). Is useful when we have, say, an existing class and want to know where
-   *                  to insert a new field. Not only 'by type' filtering might be exploited (like 'fields before methods') but
-   *                  'by name' as well, i.e. we want to insert a new field to the 'fidles' group and define its position
-   *                  according to the lexicographical fields order
-   * @return          given member's weight if the one can be computed;
-   *                  {@link #UNDEFINED_WEIGHT} otherwise
+   * @param context   given member's context
+   * @return          given member's anchor if the one can be computed;
+   *                  given 'context' element if given member should be the first child
+   *                  <code>null</code> otherwise
    */
-  public int getMemberOrderWeight(@NotNull PsiElement member, @NotNull CommonCodeStyleSettings settings, @Nullable PsiElement context) {
-    // TODO den implement
-    return UNDEFINED_WEIGHT;
+  @SuppressWarnings("MethodMayBeStatic")
+  @Nullable
+  public PsiElement getAnchor(@NotNull PsiElement member, @NotNull CommonCodeStyleSettings settings, @NotNull PsiElement context) {
+    Language language = context.getLanguage();
+    Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(language);
+    if (rearranger == null) {
+      return null;
+    }
+
+    List<? extends ArrangementRule> rules = settings.getArrangementRules();
+    if (rules.isEmpty() && rearranger instanceof ArrangementStandardSettingsAware) {
+      rules = ((ArrangementStandardSettingsAware)rearranger).getDefaultRules();
+    }
+
+    if (rules == null) {
+      return null;
+    }
+
+    ArrangementEntry memberEntry = rearranger.wrap(member);
+    if (memberEntry == null) {
+      return null;
+    }
+    
+    List<? extends ArrangementEntry> entries = rearranger.parse(context, null, Collections.singleton(context.getTextRange()));
+    if (entries.isEmpty()) {
+      return null;
+    }
+
+    ArrangementEntry parentEntry = entries.get(0);
+    List<ArrangementEntry> entriesWithNew = new ArrayList<ArrangementEntry>(parentEntry.getChildren());
+    entriesWithNew.add(memberEntry);
+    List<ArrangementEntry> arranged = ArrangementEngine.arrange(entriesWithNew, rules);
+    int i = arranged.indexOf(memberEntry);
+    if (i <= 0) {
+      return context;
+    }
+
+    ArrangementEntry anchorEntry = arranged.get(i - 1);
+    return context.findElementAt(anchorEntry.getEndOffset() - context.getTextRange().getStartOffset());
   }
 }

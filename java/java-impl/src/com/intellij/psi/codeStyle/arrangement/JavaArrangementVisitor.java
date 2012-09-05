@@ -48,11 +48,11 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
   private final Stack<JavaElementArrangementEntry> myStack = new Stack<JavaElementArrangementEntry>();
 
   @NotNull private final List<JavaElementArrangementEntry> myRootEntries;
-  @NotNull private       Document                          myDocument;
   @NotNull private       Collection<TextRange>             myRanges;
+  @Nullable private      Document                          myDocument;
 
   public JavaArrangementVisitor(@NotNull List<JavaElementArrangementEntry> entries,
-                                @NotNull Document document,
+                                @Nullable Document document,
                                 @NotNull Collection<TextRange> ranges)
   {
     myRootEntries = entries;
@@ -78,7 +78,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     JavaElementArrangementEntry entry = createNewEntry(aClass.getTextRange(), ArrangementEntryType.CLASS, aClass.getName(), false);
     processEntry(entry, null, aClass);
   }
-  
+
   @Override
   public void visitJavaFile(PsiJavaFile file) {
     for (PsiClass psiClass : file.getClasses()) {
@@ -162,9 +162,9 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     DefaultArrangementEntry current = getCurrent();
     JavaElementArrangementEntry entry;
     if (canArrange) {
-      TextRange expandedRange = ArrangementUtil.expandToLine(range, myDocument.getCharsSequence());
+      TextRange expandedRange = myDocument == null ? null : ArrangementUtil.expandToLine(range, myDocument.getCharsSequence());
       TextRange rangeToUse = expandedRange == null ? range : expandedRange;
-      entry = new JavaElementArrangementEntry(current, rangeToUse, type, name, expandedRange != null);
+      entry = new JavaElementArrangementEntry(current, rangeToUse, type, name, myDocument == null || expandedRange != null);
     }
     else {
       entry = new JavaElementArrangementEntry(current, range, type, name, false);
