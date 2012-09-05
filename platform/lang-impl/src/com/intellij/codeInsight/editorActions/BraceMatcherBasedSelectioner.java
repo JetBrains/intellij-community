@@ -58,7 +58,7 @@ public abstract class BraceMatcherBasedSelectioner extends ExtendWordSelectionHa
           && !stack.isEmpty() && braceMatcher.isPairBraces((last = stack.getLast()).third, iterator.getTokenType())) {
         stack.removeLast();
         result.addAll(expandToWholeLine(editorText, new TextRange(last.first, iterator.getEnd())));
-        int bodyStart = last.second + 1;
+        int bodyStart = last.second;
         int bodyEnd = iterator.getStart();
         while (bodyStart < textLength && Character.isWhitespace(editorText.charAt(bodyStart))) bodyStart ++;
         while (bodyEnd > 0 && Character.isWhitespace(editorText.charAt(bodyEnd - 1))) bodyEnd --;
@@ -69,4 +69,5 @@ public abstract class BraceMatcherBasedSelectioner extends ExtendWordSelectionHa
     result.add(e.getTextRange());
     return result;
   }
+
 }

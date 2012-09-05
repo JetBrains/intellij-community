@@ -30,6 +30,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.*;
@@ -522,8 +523,11 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     for (RangeHighlighter rangeHighlighter : from.getAllHighlighters()) {
       if (!rangeHighlighter.isValid()) continue;
       Object tooltip = rangeHighlighter.getErrorStripeTooltip();
-      HighlightSeverity severity = tooltip instanceof HighlightInfo? ((HighlightInfo)tooltip).getSeverity() : null;
-      if (severity != HighlightSeverity.INFORMATION) continue;
+      HighlightInfo highlightInfo = tooltip instanceof HighlightInfo? (HighlightInfo)tooltip : null;
+      if (highlightInfo != null) {
+        if (highlightInfo.getSeverity() != HighlightSeverity.INFORMATION) continue;
+        if (highlightInfo.type.getAttributesKey() == EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES) continue;
+      }
       final int localOffset = textRange.getStartOffset();
       final int start = Math.max(rangeHighlighter.getStartOffset(), localOffset) - localOffset;
       final int end = Math.min(rangeHighlighter.getEndOffset(), textRange.getEndOffset()) - localOffset;
