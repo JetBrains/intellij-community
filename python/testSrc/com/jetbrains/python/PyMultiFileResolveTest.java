@@ -446,9 +446,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
   }
 
   protected PsiElement doResolve(PsiFile psiFile) {
-    int offset = findMarkerOffset(psiFile);
-    final PsiPolyVariantReference ref = (PsiPolyVariantReference) psiFile.findReferenceAt(offset);
-    assertNotNull("<ref> in test file not found", ref);
+    final PsiPolyVariantReference ref = findReferenceByMarker(psiFile);
     final PsiManagerImpl psiManager = (PsiManagerImpl)myFixture.getPsiManager();
     psiManager.setAssertOnFileLoadingFilter(new VirtualFileFilter() {
       @Override
@@ -476,9 +474,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
 
   private ResolveResult[] doMultiResolve() {
     PsiFile psiFile = prepareFile();
-    int offset = findMarkerOffset(psiFile);
-    final PsiPolyVariantReference ref = (PsiPolyVariantReference)psiFile.findReferenceAt(offset);
-    assertNotNull("<ref> in test file not found", ref);
+    final PsiPolyVariantReference ref = findReferenceByMarker(psiFile);
     return ref.multiResolve(false);
   }
 }
