@@ -260,12 +260,6 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyChainedComparisonsInspection.class);
   }
 
-  public void testPyRedundantParenthesesInspection() {
-    myFixture.configureByFile("inspections/PyRedundantParenthesesInspection/test.py");
-    myFixture.enableInspections(PyRedundantParenthesesInspection.class);
-    myFixture.checkHighlighting(true, false, true);
-  }
-
   public void testPyBroadExceptionInspection() {
     doHighlightingTest(PyBroadExceptionInspection.class);
   }
