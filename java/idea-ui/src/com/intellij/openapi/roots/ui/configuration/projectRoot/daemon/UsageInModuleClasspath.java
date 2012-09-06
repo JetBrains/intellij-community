@@ -2,12 +2,15 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -17,12 +20,17 @@ import javax.swing.*;
 public class UsageInModuleClasspath extends ProjectStructureElementUsage {
   private final StructureConfigurableContext myContext;
   private final ModuleProjectStructureElement myContainingElement;
+  @Nullable private final DependencyScope myScope;
   private final ProjectStructureElement mySourceElement;
   private final Module myModule;
 
-  public UsageInModuleClasspath(@NotNull StructureConfigurableContext context, @NotNull ModuleProjectStructureElement containingElement, ProjectStructureElement sourceElement) {
+  public UsageInModuleClasspath(@NotNull StructureConfigurableContext context,
+                                @NotNull ModuleProjectStructureElement containingElement,
+                                ProjectStructureElement sourceElement,
+                                @Nullable DependencyScope scope) {
     myContext = context;
     myContainingElement = containingElement;
+    myScope = scope;
     myModule = containingElement.getModule();
     mySourceElement = sourceElement;
   }
@@ -74,6 +82,12 @@ public class UsageInModuleClasspath extends ProjectStructureElementUsage {
       ModuleStructureConfigurable.getInstance(myModule.getProject())
         .removeLibraryOrderEntry(myModule, ((LibraryProjectStructureElement)mySourceElement).getLibrary());
     }
+  }
+
+  @Nullable
+  @Override
+  public String getPresentableLocationInElement() {
+    return myScope != null && myScope != DependencyScope.COMPILE ? "[" + StringUtil.decapitalize(myScope.getDisplayName()) + "]" : null;
   }
 
   @Override

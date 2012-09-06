@@ -1,6 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
-import com.intellij.openapi.roots.libraries.Library;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -13,6 +13,11 @@ public abstract class ProjectStructureElementUsage {
   public abstract ProjectStructureElement getContainingElement();
 
   public abstract String getPresentableName();
+
+  @Nullable
+  public String getPresentableLocationInElement() {
+    return null;
+  }
 
   public abstract PlaceInProjectStructure getPlace();
 

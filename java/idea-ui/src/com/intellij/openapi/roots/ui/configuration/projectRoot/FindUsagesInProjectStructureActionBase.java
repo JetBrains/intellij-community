@@ -27,14 +27,16 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElementUsage;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.ui.ListCellRendererWithRightAlignedComponent;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.list.ListPopupImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -76,26 +78,40 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction im
         return o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName());
       }
     });
-    
-    JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<ProjectStructureElementUsage>(ProjectBundle.message("dependencies.used.in.popup.title"), usagesArray) {
-      @Override
-      public PopupStep onChosen(final ProjectStructureElementUsage selected, final boolean finalChoice) {
-        selected.getPlace().navigate();
-        return FINAL_CHOICE;
-      }
 
-      @NotNull
-      @Override
-      public String getTextFor(ProjectStructureElementUsage value) {
-        return value.getPresentableName();
-      }
+    BaseListPopupStep<ProjectStructureElementUsage> step =
+      new BaseListPopupStep<ProjectStructureElementUsage>(ProjectBundle.message("dependencies.used.in.popup.title"), usagesArray) {
+        @Override
+        public PopupStep onChosen(final ProjectStructureElementUsage selected, final boolean finalChoice) {
+          selected.getPlace().navigate();
+          return FINAL_CHOICE;
+        }
 
-      @Override
-      public Icon getIconFor(ProjectStructureElementUsage selection) {
-        return selection.getIcon();
-      }
+        @NotNull
+        @Override
+        public String getTextFor(ProjectStructureElementUsage value) {
+          return value.getPresentableName();
+        }
 
-    }).show(point);
+        @Override
+        public Icon getIconFor(ProjectStructureElementUsage selection) {
+          return selection.getIcon();
+        }
+      };
+    new ListPopupImpl(step) {
+      @Override
+      protected ListCellRenderer getListElementRenderer() {
+        return new ListCellRendererWithRightAlignedComponent<ProjectStructureElementUsage>() {
+          @Override
+          protected void customize(ProjectStructureElementUsage value) {
+            setLeftText(value.getPresentableName());
+            setIcon(value.getIcon());
+            setRightForeground(Color.GRAY);
+            setRightText(value.getPresentableLocationInElement());
+          }
+        };
+      }
+    }.show(point);
   }
 
   @Nullable

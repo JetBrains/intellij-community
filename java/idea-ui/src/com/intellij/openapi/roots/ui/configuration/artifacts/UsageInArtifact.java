@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -78,6 +79,12 @@ public class UsageInArtifact extends ProjectStructureElementUsage {
   @Override
   public Icon getIcon() {
     return myOriginalArtifact.getArtifactType().getIcon();
+  }
+
+  @Nullable
+  @Override
+  public String getPresentableLocationInElement() {
+    return "[" + myParentPath + "]";
   }
 
   @Override

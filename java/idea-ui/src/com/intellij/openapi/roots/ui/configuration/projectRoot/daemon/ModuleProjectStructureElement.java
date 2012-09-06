@@ -99,21 +99,24 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
     if (moduleEditor != null) {
       for (OrderEntry entry : moduleEditor.getOrderEntries()) {
         if (entry instanceof ModuleOrderEntry) {
-          final Module module = ((ModuleOrderEntry)entry).getModule();
+          ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
+          final Module module = moduleOrderEntry.getModule();
           if (module != null) {
-            usages.add(new UsageInModuleClasspath(myContext, this, new ModuleProjectStructureElement(myContext, module)));
+            usages.add(new UsageInModuleClasspath(myContext, this, new ModuleProjectStructureElement(myContext, module), moduleOrderEntry.getScope()));
           }
         }
         else if (entry instanceof LibraryOrderEntry) {
-          final Library library = ((LibraryOrderEntry)entry).getLibrary();
+          LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+          final Library library = libraryOrderEntry.getLibrary();
           if (library != null) {
-            usages.add(new UsageInModuleClasspath(myContext, this, new LibraryProjectStructureElement(myContext, library)));
+            usages.add(new UsageInModuleClasspath(myContext, this, new LibraryProjectStructureElement(myContext, library),
+                                                  libraryOrderEntry.getScope()));
           }
         }
         else if (entry instanceof JdkOrderEntry) {
           final Sdk jdk = ((JdkOrderEntry)entry).getJdk();
           if (jdk != null) {
-            usages.add(new UsageInModuleClasspath(myContext, this, new SdkProjectStructureElement(myContext, jdk)));
+            usages.add(new UsageInModuleClasspath(myContext, this, new SdkProjectStructureElement(myContext, jdk), null));
           }
         }
       }
