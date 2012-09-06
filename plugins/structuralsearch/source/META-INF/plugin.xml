@@ -3,7 +3,7 @@
   <description>Searching / replacing source code in terms of syntax (query / replace code by example :-).
   </description>
   <version>9.0</version>
-  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
   <depends>com.intellij.modules.ultimate</depends>
   <depends optional="true" config-file="javascript.xml">JavaScript</depends>
   <depends optional="true" config-file="groovy.xml">org.intellij.groovy</depends>
