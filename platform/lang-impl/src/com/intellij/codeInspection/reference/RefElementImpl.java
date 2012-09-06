@@ -36,6 +36,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -252,10 +253,13 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     mySuppressions = text.split("[, ]");    
   }
 
-  public boolean isSuppressed(final String toolId) {
+  public boolean isSuppressed(final String... toolId) {
     if (mySuppressions != null) {
       for (@NonNls String suppression : mySuppressions) {
-        if (suppression.equals(toolId) || suppression.equalsIgnoreCase(SuppressionUtil.ALL)){
+        for (String id : toolId) {
+          if (suppression.equals(id)) return true;
+        }
+        if (suppression.equalsIgnoreCase(SuppressionUtil.ALL)){
           return true;
         }
       }
