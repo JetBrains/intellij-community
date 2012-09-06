@@ -799,7 +799,7 @@ public class BuildManager implements ApplicationComponent{
   }
 
   private int startListening() throws Exception {
-    final ChannelFactory channelFactory = new NioServerSocketChannelFactory(myPooledThreadExecutor, myPooledThreadExecutor, Math.min(4, Math.max(2, Runtime.getRuntime().availableProcessors())));
+    final ChannelFactory channelFactory = new NioServerSocketChannelFactory(myPooledThreadExecutor, myPooledThreadExecutor, 2);
     final SimpleChannelUpstreamHandler channelRegistrar = new SimpleChannelUpstreamHandler() {
       public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         myAllOpenChannels.add(e.getChannel());
