@@ -24,18 +24,21 @@ import com.intellij.uiDesigner.CaptionSelection;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author yole
  */
 public abstract class RowColumnAction extends AnAction {
   private final String myColumnText;
-  private final String myColumnIcon;
+  private final Icon myColumnIcon;
   private final String myRowText;
-  private final String myRowIcon;
+  private final Icon myRowIcon;
 
-  public RowColumnAction(final String columnText, @NonNls final String columnIcon,
-                         final String rowText, @NonNls final String rowIcon) {
+  public RowColumnAction(final String columnText, @Nullable final Icon columnIcon,
+                         final String rowText, @Nullable final Icon rowIcon) {
     myColumnText = columnText;
     myColumnIcon = columnIcon;
     myRowText = rowText;
@@ -66,13 +69,13 @@ public abstract class RowColumnAction extends AnAction {
       if (!selection.isRow()) {
         presentation.setText(myColumnText);
         if (myColumnIcon != null) {
-          presentation.setIcon(IconLoader.getIcon(myColumnIcon));
+          presentation.setIcon(myColumnIcon);
         }
       }
       else {
         presentation.setText(myRowText);
         if (myRowIcon != null) {
-          presentation.setIcon(IconLoader.getIcon(myRowIcon));
+          presentation.setIcon(myRowIcon);
         }
       }
     }

@@ -16,11 +16,15 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.PairProcessor;
+import com.intellij.util.containers.Convertor;
+import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import java.util.Arrays;
+import java.util.Collection;
+
+import static org.junit.Assert.*;
 
 /**
  * @author Roman Shevchenko
@@ -75,5 +79,13 @@ public class FileUtilTest {
     assertFalse(FileUtil.isAncestor("/a/b/c", "/a/b/cde", false));
 
     assertEquals(!SystemInfo.isFileSystemCaseSensitive, FileUtil.isAncestor("/a/b/c", "/a/B/c/d", true));
+  }
+
+  @Test
+  public void testRemoveAncestors() throws Exception {
+    final String[] arr = {"/a/b/c", "/a", "/a/b", "/d/e", "/b/c", "/a/d", "/b/c/ttt", "/a/ewqeuq"};
+    final String[] expectedResult = {"/a","/b/c","/d/e"};
+    final Collection<String> result = FileUtil.removeAncestors(Arrays.asList(arr), Convertor.SELF, PairProcessor.TRUE);
+    Assert.assertArrayEquals(expectedResult, result.toArray(new String[result.size()]));
   }
 }

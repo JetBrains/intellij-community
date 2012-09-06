@@ -8,7 +8,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.Project;
+import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -27,8 +29,9 @@ public class ResourcePatterns {
   private final List<Pair<Pattern, Pattern>> myCompiledPatterns = new ArrayList<Pair<Pattern, Pattern>>();
   private final List<Pair<Pattern, Pattern>> myNegatedCompiledPatterns = new ArrayList<Pair<Pattern, Pattern>>();
 
-  public ResourcePatterns(Project project) {
-    final List<String> patterns = project.getCompilerConfiguration().getResourcePatterns();
+  public ResourcePatterns(JpsProject project) {
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    final List<String> patterns = configuration.getResourcePatterns();
     for (String pattern : patterns) {
       final Pair<Pattern, Pattern> regexp = convertToRegexp(pattern);
       if (isPatternNegated(pattern)) {

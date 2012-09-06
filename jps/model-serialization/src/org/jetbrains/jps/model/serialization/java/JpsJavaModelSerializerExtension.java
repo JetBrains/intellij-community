@@ -12,6 +12,9 @@ import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleReference;
+import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer;
+import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerOptionsSerializer;
+import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerWorkspaceConfigurationSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryRootTypeSerializer;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
@@ -54,7 +57,11 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   @NotNull
   @Override
   public List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
-    return Arrays.asList(new JavaProjectExtensionSerializer());
+    return Arrays.asList(new JavaProjectExtensionSerializer(),
+                         new JpsJavaCompilerConfigurationSerializer(),
+                         new JpsJavaCompilerWorkspaceConfigurationSerializer(),
+                         new JpsJavaCompilerOptionsSerializer("JavacSettings", "Javac"),
+                         new JpsJavaCompilerOptionsSerializer("EclipseCompilerSettings", "Eclipse"));
   }
 
   @Override

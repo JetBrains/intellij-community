@@ -144,7 +144,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     final ProjectDescriptor
       projectDescriptor = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), javaBuilderLogger));
     try {
-      doBuild(projectDescriptor, new AllProjectScope(myProject, myJpsProject, Collections.<JpsArtifact>emptySet(), true), false,
+      doBuild(projectDescriptor, new AllProjectScope(myJpsProject, Collections.<JpsArtifact>emptySet(), true), false,
               true, false).assertSuccessful();
 
       modify();
@@ -153,7 +153,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
       }
 
 
-      BuildResult result = doBuild(projectDescriptor, new AllProjectScope(myProject, myJpsProject, Collections.<JpsArtifact>emptySet(), false), true, false, false);
+      BuildResult result = doBuild(projectDescriptor, new AllProjectScope(myJpsProject, Collections.<JpsArtifact>emptySet(), false), true, false, false);
 
       final ByteArrayOutputStream makeDump = new ByteArrayOutputStream();
 
@@ -173,7 +173,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
       assertEquals(expected, actual);
 
       if (result.isSuccessful()) {
-        doBuild(projectDescriptor, new AllProjectScope(myProject, myJpsProject, Collections.<JpsArtifact>emptySet(), true), false,
+        doBuild(projectDescriptor, new AllProjectScope(myJpsProject, Collections.<JpsArtifact>emptySet(), true), false,
                 true, false).assertSuccessful();
 
         final ByteArrayOutputStream rebuildDump = new ByteArrayOutputStream();

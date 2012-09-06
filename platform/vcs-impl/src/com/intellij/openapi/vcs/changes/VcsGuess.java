@@ -54,11 +54,7 @@ public class VcsGuess {
     if (filePath.isNonLocal()) {
       return null;
     }
-    final VirtualFile validParent = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      public VirtualFile compute() {
-        return ChangesUtil.findValidParent(filePath);
-      }
-    });
+    final VirtualFile validParent = ChangesUtil.findValidParentAccurately(filePath);
     if (validParent == null) {
       return null;
     }

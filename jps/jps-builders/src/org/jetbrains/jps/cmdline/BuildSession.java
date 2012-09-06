@@ -10,9 +10,11 @@ import com.intellij.util.io.DataOutputStream;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.Channels;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ether.dependencyView.Callbacks;
+import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.api.*;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.MessageHandler;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.artifacts.ArtifactSourceTimestampStorage;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
@@ -21,6 +23,7 @@ import org.jetbrains.jps.incremental.fs.FSState;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
@@ -138,37 +141,58 @@ final class BuildSession implements Runnable, CanceledStatus {
   private void runBuild(final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
     final File dataStorageRoot = Utils.getDataStorageRoot(myProjectPath);
     if (dataStorageRoot == null) {
-      msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.ERROR, "Cannot determine build data storage root for project " +
-                                                                                      myProjectPath));
+      msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.ERROR, "Cannot determine build data storage root for project " + myProjectPath));
       return;
     }
-    final BuildFSState fsState = new BuildFSState(false);
+    if (!dataStorageRoot.exists()) {
+      // invoked the very first time for this project. Force full rebuild
+      myBuildType = BuildType.PROJECT_REBUILD;
+    }
 
-    try {
-      if (!dataStorageRoot.exists()) {
-        // invoked the very first time for this project. Force full rebuild
-        myBuildType = BuildType.PROJECT_REBUILD;
+    final DataInputStream fsStateStream = createFSDataStream(dataStorageRoot);
+
+    if (fsStateStream != null) {
+      // optimization: check whether we can skip the build
+      final boolean hasWorkToDo = fsStateStream.readBoolean();
+      if (myBuildType == BuildType.MAKE && !hasWorkToDo && !containsChanges(myInitialFSDelta)) {
+        updateFsStateOnDisk(dataStorageRoot, fsStateStream, myInitialFSDelta.getOrdinal());
+        return;
       }
-      final ProjectDescriptor pd = myBuildRunner.load(msgHandler, dataStorageRoot, fsState);
-      myProjectDescriptor = pd;
-      loadFsState(fsState, dataStorageRoot, myInitialFSDelta, pd);
-
-      // free memory
-      myInitialFSDelta = null;
-      // ensure events from controller are processed after FSState initialization
-      myEventsProcessor.startProcessing();
-
-      myBuildRunner.runBuild(pd, cs, myConstantSearch, msgHandler, true, myBuildType);
     }
-    finally {
-      saveData(fsState, dataStorageRoot);
+
+    final BuildFSState fsState = new BuildFSState(false);
+    final ProjectDescriptor pd = myBuildRunner.load(msgHandler, dataStorageRoot, fsState);
+    myProjectDescriptor = pd;
+    if (fsStateStream != null) {
+      try {
+        try {
+          fsState.load(fsStateStream, pd);
+          applyFSEvent(pd, myInitialFSDelta);
+        }
+        finally {
+          fsStateStream.close();
+        }
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+        fsState.clearAll();
+      }
     }
+    myLastEventOrdinal = myInitialFSDelta != null? myInitialFSDelta.getOrdinal() : 0L;
+
+    // free memory
+    myInitialFSDelta = null;
+    // ensure events from controller are processed after FSState initialization
+    myEventsProcessor.startProcessing();
+
+    myBuildRunner.runBuild(pd, cs, myConstantSearch, msgHandler, true, myBuildType);
+    saveData(fsState, dataStorageRoot);
   }
 
   private void saveData(final BuildFSState fsState, File dataStorageRoot) {
     final boolean wasInterrupted = Thread.interrupted();
     try {
-      saveFsState(dataStorageRoot, fsState, myLastEventOrdinal);
+      saveFsState(dataStorageRoot, fsState);
       final ProjectDescriptor pd = myProjectDescriptor;
       if (pd != null) {
         pd.release();
@@ -187,6 +211,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       public void run() {
         try {
           applyFSEvent(myProjectDescriptor, event);
+          myLastEventOrdinal += 1;
         }
         catch (IOException e) {
           LOG.error(e);
@@ -219,93 +244,79 @@ final class BuildSession implements Runnable, CanceledStatus {
       return;
     }
 
-    if (pd != null) {
-      final Timestamps timestamps = pd.timestamps.getStorage();
-      ArtifactSourceTimestampStorage artifactTimestamps = pd.dataManager.getArtifactsBuildData().getTimestampStorage();
+    final Timestamps timestamps = pd.timestamps.getStorage();
+    ArtifactSourceTimestampStorage artifactTimestamps = pd.dataManager.getArtifactsBuildData().getTimestampStorage();
 
-      for (String deleted : event.getDeletedPathsList()) {
-        final File file = new File(deleted);
-        final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(null, file);
-        if (rd != null) {
-          if (Utils.IS_TEST_MODE) {
-            LOG.info("Applying deleted path from fs event: " + file.getPath());
-          }
-          pd.fsState.registerDeleted(rd.target, file, timestamps);
+    for (String deleted : event.getDeletedPathsList()) {
+      final File file = new File(deleted);
+      final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(null, file);
+      if (rd != null) {
+        if (Utils.IS_TEST_MODE) {
+          LOG.info("Applying deleted path from fs event: " + file.getPath());
         }
-        else if (Utils.IS_TEST_MODE) {
-          LOG.info("Skipping deleted path: " + file.getPath());
-        }
-
-        Collection<ArtifactRootDescriptor> descriptor = pd.getArtifactRootsIndex().getDescriptors(file);
-        if (!descriptor.isEmpty()) {
-          if (Utils.IS_TEST_MODE) {
-            LOG.info("Applying deleted path from fs event to artifacts: " + file.getPath());
-          }
-          for (ArtifactRootDescriptor rootDescriptor : descriptor)
-            pd.fsState.registerDeleted(rootDescriptor.getArtifactName(), rootDescriptor.getArtifactId(), deleted,
-                                       artifactTimestamps);
-        }
+        pd.fsState.registerDeleted(rd.target, file, timestamps);
       }
-      for (String changed : event.getChangedPathsList()) {
-        final File file = new File(changed);
-        final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(null, file);
-        if (rd != null) {
-          if (Utils.IS_TEST_MODE) {
-            LOG.info("Applying dirty path from fs event: " + file.getPath());
-          }
-          pd.fsState.markDirty(null, file, rd, timestamps);
-        }
-        else if (Utils.IS_TEST_MODE) {
-          LOG.info("Skipping dirty path: " + file.getPath());
-        }
+      else if (Utils.IS_TEST_MODE) {
+        LOG.info("Skipping deleted path: " + file.getPath());
+      }
 
-        Collection<ArtifactRootDescriptor> descriptors = pd.getArtifactRootsIndex().getDescriptors(file);
-        if (!descriptors.isEmpty()) {
-          if (Utils.IS_TEST_MODE) {
-            LOG.info("Applying dirty path from fs event to artifacts: " + file.getPath());
-          }
-          for (ArtifactRootDescriptor descriptor : descriptors) {
-            pd.fsState.markDirty(descriptor, changed, artifactTimestamps);
-          }
+      Collection<ArtifactRootDescriptor> descriptor = pd.getArtifactRootsIndex().getDescriptors(file);
+      if (!descriptor.isEmpty()) {
+        if (Utils.IS_TEST_MODE) {
+          LOG.info("Applying deleted path from fs event to artifacts: " + file.getPath());
+        }
+        for (ArtifactRootDescriptor rootDescriptor : descriptor)
+          pd.fsState.registerDeleted(rootDescriptor.getArtifactName(), rootDescriptor.getArtifactId(), deleted,
+                                     artifactTimestamps);
+      }
+    }
+    for (String changed : event.getChangedPathsList()) {
+      final File file = new File(changed);
+      final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(null, file);
+      if (rd != null) {
+        if (Utils.IS_TEST_MODE) {
+          LOG.info("Applying dirty path from fs event: " + file.getPath());
+        }
+        pd.fsState.markDirty(null, file, rd, timestamps);
+      }
+      else if (Utils.IS_TEST_MODE) {
+        LOG.info("Skipping dirty path: " + file.getPath());
+      }
+
+      Collection<ArtifactRootDescriptor> descriptors = pd.getArtifactRootsIndex().getDescriptors(file);
+      if (!descriptors.isEmpty()) {
+        if (Utils.IS_TEST_MODE) {
+          LOG.info("Applying dirty path from fs event to artifacts: " + file.getPath());
+        }
+        for (ArtifactRootDescriptor descriptor : descriptors) {
+          pd.fsState.markDirty(descriptor, changed, artifactTimestamps);
         }
       }
     }
-
-    myLastEventOrdinal += 1;
   }
 
-  private static void saveFsState(File dataStorageRoot, BuildFSState state, long lastEventOrdinal) {
+  private void updateFsStateOnDisk(File dataStorageRoot, DataInputStream original, final long ordinal) {
     final File file = new File(dataStorageRoot, FS_STATE_FILE);
     try {
       final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
       final DataOutputStream out = new DataOutputStream(bytes);
       try {
         out.writeInt(FSState.VERSION);
-        out.writeLong(lastEventOrdinal);
-        state.save(out);
+        out.writeLong(ordinal);
+        out.writeBoolean(false);
+        while (true) {
+          final int b = original.read();
+          if (b == -1) {
+            break;
+          }
+          out.write(b);
+        }
       }
       finally {
         out.close();
       }
 
-      FileOutputStream fos = null;
-      try {
-        fos = new FileOutputStream(file);
-      }
-      catch (FileNotFoundException e) {
-        FileUtil.createIfDoesntExist(file);
-      }
-
-      if (fos == null) {
-        fos = new FileOutputStream(file);
-      }
-      try {
-        fos.write(bytes.getInternalBuffer(), 0, bytes.size());
-      }
-      finally {
-        fos.close();
-      }
-
+      saveOnDisk(bytes, file);
     }
     catch (Throwable e) {
       LOG.error(e);
@@ -313,13 +324,74 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
   }
 
-  private void loadFsState(final BuildFSState fsState,
-                           File dataStorageRoot,
-                           CmdlineRemoteProto.Message.ControllerMessage.FSEvent initialEvent,
-                           ProjectDescriptor pd) {
-    boolean shouldApplyEvent = false;
+  private void saveFsState(File dataStorageRoot, BuildFSState state) {
+    final ProjectDescriptor pd = myProjectDescriptor;
     final File file = new File(dataStorageRoot, FS_STATE_FILE);
     try {
+      final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
+      final DataOutputStream out = new DataOutputStream(bytes);
+      try {
+        out.writeInt(FSState.VERSION);
+        out.writeLong(myLastEventOrdinal);
+        boolean hasWorkToDo = state.hasWorkToDo();
+        if (!hasWorkToDo) {
+          for (JpsModule module : pd.jpsProject.getModules()) {
+            for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
+              ModuleBuildTarget target = new ModuleBuildTarget(module, type);
+              if (!state.isInitialScanPerformed(target)) {
+                hasWorkToDo = true;
+                break;
+              }
+            }
+            if (hasWorkToDo) {
+              break;
+            }
+          }
+          // todo: artifacts?
+        }
+        out.writeBoolean(hasWorkToDo);
+        state.save(out);
+      }
+      finally {
+        out.close();
+      }
+
+      saveOnDisk(bytes, file);
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      FileUtil.delete(file);
+    }
+  }
+
+  private static void saveOnDisk(BufferExposingByteArrayOutputStream bytes, final File file) throws IOException {
+    FileOutputStream fos = null;
+    try {
+      fos = new FileOutputStream(file);
+    }
+    catch (FileNotFoundException e) {
+      FileUtil.createIfDoesntExist(file);
+    }
+
+    if (fos == null) {
+      fos = new FileOutputStream(file);
+    }
+    try {
+      fos.write(bytes.getInternalBuffer(), 0, bytes.size());
+    }
+    finally {
+      fos.close();
+    }
+  }
+
+  @Nullable
+  private DataInputStream createFSDataStream(File dataStorageRoot) {
+    if (myInitialFSDelta == null) {
+      // this will force FS rescan
+      return null;
+    }
+    try {
+      final File file = new File(dataStorageRoot, FS_STATE_FILE);
       final InputStream fs = new FileInputStream(file);
       byte[] bytes;
       try {
@@ -328,39 +400,23 @@ final class BuildSession implements Runnable, CanceledStatus {
       finally {
         fs.close();
       }
-
       final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
-      try {
-        final int version = in.readInt();
-        if (version == FSState.VERSION) {
-          final long savedOrdinal = in.readLong();
-          if (initialEvent != null && (savedOrdinal + 1L == initialEvent.getOrdinal())) {
-            fsState.load(in, pd);
-            myLastEventOrdinal = savedOrdinal;
-            shouldApplyEvent = true;
-          }
-        }
-        if (shouldApplyEvent) {
-          applyFSEvent(pd, initialEvent);
-        }
-        else {
-          // either the first start or some events were lost, forcing scan
-          fsState.clearAll();
-          myLastEventOrdinal = initialEvent != null? initialEvent.getOrdinal() : 0L;
-        }
+      final int version = in.readInt();
+      if (version != FSState.VERSION) {
+        return null;
       }
-      finally {
-        in.close();
+      final long savedOrdinal = in.readLong();
+      if (savedOrdinal + 1L != myInitialFSDelta.getOrdinal()) {
+        return null;
       }
-      return; // successfully initialized
+      return in;
     }
     catch (FileNotFoundException ignored) {
     }
     catch (Throwable e) {
       LOG.error(e);
     }
-    myLastEventOrdinal = initialEvent != null? initialEvent.getOrdinal() : 0L;
-    fsState.clearAll();
+    return null;
   }
 
   private static boolean containsChanges(CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {

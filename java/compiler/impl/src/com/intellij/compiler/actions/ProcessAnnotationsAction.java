@@ -15,7 +15,7 @@
  */
 package com.intellij.compiler.actions;
 
-import com.intellij.compiler.AnnotationProcessingConfiguration;
+import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.compiler.impl.ModuleCompileScope;

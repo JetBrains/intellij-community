@@ -356,7 +356,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                 }
               }
             }
-            modifier.recheckDirtyDirKeys();
+            modifier.recheckDirtyKeys();
             if (scope.isEmpty()) {
               iterator.remove();
             }

@@ -3,12 +3,12 @@ package org.jetbrains.jps.incremental;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.AnnotationProcessingProfile;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectChunks;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.module.JpsModule;
 
 /**
@@ -34,7 +34,7 @@ public interface CompileContext extends UserDataHolder, MessageHandler {
   void removeBuildListener(BuildListener listener);
 
   @NotNull
-  AnnotationProcessingProfile getAnnotationProcessingProfile(JpsModule module);
+  ProcessorConfigProfile getAnnotationProcessingProfile(JpsModule module);
 
 
   boolean shouldDifferentiate(ModuleChunk chunk);

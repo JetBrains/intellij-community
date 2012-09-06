@@ -8,12 +8,17 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.model.module.JpsModule;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * @author nik
  */
 public class JavaModuleBuildTargetType extends BuildTargetType {
   public static final JavaModuleBuildTargetType PRODUCTION = new JavaModuleBuildTargetType("java-production", false);
   public static final JavaModuleBuildTargetType TEST = new JavaModuleBuildTargetType("java-test", true);
+  public static final List<JavaModuleBuildTargetType> ALL_TYPES = Arrays.asList(PRODUCTION, TEST);
+
   private boolean myTests;
 
   private JavaModuleBuildTargetType(String typeId, boolean tests) {
@@ -35,4 +40,5 @@ public class JavaModuleBuildTargetType extends BuildTargetType {
   public static JavaModuleBuildTargetType getInstance(boolean tests) {
     return tests ? TEST : PRODUCTION;
   }
+
 }

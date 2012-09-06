@@ -15,7 +15,7 @@
  */
 package com.intellij.compiler.options;
 
-import com.intellij.compiler.ProcessorConfigProfile;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -38,6 +38,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.EditableTreeModel;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -55,7 +56,7 @@ import java.util.List;
  */
 @SuppressWarnings({"unchecked", "UseOfObsoleteCollectionType"})
 public class AnnotationProcessorsPanel extends JPanel {
-  private final ProcessorConfigProfile myDefaultProfile = new ProcessorConfigProfile("");
+  private final ProcessorConfigProfile myDefaultProfile = new ProcessorConfigProfileImpl("");
   private final List<ProcessorConfigProfile> myModuleProfiles = new ArrayList<ProcessorConfigProfile>();
   private final Map<String, Module> myAllModulesMap = new HashMap<String, Module>();
   private final Project myProject;
@@ -170,7 +171,7 @@ public class AnnotationProcessorsPanel extends JPanel {
     myDefaultProfile.initFrom(defaultProfile);
     myModuleProfiles.clear();
     for (ProcessorConfigProfile profile : moduleProfiles) {
-      ProcessorConfigProfile copy = new ProcessorConfigProfile("");
+      ProcessorConfigProfile copy = new ProcessorConfigProfileImpl("");
       copy.initFrom(profile);
       myModuleProfiles.add(copy);
     }
@@ -252,7 +253,7 @@ public class AnnotationProcessorsPanel extends JPanel {
           }
         });
       if (newProfileName != null) {
-        final ProcessorConfigProfile profile = new ProcessorConfigProfile(newProfileName);
+        final ProcessorConfigProfile profile = new ProcessorConfigProfileImpl(newProfileName);
         myModuleProfiles.add(profile);
         ((DataSynchronizable)getRoot()).sync();
         final DefaultMutableTreeNode object = TreeUtil.findNodeWithObject((DefaultMutableTreeNode)getRoot(), profile);

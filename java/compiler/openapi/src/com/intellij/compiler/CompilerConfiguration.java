@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
 public abstract class CompilerConfiguration {
   // need this flag for profiling purposes. In production code is always set to 'true'

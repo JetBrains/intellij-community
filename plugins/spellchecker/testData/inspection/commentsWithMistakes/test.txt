@@ -1,1 +1,2 @@
 simple <TYPO descr="Typo: In word 'ttest'">ttest</TYPO> file (just plain text)
+русский (например) без словаря не проверять!!!

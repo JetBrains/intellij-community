@@ -196,6 +196,16 @@ public class IfMayBeConditionalInspection extends BaseInspection {
         if (!(elseStatement instanceof PsiReturnStatement)) {
           return;
         }
+        final PsiReturnStatement thenReturnStatement = (PsiReturnStatement)thenStatement;
+        final PsiExpression thenReturnValue = ParenthesesUtils.stripParentheses(thenReturnStatement.getReturnValue());
+        if (thenReturnValue instanceof PsiConditionalExpression) {
+          return;
+        }
+        final PsiReturnStatement elseReturnStatement = (PsiReturnStatement)elseStatement;
+        final PsiExpression elseReturnValue = ParenthesesUtils.stripParentheses(elseReturnStatement.getReturnValue());
+        if (elseReturnValue instanceof PsiConditionalExpression) {
+          return;
+        }
         registerStatementError(statement);
       }
       else if (thenStatement instanceof PsiExpressionStatement) {
@@ -218,6 +228,14 @@ public class IfMayBeConditionalInspection extends BaseInspection {
           final PsiExpression thenLhs = thenAssignmentExpression.getLExpression();
           final PsiExpression elseLhs = elseAssignmentExpression.getLExpression();
           if (!EquivalenceChecker.expressionsAreEquivalent(thenLhs, elseLhs)) {
+            return;
+          }
+          final PsiExpression thenRhs = ParenthesesUtils.stripParentheses(thenAssignmentExpression.getRExpression());
+          if (thenRhs instanceof PsiConditionalExpression) {
+            return;
+          }
+          final PsiExpression elseRhs = ParenthesesUtils.stripParentheses(elseAssignmentExpression.getRExpression());
+          if (elseRhs instanceof PsiConditionalExpression) {
             return;
           }
           registerStatementError(statement);

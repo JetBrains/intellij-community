@@ -21,7 +21,12 @@ public class JpsEncodingConfigurationServiceImpl extends JpsEncodingConfiguratio
 
   @Override
   public void setGlobalEncoding(@NotNull JpsGlobal global, @Nullable String encoding) {
-    global.getContainer().setChild(ENCODING_ROLE, JpsElementFactory.getInstance().createSimpleElement(encoding));
+    if (encoding != null) {
+      global.getContainer().setChild(ENCODING_ROLE, JpsElementFactory.getInstance().createSimpleElement(encoding));
+    }
+    else {
+      global.getContainer().removeChild(ENCODING_ROLE);
+    }
   }
 
   @Nullable

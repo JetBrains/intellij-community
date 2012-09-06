@@ -102,19 +102,24 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   private void loadFromIpr(File iprFile) {
-    final Element root = loadRootElement(iprFile);
-    JpsSdkType<?> projectSdkType = loadProjectRoot(root);
+    final Element iprRoot = loadRootElement(iprFile);
+
+    File iwsFile = new File(iprFile.getParent(), FileUtil.getNameWithoutExtension(iprFile) + ".iws");
+    Element iwsRoot = iwsFile.exists() ? loadRootElement(iwsFile) : null;
+
+    JpsSdkType<?> projectSdkType = loadProjectRoot(iprRoot);
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsProjectExtensionSerializer serializer : extension.getProjectExtensionSerializers()) {
-        Element component = JDomSerializationUtil.findComponent(root, serializer.getComponentName());
+        Element rootTag = JpsProjectExtensionSerializer.WORKSPACE_FILE.equals(serializer.getConfigFileName()) ? iwsRoot : iprRoot;
+        Element component = JDomSerializationUtil.findComponent(rootTag, serializer.getComponentName());
         if (component != null) {
           serializer.loadExtension(myProject, component);
         }
       }
     }
-    loadModules(root, projectSdkType);
-    loadProjectLibraries(JDomSerializationUtil.findComponent(root, "libraryTable"));
-    loadArtifacts(JDomSerializationUtil.findComponent(root, "ArtifactManager"));
+    loadModules(iprRoot, projectSdkType);
+    loadProjectLibraries(JDomSerializationUtil.findComponent(iprRoot, "libraryTable"));
+    loadArtifacts(JDomSerializationUtil.findComponent(iprRoot, "ArtifactManager"));
   }
 
   private void loadArtifacts(Element artifactManagerComponent) {

@@ -2,9 +2,6 @@ package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ParameterizedRunnable;
-import org.jetbrains.jps.Project;
-import org.jetbrains.jps.idea.IdeaProjectLoader;
-import org.jetbrains.jps.idea.SystemOutErrorReporter;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
@@ -56,24 +53,6 @@ public class JpsModelLoaderImpl implements JpsModelLoader {
     finally {
       final long loadTime = System.currentTimeMillis() - start;
       LOG.info("New JPS model: project " + myProjectPath + " loaded in " + loadTime + " ms");
-    }
-  }
-
-  @Override
-  public Project loadOldProject() {
-    final long start = System.currentTimeMillis();
-    try {
-      final Project project = new Project();
-
-      final File projectFile = new File(myProjectPath);
-
-      final String loadPath = isDirectoryBased(projectFile) ? new File(projectFile, IDEA_PROJECT_DIRNAME).getPath() : myProjectPath;
-      IdeaProjectLoader.loadFromPath(project, loadPath, myPathVars, null, new SystemOutErrorReporter(false));
-      return project;
-    }
-    finally {
-      final long loadTime = System.currentTimeMillis() - start;
-      LOG.info("Project " + myProjectPath + " loaded in " + loadTime + " ms");
     }
   }
 

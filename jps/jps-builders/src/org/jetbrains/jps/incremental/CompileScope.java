@@ -2,7 +2,6 @@ package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.Project;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
@@ -15,17 +14,13 @@ import java.util.Set;
  *         Date: 1/15/12
  */
 public abstract class CompileScope {
-  @NotNull
-  private final Project myProject;
   private final JpsProject myJpsProject;
   private final Set<JpsArtifact> myArtifacts;
   protected final boolean myForcedCompilation;
 
-  protected CompileScope(@NotNull Project project,
-                         JpsProject jpsProject,
+  protected CompileScope(JpsProject jpsProject,
                          Set<JpsArtifact> artifacts,
                          boolean forcedCompilation) {
-    myProject = project;
     myJpsProject = jpsProject;
     myArtifacts = artifacts;
     myForcedCompilation = forcedCompilation;
@@ -56,11 +51,6 @@ public abstract class CompileScope {
 
   public Set<JpsArtifact> getArtifacts() {
     return myArtifacts;
-  }
-
-  @NotNull
-  public final Project getProject() {
-    return myProject;
   }
 
   public JpsProject getJpsProject() {

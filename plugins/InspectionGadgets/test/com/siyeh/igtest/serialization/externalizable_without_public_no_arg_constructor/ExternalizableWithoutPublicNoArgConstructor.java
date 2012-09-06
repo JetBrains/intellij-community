@@ -31,4 +31,30 @@ class eImpl2 extends e {
   public void writeExternal(ObjectOutput out) throws IOException {
   }
 }
+class AnonymousTest {
+  public static void main(String[] args) throws IOException, ClassNotFoundException {
+    final String h = "Hello World";
+    final Externalizable externalizable = new Externalizable() {
+
+      private String string = h;
+
+      @Override
+      public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeUTF(string);
+      }
+
+      @Override
+      public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        string = in.readUTF();
+      }
+    };
+    final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    final ObjectOutputStream out = new ObjectOutputStream(bytes);
+    out.writeObject(externalizable);
+    out.close();
+    final ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()));
+    final Object o = in.readObject();
+    System.out.println("o = " + o);
+  }
+}
 

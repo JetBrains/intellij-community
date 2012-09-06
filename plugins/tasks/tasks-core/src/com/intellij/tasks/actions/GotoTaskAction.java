@@ -45,6 +45,11 @@ public class GotoTaskAction extends GotoActionBase {
   protected void gotoActionPerformed(final AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
+    perform(project);
+  }
+
+  void perform(final Project project) {
+    myInAction = getClass();
     final Ref<Boolean> shiftPressed = Ref.create(false);
 
     ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoTaskPopupModel(project), new ChooseByNameItemProvider() {

@@ -235,7 +235,31 @@ public class ChangesUtil {
     }
   }
 
+  public static VirtualFile findValidParentAccurately(final FilePath filePath) {
+    if (filePath.getVirtualFile() != null) return filePath.getVirtualFile();
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFile result = lfs.findFileByIoFile(filePath.getIOFile());
+    if (result != null) return result;
+    if (! ApplicationManager.getApplication().isReadAccessAllowed()) {
+      result = lfs.refreshAndFindFileByIoFile(filePath.getIOFile());
+      if (result != null) return result;
+    }
+    return getValidParentUnderReadAction(filePath);
+  }
+
+  private static VirtualFile getValidParentUnderReadAction(final FilePath filePath) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+      public VirtualFile compute() {
+        return findValidParent(filePath);
+      }
+    });
+  }
+
+  /**
+   * @deprecated use {@link #findValidParentAccurately(com.intellij.openapi.vcs.FilePath)}
+   */
   @Nullable
+  @Deprecated
   public static VirtualFile findValidParent(FilePath file) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     VirtualFile parent = file.getVirtualFile();
@@ -244,8 +268,9 @@ public class ChangesUtil {
     }
     if (parent == null) {
       File ioFile = file.getIOFile();
+      final LocalFileSystem lfs = LocalFileSystem.getInstance();
       do {
-        parent = LocalFileSystem.getInstance().findFileByIoFile(ioFile);
+        parent = lfs.findFileByIoFile(ioFile);
         if (parent != null) break;
         ioFile = ioFile.getParentFile();
         if (ioFile == null) return null;

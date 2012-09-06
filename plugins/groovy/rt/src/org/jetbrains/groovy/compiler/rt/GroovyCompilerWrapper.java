@@ -127,7 +127,7 @@ public class GroovyCompilerWrapper {
   private static void addWarnings(ErrorCollector errorCollector, List collector) {
     for (int i = 0; i < errorCollector.getWarningCount(); i++) {
       WarningMessage warning = errorCollector.getWarning(i);
-      collector.add(new CompilerMessage(CompilerMessage.WARNING, warning.getMessage(), null, -1, -1));
+      collector.add(new CompilerMessage(GroovyCompilerMessageCategories.WARNING, warning.getMessage(), null, -1, -1));
     }
   }
 
@@ -165,18 +165,18 @@ public class GroovyCompilerWrapper {
     }
 
     if (forStubs) {
-      collector.add(new CompilerMessage(CompilerMessage.INFORMATION,
+      collector.add(new CompilerMessage(GroovyCompilerMessageCategories.INFORMATION,
                                         "Groovyc stub generation failed", null, -1, -1));
     }
 
     final StringWriter writer = new StringWriter();
     //noinspection IOResourceOpenedButNotSafelyClosed
     exception.printStackTrace(new PrintWriter(writer));
-    collector.add(new CompilerMessage(forStubs ? CompilerMessage.INFORMATION : CompilerMessage.ERROR, writer.toString(), null, -1, -1));
+    collector.add(new CompilerMessage(forStubs ? GroovyCompilerMessageCategories.INFORMATION : GroovyCompilerMessageCategories.ERROR, writer.toString(), null, -1, -1));
   }
 
   private static void addMessageWithoutLocation(List collector, String message, boolean error) {
-    collector.add(new CompilerMessage(error ? CompilerMessage.ERROR : CompilerMessage.WARNING, message, null, -1, -1));
+    collector.add(new CompilerMessage(error ? GroovyCompilerMessageCategories.ERROR : GroovyCompilerMessageCategories.WARNING, message, null, -1, -1));
   }
 
   private static final String LINE_AT = " @ line ";
@@ -184,7 +184,7 @@ public class GroovyCompilerWrapper {
   private static void addErrorMessage(SyntaxException exception, List collector) {
     String message = exception.getMessage();
     String justMessage = message.substring(0, message.lastIndexOf(LINE_AT));
-    collector.add(new CompilerMessage(CompilerMessage.ERROR, justMessage, exception.getSourceLocator(),
+    collector.add(new CompilerMessage(GroovyCompilerMessageCategories.ERROR, justMessage, exception.getSourceLocator(),
         exception.getLine(), exception.getStartColumn()));
   }
 
@@ -194,7 +194,7 @@ public class GroovyCompilerWrapper {
     if (module == null) {
       module = findModule(astNode);
     }
-    collector.add(new CompilerMessage(CompilerMessage.ERROR, exception.getMessageWithoutLocationText(),
+    collector.add(new CompilerMessage(GroovyCompilerMessageCategories.ERROR, exception.getMessageWithoutLocationText(),
         module == null ? "<no module>" : module.getDescription(),
         astNode.getLineNumber(), astNode.getColumnNumber()));
   }

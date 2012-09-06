@@ -16,15 +16,12 @@
 package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.history.LocalHistory;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
@@ -71,12 +68,7 @@ public class SvnTreeConflictResolver {
   }
 
   private void pathDirty(final FilePath path) {
-    final VirtualFile validParent = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        return ChangesUtil.findValidParent(path);
-      }
-    });
+    final VirtualFile validParent = ChangesUtil.findValidParentAccurately(path);
     if (validParent == null) return;
     validParent.refresh(false, true);
     if (path.isDirectory()) {

@@ -159,7 +159,6 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
       jar("jps-server.jar") {
         module("jps-builders")
-        module("jps-model")
       }
 
       fileset(dir: "$home/jps/lib") {
@@ -335,8 +334,17 @@ public def layoutCommunityPlugins(String home) {
             exclude(name: "standardDsls/**")
           }
         }
-
-        jar("groovy_rt.jar") {module("groovy_rt")}
+        //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoot method
+        dir("jps") {
+          jar("groovy-jps-plugin.jar") {
+            module("groovy-jps-plugin")
+            module("groovy-rt-constants")
+          }
+        }
+        jar("groovy_rt.jar") {
+          module("groovy_rt")
+          module("groovy-rt-constants")
+        }
         dir("standardDsls") {
           fileset(dir: "$home/plugins/groovy/resources/standardDsls")
         }
@@ -516,7 +524,6 @@ def layout_jps(String target) {
       module("util")
     }
     jar("jps-model.jar") {
-      module("jps-model")
       module("jps-model-api")
       module("jps-model-impl")
       module("jps-model-serialization")

@@ -364,10 +364,10 @@ public class PlatformTestUtil {
     action.actionPerformed(event);
   }
 
-  public static void assertTiming(final String message, final long expected, final long actual) {
+  public static void assertTiming(final String message, final long expectedMs, final long actual) {
     if (COVERAGE_ENABLED_BUILD) return;
 
-    final long expectedOnMyMachine = Math.max(1, expected * Timings.MACHINE_TIMING / Timings.ETALON_TIMING);
+    final long expectedOnMyMachine = Math.max(1, expectedMs * Timings.MACHINE_TIMING / Timings.ETALON_TIMING);
     final double acceptableChangeFactor = 1.1;
 
     // Allow 10% more in case of test machine is busy.
@@ -378,7 +378,7 @@ public class PlatformTestUtil {
     }
     logMessage += ". Expected on my machine: " + expectedOnMyMachine + "." +
                   " Actual: " + actual + "." +
-                  " Expected on Standard machine: " + expected + ";" +
+                  " Expected on Standard machine: " + expectedMs + ";" +
                   " Actual on Standard: " + actual * Timings.ETALON_TIMING / Timings.MACHINE_TIMING + ";" +
                   " Timings: CPU=" + Timings.CPU_TIMING +
                   ", I/O=" + Timings.IO_TIMING + "." +
@@ -400,8 +400,8 @@ public class PlatformTestUtil {
   /**
    * example usage: startPerformanceTest("calculating pi",100, testRunnable).cpuBound().assertTiming();
    */
-  public static TestInfo startPerformanceTest(@NonNls @NotNull String message, int expected, @NotNull ThrowableRunnable test) {
-    return new TestInfo(test, expected,message);
+  public static TestInfo startPerformanceTest(@NonNls @NotNull String message, int expectedMs, @NotNull ThrowableRunnable test) {
+    return new TestInfo(test, expectedMs,message);
   }
 
   // calculates average of the median values in the selected part of the array. E.g. for part=3 returns average in the middle third.
@@ -430,7 +430,7 @@ public class PlatformTestUtil {
 
   public static class TestInfo {
     private final ThrowableRunnable test; // runnable to measure
-    private final int expected;           // millis the test is expected to run
+    private final int expectedMs;           // millis the test is expected to run
     private ThrowableRunnable setup;      // to run before each test
     private boolean usesAllCPUCores;      // true if the test runs faster on multi-core
     private int attempts = 4;             // number of retries if performance failed
@@ -438,10 +438,10 @@ public class PlatformTestUtil {
     private boolean adjustForIO = true;   // true if test uses IO, timings need to be re-calibrated according to this agent disk performance
     private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be re-calibrated according to this agent CPU speed
 
-    private TestInfo(@NotNull ThrowableRunnable test, int expected, String message) {
+    private TestInfo(@NotNull ThrowableRunnable test, int expectedMs, String message) {
       this.test = test;
-      this.expected = expected;
-      assert expected > 0 : "Expected must be > 0. Was: "+ expected;
+      this.expectedMs = expectedMs;
+      assert expectedMs > 0 : "Expected must be > 0. Was: "+ expectedMs;
       this.message = message;
     }
 
@@ -452,7 +452,7 @@ public class PlatformTestUtil {
     public TestInfo attempts(int attempts) { this.attempts = attempts; return this; }
 
     public void assertTiming() {
-      assert expected != 0 : "Must call .expect() before run test";
+      assert expectedMs != 0 : "Must call .expect() before run test";
       if (COVERAGE_ENABLED_BUILD) return;
 
       while (true) {
@@ -469,7 +469,7 @@ public class PlatformTestUtil {
         long finish = System.currentTimeMillis();
         long duration = finish - start;
 
-        int expectedOnMyMachine = expected;
+        int expectedOnMyMachine = expectedMs;
         if (adjustForCPU) {
           expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.CPU_TIMING, Timings.ETALON_CPU_TIMING);
 

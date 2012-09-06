@@ -8,6 +8,7 @@ import org.jetbrains.jps.model.JpsProject;
  * @author nik
  */
 public abstract class JpsProjectExtensionSerializer extends JpsElementExtensionSerializerBase<JpsProject> {
+  public static final String WORKSPACE_FILE = "workspace.xml";
 
   /**
    * @param configFileName name of file in .idea directory where the extension settings are stored

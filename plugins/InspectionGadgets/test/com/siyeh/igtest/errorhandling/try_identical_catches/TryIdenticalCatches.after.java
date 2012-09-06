@@ -105,4 +105,16 @@ class TryIdenticalCatches {
     } catch (E1 e) {
     }
   }
+
+  void q() {
+    try {
+      Class.forName("bla").newInstance();
+    } catch (ClassNotFoundException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    } catch (InstantiationException ) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    } catch (IllegalAccessException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
+  }
 }

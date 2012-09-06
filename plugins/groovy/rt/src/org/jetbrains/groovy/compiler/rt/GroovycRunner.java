@@ -43,28 +43,6 @@ import java.util.*;
 
 public class GroovycRunner {
 
-  public static final String PATCHERS = "patchers";
-  public static final String ENCODING = "encoding";
-  public static final String OUTPUTPATH = "outputpath";
-  public static final String FINAL_OUTPUTPATH = "final_outputpath";
-  public static final String END = "end";
-
-  public static final String SRC_FILE = "src_file";
-  public static final String COMPILED_START = "%%c";
-
-  public static final String COMPILED_END = "/%c";
-  public static final String TO_RECOMPILE_START = "%%rc";
-
-  public static final String TO_RECOMPILE_END = "/%rc";
-  public static final String MESSAGES_START = "%%m";
-
-  public static final String MESSAGES_END = "/%m";
-  public static final String SEPARATOR = "#%%#%%%#%%%%%%%%%#";
-
-  //public static final Controller ourController = initController();
-  public static final String PRESENTABLE_MESSAGE = "@#$%@# Presentable:";
-  public static final String CLEAR_PRESENTABLE = "$@#$%^ CLEAR_PRESENTABLE";
-
   private GroovycRunner() {
   }
 
@@ -132,7 +110,7 @@ public class GroovycRunner {
         config.setJointCompilationOptions(options);
       }
 
-      System.out.println(PRESENTABLE_MESSAGE + "Groovyc: loading sources...");
+      System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: loading sources...");
       final AstAwareResourceLoader resourceLoader = new AstAwareResourceLoader(class2File);
       final CompilationUnit unit = createCompilationUnit(forStubs, config, finalOutput[0], buildClassLoaderFor(config, resourceLoader));
       unit.addPhaseOperation(new CompilationUnit.SourceUnitOperation() {
@@ -147,9 +125,9 @@ public class GroovycRunner {
       addSources(forStubs, srcFiles, unit);
       runPatchers(patchers, compilerMessages, unit, resourceLoader);
 
-      System.out.println(PRESENTABLE_MESSAGE + "Groovyc: compiling...");
+      System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: compiling...");
       final List compiledFiles = GroovyCompilerWrapper.compile(compilerMessages, forStubs, unit);
-      System.out.println(CLEAR_PRESENTABLE);
+      System.out.println(GroovyRtConstants.CLEAR_PRESENTABLE);
 
       System.out.println();
       reportCompiledItems(compiledFiles);
@@ -161,7 +139,7 @@ public class GroovycRunner {
 
       int errorCount = 0;
       for (CompilerMessage message : compilerMessages) {
-        if (message.getCategory() == CompilerMessage.ERROR) {
+        if (message.getCategory() == GroovyCompilerMessageCategories.ERROR) {
           if (errorCount > 100) {
             continue;
           }
@@ -203,7 +181,7 @@ public class GroovycRunner {
       String line;
 
       while ((line = reader.readLine()) != null) {
-        if (!SRC_FILE.equals(line)) {
+        if (!GroovyRtConstants.SRC_FILE.equals(line)) {
           break;
         }
 
@@ -213,13 +191,13 @@ public class GroovycRunner {
 
       while (line != null) {
         if (line.equals("class2src")) {
-          while (!END.equals(line = reader.readLine())) {
+          while (!GroovyRtConstants.END.equals(line = reader.readLine())) {
             class2File.put(line, new File(reader.readLine()));
           }
         }
-        else if (line.startsWith(PATCHERS)) {
+        else if (line.startsWith(GroovyRtConstants.PATCHERS)) {
           String s;
-          while (!END.equals(s = reader.readLine())) {
+          while (!GroovyRtConstants.END.equals(s = reader.readLine())) {
             try {
               final CompilationUnitPatcher patcher = (CompilationUnitPatcher)Class.forName(s).newInstance();
               patchers.add(patcher);
@@ -235,13 +213,13 @@ public class GroovycRunner {
             }
           }
         }
-        else if (line.startsWith(ENCODING)) {
+        else if (line.startsWith(GroovyRtConstants.ENCODING)) {
           compilerConfiguration.setSourceEncoding(reader.readLine());
         }
-        else if (line.startsWith(OUTPUTPATH)) {
+        else if (line.startsWith(GroovyRtConstants.OUTPUTPATH)) {
           compilerConfiguration.setTargetDirectory(reader.readLine());
         }
-        else if (line.startsWith(FINAL_OUTPUTPATH)) {
+        else if (line.startsWith(GroovyRtConstants.FINAL_OUTPUTPATH)) {
           finalOutput[0] = reader.readLine();
         }
 
@@ -277,9 +255,9 @@ public class GroovycRunner {
 
       unit.addSource(new SourceUnit(file, unit.getConfiguration(), unit.getClassLoader(), unit.getErrorCollector()) {
         public void parse() throws CompilationFailedException {
-          System.out.println(PRESENTABLE_MESSAGE + "Parsing " + file.getName() + "...");
+          System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Parsing " + file.getName() + "...");
           super.parse();
-          System.out.println(CLEAR_PRESENTABLE);
+          System.out.println(GroovyRtConstants.CLEAR_PRESENTABLE);
         }
       });
     }
@@ -300,9 +278,9 @@ public class GroovycRunner {
 
   private static void reportNotCompiledItems(Collection<File> toRecompile) {
     for (File file : toRecompile) {
-      System.out.print(TO_RECOMPILE_START);
+      System.out.print(GroovyRtConstants.TO_RECOMPILE_START);
       System.out.print(file.getAbsolutePath());
-      System.out.print(TO_RECOMPILE_END);
+      System.out.print(GroovyRtConstants.TO_RECOMPILE_END);
       System.out.println();
     }
   }
@@ -314,35 +292,35 @@ public class GroovycRunner {
       * source file
       * output root directory
       */
-      System.out.print(COMPILED_START);
+      System.out.print(GroovyRtConstants.COMPILED_START);
       System.out.print(compiledFile.getOutputPath());
-      System.out.print(SEPARATOR);
+      System.out.print(GroovyRtConstants.SEPARATOR);
       System.out.print(compiledFile.getSourceFile());
-      System.out.print(COMPILED_END);
+      System.out.print(GroovyRtConstants.COMPILED_END);
       System.out.println();
     }
   }
 
   private static void printMessage(CompilerMessage message) {
-    System.out.print(MESSAGES_START);
+    System.out.print(GroovyRtConstants.MESSAGES_START);
     System.out.print(message.getCategory());
-    System.out.print(SEPARATOR);
+    System.out.print(GroovyRtConstants.SEPARATOR);
     System.out.print(message.getMessage());
-    System.out.print(SEPARATOR);
+    System.out.print(GroovyRtConstants.SEPARATOR);
     System.out.print(message.getUrl());
-    System.out.print(SEPARATOR);
+    System.out.print(GroovyRtConstants.SEPARATOR);
     System.out.print(message.getLineNum());
-    System.out.print(SEPARATOR);
+    System.out.print(GroovyRtConstants.SEPARATOR);
     System.out.print(message.getColumnNum());
-    System.out.print(SEPARATOR);
-    System.out.print(MESSAGES_END);
+    System.out.print(GroovyRtConstants.SEPARATOR);
+    System.out.print(GroovyRtConstants.MESSAGES_END);
     System.out.println();
   }
 
   private static void addExceptionInfo(List<CompilerMessage> compilerMessages, Throwable e, String message) {
     final StringWriter writer = new StringWriter();
     e.printStackTrace(new PrintWriter(writer));
-    compilerMessages.add(new CompilerMessage(CompilerMessage.WARNING, message + ":\n" + writer, "<exception>", -1, -1));
+    compilerMessages.add(new CompilerMessage(GroovyCompilerMessageCategories.WARNING, message + ":\n" + writer, "<exception>", -1, -1));
   }
 
   private static CompilationUnit createCompilationUnit(final boolean forStubs,
@@ -386,7 +364,7 @@ public class GroovycRunner {
         public void gotoPhase(int phase) throws CompilationFailedException {
           super.gotoPhase(phase);
           if (phase <= Phases.ALL) {
-            System.out.println(PRESENTABLE_MESSAGE + "Groovyc: " + getPhaseDescription());
+            System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: " + getPhaseDescription());
           }
         }
       };
@@ -398,7 +376,7 @@ public class GroovycRunner {
         public void gotoPhase(int phase) throws CompilationFailedException {
           super.gotoPhase(phase);
           if (phase <= Phases.ALL) {
-            System.out.println(PRESENTABLE_MESSAGE + "Groovyc: " + getPhaseDescription());
+            System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: " + getPhaseDescription());
           }
         }
       };
@@ -458,7 +436,7 @@ public class GroovycRunner {
 
       public void gotoPhase(int phase) throws CompilationFailedException {
         if (phase == Phases.SEMANTIC_ANALYSIS) {
-          System.out.println(PRESENTABLE_MESSAGE + "Generating Groovy stubs...");
+          System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Generating Groovy stubs...");
           // clear javaSources field so that no javac is invoked
           try {
             Field field = JavaAwareCompilationUnit.class.getDeclaredField("javaSources");
@@ -471,7 +449,7 @@ public class GroovycRunner {
           }
         }
         else if (phase <= Phases.ALL) {
-          System.out.println(PRESENTABLE_MESSAGE + "Groovy stub generator: " + getPhaseDescription());
+          System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovy stub generator: " + getPhaseDescription());
         }
 
         super.gotoPhase(phase);

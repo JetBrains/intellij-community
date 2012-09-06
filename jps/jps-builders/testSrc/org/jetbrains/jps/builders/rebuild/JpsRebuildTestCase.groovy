@@ -24,12 +24,12 @@ abstract class JpsRebuildTestCase extends JpsBuildTestCase {
     addJdk("1.6")
   }
 
-  def doTest(String projectPath, Closure initProject, Closure expectedOutput) {
-    doTest(projectPath, [:], initProject, expectedOutput)
+  def doTest(String projectPath, Closure expectedOutput) {
+    doTest(projectPath, [:], expectedOutput)
   }
 
-  def doTest(String projectPath, Map<String, String> pathVariables, Closure initProject, Closure expectedOutput) {
-    loadAndRebuild(projectPath, pathVariables, initProject)
+  def doTest(String projectPath, Map<String, String> pathVariables, Closure expectedOutput) {
+    loadAndRebuild(projectPath, pathVariables)
     assertOutput(getOrCreateOutputDirectory().getAbsolutePath(), expectedOutput);
   }
 
@@ -39,11 +39,8 @@ abstract class JpsRebuildTestCase extends JpsBuildTestCase {
     root.build().assertDirectoryEqual(new File(FileUtil.toSystemDependentName(targetFolder)))
   }
 
-  protected void loadAndRebuild(String projectPath, Map<String, String> pathVariables, Closure initProject) {
+  protected void loadAndRebuild(String projectPath, Map<String, String> pathVariables) {
     loadProject(projectPath, pathVariables)
-    if (initProject != null) {
-      initProject(myProject, null)
-    }
     rebuild()
   }
 
@@ -51,7 +48,7 @@ abstract class JpsRebuildTestCase extends JpsBuildTestCase {
     JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myJpsProject).outputUrl = JpsPathUtil.pathToUrl(FileUtil.toSystemIndependentName(getOrCreateOutputDirectory().getAbsolutePath()))
     def descriptor = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), new JavaBuilderLoggerImpl()))
     try {
-      def scope = new AllProjectScope(myProject, myJpsProject, new HashSet<JpsArtifact>(JpsArtifactService.getInstance().getArtifacts(myJpsProject)), true)
+      def scope = new AllProjectScope(myJpsProject, new HashSet<JpsArtifact>(JpsArtifactService.getInstance().getArtifacts(myJpsProject)), true)
       doBuild(descriptor, scope, false, true, false).assertSuccessful()
     }
     finally {
@@ -78,11 +75,6 @@ abstract class JpsRebuildTestCase extends JpsBuildTestCase {
     return PathManagerEx.getCommunityHomePath() + "/jps/jps-builders/testData/output"
   }
 
-  protected void loadProject(String projectPath, Map<String, String> pathVariables, Closure initGlobal) {
-    initGlobal(myProject)
-    loadProject(projectPath, pathVariables)
-  }
-
   def initFileSystemItem(TestFileSystemBuilder item, Closure initializer) {
     def meta = new Expando()
     meta.dir = {String name, Closure content ->
@@ -98,10 +90,6 @@ abstract class JpsRebuildTestCase extends JpsBuildTestCase {
     initializer.delegate = meta
     initializer.setResolveStrategy Closure.DELEGATE_FIRST
     initializer()
-  }
-
-  def File createTempDir() {
-    return FileUtil.createTempDirectory("jps-build", "");
   }
 
   def File createTempFile() {

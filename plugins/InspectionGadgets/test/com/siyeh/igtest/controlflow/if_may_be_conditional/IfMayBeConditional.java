@@ -20,4 +20,26 @@ public class IfMayBeConditional {
             sb.append("DescriptorUtils.getFQName(cd)",0, 1);
         }
     }
+
+    int foo4(int a, int b) {
+        if (a < b) return a;
+        else return b;
+    }
+
+    int foo5(int a, int b, int c) {
+        if (a < b) {
+            return a;
+        } else {
+            return b < c ? b : c;
+        }
+    }
+
+    void foo6(int a, int b, int c) {
+      int i;
+      if (a < b) {
+          i = a;
+      } else {
+          i = b < c ? b : c;
+      }
+    }
 }

@@ -6,13 +6,15 @@ import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.CompilerExcludes;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.artifacts.ArtifactFilesDelta;
 import org.jetbrains.jps.incremental.artifacts.ArtifactSourceTimestampStorage;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
 import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 
 import java.io.File;
 import java.io.IOException;
@@ -119,7 +121,8 @@ public class BuildFSState extends FSState {
 
   public boolean processFilesToRecompile(CompileContext context, final ModuleBuildTarget target, final FileProcessor processor) throws IOException {
     final Map<File, Set<File>> data = getSourcesToRecompile(context, target);
-    final CompilerExcludes excludes = context.getProjectDescriptor().project.getCompilerConfiguration().getExcludes();
+    JpsProject project = context.getProjectDescriptor().jpsProject;
+    final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getCompilerExcludes();
     final CompileScope scope = context.getScope();
     synchronized (data) {
       for (Map.Entry<File, Set<File>> entry : data.entrySet()) {
@@ -148,7 +151,7 @@ public class BuildFSState extends FSState {
     final FilesDelta delta = getDelta(rd.target);
     final Set<File> files = delta.clearRecompile(rd.root);
     if (files != null) {
-      final CompilerExcludes excludes = scope.getProject().getCompilerConfiguration().getExcludes();
+      final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(scope.getJpsProject()).getCompilerExcludes();
       for (File file : files) {
         if (!excludes.isExcluded(file)) {
           if (scope.isAffected(rd.target, file)) {

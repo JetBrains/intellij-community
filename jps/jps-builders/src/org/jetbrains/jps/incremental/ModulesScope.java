@@ -1,7 +1,6 @@
 package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.Project;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.model.JpsProject;
@@ -19,13 +18,12 @@ import java.util.Set;
 public class ModulesScope extends CompileScope {
   private final Set<BuildTarget> myTargets;
 
-  public ModulesScope(Project project,
-                      JpsProject jpsProject,
+  public ModulesScope(JpsProject jpsProject,
                       Set<JpsModule> modules,
                       Set<JpsArtifact> artifacts,
                       boolean isForcedCompilation,
                       boolean includeTests) {
-    super(project, jpsProject, artifacts, isForcedCompilation);
+    super(jpsProject, artifacts, isForcedCompilation);
     myTargets = new HashSet<BuildTarget>();
     for (JpsModule module : modules) {
       myTargets.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION));

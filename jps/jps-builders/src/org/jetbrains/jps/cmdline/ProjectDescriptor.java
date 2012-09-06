@@ -1,6 +1,5 @@
 package org.jetbrains.jps.cmdline;
 
-import org.jetbrains.jps.Project;
 import org.jetbrains.jps.incremental.BuildLoggingManager;
 import org.jetbrains.jps.incremental.CompilerEncodingConfiguration;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
@@ -23,7 +22,6 @@ import java.util.Set;
 *         Date: 1/8/12
 */
 public final class ProjectDescriptor {
-  public final Project project;
   public final JpsProject jpsProject;
   public final JpsModel jpsModel;
   public final BuildFSState fsState;
@@ -36,13 +34,11 @@ public final class ProjectDescriptor {
   private Set<JpsSdk<?>> myProjectJavaSdks;
   private CompilerEncodingConfiguration myEncodingConfiguration;
 
-  public ProjectDescriptor(Project project,
-                           JpsModel jpsModel,
+  public ProjectDescriptor(JpsModel jpsModel,
                            BuildFSState fsState,
                            ProjectTimestamps timestamps,
                            BuildDataManager dataManager,
                            BuildLoggingManager loggingManager) {
-    this.project = project;
     this.jpsModel = jpsModel;
     this.jpsProject = jpsModel.getProject();
     this.fsState = fsState;
@@ -50,7 +46,7 @@ public final class ProjectDescriptor {
     this.dataManager = dataManager;
     myLoggingManager = loggingManager;
     rootsIndex = new ModuleRootsIndex(jpsModel, dataManager);
-    myArtifactRootsIndex = new ArtifactRootsIndex(jpsModel, project, dataManager, rootsIndex);
+    myArtifactRootsIndex = new ArtifactRootsIndex(jpsModel, dataManager, rootsIndex);
     myProjectJavaSdks = new HashSet<JpsSdk<?>>();
     myEncodingConfiguration = new CompilerEncodingConfiguration(jpsModel, rootsIndex);
     for (JpsModule module : jpsProject.getModules()) {

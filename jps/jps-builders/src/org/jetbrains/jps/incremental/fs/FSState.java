@@ -28,7 +28,7 @@ import java.util.*;
  *         Date: 4/20/12
  */
 public class FSState {
-  public static final int VERSION = 1;
+  public static final int VERSION = 2;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.FSState");
   private final Map<BuildTarget, FilesDelta> myDeltas = Collections.synchronizedMap(new HashMap<BuildTarget, FilesDelta>());
   protected final Set<BuildTarget> myInitialScanPerformed = Collections.synchronizedSet(new HashSet<BuildTarget>());

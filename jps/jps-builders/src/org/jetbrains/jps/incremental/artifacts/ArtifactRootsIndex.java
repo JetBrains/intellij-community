@@ -5,7 +5,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.Project;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
 import org.jetbrains.jps.incremental.artifacts.builders.LayoutElementBuildersRegistry;
@@ -25,7 +24,7 @@ public class ArtifactRootsIndex {
   private MultiMap<File, ArtifactRootDescriptor> myRootToDescriptorMap;
   private Map<JpsArtifact, ArtifactInstructionsBuilder> myInstructions;
 
-  public ArtifactRootsIndex(JpsModel model, Project project, BuildDataManager manager, ModuleRootsIndex rootsIndex) {
+  public ArtifactRootsIndex(JpsModel model, BuildDataManager manager, ModuleRootsIndex rootsIndex) {
     myRootToDescriptorMap = new MultiMap<File, ArtifactRootDescriptor>();
     myInstructions = new HashMap<JpsArtifact, ArtifactInstructionsBuilder>();
     ArtifactsBuildData data = manager.getArtifactsBuildData();

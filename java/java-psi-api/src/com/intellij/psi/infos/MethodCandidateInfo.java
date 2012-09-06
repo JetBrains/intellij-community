@@ -15,19 +15,17 @@
  */
 package com.intellij.psi.infos;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author ik, dsl
@@ -108,6 +106,12 @@ public class MethodCandidateInfo extends CandidateInfo{
         }
         map.put(myArgumentList, getElement());
         try {
+
+          final Set<PsiParameterList> lists = LambdaUtil.ourParams.get();
+          if (lists != null && !lists.isEmpty()) {
+            return inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE);
+          }
+
           myCalcedSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE);
         }
         finally {

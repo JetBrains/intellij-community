@@ -91,7 +91,7 @@ public class TestClientRunner {
     }
 
     final CapturingProcessHandler handler = new CapturingProcessHandler(clientProcess, CharsetToolkit.getDefaultSystemCharset());
-    final ProcessOutput result = handler.runProcess(60*1000);
+    final ProcessOutput result = handler.runProcess(100*1000);
     if (myTraceClient || result.isTimeout()) {
       ChangeListManagerImpl.log("*** result: " + result.getExitCode());
       final String out = result.getStdout().trim();

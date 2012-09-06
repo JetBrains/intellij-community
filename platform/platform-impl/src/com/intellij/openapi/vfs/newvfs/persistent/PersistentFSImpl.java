@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
 import com.intellij.util.io.ReplicatorInputStream;
@@ -237,7 +238,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   @Nullable
   public DataInputStream readAttribute(@NotNull final VirtualFile file, @NotNull final FileAttribute att) {
-    return FSRecords.readAttribute(getFileId(file), att.getId());
+    return FSRecords.readAttributeWithLock(getFileId(file), att.getId());
   }
 
   @Override
@@ -855,8 +856,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return VfsUtilCore.toVirtualFileArray(roots);
   }
 
-  //guarded by dirCacheReadLock/dirCacheWriteLock
-  @NotNull private final StripedLockIntObjectConcurrentHashMap<NewVirtualFile> myIdToDirCache = new StripedLockIntObjectConcurrentHashMap<NewVirtualFile>();
+  @NotNull private final ConcurrentIntObjectMap<NewVirtualFile> myIdToDirCache = new StripedLockIntObjectConcurrentHashMap<NewVirtualFile>();
 
   @Override
   public void clearIdCache() {
@@ -884,7 +884,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     NewVirtualFile result = doFindFile(id, cachedOnly);
 
     if (result != null && result.isDirectory()) {
-      NewVirtualFile old = myIdToDirCache.putIfAbsent(id, result);
+      NewVirtualFile old = myIdToDirCache.put(id, result);
       if (old != null) result = old;
     }
     return result;
@@ -901,10 +901,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       finally {
         myRootsLock.readLock().unlock();
       }
-    }
-    else if (parentId == id) {
-      LOG.error("Corrupted VFS? id=" + id + " name=" + getName(id));
-      return null;
     }
     else {
       NewVirtualFile parentFile = _findFileById(parentId, cachedOnly);
@@ -1129,7 +1125,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     executeCreateChild(newParent, copyName);
   }
 
-  private static void executeMove(@NotNull VirtualFile file, @NotNull VirtualFile newParent) {
+  private void executeMove(@NotNull VirtualFile file, @NotNull VirtualFile newParent) {
+    clearIdCache();
+
     final int fileId = getFileId(file);
     final int newParentId = getFileId(newParent);
     final int oldParentId = getFileId(file.getParent());

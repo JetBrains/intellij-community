@@ -919,21 +919,26 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return addFileToProject(getTempDirPath(), relativePath, fileText);
   }
 
-  protected PsiFile addFileToProject(String rootPath, String relativePath, String fileText) {
-    try {
-      if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
-        final VirtualFile file = myTempDirFixture.createFile(relativePath, fileText);
-        return PsiManager.getInstance(getProject()).findFile(file);
+  protected PsiFile addFileToProject(final String rootPath, final String relativePath, final String fileText) {
+    return new WriteCommandAction<PsiFile>(getProject()) {
+      @Override
+      protected void run(Result<PsiFile> result) throws Throwable {
+        try {
+          if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
+            final VirtualFile file = myTempDirFixture.createFile(relativePath, fileText);
+            result.setResult(PsiManager.getInstance(getProject()).findFile(file));
+          } else {
+            result.setResult(((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(rootPath, relativePath, fileText));
+          }
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        finally {
+          ((PsiModificationTrackerImpl)PsiManager.getInstance(getProject()).getModificationTracker()).incCounter();
+        }
       }
-
-      return ((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(rootPath, relativePath, fileText);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    finally {
-      ((PsiModificationTrackerImpl)PsiManager.getInstance(getProject()).getModificationTracker()).incCounter();
-    }
+    }.execute().getResultObject();
   }
 
   public <T> void registerExtension(final ExtensionsArea area, final ExtensionPointName<T> epName, final T extension) {
@@ -1073,36 +1078,56 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void setUp() throws Exception {
     super.setUp();
 
-    myProjectFixture.setUp();
-    myTempDirFixture.setUp();
-    myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
-    configureInspections(myInspections == null ? LocalInspectionTool.EMPTY_ARRAY : myInspections);
+    edt(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          myProjectFixture.setUp();
+          myTempDirFixture.setUp();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+        myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
+        configureInspections(myInspections == null ? LocalInspectionTool.EMPTY_ARRAY : myInspections);
 
-    DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-    daemonCodeAnalyzer.prepareForTest();
+        DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
+        daemonCodeAnalyzer.prepareForTest();
 
-    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
-    ensureIndexesUpToDate(getProject());
-    ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivities();
+        DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
+        ensureIndexesUpToDate(getProject());
+        ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivities();
+      }
+    });
   }
 
   @Override
   public void tearDown() throws Exception {
-    FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
-    VirtualFile[] openFiles = editorManager.getOpenFiles();
-    for (VirtualFile openFile : openFiles) {
-      editorManager.closeFile(openFile);
-    }
+    edt(new Runnable() {
+      @Override
+      public void run() {
+        FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
+        VirtualFile[] openFiles = editorManager.getOpenFiles();
+        for (VirtualFile openFile : openFiles) {
+          editorManager.closeFile(openFile);
+        }
 
-    myEditor = null;
-    myFile = null;
-    myPsiManager = null;
+        myEditor = null;
+        myFile = null;
+        myPsiManager = null;
 
-    myInspections = null;
-    myAvailableTools.clear();
+        myInspections = null;
+        myAvailableTools.clear();
 
-    myProjectFixture.tearDown();
-    myTempDirFixture.tearDown();
+        try {
+          myProjectFixture.tearDown();
+          myTempDirFixture.tearDown();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
 
     super.tearDown();
   }

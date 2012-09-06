@@ -56,6 +56,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
+import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
+import org.jetbrains.jps.model.serialization.java.compiler.AnnotationProcessorProfileSerializer;
+import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer;
 
 import java.io.File;
 import java.util.*;
@@ -71,16 +75,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
   @NonNls public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
   public static final int DEPENDENCY_FORMAT_VERSION = 55;
-  private static final Comparator<String> ALPHA_COMPARATOR = new Comparator<String>() {
-    @Override
-    public int compare(String o1, String o2) {
-      return o1.compareToIgnoreCase(o2);
-    }
-  };
-  private static final String ENTRY = "entry";
-  private static final String NAME = "name";
-  private static final String ENABLED = "enabled";
-  private static final String MODULE = "module";
 
   @SuppressWarnings({"WeakerAccess"}) public String DEFAULT_COMPILER;
   @NotNull private BackendCompiler myDefaultJavaCompiler;
@@ -104,7 +98,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
   private boolean myAddNotNullAssertions = true;
 
-  private final ProcessorConfigProfile myDefaultProcessorsProfile = new ProcessorConfigProfile("Default");
+  private final ProcessorConfigProfile myDefaultProcessorsProfile = new ProcessorConfigProfileImpl("Default");
   private final List<ProcessorConfigProfile> myModuleProcessorProfiles = new ArrayList<ProcessorConfigProfile>();
 
   // the map is calculated by module processor profiles list for faster access to module settings
@@ -597,35 +591,27 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return true;
   }
 
-  // property names
-  private static final String EXCLUDE_FROM_COMPILE = "excludeFromCompile";
-  private static final String RESOURCE_EXTENSIONS = "resourceExtensions";
-  private static final String ANNOTATION_PROCESSING = "annotationProcessing";
-  private static final String BYTECODE_TARGET_LEVEL = "bytecodeTargetLevel";
-  private static final String WILDCARD_RESOURCE_PATTERNS = "wildcardResourcePatterns";
-  private static final String ADD_NOTNULL_ASSERTIONS = "addNotNullAssertions";
-
 
   public void readExternal(Element parentNode) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, parentNode);
 
-    final Element notNullAssertions = parentNode.getChild(ADD_NOTNULL_ASSERTIONS);
+    final Element notNullAssertions = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.ADD_NOTNULL_ASSERTIONS);
     if (notNullAssertions != null) {
-      myAddNotNullAssertions = Boolean.valueOf(notNullAssertions.getAttributeValue(ENABLED, "true"));
+      myAddNotNullAssertions = Boolean.valueOf(notNullAssertions.getAttributeValue(JpsJavaCompilerConfigurationSerializer.ENABLED, "true"));
     }
 
-    Element node = parentNode.getChild(EXCLUDE_FROM_COMPILE);
+    Element node = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE);
     if (node != null) {
       myExcludedEntriesConfiguration.readExternal(node);
     }
 
     try {
       removeRegexpPatterns();
-      node = parentNode.getChild(RESOURCE_EXTENSIONS);
+      node = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.RESOURCE_EXTENSIONS);
       if (node != null) {
-        for (final Object o : node.getChildren(ENTRY)) {
+        for (final Object o : node.getChildren(JpsJavaCompilerConfigurationSerializer.ENTRY)) {
           Element element = (Element)o;
-          String pattern = element.getAttributeValue(NAME);
+          String pattern = element.getAttributeValue(JpsJavaCompilerConfigurationSerializer.NAME);
           if (!StringUtil.isEmpty(pattern)) {
             addRegexpPattern(pattern);
           }
@@ -633,12 +619,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       }
 
       removeWildcardPatterns();
-      node = parentNode.getChild(WILDCARD_RESOURCE_PATTERNS);
+      node = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.WILDCARD_RESOURCE_PATTERNS);
       if (node != null) {
         myWildcardPatternsInitialized = true;
-        for (final Object o : node.getChildren(ENTRY)) {
+        for (final Object o : node.getChildren(JpsJavaCompilerConfigurationSerializer.ENTRY)) {
           final Element element = (Element)o;
-          String pattern = element.getAttributeValue(NAME);
+          String pattern = element.getAttributeValue(JpsJavaCompilerConfigurationSerializer.NAME);
           if (!StringUtil.isEmpty(pattern)) {
             addWildcardResourcePattern(pattern);
           }
@@ -653,7 +639,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     myModuleProcessorProfiles.clear();
     myProcessorsProfilesMap = null;
 
-    final Element annotationProcessingSettings = parentNode.getChild(ANNOTATION_PROCESSING);
+    final Element annotationProcessingSettings = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.ANNOTATION_PROCESSING);
     if (annotationProcessingSettings != null) {
       final List profiles = annotationProcessingSettings.getChildren("profile");
       if (!profiles.isEmpty()) {
@@ -661,11 +647,11 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
           final Element profileElement = (Element)elem;
           final boolean isDefault = "true".equals(profileElement.getAttributeValue("default"));
           if (isDefault) {
-            myDefaultProcessorsProfile.readExternal(profileElement);
+            AnnotationProcessorProfileSerializer.readExternal(myDefaultProcessorsProfile, profileElement);
           }
           else {
-            final ProcessorConfigProfile profile = new ProcessorConfigProfile("");
-            profile.readExternal(profileElement);
+            final ProcessorConfigProfile profile = new ProcessorConfigProfileImpl("");
+            AnnotationProcessorProfileSerializer.readExternal(profile, profileElement);
             myModuleProcessorProfiles.add(profile);
           }
         }
@@ -678,15 +664,15 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
     myBytecodeTargetLevel = null;
     myModuleBytecodeTarget.clear();
-    final Element bytecodeTargetElement = parentNode.getChild(BYTECODE_TARGET_LEVEL);
+    final Element bytecodeTargetElement = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
     if (bytecodeTargetElement != null) {
-      myBytecodeTargetLevel = bytecodeTargetElement.getAttributeValue("target");
-      for (Element elem : (Collection<Element>)bytecodeTargetElement.getChildren(MODULE)) {
-        final String name = elem.getAttributeValue(NAME);
+      myBytecodeTargetLevel = bytecodeTargetElement.getAttributeValue(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE);
+      for (Element elem : (Collection<Element>)bytecodeTargetElement.getChildren(JpsJavaCompilerConfigurationSerializer.MODULE)) {
+        final String name = elem.getAttributeValue(JpsJavaCompilerConfigurationSerializer.NAME);
         if (name == null) {
           continue;
         }
-        final String target = elem.getAttributeValue("target");
+        final String target = elem.getAttributeValue(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE);
         if (target == null) {
           continue;
         }
@@ -697,7 +683,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   private void loadProfilesFromOldFormat(Element processing) {
     // collect data
-    final boolean isEnabled = Boolean.parseBoolean(processing.getAttributeValue(ENABLED, "false"));
+    final boolean isEnabled = Boolean.parseBoolean(processing.getAttributeValue(JpsJavaCompilerConfigurationSerializer.ENABLED, "false"));
     final boolean isUseClasspath = Boolean.parseBoolean(processing.getAttributeValue("useClasspath", "true"));
     final StringBuilder processorPath = new StringBuilder();
     final Set<String> optionPairs = new HashSet<String>();
@@ -717,7 +703,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
     for (Object child : processing.getChildren("processor")) {
       final Element processorElement = (Element)child;
-      final String proc = processorElement.getAttributeValue(NAME, (String)null);
+      final String proc = processorElement.getAttributeValue(JpsJavaCompilerConfigurationSerializer.NAME, (String)null);
       if (proc != null) {
         processors.add(proc);
       }
@@ -730,7 +716,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
     for (Object child : processing.getChildren("processModule")) {
       final Element moduleElement = (Element)child;
-      final String name = moduleElement.getAttributeValue(NAME, (String)null);
+      final String name = moduleElement.getAttributeValue(JpsJavaCompilerConfigurationSerializer.NAME, (String)null);
       if (name == null) {
         continue;
       }
@@ -769,7 +755,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     int profileIndex = 0;
     for (Map.Entry<String, Set<String>> entry : dirNameToModulesMap.entrySet()) {
       final String dirName = entry.getKey();
-      final ProcessorConfigProfile profile = new ProcessorConfigProfile(myDefaultProcessorsProfile);
+      final ProcessorConfigProfile profile = new ProcessorConfigProfileImpl(myDefaultProcessorsProfile);
       profile.setName("Profile" + (++profileIndex));
       profile.setEnabled(isEnabled);
       profile.setGeneratedSourcesDirectoryName(dirName);
@@ -784,44 +770,47 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     DefaultJDOMExternalizer.writeExternal(this, parentNode);
 
     if (myAddNotNullAssertions != true) {
-      addChild(parentNode, ADD_NOTNULL_ASSERTIONS).setAttribute(ENABLED, String.valueOf(myAddNotNullAssertions));
+      addChild(parentNode, JpsJavaCompilerConfigurationSerializer.ADD_NOTNULL_ASSERTIONS).setAttribute(
+        JpsJavaCompilerConfigurationSerializer.ENABLED, String.valueOf(myAddNotNullAssertions));
     }
 
     if(myExcludedEntriesConfiguration.getExcludeEntryDescriptions().length > 0) {
-      myExcludedEntriesConfiguration.writeExternal(addChild(parentNode, EXCLUDE_FROM_COMPILE));
+      myExcludedEntriesConfiguration.writeExternal(addChild(parentNode, JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE));
     }
 
-    final Element newChild = addChild(parentNode, RESOURCE_EXTENSIONS);
+    final Element newChild = addChild(parentNode, JpsJavaCompilerConfigurationSerializer.RESOURCE_EXTENSIONS);
     for (final String pattern : getRegexpPatterns()) {
-      addChild(newChild, ENTRY).setAttribute(NAME, pattern);
+      addChild(newChild, JpsJavaCompilerConfigurationSerializer.ENTRY).setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, pattern);
     }
 
     if (myWildcardPatternsInitialized || !myWildcardPatterns.isEmpty()) {
-      final Element wildcardPatterns = addChild(parentNode, WILDCARD_RESOURCE_PATTERNS);
+      final Element wildcardPatterns = addChild(parentNode, JpsJavaCompilerConfigurationSerializer.WILDCARD_RESOURCE_PATTERNS);
       for (final String wildcardPattern : myWildcardPatterns) {
-        addChild(wildcardPatterns, ENTRY).setAttribute(NAME, wildcardPattern);
+        addChild(wildcardPatterns, JpsJavaCompilerConfigurationSerializer.ENTRY).setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, wildcardPattern);
       }
     }
 
-    final Element annotationProcessingSettings = addChild(parentNode, ANNOTATION_PROCESSING);
-    myDefaultProcessorsProfile.writeExternal(addChild(annotationProcessingSettings, "profile").setAttribute("default", "true"));
+    final Element annotationProcessingSettings = addChild(parentNode, JpsJavaCompilerConfigurationSerializer.ANNOTATION_PROCESSING);
+    AnnotationProcessorProfileSerializer
+      .writeExternal(myDefaultProcessorsProfile, addChild(annotationProcessingSettings, "profile").setAttribute("default", "true"));
     for (ProcessorConfigProfile profile : myModuleProcessorProfiles) {
-      profile.writeExternal(addChild(annotationProcessingSettings, "profile").setAttribute("default", "false"));
+      AnnotationProcessorProfileSerializer
+        .writeExternal(profile, addChild(annotationProcessingSettings, "profile").setAttribute("default", "false"));
     }
 
     if (!StringUtil.isEmpty(myBytecodeTargetLevel) || !myModuleBytecodeTarget.isEmpty()) {
-      final Element bytecodeTarget = addChild(parentNode, BYTECODE_TARGET_LEVEL);
+      final Element bytecodeTarget = addChild(parentNode, JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
       if (!StringUtil.isEmpty(myBytecodeTargetLevel)) {
-        bytecodeTarget.setAttribute("target", myBytecodeTargetLevel);
+        bytecodeTarget.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, myBytecodeTargetLevel);
       }
       if (!myModuleBytecodeTarget.isEmpty()) {
         final List<String> moduleNames = new ArrayList<String>(myModuleBytecodeTarget.keySet());
-        Collections.sort(moduleNames, ALPHA_COMPARATOR);
+        Collections.sort(moduleNames, String.CASE_INSENSITIVE_ORDER);
         for (String name : moduleNames) {
-          final Element moduleElement = addChild(bytecodeTarget, MODULE);
-          moduleElement.setAttribute(NAME, name);
+          final Element moduleElement = addChild(bytecodeTarget, JpsJavaCompilerConfigurationSerializer.MODULE);
+          moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, name);
           final String value = myModuleBytecodeTarget.get(name);
-          moduleElement.setAttribute("target", value != null? value : "");
+          moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, value != null? value : "");
         }
       }
     }

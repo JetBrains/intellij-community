@@ -17,7 +17,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.compiler.ProcessorConfigProfile;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -37,6 +37,7 @@ import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -276,7 +277,7 @@ public class MavenModuleImporter {
         }
 
         if (defaultMavenProfile == null) {
-          defaultMavenProfile = new ProcessorConfigProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE);
+          defaultMavenProfile = new ProcessorConfigProfileImpl(MAVEN_DEFAULT_ANNOTATION_PROFILE);
           defaultMavenProfile.setEnabled(true);
           defaultMavenProfile.setObtainProcessorsFromClasspath(true);
           defaultMavenProfile.setGeneratedSourcesDirectoryName("target/generated-sources/annotations");
@@ -295,7 +296,7 @@ public class MavenModuleImporter {
         }
 
         if (moduleProfile == null) {
-          moduleProfile = new ProcessorConfigProfile(moduleProfileName);
+          moduleProfile = new ProcessorConfigProfileImpl(moduleProfileName);
           moduleProfile.setEnabled(true);
           moduleProfile.setObtainProcessorsFromClasspath(true);
           moduleProfile.addModuleName(myModule.getName());

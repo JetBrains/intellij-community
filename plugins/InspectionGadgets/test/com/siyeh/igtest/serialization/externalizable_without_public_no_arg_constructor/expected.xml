@@ -3,7 +3,6 @@
   <problem>
     <file>ExternalizableWithoutPublicNoArgConstructor.java</file>
     <line>9</line>
-    <module>test_5975879954938100914</module>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Externalizable class without public no-arg constructor</problem_class>
     <description>Externalizable class &lt;code&gt;eImpl&lt;/code&gt; has no public no-arg constructor</description>
   </problem>
@@ -11,7 +10,6 @@
   <problem>
     <file>ExternalizableWithoutPublicNoArgConstructor.java</file>
     <line>16</line>
-    <entry_point TYPE="class" FQNAME="com.siyeh.igtest.serialization.externalizable_without_public_no_arg_constructor.eImpl1" />
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Externalizable class without public no-arg constructor</problem_class>
     <description>Externalizable class &lt;code&gt;eImpl1&lt;/code&gt; has no public no-arg constructor</description>
   </problem>
@@ -19,8 +17,14 @@
   <problem>
     <file>ExternalizableWithoutPublicNoArgConstructor.java</file>
     <line>24</line>
-    <entry_point TYPE="class" FQNAME="com.siyeh.igtest.serialization.externalizable_without_public_no_arg_constructor.eImpl2" />
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Externalizable class without public no-arg constructor</problem_class>
     <description>Externalizable class &lt;code&gt;eImpl2&lt;/code&gt; has no public no-arg constructor</description>
+  </problem>
+
+  <problem>
+    <file>ExternalizableWithoutPublicNoArgConstructor.java</file>
+    <line>37</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Externalizable class without public no-arg constructor</problem_class>
+    <description>Externalizable class &lt;code&gt;Externalizable&lt;/code&gt; has no public no-arg constructor #loc</description>
   </problem>
 </problems>

@@ -323,8 +323,9 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
   }
 
-  private static String addReadOnly(@NotNull String title, @Nullable Editor editor) {
-    if (editor == null) {
+  @Nullable
+  private static String addReadOnly(@Nullable String title, @Nullable Editor editor) {
+    if (editor == null || title == null) {
       return title;
     }
     boolean readonly = editor.isViewer() || !editor.getDocument().isWritable();
@@ -578,7 +579,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     String title1 = addReadOnly(data.getContentTitles()[0], myLeftSide.getEditor());
     String title2 = addReadOnly(data.getContentTitles()[1], myRightSide.getEditor());
 
-    if (sep1 != null && sep2 != null && !sep1.equals(sep2)) {
+    if (title1 != null && title2 != null && sep1 != null && sep2 != null && !sep1.equals(sep2)) {
       setTitle1(createComponentForTitle(title1, sep1, true));
       setTitle2(createComponentForTitle(title2, sep2, false));
     }

@@ -36,7 +36,6 @@ import java.util.Iterator;
 import java.util.List;
 
 public final class IterationState {
-  
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.IterationState");
   
   private static final Comparator<RangeHighlighterEx> HIGHLIGHTER_COMPARATOR = new Comparator<RangeHighlighterEx>() {
@@ -90,7 +89,7 @@ public final class IterationState {
   private final int mySelectionStart;
 
   private final int mySelectionEnd;
-  private final List<RangeHighlighterEx> myCurrentHighlighters;
+  private final List<RangeHighlighterEx> myCurrentHighlighters = new ArrayList<RangeHighlighterEx>();
 
   private final FoldingModelEx myFoldingModel;
 
@@ -103,7 +102,7 @@ public final class IterationState {
   private final Color myDefaultForeground;
   private final int myCaretRowStart;
   private final int myCaretRowEnd;
-  private final List<TextAttributes> myCachedAttributesList;
+  private final List<TextAttributes> myCachedAttributesList = new ArrayList<TextAttributes>(5);
   private final DocumentEx myDocument;
   private final EditorEx myEditor;
   private final Color myReadOnlyColor;
@@ -113,7 +112,7 @@ public final class IterationState {
    */
   public IterationState(@NotNull EditorEx editor, int start, int end, boolean useCaretAndSelection) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    myDocument = (DocumentEx)editor.getDocument();
+    myDocument = editor.getDocument();
     myStartOffset = start;
 
     myEnd = end;
@@ -139,9 +138,6 @@ public final class IterationState {
 
     myCaretRowStart = caretModel.getVisualLineStart();
     myCaretRowEnd = caretModel.getVisualLineEnd();
-    myCachedAttributesList = new ArrayList<TextAttributes>(5);
-
-    myCurrentHighlighters = new ArrayList<RangeHighlighterEx>();
 
     MarkupModelEx editorMarkup = (MarkupModelEx)editor.getMarkupModel();
     myView = new HighlighterSweep(editorMarkup, start, myEnd);
@@ -467,11 +463,7 @@ public final class IterationState {
     if (back == null) back = myDefaultBackground;
     if (effectType == null) effectType = EffectType.BOXED;
 
-    myMergedAttributes.setForegroundColor(fore);
-    myMergedAttributes.setBackgroundColor(back);
-    myMergedAttributes.setFontType(fontType);
-    myMergedAttributes.setEffectColor(effect);
-    myMergedAttributes.setEffectType(effectType);
+    myMergedAttributes.setAttributes(fore, back, effect, null, effectType, fontType);
   }
 
   @Nullable
@@ -492,6 +484,7 @@ public final class IterationState {
     return myEndOffset;
   }
 
+  @NotNull
   public TextAttributes getMergedAttributes() {
     return myMergedAttributes;
   }
