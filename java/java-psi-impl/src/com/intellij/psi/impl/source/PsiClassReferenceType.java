@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -30,6 +31,7 @@ import java.util.List;
  * @author max
  */
 public class PsiClassReferenceType extends PsiClassType {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiClassReferenceType");
   private final PsiJavaCodeReferenceElement myReference;
 
   public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel languageLevel) {
@@ -137,6 +139,7 @@ public class PsiClassReferenceType extends PsiClassType {
   @Override
   @NotNull
   public ClassResolveResult resolveGenerics() {
+    LOG.assertTrue(isValid());
     final JavaResolveResult result = myReference.advancedResolve(false);
     return new DelegatingClassResolveResult(result);
   }
