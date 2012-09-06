@@ -429,7 +429,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   /**
    * @return coordinates in layered pane coordinate system.
    */
-  public Point getHintPosition(LightweightHint hint, Editor editor, @PositionFlags short constraint) {
+  public Point getHintPosition(@NotNull LightweightHint hint, @NotNull Editor editor, @PositionFlags short constraint) {
     JLayeredPane lp = editor.getComponent().getRootPane().getLayeredPane();
 
     LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
@@ -545,18 +545,25 @@ public class HintManagerImpl extends HintManager implements Disposable {
   /**
    * @return position of hint in layered pane coordinate system
    */
-  public static Point getHintPosition(LightweightHint hint, Editor editor, LogicalPosition pos, @PositionFlags short constraint) {
+  public static Point getHintPosition(@NotNull LightweightHint hint,
+                                      @NotNull Editor editor,
+                                      @NotNull LogicalPosition pos,
+                                      @PositionFlags short constraint) {
     return getHintPosition(hint, editor, pos, pos, constraint);
   }
 
-  private static Point getHintPosition(LightweightHint hint, Editor editor, LogicalPosition pos1, LogicalPosition pos2, @PositionFlags short constraint) {
+  private static Point getHintPosition(@NotNull LightweightHint hint,
+                                       @NotNull Editor editor,
+                                       @NotNull LogicalPosition pos1,
+                                       @NotNull LogicalPosition pos2,
+                                       @PositionFlags short constraint) {
     return getHintPosition(hint, editor, pos1, pos2, constraint, Registry.is("editor.balloonHints"));
   }
 
-  private static Point getHintPosition(LightweightHint hint,
-                                       Editor editor,
-                                       LogicalPosition pos1,
-                                       LogicalPosition pos2,
+  private static Point getHintPosition(@NotNull LightweightHint hint,
+                                       @NotNull Editor editor,
+                                       @NotNull LogicalPosition pos1,
+                                       @NotNull LogicalPosition pos2,
                                        @PositionFlags short constraint,
                                        boolean showByBalloon) {
     Point p = _getHintPosition(hint, editor, pos1, pos2, constraint, showByBalloon);
@@ -582,10 +589,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
     return p;
   }
 
-  private static Point _getHintPosition(LightweightHint hint,
-                                        Editor editor,
-                                        LogicalPosition pos1,
-                                        LogicalPosition pos2,
+  private static Point _getHintPosition(@NotNull LightweightHint hint,
+                                        @NotNull Editor editor,
+                                        @NotNull LogicalPosition pos1,
+                                        @NotNull LogicalPosition pos2,
                                         @PositionFlags short constraint,
                                         boolean showByBalloon) {
     Dimension hintSize = hint.getComponent().getPreferredSize();

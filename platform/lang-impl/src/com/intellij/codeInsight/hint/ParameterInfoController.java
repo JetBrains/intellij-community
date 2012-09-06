@@ -39,7 +39,6 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -48,7 +47,7 @@ import java.util.List;
 
 public class ParameterInfoController {
   private final Project myProject;
-  private final Editor myEditor;
+  @NotNull private final Editor myEditor;
 
   private final String myParameterCloseChars;
   private final RangeMarker myLbraceMarker;
@@ -145,7 +144,7 @@ public class ParameterInfoController {
     }
   }
 
-  private static ArrayList<ParameterInfoController> getAllControllers(Editor editor) {
+  private static ArrayList<ParameterInfoController> getAllControllers(@NotNull Editor editor) {
     ArrayList<ParameterInfoController> array = editor.getUserData(ALL_CONTROLLERS_KEY);
     if (array == null){
       array = new ArrayList<ParameterInfoController>();
@@ -158,8 +157,12 @@ public class ParameterInfoController {
     return findControllerAtOffset(editor, lbraceOffset) != null;
   }
 
-  public ParameterInfoController(Project project, Editor editor, int lbraceOffset, LightweightHint hint, @NotNull ParameterInfoHandler handler,
-                                 final ShowParameterInfoHandler.BestLocationPointProvider provider) {
+  public ParameterInfoController(@NotNull Project project,
+                                 @NotNull Editor editor,
+                                 int lbraceOffset,
+                                 @NotNull LightweightHint hint,
+                                 @NotNull ParameterInfoHandler handler,
+                                 @NotNull ShowParameterInfoHandler.BestLocationPointProvider provider) {
     myProject = project;
     myEditor = editor;
     myHandler = handler;
@@ -260,17 +263,17 @@ public class ParameterInfoController {
     LookupManager.getInstance(myProject).removePropertyChangeListener(myLookupListener);
   }
 
-  private void adjustPositionForLookup(Lookup lookup) {
-    if (!myHint.isVisible()){
+  private void adjustPositionForLookup(@NotNull Lookup lookup) {
+    if (!myHint.isVisible() || myEditor.isDisposed()) {
       dispose();
       return;
     }
 
     HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-    short constraint = lookup.isPositionedAboveCaret() ? HintManagerImpl.UNDER : HintManagerImpl.ABOVE;
+    short constraint = lookup.isPositionedAboveCaret() ? HintManager.UNDER : HintManager.ABOVE;
     Point p = hintManager.getHintPosition(myHint, myEditor, constraint);
-    Dimension hintSize = myHint.getComponent().getPreferredSize();
-    JLayeredPane layeredPane = myEditor.getComponent().getRootPane().getLayeredPane();
+    //Dimension hintSize = myHint.getComponent().getPreferredSize();
+    //JLayeredPane layeredPane = myEditor.getComponent().getRootPane().getLayeredPane();
     //p.x = Math.min(p.x, layeredPane.getWidth() - hintSize.width);
     //p.x = Math.max(p.x, 0);
     myHint.updateBounds(p.x, p.y);
