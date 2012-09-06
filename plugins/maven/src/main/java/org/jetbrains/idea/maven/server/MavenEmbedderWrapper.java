@@ -157,7 +157,26 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
     return perform(new RetriableCancelable<MavenServerExecutionResult>() {
       @Override
       public MavenServerExecutionResult execute() throws RemoteException, MavenServerProcessCanceledException {
-        return getOrCreateWrappee().execute(new File(file.getPath()), activeProfiles, goals);
+        return getOrCreateWrappee()
+          .execute(new File(file.getPath()), activeProfiles, Collections.<String>emptyList(), goals, Collections.<String>emptyList(), false,
+                   false);
+      }
+    });
+  }
+
+  @NotNull
+  public MavenServerExecutionResult execute(@NotNull final VirtualFile file,
+                                            @NotNull final Collection<String> activeProfiles,
+                                            @NotNull final Collection<String> inactiveProfiles,
+                                            @NotNull final List<String> goals,
+                                            @NotNull final List<String> selectedProjects,
+                                            final boolean alsoMake,
+                                            final boolean alsoMakeDependents) throws MavenProcessCanceledException {
+    return perform(new RetriableCancelable<MavenServerExecutionResult>() {
+      @Override
+      public MavenServerExecutionResult execute() throws RemoteException, MavenServerProcessCanceledException {
+        return getOrCreateWrappee()
+          .execute(new File(file.getPath()), activeProfiles, inactiveProfiles, goals, selectedProjects, alsoMake, alsoMakeDependents);
       }
     });
   }
