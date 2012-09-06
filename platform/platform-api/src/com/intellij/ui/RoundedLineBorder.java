@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.border.LineBorder;
 import java.awt.*;
 
@@ -51,5 +53,9 @@ public class RoundedLineBorder extends LineBorder {
 
     g2.setColor(oldColor);
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAntialiasing);
+  }
+
+  public void setColor(@NotNull Color color) {
+    lineColor = color;
   }
 }
