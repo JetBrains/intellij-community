@@ -206,4 +206,9 @@ public abstract class XmlExtension {
   public boolean isCustomTagAllowed(final XmlTag tag) {
     return false;
   }
+
+  public boolean needWhitespaceBeforeAttribute() {
+    return true;
+  }
+
 }
