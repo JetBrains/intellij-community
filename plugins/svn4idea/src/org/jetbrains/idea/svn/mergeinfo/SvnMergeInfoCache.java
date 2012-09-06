@@ -19,7 +19,10 @@ import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Consumer;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.vcs.changes.TransparentlyFailedValue;
+import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +32,7 @@ import org.jetbrains.idea.svn.dialogs.WCPaths;
 import org.jetbrains.idea.svn.history.CopyData;
 import org.jetbrains.idea.svn.history.FirstInBranch;
 import org.jetbrains.idea.svn.history.SvnChangeList;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
@@ -167,21 +171,34 @@ public class SvnMergeInfoCache {
       myPath = path;
       myRevision = -1;
 
-      ApplicationManager.getApplication().executeOnPooledThread(new FirstInBranch(vcs, repositoryRoot, branchUrl, trunkUrl,
-                                                                                  new Consumer<CopyData>() {
-                                                                                    public void consume(CopyData copyData) {
-                                                                                      if (copyData == null) return;
-                                                                                      myRevision = copyData.getCopySourceRevision();
-                                                                                      if (myRevision != -1) {
-                                                                                        ApplicationManager.getApplication().invokeLater(new Runnable() {
-                                                                                          public void run() {
-                                                                                            if (vcs.getProject().isDisposed()) return;
-                                                                                            vcs.getProject().getMessageBus().syncPublisher(SVN_MERGE_INFO_CACHE).copyRevisionUpdated();
-                                                                                          }
-                                                                                        });
-                                                                                      }
-                                                                                    }
-                                                                                  }));
+      final TransparentlyFailedValueI<CopyData, SVNException> result = new TransparentlyFailedValue<CopyData, SVNException>() {
+        @Override
+        public void set(CopyData copyData) {
+          if (copyData == null) return;
+          myRevision = copyData.getCopySourceRevision();
+          if (myRevision != -1) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                if (vcs.getProject().isDisposed()) return;
+                vcs.getProject().getMessageBus().syncPublisher(SVN_MERGE_INFO_CACHE).copyRevisionUpdated();
+              }
+            });
+          }
+        }
+
+        @Override
+        public void fail(SVNException e) {
+          LOG.info(e);
+          VcsBalloonProblemNotifier.showOverChangesView(vcs.getProject(), e.getMessage(), MessageType.ERROR);
+        }
+
+        @Override
+        public void failRuntime(RuntimeException e) {
+          LOG.info(e);
+          VcsBalloonProblemNotifier.showOverChangesView(vcs.getProject(), e.getMessage(), MessageType.ERROR);
+        }
+      };
+      ApplicationManager.getApplication().executeOnPooledThread(new FirstInBranch(vcs, repositoryRoot, branchUrl, trunkUrl, result));
     }
 
     public String getPath() {

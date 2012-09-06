@@ -58,7 +58,6 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, SvnHistorySession> {
   private final SvnVcs myVcs;
@@ -456,7 +455,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   private static class MyLogEntryHandler implements ISVNLogEntryHandler {
     private final ProgressIndicator myIndicator;
     protected final SvnVcs myVcs;
-    private String myLastPath;
+    protected final SvnPathThroughHistoryCorrection myLastPathCorrector;
     private final Charset myCharset;
     protected final Consumer<VcsFileRevision> myResult;
     private VcsFileRevision myPrevious;
@@ -472,7 +471,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
                              SVNURL repoRootURL, Charset charset)
       throws SVNException, VcsException {
       myVcs = vcs;
-      myLastPath = lastPath;
+      myLastPathCorrector = new SvnPathThroughHistoryCorrection(lastPath);
       myCharset = charset;
       myIndicator = ProgressManager.getInstance().getProgressIndicator();
       myResult = result;
@@ -489,24 +488,19 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
             }
             myIndicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
           }
+          myLastPathCorrector.handleLogEntry(logEntry);
+          SVNLogEntryPath entryPath = myLastPathCorrector.getDirectlyMentioned();
           String copyPath = null;
-          SVNLogEntryPath entryPath = (SVNLogEntryPath)logEntry.getChangedPaths().get(myLastPath);
           if (entryPath != null) {
             copyPath = entryPath.getCopyPath();
           } else {
             // if there are no path with exact match, check whether parent or child paths had changed
-            // "entry path" is allowed to be null now; if it is null, last pa in th would be taken for revision construction
-            // if parent path was renamed, last path would be corrected below in correctLastPathAccordingToFolderRenames
+            // "entry path" is allowed to be null now; if it is null, last path would be taken for revision construction
             if (! checkForChildChanges(logEntry) && ! checkForParentChanges(logEntry)) return;
           }
 
           final int mergeLevel = svnLogEntryIntegerPair.getSecond();
           final SvnFileRevision revision = createRevision(logEntry, copyPath, entryPath);
-          if (copyPath != null) {
-            myLastPath = copyPath;
-          } else if (entryPath == null) {
-            myLastPath = correctLastPathAccordingToFolderRenames(myLastPath, logEntry);
-          }
           if (mergeLevel >= 0) {
             addToListByLevel((SvnFileRevision) myPrevious, revision, mergeLevel);
           } else {
@@ -519,12 +513,12 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
 
     private boolean checkForParentChanges(SVNLogEntry logEntry) {
-      String relativePath = null;
-      String path = SVNPathUtil.removeTail(myLastPath);
+      final String lastPathBefore = myLastPathCorrector.getBefore();
+      String path = SVNPathUtil.removeTail(lastPathBefore);
       while (path.length() > 0) {
-        final SVNLogEntryPath entryPath = (SVNLogEntryPath)logEntry.getChangedPaths().get(path);
+        final SVNLogEntryPath entryPath = logEntry.getChangedPaths().get(path);
+        // A & D are checked since we are not interested in parent folders property changes, only in structure changes
         if (entryPath != null && (entryPath.getType() == 'A' || entryPath.getType() == 'D')) {
-          relativePath = SVNPathUtil.getRelativePath(entryPath.getPath(), myLastPath);
           if (entryPath.getCopyPath() != null) {
             return true;
           }
@@ -536,28 +530,13 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
 
     private boolean checkForChildChanges(SVNLogEntry logEntry) {
+      final String lastPathBefore = myLastPathCorrector.getBefore();
       for (String key : logEntry.getChangedPaths().keySet()) {
-        if (SVNPathUtil.isAncestor(myLastPath, key)) {
+        if (SVNPathUtil.isAncestor(lastPathBefore, key)) {
           return true;
         }
       }
       return false;
-    }
-
-    private String correctLastPathAccordingToFolderRenames(String lastPath, SVNLogEntry logEntry) {
-      final Map<String,SVNLogEntryPath> paths = logEntry.getChangedPaths();
-      for (Map.Entry<String, SVNLogEntryPath> entry : paths.entrySet()) {
-        final SVNLogEntryPath value = entry.getValue();
-        final String copyPath = value.getCopyPath();
-        if (copyPath != null) {
-          final String entryPath = value.getPath();
-          if (SVNPathUtil.isAncestor(entryPath, lastPath)) {
-            final String relativePath = SVNPathUtil.getRelativePath(entryPath, lastPath);
-            return SVNPathUtil.append(copyPath, relativePath);
-          }
-        }
-      }
-      return lastPath;
     }
 
     public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
@@ -585,7 +564,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       SVNRevision rev = SVNRevision.create(logEntry.getRevision());
 //      final SVNURL url = myRepositoryRoot.appendPath(myLastPath, true);
       final SVNURL url = entryPath != null ? myRepositoryRoot.appendPath(entryPath.getPath(), true) :
-                         myRepositoryRoot.appendPath(myLastPath, true);
+                         myRepositoryRoot.appendPath(myLastPathCorrector.getBefore(), false);
       return new SvnFileRevision(myVcs, myPegRevision, rev, url.toString(), author, date, message, copyPath, myCharset);
     }
   }
@@ -603,7 +582,8 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     @Override
     protected SvnFileRevision createRevision(final SVNLogEntry logEntry, final String copyPath, SVNLogEntryPath entryPath)
       throws SVNException {
-      final SVNURL url = myRepositoryRoot.appendPath(entryPath.getPath(), true);
+      final SVNURL url = entryPath == null ? myRepositoryRoot.appendPath(myLastPathCorrector.getBefore(), false) :
+                         myRepositoryRoot.appendPath(entryPath.getPath(), true);
       return new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, url.toString(), copyPath, null);
     }
   }
