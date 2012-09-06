@@ -60,6 +60,8 @@ public class SmartType17CompletionTest extends LightFixtureCompletionTestCase {
 
   public void testTryWithResourcesNoSemicolon() { doTest(); }
 
+  public void testTryWithResourcesThrowsException() { doTest(); }
+
   public void testDiamondPresentation() {
     configureByFile("/" + getTestName(false) + ".java");
     LookupElementPresentation presentation = new LookupElementPresentation();
