@@ -42,6 +42,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentSoftValueHashMap;
 import com.intellij.util.containers.ConcurrentWeakValueHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -416,7 +417,7 @@ public class FileManagerImpl implements FileManager {
     List<PsiFile> files = new ArrayList<PsiFile>();
     for (FileViewProvider provider : myVFileToViewProviderMap.values()) {
       if (provider instanceof SingleRootFileViewProvider) {
-        files.add(((SingleRootFileViewProvider)provider).getCachedPsi(provider.getBaseLanguage()));
+        ContainerUtil.addIfNotNull(files, ((SingleRootFileViewProvider)provider).getCachedPsi(provider.getBaseLanguage()));
       }
     }
     return files;
