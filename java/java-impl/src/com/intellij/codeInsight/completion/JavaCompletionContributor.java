@@ -70,7 +70,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   static {
     ourCompletionData = new LinkedHashMap<LanguageLevel, JavaCompletionData>();
     ourCompletionData.put(LanguageLevel.JDK_1_8, new Java18CompletionData());
-    ourCompletionData.put(LanguageLevel.JDK_1_3, new Java15CompletionData());
+    ourCompletionData.put(LanguageLevel.JDK_1_5, new Java15CompletionData());
     ourCompletionData.put(LanguageLevel.JDK_1_3, new JavaCompletionData());
   }
 
