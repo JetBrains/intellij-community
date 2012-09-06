@@ -58,7 +58,6 @@ public class TestClass {
             return yearsTo( expiry );
         }
         return 0.0;
-
     }
 
     private double yearsTo( final Date endDate ) {

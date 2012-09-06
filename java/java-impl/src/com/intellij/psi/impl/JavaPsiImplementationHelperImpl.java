@@ -183,8 +183,14 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(aClass.getProject());
     MemberOrderService service = ServiceManager.getService(MemberOrderService.class);
     PsiElement anchor = service.getAnchor(member, settings.getCommonSettings(JavaLanguage.INSTANCE), aClass);
+
+    if (anchor != null && anchor.getNextSibling() == aClass.getRBrace()) {
+      // Given member should be inserted as the last child.
+      return aClass.getRBrace();
+    }
     
     if (anchor != null && anchor != aClass) {
+      anchor = anchor.getNextSibling();
       while (anchor instanceof PsiJavaToken && (anchor.getText().equals(",") || anchor.getText().equals(";"))) {
         anchor = anchor.getNextSibling();
       }
@@ -194,7 +200,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     }
 
     // The main idea is to avoid to anchor to 'white space' element because that causes reformatting algorithm
-    // to perform incorrectly. The algorithm is encapsulated at PostprocessReformattingAspect.doPostponedFormattingInner().
+    // to perform incorrectly. The algorithm is encapsulated at the PostprocessReformattingAspect.doPostponedFormattingInner().
     final PsiElement lBrace = aClass.getLBrace();
     if (lBrace != null) {
       PsiElement result = lBrace.getNextSibling();
@@ -207,7 +213,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     return aClass.getRBrace();
   }
   
-  // TODO remove as soon as arrangement sub-system is provided for groovy.
+  // TODO remove as soon as an arrangement sub-system is provided for groovy.
   public static int getMemberOrderWeight(PsiElement member, CodeStyleSettings settings) {
     if (member instanceof PsiField) {
       if (member instanceof PsiEnumConstant) {

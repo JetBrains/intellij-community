@@ -57,6 +57,20 @@ public interface ArrangementEntry {
   List<? extends ArrangementEntry> getChildren();
 
   /**
+   * There is a possible case that particular entry position depends on another entries positions. E.g. static initialization
+   * block which uses static fields from the same class must be declared after them.
+   * <p/>
+   * This method allows to answer what sibling entries must be located before the current one at the resulting arrangement algorithm.
+   * <p/>
+   * There is also a special case when a list with the single entry which is the current's entry {@link #getParent() parent}
+   * is returned - that means that current entry should be arranged to be the first child.
+   * 
+   * @return    current entry's dependencies (if any)
+   */
+  @Nullable
+  List<? extends ArrangementEntry> getDependencies();
+  
+  /**
    * @return    start offset of the current entry (inclusive) within the target document. Rearranger engine uses this information
    *            to move rearranged entries
    */

@@ -112,7 +112,12 @@ public class MemberOrderService {
     if (anchorEntry == null) {
       return context;
     }
-    
-    return context.findElementAt(anchorEntry.getEndOffset() - context.getTextRange().getStartOffset());
+
+    int offset = anchorEntry.getEndOffset() - 1 - context.getTextRange().getStartOffset();
+    PsiElement element = context.findElementAt(offset);
+    for (PsiElement e = element; e != null && e.getTextRange().getStartOffset() >= anchorEntry.getStartOffset(); e = e.getParent()) {
+      element = e;
+    }
+    return element;
   }
 }

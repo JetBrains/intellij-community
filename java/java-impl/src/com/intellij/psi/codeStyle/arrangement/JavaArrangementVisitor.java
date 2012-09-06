@@ -45,7 +45,8 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     MODIFIERS.put(PsiModifier.ABSTRACT, ArrangementModifier.ABSTRACT);
   }
 
-  private final Stack<JavaElementArrangementEntry> myStack = new Stack<JavaElementArrangementEntry>();
+  @NotNull private final Stack<JavaElementArrangementEntry>           myStack   = new Stack<JavaElementArrangementEntry>();
+  @NotNull private final Map<PsiElement, JavaElementArrangementEntry> myEntries = new HashMap<PsiElement, JavaElementArrangementEntry>();
 
   @NotNull private final List<JavaElementArrangementEntry> myRootEntries;
   @NotNull private       Collection<TextRange>             myRanges;
@@ -69,13 +70,13 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     else if (aClass.isInterface()) {
       type = ArrangementEntryType.INTERFACE;
     }
-    JavaElementArrangementEntry entry = createNewEntry(aClass.getTextRange(), type, aClass.getName(), true);
+    JavaElementArrangementEntry entry = createNewEntry(aClass, type, aClass.getName(), true);
     processEntry(entry, aClass, aClass);
   }
 
   @Override
   public void visitAnonymousClass(PsiAnonymousClass aClass) {
-    JavaElementArrangementEntry entry = createNewEntry(aClass.getTextRange(), ArrangementEntryType.CLASS, aClass.getName(), false);
+    JavaElementArrangementEntry entry = createNewEntry(aClass, ArrangementEntryType.CLASS, aClass.getName(), false);
     processEntry(entry, null, aClass);
   }
 
@@ -88,14 +89,43 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
 
   @Override
   public void visitField(PsiField field) {
-    JavaElementArrangementEntry entry = createNewEntry(field.getTextRange(), ArrangementEntryType.FIELD, field.getName(), true);
+    JavaElementArrangementEntry entry = createNewEntry(field, ArrangementEntryType.FIELD, field.getName(), true);
     processEntry(entry, field, field.getInitializer());
+  }
+
+  @Override
+  public void visitClassInitializer(PsiClassInitializer initializer) {
+    JavaElementArrangementEntry entry = createNewEntry(initializer, ArrangementEntryType.FIELD, null, true);
+    if (entry == null) {
+      return;
+    }
+    
+    PsiElement classLBrace = null;
+    PsiClass clazz = initializer.getContainingClass();
+    if (clazz != null) {
+      classLBrace = clazz.getLBrace();
+    }
+    for (PsiElement e = initializer.getPrevSibling(); e != null; e = e.getPrevSibling()) {
+      JavaElementArrangementEntry prevEntry;
+      if (e == classLBrace) {
+        prevEntry = myEntries.get(clazz);
+      }
+      else {
+        prevEntry = myEntries.get(e);
+      }
+      if (prevEntry != null) {
+        entry.addDependency(prevEntry);
+      }
+      if (!(e instanceof PsiWhiteSpace)) {
+        break;
+      }
+    }
   }
 
   @Override
   public void visitMethod(PsiMethod method) {
     ArrangementEntryType type = method.isConstructor() ? ArrangementEntryType.CONSTRUCTOR : ArrangementEntryType.METHOD;
-    JavaElementArrangementEntry entry = createNewEntry(method.getTextRange(), type, method.getName(), true);
+    JavaElementArrangementEntry entry = createNewEntry(method, type, method.getName(), true);
     processEntry(entry, method, method.getBody());
   }
 
@@ -111,7 +141,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
       return;
     }
     JavaElementArrangementEntry entry =
-      createNewEntry(anonymousClass.getTextRange(), ArrangementEntryType.CLASS, anonymousClass.getName(), false);
+      createNewEntry(anonymousClass, ArrangementEntryType.CLASS, anonymousClass.getName(), false);
     processEntry(entry, null, anonymousClass);
   }
 
@@ -152,11 +182,12 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
   }
   
   @Nullable
-  private JavaElementArrangementEntry createNewEntry(@NotNull TextRange range,
+  private JavaElementArrangementEntry createNewEntry(@NotNull PsiElement element,
                                                      @NotNull ArrangementEntryType type,
                                                      @Nullable String name,
                                                      boolean canArrange)
   {
+    TextRange range = element.getTextRange();
     if (!isWithinBounds(range)) {
       return null;
     }
@@ -170,13 +201,14 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     else {
       entry = new JavaElementArrangementEntry(current, range, type, name, false);
     }
+    myEntries.put(element, entry);
     if (current == null) {
       myRootEntries.add(entry);
     }
     else {
       current.addChild(entry);
     }
-
+    
     return entry;
   }
 

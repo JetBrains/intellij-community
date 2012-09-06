@@ -22,13 +22,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Not thread-safe.
+ * 
  * @author Denis Zhdanov
  * @since 7/20/12 4:53 PM
  */
 public class DefaultArrangementEntry implements ArrangementEntry {
+  
+  @NotNull private final List<ArrangementEntry> myChildren = new ArrayList<ArrangementEntry>();
 
-  private final List<ArrangementEntry> myChildren = new ArrayList<ArrangementEntry>();
-
+  @Nullable private List<ArrangementEntry> myDependencies;
   @Nullable     ArrangementEntry myParent;
   private final int              myStartOffset;
   private final int              myEndOffset;
@@ -56,6 +59,19 @@ public class DefaultArrangementEntry implements ArrangementEntry {
 
   public void addChild(@NotNull ArrangementEntry entry) {
     myChildren.add(entry);
+  }
+
+  @Nullable
+  @Override
+  public List<? extends ArrangementEntry> getDependencies() {
+    return myDependencies;
+  }
+
+  public void addDependency(@NotNull ArrangementEntry dependency) {
+    if (myDependencies == null) {
+      myDependencies = new ArrayList<ArrangementEntry>();
+    }
+    myDependencies.add(dependency);
   }
 
   @Override

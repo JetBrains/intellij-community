@@ -26,6 +26,8 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
+ * Not thread-safe.
+ * 
  * @author Denis Zhdanov
  * @since 7/20/12 4:50 PM
  */

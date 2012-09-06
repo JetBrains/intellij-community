@@ -88,9 +88,11 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
       and(FIELD, modifier);
     }
     and(CONSTRUCTOR);
+    and(METHOD, STATIC);
     and(METHOD);
     and(ENUM);
     and(INTERFACE);
+    and(CLASS, STATIC);
     and(CLASS);
   }
 

@@ -69,4 +69,38 @@ class Test {
              rule(CLASS)]
     )
   }
+
+  void testInstanceInitializationBlockBoundToField() {
+    doTest('''\
+class Test {
+  private int i;
+  public int j;
+  { j = 1; }
+  protected int k;
+}''', '''\
+class Test {
+  public int j;
+  { j = 1; }
+  protected int k;
+  private int i;
+}''',
+           [rule(FIELD, PUBLIC), rule(FIELD, PROTECTED), rule(FIELD, PRIVATE)])
+  }
+  
+  void testInstanceInitializationBlockAsFirstChild() {
+    doTest('''\
+class Test {
+  { j = 1; }
+  private int i;
+  public int j;
+  protected int k;
+}''', '''\
+class Test {
+  { j = 1; }
+  public int j;
+  protected int k;
+  private int i;
+}''',
+           [rule(FIELD, PUBLIC), rule(FIELD, PROTECTED), rule(FIELD, PRIVATE)])
+  }
 }

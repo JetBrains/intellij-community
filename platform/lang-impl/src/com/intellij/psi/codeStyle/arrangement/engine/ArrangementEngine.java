@@ -18,6 +18,7 @@ package com.intellij.psi.codeStyle.arrangement.engine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -30,6 +31,7 @@ import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntArrayList;
@@ -200,22 +202,58 @@ public class ArrangementEngine {
    * @param <E>      arrangement entry type
    * @return         arranged list of the given rules
    */
+  @SuppressWarnings("AssignmentToForLoopParameter")
   @NotNull
   public static <E extends ArrangementEntry> List<E> arrange(@NotNull Collection<E> entries,
                                                              @NotNull List<? extends ArrangementRule> rules)
   {
     List<E> arranged = new ArrayList<E>();
-    Set<E> unprocessed = new LinkedHashSet<E>(entries);
-
-    for (ArrangementRule rule : rules) {
-      for (E entry : entries) {
-        if (entry.canBeMatched() && unprocessed.contains(entry) && rule.getMatcher().isMatched(entry)) {
+    Set<E> unprocessed = new LinkedHashSet<E>();
+    List<Pair<Set<ArrangementEntry>, E>> dependent = new ArrayList<Pair<Set<ArrangementEntry>, E>>();
+    for (E entry : entries) {
+      List<? extends ArrangementEntry> dependencies = entry.getDependencies();
+      if (dependencies == null) {
+        unprocessed.add(entry);
+      }
+      else {
+        if (dependencies.size() == 1 && dependencies.get(0) == entry.getParent()) {
+          // Handle a situation when the entry is condifured to be at the first parent's children.
           arranged.add(entry);
-          unprocessed.remove(entry);
+        }
+        else {
+          Set<ArrangementEntry> first = new HashSet<ArrangementEntry>(dependencies);
+          dependent.add(Pair.create(first, entry));
         }
       }
     }
+    
+    Set<E> matched = new HashSet<E>();
+
+    for (ArrangementRule rule : rules) {
+      matched.clear();
+      for (E entry : unprocessed) {
+        if (entry.canBeMatched() && rule.getMatcher().isMatched(entry)) {
+          arranged.add(entry);
+          matched.add(entry);
+        }
+      }
+      unprocessed.removeAll(matched);
+    }
     arranged.addAll(unprocessed);
+
+    for (int i = 0; i < arranged.size() && !dependent.isEmpty(); i++) {
+      E e = arranged.get(i);
+      for (Iterator<Pair<Set<ArrangementEntry>, E>> iterator = dependent.iterator(); iterator.hasNext(); ) {
+        Pair<Set<ArrangementEntry>, E> pair = iterator.next();
+        pair.first.remove(e);
+        if (pair.first.isEmpty()) {
+          iterator.remove();
+          arranged.add(i + 1, pair.second);
+          i++;
+        }
+      }
+    }
+
     return arranged;
   }
   
