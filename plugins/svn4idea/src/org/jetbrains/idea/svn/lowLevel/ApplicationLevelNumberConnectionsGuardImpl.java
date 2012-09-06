@@ -42,6 +42,7 @@ public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, A
   private final Object myLock;
   private final Set<CachingSvnRepositoryPool> mySet;
   private int myCurrentlyActiveConnections;
+  private int myCurrentlyOpenedConnections;
   private boolean myDisposed;
 
   private int myInstanceCount;  // refreshable instances
@@ -49,6 +50,7 @@ public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, A
   private ScheduledFuture<?> myFuture;
   private final Runnable myRecheck;
   private int myDelay;
+  private int myCurrentlyOpenedCount;
 
   public ApplicationLevelNumberConnectionsGuardImpl() {
     myDelay = DELAY;
@@ -68,6 +70,8 @@ public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, A
         }
       }
     };
+    myCurrentlyActiveConnections = 0;
+    myCurrentlyOpenedConnections = 0;
   }
 
   public void setDelay(int delay) {
@@ -110,6 +114,20 @@ public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, A
     }
   }
 
+  @Override
+  public void connectionCreated() {
+    synchronized (myLock) {
+      ++ myCurrentlyOpenedConnections;
+    }
+  }
+
+  @Override
+  public void connectionDestroyed(int number) {
+    synchronized (myLock) {
+      myCurrentlyOpenedConnections -= number;
+    }
+  }
+
   public void connectionOpened() {
     synchronized (myLock) {
       ++ myCurrentlyActiveConnections;
@@ -128,17 +146,20 @@ public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, A
     synchronized (myLock) {
       if (myCurrentlyActiveConnections >= CachingSvnRepositoryPool.ourMaxTotal) {
         waitForFreeConnections();
-        return;
       }
-      int cntTotal = getTotalRepositories();
-      if (cntTotal >= CachingSvnRepositoryPool.ourMaxTotal) {
-        for (CachingSvnRepositoryPool pool : mySet) {
-          pool.closeInactive();
-        }
-        if (myCurrentlyActiveConnections >= CachingSvnRepositoryPool.ourMaxTotal) {
-          waitForFreeConnections();
-        }
+    }
+    // maybe too many opened? reduce request
+    final Set<CachingSvnRepositoryPool> copy = new HashSet<CachingSvnRepositoryPool>();
+    synchronized (myLock) {
+      if (myCurrentlyOpenedConnections >= CachingSvnRepositoryPool.ourMaxTotal) {
+        copy.addAll(mySet);
       }
+    }
+    for (CachingSvnRepositoryPool pool : copy) {
+      pool.closeInactive();
+    }
+    synchronized (myLock) {
+      waitForFreeConnections();
     }
   }
 
@@ -162,20 +183,10 @@ public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, A
   @Override
   public boolean shouldKeepConnectionLocally() {
     synchronized (myLock) {
-      if (myCurrentlyActiveConnections > CachingSvnRepositoryPool.ourMaxTotal) return false;
-      int cntTotal = getTotalRepositories();
-      return cntTotal <= CachingSvnRepositoryPool.ourMaxTotal;
+      if (myCurrentlyActiveConnections > CachingSvnRepositoryPool.ourMaxTotal ||
+          myCurrentlyOpenedConnections > CachingSvnRepositoryPool.ourMaxTotal) return false;
     }
-  }
-
-  private int getTotalRepositories() {
-    synchronized (myLock) {
-      int cntTotal = myCurrentlyActiveConnections;
-      for (CachingSvnRepositoryPool pool : mySet) {
-        cntTotal += pool.getNumberInactiveConnections();
-      }
-      return cntTotal;
-    }
+    return true;
   }
 
   @Override
@@ -183,6 +194,12 @@ public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, A
     synchronized (myLock) {
       myDisposed = true;
       myLock.notifyAll();
+    }
+  }
+
+  public int getCurrentlyOpenedCount() {
+    synchronized (myLock) {
+      return myCurrentlyOpenedCount;
     }
   }
 }

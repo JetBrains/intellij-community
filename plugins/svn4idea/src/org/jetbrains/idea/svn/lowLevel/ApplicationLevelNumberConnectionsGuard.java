@@ -26,4 +26,8 @@ import org.tmatesoft.svn.core.SVNException;
 public interface ApplicationLevelNumberConnectionsGuard {
   void waitForTotalNumberOfConnectionsOk() throws SVNException;
   boolean shouldKeepConnectionLocally();
+
+  void connectionCreated();
+
+  void connectionDestroyed(int number);
 }

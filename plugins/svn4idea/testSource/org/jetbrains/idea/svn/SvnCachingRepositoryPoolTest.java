@@ -158,6 +158,7 @@ public class SvnCachingRepositoryPoolTest extends FileBasedTest {
     Assert.assertEquals(0, group.getUsedSize());
 
     Assert.assertEquals(0, guard.getInstanceCount());
+    Assert.assertEquals(0, guard.getCurrentlyOpenedCount());
 
     Assert.assertEquals(0, group.getUsedSize());
     Assert.assertEquals(0, group.getInactiveSize());

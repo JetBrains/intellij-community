@@ -124,6 +124,7 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
     synchronized (myLock) {
       if (myDisposed) {
         repo.closeSession();
+        myGuard.connectionDestroyed(1);
         return;
       }
       final String host = repo.getLocation().getHost();
@@ -140,16 +141,6 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
       for (RepoGroup group : myGroups.values()) {
         group.dispose();
       }
-    }
-  }
-
-  public int getNumberInactiveConnections() {
-    synchronized (myLock) {
-      int result = 0;
-      for (RepoGroup group : myGroups.values()) {
-        result += group.getInactiveSize();
-      }
-      return result;
     }
   }
 
@@ -205,6 +196,7 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
       myDisposed = true;
       myWait.notifyAll();
 
+      myGuard.connectionDestroyed(listForClose.size());
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
@@ -259,6 +251,7 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
       assert myUsed.size() <= myMaxConcurrent;
       final SVNRepository fun = myCreator.convert(url);
       myUsed.add(fun);
+      myGuard.connectionCreated();
       return fun;
     }
 
@@ -283,6 +276,9 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
           time = myInactive.lastKey() + 1;
         }
         myInactive.put(time, repo);
+      } else {
+        repo.closeSession();
+        myGuard.connectionDestroyed(1);
       }
     }
 
@@ -294,6 +290,7 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
         final Long next = iterator.next();
         if (time - next > myConnectionTimeout) {
           myInactive.get(next).closeSession();
+          myGuard.connectionDestroyed(1);
           iterator.remove();
         } else {
           break;
@@ -305,6 +302,7 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
       int cnt = myInactive.size();
       for (SVNRepository repository : myInactive.values()) {
         repository.closeSession();
+        myGuard.connectionDestroyed(1);
       }
       myInactive.clear();
       return cnt;
