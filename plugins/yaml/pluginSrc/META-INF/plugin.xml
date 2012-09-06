@@ -1,7 +1,7 @@
 <idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
   <name>YAML</name>
   <id>org.jetbrains.plugins.yaml</id>
-  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
   <description>YAML support</description>
 
   <depends>com.intellij.modules.lang</depends>
