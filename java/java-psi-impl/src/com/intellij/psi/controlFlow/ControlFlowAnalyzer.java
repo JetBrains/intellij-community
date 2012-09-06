@@ -1449,6 +1449,16 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override
   public void visitLambdaExpression(PsiLambdaExpression expression) {
     startElement(expression);
+    final PsiElement body = expression.getBody();
+    if (body != null) {
+      body.accept(this);
+      List<PsiVariable> array = new ArrayList<PsiVariable>();
+      addUsedVariables(array, body);
+      for (PsiVariable var : array) {
+        ProgressIndicatorProvider.checkCanceled();
+        generateReadInstruction(var);
+      }
+    }
     finishElement(expression);
   }
 
