@@ -36,9 +36,9 @@ public interface ExternalAnnotationsListener extends EventListener {
   void afterExternalAnnotationChanging(@NotNull PsiModifierListOwner owner, @NotNull String annotationFQName, boolean successful);
 
   /**
-   * Invoked when modules/libraries roots were changed, external annotations files were modified, etc.
+   * Invoked when external annotations files were modified
    */
-  void externalAnnotationsChangedDramatically();
+  void externalAnnotationsChangedExternally();
 
   abstract class Adapter implements ExternalAnnotationsListener {
     @Override
@@ -46,7 +46,7 @@ public interface ExternalAnnotationsListener extends EventListener {
     }
 
     @Override
-    public void externalAnnotationsChangedDramatically() {
+    public void externalAnnotationsChangedExternally() {
     }
   }
 }

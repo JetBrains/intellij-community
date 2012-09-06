@@ -4,7 +4,6 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.DeannotateIntentionAction;
@@ -21,7 +20,6 @@ import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.ModuleRootEventImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Trinity;
@@ -142,19 +140,19 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     startListening(Arrays.asList(Trinity.create(expectedOwner, expectedAnnotationFQName, expectedSuccessful)));
   }
 
-  private void startListeningForDramaticChanges() {
+  private void startListeningForExternalChanges() {
     myBusConnection = myProject.getMessageBus().connect();
     myBusConnection.subscribe(ExternalAnnotationsManager.TOPIC, new DefaultAnnotationsListener() {
       private boolean notifiedOnce;
 
       @Override
-      public void externalAnnotationsChangedDramatically() {
+      public void externalAnnotationsChangedExternally() {
         if (!notifiedOnce) {
           myExpectedEventWasProduced = true;
           notifiedOnce = true;
         }
         else {
-          super.externalAnnotationsChangedDramatically();
+          super.externalAnnotationsChangedExternally();
         }
       }
     });
@@ -385,18 +383,14 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     stopListeningAndCheckEvents();
   }
 
-  public void testListenerNotifiedOnDramaticChanges() {
+  public void testListenerNotifiedOnExternalChanges() {
     addDefaultLibrary();
     myFixture.configureByFiles("/content/anno/p/annotations.xml");
     myFixture.configureByFiles("lib/p/Test.java");
 
     ExternalAnnotationsManager.getInstance(myProject).findExternalAnnotation(getOwner(), AnnotationUtil.NOT_NULL); // force creating service
 
-    startListeningForDramaticChanges();
-    myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, true));
-    stopListeningAndCheckEvents();
-
-    startListeningForDramaticChanges();
+    startListeningForExternalChanges();
     new WriteCommandAction(myProject){
       @Override
       protected void run(final Result result) throws Throwable {
@@ -420,8 +414,8 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     }
 
     @Override
-    public void externalAnnotationsChangedDramatically() {
-      System.err.println("Unexpected ExternalAnnotationsListener.externalAnnotationsChangedDramatically event produced");
+    public void externalAnnotationsChangedExternally() {
+      System.err.println("Unexpected ExternalAnnotationsListener.externalAnnotationsChangedExternally event produced");
       myUnexpectedEventWasProduced = true;
     }
   }

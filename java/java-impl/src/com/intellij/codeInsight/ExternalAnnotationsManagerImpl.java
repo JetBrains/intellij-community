@@ -99,7 +99,6 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         dropCache();
-        notifyChangedDramatically();
       }
     });
 
@@ -117,8 +116,8 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
     myBus.syncPublisher(TOPIC).afterExternalAnnotationChanging(owner, annotationFQName, successful);
   }
 
-  private void notifyChangedDramatically() {
-    myBus.syncPublisher(TOPIC).externalAnnotationsChangedDramatically();
+  private void notifyChangedExternally() {
+    myBus.syncPublisher(TOPIC).externalAnnotationsChangedExternally();
   }
 
   @Override
@@ -349,13 +348,13 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
           @Override
           public void undo() throws UnexpectedUndoException {
             dropCache();
-            notifyChangedDramatically();
+            notifyChangedExternally();
           }
 
           @Override
           public void redo() throws UnexpectedUndoException {
             dropCache();
-            notifyChangedDramatically();
+            notifyChangedExternally();
           }
         });
       }
@@ -753,7 +752,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
     private void processEvent(VirtualFileEvent event) {
       if (event.isFromRefresh() && ANNOTATIONS_XML.equals(event.getFileName())) {
         dropCache();
-        notifyChangedDramatically();
+        notifyChangedExternally();
       }
     }
 
