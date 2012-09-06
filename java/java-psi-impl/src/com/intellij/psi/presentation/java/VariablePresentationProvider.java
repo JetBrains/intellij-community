@@ -18,10 +18,7 @@ package com.intellij.psi.presentation.java;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProvider;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiVariable;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
 
 import javax.swing.*;
 
@@ -34,7 +31,8 @@ public class VariablePresentationProvider<T extends PsiVariable & NavigationItem
     return new ItemPresentation() {
       @Override
       public String getPresentableText() {
-        return PsiFormatUtil.formatVariable(variable, PsiFormatUtilBase.SHOW_TYPE, PsiSubstitutor.EMPTY);
+        //return PsiFormatUtil.formatVariable(variable, PsiFormatUtilBase.SHOW_TYPE, PsiSubstitutor.EMPTY);
+        return variable.getName();
       }
 
       @Override
