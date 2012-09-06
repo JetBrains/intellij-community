@@ -29,7 +29,7 @@ public class WebServer {
 
   public WebServer() {
     ExecutorService executor = Executors.newCachedThreadPool();
-    channelFactory = new NioServerSocketChannelFactory(executor, executor);
+    channelFactory = new NioServerSocketChannelFactory(executor, executor, 2);
   }
 
   public boolean isRunning() {
