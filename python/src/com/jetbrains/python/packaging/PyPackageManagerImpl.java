@@ -324,10 +324,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     mySdk = sdk;
     final Application app = ApplicationManager.getApplication();
     final MessageBusConnection connection = app.getMessageBus().connect();
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void before(@NotNull List<? extends VFileEvent> events) {}
-
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         final VirtualFile[] roots = mySdk.getRootProvider().getFiles(OrderRootType.CLASSES);
