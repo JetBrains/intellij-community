@@ -1,0 +1,2 @@
+# error.png is used in MavenProjectsStructure
+used: error.png

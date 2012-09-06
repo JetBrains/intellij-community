@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.spellchecker.SpellCheckerManager;
+import icons.SpellcheckerIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -46,6 +47,6 @@ public abstract class ShowSuggestions implements LocalQuickFix, Iconable {
   }
 
   public Icon getIcon(int flags) {
-    return new ImageIcon(ShowSuggestions.class.getResource("spellcheck.png"));
+    return SpellcheckerIcons.Spellcheck;
   }
 }
