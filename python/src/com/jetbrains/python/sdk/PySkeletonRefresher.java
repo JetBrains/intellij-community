@@ -288,7 +288,9 @@ public class PySkeletonRefresher {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          DaemonCodeAnalyzer.getInstance(myProject).restart();
+          if (myProject != null) {
+            DaemonCodeAnalyzer.getInstance(myProject).restart();
+          }
         }
       });
     }
