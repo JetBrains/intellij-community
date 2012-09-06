@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -24,7 +20,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * @author max
+ */
 public interface BulkFileListener {
+  class Adapter implements BulkFileListener {
+    @Override public void before(@NotNull List<? extends VFileEvent> events) { }
+    @Override public void after(@NotNull List<? extends VFileEvent> events) { }
+  }
+
   void before(@NotNull List<? extends VFileEvent> events);
   void after(@NotNull List<? extends VFileEvent> events);
 }

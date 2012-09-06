@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,7 @@ public class IgnoredFilesComponent {
     myFilesToIgnore = new LinkedHashSet<IgnoredFileBean>();
 
     if (registerListener) {
-      project.getMessageBus().connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-        @Override
-        public void before(@NotNull List<? extends VFileEvent> events) {}
-
+      project.getMessageBus().connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
         @Override
         public void after(@NotNull List<? extends VFileEvent> events) {
           resetCaches();

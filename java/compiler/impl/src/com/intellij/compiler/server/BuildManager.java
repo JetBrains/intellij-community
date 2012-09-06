@@ -146,11 +146,7 @@ public class BuildManager implements ApplicationComponent{
 
     projectManager.addProjectManagerListener(new ProjectWatcher());
     final MessageBusConnection conn = ApplicationManager.getApplication().getMessageBus().connect();
-    conn.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void before(@NotNull List<? extends VFileEvent> events) {
-      }
-
+    conn.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         if (shouldTriggerMake(events)) {

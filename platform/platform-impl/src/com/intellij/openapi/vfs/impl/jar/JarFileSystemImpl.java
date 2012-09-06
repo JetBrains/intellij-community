@@ -55,11 +55,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   private String[] jarPathsCache; // jarPathsCache = myHandlers.keySet()
 
   public JarFileSystemImpl(MessageBus bus) {
-    bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void before(@NotNull final List<? extends VFileEvent> events) {
-      }
-
+    bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
       public void after(@NotNull final List<? extends VFileEvent> events) {
         final List<VirtualFile> rootsToRefresh = new ArrayList<VirtualFile>();
@@ -77,9 +73,8 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
             }
 
             for (String jarPath : jarPaths) {
-              if (FileUtil.startsWith(jarPath.substring(0, jarPath.length() - JAR_SEPARATOR.length()),
-                                      path,
-                                      SystemInfo.isFileSystemCaseSensitive)) {
+              final String jarFile = jarPath.substring(0, jarPath.length() - JAR_SEPARATOR.length());
+              if (FileUtil.startsWith(jarFile, path, SystemInfo.isFileSystemCaseSensitive)) {
                 VirtualFile jarRootToRefresh = markDirty(jarPath);
                 if (jarRootToRefresh != null) {
                   rootsToRefresh.add(jarRootToRefresh);

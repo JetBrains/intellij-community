@@ -94,11 +94,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
     assertNotNull(myFileSystem);
 
     myConnection = ApplicationManager.getApplication().getMessageBus().connect();
-    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void before(@NotNull List<? extends VFileEvent> events) {
-      }
-
+    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         myEvents.addAll(events);

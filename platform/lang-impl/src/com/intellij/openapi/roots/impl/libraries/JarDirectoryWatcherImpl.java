@@ -64,11 +64,7 @@ public class JarDirectoryWatcherImpl implements JarDirectoryWatcher {
 
       if (myBusConnection == null) {
         myBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
-        myBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-          @Override
-          public void before(@NotNull final List<? extends VFileEvent> events) {
-          }
-
+        myBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
           @Override
           public void after(@NotNull final List<? extends VFileEvent> events) {
             boolean changesDetected = false;
