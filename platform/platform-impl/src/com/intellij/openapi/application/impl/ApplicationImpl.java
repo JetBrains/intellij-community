@@ -951,11 +951,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public <T> T runReadAction(@NotNull final Computable<T> computation) {
-    assertReadActionAllowed();
     if (isReadAccessAllowed()) {
       return computation.compute();
     }
     else {
+      assertReadActionAllowed();
       try {
         myActionsLock.readLock().acquire();
         return computation.compute();
