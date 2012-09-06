@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -161,6 +162,11 @@ public class CommonActionsPanel extends JPanel {
       public void update(AnActionEvent e) {
         final JComponent contextComponent = removeButton.getContextComponent();
         if (contextComponent instanceof JTable && ((JTable)contextComponent).isEditing()) {
+          e.getPresentation().setEnabled(false);
+          return;
+        }
+        final SpeedSearchSupply supply = SpeedSearchSupply.getSupply(contextComponent);
+        if (supply != null && supply.isPopupActive()) {
           e.getPresentation().setEnabled(false);
           return;
         }
