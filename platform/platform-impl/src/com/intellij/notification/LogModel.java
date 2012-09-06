@@ -82,7 +82,7 @@ public class LogModel implements Disposable {
     }
   }
 
-  public void logShown() {
+  void logShown() {
     for (Notification notification : getNotifications()) {
       if (!notification.isImportant()) {
         removeNotification(notification);

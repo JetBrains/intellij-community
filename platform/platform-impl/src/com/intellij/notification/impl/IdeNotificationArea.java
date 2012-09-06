@@ -102,9 +102,6 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
     final Project project = getProject();
     LogModel logModel = EventLog.getLogModel(project);
     ToolWindow eventLog = EventLog.getEventLog(project);
-    if (eventLog != null && eventLog.isVisible()) {
-      logModel.logShown();
-    }
     boolean stripesVisible = !UISettings.getInstance().HIDE_TOOL_STRIPES;
     ArrayList<Notification> notifications = logModel.getNotifications();
     LayeredIcon icon = new LayeredIcon(2);
