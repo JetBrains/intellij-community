@@ -95,9 +95,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
                   ((NewVirtualFile)root).markDirtyRecursively();
                 }
               }
-
-              VirtualFile[] roots = VfsUtilCore.toVirtualFileArray(rootsToRefresh);
-              RefreshQueue.getInstance().refresh(false, true, null, roots);
+              RefreshQueue.getInstance().refresh(false, true, null, rootsToRefresh);
             }
           };
           if (app.isUnitTestMode()) {

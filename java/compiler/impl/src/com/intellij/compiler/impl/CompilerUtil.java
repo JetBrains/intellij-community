@@ -124,7 +124,7 @@ public class CompilerUtil {
       }
     }
     if (!filesToRefresh.isEmpty()) {
-      RefreshQueue.getInstance().refresh(false, true, null, VfsUtil.toVirtualFileArray(filesToRefresh));
+      RefreshQueue.getInstance().refresh(false, true, null, filesToRefresh);
     }
   }
 

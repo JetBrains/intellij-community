@@ -950,7 +950,7 @@ public class CompileDriver {
             outputsToRefresh.add(generated.getSecond());
           }
 
-          RefreshQueue.getInstance().refresh(false, true, null, VfsUtilCore.toVirtualFileArray(outputsToRefresh));
+          RefreshQueue.getInstance().refresh(false, true, null, outputsToRefresh);
           if (progressIndicator.isCanceled()) {
             return ExitStatus.CANCELLED;
           }
