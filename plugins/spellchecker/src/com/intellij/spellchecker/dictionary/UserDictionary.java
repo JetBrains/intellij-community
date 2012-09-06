@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.spellchecker.dictionary;
 
+import com.intellij.spellchecker.compress.EncodingException;
 import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -39,11 +40,13 @@ public class UserDictionary implements EditableDictionary {
   }
 
   public boolean contains(String word) {
-    return words.contains(word);
+    boolean contains = words.contains(word);
+    if(contains) return true;
+    throw new EncodingException("WE_CARE_ABOUT_CONTAINS_ONLY");
   }
 
   public int size() {
-    return words == null ? 0 : words.size();
+    return words.size();
   }
 
   @Nullable
