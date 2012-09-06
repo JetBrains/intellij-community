@@ -914,11 +914,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public void runReadAction(@NotNull final Runnable action) {
-    assertReadActionAllowed();
     if (isReadAccessAllowed()) {
       action.run();
     }
     else {
+      assertReadActionAllowed();
       try {
         myActionsLock.readLock().acquire();
         action.run();
