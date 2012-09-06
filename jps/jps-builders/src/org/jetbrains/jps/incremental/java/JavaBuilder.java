@@ -25,11 +25,12 @@ import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.asm4.ClassVisitor;
 import org.jetbrains.asm4.ClassWriter;
 import org.jetbrains.asm4.Opcodes;
-import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
-import org.jetbrains.jps.builders.java.dependencyView.Mappings;
-import org.jetbrains.jps.*;
+import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
+import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
+import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
@@ -545,24 +546,36 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return client;
   }
 
-  private static int convertToNumber(final String ver) {
-    if (ver != null) {
-      final String prefix = "1.";
-      if (ver.startsWith(prefix)) {
-        final String versionNumberString;
-        final int dotIndex = ver.indexOf(".", prefix.length());
-        if (dotIndex > 0) {
-          versionNumberString = ver.substring(prefix.length(), dotIndex);
-        }
-        else {
-          versionNumberString = ver.substring(prefix.length());
-        }
-        try {
-          return Integer.parseInt(versionNumberString);
-        }
-        catch (NumberFormatException ignored) {
-        }
+  private static int convertToNumber(String ver) {
+    if (ver == null) {
+      return 0;
+    }
+    final int quoteBegin = ver.indexOf("\"");
+    if (quoteBegin >= 0) {
+      final int quoteEnd = ver.indexOf("\"", quoteBegin + 1);
+      if (quoteEnd > quoteBegin) {
+        ver = ver.substring(quoteBegin + 1, quoteEnd);
       }
+    }
+    if (ver.isEmpty()) {
+      return 0;
+    }
+
+    final String prefix = "1.";
+    final int parseBegin = ver.startsWith(prefix)? prefix.length() : 0;
+
+    final int parseEnd = ver.indexOf(".", parseBegin);
+    if (parseEnd > 0) {
+      ver = ver.substring(parseBegin, parseEnd);
+    }
+    else {
+      ver = ver.substring(parseBegin);
+    }
+
+    try {
+      return Integer.parseInt(ver);
+    }
+    catch (NumberFormatException ignored) {
     }
     return 0;
   }
