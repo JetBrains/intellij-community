@@ -99,7 +99,8 @@ public class PythonAllTestsSuite {
     PyPropertyAccessInspectionTest.class,
     Jinja2ParserTest.class,
     DjangoTemplateParserTest.class,
-    PyJoinLinesTest.class
+    PyJoinLinesTest.class,
+    PyStatementListTest.class
   };
 
   public static TestSuite suite() {

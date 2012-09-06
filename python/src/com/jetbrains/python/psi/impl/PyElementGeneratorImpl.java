@@ -42,11 +42,15 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
 
   @Override
   public PsiFile createDummyFile(LanguageLevel langLevel, String contents) {
+    return createDummyFile(langLevel, contents, false);
+  }
+
+  public PsiFile createDummyFile(LanguageLevel langLevel, String contents, boolean physical) {
     final PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
     final String name = "dummy." + PythonFileType.INSTANCE.getDefaultExtension();
     final LightVirtualFile virtualFile = new LightVirtualFile(name, PythonFileType.INSTANCE, contents);
     virtualFile.putUserData(LanguageLevel.KEY, langLevel);
-    final PsiFile psiFile = ((PsiFileFactoryImpl)factory).trySetupPsiForFile(virtualFile, PythonLanguage.getInstance(), false, true);
+    final PsiFile psiFile = ((PsiFileFactoryImpl)factory).trySetupPsiForFile(virtualFile, PythonLanguage.getInstance(), physical, true);
     assert psiFile != null;
     return psiFile;
   }
@@ -233,6 +237,12 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     return createFromText(langLevel, aClass, text, FROM_ROOT);
   }
 
+  @NotNull
+  @Override
+  public <T> T createPhysicalFromText(LanguageLevel langLevel, Class<T> aClass, String text) {
+    return createFromText(langLevel, aClass, text, FROM_ROOT, true);
+  }
+
   static int[] PATH_PARAMETER = {0, 3, 1};
 
   public PyNamedParameter createParameter(@NotNull String name) {
@@ -258,7 +268,12 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
 
   @NotNull
   public <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text, final int[] path) {
-    PsiElement ret = createDummyFile(langLevel, text);
+    return createFromText(langLevel, aClass, text, path, false);
+  }
+
+  @NotNull
+  public <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text, final int[] path, boolean physical) {
+    PsiElement ret = createDummyFile(langLevel, text, physical);
     for (int skip : path) {
       if (ret != null) {
         ret = ret.getFirstChild();

@@ -19,8 +19,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   private PsiReference findReferenceByMarker() {
     myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
-    int offset = findMarkerOffset(myFixture.getFile());
-    return myFixture.getFile().findReferenceAt(offset);
+    return findReferenceByMarker(myFixture.getFile());
   }
 
   protected PsiElement resolve() {

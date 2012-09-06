@@ -11,6 +11,8 @@ import com.intellij.testFramework.TestDataFile;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,6 +71,19 @@ public abstract class PyResolveTestCase extends PyTestCase {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+    return assertResolveResult(element, aClass, name, containingFilePath);
+  }
+
+  public static <T extends PsiElement> T assertResolveResult(PsiElement element,
+                                                             Class<T> aClass,
+                                                             String name) {
+    return assertResolveResult(element, aClass, name, null);
+  }
+
+  public static <T extends PsiElement> T assertResolveResult(PsiElement element,
+                                                             Class<T> aClass,
+                                                             String name,
+                                                             @Nullable String containingFilePath) {
     assertInstanceOf(element, aClass);
     assertEquals(name, ((PsiNamedElement) element).getName());
     if (containingFilePath != null) {
@@ -84,8 +99,8 @@ public abstract class PyResolveTestCase extends PyTestCase {
     return (T)element;
   }
 
-  protected int findMarkerOffset(final PsiFile psiFile) {
-    Document document = PsiDocumentManager.getInstance(myFixture.getProject()).getDocument(psiFile);
+  public static int findMarkerOffset(final PsiFile psiFile) {
+    Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
     assert document != null;
     int offset = -1;
     for (int i=1; i<document.getLineCount(); i++) {
@@ -98,5 +113,13 @@ public abstract class PyResolveTestCase extends PyTestCase {
     }
     assert offset != -1;
     return offset;
+  }
+
+  @NotNull
+  public static PsiPolyVariantReference findReferenceByMarker(PsiFile psiFile) {
+    int offset = findMarkerOffset(psiFile);
+    final PsiPolyVariantReference ref = (PsiPolyVariantReference)psiFile.findReferenceAt(offset);
+    assertNotNull("<ref> in test file not found", ref);
+    return ref;
   }
 }

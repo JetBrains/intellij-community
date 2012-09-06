@@ -20,8 +20,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
   @Override
   protected PsiElement doResolve() {
     myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
-    int offset = findMarkerOffset(myFixture.getFile());
-    final PsiReference ref = myFixture.getFile().findReferenceAt(offset);
+    final PsiReference ref = findReferenceByMarker(myFixture.getFile());
     return ref.resolve();
   }
 
