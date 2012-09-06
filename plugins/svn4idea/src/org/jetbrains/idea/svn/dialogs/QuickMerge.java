@@ -67,6 +67,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class QuickMerge {
   private final Project myProject;
@@ -370,7 +371,7 @@ public class QuickMerge {
     private final WCInfo myWcInfo;
     private final String mySourceUrl;
     private final String myBranchName;
-    private SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> myCopyData;
+    private final AtomicReference<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>> myCopyData;
     private boolean myIsReintegrate;
 
     private final List<CommittedChangeList> myNotMerged;
@@ -378,7 +379,7 @@ public class QuickMerge {
     private final MergeChecker myMergeChecker;
 
     public void consume(SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> branchCopyDataWrapperInvertor) {
-      myCopyData = branchCopyDataWrapperInvertor;
+      myCopyData.set(branchCopyDataWrapperInvertor);
     }
 
     private MergeCalculator(WCInfo wcInfo, String sourceUrl, String branchName) throws SVNException {
@@ -396,20 +397,22 @@ public class QuickMerge {
                                                                                                  myWcInfo.getRootUrl(), mySourceUrl,
                                                                                                  mySourceUrl, myVcs.createWCClient()));
       }*/
+      myCopyData = new AtomicReference<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>>();
     }
 
     //"Calculating not merged revisions"
     @Override
     public void run(ContinuationContext context) {
-      if (myCopyData == null) {
+      SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> copyDataValue = myCopyData.get();
+      if (copyDataValue == null) {
         finishWithError(context, "Merge start wasn't found", true);
         return;
       }
 
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      myIsReintegrate = myCopyData.isInvertedSense();
+      myIsReintegrate = copyDataValue.isInvertedSense();
       if (!myWcInfo.getFormat().supportsMergeInfo()) return;
-      final SvnBranchPointsCalculator.BranchCopyData data = myCopyData.getTrue();
+      final SvnBranchPointsCalculator.BranchCopyData data = copyDataValue.getTrue();
       final long sourceLatest = data.getTargetRevision();
 
       final SvnCommittedChangesProvider committedChangesProvider = (SvnCommittedChangesProvider)myVcs.getCommittedChangesProvider();
@@ -464,7 +467,7 @@ public class QuickMerge {
         finishWithError(context, "Everything is up-to-date", false);
         return;
       }
-      context.next(new ShowRevisionSelector(myCopyData));
+      context.next(new ShowRevisionSelector(copyDataValue));
     }
 
     private boolean isLocalRevisionMergeIteration(final TreeStructureNode<SVNLogEntry> tree,
