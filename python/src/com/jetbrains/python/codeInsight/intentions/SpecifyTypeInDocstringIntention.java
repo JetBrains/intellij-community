@@ -50,7 +50,7 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset() - 1);
-    if (elementAt != null && !(elementAt.getNode().getElementType() == PyTokenTypes.IDENTIFIER))
+    if (elementAt != null && elementAt.getNode() != null && !(elementAt.getNode().getElementType() == PyTokenTypes.IDENTIFIER))
       elementAt = file.findElementAt(editor.getCaretModel().getOffset());
 
     PyCallExpression callExpression = PsiTreeUtil.getParentOfType(elementAt, PyCallExpression.class);
