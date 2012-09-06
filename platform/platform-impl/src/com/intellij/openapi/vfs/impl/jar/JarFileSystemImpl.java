@@ -370,7 +370,10 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     if (file.getParent() == null) {
       final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
       final VirtualFile originalFile = localFileSystem.findFileByIoFile(handler.getOriginalFile());
-      return originalFile != null ? localFileSystem.getAttributes(originalFile) : null;
+      if (originalFile == null) return null;
+      final FileAttributes attributes = localFileSystem.getAttributes(originalFile);
+      if (attributes == null) return null;
+      return new FileAttributes(true, false, false, false, attributes.length, attributes.lastModified, attributes.isWritable());
     }
 
     return handler.getAttributes(file);
