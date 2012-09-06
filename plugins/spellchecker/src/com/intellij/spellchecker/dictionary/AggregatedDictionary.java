@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 public class AggregatedDictionary implements EditableDictionary {
@@ -41,6 +40,14 @@ public class AggregatedDictionary implements EditableDictionary {
 
   public boolean isEmpty() {
     return false;
+  }
+
+  @Override
+  public String toString() {
+    return "AggregatedDictionary{" +
+           "cachedDictionary=" + cachedDictionary +
+           ", projectDictionary=" + projectDictionary +
+           '}';
   }
 
   public boolean contains(String word) {
@@ -83,11 +90,11 @@ public class AggregatedDictionary implements EditableDictionary {
 
 
   public Set<String> getWords() {
-    return cachedDictionary!=null?cachedDictionary.getWords():null;
+    return cachedDictionary.getWords();
   }
 
   public int size() {
-    return (cachedDictionary!=null?cachedDictionary.size():0);
+    return (cachedDictionary.size());
   }
 
   @Nullable
