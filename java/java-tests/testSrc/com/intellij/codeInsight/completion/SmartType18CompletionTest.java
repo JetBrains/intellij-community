@@ -50,6 +50,18 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
   public void testExpectedReturnType1() {
     doTest();
   }
+  
+  public void testSemicolonInExpressionBodyInLocalVariable() {
+    doTest();
+  }
+
+  public void testSemicolonInCodeBlocBodyInLocalVariable() {
+    doTest();
+  }
+
+  public void testSemicolonInExpressionBodyInExpressionList() {
+    doTest();
+  }
 
   private void doTest() {
     configureByFile("/" + getTestName(false) + ".java");

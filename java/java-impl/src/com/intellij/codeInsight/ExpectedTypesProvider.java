@@ -336,33 +336,47 @@ public class ExpectedTypesProvider {
       final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
       final PsiMethod scopeMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
       if (scopeMethod != null) {
-        visitMethodReturnType(scopeMethod, LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType));
+        visitMethodReturnType(scopeMethod, LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType), insertSemicolonAfter(lambdaExpression));
       }
     }
 
     @Override public void visitReturnStatement(PsiReturnStatement statement) {
       final PsiMethod method;
       final PsiType type;
+      final boolean tailTypeSemicolon;
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(statement, PsiLambdaExpression.class);
       if (lambdaExpression != null) {
         final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
         method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
         type = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
+        tailTypeSemicolon = insertSemicolonAfter(lambdaExpression);
       }
       else {
         method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
         type = method != null ? method.getReturnType() : null;
+        tailTypeSemicolon = true;
       }
 
       if (method != null) {
-        visitMethodReturnType(method, type);
+        visitMethodReturnType(method, type, tailTypeSemicolon);
       }
     }
 
-    private void visitMethodReturnType(final PsiMethod scopeMethod, PsiType type) {
+    private static boolean insertSemicolonAfter(PsiLambdaExpression lambdaExpression) {
+       if (lambdaExpression.getBody() instanceof PsiCodeBlock) {
+         return true;
+       }
+      final PsiElement parent = lambdaExpression.getParent();
+      if (parent instanceof PsiExpressionList || parent instanceof PsiExpression) {
+        return false;
+      }
+      return true;
+    }
+
+    private void visitMethodReturnType(final PsiMethod scopeMethod, PsiType type, boolean tailTypeSemicolon) {
       if (type != null) {
         ExpectedTypeInfoImpl info = createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type,
-                                                   TailType.SEMICOLON);
+                                                   tailTypeSemicolon ? TailType.SEMICOLON : TailType.NONE);
         if (PropertyUtil.isSimplePropertyAccessor(scopeMethod)) {
           info.expectedName = new NullableComputable<String>() {
             @Override
