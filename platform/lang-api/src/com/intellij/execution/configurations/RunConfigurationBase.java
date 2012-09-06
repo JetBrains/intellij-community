@@ -219,8 +219,12 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     if (myFileOutputPath != null || mySaveOutput) {
       element.addContent(fileOutputPathElement);
     }
-    element.setAttribute(SHOW_CONSOLE_ON_STD_OUT, String.valueOf(myShowConsoleOnStdOut));
-    element.setAttribute(SHOW_CONSOLE_ON_STD_ERR, String.valueOf(myShowConsoleOnStdErr));
+    if (myShowConsoleOnStdOut) {//default value shouldn't be written
+      element.setAttribute(SHOW_CONSOLE_ON_STD_OUT, String.valueOf(myShowConsoleOnStdOut));
+    }
+    if (myShowConsoleOnStdErr) {//default value shouldn't be written
+      element.setAttribute(SHOW_CONSOLE_ON_STD_ERR, String.valueOf(myShowConsoleOnStdErr));
+    }
   }
 
   public boolean isSaveOutputToFile() {
