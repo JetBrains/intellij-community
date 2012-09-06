@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
@@ -46,8 +45,10 @@ import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.continuation.*;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.continuation.Continuation;
+import com.intellij.util.continuation.ContinuationContext;
+import com.intellij.util.continuation.TaskDescriptor;
+import com.intellij.util.continuation.Where;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
@@ -251,7 +252,7 @@ public class MergeFromTheirsResolver {
 
     @Override
     public void apply(MultiMap<VirtualFile, FilePatchInProgress> patchGroups, LocalChangeList localList, String fileName,
-                      TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+                      TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
       final List<FilePatch> patches;
       try {
         patches = ApplyPatchSaveToFileExecutor.patchGroupsToOneGroup(patchGroups, myBaseDir);
