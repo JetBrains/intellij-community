@@ -1451,7 +1451,6 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(expression);
     final PsiElement body = expression.getBody();
     if (body != null) {
-      body.accept(this);
       List<PsiVariable> array = new ArrayList<PsiVariable>();
       addUsedVariables(array, body);
       for (PsiVariable var : array) {
