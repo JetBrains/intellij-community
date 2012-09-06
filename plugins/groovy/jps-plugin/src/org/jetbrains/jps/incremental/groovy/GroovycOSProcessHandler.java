@@ -25,7 +25,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.groovy.compiler.rt.GroovycRunner;
+import org.jetbrains.groovy.compiler.rt.GroovyCompilerMessageCategories;
+import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
@@ -80,12 +81,12 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
   private void parseOutput(String text) {
     final String trimmed = text.trim();
 
-    if (trimmed.startsWith(GroovycRunner.PRESENTABLE_MESSAGE)) {
-      updateStatus(trimmed.substring(GroovycRunner.PRESENTABLE_MESSAGE.length()));
+    if (trimmed.startsWith(GroovyRtConstants.PRESENTABLE_MESSAGE)) {
+      updateStatus(trimmed.substring(GroovyRtConstants.PRESENTABLE_MESSAGE.length()));
       return;
     }
 
-    if (GroovycRunner.CLEAR_PRESENTABLE.equals(trimmed)) {
+    if (GroovyRtConstants.CLEAR_PRESENTABLE.equals(trimmed)) {
       updateStatus(null);
       return;
     }
@@ -95,33 +96,33 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
       outputBuffer.append(text);
 
       //compiled start marker have to be in the beginning on each string
-      if (outputBuffer.indexOf(GroovycRunner.COMPILED_START) != -1) {
-        if (outputBuffer.indexOf(GroovycRunner.COMPILED_END) == -1) {
+      if (outputBuffer.indexOf(GroovyRtConstants.COMPILED_START) != -1) {
+        if (outputBuffer.indexOf(GroovyRtConstants.COMPILED_END) == -1) {
           return;
         }
 
-        final String compiled = handleOutputBuffer(GroovycRunner.COMPILED_START, GroovycRunner.COMPILED_END);
-        final List<String> list = StringUtil.split(compiled, GroovycRunner.SEPARATOR);
+        final String compiled = handleOutputBuffer(GroovyRtConstants.COMPILED_START, GroovyRtConstants.COMPILED_END);
+        final List<String> list = StringUtil.split(compiled, GroovyRtConstants.SEPARATOR);
         String outputPath = list.get(0);
         String sourceFile = list.get(1);
 
         ContainerUtil.addIfNotNull(getOutputItem(outputPath, sourceFile), myCompiledItems);
 
       }
-      else if (outputBuffer.indexOf(GroovycRunner.TO_RECOMPILE_START) != -1) {
-        if (outputBuffer.indexOf(GroovycRunner.TO_RECOMPILE_END) != -1) {
-          String url = handleOutputBuffer(GroovycRunner.TO_RECOMPILE_START, GroovycRunner.TO_RECOMPILE_END);
+      else if (outputBuffer.indexOf(GroovyRtConstants.TO_RECOMPILE_START) != -1) {
+        if (outputBuffer.indexOf(GroovyRtConstants.TO_RECOMPILE_END) != -1) {
+          String url = handleOutputBuffer(GroovyRtConstants.TO_RECOMPILE_START, GroovyRtConstants.TO_RECOMPILE_END);
           toRecompileFiles.add(new File(url));
         }
       }
-      else if (outputBuffer.indexOf(GroovycRunner.MESSAGES_START) != -1) {
-        if (!(outputBuffer.indexOf(GroovycRunner.MESSAGES_END) != -1)) {
+      else if (outputBuffer.indexOf(GroovyRtConstants.MESSAGES_START) != -1) {
+        if (outputBuffer.indexOf(GroovyRtConstants.MESSAGES_END) == -1) {
           return;
         }
 
-        text = handleOutputBuffer(GroovycRunner.MESSAGES_START, GroovycRunner.MESSAGES_END);
+        text = handleOutputBuffer(GroovyRtConstants.MESSAGES_START, GroovyRtConstants.MESSAGES_END);
 
-        List<String> tokens = StringUtil.split(text, GroovycRunner.SEPARATOR);
+        List<String> tokens = StringUtil.split(text, GroovyRtConstants.SEPARATOR);
         LOG.assertTrue(tokens.size() > 4, "Wrong number of output params");
 
         String category = tokens.get(0);
@@ -143,9 +144,9 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
           columnInt = 0;
         }
 
-        BuildMessage.Kind kind = category.equals(org.jetbrains.groovy.compiler.rt.CompilerMessage.ERROR)
+        BuildMessage.Kind kind = category.equals(GroovyCompilerMessageCategories.ERROR)
                                  ? BuildMessage.Kind.ERROR
-                                 : category.equals(org.jetbrains.groovy.compiler.rt.CompilerMessage.WARNING)
+                                 : category.equals(GroovyCompilerMessageCategories.WARNING)
                                    ? BuildMessage.Kind.WARNING
                                    : BuildMessage.Kind.INFO;
 
@@ -224,7 +225,7 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
     final Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile)));
     try {
       for (String file : changedSources) {
-        writer.write(GroovycRunner.SRC_FILE + "\n");
+        writer.write(GroovyRtConstants.SRC_FILE + "\n");
         writer.write(file);
         writer.write("\n");
       }
@@ -234,21 +235,21 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
         writer.write(entry.getKey() + "\n");
         writer.write(entry.getValue() + "\n");
       }
-      writer.write(GroovycRunner.END + "\n");
+      writer.write(GroovyRtConstants.END + "\n");
 
-      writer.write(GroovycRunner.PATCHERS + "\n");
+      writer.write(GroovyRtConstants.PATCHERS + "\n");
       for (String patcher : patchers) {
         writer.write(patcher + "\n");
       }
-      writer.write(GroovycRunner.END + "\n");
+      writer.write(GroovyRtConstants.END + "\n");
       if (encoding != null) {
-        writer.write(GroovycRunner.ENCODING + "\n");
+        writer.write(GroovyRtConstants.ENCODING + "\n");
         writer.write(encoding + "\n");
       }
-      writer.write(GroovycRunner.OUTPUTPATH + "\n");
+      writer.write(GroovyRtConstants.OUTPUTPATH + "\n");
       writer.write(outputDir);
       writer.write("\n");
-      writer.write(GroovycRunner.FINAL_OUTPUTPATH + "\n");
+      writer.write(GroovyRtConstants.FINAL_OUTPUTPATH + "\n");
       writer.write(finalOutput);
       writer.write("\n");
     }

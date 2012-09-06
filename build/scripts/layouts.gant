@@ -334,8 +334,17 @@ public def layoutCommunityPlugins(String home) {
             exclude(name: "standardDsls/**")
           }
         }
-
-        jar("groovy_rt.jar") {module("groovy_rt")}
+        //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoot method
+        dir("jps") {
+          jar("groovy-jps-plugin.jar") {
+            module("groovy-jps-plugin")
+            module("groovy-rt-constants")
+          }
+        }
+        jar("groovy_rt.jar") {
+          module("groovy_rt")
+          module("groovy-rt-constants")
+        }
         dir("standardDsls") {
           fileset(dir: "$home/plugins/groovy/resources/standardDsls")
         }

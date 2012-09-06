@@ -7,13 +7,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
-import groovy.util.CharsetToolkit;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
+import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
-import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
-import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
@@ -97,7 +95,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         "org.jetbrains.groovy.compiler.rt.GroovycRunner",
         Collections.<String>emptyList(), new ArrayList<String>(generateClasspath(context, chunk)),
         Arrays.asList("-Xmx384m",
-                      "-Dfile.encoding=" + CharsetToolkit.getDefaultSystemCharset().name()/*,
+                      "-Dfile.encoding=" + System.getProperty("file.encoding")/*,
                       "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239"*/),
         Arrays.<String>asList(myForStubs ? "stubs" : "groovyc",
                               tempFile.getPath())
@@ -285,12 +283,20 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     final Set<String> cp = new LinkedHashSet<String>();
     //groovy_rt.jar
     // IMPORTANT! must be the first in classpath
-    cp.add(ClasspathBootstrap.getResourcePath(GroovyCompilerWrapper.class).getPath());
+    cp.add(getGroovyRtRoot().getPath());
 
     for (File file : context.getProjectPaths().getCompilationClasspathFiles(chunk, chunk.isTests(), false, false)) {
       cp.add(FileUtil.toCanonicalPath(file.getPath()));
     }
     return new ArrayList<String>(cp);
+  }
+
+  private static File getGroovyRtRoot() {
+    File root = ClasspathBootstrap.getResourcePath(GroovyBuilder.class);
+    if (root.isFile()) {
+      return new File(root.getParentFile().getParentFile(), "groovy_rt.jar");
+    }
+    return new File(root.getParentFile(), "groovy_rt");
   }
 
   private static boolean isGroovyFile(String path) {
