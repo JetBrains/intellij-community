@@ -51,6 +51,7 @@ public class JdkScope extends GlobalSearchScope {
 
   public boolean equals(Object object) {
     if (object == this) return true;
+    if (object == null) return false;
     if (object.getClass() != JdkScope.class) return false;
 
     final JdkScope that = (JdkScope)object;
