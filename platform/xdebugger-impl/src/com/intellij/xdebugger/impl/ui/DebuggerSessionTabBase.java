@@ -23,6 +23,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.LayoutViewOptions;
@@ -52,6 +53,8 @@ import java.io.Reader;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.nio.charset.Charset;
+import java.util.*;
 
 /**
  * @author nik
@@ -132,7 +135,22 @@ public abstract class DebuggerSessionTabBase extends LogConsoleManagerBase imple
           }
         }
       }, content);
+      RunProfile profile = getRunProfile();
+      if (profile instanceof RunConfigurationBase && !ApplicationManager.getApplication().isUnitTestMode()) {
+        final RunConfigurationBase runConfigurationBase = (RunConfigurationBase)profile;
+        observable.addChangeListener(new RunContentBuilder.ConsoleToFrontListener(runConfigurationBase,
+                                                                                  getProject(),
+                                                                                  DefaultDebugExecutor.getDebugExecutorInstance(),
+                                                                                  myRunContentDescriptor,
+                                                                                  getUi()),
+                                     content);
+      }
     }
+  }
+
+  @Nullable
+  protected RunProfile getRunProfile() {
+    return myEnvironment != null ? myEnvironment.getRunProfile() : null;
   }
 
   public void toFront() {
