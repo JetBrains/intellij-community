@@ -13,7 +13,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.jetbrains.jps.model.serialization.JpsProjectSerializationTest.SAMPLE_PROJECT_PATH;
-import static org.jetbrains.jps.model.serialization.JpsProjectSerializationTest.getFileInSampleProject;
 
 /**
  * @author nik
@@ -29,7 +28,7 @@ public class JpsArtifactSerializationTest extends JpsSerializationTestCase {
 
   public void testSaveProject() {
     loadProject(SAMPLE_PROJECT_PATH);
-    File[] artifactFiles = getFileInSampleProject(".idea/artifacts").listFiles();
+    File[] artifactFiles = new File(getTestDataFileAbsolutePath(SAMPLE_PROJECT_PATH + "/.idea/artifacts")).listFiles();
     assertNotNull(artifactFiles);
     for (File file : artifactFiles) {
       JpsArtifact artifact = getService().createReference(FileUtil.getNameWithoutExtension(file)).asExternal(myModel).resolve();
@@ -38,12 +37,12 @@ public class JpsArtifactSerializationTest extends JpsSerializationTestCase {
     }
   }
 
-  private static void doTestSaveArtifact(JpsArtifact artifact, File expectedFile) {
+  private void doTestSaveArtifact(JpsArtifact artifact, File expectedFile) {
     try {
       Element actual = new Element("component").setAttribute("name", "ArtifactManager");
       JpsArtifactSerializer.saveArtifact(artifact, actual);
       JpsMacroExpander
-        expander = JpsProjectLoader.createProjectMacroExpander(Collections.<String, String>emptyMap(), getFileInSampleProject(""));
+        expander = JpsProjectLoader.createProjectMacroExpander(Collections.<String, String>emptyMap(), new File(getTestDataFileAbsolutePath(SAMPLE_PROJECT_PATH)));
       Element expected = JpsLoaderBase.loadRootElement(expectedFile, expander);
       PlatformTestUtil.assertElementsEqual(expected, actual);
     }

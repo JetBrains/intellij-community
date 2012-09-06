@@ -1,5 +1,6 @@
 package org.jetbrains.jps.model.serialization;
 
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
@@ -87,7 +88,7 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     }
   }
 
-  private static void doTestSaveLibrary(File libFile, String libName, JpsLibrary library) {
+  private void doTestSaveLibrary(File libFile, String libName, JpsLibrary library) {
     try {
       Element actual = new Element("library");
       JpsLibraryTableSerializer.saveLibrary(library, actual, libName);
@@ -102,7 +103,7 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     }
   }
 
-  private static void doTestSaveModule(JpsModule module, final String moduleFilePath) {
+  private void doTestSaveModule(JpsModule module, final String moduleFilePath) {
     try {
       Element actual = JDomSerializationUtil.createComponentElement("NewModuleRootManager");
       JpsModuleRootModelSerializer.saveRootModel(module, actual);
@@ -116,11 +117,12 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     }
   }
 
-  public static File getFileInSampleProject(String relativePath) {
+  public File getFileInSampleProject(String relativePath) {
     return new File(getTestDataFileAbsolutePath(SAMPLE_PROJECT_PATH + "/" + relativePath));
   }
 
-  public void _testLoadIdeaProject() {
+  public void testLoadIdeaProject() {
+    PathManagerEx.getTestDataPath(getClass());
     long start = System.currentTimeMillis();
     final JpsProject project = myProject;
     loadProject("");
