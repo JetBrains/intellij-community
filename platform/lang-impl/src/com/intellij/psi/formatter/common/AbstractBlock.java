@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,29 @@
 package com.intellij.psi.formatter.common;
 
 import com.intellij.formatting.*;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.formatter.FormatterUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public abstract class AbstractBlock implements ASTBlock {
   public static final List<Block> EMPTY = Collections.emptyList();
 
-  protected final ASTNode myNode;
-  protected final Wrap myWrap;
-  protected final Alignment myAlignment;
+  @NotNull protected final  ASTNode   myNode;
+  @Nullable protected final Wrap      myWrap;
+  @Nullable protected final Alignment myAlignment;
 
   private List<Block> mySubBlocks;
-  private Boolean myIncomplete;
+  private Boolean     myIncomplete;
 
   protected AbstractBlock(@NotNull ASTNode node, @Nullable Wrap wrap, @Nullable Alignment alignment) {
     myNode = node;
@@ -53,14 +58,49 @@ public abstract class AbstractBlock implements ASTBlock {
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
 
-      final List<Block> list = buildChildren();
-      mySubBlocks = list.size() > 0 ? list:EMPTY;
+      List<Block> list = buildChildren();
+      if (list.isEmpty()) {
+        list = buildInjectedBlocks();
+      }
+      mySubBlocks = list.size() > 0 ? list : EMPTY;
     }
     return mySubBlocks;
   }
 
+  @NotNull
+  private List<Block> buildInjectedBlocks() {
+    if (!(this instanceof SettingsAwareBlock)) {
+      return EMPTY;
+    }
+    PsiElement psi = myNode.getPsi();
+    if (psi == null) {
+      return EMPTY;
+    }
+    PsiFile file = psi.getContainingFile();
+    if (file == null) {
+      return EMPTY;
+    }
+    TextRange blockRange = myNode.getTextRange();
+    List<DocumentWindow> documentWindows = InjectedLanguageUtil.getCachedInjectedDocuments(file);
+    for (DocumentWindow documentWindow : documentWindows) {
+      int startOffset = documentWindow.injectedToHost(0);
+      int endOffset = startOffset + documentWindow.getTextLength();
+      if (blockRange.containsRange(startOffset, endOffset)) {
+        PsiElement injected = InjectedLanguageUtil.findInjectedElementNoCommit(file, startOffset);
+        if (injected != null) {
+          List<Block> result = new ArrayList<Block>();
+          DefaultInjectedLanguageBlockBuilder builder = new DefaultInjectedLanguageBlockBuilder(((SettingsAwareBlock)this).getSettings());
+          builder.addInjectedBlocks(result, myNode, getWrap(), getAlignment(), getIndent());
+          return result;
+        }
+      }
+    }
+    return EMPTY;
+  }
+  
   protected abstract List<Block> buildChildren();
 
+  @Nullable
   @Override
   public Wrap getWrap() {
     return myWrap;
@@ -71,11 +111,13 @@ public abstract class AbstractBlock implements ASTBlock {
     return null;
   }
 
+  @Nullable
   @Override
   public Alignment getAlignment() {
     return myAlignment;
   }
 
+  @NotNull
   @Override
   public ASTNode getNode() {
     return myNode;
@@ -114,9 +156,6 @@ public abstract class AbstractBlock implements ASTBlock {
 
   @Override
   public String toString() {
-    if (myNode == null) {
-      return super.toString();
-    }
     return myNode.getText() + " " + getTextRange();
   }
 }
