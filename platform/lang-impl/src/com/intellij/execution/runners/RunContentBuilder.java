@@ -43,10 +43,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import javax.swing.event.ChangeEvent;
-import java.io.File;
-import java.nio.charset.Charset;
-import java.util.*;
+import java.util.Collection;
 
 /**
  * @author dyoma
@@ -136,7 +133,7 @@ public class RunContentBuilder extends LogConsoleManagerBase {
     if (profile instanceof RunConfigurationBase) {
       if (console instanceof ObservableConsoleView && !ApplicationManager.getApplication().isUnitTestMode()) {
         ((ObservableConsoleView)console).addChangeListener(new ConsoleToFrontListener((RunConfigurationBase)profile,
-                                                                                      myEnvironment.getProject(),
+                                                                                      getProject(),
                                                                                       myExecutor,
                                                                                       contentDescriptor,
                                                                                       myUi),

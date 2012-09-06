@@ -29,32 +29,17 @@ import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComponentWithActions;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.AppIcon;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManagerAdapter;
-import com.intellij.ui.content.ContentManagerEvent;
-import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.xdebugger.XDebuggerBundle;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.Reader;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.nio.charset.Charset;
-import java.util.*;
 
 /**
  * @author nik
@@ -150,7 +135,8 @@ public abstract class DebuggerSessionTabBase extends LogConsoleManagerBase imple
 
   @Nullable
   protected RunProfile getRunProfile() {
-    return myEnvironment != null ? myEnvironment.getRunProfile() : null;
+    ExecutionEnvironment environment = getEnvironment();
+    return environment != null ? environment.getRunProfile() : null;
   }
 
   public void toFront() {
