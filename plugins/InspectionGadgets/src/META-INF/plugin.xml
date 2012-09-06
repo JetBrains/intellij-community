@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <name>Inspection Gadgets</name>
   <id>InspectionGadgets</id>
-  <vendor>InspectionGadgets Software</vendor>
+  <vendor>JetBrains</vendor>
 
   <category>inspection</category>
   <version>1.0</version>

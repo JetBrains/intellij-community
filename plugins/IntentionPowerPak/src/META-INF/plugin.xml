@@ -3,7 +3,7 @@
   <id>IntentionPowerPack</id>
   <version>1.0</version>
 
-  <vendor>InspectionGadgets Software</vendor>
+  <vendor>JetBrains</vendor>
   <resource-bundle>com.siyeh.IntentionPowerPackBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
