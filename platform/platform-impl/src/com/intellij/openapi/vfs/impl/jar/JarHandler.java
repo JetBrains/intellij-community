@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,18 +59,13 @@ public class JarHandler extends JarHandlerBase implements FileSystemInterface {
 
   @Nullable
   public VirtualFile markDirty() {
-    synchronized (lock) {
-      myRelPathsToEntries = null;
-      myJarFile.set(null);
+    clear();
 
-      final NewVirtualFile root = (NewVirtualFile)
-        JarFileSystem.getInstance().findFileByPath(myBasePath + JarFileSystem.JAR_SEPARATOR);
-      if (root != null) {
-        root.markDirty();
-        return root;
-      }
-      return null;
+    final VirtualFile root = JarFileSystem.getInstance().findFileByPath(myBasePath + JarFileSystem.JAR_SEPARATOR);
+    if (root instanceof NewVirtualFile) {
+      ((NewVirtualFile)root).markDirty();
     }
+    return root;
   }
 
   @Override
@@ -78,16 +73,15 @@ public class JarHandler extends JarHandlerBase implements FileSystemInterface {
     if (!myFileSystem.isMakeCopyOfJar(originalFile) || !originalFile.exists()) return originalFile;
 
     String folderPath = getJarsDir();
-    if (!new File(folderPath).exists()) {
-      if (!new File(folderPath).mkdirs()) {
-        return originalFile;
-      }
+    if (!new File(folderPath).exists() && !new File(folderPath).mkdirs()) {
+      return originalFile;
     }
 
     String fileName = originalFile.getName() + "." + Integer.toHexString(originalFile.getPath().hashCode());
-    final File mirror = new File(folderPath, fileName);
+    File mirror = new File(folderPath, fileName);
 
-    if (!mirror.exists() || Math.abs(originalFile.lastModified() - mirror.lastModified()) > 2000) {
+    if (!mirror.exists() ||
+        Math.abs(originalFile.lastModified() - mirror.lastModified()) > 2000) {
       return copyToMirror(originalFile, mirror);
     }
 
@@ -100,25 +94,24 @@ public class JarHandler extends JarHandlerBase implements FileSystemInterface {
   }
 
   private File copyToMirror(final File original, final File mirror) {
-    ProgressManager progressManager = ProgressManager.getInstance();
-    ProgressIndicator progress = progressManager.getProgressIndicator();
-    if (progress != null){
+    ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+    if (progress != null) {
       progress.pushState();
       progress.setText(VfsBundle.message("jar.copy.progress", original.getPath()));
       progress.setFraction(0);
     }
 
-    try{
+    try {
       FileUtil.copy(original, mirror);
     }
-    catch(final IOException e){
+    catch (final IOException e) {
       final String path1 = original.getPath();
       final String path2 = mirror.getPath();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          Messages.showMessageDialog(VfsBundle.message("jar.copy.error.message", path1, path2, e.getMessage()), VfsBundle.message("jar.copy.error.title"),
-                                     Messages.getErrorIcon());
+          Messages.showErrorDialog(VfsBundle.message("jar.copy.error.message", path1, path2, e.getMessage()),
+                                   VfsBundle.message("jar.copy.error.title"));
         }
       }, ModalityState.NON_MODAL);
 
@@ -126,7 +119,7 @@ public class JarHandler extends JarHandlerBase implements FileSystemInterface {
       return original;
     }
 
-    if (progress != null){
+    if (progress != null) {
       progress.popState();
     }
 

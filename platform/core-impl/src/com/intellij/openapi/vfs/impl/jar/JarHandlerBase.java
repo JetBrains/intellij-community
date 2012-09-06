@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.jar;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
@@ -38,34 +39,44 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class JarHandlerBase {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.jar.JarHandlerBase");
+
   private static final long DEFAULT_LENGTH = 0L;
   private static final long DEFAULT_TIMESTAMP = -1L;
 
-  protected final TimedReference<JarFile> myJarFile = new TimedReference<JarFile>(null);
-  protected SoftReference<Map<String, EntryInfo>> myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(null);
-  protected final Object lock = new Object();
+  private final TimedReference<JarFile> myJarFile = new TimedReference<JarFile>(null);
+  private SoftReference<Map<String, EntryInfo>> myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(null);
+  private final Object lock = new Object();
+
   protected final String myBasePath;
 
   protected static class EntryInfo {
+    protected final boolean isDirectory;
+    protected final String shortName;
+    protected final EntryInfo parent;
+
     public EntryInfo(final String shortName, final EntryInfo parent, final boolean directory) {
       this.shortName = shortName;
       this.parent = parent;
-      isDirectory = directory;
+      this.isDirectory = directory;
     }
-
-    final boolean isDirectory;
-    protected final String shortName;
-    final EntryInfo parent;
   }
 
   public JarHandlerBase(String path) {
     myBasePath = path;
   }
 
+  protected void clear() {
+    synchronized (lock) {
+      myRelPathsToEntries = null;
+      myJarFile.set(null);
+    }
+  }
+
   @NotNull
   protected Map<String, EntryInfo> initEntries() {
     synchronized (lock) {
-      Map<String, EntryInfo> map = myRelPathsToEntries.get();
+      Map<String, EntryInfo> map = myRelPathsToEntries != null ? myRelPathsToEntries.get() : null;
       if (map == null) {
         final JarFile zip = getJar();
 
@@ -105,8 +116,9 @@ public class JarHandlerBase {
 
   @Nullable
   protected JarFile createJarFile() {
+    final File originalFile = getOriginalFile();
     try {
-      final ZipFile zipFile = new ZipFile(getMirrorFile(getOriginalFile()));
+      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") final ZipFile zipFile = new ZipFile(getMirrorFile(originalFile));
 
       class MyJarEntry implements JarFile.JarEntry {
         private ZipEntry myEntry;
@@ -180,6 +192,7 @@ public class JarHandlerBase {
       };
     }
     catch (IOException e) {
+      LOG.warn(e.getMessage() + ": " + originalFile.getPath());
       return null;
     }
   }
