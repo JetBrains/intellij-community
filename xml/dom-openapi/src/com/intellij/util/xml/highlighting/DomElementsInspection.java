@@ -80,7 +80,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
       for (final DomElement child : DomUtil.getDefinedChildren(element, true, true)) {
         final XmlElement element1 = child.getXmlElement();
         if (element1 == null) {
-          LOG.error("child=" + child + "; parent=" + element);
+          LOG.error("child=" + child + " of class " + child.getClass() + "; parent=" + element);
         }
         if (element1.isPhysical()) {
           visitor.consume(child);

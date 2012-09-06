@@ -228,7 +228,9 @@ public class DomUtil {
           if (!attribute.isValid()) {
             throw new AssertionError("Invalid attr: parent.valid=" + tag.isValid());
           }
-          ContainerUtil.addIfNotNull(domManager.getDomElement(attribute), result);
+          GenericAttributeValue element = domManager.getDomElement(attribute);
+          checkHasXml(attribute, element);
+          ContainerUtil.addIfNotNull(element, result);
         }
       }
       if (tags) {
@@ -236,12 +238,20 @@ public class DomUtil {
           if (!subTag.isValid()) {
             throw new AssertionError("Invalid subtag: parent.valid=" + tag.isValid());
           }
-          ContainerUtil.addIfNotNull(domManager.getDomElement(subTag), result);
+          DomElement element = domManager.getDomElement(subTag);
+          checkHasXml(subTag, element);
+          ContainerUtil.addIfNotNull(element, result);
         }
       }
       return result;
     }
     return Collections.emptyList();
+  }
+
+  private static void checkHasXml(XmlElement psi, DomElement dom) {
+    if (dom != null && dom.getXmlElement() == null) {
+      throw new AssertionError("No xml for dom " + dom + "; attr=" + psi + ", physical=" + psi.isPhysical());
+    }
   }
 
   public static <T> List<T> getDefinedChildrenOfType(@NotNull final DomElement parent, final Class<T> type, boolean tags, boolean attributes) {
