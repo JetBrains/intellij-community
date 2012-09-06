@@ -43,6 +43,7 @@ public class TypeAssertionIntention implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PyExpression problemElement = PyUtil.findProblemElement(editor, file, PyQualifiedExpression.class);
     if (problemElement == null) return false;
+    if (problemElement.getParent() instanceof PyWithItem) return false;
     if (problemElement instanceof PyQualifiedExpression) {
       final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
       if (qualifier != null && !qualifier.getText().equals(PyNames.CANONICAL_SELF)) {
