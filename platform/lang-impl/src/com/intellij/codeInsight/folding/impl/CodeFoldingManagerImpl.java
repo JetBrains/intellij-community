@@ -214,7 +214,8 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (file == null || !file.getViewProvider().isPhysical() && !ApplicationManager.getApplication().isUnitTestMode()) return;
 
-    if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) return;
+    final FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
+    if (!foldingModel.isFoldingEnabled()) return;
     if (project.isDisposed() || editor.isDisposed() || !file.isValid()) return;
 
     PsiDocumentManager.getInstance(myProject).commitDocument(document);
@@ -231,16 +232,21 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
           @Override
           public void run() {
             if (myProject.isDisposed() || editor.isDisposed()) return;
-            DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
-            Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
-            for (Editor otherEditor : editors) {
-              if (otherEditor == editor) continue;
-              documentFoldingInfo.loadFromEditor(otherEditor);
-              break;
-            }
-            documentFoldingInfo.setToEditor(editor);
+            foldingModel.runBatchFoldingOperation(new Runnable() {
+              @Override
+              public void run() {
+                DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
+                Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
+                for (Editor otherEditor : editors) {
+                  if (otherEditor == editor) continue;
+                  documentFoldingInfo.loadFromEditor(otherEditor);
+                  break;
+                }
+                documentFoldingInfo.setToEditor(editor);
 
-            documentFoldingInfo.clear();
+                documentFoldingInfo.clear();
+              }
+            });
           }
         });
       }

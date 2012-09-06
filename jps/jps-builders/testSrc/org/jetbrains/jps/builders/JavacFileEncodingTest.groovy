@@ -7,7 +7,7 @@ import org.jetbrains.jps.builders.rebuild.JpsRebuildTestCase
  */
 class JavacFileEncodingTest extends JpsRebuildTestCase {
   public void test() {
-    doTest("javacFileEncoding/javacFileEncoding.ipr", null, {
+    doTest("javacFileEncoding/javacFileEncoding.ipr", {
       dir("production") {
         dir("javacFileEncoding") {
           file("MyClass.class")

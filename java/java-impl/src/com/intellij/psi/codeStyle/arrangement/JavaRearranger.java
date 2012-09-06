@@ -45,7 +45,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
 {
 
   // Type
-  @NotNull private static final Set<ArrangementEntryType> SUPPORTED_TYPES = EnumSet.of(INTERFACE, CLASS, ENUM, FIELD, METHOD);
+  @NotNull private static final Set<ArrangementEntryType> SUPPORTED_TYPES = EnumSet.of(INTERFACE, CLASS, ENUM, FIELD, METHOD, CONSTRUCTOR);
 
   // Modifier
   @NotNull private static final Set<ArrangementModifier> SUPPORTED_MODIFIERS = EnumSet.of(
@@ -68,6 +68,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     MODIFIERS_BY_TYPE.put(INTERFACE, visibilityModifiers);
     MODIFIERS_BY_TYPE.put(CLASS, concat(commonModifiers, ABSTRACT));
     MODIFIERS_BY_TYPE.put(METHOD, concat(commonModifiers, SYNCHRONIZED, ABSTRACT));
+    MODIFIERS_BY_TYPE.put(CONSTRUCTOR, concat(commonModifiers, SYNCHRONIZED));
     MODIFIERS_BY_TYPE.put(FIELD, concat(commonModifiers, TRANSIENT, VOLATILE));
   }
 
@@ -86,9 +87,12 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     for (ArrangementModifier modifier : visibility) {
       and(FIELD, modifier);
     }
+    and(CONSTRUCTOR);
+    and(METHOD, STATIC);
     and(METHOD);
     and(ENUM);
     and(INTERFACE);
+    and(CLASS, STATIC);
     and(CLASS);
   }
 
@@ -114,11 +118,19 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     return result;
   }
 
+  @Nullable
+  @Override
+  public JavaElementArrangementEntry wrap(@NotNull PsiElement element) {
+    List<JavaElementArrangementEntry> result = new ArrayList<JavaElementArrangementEntry>();
+    element.accept(new JavaArrangementVisitor(result, null, Collections.singleton(element.getTextRange())));
+    return result.size() == 1 ? result.get(0) : null;
+  }
+
   @NotNull
   @Override
-  public Collection<JavaElementArrangementEntry> parse(@NotNull PsiElement root,
-                                                       @NotNull Document document,
-                                                       @NotNull Collection<TextRange> ranges)
+  public List<JavaElementArrangementEntry> parse(@NotNull PsiElement root,
+                                                 @Nullable Document document,
+                                                 @NotNull Collection<TextRange> ranges)
   {
     // Following entries are subject to arrangement: class, interface, field, method.
     List<JavaElementArrangementEntry> result = new ArrayList<JavaElementArrangementEntry>();

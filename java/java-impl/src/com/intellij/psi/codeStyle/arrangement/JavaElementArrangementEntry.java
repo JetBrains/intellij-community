@@ -26,6 +26,8 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
+ * Not thread-safe.
+ * 
  * @author Denis Zhdanov
  * @since 7/20/12 4:50 PM
  */
@@ -58,6 +60,9 @@ public class JavaElementArrangementEntry extends DefaultArrangementEntry
     super(parent, startOffset, endOffset, canBeArranged);
     myType = type;
     myTypes = EnumSet.of(type);
+    if (myType == ArrangementEntryType.CONSTRUCTOR) {
+      myTypes.add(ArrangementEntryType.METHOD);
+    }
     myName = name;
   }
 

@@ -25,6 +25,9 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
 import org.jetbrains.jps.incremental.storage.TimestampValidityState;
+import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
@@ -377,7 +380,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     final List<AndroidNativeLibData> additionalNativeLibs = extension.getAdditionalNativeLibs();
 
     final AndroidFileSetState currentFileSetState =
-      buildCurrentApkBuilderState(context.getProjectDescriptor().project, resPackagePath, classesDexFilePath, nativeLibDirs, sourceRoots,
+      buildCurrentApkBuilderState(context.getProjectDescriptor().jpsProject, resPackagePath, classesDexFilePath, nativeLibDirs, sourceRoots,
                                   externalJars, release);
 
     final AndroidApkBuilderConfigState currentApkBuilderConfigState =
@@ -397,7 +400,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
 
     final Map<AndroidCompilerMessageKind, List<String>> messages = AndroidApkBuilder
       .execute(resPackagePath, classesDexFilePath, sourceRoots, externalJars, nativeLibDirs, additionalNativeLibs,
-               outputApkPath, release, sdkPath, customKeyStorePath, new MyExcludedSourcesFilter(context.getProjectDescriptor().project));
+               outputApkPath, release, sdkPath, customKeyStorePath, new MyExcludedSourcesFilter(context.getProjectDescriptor().jpsProject));
 
     AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME, module.getName());
     final boolean success = messages.get(AndroidCompilerMessageKind.ERROR).isEmpty();
@@ -408,7 +411,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
   }
 
   @SuppressWarnings("unchecked")
-  private static AndroidFileSetState buildCurrentApkBuilderState(@NotNull Project project,
+  private static AndroidFileSetState buildCurrentApkBuilderState(@NotNull JpsProject project,
                                                                  @NotNull String resPackagePath,
                                                                  @NotNull String classesDexFilePath,
                                                                  @NotNull String[] nativeLibDirs,
@@ -562,10 +565,10 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
   }
 
   private static class MyExcludedSourcesFilter implements Condition<File> {
-    private final CompilerExcludes myExcludes;
+    private final JpsCompilerExcludes myExcludes;
 
-    public MyExcludedSourcesFilter(@NotNull Project project) {
-      myExcludes = project.getCompilerConfiguration().getExcludes();
+    public MyExcludedSourcesFilter(@NotNull JpsProject project) {
+      myExcludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getCompilerExcludes();
     }
 
     @Override

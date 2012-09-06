@@ -26,6 +26,7 @@ import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.Timings;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -139,9 +140,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   public void testReplaceWholeRange() throws Exception {
     RangeMarker marker = createMarker("0123456789", 1, 7);
     marker.getDocument().replaceString(1, 7, "abc");
-    assertTrue(marker.isValid());
-    assertEquals(1, marker.getStartOffset());
-    assertEquals(4, marker.getEndOffset());
+    assertValidMarker(marker, 1, 4);
   }
 
   public void testUpdateInvalid() throws Exception {
@@ -173,9 +172,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     marker.getDocument().deleteString(4, 6);
 
-    assertTrue(marker.isValid());
-    assertEquals(2, marker.getStartOffset());
-    assertEquals(4, marker.getEndOffset());
+    assertValidMarker(marker, 2, 4);
   }
 
   public void testDeleteStartPart() throws Exception {
@@ -183,9 +180,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     marker.getDocument().deleteString(0, 4);
 
-    assertTrue(marker.isValid());
-    assertEquals(0, marker.getStartOffset());
-    assertEquals(1, marker.getEndOffset());
+    assertValidMarker(marker, 0, 1);
   }
 
   public void testReplaceStartPartInvalid() throws Exception {
@@ -193,9 +188,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     marker.getDocument().replaceString(0, 4, "xxxx");
 
-    assertTrue(marker.isValid());
-    assertEquals(4, marker.getStartOffset());
-    assertEquals(5, marker.getEndOffset());
+    assertValidMarker(marker, 4, 5);
   }
 
   public void testDeleteFirstChar() throws Exception {
@@ -203,9 +196,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     marker.getDocument().deleteString(0, 1);
 
-    assertTrue(marker.isValid());
-    assertEquals(0, marker.getStartOffset());
-    assertEquals(4, marker.getEndOffset());
+    assertValidMarker(marker, 0, 4);
   }
 
   public void testInsertBeforeStart() throws Exception {
@@ -223,9 +214,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     marker.getDocument().insertString(2, "xxx");
 
-    assertTrue(marker.isValid());
-    assertEquals(5, marker.getStartOffset());
-    assertEquals(8, marker.getEndOffset());
+    assertValidMarker(marker, 5, 8);
   }
 
   public void testInsertIntoStartExpandToLeft() throws Exception {
@@ -277,9 +266,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     marker.getDocument().replaceString(0, s.length(), s.replaceAll(" ", ""));
 
-    assertTrue(marker.isValid());
-    assertEquals(6, marker.getStartOffset());
-    assertEquals(7, marker.getEndOffset());
+    assertValidMarker(marker, 6, 7);
   }
 
   public void testDeleteRightPart() throws Exception {
@@ -287,9 +274,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     marker.getDocument().deleteString(4, 6);
 
-    assertTrue(marker.isValid());
-    assertEquals(2, marker.getStartOffset());
-    assertEquals(4, marker.getEndOffset());
+    assertValidMarker(marker, 2, 4);
   }
 
   public void testDeleteRightPart2() throws Exception {
@@ -297,9 +282,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     marker.getDocument().deleteString(4, 5);
 
-    assertTrue(marker.isValid());
-    assertEquals(2, marker.getStartOffset());
-    assertEquals(4, marker.getEndOffset());
+    assertValidMarker(marker, 2, 4);
   }
 
   public void testReplaceRightPartInvalid() throws Exception {
@@ -307,9 +290,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     marker.getDocument().replaceString(4, 6, "xxx");
 
-    assertTrue(marker.isValid());
-    assertEquals(2, marker.getStartOffset());
-    assertEquals(4, marker.getEndOffset());
+    assertValidMarker(marker, 2, 4);
   }
 
   public void testDeleteWholeRange() throws Exception {
@@ -322,36 +303,28 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     RangeMarker marker = createMarker("0123456789", 2, 5);
 
     marker.getDocument().deleteString(2, 5);
-    assertTrue(marker.isValid());
-    assertEquals(2, marker.getStartOffset());
-    assertEquals(2, marker.getEndOffset());
+    assertValidMarker(marker, 2, 2);
   }
 
   public void testDeleteJustBeforeStart() throws Exception {
     RangeMarker marker = createMarker("0123456789", 2, 5);
 
     marker.getDocument().deleteString(0, 2);
-    assertTrue(marker.isValid());
-    assertEquals(0, marker.getStartOffset());
-    assertEquals(3, marker.getEndOffset());
+    assertValidMarker(marker, 0, 3);
   }
 
   public void testDeleteRightAfterEnd() throws Exception {
     RangeMarker marker = createMarker("0123456789", 2, 2);
 
     marker.getDocument().deleteString(2, 5);
-    assertTrue(marker.isValid());
-    assertEquals(2, marker.getStartOffset());
-    assertEquals(2, marker.getEndOffset());
+    assertValidMarker(marker, 2, 2);
   }
 
   public void testReplacementWithOldTextOverlap() throws Exception {
     RangeMarker marker = createMarker("0123456789", 2, 5);
 
     marker.getDocument().replaceString(0, 10, "0123456789");
-    assertTrue(marker.isValid());
-    assertEquals(2, marker.getStartOffset());
-    assertEquals(5, marker.getEndOffset());
+    assertValidMarker(marker, 2, 5);
   }
 
   // Psi -> Document synchronization
@@ -369,9 +342,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     assertEquals(buffer.toString(), marker.getDocument().getText());
 
-    assertTrue(marker.isValid());
-    assertEquals(2, marker.getStartOffset());
-    assertEquals(6, marker.getEndOffset());
+    assertValidMarker(marker, 2, 6);
   }
 
   public void testDocSynchronizerPrefersLineBoundaryChanges() throws Exception {
@@ -416,9 +387,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     assertEquals(buffer.toString(), marker.getDocument().getText());
 
-    assertTrue(marker.isValid());
-    assertEquals(3, marker.getStartOffset());
-    assertEquals(6, marker.getEndOffset());
+    assertValidMarker(marker, 3, 6);
   }
 
   public void testPsi2DocMergeReplaceAfterAdd() throws Exception {
@@ -443,9 +412,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     assertEquals(buffer.toString(), marker.getDocument().getText());
 
-    assertTrue(marker.isValid());
-    assertEquals(3, marker.getStartOffset());
-    assertEquals(6, marker.getEndOffset());
+    assertValidMarker(marker, 3, 6);
   }
 
   public void testPsi2DocMergeReplaceWithMultipleAdditions() throws Exception {
@@ -469,9 +436,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     assertEquals(buffer.toString(), marker.getDocument().getText());
 
-    assertTrue(marker.isValid());
-    assertEquals(2, marker.getStartOffset());
-    assertEquals(5, marker.getEndOffset());
+    assertValidMarker(marker, 2, 5);
   }
 
   public void testPsi2DocMergeMultipleAdditionsWithReplace() throws Exception {
@@ -498,9 +463,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     assertEquals(buffer.toString(), marker.getDocument().getText());
 
-    assertTrue(marker.isValid());
-    assertEquals(2, marker.getStartOffset());
-    assertEquals(5, marker.getEndOffset());
+    assertValidMarker(marker, 2, 5);
   }
 
   public void testPsi2DocSurround() throws Exception {
@@ -526,9 +489,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     assertEquals(buffer.toString(), marker.getDocument().getText());
 
-    assertTrue(marker.isValid());
-    assertEquals(2, marker.getStartOffset());
-    assertEquals(7, marker.getEndOffset());
+    assertValidMarker(marker, 2, 7);
   }
 
   public void testPsi2DocForwardRangesChanges() throws Exception {
@@ -551,9 +512,13 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     assertEquals(buffer.toString(), document.getText());
 
+    assertValidMarker(marker, 3, 8);
+  }
+
+  private static void assertValidMarker(@NotNull RangeMarker marker, int start, int end) {
     assertTrue(marker.isValid());
-    assertEquals(3, marker.getStartOffset());
-    assertEquals(8, marker.getEndOffset());
+    assertEquals(start, marker.getStartOffset());
+    assertEquals(end, marker.getEndOffset());
   }
 
   public void testNested() {
@@ -1055,5 +1020,29 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     document.replaceString(startOffset+1, endOffset-1, "ccc");
 
     assertTrue(marker.isValid());
+  }
+
+  public void testMoveTextRetargetsMarkers() throws Exception {
+    RangeMarkerEx marker1 = createMarker("01234567890", 1, 3);
+    DocumentEx document = (DocumentEx)marker1.getDocument();
+    RangeMarker marker2 = document.createRangeMarker(2, 4);
+
+    document.moveText(0, 5, 8);
+    assertEquals("56701234890", document.getText());
+
+    assertValidMarker(marker1, 4, 6);
+    assertValidMarker(marker2, 5, 7);
+  }
+
+  public void testMoveTextToTheBeginningRetargetsMarkers() throws Exception {
+    RangeMarkerEx marker1 = createMarker("01234567890", 5, 5);
+    DocumentEx document = (DocumentEx)marker1.getDocument();
+    RangeMarker marker2 = document.createRangeMarker(5, 7);
+
+    document.moveText(4, 7, 1);
+    assertEquals("04561237890", document.getText());
+
+    assertValidMarker(marker1, 2, 2);
+    assertValidMarker(marker2, 2, 4);
   }
 }

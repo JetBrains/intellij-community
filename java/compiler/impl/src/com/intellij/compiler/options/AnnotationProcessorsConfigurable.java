@@ -17,13 +17,13 @@ package com.intellij.compiler.options;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.compiler.ProcessorConfigProfile;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 
 import javax.swing.*;
 import java.util.List;

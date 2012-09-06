@@ -67,7 +67,7 @@ public class DirDiffSettings {
     return filterPattern;
   }
 
-  public static enum CompareMode {
+  public enum CompareMode {
     CONTENT, // the most honest, the slowest. Compares size, if equal compares contents. Ignores timestamps
     SIZE, // Compares size only
     TIMESTAMP; // Compares size, if equal compares timestamps
@@ -84,14 +84,8 @@ public class DirDiffSettings {
     }
   }
 
-  public <T extends AnAction & DirDiffModelHolder> void addExtraAction(@NotNull T action) {
+  public <T extends AnAction> void addExtraAction(@NotNull T action) {
     extraToolbarActions.add(action);
-  }
-
-  public void setModelToExtraActions(DirDiffModel model) {
-    for (AnAction action : extraToolbarActions) {
-      ((DirDiffModelHolder)action).setModel(model);
-    }
   }
 
   public List<AnAction> getExtraActions() {

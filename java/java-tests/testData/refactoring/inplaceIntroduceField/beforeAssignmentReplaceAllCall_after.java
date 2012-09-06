@@ -1,6 +1,6 @@
 class Test {
-    private Foo myFoo;
     private final Foo foo;
+    private Foo myFoo;
 
     Test() {
         foo = new Foo();

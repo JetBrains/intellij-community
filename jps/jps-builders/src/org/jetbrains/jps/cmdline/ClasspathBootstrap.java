@@ -25,12 +25,10 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.SystemProperties;
 import com.jgoodies.forms.layout.CellConstraints;
 import net.n3.nanoxml.IXMLBuilder;
-import org.codehaus.groovy.GroovyException;
 import org.jboss.netty.util.Version;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassVisitor;
 import org.jetbrains.asm4.ClassWriter;
-import org.jetbrains.jps.MacroExpander;
 import org.jetbrains.jps.javac.JavacServer;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.impl.JpsModelImpl;
@@ -96,12 +94,10 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(Version.class)); // netty
     cp.add(getResourcePath(ClassWriter.class));  // asm
     cp.add(getResourcePath(ClassVisitor.class));  // asm-commons
-    cp.add(getResourcePath(MacroExpander.class));  // jps-model
-    cp.add(getResourcePath(JpsModel.class));  // jps-project-model
-    cp.add(getResourcePath(JpsModelImpl.class));  // jps-project-model
+    cp.add(getResourcePath(JpsModel.class));  // jps-model-api
+    cp.add(getResourcePath(JpsModelImpl.class));  // jps-model-impl
     cp.add(getResourcePath(JpsProjectLoader.class));  // jps-model-serialization
     cp.add(getResourcePath(AlienFormFileException.class));  // forms-compiler
-    cp.add(getResourcePath(GroovyException.class));  // groovy
     cp.add(getResourcePath(GridConstraints.class));  // forms-rt
     cp.add(getResourcePath(CellConstraints.class));  // jgoodies-forms
     cp.add(getResourcePath(NotNullVerifyingInstrumenter.class));  // not-null

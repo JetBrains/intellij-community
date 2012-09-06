@@ -20,5 +20,4 @@ class B {
     public int getI() {
         return i;
     }
-
 }

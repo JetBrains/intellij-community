@@ -17,10 +17,10 @@ package com.intellij.find.findUsages;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -181,13 +181,12 @@ public abstract class FindUsagesHandler {
   @Nullable
   protected Collection<String> getStringsToSearch(final PsiElement element) {
     if (element instanceof PsiNamedElement) {
-      final AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
-        return ContainerUtil.createMaybeSingletonList(((PsiNamedElement)element).getName());
-      }
-      finally {
-        accessToken.finish();
-      }
+      return ApplicationManager.getApplication().runReadAction(new Computable<Collection<String>>() {
+        @Override
+        public Collection<String> compute() {
+          return ContainerUtil.createMaybeSingletonList(((PsiNamedElement)element).getName());
+        }
+      });
     }
 
     return Collections.singleton(element.getText());

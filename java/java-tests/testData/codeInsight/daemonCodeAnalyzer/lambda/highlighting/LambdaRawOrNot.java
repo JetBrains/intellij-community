@@ -34,3 +34,27 @@ class Test3 {
     bar(<error descr="Cyclic inference">x->{}</error>, new ArrayList());
   }
 }
+
+
+class Test4 {
+  protected <T, U> U exerciseOps(TestData<T> data, TerminalOp1<T, U> terminal, IntermediateOp1... ops) {
+    return exerciseOps(data, (u, v) -> u.equals(v), terminal, ops);
+  }
+
+  protected static <T, U> U exerciseOps(TestData<T> data,
+                                        BiPredicate1<U, U> equalator,
+                                        TerminalOp1<T, U> terminalOp,
+                                        IntermediateOp1[] ops) {
+    return null;
+  }
+
+  public interface IntermediateOp1<T,U> {
+
+  }
+  public interface BiPredicate1<T, U> extends IntermediateOp1<T, U>{
+    boolean _(T t, U u);
+  }
+
+  public interface TerminalOp1<T, U> extends IntermediateOp1<T, U> {}
+
+}

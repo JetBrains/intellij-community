@@ -16,11 +16,11 @@
 
 package com.intellij.tasks.actions;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -28,7 +28,7 @@ import com.intellij.tasks.ChangeListInfo;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.impl.TaskManagerImpl;
-import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.tools.SimpleActionGroup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,6 +39,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -46,26 +47,59 @@ import java.util.List;
  */
 public class SwitchTaskAction extends BaseTaskAction {
 
-  private static final int MAX_ROW_COUNT = 20;
-
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     assert project != null;
-    final ListPopupImpl popup = createPopup(dataContext, null, true);
+    final ListPopupImpl popup = createPopup(dataContext, true);
     popup.showCenteredInCurrentWindow(project);
   }
 
-  public static ListPopupImpl createPopup(DataContext dataContext, @Nullable Runnable onDispose, boolean withTitle) {
+  public static ListPopupImpl createPopup(final DataContext dataContext, boolean withTitle) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final Ref<Boolean> shiftPressed = Ref.create(false);
-    final DefaultActionGroup group = project == null ? new DefaultActionGroup() : createPopupActionGroup(project, shiftPressed);
+    final Ref<JComponent> componentRef = Ref.create();
+    List<TaskListItem> items = project == null ? Collections.<TaskListItem>emptyList() :
+                               createPopupActionGroup(project, shiftPressed);
     final String title = withTitle ? "Switch to Task" : null;
-    final ListPopupImpl popup = (ListPopupImpl)JBPopupFactory.getInstance()
-      .createActionGroupPopup(title, group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, onDispose, MAX_ROW_COUNT);
-    
-    if (group.getChildrenCount() <= 2) {
+    ListPopupStep<TaskListItem> step = new MultiSelectionListPopupStep<TaskListItem>(title, items) {
+      @Override
+      public PopupStep<?> onChosen(List<TaskListItem> selectedValues, boolean finalChoice) {
+        if (finalChoice) {
+          selectedValues.get(0).select();
+          return FINAL_CHOICE;
+        }
+        ActionGroup group = createActionsStep(selectedValues, project, shiftPressed);
+        return JBPopupFactory.getInstance().createActionsStep(group, DataManager.getInstance().getDataContext(componentRef.get()), false, false, null, null, true);
+      }
+
+      @Override
+      public Icon getIconFor(TaskListItem aValue) {
+        return aValue.getIcon();
+      }
+
+      @NotNull
+      @Override
+      public String getTextFor(TaskListItem value) {
+        return value.getText();
+      }
+
+      @Nullable
+      @Override
+      public ListSeparator getSeparatorAbove(TaskListItem value) {
+        return value.getSeparator() == null ? null : new ListSeparator(value.getSeparator());
+      }
+
+      @Override
+      public boolean hasSubstep(List<TaskListItem> selectedValues) {
+        return selectedValues.size() > 1 || selectedValues.get(0).getTask() != null;
+      }
+    };
+
+    final ListPopupImpl popup = (ListPopupImpl)JBPopupFactory.getInstance().createListPopup(step);
+    componentRef.set(popup.getComponent());
+    if (items.size() <= 2) {
       return popup;
     }
 
@@ -91,15 +125,48 @@ public class SwitchTaskAction extends BaseTaskAction {
     return popup;
   }
 
-  @NotNull
-  private static DefaultActionGroup createPopupActionGroup(@NotNull Project project, final Ref<Boolean> shiftPressed) {
-    DefaultActionGroup group = new DefaultActionGroup();
+  private static ActionGroup createActionsStep(final List<TaskListItem> tasks, final Project project, final Ref<Boolean> shiftPressed) {
+
+    SimpleActionGroup group = new SimpleActionGroup();
     final TaskManager manager = TaskManager.getManager(project);
+    final LocalTask task = tasks.get(0).getTask();
+    if (tasks.size() == 1 && task != null) {
+      group.add(new AnAction("&Switch to") {
+        public void actionPerformed(AnActionEvent e) {
+          manager.activateTask(task, !shiftPressed.get(), !tasks.get(0).isTemp());
+        }
+      });
+    }
+    final AnAction remove = new AnAction("&Remove") {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        for (TaskListItem item : tasks) {
+          LocalTask itemTask = item.getTask();
+          if (itemTask != null) {
+            removeTask(project, itemTask, manager);
+          }
+        }
+      }
+    };
+    group.add(remove);
 
-    group.add(new GotoTaskAction());
-    
-    group.addSeparator();
+    return group;
+  }
 
+  @NotNull
+  private static List<TaskListItem> createPopupActionGroup(@NotNull final Project project, final Ref<Boolean> shiftPressed) {
+    List<TaskListItem> group = new ArrayList<TaskListItem>();
+
+    final GotoTaskAction gotoTaskAction = new GotoTaskAction();
+    group.add(new TaskListItem(gotoTaskAction.getTemplatePresentation().getText(),
+                               gotoTaskAction.getTemplatePresentation().getIcon()) {
+      @Override
+      void select() {
+        gotoTaskAction.perform(project);
+      }
+    });
+
+    final TaskManager manager = TaskManager.getManager(project);
     LocalTask activeTask = manager.getActiveTask();
     LocalTask[] localTasks = manager.getLocalTasks();
     Arrays.sort(localTasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
@@ -113,55 +180,26 @@ public class SwitchTaskAction extends BaseTaskAction {
         temp.add(task);
         continue;
       }
-      group.add(createActivateTaskAction(manager, project, task, shiftPressed, false));
+
+      group.add(new TaskListItem(task, group.size() == 1 ? "" : null, false) {
+        @Override
+        void select() {
+          manager.activateTask(task, !shiftPressed.get(), false);
+        }
+      });
     }
     if (vcsEnabled && !temp.isEmpty()) {
-      group.addSeparator();
       for (int i = 0, tempSize = temp.size(); i < Math.min(tempSize, 15); i++) {
-        LocalTask task = temp.get(i);
-        group.add(createActivateTaskAction(manager, project, task, shiftPressed, true));
+        final LocalTask task = temp.get(i);
+
+        group.add(new TaskListItem(task, i == 0 ? "Recently Closed Tasks" : null, true) {
+          @Override
+          void select() {
+            manager.activateTask(task, !shiftPressed.get(), true);
+          }
+        });
       }
     }
-    return group;
-  }
-
-  private static AnAction createActivateTaskAction(final TaskManager manager,
-                                                   final Project project,
-                                                   final LocalTask task,
-                                                   final Ref<Boolean> shiftPressed,
-                                                   final boolean temp) {
-    String trimmedSummary = TaskUtil.getTrimmedSummary(task);
-
-    Icon icon = temp ? IconLoader.getTransparentIcon(task.getIcon(), 0.5f) : task.getIcon();
-    final AnAction switchAction = new AnAction("&Switch to") {
-      public void actionPerformed(AnActionEvent e) {
-        manager.activateTask(task, !shiftPressed.get(), !temp);
-      }
-    };
-    ActionGroup group = new ActionGroup(trimmedSummary, task.getSummary(), icon) {
-
-      @NotNull
-      @Override
-      public AnAction[] getChildren(@Nullable AnActionEvent e) {
-        return new AnAction[]{switchAction, new AnAction("&Remove") {
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            removeTask(project, task, manager);
-          }
-        }};
-      }
-
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        switchAction.actionPerformed(e);
-      }
-
-      @Override
-      public boolean canBePerformed(DataContext context) {
-        return true;
-      }
-    };
-    group.setPopup(true);
     return group;
   }
 
@@ -183,7 +221,7 @@ public class SwitchTaskAction extends BaseTaskAction {
       l: for (LocalChangeList list : lists) {
         if (!list.getChanges().isEmpty()) {
           int result = Messages.showYesNoCancelDialog(project,
-                                   "Changelist associated with this task is not empty.\n" +
+                                   "Changelist associated with '" + task.getSummary() + "' is not empty.\n" +
                                    "Do you want to remove it and move the changes to the active changelist?",
                                    "Changelist Not Empty", Messages.getWarningIcon());
           switch (result) {

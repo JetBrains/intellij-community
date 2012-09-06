@@ -10,7 +10,7 @@ import com.intellij.util.io.DataOutputStream;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.Channels;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ether.dependencyView.Callbacks;
+import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.MessageHandler;

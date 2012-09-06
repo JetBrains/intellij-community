@@ -41,6 +41,7 @@ import com.intellij.rt.compiler.JavacRunner;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
 import java.io.*;
 import java.util.*;

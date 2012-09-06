@@ -75,8 +75,4 @@ public class ReformatFilesDialog extends DialogWrapper {
   static boolean isOptmizeImportsOptionOn() {
     return PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, false);
   }
-
-  static boolean isRearrangeEntriesOptionOn() {
-    return PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.REARRANGE_ENTRIES_KEY, false);
-  }
 }

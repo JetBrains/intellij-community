@@ -18,9 +18,12 @@ package org.jetbrains.plugins.groovy.dsl.holders;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ConcurrentSoftHashMap;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
@@ -61,7 +64,9 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
     for (Map prop : data) {
       if (prop.get("closure") == Boolean.TRUE) {
         PsiElement closureDescriptor = createClosureDescriptor(prop, place, manager);
-        myMethods.add(closureDescriptor);
+        if (closureDescriptor != null) {
+          myMethods.add(closureDescriptor);
+        }
       }
       else {
         final PsiElement method = createMethod(prop, place, manager);
@@ -70,64 +75,39 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
     }
   }
 
+  @Nullable
   private static PsiElement createClosureDescriptor(Map prop, PsiElement place, PsiManager manager) {
     final ClosureDescriptor closure = new ClosureDescriptor(manager);
 
-    {
-//    closure.setReturnType(convertToPsiType(String.valueOf(prop.get("type")), place));
-      final Object params = prop.get("params");
-      if (params instanceof Map) {
-        boolean first = true;
-        for (Object paramName : ((Map)params).keySet()) {
-          Object value = ((Map)params).get(paramName);
-          boolean isNamed = first && value instanceof List;
-          first = false;
-          String typeName = isNamed ? CommonClassNames.JAVA_UTIL_MAP : String.valueOf(value);
-          closure.addParameter(typeName, String.valueOf(paramName));
-        }
-      }
-
-      Object doc = prop.get("doc");
-      if (doc instanceof String) {
-        closure.putUserData(DOCUMENTATION, (String)doc);
-      }
-
-      Object docUrl = prop.get("docUrl");
-      if (docUrl instanceof String) {
-        closure.putUserData(DOCUMENTATION_URL, (String)docUrl);
-      }
-    }
-
-
     final Object method = prop.get("method");
-    if (method instanceof Map) {
+    if (!(method instanceof Map)) return null;
 
-      String name = String.valueOf(((Map)method).get("name"));
+    closure.setMethod(((Map)method));
 
-
-      List<PsiType> types = new ArrayList<PsiType>();
-      final Object params = ((Map)method).get("params");
-      if (params instanceof Map) {
-        boolean first = true;
-        for (Object paramName : ((Map)params).keySet()) {
-          Object value = ((Map)params).get(paramName);
-          boolean isNamed = first && value instanceof List;
-          first = false;
-          String typeName = isNamed ? CommonClassNames.JAVA_UTIL_MAP : String.valueOf(value);
-          types.add(convertToPsiType(typeName, place));
-        }
+//    closure.setReturnType(convertToPsiType(String.valueOf(prop.get("type")), place));
+    final Object closureParams = prop.get("params");
+    if (closureParams instanceof Map) {
+      boolean first = true;
+      for (Object paramName : ((Map)closureParams).keySet()) {
+        Object value = ((Map)closureParams).get(paramName);
+        boolean isNamed = first && value instanceof List;
+        first = false;
+        String typeName = isNamed ? CommonClassNames.JAVA_UTIL_MAP : String.valueOf(value);
+        closure.addParameter(typeName, String.valueOf(paramName));
       }
-      else if (params instanceof List) {
-        for (Object param : ((List)params)) {
-          types.add(convertToPsiType(String.valueOf(param), place));
-        }
-      }
-      final boolean isConstructor = Boolean.TRUE.equals(((Map)method).get("constructor"));
-      final PsiType[] typeArray = types.toArray(new PsiType[types.size()]);
-      final MethodSignature signature =
-        MethodSignatureUtil.createMethodSignature(name, typeArray, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, isConstructor);
-      closure.setMethodSignature(signature);
     }
+
+    Object doc = prop.get("doc");
+    if (doc instanceof String) {
+      closure.putUserData(DOCUMENTATION, (String)doc);
+    }
+
+    Object docUrl = prop.get("docUrl");
+    if (docUrl instanceof String) {
+      closure.putUserData(DOCUMENTATION_URL, (String)docUrl);
+    }
+
+
     return closure;
   }
 

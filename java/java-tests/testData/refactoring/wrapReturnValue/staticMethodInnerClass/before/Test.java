@@ -6,5 +6,4 @@ class Test {
   void bar() {
     String s = foo();
   }
-
 }

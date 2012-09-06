@@ -20,6 +20,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.AutoHardWrapHandler;
+import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -137,6 +138,7 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
       }
 
       lookup.hide();
+      TypedHandler.autoPopupCompletion(editor, charTyped, project);
       return Result.CONTINUE;
     }
     finally {

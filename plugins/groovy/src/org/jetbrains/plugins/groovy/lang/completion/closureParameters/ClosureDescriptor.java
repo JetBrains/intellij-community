@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.lang.completion.closureParameters;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -30,15 +30,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureU
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Max Medvedev
  */
 public class ClosureDescriptor extends LightElement implements PsiElement {
   private final List<ClosureParameterInfo> myParams = new ArrayList<ClosureParameterInfo>();
-  private MethodSignature myMethodSignature;
-  private GrClosureSignature myClosureSignature;
-
+  private Map myMethod;
 
   public ClosureDescriptor(PsiManager manager) {
     super(manager, GroovyFileType.GROOVY_LANGUAGE);
@@ -58,24 +57,48 @@ public class ClosureDescriptor extends LightElement implements PsiElement {
     return "closure descriptor";
   }
 
-  public void setMethodSignature(MethodSignature methodSignature) {
-    myMethodSignature = methodSignature;
-    myClosureSignature = GrClosureSignatureUtil.createSignature(methodSignature);
+  public void setMethod(Map method) {
+    this.myMethod = method;
   }
 
-  public boolean isMethodApplicable(PsiMethod method, GroovyPsiElement place) {
-    assert myMethodSignature != null;
-    assert myClosureSignature != null;
+  public boolean isMethodApplicable(PsiMethod method, PsiSubstitutor substitutor, GroovyPsiElement place) {
+    String name = String.valueOf(myMethod.get("name"));
+    if (name == null || !name.equals(method.getName())) return false;
+
+    List<PsiType> types = new ArrayList<PsiType>();
+    final Object params = myMethod.get("params");
+    if (params instanceof Map) {
+      boolean first = true;
+      for (Object paramName : ((Map)params).keySet()) {
+        Object value = ((Map)params).get(paramName);
+        boolean isNamed = first && value instanceof List;
+        first = false;
+        String typeName = isNamed ? CommonClassNames.JAVA_UTIL_MAP : String.valueOf(value);
+        types.add(convertToPsiType(typeName, place));
+      }
+    }
+    else if (params instanceof List) {
+      for (Object param : ((List)params)) {
+        types.add(convertToPsiType(String.valueOf(param), method.getTypeParameterList()));
+      }
+    }
+    final boolean isConstructor = Boolean.TRUE.equals(myMethod.get("constructor"));
+    final MethodSignature signature = MethodSignatureUtil
+      .createMethodSignature(name, types.toArray(new PsiType[types.size()]), method.getTypeParameters(), substitutor, isConstructor);
+    final GrClosureSignature closureSignature = GrClosureSignatureUtil.createSignature(signature);
 
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    final PsiType[] types = new PsiType[parameters.length];
+    final PsiType[] typeArray = new PsiType[parameters.length];
     ContainerUtil.map(parameters, new Function<PsiParameter, PsiType>() {
       @Override
       public PsiType fun(PsiParameter parameter) {
-        return TypeConversionUtil.erasure(parameter.getType());
+        return parameter.getType();
       }
-    }, types);
-    return method.getName().equals(myMethodSignature.getName()) &&
-           GrClosureSignatureUtil.isSignatureApplicable(myClosureSignature, types, place);
+    }, typeArray);
+    return GrClosureSignatureUtil.isSignatureApplicable(closureSignature, typeArray, place);
+  }
+
+  private static PsiType convertToPsiType(String type, PsiElement place) {
+    return JavaPsiFacade.getElementFactory(place.getProject()).createTypeFromText(type, place);
   }
 }

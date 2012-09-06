@@ -34,10 +34,12 @@ public abstract class StatementUpDownMover {
   public static final ExtensionPointName<StatementUpDownMover> STATEMENT_UP_DOWN_MOVER_EP = ExtensionPointName.create("com.intellij.statementUpDownMover");
 
   public static class MoveInfo {
+    /** Source line range */
     @NotNull
     public LineRange toMove;
 
-    @Nullable // if move is illegal
+    /** Target line range, or <code>null</code> if move not available */
+    @Nullable
     public LineRange toMove2;
 
     public RangeMarker range1;

@@ -253,10 +253,12 @@ public class DiffSideView {
     SyncScrollSupport.scrollEditor(editor, logicalLine);
   }
 
+  @Nullable
   public Editor getEditor() {
     return myEditorSource.getEditor();
   }
 
+  @Nullable
   public FragmentSide getSide() {
     return myEditorSource.getSide();
   }

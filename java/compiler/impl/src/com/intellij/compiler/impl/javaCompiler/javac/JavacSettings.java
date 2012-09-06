@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Chunk;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -29,13 +30,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.StringTokenizer;
 
-public class JavacSettings {
-  public boolean DEBUGGING_INFO = true;
-  public boolean GENERATE_NO_WARNINGS = false;
-  public boolean DEPRECATION = true;
-  public String ADDITIONAL_OPTIONS_STRING = "";
-  public int MAXIMUM_HEAP_SIZE = 128;
-
+public class JavacSettings extends JpsJavaCompilerOptions {
   private boolean myTestsUseExternalCompiler = false;
 
   public Collection<String> getOptions(Chunk<Module> chunk) {

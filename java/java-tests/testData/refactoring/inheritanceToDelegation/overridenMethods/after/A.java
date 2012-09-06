@@ -1,6 +1,6 @@
 class A {
-    int fieldFromA;
     private final MyBase myDelegate = new MyBase();
+    int fieldFromA;
 
     public void firstMethodFromBase() {
         myDelegate.firstMethodFromBase();

@@ -1,8 +1,6 @@
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -13,7 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -21,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author max
@@ -71,11 +70,8 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
           if (!psiManager.areElementsEquivalent(ref.resolve(), annClass)) {
             return false;
           }
-          if (useScope instanceof GlobalSearchScope &&
-              !((GlobalSearchScope)useScope).contains(candidate.getContainingFile().getVirtualFile())) {
-            return false;
-          }
-          return true;
+          return !(useScope instanceof GlobalSearchScope) ||
+                 ((GlobalSearchScope)useScope).contains(candidate.getContainingFile().getVirtualFile());
         }
       })) {
         continue;
@@ -89,28 +85,27 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
     return true;
   }
 
-  private static Collection<? extends PsiElement> getAnnotationCandidates(final PsiClass annClass, SearchScope useScope) {
-    AccessToken token = ReadAction.start();
-    try {
-      if (useScope instanceof GlobalSearchScope) {
-        return JavaAnnotationIndex.getInstance().get(annClass.getName(), annClass.getProject(), (GlobalSearchScope)useScope);
-      }
-      final ArrayList<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
-      for (PsiElement element : ((LocalSearchScope)useScope).getScope()) {
-        element.accept(new PsiRecursiveElementWalkingVisitor() {
-          @Override
-          public void visitElement(PsiElement element) {
-            if (element instanceof PsiAnnotation) {
-              result.add((PsiAnnotation)element);
+  private static Collection<? extends PsiElement> getAnnotationCandidates(final PsiClass annClass, final SearchScope useScope) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Collection<? extends PsiElement>>() {
+      @Override
+      public Collection<? extends PsiElement> compute() {
+        if (useScope instanceof GlobalSearchScope) {
+          return JavaAnnotationIndex.getInstance().get(annClass.getName(), annClass.getProject(), (GlobalSearchScope)useScope);
+        }
+        final List<PsiElement> result = new ArrayList<PsiElement>();
+        for (PsiElement element : ((LocalSearchScope)useScope).getScope()) {
+          element.accept(new PsiRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitElement(PsiElement element) {
+              if (element instanceof PsiAnnotation) {
+                result.add(element);
+              }
             }
-          }
-        });
+          });
+        }
+        return result;
       }
-      return result;
-    }
-    finally {
-      token.finish();
-    }
+    });
   }
 
   public static boolean isInstanceof(PsiElement owner, Class<? extends PsiModifierListOwner>[] types) {
@@ -123,7 +118,7 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
   private static boolean notAnnotation(final PsiElement found) {
     if (found instanceof PsiAnnotation) return false;
 
-    VirtualFile faultyContainer = PsiUtil.getVirtualFile(found);
+    VirtualFile faultyContainer = PsiUtilCore.getVirtualFile(found);
     LOG.error("Non annotation in annotations list: " + faultyContainer+"; element:"+found);
     if (faultyContainer != null && faultyContainer.isValid()) {
       FileBasedIndex.getInstance().requestReindex(faultyContainer);

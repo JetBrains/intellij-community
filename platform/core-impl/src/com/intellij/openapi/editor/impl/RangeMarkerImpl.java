@@ -89,7 +89,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return intervalEnd() + (node == null ? 0 : node.computeDeltaUpToRoot());
   }
 
-  public void invalidate(final DocumentEvent e) {
+  public void invalidate(@NotNull final Object reason) {
     setValid(false);
     RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
 
@@ -97,7 +97,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       node.processAliveKeys(new Processor<RangeMarkerEx>() {
         @Override
         public boolean process(RangeMarkerEx markerEx) {
-          myNode.getTree().reportInvalidation(markerEx, e);
+          myNode.getTree().reportInvalidation(markerEx, reason);
           return true;
         }
       });

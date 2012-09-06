@@ -25,8 +25,8 @@ import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.asm4.ClassVisitor;
 import org.jetbrains.asm4.ClassWriter;
 import org.jetbrains.asm4.Opcodes;
-import org.jetbrains.ether.dependencyView.Callbacks;
-import org.jetbrains.ether.dependencyView.Mappings;
+import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
+import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
@@ -40,9 +40,14 @@ import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.LanguageLevel;
+import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerConfiguration;
@@ -163,7 +168,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       });
 
       // force compilation of bound source file if the form is dirty
-      final CompilerExcludes excludes = context.getProjectDescriptor().project.getCompilerConfiguration().getExcludes();
+      final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(context.getProjectDescriptor().jpsProject).getCompilerExcludes();
       if (!context.isProjectRebuild()) {
         for (Iterator<File> formsIterator = formsToCompile.iterator(); formsIterator.hasNext(); ) {
           final File form = formsIterator.next();
@@ -283,7 +288,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     final ProjectPaths paths = context.getProjectPaths();
     final ProjectDescriptor pd = context.getProjectDescriptor();
-    final boolean addNotNullAssertions = pd.project.getCompilerConfiguration().isAddNotNullAssertions();
+    final boolean addNotNullAssertions = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
+      pd.jpsProject).isAddNotNullAssertions();
 
     final Collection<File> classpath =
       paths.getCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
@@ -432,14 +438,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
     COUNTER_KEY.set(context, counter);
 
     final Set<JpsModule> modules = chunk.getModules();
-    AnnotationProcessingProfile profile = null;
+    ProcessorConfigProfile profile = null;
     if (modules.size() == 1) {
       profile = context.getAnnotationProcessingProfile(modules.iterator().next());
     }
     else {
       // check that all chunk modules are excluded from annotation processing
       for (JpsModule module : modules) {
-        final AnnotationProcessingProfile prof = context.getAnnotationProcessingProfile(module);
+        final ProcessorConfigProfile prof = context.getAnnotationProcessingProfile(module);
         if (prof.isEnabled()) {
           String message = "Annotation processing is not supported for module cycles. Please ensure that all modules from cycle [" + getChunkPresentableName(chunk) + "] are excluded from annotation processing";
           context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
@@ -479,7 +485,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static boolean useEclipseCompiler(CompileContext context) {
-    return USE_EMBEDDED_JAVAC && "Eclipse".equalsIgnoreCase( context.getProjectDescriptor().project.getCompilerConfiguration().getOptions().get("DEFAULT_COMPILER"));
+    JpsProject project = context.getProjectDescriptor().jpsProject;
+    return USE_EMBEDDED_JAVAC && "Eclipse".equalsIgnoreCase(JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getJavaCompilerId());
   }
 
   private void submitAsyncTask(CompileContext context, final Runnable taskRunnable) {
@@ -586,19 +593,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static int getJavacServerHeapSize(CompileContext context) {
-    int heapSize = 512;
-    final Project project = context.getProjectDescriptor().project;
-    final CompilerConfiguration config = project.getCompilerConfiguration();
-    final Map<String, String> opts = useEclipseCompiler(context)? config.getEclipseOptions() : config.getJavacOptions();
-    final String hSize = opts.get("MAXIMUM_HEAP_SIZE");
-    if (hSize != null) {
-      try {
-        heapSize = Integer.parseInt(hSize);
-      }
-      catch (NumberFormatException ignored) {
-      }
-    }
-    return heapSize;
+    final JpsProject project = context.getProjectDescriptor().jpsProject;
+    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    final JpsJavaCompilerOptions options = config.getCurrentCompilerOptions();
+    return options.MAXIMUM_HEAP_SIZE;
+    //return 512;//todo[jeka] default value was 128 in IDEA, do we really need to set it to 512 for javac server?
   }
 
   private static InstrumentationClassFinder createInstrumentationClassFinder(Collection<File> platformCp,
@@ -643,7 +642,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return cached;
   }
 
-  private static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk, AnnotationProcessingProfile profile) {
+  private static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk, ProcessorConfigProfile profile) {
     List<String> cached = JAVAC_OPTIONS.get(context);
     if (cached == null) {
       loadCommonJavacOptions(context);
@@ -662,7 +661,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, msgBuilder.toString()));
       }
-      if (encoding != null) {
+      if (!StringUtil.isEmpty(encoding)) {
         options.add("-encoding");
         options.add(encoding);
       }
@@ -674,7 +673,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
       options.add(langLevel);
     }
 
-    final BytecodeTargetConfiguration targetConfig = context.getProjectDescriptor().project.getCompilerConfiguration().getBytecodeTarget();
+    JpsJavaCompilerConfiguration compilerConfiguration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
+      context.getProjectDescriptor().jpsProject);
     String bytecodeTarget = null;
     int chunkSdkVersion = -1;
     for (JpsModule module : chunk.getModules()) {
@@ -686,7 +686,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       }
 
-      final String moduleTarget = getModuleTarget(targetConfig, module);
+      final String moduleTarget = compilerConfiguration.getByteCodeTargetLevel(module.getName());
       if (moduleTarget == null) {
         continue;
       }
@@ -713,8 +713,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     if (profile != null && profile.isEnabled()) {
       // configuring annotation processing
-      if (!profile.getObtainProcessorsFromClasspath()) {
-        final String processorsPath = profile.getProcessorsPath();
+      if (!profile.isObtainProcessorsFromClasspath()) {
+        final String processorsPath = profile.getProcessorPath();
         options.add("-processorpath");
         options.add(processorsPath == null? "" : FileUtil.toSystemDependentName(processorsPath.trim()));
       }
@@ -724,13 +724,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
         options.add(procFQName);
       }
 
-      for (Map.Entry<String, String> optionEntry : profile.getProcessorsOptions().entrySet()) {
+      for (Map.Entry<String, String> optionEntry : profile.getProcessorOptions().entrySet()) {
         options.add("-A" + optionEntry.getKey() + "=" + optionEntry.getValue());
       }
 
       final File srcOutput = context.getProjectPaths()
         .getAnnotationProcessorGeneratedSourcesOutputDir(chunk.getModules().iterator().next(), chunk.isTests(),
-                                                         profile.getGeneratedSourcesDirName());
+                                                         profile.getGeneratedSourcesDirectoryName());
       if (srcOutput != null) {
         srcOutput.mkdirs();
         options.add("-s");
@@ -788,37 +788,25 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return javaVersion;
   }
 
-  @Nullable
-  private static String getModuleTarget(BytecodeTargetConfiguration config, JpsModule module) {
-    final String level = config.getModulesBytecodeTarget().get(module.getName());
-    if (level != null) {
-      return level.isEmpty()? null : level;
-    }
-    return config.getProjectBytecodeTarget();
-  }
-
   private static void loadCommonJavacOptions(CompileContext context) {
     final List<String> options = new ArrayList<String>();
     final List<String> vmOptions = new ArrayList<String>();
 
-    final Project project = context.getProjectDescriptor().project;
-    final CompilerConfiguration compilerConfig = project.getCompilerConfiguration();
+    final JpsProject project = context.getProjectDescriptor().jpsProject;
+    final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
     final boolean useEclipseCompiler = useEclipseCompiler(context);
-    final Map<String, String> opts = useEclipseCompiler ? compilerConfig.getEclipseOptions() : compilerConfig.getJavacOptions();
-    final boolean debugInfo = !"false".equals(opts.get("DEBUGGING_INFO"));
-    final boolean nowarn = "true".equals(opts.get("GENERATE_NO_WARNINGS"));
-    final boolean deprecation = !"false".equals(opts.get("DEPRECATION"));
-    if (debugInfo) {
+    final JpsJavaCompilerOptions compilerOptions = compilerConfig.getCurrentCompilerOptions();
+    if (compilerOptions.DEBUGGING_INFO) {
       options.add("-g");
     }
-    if (deprecation) {
+    if (compilerOptions.DEPRECATION) {
       options.add("-deprecation");
     }
-    if (nowarn) {
+    if (compilerOptions.GENERATE_NO_WARNINGS) {
       options.add("-nowarn");
     }
 
-    final String customArgs = opts.get("ADDITIONAL_OPTIONS_STRING");
+    final String customArgs = compilerOptions.ADDITIONAL_OPTIONS_STRING;
     if (customArgs != null) {
       final StringTokenizer customOptsTokenizer = new StringTokenizer(customArgs, " \t\r\n");
       boolean skip = false;

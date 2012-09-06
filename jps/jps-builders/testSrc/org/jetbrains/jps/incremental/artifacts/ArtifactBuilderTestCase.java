@@ -155,7 +155,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
       myDescriptor.incUsageCounter();
     }
     myArtifactBuilderLogger.clear();
-    final CompileScope scope = new AllProjectScope(myDescriptor.project, myDescriptor.jpsProject,
+    final CompileScope scope = new AllProjectScope(myDescriptor.jpsProject,
                                                    new HashSet<JpsArtifact>(Arrays.asList(artifacts)), force);
     return doBuild(myDescriptor, scope, !force, false, false);
   }

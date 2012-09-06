@@ -171,6 +171,10 @@ public final class DarculaLaf extends BasicLookAndFeel {
                                                  Integer.parseInt(numbers.get(1)),
                                                  Integer.parseInt(numbers.get(2)),
                                                  Integer.parseInt(numbers.get(3))));
+        } else if (key.endsWith(".border")) {
+          try {
+            defaults.put(key, Class.forName(value).newInstance());
+          } catch (Exception ignore) {}
         } else {
           final Color color = ColorUtil.fromHex(value, null);
           final Integer invVal = getInteger(value);

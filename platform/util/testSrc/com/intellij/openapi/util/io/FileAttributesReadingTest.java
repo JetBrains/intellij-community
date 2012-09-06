@@ -45,7 +45,7 @@ public class FileAttributesReadingTest {
 
   @Before
   public void setUp() throws Exception {
-    myTempDirectory = FileUtil.createTempDirectory(getClass().getName(), ".tmp");
+    myTempDirectory = FileUtil.createTempDirectory(getClass().getSimpleName() + ".", ".tmp");
   }
 
   @After
@@ -325,7 +325,7 @@ public class FileAttributesReadingTest {
   private static FileAttributes getAttributes(@NotNull final File file, final boolean checkList) {
     final FileAttributes attributes = FileSystemUtil.getAttributes(file);
     assertNotNull(attributes);
-    System.out.println(attributes);
+    System.out.println(attributes + ": " + file);
 
     if (SystemInfo.isWindows && checkList) {
       final String parent = file.getParent();

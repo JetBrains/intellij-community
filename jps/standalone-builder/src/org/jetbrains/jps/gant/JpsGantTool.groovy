@@ -1,7 +1,5 @@
 package org.jetbrains.jps.gant
 import org.codehaus.gant.GantBinding
-import org.jetbrains.jps.Project
-import org.jetbrains.jps.idea.IdeaProjectLoader
 import org.jetbrains.jps.incremental.Utils
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsGlobal
@@ -17,14 +15,12 @@ final class JpsGantTool {
   JpsGantTool(GantBinding binding) {
     JpsModel model = JpsElementFactory.getInstance().createModel();
     JpsProject project = model.project
-    def oldProject = new Project()
     binding.setVariable("project", project)
-    binding.setVariable("oldProject", oldProject)
     binding.setVariable("global", model.global)
-    def builder = new JpsGantProjectBuilder(binding.ant.project, model, oldProject)
+    def builder = new JpsGantProjectBuilder(binding.ant.project, model)
     binding.setVariable("projectBuilder", builder)
     binding.setVariable("loadProjectFromPath", {String path ->
-      loadProject(path, model, oldProject, builder);
+      loadProject(path, model, builder);
     })
 
     binding.setVariable("jdk", {Object[] args ->
@@ -85,8 +81,7 @@ final class JpsGantTool {
     binding.ant.taskdef(name: "layout", classname: "jetbrains.antlayout.tasks.LayoutTask")
   }
 
-  private void loadProject(String path, JpsModel model, Project oldProject, JpsGantProjectBuilder builder) {
-    IdeaProjectLoader.loadFromPath(oldProject, path, [:])
+  private void loadProject(String path, JpsModel model, JpsGantProjectBuilder builder) {
     JpsProjectLoader.loadProject(model.project, [:], path)
     builder.exportModuleOutputProperties();
     if (builder.getDataStorageRoot() == null) {

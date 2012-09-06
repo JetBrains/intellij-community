@@ -43,12 +43,10 @@ public class TestClass {
             return yearsTo( expiry );
         }
         return 0.0;
-
     }
 
     private double yearsTo( final Date endDate ) {
         Date beginDate = ( today == null ? start : today );
         return ( ( endDate.getTime() - beginDate.getTime() ));
     }
-
 }

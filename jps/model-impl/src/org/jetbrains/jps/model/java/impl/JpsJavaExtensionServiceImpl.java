@@ -9,6 +9,8 @@ import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
+import org.jetbrains.jps.model.java.impl.compiler.JpsJavaCompilerConfigurationImpl;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
@@ -141,6 +143,22 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
       sdk.addRoot(root, JpsOrderRootType.COMPILED);
     }
     return sdk;
+  }
+
+  @Nullable
+  @Override
+  public JpsJavaCompilerConfiguration getCompilerConfiguration(@NotNull JpsProject project) {
+    return project.getContainer().getChild(JpsJavaCompilerConfigurationImpl.ROLE);
+  }
+
+  @NotNull
+  @Override
+  public JpsJavaCompilerConfiguration getOrCreateCompilerConfiguration(@NotNull JpsProject project) {
+    JpsJavaCompilerConfiguration configuration = getCompilerConfiguration(project);
+    if (configuration == null) {
+      configuration = project.getContainer().setChild(JpsJavaCompilerConfigurationImpl.ROLE, new JpsJavaCompilerConfigurationImpl());
+    }
+    return configuration;
   }
 
   @Override

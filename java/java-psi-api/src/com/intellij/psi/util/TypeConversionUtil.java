@@ -648,7 +648,7 @@ public class TypeConversionUtil {
     if (right instanceof PsiLambdaExpressionType) {
       final PsiLambdaExpression rLambdaExpression = ((PsiLambdaExpressionType)right).getExpression();
       if (left instanceof PsiClassType) {
-        return LambdaUtil.isAcceptable(rLambdaExpression, left);
+        return LambdaUtil.isAcceptable(rLambdaExpression, left, false);
       }
       if (left instanceof PsiLambdaExpressionType) {
         final PsiLambdaExpression lLambdaExpression = ((PsiLambdaExpressionType)left).getExpression();

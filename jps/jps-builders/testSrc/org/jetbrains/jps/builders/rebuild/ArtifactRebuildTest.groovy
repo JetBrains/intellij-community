@@ -12,7 +12,7 @@ class ArtifactRebuildTest extends JpsRebuildTestCase {
   public void testArtifactIncludesArchiveArtifact() {
     def name = "artifactIncludesArchiveArtifact"
     try {
-      doTest("$name/${name}.ipr", null) {
+      doTest("$name/${name}.ipr", {
         dir("artifacts") {
           dir("data") {
             archive("a.jar") {
@@ -20,7 +20,7 @@ class ArtifactRebuildTest extends JpsRebuildTestCase {
             }
           }
         }
-      }
+      })
     }
     finally {
       FileUtil.delete(new File(FileUtil.toSystemDependentName(getTestDataRootPath() + "/$name/data/a.jar")))
@@ -43,7 +43,7 @@ class ArtifactRebuildTest extends JpsRebuildTestCase {
   }
 
   public void testExtractDir() {
-    doTest("extractDirTest/extractDirTest.ipr", null, {
+    doTest("extractDirTest/extractDirTest.ipr", {
       dir("artifacts") {
         dir("extractDir") {
           file("b.txt", "b")
@@ -74,7 +74,7 @@ class ArtifactRebuildTest extends JpsRebuildTestCase {
   }
 
   public void testManifestInArtifact() {
-    loadAndRebuild("manifestInArtifact/manifest.ipr", [:], null)
+    loadAndRebuild("manifestInArtifact/manifest.ipr", [:])
     File jarFile = new File(myOutputDirectory, "artifacts/simple/simple.jar")
     junit.framework.Assert.assertTrue(jarFile.exists())
     File extracted = FileUtil.createTempDirectory("build-manifest", "")
@@ -86,7 +86,7 @@ class ArtifactRebuildTest extends JpsRebuildTestCase {
   }
 
   public void testOverwriteArtifacts() {
-    doTest("overwriteTest/overwriteTest.ipr", null, {
+    doTest("overwriteTest/overwriteTest.ipr", {
       dir("artifacts") {
         dir("classes") {
           file("a.xml", "<root2/>")
@@ -115,7 +115,7 @@ class ArtifactRebuildTest extends JpsRebuildTestCase {
 
   public void testPathVariablesInArtifact() {
     String externalDir = "${getTestDataRootPath()}/pathVariables/external"
-    doTest("pathVariables/pathVariables.ipr", ["EXTERNAL_DIR": externalDir], null, {
+    doTest("pathVariables/pathVariables.ipr", ["EXTERNAL_DIR": externalDir], {
       dir("artifacts") {
         dir("fileCopy") {
           dir("dir") {
@@ -127,7 +127,7 @@ class ArtifactRebuildTest extends JpsRebuildTestCase {
   }
 
   public void testModuleTestOutputElement() {
-    doTest("moduleTestOutput/moduleTestOutput.ipr", null, {
+    doTest("moduleTestOutput/moduleTestOutput.ipr", {
       dir("artifacts") {
         dir("tests") {
           file("MyTest.class")

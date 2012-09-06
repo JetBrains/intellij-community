@@ -96,6 +96,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
   private WeakUnreferencedFilter myFilter;
   private DeadHTMLComposer myComposer;
   @NonNls public static final String SHORT_NAME = "UnusedDeclaration";
+  @NonNls private static final String ALTERNATIVE_ID = "unused";
 
   private static final String COMMENT_OUT_QUICK_FIX = InspectionsBundle.message("inspection.dead.code.comment.quickfix");
   private static final String DELETE_QUICK_FIX = InspectionsBundle.message("inspection.dead.code.safe.delete.quickfix");
@@ -351,7 +352,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
           PsiFile file = refElement.getContainingFile();
 
           if (file == null) return;
-          final boolean isSuppressed = refElement.isSuppressed(getShortName());
+          final boolean isSuppressed = refElement.isSuppressed(getShortName(), ALTERNATIVE_ID);
           if (!getContext().isToCheckFile(file, UnusedDeclarationInspection.this) || isSuppressed) {
             if (isSuppressed || !scope.contains(file)) {
               getEntryPointsManager().addEntryPoint(refElement, false);

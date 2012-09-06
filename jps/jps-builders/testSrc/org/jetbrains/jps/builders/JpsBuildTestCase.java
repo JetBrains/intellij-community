@@ -6,11 +6,9 @@ import com.intellij.testFramework.UsefulTestCase;
 import junit.framework.Assert;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
-import org.jetbrains.jps.Project;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
@@ -37,13 +35,11 @@ import java.util.Map;
 public abstract class JpsBuildTestCase extends UsefulTestCase {
   protected JpsProject myJpsProject;
   protected JpsModel myModel;
-  protected Project myProject;
   private File myDataStorageRoot;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myProject = new Project();
     myModel = JpsElementFactory.getInstance().createModel();
     myJpsProject = myModel.getProject();
     myDataStorageRoot = FileUtil.createTempDirectory("compile-server-" + getProjectName(), null);
@@ -74,7 +70,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     try {
       ProjectTimestamps timestamps = new ProjectTimestamps(myDataStorageRoot);
       BuildDataManager dataManager = new BuildDataManager(myDataStorageRoot, true);
-      return new ProjectDescriptor(myProject, myModel, new BuildFSState(true), timestamps, dataManager, buildLoggingManager);
+      return new ProjectDescriptor(myModel, new BuildFSState(true), timestamps, dataManager, buildLoggingManager);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -91,7 +87,6 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       String testDataRootPath = getTestDataRootPath();
       String fullProjectPath = FileUtil.toSystemDependentName(testDataRootPath != null ? testDataRootPath + "/" + projectPath : projectPath);
       pathVariables = addPathVariables(pathVariables);
-      IdeaProjectLoader.loadFromPath(myProject, fullProjectPath, pathVariables);
       JpsProjectLoader.loadProject(myJpsProject, pathVariables, fullProjectPath);
     }
     catch (IOException e) {

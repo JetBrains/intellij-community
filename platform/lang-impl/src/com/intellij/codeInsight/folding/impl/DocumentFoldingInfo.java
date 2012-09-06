@@ -93,7 +93,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
     }
   }
 
-  void setToEditor(@NotNull Editor editor) {
+  void setToEditor(@NotNull final Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     if (psiManager.isDisposed()) return;

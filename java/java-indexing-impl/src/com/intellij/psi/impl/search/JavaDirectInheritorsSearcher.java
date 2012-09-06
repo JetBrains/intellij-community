@@ -15,9 +15,7 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -178,14 +176,13 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     return true;
   }
 
-  private static boolean checkInheritance(DirectClassInheritorsSearch.SearchParameters p, PsiClass aClass, PsiClass candidate) {
-    final AccessToken token = ReadAction.start();
-    try {
-      return !p.isCheckInheritance() || candidate.isInheritor(aClass, false);
-    }
-    finally {
-      token.finish();
-    }
+  private static boolean checkInheritance(final DirectClassInheritorsSearch.SearchParameters p, final PsiClass aClass, final PsiClass candidate) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        return !p.isCheckInheritance() || candidate.isInheritor(aClass, false);
+      }
+    });
   }
 
   private static boolean processSameNamedClasses(Processor<PsiClass> consumer, PsiClass aClass, List<PsiClass> sameNamedClasses) {

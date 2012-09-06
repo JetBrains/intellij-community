@@ -19,6 +19,7 @@ package com.intellij.codeInsight.actions;
 import com.intellij.application.options.editor.EditorOptions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -28,7 +29,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.Module;
@@ -150,8 +150,8 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
 
     boolean optimizeImports = ReformatFilesDialog.isOptmizeImportsOptionOn();
     boolean processWholeFile = false;
-    boolean processChangedTextOnly = false;
-    boolean rearrangeEntries = ReformatFilesDialog.isRearrangeEntriesOptionOn();
+    boolean processChangedTextOnly = PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, false);
+    boolean rearrangeEntries = PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.REARRANGE_ENTRIES_KEY, false);
     final boolean showDialog = EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG;
     if (showDialog || (file == null && dir != null)) {
       final LayoutCodeDialog dialog = new LayoutCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), file, dir,

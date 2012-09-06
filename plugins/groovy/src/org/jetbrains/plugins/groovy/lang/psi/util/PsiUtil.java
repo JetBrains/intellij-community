@@ -235,13 +235,14 @@ public class PsiUtil {
   public static PsiType[] getArgumentTypes(PsiElement place, boolean nullAsBottom) {
     return getArgumentTypes(place, nullAsBottom, null, false);
   }
+
   @Nullable
   public static PsiType[] getArgumentTypes(PsiElement place, boolean nullAsBottom, @Nullable GrExpression stopAt, boolean byShape) {
     PsiElement parent = place instanceof GrEnumConstant ? place : place.getParent();
 
     if (parent instanceof GrIndexProperty) {
       GrIndexProperty index = (GrIndexProperty)parent;
-      PsiType[] argTypes = getArgumentTypes(index.getNamedArguments(), index.getExpressionArguments(), index.getClosureArguments(), false, null, byShape);
+      PsiType[] argTypes = getArgumentTypes(index.getNamedArguments(), index.getExpressionArguments(), index.getClosureArguments(), nullAsBottom, stopAt, byShape);
       if (isLValue(index) && argTypes != null) {
         return ArrayUtil.append(argTypes, TypeInferenceHelper.getInitializerFor(index));
       }
@@ -260,10 +261,10 @@ public class PsiUtil {
     else if (parent instanceof GrAnonymousClassDefinition) {
       final GrArgumentList argList = ((GrAnonymousClassDefinition)parent).getArgumentListGroovy();
       if (argList == null) {
-        return getArgumentTypes(GrNamedArgument.EMPTY_ARRAY, GrExpression.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY, false, null, byShape);
+        return getArgumentTypes(GrNamedArgument.EMPTY_ARRAY, GrExpression.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY, nullAsBottom, stopAt, byShape);
       }
       else {
-        return getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, false, null, byShape);
+        return getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, nullAsBottom, stopAt, byShape);
       }
     }
 
@@ -280,7 +281,8 @@ public class PsiUtil {
                                            GrExpression[] expressions,
                                            GrClosableBlock[] closures,
                                            boolean nullAsBottom,
-                                           @Nullable GrExpression stopAt, boolean byShape) {
+                                           @Nullable GrExpression stopAt,
+                                           boolean byShape) {
     List<PsiType> result = new ArrayList<PsiType>();
 
     if (namedArgs.length > 0) {

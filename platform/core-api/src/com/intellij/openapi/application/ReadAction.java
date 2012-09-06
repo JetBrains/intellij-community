@@ -15,30 +15,18 @@
  */
 package com.intellij.openapi.application;
 
-import java.awt.*;
+import com.intellij.openapi.util.Computable;
 
 public abstract class ReadAction<T> extends BaseActionRunnable<T> {
-
+  @Override
   public RunResult<T> execute() {
     final RunResult<T> result = new RunResult<T>(this);
-
-    if (canReadNow()) {
-      result.run();
-      return result;
-    }
-
-    if (EventQueue.isDispatchThread()) {
-      return result.run();
-    } else {
-      AccessToken r = start();
-      try {
-        result.run();
-      } finally {
-        r.finish();
+    return ApplicationManager.getApplication().runReadAction(new Computable<RunResult<T>>() {
+      @Override
+      public RunResult<T> compute() {
+        return result.run();
       }
-    }
-
-    return result;
+    });
   }
 
   public static AccessToken start() {

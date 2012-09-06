@@ -10,6 +10,7 @@
     <orderEntry type="library" exported="" name="Groovy" level="project" />
     <orderEntry type="module" module-name="jps-builders" />
     <orderEntry type="module" module-name="jps-model-api" />
+    <orderEntry type="module" module-name="groovy-rt-constants" />
   </component>
 </module>
 

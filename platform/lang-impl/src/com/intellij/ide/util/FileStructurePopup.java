@@ -304,13 +304,11 @@ public class FileStructurePopup implements Disposable {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-        try {
-          myFilteringStructure.rebuild();
-        }
-        finally {
-          token.finish();
-        }
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            myFilteringStructure.rebuild();
+          }
+        });
 
         SwingUtilities.invokeLater(new Runnable() {
           @Override

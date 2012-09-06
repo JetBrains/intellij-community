@@ -40,7 +40,7 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
     // init patterns
     ResourcePatterns patterns = ResourcePatterns.KEY.get(context);
     if (patterns == null) {
-      ResourcePatterns.KEY.set(context, new ResourcePatterns(context.getProjectDescriptor().project));
+      ResourcePatterns.KEY.set(context, new ResourcePatterns(context.getProjectDescriptor().jpsProject));
     }
   }
 

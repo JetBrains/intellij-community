@@ -1,6 +1,6 @@
 package org.jetbrains.ether;
 
-import org.jetbrains.ether.dependencyView.Mappings;
+import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 
 import java.io.File;
 

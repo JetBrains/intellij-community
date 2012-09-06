@@ -28,26 +28,19 @@ import java.util.*;
 public class JpsGantProjectBuilder {
   private final Project myProject;
   private final JpsModel myModel;
-  private final org.jetbrains.jps.Project myOldProject;
   private boolean myCompressJars;
   private File myDataStorageRoot;
   private JpsModelLoader myModelLoader;
   private boolean myDryRun;
   private BuildInfoPrinter myBuildInfoPrinter = new DefaultBuildInfoPrinter();
 
-  public JpsGantProjectBuilder(Project project, JpsModel model, org.jetbrains.jps.Project oldProject) {
+  public JpsGantProjectBuilder(Project project, JpsModel model) {
     myProject = project;
     myModel = model;
-    myOldProject = oldProject;
     myModelLoader = new JpsModelLoader() {
       @Override
       public JpsModel loadModel() {
         return myModel;
-      }
-
-      @Override
-      public org.jetbrains.jps.Project loadOldProject() {
-        return myOldProject;
       }
     };
   }

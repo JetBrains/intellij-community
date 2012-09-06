@@ -1,6 +1,6 @@
 class Test {
-  private String myTimer;
     private final String string;
+    private String myTimer;
 
     Test() {
         string = "";

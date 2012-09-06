@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.codeInspection.confusing;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -100,7 +101,7 @@ public class GrUnusedIncDecInspection extends BaseInspection {
       final Instruction cur = ControlFlowUtils.findInstruction(operand, owner.getControlFlow());
 
       if (cur == null) {
-        LOG.error("no instruction found in flow." + "operand: " + operand.getText() + " cfo: " + owner.getText());
+        LogMessageEx.error(LOG, "no instruction found in flow." + "operand: " + operand.getText(), owner.getText());
       }
 
       //get write access for inc or dec

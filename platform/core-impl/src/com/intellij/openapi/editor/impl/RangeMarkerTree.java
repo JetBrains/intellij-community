@@ -184,7 +184,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     }
   }
 
-  private void updateMarkersOnChange(DocumentEvent e) {
+  private void updateMarkersOnChange(@NotNull DocumentEvent e) {
     try {
       l.writeLock().lock();
       if (size() == 0) return;
@@ -368,4 +368,51 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     return true;
   }
 
+  public void retarget(int start, int end, int newBase) {
+    l.writeLock().lock();
+    try {
+      //updateMarkersOnChange(new DocumentEventImpl(myDocument, ));
+
+      List<IntervalNode<T>> affected = new ArrayList<IntervalNode<T>>();
+      collectNodesToRetarget(getRoot(), start, end, affected);
+      if (affected.isEmpty()) return;
+
+      int shift = newBase - start;
+      for (IntervalNode<T> node : affected) {
+        removeNode(node);
+        node.setLeft(null);
+        node.setRight(null);
+        node.setParent(null);
+        node.changeDelta(shift);
+        pushDelta(node);
+        findOrInsert(node);
+      }
+    }
+    finally {
+      l.writeLock().unlock();
+    }
+  }
+
+  private void collectNodesToRetarget(IntervalNode<T> root,
+                                      int start, int end,
+                                      @NotNull List<IntervalNode<T>> affected) {
+    if (root == null) return;
+    pushDelta(root);
+
+    int maxEnd = root.maxEnd;
+    assert root.isValid();
+
+    if (start > maxEnd) {
+      // no need to bother
+      return;
+    }
+    collectNodesToRetarget(root.getLeft(), start, end, affected);
+    if (start <= root.intervalStart() && root.intervalEnd() <= end) {
+      affected.add(root);
+    }
+    if (end < root.intervalStart()) {
+      return;
+    }
+    collectNodesToRetarget(root.getRight(), start, end, affected);
+  }
 }

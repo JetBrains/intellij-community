@@ -23,12 +23,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -44,7 +42,11 @@ import java.util.List;
  * @author Max Medvedev
  */
 public class ClosureTemplateBuilder {
-  public static void runTemplate(List<ClosureParameterInfo> parameters, GrClosableBlock block, final Project project, final Editor editor) {
+  public static void runTemplate(List<ClosureParameterInfo> parameters,
+                                 GrClosableBlock block,
+                                 PsiSubstitutor substitutor,
+                                 PsiMethod method, final Project project,
+                                 final Editor editor) {
     assert block.getArrow() == null;
     if (parameters.isEmpty()) return;
 
@@ -54,7 +56,9 @@ public class ClosureTemplateBuilder {
       final String type = parameter.getType();
       final String name = parameter.getName();
       if (type != null) {
-        buffer.append(type).append(" ");
+        final PsiType fromText = JavaPsiFacade.getElementFactory(project).createTypeFromText(type, method);
+        final PsiType substituted = TypeConversionUtil.erasure(substitutor.substitute(fromText));
+        buffer.append(substituted.getCanonicalText()).append(" ");
       }
       else {
         buffer.append("def ");

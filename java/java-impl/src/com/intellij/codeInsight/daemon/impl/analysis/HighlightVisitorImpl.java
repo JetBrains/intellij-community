@@ -268,7 +268,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
                     for (int i = 0; i < lambdaParameters.length; i++) {
                       PsiParameter lambdaParameter = lambdaParameters[i];
-                      if (!TypeConversionUtil.isAssignable(resolveResult.getSubstitutor().substitute(parameters[i].getType()), lambdaParameter.getType())) {
+                      if (!TypeConversionUtil.isAssignable(LambdaUtil.getSubstitutor(interfaceMethod, resolveResult).substitute(parameters[i].getType()), lambdaParameter.getType())) {
                         myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, lambdaParameter, incompatibleTypesMessage));
                         break;
                       }

@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.arrangement.settings.ArrangementConditionsGrou
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.plaf.TreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -90,6 +92,17 @@ public class ArrangementRuleTree {
     });
     myRoot = new ArrangementTreeNode(null);
     myTreeModel = new DefaultTreeModel(myRoot);
+    
+    final Condition<Integer> wideSelectionCondition = new Condition<Integer>() {
+      @Override
+      public boolean value(Integer row) {
+        TreePath path = myTree.getPathForRow(row);
+        if (path == null) {
+          return false;
+        }
+        return isEmptyCondition(((ArrangementTreeNode)path.getLastPathComponent()).getBackingCondition());
+      }
+    };
     myTree = new Tree(myTreeModel) {
       
       @Override
@@ -103,16 +116,7 @@ public class ArrangementRuleTree {
       @NotNull
       @Override
       protected Condition<Integer> getWideSelectionBackgroundCondition() {
-        return new Condition<Integer>() {
-          @Override
-          public boolean value(Integer row) {
-            TreePath path = getPathForRow(row);
-            if (path == null) {
-              return false;
-            }
-            return isEmptyCondition(((ArrangementTreeNode)path.getLastPathComponent()).getBackingCondition());
-          }
-        };
+        return wideSelectionCondition;
       }
 
       @Override
@@ -135,9 +139,10 @@ public class ArrangementRuleTree {
           mySkipSelectionChange = false;
         }
       }
-      };
+    };
     myTree.setSelectionModel(mySelectionModel);
     myTree.setRootVisible(false);
+    myTree.setRowHeight(0); // Don't insist on the same row height
     mySelectionModel.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
@@ -184,6 +189,15 @@ public class ArrangementRuleTree {
     
     myTree.setShowsRootHandles(false);
     myTree.setCellRenderer(new MyCellRenderer());
+    TreeUI ui = myTree.getUI();
+    if (!(ui instanceof WideSelectionTreeUI)) {
+      // IJ wide selection tree ui is not applied for some LAFs (e.g. GTK) and default wide selection tree ui doesn't allow
+      // to customize selection background appliance algorithm (don't draw background for rule components; do draw for
+      // 'new rule' node).
+      // That's why we forcibly apply UI with custom selection strategy here.
+      // P.S. 'wide selection tree ui' appliance decision is taken at the com.intellij.ui.treeStructure.Tree.setUI().
+      myTree.setUI(new WideSelectionTreeUI(true, wideSelectionCondition));
+    }
   }
 
   private void selectPreviousRule() {
