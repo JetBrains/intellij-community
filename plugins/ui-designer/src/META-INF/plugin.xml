@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <name>UI Designer</name>
   <id>com.intellij.uiDesigner</id>
-  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
   <resource-bundle>messages.UIDesignerBundle</resource-bundle>
   <depends>com.intellij.java-i18n</depends>
   <depends>com.intellij.properties</depends>

@@ -5,7 +5,7 @@
   <description>Enables task and context management</description>
 
   <version>1.0</version>
-  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
 
   <!--fake dependency for Web IDE-->
   <depends>com.intellij.modules.xml</depends>

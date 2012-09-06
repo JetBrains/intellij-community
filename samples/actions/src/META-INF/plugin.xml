@@ -9,7 +9,7 @@
   <version>1.0</version>
 
   <!-- Plugin's vendor -->
-  <vendor logo="/general/ijLogo.png">IntelliJ</vendor>
+  <vendor>IntelliJ</vendor>
 
   <!-- the IDEA build number which works with plugin -->
     <!--

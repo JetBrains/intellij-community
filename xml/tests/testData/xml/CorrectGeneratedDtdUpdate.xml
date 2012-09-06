@@ -2,7 +2,7 @@
   <name>HTML Designer</name>
   <id>com.intellij.htmlDesigner</id>
   <version>1.0</version>
-  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
   <idea-version min="5.0" max="5.0"/>
 
   <selection><</selection>extensionPoints>

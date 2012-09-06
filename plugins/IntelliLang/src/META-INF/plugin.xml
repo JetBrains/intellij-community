@@ -1,7 +1,7 @@
 <idea-plugin url="http://www.jetbrains.net/confluence/display/CONTEST/IntelliLang" version="2">
   <name>IntelliLang</name>
   <id>org.intellij.intelliLang</id>
-  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
   <description><![CDATA[User configurable language injection support (originally developed by Sascha Weinreuter sascha.weinreuter@cit.de)]]></description>
   <version>8.0</version>
 

@@ -4,7 +4,7 @@
   <version>1.0</version>
 
   <category>inspection</category>
-  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
 
   <depends>com.intellij.properties</depends>
 
