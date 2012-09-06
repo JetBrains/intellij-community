@@ -6,5 +6,4 @@ class Test {
         System.out.println(MessageFormat.format("i: {0}", i));
         System.out.println(MessageFormat.format("k: {0}", j));
     }
-
 }
