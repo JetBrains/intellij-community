@@ -563,7 +563,9 @@ public class CodeCompletionHandlerBase {
                                                            Editor hostEditor,
                                                            OffsetMap hostMap) {
     assert hostFile.isValid() : "file became invalid: " + hostFile.getClass();
-    assert hostMap.getOffset(CompletionInitializationContext.START_OFFSET) < hostFile.getTextLength() : "startOffset outside the host file";
+    if (hostMap.getOffset(CompletionInitializationContext.START_OFFSET) >= hostFile.getTextLength()) {
+      throw new AssertionError("startOffset outside the host file: " + hostMap.getOffset(CompletionInitializationContext.START_OFFSET) + "; " + hostFile);
+    }
 
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(hostFile.getProject());
     CompletionContext context;
