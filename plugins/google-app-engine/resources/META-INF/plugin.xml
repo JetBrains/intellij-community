@@ -18,7 +18,7 @@
   <depends>com.intellij.javaee</depends>
   <depends optional="true" config-file="gwt-integration.xml">com.intellij.gwt</depends>
   <depends>com.intellij.modules.ultimate</depends>
-  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
   <category>Web/JavaEE Technologies</category>
 
   <extensionPoints>
