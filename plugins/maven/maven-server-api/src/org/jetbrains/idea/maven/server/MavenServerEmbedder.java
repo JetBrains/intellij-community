@@ -54,8 +54,11 @@ public interface MavenServerEmbedder extends Remote {
   @NotNull
   MavenServerExecutionResult execute(@NotNull File file,
                                      @NotNull Collection<String> activeProfiles,
-                                     @NotNull List<String> goals) throws RemoteException,
-                                                                         MavenServerProcessCanceledException;
+                                     @NotNull Collection<String> inactiveProfiles,
+                                     @NotNull List<String> goals,
+                                     @NotNull final List<String> selectedProjects,
+                                     boolean alsoMake,
+                                     boolean alsoMakeDependents) throws RemoteException, MavenServerProcessCanceledException;
 
   void reset() throws RemoteException;
 

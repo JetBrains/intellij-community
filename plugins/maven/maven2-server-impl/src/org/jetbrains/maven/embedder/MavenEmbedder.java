@@ -289,9 +289,28 @@ public class MavenEmbedder {
   @NotNull
   public MavenExecutionResult execute(@NotNull final File file,
                                       @NotNull final List<String> activeProfiles,
-                                      @NotNull final List<String> goals) {
+                                      @NotNull final List<String> inactiveProfiles,
+                                      @NotNull final List<String> goals,
+                                      @NotNull final List<String> selectedProjects,
+                                      boolean alsoMake,
+                                      boolean alsoMakeDependents) {
     try {
-      MavenExecutionRequest request = createRequest(file, activeProfiles, Collections.<String>emptyList(), goals);
+      MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, goals);
+
+      if (!selectedProjects.isEmpty()) {
+        request.setRecursive(true);
+        request.setSelectedProjects(selectedProjects);
+        if (alsoMake && alsoMakeDependents) {
+          request.setMakeBehavior(ReactorManager.MAKE_BOTH_MODE);
+        }
+        else if (alsoMake) {
+          request.setMakeBehavior(ReactorManager.MAKE_MODE);
+        }
+        else if (alsoMakeDependents) {
+          request.setMakeBehavior(ReactorManager.MAKE_DEPENDENTS_MODE);
+        }
+      }
+
       Maven maven = getComponent(Maven.class);
       Method method = maven.getClass().getDeclaredMethod("doExecute", MavenExecutionRequest.class, EventDispatcher.class);
       method.setAccessible(true);
