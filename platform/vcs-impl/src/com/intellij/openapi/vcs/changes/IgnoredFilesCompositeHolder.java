@@ -74,8 +74,7 @@ public class IgnoredFilesCompositeHolder implements IgnoredFilesHolder {
 
   @Override
   public void addFile(VirtualFile file) {
-    LOG.assertTrue(myHolderMap.containsKey(myCurrentVcs), "current vcs: " + myCurrentVcs + " file: " + file.getPath() +
-                                                          " file's vcs: " + myVcsManager.getVcsFor(file));
+    LOG.assertTrue(myHolderMap.containsKey(myCurrentVcs), "current vcs: " + myCurrentVcs + " file: " + file.getPath());
     myHolderMap.get(myCurrentVcs).addFile(file);
   }
 

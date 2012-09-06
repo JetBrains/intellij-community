@@ -26,7 +26,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.TransparentlyFailedValue;
+import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -61,7 +61,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
   public void apply(MultiMap<VirtualFile, FilePatchInProgress> patchGroups,
                     LocalChangeList localList,
                     String fileName,
-                    TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+                    TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
     final Collection<PatchApplier> appliers = new LinkedList<PatchApplier>();
     final CommitContext commitContext = new CommitContext();
     applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
@@ -82,7 +82,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
   }
 
   public static void applyAdditionalInfoBefore(final Project project,
-                                         TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
+                                         TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
                                          CommitContext commitContext) {
     applyAdditionalInfoImpl(project, additionalInfo, commitContext, new Consumer<InfoGroup>() {
       @Override
@@ -93,7 +93,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
   }
 
   private static void applyAdditionalInfo(final Project project,
-                                         TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
+                                         TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
                                          CommitContext commitContext) {
     applyAdditionalInfoImpl(project, additionalInfo, commitContext, new Consumer<InfoGroup>() {
       @Override
@@ -104,7 +104,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
   }
 
   public static void applyAdditionalInfoImpl(final Project project,
-                                         TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
+                                         TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
                                          CommitContext commitContext, final Consumer<InfoGroup> worker) {
     final PatchEP[] extensions = Extensions.getExtensions(PatchEP.EP_NAME, project);
     if (extensions == null && extensions.length == 0) return;

@@ -67,6 +67,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class QuickMerge {
   private final Project myProject;
@@ -190,8 +191,8 @@ public class QuickMerge {
         finishWithError(context, e.getMessage(), true);
         return;
       }
-      context.next(myVcs.getSvnBranchPointsCalculator().getFirstCopyPointTask(myWcInfo.getRepositoryRoot(), myWcInfo.getRootUrl(), mySourceUrl, calculator),
-                   calculator);
+      context.next(myVcs.getSvnBranchPointsCalculator().getFirstCopyPointTask(
+        myWcInfo.getRepositoryRoot(), myWcInfo.getRootUrl(), mySourceUrl, calculator), calculator);
     }
   }
 
@@ -253,42 +254,52 @@ public class QuickMerge {
     queue.add(mergeAllExecutor);
   }
 
-  private class MergeAllWithBranchCopyPoint extends TaskDescriptor implements Consumer<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>> {
-    private SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> myData;
+  private class MergeAllWithBranchCopyPoint extends TaskDescriptor implements Consumer<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>, SVNException>> {
+    private AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>, SVNException>> myData;
 
     private MergeAllWithBranchCopyPoint() {
       super("merge all", Where.AWT);
     }
 
-    public void consume(SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> data) {
-      myData = data;
+    @Override
+    public void consume(TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>, SVNException> value) {
+      myData.set(value);
     }
 
     @Override
     public void run(ContinuationContext context) {
-      if (myData == null) {
+      SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> invertor;
+      try {
+        invertor = myData.get().get();
+      }
+      catch (SVNException e) {
+        finishWithError(context, "Merge start wasn't found", Collections.singletonList(new VcsException(e)));
+        return;
+      }
+      if (invertor == null) {
         finishWithError(context, "Merge start wasn't found", true);
         return;
       }
-      final boolean reintegrate = myData.isInvertedSense();
+      final boolean reintegrate = invertor.isInvertedSense();
       if (reintegrate && (! prompt("<html><body>You are going to reintegrate changes.<br><br>This will make branch '" + mySourceUrl +
                     "' <b>no longer usable for further work</b>." +
-                   "<br>It will not be able to correctly absorb new trunk (" + myData.inverted().getTarget() +
+                   "<br>It will not be able to correctly absorb new trunk (" + invertor.inverted().getTarget() +
                    ") changes,<br>nor can this branch be properly reintegrated to trunk again.<br><br>Are you sure?</body></html>"))) {
         context.cancelEverything();
         return;
       }
-      final MergerFactory mergerFactory = createBranchMergerFactory(reintegrate);
+      final MergerFactory mergerFactory = createBranchMergerFactory(reintegrate, invertor);
 
       final String title = "Merging all from " + myBranchName + (reintegrate ? " (reintegrate)" : "");
       context.next(new MergeTask(mergerFactory, title));
     }
 
-    private MergerFactory createBranchMergerFactory(final boolean reintegrate) {
+    private MergerFactory createBranchMergerFactory(final boolean reintegrate,
+                                                    final SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> invertor) {
       return new MergerFactory() {
         public IMerger createMerger(SvnVcs vcs, File target, UpdateEventHandler handler, SVNURL currentBranchUrl, String branchName) {
           return new BranchMerger(vcs, currentBranchUrl, myWcInfo.getUrl(), myWcInfo.getPath(), handler, reintegrate, myBranchName,
-                                  reintegrate ? myData.getWrapped().getTargetRevision() : myData.getWrapped().getSourceRevision());
+                                  reintegrate ? invertor.getWrapped().getTargetRevision() : invertor.getWrapped().getSourceRevision());
         }
         @Nullable
         public List<CommittedChangeList> getListsToMerge() {
@@ -365,20 +376,24 @@ public class QuickMerge {
     }
   }
 
-  private class MergeCalculator extends TaskDescriptor implements Consumer<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>> {
+  private class MergeCalculator extends TaskDescriptor implements
+                     Consumer<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>, SVNException>> {
     private final static String ourOneShotStrategy = "svn.quickmerge.oneShotStrategy";
     private final WCInfo myWcInfo;
     private final String mySourceUrl;
     private final String myBranchName;
-    private SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> myCopyData;
+    private final
+    AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>, SVNException>>
+      myCopyData;
     private boolean myIsReintegrate;
 
     private final List<CommittedChangeList> myNotMerged;
     private String myMergeTitle;
     private final MergeChecker myMergeChecker;
 
-    public void consume(SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> branchCopyDataWrapperInvertor) {
-      myCopyData = branchCopyDataWrapperInvertor;
+    @Override
+    public void consume(TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>, SVNException> value) {
+      myCopyData.set(value);
     }
 
     private MergeCalculator(WCInfo wcInfo, String sourceUrl, String branchName) throws SVNException {
@@ -396,20 +411,29 @@ public class QuickMerge {
                                                                                                  myWcInfo.getRootUrl(), mySourceUrl,
                                                                                                  mySourceUrl, myVcs.createWCClient()));
       }*/
+      myCopyData = new AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>, SVNException>>();
     }
 
     //"Calculating not merged revisions"
     @Override
     public void run(ContinuationContext context) {
-      if (myCopyData == null) {
+      SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> copyDataValue = null;
+      try {
+        copyDataValue = myCopyData.get().get();
+      }
+      catch (SVNException e) {
+        finishWithError(context, "Merge start wasn't found", Collections.singletonList(new VcsException(e)));
+        return;
+      }
+      if (copyDataValue == null) {
         finishWithError(context, "Merge start wasn't found", true);
         return;
       }
 
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      myIsReintegrate = myCopyData.isInvertedSense();
+      myIsReintegrate = copyDataValue.isInvertedSense();
       if (!myWcInfo.getFormat().supportsMergeInfo()) return;
-      final SvnBranchPointsCalculator.BranchCopyData data = myCopyData.getTrue();
+      final SvnBranchPointsCalculator.BranchCopyData data = copyDataValue.getTrue();
       final long sourceLatest = data.getTargetRevision();
 
       final SvnCommittedChangesProvider committedChangesProvider = (SvnCommittedChangesProvider)myVcs.getCommittedChangesProvider();
@@ -464,7 +488,7 @@ public class QuickMerge {
         finishWithError(context, "Everything is up-to-date", false);
         return;
       }
-      context.next(new ShowRevisionSelector(myCopyData));
+      context.next(new ShowRevisionSelector(copyDataValue));
     }
 
     private boolean isLocalRevisionMergeIteration(final TreeStructureNode<SVNLogEntry> tree,
