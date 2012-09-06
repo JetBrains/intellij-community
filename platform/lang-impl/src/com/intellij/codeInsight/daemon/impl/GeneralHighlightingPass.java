@@ -402,12 +402,14 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return true;
   }
 
+  @Nullable("null means invalid")
   private static TextRange getFixedTextRange(@NotNull DocumentWindow documentWindow, int startOffset) {
     final TextRange fixedTextRange;
     TextRange textRange = documentWindow.getHostRange(startOffset);
     if (textRange == null) {
       // todo[cdr] check this fix. prefix/suffix code annotation case
       textRange = findNearestTextRange(documentWindow, startOffset);
+      if (textRange == null) return null;
       final boolean isBefore = startOffset < textRange.getStartOffset();
       fixedTextRange = new ProperTextRange(isBefore ? textRange.getStartOffset() - 1 : textRange.getEndOffset(),
                                      isBefore ? textRange.getStartOffset() : textRange.getEndOffset() + 1);
@@ -467,6 +469,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   // finds the first nearest text range
+  @Nullable("null means invalid")
   private static TextRange findNearestTextRange(final DocumentWindow documentWindow, final int startOffset) {
     TextRange textRange = null;
     for (Segment marker : documentWindow.getHostRanges()) {
@@ -474,7 +477,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       if (curRange.getStartOffset() > startOffset && textRange != null) break;
       textRange = curRange;
     }
-    assert textRange != null;
     return textRange;
   }
 
