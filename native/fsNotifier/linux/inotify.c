@@ -117,8 +117,10 @@ inline bool watch_limit_reached() {
 }
 
 
+#define EVENT_MASK IN_MODIFY | IN_ATTRIB | IN_CREATE | IN_DELETE | IN_MOVE | IN_DELETE_SELF
+
 static int add_watch(const char* path, watch_node* parent) {
-  int wd = inotify_add_watch(inotify_fd, path, IN_MODIFY | IN_ATTRIB | IN_CREATE | IN_DELETE | IN_MOVE | IN_DELETE_SELF);
+  int wd = inotify_add_watch(inotify_fd, path, EVENT_MASK);
   if (wd < 0) {
     if (errno == ENOSPC) {
       limit_reached = true;
@@ -132,7 +134,11 @@ static int add_watch(const char* path, watch_node* parent) {
 
   watch_node* node = table_get(watches, wd);
   if (node != NULL) {
-    if (node->wd != wd || strcmp(node->name, path) != 0) {
+    if (node->wd != wd) {
+      userlog(LOG_ERR, "table error: corruption at %d:%s / %d:%s)", wd, path, node->wd, node->name);
+      return ERR_ABORT;
+    }
+    else if (strcmp(node->name, path) != 0) {
       char buf1[PATH_MAX], buf2[PATH_MAX];
       const char* normalized1 = realpath(node->name, buf1);
       const char* normalized2 = realpath(path, buf2);
@@ -141,7 +147,7 @@ static int add_watch(const char* path, watch_node* parent) {
         return ERR_ABORT;
       }
       else {
-        userlog(LOG_WARNING, "intersection at %d: (new %s, existing %s, real %s)", wd, path, node->name, normalized1);
+        userlog(LOG_INFO, "intersection at %d: (new %s, existing %s, real %s)", wd, path, node->name, normalized1);
         return ERR_IGNORE;
       }
     }
@@ -210,54 +216,24 @@ static void rm_watch(int wd, bool update_parent) {
 }
 
 
-static bool is_directory(struct dirent* entry, const char* path) {
-  if (entry->d_type == DT_DIR) {
-    return true;
-  }
-  else if (entry->d_type == DT_UNKNOWN || entry->d_type == DT_LNK) {
-    struct stat st;
-    return (stat(path, &st) == 0 && S_ISDIR(st.st_mode));
-  }
-  return false;
-}
-
-static bool is_ignored(const char* path, array* ignores) {
-  if (ignores != NULL) {
-    int pl = strlen(path);
-    for (int i=0; i<array_size(ignores); i++) {
-      const char* ignore = array_get(ignores, i);
-      int il = strlen(ignore);
-      if (pl >= il && strncmp(path, ignore, il) == 0) {
-        userlog(LOG_DEBUG, "path %s is under unwatchable %s - ignoring", path, ignore);
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-static int walk_tree(const char* path, watch_node* parent, array* ignores, bool recursive) {
-  if (is_ignored(path, ignores)) {
-    return ERR_IGNORE;
-  }
-
-  DIR* dir;
+static int walk_tree(const char* path, watch_node* parent, bool recursive) {
+  DIR* dir = NULL;
   if (recursive) {
-    dir = opendir(path);
-    if (dir == NULL) {
-      if (errno == EACCES) {
+    if ((dir = opendir(path)) == NULL) {
+      if (errno == EACCES || errno == ENOENT) {
+        userlog(LOG_DEBUG, "opendir(%s): %d", path, errno);
         return ERR_IGNORE;
       }
-      else if (errno == ENOTDIR) {  // "future" root
-        return add_watch(path, parent);
+      else {
+        userlog(LOG_ERR, "opendir(%s): %s", path, strerror(errno));
+        return ERR_CONTINUE;
       }
-      userlog(LOG_ERR, "opendir(%s): %s", path, strerror(errno));
-      return ERR_CONTINUE;
     }
   }
 
   int id = add_watch(path, parent);
-  if (!recursive) {
+
+  if (dir == NULL) {
     return id;
   }
   else if (id < 0) {
@@ -265,7 +241,6 @@ static int walk_tree(const char* path, watch_node* parent, array* ignores, bool 
     return id;
   }
 
-  struct dirent* entry;
   char subdir[PATH_MAX];
   strcpy(subdir, path);
   if (subdir[strlen(subdir) - 1] != '/') {
@@ -273,17 +248,16 @@ static int walk_tree(const char* path, watch_node* parent, array* ignores, bool 
   }
   char* p = subdir + strlen(subdir);
 
+  struct dirent* entry;
   while ((entry = readdir(dir)) != NULL) {
-    if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+    if (entry->d_type != DT_DIR ||
+        strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
       continue;
     }
 
     strcpy(p, entry->d_name);
-    if (!is_directory(entry, subdir)) {
-      continue;
-    }
 
-    int subdir_id = walk_tree(subdir, table_get(watches, id), ignores, recursive);
+    int subdir_id = walk_tree(subdir, table_get(watches, id), recursive);
     if (subdir_id < 0 && subdir_id != ERR_IGNORE) {
       rm_watch(id, true);
       id = subdir_id;
@@ -296,16 +270,34 @@ static int walk_tree(const char* path, watch_node* parent, array* ignores, bool 
 }
 
 
-int watch(const char* root, array* ignores) {
+int watch(const char* root) {
   bool recursive = true;
   if (root[0] == '|') {
     root++;
     recursive = false;
   }
 
-  char buf[PATH_MAX];
-  const char* normalized = realpath(root, buf);
-  return walk_tree((normalized != NULL ? normalized : root), NULL, ignores, recursive);
+  struct stat st;
+  if (stat(root, &st) != 0) {
+    if (errno == EACCES) {
+      return ERR_IGNORE;
+    }
+    else if (errno == ENOENT) {
+      return ERR_CONTINUE;
+    }
+    userlog(LOG_ERR, "stat(%s): %s", root, strerror(errno));
+    return ERR_ABORT;
+  }
+
+  if (S_ISREG(st.st_mode)) {
+    recursive = false;
+  }
+  else if (!S_ISDIR(st.st_mode)) {
+    userlog(LOG_WARNING, "unexpected node type: %s, %d", root, st.st_mode);
+    return ERR_IGNORE;
+  }
+
+  return walk_tree(root, NULL, recursive);
 }
 
 
@@ -320,8 +312,9 @@ static bool process_inotify_event(struct inotify_event* event) {
     return true;
   }
 
+  bool is_dir = (event->mask & IN_ISDIR) == IN_ISDIR;
   userlog(LOG_DEBUG, "inotify: wd=%d mask=%d dir=%d name=%s",
-      event->wd, event->mask & (~IN_ISDIR), (event->mask & IN_ISDIR) != 0, node->name);
+      event->wd, event->mask & (~IN_ISDIR), is_dir, node->name);
 
   char path[PATH_MAX];
   strcpy(path, node->name);
@@ -332,14 +325,14 @@ static bool process_inotify_event(struct inotify_event* event) {
     strcat(path, event->name);
   }
 
-  if ((event->mask & IN_CREATE || event->mask & IN_MOVED_TO) && event->mask & IN_ISDIR) {
-    int result = walk_tree(path, node, NULL, true);
+  if (is_dir && ((event->mask & IN_CREATE) == IN_CREATE || (event->mask & IN_MOVED_TO) == IN_MOVED_TO)) {
+    int result = walk_tree(path, node, true);
     if (result < 0 && result != ERR_IGNORE) {
       return false;
     }
   }
 
-  if ((event->mask & IN_DELETE || event->mask & IN_MOVED_FROM) && event->mask & IN_ISDIR) {
+  if (is_dir && ((event->mask & IN_DELETE) == IN_DELETE || (event->mask & IN_MOVED_FROM) == IN_MOVED_FROM)) {
     for (int i=0; i<array_size(node->kids); i++) {
       watch_node* kid = array_get(node->kids, i);
       if (kid != NULL && strcmp(kid->name, path) == 0) {

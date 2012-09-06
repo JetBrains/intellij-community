@@ -33,7 +33,7 @@
 #define LOG_ENV_ERROR "error"
 #define LOG_ENV_OFF "off"
 
-#define VERSION "1.1"
+#define VERSION "1.2"
 #define VERSION_MSG "fsnotifier " VERSION "\n"
 
 #define USAGE_MSG \
@@ -66,8 +66,8 @@ static void main_loop();
 static bool read_input();
 static bool update_roots(array* new_roots);
 static void unregister_roots();
-static bool register_roots(array* new_roots, array* unwatchable);
-static bool unwatchable_mounts(array* mounts);
+static bool register_roots(array* new_roots, array* unwatchable, array* mounts);
+static array* unwatchable_mounts();
 static void inotify_callback(char* path, int event);
 static void output(const char* format, ...);
 
@@ -215,6 +215,7 @@ static bool read_input() {
   userlog(LOG_DEBUG, "input: %s", (line ? line : "<null>"));
 
   if (line == NULL || strcmp(line, "EXIT") == 0) {
+    userlog(LOG_INFO, "exiting: %s", line);
     return false;
   }
 
@@ -241,6 +242,12 @@ static bool read_input() {
     return update_roots(new_roots);
   }
 
+  if (strcmp(line, "VERSION") == 0) {
+    output(VERSION "\n");
+    return true;
+  }
+
+  userlog(LOG_INFO, "unrecognised command: %s", line);
   return true;
 }
 
@@ -249,7 +256,10 @@ static bool update_roots(array* new_roots) {
   userlog(LOG_INFO, "updating roots (curr:%d, new:%d)", array_size(roots), array_size(new_roots));
 
   unregister_roots();
+
   if (array_size(new_roots) == 0) {
+    output("UNWATCHEABLE\n#\n");
+    array_delete(new_roots);
     return true;
   }
   else if (array_size(new_roots) == 1 && strcmp(array_get(new_roots, 0), "/") == 0) {  // refuse to watch entire tree
@@ -259,17 +269,16 @@ static bool update_roots(array* new_roots) {
     return true;
   }
 
+  array* mounts = unwatchable_mounts();
+  if (mounts == NULL) {
+    return false;
+  }
+
   array* unwatchable = array_create(20);
-  CHECK_NULL(unwatchable, false);
-  if (!unwatchable_mounts(unwatchable)) {
+  if (!register_roots(new_roots, unwatchable, mounts)) {
     return false;
   }
 
-  if (!register_roots(new_roots, unwatchable)) {
-    return false;
-  }
-
-  // todo: sort/optimize list
   output("UNWATCHEABLE\n");
   for (int i=0; i<array_size(unwatchable); i++) {
     char* s = array_get(unwatchable, i);
@@ -279,7 +288,8 @@ static bool update_roots(array* new_roots) {
   output("#\n");
 
   array_delete_vs_data(unwatchable);
-  array_delete(new_roots);
+  array_delete_vs_data(mounts);
+  array_delete_vs_data(new_roots);
 
   return true;
 }
@@ -296,52 +306,82 @@ static void unregister_roots() {
 }
 
 
-static bool register_roots(array* new_roots, array* unwatchable) {
+static bool register_roots(array* new_roots, array* unwatchable, array* mounts) {
   for (int i=0; i<array_size(new_roots); i++) {
     char* new_root = array_get(new_roots, i);
+    char* unflattened = new_root;
+    if (unflattened[0] == '|') ++unflattened;
     userlog(LOG_INFO, "registering root: %s", new_root);
-    int id = watch(new_root, unwatchable);
-    if (id == ERR_ABORT) {
-      return false;
+
+    if (unflattened[0] != '/') {
+      userlog(LOG_WARNING, "  ... not valid, skipped");
+      continue;
     }
-    else if (id >= 0) {
+
+    char* skip = NULL;
+    for (int j=0; j<array_size(mounts); j++) {
+      char* mount = array_get(mounts, j);
+      if (strncmp(mount, unflattened, strlen(mount)) == 0) {
+        userlog(LOG_DEBUG, "path %s is under unwatchable %s - ignoring", unflattened, mount);
+        skip = strdup(unflattened);
+        CHECK_NULL(skip, false);
+        break;
+      }
+    }
+    if (skip != NULL) {
+      CHECK_NULL(array_push(unwatchable, skip), false);
+      continue;
+    }
+
+    // todo: consider a mount point under a watch root?
+    int id = watch(new_root);
+
+    if (id >= 0) {
       watch_root* root = malloc(sizeof(watch_root));
       CHECK_NULL(root, false);
       root->id = id;
-      root->name = new_root;
+      root->name = strdup(new_root);
+      CHECK_NULL(root->name, false);
       CHECK_NULL(array_push(roots, root), false);
     }
-    else {
+    else if (id == ERR_ABORT) {
+      return false;
+    }
+    else if (id != ERR_IGNORE) {
       if (show_warning && watch_limit_reached()) {
         int limit = get_watch_count();
         userlog(LOG_WARNING, "watch limit (%d) reached", limit);
         output("MESSAGE\n" INOTIFY_LIMIT_MSG, limit);
         show_warning = false;  // warn only once
       }
-      CHECK_NULL(array_push(unwatchable, new_root), false);
+      CHECK_NULL(array_push(unwatchable, strdup(unflattened)), false);
     }
   }
 
   return true;
 }
 
+
 static bool is_watchable(const char* dev, const char* mnt, const char* fs) {
   // don't watch special and network filesystems
   return !(strncmp(mnt, "/dev", 4) == 0 || strncmp(mnt, "/proc", 5) == 0 || strncmp(mnt, "/sys", 4) == 0 ||
-           strcmp(fs, "fuse.gvfs-fuse-daemon") == 0 || strcmp(fs, "cifs") == 0 || strcmp(fs, "nfs") == 0);
+           strncmp(fs, "fuse.", 5) == 0 || strcmp(fs, "cifs") == 0 || strcmp(fs, "nfs") == 0);
 }
 
 #define MTAB_DELIMS " \t"
 
-static bool unwatchable_mounts(array* mounts) {
+static array* unwatchable_mounts() {
   FILE* mtab = fopen("/etc/mtab", "r");
   if (mtab == NULL) {
     mtab = fopen("/proc/mounts", "r");
   }
   if (mtab == NULL) {
     userlog(LOG_ERR, "neither /etc/mtab nor /proc/mounts can be read");
-    return false;
+    return NULL;
   }
+
+  array* mounts = array_create(20);
+  CHECK_NULL(mounts, NULL);
 
   char* line;
   while ((line = read_line(mtab)) != NULL) {
@@ -352,16 +392,16 @@ static bool unwatchable_mounts(array* mounts) {
 
     if (dev == NULL || point == NULL || fs == NULL) {
       userlog(LOG_ERR, "can't parse mount line");
-      return false;
+      return NULL;
     }
 
     if (!is_watchable(dev, point, fs)) {
-      CHECK_NULL(array_push(mounts, strdup(point)), false);
+      CHECK_NULL(array_push(mounts, strdup(point)), NULL);
     }
   }
 
   fclose(mtab);
-  return true;
+  return mounts;
 }
 
 

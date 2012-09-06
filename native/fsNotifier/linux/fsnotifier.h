@@ -61,7 +61,7 @@ void set_inotify_callback(void (* callback)(char*, int));
 int get_inotify_fd();
 int get_watch_count();
 bool watch_limit_reached();
-int watch(const char* root, array* ignores);
+int watch(const char* root);
 void unwatch(int id);
 bool process_inotify_input();
 void close_inotify();
