@@ -292,6 +292,7 @@ public class RefactoringUtil {
     PsiElement parent = place;
     while (true) {
       if (parent instanceof PsiStatement) break;
+      if (parent instanceof PsiExpression && parent.getParent() instanceof PsiLambdaExpression) return parent;
       parent = parent.getParent();
       if (parent == null) return null;
     }
