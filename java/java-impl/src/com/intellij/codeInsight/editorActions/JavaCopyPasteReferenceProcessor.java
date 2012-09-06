@@ -109,7 +109,7 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
                                         PsiJavaCodeReferenceElement[] refs) {
     for (int i = 0; i < refs.length; i++) {
       PsiJavaCodeReferenceElement reference = refs[i];
-      if (reference == null) continue;
+      if (reference == null || !reference.isValid()) continue;
       try {
         PsiManager manager = reference.getManager();
         ReferenceTransferableData.ReferenceData refData = referenceData[i];
