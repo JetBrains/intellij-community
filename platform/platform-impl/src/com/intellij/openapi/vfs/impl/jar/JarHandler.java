@@ -25,6 +25,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -70,22 +72,27 @@ public class JarHandler extends JarHandlerBase implements FileSystemInterface {
 
   @Override
   public File getMirrorFile(File originalFile) {
-    if (!myFileSystem.isMakeCopyOfJar(originalFile) || !originalFile.exists()) return originalFile;
+    if (!myFileSystem.isMakeCopyOfJar(originalFile)) return originalFile;
 
-    String folderPath = getJarsDir();
+    final FileAttributes originalAttributes = FileSystemUtil.getAttributes(originalFile);
+    if (originalAttributes == null) return originalFile;
+
+    final String folderPath = getJarsDir();
     if (!new File(folderPath).exists() && !new File(folderPath).mkdirs()) {
       return originalFile;
     }
 
-    String fileName = originalFile.getName() + "." + Integer.toHexString(originalFile.getPath().hashCode());
-    File mirror = new File(folderPath, fileName);
+    final String mirrorName = originalFile.getName() + "." + Integer.toHexString(originalFile.getPath().hashCode());
+    final File mirrorFile = new File(folderPath, mirrorName);
+    final FileAttributes mirrorAttributes = FileSystemUtil.getAttributes(mirrorFile);
 
-    if (!mirror.exists() ||
-        Math.abs(originalFile.lastModified() - mirror.lastModified()) > 2000) {
-      return copyToMirror(originalFile, mirror);
+    if (mirrorAttributes == null ||
+        originalAttributes.length != mirrorAttributes.length ||
+        Math.abs(originalAttributes.lastModified - mirrorAttributes.lastModified) > 2000) {
+      return copyToMirror(originalFile, mirrorFile);
     }
 
-    return mirror;
+    return mirrorFile;
   }
 
   private static String getJarsDir() {
