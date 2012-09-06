@@ -49,9 +49,8 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset() - 1);
-    if (elementAt != null && elementAt.getNode() != null && !(elementAt.getNode().getElementType() == PyTokenTypes.IDENTIFIER))
-      elementAt = file.findElementAt(editor.getCaretModel().getOffset());
+    myText = PyBundle.message("INTN.specify.type");
+    PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
 
     PyCallExpression callExpression = PsiTreeUtil.getParentOfType(elementAt, PyCallExpression.class);
     if (callExpression != null && callExpression.resolveCalleeFunction(PyResolveContext.defaultContext()) != null) {
