@@ -61,7 +61,9 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
   public void handleInsert(InsertionContext context, LookupElement item) {
     @NonNls Object obj = item.getObject();
 
+    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     if (obj instanceof GroovyResolveResult) {
+      substitutor = ((GroovyResolveResult)obj).getSubstitutor();
       obj = ((GroovyResolveResult)obj).getElement();
     }
 
@@ -114,7 +116,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
               document.insertString(offset, " ");
               offset++;
             }
-            if (processClosureWithParams(context, method, document, offset, parent)) return;
+            if (processClosureWithParams(context, method, substitutor, document, offset, parent)) return;
             if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
               //smart enter invoked
               document.insertString(offset, "{\n}");
@@ -186,6 +188,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
 
   private static boolean processClosureWithParams(InsertionContext context,
                                                   PsiMethod method,
+                                                  PsiSubstitutor substitutor,
                                                   Document document,
                                                   int offset,
                                                   PsiElement parent) {
@@ -204,8 +207,8 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
     }, ResolveState.initial());
 
     for (ClosureDescriptor descriptor : descriptors) {
-      if (descriptor.isMethodApplicable(method, (GrReferenceExpression)parent)) {
-        if (runClosureTemplate(context, document, offset, descriptor)) {
+      if (descriptor.isMethodApplicable(method, substitutor, (GrReferenceExpression)parent)) {
+        if (runClosureTemplate(context, document, offset, descriptor, substitutor, method)) {
           return true;
         }
       }
@@ -213,14 +216,19 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
     return false;
   }
 
-  private static boolean runClosureTemplate(InsertionContext context, Document document, int offset, ClosureDescriptor descriptor) {
+  private static boolean runClosureTemplate(InsertionContext context,
+                                            Document document,
+                                            int offset,
+                                            ClosureDescriptor descriptor,
+                                            PsiSubstitutor substitutor,
+                                            PsiMethod method) {
     document.insertString(offset, "{\n}");
     PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
     final GrClosableBlock closure =
       PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), offset + 1, GrClosableBlock.class, false);
     if (closure == null) return false;
 
-    ClosureTemplateBuilder.runTemplate(descriptor.getParameters(), closure, context.getProject(), context.getEditor());
+    ClosureTemplateBuilder.runTemplate(descriptor.getParameters(), closure, substitutor, method, context.getProject(), context.getEditor());
     return true;
   }
 
