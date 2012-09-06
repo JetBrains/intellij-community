@@ -28,9 +28,9 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,17 +42,14 @@ import java.io.OutputStream;
 import java.util.*;
 
 public class JarFileSystemImpl extends JarFileSystem implements ApplicationComponent {
-  @NonNls private static final String IDEA_JARS_NOCOPY = "idea.jars.nocopy";
-
   private static final class JarFileSystemImplLock { }
   private static final Object LOCK = new JarFileSystemImplLock();
 
-  private final Set<String> myNoCopyJarPaths = SystemInfo.isFileSystemCaseSensitive ?
-                                               new ConcurrentHashSet<String>() :
-                                               new ConcurrentHashSet<String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
-  private final Map<String, JarHandler> myHandlers = new HashMap<String, JarHandler>();
+  private final Set<String> myNoCopyJarPaths =
+    SystemProperties.getBooleanProperty("idea.jars.nocopy", false) ? null : new ConcurrentHashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
   private File myNoCopyJarDir;
-  private String[] jarPathsCache; // jarPathsCache = myHandlers.keySet()
+  private final Map<String, JarHandler> myHandlers = new HashMap<String, JarHandler>();
+  private String[] jarPathsCache;
 
   public JarFileSystemImpl(MessageBus bus) {
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
@@ -132,9 +129,9 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
   @Override
   public void initComponent() {
-    //We want to prevent Platform from copying its own jars when running from dist to save system resources
+    // we want to prevent Platform from copying its own jars when running from dist to save system resources
     final boolean isRunningFromDist = new File(PathManager.getLibPath() + File.separatorChar + "openapi.jar").exists();
-    if(isRunningFromDist) {
+    if (isRunningFromDist) {
       myNoCopyJarDir = new File(new File(PathManager.getLibPath()).getParent());
     }
   }
@@ -257,12 +254,8 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   public boolean isMakeCopyOfJar(File originalJar) {
-    String property = System.getProperty(IDEA_JARS_NOCOPY);
-    if (Boolean.TRUE.toString().equalsIgnoreCase(property)) return false;
-
-    if (myNoCopyJarPaths.contains(originalJar.getPath())) return false;
-    if (myNoCopyJarDir!=null && FileUtil.isAncestor(myNoCopyJarDir, originalJar, false)) return false;
-
+    if (myNoCopyJarPaths == null || myNoCopyJarPaths.contains(originalJar.getPath())) return false;
+    if (myNoCopyJarDir != null && FileUtil.isAncestor(myNoCopyJarDir, originalJar, false)) return false;
     return true;
   }
 
