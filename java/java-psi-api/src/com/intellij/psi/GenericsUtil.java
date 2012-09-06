@@ -340,10 +340,10 @@ public class GenericsUtil {
   }
 
   public static PsiType eliminateWildcards(PsiType type) {
-    return eliminateWildcardsInner(type, true);
+    return eliminateWildcards(type, true);
   }
 
-  static PsiType eliminateWildcardsInner(PsiType type, final boolean eliminateInTypeArguments) {
+  public static PsiType eliminateWildcards(PsiType type, final boolean eliminateInTypeArguments) {
     if (eliminateInTypeArguments && type instanceof PsiClassType) {
       PsiClassType classType = ((PsiClassType)type);
       JavaResolveResult resolveResult = classType.resolveGenerics();
@@ -367,7 +367,7 @@ public class GenericsUtil {
       }
     }
     else if (type instanceof PsiArrayType) {
-      return eliminateWildcardsInner(((PsiArrayType)type).getComponentType(), false).createArrayType();
+      return eliminateWildcards(((PsiArrayType)type).getComponentType(), false).createArrayType();
     }
     else if (type instanceof PsiWildcardType) {
       final PsiType bound = ((PsiWildcardType)type).getBound();
