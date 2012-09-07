@@ -32,11 +32,11 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.MutualMap;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFocusManagerImpl;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -132,7 +132,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
   @Override
   public String getDimensionKeyForFocus(@NotNull String key) {
-    Component owner = IdeFocusManagerImpl.getInstance(myProject).getFocusOwner();
+    Component owner = IdeFocusManager.getInstance(myProject).getFocusOwner();
     if (owner == null) return key;
 
     DockWindow wnd = myWindows.getValue(getContainerFor(owner));
@@ -609,8 +609,8 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     if (myLoadedState == null) return;
 
     List windows = myLoadedState.getChildren("window");
-    for (int i = 0; i < windows.size(); i++) {
-      Element eachWindow = (Element)windows.get(i);
+    for (Object window1 : windows) {
+      Element eachWindow = (Element)window1;
       if (eachWindow == null) continue;
 
       String eachId = eachWindow.getAttributeValue("id");
@@ -628,7 +628,13 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       DockContainer container = persistentFactory.loadContainerFrom(eachContent);
       register(container);
 
-      createWindowFor(eachId, container).show();
+      final DockWindow window = createWindowFor(eachId, container);
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          window.show();
+        }
+      });
     }
   }
 }
