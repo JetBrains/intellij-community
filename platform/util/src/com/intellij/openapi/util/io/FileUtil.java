@@ -871,10 +871,26 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static int pathHashCode(@Nullable String path) {
-    if (path == null) return 0;
+    if (path == null) {
+      return 0;
+    }
+    final int len = path.length();
+    if (len == 0) {
+      return 0;
+    }
+
     path = toSystemIndependentName(path);
-    return SystemInfo.isFileSystemCaseSensitive ? path.hashCode() : StringUtil.toLowerCase(path).hashCode();
+
+    if (SystemInfo.isFileSystemCaseSensitive) {
+      return path.hashCode();
+    }
+    int h = 0;
+    for (int i = 0; i < len; i++) {
+      h = 31*h + StringUtil.toLowerCase(path.charAt(i));
+    }
+    return h;
   }
+
 
   @NotNull
   public static String getExtension(@NotNull String fileName) {
