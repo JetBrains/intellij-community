@@ -61,8 +61,4 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     }
   }
 
-  @Override
-  public boolean usesSharedPreview() {
-    return false;
-  }
 }
