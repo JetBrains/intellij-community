@@ -199,7 +199,9 @@ public abstract class GrVariableDeclarationBase extends GrStubElementBase<EmptyS
                                        @NotNull ResolveState state,
                                        PsiElement lastParent,
                                        @NotNull PsiElement place) {
-      if (lastParent == getInitializerGroovy()) return true;
+      if (lastParent != null && lastParent == getInitializerGroovy()) {
+        return true;
+      }
 
       for (final GrVariable variable : getVariables()) {
         if (lastParent instanceof GrMethod && !(variable instanceof GrField)) break;
