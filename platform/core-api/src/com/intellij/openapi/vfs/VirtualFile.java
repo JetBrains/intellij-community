@@ -225,11 +225,14 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * Resolves all symbolic links containing in a path to this file and returns a path to a link target.
+   * <p/>
+   * <b>Note</b>: please use this method judiciously. In most cases VFS clients don't need to resolve links in paths and should
+   * work with those provided by a user.
    *
-   * @since 11.1
    * @return <code>getPath()</code> if there are no symbolic links in a file's path;
    *         <code>getCanonicalFile().getPath()</code> if the link was successfully resolved;
    *         <code>null</code> otherwise
+   * @since 11.1
    */
   @Nullable
   public String getCanonicalPath() {
@@ -238,11 +241,14 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * Resolves all symbolic links containing in a path to this file and returns a link target.
+   * <p/>
+   * <b>Note</b>: please use this method judiciously. In most cases VFS clients don't need to resolve links in paths and should
+   * work with those provided by a user.
    *
-   * @since 11.1
    * @return <code>this</code> if there are no symbolic links in a file's path;
    *         instance of <code>VirtualFile</code> if the link was successfully resolved;
    *         <code>null</code> otherwise
+   * @since 11.1
    */
   @Nullable
   public VirtualFile getCanonicalFile() {
