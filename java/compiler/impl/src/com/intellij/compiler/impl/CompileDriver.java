@@ -32,10 +32,7 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.DefaultMessageHandler;
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
@@ -598,7 +595,11 @@ public class CompileDriver {
 
             final Collection<String> paths = fetchFiles(compileContext);
             final List<Module> modules = paths.isEmpty() && !isRebuild && !allProjectModulesAffected(compileContext)? Arrays.asList(compileContext.getCompileScope().getAffectedModules()) : Collections.<Module>emptyList();
-            final Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(myProject, compileContext.getCompileScope(), true);
+            final Set<Artifact> artifacts = new ReadAction<Set<Artifact>>() {
+              protected void run(final Result<Set<Artifact>> result) {
+                result.setResult(ArtifactCompileScope.getArtifactsToBuild(myProject, compileContext.getCompileScope(), true));
+              }
+            }.execute().getResultObject();
             final RequestFuture future = compileInExternalProcess(compileContext, modules, artifacts, paths, callback);
             if (future != null) {
               while (!future.waitFor(200L , TimeUnit.MILLISECONDS)) {
