@@ -54,6 +54,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.psi.PsiDocumentManager;
@@ -739,7 +740,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   @Override
   public void beforeFileDeletion(VirtualFileEvent event) {
     if (!event.isFromRefresh()) {
-      VfsUtilCore.visitChildrenRecursively(event.getFile(), new VirtualFileVisitor() {
+      VirtualFile file = event.getFile();
+      if (file.getFileSystem() instanceof TempFileSystem) {
+        return; //hack: this fs fails in getChildren during beforeFileDeletion
+      }
+      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           Document document = getCachedDocument(file);
