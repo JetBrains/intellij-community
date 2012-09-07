@@ -91,7 +91,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createAddConstructorFix(@NotNull PsiClass aClass, String modifier) {
-    return new AddDefaultConstructorFix(aClass, modifier);
+    return aClass.getName() != null ? new AddDefaultConstructorFix(aClass, modifier) : null;
   }
 
   @Override
