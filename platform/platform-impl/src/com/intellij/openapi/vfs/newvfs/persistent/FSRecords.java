@@ -1112,12 +1112,14 @@ public class FSRecords implements Forceable {
   @Nullable
   static DataInputStream readAttributeWithLock(int fileId, String attId) {
     try {
-      try {
-        r.lock();
-        return readAttribute(fileId, attId);
-      }
-      finally {
-        r.unlock();
+      synchronized (attId) {
+        try {
+          r.lock();
+          return readAttribute(fileId, attId);
+        }
+        finally {
+          r.unlock();
+        }
       }
     }
     catch (Throwable e) {
@@ -1128,11 +1130,9 @@ public class FSRecords implements Forceable {
   // should be called under r or w lock
   @Nullable
   private static DataInputStream readAttribute(int fileId, String attId) throws IOException {
-    synchronized (attId) {
-      int page = findAttributePage(fileId, attId, false);
-      if (page == 0) return null;
-      return getAttributesStorage().readStream(page);
-    }
+    int page = findAttributePage(fileId, attId, false);
+    if (page == 0) return null;
+    return getAttributesStorage().readStream(page);
   }
 
   private static int findContentPage(int fileId, boolean toWrite) throws IOException {
