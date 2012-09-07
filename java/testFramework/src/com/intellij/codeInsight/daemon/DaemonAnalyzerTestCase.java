@@ -136,11 +136,6 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
       @Override
       public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
-        return isToolEnabled(key);
-      }
-
-      @Override
-      public boolean isToolEnabled(HighlightDisplayKey key) {
         return key != null && myAvailableTools.containsKey(key.toString());
       }
 

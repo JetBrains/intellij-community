@@ -33,7 +33,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -90,7 +90,7 @@ public class RunInspectionAction extends GotoActionBase {
                                     @Nullable VirtualFile virtualFile,
                                     PsiElement psiElement, PsiFile psiFile) {
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
-    final Module module = virtualFile != null ? ModuleUtil.findModuleForFile(virtualFile, project) : null;
+    final Module module = virtualFile != null ? ModuleUtilCore.findModuleForFile(virtualFile, project) : null;
 
     AnalysisScope analysisScope = null;
     if (psiFile != null) {
