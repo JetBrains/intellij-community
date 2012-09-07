@@ -73,5 +73,6 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testEqualsNotNull() throws Throwable { doTest(); }
   public void testVisitFinallyOnce() throws Throwable { doTest(); }
   public void testNotEqualsDoesntImplyNotNullity() throws Throwable { doTest(); }
+  public void testEqualsEnumConstant() throws Throwable { doTest(); }
 
 }
