@@ -144,6 +144,10 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
     if (lastParent instanceof GrArgumentList) return true;
+
+    GrCodeReferenceElement refElement = getBaseClassReferenceGroovy();
+    if (refElement == place || refElement == lastParent) return true;
+
     return super.processDeclarations(processor, state, lastParent, place);
   }
 
