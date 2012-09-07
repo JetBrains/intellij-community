@@ -54,7 +54,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.psi.PsiDocumentManager;
@@ -365,7 +364,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       if (!myUnsavedDocuments.contains(document)) return;
     }
 
-    if (!file.isValid() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!file.isValid() && !ApplicationManager.getApplication().isUnitTestMode() && false) {
       file = handleExternalDeletion(file);
       if (!myUnsavedDocuments.contains(document)) return;
     }
@@ -739,6 +738,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   @Override
   public void beforeFileDeletion(VirtualFileEvent event) {
+    /*
     if (!event.isFromRefresh()) {
       VirtualFile file = event.getFile();
       if (file.getFileSystem() instanceof TempFileSystem) {
@@ -755,6 +755,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         }
       });
     }
+    */
 
   }
 
