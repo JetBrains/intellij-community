@@ -231,8 +231,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   private static boolean areChildrenLoaded(final int parentId) {
-    final int mask = CHILDREN_CACHED_FLAG;
-    return (FSRecords.getFlags(parentId) & mask) != 0;
+    return (FSRecords.getFlags(parentId) & CHILDREN_CACHED_FLAG) != 0;
   }
 
   @Override
@@ -273,8 +272,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public int getModificationCount(@NotNull final VirtualFile file) {
-    final int id = getFileId(file);
-    return FSRecords.getModCount(id);
+    return FSRecords.getModCount(getFileId(file));
   }
 
   @Override
@@ -315,15 +313,15 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   @Override
-  public boolean isDirectory(@NotNull final VirtualFile file) {
-    final int id = getFileId(file);
-    return isDirectory(id);
+  public int getFileAttributes(int id) {
+    assert id > 0;
+    //noinspection MagicConstant
+    return FSRecords.getFlags(id);
   }
 
   @Override
-  public boolean isDirectory(final int id) {
-    assert id > 0;
-    return (FSRecords.getFlags(id) & IS_DIRECTORY_FLAG) != 0;
+  public boolean isDirectory(@NotNull final VirtualFile file) {
+    return isDirectory(getFileAttributes(getFileId(file)));
   }
 
   private static int getParent(final int id) {
@@ -342,8 +340,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public long getTimeStamp(@NotNull final VirtualFile file) {
-    final int id = getFileId(file);
-    return FSRecords.getTimestamp(id);
+    return FSRecords.getTimestamp(getFileId(file));
   }
 
   @Override
@@ -363,7 +360,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public boolean isSymLink(@NotNull VirtualFile file) {
-    return (FSRecords.getFlags(getFileId(file)) & IS_SYMLINK) != 0;
+    return isSymLink(getFileAttributes(getFileId(file)));
   }
 
   @Override
@@ -373,12 +370,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public boolean isSpecialFile(@NotNull VirtualFile file) {
-    return (FSRecords.getFlags(getFileId(file)) & IS_SPECIAL) != 0;
+    return isSpecialFile(getFileAttributes(getFileId(file)));
   }
 
   @Override
   public boolean isWritable(@NotNull final VirtualFile file) {
-    return (FSRecords.getFlags(getFileId(file)) & IS_READ_ONLY) == 0;
+    return (getFileAttributes(getFileId(file)) & IS_READ_ONLY) == 0;
   }
 
   @Override
@@ -750,7 +747,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
       if (basePath.isEmpty()) {
         // fake super-root
-        root = new VirtualDirectoryImpl("", null, fs, rootId) {
+        root = new VirtualDirectoryImpl("", null, fs, rootId, 0) {
           @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
           @Override
           @NotNull
@@ -773,7 +770,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         root = new JarRoot(fs, rootId, parentLocalFile);
       }
       else {
-        root = new VirtualDirectoryImpl(basePath, null, fs, rootId);
+        root = new VirtualDirectoryImpl(basePath, null, fs, rootId, 0);
       }
 
       final FileAttributes attributes = fs.getAttributes(root);
@@ -1139,7 +1136,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @TestOnly
   private void cleanPersistedContentsRecursively(int id) {
-    if (isDirectory(id)) {
+    if (isDirectory(getFileAttributes(id))) {
       for (int child : FSRecords.list(id)) {
         cleanPersistedContentsRecursively(child);
       }
@@ -1153,7 +1150,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     private final VirtualFile myParentLocalFile;
 
     public JarRoot(@NotNull NewVirtualFileSystem fs, int rootId, @NotNull VirtualFile parentLocalFile) {
-      super("", null, fs, rootId);
+      super("", null, fs, rootId, 0);
       myParentLocalFile = parentLocalFile;
     }
 

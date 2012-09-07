@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,8 +36,8 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class VirtualFileImpl extends VirtualFileSystemEntry {
-  public VirtualFileImpl(final String name, final VirtualDirectoryImpl parent, final int id) {
-    super(name, parent, id);
+  public VirtualFileImpl(String name, VirtualDirectoryImpl parent, int id, @PersistentFS.Attributes final int attributes) {
+    super(name, parent, id, attributes);
   }
 
   @Override

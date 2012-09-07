@@ -41,41 +41,48 @@ import java.nio.charset.Charset;
  * @author max
  */
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
-  private static final Key<String> SYMLINK_TARGET = Key.create("SYMLINK_TARGET");
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
 
   protected static final PersistentFS ourPersistence = PersistentFS.getInstance();
 
-  private static final byte DIRTY_FLAG = 0x01;
-  private static final byte HAS_SYMLINK_FLAG = 0x02;
-  private static final int INT_FLAGS_MASK = 0xe3;  // 0b11100011
+  private static final Key<String> SYMLINK_TARGET = Key.create("local.vfs.symlink.target");
+
+  private static final int DIRTY_FLAG = 0x0100;
+  private static final int IS_SYMLINK_FLAG = 0x0200;
+  private static final int HAS_SYMLINK_FLAG = 0x0400;
+  private static final int IS_SPECIAL_FLAG = 0x0800;
+  private static final int INT_FLAGS_MASK = 0xff00;
 
   @NonNls private static final String EMPTY = "";
-  @NonNls private static final String[] wellKnownSuffixes = {"$1.class", "$2.class", ".class", ".java", ".html", ".txt", ".xml"};
+  @NonNls private static final String[] WELL_KNOWN_SUFFIXES = {"$1.class", "$2.class", ".class", ".java", ".html", ".txt", ".xml"};
 
-  /** Either a String or byte[]. Possibly should be concatenated with one of the entries in the {@link #wellKnownSuffixes}. */
+  /** Either a String or byte[]. Possibly should be concatenated with one of the entries in the {@link #WELL_KNOWN_SUFFIXES}. */
   private volatile Object myName;
   private volatile VirtualDirectoryImpl myParent;
-  /** Also, high three bits are used as an index into the {@link #wellKnownSuffixes} array. */
-  private volatile byte myFlags = 0;
+  /** Also, high three bits are used as an index into the {@link #WELL_KNOWN_SUFFIXES} array. */
+  private volatile short myFlags = 0;
   private volatile int myId;
 
-  public VirtualFileSystemEntry(@NotNull String name, final VirtualDirectoryImpl parent, int id) {
+  public VirtualFileSystemEntry(@NotNull String name, VirtualDirectoryImpl parent, int id, @PersistentFS.Attributes int attributes) {
     myParent = parent;
     myId = id;
+
     storeName(name);
+
     if (parent != null) {
-      calcLinkStatus();
+      setFlagInt(IS_SYMLINK_FLAG, PersistentFS.isSymLink(attributes));
+      setFlagInt(IS_SPECIAL_FLAG, PersistentFS.isSpecialFile(attributes));
+      updateLinkStatus();
     }
   }
 
   private void storeName(@NotNull String name) {
-    myFlags &= 0x1f;
-    for (int i = 0; i < wellKnownSuffixes.length; i++) {
-      String suffix = wellKnownSuffixes[i];
+    myFlags &= 0x1fff;
+    for (int i = 0; i < WELL_KNOWN_SUFFIXES.length; i++) {
+      String suffix = WELL_KNOWN_SUFFIXES[i];
       if (name.endsWith(suffix)) {
         name = StringUtil.trimEnd(name, suffix);
-        int mask = (i+1) << 5;
+        int mask = (i+1) << 13;
         myFlags |= mask;
         break;
       }
@@ -84,10 +91,12 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     myName = encodeName(name.replace('\\', '/'));  // note: on Unix-style FS names may contain backslashes
   }
 
-  private void calcLinkStatus() {
-    boolean symLink = isSymLink();
-    putUserData(SYMLINK_TARGET, symLink ? myParent.getFileSystem().resolveSymLink(this) : null);
-    setFlagInt(HAS_SYMLINK_FLAG, symLink || ((VirtualFileSystemEntry)myParent).getFlagInt(HAS_SYMLINK_FLAG));
+  private void updateLinkStatus() {
+    boolean isSymLink = isSymLink();
+    if (isSymLink) {
+      putUserData(SYMLINK_TARGET, myParent.getFileSystem().resolveSymLink(this));
+    }
+    setFlagInt(HAS_SYMLINK_FLAG, isSymLink || ((VirtualFileSystemEntry)myParent).getFlagInt(HAS_SYMLINK_FLAG));
   }
 
   private static Object encodeName(@NotNull String name) {
@@ -107,9 +116,9 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @NotNull
   private String getEncodedSuffix() {
-    int index = (myFlags >> 5) & 0x07;
+    int index = (myFlags >> 13) & 0x07;
     if (index == 0) return EMPTY;
-    return wellKnownSuffixes[index-1];
+    return WELL_KNOWN_SUFFIXES[index-1];
   }
 
   @Override
@@ -247,7 +256,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return chars;
   }
 
-
   private static int copyString(@NotNull char[] chars, int pos, @NotNull String s) {
     int length = s.length();
     s.getChars(0, length, chars, pos);
@@ -383,12 +391,10 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return ourPersistence.exists(this);
   }
 
-
   @Override
   public boolean isValid() {
     return exists();
   }
-
 
   public String toString() {
     return getUrl();
@@ -408,7 +414,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     myParent.removeChild(this);
     myParent = (VirtualDirectoryImpl)newParent;
     myParent.addChild(this);
-    calcLinkStatus();
+    updateLinkStatus();
   }
 
   @Override
@@ -466,12 +472,12 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public boolean isSymLink() {
-    return ourPersistence.isSymLink(this);
+    return getFlagInt(IS_SYMLINK_FLAG);
   }
 
   @Override
   public boolean isSpecialFile() {
-    return ourPersistence.isSpecialFile(this);
+    return getFlagInt(IS_SPECIAL_FLAG);
   }
 
   @Override
