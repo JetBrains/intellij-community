@@ -15,9 +15,16 @@
  */
 package com.intellij.openapi.util.io;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.Convertor;
+import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import java.util.Arrays;
+import java.util.Collection;
+
+import static org.junit.Assert.*;
 
 /**
  * @author Roman Shevchenko
@@ -51,5 +58,29 @@ public class FileUtilTest {
     assertEquals("c:", FileUtil.toCanonicalPath("c:\\a\\..\\", WINDOWS_SEPARATOR));
     assertEquals("c:", FileUtil.toCanonicalPath("c:\\a\\..\\..", WINDOWS_SEPARATOR));
     assertEquals("c:/b", FileUtil.toCanonicalPath("c:\\a\\..\\..\\b", WINDOWS_SEPARATOR));
+  }
+
+  @Test
+  public void isAncestor() throws Exception {
+    assertTrue(FileUtil.isAncestor("/a/b/c", "/a/b/c/d/e/f", true));
+    assertTrue(FileUtil.isAncestor("/a/b/c/", "/a/b/c/d/e/f", true));
+    assertFalse(FileUtil.isAncestor("/a/b/c/1", "/a/b/c/2", true));
+    assertFalse(FileUtil.isAncestor("/a/b/c/1", "/a/b/c/2", false));
+    assertTrue(FileUtil.isAncestor("/a/b/c/", "/a/b/c", false));
+    assertTrue(FileUtil.isAncestor("/a///b/c", "/a/b/c/", false));
+    assertFalse(FileUtil.isAncestor("/a/b/c/", "/a/./b/c", true));
+    assertFalse(FileUtil.isAncestor("/a/b/c", "/a/b/c/", true));
+    assertFalse(FileUtil.isAncestor("/a/b/c", "/a/b/cde", true));
+    assertFalse(FileUtil.isAncestor("/a/b/c", "/a/b/cde", false));
+
+    assertEquals(!SystemInfo.isFileSystemCaseSensitive, FileUtil.isAncestor("/a/b/c", "/a/B/c/d", true));
+  }
+
+  @Test
+  public void testRemoveAncestors() throws Exception {
+    final String[] arr = {"/a/b/c", "/a", "/a/b", "/d/e", "/b/c", "/a/d", "/b/c/ttt", "/a/ewqeuq"};
+    final String[] expectedResult = {"/a","/b/c","/d/e"};
+    final Collection<String> result = FileUtil.removeAncestors(Arrays.asList(arr), Convertor.SELF, Processor.TRUE);
+    Assert.assertArrayEquals(expectedResult, result.toArray(new String[result.size()]));
   }
 }
