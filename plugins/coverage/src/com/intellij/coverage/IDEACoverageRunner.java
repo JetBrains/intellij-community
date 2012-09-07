@@ -24,7 +24,7 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
 
   public void appendCoverageArgument(final String sessionDataFilePath, final String[] patterns, final SimpleJavaParameters javaParameters,
                                      final boolean collectLineInfo, final boolean isSampling) {
-    StringBuffer argument = new StringBuffer("-javaagent:");
+    StringBuilder argument = new StringBuilder("-javaagent:");
     final String agentPath = PathUtil.getJarPathForClass(ProjectData.class);
     final String parentPath = handleSpacesInPath(agentPath);
     argument.append(parentPath).append(File.separator).append(new File(agentPath).getName());
