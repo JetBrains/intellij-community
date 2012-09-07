@@ -141,7 +141,7 @@ public class TestsUIUtil {
       if (icon.hideProgress(TESTS)) {
         if (problemsCounter > 0) {
           icon.setErrorBadge(String.valueOf(problemsCounter));
-          icon.requestAttention(true);
+          icon.requestAttention(false);
         } else {
           icon.setOkBadge(true);
           icon.requestAttention(false);
