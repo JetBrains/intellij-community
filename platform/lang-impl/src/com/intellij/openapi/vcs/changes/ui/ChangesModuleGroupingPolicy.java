@@ -21,10 +21,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
+import java.io.File;
 import java.util.HashMap;
 
 /**
@@ -49,6 +51,9 @@ public class ChangesModuleGroupingPolicy implements ChangesGroupingPolicy {
     ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
 
     VirtualFile vFile = node.getVf();
+    if (vFile == null) {
+      vFile = LocalFileSystem.getInstance().findFileByIoFile(new File(node.getPath()));
+    }
     if (vFile != null && Comparing.equal(vFile, index.getContentRootForFile(vFile))) {
       Module module = index.getModuleForFile(vFile);
       return getNodeForModule(module, rootNode);
