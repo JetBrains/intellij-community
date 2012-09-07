@@ -61,10 +61,10 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
   }
 
   public void runPythonTest(PyTestTask testTask) {
-    runTest(testTask);
+    runTest(testTask, getTestName(false));
   }
 
-  private void runTest(@NotNull PyTestTask testTask) {
+  public static void runTest(@NotNull PyTestTask testTask, @NotNull String testName) {
     if (notEnvConfiguration()) {
       fail("Running under teamcity but not by Env configuration. Skipping.");
       return;
@@ -73,7 +73,7 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
     List<String> roots = getPythonRoots();
 
     if (roots.size() == 0) {
-      String msg = getTestName(false) +
+      String msg = testName +
                    ": environments are not defined. Skipping. \nSpecify either " +
                    PYCHARM_PYTHON_ENVS +
                    " or " +
@@ -125,7 +125,7 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
 
     if (!wasExecuted) {
       throw new RuntimeException("test" +
-                                 getTestName(false) +
+                                 testName +
                                  " was not executed.\n" +
                                  joinStrings(roots, "All roots: ") +
                                  "\n" +
