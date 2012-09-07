@@ -871,24 +871,11 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static int pathHashCode(@Nullable String path) {
-    if (path == null) {
+    if (StringUtil.isEmpty(path)) {
       return 0;
     }
-    final int len = path.length();
-    if (len == 0) {
-      return 0;
-    }
-
     path = toSystemIndependentName(path);
-
-    if (SystemInfo.isFileSystemCaseSensitive) {
-      return path.hashCode();
-    }
-    int h = 0;
-    for (int i = 0; i < len; i++) {
-      h = 31*h + StringUtil.toLowerCase(path.charAt(i));
-    }
-    return h;
+    return SystemInfo.isFileSystemCaseSensitive? path.hashCode() : StringUtil.stringHashCodeInsensitive(path);
   }
 
 
