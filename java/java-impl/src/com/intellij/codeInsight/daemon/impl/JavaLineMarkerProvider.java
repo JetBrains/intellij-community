@@ -210,8 +210,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
           ProgressManager.checkCanceled();
 
           final PsiMethod superMethod = pair.getFirst();
-          if (superMethod.isPhysical() && pair.getSecond().isPhysical() //groovy, scala
-              && methods.remove(superMethod)) {
+          if (methods.remove(superMethod)) {
             overridden.add(superMethod);
           }
           return !methods.isEmpty();

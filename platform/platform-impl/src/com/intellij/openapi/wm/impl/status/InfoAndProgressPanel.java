@@ -55,10 +55,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget {
   private final ProcessPopup myPopup;
@@ -635,16 +632,24 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private void runQuery() {
     if (getRootPane() == null) return;
 
-    synchronized (myOriginals) {
-      for (InlineProgressIndicator each : myInline2Original.keySet()) {
-        each.updateProgress();
-      }
+    Set<InlineProgressIndicator> indicators = getCurrentInlineIndicators();
+    if (indicators.isEmpty()) return;
+
+    for (InlineProgressIndicator each : indicators) {
+      each.updateProgress();
     }
+    myQueryAlarm.cancelAllRequests();
     myQueryAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
         runQuery();
       }
     }, 2000);
+  }
+
+  private Set<InlineProgressIndicator> getCurrentInlineIndicators() {
+    synchronized (myOriginals) {
+      return myInline2Original.keySet();
+    }
   }
 }

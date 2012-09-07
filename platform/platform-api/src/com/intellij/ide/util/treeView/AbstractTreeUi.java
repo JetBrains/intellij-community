@@ -3834,7 +3834,7 @@ public class AbstractTreeUi {
             }
           }
 
-          Set<Object> toSelect = new HashSet<Object>();
+          Set<Object> toSelect = new THashSet<Object>();
           clearSelection();
           ContainerUtil.addAll(toSelect, elements);
           if (addToSelection) {
@@ -3979,11 +3979,12 @@ public class AbstractTreeUi {
     }
   }
 
-  public void select(final Object element, @Nullable final Runnable onDone) {
+  public void select(@Nullable Object element, @Nullable final Runnable onDone) {
     select(element, onDone, false);
   }
 
-  public void select(final Object element, @Nullable final Runnable onDone, boolean addToSelection) {
+  public void select(@Nullable Object element, @Nullable final Runnable onDone, boolean addToSelection) {
+     if (element == null) return;
     _select(new Object[]{element}, onDone, addToSelection, true, false);
   }
 

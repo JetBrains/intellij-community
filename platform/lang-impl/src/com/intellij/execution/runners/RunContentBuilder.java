@@ -19,10 +19,12 @@ import com.intellij.diagnostic.logging.LogConsoleManagerBase;
 import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.DefaultExecutionResult;
+import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.actions.CloseAction;
@@ -41,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author dyoma
@@ -126,6 +129,17 @@ public class RunContentBuilder extends LogConsoleManagerBase {
     }
     MyRunContentDescriptor contentDescriptor = new MyRunContentDescriptor(profile, myExecutionResult, myReuseProhibited, myUi.getComponent(), this);
     myUi.getOptions().setLeftToolbar(createActionToolbar(contentDescriptor, myUi.getComponent()), ActionPlaces.UNKNOWN);
+
+    if (profile instanceof RunConfigurationBase) {
+      if (console instanceof ObservableConsoleView && !ApplicationManager.getApplication().isUnitTestMode()) {
+        ((ObservableConsoleView)console).addChangeListener(new ConsoleToFrontListener((RunConfigurationBase)profile,
+                                                                                      getProject(),
+                                                                                      myExecutor,
+                                                                                      contentDescriptor,
+                                                                                      myUi),
+                                                           this);
+      }
+    }
 
     return contentDescriptor;
   }
@@ -243,6 +257,40 @@ public class RunContentBuilder extends LogConsoleManagerBase {
     public void dispose() {
       Disposer.dispose(myAdditionalDisposable);
       super.dispose();
+    }
+  }
+
+  public static class ConsoleToFrontListener implements ConsoleViewImpl.ChangeListener {
+    @NotNull private final RunConfigurationBase myRunConfigurationBase;
+    @NotNull private final Project myProject;
+    @NotNull private final Executor myExecutor;
+    @NotNull private final RunContentDescriptor myRunContentDescriptor;
+    @NotNull private final RunnerLayoutUi myUi;
+
+    public ConsoleToFrontListener(@NotNull RunConfigurationBase runConfigurationBase,
+                                  @NotNull Project project,
+                                  @NotNull Executor executor,
+                                  @NotNull RunContentDescriptor runContentDescriptor,
+                                  @NotNull RunnerLayoutUi ui) {
+      myRunConfigurationBase = runConfigurationBase;
+      myProject = project;
+      myExecutor = executor;
+      myRunContentDescriptor = runContentDescriptor;
+      myUi = ui;
+    }
+
+    @Override
+    public void contentAdded(Collection<ConsoleViewContentType> types) {
+      if (myProject.isDisposed() || myUi.isDisposed())
+        return;
+      for (ConsoleViewContentType type : types) {
+        if ((type == ConsoleViewContentType.NORMAL_OUTPUT) && myRunConfigurationBase.isShowConsoleOnStdOut()
+            || (type == ConsoleViewContentType.ERROR_OUTPUT) && myRunConfigurationBase.isShowConsoleOnStdErr()) {
+          ExecutionManager.getInstance(myProject).getContentManager().toFrontRunContent(myExecutor, myRunContentDescriptor);
+          myUi.selectAndFocus(myUi.findContent(ExecutionConsole.CONSOLE_CONTENT_ID), false, false);
+          return;
+        }
+      }
     }
   }
 }

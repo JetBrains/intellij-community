@@ -1,0 +1,8 @@
+<root>
+    <te<caret>st>
+        <element
+            attribute="test1"/>
+        <element
+            attribute="test2"/>
+    </test>
+</root>

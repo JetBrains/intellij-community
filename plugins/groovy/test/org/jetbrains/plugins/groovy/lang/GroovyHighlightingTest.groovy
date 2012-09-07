@@ -1415,4 +1415,8 @@ class X {
 ''')
   }
 
+  void testTupleVariableDeclarationWithRecursion() {
+    testHighlighting('''\
+def (a, b) = [a, a]''')
+  }
 }

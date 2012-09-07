@@ -81,6 +81,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
           myModifiableModelsProvider.disposeModuleModifiableModel(modifiableModel);
           return;
         }
+        return;
       }
       myModifiableModelsProvider.commitModuleModifiableModel(modifiableModel);
 

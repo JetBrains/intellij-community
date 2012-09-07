@@ -233,7 +233,10 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     }
     for (String modifier : PsiModifier.MODIFIERS) {
       if (modifierList.hasModifierProperty(modifier)) {
-        entry.addModifier(MODIFIERS.get(modifier));
+        ArrangementModifier arrangementModifier = MODIFIERS.get(modifier);
+        if (arrangementModifier != null) {
+          entry.addModifier(arrangementModifier);
+        }
       }
     }
     if (modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {

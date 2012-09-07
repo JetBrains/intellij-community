@@ -52,7 +52,7 @@ public class CreateFromScratchMode extends WizardMode {
   }
 
   @Nullable
-  protected StepSequence createSteps(final WizardContext context, @Nullable final ModulesProvider modulesProvider) {
+  protected StepSequence createSteps(final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
     final StepSequence sequence = new StepSequence();
     sequence.addCommonStep(new ProjectNameWithTypeStep(context, sequence, this));
     for (ModuleBuilder builder : ModuleBuilder.getAllBuilders()) {

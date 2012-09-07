@@ -170,34 +170,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   private void inlineExpressionUsage(PsiExpression expr,
                                      final PsiConstantEvaluationHelper evalHelper,
                                      PsiExpression initializer1) throws IncorrectOperationException {
-    while (expr.getParent() instanceof PsiArrayAccessExpression) {
-      PsiArrayAccessExpression arrayAccess = (PsiArrayAccessExpression)expr.getParent();
-      Object value = evalHelper.computeConstantExpression(arrayAccess.getIndexExpression());
-      if (value instanceof Integer) {
-        int intValue = ((Integer)value).intValue();
-        if (initializer1 instanceof PsiNewExpression) {
-          PsiExpression[] arrayInitializers = ((PsiNewExpression)initializer1).getArrayInitializer().getInitializers();
-          if (0 <= intValue && intValue < arrayInitializers.length) {
-            expr = (PsiExpression)expr.getParent();
-            initializer1 = normalize(arrayInitializers[intValue]);
-            continue;
-          }
-        }
-      }
-
-      break;
-    }
-
-    if (initializer1 instanceof PsiArrayInitializerExpression) {
-      final PsiType type = expr.getType();
-      if (type != null) {
-        initializer1 = (PsiExpression)initializer1.replace(
-          (PsiNewExpression)JavaPsiFacade.getInstance(expr.getProject()).getElementFactory()
-            .createExpressionFromText("new " + type.getCanonicalText() + initializer1.getText(), initializer1));
-      }
-    }
     myField.normalizeDeclaration();
-    ChangeContextUtil.encodeContextInfo(initializer1, true);
     if (expr instanceof PsiReferenceExpression) {
       PsiExpression qExpression = ((PsiReferenceExpression)expr).getQualifierExpression();
       if (qExpression != null) {
@@ -214,8 +187,8 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    PsiElement element = expr.replace(initializer1);
-    ChangeContextUtil.decodeContextInfo(element, null, null);
+
+    InlineUtil.inlineVariable(myField, initializer1, (PsiJavaCodeReferenceElement)expr);
   }
 
   private static PsiExpression normalize(PsiExpression expression) {

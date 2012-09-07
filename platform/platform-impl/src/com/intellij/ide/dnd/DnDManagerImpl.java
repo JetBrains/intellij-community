@@ -78,12 +78,10 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
 
   public DnDManagerImpl(final Application app) {
     myApp = app;
-    myTooltipTimer.start();
   }
 
   @Override
   public void dispose() {
-    myTooltipTimer.stop();
   }
 
   public void registerSource(@NotNull final AdvancedDnDSource source) {
@@ -265,7 +263,6 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
         if (!myLastProcessedPoint.equals(currentEvent.getPoint())) {
           if (!Highlighters.isVisibleExcept(DnDEvent.DropTargetHighlightingType.TEXT | DnDEvent.DropTargetHighlightingType.ERROR_TEXT)) {
             hideCurrentHighlighter();
-            restartTimer();
             queueTooltip(currentEvent, getLayeredPane(current), inPlaceRect);
           }
         }
@@ -273,7 +270,6 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
       else {
         if (myLastProcessedPoint == null || currentEvent == null || !myLastProcessedPoint.equals(currentEvent.getPoint())) {
           hideCurrentHighlighter();
-          restartTimer();
           queueTooltip(currentEvent, getLayeredPane(current), inPlaceRect);
         }
       }
@@ -284,7 +280,6 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
         processedTarget.cleanUpOnLeave();
       }
       currentEvent.clearDropHandler();
-      restartTimer();
 
       if (!currentEvent.isDropPossible()) {
         queueTooltip(currentEvent, getLayeredPane(current), inPlaceRect);
@@ -316,10 +311,6 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
     }
 
     myCurrentDragContext.setCursor(cursor);
-  }
-
-  private void restartTimer() {
-    myTooltipTimer.restart();
   }
 
   private boolean update(DnDTarget target, DnDEvent currentEvent) {
@@ -443,6 +434,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
         }
       }
     };
+    myTooltipTimer.restart();
   }
 
   private static boolean isMessageProvided(final DnDEvent aEvent) {
@@ -451,15 +443,20 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
 
   void hideCurrentHighlighter() {
     Highlighters.hide();
-    myHighlighterShowRequest = null;
+    clearRequest();
     setLastHighlightedEvent(null, null);
+  }
+
+  private void clearRequest() {
+    myHighlighterShowRequest = null;
+    myTooltipTimer.stop();
   }
 
   private void onTimer() {
     if (myHighlighterShowRequest != null) {
       myHighlighterShowRequest.run();
-      myHighlighterShowRequest = null;
     }
+    clearRequest();
   }
   
 
@@ -518,7 +515,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
     return myLastHighlightedEvent;
   }
 
-  private void setLastHighlightedEvent(DnDEvent lastHighlightedEvent, Rectangle aRectangle) {
+  private void setLastHighlightedEvent(@Nullable DnDEvent lastHighlightedEvent, @Nullable Rectangle aRectangle) {
     myLastHighlightedEvent = lastHighlightedEvent;
     myLastHighlightedRec = aRectangle;
   }
@@ -729,7 +726,6 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
       target.cleanUpOnLeave();
     }
     hideCurrentHighlighter();
-    myHighlighterShowRequest = null;
   }
 
   private Application getApplication() {

@@ -5,7 +5,7 @@
   <category>VCS Integration</category>
   <description>For Subversion 1.7 and older versions</description>
   <depends>com.intellij.modules.vcs</depends>
-  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
   <resource-bundle>org.jetbrains.idea.svn.SvnBundle</resource-bundle>
   <project-components>
     <component>

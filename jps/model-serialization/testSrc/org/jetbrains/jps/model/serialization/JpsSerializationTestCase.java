@@ -46,8 +46,8 @@ public abstract class JpsSerializationTestCase extends JpsModelTestCase {
     }
   }
 
-  protected static String getTestDataFileAbsolutePath(String relativePath) {
-    return PathManagerEx.findFileUnderCommunityHome(relativePath).getAbsolutePath();
+  protected String getTestDataFileAbsolutePath(String relativePath) {
+    return PathManagerEx.findFileUnderProjectHome(relativePath, getClass()).getAbsolutePath();
   }
 
   protected static Element loadModuleRootTag(File imlFile) {

@@ -24,6 +24,7 @@ import com.intellij.notification.LogModel;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
@@ -66,6 +67,18 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
         return true;
       }
     }.installOn(this);
+
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(LogModel.LOG_MODEL_CHANGED, new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            updateStatus();
+          }
+        });
+      }
+    });
   }
 
   public WidgetPresentation getPresentation(@NotNull PlatformType type) {
@@ -77,15 +90,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
 
   public void install(@NotNull StatusBar statusBar) {
     myStatusBar = statusBar;
-
-    new Runnable() {
-      @Override
-      public void run() {
-        updateStatus();
-        myLogAlarm.addRequest(this, 100, true);
-      }
-    }.run();
-
+    updateStatus();
   }
 
   @Nullable
@@ -100,29 +105,36 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
 
   private void updateStatus() {
     final Project project = getProject();
-    LogModel logModel = EventLog.getLogModel(project);
-    ToolWindow eventLog = EventLog.getEventLog(project);
-    if (eventLog != null && eventLog.isVisible()) {
-      logModel.logShown();
-    }
-    boolean stripesVisible = !UISettings.getInstance().HIDE_TOOL_STRIPES;
-    ArrayList<Notification> notifications = logModel.getNotifications();
-    LayeredIcon icon = new LayeredIcon(2);
-    Icon statusIcon = getPendingNotificationsIcon(AllIcons.Ide.Notifications, getMaximumType(notifications));
-    icon.setIcon(statusIcon, 0);
-    final int count = notifications.size();
-    if (count > 0) {
-      icon.setIcon(new TextIcon(this, String.valueOf(count)), 1, statusIcon.getIconWidth() - 2, 0);
-    }
-    if (stripesVisible && eventLog != null) {
-      eventLog.setIcon(icon);
-      setIcon(null);
-    } else {
-      setIcon(icon);
-    }
+    ArrayList<Notification> notifications = EventLog.getLogModel(project).getNotifications();
+    applyIconToStatusAndToolWindow(project, createIconWithNotificationCount(notifications));
+
+    int count = notifications.size();
     setToolTipText(count > 0 ? String.format("%s notification%s pending", count, count == 1 ? "" : "s") : "No new notifications");
 
     myStatusBar.updateWidget(ID());
+  }
+
+  private void applyIconToStatusAndToolWindow(Project project, LayeredIcon icon) {
+    if (UISettings.getInstance().HIDE_TOOL_STRIPES) {
+      setIcon(icon);
+    }
+    else {
+      ToolWindow eventLog = EventLog.getEventLog(project);
+      if (eventLog != null) {
+        eventLog.setIcon(icon);
+      }
+      setIcon(null);
+    }
+  }
+
+  private LayeredIcon createIconWithNotificationCount(ArrayList<Notification> notifications) {
+    LayeredIcon icon = new LayeredIcon(2);
+    Icon statusIcon = getPendingNotificationsIcon(AllIcons.Ide.Notifications, getMaximumType(notifications));
+    icon.setIcon(statusIcon, 0);
+    if (notifications.size() > 0) {
+      icon.setIcon(new TextIcon(this, String.valueOf(notifications.size())), 1, statusIcon.getIconWidth() - 2, 0);
+    }
+    return icon;
   }
 
   @Override

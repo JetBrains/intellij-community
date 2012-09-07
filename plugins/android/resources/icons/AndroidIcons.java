@@ -15,12 +15,9 @@ public class AndroidIcons {
 
   public static final Icon Android = load("/icons/android.png"); // 16x16
   public static final Icon Android24 = load("/icons/android24.png"); // 24x24
-  public static final Icon AndroidLarge = load("/icons/androidLarge.png"); // 64x64
   public static final Icon AndroidPreview = load("/icons/androidPreview.png"); // 16x16
   public static final Icon AndroidToolWindow = load("/icons/androidToolWindow.png"); // 13x13
   public static final Icon AttachDebugger = load("/icons/attachDebugger.png"); // 16x16
-  public static final Icon Ddms = load("/icons/ddms.png"); // 16x16
-  public static final Icon Navigate = load("/icons/navigate.png"); // 7x7
   public static final Icon RefreshPreview = load("/icons/refreshPreview.png"); // 16x16
   public static final Icon RestartLogcat = load("/icons/restartLogcat.png"); // 16x16
   public static final Icon ZoomActual = load("/icons/zoomActual.png"); // 16x16

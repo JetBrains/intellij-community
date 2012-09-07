@@ -56,6 +56,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   private static final String ADD_MODULE_TITLE = IdeBundle.message("title.add.module");
   private static final String NEW_PROJECT_TITLE = IdeBundle.message("title.new.project");
   private final Project myCurrentProject;
+  private final ModulesProvider myModulesProvider;
   private WizardContext myWizardContext;
   private ProjectCreateModeStep myRootStep;
 
@@ -63,22 +64,24 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   /**
    * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing project.
    */
-  public AddModuleWizard(final Project project, final ModulesProvider modulesProvider, @Nullable String defaultPath) {
+  public AddModuleWizard(final Project project, final @NotNull ModulesProvider modulesProvider, @Nullable String defaultPath) {
     super(project == null ? NEW_PROJECT_TITLE : ADD_MODULE_TITLE, project);
     myCurrentProject = project;
-    initModuleWizard(project, modulesProvider, defaultPath);
+    myModulesProvider = modulesProvider;
+    initModuleWizard(project, defaultPath);
   }
 
   /**
    * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing proj.
    */
-  public AddModuleWizard(Component parent, final Project project, ModulesProvider modulesProvider) {
+  public AddModuleWizard(Component parent, final Project project, @NotNull ModulesProvider modulesProvider) {
     super(project == null ? NEW_PROJECT_TITLE : ADD_MODULE_TITLE, parent);
     myCurrentProject = project;
-    initModuleWizard(project, modulesProvider, null);
+    myModulesProvider = modulesProvider;
+    initModuleWizard(project, null);
   }
 
-  private void initModuleWizard(final Project project, final ModulesProvider modulesProvider, @Nullable final String defaultPath) {
+  private void initModuleWizard(final Project project, @Nullable final String defaultPath) {
     myWizardContext = new WizardContext(project);
     if (defaultPath != null) {
       myWizardContext.setProjectFileDirectory(defaultPath);
@@ -101,7 +104,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     };
     addStep(myRootStep);
     for (WizardMode mode : myRootStep.getModes()) {
-      appendSteps(mode.getSteps(myWizardContext, modulesProvider));
+      appendSteps(mode.getSteps(myWizardContext, myModulesProvider));
     }
     init();
   }
@@ -257,7 +260,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
 
   protected final int getNextStep(int step) {
     ModuleWizardStep nextStep = null;
-    final StepSequence stepSequence = getMode().getSteps(myWizardContext, null);
+    final StepSequence stepSequence = getMode().getSteps(myWizardContext, myModulesProvider);
     if (stepSequence != null) {
       if (myRootStep == mySteps.get(step)) {
         return mySteps.indexOf(stepSequence.getFirstStep());
@@ -272,7 +275,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
 
   protected final int getPreviousStep(final int step) {
     ModuleWizardStep previousStep = null;
-    final StepSequence stepSequence = getMode().getSteps(myWizardContext, null);
+    final StepSequence stepSequence = getMode().getSteps(myWizardContext, myModulesProvider);
     if (stepSequence != null) {
       previousStep = stepSequence.getPreviousStep(mySteps.get(step));
       while (previousStep != null && !previousStep.isStepVisible()) {
@@ -381,7 +384,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
 
       // Switch to the target mode if necessary.
       for (WizardMode mode : myRootStep.getModes()) {
-        StepSequence steps = mode.getSteps(myWizardContext, null);
+        StepSequence steps = mode.getSteps(myWizardContext, myModulesProvider);
         if (steps == null || !steps.getAllSteps().contains(step)) {
           continue;
         }

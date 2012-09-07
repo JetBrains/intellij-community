@@ -13,5 +13,5 @@ public class SpellcheckerIcons {
     return IconLoader.getIcon(path, SpellcheckerIcons.class);
   }
 
-  public static final Icon Spellcheck = load("/com/intellij/spellchecker/quickfixes/spellcheck.png"); // 16x16
+  public static final Icon Spellcheck = load("/icons/spellcheck.png"); // 16x16
 }

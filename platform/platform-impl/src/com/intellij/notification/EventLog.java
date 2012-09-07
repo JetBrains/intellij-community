@@ -17,39 +17,24 @@
 package com.intellij.notification;
 
 import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.actions.ContextHelpAction;
-import com.intellij.notification.impl.NotificationsConfigurable;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
-import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -335,7 +320,6 @@ public class EventLog {
     if (eventLog != null) {
       if (!eventLog.isVisible()) {
         eventLog.activate(null, true);
-        getLogModel(project).logShown();
       } else {
         eventLog.hide(null);
       }
@@ -373,6 +357,10 @@ public class EventLog {
         }
       });
 
+    }
+
+    EventLogConsole getConsole() {
+      return myConsole;
     }
 
     @Override
@@ -416,78 +404,8 @@ public class EventLog {
 
   }
 
-  private static ProjectTracker getProjectComponent(Project project) {
+  static ProjectTracker getProjectComponent(Project project) {
     return project.getComponent(ProjectTracker.class);
-  }
-  public static class FactoryItself implements ToolWindowFactory, DumbAware {
-    @Override
-    public void createToolWindowContent(final Project project, ToolWindow toolWindow) {
-      final Editor editor = getProjectComponent(project).myConsole.getConsoleEditor();
-
-      SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true) {
-        @Override
-        public Object getData(@NonNls String dataId) {
-          return PlatformDataKeys.HELP_ID.is(dataId) ? HELP_ID : super.getData(dataId);
-        }
-      };
-      panel.setContent(editor.getComponent());
-
-      DefaultActionGroup group = new DefaultActionGroup();
-      group.add(new DumbAwareAction("Settings", "Edit notification settings", AllIcons.Actions.ShowSettings) {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          ShowSettingsUtil.getInstance().editConfigurable(project, new NotificationsConfigurable());
-        }
-      });
-      group.add(new DisplayBalloons());
-      group.add(new ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE) {
-        @Override
-        protected Editor getEditor(AnActionEvent e) {
-          return editor;
-        }
-      });
-      group.add(new ScrollToTheEndToolbarAction(editor));
-      group.add(new DumbAwareAction("Mark all as read", "Mark all unread notifications as read", AllIcons.General.Reset) {
-        @Override
-        public void update(AnActionEvent e) {
-          if (project.isDisposed()) return;
-          e.getPresentation().setEnabled(!getProjectComponent(project).myProjectModel.getNotifications().isEmpty());
-        }
-
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          LogModel model = getProjectComponent(project).myProjectModel;
-          for (Notification notification : model.getNotifications()) {
-            model.removeNotification(notification);
-            notification.expire();
-          }
-        }
-      });
-      group.add(new ContextHelpAction(HELP_ID));
-
-      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false);
-      toolbar.setTargetComponent(panel);
-      panel.setToolbar(toolbar.getComponent());
-
-      final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
-      toolWindow.getContentManager().addContent(content);
-    }
-
-    private static class DisplayBalloons extends ToggleAction implements DumbAware {
-      public DisplayBalloons() {
-        super("Show balloons", "Enable or suppress notification balloons", AllIcons.General.Balloon);
-      }
-
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS;
-      }
-
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS = state;
-      }
-    }
   }
 
   private static class NotificationHyperlinkInfo implements HyperlinkInfo {

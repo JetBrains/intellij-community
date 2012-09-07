@@ -59,6 +59,8 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
   private JPanel myScrollPanel;
   private JBCheckBox myRedirectOutputCb;
   private TextFieldWithBrowseButton myOutputFile;
+  private JCheckBox myShowConsoleOnStdOutCb;
+  private JCheckBox myShowConsoleOnStdErrCb;
   private final Map<LogFileOptions, PredefinedLogFile> myLog2Predefined = new HashMap<LogFileOptions, PredefinedLogFile>();
   private final List<PredefinedLogFile> myUnresolvedPredefined = new ArrayList<PredefinedLogFile>();
 
@@ -240,6 +242,8 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     final String fileOutputPath = configuration.getOutputFilePath();
     myOutputFile.setText(fileOutputPath != null ? FileUtil.toSystemDependentName(fileOutputPath) : "");
     myOutputFile.setEnabled(redirectOutputToFile);
+    myShowConsoleOnStdOutCb.setSelected(configuration.isShowConsoleOnStdOut());
+    myShowConsoleOnStdErrCb.setSelected(configuration.isShowConsoleOnStdErr());
   }
 
   protected void applyEditorTo(final RunConfigurationBase configuration) throws ConfigurationException {
@@ -269,6 +273,8 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     final String text = myOutputFile.getText();
     configuration.setFileOutputPath(StringUtil.isEmpty(text) ? null : FileUtil.toSystemIndependentName(text));
     configuration.setSaveOutputToFile(myRedirectOutputCb.isSelected());
+    configuration.setShowConsoleOnStdOut(myShowConsoleOnStdOutCb.isSelected());
+    configuration.setShowConsoleOnStdErr(myShowConsoleOnStdErrCb.isSelected());
   }
 
   @NotNull

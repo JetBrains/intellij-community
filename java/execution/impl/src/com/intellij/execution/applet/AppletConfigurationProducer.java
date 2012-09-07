@@ -24,9 +24,9 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaPsiFacade;
@@ -36,6 +36,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class AppletConfigurationProducer extends JavaRuntimeConfigurationProducerBase {
   private PsiClass myPsiClass;
@@ -60,7 +61,7 @@ public class AppletConfigurationProducer extends JavaRuntimeConfigurationProduce
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final AppletConfiguration configuration = (AppletConfiguration)settings.getConfiguration();
     configuration.MAIN_CLASS_NAME = JavaExecutionUtil.getRuntimeQualifiedName(myPsiClass);
-    configuration.setModule(new JUnitUtil.ModuleOfClass().convert(myPsiClass));
+    configuration.setModule(myPsiClass.isValid() ? ModuleUtilCore.findModuleForPsiElement(myPsiClass) : null);
     configuration.setName(configuration.getGeneratedName());
     return settings;
   }
@@ -70,6 +71,7 @@ public class AppletConfigurationProducer extends JavaRuntimeConfigurationProduce
   }
 
 
+  @Nullable
   private static PsiClass getAppletClass(PsiElement element, final PsiManager manager) {
     while (element != null) {
       if (element instanceof PsiClass) {

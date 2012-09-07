@@ -210,7 +210,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
                                                          : expression instanceof PsiReferenceExpression
                                                            ? (PsiReferenceExpression)expression
                                                            : null;
-      if (referenceExpression == null) {
+      if (referenceExpression == null || !referenceExpression.isValid()) {
         toInsert = fqn;
       }
       else if (!isReferencedTo(referenceExpression, targetElement)) {

@@ -20,7 +20,6 @@ import com.intellij.execution.*;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -30,18 +29,13 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.Convertor;
-import junit.runner.BaseTestRunner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.runners.Parameterized;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class JUnitUtil {
@@ -51,6 +45,12 @@ public class JUnitUtil {
   @NonNls private static final String TEST_ANNOTATION = "org.junit.Test";
   @NonNls public static final String RUN_WITH = "org.junit.runner.RunWith";
   @NonNls public static final String SUITE_METHOD_NAME = "suite";
+  private static final String BEFORE_ANNOTATION_NAME = "org.junit.Before";
+  private static final String AFTER_ANNOTATION_NAME = "org.junit.After";
+  private static final String PARAMETRIZED_PARAMETERS_ANNOTATION_NAME = "org.junit.runners.Parameterized.Parameters";
+  private static final String AFTER_CLASS_ANNOTATION_NAME = "org.junit.AfterClass";
+  private static final String BEFORE_CLASS_ANNOTATION_NAME = "org.junit.BeforeClass";
+  private static final String PARAMETERIZED_CLASS_NAME = "org.junit.runners.Parameterized";
 
   public static boolean isSuiteMethod(@NotNull PsiMethod psiMethod) {
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
@@ -78,7 +78,7 @@ public class JUnitUtil {
     if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
     if (AnnotationUtil.isAnnotated(aClass, RUN_WITH, true)) return true;
     if (psiMethod.getParameterList().getParametersCount() > 0) return false;
-    if (psiMethod.hasModifierProperty(PsiModifier.STATIC) && BaseTestRunner.SUITE_METHODNAME.equals(psiMethod.getName())) return false;
+    if (psiMethod.hasModifierProperty(PsiModifier.STATIC) && SUITE_METHOD_NAME.equals(psiMethod.getName())) return false;
     if (!psiMethod.getName().startsWith("test")) return false;
     PsiClass testCaseClass = getTestCaseClassOrNull(location);
     return testCaseClass != null && psiMethod.getContainingClass().isInheritor(testCaseClass, true);
@@ -89,15 +89,6 @@ public class JUnitUtil {
     Location<PsiClass> location = PsiLocation.fromPsiElement(aClass);
     PsiClass testCaseClass = getTestCaseClassOrNull(location);
     return testCaseClass != null && aClass.isInheritor(testCaseClass, true);
-  }
-
-  /**
-   *
-   * @param aClassLocation
-   * @return true if aClassLocation can be used as JUnit test class.
-   */
-  private static boolean isTestClass(final Location<? extends PsiClass> aClassLocation) {
-    return isTestClass(aClassLocation.getPsiElement());
   }
 
   public static boolean isTestClass(final PsiClass psiClass) {
@@ -151,7 +142,7 @@ public class JUnitUtil {
           final PsiAnnotationMemberValue value = attribute.getValue();
           if (value instanceof PsiClassObjectAccessExpression ) {
             final PsiTypeElement typeElement = ((PsiClassObjectAccessExpression)value).getOperand();
-            if (typeElement.getType().getCanonicalText().equals(Parameterized.class.getName())) {
+            if (typeElement.getType().getCanonicalText().equals(PARAMETERIZED_CLASS_NAME)) {
               return false;
             }
           }
@@ -223,13 +214,13 @@ public class JUnitUtil {
         return true;
       }
       if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
-        if (AnnotationUtil.isAnnotated(psiMethod, Arrays.asList(BeforeClass.class.getName(), AfterClass.class.getName(),
-                                                                Parameterized.Parameters.class.getName().replace('$', '.')))) {
+        if (AnnotationUtil.isAnnotated(psiMethod, Arrays.asList(BEFORE_CLASS_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME,
+                                                                PARAMETRIZED_PARAMETERS_ANNOTATION_NAME))) {
           return true;
         }
       }
       else {
-        if (AnnotationUtil.isAnnotated(psiMethod, Arrays.asList(Before.class.getName(), After.class.getName()))) return true;
+        if (AnnotationUtil.isAnnotated(psiMethod, Arrays.asList(BEFORE_ANNOTATION_NAME, AFTER_ANNOTATION_NAME))) return true;
       }
     }
     return false;
@@ -296,55 +287,6 @@ public class JUnitUtil {
       if (isTestMethod(methodLocation, checkAbstract)) return methodLocation.getPsiElement();
     }
     return null;
-  }
-
-  /**
-   * @param collection
-   * @param comparator returns 0 iff elemets are incomparable.
-   * @return maximum elements
-   */
-  public static <T> Collection<T> findMaximums(final Collection<T> collection, final Comparator<T> comparator) {
-    final ArrayList<T> maximums = new ArrayList<T>();
-    loop:
-    for (final T candidate : collection) {
-      for (final T element : collection) {
-        if (comparator.compare(element, candidate) > 0) continue loop;
-      }
-      maximums.add(candidate);
-    }
-    return maximums;
-  }
-
-  /*public static Map<Module, Collection<Module>> buildAllDependencies(final Project project) {
-    final Module[] modules = ModuleManager.getInstance(project).getSortedModules();
-    final HashMap<Module, Collection<Module>> lessers = new HashMap<Module, Collection<Module>>();
-    int prevProcessedCount = 0;
-    while (modules.length > lessers.size()) {
-      for (int i = 0; i < modules.length; i++) {
-        final Module module = modules[i];
-        if (lessers.containsKey(module)) continue;
-        final Module[] dependencies = ModuleRootManager.getInstance(module).getDependencies();
-        if (lessers.keySet().containsAll(Arrays.asList(dependencies))) {
-          final HashSet<Module> allDependencies = new HashSet<Module>();
-          for (int j = 0; j < dependencies.length; j++) {
-            final Module dependency = dependencies[j];
-            allDependencies.add(dependency);
-            allDependencies.addAll(lessers.get(dependency));
-          }
-          lessers.put(module, allDependencies);
-        }
-      }
-      if (lessers.size() == prevProcessedCount) return null;
-      prevProcessedCount = lessers.size();
-    }
-    return lessers;
-  }*/
-
-  public static class ModuleOfClass implements Convertor<PsiClass, Module> {
-    public Module convert(final PsiClass psiClass) {
-      if (psiClass == null || !psiClass.isValid()) return null;
-      return ModuleUtil.findModuleForPsiElement(psiClass);
-    }
   }
 
   public static class NoJUnitException extends CantRunException {

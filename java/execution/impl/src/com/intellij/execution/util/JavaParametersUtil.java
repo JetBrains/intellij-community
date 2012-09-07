@@ -23,8 +23,8 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -78,7 +78,7 @@ public class JavaParametersUtil {
     if (psiFile == null) throw CantRunException.classNotFound(mainClassName, module);
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) throw CantRunException.classNotFound(mainClassName, module);
-    Module classModule = new JUnitUtil.ModuleOfClass().convert(psiClass);
+    Module classModule = psiClass.isValid() ? ModuleUtilCore.findModuleForPsiElement(psiClass) : null;
     if (classModule == null) classModule = module;
     ModuleFileIndex fileIndex = ModuleRootManager.getInstance(classModule).getFileIndex();
     if (fileIndex.isInSourceContent(virtualFile)) {

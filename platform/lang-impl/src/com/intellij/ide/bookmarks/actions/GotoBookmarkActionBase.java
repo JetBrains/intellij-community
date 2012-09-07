@@ -16,49 +16,54 @@
 
 package com.intellij.ide.bookmarks.actions;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.ide.bookmarks.Bookmark;
+import com.intellij.ide.bookmarks.BookmarkManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-abstract class GotoBookmarkActionBase extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware {
-  protected GotoBookmarkActionBase() {
-    super(false);
+abstract class GotoBookmarkActionBase extends EditorAction {
+  protected GotoBookmarkActionBase(final boolean next) {
+    super(new EditorActionHandler() {
+      @Override
+      public void execute(Editor editor, DataContext dataContext) {
+        navigateToBookmark(dataContext, editor);
+      }
+
+      @Override
+      public boolean isEnabled(Editor editor, DataContext dataContext) {
+        return getBookmarkToGo(dataContext, editor) != null;
+      }
+
+      private void navigateToBookmark(DataContext dataContext, @NotNull final Editor editor) {
+        final Bookmark bookmark = getBookmarkToGo(dataContext, editor);
+        if (bookmark == null) return;
+
+        int line = bookmark.getLine();
+        if (line >= editor.getDocument().getLineCount()) return;
+        if (line < 0) line = 0;
+
+        LogicalPosition pos = new LogicalPosition(line, 0);
+        editor.getSelectionModel().removeSelection();
+        editor.getCaretModel().moveToLogicalPosition(pos);
+        editor.getScrollingModel().scrollTo(new LogicalPosition(line, 0), ScrollType.CENTER);
+      }
+
+      @Nullable
+      private Bookmark getBookmarkToGo(DataContext dataContext, Editor editor) {
+        Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+        if (project == null) return null;
+        BookmarkManager manager = BookmarkManager.getInstance(project);
+        return next ? manager.getNextBookmark(editor, true) : manager.getPreviousBookmark(editor, true);
+      }
+    });
   }
 
-  protected CodeInsightActionHandler getHandler() {
-    return this;
-  }
-
-  public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
-    if (ToolWindowManager.getInstance(project).isEditorComponentActive()) {
-      final Bookmark bookmark = getBookmarkToGo(project, editor);
-      if (bookmark == null) return;
-      int line = bookmark.getLine();
-      if (line >= editor.getDocument().getLineCount()) return;
-      if (line < 0) line = 0;
-
-      LogicalPosition pos = new LogicalPosition(line, 0);
-      editor.getSelectionModel().removeSelection();
-      editor.getCaretModel().moveToLogicalPosition(pos);
-      editor.getScrollingModel().scrollTo(new LogicalPosition(line, 0), ScrollType.CENTER);
-    }
-  }
-
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  protected final boolean isValidForFile(Project project, Editor editor, PsiFile file) {
-    return getBookmarkToGo(project, editor) != null;
-  }
-
-  abstract protected Bookmark getBookmarkToGo(Project project, Editor editor);
 }

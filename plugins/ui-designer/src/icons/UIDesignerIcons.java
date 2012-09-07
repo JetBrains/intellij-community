@@ -13,7 +13,6 @@ public class UIDesignerIcons {
     return IconLoader.getIcon(path, UIDesignerIcons.class);
   }
 
-  public static final Icon Break = load("/com/intellij/uiDesigner/icons/break.png"); // 18x18
   
   @SuppressWarnings("unused")
   public static final Icon Button = load("/com/intellij/uiDesigner/icons/button.png"); // 16x16
@@ -27,7 +26,6 @@ public class UIDesignerIcons {
   @SuppressWarnings("unused")
   public static final Icon ComboBox = load("/com/intellij/uiDesigner/icons/comboBox.png"); // 16x16
   public static final Icon DataBindingWizard = load("/com/intellij/uiDesigner/icons/dataBindingWizard.png"); // 16x16
-  public static final Icon Delete = load("/com/intellij/uiDesigner/icons/delete.png"); // 18x18
   public static final Icon DeleteCell = load("/com/intellij/uiDesigner/icons/deleteCell.png"); // 7x7
   public static final Icon Drag = load("/com/intellij/uiDesigner/icons/drag.png"); // 11x11
   
@@ -39,8 +37,6 @@ public class UIDesignerIcons {
   
   @SuppressWarnings("unused")
   public static final Icon FormattedTextField = load("/com/intellij/uiDesigner/icons/formattedTextField.png"); // 16x16
-  public static final Icon Grid = load("/com/intellij/uiDesigner/icons/grid.png"); // 18x18
-  public static final Icon Horizontal = load("/com/intellij/uiDesigner/icons/horizontal.png"); // 18x18
   
   @SuppressWarnings("unused")
   public static final Icon Hspacer = load("/com/intellij/uiDesigner/icons/hspacer.png"); // 16x16
@@ -115,7 +111,6 @@ public class UIDesignerIcons {
   public static final Icon Tree = load("/com/intellij/uiDesigner/icons/tree.png"); // 16x16
   public static final Icon Unknown_small = load("/com/intellij/uiDesigner/icons/unknown-small.png"); // 16x16
   public static final Icon Unknown = load("/com/intellij/uiDesigner/icons/unknown.png"); // 18x18
-  public static final Icon Vertical = load("/com/intellij/uiDesigner/icons/vertical.png"); // 18x18
   
   @SuppressWarnings("unused")
   public static final Icon Vspacer = load("/com/intellij/uiDesigner/icons/vspacer.png"); // 16x16

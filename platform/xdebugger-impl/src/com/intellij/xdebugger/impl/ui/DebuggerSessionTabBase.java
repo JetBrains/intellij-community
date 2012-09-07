@@ -23,35 +23,23 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComponentWithActions;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.AppIcon;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManagerAdapter;
-import com.intellij.ui.content.ContentManagerEvent;
-import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.xdebugger.XDebuggerBundle;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.Reader;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author nik
@@ -132,7 +120,23 @@ public abstract class DebuggerSessionTabBase extends LogConsoleManagerBase imple
           }
         }
       }, content);
+      RunProfile profile = getRunProfile();
+      if (profile instanceof RunConfigurationBase && !ApplicationManager.getApplication().isUnitTestMode()) {
+        final RunConfigurationBase runConfigurationBase = (RunConfigurationBase)profile;
+        observable.addChangeListener(new RunContentBuilder.ConsoleToFrontListener(runConfigurationBase,
+                                                                                  getProject(),
+                                                                                  DefaultDebugExecutor.getDebugExecutorInstance(),
+                                                                                  myRunContentDescriptor,
+                                                                                  getUi()),
+                                     content);
+      }
     }
+  }
+
+  @Nullable
+  protected RunProfile getRunProfile() {
+    ExecutionEnvironment environment = getEnvironment();
+    return environment != null ? environment.getRunProfile() : null;
   }
 
   public void toFront() {

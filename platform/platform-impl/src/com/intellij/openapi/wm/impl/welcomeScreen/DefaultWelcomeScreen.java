@@ -464,19 +464,17 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
   }
 
   private void addListItemToPlugins(final JPanel bundledPluginsPanel, final String title) {
-    addListItemToPlugins(bundledPluginsPanel, title, null, null, null, null, true, false);
+    addListItemToPlugins(bundledPluginsPanel, title, null, null, true, false);
   }
 
   private void addListItemToPlugins(final JPanel bundledPluginsPanel, final IdeaPluginDescriptorImpl plugin) {
-    addListItemToPlugins(bundledPluginsPanel, plugin.getName(), plugin.getDescription(), plugin.getVendorLogoPath(),
-                         plugin.getPluginClassLoader(), plugin.getUrl(), plugin.isEnabled(), PluginManager.isIncompatible(plugin));
+    addListItemToPlugins(bundledPluginsPanel, plugin.getName(), plugin.getDescription(),
+                         plugin.getUrl(), plugin.isEnabled(), PluginManager.isIncompatible(plugin));
   }
 
   public void addListItemToPlugins(final JPanel panel,
                                    String name,
                                    @Nullable String description,
-                                   @Nullable final String iconPath,
-                                   @Nullable final ClassLoader pluginClassLoader,
                                    @Nullable final String url,
                                    final boolean enabled,
                                    final boolean incompatible) {
@@ -488,17 +486,8 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     }
 
     final int y = myPluginsIdx += 2;
-    Icon logoImage;
 
-    // Check the iconPath and insert empty icon in case of empty or invalid value
-    if (StringUtil.isEmptyOrSpaces(iconPath)) {
-      logoImage = new EmptyIcon(PLUGIN_LOGO_SIZE.width, PLUGIN_LOGO_SIZE.height);
-    }
-    else {
-      logoImage = IconLoader.findIcon(iconPath, pluginClassLoader);
-      if (logoImage == null) logoImage = new EmptyIcon(PLUGIN_LOGO_SIZE.width, PLUGIN_LOGO_SIZE.height);
-    }
-    JLabel imageLabel = new JLabel(logoImage);
+    JLabel imageLabel = new JLabel(); // There used to be a logo, which is removed and I'm (max) lazy enough fixing gridbag
     GridBagConstraints gBC = new GridBagConstraints(0, y, 1, 1, 0, 0, NORTHWEST, NONE, new Insets(15, 20, 0, 0), 0, 0);
     panel.add(imageLabel, gBC);
 

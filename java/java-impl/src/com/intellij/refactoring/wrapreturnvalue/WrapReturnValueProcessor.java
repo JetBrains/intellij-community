@@ -317,6 +317,10 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
       myMethod = psiMethod;
     }
 
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) {
+    }
+
     public void visitReturnStatement(PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
 

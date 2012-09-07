@@ -25,30 +25,35 @@ public class XmlMoverTest extends CodeInsightTestCase {
   public void testTag10() throws Exception { doTest("xml"); }
   public void testTag11() throws Exception { doTest("xml"); }
 
+  public void testMultiLineTag() throws Exception { doTest("xml"); }
+
+  public void testRootTag() throws Exception { doTest("xml"); }
+  public void testRootTag1() throws Exception { doTest("xml"); }
+  public void testSingleTag() throws Exception { doTest("xml"); }
+  public void testMoveTag() throws Exception { doTest("xml"); }
+  public void testMoveTag1() throws Exception { doTest("xml"); }
+  public void testMoveTagWithEmptyLines() throws Exception { doTest("xml"); }
+
   public void test1() throws Exception { doTest("html"); }
+
 
   private void doTest(String ext) throws Exception {
     final String baseName = getBasePath() + '/' + getTestName(true);
     final String fileName = baseName + "."+ext;
 
-    try {
-      @NonNls String afterFileName = baseName + "_afterUp." + ext;
-      EditorActionHandler handler = new MoveStatementUpAction().getHandler();
-      performAction(fileName, handler, afterFileName);
+    @NonNls String afterFileName = baseName + "_afterUp." + ext;
+    EditorActionHandler handler = new MoveStatementUpAction().getHandler();
+    performAction(fileName, handler, afterFileName);
 
-      afterFileName = baseName + "_afterDown." + ext;
-      handler = new MoveStatementDownAction().getHandler();
-      performAction(fileName, handler, afterFileName);
-    }
-    finally {
-      //CodeStyleSettingsManager.getInstance(myProject).dropTemporarySettings();
-    }
+    afterFileName = baseName + "_afterDown." + ext;
+    handler = new MoveStatementDownAction().getHandler();
+    performAction(fileName, handler, afterFileName);
   }
 
   private void performAction(final String fileName, final EditorActionHandler handler, final String afterFileName) throws Exception {
     configureByFile(fileName);
     final boolean enabled = handler.isEnabled(myEditor, null);
-    assertEquals(new File(getTestDataPath(), afterFileName).exists(), enabled);
+    assertEquals("not enabled for " + afterFileName, new File(getTestDataPath(), afterFileName).exists(), enabled);
     if (enabled) {
       handler.execute(myEditor, null);
       checkResultByFile(afterFileName);

@@ -5,7 +5,7 @@
   <description>A minimalistic sample plugin for IntelliJ IDEA</description>
 <!-- plugin version -->
   <version>1.0</version>
-  <vendor logo="/general/ijLogo.png">IntelliJ</vendor>
+  <vendor>IntelliJ</vendor>
 <!-- minimum IDEA build number with which the plugin is compatible -->
  <!--
   <idea-version since-build="2000"/>

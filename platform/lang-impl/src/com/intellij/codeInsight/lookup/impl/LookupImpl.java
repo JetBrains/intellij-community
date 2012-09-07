@@ -35,6 +35,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -149,6 +150,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private int myMaximumHeight = Integer.MAX_VALUE;
   private boolean myFinishing;
   private boolean myUpdating;
+  private final ModalityState myModalityState;
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger) {
     super(new JPanel(new BorderLayout()));
@@ -226,6 +228,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       }
     }.installOn(mySortingLabel);
     updateSorting();
+    myModalityState = ModalityState.stateForComponent(getComponent());
   }
 
   private CollectionListModel<LookupElement> getListModel() {
@@ -248,7 +251,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
               done.setDone();
             }
           }
-        }, 300);
+        }, 300, myModalityState);
       }
     });
   }
@@ -287,7 +290,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       }
     };
     if (myCalculating) {
-      new Alarm().addRequest(setVisible, 100);
+      new Alarm(this).addRequest(setVisible, 100, myModalityState);
     } else {
       setVisible.run();
     }
@@ -897,7 +900,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
           public void run() {
             refreshUi(false, false);
           }
-        }, 300);
+        }, 300, myModalityState);
       }
     });
   }
@@ -931,7 +934,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
           myLayeredPane.add(myElementHint, 20, 0);
           myLayeredPane.layoutHint();
         }
-      }, 500);
+      }, 500, myModalityState);
     }
   }
 
@@ -1286,7 +1289,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void addAdvertisement(@NotNull final String text) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         if (!myDisposed) {
@@ -1297,7 +1300,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
           }
         }
       }
-    });
+    }, myModalityState);
   }
 
   public boolean isLookupDisposed() {

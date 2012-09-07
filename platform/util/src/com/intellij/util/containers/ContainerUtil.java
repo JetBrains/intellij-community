@@ -1698,4 +1698,9 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <T> T[] toArray(@NotNull Collection<T> c, @NotNull T[] sample) {
     return ContainerUtilRt.toArray(c, sample);
   }
+
+  @NotNull
+  public static <T> Collection<T> toCollection(@NotNull Iterable<T> iterable) {
+    return iterable instanceof Collection ? (Collection<T>)iterable : newArrayList(iterable);
+  }
 }

@@ -30,9 +30,13 @@ import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.diagnostic.LogUtil.debug;
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
 
 /**
  * @author max
@@ -94,11 +98,11 @@ public class RefreshWorker {
         final VirtualDirectoryImpl dir = (VirtualDirectoryImpl)file;
         final boolean fullSync = dir.allChildrenLoaded();
         if (fullSync) {
-          final Set<String> currentNames = new HashSet<String>(Arrays.asList(persistence.list(file)));
-          final Set<String> upToDateNames = new HashSet<String>(Arrays.asList(VfsUtil.filterNames(fs.list(file))));
-          final Set<String> newNames = new HashSet<String>(upToDateNames);
+          final Set<String> currentNames = newHashSet(persistence.list(file));
+          final Set<String> upToDateNames = newHashSet(VfsUtil.filterNames(fs.list(file)));
+          final Set<String> newNames = newHashSet(upToDateNames);
           newNames.removeAll(currentNames);
-          final Set<String> deletedNames = new HashSet<String>(currentNames);
+          final Set<String> deletedNames = newHashSet(currentNames);
           deletedNames.removeAll(upToDateNames);
           debug(LOG, "current=%s +%s -%s", currentNames, newNames, deletedNames);
 
@@ -158,7 +162,7 @@ public class RefreshWorker {
       else {
         final long currentTimestamp = persistence.getTimeStamp(file);
         final long upToDateTimestamp = attributes.lastModified;
-        final long currentLength = persistence.getLengthNoFollow(file);
+        final long currentLength = persistence.getLength(file);
         final long upToDateLength = attributes.length;
 
         if (currentTimestamp != upToDateTimestamp || currentLength != upToDateLength) {

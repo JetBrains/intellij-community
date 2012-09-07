@@ -18,7 +18,7 @@
   <name>JUnit</name>
   <description>Provides possibility to run JUnit 3.x and 4.x tests and view their results</description>
   <version>1.0</version>
-  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <configurationProducer implementation="com.intellij.execution.junit.AllInPackageConfigurationProducer"/>
@@ -30,6 +30,7 @@
     <testFramework implementation="com.intellij.execution.junit.JUnit3Framework"/>
     <testFramework implementation="com.intellij.execution.junit.JUnit4Framework"/>
     <configurationType implementation="com.intellij.execution.junit.JUnitConfigurationType"/>
+    <library.dependencyScopeSuggester implementation="com.intellij.execution.junit.JUnitDependencyScopeSuggester"/>
 
     <stacktrace.fold substring="at org.junit.internal.runners."/>
     <stacktrace.fold substring="at org.junit.runners."/>

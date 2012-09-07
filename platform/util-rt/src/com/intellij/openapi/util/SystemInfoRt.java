@@ -33,5 +33,6 @@ public class SystemInfoRt {
   public static final boolean isLinux = _OS_NAME.startsWith("linux");
   public static final boolean isUnix = !isWindows && !isOS2;
 
-  public static final boolean isFileSystemCaseSensitive = !isWindows && !isOS2 && !isMac;
+  public static final boolean isFileSystemCaseSensitive = isUnix && !isMac ||
+                                                          "true".equalsIgnoreCase(System.getProperty("idea.case.sensitive.fs"));
 }

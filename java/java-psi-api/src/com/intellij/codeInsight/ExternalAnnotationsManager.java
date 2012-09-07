@@ -24,6 +24,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.*;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,8 @@ import java.util.List;
 
 public abstract class ExternalAnnotationsManager {
   @NonNls public static final String ANNOTATIONS_XML = "annotations.xml";
+
+  public static final Topic<ExternalAnnotationsListener> TOPIC = Topic.create("external annotations", ExternalAnnotationsListener.class);
 
   public enum AnnotationPlace {
     IN_CODE,
@@ -48,6 +51,7 @@ public abstract class ExternalAnnotationsManager {
   @Nullable
   public abstract PsiAnnotation findExternalAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
+  // Method used in Kotlin plugin
   public abstract boolean isExternalAnnotationWritable(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
   @Nullable
@@ -56,12 +60,13 @@ public abstract class ExternalAnnotationsManager {
   public abstract void annotateExternally(@NotNull PsiModifierListOwner listOwner,
                                           @NotNull String annotationFQName,
                                           @NotNull PsiFile fromFile,
-                                          PsiNameValuePair[] value);
+                                          @Nullable PsiNameValuePair[] value);
 
   public abstract boolean deannotate(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
+  // Method used in Kotlin plugin when it is necessary to leave external annotation, but modify its arguments
   public abstract boolean editExternalAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN,
-                                                 @NotNull PsiNameValuePair[] value);
+                                                 @Nullable PsiNameValuePair[] value);
 
   public abstract AnnotationPlace chooseAnnotationsPlace(@NotNull PsiElement element);
 

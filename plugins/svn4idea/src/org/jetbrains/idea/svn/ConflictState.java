@@ -15,20 +15,20 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.util.IconLoader;
+import icons.Svn4ideaIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public enum ConflictState {
   none(false, false, false, null),
-  tree(true, false, false, "/icons/conflictc.png"),
-  text(false, true, false, "/icons/conflictt.png"),
-  prop(false, false, true, "/icons/conflictp.png"),
-  tree_text(true, true, false, "/icons/conflictct.png"), // ? -
-  tree_prop(true, false, true, "/icons/conflictcp.png"), // now falls but marked
-  text_prop(false, true, true, "/icons/conflicttp.png"),
-  all3(true, true, true, "/icons/conflictctp.png");       // ? -
+  tree(true, false, false, Svn4ideaIcons.Conflictc),
+  text(false, true, false, Svn4ideaIcons.Conflictt),
+  prop(false, false, true, Svn4ideaIcons.Conflictp),
+  tree_text(true, true, false, Svn4ideaIcons.Conflictct), // ? -
+  tree_prop(true, false, true, Svn4ideaIcons.Conflictcp), // now falls but marked
+  text_prop(false, true, true, Svn4ideaIcons.Conflicttp),
+  all3(true, true, true, Svn4ideaIcons.Conflictctp);       // ? -
 
   private final boolean myTree;
   private final boolean myText;
@@ -37,16 +37,12 @@ public enum ConflictState {
   private final Icon myIcon;
   private final String myDescription;
 
-  private ConflictState(final boolean tree, final boolean text, final boolean property, final String iconPath) {
+  ConflictState(final boolean tree, final boolean text, final boolean property, @Nullable final Icon icon) {
     myTree = tree;
     myText = text;
     myProperty = property;
 
-    if (iconPath != null) {
-      myIcon = IconLoader.getIcon(iconPath);
-    } else {
-      myIcon = null;
-    }
+    myIcon = icon;
 
     myDescription = createDescription();
   }
@@ -64,7 +60,7 @@ public enum ConflictState {
     return sb.toString();
   }
 
-  private int checkOne(final boolean value, final int init, final StringBuilder sb, final String text) {
+  private static int checkOne(final boolean value, final int init, final StringBuilder sb, final String text) {
     if (value) {
       if (sb.length() > 0) {
         sb.append(", ");

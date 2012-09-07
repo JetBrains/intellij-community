@@ -36,7 +36,6 @@ import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +48,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
 
   private final Transformation transform = new Transformation();
 
-  private final Set<EditableDictionary> dictionaries = new THashSet<EditableDictionary>();
+  private final Set<EditableDictionary> dictionaries = new HashSet<EditableDictionary>();
   private final List<Dictionary> bundledDictionaries = ContainerUtil.createEmptyCOWList();
   private final Metrics metrics = new LevenshteinDistance();
 
@@ -70,23 +69,9 @@ public class BaseSpellChecker implements SpellCheckerEngine {
       }
     }
     else {
-      loadFixedDictionary(loader);
-    }
-
-  }
-
-  private void loadFixedDictionary(final @NotNull Loader loader) {
-    /*if (ApplicationManager.getApplication().isUnitTestMode()) {
       loadCompressedDictionary(loader);
     }
-    else {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          loadCompressedDictionary(loader);
-        }
-      });
-    }*/
-    loadCompressedDictionary(loader);
+
   }
 
   private void loadCompressedDictionary(@NotNull Loader loader) {
@@ -248,45 +233,47 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     return result;
   }
 
-  private static boolean isCorrect(@NotNull String transformed, @Nullable Collection dictionaries) {
+  /**
+   * @param transformed
+   * @param dictionaries
+   * @return -1 (all)failed / 0 (any) ok / >0 all alien
+   */
+  private static int isCorrect(@NotNull String transformed, @Nullable Collection<? extends Dictionary> dictionaries) {
     if (dictionaries == null) {
-      return true;
+      return -1;
     }
 
-    for (Object o : dictionaries) {
-      if (o instanceof Dictionary) {
-        boolean result = isCorrect(transformed, (Dictionary)o);
-        if (result) {
-          return true;
-        }
+    //System.out.println("dictionaries = " + dictionaries);
+    int errors = 0;
+    for (Dictionary dictionary : dictionaries) {
+      try {
+        if (dictionary == null) continue;
+        //System.out.print("\tBSC.isCorrect " + transformed + " " + dictionary);
+        boolean contains = dictionary.contains(transformed);
+        //System.out.println("\tcontains = " + contains);
+        if (contains) return 0;
       }
-
+      catch (EncodingException e) {
+        ++errors;
+        //System.out.println(e.getMessage() + " " + transformed);
+        //return true;
+      }
     }
-    return false;
-  }
-
-  private static boolean isCorrect(@NotNull String transformed, @Nullable Dictionary dictionary) {
-    if (dictionary == null) {
-      return true;
-    }
-
-    try {
-      return dictionary.contains(transformed);
-    }
-    catch (EncodingException e) {
-      //System.out.println("e.getMessage() = " + e.getMessage() + " " + transformed);
-      return true;
-    }
+    if(errors==dictionaries.size()) return errors;
+    return -1;
   }
 
   public boolean isCorrect(@NotNull String word) {
+    //System.out.println("---\n"+word);
     final String transformed = transform.transform(word);
-    if (transformed == null) {
+    if (myLoadingDictionaries.get() || transformed == null) {
       return true;
     }
-    return myLoadingDictionaries.get() || isCorrect(transformed, bundledDictionaries) || isCorrect(transformed, dictionaries);
-
-
+    int bundled = isCorrect(transformed, bundledDictionaries);
+    int user = isCorrect(transformed, dictionaries);
+    //System.out.println("bundled = " + bundled);
+    //System.out.println("user = " + user);
+    return bundled == 0 || user==0 || bundled>0 && user>0;
   }
 
 

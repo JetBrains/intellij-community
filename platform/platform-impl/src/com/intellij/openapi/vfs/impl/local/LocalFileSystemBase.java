@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
@@ -265,7 +264,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         }
       }
 
-      RefreshQueue.getInstance().refresh(async, recursive, onFinish, VfsUtilCore.toVirtualFileArray(filesToRefresh));
+      RefreshQueue.getInstance().refresh(async, recursive, onFinish, filesToRefresh);
     }
     finally {
       if (fireCommonRefreshSession) manager.fireAfterRefreshFinish(false);
@@ -279,15 +278,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public void refreshFiles(@NotNull Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
-    final Collection<VirtualFile> collection;
-    if (files instanceof Collection) {
-      collection = (Collection<VirtualFile>)files;
-    }
-    else {
-      collection = new ArrayList<VirtualFile>();
-      ContainerUtil.addAll(collection, files);
-    }
-    RefreshQueue.getInstance().refresh(async, recursive, onFinish, VfsUtilCore.toVirtualFileArray(collection));
+    RefreshQueue.getInstance().refresh(async, recursive, onFinish, ContainerUtil.toCollection(files));
   }
 
   @Override

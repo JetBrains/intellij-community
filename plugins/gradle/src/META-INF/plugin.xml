@@ -17,7 +17,7 @@
 <idea-plugin url="http://confluence.jetbrains.net/display/IDEADEV/Gradle+integration">
   <name>Gradle</name>
   <id>org.jetbrains.plugins.gradle</id>
-  <vendor logo="/icons/gradle.png" url="http://www.jetbrains.com">JetBrains Inc.</vendor>
+  <vendor>JetBrains</vendor>
   <description>Gradle integration</description>
 
   <depends>com.intellij.modules.lang</depends>

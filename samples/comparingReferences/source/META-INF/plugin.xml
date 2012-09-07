@@ -2,7 +2,7 @@
   <name>Comparing References Inspection</name>
   <description>Inspection for (probably) inappropriate use of equality relation operation.</description>
   <version>1.0</version>
-  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
     <!--
     <idea-version since-build="3000"/>
     -->

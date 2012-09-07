@@ -74,7 +74,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private final CodeStyleManager myCodeStyleManager;
   private final JavaCodeStyleManager myJavaCodeStyle;
 
-  private PsiBlockStatement[] myAddedBraces;
+  private PsiCodeBlock[] myAddedBraces;
   private final String myDescriptiveName;
   private Map<PsiField, PsiClassInitializer> myAddedClassInitializers;
   private PsiMethod myMethodCopy;
@@ -577,7 +577,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
     ChangeContextUtil.decodeContextInfo(anchorParent, thisClass, thisAccessExpr);
 
-    if (methodCall.getParent() instanceof PsiExpressionStatement || tailCall == InlineUtil.TailCallType.Return) {
+    if (methodCall.getParent() instanceof PsiLambdaExpression) {
+      methodCall.delete();
+    } else if (methodCall.getParent() instanceof PsiExpressionStatement || tailCall == InlineUtil.TailCallType.Return) {
       methodCall.getParent().delete();
     }
     else {
@@ -1170,7 +1172,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   private PsiReferenceExpression[] addBracesWhenNeeded(PsiReferenceExpression[] refs) throws IncorrectOperationException {
     ArrayList<PsiReferenceExpression> refsVector = new ArrayList<PsiReferenceExpression>();
-    ArrayList<PsiBlockStatement> addedBracesVector = new ArrayList<PsiBlockStatement>();
+    ArrayList<PsiCodeBlock> addedBracesVector = new ArrayList<PsiCodeBlock>();
     myAddedClassInitializers = new HashMap<PsiField, PsiClassInitializer>();
 
     for (PsiReferenceExpression ref : refs) {
@@ -1194,10 +1196,32 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
             PsiElement newStatement = blockStatement.getCodeBlock().getStatements()[0];
             addMarkedElements(refsVector, newStatement);
-            addedBracesVector.add(blockStatement);
+            addedBracesVector.add(blockStatement.getCodeBlock());
             continue RefLoop;
           }
           parent = parent.getParent();
+        }
+        final PsiElement lambdaExpr = parentStatement.getParent();
+        if (lambdaExpr instanceof PsiLambdaExpression) {
+          final PsiLambdaExpression newLambdaExpr = (PsiLambdaExpression)myFactory.createExpressionFromText(
+            ((PsiLambdaExpression)lambdaExpr).getParameterList().getText() + " -> " + "{\n}", lambdaExpr);
+          final PsiStatement statementFromText;
+          if (LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)lambdaExpr) == PsiType.VOID ) {
+            statementFromText = myFactory.createStatementFromText("a;", lambdaExpr);
+            ((PsiExpressionStatement)statementFromText).getExpression().replace(parentStatement);
+          } else {
+            statementFromText = myFactory.createStatementFromText("return a;", lambdaExpr);
+            ((PsiReturnStatement)statementFromText).getReturnValue().replace(parentStatement);
+          }
+
+          newLambdaExpr.getBody().add(statementFromText);
+
+          final PsiCodeBlock body = (PsiCodeBlock)((PsiLambdaExpression)lambdaExpr.replace(newLambdaExpr)).getBody();
+          PsiElement newStatement = body.getStatements()[0];
+          addMarkedElements(refsVector, newStatement);
+          addedBracesVector.add(body);
+          continue;
+
         }
       }
       else {
@@ -1236,7 +1260,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       ref.putCopyableUserData(MARK_KEY, null);
     }
 
-    myAddedBraces = addedBracesVector.toArray(new PsiBlockStatement[addedBracesVector.size()]);
+    myAddedBraces = addedBracesVector.toArray(new PsiCodeBlock[addedBracesVector.size()]);
     return refsVector.toArray(new PsiReferenceExpression[refsVector.size()]);
   }
 
@@ -1296,10 +1320,27 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private void removeAddedBracesWhenPossible() throws IncorrectOperationException {
     if (myAddedBraces == null) return;
 
-    for (PsiBlockStatement blockStatement : myAddedBraces) {
-      PsiStatement[] statements = blockStatement.getCodeBlock().getStatements();
+    for (PsiCodeBlock codeBlock : myAddedBraces) {
+      PsiStatement[] statements = codeBlock.getStatements();
       if (statements.length == 1) {
-        blockStatement.replace(statements[0]);
+        final PsiElement codeBlockParent = codeBlock.getParent();
+        if (codeBlockParent instanceof PsiLambdaExpression) {
+          if (statements[0] instanceof PsiReturnStatement) {
+            final PsiExpression returnValue = ((PsiReturnStatement)statements[0]).getReturnValue();
+            if (returnValue != null) {
+              codeBlock.replace(returnValue);
+            }
+          } else if (statements[0] instanceof PsiExpressionStatement){
+            codeBlock.replace(((PsiExpressionStatement)statements[0]).getExpression());
+          }
+        }
+        else {
+          if (codeBlockParent instanceof PsiBlockStatement) {
+            codeBlockParent.replace(statements[0]);
+          } else {
+            codeBlock.replace(statements[0]);
+          }
+        }
       }
     }
 

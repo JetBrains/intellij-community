@@ -58,8 +58,6 @@ public abstract class PersistentFS extends ManagingFS {
 
   public abstract boolean isDirectory(int id);
 
-  public abstract long getLengthNoFollow(@NotNull VirtualFile file);
-
   @Nullable
   public abstract NewVirtualFile findFileByIdIfCached(int id);
 

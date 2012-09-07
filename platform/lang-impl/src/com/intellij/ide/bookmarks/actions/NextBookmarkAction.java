@@ -16,13 +16,8 @@
 
 package com.intellij.ide.bookmarks.actions;
 
-import com.intellij.ide.bookmarks.Bookmark;
-import com.intellij.ide.bookmarks.BookmarkManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-
 public class NextBookmarkAction extends GotoBookmarkActionBase {
-  protected Bookmark getBookmarkToGo(Project project, Editor editor) {
-    return BookmarkManager.getInstance(project).getNextBookmark(editor, true);
+  public NextBookmarkAction() {
+    super(true);
   }
 }

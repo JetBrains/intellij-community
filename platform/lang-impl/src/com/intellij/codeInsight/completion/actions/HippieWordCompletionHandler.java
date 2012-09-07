@@ -18,7 +18,6 @@ package com.intellij.codeInsight.completion.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -62,7 +61,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     String oldPrefix = completionState.oldPrefix;
     CompletionVariant lastProposedVariant = completionState.lastProposedVariant;
 
-    if (lastProposedVariant == null || oldPrefix == null || !new CamelHumpMatcher(oldPrefix).prefixMatches(currentPrefix) || //oldPrefix.length() == 0 ||
+    if (lastProposedVariant == null || oldPrefix == null || !prefixMatches(oldPrefix, currentPrefix) ||
         !currentPrefix.equals(lastProposedVariant.variant)) {
       //we are starting over
       oldPrefix = currentPrefix;
@@ -182,7 +181,6 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
   }
 
   private static List<CompletionVariant> computeVariants(@NotNull final Editor editor, @Nullable final String prefix) {
-    final PrefixMatcher matcher = new CamelHumpMatcher(prefix == null ? "" : prefix); 
 
     final CharSequence chars = editor.getDocument().getCharsSequence();
 
@@ -196,7 +194,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
         if (start <= caretOffset && end >= caretOffset) return; //skip prefix itself
 
         final String word = chars.subSequence(start, end).toString();
-        if (!matcher.prefixMatches(word)) return;
+        if (!prefixMatches(prefix, word)) return;
         final CompletionVariant v = new CompletionVariant(word, start);
 
         if (end > caretOffset) {
@@ -232,6 +230,10 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     }
 
     return result;
+  }
+
+  private static boolean prefixMatches(String prefix, String word) {
+    return new CamelHumpMatcher(prefix == null ? "" : prefix).isStartMatch(word);
   }
 
   private static CompletionData computeData(final Editor editor, final CharSequence charsSequence) {

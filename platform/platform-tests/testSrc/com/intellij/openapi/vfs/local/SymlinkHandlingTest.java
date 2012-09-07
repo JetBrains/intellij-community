@@ -297,6 +297,7 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
     assertEquals(FileUtil.loadFile(target2), VfsUtilCore.loadText(vLink2));
   }
 
+/*
   public void testContentSynchronization() throws Exception {
     final File file = createTempFile(myTempDir, "file.", ".txt");
     final VirtualFile vFile = refreshAndFind(file);
@@ -338,6 +339,7 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
     assertEquals(extContent, fileContent);
     assertEquals(extContent, linkContent);
   }
+*/
 
   public void testFindByLinkParentPath() throws Exception {
     final File topDir = createTempDirectory(myTempDir, "top.", ".dir");

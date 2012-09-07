@@ -60,4 +60,7 @@ public class LineRange {
     return startLine <= lineNumber && endLine > lineNumber;
   }
 
+  public boolean contains(LineRange range) {
+    return startLine <= range.startLine && endLine >= range.endLine;
+  }
 }

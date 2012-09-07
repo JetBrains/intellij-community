@@ -350,7 +350,7 @@ public class TagNameReference implements PsiReference {
 
         for(XmlElementDescriptor candidateDescriptor: rootElementsDescriptors) {
           if (candidateDescriptor != null &&
-              couldContainDescriptor(parentTag, parentDescriptor, candidateDescriptor, namespace)) {
+              couldContainDescriptor(parentTag, parentDescriptor, candidateDescriptor, namespace, false)) {
             variants.add(candidateDescriptor);
           }
         }
@@ -363,16 +363,22 @@ public class TagNameReference implements PsiReference {
     return extension.getNSDescriptor(element, namespace, strict);
   }
 
+  public static boolean couldContain(XmlTag parent, XmlTag child) {
+    return couldContainDescriptor(parent, parent.getDescriptor(), child.getDescriptor(), child.getNamespace(), true);
+  }
+
   private static boolean couldContainDescriptor(final XmlTag parentTag,
                                                 final XmlElementDescriptor parentDescriptor,
                                                 final XmlElementDescriptor childDescriptor,
-                                                String childNamespace) {
+                                                String childNamespace, boolean strict) {
 
     if (XmlUtil.nsFromTemplateFramework(childNamespace)) return true;
     if (parentTag == null) return true;
+    if (parentDescriptor == null) return false;
     final XmlTag childTag = parentTag.createChildTag(childDescriptor.getName(), childNamespace, null, false);
     childTag.putUserData(XmlElement.INCLUDING_ELEMENT, parentTag);
-    return parentDescriptor != null && parentDescriptor.getElementDescriptor(childTag, parentTag) != null;
+    XmlElementDescriptor descriptor = parentDescriptor.getElementDescriptor(childTag, parentTag);
+    return descriptor != null && (!strict || !(descriptor instanceof AnyXmlElementDescriptor));
   }
 
   private static boolean isAcceptableNs(final XmlTag element, final XmlElementDescriptor elementDescriptor,

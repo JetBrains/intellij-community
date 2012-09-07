@@ -48,9 +48,13 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @NonNls private static final String FILE_OUTPUT = "output_file";
   @NonNls private static final String SAVE = "is_save";
   @NonNls private static final String OUTPUT_FILE = "path";
+  @NonNls private static final String SHOW_CONSOLE_ON_STD_OUT = "show_console_on_std_out";
+  @NonNls private static final String SHOW_CONSOLE_ON_STD_ERR = "show_console_on_std_err";
 
   private final Icon myIcon;
   private boolean mySaveOutput = false;
+  private boolean myShowConsoleOnStdOut = false;
+  private boolean myShowConsoleOnStdErr = false;
   private String myFileOutputPath = null;
 
   protected RunConfigurationBase(final Project project, final ConfigurationFactory factory, final String name) {
@@ -114,6 +118,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     runConfiguration.myPredefinedLogFiles = new ArrayList<PredefinedLogFile>(myPredefinedLogFiles);
     runConfiguration.myFileOutputPath = myFileOutputPath;
     runConfiguration.mySaveOutput = mySaveOutput;
+    runConfiguration.myShowConsoleOnStdOut = myShowConsoleOnStdOut;
+    runConfiguration.myShowConsoleOnStdErr = myShowConsoleOnStdErr;
     copyCopyableDataTo(runConfiguration);
     return runConfiguration;
   }
@@ -190,6 +196,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
       final String isSave = fileOutputElement.getAttributeValue(SAVE);
       mySaveOutput = isSave != null && Boolean.parseBoolean(isSave);
     }
+    myShowConsoleOnStdOut = Boolean.parseBoolean(element.getAttributeValue(SHOW_CONSOLE_ON_STD_OUT));
+    myShowConsoleOnStdErr = Boolean.parseBoolean(element.getAttributeValue(SHOW_CONSOLE_ON_STD_ERR));
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -211,6 +219,12 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     if (myFileOutputPath != null || mySaveOutput) {
       element.addContent(fileOutputPathElement);
     }
+    if (myShowConsoleOnStdOut) {//default value shouldn't be written
+      element.setAttribute(SHOW_CONSOLE_ON_STD_OUT, String.valueOf(myShowConsoleOnStdOut));
+    }
+    if (myShowConsoleOnStdErr) {//default value shouldn't be written
+      element.setAttribute(SHOW_CONSOLE_ON_STD_ERR, String.valueOf(myShowConsoleOnStdErr));
+    }
   }
 
   public boolean isSaveOutputToFile() {
@@ -219,6 +233,22 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   public void setSaveOutputToFile(boolean redirectOutput) {
     mySaveOutput = redirectOutput;
+  }
+
+  public boolean isShowConsoleOnStdOut() {
+    return myShowConsoleOnStdOut;
+  }
+
+  public void setShowConsoleOnStdOut(boolean showConsoleOnStdOut) {
+    myShowConsoleOnStdOut = showConsoleOnStdOut;
+  }
+
+  public boolean isShowConsoleOnStdErr() {
+    return myShowConsoleOnStdErr;
+  }
+
+  public void setShowConsoleOnStdErr(boolean showConsoleOnStdErr) {
+    myShowConsoleOnStdErr = showConsoleOnStdErr;
   }
 
   public String getOutputFilePath() {

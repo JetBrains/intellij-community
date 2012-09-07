@@ -24,7 +24,6 @@ public class JetgroovyIcons {
   public static class Groovy {
     public static final Icon AbstractClass = load("/icons/groovy/abstractClass.png"); // 16x16
     public static final Icon AnnotationType = load("/icons/groovy/annotationType.png"); // 16x16
-    public static final Icon Ant = load("/icons/groovy/ant.png"); // 16x16
     public static final Icon Ant_task = load("/icons/groovy/ant_task.png"); // 16x16
     public static final Icon Class = load("/icons/groovy/class.png"); // 16x16
     public static final Icon Def = load("/icons/groovy/def.png"); // 16x16
@@ -35,23 +34,13 @@ public class JetgroovyIcons {
     public static final Icon Gant_16x16 = load("/icons/groovy/gant_16x16.png"); // 16x16
     public static final Icon Gant_sdk = load("/icons/groovy/gant_sdk.png"); // 16x16
     public static final Icon Gant_target = load("/icons/groovy/gant_target.png"); // 16x16
-    public static final Icon Gant_task = load("/icons/groovy/gant_task.png"); // 16x16
     public static final Icon Groovy_13x13 = load("/icons/groovy/groovy_13x13.png"); // 13x13
     public static final Icon Groovy_16x16 = load("/icons/groovy/groovy_16x16.png"); // 16x16
-    public static final Icon Groovy_18x18 = load("/icons/groovy/groovy_18x18.png"); // 18x18
-    public static final Icon Groovy_24x24 = load("/icons/groovy/groovy_24x24.png"); // 24x24
     public static final Icon Groovy_32x32 = load("/icons/groovy/groovy_32x32.png"); // 32x32
-    public static final Icon Groovy_48x48 = load("/icons/groovy/groovy_48x48.png"); // 48x48
-    public static final Icon Groovy_64x64 = load("/icons/groovy/groovy_64x64.png"); // 64x64
-    public static final Icon Groovy_fileType = load("/icons/groovy/groovy_fileType.png"); // 18x18
-    public static final Icon Groovy_sdk = load("/icons/groovy/groovy_sdk.png"); // 16x16
     public static final Icon GroovyDoc = load("/icons/groovy/GroovyDoc.png"); // 16x16
     public static final Icon Interface = load("/icons/groovy/interface.png"); // 16x16
     public static final Icon Method = load("/icons/groovy/method.png"); // 16x16
-    public static final Icon No_gant_sdk = load("/icons/groovy/no_gant_sdk.png"); // 16x16
-    public static final Icon No_groovy_sdk = load("/icons/groovy/no_groovy_sdk.png"); // 16x16
     public static final Icon Property = load("/icons/groovy/property.png"); // 16x16
-    public static final Icon Static = load("/icons/groovy/static.png"); // 16x16
     public static final Icon Variable = load("/icons/groovy/variable.png"); // 16x16
 
   }

@@ -128,6 +128,10 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIncompleteSubst() throws Exception {
     doTest();
   }
+
+  public void testVariableInitialization() throws Exception {
+    doTest();
+  }
   
   private void doTest() throws Exception {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);

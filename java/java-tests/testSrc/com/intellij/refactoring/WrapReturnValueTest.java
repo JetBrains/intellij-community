@@ -124,4 +124,8 @@ public class WrapReturnValueTest extends MultiFileTestCase{
     doTest(true, "Existing class does not have appropriate constructor");
   }
 
+  public void testReturnInsideLambda() throws Exception {
+    doTest(false, null, true);
+  }
+  
 }

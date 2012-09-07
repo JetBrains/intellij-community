@@ -19,7 +19,9 @@ import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.find.FindBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.scopes.LibraryScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -83,6 +85,7 @@ import java.util.List;
 import java.util.Set;
 
 public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanelImpl");
   private final JBTable myEntryTable;
   private final ClasspathTableModel myModel;
   private final EventDispatcher<OrderPanelListener> myListeners = EventDispatcher.create(OrderPanelListener.class);
@@ -716,11 +719,19 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     @Override
     public void actionPerformed(AnActionEvent e) {
       final OrderEntry selectedEntry = getSelectedEntry();
-      assert selectedEntry instanceof ModuleOrderEntry;
-      final Module module = ((ModuleOrderEntry)selectedEntry).getModule();
-      assert module != null;
-      new AnalyzeDependenciesOnSpecifiedTargetHandler(module.getProject(), new AnalysisScope(myState.getRootModel().getModule()),
-                                                      GlobalSearchScope.moduleScope(module)) {
+      GlobalSearchScope targetScope;
+      if (selectedEntry instanceof ModuleOrderEntry) {
+        final Module module = ((ModuleOrderEntry)selectedEntry).getModule();
+        LOG.assertTrue(module != null);
+        targetScope = GlobalSearchScope.moduleScope(module);
+      }
+      else {
+        Library library = ((LibraryOrderEntry)selectedEntry).getLibrary();
+        LOG.assertTrue(library != null);
+        targetScope = new LibraryScope(getProject(), library);
+      }
+      new AnalyzeDependenciesOnSpecifiedTargetHandler(getProject(), new AnalysisScope(myState.getRootModel().getModule()),
+                                                      targetScope) {
         @Override
         protected boolean canStartInBackground() {
           return false;
@@ -752,7 +763,8 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     @Override
     public void update(AnActionEvent e) {
       final OrderEntry entry = getSelectedEntry();
-      e.getPresentation().setVisible(entry instanceof ModuleOrderEntry && ((ModuleOrderEntry)entry).getModule() != null);
+      e.getPresentation().setVisible(entry instanceof ModuleOrderEntry && ((ModuleOrderEntry)entry).getModule() != null
+                                   || entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() != null);
     }
   }
 }

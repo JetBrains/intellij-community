@@ -25,18 +25,25 @@
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.TestRunnerUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
+import gnu.trove.THashSet;
 import junit.framework.TestCase;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static java.util.Arrays.asList;
@@ -59,14 +66,7 @@ public class PathManagerEx {
   /** Caches test data lookup strategy by class. */
   private static final ConcurrentMap<Class, TestDataLookupStrategy> CLASS_STRATEGY_CACHE = new ConcurrentHashMap<Class, TestDataLookupStrategy>();
   private static final ConcurrentMap<String, Class> CLASS_CACHE = new ConcurrentHashMap<String, Class>();
-
-  /**
-   * Holds names of the files that contain community test classes.
-   * <p/>
-   * <b>Note:</b>  stored names are relative to the source roots.
-   */
-  private static final Set<String> COMMUNITY_TEST_FILES = new HashSet<String>();
-  private static final AtomicBoolean COMMUNITY_TEST_FILES_PARSED_FLAG = new AtomicBoolean();
+  private static Set<String> ourCommunityModules;
 
   private PathManagerEx() {
   }
@@ -170,9 +170,17 @@ public class PathManagerEx {
   /**
    * @return path to 'community' project home irrespective of current project
    */
-  public static String getCommunityHomePath() {
+  private static String getCommunityHomePath() {
     String path = PathManager.getHomePath();
     return isLocatedInCommunity() ? path : path + File.separator + "community";
+  }
+
+  /**
+   * @return path to 'community' project home if {@code testClass} is located in the community project and path to 'ultimate' project otherwise
+   */
+  public static String getHomePath(Class<? extends TestCase> testClass) {
+    TestDataLookupStrategy strategy = isLocatedInCommunity() ? TestDataLookupStrategy.COMMUNITY : determineLookupStrategy(testClass);
+    return strategy == TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE ? getCommunityHomePath() : PathManager.getHomePath();
   }
 
   /**
@@ -184,6 +192,19 @@ public class PathManagerEx {
     File file = new File(getCommunityHomePath(), toSystemDependentName(relativePath));
     if (!file.exists()) {
       throw new IllegalArgumentException("Cannot find file '" + relativePath + "' under '" + getCommunityHomePath() + "' directory");
+    }
+    return file;
+  }
+
+  /**
+   * Find file by its path relative to project home directory (the 'commmunity' project if {@code testClass} is located in the community project
+   * and the 'ultimate' project otherwise)
+   */
+  public static File findFileUnderProjectHome(String relativePath, Class<? extends TestCase> testClass) {
+    String homePath = getHomePath(testClass);
+    File file = new File(homePath, toSystemDependentName(relativePath));
+    if (!file.exists()) {
+      throw new IllegalArgumentException("Cannot find file '" + relativePath + "' under '" + homePath + "' directory");
     }
     return file;
   }
@@ -326,19 +347,60 @@ public class PathManagerEx {
       return result;
     }
 
-    String targetFile = toSystemDependentName(clazz.getName().replace('.', '/'));
-    if (COMMUNITY_TEST_FILES_PARSED_FLAG.compareAndSet(false, true)) {
-      parseCommunityTestFiles();
-    }
-
-    FileSystemLocation classFileLocation = COMMUNITY_TEST_FILES.contains(targetFile) ? FileSystemLocation.COMMUNITY
-                                                                                     : FileSystemLocation.ULTIMATE;
+    FileSystemLocation classFileLocation = computeClassLocation(clazz);
 
     // We know that project location is ULTIMATE if control flow reaches this place.
     result = classFileLocation == FileSystemLocation.COMMUNITY ? TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE
                                                                : TestDataLookupStrategy.ULTIMATE;
     CLASS_STRATEGY_CACHE.put(clazz, result);
     return result;
+  }
+
+  private static FileSystemLocation computeClassLocation(Class<?> clazz) {
+    String classRootPath = PathManager.getJarPathForClass(clazz);
+    if (classRootPath == null) {
+      throw new IllegalStateException("Cannot find root directory for " + clazz);
+    }
+    File root = new File(classRootPath);
+    if (!root.exists()) {
+      throw new IllegalStateException("Classes root " + root + " doesn't exist");
+    }
+    if (!root.isDirectory()) {
+      //this means that clazz is located in a library, perhaps we should throw exception here
+      return FileSystemLocation.ULTIMATE;
+    }
+
+    String moduleName = root.getName();
+    return getCommunityModules().contains(moduleName) ? FileSystemLocation.COMMUNITY : FileSystemLocation.ULTIMATE;
+  }
+
+  private synchronized static Set<String> getCommunityModules() {
+    if (ourCommunityModules != null) {
+      return ourCommunityModules;
+    }
+
+    ourCommunityModules = new THashSet<String>();
+    File modulesXml = findFileUnderCommunityHome(".idea/modules.xml");
+    if (!modulesXml.exists()) {
+      throw new IllegalStateException("Cannot obtain test data path: " + modulesXml.getAbsolutePath() + " not found");
+    }
+
+    try {
+      Element componentRoot = JDomSerializationUtil
+        .findComponent(JDOMUtil.loadDocument(modulesXml).getRootElement(), ModuleManagerImpl.COMPONENT_NAME);
+      ModuleManagerImpl.ModulePath[] files = ModuleManagerImpl.getPathsToModuleFiles(componentRoot);
+      for (ModuleManagerImpl.ModulePath file : files) {
+        String name = FileUtil.getNameWithoutExtension(PathUtil.getFileName(file.getPath()));
+        ourCommunityModules.add(name);
+      }
+      return ourCommunityModules;
+    }
+    catch (JDOMException e) {
+      throw new RuntimeException("Cannot read modules from " + modulesXml.getAbsolutePath(), e);
+    }
+    catch (IOException e) {
+      throw new RuntimeException("Cannot read modules from " + modulesXml.getAbsolutePath(), e);
+    }
   }
 
   /**
@@ -348,10 +410,6 @@ public class PathManagerEx {
    */
   private static FileSystemLocation parseProjectLocation() {
     return new File(PathManager.getHomePath(), "community").isDirectory() ? FileSystemLocation.ULTIMATE : FileSystemLocation.COMMUNITY;
-  }
-
-  private static void parseCommunityTestFiles() {
-    new CommunityClassesResolver().dispatch(new File(PathManager.getHomePath(), "community"));
   }
 
   /**
@@ -372,50 +430,5 @@ public class PathManagerEx {
       }
     }
     return TestDataLookupStrategy.ULTIMATE;
-  }
-
-  /**
-   * Recursively processes all files under directory given to {@link #dispatch(File)} and updates {@link #COMMUNITY_TEST_FILES} with
-   * all <code>'*.java'</code> files accordingly.
-   */
-  private static class CommunityClassesResolver {
-
-    @SuppressWarnings({"MethodMayBeStatic"})
-    public void dispatch(File dir) {
-      for (File file : dir.listFiles()) {
-        if (file.isDirectory()) {
-          if (!ignoreDirectory(file, dir)) dispatch(file);
-        }
-        else {
-          process(file);
-        }
-      }
-    }
-
-    private static boolean ignoreDirectory(File file, File parent) {
-      String fileName = file.getName();
-      return fileName.startsWith(".") || "out".equals(fileName) || "testData".equalsIgnoreCase(fileName) ||
-             ("src".equals(fileName) && !"testFramework".equals(parent.getName()));
-    }
-
-    private static void process(File file) {
-      String path = file.getAbsolutePath();
-      if (!path.endsWith(".java") && !path.endsWith(".groovy")) {
-        return;
-      }
-
-      String src = "src";
-      String testSrc = "testSrc";
-
-      int srcIndex = path.indexOf(src);
-      int testSrcIndex = path.indexOf(testSrc);
-      int indexToUse = srcIndex > testSrcIndex ? srcIndex + src.length() : testSrcIndex + testSrc.length();
-      indexToUse++; // for path separator
-      if (indexToUse < 0 || indexToUse >= path.length()) {
-        // Never expect to be here.
-        return;
-      }
-      COMMUNITY_TEST_FILES.add(StringUtil.trimEnd(StringUtil.trimEnd(path.substring(indexToUse), ".java"), ".groovy"));
-    }
   }
 }

@@ -383,7 +383,8 @@ public class ControlFlowUtil {
       if (parent instanceof PsiDirectory
           || parent instanceof PsiMethod
           || parent instanceof PsiField || parent instanceof PsiClassInitializer
-          || parent instanceof DummyHolder) {
+          || parent instanceof DummyHolder
+          || parent instanceof PsiLambdaExpression) {
         break;
       }
       codeFragment = parent;

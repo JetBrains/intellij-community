@@ -16,3 +16,12 @@ class Test {
         return (int x) -> {};
     }
 }
+
+interface II {
+  boolean _(String s);
+}
+class Test1 {
+  void bar(boolean b){
+    II ik = b ? (s)-> true : (s)->false;
+  }
+}

@@ -35,6 +35,7 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.ExceptionFilters;
 import com.intellij.execution.filters.Filter;
@@ -80,7 +81,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   private final MyDebuggerStateManager myStateManager = new MyDebuggerStateManager();
 
   private final FramesPanel myFramesPanel;
-  private DebugUIEnvironment myEnvironment;
+  private DebugUIEnvironment myDebugUIEnvironment;
 
   private final ThreadsPanel myThreadsPanel;
   private static final String THREAD_DUMP_CONTENT_PREFIX = "Dump";
@@ -255,7 +256,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     }
     console.setActions(consoleActions, ActionPlaces.DEBUGGER_TOOLBAR, myConsole.getPreferredFocusableComponent());
 
-    myEnvironment.initLogs(myRunContentDescriptor, getLogManager());
+    myDebugUIEnvironment.initLogs(myRunContentDescriptor, getLogManager());
 
     DefaultActionGroup group = new DefaultActionGroup();
 
@@ -322,7 +323,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
     addActionToGroup(group, PinToolwindowTabAction.ACTION_NAME);
 
-    myEnvironment.initActions(myRunContentDescriptor, group);
+    myDebugUIEnvironment.initActions(myRunContentDescriptor, group);
 
     myUi.getOptions().setLeftToolbar(group, ActionPlaces.DEBUGGER_TOOLBAR);
 
@@ -373,7 +374,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   }
 
   public String getSessionName() {
-    return myEnvironment.getEnvironment().getSessionName();
+    return myDebugUIEnvironment.getEnvironment().getSessionName();
   }
 
   public DebuggerStateManager getContextManager() {
@@ -416,10 +417,16 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     }
   }
 
+  @Nullable
+  @Override
+  protected RunProfile getRunProfile() {
+    return myDebugUIEnvironment != null ? myDebugUIEnvironment.getRunProfile() : null;
+  }
+
   public RunContentDescriptor attachToSession(final DebuggerSession session, DebugUIEnvironment environment) throws ExecutionException {
     disposeSession();
     myDebuggerSession = session;
-    myEnvironment = environment;
+    myDebugUIEnvironment = environment;
 
     session.getContextManager().addListener(new DebuggerContextListener() {
       public void changeEvent(DebuggerContextImpl newContext, int event) {

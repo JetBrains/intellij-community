@@ -24,7 +24,9 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -80,6 +82,11 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile> {
     if (project == null) {
       return url;
     }
+    VirtualFile root = ProjectFileIndex.SERVICE.getInstance(project).getContentRootForFile(virtualFile);
+    if (root != null) {
+      return VfsUtilCore.getRelativePath(virtualFile, root, File.separatorChar);
+    }
+
     final VirtualFile baseDir = project.getBaseDir();
     if (baseDir != null) {
       //noinspection ConstantConditions

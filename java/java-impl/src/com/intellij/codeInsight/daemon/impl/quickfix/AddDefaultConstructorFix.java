@@ -28,15 +28,15 @@ public class AddDefaultConstructorFix extends AddMethodFix {
   }
 
   public AddDefaultConstructorFix(PsiClass aClass, @PsiModifier.ModifierConstant final String modifier) {
-    super(generateConstructor(aClass, modifier), aClass);
+    super(generateConstructor(aClass.getName(), modifier), aClass);
     setText(QuickFixBundle.message("add.default.constructor.text", VisibilityUtil.toPresentableText(modifier), aClass.getName()));
   }
 
-  private static String generateConstructor(PsiClass aClass, @PsiModifier.ModifierConstant final String modifier) {
+  private static String generateConstructor(final String className, @PsiModifier.ModifierConstant final String modifier) {
     if (modifier == PsiModifier.PACKAGE_LOCAL) {
-      return aClass.getName() + "() {}";
+      return className + "() {}";
     }
-    return modifier + " " + aClass.getName() + "() {}";
+    return modifier + " " + className + "() {}";
   }
 
   @Override

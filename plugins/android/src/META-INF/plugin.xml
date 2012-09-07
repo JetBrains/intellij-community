@@ -5,7 +5,7 @@
     Supports development of Open Handset Alliance Android applications with IntelliJ IDEA.
   </description>
   <version>10.0</version>
-  <vendor logo="/icons/android.png">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
   <application-components>
     <component>
       <implementation-class>org.jetbrains.android.AndroidPlugin</implementation-class>

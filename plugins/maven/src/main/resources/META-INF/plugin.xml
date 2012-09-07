@@ -3,7 +3,7 @@
 
   <name>Maven Integration</name>
   <description>Import Maven projects and execute Maven goals</description>
-  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
 
   <extensionPoints>
     <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter"/>

@@ -905,10 +905,10 @@ public class StringUtil extends StringUtilRt {
   @Nullable
   public static String nullize(@Nullable final String s, boolean nullizeSpaces) {
     if (nullizeSpaces) {
-      if (isEmpty(s)) return null;
+      if (isEmptyOrSpaces(s)) return null;
     }
     else {
-      if (isEmptyOrSpaces(s)) return null;
+      if (isEmpty(s)) return null;
     }
     return s;
   }

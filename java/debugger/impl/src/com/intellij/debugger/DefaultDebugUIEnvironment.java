@@ -118,4 +118,9 @@ public class DefaultDebugUIEnvironment implements DebugUIEnvironment {
     actionGroup.add(new CloseAction(myExecutor, content, myProject));
     actionGroup.add(new ContextHelpAction(myExecutor.getHelpId()));
   }
+
+  @Override
+  public RunProfile getRunProfile() {
+    return myRunProfile;
+  }
 }

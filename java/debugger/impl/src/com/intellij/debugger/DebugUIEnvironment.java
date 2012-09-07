@@ -16,6 +16,7 @@
 package com.intellij.debugger;
 
 import com.intellij.diagnostic.logging.LogFilesManager;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.jetbrains.annotations.Nullable;
@@ -39,4 +40,7 @@ public interface DebugUIEnvironment {
   void initLogs(RunContentDescriptor content, LogFilesManager logFilesManager);
 
   void initActions(RunContentDescriptor content, DefaultActionGroup actionGroup);
+
+  @Nullable
+  RunProfile getRunProfile();
 }

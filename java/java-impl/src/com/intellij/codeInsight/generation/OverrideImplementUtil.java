@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -428,7 +428,10 @@ public class OverrideImplementUtil {
   public static PsiGenerationInfo<PsiMethod> createGenerationInfo(PsiMethod s, boolean mergeIfExists) {
     for (MethodImplementor implementor : getImplementors()) {
       final GenerationInfo info = implementor.createGenerationInfo(s, mergeIfExists);
-      if (info instanceof PsiGenerationInfo) return (PsiGenerationInfo<PsiMethod>)info;
+      if (info instanceof PsiGenerationInfo) {
+        @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"}) final PsiGenerationInfo<PsiMethod> psiGenerationInfo = (PsiGenerationInfo<PsiMethod>)info;
+        return psiGenerationInfo;
+      }
     }
     return new PsiGenerationInfo<PsiMethod>(s);
   }
@@ -523,9 +526,9 @@ public class OverrideImplementUtil {
   }
 
   public static void chooseAndOverrideOrImplementMethods(final Project project,
-                                                          final Editor editor,
-                                                          final PsiClass aClass,
-                                                          final boolean toImplement){
+                                                         final Editor editor,
+                                                         final PsiClass aClass,
+                                                         final boolean toImplement) {
     LOG.assertTrue(aClass.isValid());
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -558,47 +561,43 @@ public class OverrideImplementUtil {
     final PsiMethodMember[] onlyPrimary = convertToMethodMembers(candidates);
     final PsiMethodMember[] all = ArrayUtil.mergeArrays(onlyPrimary, convertToMethodMembers(secondary));
 
-    final String toMerge = PropertiesComponent.getInstance(project).getValue(PROP_COMBINED_OVERRIDE_IMPLEMENT);
-    final Ref<Boolean> merge = Ref.create(!"false".equals(toMerge));
+    final Ref<Boolean> merge = Ref.create(PropertiesComponent.getInstance(project).isTrueValue(PROP_COMBINED_OVERRIDE_IMPLEMENT));
+    final MemberChooser<PsiMethodMember> chooser =
+      new MemberChooser<PsiMethodMember>(merge.get() ? all : onlyPrimary, false, true, project, PsiUtil.isLanguageLevel5OrHigher(aClass)) {
+        @Override
+        protected void fillToolbarActions(DefaultActionGroup group) {
+          super.fillToolbarActions(group);
+          if (toImplement) return;
 
-    final boolean isAll = merge.get().booleanValue();
-    final MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(isAll ? all : onlyPrimary, false, true, project,
-                                                                                      PsiUtil.isLanguageLevel5OrHigher(aClass)) {
+          final ToggleAction mergeAction = new ToggleAction("Show methods to implement", "Show methods to implement",
+                                                            AllIcons.General.Show_to_implement) {
+            @Override
+            public boolean isSelected(AnActionEvent e) {
+              return merge.get().booleanValue();
+            }
 
-      @Override
-      protected void fillToolbarActions(DefaultActionGroup group) {
-        super.fillToolbarActions(group);
-        if (toImplement) return;
+            @Override
+            public void setSelected(AnActionEvent e, boolean state) {
+              merge.set(state);
+              resetElements(state ? all : onlyPrimary);
+              setTitle(getChooserTitle(false, merge));
+            }
+          };
+          mergeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.ALT_MASK)), myTree);
 
-        final ToggleAction mergeAction = new ToggleAction("Show methods to implement", "Show methods to implement",
-                                                          AllIcons.General.Show_to_implement) {
-          @Override
-          public boolean isSelected(AnActionEvent e) {
-            return merge.get().booleanValue();
-          }
+          Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("OverrideMethods");
+          mergeAction.registerCustomShortcutSet(new CustomShortcutSet(shortcuts), myTree);
 
-          @Override
-          public void setSelected(AnActionEvent e, boolean state) {
-            merge.set(state);
-            resetElements(state ? all : onlyPrimary);
-            setTitle(getChooserTitle(false, merge));
-          }
-        };
-        mergeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.ALT_MASK)), myTree);
-
-        Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("OverrideMethods");
-        mergeAction.registerCustomShortcutSet(new CustomShortcutSet(shortcuts), myTree);
-
-        group.add(mergeAction);
-      }
-    };
+          group.add(mergeAction);
+        }
+      };
     chooser.setTitle(getChooserTitle(toImplement, merge));
     registerHandlerForComplementaryAction(project, editor, aClass, toImplement, chooser);
 
     chooser.setCopyJavadocVisible(true);
 
     if (toImplement) {
-      chooser.selectElements(isAll ? all : onlyPrimary);
+      chooser.selectElements((boolean)merge.get() ? all : onlyPrimary);
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {

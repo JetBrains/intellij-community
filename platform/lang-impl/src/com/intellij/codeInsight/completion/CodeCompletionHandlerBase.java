@@ -115,7 +115,7 @@ public class CodeCompletionHandlerBase {
 
     checkNoWriteAccess();
 
-    checkEditorValid(editor);
+    checkEditorValid2(editor);
 
     if (editor.isViewer()) {
       editor.getDocument().fireReadOnlyModificationAttempt();
@@ -185,7 +185,7 @@ public class CodeCompletionHandlerBase {
               throw new AssertionError("unsuccessful commit: injected=" + (editor instanceof EditorWindow));
             }
 
-            checkEditorValid(editor);
+            checkEditorValid2(editor);
 
             final Ref<CompletionContributor> current = Ref.create(null);
             initializationContext[0] = new CompletionInitializationContext(editor, psiFile, myCompletionType) {
@@ -207,7 +207,7 @@ public class CodeCompletionHandlerBase {
 
               current.set(contributor);
               contributor.beforeCompletion(initializationContext[0]);
-              checkEditorValid(editor);
+              checkEditorValid2(editor);
               assert !documentManager.isUncommited(document) : "Contributor " + contributor + " left the document uncommitted";
             }
           }
@@ -227,7 +227,7 @@ public class CodeCompletionHandlerBase {
     insertDummyIdentifier(initializationContext[0], hasModifiers, time);
   }
 
-  private static void checkEditorValid(Editor editor) {
+  private static void checkEditorValid2(Editor editor) {
     if (editor instanceof EditorWindow && !((EditorWindow)editor).isValid()) {
       throw new AssertionError();
     }
@@ -267,7 +267,7 @@ public class CodeCompletionHandlerBase {
 
   @NotNull
   private LookupImpl obtainLookup(Editor editor) {
-    checkEditorValid(editor);
+    checkEditorValid2(editor);
     LookupImpl existing = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (existing != null && existing.isCompletion()) {
       existing.markReused();
@@ -292,8 +292,11 @@ public class CodeCompletionHandlerBase {
                           int invocationCount,
                           PsiFile hostFile,
                           int hostStartOffset, Editor hostEditor, OffsetMap hostMap, OffsetTranslator translator) {
+    final Editor editor = initContext.getEditor();
+    checkEditorValid2(editor);
+
     CompletionContext context = createCompletionContext(hostFile, hostStartOffset, hostEditor, hostMap);
-    CompletionParameters parameters = createCompletionParameters(invocationCount, initContext, context);
+    CompletionParameters parameters = createCompletionParameters(invocationCount, context, editor);
 
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
     if (phase instanceof CompletionPhase.CommittingDocuments) {
@@ -305,7 +308,6 @@ public class CodeCompletionHandlerBase {
       CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
     }
 
-    final Editor editor = initContext.getEditor();
     final Semaphore freezeSemaphore = new Semaphore();
     freezeSemaphore.down();
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore,
@@ -342,16 +344,13 @@ public class CodeCompletionHandlerBase {
     }
   }
 
-  private CompletionParameters createCompletionParameters(int invocationCount,
-                                                          CompletionInitializationContext initContext,
-                                                          final CompletionContext newContext) {
-
+  private CompletionParameters createCompletionParameters(int invocationCount, final CompletionContext newContext, final Editor editor) {
     final int offset = newContext.getStartOffset();
     final PsiFile fileCopy = newContext.file;
     PsiFile originalFile = fileCopy.getOriginalFile();
     final PsiElement insertedElement = findCompletionPositionLeaf(newContext, offset, fileCopy, originalFile);
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, newContext);
-    return new CompletionParameters(insertedElement, originalFile, myCompletionType, offset, invocationCount, obtainLookup(initContext.getEditor()));
+    return new CompletionParameters(insertedElement, originalFile, myCompletionType, offset, invocationCount, obtainLookup(editor));
   }
 
   @NotNull
@@ -514,6 +513,7 @@ public class CodeCompletionHandlerBase {
     assert document != null : "no document";
     final OffsetTranslator translator = new OffsetTranslator(initContext.getEditor().getDocument(), initContext.getFile(), document);
 
+    checkEditorValid2(initContext.getEditor());
     CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
       @Override
       public void run() {
@@ -525,6 +525,7 @@ public class CodeCompletionHandlerBase {
         });
       }
     });
+    checkEditorValid2(initContext.getEditor());
     final Document hostDocument = hostFile.getViewProvider().getDocument();
     assert hostDocument != null : "no host document";
 
@@ -562,7 +563,9 @@ public class CodeCompletionHandlerBase {
                                                            Editor hostEditor,
                                                            OffsetMap hostMap) {
     assert hostFile.isValid() : "file became invalid: " + hostFile.getClass();
-    assert hostMap.getOffset(CompletionInitializationContext.START_OFFSET) < hostFile.getTextLength() : "startOffset outside the host file";
+    if (hostMap.getOffset(CompletionInitializationContext.START_OFFSET) >= hostFile.getTextLength()) {
+      throw new AssertionError("startOffset outside the host file: " + hostMap.getOffset(CompletionInitializationContext.START_OFFSET) + "; " + hostFile);
+    }
 
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(hostFile.getProject());
     CompletionContext context;

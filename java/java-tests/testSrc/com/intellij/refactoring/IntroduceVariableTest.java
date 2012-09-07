@@ -371,6 +371,13 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("c", false, false, false, "SAM<java.lang.String>"));
   }
 
+  public void testOneLineLambdaVoidCompatible() throws Exception {
+    doTest(new MockIntroduceVariableHandler("c", false, false, false, "java.lang.String"));
+  }
+  public void testOneLineLambdaValueCompatible() throws Exception {
+    doTest(new MockIntroduceVariableHandler("c", false, false, false, "int"));
+  }
+
   private void doTest(IntroduceVariableBase testMe) throws Exception {
     @NonNls String baseName = "/refactoring/introduceVariable/" + getTestName(false);
     configureByFile(baseName + ".java");

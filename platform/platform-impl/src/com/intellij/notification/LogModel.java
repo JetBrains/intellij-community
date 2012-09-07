@@ -17,12 +17,14 @@ package com.intellij.notification;
 
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +36,8 @@ import java.util.*;
  * @author peter
  */
 public class LogModel implements Disposable {
+  public static final Topic<Runnable> LOG_MODEL_CHANGED = Topic.create("LOG_MODEL_CHANGED", Runnable.class, Topic.BroadcastDirection.NONE);
+
   private final List<Notification> myNotifications = new ArrayList<Notification>();
   private final Map<Notification, Long> myStamps = Collections.synchronizedMap(new WeakHashMap<Notification, Long>());
   private Trinity<Notification, String, Long> myStatusMessage;
@@ -55,14 +59,21 @@ public class LogModel implements Disposable {
     }
     myStamps.put(notification, stamp);
     setStatusMessage(notification, stamp);
+    fireModelChanged();
+  }
+
+  private static void fireModelChanged() {
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(LOG_MODEL_CHANGED).run();
   }
 
   List<Notification> takeNotifications() {
+    final ArrayList<Notification> result;
     synchronized (myNotifications) {
-      final ArrayList<Notification> result = getNotifications();
+      result = getNotifications();
       myNotifications.clear();
-      return result;
     }
+    fireModelChanged();
+    return result;
   }
 
   void setStatusMessage(@Nullable Notification statusMessage, long stamp) {
@@ -82,7 +93,7 @@ public class LogModel implements Disposable {
     }
   }
 
-  public void logShown() {
+  void logShown() {
     for (Notification notification : getNotifications()) {
       if (!notification.isImportant()) {
         removeNotification(notification);
@@ -116,6 +127,7 @@ public class LogModel implements Disposable {
     if (oldStatus != null && notification == oldStatus.first) {
       setStatusToImportant();
     }
+    fireModelChanged();
   }
 
   private void setStatusToImportant() {
@@ -137,6 +149,7 @@ public class LogModel implements Disposable {
   }
 
   public Project getProject() {
+    //noinspection ConstantConditions
     return myProject;
   }
 

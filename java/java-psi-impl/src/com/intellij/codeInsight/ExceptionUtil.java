@@ -102,53 +102,62 @@ public class ExceptionUtil {
       return classTypes;
     }
     else if (element instanceof PsiTryStatement) {
-      PsiTryStatement tryStatement = (PsiTryStatement)element;
-      final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-      List<PsiClassType> array = new ArrayList<PsiClassType>();
-      if (tryBlock != null) {
-        List<PsiClassType> exceptions = getThrownExceptions(tryBlock);
-        array.addAll(exceptions);
-      }
-
-      PsiParameter[] parameters = tryStatement.getCatchBlockParameters();
-      for (PsiParameter parameter : parameters) {
-        PsiType exception = parameter.getType();
-        for (int j = array.size() - 1; j >= 0; j--) {
-          PsiClassType exception1 = array.get(j);
-          if (exception.isAssignableFrom(exception1)) {
-            array.remove(exception1);
-          }
-        }
-      }
-
-      PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
-      for (PsiCodeBlock catchBlock : catchBlocks) {
-        addExceptions(array, getThrownExceptions(catchBlock));
-      }
-
-      PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-      if (finallyBlock != null) {
-        // if finally block completes normally, exception not caught
-        // if finally block completes abruptly, exception gets lost
-        try {
-          ControlFlow flow = ControlFlowFactory.getInstance(finallyBlock.getProject()).getControlFlow(finallyBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
-          int completionReasons = ControlFlowUtil.getCompletionReasons(flow, 0, flow.getSize());
-          List<PsiClassType> thrownExceptions = getThrownExceptions(finallyBlock);
-          if ((completionReasons & ControlFlowUtil.NORMAL_COMPLETION_REASON) == 0) {
-            array = new ArrayList<PsiClassType>(thrownExceptions);
-          }
-          else {
-            addExceptions(array, thrownExceptions);
-          }
-        }
-        catch (AnalysisCanceledException e) {
-          // incomplete code
-        }
-      }
-
-      return array;
+      return getTryExceptions((PsiTryStatement)element);
     }
     return getThrownExceptions(element.getChildren());
+  }
+
+  private static List<PsiClassType> getTryExceptions(PsiTryStatement tryStatement) {
+    List<PsiClassType> array = new ArrayList<PsiClassType>();
+
+    PsiResourceList resourceList = tryStatement.getResourceList();
+    if (resourceList != null) {
+      for (PsiResourceVariable variable : resourceList.getResourceVariables()) {
+        array.addAll(getUnhandledCloserExceptions(variable, resourceList));
+      }
+    }
+
+    PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+    if (tryBlock != null) {
+      array.addAll(getThrownExceptions(tryBlock));
+    }
+
+    for (PsiParameter parameter : tryStatement.getCatchBlockParameters()) {
+      PsiType exception = parameter.getType();
+      for (int j = array.size() - 1; j >= 0; j--) {
+        PsiClassType exception1 = array.get(j);
+        if (exception.isAssignableFrom(exception1)) {
+          array.remove(exception1);
+        }
+      }
+    }
+
+    for (PsiCodeBlock catchBlock : tryStatement.getCatchBlocks()) {
+      addExceptions(array, getThrownExceptions(catchBlock));
+    }
+
+    PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
+    if (finallyBlock != null) {
+      // if finally block completes normally, exception not caught
+      // if finally block completes abruptly, exception gets lost
+      try {
+        ControlFlow flow = ControlFlowFactory
+          .getInstance(finallyBlock.getProject()).getControlFlow(finallyBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
+        int completionReasons = ControlFlowUtil.getCompletionReasons(flow, 0, flow.getSize());
+        List<PsiClassType> thrownExceptions = getThrownExceptions(finallyBlock);
+        if ((completionReasons & ControlFlowUtil.NORMAL_COMPLETION_REASON) == 0) {
+          array = new ArrayList<PsiClassType>(thrownExceptions);
+        }
+        else {
+          addExceptions(array, thrownExceptions);
+        }
+      }
+      catch (AnalysisCanceledException e) {
+        // incomplete code
+      }
+    }
+
+    return array;
   }
 
   @NotNull

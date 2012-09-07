@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <name>Swing Designer</name>
   <id>com.intellij.swing-designer</id>
-  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
   <resource-bundle>messages.SwingDesignerBundle</resource-bundle>
   <depends>com.intellij.java-i18n</depends>
   <depends>com.intellij.properties</depends>

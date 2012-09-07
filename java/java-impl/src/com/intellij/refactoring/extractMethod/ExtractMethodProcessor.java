@@ -316,7 +316,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         if (myOutputVariable != null) {
           elements = ArrayUtil.append(myElements, myOutputVariable, PsiElement.class);
         }
-        if (myCodeFragmentMember != null && myReturnType == ((PsiMethod)myCodeFragmentMember).getReturnType()) {
+        if (myCodeFragmentMember instanceof PsiMethod && myReturnType == ((PsiMethod)myCodeFragmentMember).getReturnType()) {
           elements = ArrayUtil.append(myElements, ((PsiMethod)myCodeFragmentMember).getReturnTypeElement(), PsiElement.class);
         }
       }

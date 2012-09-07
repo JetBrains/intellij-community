@@ -87,7 +87,6 @@ public class Mappings {
     myInitName = myContext.get("<init>");
     myEmptyName = myContext.get("");
     myDebugS = base.myDebugS;
-    myRootDir.mkdirs();
     createImplementation();
   }
 
@@ -120,6 +119,9 @@ public class Mappings {
       myClassToSourceFile = new IntIntTransientMaplet();
     }
     else {
+      if (myIsDelta) {
+        myRootDir.mkdirs();
+      }
       myClassToSubclasses = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_SUBCLASSES), INT_KEY_DESCRIPTOR);
       myClassToClassDependency = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_CLASS), INT_KEY_DESCRIPTOR);
       mySourceFileToClasses = new IntObjectPersistentMultiMaplet<ClassRepr>(
@@ -2186,7 +2188,9 @@ public class Mappings {
         }
       }
       else {
-        FileUtil.delete(myRootDir);
+        if (!myDeltaIsTransient) {
+          FileUtil.delete(myRootDir);
+        }
       }
     }
   }

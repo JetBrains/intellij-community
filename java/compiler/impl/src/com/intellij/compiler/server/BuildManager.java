@@ -128,7 +128,7 @@ public class BuildManager implements ApplicationComponent{
 
   private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("build-manager");
   private final BuildMessageDispatcher myMessageDispatcher = new BuildMessageDispatcher();
-  private int myListenPort = -1;
+  private volatile int myListenPort = -1;
   private volatile CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings myGlobals;
 
   public BuildManager(final ProjectManager projectManager) {
@@ -146,11 +146,7 @@ public class BuildManager implements ApplicationComponent{
 
     projectManager.addProjectManagerListener(new ProjectWatcher());
     final MessageBusConnection conn = ApplicationManager.getApplication().getMessageBus().connect();
-    conn.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void before(@NotNull List<? extends VFileEvent> events) {
-      }
-
+    conn.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         if (shouldTriggerMake(events)) {
@@ -380,7 +376,11 @@ public class BuildManager implements ApplicationComponent{
     // ensure server is listening
     if (myListenPort < 0) {
       try {
-        myListenPort = startListening();
+        synchronized (this) {
+          if (myListenPort < 0) {
+            myListenPort = startListening();
+          }
+        }
       }
       catch (Exception e) {
         handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), null));
@@ -795,7 +795,7 @@ public class BuildManager implements ApplicationComponent{
   }
 
   private int startListening() throws Exception {
-    final ChannelFactory channelFactory = new NioServerSocketChannelFactory(myPooledThreadExecutor, myPooledThreadExecutor);
+    final ChannelFactory channelFactory = new NioServerSocketChannelFactory(myPooledThreadExecutor, myPooledThreadExecutor, 2);
     final SimpleChannelUpstreamHandler channelRegistrar = new SimpleChannelUpstreamHandler() {
       public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         myAllOpenChannels.add(e.getChannel());

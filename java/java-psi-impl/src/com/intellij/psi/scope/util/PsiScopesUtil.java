@@ -363,10 +363,11 @@ public class PsiScopesUtil {
     }
   }
 
-  private static boolean processQualifierType(final PsiType type,
+  private static boolean processQualifierType(@NotNull final PsiType type,
                                               final MethodsProcessor processor,
                                               PsiManager manager,
                                               PsiMethodCallExpression call) throws MethodProcessorSetupFailedException {
+    LOG.assertTrue(type.isValid());
     if (type instanceof PsiClassType) {
       JavaResolveResult qualifierResult = ((PsiClassType)type).resolveGenerics();
       return processQualifierResult(qualifierResult, processor, call);

@@ -59,16 +59,6 @@ public abstract class GrVariableDeclarationBase extends GrStubElementBase<EmptyS
     GroovyPsiElementImpl.removeStatement(this);
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
-    for (final GrVariable variable : getVariables()) {
-      if (lastParent == variable) break;
-      if (lastParent instanceof GrMethod && !(variable instanceof GrField)) break;
-      if (!ResolveUtil.processElement(processor, variable, state)) return false;
-    }
-
-    return true;
-  }
-
   @NotNull
   public GrModifierList getModifierList() {
     return (GrModifierList)findNotNullChildByType(GroovyElementTypes.MODIFIERS);
@@ -116,6 +106,7 @@ public abstract class GrVariableDeclarationBase extends GrStubElementBase<EmptyS
     return getTupleDeclaration() != null;
   }
 
+  @Nullable
   public GrTupleDeclaration getTupleDeclaration() {
     return findChildByClass(GrTupleDeclaration.class);
   }
@@ -156,6 +147,7 @@ public abstract class GrVariableDeclarationBase extends GrStubElementBase<EmptyS
       return "Variable definitions";
     }
 
+    @NotNull
     public GrVariable[] getVariables() {
       return getStubOrPsiChildren(GroovyElementTypes.VARIABLES, GrVariable.ARRAY_FACTORY);
     }
@@ -164,6 +156,18 @@ public abstract class GrVariableDeclarationBase extends GrStubElementBase<EmptyS
       return findChildrenByClass(GrMember.class);
     }
 
+    public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                       @NotNull ResolveState state,
+                                       PsiElement lastParent,
+                                       @NotNull PsiElement place) {
+      for (final GrVariable variable : getVariables()) {
+        if (lastParent == variable) break;
+        if (lastParent instanceof GrMethod && !(variable instanceof GrField)) break;
+        if (!ResolveUtil.processElement(processor, variable, state)) return false;
+      }
+
+      return true;
+    }
   }
 
   public static class GrMultipleVariables extends GrVariableDeclarationBase {
@@ -176,16 +180,33 @@ public abstract class GrVariableDeclarationBase extends GrStubElementBase<EmptyS
     }
 
     @Nullable
-    public GrExpression getInitializerGroovy(){
+    public GrExpression getInitializerGroovy() {
       return findChildByClass(GrExpression.class);
     }
 
+    @NotNull
     public GrVariable[] getVariables() {
-      return getTupleDeclaration().getVariables();
+      GrTupleDeclaration declaration = getTupleDeclaration();
+      assert declaration != null;
+      return declaration.getVariables();
     }
 
     public GrMember[] getMembers() {
       return GrMember.EMPTY_ARRAY;
+    }
+
+    public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                       @NotNull ResolveState state,
+                                       PsiElement lastParent,
+                                       @NotNull PsiElement place) {
+      if (lastParent == getInitializerGroovy()) return true;
+
+      for (final GrVariable variable : getVariables()) {
+        if (lastParent instanceof GrMethod && !(variable instanceof GrField)) break;
+        if (!ResolveUtil.processElement(processor, variable, state)) return false;
+      }
+
+      return true;
     }
   }
 }

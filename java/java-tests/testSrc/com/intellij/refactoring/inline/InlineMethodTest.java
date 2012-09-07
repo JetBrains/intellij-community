@@ -209,6 +209,22 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testInlineRunnableRun() throws Exception {
     doTestInlineThisOnly();
   }
+  
+  public void testOneLineLambdaVoidCompatibleToBlock() throws Exception {
+    doTestInlineThisOnly();
+  }
+
+  public void testOneLineLambdaValueCompatibleToBlock() throws Exception {
+    doTestInlineThisOnly();
+  }
+
+  public void testOneLineLambdaVoidCompatibleOneLine() throws Exception {
+    doTestInlineThisOnly();
+  }
+ 
+  public void testOneLineLambdaValueCompatibleOneLine() throws Exception {
+    doTestInlineThisOnly();
+  }
 
   private void doTestInlineThisOnly() {
     @NonNls String fileName = "/refactoring/inlineMethod/" + getTestName(false) + ".java";

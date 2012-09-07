@@ -219,7 +219,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
     });
 
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
       public void before(@NotNull List<? extends VFileEvent> events) {
         for (VFileEvent event : events) {
@@ -229,10 +229,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             break;
           }
         }
-      }
-
-      @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
       }
     });
 

@@ -310,7 +310,9 @@ public class XmlDtdTest extends PsiTestCase {
   private XmlNSDescriptor createDescriptor(String dtdText) throws Exception {
     PsiFile dtdFile = createDummyFile("test.dtd", dtdText);
 
-    return new XmlNSDescriptorImpl((XmlFile)dtdFile);
+    XmlNSDescriptorImpl descriptor = new XmlNSDescriptorImpl();
+    descriptor.init(dtdFile);
+    return descriptor;
   }
 
   private XmlTag tag(String tagName) throws Exception {

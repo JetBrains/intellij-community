@@ -203,7 +203,7 @@ public class VcsUtil {
   }
 
   private static void refreshFiles(final List<VirtualFile> filesToRefresh, final Runnable runnable) {
-    RefreshQueue.getInstance().refresh(true, true, runnable, VfsUtil.toVirtualFileArray(filesToRefresh));
+    RefreshQueue.getInstance().refresh(true, true, runnable, filesToRefresh);
   }
 
   private static List<VirtualFile> collectFilesToRefresh(final File[] roots) {
