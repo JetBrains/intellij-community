@@ -376,7 +376,9 @@ public abstract class AppIcon {
       }
 
       try {
-        Win7TaskBar.setProgress(frame, value, isOk);
+        if (frame != null) {
+          Win7TaskBar.setProgress(frame, value, isOk);
+        }
       }
       catch (Throwable e) {
         LOG.error(e);
@@ -394,7 +396,9 @@ public abstract class AppIcon {
       }
 
       try {
-        Win7TaskBar.hideProgress(frame);
+        if (frame != null) {
+          Win7TaskBar.hideProgress(frame);
+        }
       }
       catch (Throwable e) {
         LOG.error(e);
@@ -409,6 +413,10 @@ public abstract class AppIcon {
 
     @Override
     public void _setTextBadge(IdeFrame frame, String text) {
+      if (frame == null) {
+        return;
+      }
+
       Object icon = null;
 
       if (text != null) {
@@ -450,6 +458,10 @@ public abstract class AppIcon {
 
     @Override
     public void _setOkBadge(IdeFrame frame, boolean visible) {
+      if (frame == null) {
+        return;
+      }
+
       Object icon = null;
 
       if (visible) {
@@ -482,7 +494,9 @@ public abstract class AppIcon {
     @Override
     public void _requestAttention(IdeFrame frame, boolean critical) {
       try {
-        Win7TaskBar.attention(frame, critical);
+        if (frame != null) {
+          Win7TaskBar.attention(frame, critical);
+        }
       }
       catch (Throwable e) {
         LOG.error(e);
