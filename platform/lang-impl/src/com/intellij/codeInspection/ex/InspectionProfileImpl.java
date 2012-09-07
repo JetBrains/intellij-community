@@ -138,6 +138,14 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         return ContainerUtil.map(tools, WRAPPER_FUNCTION);
       }
     }, InspectionProfileManager.getInstance());
+    boolean init = INIT_INSPECTIONS;
+    try {
+      INIT_INSPECTIONS = true;
+      profile.initialize(null);
+    }
+    finally {
+      INIT_INSPECTIONS = init;
+    }
     for (InspectionProfileEntry tool : tools) {
       profile.enableTool(tool.getShortName());
     }
@@ -445,7 +453,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     }
   }
 
-  private boolean initialize(Project project) {
+  private boolean initialize(@Nullable Project project) {
     if (myBaseProfile != null) {
       myBaseProfile.initInspectionTools(project);
     }
