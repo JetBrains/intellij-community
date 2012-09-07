@@ -20,7 +20,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -137,11 +136,6 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   public Library createLibrary() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     return createLibrary(null);
-  }
-
-  @NotNull
-  public DependencyScope getDefaultDependencyScope() {
-    return DependencyScope.COMPILE;
   }
 
   public void fireLibraryRenamed(@NotNull LibraryImpl library) {

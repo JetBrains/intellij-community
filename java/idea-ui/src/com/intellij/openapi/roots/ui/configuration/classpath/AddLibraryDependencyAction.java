@@ -16,10 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryType;
@@ -100,7 +97,8 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
         if (item.equals(libraryOrderEntry.getLibrary())) {
           return ClasspathTableItem.createLibItem(libraryOrderEntry, myContext);
         }
-        if (item.getName().equals(libraryOrderEntry.getLibraryName())) {
+        String name = item.getName();
+        if (name != null && name.equals(libraryOrderEntry.getLibraryName())) {
           if (orderEntry.isValid()) {
             Messages.showErrorDialog(ProjectBundle.message("classpath.message.library.already.added", item.getName()),
                                      ProjectBundle.message("classpath.title.adding.dependency"));
@@ -113,11 +111,22 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
       }
     }
     final LibraryOrderEntry orderEntry = rootModel.addLibraryEntry(item);
-    final LibraryTable table = item.getTable();
-    if (table instanceof LibraryTableBase) {
-      orderEntry.setScope(((LibraryTableBase)table).getDefaultDependencyScope());
+    DependencyScope defaultScope = getDefaultScope(item);
+    if (defaultScope != null) {
+      orderEntry.setScope(defaultScope);
     }
     return ClasspathTableItem.createLibItem(orderEntry, myContext);
+  }
+
+  @Nullable
+  private static DependencyScope getDefaultScope(Library item) {
+    for (LibraryDependencyScopeSuggester suggester : LibraryDependencyScopeSuggester.EP_NAME.getExtensions()) {
+      DependencyScope scope = suggester.getDefaultDependencyScope(item);
+      if (scope != null) {
+        return scope;
+      }
+    }
+    return null;
   }
 
   protected ClasspathElementChooser<Library> createChooser() {
