@@ -302,7 +302,9 @@ public abstract class AppIcon {
                                                      (progressHeight - 2));
         AppImage appImg = createAppImage();
 
-        appImg.myG2d.setColor(Color.GRAY.brighter().brighter());
+        final Color brighter = Color.GRAY.brighter().brighter();
+        final Color backGround = new Color(brighter.getRed(), brighter.getGreen(), brighter.getBlue(), 85);
+        appImg.myG2d.setColor(backGround);
         appImg.myG2d.fill(rect);
         appImg.myG2d.setColor(isOk ? scheme.getOkColor() : scheme.getErrorColor());
         appImg.myG2d.fill(progress);
