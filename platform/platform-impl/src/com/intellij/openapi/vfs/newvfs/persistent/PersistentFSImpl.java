@@ -409,12 +409,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public long getLength(@NotNull final VirtualFile file) {
-    final VirtualFile canonicalFile = file.getCanonicalFile();
-    return canonicalFile == null ? 0 : getLengthNoFollow(canonicalFile);
-  }
-
-  @Override
-  public long getLengthNoFollow(@NotNull final VirtualFile file) {
     final int id = getFileId(file);
 
     long len = FSRecords.getLength(id);
@@ -488,18 +482,16 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   @NotNull
   public byte[] contentsToByteArray(@NotNull final VirtualFile file, boolean cacheContent) throws IOException {
-    final VirtualFile canonicalFile = getCanonicalFile(file);
-
     InputStream contentStream = null;
     boolean reloadFromDelegate;
     synchronized (myInputLock) {
-      reloadFromDelegate = mustReloadContent(canonicalFile) || (contentStream = readContent(canonicalFile)) == null;
+      reloadFromDelegate = mustReloadContent(file) || (contentStream = readContent(file)) == null;
     }
 
     if (reloadFromDelegate) {
-      final NewVirtualFileSystem delegate = getDelegate(canonicalFile);
-      final byte[] content = delegate.contentsToByteArray(canonicalFile);
-      FSRecords.setLength(getFileId(canonicalFile), content.length);
+      final NewVirtualFileSystem delegate = getDelegate(file);
+      final byte[] content = delegate.contentsToByteArray(file);
+      FSRecords.setLength(getFileId(file), content.length);
 
       ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
       // we should cache every local files content
@@ -510,8 +502,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
            (cacheContent && !application.isInternal() && !application.isUnitTestMode())) &&
           content.length <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
         synchronized (myInputLock) {
-          writeContent(canonicalFile, new ByteSequence(content), delegate.isReadOnly());
-          setFlag(canonicalFile, MUST_RELOAD_CONTENT, false);
+          writeContent(file, new ByteSequence(content), delegate.isReadOnly());
+          setFlag(file, MUST_RELOAD_CONTENT, false);
         }
       }
 
@@ -519,8 +511,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
     else {
       try {
-        final int length = (int)canonicalFile.getLength();
-        assert length >= 0 : canonicalFile;
+        final int length = (int)file.getLength();
+        assert length >= 0 : file;
         return FileUtil.loadBytes(contentStream, length);
       }
       catch (IOException e) {
@@ -540,31 +532,21 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   @NotNull
   public InputStream getInputStream(@NotNull final VirtualFile file) throws IOException {
-    final VirtualFile canonicalFile = getCanonicalFile(file);
     synchronized (myInputLock) {
       InputStream contentStream;
-      if (mustReloadContent(canonicalFile) || (contentStream = readContent(canonicalFile)) == null) {
-        final NewVirtualFileSystem delegate = getDelegate(canonicalFile);
-        final long len = delegate.getLength(canonicalFile);
-        FSRecords.setLength(getFileId(canonicalFile), len);
-        final InputStream nativeStream = delegate.getInputStream(canonicalFile);
+      if (mustReloadContent(file) || (contentStream = readContent(file)) == null) {
+        final NewVirtualFileSystem delegate = getDelegate(file);
+        final long len = delegate.getLength(file);
+        FSRecords.setLength(getFileId(file), len);
+        final InputStream nativeStream = delegate.getInputStream(file);
 
         if (len > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) return nativeStream;
-        return createReplicator(canonicalFile, nativeStream, len, delegate.isReadOnly());
+        return createReplicator(file, nativeStream, len, delegate.isReadOnly());
       }
       else {
         return contentStream;
       }
     }
-  }
-
-  @NotNull
-  private static VirtualFile getCanonicalFile(@NotNull final VirtualFile file) throws IOException {
-    final VirtualFile canonicalFile = file.getCanonicalFile();
-    if (canonicalFile == null) {
-      throw new IOException("Broken link: " + file);
-    }
-    return canonicalFile;
   }
 
   private InputStream createReplicator(@NotNull final VirtualFile file, final InputStream nativeStream, final long fileLength, final boolean readOnly)
@@ -612,9 +594,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                                       final Object requestor,
                                       final long modStamp,
                                       final long timeStamp) throws IOException {
-    final VirtualFile canonicalFile = getCanonicalFile(file);
-
-    final VFileContentChangeEvent event = new VFileContentChangeEvent(requestor, canonicalFile, canonicalFile.getModificationStamp(), modStamp, false);
+    final VFileContentChangeEvent event = new VFileContentChangeEvent(requestor, file, file.getModificationStamp(), modStamp, false);
 
     final List<VFileContentChangeEvent> events = Collections.singletonList(event);
 
@@ -628,10 +608,10 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         if (closed) return;
         super.close();
 
-        NewVirtualFileSystem delegate = getDelegate(canonicalFile);
-        OutputStream ioFileStream = delegate.getOutputStream(canonicalFile, requestor, modStamp, timeStamp);
+        NewVirtualFileSystem delegate = getDelegate(file);
+        OutputStream ioFileStream = delegate.getOutputStream(file, requestor, modStamp, timeStamp);
         // com.intellij.openapi.vfs.newvfs.persistent.FSRecords.ContentOutputStream already buffered, no need to wrap in BufferedStream
-        OutputStream persistenceStream = writeContent(canonicalFile, delegate.isReadOnly());
+        OutputStream persistenceStream = writeContent(file, delegate.isReadOnly());
 
         try {
           persistenceStream.write(buf, 0, count);
@@ -644,7 +624,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
             closed = true;
             persistenceStream.close();
             ioFileStream.close();
-            executeTouch(canonicalFile, false, event.getModificationStamp());
+            executeTouch(file, false, event.getModificationStamp());
             publisher.after(events);
           }
         }
