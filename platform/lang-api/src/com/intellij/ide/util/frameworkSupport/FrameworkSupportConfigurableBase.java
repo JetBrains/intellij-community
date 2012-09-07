@@ -51,9 +51,27 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
     myFrameworkSupportProvider = frameworkSupportProvider;
     myFrameworkSupportModel = model;
     myVersions = versions;
+    myDescriptionLabel.setText(versionLabelText);
+    myVersionComboBox.setRenderer(new ListCellRendererWrapper() {
+      @Override
+      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        if (value instanceof FrameworkVersion) {
+          setText(((FrameworkVersion)value).getVersionName());
+        }
+      }
+    });
+    myVersionComboBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        fireFrameworkVersionChanged();
+      }
+    });
+    updateAvailableVersions(versions);
+  }
+
+  protected void updateAvailableVersions(List<? extends FrameworkVersion> versions) {
     if (versions.size() > 0) {
-      myDescriptionLabel.setText(versionLabelText);
       String maxValue = "";
+      ((DefaultComboBoxModel)myVersionComboBox.getModel()).removeAllElements();
       FrameworkVersion defaultVersion = versions.get(versions.size() - 1);
       for (FrameworkVersion version : versions) {
         myVersionComboBox.addItem(version);
@@ -65,31 +83,24 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
           defaultVersion = version;
         }
       }
-      myVersionComboBox.setPrototypeDisplayValue(maxValue + "_");
-      myVersionComboBox.setRenderer(new ListCellRendererWrapper() {
-        @Override
-        public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          if (value instanceof FrameworkVersion) {
-            setText(((FrameworkVersion)value).getVersionName());
-          }
-        }
-      });
       myVersionComboBox.setSelectedItem(defaultVersion);
-      myVersionComboBox.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          fireFrameworkVersionChanged();
-        }
-      });
+      myVersionComboBox.setPrototypeDisplayValue(maxValue + "_");
     }
 
-    if (versions.size() < 2) {
-      myDescriptionLabel.setVisible(false);
-      myVersionComboBox.setVisible(false);
-    }
+    final boolean hasMoreThanOneVersion = versions.size() >= 2;
+    myDescriptionLabel.setVisible(hasMoreThanOneVersion);
+    myVersionComboBox.setVisible(hasMoreThanOneVersion);
   }
 
   public JComponent getComponent() {
     return myVersions.size() > 1 ? myMainPanel : null;
+  }
+  
+  protected void reloadVersions(List<? extends FrameworkVersion> frameworkVersions) {
+    myVersions.clear();
+    for (FrameworkVersion version : frameworkVersions) {
+      myVersions.add(version);
+    }
   }
 
   @NotNull
