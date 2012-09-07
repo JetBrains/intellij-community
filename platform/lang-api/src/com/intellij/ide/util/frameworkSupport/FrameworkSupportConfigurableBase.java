@@ -60,12 +60,12 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
         }
       }
     });
+    updateAvailableVersions(versions);
     myVersionComboBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         fireFrameworkVersionChanged();
       }
     });
-    updateAvailableVersions(versions);
   }
 
   protected void updateAvailableVersions(List<? extends FrameworkVersion> versions) {
