@@ -274,12 +274,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
         final DfaMemoryState trueCopy = memState.createCopy();
         if (trueCopy.applyCondition(dfaRelation)) {
-          if (dfaLeft instanceof DfaVariableValue && dfaRight instanceof DfaVariableValue) {
-            if (trueCopy.isNotNull((DfaVariableValue)dfaLeft)) {
-              trueCopy.applyCondition(relationFactory.create(dfaRight, factory.getConstFactory().getNull(), JavaTokenType.EQEQ, true));
-            } else if (trueCopy.isNotNull((DfaVariableValue)dfaRight)) {
-              trueCopy.applyCondition(relationFactory.create(dfaLeft, factory.getConstFactory().getNull(), JavaTokenType.EQEQ, true));
-            }
+          if (!dfaRelation.isNegated()) {
+            handleEqualVariables(dfaRight, dfaLeft, factory, trueCopy);
           }
           trueCopy.push(factory.getConstFactory().getTrue());
           instruction.setTrueReachable();
@@ -333,6 +329,17 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     instruction.setFalseReachable();
 
     return nextInstruction(instruction, runner, memState);
+  }
+
+  private static void handleEqualVariables(DfaValue var1, DfaValue var2, DfaValueFactory factory, DfaMemoryState state) {
+    if (!(var2 instanceof DfaVariableValue) || !(var1 instanceof DfaVariableValue)) {
+      return;
+    }
+
+    DfaValue nowNotNull = state.isNotNull((DfaVariableValue)var2) ? var1 : state.isNotNull((DfaVariableValue)var1) ? var2 : null;
+    if (nowNotNull != null) {
+      state.applyCondition(factory.getRelationFactory().create(nowNotNull, factory.getConstFactory().getNull(), JavaTokenType.EQEQ, true));
+    }
   }
 
   public boolean isInstanceofRedundant(InstanceofInstruction instruction) {
