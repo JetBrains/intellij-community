@@ -18,7 +18,6 @@ package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -61,8 +60,7 @@ public class LineRange {
     return startLine <= lineNumber && endLine > lineNumber;
   }
 
-  public TextRange getTextRange(Document document) {
-    return TextRange.create(StatementUpDownMover.getLineStartSafeOffset(document, startLine),
-                            StatementUpDownMover.getLineStartSafeOffset(document, endLine) - 1);
+  public boolean contains(LineRange range) {
+    return startLine <= range.startLine && endLine >= range.endLine;
   }
 }
