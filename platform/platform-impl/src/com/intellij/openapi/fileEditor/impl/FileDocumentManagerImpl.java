@@ -716,9 +716,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     Document doc = getCachedDocument(event.getFile());
     if (doc != null) {
       myTrailingSpacesStripper.documentDeleted(doc);
-      if (!event.isFromRefresh()) {
-        removeFromUnsaved(doc);
-      }
     }
   }
 
@@ -741,6 +738,19 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   @Override
   public void beforeFileDeletion(VirtualFileEvent event) {
+    if (!event.isFromRefresh()) {
+      VfsUtilCore.visitChildrenRecursively(event.getFile(), new VirtualFileVisitor() {
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file) {
+          Document document = getCachedDocument(file);
+          if (document != null) {
+            removeFromUnsaved(document);
+          }
+          return true;
+        }
+      });
+    }
+
   }
 
   @Override
