@@ -1,8 +1,8 @@
-<root>
-    <te<caret>st>
-        <element
+<test>
+    <element
             attribute="test1"/>
-        <element
+    <element
             attribute="test2"/>
-    </test>
+</test>
+<root>
 </root>

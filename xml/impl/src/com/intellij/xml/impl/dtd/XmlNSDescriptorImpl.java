@@ -78,10 +78,6 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
 
   public XmlNSDescriptorImpl() {}
 
-  public XmlNSDescriptorImpl(XmlElement element) {
-    init(element);
-  }
-
   public XmlFile getDescriptorFile() {
     return myDescriptorFile;
   }

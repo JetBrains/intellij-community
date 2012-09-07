@@ -38,8 +38,10 @@ public abstract class StatementUpDownMover {
     @NotNull
     public LineRange toMove;
 
-    /** Target line range, or <code>null</code> if move not available */
-    @Nullable
+    /**
+     * Target line range, or <code>null</code> if move not available
+     * @see #prohibitMove()
+     */
     public LineRange toMove2;
 
     public RangeMarker range1;
@@ -47,6 +49,15 @@ public abstract class StatementUpDownMover {
 
     public boolean indentSource;
     public boolean indentTarget = true;
+
+    /**
+     * Use this method in {@link StatementUpDownMover#checkAvailable(com.intellij.openapi.editor.Editor, com.intellij.psi.PsiFile, com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover.MoveInfo, boolean)}
+     * @return true to suppress further movers processing
+     */
+    public final boolean prohibitMove() {
+      toMove2 = null;
+      return true;
+    }
   }
 
   public abstract boolean checkAvailable(@NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final MoveInfo info, final boolean down);
@@ -100,11 +111,13 @@ public abstract class StatementUpDownMover {
     return null;
   }
 
+  @Nullable
   protected static PsiElement firstNonWhiteElement(int offset, PsiFile file, final boolean lookRight) {
     final ASTNode leafElement = file.getNode().findLeafElementAt(offset);
     return leafElement == null ? null : firstNonWhiteElement(leafElement.getPsi(), lookRight);
   }
 
+  @Nullable
   protected static PsiElement firstNonWhiteElement(PsiElement element, final boolean lookRight) {
     if (element instanceof PsiWhiteSpace) {
       element = lookRight ? element.getNextSibling() : element.getPrevSibling();

@@ -29,7 +29,8 @@ public class XmlMoverTest extends CodeInsightTestCase {
 
   public void testRootTag() throws Exception { doTest("xml"); }
   public void testRootTag1() throws Exception { doTest("xml"); }
-//  public void testSingleTag() throws Exception { doTest("xml"); }
+  public void testSingleTag() throws Exception { doTest("xml"); }
+  public void testMoveTag() throws Exception { doTest("xml"); }
 
   public void test1() throws Exception { doTest("html"); }
 
