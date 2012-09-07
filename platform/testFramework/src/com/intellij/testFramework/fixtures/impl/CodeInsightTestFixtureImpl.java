@@ -1173,12 +1173,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         return result;
       }
 
-      @Override
       public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
-        return isToolEnabled(key);
-      }
-
-      public boolean isToolEnabled(HighlightDisplayKey key) {
         return key != null && key.toString() != null && myAvailableTools.containsKey(key.toString());
       }
 
