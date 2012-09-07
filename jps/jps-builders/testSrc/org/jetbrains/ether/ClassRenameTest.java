@@ -12,7 +12,11 @@ public class ClassRenameTest extends IncrementalTestCase {
     super("changeName");
   }
 
-  public void testChangeClassName() throws Exception {
-    doTest();
+  public void testChangeClassName() {
+    doTest().assertSuccessful();
+  }
+
+  public void _testChangeCaseOfName() {
+    doTest().assertSuccessful();
   }
 }

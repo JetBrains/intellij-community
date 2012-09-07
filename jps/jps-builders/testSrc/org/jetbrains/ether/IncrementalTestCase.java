@@ -90,26 +90,22 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     }
   }
 
-  private void modify() throws Exception {
+  private void modify() {
+    FileUtil.processFilesRecursively(baseDir, new Processor<File>() {
+      @Override
+      public boolean process(File file) {
+        if (file.getName().endsWith(".remove")) {
+          FileUtil.delete(getTargetFile(file, ".remove"));
+        }
+        return true;
+      }
+    });
     FileUtil.processFilesRecursively(baseDir, new Processor<File>() {
       @Override
       public boolean process(File file) {
         try {
-          String name = file.getName();
-          boolean copy = name.endsWith(".new");
-          boolean remove = name.endsWith(".remove");
-          if (copy || remove) {
-            String path = FileUtil.getRelativePath(baseDir, file);
-            assertNotNull(path);
-            if (!path.contains(File.separator)) {
-              path = "src" + File.separator + path;
-            }
-            if (copy) {
-              FileUtil.copyContent(file, new File(workDir, StringUtil.trimEnd(path, ".new")));
-            }
-            if (remove) {
-              FileUtil.delete(new File(workDir, StringUtil.trimEnd(path, ".remove")));
-            }
+          if (file.getName().endsWith(".new")) {
+            FileUtil.copyContent(file, getTargetFile(file, ".new"));
           }
         }
         catch (IOException e) {
@@ -120,7 +116,16 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     });
   }
 
-  public BuildResult doTest() throws Exception {
+  private File getTargetFile(File sourceFile, final String suffix) {
+    String path = FileUtil.getRelativePath(baseDir, sourceFile);
+    assertNotNull(path);
+    if (!path.contains(File.separator)) {
+      path = "src" + File.separator + path;
+    }
+    return new File(workDir, StringUtil.trimEnd(path, suffix));
+  }
+
+  public BuildResult doTest() {
     if (new File(workDir, ".idea").exists()) {
       getOrCreateJdk();
       loadProject(workDir.getAbsolutePath());
@@ -138,7 +143,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     return addModule(moduleName, new String[]{srcPath}, null, getOrCreateJdk());
   }
 
-  protected BuildResult doTestBuild() throws Exception {
+  protected BuildResult doTestBuild() {
     final TestJavaBuilderLogger
       javaBuilderLogger = new TestJavaBuilderLogger(FileUtil.toSystemIndependentName(workDir.getAbsolutePath()) + "/");
     final ProjectDescriptor
@@ -149,11 +154,16 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
 
       modify();
       if (Utils.TIMESTAMP_ACCURACY > 1) {
-        Thread.sleep(Utils.TIMESTAMP_ACCURACY);
+        try {
+          Thread.sleep(Utils.TIMESTAMP_ACCURACY);
+        }
+        catch (InterruptedException ignored) {
+        }
       }
 
 
-      BuildResult result = doBuild(projectDescriptor, new AllProjectScope(myJpsProject, Collections.<JpsArtifact>emptySet(), false), true, false, false);
+      BuildResult result =
+        doBuild(projectDescriptor, new AllProjectScope(myJpsProject, Collections.<JpsArtifact>emptySet(), false), true, false, false);
 
       final ByteArrayOutputStream makeDump = new ByteArrayOutputStream();
 
@@ -185,6 +195,9 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
         assertEquals(rebuildDump.toString(), makeDump.toString());
       }
       return result;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
     finally {
       projectDescriptor.release();
