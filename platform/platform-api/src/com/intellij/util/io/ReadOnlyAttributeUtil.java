@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 
@@ -26,18 +25,20 @@ public class ReadOnlyAttributeUtil {
   /**
    * Sets specified read-only status for the spcified <code>file</code>.
    * This method can be performed only for files which are in local file system.
-   * @param file file which read-only attribute to be changed.
+   *
+   * @param file           file which read-only attribute to be changed.
    * @param readOnlyStatus new read-only status.
-   * @throws java.lang.IllegalArgumentException if passed <code>file</code> doesn't
-   * belong to the local file system.
-   * @throws IOException if some <code>IOExecption</code> occurred.
+   * @throws java.lang.IllegalArgumentException
+   *                     if passed <code>file</code> doesn't
+   *                     belong to the local file system.
+   * @throws IOException if some <code>IOException</code> occurred.
    */
   public static void setReadOnlyAttribute(VirtualFile file, boolean readOnlyStatus) throws IOException {
     if (file.getFileSystem().isReadOnly()) {
-      throw new IllegalArgumentException("Wrong file system: "+file.getFileSystem());
+      throw new IllegalArgumentException("Wrong file system: " + file.getFileSystem());
     }
 
-    if(file.isWritable()==!readOnlyStatus){
+    if (file.isWritable() == !readOnlyStatus) {
       return;
     }
 

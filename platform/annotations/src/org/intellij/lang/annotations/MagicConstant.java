@@ -18,7 +18,7 @@ package org.intellij.lang.annotations;
 import java.lang.annotation.*;
 
 /**
- * <p>This annotation indended to help IDEA to detect and auto-complete int and String constants used as an enumeration.
+ * <p>This annotation intended to help IDEA to detect and auto-complete int and String constants used as an enumeration.
  * For example, in the {@link java.awt.Label#Label(String, int)} constructor the <tt><b>alignment</b></tt> parameter can be one of the following
  * int constants: {@link java.awt.Label#LEFT}, {@link java.awt.Label#CENTER} or {@link java.awt.Label#RIGHT}
  *

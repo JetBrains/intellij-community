@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.vfs.newvfs.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
+/**
+ * @author max
+ */
 public class FakeVirtualFile extends StubVirtualFile {
   private final VirtualFile myParent;
   private final String myName;
@@ -42,8 +42,7 @@ public class FakeVirtualFile extends StubVirtualFile {
   @Override
   public String getPath() {
     final String basePath = myParent.getPath();
-    if (basePath.endsWith("/")) return basePath + myName;
-    return basePath + '/' + myName;
+    return StringUtil.endsWithChar(basePath, '/') ? basePath + myName : basePath + '/' + myName;
   }
 
   @Override
