@@ -15,13 +15,12 @@
  */
 package org.jetbrains.idea.svn.lowLevel;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Processor;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableConvertor;
-import com.intellij.util.containers.hash.HashSet;
 import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
@@ -32,9 +31,6 @@ import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
-import java.util.Collections;
-import java.util.Set;
-
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
@@ -44,53 +40,45 @@ import java.util.Set;
 public class SvnIdeaRepositoryPoolManager implements ISVNRepositoryPool, ISVNSession {
   private final static ApplicationLevelNumberConnectionsGuardImpl ourGuard;
 
-  private Set<Thread> myInterrupted;
-  private final Processor<Thread> myCancelThreadProcessor;
   private final ISVNDebugLog myLog;
-  private final ISVNCanceller myCanceller;
+  private final QuicklyDisposableISVNCanceller myCanceller;
 
   private final SvnRepositoryPool myPool;
-  private final boolean myKeepConnection;
-  private final ISVNConnectionListener myListener;
-  private ISVNAuthenticationManager myAuthManager;
+  private volatile boolean myKeepConnection;
+  private final QuicklyDisposableISVNTunnelProvider myTunnelProvider;
+  private final QuicklyDisposableISVNConnectionListener myListener;
+  private QuicklyDisposableISVNAuthenticationManager myAuthManager;
+  private ThrowableConvertor<SVNURL, SVNRepository, SVNException> myCreator;
 
   static {
     ourGuard = new ApplicationLevelNumberConnectionsGuardImpl();
   }
 
-  public SvnIdeaRepositoryPoolManager(final boolean keepConnection, final ISVNAuthenticationManager authManager, final ISVNTunnelProvider tunnelProvider) {
+  public SvnIdeaRepositoryPoolManager(final boolean keepConnection, final ISVNAuthenticationManager authManager,
+                                      final ISVNTunnelProvider tunnelProvider) {
+    this(keepConnection, authManager, tunnelProvider, -1, -1);
+  }
+
+  public SvnIdeaRepositoryPoolManager(final boolean keepConnection,
+                                      final ISVNAuthenticationManager authManager,
+                                      final ISVNTunnelProvider tunnelProvider, final int maxCached, final int maxConcurrent) {
     myKeepConnection = keepConnection;
-    myAuthManager = authManager;
-    myInterrupted = Collections.synchronizedSet(new HashSet<Thread>());
-    myCancelThreadProcessor = new Processor<Thread>() {
-      @Override
-      public boolean process(Thread thread) {
-        return ! myInterrupted.contains(thread);
-      }
-    };
-    myLog = new ProxySvnLog(SVNDebugLog.getDefaultLog(), myCancelThreadProcessor);
-    myCanceller = new ISVNCanceller() {
-      @Override
-      public void checkCancelled() throws SVNCancelException {
-        final ProgressManager pm = ProgressManager.getInstance();
-        final ProgressIndicator pi = pm.getProgressIndicator();
-        if (pi != null) {
-          if (pi.isCanceled()) throw new SVNCancelException();
-        }
-        if (! myCancelThreadProcessor.process(Thread.currentThread())) {
-          throw new SVNCancelException();
-        }
-      }
-    };
+    myTunnelProvider = new QuicklyDisposableISVNTunnelProvider(tunnelProvider);
+    myAuthManager = new QuicklyDisposableISVNAuthenticationManager(authManager);
+    myLog = SVNDebugLog.getDefaultLog(); // for 11.1.x branch, do not call new log //new ProxySvnLog(SVNDebugLog.getDefaultLog());
+    myCanceller = new QuicklyDisposableISVNCanceller(new MyCanceller());
 
     final ThrowableConvertor<SVNURL, SVNRepository, SVNException> creator = new ThrowableConvertor<SVNURL, SVNRepository, SVNException>() {
       @Override
       public SVNRepository convert(SVNURL svnurl) throws SVNException {
-        final SVNRepository repos = SVNRepositoryFactory.create(svnurl, SvnIdeaRepositoryPoolManager.this);
+        final SVNRepository repos = myCreator != null ? myCreator.convert(svnurl) : SVNRepositoryFactory.create(svnurl, SvnIdeaRepositoryPoolManager.this);
         repos.setAuthenticationManager(myAuthManager);
-        repos.setTunnelProvider(tunnelProvider);
+        repos.setTunnelProvider(myTunnelProvider);
         repos.setDebugLog(myLog);
         repos.setCanceller(myCanceller);
+        if (myKeepConnection) {
+          repos.addConnectionListener(myListener);
+        }
         return repos;
       }
     };
@@ -103,16 +91,16 @@ public class SvnIdeaRepositoryPoolManager implements ISVNRepositoryPool, ISVNSes
         repository.setLocation(url, false);
         repository.addConnectionListener(myListener);
         repository.setAuthenticationManager(myAuthManager);
-        repository.setTunnelProvider(tunnelProvider);
+        repository.setTunnelProvider(myTunnelProvider);
         repository.setDebugLog(myLog);
         repository.setCanceller(myCanceller);
       }
     };
 
     if (keepConnection) {
-      CachingSvnRepositoryPool pool = new CachingSvnRepositoryPool(creator, -1, -1, adjuster, myCancelThreadProcessor, ourGuard);
+      CachingSvnRepositoryPool pool = new CachingSvnRepositoryPool(creator, maxCached, maxConcurrent, adjuster, ourGuard);
       myPool = pool;
-      myListener = new ISVNConnectionListener() {
+      ISVNConnectionListener listener = new ISVNConnectionListener() {
         @Override
         public void connectionOpened(SVNRepository repository) {
           ourGuard.connectionOpened();
@@ -120,10 +108,12 @@ public class SvnIdeaRepositoryPoolManager implements ISVNRepositoryPool, ISVNSes
 
         @Override
         public void connectionClosed(SVNRepository repository) {
+          repository.removeConnectionListener(myListener);
           myPool.returnRepo(repository);
           ourGuard.connectionClosed();
         }
       };
+      myListener = new QuicklyDisposableISVNConnectionListener(listener);
       ourGuard.addRepositoryPool(pool);
     }
     else {
@@ -132,16 +122,24 @@ public class SvnIdeaRepositoryPoolManager implements ISVNRepositoryPool, ISVNSes
     }
   }
 
-  public void interruptThread(final Thread thread) {
-    myInterrupted.add(thread);
-    if (myKeepConnection) {
-      ((CachingSvnRepositoryPool) myPool).waitingInterrupted();
+  private static class MyCanceller implements ISVNCanceller {
+    @Override
+    public void checkCancelled() throws SVNCancelException {
+      final ProgressManager pm = ProgressManager.getInstance();
+      final ProgressIndicator pi = pm.getProgressIndicator();
+      if (pi != null) {
+        if (pi.isCanceled()) throw new SVNCancelException();
+      }
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      if (indicator != null && indicator.isCanceled()) {
+        throw new SVNCancelException();
+      }
     }
   }
 
   @Override
   public void setAuthenticationManager(ISVNAuthenticationManager authManager) {
-    myAuthManager = authManager;
+    myAuthManager = new QuicklyDisposableISVNAuthenticationManager(authManager);
   }
 
   @Override
@@ -176,9 +174,13 @@ public class SvnIdeaRepositoryPoolManager implements ISVNRepositoryPool, ISVNSes
     if (myKeepConnection) {
       ourGuard.removeRepositoryPool((CachingSvnRepositoryPool)myPool);
     }
+    myKeepConnection = false;
+    if (myListener != null) {
+      myListener.dispose();
+    }
+    myAuthManager.dispose();
+    myTunnelProvider.dispose();
     myPool.dispose();
-    myInterrupted.clear();
-    myInterrupted = null;
   }
 
   @Override
@@ -198,5 +200,20 @@ public class SvnIdeaRepositoryPoolManager implements ISVNRepositoryPool, ISVNSes
   @Override
   public boolean hasCommitMessage(SVNRepository repository, long revision) {
     return false;
+  }
+
+  public void setCreator(ThrowableConvertor<SVNURL, SVNRepository, SVNException> creator) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myCreator = creator;
+  }
+
+  public SvnRepositoryPool getPool() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    return myPool;
+  }
+
+  public static ApplicationLevelNumberConnectionsGuardImpl getOurGuard() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    return ourGuard;
   }
 }

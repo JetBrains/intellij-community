@@ -15,15 +15,26 @@
  */
 package org.jetbrains.idea.svn.lowLevel;
 
-import org.tmatesoft.svn.core.SVNException;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import org.tmatesoft.svn.core.ISVNCanceller;
+import org.tmatesoft.svn.core.SVNCancelException;
 
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
- * Date: 8/2/12
- * Time: 12:11 PM
+ * Date: 8/15/12
+ * Time: 3:30 PM
  */
-public interface ApplicationLevelNumberConnectionsGuard {
-  void waitForTotalNumberOfConnectionsOk() throws SVNException;
-  boolean shouldKeepConnectionLocally();
+public class QuicklyDisposableISVNCanceller extends QuicklyDisposableProxy<ISVNCanceller> implements ISVNCanceller {
+  public QuicklyDisposableISVNCanceller(ISVNCanceller canceller) {
+    super(canceller);
+  }
+
+  public void checkCancelled() throws SVNCancelException {
+    try {
+      getRef().checkCancelled();
+    } catch (ProcessCanceledException e) {
+      throw new SVNCancelException();
+    }
+  }
 }

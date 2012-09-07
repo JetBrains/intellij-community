@@ -202,7 +202,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
       final VcsDescriptor wrapper = (VcsDescriptor) myVCSComboBox.getSelectedItem();
       if (oldText.length() == 0 && (wrapper == null || wrapper.isNone())) {
         final ModalityIgnorantBackgroundableTask task =
-          new ModalityIgnorantBackgroundableTask(myProject, "Looking for VCS administrative area, false") {
+          new ModalityIgnorantBackgroundableTask(myProject, "Looking for VCS administrative area", false) {
             VcsDescriptor probableVcs = null;
 
             @Override

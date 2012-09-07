@@ -15,15 +15,27 @@
  */
 package org.jetbrains.idea.svn.lowLevel;
 
-import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.io.ISVNConnectionListener;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
- * Date: 8/2/12
- * Time: 12:11 PM
+ * Date: 8/15/12
+ * Time: 3:05 PM
  */
-public interface ApplicationLevelNumberConnectionsGuard {
-  void waitForTotalNumberOfConnectionsOk() throws SVNException;
-  boolean shouldKeepConnectionLocally();
+public class QuicklyDisposableISVNConnectionListener extends QuicklyDisposableProxy<ISVNConnectionListener> implements ISVNConnectionListener {
+  public QuicklyDisposableISVNConnectionListener(ISVNConnectionListener o) {
+    super(o);
+  }
+
+  @Override
+  public void connectionOpened(SVNRepository repository) {
+    getRef().connectionOpened(repository);
+  }
+
+  @Override
+  public void connectionClosed(SVNRepository repository) {
+    getRef().connectionClosed(repository);
+  }
 }

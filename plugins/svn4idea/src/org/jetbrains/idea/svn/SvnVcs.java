@@ -35,7 +35,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.*;
@@ -71,6 +70,7 @@ import org.jetbrains.idea.svn.history.LoadedRevisionsCache;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
+import org.jetbrains.idea.svn.lowLevel.SvnIdeaRepositoryPoolManager;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
@@ -116,7 +116,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public static final Topic<Runnable> WC_CONVERTED = new Topic<Runnable>("WC_CONVERTED", Runnable.class);
   private final Map<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>> myPropertyCache = new SoftHashMap<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>>();
 
-  private DefaultSVNRepositoryPool myPool;
+  private SvnIdeaRepositoryPoolManager myPool;
   private final SvnConfiguration myConfiguration;
   private final SvnEntriesFileListener myEntriesFileListener;
 
@@ -608,17 +608,25 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   private void createPool() {
-    final String property = System.getProperty(KEEP_CONNECTIONS_KEY);
+    if (myPool != null) return;
+/*    final String property = System.getProperty(KEEP_CONNECTIONS_KEY);
     final boolean keep;
-    if (StringUtil.isEmptyOrSpaces(property)) {
-      keep = ! ApplicationManager.getApplication().isUnitTestMode();  // default
+    boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    if (StringUtil.isEmptyOrSpaces(property) || unitTestMode) {
+      keep = ! unitTestMode;  // default
     } else {
       keep = Boolean.getBoolean(KEEP_CONNECTIONS_KEY);
-    }
-    myPool = new DefaultSVNRepositoryPool(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject), 60*1000, keep);
+    }*/
+    myPool = new SvnIdeaRepositoryPoolManager(false, myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
   }
 
   private ISVNRepositoryPool getPool() {
+    if (myProject.isDisposed()) {
+      throw new ProcessCanceledException();
+    }
+    if (myPool == null) {
+      createPool();
+    }
     return myPool;
   }
 

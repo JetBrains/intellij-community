@@ -15,15 +15,32 @@
  */
 package org.jetbrains.idea.svn.lowLevel;
 
-import org.tmatesoft.svn.core.SVNException;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProcessCanceledException;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
- * Date: 8/2/12
- * Time: 12:11 PM
+ * Date: 8/15/12
+ * Time: 3:03 PM
  */
-public interface ApplicationLevelNumberConnectionsGuard {
-  void waitForTotalNumberOfConnectionsOk() throws SVNException;
-  boolean shouldKeepConnectionLocally();
+public abstract class QuicklyDisposableProxy<T> implements Disposable {
+  private final AtomicReference<T> myRef;
+
+  protected QuicklyDisposableProxy(final T t) {
+    myRef = new AtomicReference<T>(t);
+  }
+
+  @Override
+  public void dispose() {
+    myRef.set(null);
+  }
+
+  protected T getRef() {
+    T t = myRef.get();
+    if (t == null) throw new ProcessCanceledException();
+    return t;
+  }
 }

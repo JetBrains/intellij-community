@@ -15,15 +15,22 @@
  */
 package org.jetbrains.idea.svn.lowLevel;
 
-import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.io.svn.ISVNConnector;
+import org.tmatesoft.svn.core.io.ISVNTunnelProvider;
 
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
- * Date: 8/2/12
- * Time: 12:11 PM
+ * Date: 8/15/12
+ * Time: 3:16 PM
  */
-public interface ApplicationLevelNumberConnectionsGuard {
-  void waitForTotalNumberOfConnectionsOk() throws SVNException;
-  boolean shouldKeepConnectionLocally();
+public class QuicklyDisposableISVNTunnelProvider extends QuicklyDisposableProxy<ISVNTunnelProvider> implements ISVNTunnelProvider {
+  public QuicklyDisposableISVNTunnelProvider(ISVNTunnelProvider provider) {
+    super(provider);
+  }
+
+  public ISVNConnector createTunnelConnector(SVNURL location) {
+    return getRef().createTunnelConnector(location);
+  }
 }
