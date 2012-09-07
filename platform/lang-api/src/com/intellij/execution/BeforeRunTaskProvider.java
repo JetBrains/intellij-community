@@ -45,7 +45,7 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
   @Nullable
   public Icon getIcon() {
     return null;
-  };
+  }
 
   public abstract String getDescription(T task);
 
