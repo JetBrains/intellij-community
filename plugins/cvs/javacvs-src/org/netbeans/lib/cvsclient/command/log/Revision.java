@@ -32,7 +32,7 @@ public final class Revision {
 	// Setup ==================================================================
 
 	public Revision(String number) {
-		this.number = number;
+		this.number = number.intern();
 	}
 
 	// Accessing ==============================================================
@@ -42,7 +42,7 @@ public final class Revision {
 	}
 
 	public void setNumber(String number) {
-		this.number = number;
+		this.number = number.intern();
 	}
 
 	public Date getDate() {
@@ -58,7 +58,7 @@ public final class Revision {
 	}
 
 	public void setAuthor(String author) {
-		this.author = author;
+		this.author = author.intern();
 	}
 
 	public String getState() {
@@ -66,7 +66,7 @@ public final class Revision {
 	}
 
 	public void setState(String state) {
-		this.state = state;
+		this.state = state.intern();
 	}
 
 	public String getLines() {
@@ -74,7 +74,7 @@ public final class Revision {
 	}
 
 	public void setLines(String lines) {
-		this.lines = lines;
+		this.lines = lines.intern();
 	}
 
 	public String getMessage() {
@@ -90,6 +90,6 @@ public final class Revision {
 	}
 
 	public void setBranches(String branches) {
-		this.branches = branches;
+		this.branches = branches.intern();
 	}
 }
