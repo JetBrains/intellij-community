@@ -12,7 +12,7 @@ import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import icons.TasksCoreIcons;
+import icons.TasksIcons;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -135,7 +135,7 @@ public class RedmineRepository extends BaseRepositoryImpl {
 
       @Override
       public Icon getIcon() {
-        return TasksCoreIcons.Redmine;
+        return TasksIcons.Redmine;
       }
 
       @NotNull

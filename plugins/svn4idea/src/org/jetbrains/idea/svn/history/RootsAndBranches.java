@@ -33,7 +33,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.messages.Topic;
-import icons.Svn4ideaIcons;
+import icons.SvnIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -468,7 +468,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     public void update(final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      presentation.setIcon(Svn4ideaIcons.ShowIntegratedTo);
+      presentation.setIcon(SvnIcons.ShowIntegratedTo);
     }
 
     public boolean isSelected(final AnActionEvent e) {
@@ -489,7 +489,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     public void update(final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      presentation.setIcon(Svn4ideaIcons.ShowIntegratedFrom);
+      presentation.setIcon(SvnIcons.ShowIntegratedFrom);
       presentation.setText(SvnBundle.message("committed.changes.action.enable.merge.highlighting"));
       presentation.setDescription(SvnBundle.message("committed.changes.action.enable.merge.highlighting.description.text"));
     }
@@ -537,19 +537,19 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
   private class FilterOutMerged extends CommonFilter {
     private FilterOutMerged() {
-      super(Svn4ideaIcons.FilterIntegrated, SvnBundle.message("tab.repository.merge.panel.filter.plus"));
+      super(SvnIcons.FilterIntegrated, SvnBundle.message("tab.repository.merge.panel.filter.plus"));
     }
   }
 
   private class FilterOutNotMerged extends CommonFilter {
     private FilterOutNotMerged() {
-      super(Svn4ideaIcons.FilterNotIntegrated, SvnBundle.message("tab.repository.merge.panel.filter.minus"));
+      super(SvnIcons.FilterNotIntegrated, SvnBundle.message("tab.repository.merge.panel.filter.minus"));
     }
   }
 
   private class FilterOutAlien extends CommonFilter {
     private FilterOutAlien() {
-      super(Svn4ideaIcons.FilterOthers, SvnBundle.message("tab.repository.merge.panel.filter.others"));
+      super(SvnIcons.FilterOthers, SvnBundle.message("tab.repository.merge.panel.filter.others"));
     }
   }
 
@@ -601,7 +601,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     @Override
     protected void updateWithChecker(AnActionEvent e, SelectedCommittedStuffChecker checker) {
       final Presentation presentation = e.getPresentation();
-      presentation.setIcon(Svn4ideaIcons.MarkAsMerged);
+      presentation.setIcon(SvnIcons.MarkAsMerged);
       presentation.setText(myText);
       presentation.setDescription(myDescription);
       presentation.setEnabled(presentation.isEnabled() && mergeEnabled(checker.getSelectedLists(), true));
@@ -653,7 +653,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     @Override
     protected void updateWithChecker(AnActionEvent e, SelectedCommittedStuffChecker checker) {
       final Presentation presentation = e.getPresentation();
-      presentation.setIcon(Svn4ideaIcons.MarkAsNotMerged);
+      presentation.setIcon(SvnIcons.MarkAsNotMerged);
       presentation.setText(myText);
       presentation.setDescription(myDescription);
       presentation.setEnabled(presentation.isEnabled() && mergeEnabled(checker.getSelectedLists(), false));
@@ -689,7 +689,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
     @Override
     protected void updateWithChecker(AnActionEvent e, SelectedCommittedStuffChecker checker) {
-      e.getPresentation().setIcon(Svn4ideaIcons.UndoIntegrateToBranch);
+      e.getPresentation().setIcon(SvnIcons.UndoIntegrateToBranch);
       e.getPresentation().setText(SvnBundle.message("undo.integrate.to.branch"));
       e.getPresentation().setDescription(SvnBundle.message("undo.integrate.to.branch.description"));
     }
@@ -742,7 +742,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
     @Override
     protected void updateWithChecker(AnActionEvent e, SelectedCommittedStuffChecker checker) {
-      e.getPresentation().setIcon(Svn4ideaIcons.IntegrateToBranch);
+      e.getPresentation().setIcon(SvnIcons.IntegrateToBranch);
     }
 
     protected String getSelectedBranchUrl(SelectedCommittedStuffChecker checker) {

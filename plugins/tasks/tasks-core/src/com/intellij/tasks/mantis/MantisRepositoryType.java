@@ -2,7 +2,7 @@ package com.intellij.tasks.mantis;
 
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.BaseRepositoryType;
-import icons.TasksCoreIcons;
+import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -20,7 +20,7 @@ public class MantisRepositoryType extends BaseRepositoryType<MantisRepository> {
 
   @Override
   public Icon getIcon() {
-    return TasksCoreIcons.Mantis;
+    return TasksIcons.Mantis;
   }
 
   @NotNull

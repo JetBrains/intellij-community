@@ -20,7 +20,7 @@ import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.tasks.impl.BaseRepositoryType;
 import com.intellij.util.Consumer;
-import icons.TasksCoreIcons;
+import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,7 +38,7 @@ public class TracRepositoryType extends BaseRepositoryType<TracRepository> {
 
   @Override
   public Icon getIcon() {
-    return TasksCoreIcons.Trac;
+    return TasksIcons.Trac;
   }
 
   @NotNull

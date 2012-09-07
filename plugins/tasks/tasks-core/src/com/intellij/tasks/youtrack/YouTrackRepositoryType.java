@@ -5,7 +5,7 @@ import com.intellij.tasks.TaskState;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.tasks.impl.BaseRepositoryType;
 import com.intellij.util.Consumer;
-import icons.TasksCoreIcons;
+import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -22,7 +22,7 @@ public class YouTrackRepositoryType extends BaseRepositoryType<YouTrackRepositor
   }
 
   public Icon getIcon() {
-    return TasksCoreIcons.Youtrack;
+    return TasksIcons.Youtrack;
   }
 
   @NotNull

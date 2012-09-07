@@ -40,7 +40,7 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
-import icons.Svn4ideaIcons;
+import icons.SvnIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -445,7 +445,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     public void update(final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      presentation.setIcon(Svn4ideaIcons.ShowIntegratedFrom);
+      presentation.setIcon(SvnIcons.ShowIntegratedFrom);
       presentation.setText(SvnBundle.message("committed.changes.action.enable.merge.highlighting"));
       presentation.setDescription(SvnBundle.message("committed.changes.action.enable.merge.highlighting.description.text"));
     }

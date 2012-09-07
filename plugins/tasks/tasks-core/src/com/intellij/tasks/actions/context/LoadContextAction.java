@@ -36,7 +36,7 @@ import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import icons.TasksCoreIcons;
+import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,7 +84,7 @@ public class LoadContextAction extends BaseTaskAction {
 
           @Override
           Icon getIcon() {
-            return TasksCoreIcons.SavedContext;
+            return TasksIcons.SavedContext;
           }
         };
       }

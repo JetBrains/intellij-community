@@ -23,7 +23,7 @@ import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
-import icons.TasksCoreIcons;
+import icons.TasksIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -221,14 +221,14 @@ public class LocalTaskImpl extends LocalTask {
     }
     switch (myType) {
       case BUG:
-        return TasksCoreIcons.Bug;
+        return TasksIcons.Bug;
       case EXCEPTION:
-        return TasksCoreIcons.Exception;
+        return TasksIcons.Exception;
       case FEATURE:
-        return TasksCoreIcons.Feature;
+        return TasksIcons.Feature;
       default:
       case OTHER:
-        return isIssue() ? TasksCoreIcons.Other : TasksCoreIcons.Unknown;
+        return isIssue() ? TasksIcons.Other : TasksIcons.Unknown;
     }
   }
 

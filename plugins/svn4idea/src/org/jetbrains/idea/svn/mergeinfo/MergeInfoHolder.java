@@ -24,7 +24,7 @@ import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
-import icons.Svn4ideaIcons;
+import icons.SvnIcons;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
@@ -166,12 +166,12 @@ public class MergeInfoHolder {
   }
 
   public static enum ListMergeStatus {
-    COMMON(Svn4ideaIcons.Common),
-    MERGED(Svn4ideaIcons.Integrated),
-    NOT_MERGED(Svn4ideaIcons.Notintegrated),
+    COMMON(SvnIcons.Common),
+    MERGED(SvnIcons.Integrated),
+    NOT_MERGED(SvnIcons.Notintegrated),
     //ALIEN(IconLoader.getIcon("/icons/OnDefault.png")),
     ALIEN(null),
-    REFRESHING(Svn4ideaIcons.IntegrationStatusUnknown);
+    REFRESHING(SvnIcons.IntegrationStatusUnknown);
 
     private final Icon myIcon;
 

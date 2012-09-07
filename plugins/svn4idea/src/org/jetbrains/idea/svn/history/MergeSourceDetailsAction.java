@@ -24,7 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
-import icons.Svn4ideaIcons;
+import icons.SvnIcons;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
@@ -33,7 +33,7 @@ public class MergeSourceDetailsAction extends AnAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setIcon(Svn4ideaIcons.MergeSourcesDetails);
+    e.getPresentation().setIcon(SvnIcons.MergeSourcesDetails);
     e.getPresentation().setText("Show merge sources details");
     e.getPresentation().setEnabled(enabled(e));
   }

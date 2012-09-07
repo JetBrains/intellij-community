@@ -15,20 +15,20 @@
  */
 package org.jetbrains.idea.svn;
 
-import icons.Svn4ideaIcons;
+import icons.SvnIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public enum ConflictState {
   none(false, false, false, null),
-  tree(true, false, false, Svn4ideaIcons.Conflictc),
-  text(false, true, false, Svn4ideaIcons.Conflictt),
-  prop(false, false, true, Svn4ideaIcons.Conflictp),
-  tree_text(true, true, false, Svn4ideaIcons.Conflictct), // ? -
-  tree_prop(true, false, true, Svn4ideaIcons.Conflictcp), // now falls but marked
-  text_prop(false, true, true, Svn4ideaIcons.Conflicttp),
-  all3(true, true, true, Svn4ideaIcons.Conflictctp);       // ? -
+  tree(true, false, false, SvnIcons.Conflictc),
+  text(false, true, false, SvnIcons.Conflictt),
+  prop(false, false, true, SvnIcons.Conflictp),
+  tree_text(true, true, false, SvnIcons.Conflictct), // ? -
+  tree_prop(true, false, true, SvnIcons.Conflictcp), // now falls but marked
+  text_prop(false, true, true, SvnIcons.Conflicttp),
+  all3(true, true, true, SvnIcons.Conflictctp);       // ? -
 
   private final boolean myTree;
   private final boolean myText;

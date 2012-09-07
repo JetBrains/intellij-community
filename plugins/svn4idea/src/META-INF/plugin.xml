@@ -32,11 +32,11 @@
     </group>
 
 
-    <action id="IntegrateChangeSetAction" class="org.jetbrains.idea.svn.actions.IntegrateChangeSetAction" popup="true" icon="Svn4ideaIcons.IntegrateToBranch">
+    <action id="IntegrateChangeSetAction" class="org.jetbrains.idea.svn.actions.IntegrateChangeSetAction" popup="true" icon="SvnIcons.IntegrateToBranch">
       <add-to-group group-id="RepositoryChangesBrowserToolbar" anchor="last"/>
     </action>
 
-    <action id="PropertiesDiff" class="org.jetbrains.idea.svn.actions.ShowPropertiesDiffAction" popup="true" icon="Svn4ideaIcons.PropertiesDiff">
+    <action id="PropertiesDiff" class="org.jetbrains.idea.svn.actions.ShowPropertiesDiffAction" popup="true" icon="SvnIcons.PropertiesDiff">
       <add-to-group group-id="RepositoryChangesBrowserToolbar" anchor="last"/>
     </action>
 
@@ -56,7 +56,7 @@
       <separator/>
       <action id="Subversion.ShowProperties" class="org.jetbrains.idea.svn.actions.ShowPropertiesAction"/>
       <action id="Subversion.SetProperty" class="org.jetbrains.idea.svn.actions.SetPropertyAction"/>
-      <action id="ShowPropertiesDiffVsLocal" class="org.jetbrains.idea.svn.actions.ShowPropertiesDiffWithLocalAction" icon="Svn4ideaIcons.PropertiesDiffWithLocal">
+      <action id="ShowPropertiesDiffVsLocal" class="org.jetbrains.idea.svn.actions.ShowPropertiesDiffWithLocalAction" icon="SvnIcons.PropertiesDiffWithLocal">
       </action>
       <reference id="ChangesView.Revert"/>
       <action id="Subversion.Resolve" class="org.jetbrains.idea.svn.actions.ResolveAction"/>
