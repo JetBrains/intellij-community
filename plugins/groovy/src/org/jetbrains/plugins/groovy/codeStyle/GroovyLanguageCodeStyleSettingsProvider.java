@@ -131,11 +131,6 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
   }
 
   @Override
-  public boolean usesSharedPreview() {
-    return false;
-  }
-
-  @Override
   public String getCodeSample(@NotNull SettingsType settingsType) {
     switch (settingsType) {
       case INDENT_SETTINGS: return INDENT_OPTIONS_SAMPLE;

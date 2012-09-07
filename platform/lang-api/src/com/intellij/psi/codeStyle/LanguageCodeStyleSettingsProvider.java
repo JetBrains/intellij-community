@@ -101,9 +101,11 @@ public abstract class LanguageCodeStyleSettingsProvider {
   /**
    * @return True if the language uses the preview pane shared with other languages. The tab for the
    *         language is shown above common settings' preview pane in this case.
+   * @deprecated Normally a language must have it's own settings/preview page.
    */
+  @SuppressWarnings("MethodMayBeStatic")
   public boolean usesSharedPreview() {
-    return true;
+    return false;
   }
 
   /**

@@ -86,11 +86,6 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   }
 
   @Override
-  public boolean usesSharedPreview() {
-    return false;
-  }
-
-  @Override
   public IndentOptionsEditor getIndentOptionsEditor() {
     return new JavaIndentOptionsEditor();
   }

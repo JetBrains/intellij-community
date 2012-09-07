@@ -32,11 +32,6 @@ public class HtmlLanguageCodeStyleSettings extends LanguageCodeStyleSettingsProv
   }
 
   @Override
-  public boolean usesSharedPreview() {
-    return false;
-  }
-
-  @Override
   public String getCodeSample(@NotNull SettingsType settingsType) {
     return CodeStyleAbstractPanel.readFromFile(this.getClass(), "preview.html.template");
   }
