@@ -83,7 +83,7 @@ public class GitChangeProviderNestedRepositoriesTest extends GitChangeProviderTe
     final LocalChangeList localChangeList = myChangeListManager.addChangeList("new", "new");
     Change change1 = myChangeListManager.getChange(in1);
     Change change2 = myChangeListManager.getChange(in2);
-    myChangeListManager.moveChangesTo(localChangeList, change1, change2);
+    myChangeListManager.moveChangesTo(localChangeList, new Change[] {change1, change2});
 
     myDirtyScopeManager.filesDirty(Collections.singletonList(in1), Collections.singletonList(myRepo.getVFRootDir()));
     myChangeListManager.ensureUpToDate(false);
