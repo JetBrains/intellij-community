@@ -78,6 +78,7 @@ public class FileUtilTest {
     assertFalse(FileUtil.isAncestor("/a/b/c", "/a/b/cde", true));
     assertFalse(FileUtil.isAncestor("/a/b/c", "/a/b/cde", false));
 
+    assertEquals(SystemInfo.isWindows, FileUtil.isAncestor("c:\\", "C:/a/b/c", true));
     assertEquals(!SystemInfo.isFileSystemCaseSensitive, FileUtil.isAncestor("/a/b/c", "/a/B/c/d", true));
   }
 

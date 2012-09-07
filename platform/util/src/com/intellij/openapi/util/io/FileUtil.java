@@ -127,7 +127,8 @@ public class FileUtil extends FileUtilRt {
       return false;
     }
 
-    return filePath.length() > ancestorPath.length() && filePath.charAt(ancestorPath.length()) == '/' ||
+    return ancestorPath.length() > 0 && ancestorPath.charAt(ancestorPath.length() - 1) == '/' ||
+           filePath.length() > ancestorPath.length() && filePath.charAt(ancestorPath.length()) == '/' ||
            !strict && filePath.length() == ancestorPath.length();
   }
 
