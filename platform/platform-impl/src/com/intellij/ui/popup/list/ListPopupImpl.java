@@ -442,7 +442,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     final int index = myList.getSelectedIndex();
     final Rectangle bounds = myList.getCellBounds(index, index);
     final Point point = e.getPoint();
-    return point.getX() > bounds.width + bounds.getX() - AllIcons.Icons.Ide.NextStep.getIconWidth();
+    return bounds != null && point.getX() > bounds.width + bounds.getX() - AllIcons.Icons.Ide.NextStep.getIconWidth();
   }
 
   protected void process(KeyEvent aEvent) {
