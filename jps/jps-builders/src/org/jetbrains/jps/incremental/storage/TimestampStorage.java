@@ -1,5 +1,6 @@
 package org.jetbrains.jps.incremental.storage;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
@@ -56,11 +57,11 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampValidi
     }
 
     public int getHashCode(File value) {
-      return value.hashCode();
+      return FileUtil.fileHashCode(value);
     }
 
     public boolean isEqual(File val1, File val2) {
-      return val1.equals(val2);
+      return FileUtil.filesEqual(val1, val2);
     }
   }
 
