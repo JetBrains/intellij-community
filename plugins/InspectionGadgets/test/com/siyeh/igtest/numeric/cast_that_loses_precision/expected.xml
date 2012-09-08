@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>CastThatLosesPrecision.java</file>
+    <line>18</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Numeric cast that loses precision</problem_class>
+    <description>Cast to &lt;code&gt;int&lt;/code&gt; from 'float' may result in loss of precision #loc</description>
+  </problem>
+
+  <problem>
+    <file>CastThatLosesPrecision.java</file>
+    <line>20</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Numeric cast that loses precision</problem_class>
+    <description>Cast to &lt;code&gt;char&lt;/code&gt; from 'double' may result in loss of precision #loc</description>
+  </problem>
+
+  <problem>
+    <file>CastThatLosesPrecision.java</file>
+    <line>22</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Numeric cast that loses precision</problem_class>
+    <description>Cast to &lt;code&gt;int&lt;/code&gt; from 'double' may result in loss of precision #loc</description>
+  </problem>
+
+  <problem>
+    <file>CastThatLosesPrecision.java</file>
+    <line>24</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Numeric cast that loses precision</problem_class>
+    <description>Cast to &lt;code&gt;int&lt;/code&gt; from 'long' may result in loss of precision #loc</description>
+  </problem>
+
+  <problem>
+    <file>CastThatLosesPrecision.java</file>
+    <line>26</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Numeric cast that loses precision</problem_class>
+    <description>Cast to &lt;code&gt;byte&lt;/code&gt; from 'long' may result in loss of precision #loc</description>
+  </problem>
+
+  <problem>
+    <file>CastThatLosesPrecision.java</file>
+    <line>29</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Numeric cast that loses precision</problem_class>
+    <description>Cast to &lt;code&gt;long&lt;/code&gt; from 'double' may result in loss of precision #loc</description>
+  </problem>
+
+  <problem>
+    <file>CastThatLosesPrecision.java</file>
+    <line>31</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Numeric cast that loses precision</problem_class>
+    <description>Cast to &lt;code&gt;long&lt;/code&gt; from 'float' may result in loss of precision #loc</description>
+  </problem>
+
+  <problem>
+    <file>CastThatLosesPrecision.java</file>
+    <line>37</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Numeric cast that loses precision</problem_class>
+    <description>Cast to &lt;code&gt;float&lt;/code&gt; from 'double' may result in loss of precision #loc</description>
+  </problem>
+
+  <problem>
+    <file>CastThatLosesPrecision.java</file>
+    <line>55</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Numeric cast that loses precision</problem_class>
+    <description>Cast to &lt;code&gt;byte&lt;/code&gt; from 'long' may result in loss of precision #loc</description>
+  </problem>
+
+  <problem>
+    <file>CastThatLosesPrecision.java</file>
+    <line>77</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Numeric cast that loses precision</problem_class>
+    <description>Cast to &lt;code&gt;int&lt;/code&gt; from 'double' may result in loss of precision #loc</description>
+  </problem>
+</problems>
