@@ -27,6 +27,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,11 +110,11 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     }
 
     @Nullable
-    private static StringBuilder buildStringExpression(PsiExpression expression, StringBuilder result) {
+    private static StringBuilder buildStringExpression(PsiExpression expression, @NonNls StringBuilder result) {
       if (expression instanceof PsiNewExpression) {
         final PsiNewExpression newExpression = (PsiNewExpression)expression;
         final PsiExpressionList argumentList = newExpression.getArgumentList();
-        if (argumentList ==  null) {
+        if (argumentList == null) {
           return null;
         }
         final PsiExpression[] arguments = argumentList.getExpressions();
@@ -166,7 +167,13 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           }
           else {
             if (type instanceof PsiPrimitiveType) {
-              result.append("String.valueOf(").append(argument.getText()).append(")");
+              if (argument instanceof PsiLiteralExpression) {
+                final PsiLiteralExpression literalExpression = (PsiLiteralExpression)argument;
+                result.append('"').append(literalExpression.getValue()).append('"');
+              }
+              else {
+                result.append("String.valueOf(").append(argument.getText()).append(")");
+              }
             }
             else {
               if (ParenthesesUtils.getPrecedence(argument) >= ParenthesesUtils.ADDITIVE_PRECEDENCE) {
