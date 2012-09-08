@@ -146,7 +146,7 @@ public class Mappings {
   private void compensateRemovedContent(final Collection<File> compiled) {
     if (compiled != null) {
       for (final File file : compiled) {
-        final int fileName = myContext.get(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
+        final int fileName = myContext.getFilePath(file.getPath());
         if (!mySourceFileToClasses.containsKey(fileName)) {
           mySourceFileToClasses.put(fileName, new HashSet<ClassRepr>());
         }
@@ -949,7 +949,7 @@ public class Mappings {
 
         if (removed != null) {
           for (final String file : removed) {
-            final Collection<ClassRepr> classes = mySourceFileToClasses.get(myContext.get(file));
+            final Collection<ClassRepr> classes = mySourceFileToClasses.get(myContext.getFilePath(file));
 
             if (classes != null) {
               for (ClassRepr c : classes) {
@@ -1965,7 +1965,7 @@ public class Mappings {
 
         if (removed != null) {
           for (final String file : removed) {
-            final int fileName = myContext.get(file);
+            final int fileName = myContext.getFilePath(file);
             final Set<ClassRepr> fileClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
 
             if (fileClasses != null) {
@@ -2101,12 +2101,12 @@ public class Mappings {
     return new Callbacks.Backend() {
       public void associate(final String classFileName, final String sourceFileName, final ClassReader cr) {
         synchronized (myLock) {
-          final int classFileNameS = myContext.get(classFileName);
+          final int classFileNameS = myContext.getFilePath(classFileName);
           final Pair<ClassRepr, Set<UsageRepr.Usage>> result = new ClassfileAnalyzer(myContext).analyze(classFileNameS, cr);
           final ClassRepr repr = result.first;
           if (repr != null) {
             final Set<UsageRepr.Usage> localUsages = result.second;
-            final int sourceFileNameS = myContext.get(sourceFileName);
+            final int sourceFileNameS = myContext.getFilePath(sourceFileName);
             final int className = repr.name;
 
             myClassToSourceFile.put(className, sourceFileNameS);
@@ -2146,20 +2146,20 @@ public class Mappings {
 
         if (!allImports.isEmpty()) {
           myPostPasses.offer(new Runnable() {
-                  public void run() {
-                    final int rootClassName = myContext.get(className.replace(".", "/"));
-                    final int fileName = myClassToSourceFile.get(rootClassName);
-                    final ClassRepr repr = fileName > 0? getReprByName(rootClassName) : null;
+            public void run() {
+              final int rootClassName = myContext.get(className.replace(".", "/"));
+              final int fileName = myClassToSourceFile.get(rootClassName);
+              final ClassRepr repr = fileName > 0? getReprByName(rootClassName) : null;
 
-                    for (final String i : allImports) {
-                      final int iname = myContext.get(i.replace(".", "/"));
-                      myClassToClassDependency.put(iname, rootClassName);
-                      if (repr != null && repr.addUsage(UsageRepr.createClassUsage(myContext, iname))) {
-                        mySourceFileToClasses.put(fileName, repr);
-                      }
-                    }
-                  }
-                });
+              for (final String i : allImports) {
+                final int iname = myContext.get(i.replace(".", "/"));
+                myClassToClassDependency.put(iname, rootClassName);
+                if (repr != null && repr.addUsage(UsageRepr.createClassUsage(myContext, iname))) {
+                  mySourceFileToClasses.put(fileName, repr);
+                }
+              }
+            }
+          });
         }
       }
     };
@@ -2168,7 +2168,7 @@ public class Mappings {
   @Nullable
   public Set<ClassRepr> getClasses(final String sourceFileName) {
     synchronized (myLock) {
-      return (Set<ClassRepr>)mySourceFileToClasses.get(myContext.get(sourceFileName));
+      return (Set<ClassRepr>)mySourceFileToClasses.get(myContext.getFilePath(sourceFileName));
     }
   }
 

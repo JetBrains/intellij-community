@@ -1,11 +1,15 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -21,8 +25,9 @@ class DependencyContext {
 
   private final Map<TypeRepr.AbstractType, TypeRepr.AbstractType> myTypeMap = new HashMap<TypeRepr.AbstractType, TypeRepr.AbstractType>();
   private final Map<UsageRepr.Usage, UsageRepr.Usage> myUsageMap = new HashMap<UsageRepr.Usage, UsageRepr.Usage>();
+  private final int myEmptyName;
 
-   UsageRepr.Usage getUsage(final UsageRepr.Usage u) {
+  UsageRepr.Usage getUsage(final UsageRepr.Usage u) {
      final UsageRepr.Usage r = myUsageMap.get(u);
 
      if (r == null) {
@@ -58,10 +63,11 @@ class DependencyContext {
 
   DependencyContext(final File rootDir) throws IOException {
     final File file = getTableFile(rootDir, STRING_TABLE_NAME);
-
     myEnumerator = new PersistentStringEnumerator(file, true);
+    myEmptyName = myEnumerator.enumerate("");
   }
 
+  @Nullable
   public String getValue(final int s) {
     try {
       return myEnumerator.valueOf(s);
@@ -73,9 +79,20 @@ class DependencyContext {
 
   public int get(final String s) {
     try {
-      final int i = s == null ? myEnumerator.enumerate("") : myEnumerator.enumerate(s);
+      return StringUtil.isEmpty(s) ? myEmptyName : myEnumerator.enumerate(s);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
-      return i;
+  public int getFilePath(final String path) {
+    try {
+      if (StringUtil.isEmpty(path)) {
+        return myEmptyName;
+      }
+      final String _path = FileUtil.toSystemIndependentName(path);
+      return myEnumerator.enumerate(SystemInfo.isFileSystemCaseSensitive ? _path : _path.toLowerCase(Locale.US));
     }
     catch (IOException e) {
       throw new RuntimeException(e);

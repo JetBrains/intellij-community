@@ -22,7 +22,17 @@ import java.util.List;
 public final class SourceToOutputMapping extends AbstractStateStorage<String, Collection<String>> {
 
   public SourceToOutputMapping(File storePath) throws IOException {
-    super(storePath, new EnumeratorStringDescriptor(), new StringCollectionExternalizer());
+    super(storePath, new EnumeratorStringDescriptor() {
+      @Override
+      public int getHashCode(String value) {
+        return FileUtil.pathHashCode(value);
+      }
+
+      @Override
+      public boolean isEqual(String val1, String val2) {
+        return FileUtil.pathsEqual(val1, val2);
+      }
+    }, new StringCollectionExternalizer());
   }
 
   @Override
