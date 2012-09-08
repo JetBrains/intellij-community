@@ -10,9 +10,9 @@ import com.intellij.util.io.DataOutputStream;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.Channels;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.incremental.Utils;
@@ -161,32 +161,36 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
 
     final BuildFSState fsState = new BuildFSState(false);
-    final ProjectDescriptor pd = myBuildRunner.load(msgHandler, dataStorageRoot, fsState);
-    myProjectDescriptor = pd;
-    if (fsStateStream != null) {
-      try {
+    try {
+      final ProjectDescriptor pd = myBuildRunner.load(msgHandler, dataStorageRoot, fsState);
+      myProjectDescriptor = pd;
+      if (fsStateStream != null) {
         try {
-          fsState.load(fsStateStream, pd);
-          applyFSEvent(pd, myInitialFSDelta);
+          try {
+            fsState.load(fsStateStream, pd);
+            applyFSEvent(pd, myInitialFSDelta);
+          }
+          finally {
+            fsStateStream.close();
+          }
         }
-        finally {
-          fsStateStream.close();
+        catch (Throwable e) {
+          LOG.error(e);
+          fsState.clearAll();
         }
       }
-      catch (Throwable e) {
-        LOG.error(e);
-        fsState.clearAll();
-      }
+      myLastEventOrdinal = myInitialFSDelta != null? myInitialFSDelta.getOrdinal() : 0L;
+
+      // free memory
+      myInitialFSDelta = null;
+      // ensure events from controller are processed after FSState initialization
+      myEventsProcessor.startProcessing();
+
+      myBuildRunner.runBuild(pd, cs, myConstantSearch, msgHandler, true, myBuildType);
     }
-    myLastEventOrdinal = myInitialFSDelta != null? myInitialFSDelta.getOrdinal() : 0L;
-
-    // free memory
-    myInitialFSDelta = null;
-    // ensure events from controller are processed after FSState initialization
-    myEventsProcessor.startProcessing();
-
-    myBuildRunner.runBuild(pd, cs, myConstantSearch, msgHandler, true, myBuildType);
-    saveData(fsState, dataStorageRoot);
+    finally {
+      saveData(fsState, dataStorageRoot);
+    }
   }
 
   private void saveData(final BuildFSState fsState, File dataStorageRoot) {
