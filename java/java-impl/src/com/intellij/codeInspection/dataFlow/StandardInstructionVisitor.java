@@ -243,84 +243,26 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   @Override
   public DfaInstructionState[] visitBinop(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     myReachable.add(instruction);
-    final Instruction next = runner.getInstruction(instruction.getIndex() + 1);
 
     DfaValue dfaRight = memState.pop();
     DfaValue dfaLeft = memState.pop();
 
     final IElementType opSign = instruction.getOperationSign();
     if (opSign != null) {
-      final DfaValueFactory factory = runner.getFactory();
-      if ((JavaTokenType.EQEQ == opSign || JavaTokenType.NE == opSign) &&
-          dfaLeft instanceof DfaConstValue && dfaRight instanceof DfaConstValue) {
-        boolean negated = (JavaTokenType.NE == opSign) ^ (memState.canBeNaN(dfaLeft) || memState.canBeNaN(dfaRight));
-        if (dfaLeft == dfaRight ^ negated) {
-          memState.push(factory.getConstFactory().getTrue());
-          instruction.setTrueReachable();
-        }
-        else {
-          memState.push(factory.getConstFactory().getFalse());
-          instruction.setFalseReachable();
-        }
-        return nextInstruction(instruction, runner, memState);
+      DfaInstructionState[] states = handleConstantComparison(instruction, runner, memState, dfaRight, dfaLeft);
+      if (states == null) {
+        states = handleRelationBinop(instruction, runner, memState, dfaRight, dfaLeft);
+      }
+      if (states != null) {
+        return states;
       }
 
-      boolean negated = memState.canBeNaN(dfaLeft) || memState.canBeNaN(dfaRight);
-      DfaRelationValue.Factory relationFactory = factory.getRelationFactory();
-      DfaRelationValue dfaRelation = relationFactory.create(dfaLeft, dfaRight, opSign, negated);
-      if (dfaRelation != null) {
-        myCanBeNullInInstanceof.add(instruction);
-        ArrayList<DfaInstructionState> states = new ArrayList<DfaInstructionState>();
-
-        final DfaMemoryState trueCopy = memState.createCopy();
-        if (trueCopy.applyCondition(dfaRelation)) {
-          if (dfaLeft instanceof DfaVariableValue && dfaRight instanceof DfaVariableValue) {
-            if (trueCopy.isNotNull((DfaVariableValue)dfaLeft)) {
-              trueCopy.applyCondition(relationFactory.create(dfaRight, factory.getConstFactory().getNull(), JavaTokenType.EQEQ, true));
-            } else if (trueCopy.isNotNull((DfaVariableValue)dfaRight)) {
-              trueCopy.applyCondition(relationFactory.create(dfaLeft, factory.getConstFactory().getNull(), JavaTokenType.EQEQ, true));
-            }
-          }
-          trueCopy.push(factory.getConstFactory().getTrue());
-          instruction.setTrueReachable();
-          states.add(new DfaInstructionState(next, trueCopy));
-        }
-
-        //noinspection UnnecessaryLocalVariable
-        DfaMemoryState falseCopy = memState;
-        if (falseCopy.applyCondition(dfaRelation.createNegated())) {
-          falseCopy.push(factory.getConstFactory().getFalse());
-          instruction.setFalseReachable();
-          states.add(new DfaInstructionState(next, falseCopy));
-          if (instruction instanceof InstanceofInstruction && !falseCopy.isNull(dfaLeft)) {
-            myUsefulInstanceofs.add((InstanceofInstruction)instruction);
-          }
-        }
-
-        return states.toArray(new DfaInstructionState[states.size()]);
-      }
-      else if (JavaTokenType.PLUS == opSign) {
-        memState.push(instruction.getNonNullStringValue(factory));
+      if (JavaTokenType.PLUS == opSign) {
+        memState.push(instruction.getNonNullStringValue(runner.getFactory()));
       }
       else {
         if (instruction instanceof InstanceofInstruction) {
-          if ((dfaLeft instanceof DfaTypeValue || dfaLeft instanceof DfaNotNullValue) && dfaRight instanceof DfaTypeValue) {
-            final PsiType leftType;
-            if (dfaLeft instanceof DfaNotNullValue) {
-              leftType = ((DfaNotNullValue)dfaLeft).getType();
-            }
-            else {
-              leftType = ((DfaTypeValue)dfaLeft).getType();
-              myCanBeNullInInstanceof.add(instruction);
-            }
-
-            if (!((DfaTypeValue)dfaRight).getType().isAssignableFrom(leftType)) {
-              myUsefulInstanceofs.add((InstanceofInstruction)instruction);
-            }
-          }
-          else {
-            myUsefulInstanceofs.add((InstanceofInstruction)instruction);
-          }
+          handleInstanceof((InstanceofInstruction)instruction, dfaRight, dfaLeft);
         }
         memState.push(DfaUnknownValue.getInstance());
       }
@@ -333,6 +275,111 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     instruction.setFalseReachable();
 
     return nextInstruction(instruction, runner, memState);
+  }
+
+  @Nullable
+  private DfaInstructionState[] handleRelationBinop(BinopInstruction instruction,
+                                                    DataFlowRunner runner,
+                                                    DfaMemoryState memState,
+                                                    DfaValue dfaRight, DfaValue dfaLeft) {
+    DfaValueFactory factory = runner.getFactory();
+    final Instruction next = runner.getInstruction(instruction.getIndex() + 1);
+    boolean negated = memState.canBeNaN(dfaLeft) || memState.canBeNaN(dfaRight);
+    DfaRelationValue dfaRelation = factory.getRelationFactory().create(dfaLeft, dfaRight, instruction.getOperationSign(), negated);
+    if (dfaRelation == null) {
+      return null;
+    }
+
+    myCanBeNullInInstanceof.add(instruction);
+    ArrayList<DfaInstructionState> states = new ArrayList<DfaInstructionState>();
+
+    final DfaMemoryState trueCopy = memState.createCopy();
+    if (trueCopy.applyCondition(dfaRelation)) {
+      if (!dfaRelation.isNegated()) {
+        checkOneOperandNotNull(dfaRight, dfaLeft, factory, trueCopy);
+      }
+      trueCopy.push(factory.getConstFactory().getTrue());
+      instruction.setTrueReachable();
+      states.add(new DfaInstructionState(next, trueCopy));
+    }
+
+    //noinspection UnnecessaryLocalVariable
+    DfaMemoryState falseCopy = memState;
+    if (falseCopy.applyCondition(dfaRelation.createNegated())) {
+      if (dfaRelation.isNegated()) {
+        checkOneOperandNotNull(dfaRight, dfaLeft, factory, falseCopy);
+      }
+      falseCopy.push(factory.getConstFactory().getFalse());
+      instruction.setFalseReachable();
+      states.add(new DfaInstructionState(next, falseCopy));
+      if (instruction instanceof InstanceofInstruction && !falseCopy.isNull(dfaLeft)) {
+        myUsefulInstanceofs.add((InstanceofInstruction)instruction);
+      }
+    }
+
+    return states.toArray(new DfaInstructionState[states.size()]);
+  }
+
+  private void handleInstanceof(InstanceofInstruction instruction, DfaValue dfaRight, DfaValue dfaLeft) {
+    if ((dfaLeft instanceof DfaTypeValue || dfaLeft instanceof DfaNotNullValue) && dfaRight instanceof DfaTypeValue) {
+      final PsiType leftType;
+      if (dfaLeft instanceof DfaNotNullValue) {
+        leftType = ((DfaNotNullValue)dfaLeft).getType();
+      }
+      else {
+        leftType = ((DfaTypeValue)dfaLeft).getType();
+        myCanBeNullInInstanceof.add(instruction);
+      }
+
+      if (((DfaTypeValue)dfaRight).getType().isAssignableFrom(leftType)) {
+        return;
+      }
+    }
+    myUsefulInstanceofs.add(instruction);
+  }
+
+  @Nullable
+  private static DfaInstructionState[] handleConstantComparison(BinopInstruction instruction,
+                                                                DataFlowRunner runner,
+                                                                DfaMemoryState memState,
+                                                                DfaValue dfaRight,
+                                                                DfaValue dfaLeft) {
+    final IElementType opSign = instruction.getOperationSign();
+    if (JavaTokenType.EQEQ != opSign && JavaTokenType.NE != opSign ||
+        !(dfaLeft instanceof DfaConstValue) || !(dfaRight instanceof DfaConstValue)) {
+      return null;
+    }
+
+    boolean negated = (JavaTokenType.NE == opSign) ^ (memState.canBeNaN(dfaLeft) || memState.canBeNaN(dfaRight));
+    if (dfaLeft == dfaRight ^ negated) {
+      memState.push(runner.getFactory().getConstFactory().getTrue());
+      instruction.setTrueReachable();
+    }
+    else {
+      memState.push(runner.getFactory().getConstFactory().getFalse());
+      instruction.setFalseReachable();
+    }
+    return nextInstruction(instruction, runner, memState);
+  }
+
+  private static void checkOneOperandNotNull(DfaValue var1, DfaValue var2, DfaValueFactory factory, DfaMemoryState state) {
+    DfaValue nowNotNull = isNotNullExpression(var2, state) ? var1 : isNotNullExpression(var1, state) ? var2 : null;
+    if (nowNotNull != null) {
+      state.applyCondition(factory.getRelationFactory().create(nowNotNull, factory.getConstFactory().getNull(), JavaTokenType.EQEQ, true));
+    }
+  }
+
+  private static boolean isNotNullExpression(DfaValue dfa, DfaMemoryState state) {
+    if (dfa instanceof DfaVariableValue) {
+      return state.isNotNull((DfaVariableValue)dfa);
+    }
+    if (dfa instanceof DfaConstValue) {
+      Object val = ((DfaConstValue)dfa).getValue();
+      if (val instanceof PsiEnumConstant) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public boolean isInstanceofRedundant(InstanceofInstruction instruction) {

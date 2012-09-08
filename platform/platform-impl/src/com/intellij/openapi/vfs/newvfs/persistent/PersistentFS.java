@@ -23,10 +23,13 @@ import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+
+import static com.intellij.util.BitUtil.isSet;
 
 public abstract class PersistentFS extends ManagingFS {
   static final int CHILDREN_CACHED_FLAG = 0x01;
@@ -35,6 +38,9 @@ public abstract class PersistentFS extends ManagingFS {
   static final int MUST_RELOAD_CONTENT = 0x08;
   static final int IS_SYMLINK = 0x10;
   static final int IS_SPECIAL = 0x20;
+
+  @MagicConstant(flags = {CHILDREN_CACHED_FLAG, IS_DIRECTORY_FLAG, IS_READ_ONLY, MUST_RELOAD_CONTENT, IS_SYMLINK, IS_SPECIAL})
+  public @interface Attributes { }
 
   static final int ALL_VALID_FLAGS =
     CHILDREN_CACHED_FLAG | IS_DIRECTORY_FLAG | IS_READ_ONLY | MUST_RELOAD_CONTENT | IS_SYMLINK | IS_SPECIAL;
@@ -56,7 +62,12 @@ public abstract class PersistentFS extends ManagingFS {
 
   public abstract String getName(int id);
 
-  public abstract boolean isDirectory(int id);
+  @Attributes
+  public abstract int getFileAttributes(int id);
+
+  public static boolean isDirectory(@Attributes int attributes) { return isSet(attributes, IS_DIRECTORY_FLAG); }
+  public static boolean isSymLink(@Attributes int attributes) { return isSet(attributes, IS_SYMLINK); }
+  public static boolean isSpecialFile(@Attributes int attributes) { return isSet(attributes, IS_SPECIAL); }
 
   @Nullable
   public abstract NewVirtualFile findFileByIdIfCached(int id);

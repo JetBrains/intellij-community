@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
@@ -66,18 +67,41 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaLocalInspectionT
         super.visitLambdaExpression(expression);
         final PsiElement body = expression.getBody();
         if (body instanceof PsiCodeBlock) {
-          final PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
-          if (statements.length == 1 && statements[0] instanceof PsiReturnStatement) {
-            final PsiReturnStatement returnStatement = (PsiReturnStatement)statements[0];
-            final PsiExpression returnValue = returnStatement.getReturnValue();
-            if (returnValue != null) {
-              holder.registerProblem(returnStatement.getFirstChild(), "Lambda code block can be replaced with one line expression",
-                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithExprFix());
+          PsiExpression psiExpression = getExpression((PsiCodeBlock)body);
+          if (psiExpression != null) {
+            final PsiElement errorElement;
+            final PsiElement parent = psiExpression.getParent();
+            if (parent instanceof PsiReturnStatement) {
+              errorElement = parent.getFirstChild();
+            } else {
+              errorElement = body.getFirstChild();
             }
+            holder.registerProblem(errorElement, "Lambda code block can be replaced with one line expression",
+                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithExprFix());
           }
         }
       }
     };
+  }
+
+  @Nullable
+  private static PsiExpression getExpression(PsiCodeBlock body) {
+    final PsiStatement[] statements = body.getStatements();
+    if (statements.length == 1) {
+      if (statements[0] instanceof PsiBlockStatement) {
+        return getExpression(((PsiBlockStatement)statements[0]).getCodeBlock());
+      }
+      if (statements[0] instanceof PsiReturnStatement || statements[0] instanceof PsiExpressionStatement) {
+        if (statements[0] instanceof PsiReturnStatement) {
+          final PsiReturnStatement returnStatement = (PsiReturnStatement)statements[0];
+          return returnStatement.getReturnValue();
+        }
+        else {
+          return ((PsiExpressionStatement)statements[0]).getExpression();
+        }
+      }
+    }
+    return null;
   }
 
   private static class ReplaceWithExprFix implements LocalQuickFix, HighPriorityAction {
@@ -99,11 +123,13 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaLocalInspectionT
       if (element != null) {
         final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
         if (lambdaExpression != null) {
-          PsiElement body = lambdaExpression.getBody();
-          LOG.assertTrue(body != null);
-          PsiExpression returnValue = ((PsiReturnStatement)((PsiCodeBlock)body).getStatements()[0]).getReturnValue();
-          LOG.assertTrue(returnValue != null);
-          body.replace(returnValue);
+          final PsiElement body = lambdaExpression.getBody();
+          if (body != null) {
+            PsiExpression expression = getExpression((PsiCodeBlock)body);
+            if (expression != null) {
+              body.replace(expression);
+            }
+          }
         }
       }
     }

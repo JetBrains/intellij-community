@@ -37,10 +37,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.PathUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
@@ -61,21 +58,21 @@ import java.util.*;
  * @author max
  */
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
-  private static final VirtualFileSystemEntry NULL_VIRTUAL_FILE = new VirtualFileImpl("*?;%NULL", null, -42) {
+  private static final VirtualFileSystemEntry NULL_VIRTUAL_FILE = new VirtualFileImpl("*?;%NULL", null, -42, 0) {
     public String toString() {
       return "NULL";
     }
   };
-  private final NewVirtualFileSystem myFS;
 
-  // guarded by this
-  private Object myChildren; // Either Map<String, VFile> or VFile[]
+  private final NewVirtualFileSystem myFS;
+  private Object myChildren; // guarded by this, either Map<String, VFile> or VFile[]
 
   public VirtualDirectoryImpl(@NotNull final String name,
                               @Nullable final VirtualDirectoryImpl parent,
                               @NotNull final NewVirtualFileSystem fs,
-                              final int id) {
-    super(name, parent, id);
+                              final int id,
+                              @PersistentFS.Attributes final int attributes) {
+    super(name, parent, id, attributes);
     myFS = fs;
   }
 
@@ -174,11 +171,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   public VirtualFileSystemEntry createChild(@NotNull String name, int id) {
     final VirtualFileSystemEntry child;
     final NewVirtualFileSystem fs = getFileSystem();
-    if (ourPersistence.isDirectory(id)) {
-      child = new VirtualDirectoryImpl(name, this, fs, id);
+
+    final int attributes = ourPersistence.getFileAttributes(id);
+    if (PersistentFS.isDirectory(attributes)) {
+      child = new VirtualDirectoryImpl(name, this, fs, id, attributes);
     }
     else {
-      child = new VirtualFileImpl(name, this, id);
+      child = new VirtualFileImpl(name, this, id, attributes);
       //noinspection TestOnlyProblems
       assertAccessInTests(child);
     }

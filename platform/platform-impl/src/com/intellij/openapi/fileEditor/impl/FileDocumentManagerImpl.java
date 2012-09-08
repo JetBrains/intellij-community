@@ -364,7 +364,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       if (!myUnsavedDocuments.contains(document)) return;
     }
 
-    if (!file.isValid() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!file.isValid() && !ApplicationManager.getApplication().isUnitTestMode() && false) {
       file = handleExternalDeletion(file);
       if (!myUnsavedDocuments.contains(document)) return;
     }
@@ -738,8 +738,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   @Override
   public void beforeFileDeletion(VirtualFileEvent event) {
+    /*
     if (!event.isFromRefresh()) {
-      VfsUtilCore.visitChildrenRecursively(event.getFile(), new VirtualFileVisitor() {
+      VirtualFile file = event.getFile();
+      if (file.getFileSystem() instanceof TempFileSystem) {
+        return; //hack: this fs fails in getChildren during beforeFileDeletion
+      }
+      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           Document document = getCachedDocument(file);
@@ -750,6 +755,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         }
       });
     }
+    */
 
   }
 

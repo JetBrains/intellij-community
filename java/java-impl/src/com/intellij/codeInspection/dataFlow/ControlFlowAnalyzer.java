@@ -685,7 +685,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   private void addGotoCatch(CatchDescriptor cd) {
     addInstruction(new PushInstruction(myFactory.getVarFactory().create(cd.getParameter(), false), null));
     addInstruction(new SwapInstruction());
-    addInstruction(new AssignInstruction(null));
+    myCurrentFlow.addInstruction(new AssignInstruction(null));
     addInstruction(new PopInstruction());
     addInstruction(new GotoInstruction(cd.getJumpOffset()));
   }
