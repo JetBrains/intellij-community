@@ -138,7 +138,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
         g2.setPaint(new GradientPaint(0, 0, Gray._190, 0, size.height - 1, Gray._230));
         g2.fillRect(xOffset, yOffset, totalBarLength, barHeight);
 
-        g2.setPaint(new GradientPaint(0, 0, new Gray(200, 100), 0, size.height - 1, new Gray(150, 130)));
+        g2.setPaint(new GradientPaint(0, 0, Gray._200.withAlpha(100), 0, size.height - 1, Gray._150.withAlpha(130)));
         g2.fillRect(xOffset + 1, yOffset, allocatedBarWidth, barHeight);
 
         g2.setColor(Gray._175);
