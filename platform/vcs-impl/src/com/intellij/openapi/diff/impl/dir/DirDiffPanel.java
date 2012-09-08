@@ -111,7 +111,10 @@ public class DirDiffPanel implements Disposable, DataProvider {
         final int firstIndex = e.getFirstIndex();
         final DirDiffElementImpl last = myModel.getElementAt(lastIndex);
         final DirDiffElementImpl first = myModel.getElementAt(firstIndex);
-        if (last == null || first == null) return;
+        if (last == null || first == null) {
+          update(false);
+          return;
+        }
         if (last.isSeparator()) {
           final int ind = lastIndex + ((lastIndex < firstIndex) ? 1 : -1);
           myTable.getSelectionModel().addSelectionInterval(ind, ind);
@@ -465,6 +468,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     myCurrentElement = null;
     myDiffPanel.remove(getErrorLabel());
     DataManager.removeDataProvider(myDiffPanel);
+    myDiffPanel.repaint();
   }
 
   public JComponent getPanel() {
