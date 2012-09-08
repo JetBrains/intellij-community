@@ -871,11 +871,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static int pathHashCode(@Nullable String path) {
-    if (StringUtil.isEmpty(path)) {
-      return 0;
-    }
-    path = toSystemIndependentName(path);
-    return SystemInfo.isFileSystemCaseSensitive? path.hashCode() : StringUtil.stringHashCodeInsensitive(path);
+    return StringUtil.isEmpty(path)? 0 : PATH_HASHING_STRATEGY.computeHashCode(toSystemIndependentName(path));
   }
 
 
