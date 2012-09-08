@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -372,12 +373,8 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   protected boolean isKeyAtIndex(final Data value, final int idx) throws IOException {
     if (myKeyStorage == null) return false;
 
-    /*
-    // todo: this optimization violates the contract specified by the API of the storage: all keys must be comparable using KeyDescriptor
-    // todo: to be made optional and configurable from the API, until then commented.
-
     // check if previous serialized state is the same as for value
-    // this is much faster than myDataDescriptor.isEqualTo(valueOf(idx), value)
+    // this is much faster than myDataDescriptor.isEqualTo(valueOf(idx), value) for identical objects
     final boolean sameValue[] = new boolean[1];    // TODO: key storage lock
     final int addr = indexToAddr(idx);
     OutputStream comparer;
@@ -429,8 +426,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     myDataDescriptor.save(out, value);
     comparer.close();
 
-    return sameValue[0];
-    */
+    if (sameValue[0]) return true;
 
     return myDataDescriptor.isEqual(valueOf(idx), value);
   }
