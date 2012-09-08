@@ -2360,7 +2360,7 @@ public class StringUtil extends StringUtilRt {
   public static class BombedCharSequence implements CharSequence {
     private CharSequence delegate;
     private long myTime;
-    private long i = 0;
+    private int i = 0;
 
     public BombedCharSequence(CharSequence sequence, long time) {
       delegate = sequence;
@@ -2381,7 +2381,7 @@ public class StringUtil extends StringUtilRt {
 
     private void check() {
       ++i;
-      if (i % 1000 == 0) {
+      if ((i & 1023) == 0) {
         long l = System.currentTimeMillis();
         if (l >= myTime) {
           throw new ProcessCanceledException();

@@ -853,7 +853,7 @@ public class FileUtil extends FileUtilRt {
     path1 = toCanonicalPath(path1);
     path2 = toCanonicalPath(path2);
     //noinspection ConstantConditions
-    return SystemInfo.isFileSystemCaseSensitive ? path1.equals(path2) : path1.equalsIgnoreCase(path2);
+    return PATH_HASHING_STRATEGY.equals(path1, path2);
   }
 
   public static int compareFiles(@Nullable File file1, @Nullable File file2) {
@@ -871,10 +871,9 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static int pathHashCode(@Nullable String path) {
-    if (path == null) return 0;
-    path = toSystemIndependentName(path);
-    return SystemInfo.isFileSystemCaseSensitive ? path.hashCode() : StringUtil.toLowerCase(path).hashCode();
+    return StringUtil.isEmpty(path)? 0 : PATH_HASHING_STRATEGY.computeHashCode(toSystemIndependentName(path));
   }
+
 
   @NotNull
   public static String getExtension(@NotNull String fileName) {

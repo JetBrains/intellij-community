@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,17 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeCastExpression;
-import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,8 +35,7 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
   /**
    * @noinspection StaticCollection
    */
-  private static final Map<PsiType, Integer> typePrecisions =
-    new HashMap<PsiType, Integer>(7);
+  private static final Map<PsiType, Integer> typePrecisions = new HashMap<PsiType, Integer>(7);
 
   static {
     typePrecisions.put(PsiType.BYTE, 1);
@@ -69,15 +67,12 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiType operandType = (PsiType)infos[0];
-    return InspectionGadgetsBundle.message(
-      "cast.that.loses.precision.problem.descriptor",
-      operandType.getPresentableText());
+    return InspectionGadgetsBundle.message("cast.that.loses.precision.problem.descriptor", operandType.getPresentableText());
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "cast.that.loses.precision.option"),
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("cast.that.loses.precision.option"),
                                           this, "ignoreIntegerCharCasts");
   }
 
@@ -90,8 +85,7 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitTypeCastExpression(
-      @NotNull PsiTypeCastExpression expression) {
+    public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
       final PsiType castType = expression.getType();
       if (!ClassUtils.isPrimitiveNumericType(castType)) {
         return;
@@ -112,8 +106,13 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
           return;
         }
       }
-      Object result =
-        ExpressionUtils.computeConstantExpression(operand);
+      if (PsiType.LONG.equals(operandType) && PsiType.INT.equals(castType)) {
+        final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class);
+        if (MethodUtils.isHashCode(method)) {
+          return;
+        }
+      }
+      Object result = ExpressionUtils.computeConstantExpression(operand);
       if (result instanceof Character) {
         result = Integer.valueOf(((Character)result).charValue());
       }
@@ -130,15 +129,13 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
       registerError(castTypeElement, operandType);
     }
 
-    private boolean hasLowerPrecision(PsiType operandType,
-                                      PsiType castType) {
+    private boolean hasLowerPrecision(PsiType operandType, PsiType castType) {
       final Integer operandPrecision = typePrecisions.get(operandType);
       final Integer castPrecision = typePrecisions.get(castType);
-      return operandPrecision <= castPrecision;
+      return operandPrecision.intValue() <= castPrecision.intValue();
     }
 
-    private boolean valueIsContainableInType(Number value,
-                                             PsiType type) {
+    private boolean valueIsContainableInType(Number value, PsiType type) {
       final long longValue = value.longValue();
       final double doubleValue = value.doubleValue();
       if (PsiType.BYTE.equals(type)) {

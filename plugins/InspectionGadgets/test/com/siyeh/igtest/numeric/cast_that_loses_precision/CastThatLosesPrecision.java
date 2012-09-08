@@ -1,8 +1,8 @@
-package com.siyeh.igtest.confusing;
+package com.siyeh.igtest.numeric.cast_that_loses_precision;
 
-public class CastThatLosesPrecisionInspection
+public class CastThatLosesPrecision
 {
-    public CastThatLosesPrecisionInspection()
+    public CastThatLosesPrecision()
     {
     }
 
@@ -67,4 +67,15 @@ public class CastThatLosesPrecisionInspection
         System.out.println("f = " + f);
     }
 
+
+  private long aLong = 2L;
+  private double d = 1.0;
+
+  @Override
+  public int hashCode() {
+    int result = (int) (aLong ^ (aLong >>> 32));
+    long temp = d != +0.0d ? (int) d : 0L;
+    result = 31 * result + (int) (temp ^ temp >>> 32);
+    return result;
+  }
 }

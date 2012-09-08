@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.IOUtil;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.Utils;
 
@@ -50,7 +49,7 @@ final class FilesDelta {
       final File root = new File(IOUtil.readString(in));
       Set<File> files = myFilesToRecompile.get(root);
       if (files == null) {
-        files = createSetOfFiles();
+        files = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
         myFilesToRecompile.put(root, files);
       }
       int filesCount = in.readInt();
@@ -68,20 +67,6 @@ final class FilesDelta {
     return hasPathsToDelete() || hasSourcesToRecompile();
   }
 
-
-  private static Set<File> createSetOfFiles() {
-    return new THashSet<File>(new TObjectHashingStrategy<File>() {
-      @Override
-      public int computeHashCode(File file) {
-        return FileUtil.fileHashCode(file);
-      }
-
-      @Override
-      public boolean equals(File f1, File f2) {
-        return FileUtil.filesEqual(f1, f2);
-      }
-    });
-  }
 
   public boolean markRecompile(File root, File file) {
     final boolean added = _addToRecompiled(root, file);
@@ -115,7 +100,7 @@ final class FilesDelta {
     synchronized (myFilesToRecompile) {
       files = myFilesToRecompile.get(root);
       if (files == null) {
-        files = createSetOfFiles();
+        files = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
         myFilesToRecompile.put(root, files);
       }
       return files.add(file);
