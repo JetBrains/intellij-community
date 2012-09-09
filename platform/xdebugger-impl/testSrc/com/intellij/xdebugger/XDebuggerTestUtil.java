@@ -71,11 +71,22 @@ public class XDebuggerTestUtil {
     XDebuggerUtil.getInstance().toggleLineBreakpoint(project, file, line);
   }
 
-  public static <P extends XBreakpointProperties>void insertBreakpoint(final Project project, final P properties, final Class<? extends XBreakpointType<XBreakpoint<P>, P>> typeClass) {
+  public static <P extends XBreakpointProperties> XBreakpoint<P> insertBreakpoint(final Project project,
+                                                                                  final P properties,
+                                                                                  final Class<? extends XBreakpointType<XBreakpoint<P>, P>> typeClass) {
+    return new WriteAction<XBreakpoint<P>>() {
+      protected void run(final Result<XBreakpoint<P>> result) {
+        result.setResult(XDebuggerManager.getInstance(project).getBreakpointManager()
+                           .addBreakpoint((XBreakpointType<XBreakpoint<P>, P>)XDebuggerUtil.getInstance().findBreakpointType(typeClass),
+                                          properties));
+      }
+    }.execute().getResultObject();
+  }
+
+  public static void removeBreakpoint(final Project project, final XBreakpoint<?> breakpoint) {
     new WriteAction() {
       protected void run(final Result result) {
-        XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-        breakpointManager.addBreakpoint((XBreakpointType<XBreakpoint<P>,P>)XDebuggerUtil.getInstance().findBreakpointType(typeClass), properties);
+        XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint);
       }
     }.execute();
   }
@@ -327,7 +338,7 @@ public class XDebuggerTestUtil {
   public static void removeAllBreakpoints(@NotNull final Project project) {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     XBreakpoint<?>[] breakpoints = breakpointManager.getAllBreakpoints();
-    for (XBreakpoint b: breakpoints) {
+    for (XBreakpoint b : breakpoints) {
       breakpointManager.removeBreakpoint(b);
     }
   }
