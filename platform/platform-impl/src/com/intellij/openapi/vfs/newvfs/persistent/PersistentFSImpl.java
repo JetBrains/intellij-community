@@ -183,7 +183,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         final FakeVirtualFile child = new FakeVirtualFile(file, name);
         final FileAttributes attributes = fs.getAttributes(child);
         if (attributes != null) {
-          final int childId = createAndCopyRecord(fs, child, id, attributes);
+          final int childId = createAndFillRecord(fs, child, id, attributes);
           childrenIds[i] = childId;
         }
         else {
@@ -285,11 +285,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return FSRecords.getModCount();
   }
 
-  private static boolean copyRecordFromDelegateFS(final int id,
-                                                  final int parentId,
-                                                  @NotNull VirtualFile file,
-                                                  @NotNull NewVirtualFileSystem fs,
-                                                  @NotNull FileAttributes attributes) {
+  private static boolean writeAttributesToRecord(final int id,
+                                                 final int parentId,
+                                                 @NotNull VirtualFile file,
+                                                 @NotNull NewVirtualFileSystem fs,
+                                                 @NotNull FileAttributes attributes) {
     String name = file.getName();
     if (!name.isEmpty()) {
       if (namesEqual(fs, name, FSRecords.getName(id))) return false; // TODO: Handle root attributes change.
@@ -396,7 +396,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     final VirtualFile fake = new FakeVirtualFile(parent, childName);
     final FileAttributes attributes = fs.getAttributes(fake);
     if (attributes != null) {
-      final int child = createAndCopyRecord(fs, fake, parentId, attributes);
+      final int child = createAndFillRecord(fs, fake, parentId, attributes);
       FSRecords.updateList(parentId, ArrayUtil.append(children, child));
       return child;
     }
@@ -778,7 +778,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         return null;
       }
 
-      final boolean newRoot = copyRecordFromDelegateFS(rootId, 0, root, fs, attributes);
+      final boolean newRoot = writeAttributesToRecord(rootId, 0, root, fs, attributes);
       if (!newRoot) {
         if (attributes.lastModified != FSRecords.getTimestamp(rootId)) {
           root.markDirtyRecursively();
@@ -937,7 +937,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       }
       else if (event instanceof VFileCopyEvent) {
         final VFileCopyEvent copyEvent = (VFileCopyEvent)event;
-        executeCopy(copyEvent.getFile(), copyEvent.getNewParent(), copyEvent.getNewChildName());
+        executeCreateChild(copyEvent.getNewParent(), copyEvent.getNewChildName());
       }
       else if (event instanceof VFileMoveEvent) {
         final VFileMoveEvent moveEvent = (VFileMoveEvent)event;
@@ -971,7 +971,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     final FileAttributes attributes = delegate.getAttributes(fake);
     if (attributes != null) {
       final int parentId = getFileId(parent);
-      final int childId = createAndCopyRecord(delegate, fake, parentId, attributes);
+      final int childId = createAndFillRecord(delegate, fake, parentId, attributes);
       appendIdToParentList(parentId, childId);
       assert parent instanceof VirtualDirectoryImpl : parent;
       final VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
@@ -979,12 +979,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
   }
 
-  private static int createAndCopyRecord(@NotNull NewVirtualFileSystem delegateSystem,
+  private static int createAndFillRecord(@NotNull NewVirtualFileSystem delegateSystem,
                                          @NotNull VirtualFile delegateFile,
                                          int parentId,
                                          @NotNull FileAttributes attributes) {
     final int childId = FSRecords.createRecord();
-    copyRecordFromDelegateFS(childId, parentId, delegateFile, delegateSystem, attributes);
+    writeAttributesToRecord(childId, parentId, delegateFile, delegateSystem, attributes);
     return childId;
   }
 
@@ -1095,11 +1095,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     FSRecords.setTimestamp(getFileId(file), attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP);
 
     ((VirtualFileSystemEntry)file).setModificationStamp(newModificationStamp);
-  }
-
-  @SuppressWarnings({"UnusedDeclaration"})
-  private static void executeCopy(VirtualFile from, @NotNull VirtualFile newParent, @NotNull String copyName) {
-    executeCreateChild(newParent, copyName);
   }
 
   private void executeMove(@NotNull VirtualFile file, @NotNull VirtualFile newParent) {
