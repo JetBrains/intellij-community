@@ -63,13 +63,14 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.FocusTrackback;
+import com.intellij.ui.Gray;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
-import com.intellij.util.ui.SameColor;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -234,9 +235,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
             public Color getBackground() {
               boolean navBar = UISettings.getInstance().SHOW_NAVIGATION_BAR;
               if (navBar) {
-                return  UIUtil.getSlightlyDarkerColor(UIUtil.isUnderAquaLookAndFeel() ? new SameColor(200) : UIUtil.getPanelBackground());
+                return  UIUtil.getSlightlyDarkerColor(UIUtil.isUnderAquaLookAndFeel() ? Gray._200 : UIUtil.getPanelBackground());
               } else {
-                return UIUtil.isUnderAquaLookAndFeel() ? new SameColor(189) : UIUtil.getPanelBackground();
+                return UIUtil.isUnderAquaLookAndFeel() ? Gray._189 : UIUtil.getPanelBackground();
               }
             }
           };
@@ -262,7 +263,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
     @Override
     public Insets getBorderInsets(Component c) {
-      return new Insets(0, 0, 0, 0);
+      return JBInsets.NONE;
     }
 
     @Override

@@ -34,6 +34,7 @@ import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.Centerizer;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -47,7 +48,7 @@ public class TabLabel extends JPanel {
   protected final SimpleColoredComponent myLabel = new SimpleColoredComponent() {
     @Override
     protected boolean shouldDrawMacShadow() {
-      return SystemInfo.isMac;
+      return SystemInfo.isMac && !UIUtil.isUnderDarcula();
     }
   };
   

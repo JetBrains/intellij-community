@@ -27,7 +27,6 @@ import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
-import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,11 +133,11 @@ public class
     int _height = r.height;
 
     if (!isHideTabs()) {
-      g2d.setPaint(new GradientPaint(_x, _y, new SameColor(255), _x, _y + _height - 3, UIUtil.getPanelBackground()));
+      g2d.setPaint(new GradientPaint(_x, _y, Gray._255, _x, _y + _height - 3, UIUtil.getPanelBackground()));
 
       g2d.fill(selectedShape.fillPath.getShape());
 
-      g2d.setColor(new Color(255, 255, 255, 180));
+      g2d.setColor(Gray._255.withAlpha(180));
       g2d.draw(selectedShape.fillPath.getShape());
 
       // fix right side due to swing stupidity (fill & draw will occupy different shapes)
@@ -155,7 +154,7 @@ public class
                  selectedShape.path.getMaxX() - 1, getHeight() - 1);
 
     if (isHideTabs()) return;
-    g2d.setColor(new Color(0, 0, 0, 50));
+    g2d.setColor(Gray._0.withAlpha(50));
     g2d.drawLine(1, selectedShape.labelPath.getMaxY(), 1, getHeight() - 1);
     g2d.drawLine(selectedShape.path.getMaxX() - 1, selectedShape.labelPath.getMaxY() - 4,
                  selectedShape.path.getMaxX() - 1, getHeight() - 1);

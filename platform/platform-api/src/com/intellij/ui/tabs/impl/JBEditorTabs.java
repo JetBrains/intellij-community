@@ -22,13 +22,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.table.TableLayout;
-import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,17 +102,17 @@ public class JBEditorTabs extends JBTabsImpl {
     Color tabColor = label.getInfo().getTabColor();
     if (tabColor != null) {
       //g2d.setPaint(new LinearGradientPaint(_x, _y, _x, _y + effectiveBounds.height, new float[] {.3f, .6f, 1f}, new Color[] {new SameColor(170), new SameColor(150), new SameColor(90)}));
-      g2d.setPaint(new GradientPaint(_x, _y, new SameColor(200), _x, _y + effectiveBounds.height, new SameColor(130)));
+      g2d.setPaint(new GradientPaint(_x, _y, Gray._200, _x, _y + effectiveBounds.height, Gray._130));
       g2d.fillRect(_x, _y, _width, _height);
 
       g2d.setColor(ColorUtil.toAlpha(tabColor, 150));
       g2d.fillRect(_x, _y, _width, _height);
     } else {
-      g2d.setPaint(new GradientPaint(_x, _y, new Color(255, 255, 255, 180), _x, _y + effectiveBounds.height, new Color(255, 255, 255, 100)));
+      g2d.setPaint(new GradientPaint(_x, _y, Gray._255.withAlpha(180), _x, _y + effectiveBounds.height, Gray._255.withAlpha(100)));
       g2d.fillRect(_x, _y, _width, _height);
     }
 
-    g2d.setColor(new Color(255, 255, 255, 100));
+    g2d.setColor(Gray._255.withAlpha(100));
     g2d.drawRect(_x, _y, _width - 1, _height - 1);
   }
 
@@ -180,7 +180,7 @@ public class JBEditorTabs extends JBTabsImpl {
     g2d.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height + (vertical ? 1 : 0));
 
     if (!vertical) {
-      g2d.setColor(new SameColor(210));
+      g2d.setColor(Gray._210);
       g2d.drawLine(rectangle.x, rectangle.y, rectangle.x + rectangle.width, rectangle.y);
     }
   }
@@ -219,14 +219,14 @@ public class JBEditorTabs extends JBTabsImpl {
       g2d.setColor(multiplyColor(tabColor));
       g2d.fill(selectedShape.fillPath.getShape());
 
-      g2d.setPaint(new GradientPaint(_x, _y, new Color(255, 255, 255, 150), _x, _y + _height, new Color(255, 255, 255, 0)));
+      g2d.setPaint(new GradientPaint(_x, _y, Gray._255.withAlpha(150), _x, _y + _height, Gray._255.withAlpha(0)));
     } else {
-      g2d.setPaint(new GradientPaint(_x, _y, new SameColor(255), _x, _y + _height, new SameColor(230)));
+      g2d.setPaint(new GradientPaint(_x, _y, Gray._255, _x, _y + _height, Gray._230));
     }
 
     g2d.fill(selectedShape.fillPath.getShape());
 
-    g2d.setColor(new Color(255, 255, 255, 180));
+    g2d.setColor(Gray._255.withAlpha(180));
     g2d.draw(selectedShape.fillPath.getShape());
 
     // fix right side due to swing stupidity (fill & draw will occupy different shapes)
@@ -238,7 +238,7 @@ public class JBEditorTabs extends JBTabsImpl {
 
     if (!isHorizontalTabs()) {
       // side shadow
-      g2d.setColor(new Color(0, 0, 0, 30));
+      g2d.setColor(Gray._0.withAlpha(30));
       g2d.draw(selectedShape.labelPath
                  .transformLine(selectedShape.labelPath.getMaxX() + selectedShape.labelPath.deltaX(1), selectedShape.labelPath.getY() +
                                                                                                        selectedShape.labelPath.deltaY(1),
@@ -264,7 +264,7 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   public Color getBackground() {
-    return new SameColor(142);
+    return Gray._142;
   }
 
   protected ShapeInfo _computeSelectedLabelShape() {
