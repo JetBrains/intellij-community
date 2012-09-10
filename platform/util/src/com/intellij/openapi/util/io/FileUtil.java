@@ -132,8 +132,11 @@ public class FileUtil extends FileUtilRt {
            !strict && filePath.length() == ancestorPath.length();
   }
 
+  /**
+   * @param removeProcessor parent, child
+   */
   public static<T> Collection<T> removeAncestors(final Collection<T> files, final Convertor<T, String> convertor,
-                                                 final PairProcessor<String, T> removeProcessor) {
+                                                 final PairProcessor<T, T> removeProcessor) {
     if (files.isEmpty()) return files;
     final TreeMap<String, T> paths = new TreeMap<String, T>();
     for (T file : files) {
@@ -153,7 +156,7 @@ public class FileUtil extends FileUtilRt {
         // possible parents
         final String parent = ordered.get(j).getKey();
         if (parent == null) continue;
-        if (isCanonicalAncestor(false, parent, child) && removeProcessor.process(child, entry.getValue())) {
+        if (isCanonicalAncestor(false, parent, child) && removeProcessor.process(ordered.get(j).getValue(), entry.getValue())) {
           parentNotFound = false;
           break;
         }
