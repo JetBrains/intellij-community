@@ -48,7 +48,7 @@ public class LookupCellRenderer implements ListCellRenderer {
   //TODO[kb]: move all these awesome constants to Editor's Fonts & Colors settings
   private static final int AFTER_TAIL = 10;
   private static final int AFTER_TYPE = 6;
-  public static final Color BACKGROUND_COLOR_DARK_VARIANT = new Color(47, 67, 96);
+  public static final Color BACKGROUND_COLOR_DARK_VARIANT = new Color(0x141D29);
   private Icon myEmptyIcon = EmptyIcon.create(5);
   private final Font myNormalFont;
   private final Font myBoldFont;
@@ -141,7 +141,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     myNameComponent.clear();
     myNameComponent.setIcon(augmentIcon(presentation.getIcon(), myEmptyIcon));
     myNameComponent.setBackground(background);
-    allowedWidth -= setItemTextLabel(item, isSelected || dark ? SELECTED_FOREGROUND_COLOR : presentation.getItemTextForeground(), isSelected, presentation, allowedWidth);
+    allowedWidth -= setItemTextLabel(item, dark ? foreground : isSelected ? SELECTED_FOREGROUND_COLOR : presentation.getItemTextForeground(), isSelected, presentation, allowedWidth);
 
     myTypeLabel.clear();
     if (allowedWidth > 0) {
@@ -182,7 +182,7 @@ public class LookupCellRenderer implements ListCellRenderer {
   }
 
   private static Color getForegroundColor(boolean isSelected) {
-    return UIUtil.isUnderDarcula() ? Gray._230 : isSelected ? SELECTED_FOREGROUND_COLOR : FOREGROUND_COLOR;
+    return UIUtil.isUnderDarcula() ? UIUtil.getListForeground() : isSelected ? SELECTED_FOREGROUND_COLOR : FOREGROUND_COLOR;
   }
 
   private int getMaxWidth() {
