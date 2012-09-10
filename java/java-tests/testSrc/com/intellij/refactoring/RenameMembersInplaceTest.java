@@ -61,6 +61,10 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
   public void testMethodWithJavadocRef() throws Exception {
     doTestInplaceRename("bar");
   }
+  
+  public void testEnumConstructor() throws Exception {
+    doTestInplaceRename("Bar");
+  }
 
   public void testConflictingMethodName() throws Exception {
     try {

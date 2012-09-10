@@ -220,6 +220,10 @@ public abstract class InplaceRefactoring {
   }
 
   protected boolean acceptReference(PsiReference reference) {
+    final PsiElement element = reference.getElement();
+    if (element instanceof PsiNamedElement) {
+      return Comparing.strEqual(((PsiNamedElement)element).getName(), myElementToRename.getName());
+    }
     return true;
   }
 
