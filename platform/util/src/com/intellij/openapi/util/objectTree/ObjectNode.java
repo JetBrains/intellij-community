@@ -51,6 +51,7 @@ public final class ObjectNode<T> {
     myOwnModification = modification;
   }
 
+  @SuppressWarnings("unchecked")
   @NotNull
   private ObjectNode<T>[] getChildrenArray() {
     synchronized (myTree.treeLock) {
@@ -79,7 +80,9 @@ public final class ObjectNode<T> {
   }
 
   public ObjectNode<T> getParent() {
-    return myParent;
+    synchronized (myTree.treeLock) {
+      return myParent;
+    }
   }
 
   @NotNull
