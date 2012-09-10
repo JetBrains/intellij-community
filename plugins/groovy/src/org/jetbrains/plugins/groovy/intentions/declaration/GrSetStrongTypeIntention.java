@@ -34,8 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -45,11 +43,7 @@ import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 import java.util.ArrayList;
 
 /**
- * Created with IntelliJ IDEA.
- * User: maxmedvedev
- * Date: 9/8/12
- * Time: 9:55
- * To change this template use File | Settings | File Templates.
+ * @author Max Medvedev
  */
 public class GrSetStrongTypeIntention extends Intention {
 
@@ -72,15 +66,19 @@ public class GrSetStrongTypeIntention extends Intention {
       PsiManager manager = element.getManager();
 
       GrModifierList modifierList = ((GrVariableDeclaration)element).getModifierList();
+
+      PsiElement replaceElement;
       if (modifierList.hasModifierProperty(GrModifier.DEF) && modifierList.getModifiers().length == 1) {
-        PsiElement def = PsiUtil.findModifierInList(modifierList, GrModifier.DEF);
-        builder.replaceElement(def, new ChooseTypeExpression(types.toArray(new TypeConstraint[types.size()]), manager));
+        replaceElement = PsiUtil.findModifierInList(modifierList, GrModifier.DEF);
       }
       else {
         ((GrVariableDeclaration)element).setType(TypesUtil.createType("Abc", element));
-        GrTypeElement typeElement = ((GrVariableDeclaration)element).getTypeElementGroovy();
-        builder.replaceElement(typeElement, new ChooseTypeExpression(types.toArray(new TypeConstraint[types.size()]), manager));
+        replaceElement = ((GrVariableDeclaration)element).getTypeElementGroovy();
       }
+      assert replaceElement != null;
+      TypeConstraint[] constraints = types.toArray(new TypeConstraint[types.size()]);
+      ChooseTypeExpression chooseTypeExpression = new ChooseTypeExpression(constraints, manager, replaceElement.getResolveScope());
+      builder.replaceElement(replaceElement, chooseTypeExpression);
 
 
       final PsiElement afterPostprocess = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(element);

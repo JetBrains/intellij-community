@@ -107,8 +107,9 @@ public class CreateMethodFromUsageFix implements IntentionAction {
       if (argType == null || argType == PsiType.NULL) argType = TypesUtil.getJavaLangObject(myRefExpression);
       final PsiParameter p = factory.createParameter("o", argType);
       parameterList.add(p);
-      paramTypesExpressions[i] =
-        new ChooseTypeExpression(new TypeConstraint[]{SupertypeConstraint.create(argType)}, myRefExpression.getManager(), method.getLanguage() == GroovyFileType.GROOVY_LANGUAGE);
+      TypeConstraint[] constraints = {SupertypeConstraint.create(argType)};
+      boolean isGroovy = method.getLanguage() == GroovyFileType.GROOVY_LANGUAGE;
+      paramTypesExpressions[i] = new ChooseTypeExpression(constraints, myRefExpression.getManager(), isGroovy, method.getResolveScope());
     }
     return paramTypesExpressions;
   }

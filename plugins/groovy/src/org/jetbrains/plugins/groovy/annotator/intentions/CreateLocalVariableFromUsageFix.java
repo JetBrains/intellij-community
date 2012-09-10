@@ -96,7 +96,7 @@ public class CreateLocalVariableFromUsageFix implements IntentionAction {
     }
     GrTypeElement typeElement = decl.getTypeElementGroovy();
     assert typeElement != null;
-    ChooseTypeExpression expr = new ChooseTypeExpression(constraints, PsiManager.getInstance(project));
+    ChooseTypeExpression expr = new ChooseTypeExpression(constraints, PsiManager.getInstance(project), typeElement.getResolveScope());
     TemplateBuilderImpl builder = new TemplateBuilderImpl(decl);
     builder.replaceElement(typeElement, expr);
     decl = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(decl);
