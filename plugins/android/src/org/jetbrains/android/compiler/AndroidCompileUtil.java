@@ -485,7 +485,7 @@ public class AndroidCompileUtil {
           try {
             f = f.getCanonicalFile();
             classFile = classFile != null ? classFile.getCanonicalFile() : null;
-            if (f != null && !f.equals(classFile) && f.exists()) {
+            if (f != null && !FileUtil.filesEqual(f, classFile) && f.exists()) {
               if (f.delete()) {
                 virtualFile.refresh(true, false);
               }

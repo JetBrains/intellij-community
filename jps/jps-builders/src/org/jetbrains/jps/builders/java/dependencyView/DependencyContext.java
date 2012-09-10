@@ -1,6 +1,5 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
@@ -9,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -92,7 +90,8 @@ class DependencyContext {
         return myEmptyName;
       }
       final String _path = FileUtil.toSystemIndependentName(path);
-      return myEnumerator.enumerate(SystemInfo.isFileSystemCaseSensitive ? _path : _path.toLowerCase(Locale.US));
+      //return myEnumerator.enumerate(SystemInfo.isFileSystemCaseSensitive ? _path : _path.toLowerCase(Locale.US));
+      return myEnumerator.enumerate(_path);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

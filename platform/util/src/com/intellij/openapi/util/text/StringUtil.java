@@ -134,7 +134,6 @@ public class StringUtil extends StringUtilRt {
     return newBuffer == null ? buffer : newBuffer.toString();
   }
 
-  @NotNull
   public static String replace(@NotNull final String text, @NotNull final String oldS, @Nullable final String newS, boolean ignoreCase) {
     if (text.length() < oldS.length()) return text;
 

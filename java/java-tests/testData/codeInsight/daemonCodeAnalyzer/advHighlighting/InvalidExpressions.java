@@ -99,6 +99,12 @@ public class a12 {
   public <error descr="Invalid method declaration; return type required">foo</error>() {
   }
 
+  {
+    new Object() {
+      <error descr="Invalid method declaration; return type required">Object</error>() {}
+    };
+  }
+
   // do not warn about illegal type in incomplete declarations (http://www.intellij.net/tracker/idea/viewSCR?publicId=9586)
   void foo<EOLError descr="';' expected"></EOLError>
 }

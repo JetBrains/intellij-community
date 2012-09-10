@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
@@ -19,6 +20,7 @@ import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
@@ -82,16 +84,32 @@ public class JavaBuilder extends ModuleLevelBuilder {
     "-g", "-deprecation", "-nowarn", "-verbose"
   ));
 
-  private static final FileFilter JAVA_SOURCES_FILTER = new FileFilter() {
-    public boolean accept(File file) {
-      return file.getPath().endsWith(JAVA_EXTENSION);
+  private static final FileFilter JAVA_SOURCES_FILTER =
+    SystemInfo.isFileSystemCaseSensitive?
+    new FileFilter() {
+      public boolean accept(File file) {
+        return file.getPath().endsWith(JAVA_EXTENSION);
+      }
+    } :
+    new FileFilter() {
+      public boolean accept(File file) {
+        return StringUtil.endsWithIgnoreCase(file.getPath(), JAVA_EXTENSION);
+      }
+    };
+
+  private static final FileFilter FORM_SOURCES_FILTER =
+    SystemInfo.isFileSystemCaseSensitive?
+    new FileFilter() {
+      public boolean accept(File file) {
+        return file.getPath().endsWith(FORM_EXTENSION);
+      }
+    } :
+    new FileFilter() {
+      public boolean accept(File file) {
+        return StringUtil.endsWithIgnoreCase(file.getPath(), FORM_EXTENSION);
+      }
     }
-  };
-  private static final FileFilter FORM_SOURCES_FILTER = new FileFilter() {
-    public boolean accept(File file) {
-      return file.getPath().endsWith(FORM_EXTENSION);
-    }
-  };
+    ;
 
   private static final Key<Callbacks.Backend> DELTA_MAPPINGS_CALLBACK_KEY = Key.create("_dependency_data_");
   private final Executor myTaskRunner;
@@ -153,8 +171,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   public ExitCode build(final CompileContext context, final ModuleChunk chunk) throws ProjectBuildException {
     try {
-      final Set<File> filesToCompile = new HashSet<File>();
-      final Set<File> formsToCompile = new HashSet<File>();
+      final Set<File> filesToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+      final Set<File> formsToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
       FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
         public boolean apply(ModuleBuildTarget target, File file, String sourceRoot) throws IOException {

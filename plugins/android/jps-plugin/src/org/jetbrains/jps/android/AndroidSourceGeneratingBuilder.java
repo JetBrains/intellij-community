@@ -910,7 +910,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       return null;
     }
 
-    if (parent.equals(sourceRoot)) {
+    if (FileUtil.filesEqual(parent, sourceRoot)) {
       return genFolder.getPath();
     }
     final String relativePath = FileUtil.getRelativePath(sourceRoot, parent);

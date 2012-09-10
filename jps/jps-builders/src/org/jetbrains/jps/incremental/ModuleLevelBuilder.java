@@ -3,10 +3,12 @@ package org.jetbrains.jps.incremental;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
-import org.jetbrains.jps.builders.java.dependencyView.Mappings;
+import com.intellij.openapi.util.io.FileUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
+import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
@@ -87,7 +89,8 @@ public abstract class ModuleLevelBuilder extends Builder {
           // unmark as affected all successfully compiled
           allAffectedFiles.removeAll(successfullyCompiled);
 
-          final HashSet<File> affectedBeforeDif = new HashSet<File>(allAffectedFiles);
+          final Set<File> affectedBeforeDif = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+          affectedBeforeDif.addAll(allAffectedFiles);
 
           final ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
           final boolean incremental = globalMappings.differentiateOnIncrementalMake(
@@ -110,8 +113,7 @@ public abstract class ModuleLevelBuilder extends Builder {
           if (incremental) {
             final Set<File> newlyAffectedFiles = new HashSet<File>(allAffectedFiles);
             newlyAffectedFiles.removeAll(affectedBeforeDif);
-            newlyAffectedFiles
-              .removeAll(allCompiledFiles); // the diff operation may have affected the class already compiled in thic compilation round
+            newlyAffectedFiles.removeAll(allCompiledFiles); // the diff operation may have affected the class already compiled in thic compilation round
 
             final String infoMessage = "Dependency analysis found " + newlyAffectedFiles.size() + " affected files";
             LOG.info(infoMessage);
@@ -211,7 +213,7 @@ public abstract class ModuleLevelBuilder extends Builder {
   private static Set<File> getAllAffectedFilesContainer(CompileContext context) {
     Set<File> allAffectedFiles = ALL_AFFECTED_FILES_KEY.get(context);
     if (allAffectedFiles == null) {
-      allAffectedFiles = new HashSet<File>();
+      allAffectedFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       ALL_AFFECTED_FILES_KEY.set(context, allAffectedFiles);
     }
     return allAffectedFiles;
@@ -220,7 +222,7 @@ public abstract class ModuleLevelBuilder extends Builder {
   private static Set<File> getAllCompiledFilesContainer(CompileContext context) {
     Set<File> allCompiledFiles = ALL_COMPILED_FILES_KEY.get(context);
     if (allCompiledFiles == null) {
-      allCompiledFiles = new HashSet<File>();
+      allCompiledFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       ALL_COMPILED_FILES_KEY.set(context, allCompiledFiles);
     }
     return allCompiledFiles;
@@ -231,7 +233,7 @@ public abstract class ModuleLevelBuilder extends Builder {
     if (map == null) {
       return Collections.emptySet();
     }
-    final Set<String> removed = new HashSet<String>();
+    final Set<String> removed = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
     for (ModuleBuildTarget target : chunk.getTargets()) {
       final Collection<String> modulePaths = map.get(target);
       if (modulePaths != null) {

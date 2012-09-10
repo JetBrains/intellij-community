@@ -35,7 +35,7 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
     final File file = new File(FileUtil.toSystemDependentName(filePath));
     if (!file.exists()) return;
     String targetPath;
-    if (!file.equals(getRootFile())) {
+    if (!FileUtil.filesEqual(file, getRootFile())) {
       final String relativePath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(getRootFile().getPath()), filePath, '/');
       targetPath = JpsPathUtil.appendToPath(outputPath, relativePath);
     }

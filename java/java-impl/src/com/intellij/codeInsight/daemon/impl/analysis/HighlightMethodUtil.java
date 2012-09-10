@@ -806,10 +806,12 @@ public class HighlightMethodUtil {
 
     if (aClass != null) {
       String className = aClass instanceof PsiAnonymousClass ? null : aClass.getName();
-      if (className != null && !Comparing.strEqual(methodName, className)) {
+      if (className == null || !Comparing.strEqual(methodName, className)) {
         errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, method.getNameIdentifier(),
                                                         JavaErrorMessages.message("missing.return.type"));
-        QuickFixAction.registerQuickFixAction(errorResult, new RenameElementFix(method, className));
+        if (className != null) {
+          QuickFixAction.registerQuickFixAction(errorResult, new RenameElementFix(method, className));
+        }
       }
     }
     return errorResult;

@@ -159,13 +159,16 @@ public class ParameterCanBeLocalInspection extends BaseJavaLocalInspectionTool {
         final PsiMethod method = (PsiMethod)scope;
         final PsiParameter[] parameters = method.getParameterList().getParameters();
 
-        final ParameterInfoImpl[] info = new ParameterInfoImpl[parameters.length - 1];
+        final List<ParameterInfoImpl> info = new ArrayList<ParameterInfoImpl>();
         for (int i = 0; i < parameters.length; i++) {
           PsiParameter psiParameter = parameters[i];
           if (psiParameter == parameter) continue;
-          info[i] = new ParameterInfoImpl(i, psiParameter.getName(), psiParameter.getType());
+          info.add(new ParameterInfoImpl(i, psiParameter.getName(), psiParameter.getType()));
         }
-        final ChangeSignatureProcessor cp = new ChangeSignatureProcessor(project, method, false, VisibilityUtil.getVisibilityModifier(method.getModifierList()), method.getName(), method.getReturnType(), info){
+        final ParameterInfoImpl[] newParams = info.toArray(new ParameterInfoImpl[info.size()]);
+        final String visibilityModifier = VisibilityUtil.getVisibilityModifier(method.getModifierList());
+        final ChangeSignatureProcessor cp = new ChangeSignatureProcessor(project, method, false, visibilityModifier, 
+                                                                         method.getName(), method.getReturnType(), newParams) {
           @Override
           protected void performRefactoring(UsageInfo[] usages) {
             final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);

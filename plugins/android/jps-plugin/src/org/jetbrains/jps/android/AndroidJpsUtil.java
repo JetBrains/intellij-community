@@ -533,7 +533,7 @@ class AndroidJpsUtil {
 
       if ((JavaSourceRootType.SOURCE.equals(root.getRootType())
            || JavaSourceRootType.TEST_SOURCE.equals(root.getRootType()) && extension != null && extension.isPackTestCode())
-          && !rootDir.equals(resDir) && !rootDir.equals(resDirForCompilation)) {
+          && !FileUtil.filesEqual(rootDir, resDir) && !rootDir.equals(resDirForCompilation)) {
         result.add(rootDir);
       }
     }

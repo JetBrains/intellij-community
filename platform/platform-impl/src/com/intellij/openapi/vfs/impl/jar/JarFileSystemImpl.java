@@ -142,10 +142,9 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
   @Override
   public void setNoCopyJarForPath(String pathInJar) {
-    if (myNoCopyJarPaths == null) {
+    if (myNoCopyJarPaths == null || pathInJar == null) {
       return;
     }
-
     int index = pathInJar.indexOf(JAR_SEPARATOR);
     if (index < 0) return;
     String path = pathInJar.substring(0, index);
