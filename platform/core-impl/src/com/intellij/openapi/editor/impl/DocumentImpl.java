@@ -374,7 +374,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (dstOffset == srcEnd) return;
     assert !srcRange.containsOffset(dstOffset);
 
-    CharSequence replacement = getCharsSequence().subSequence(srcStart, srcEnd);
+    //CharSequence replacement = getCharsSequence().subSequence(srcStart, srcEnd);
+    String replacement = getCharsSequence().subSequence(srcStart, srcEnd).toString();
 
     insertString(dstOffset, replacement);
     int shift = 0;
