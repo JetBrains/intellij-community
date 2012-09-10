@@ -364,13 +364,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       private static Vector prepareChildren(Component toSelect, Component parent) {
         Vector<ComponentNode> result = new Vector<ComponentNode>();
         if (parent == null) {
-          Container root = toSelect.getParent();
-          while (true) {
-            Container _superRoot = root.getParent();
-            if (_superRoot == null) break;
-            root = _superRoot;
-          }
-
+          Container root = SwingUtilities.windowForComponent(toSelect);
           for (Component component : root.getComponents()) {
             result.add(new ComponentNode(toSelect, component));
           }
