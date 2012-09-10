@@ -555,7 +555,11 @@ public class DuplicatesFinder {
         return match.registerReturnValue(new ConditionalReturnStatementValue(returnValue));
       }
       else {
-        if (returnValue != null && !match.registerReturnValue(ReturnStatementReturnValue.INSTANCE)) return false; //do not register return value for return; statement
+        final PsiElement classOrLambda = PsiTreeUtil.getParentOfType(returnValue, PsiClass.class, PsiLambdaExpression.class);
+        final PsiElement commonParent = PsiTreeUtil.findCommonParent(match.getMatchStart(), match.getMatchEnd());
+        if (classOrLambda == null || !PsiTreeUtil.isAncestor(commonParent, classOrLambda, false)) {
+          if (returnValue != null && !match.registerReturnValue(ReturnStatementReturnValue.INSTANCE)) return false; //do not register return value for return; statement
+        }
         return matchPattern(patternReturnStatement.getReturnValue(), returnValue, candidates, match);
       }
     }
