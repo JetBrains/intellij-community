@@ -16,6 +16,9 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,4 +28,6 @@ public interface GrDocMethodReference extends GrDocMemberReference{
 
   @NotNull
   GrDocMethodParams getParameterList();
+
+  PsiElement bindToText(Project project, String text);
 }

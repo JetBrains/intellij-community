@@ -17,16 +17,18 @@
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodReference;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
@@ -53,6 +55,15 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
     GrDocMethodParams child = findChildByClass(GrDocMethodParams.class);
     assert child != null;
     return child;
+  }
+
+  @Override
+  public PsiElement bindToText(Project project, String text) {
+    GrDocComment comment = GroovyPsiElementFactory.getInstance(project).createDocCommentFromText(text);
+    PsiElement tag = PsiTreeUtil.getChildOfType(comment, GrDocTag.class);
+    PsiElement ref = PsiTreeUtil.getChildOfType(tag, GrDocMethodReference.class);
+    assert ref != null : text;
+    return replace(ref);
   }
 
   @Override

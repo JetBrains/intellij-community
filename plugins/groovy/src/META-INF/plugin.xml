@@ -165,6 +165,7 @@
         implementation="org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureUsageProcessor" id="groovyProcessor"
         order="before javaProcessor"/>
     <safeDelete.importSearcher implementation="org.jetbrains.plugins.groovy.refactoring.safeDelete.GroovyImportSearcher"/>
+    <refactoring.safeDelete.JavaSafeDeleteDelegate implementationClass="org.jetbrains.plugins.groovy.refactoring.safeDelete.JavaSafeDeleteDelegateForGroovy" language="Groovy"/>
 
     <constantExpressionEvaluator language="Groovy"
                                  implementationClass="org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator"/>
