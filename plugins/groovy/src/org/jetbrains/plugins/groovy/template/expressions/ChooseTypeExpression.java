@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SubtypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -88,8 +89,7 @@ public class ChooseTypeExpression extends Expression {
 
   private PsiType chooseType(TypeConstraint[] constraints) {
     if (constraints.length > 0) return constraints[0].getDefaultType();
-    return JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory()
-      .createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(myManager.getProject()));
+    return PsiType.getJavaLangObject(myManager, GlobalSearchScope.allScope(myManager.getProject()));
   }
 
   public Result calculateResult(ExpressionContext context) {
@@ -99,6 +99,9 @@ public class ChooseTypeExpression extends Expression {
       if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
         return new TextResult(GrModifier.DEF);
       }
+
+      type = TypesUtil.unboxPrimitiveTypeWrapper(type);
+      if (type == null) return null;
 
       return new PsiTypeResult(type, context.getProject()) {
         @Override
