@@ -174,7 +174,7 @@ public final class DarculaLaf extends BasicLookAndFeel {
         } else if (key.endsWith(".border")) {
           try {
             defaults.put(key, Class.forName(value).newInstance());
-          } catch (Exception ignore) {}
+          } catch (Exception e) {log(e);}
         } else {
           final Color color = ColorUtil.fromHex(value, null);
           final Integer invVal = getInteger(value);
@@ -191,9 +191,7 @@ public final class DarculaLaf extends BasicLookAndFeel {
         }
       }
     }
-    catch (IOException e) {
-      log(e);
-    }
+    catch (IOException e) {log(e);}
   }
 
   private static Integer getInteger(String value) {
