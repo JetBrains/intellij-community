@@ -38,7 +38,7 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
 
   public boolean addDestination(@NotNull ArtifactRootDescriptor descriptor, @NotNull DestinationInfo destinationInfo) {
     if (destinationInfo instanceof ExplodedDestinationInfo && descriptor instanceof FileBasedArtifactRootDescriptor
-        && descriptor.getRootFile().equals(new File(FileUtil.toSystemDependentName(destinationInfo.getOutputFilePath())))) {
+        && FileUtil.filesEqual(descriptor.getRootFile(), new File(FileUtil.toSystemDependentName(destinationInfo.getOutputFilePath())))) {
       return false;
     }
 

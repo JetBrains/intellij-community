@@ -70,8 +70,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
                          CompilerBundle.message("message.text.destination.is.directory", createCopyErrorMessage(fromFile, toFile)), null, -1, -1);
       return;
     }
-    if (fromFile.equals(toFile)
-        || writtenPaths != null && !writtenPaths.add(toFile.getPath())) {
+    if (FileUtil.filesEqual(fromFile, toFile) || writtenPaths != null && !writtenPaths.add(toFile.getPath())) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Skipping " + fromFile.getAbsolutePath() + ": " + toFile.getAbsolutePath() + " is already written");
       }

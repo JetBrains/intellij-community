@@ -17,6 +17,7 @@ package com.intellij.compiler.impl.packagingCompiler;
 
 import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
 import com.intellij.openapi.compiler.make.FileCopyInstruction;
+import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.File;
 
@@ -43,7 +44,7 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
 
     final FileCopyInstruction item = (FileCopyInstruction) o;
 
-    if (getFile() != null ? !getFile().equals(item.getFile()) : item.getFile() != null) return false;
+    if (getFile() != null ? !FileUtil.filesEqual(getFile(), item.getFile()) : item.getFile() != null) return false;
 
     if (getOutputRelativePath() != null) {
       if (!getOutputRelativePath().equals( item.getOutputRelativePath() )) return false;

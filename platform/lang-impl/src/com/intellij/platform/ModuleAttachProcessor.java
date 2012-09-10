@@ -130,7 +130,7 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
     if (mappings.size() == 1) {
       final VirtualFile[] contentRoots = ModuleRootManager.getInstance(primaryModule).getContentRoots();
       // if we had one mapping for the root of the primary module and the added module uses the same VCS, change mapping to <Project Root>
-      if (contentRoots.length == 1 && new File(contentRoots[0].getPath()).equals(new File(mappings.get(0).getDirectory()))) {
+      if (contentRoots.length == 1 && FileUtil.filesEqual(new File(contentRoots[0].getPath()), new File(mappings.get(0).getDirectory()))) {
         final AbstractVcs vcs = vcsManager.findVersioningVcs(addedModuleContentRoot);
         if (vcs != null && vcs.getName().equals(mappings.get(0).getVcs())) {
           vcsManager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping("", vcs.getName())));
