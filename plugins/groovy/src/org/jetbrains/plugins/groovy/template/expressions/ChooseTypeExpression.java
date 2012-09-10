@@ -15,18 +15,23 @@
  */
 package org.jetbrains.plugins.groovy.template.expressions;
 
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTypesUtil;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SubtypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -39,13 +44,13 @@ public class ChooseTypeExpression extends Expression {
   private final LookupElement[] myItems;
   private final PsiManager myManager;
 
-  public ChooseTypeExpression(TypeConstraint[] constraints, PsiManager manager) {
-    this(constraints, manager, true);
+  public ChooseTypeExpression(TypeConstraint[] constraints, PsiManager manager, GlobalSearchScope resolveScope) {
+    this(constraints, manager, true, resolveScope);
   }
 
-  public ChooseTypeExpression(TypeConstraint[] constraints, PsiManager manager, boolean forGroovy) {
+  public ChooseTypeExpression(TypeConstraint[] constraints, PsiManager manager, boolean forGroovy, GlobalSearchScope resolveScope) {
     myManager = manager;
-    myTypePointer = SmartTypePointerManager.getInstance(manager.getProject()).createSmartTypePointer(chooseType(constraints));
+    myTypePointer = SmartTypePointerManager.getInstance(manager.getProject()).createSmartTypePointer(chooseType(constraints, resolveScope));
     myItems = createItems(constraints, forGroovy);
   }
 
@@ -57,7 +62,12 @@ public class ChooseTypeExpression extends Expression {
     }
     for (TypeConstraint constraint : constraints) {
       if (constraint instanceof SubtypeConstraint) {
-        result.add(PsiTypeLookupItem.createLookupItem(constraint.getDefaultType(), null));
+        PsiType type = constraint.getDefaultType();
+        PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(type, null);
+
+        setupLookup(item);
+
+        result.add(item);
       }
       else if (constraint instanceof SupertypeConstraint) {
         processSuperTypes(constraint.getType(), result);
@@ -71,6 +81,14 @@ public class ChooseTypeExpression extends Expression {
     return result.toArray(new LookupElement[result.size()]);
   }
 
+  private static void setupLookup(PsiTypeLookupItem item) {
+    item.setInsertHandler(new InsertHandler<LookupItem>() {
+      public void handleInsert(InsertionContext context, LookupItem item) {
+        GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), item);
+      }
+    });
+  }
+
   private static void processSuperTypes(PsiType type, Set<LookupElement> result) {
     String text = type.getCanonicalText();
     String unboxed = PsiTypesUtil.unboxIfPossible(text);
@@ -78,7 +96,9 @@ public class ChooseTypeExpression extends Expression {
       result.add(LookupElementBuilder.create(unboxed).bold());
     }
     else {
-      result.add(PsiTypeLookupItem.createLookupItem(type, null));
+      PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(type, null);
+      setupLookup(item);
+      result.add(item);
     }
     PsiType[] superTypes = type.getSuperTypes();
     for (PsiType superType : superTypes) {
@@ -86,10 +106,9 @@ public class ChooseTypeExpression extends Expression {
     }
   }
 
-  private PsiType chooseType(TypeConstraint[] constraints) {
+  private PsiType chooseType(TypeConstraint[] constraints, GlobalSearchScope scope) {
     if (constraints.length > 0) return constraints[0].getDefaultType();
-    return JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory()
-      .createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(myManager.getProject()));
+    return PsiType.getJavaLangObject(myManager, scope);
   }
 
   public Result calculateResult(ExpressionContext context) {
@@ -99,6 +118,9 @@ public class ChooseTypeExpression extends Expression {
       if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
         return new TextResult(GrModifier.DEF);
       }
+
+      type = TypesUtil.unboxPrimitiveTypeWrapper(type);
+      if (type == null) return null;
 
       return new PsiTypeResult(type, context.getProject()) {
         @Override

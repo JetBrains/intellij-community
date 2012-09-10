@@ -51,6 +51,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -99,7 +100,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private final String myName;
 
   private final ReentrantWriterPreferenceReadWriteLock myActionsLock = new ReentrantWriterPreferenceReadWriteLock();
-  //private final AppLock myActionsLock = new AppLockImpl();
 
   private final Stack<Class> myWriteActionsStack = new Stack<Class>(); // accessed from EDT only, no need to sync
 
@@ -914,21 +914,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public void runReadAction(@NotNull final Runnable action) {
-    if (isReadAccessAllowed()) {
+    final AccessToken token = acquireReadActionLock();
+
+    try {
       action.run();
     }
-    else {
-      assertReadActionAllowed();
-      try {
-        myActionsLock.readLock().acquire();
-        action.run();
-      }
-      catch (InterruptedException e) {
-        throw new RuntimeInterruptedException(e);
-      }
-      finally {
-        myActionsLock.readLock().release();
-      }
+    finally {
+      token.finish();
     }
   }
 
@@ -951,21 +943,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public <T> T runReadAction(@NotNull final Computable<T> computation) {
-    if (isReadAccessAllowed()) {
+    final AccessToken token = acquireReadActionLock();
+
+    try {
       return computation.compute();
     }
-    else {
-      assertReadActionAllowed();
-      try {
-        myActionsLock.readLock().acquire();
-        return computation.compute();
-      }
-      catch (InterruptedException e) {
-        throw new RuntimeInterruptedException(e);
-      }
-      finally {
-        myActionsLock.readLock().release();
-      }
+    finally {
+      token.finish();
     }
   }
 
@@ -1247,6 +1231,44 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         myActionsLock.writeLock().release();
         released();
       }
+    }
+
+    @Override
+    protected void acquired() {
+      String id = id();
+
+      if (id != null) {
+        final Thread thread = Thread.currentThread();
+        thread.setName(thread.getName() + id);
+      }
+    }
+
+    @Override
+    protected void released() {
+      String id = id();
+
+      if (id != null) {
+        final Thread thread = Thread.currentThread();
+        String name = thread.getName();
+        name = StringUtil.replace(name, id, "");
+        thread.setName(name);
+      }
+    }
+
+    private String id() {
+      Class aClass = getClass();
+      String name = aClass.getName();
+      while (name == null) {
+        aClass = aClass.getSuperclass();
+        name = aClass.getName();
+      }
+
+      name = name.substring(name.lastIndexOf('.') + 1);
+      name = name.substring(name.lastIndexOf('$') + 1);
+      if (!name.equals("AccessToken")) {
+        return " [" + name+"]";
+      }
+      return null;
     }
   }
 

@@ -282,6 +282,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       } else {
         myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, "Lambda expression not expected here"));
       }
+      if (!myHolder.hasErrorResults()) {
+        final PsiElement body = expression.getBody();
+        if (body instanceof PsiCodeBlock) {
+          myHolder.add(HighlightControlFlowUtil.checkUnreachableStatement((PsiCodeBlock)body));
+        }
+      }
     }
   }
 
@@ -333,10 +339,24 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitJavaToken(token);
     if (!myHolder.hasErrorResults()
         && token.getTokenType() == JavaTokenType.RBRACE
-        && token.getParent() instanceof PsiCodeBlock
-        && token.getParent().getParent() instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)token.getParent().getParent();
-      myHolder.add(HighlightControlFlowUtil.checkMissingReturnStatement(method));
+        && token.getParent() instanceof PsiCodeBlock) {
+
+      final PsiElement gParent = token.getParent().getParent();
+      final PsiCodeBlock codeBlock;
+      final PsiType returnType;
+      if (gParent instanceof PsiMethod) {
+        PsiMethod method = (PsiMethod)gParent;
+        codeBlock = method.getBody();
+        returnType = method.getReturnType();
+      } else if (gParent instanceof PsiLambdaExpression) {
+        final PsiElement body = ((PsiLambdaExpression)gParent).getBody();
+        if (!(body instanceof PsiCodeBlock)) return;
+        codeBlock = (PsiCodeBlock)body;
+        returnType = LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)gParent);
+      } else {
+        return;
+      }
+      myHolder.add(HighlightControlFlowUtil.checkMissingReturnStatement(codeBlock, returnType));
     }
 
   }

@@ -48,7 +48,7 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
       }
 
       for (GrCallExpressionTypeCalculator typeCalculator : GrCallExpressionTypeCalculator.EP_NAME.getExtensions()) {
-        PsiType res = typeCalculator.calculateReturnType(callExpression, resolveResults);
+          PsiType res = typeCalculator.calculateReturnType(callExpression, resolveResults);
         if (res != null) {
           return res;
         }

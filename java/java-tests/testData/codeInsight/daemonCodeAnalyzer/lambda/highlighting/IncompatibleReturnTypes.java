@@ -18,7 +18,7 @@ class Test2 {
     }
     {
         IntReturnType aI = <error descr="Incompatible return type void in lambda expression">() -> System.out.println()</error>;
-        IntReturnType aI1 = <error descr="Missing return value">() -> {System.out.println();}</error>;
+        IntReturnType aI1 = () -> {System.out.println();<error descr="Missing return statement">}</error>;
         IntReturnType aI2 = () -> {return 1;};
         IntReturnType aI3 = () -> 1;
     }
@@ -32,10 +32,10 @@ class Test3 {
     }
     {
         XReturnType<Object> aI = <error descr="Incompatible return type void in lambda expression">() -> System.out.println()</error>;
-        XReturnType<Object> aI1 = <error descr="Missing return value">() -> {System.out.println();}</error>;
+        XReturnType<Object> aI1 = () -> {System.out.println();<error descr="Missing return statement">}</error>;
         XReturnType<Object> aI2 = () -> {return 1;};
         XReturnType<Object> aI3 = () -> 1;
-        XReturnType<Object> aI4 = <error descr="Missing return value">() -> {}</error>;
+        XReturnType<Object> aI4 = () -> {<error descr="Missing return statement">}</error>;
     }
 }
 
@@ -48,7 +48,7 @@ class Test4 {
 
     {
         YXReturnType<Object> aI = <error descr="Incompatible return type void in lambda expression">() -> System.out.println()</error>;
-        YXReturnType<Object> aI1 = <error descr="Missing return value">() -> {System.out.println();}</error>;
+        YXReturnType<Object> aI1 = () -> {System.out.println();<error descr="Missing return statement">}</error>;
         YXReturnType<Object> aI2 = <error descr="Incompatible return type int in lambda expression">() -> {return 1;}</error>;
         YXReturnType<Object> aI3 = <error descr="Incompatible return type int in lambda expression">() -> 1</error>;
         YXReturnType<Object> aI4 = () -> new Y<Object>(){};

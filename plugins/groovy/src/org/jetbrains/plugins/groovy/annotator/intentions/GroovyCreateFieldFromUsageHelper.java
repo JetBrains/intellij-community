@@ -57,7 +57,8 @@ public class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper
     if (expectedTypes instanceof TypeConstraint[]) {
       GrTypeElement typeElement = fieldDecl.getTypeElementGroovy();
       assert typeElement != null;
-      ChooseTypeExpression expr = new ChooseTypeExpression((TypeConstraint[])expectedTypes, PsiManager.getInstance(project));
+      ChooseTypeExpression expr = new ChooseTypeExpression((TypeConstraint[])expectedTypes, PsiManager.getInstance(project),
+                                                           typeElement.getResolveScope());
       builder.replaceElement(typeElement, expr);
     }
     else if (expectedTypes instanceof ExpectedTypeInfo[]) {

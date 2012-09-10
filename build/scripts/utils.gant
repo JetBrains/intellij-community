@@ -161,6 +161,13 @@ binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
     projectBuilder.error("Artifact path $artifactPath should start with $home")
   }
   def relativePath = artifactPath.substring(home.length())
+  if (relativePath.startsWith("/")) {
+    relativePath = relativePath.substring(1)
+  }
+  def file = new File(artifactPath)
+  if (file.isDirectory()) {
+    relativePath += "=>" + file.name
+  }
   projectBuilder.info("##teamcity[publishArtifacts '$relativePath']")
 })
 

@@ -1008,15 +1008,9 @@ public class ExpressionGenerator extends Generator {
 
   @Override
   public void visitThisSuperReferenceExpression(GrThisSuperReferenceExpression expr) {
-    if (context.isInAnonymousContext() && expr.getQualifier() == null) {
-      builder.append(expr.getReferenceName());
-      return;
-    }
-    final PsiElement resolved = expr.resolve();
-    LOG.assertTrue(resolved instanceof PsiClass);
-
-    if (!(resolved instanceof PsiAnonymousClass)) {
-      builder.append(((PsiClass)resolved).getQualifiedName()).append('.');
+    GrReferenceExpression qualifier = expr.getQualifier();
+    if (!context.isInAnonymousContext() && qualifier != null) {
+      qualifier.accept(this);
     }
     builder.append(expr.getReferenceName());
   }

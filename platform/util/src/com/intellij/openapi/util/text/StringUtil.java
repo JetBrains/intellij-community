@@ -2357,14 +2357,18 @@ public class StringUtil extends StringUtilRt {
     return StringUtilRt.getShortName(fqName, separator);
   }
 
+  /**
+   * Expirable CharSequence. Very useful to control external libary execution time,
+   * i.e. when java.util.regex.Pattern match goes out of control.
+   */
   public static class BombedCharSequence implements CharSequence {
     private CharSequence delegate;
     private long myTime;
     private int i = 0;
 
-    public BombedCharSequence(CharSequence sequence, long time) {
+    public BombedCharSequence(CharSequence sequence, long delay) {
       delegate = sequence;
-      myTime = time;
+      myTime =  System.currentTimeMillis() + delay;
     }
 
     @Override

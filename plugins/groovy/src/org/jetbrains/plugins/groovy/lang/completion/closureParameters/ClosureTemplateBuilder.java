@@ -84,11 +84,12 @@ public class ClosureTemplateBuilder {
 
       if (typeElement != null) {
         final TypeConstraint[] typeConstraints = {SupertypeConstraint.create(typeElement.getType())};
-        final ChooseTypeExpression expression = new ChooseTypeExpression(typeConstraints, PsiManager.getInstance(project));
+        final ChooseTypeExpression expression = new ChooseTypeExpression(typeConstraints, PsiManager.getInstance(project), nameIdentifier.getResolveScope());
         builder.replaceElement(typeElement, expression);
       }
       else {
-        final ChooseTypeExpression expression = new ChooseTypeExpression(TypeConstraint.EMPTY_ARRAY, PsiManager.getInstance(project));
+        final ChooseTypeExpression expression =
+          new ChooseTypeExpression(TypeConstraint.EMPTY_ARRAY, PsiManager.getInstance(project), nameIdentifier.getResolveScope());
         builder.replaceElement(p.getModifierList(), expression);
       }
 

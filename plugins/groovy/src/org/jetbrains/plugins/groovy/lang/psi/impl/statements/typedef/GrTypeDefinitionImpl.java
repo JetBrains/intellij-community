@@ -135,7 +135,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     }
 
     final PsiClass containingClass = getContainingClass();
-    if (containingClass != null) {
+    if (containingClass != null && containingClass.getQualifiedName() != null) {
       return containingClass.getQualifiedName() + "." + getName();
     }
 

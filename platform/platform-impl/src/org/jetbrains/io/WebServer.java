@@ -57,8 +57,8 @@ public class WebServer {
     bootstrap.setOption("child.tcpNoDelay", true);
     bootstrap.setPipelineFactory(new ChannelPipelineFactoryImpl(pipelineConsumers, new DefaultHandler(openChannels)));
 
-    for (int i = 0, n = tryAnyPort ? portsCount : portsCount + 1; i < n; i++) {
-      int port = i == portsCount ? 0 : firstPort + i;
+    for (int i = 0; i < portsCount; i++) {
+      int port = firstPort + i;
       try {
         openChannels.add(bootstrap.bind(new InetSocketAddress(port)));
         return port;
@@ -67,9 +67,20 @@ public class WebServer {
         if (portsCount == 1) {
           throw e;
         }
-        else if (i == (n - 1)) {
+        else if (!tryAnyPort && i == (portsCount - 1)) {
           LOG.error(e);
         }
+      }
+    }
+
+    if (tryAnyPort) {
+      try {
+        Channel channel = bootstrap.bind(new InetSocketAddress(0));
+        openChannels.add(channel);
+        return ((InetSocketAddress)channel.getLocalAddress()).getPort();
+      }
+      catch (ChannelException e) {
+        LOG.error(e);
       }
     }
 

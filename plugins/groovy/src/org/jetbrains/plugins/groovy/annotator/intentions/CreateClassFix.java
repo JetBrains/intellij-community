@@ -118,7 +118,8 @@ public abstract class CreateClassFix {
         if (argType == null) argType = TypesUtil.getJavaLangObject(refElement);
         paramTypes[i] = "Object";
         paramNames[i] = "o" + i;
-        paramTypesExpressions[i] = new ChooseTypeExpression(new TypeConstraint[]{SupertypeConstraint.create(argType)}, refElement.getManager());
+        TypeConstraint[] constraints = {SupertypeConstraint.create(argType)};
+        paramTypesExpressions[i] = new ChooseTypeExpression(constraints, refElement.getManager(), targetClass.getResolveScope());
       }
 
       GrMethod method = GroovyPsiElementFactory.getInstance(project).createConstructorFromText(name, paramTypes, paramNames, "{\n}");

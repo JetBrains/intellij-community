@@ -58,3 +58,15 @@ class Test4 {
   public interface TerminalOp1<T, U> extends IntermediateOp1<T, U> {}
 
 }
+
+class Test5 {
+  {
+    Block empty = x -> {};
+    Block<?> empty1 = x -> {};
+    System.out.println((Block) x -> {});
+  }
+
+  interface Block<T> {
+    void apply(T t);
+  }
+}
