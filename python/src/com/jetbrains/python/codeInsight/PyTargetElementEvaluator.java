@@ -14,6 +14,9 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * @author yole
  */
@@ -31,11 +34,14 @@ public class PyTargetElementEvaluator implements TargetElementEvaluator {
     }
     final PsiElement element = ref.getElement();
     PsiElement result = ref.resolve();
+    Set<PsiElement> visited = new HashSet<PsiElement>();
+    visited.add(result);
     while (result instanceof PyReferenceExpression || result instanceof PyTargetExpression) {
       PsiElement nextResult = ((PyQualifiedExpression) result).getReference(PyResolveContext.noImplicits()).resolve();
-      if (nextResult != null && nextResult != result &&
+      if (nextResult != null && !visited.contains(nextResult) &&
           PsiTreeUtil.getParentOfType(element, ScopeOwner.class) == PsiTreeUtil.getParentOfType(result, ScopeOwner.class) &&
           (nextResult instanceof PyReferenceExpression || nextResult instanceof PyTargetExpression || nextResult instanceof PyParameter)) {
+        visited.add(nextResult);
         result = nextResult;
       }
       else {
