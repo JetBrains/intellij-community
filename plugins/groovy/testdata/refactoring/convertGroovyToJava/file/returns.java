@@ -1,14 +1,14 @@
 public class returns extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
 public void foo1() {
-org.codehaus.groovy.runtime.DefaultGroovyMethods.print(returns.this, "foo");
+org.codehaus.groovy.runtime.DefaultGroovyMethods.print(this, "foo");
 }
 
 public void foo2() {
-org.codehaus.groovy.runtime.DefaultGroovyMethods.print(returns.this, "foo");
+org.codehaus.groovy.runtime.DefaultGroovyMethods.print(this, "foo");
 }
 
 public int foo3() {
-org.codehaus.groovy.runtime.DefaultGroovyMethods.print(returns.this, "foo");
+org.codehaus.groovy.runtime.DefaultGroovyMethods.print(this, "foo");
 }
 
 public java.lang.Integer foo4() {

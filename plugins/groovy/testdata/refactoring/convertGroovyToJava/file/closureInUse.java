@@ -1,10 +1,10 @@
 public class IntCat extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
 public static void call(java.lang.Integer i) {
-org.codehaus.groovy.runtime.DefaultGroovyMethods.print(IntCat.this, i);
+org.codehaus.groovy.runtime.DefaultGroovyMethods.print(this, i);
 }
 
 public static void call(java.lang.Integer i, java.lang.String s) {
-org.codehaus.groovy.runtime.DefaultGroovyMethods.print(IntCat.this, s);
+org.codehaus.groovy.runtime.DefaultGroovyMethods.print(this, s);
 }
 
 }
@@ -14,7 +14,7 @@ new closureInUse(new groovy.lang.Binding(args)).run();
 }
 
 public java.lang.Object run() {
-return org.codehaus.groovy.runtime.DefaultGroovyMethods.use(closureInUse.this, IntCat.class, new groovy.lang.Closure<java.lang.Void>(this, this) {
+return org.codehaus.groovy.runtime.DefaultGroovyMethods.use(this, IntCat.class, new groovy.lang.Closure<java.lang.Void>(this, this) {
 public void doCall(java.lang.Object it) {
 IntCat.call(2);
 IntCat.call(2, "a");
