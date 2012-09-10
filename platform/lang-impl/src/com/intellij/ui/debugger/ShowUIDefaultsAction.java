@@ -24,10 +24,10 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Enumeration;
 import java.util.EventObject;
@@ -78,27 +78,6 @@ public class ShowUIDefaultsAction extends AnAction {
             return false;
           }
         };
-        table.setDefaultRenderer(Object.class, new TableCellRenderer() {
-          @Override
-          public Component getTableCellRendererComponent(JTable table,
-                                                         Object value,
-                                                         boolean isSelected,
-                                                         boolean hasFocus,
-                                                         int row,
-                                                         int column) {
-            final JLabel label = new JLabel(value == null ? "" : value.toString());
-            if (value instanceof Color) {
-              final JPanel panel = new JPanel(new BorderLayout());
-              panel.setBackground((Color)value);
-              panel.add(label, BorderLayout.CENTER);
-              return panel;
-            }
-            return label;
-          }
-        });
-        final JBScrollPane pane = new JBScrollPane(table);
-        new TableSpeedSearch(table);
-        table.setShowGrid(false);
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
           @Override
           public Component getTableCellRendererComponent(JTable table,
@@ -107,14 +86,32 @@ public class ShowUIDefaultsAction extends AnAction {
                                                          boolean hasFocus,
                                                          int row,
                                                          int column) {
+            final JPanel panel = new JPanel(new BorderLayout());
+            final JLabel label = new JLabel(value == null ? "" : value.toString());
+            panel.add(label, BorderLayout.CENTER);
             if (value instanceof Color) {
-              final JPanel panel = new JPanel();
               panel.setBackground((Color)value);
               return panel;
+            } else if (value instanceof Icon) {
+              final Icon icon = (Icon)value;
+              if (icon.getIconHeight() <= 20) {
+                label.setIcon(icon);
+              }
+              label.setText(String.format("(%dx%d) %s)",icon.getIconWidth(), icon.getIconHeight(), label.getText()));
+              return panel;
+            } else if (value instanceof Border) {
+              try {
+                final Insets i = ((Border)value).getBorderInsets(null);
+                label.setText(String.format("border[%d, %d, %d, %d] %s", i.top, i.left, i.bottom, i.right, label.getText()));
+                return panel;
+              } catch (Exception ignore) {}
             }
             return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           }
         });
+        final JBScrollPane pane = new JBScrollPane(table);
+        new TableSpeedSearch(table);
+        table.setShowGrid(false);
         final JPanel panel = new JPanel(new BorderLayout());
         panel.add(pane, BorderLayout.CENTER);
         return panel;
