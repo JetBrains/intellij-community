@@ -120,6 +120,10 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
     Processor<ChooseByNameContributor> processor = new Processor<ChooseByNameContributor>() {
       @Override
       public boolean process(ChooseByNameContributor contributor) {
+        if (myProject.isDisposed()) {
+          return true;
+        }
+
         try {
           for (NavigationItem item : contributor.getItemsByName(name, pattern, myProject, checkBoxState)) {
             if (item == null) {

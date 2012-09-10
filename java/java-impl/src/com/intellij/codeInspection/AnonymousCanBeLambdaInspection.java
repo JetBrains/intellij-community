@@ -15,18 +15,16 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +72,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaLocalInspectionTool 
           final String functionalInterfaceErrorMessage = LambdaUtil.checkInterfaceFunctional(baseClassType);
           if (functionalInterfaceErrorMessage == null) {
             final PsiMethod[] methods = aClass.getMethods();
-            if (methods.length == 1) {
+            if (methods.length == 1 && aClass.getFields().length == 0) {
               final PsiCodeBlock body = methods[0].getBody();
               if (body != null) {
                 final boolean [] bodyContainsForbiddenRefs = new boolean[1];
@@ -128,7 +126,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaLocalInspectionTool 
       if (element != null) {
         final PsiAnonymousClass anonymousClass = PsiTreeUtil.getParentOfType(element, PsiAnonymousClass.class);
         LOG.assertTrue(anonymousClass != null);
-
+        ChangeContextUtil.encodeContextInfo(anonymousClass, true);
         boolean validContext = LambdaUtil.isValidLambdaContext(anonymousClass.getParent().getParent());
         final String canonicalText = anonymousClass.getBaseClassType().getCanonicalText();
         final PsiMethod method = anonymousClass.getMethods()[0];
@@ -139,25 +137,69 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaLocalInspectionTool 
         final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
         PsiLambdaExpression lambdaExpression =
           (PsiLambdaExpression)elementFactory.createExpressionFromText(withoutTypesDeclared, anonymousClass);
+
+        final PsiCodeBlock body = method.getBody();
+        LOG.assertTrue(body != null);
+        final PsiStatement[] statements = body.getStatements();
+        PsiElement copy = body.copy();
+        if (statements.length == 1 && statements[0] instanceof PsiReturnStatement) {
+          PsiExpression value = ((PsiReturnStatement)statements[0]).getReturnValue();
+          if (value != null) {
+            copy = value.copy();
+          }
+        }
+
+        PsiElement lambdaBody = lambdaExpression.getBody();
+        LOG.assertTrue(lambdaBody != null);
+        lambdaBody.replace(copy);
+
         final PsiNewExpression newExpression = (PsiNewExpression)anonymousClass.getParent();
         lambdaExpression = (PsiLambdaExpression)newExpression.replace(lambdaExpression);
+        ChangeContextUtil.decodeContextInfo(lambdaExpression, null, null);
         if (!validContext) {
-          lambdaExpression.replace(elementFactory.createExpressionFromText("((" + canonicalText + ")" + withoutTypesDeclared + ")", lambdaExpression));
+          final PsiParenthesizedExpression typeCast =
+            (PsiParenthesizedExpression)elementFactory.createExpressionFromText("((" + canonicalText + ")" + withoutTypesDeclared + ")", lambdaExpression);
+          final PsiExpression typeCastExpr = typeCast.getExpression();
+          LOG.assertTrue(typeCastExpr != null);
+          final PsiExpression typeCastOperand = ((PsiTypeCastExpression)typeCastExpr).getOperand();
+          LOG.assertTrue(typeCastOperand != null);
+          final PsiElement fromText = ((PsiLambdaExpression)typeCastOperand).getBody();
+          LOG.assertTrue(fromText != null);
+          lambdaBody = lambdaExpression.getBody();
+          LOG.assertTrue(lambdaBody != null);
+          fromText.replace(lambdaBody);
+          lambdaExpression.replace(typeCast);
           return;
         }
+
         PsiType interfaceType = lambdaExpression.getFunctionalInterfaceType();
-        if (isInferenced(lambdaExpression, interfaceType)) {
-          lambdaExpression = (PsiLambdaExpression)lambdaExpression.replace(elementFactory.createExpressionFromText(lambdaWithTypesDeclared, lambdaExpression));
+        if (isInferred(lambdaExpression, interfaceType)) {
+          final PsiLambdaExpression withTypes =
+            (PsiLambdaExpression)elementFactory.createExpressionFromText(lambdaWithTypesDeclared, lambdaExpression);
+          final PsiElement withTypesBody = withTypes.getBody();
+          LOG.assertTrue(withTypesBody != null);
+          lambdaBody = lambdaExpression.getBody();
+          LOG.assertTrue(lambdaBody != null);
+          withTypesBody.replace(lambdaBody);
+          lambdaExpression = (PsiLambdaExpression)lambdaExpression.replace(withTypes);
 
           interfaceType = lambdaExpression.getFunctionalInterfaceType();
-          if (isInferenced(lambdaExpression, interfaceType)) {
-            lambdaExpression.replace(elementFactory.createExpressionFromText("(" + canonicalText + ")" + withoutTypesDeclared, lambdaExpression));
+          if (isInferred(lambdaExpression, interfaceType)) {
+            final PsiTypeCastExpression typeCast = (PsiTypeCastExpression)elementFactory.createExpressionFromText("(" + canonicalText + ")" + withoutTypesDeclared, lambdaExpression);
+            final PsiExpression typeCastOperand = typeCast.getOperand();
+            LOG.assertTrue(typeCastOperand instanceof PsiLambdaExpression);
+            final PsiElement fromText = ((PsiLambdaExpression)typeCastOperand).getBody();
+            LOG.assertTrue(fromText != null);
+            lambdaBody = lambdaExpression.getBody();
+            LOG.assertTrue(lambdaBody != null);
+            fromText.replace(lambdaBody);
+            lambdaExpression.replace(typeCast);
           }
         }
       }
     }
 
-    private static boolean isInferenced(PsiLambdaExpression lambdaExpression, PsiType interfaceType) {
+    private static boolean isInferred(PsiLambdaExpression lambdaExpression, PsiType interfaceType) {
       return interfaceType == null || !LambdaUtil.isLambdaFullyInferred(lambdaExpression, interfaceType) || LambdaUtil.checkInterfaceFunctional(interfaceType) != null;
     }
 
@@ -185,18 +227,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaLocalInspectionTool 
           buf.append(")");
         }
       }
-      buf.append("->");
-      final PsiCodeBlock body = method.getBody();
-      LOG.assertTrue(body != null);
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length == 1 && statements[0] instanceof PsiReturnStatement) {
-        PsiExpression value = ((PsiReturnStatement)statements[0]).getReturnValue();
-        if (value != null) {
-          buf.append(value.getText());
-          return buf.toString();
-        }
-      }
-      buf.append(body.getText());
+      buf.append("-> {}");
       return buf.toString();
     }
   }

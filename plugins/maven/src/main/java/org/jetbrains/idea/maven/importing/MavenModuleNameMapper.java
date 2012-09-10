@@ -74,7 +74,8 @@ public class MavenModuleNameMapper {
 
     for (NameItem name : names) {
       if (name.module != null) {
-        existingNames.add(name.getResultName());
+        boolean wasAdded = existingNames.add(name.getResultName());
+        assert wasAdded : name.getResultName();
       }
     }
 

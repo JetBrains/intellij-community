@@ -2,7 +2,7 @@
 class Test {
   {
     Runnable r = () -> {
-        System.out.println("");
+      System.out.println("");
     };
   }
 }

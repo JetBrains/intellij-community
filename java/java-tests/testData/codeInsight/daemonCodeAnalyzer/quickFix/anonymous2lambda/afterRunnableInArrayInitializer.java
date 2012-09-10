@@ -2,7 +2,7 @@
 class Test {
   {
     Runnable[] r = new Runnable[] {() -> {
-        System.out.println("");
+      System.out.println("");
     }};
   }
 }
