@@ -155,7 +155,7 @@ public class PySkeletonRefresher {
     return mySkeletonsPath;
   }
 
-  List<String> regenerateSkeletons(@Nullable SkeletonVersionChecker cachedChecker,
+  public List<String> regenerateSkeletons(@Nullable SkeletonVersionChecker cachedChecker,
                                    @Nullable Ref<Boolean> migrationFlag) throws InvalidSdkException {
     final List<String> errorList = new SmartList<String>();
     final String homePath = mySdk.getHomePath();
@@ -299,7 +299,7 @@ public class PySkeletonRefresher {
   }
 
   @Nullable
-  private static SkeletonHeader readSkeletonHeader(@NotNull File file) {
+  public static SkeletonHeader readSkeletonHeader(@NotNull File file) {
     try {
       final LineNumberReader reader = new LineNumberReader(new FileReader(file));
       try {
@@ -338,7 +338,7 @@ public class PySkeletonRefresher {
     return null;
   }
 
-  static class SkeletonHeader {
+  public static class SkeletonHeader {
     @NotNull private final String myFile;
     private final int myVersion;
 

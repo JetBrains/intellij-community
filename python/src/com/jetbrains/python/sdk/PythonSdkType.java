@@ -614,7 +614,7 @@ public class PythonSdkType extends SdkType {
   }
 
   @NotNull
-  protected static List<String> getSysPathsFromScript(String bin_path) throws InvalidSdkException {
+  public static List<String> getSysPathsFromScript(String bin_path) throws InvalidSdkException {
     String scriptFile = PythonHelpersLocator.getHelperPath("syspath.py");
     // to handle the situation when PYTHONPATH contains ., we need to run the syspath script in the
     // directory of the script itself - otherwise the dir in which we run the script (e.g. /usr/bin) will be added to SDK path
