@@ -704,7 +704,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState state, InstructionVisitor visitor) {
       DfaValue value = state.pop();
       DfaValueFactory factory = runner.getFactory();
-      state.applyCondition(factory.getRelationFactory().create(value, factory.getConstFactory().getNull(), JavaTokenType.EQEQ, true));
+      state.applyCondition(factory.getRelationFactory().createRelation(value, factory.getConstFactory().getNull(), JavaTokenType.EQEQ, true));
       return nextInstruction(runner, state);
     }
   }

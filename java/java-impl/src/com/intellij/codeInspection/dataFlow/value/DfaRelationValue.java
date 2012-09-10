@@ -51,14 +51,14 @@ public class DfaRelationValue extends DfaValue {
     }
 
     @Nullable
-    public DfaRelationValue create(DfaValue dfaLeft, DfaValue dfaRight, IElementType relation, boolean negated) {
+    public DfaRelationValue createRelation(DfaValue dfaLeft, DfaValue dfaRight, IElementType relation, boolean negated) {
       if (dfaRight instanceof DfaTypeValue && JavaTokenType.INSTANCEOF_KEYWORD != relation) return null;
       if (JavaTokenType.PLUS == relation) return null;
 
       if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaUnboxedValue
           || dfaRight instanceof DfaVariableValue || dfaRight instanceof DfaBoxedValue || dfaRight instanceof DfaUnboxedValue) {
         if (!(dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaUnboxedValue)) {
-          return create(dfaRight, dfaLeft, getSymmetricOperation(relation), negated);
+          return createRelation(dfaRight, dfaLeft, getSymmetricOperation(relation), negated);
         }
 
         return createCanonicalRelation(relation, negated, dfaLeft, dfaRight);
@@ -158,7 +158,7 @@ public class DfaRelationValue extends DfaValue {
   }
 
   public DfaValue createNegated() {
-    return myFactory.getRelationFactory().create(myLeftOperand, myRightOperand, myRelation, !myIsNegated);
+    return myFactory.getRelationFactory().createRelation(myLeftOperand, myRightOperand, myRelation, !myIsNegated);
   }
 
   private boolean hardEquals(DfaRelationValue rel) {

@@ -141,7 +141,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue dfaExpr = factory.create(instruction.getCasted());
     if (dfaExpr != null) {
       DfaTypeValue dfaType = factory.getTypeFactory().create(instruction.getCastTo());
-      DfaRelationValue dfaInstanceof = factory.getRelationFactory().create(dfaExpr, dfaType, JavaTokenType.INSTANCEOF_KEYWORD, false);
+      DfaRelationValue dfaInstanceof = factory.getRelationFactory().createRelation(dfaExpr, dfaType, JavaTokenType.INSTANCEOF_KEYWORD, false);
       if (dfaInstanceof != null && !memState.applyInstanceofOrNull(dfaInstanceof)) {
         onInstructionProducesCCE(instruction, runner);
       }
@@ -285,7 +285,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValueFactory factory = runner.getFactory();
     final Instruction next = runner.getInstruction(instruction.getIndex() + 1);
     boolean negated = memState.canBeNaN(dfaLeft) || memState.canBeNaN(dfaRight);
-    DfaRelationValue dfaRelation = factory.getRelationFactory().create(dfaLeft, dfaRight, instruction.getOperationSign(), negated);
+    DfaRelationValue dfaRelation = factory.getRelationFactory().createRelation(dfaLeft, dfaRight, instruction.getOperationSign(), negated);
     if (dfaRelation == null) {
       return null;
     }
@@ -365,7 +365,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private static void checkOneOperandNotNull(DfaValue var1, DfaValue var2, DfaValueFactory factory, DfaMemoryState state) {
     DfaValue nowNotNull = isNotNullExpression(var2, state) ? var1 : isNotNullExpression(var1, state) ? var2 : null;
     if (nowNotNull != null) {
-      state.applyCondition(factory.getRelationFactory().create(nowNotNull, factory.getConstFactory().getNull(), JavaTokenType.EQEQ, true));
+      state.applyCondition(factory.getRelationFactory().createRelation(nowNotNull, factory.getConstFactory().getNull(), JavaTokenType.EQEQ, true));
     }
   }
 
