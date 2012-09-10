@@ -736,7 +736,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public void flushVariable(@NotNull DfaVariableValue variable) {
-    if (variable.getPsiVariable().hasModifierProperty(PsiModifier.FINAL)) {
+    PsiVariable psiVariable = variable.getPsiVariable();
+    if (psiVariable instanceof PsiField && psiVariable.hasModifierProperty(PsiModifier.FINAL)) {
       return;
     }
 
