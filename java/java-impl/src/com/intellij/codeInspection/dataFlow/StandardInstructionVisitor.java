@@ -189,48 +189,51 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       return nextInstruction(instruction, runner, memState);
     }
     finally {
-      pushResult(instruction, memState, qualifier, runner.getFactory());
+      memState.push(getMethodResultValue(instruction, qualifier, runner.getFactory()));
       if (instruction.shouldFlushFields()) {
         memState.flushFields(runner);
       }
     }
   }
 
-  private void pushResult(MethodCallInstruction instruction, DfaMemoryState state, final DfaValue oldValue, DfaValueFactory factory) {
+  @NotNull
+  private DfaValue getMethodResultValue(MethodCallInstruction instruction, @NotNull DfaValue qualifierValue, DfaValueFactory factory) {
     final PsiType type = instruction.getResultType();
     final MethodCallInstruction.MethodType methodType = instruction.getMethodType();
-    DfaValue dfaValue = null;
     if (type != null && (type instanceof PsiClassType || type.getArrayDimensions() > 0)) {
       @Nullable final Boolean nullability = myCalleeNullability.get(instruction);
-      dfaValue = nullability == Boolean.FALSE ? factory.getNotNullFactory().create(type) : factory.getTypeFactory().create(type, nullability == Boolean.TRUE);
-    }
-    else if (methodType == MethodCallInstruction.MethodType.UNBOXING) {
-      dfaValue = factory.getBoxedFactory().createUnboxed(oldValue);
-    }
-    else if (methodType == MethodCallInstruction.MethodType.BOXING) {
-      dfaValue = factory.getBoxedFactory().createBoxed(oldValue);
-    }
-    else if (methodType == MethodCallInstruction.MethodType.CAST) {
-      if (oldValue instanceof DfaConstValue) {
-        final DfaConstValue constValue = (DfaConstValue)oldValue;
-        Object o = constValue.getValue();
-        if (o instanceof Double || o instanceof Float) {
-          double dbVal = o instanceof Double ? ((Double)o).doubleValue() : ((Float)o).doubleValue();
-          // 5.0f == 5
-          if (Math.floor(dbVal) == dbVal) o = TypeConversionUtil.computeCastTo(o, PsiType.LONG);
-        }
-        else {
-          o = TypeConversionUtil.computeCastTo(o, PsiType.LONG);
-        }
-
-        dfaValue = factory.getConstFactory().createFromValue(o, type);
-      }
-      else {
-        dfaValue = oldValue;
-      }
+      return nullability == Boolean.FALSE ? factory.getNotNullFactory().create(type) : factory.getTypeFactory().create(type, nullability == Boolean.TRUE);
     }
 
-    state.push(dfaValue == null ? DfaUnknownValue.getInstance() : dfaValue);
+    if (methodType == MethodCallInstruction.MethodType.UNBOXING) {
+      return factory.getBoxedFactory().createUnboxed(qualifierValue);
+    }
+
+    if (methodType == MethodCallInstruction.MethodType.BOXING) {
+      DfaValue boxed = factory.getBoxedFactory().createBoxed(qualifierValue);
+      return boxed == null ? DfaUnknownValue.getInstance() : boxed;
+    }
+
+    if (methodType == MethodCallInstruction.MethodType.CAST) {
+      if (qualifierValue instanceof DfaConstValue) {
+        return factory.getConstFactory().createFromValue(castConstValue((DfaConstValue)qualifierValue), type);
+      }
+      return qualifierValue;
+    }
+    return DfaUnknownValue.getInstance();
+  }
+
+  private static Object castConstValue(DfaConstValue constValue) {
+    Object o = constValue.getValue();
+    if (o instanceof Double || o instanceof Float) {
+      double dbVal = o instanceof Double ? ((Double)o).doubleValue() : ((Float)o).doubleValue();
+      // 5.0f == 5
+      if (Math.floor(dbVal) != dbVal) {
+        return o;
+      }
+    }
+
+    return TypeConversionUtil.computeCastTo(o, PsiType.LONG);
   }
 
 

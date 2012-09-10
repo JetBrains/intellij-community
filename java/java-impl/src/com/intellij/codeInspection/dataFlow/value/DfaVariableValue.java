@@ -24,10 +24,9 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiVariable;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -49,7 +48,7 @@ public class DfaVariableValue extends DfaValue {
     public DfaVariableValue createVariableValue(PsiVariable myVariable, boolean isNegated) {
       return createVariableValue(myVariable, isNegated, null);
     }
-    private DfaVariableValue createVariableValue(PsiVariable myVariable, boolean isNegated, @Nullable DfaVariableValue qualifier) {
+    public DfaVariableValue createVariableValue(PsiVariable myVariable, boolean isNegated, @Nullable DfaVariableValue qualifier) {
       mySharedInstance.myVariable = myVariable;
       mySharedInstance.myIsNegated = isNegated;
       mySharedInstance.myQualifier = qualifier;
@@ -83,23 +82,6 @@ public class DfaVariableValue extends DfaValue {
       return result;
     }
 
-    @Nullable
-    public DfaVariableValue createFromReference(@NotNull PsiReferenceExpression expression, @NotNull PsiVariable target) {
-      PsiExpression qualifier = expression.getQualifierExpression();
-      if (qualifier == null) {
-        return createVariableValue(target, false, null);
-      }
-
-      if (qualifier instanceof PsiReferenceExpression && target instanceof PsiField && target.hasModifierProperty(PsiModifier.FINAL)) {
-        PsiElement qTarget = ((PsiReferenceExpression)qualifier).resolve();
-        if (qTarget instanceof PsiVariable) {
-          DfaVariableValue qualifierValue = createFromReference((PsiReferenceExpression)qualifier, (PsiVariable)qTarget);
-          return qualifierValue == null ? null : createVariableValue(target, false, qualifierValue);
-        }
-      }
-
-      return null;
-    }
   }
 
   private PsiVariable myVariable;
