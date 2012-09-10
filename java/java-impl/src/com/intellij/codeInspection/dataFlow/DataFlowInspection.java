@@ -232,14 +232,12 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
               createSimplifyToAssignmentFix()
             );
           }
-          else {
-            boolean report = !(psiAnchor.getParent() instanceof PsiAssertStatement) || !DONT_REPORT_TRUE_ASSERT_STATEMENTS || !evaluatesToTrue;
-            if (report) {
-              final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue);
-              holder.registerProblem(psiAnchor, InspectionsBundle.message(underBinary ? "dataflow.message.constant.condition.whenriched" : "dataflow.message.constant.condition",
-                                                                          Boolean.toString(evaluatesToTrue)),
-                                     localQuickFix == null ? null : new LocalQuickFix[]{localQuickFix});
-            }
+          else if (shouldReportConditionAlwaysTrueOrFalse(psiAnchor, evaluatesToTrue)) {
+            final LocalQuickFix fix = createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue);
+            String message = InspectionsBundle.message(underBinary ?
+                                                       "dataflow.message.constant.condition.whenriched" :
+                                                       "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
+            holder.registerProblem(psiAnchor, message, fix == null ? null : new LocalQuickFix[]{fix});
           }
           reportedAnchors.add(psiAnchor);
         }
@@ -285,6 +283,13 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         holder.registerProblem(expr, text, new AnnotateMethodFix(manager.getDefaultNullable(), ArrayUtil.toStringArray(manager.getNotNulls())));
       }
     }
+  }
+
+  private boolean shouldReportConditionAlwaysTrueOrFalse(PsiElement psiAnchor, boolean evaluatesToTrue) {
+    if (psiAnchor.getParent() instanceof PsiAssertStatement && DONT_REPORT_TRUE_ASSERT_STATEMENTS && evaluatesToTrue) {
+      return false;
+    }
+    return true;
   }
 
   private static boolean isAtRHSOfBooleanAnd(PsiElement expr) {

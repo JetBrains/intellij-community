@@ -198,6 +198,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   @NotNull
   private DfaValue getMethodResultValue(MethodCallInstruction instruction, @NotNull DfaValue qualifierValue, DfaValueFactory factory) {
+    DfaValue precalculated = instruction.getPrecalculatedReturnValue();
+    if (precalculated != null) {
+      return precalculated;
+    }
+
     final PsiType type = instruction.getResultType();
     final MethodCallInstruction.MethodType methodType = instruction.getMethodType();
     if (type != null && (type instanceof PsiClassType || type.getArrayDimensions() > 0)) {
