@@ -23,7 +23,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightPlatformLangTestCase;
 import org.jetbrains.annotations.Nullable;
@@ -213,6 +212,7 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
     assertEquals(2, vLink.getChildren().length);
   }
 
+/*
   public void testContentSynchronization() throws Exception {
     final File file = FileUtil.createTempFile("file.", ".txt");
     final VirtualFile vFile = refreshAndFind(file);
@@ -244,6 +244,7 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
     fileContent = VfsUtilCore.loadText(vFile);
     assertEquals(linkContent, fileContent);
   }
+*/
 
   public void testFindByLinkParentPath() throws Exception {
     final File topDir = FileUtil.createTempDirectory("topDir.", null);

@@ -52,7 +52,7 @@ public class BasePathMacroManager extends PathMacroManager {
     if (f == null) return;
     addFileHierarchyReplacements(result, f.getParent(), macro + "/..");
 
-    final String path = FileUtil.toSystemIndependentName(f.getCanonicalPath());
+    final String path = f.getPath();
     if (StringUtil.endsWithChar(path, '/')) {
       result.put(macro + "/", path);
       result.put(macro, path.substring(0, path.length()-1));
