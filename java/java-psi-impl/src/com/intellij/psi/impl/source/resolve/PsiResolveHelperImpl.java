@@ -850,9 +850,17 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       }
     }
     else if (parent instanceof PsiReturnStatement) {
-      PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
-      if (method != null) {
-        expectedType = method.getReturnType();
+      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class);
+      if (lambdaExpression != null) {
+        expectedType = LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression.getFunctionalInterfaceType());
+        if (expectedType == null) {
+          return getFailedInferenceConstraint(typeParameter);
+        }
+      } else {
+        PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+        if (method != null) {
+          expectedType = method.getReturnType();
+        }
       }
     }
     else if (parent instanceof PsiExpressionList) {

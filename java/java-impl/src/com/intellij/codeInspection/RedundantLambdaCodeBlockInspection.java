@@ -97,7 +97,12 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaLocalInspectionT
           return returnStatement.getReturnValue();
         }
         else {
-          return ((PsiExpressionStatement)statements[0]).getExpression();
+          final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
+          final PsiType psiType = expression.getType();
+          if (psiType != PsiType.VOID) {
+            return null;
+          }
+          return expression;
         }
       }
     }

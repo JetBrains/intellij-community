@@ -48,11 +48,11 @@ public class HighlightControlFlowUtil {
   private HighlightControlFlowUtil() { }
 
   @Nullable
-  public static HighlightInfo checkMissingReturnStatement(PsiMethod method) {
-    PsiCodeBlock body = method.getBody();
+  public static HighlightInfo checkMissingReturnStatement(PsiCodeBlock body, PsiType returnType) {
+    
     if (body == null
-        || method.getReturnType() == null
-        || PsiType.VOID.equals(method.getReturnType())) {
+        || returnType == null
+        || PsiType.VOID.equals(returnType)) {
       return null;
     }
     // do not compute constant expressions for if() statement condition
@@ -68,9 +68,13 @@ public class HighlightControlFlowUtil {
             HighlightInfoType.ERROR,
             context,
             JavaErrorMessages.message("missing.return.statement"));
-        QuickFixAction.registerQuickFixAction(highlightInfo, new AddReturnFix(method));
-        IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.VOID, true);
-        QuickFixAction.registerQuickFixAction(highlightInfo, fix);
+        final PsiElement parent = body.getParent();
+        if (parent instanceof PsiMethod) {
+          final PsiMethod method = (PsiMethod)parent;
+          QuickFixAction.registerQuickFixAction(highlightInfo, new AddReturnFix(method));
+          IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.VOID, true);
+          QuickFixAction.registerQuickFixAction(highlightInfo, fix);
+        }
         return highlightInfo;
       }
     }
