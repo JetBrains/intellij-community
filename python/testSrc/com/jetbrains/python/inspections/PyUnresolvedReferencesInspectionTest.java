@@ -221,6 +221,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
     });
   }
 
+  // PY-7516
+  public void testComprehensionInParameterValue() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);

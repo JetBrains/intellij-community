@@ -178,6 +178,17 @@ public class ScopeImpl implements Scope {
       }
 
       @Override
+      public void visitPyFunction(PyFunction node) {
+        for (PyParameter parameter : node.getParameterList().getParameters()) {
+          final PyExpression defaultValue = parameter.getDefaultValue();
+          if (defaultValue != null) {
+            defaultValue.accept(this);
+          }
+        }
+        super.visitPyFunction(node);
+      }
+
+      @Override
       public void visitPyElement(PyElement node) {
         if (node instanceof PsiNamedElement && !(node instanceof PyKeywordArgument)) {
           namedElements.put(node.getName(), (PsiNamedElement)node);
