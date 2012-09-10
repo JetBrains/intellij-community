@@ -99,7 +99,9 @@ def layoutAll(Map args, String home, String out, Paths _paths = null) {
   def layouts = includeFile("$home/build/scripts/layouts.gant")
   layouts.layoutFull(home, paths.distAll)
   layouts.layout_core(home, paths.artifacts_core)
+  notifyArtifactBuilt(paths.artifacts_core)
   layouts.layout_core_upsource(home, paths.artifacts_core_upsource)
+  notifyArtifactBuilt(paths.artifacts_core_upsource)
 
   layout(paths.distAll) {
     dir("bin") {
