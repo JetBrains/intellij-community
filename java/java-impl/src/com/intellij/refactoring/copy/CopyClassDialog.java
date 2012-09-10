@@ -115,7 +115,7 @@ class CopyClassDialog extends DialogWrapper{
     final boolean isMultipleSourceRoots = ProjectRootManager.getInstance(myProject).getContentSourceRoots().length > 1;
     myDestinationCB.setVisible(!myDoClone && isMultipleSourceRoots);
     label.setVisible(!myDoClone && isMultipleSourceRoots);
-
+    label.setLabelFor(myDestinationCB);
 
     return FormBuilder.createFormBuilder()
       .addComponent(myInformationLabel)

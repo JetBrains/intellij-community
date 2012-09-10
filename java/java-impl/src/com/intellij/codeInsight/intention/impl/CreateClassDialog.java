@@ -210,6 +210,7 @@ public class CreateClassDialog extends DialogWrapper {
     final boolean isMultipleSourceRoots = ProjectRootManager.getInstance(myProject).getContentSourceRoots().length > 1;
     myDestinationCB.setVisible(isMultipleSourceRoots);
     label.setVisible(isMultipleSourceRoots);
+    label.setLabelFor(myDestinationCB);
     return panel;
   }
 

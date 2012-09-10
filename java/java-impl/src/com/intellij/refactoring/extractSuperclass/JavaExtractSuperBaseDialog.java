@@ -74,8 +74,9 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
     if (sourceRoots.length <= 1) return super.createDestinationRootPanel();
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-    panel.add(new JBLabel(RefactoringBundle.message("target.destination.folder")), BorderLayout.NORTH);
-
+    final JBLabel label = new JBLabel(RefactoringBundle.message("target.destination.folder"));
+    panel.add(label, BorderLayout.NORTH);
+    label.setLabelFor(myDestinationFolderComboBox);
     myDestinationFolderComboBox.setData(myProject, myTargetDirectory, new Pass<String>() {
       @Override
       public void pass(String s) {
