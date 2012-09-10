@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -238,7 +239,13 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
   }
 
   private JPopupMenu fillMenu(boolean under) {
-    final JPopupMenu result = new JPopupMenu();
+    final JPopupMenu result = new JPopupMenu() {
+      @Override
+      public void paint(Graphics g) {
+        GraphicsUtil.setupAntialiasing(g);
+        super.paint(g);
+      }
+    };
 
     if (under && myOptions.length > 0) {
       final JMenuItem mainAction = new JMenuItem(getAction());

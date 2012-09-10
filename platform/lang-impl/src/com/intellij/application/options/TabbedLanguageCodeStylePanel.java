@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,7 +133,13 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   private void initCopyFromMenu() {
     if (myCopyFromMenu == null) {
-      myCopyFromMenu = new JPopupMenu();
+      myCopyFromMenu = new JPopupMenu() {
+        @Override
+        public void paint(Graphics g) {
+          GraphicsUtil.setupAntialiasing(g);
+          super.paint(g);
+        }
+      };
       setupCopyFromMenu(myCopyFromMenu);
     }
   }
