@@ -199,7 +199,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   protected static void assertNonCompileElement(PsiElement element) {
-    LOG.assertTrue(!(element instanceof PsiCompiledElement));
+    LOG.assertTrue(!(element instanceof PsiCompiledElement), element);
   }
 
   private boolean findRenamedVariables(final List<UsageInfo> variableUsages) {
