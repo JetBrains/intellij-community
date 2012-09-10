@@ -72,7 +72,7 @@ abstract class JpsRebuildTestCase extends JpsBuildTestCase {
 
   @Override
   protected String getTestDataRootPath() {
-    return PathManagerEx.getCommunityHomePath() + "/jps/jps-builders/testData/output"
+    return PathManagerEx.findFileUnderCommunityHome("jps/jps-builders/testData/output").absolutePath
   }
 
   def initFileSystemItem(TestFileSystemBuilder item, Closure initializer) {
