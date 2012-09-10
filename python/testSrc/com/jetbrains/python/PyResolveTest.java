@@ -7,6 +7,7 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 
@@ -482,5 +483,24 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testReferenceInDocstring() {
     assertResolvesTo(PyClass.class, "datetime");
+  }
+
+  // PY-7541
+  public void testLoopToUpperReassignment() {
+    final PsiReference ref = findReferenceByMarker();
+    final PsiElement source = ref.getElement();
+    final PsiElement target = ref.resolve();
+    assertNotNull(target);
+    assertTrue(source != target);
+    assertTrue(PyPsiUtils.isBefore(target, source));
+  }
+
+  // PY-7541
+  public void testLoopToLowerReassignment() {
+    final PsiReference ref = findReferenceByMarker();
+    final PsiElement source = ref.getElement();
+    final PsiElement target = ref.resolve();
+    assertNotNull(target);
+    assertTrue(source == target);
   }
 }

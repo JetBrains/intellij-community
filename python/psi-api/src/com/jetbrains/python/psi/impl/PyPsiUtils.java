@@ -373,6 +373,11 @@ public class PyPsiUtils {
     return expression instanceof PyStringLiteralExpression ? ((PyStringLiteralExpression)expression).getStringValue() : null;
   }
 
+  public static boolean isBefore(@NotNull final PsiElement element, @NotNull final PsiElement element2) {
+    // TODO: From RubyPsiUtil, should be moved to PsiTreeUtil
+    return element.getTextOffset() <= element2.getTextOffset();
+  }
+
   private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {
     public void visitPyElement(final PyElement node) {
       super.visitPyElement(node);

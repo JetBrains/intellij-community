@@ -227,6 +227,19 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           else if (owner == originalOwner && !scope.isGlobal(referencedName)) {
             final ResolveResultList latest = resolveToLatestDefs(owner, myElement, referencedName);
             if (!latest.isEmpty()) {
+              if (myElement instanceof PyTargetExpression) {
+                final RatedResolveResult result = latest.get(0);
+                final PsiElement element = result.getElement();
+                if (element instanceof PyTargetExpression) {
+                  if (PyPsiUtils.isBefore(element, myElement)) {
+                    return latest;
+                  }
+                  else {
+                    ret.poke(myElement, getRate(myElement));
+                    return ret;
+                  }
+                }
+              }
               return latest;
             }
             if (owner instanceof PyClass) {
