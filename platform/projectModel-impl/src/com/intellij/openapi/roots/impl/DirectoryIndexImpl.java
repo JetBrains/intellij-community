@@ -245,11 +245,11 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   }
 
   protected class IndexState {
-    final THashMap<VirtualFile, Set<String>> myExcludeRootsMap = new THashMap<VirtualFile, Set<String>>();
-    final Set<VirtualFile> myProjectExcludeRoots = new THashSet<VirtualFile>();
-    final Map<VirtualFile, DirectoryInfo> myDirToInfoMap = new THashMap<VirtualFile, DirectoryInfo>();
-    final THashMap<String, List<VirtualFile>> myPackageNameToDirsMap = new THashMap<String, List<VirtualFile>>();
-    final Map<VirtualFile, String> myDirToPackageName = new THashMap<VirtualFile, String>();
+    protected final THashMap<VirtualFile, Set<String>> myExcludeRootsMap = new THashMap<VirtualFile, Set<String>>();
+    protected final Set<VirtualFile> myProjectExcludeRoots = new THashSet<VirtualFile>();
+    protected final Map<VirtualFile, DirectoryInfo> myDirToInfoMap = new THashMap<VirtualFile, DirectoryInfo>();
+    protected final THashMap<String, List<VirtualFile>> myPackageNameToDirsMap = new THashMap<String, List<VirtualFile>>();
+    protected final Map<VirtualFile, String> myDirToPackageName = new THashMap<VirtualFile, String>();
 
     public IndexState() {
     }
