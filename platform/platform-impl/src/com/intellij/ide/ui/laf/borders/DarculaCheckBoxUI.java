@@ -109,10 +109,13 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
 
     if (b.getModel().isSelected()) {
       g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-      g.setPaint(Gray._200);
       g.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
-      g.drawLine(iconRect.x + 4, iconRect.y + 6, iconRect.x + 7, iconRect.y + 10);
-      g.drawLine(iconRect.x + 7, iconRect.y + 10, iconRect.x + iconRect.width + 1, iconRect.y -1);
+      g.setPaint(Gray._30);
+      g.drawLine(iconRect.x + 4, iconRect.y + 8, iconRect.x + 9, iconRect.y + 14);
+      g.drawLine(iconRect.x + 9, iconRect.y + 14, iconRect.x + iconRect.width, iconRect.y+2);
+      g.setPaint(Gray._200);
+      g.drawLine(iconRect.x + 4, iconRect.y + 6, iconRect.x + 9, iconRect.y + 12);
+      g.drawLine(iconRect.x + 9, iconRect.y + 12, iconRect.x + iconRect.width, iconRect.y);
     }
     config.restore();
     //icon.paintIcon(c, g, iconRect.x, iconRect.y);
