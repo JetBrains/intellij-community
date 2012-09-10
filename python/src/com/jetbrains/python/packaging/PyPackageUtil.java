@@ -30,7 +30,9 @@ import java.util.List;
  * @author vlan
  */
 public class PyPackageUtil {
-  public static final String[] SETUP_PY_REQUIRES_KWARGS_NAMES = new String[] {"requires", "install_requires", "setup_requires"};
+  public static final String[] SETUP_PY_REQUIRES_KWARGS_NAMES = new String[] {
+    "requires", "install_requires", "setup_requires", "tests_require"
+  };
 
   private PyPackageUtil() {
   }
