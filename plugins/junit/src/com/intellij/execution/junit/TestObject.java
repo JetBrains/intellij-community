@@ -288,6 +288,12 @@ public abstract class TestObject implements JavaCommandLine {
     handler.getErr().setPacketDispatcher(packetsReceiver, queue);
 
     handler.addProcessListener(new ProcessAdapter() {
+      private boolean myStarted = false;
+      @Override
+      public void startNotified(ProcessEvent event) {
+        myStarted = true;
+      }
+
       @Override
       public void processTerminated(ProcessEvent event) {
         handler.removeProcessListener(this);
@@ -304,7 +310,7 @@ public abstract class TestObject implements JavaCommandLine {
               unboundOutputRoot.flush();
               packetsReceiver.checkTerminated();
               final JUnitRunningModel model = packetsReceiver.getModel();
-              notifyByBalloon(model, consoleProperties);
+              notifyByBalloon(model, myStarted, consoleProperties);
             }
             finally {
               if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -355,8 +361,8 @@ public abstract class TestObject implements JavaCommandLine {
     return result;
   }
 
-  protected void notifyByBalloon(JUnitRunningModel model, JUnitConsoleProperties consoleProperties) {
-    TestsUIUtil.notifyByBalloon(myProject, model != null ? model.getRoot() : null, consoleProperties);
+  protected void notifyByBalloon(JUnitRunningModel model, boolean started, JUnitConsoleProperties consoleProperties) {
+    TestsUIUtil.notifyByBalloon(myProject, started, model != null ? model.getRoot() : null, consoleProperties);
   }
 
   protected JUnitProcessHandler createHandler(Executor executor) throws ExecutionException {

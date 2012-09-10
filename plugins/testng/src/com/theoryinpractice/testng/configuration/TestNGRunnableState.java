@@ -133,6 +133,8 @@ public class TestNGRunnableState extends JavaCommandLineState {
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(config, processHandler, runnerSettings);
     final SearchingForTestsTask task = createSearchingForTestsTask(myServerSocket, config, myTempFile);
     processHandler.addProcessListener(new ProcessAdapter() {
+      private boolean myStarted = false;
+      
       @Override
       public void processTerminated(final ProcessEvent event) {
         unboundOutputRoot.flush();
@@ -157,7 +159,13 @@ public class TestNGRunnableState extends JavaCommandLineState {
                                        : (resultsView.getStatus() == MessageHelper.FAILED_TEST
                                           ? MessageType.ERROR
                                           : MessageType.INFO);
-              final String message = resultsView == null ? "Tests were not started" : resultsView.getStatusLine();
+              final String message;
+              if (resultsView == null) {
+                message = myStarted ? "Tests were interrupted" : "Tests were not started";
+              }
+              else {
+                message = resultsView.getStatusLine();
+              }
               toolWindowManager.notifyByBalloon(testRunDebugId, type, message, null, null);
               TestsUIUtil.NOTIFICATION_GROUP.createNotification(message, type).notify(project);
             }
@@ -173,6 +181,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
           unboundOutputRoot.setOutputFilePath(config.getOutputFilePath());
         }
         client.prepareListening(listener, port);
+        myStarted = true;
         mySearchForTestIndicator = new BackgroundableProcessIndicator(task);
         ProgressManagerImpl.runProcessWithProgressAsynchronously(task, mySearchForTestIndicator);
       }

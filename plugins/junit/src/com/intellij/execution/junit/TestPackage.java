@@ -272,9 +272,9 @@ public class TestPackage extends TestObject {
   }
 
   @Override
-  protected void notifyByBalloon(JUnitRunningModel model, final JUnitConsoleProperties consoleProperties) {
+  protected void notifyByBalloon(JUnitRunningModel model, boolean started, final JUnitConsoleProperties consoleProperties) {
     if (myFoundTests) {
-      super.notifyByBalloon(model, consoleProperties);
+      super.notifyByBalloon(model, started, consoleProperties);
     }
     else {
       final String packageName = myConfiguration.getPackage();

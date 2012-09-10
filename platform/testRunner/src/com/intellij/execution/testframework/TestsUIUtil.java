@@ -96,7 +96,10 @@ public class TestsUIUtil {
     return null;
   }
 
-  public static void notifyByBalloon(@NotNull final Project project, final AbstractTestProxy root, final TestConsoleProperties properties) {
+  public static void notifyByBalloon(@NotNull final Project project,
+                                     boolean started,
+                                     final AbstractTestProxy root,
+                                     final TestConsoleProperties properties) {
     if (project.isDisposed()) return;
     if (properties == null) return;
 
@@ -107,7 +110,7 @@ public class TestsUIUtil {
     String text;
     String balloonText;
     MessageType type;
-    TestResultPresentation testResultPresentation = new TestResultPresentation(root).getPresentation();
+    TestResultPresentation testResultPresentation = new TestResultPresentation(root, started).getPresentation();
     type = testResultPresentation.getType();
     balloonText = testResultPresentation.getBalloonText();
     title = testResultPresentation.getTitle();
@@ -157,13 +160,19 @@ public class TestsUIUtil {
 
   private static class TestResultPresentation {
     private AbstractTestProxy myRoot;
+    private boolean myStarted;
     private String myTitle;
     private String myText;
     private String myBalloonText;
     private MessageType myType;
 
-    public TestResultPresentation(AbstractTestProxy root) {
+    public TestResultPresentation(AbstractTestProxy root, boolean started) {
       myRoot = root;
+      myStarted = started;
+    }
+
+    public TestResultPresentation(AbstractTestProxy root) {
+      this(root, true);
     }
 
     public String getTitle() {
@@ -184,7 +193,7 @@ public class TestsUIUtil {
 
     public TestResultPresentation getPresentation() {
       if (myRoot == null) {
-        myBalloonText = myTitle = ExecutionBundle.message("test.not.started.progress.text");
+        myBalloonText = myTitle = myStarted ? "Tests were interrupted" : ExecutionBundle.message("test.not.started.progress.text");
         myText = "";
         myType = MessageType.WARNING;
       } else{
