@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
@@ -23,7 +24,7 @@ import java.util.*;
  *         Date: 1/11/12
  */
 public class ModuleRootsIndex {
-  private final Map<File, RootDescriptor> myRootToDescriptorMap = new HashMap<File, RootDescriptor>();
+  private final THashMap<File, RootDescriptor> myRootToDescriptorMap = new THashMap<File, RootDescriptor>(FileUtil.FILE_HASHING_STRATEGY);
   private final Map<JpsModule, List<RootDescriptor>> myModuleToRootsMap = new HashMap<JpsModule, List<RootDescriptor>>();
   private final Map<String, JpsModule> myNameToModuleMap = new HashMap<String, JpsModule>();
   private final int myTotalModuleCount;
@@ -167,7 +168,7 @@ public class ModuleRootsIndex {
   public RootDescriptor associateRoot(@NotNull CompileContext context, File root, JpsModule module, boolean isTestRoot) {
     Map<File, RootDescriptor> rootToDescriptorMap = ROOT_DESCRIPTOR_MAP.get(context);
     if (rootToDescriptorMap == null) {
-      rootToDescriptorMap = new HashMap<File, RootDescriptor>();
+      rootToDescriptorMap = new THashMap<File, RootDescriptor>(FileUtil.FILE_HASHING_STRATEGY);
       ROOT_DESCRIPTOR_MAP.set(context, rootToDescriptorMap);
     }
 

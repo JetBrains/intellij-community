@@ -1,5 +1,7 @@
 package org.jetbrains.jps.incremental.java;
 
+import com.intellij.openapi.util.io.FileUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -19,8 +21,8 @@ import java.util.*;
 */
 class OutputFilesSink implements OutputFileConsumer {
   private final CompileContext myContextI;
-  private final Set<File> mySuccessfullyCompiled = new LinkedHashSet<File>();
-  private final Set<File> myProblematic = new HashSet<File>();
+  private final Set<File> mySuccessfullyCompiled = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+  private final Set<File> myProblematic = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
   private final List<OutputFileObject> myFileObjects = new ArrayList<OutputFileObject>();
   private final Map<String, OutputFileObject> myCompiledClasses = new HashMap<String, OutputFileObject>();
 
