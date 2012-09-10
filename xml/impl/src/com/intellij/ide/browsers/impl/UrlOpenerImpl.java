@@ -31,6 +31,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,39 +48,48 @@ public class UrlOpenerImpl extends UrlOpener {
   }
 
   public static void doLaunchBrowser(final BrowsersConfiguration.BrowserFamily family,
-                                     @NotNull String url,
+                                     @Nullable String url,
                                      @NotNull String[] additionalParameters,
                                      @NotNull Condition<String> browserSpecificParametersFilter,
                                      final boolean forceOpenNewInstanceOnMac) {
     final WebBrowserSettings settings = BrowsersConfiguration.getInstance().getBrowserSettings(family);
     final String path = settings.getPath();
-    String pathCheckResult = BrowsersConfiguration.checkPath(family, path);
-    if (pathCheckResult == null) {
-      try {
-        BrowserSpecificSettings specificSettings = settings.getBrowserSpecificSettings();
-        List<String> parameters = specificSettings == null
-                                  ? (additionalParameters.length == 0 ? Collections.<String>emptyList() : new ArrayList<String>())
-                                  : ContainerUtil.findAll(specificSettings.getAdditionalParameters(), browserSpecificParametersFilter);
-        Collections.addAll(parameters, additionalParameters);
-        launchBrowser(path, BrowserUtil.escapeUrl(url), forceOpenNewInstanceOnMac, parameters);
-      }
-      catch (IOException e) {
-        Messages.showErrorDialog(e.getMessage(), XmlBundle.message("browser.error"));
-      }
+    if (StringUtil.isEmpty(path)) {
+      Messages.showErrorDialog(XmlBundle.message("browser.path.not.specified", family.getName()), XmlBundle.message("browser.path.not.specified.title"));
+      return;
     }
-    else {
-      Messages.showErrorDialog(pathCheckResult, XmlBundle.message("browser.path.not.specified.title"));
+
+    try {
+      BrowserSpecificSettings specificSettings = settings.getBrowserSpecificSettings();
+      List<String> parameters = specificSettings == null
+                                ? (additionalParameters.length == 0 ? Collections.<String>emptyList() : new ArrayList<String>())
+                                : ContainerUtil.findAll(specificSettings.getAdditionalParameters(), browserSpecificParametersFilter);
+      Collections.addAll(parameters, additionalParameters);
+      launchBrowser(path, url == null ? null : BrowserUtil.escapeUrl(url), forceOpenNewInstanceOnMac, parameters);
+    }
+    catch (IOException e) {
+      Messages.showErrorDialog(e.getMessage(), XmlBundle.message("browser.error"));
     }
   }
 
-  private static void launchBrowser(String browserPath, String url, boolean forceOpenNewInstanceOnMac, List<String> browserArgs)
+  private static void launchBrowser(String browserPath, @Nullable String url, boolean forceOpenNewInstanceOnMac, List<String> browserArgs)
     throws IOException {
-    final List<String> command = BrowserUtil.getOpenBrowserCommand(browserPath);
+    List<String> command = BrowserUtil.getOpenBrowserCommand(browserPath);
+    addArgs(command, browserArgs, url, forceOpenNewInstanceOnMac);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Launching browser: " + StringUtil.join(browserArgs, " "));
+    }
+    new ProcessBuilder(command).start();
+  }
+
+  private static void addArgs(List<String> command, List<String> browserArgs, @Nullable String url, boolean forceOpenNewInstanceOnMac) {
     if (SystemInfo.isMac && ExecUtil.getOpenCommandPath().equals(command.get(0))) {
       if (forceOpenNewInstanceOnMac) {
         command.add("-n");
       }
-      command.add(url);
+      if (url != null) {
+        command.add(url);
+      }
 
       if (!browserArgs.isEmpty()) {
         if (BrowserUtil.isOpenCommandSupportArgs()) {
@@ -93,13 +103,10 @@ public class UrlOpenerImpl extends UrlOpener {
       }
     }
     else {
-      command.add(url);
+      if (url != null) {
+        command.add(url);
+      }
       command.addAll(browserArgs);
     }
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Launching browser: " + StringUtil.join(browserArgs, " "));
-    }
-    new ProcessBuilder(command).start();
   }
 }
