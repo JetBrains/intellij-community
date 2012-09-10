@@ -90,7 +90,7 @@ public class DfaValueFactory {
 
         PsiVariable psiVariable = resolveVariable((PsiReferenceExpression)psiExpression);
         if (psiVariable != null) {
-          result = getVarFactory().create(psiVariable, false);
+          result = getVarFactory().createVariableValue(psiVariable, false);
         }
       }
     }

@@ -28,6 +28,7 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,15 +41,17 @@ public class MethodCallInstruction extends Instruction {
   private boolean myShouldFlushFields;
   @NotNull private final PsiExpression myContext;
   private final MethodType myMethodType;
+  @Nullable private DfaValue myPrecalculatedReturnValue;
   public static enum MethodType {
     BOXING, UNBOXING, REGULAR_METHOD_CALL, CAST
   }
 
-  public MethodCallInstruction(@NotNull PsiCallExpression callExpression) {
+  public MethodCallInstruction(@NotNull PsiCallExpression callExpression, @Nullable DfaValue precalculatedReturnValue) {
     this(callExpression, MethodType.REGULAR_METHOD_CALL);
+    myPrecalculatedReturnValue = precalculatedReturnValue;
   }
 
-  public MethodCallInstruction(@NotNull PsiExpression context, MethodType methodType, PsiType resultType) {
+  public MethodCallInstruction(@NotNull PsiExpression context, MethodType methodType, @Nullable PsiType resultType) {
     this(context, methodType);
     myType = resultType;
     myShouldFlushFields = false;
@@ -100,6 +103,11 @@ public class MethodCallInstruction extends Instruction {
   @NotNull
   public PsiExpression getContext() {
     return myContext;
+  }
+
+  @Nullable
+  public DfaValue getPrecalculatedReturnValue() {
+    return myPrecalculatedReturnValue;
   }
 
   public String toString() {

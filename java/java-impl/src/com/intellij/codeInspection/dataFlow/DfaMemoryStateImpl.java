@@ -741,16 +741,23 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return;
     }
 
-    doFlush(variable);
+    flushWithDependencies(variable);
   }
 
   @Override
   public void flushVariableOutOfScope(DfaVariableValue variable) {
+    flushWithDependencies(variable);
+  }
+
+  private void flushWithDependencies(DfaVariableValue variable) {
     doFlush(variable);
+    for (DfaVariableValue dependent : myFactory.getVarFactory().getAllQualifiedBy(variable)) {
+      doFlush(dependent);
+    }
   }
 
   private void doFlush(DfaVariableValue varPlain) {
-    DfaVariableValue varNegated = (DfaVariableValue)varPlain.createNegated();
+    DfaVariableValue varNegated = varPlain.createNegated();
 
     final int idPlain = varPlain.getID();
     final int idNegated = varNegated.getID();

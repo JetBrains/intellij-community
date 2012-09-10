@@ -26,15 +26,18 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.psi.PsiVariable;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class DfaVariableValue extends DfaValue {
   public static class Factory {
     private final DfaVariableValue mySharedInstance;
     private final HashMap<String,ArrayList<DfaVariableValue>> myStringToObject;
     private final DfaValueFactory myFactory;
+    private final MultiMap<DfaVariableValue, DfaVariableValue> myQualifiersToChainedVariables = new MultiMap<DfaVariableValue, DfaVariableValue>();
 
     Factory(DfaValueFactory factory) {
       myFactory = factory;
@@ -42,9 +45,13 @@ public class DfaVariableValue extends DfaValue {
       myStringToObject = new HashMap<String, ArrayList<DfaVariableValue>>();
     }
 
-    public DfaVariableValue create(PsiVariable myVariable, boolean isNegated) {
+    public DfaVariableValue createVariableValue(PsiVariable myVariable, boolean isNegated) {
+      return createVariableValue(myVariable, isNegated, null);
+    }
+    public DfaVariableValue createVariableValue(PsiVariable myVariable, boolean isNegated, @Nullable DfaVariableValue qualifier) {
       mySharedInstance.myVariable = myVariable;
       mySharedInstance.myIsNegated = isNegated;
+      mySharedInstance.myQualifier = qualifier;
 
       String id = mySharedInstance.toString();
       ArrayList<DfaVariableValue> conditions = myStringToObject.get(id);
@@ -58,19 +65,34 @@ public class DfaVariableValue extends DfaValue {
         }
       }
 
-      DfaVariableValue result = new DfaVariableValue(myVariable, isNegated, myFactory);
+      DfaVariableValue result = new DfaVariableValue(myVariable, isNegated, myFactory, qualifier);
+      if (qualifier != null) {
+        myQualifiersToChainedVariables.putValue(qualifier, result);
+      }
       conditions.add(result);
       return result;
     }
+
+    public List<DfaVariableValue> getAllQualifiedBy(DfaVariableValue value) {
+      ArrayList<DfaVariableValue> result = new ArrayList<DfaVariableValue>();
+      for (DfaVariableValue directQualified : myQualifiersToChainedVariables.get(value)) {
+        result.add(directQualified);
+        result.addAll(getAllQualifiedBy(directQualified));
+      }
+      return result;
+    }
+
   }
 
   private PsiVariable myVariable;
+  @Nullable private DfaVariableValue myQualifier;
   private boolean myIsNegated;
 
-  private DfaVariableValue(PsiVariable variable, boolean isNegated, DfaValueFactory factory) {
+  private DfaVariableValue(PsiVariable variable, boolean isNegated, DfaValueFactory factory, @Nullable DfaVariableValue qualifier) {
     super(factory);
     myVariable = variable;
     myIsNegated = isNegated;
+    myQualifier = qualifier;
   }
 
   private DfaVariableValue(DfaValueFactory factory) {
@@ -88,17 +110,24 @@ public class DfaVariableValue extends DfaValue {
     return myIsNegated;
   }
 
-  public DfaValue createNegated() {
-    return myFactory.getVarFactory().create(getPsiVariable(), !myIsNegated);
+  public DfaVariableValue createNegated() {
+    return myFactory.getVarFactory().createVariableValue(myVariable, !myIsNegated, myQualifier);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     if (myVariable == null) return "$currentException";
-    return (myIsNegated ? "!" : "") + myVariable.getName();
+    return (myIsNegated ? "!" : "") + myVariable.getName() + (myQualifier == null ? "" : "|" + myQualifier.toString());
   }
 
   private boolean hardEquals(DfaVariableValue aVar) {
-    return aVar.myVariable == myVariable && aVar.myIsNegated == myIsNegated;
+    return aVar.myVariable == myVariable &&
+           aVar.myIsNegated == myIsNegated &&
+           (myQualifier == null ? aVar.myQualifier == null : myQualifier.hardEquals(aVar.myQualifier));
+  }
+
+  @Nullable
+  public DfaVariableValue getQualifier() {
+    return myQualifier;
   }
 }

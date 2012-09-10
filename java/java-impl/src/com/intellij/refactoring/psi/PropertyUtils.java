@@ -52,84 +52,68 @@ public class PropertyUtils {
    */
   @Nullable
   public static PsiExpression getGetterReturnExpression(PsiMethod method) {
-    if (method == null) {
-      return null;
-    }
-    final PsiParameterList parameterList = method.getParameterList();
-    if (parameterList.getParametersCount() != 0) {
-      return null;
-    }
-    @NonNls final String name = method.getName();
-    if (!name.startsWith("get") && !name.startsWith("is")) {
-      return null;
-    }
-    if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-      return null;
-    }
+    return method != null && hasGetterSignature(method) ? getSingleReturnValue(method) : null;
+  }
+
+  private static boolean hasGetterSignature(@NotNull PsiMethod method) {
+    return PropertyUtil.isSimplePropertyGetter(method) && !method.hasModifierProperty(PsiModifier.SYNCHRONIZED);
+  }
+
+  @Nullable
+  public static PsiExpression getSingleReturnValue(@NotNull PsiMethod method) {
     final PsiCodeBlock body = method.getBody();
     if (body == null) {
       return null;
     }
     final PsiStatement[] statements = body.getStatements();
-    if (statements.length != 1) {
-      return null;
-    }
-    final PsiStatement statement = statements[0];
-    if (!(statement instanceof PsiReturnStatement)) {
-      return null;
-    }
-    final PsiReturnStatement returnStatement =
-      (PsiReturnStatement)statement;
-    final PsiExpression value = returnStatement.getReturnValue();
-    if (value == null) {
-      return null;
-    }
-    return value;
+    final PsiStatement statement = statements.length != 1 ? null : statements[0];
+    return statement instanceof PsiReturnStatement ? ((PsiReturnStatement)statement).getReturnValue() : null;
   }
 
   @Nullable
   public static PsiField getFieldOfGetter(PsiMethod method) {
-    final PsiExpression value = getGetterReturnExpression(method);
-    if (value == null) return null;
+    PsiField field = getSimplyReturnedField(method, getGetterReturnExpression(method));
+    if (field != null) {
+      final PsiType returnType = method.getReturnType();
+      if (returnType != null && field.getType().equalsToText(returnType.getCanonicalText())) {
+        return field;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiField getSimplyReturnedField(PsiMethod method, @Nullable PsiExpression value) {
     if (!(value instanceof PsiReferenceExpression)) {
       return null;
     }
+
     final PsiReferenceExpression reference = (PsiReferenceExpression)value;
-    final PsiExpression qualifier = reference.getQualifierExpression();
-    if (qualifier instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
-      final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiClass)) {
-        return null;
-      }
-    }
-    else if (qualifier != null && !(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression)) {
+    if (hasSubstantialQualifier(reference)) {
       return null;
     }
+
     final PsiElement referent = reference.resolve();
-    if (referent == null) {
-      return null;
-    }
     if (!(referent instanceof PsiField)) {
       return null;
     }
+
     final PsiField field = (PsiField)referent;
-    final PsiType fieldType = field.getType();
-    final PsiType returnType = method.getReturnType();
-    if (returnType == null) {
-      return null;
+    return InheritanceUtil.isInheritorOrSelf(method.getContainingClass(), field.getContainingClass(), true) ? field : null;
+  }
+
+  private static boolean hasSubstantialQualifier(PsiReferenceExpression reference) {
+    final PsiExpression qualifier = reference.getQualifierExpression();
+    if (qualifier == null) return false;
+
+    if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
+      return false;
     }
-    if (!fieldType.equalsToText(returnType.getCanonicalText())) {
-      return null;
+
+    if (qualifier instanceof PsiReferenceExpression) {
+      return !(((PsiReferenceExpression)qualifier).resolve() instanceof PsiClass);
     }
-    final PsiClass fieldContainingClass = field.getContainingClass();
-    final PsiClass methodContainingClass = method.getContainingClass();
-    if (InheritanceUtil.isInheritorOrSelf(methodContainingClass, fieldContainingClass, true)) {
-      return field;
-    }
-    else {
-      return null;
-    }
+    return true;
   }
 
   public static boolean isSimpleGetter(PsiMethod method) {

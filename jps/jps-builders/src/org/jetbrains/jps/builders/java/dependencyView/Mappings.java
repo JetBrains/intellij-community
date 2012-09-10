@@ -5,14 +5,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.IntInlineKeyDescriptor;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntIntProcedure;
-import gnu.trove.TIntObjectProcedure;
-import gnu.trove.TIntProcedure;
+import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.asm4.Opcodes;
+import org.jetbrains.jps.incremental.storage.FileKeyDescriptor;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -36,8 +34,6 @@ public class Mappings {
   private final static String CLASS_TO_SUBCLASSES = "classToSubclasses.tab";
   private final static String CLASS_TO_CLASS = "classToClass.tab";
   private final static String SOURCE_TO_CLASS = "sourceToClass.tab";
-  private final static String SOURCE_TO_ANNOTATIONS = "sourceToAnnotations.tab";
-  private final static String SOURCE_TO_USAGES = "sourceToUsages.tab";
   private final static String CLASS_TO_SOURCE = "classToSource.tab";
   private static final IntInlineKeyDescriptor INT_KEY_DESCRIPTOR = new IntInlineKeyDescriptor();
   private static final int DEFAULT_SET_CAPACITY = 32;
@@ -54,7 +50,7 @@ public class Mappings {
   private boolean myIsRebuild = false;
 
   private final TIntHashSet myChangedClasses;
-  private final TIntHashSet myChangedFiles;
+  private final THashSet<File> myChangedFiles;
   private final Set<ClassRepr> myDeletedClasses;
   private final Object myLock;
   private final File myRootDir;
@@ -66,8 +62,8 @@ public class Mappings {
 
   private IntIntMultiMaplet myClassToSubclasses;
   private IntIntMultiMaplet myClassToClassDependency;
-  private IntObjectMultiMaplet<ClassRepr> mySourceFileToClasses;
-  private IntIntMaplet myClassToSourceFile;
+  private ObjectObjectMultiMaplet<File, ClassRepr> mySourceFileToClasses;
+  private IntObjectMaplet<File> myClassToSourceFile;
 
   private IntIntTransientMultiMaplet myRemovedSuperClasses;
   private IntIntTransientMultiMaplet myAddedSuperClasses;
@@ -79,7 +75,7 @@ public class Mappings {
     myLock = base.myLock;
     myIsDelta = true;
     myChangedClasses = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
-    myChangedFiles = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
+    myChangedFiles = new THashSet(FileUtil.FILE_HASHING_STRATEGY);
     myDeletedClasses = new HashSet<ClassRepr>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myDeltaIsTransient = base.myDeltaIsTransient;
     myRootDir = new File(FileUtil.toSystemIndependentName(base.myRootDir.getAbsolutePath()) + File.separatorChar + "myDelta");
@@ -115,8 +111,8 @@ public class Mappings {
     if (myIsDelta && myDeltaIsTransient) {
       myClassToSubclasses = new IntIntTransientMultiMaplet();
       myClassToClassDependency = new IntIntTransientMultiMaplet();
-      mySourceFileToClasses = new IntObjectTransientMultiMaplet<ClassRepr>(ourClassSetConstructor);
-      myClassToSourceFile = new IntIntTransientMaplet();
+      mySourceFileToClasses = new ObjectObjectTransientMultiMaplet<File, ClassRepr>(FileUtil.FILE_HASHING_STRATEGY, ourClassSetConstructor);
+      myClassToSourceFile = new IntObjectTransientMaplet<File>();
     }
     else {
       if (myIsDelta) {
@@ -124,11 +120,11 @@ public class Mappings {
       }
       myClassToSubclasses = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_SUBCLASSES), INT_KEY_DESCRIPTOR);
       myClassToClassDependency = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_CLASS), INT_KEY_DESCRIPTOR);
-      mySourceFileToClasses = new IntObjectPersistentMultiMaplet<ClassRepr>(
-        DependencyContext.getTableFile(myRootDir, SOURCE_TO_CLASS), INT_KEY_DESCRIPTOR, ClassRepr.externalizer(myContext),
+      mySourceFileToClasses = new ObjectObjectPersistentMultiMaplet<File, ClassRepr>(
+        DependencyContext.getTableFile(myRootDir, SOURCE_TO_CLASS), new FileKeyDescriptor(), ClassRepr.externalizer(myContext),
         ourClassSetConstructor
       );
-      myClassToSourceFile = new IntIntPersistentMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_SOURCE), INT_KEY_DESCRIPTOR);
+      myClassToSourceFile = new IntObjectPersistentMaplet<File>(DependencyContext.getTableFile(myRootDir, CLASS_TO_SOURCE), new FileKeyDescriptor());
     }
   }
 
@@ -146,9 +142,8 @@ public class Mappings {
   private void compensateRemovedContent(final Collection<File> compiled) {
     if (compiled != null) {
       for (final File file : compiled) {
-        final int fileName = myContext.getFilePath(file.getPath());
-        if (!mySourceFileToClasses.containsKey(fileName)) {
-          mySourceFileToClasses.put(fileName, new HashSet<ClassRepr>());
+        if (!mySourceFileToClasses.containsKey(file)) {
+          mySourceFileToClasses.put(file, new HashSet<ClassRepr>());
         }
       }
     }
@@ -156,9 +151,9 @@ public class Mappings {
 
   @Nullable
   private ClassRepr getReprByName(final int name) {
-    final int source = myClassToSourceFile.get(name);
+    final File source = myClassToSourceFile.get(name);
 
-    if (source > 0) {
+    if (source != null) {
       final Collection<ClassRepr> reprs = mySourceFileToClasses.get(source);
 
       if (reprs != null) {
@@ -493,8 +488,8 @@ public class Mappings {
     private void affectSubclasses(final int className, final Collection<File> affectedFiles, final Collection<UsageRepr.Usage> affectedUsages, final TIntHashSet dependants, final boolean usages) {
       debug("Affecting subclasses of class: ", className);
 
-      final int fileName = myClassToSourceFile.get(className);
-      if (fileName <= 0) {
+      final File fileName = myClassToSourceFile.get(className);
+      if (fileName == null) {
         debug("No source file detected for class ", className);
         debug("End of affectSubclasses");
         return;
@@ -516,7 +511,7 @@ public class Mappings {
       if (depClasses != null) {
         addAll(dependants, depClasses);
       }
-      affectedFiles.add(new File(myContext.getValue(fileName)));
+      affectedFiles.add(fileName);
 
       final TIntHashSet directSubclasses = myClassToSubclasses.get(className);
       if (directSubclasses != null) {
@@ -631,18 +626,17 @@ public class Mappings {
   }
 
   private void affectAll(final int className, final Collection<File> affectedFiles, @Nullable final DependentFilesFilter filter) {
-    final int sourceFile = myClassToSourceFile.get(className);
-    if (sourceFile > 0) {
+    final File sourceFile = myClassToSourceFile.get(className);
+    if (sourceFile != null) {
       final TIntHashSet dependants = myClassToClassDependency.get(className);
       if (dependants != null) {
         dependants.forEach(new TIntProcedure() {
           @Override
           public boolean execute(int depClass) {
-            final int depFile = myClassToSourceFile.get(depClass);
-            if (depFile > 0 && depFile != sourceFile) {
-              final File theFile = new File(myContext.getValue(depFile));
-              if (filter == null || filter.accept(theFile)) {
-                affectedFiles.add(theFile);
+            final File depFile = myClassToSourceFile.get(depClass);
+            if (depFile != null && !FileUtil.filesEqual(depFile, sourceFile)) {
+              if (filter == null || filter.accept(depFile)) {
+                affectedFiles.add(depFile);
               }
             }
             return true;
@@ -702,23 +696,14 @@ public class Mappings {
       debug("Root class: ", owner);
 
       final TIntHashSet propagated = self.propagateFieldAccess(isField ? member.name : myEmptyName, owner);
-      final TIntHashSet fileNames = new TIntHashSet(propagated.size());
       propagated.forEach(new TIntProcedure() {
         @Override
         public boolean execute(int className) {
-          final int fileName = myClassToSourceFile.get(className);
-          if (fileName > 0) {
-            fileNames.add(fileName);
+          final File fileName = myClassToSourceFile.get(className);
+          if (fileName != null) {
+            debug("Adding ", fileName);
+            affectedFiles.add(fileName);
           }
-          return true;
-        }
-      });
-      fileNames.forEach(new TIntProcedure() {
-        @Override
-        public boolean execute(int file) {
-          final String fileName = myContext.getValue(file);
-          debug("Adding ", fileName);
-          affectedFiles.add(new File(fileName));
           return true;
         }
       });
@@ -730,24 +715,14 @@ public class Mappings {
     debug("Package name: ", packageName);
 
     // Package-local branch
-    final TIntHashSet fileNames = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
-    myClassToSourceFile.forEachEntry(new TIntIntProcedure() {
+    myClassToSourceFile.forEachEntry(new TIntObjectProcedure<File>() {
       @Override
-      public boolean execute(int className, int fileName) {
+      public boolean execute(int className, File fileName) {
         if (ClassRepr.getPackageName(myContext.getValue(className)).equals(packageName)) {
-          fileNames.add(fileName);
-        }
-        return true;
-      }
-    });
-    fileNames.forEach(new TIntProcedure() {
-      @Override
-      public boolean execute(int fileName) {
-        final String f = myContext.getValue(fileName);
-        final File file = new File(f);
-        if (filter == null || filter.accept(file)) {
-          debug("Adding: ", f);
-          affectedFiles.add(file);
+          if (filter == null || filter.accept(fileName)) {
+            debug("Adding: ", fileName);
+            affectedFiles.add(fileName);
+          }
         }
         return true;
       }
@@ -859,10 +834,10 @@ public class Mappings {
     }
 
     private class FileClasses {
-      final int myFileName;
+      final File myFileName;
       final Set<ClassRepr> myFileClasses;
 
-      FileClasses(int fileName, Collection<ClassRepr> fileClasses) {
+      FileClasses(File fileName, Collection<ClassRepr> fileClasses) {
         this.myFileName = fileName;
         this.myFileClasses = new HashSet<ClassRepr>(fileClasses);
       }
@@ -949,7 +924,7 @@ public class Mappings {
 
         if (removed != null) {
           for (final String file : removed) {
-            final Collection<ClassRepr> classes = mySourceFileToClasses.get(myContext.getFilePath(file));
+            final Collection<ClassRepr> classes = mySourceFileToClasses.get(new File(file));
 
             if (classes != null) {
               for (ClassRepr c : classes) {
@@ -972,7 +947,6 @@ public class Mappings {
         debug("Class is annotation, skipping method analysis");
         return;
       }
-      final TIntHashSet affectedFiles = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
       Ref<ClassRepr> oldItRef = null;
       for (final MethodRepr m : added) {
         debug("Method: ", m.name);
@@ -1037,10 +1011,10 @@ public class Mappings {
             if (overrides.satisfy(method) && isInheritor) {
               debug("Current method overrides that found");
 
-              final int file = myClassToSourceFile.get(methodClass.name);
+              final File file = myClassToSourceFile.get(methodClass.name);
 
-              if (file > 0) {
-                affectedFiles.add(file);
+              if (file != null) {
+                myAffectedFiles.add(file);
                 debug("Affecting file ", file);
               }
             }
@@ -1074,11 +1048,11 @@ public class Mappings {
               public boolean execute(int subClass) {
                 final ClassRepr r = myFuture.reprByName(subClass);
                 if (r != null) {
-                  final int sourceFileName = myClassToSourceFile.get(subClass);
-                  if (sourceFileName > 0) {
+                  final File sourceFileName = myClassToSourceFile.get(subClass);
+                  if (sourceFileName != null) {
                     final int outerClass = r.getOuterClassName();
                     if (myFuture.isMethodVisible(outerClass, m)) {
-                      affectedFiles.add(sourceFileName);
+                      myAffectedFiles.add(sourceFileName);
                       debug("Affecting file due to local overriding: ", sourceFileName);
                     }
                   }
@@ -1089,13 +1063,6 @@ public class Mappings {
           }
         }
       }
-      affectedFiles.forEach(new TIntProcedure() {
-        @Override
-        public boolean execute(int file) {
-          myAffectedFiles.add(new File(myContext.getValue(file)));
-          return true;
-        }
-      });
       debug("End of added methods processing");
     }
 
@@ -1105,7 +1072,6 @@ public class Mappings {
         return;
       }
       debug("Processing removed methods:");
-      final TIntHashSet affectedFiles = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
       for (final MethodRepr m : removed) {
         debug("Method ", m.name);
 
@@ -1140,8 +1106,8 @@ public class Mappings {
         myFuture.addOverridingMethods(m, it, MethodRepr.equalByJavaRules(m), overridingMethods);
 
         for (final Pair<MethodRepr, ClassRepr> p : overridingMethods) {
-          final int fName = myClassToSourceFile.get(p.second.name);
-          affectedFiles.add(fName);
+          final File fName = myClassToSourceFile.get(p.second.name);
+          myAffectedFiles.add(fName);
           debug("Affecting file by overriding: ", fName);
         }
 
@@ -1181,10 +1147,10 @@ public class Mappings {
                   }
 
                   if (allAbstract && visited) {
-                    final int source = myClassToSourceFile.get(p);
+                    final File source = myClassToSourceFile.get(p);
 
-                    if (source > 0) {
-                      affectedFiles.add(source);
+                    if (source != null) {
+                      myAffectedFiles.add(source);
                       debug("Removed method is not abstract & overrides some abstract method which is not then over-overriden in subclass ", p);
                       debug("Affecting subclass source file ", source);
                     }
@@ -1196,14 +1162,6 @@ public class Mappings {
           });
         }
       }
-      affectedFiles.forEach(new TIntProcedure() {
-        @Override
-        public boolean execute(int file) {
-          final String f = myContext.getValue(file);
-          myAffectedFiles.add(new File(f));
-          return true;
-        }
-      });
       debug("End of removed methods processing");
     }
 
@@ -1264,10 +1222,9 @@ public class Mappings {
                 final ClassRepr aClass = p.getSecond();
 
                 if (aClass != MOCK_CLASS) {
-                  final int fileName = myClassToSourceFile.get(aClass.name);
-
-                  if (fileName > 0) {
-                    myAffectedFiles.add(new File(myContext.getValue(fileName)));
+                  final File fileName = myClassToSourceFile.get(aClass.name);
+                  if (fileName != null) {
+                    myAffectedFiles.add(fileName);
                   }
                 }
               }
@@ -1340,17 +1297,17 @@ public class Mappings {
             public boolean execute(int subClass) {
               final ClassRepr r = myFuture.reprByName(subClass);
               if (r != null) {
-                final int sourceFileName = myClassToSourceFile.get(subClass);
-                if (sourceFileName > 0) {
+                final File sourceFileName = myClassToSourceFile.get(subClass);
+                if (sourceFileName != null) {
                   if (r.isLocal()) {
                     debug("Affecting local subclass (introduced field can potentially hide surrounding method parameters/local variables): ", sourceFileName);
-                    myAffectedFiles.add(new File(myContext.getValue(sourceFileName)));
+                    myAffectedFiles.add(sourceFileName);
                   }
                   else {
                     final int outerClass = r.getOuterClassName();
                     if (!isEmpty(outerClass) && myFuture.isFieldVisible(outerClass, f)) {
                       debug("Affecting inner subclass (introduced field can potentially hide surrounding class fields): ", sourceFileName);
-                      myAffectedFiles.add(new File(myContext.getValue(sourceFileName)));
+                      myAffectedFiles.add(sourceFileName);
                     }
                   }
                 }
@@ -1706,9 +1663,9 @@ public class Mappings {
       for (final ClassRepr c : removed) {
         myDelta.addDeletedClass(c);
 
-        final int fileName = myClassToSourceFile.get(c.name);
+        final File fileName = myClassToSourceFile.get(c.name);
 
-        if (fileName > 0) {
+        if (fileName != null) {
           myDelta.myChangedFiles.add(fileName);
         }
 
@@ -1740,25 +1697,15 @@ public class Mappings {
           final TIntHashSet depClasses = myClassToClassDependency.get(c.name);
 
           if (depClasses != null) {
-            final TIntHashSet fileNames = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
             depClasses.forEach(new TIntProcedure() {
               @Override
               public boolean execute(int depClass) {
-                final int fName = myClassToSourceFile.get(depClass);
-                if (fName > 0) {
-                  fileNames.add(fName);
-                }
-                return true;
-              }
-            });
-            fileNames.forEach(new TIntProcedure() {
-              @Override
-              public boolean execute(int fName) {
-                final String f = myContext.getValue(fName);
-                final File theFile = new File(f);
-                if (myFilter == null || myFilter.accept(theFile)) {
-                  debug("Adding dependent file ", f);
-                  myAffectedFiles.add(theFile);
+                final File fName = myClassToSourceFile.get(depClass);
+                if (fName != null) {
+                  if (myFilter == null || myFilter.accept(fName)) {
+                    debug("Adding dependent file ", fName);
+                    myAffectedFiles.add(fName);
+                  }
                 }
                 return true;
               }
@@ -1776,12 +1723,11 @@ public class Mappings {
       state.myDependants.forEach(new TIntProcedure() {
         @Override
         public boolean execute(final int depClass) {
-          final int depFile = myClassToSourceFile.get(depClass);
+          final File depFile = myClassToSourceFile.get(depClass);
 
-          if (depFile > 0) {
-            final File theFile = new File(myContext.getValue(depFile));
+          if (depFile != null) {
 
-            if (myAffectedFiles.contains(theFile) || myCompiledFiles.contains(theFile)) {
+            if (myAffectedFiles.contains(depFile) || myCompiledFiles.contains(depFile)) {
               return true;
             }
 
@@ -1804,7 +1750,7 @@ public class Mappings {
                 for (final UsageRepr.AnnotationUsage query : state.myAnnotationQuery) {
                   if (query.satisfies(usage)) {
                     debug("Added file due to annotation query");
-                    myAffectedFiles.add(theFile);
+                    myAffectedFiles.add(depFile);
 
                     return true;
                   }
@@ -1815,14 +1761,14 @@ public class Mappings {
 
                 if (constraint == null) {
                   debug("Added file with no constraints");
-                  myAffectedFiles.add(theFile);
+                  myAffectedFiles.add(depFile);
 
                   return true;
                 }
                 else {
                   if (constraint.checkResidence(depClass)) {
                     debug("Added file with satisfied constraint");
-                    myAffectedFiles.add(theFile);
+                    myAffectedFiles.add(depFile);
 
                     return true;
                   }
@@ -1850,16 +1796,16 @@ public class Mappings {
         processDisappearedClasses();
 
         final List<FileClasses> newClasses = new ArrayList<FileClasses>();
-        myDelta.mySourceFileToClasses.forEachEntry(new TIntObjectProcedure<Collection<ClassRepr>>() {
+        myDelta.mySourceFileToClasses.forEachEntry(new TObjectObjectProcedure<File, Collection<ClassRepr>>() {
           @Override
-          public boolean execute(int fileName, Collection<ClassRepr> classes) {
+          public boolean execute(File fileName, Collection<ClassRepr> classes) {
             newClasses.add(new FileClasses(fileName, classes));
             return true;
           }
         });
 
         for (final FileClasses compiledFile : newClasses) {
-          final int fileName = compiledFile.myFileName;
+          final File fileName = compiledFile.myFileName;
           final Set<ClassRepr> classes = compiledFile.myFileClasses;
           final Set<ClassRepr> pastClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
           final DiffState state = new DiffState(Difference.make(pastClasses, classes));
@@ -1965,7 +1911,7 @@ public class Mappings {
 
         if (removed != null) {
           for (final String file : removed) {
-            final int fileName = myContext.getFilePath(file);
+            final File fileName = new File(file);
             final Set<ClassRepr> fileClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
 
             if (fileClasses != null) {
@@ -2019,8 +1965,8 @@ public class Mappings {
           delta.getChangedClasses().forEach(new TIntProcedure() {
             @Override
             public boolean execute(final int className) {
-              final int sourceFile = delta.myClassToSourceFile.get(className);
-              if (sourceFile > 0) {
+              final File sourceFile = delta.myClassToSourceFile.get(className);
+              if (sourceFile != null) {
                 myClassToSourceFile.put(className, sourceFile);
               }
               else {
@@ -2033,9 +1979,9 @@ public class Mappings {
             }
           });
 
-          delta.getChangedFiles().forEach(new TIntProcedure() {
+          delta.getChangedFiles().forEach(new TObjectProcedure<File>() {
             @Override
-            public boolean execute(final int fileName) {
+            public boolean execute(final File fileName) {
               final Collection<ClassRepr> classes = delta.mySourceFileToClasses.get(fileName);
               mySourceFileToClasses.replace(fileName, classes);
               return true;
@@ -2101,16 +2047,16 @@ public class Mappings {
     return new Callbacks.Backend() {
       public void associate(final String classFileName, final String sourceFileName, final ClassReader cr) {
         synchronized (myLock) {
-          final int classFileNameS = myContext.getFilePath(classFileName);
+          final int classFileNameS = myContext.get(classFileName);
           final Pair<ClassRepr, Set<UsageRepr.Usage>> result = new ClassfileAnalyzer(myContext).analyze(classFileNameS, cr);
           final ClassRepr repr = result.first;
           if (repr != null) {
             final Set<UsageRepr.Usage> localUsages = result.second;
-            final int sourceFileNameS = myContext.getFilePath(sourceFileName);
+            final File sourceFile = new File(sourceFileName);
             final int className = repr.name;
 
-            myClassToSourceFile.put(className, sourceFileNameS);
-            mySourceFileToClasses.put(sourceFileNameS, repr);
+            myClassToSourceFile.put(className, sourceFile);
+            mySourceFileToClasses.put(sourceFile, repr);
 
             for (final int s : repr.getSupers()) {
               myClassToSubclasses.put(s, className);
@@ -2148,8 +2094,8 @@ public class Mappings {
           myPostPasses.offer(new Runnable() {
             public void run() {
               final int rootClassName = myContext.get(className.replace(".", "/"));
-              final int fileName = myClassToSourceFile.get(rootClassName);
-              final ClassRepr repr = fileName > 0? getReprByName(rootClassName) : null;
+              final File fileName = myClassToSourceFile.get(rootClassName);
+              final ClassRepr repr = fileName != null? getReprByName(rootClassName) : null;
 
               for (final String i : allImports) {
                 final int iname = myContext.get(i.replace(".", "/"));
@@ -2168,7 +2114,7 @@ public class Mappings {
   @Nullable
   public Set<ClassRepr> getClasses(final String sourceFileName) {
     synchronized (myLock) {
-      return (Set<ClassRepr>)mySourceFileToClasses.get(myContext.getFilePath(sourceFileName));
+      return (Set<ClassRepr>)mySourceFileToClasses.get(new File(sourceFileName));
     }
   }
 
@@ -2272,9 +2218,9 @@ public class Mappings {
     assert (myChangedClasses != null && myChangedFiles != null);
     myChangedClasses.add(it);
 
-    final int file = myClassToSourceFile.get(it);
+    final File file = myClassToSourceFile.get(it);
 
-    if (file > 0) {
+    if (file != null) {
       myChangedFiles.add(file);
     }
   }
@@ -2288,7 +2234,7 @@ public class Mappings {
     return myChangedClasses;
   }
 
-  private TIntHashSet getChangedFiles() {
+  private THashSet<File> getChangedFiles() {
     return myChangedFiles;
   }
 
@@ -2298,6 +2244,10 @@ public class Mappings {
 
   private void debug(final String comment, final int s) {
     myDebugS.debug(comment, s);
+  }
+
+  private void debug(final String comment, final File f) {
+    debug(comment, f.getPath());
   }
 
   private void debug(final String comment, final String s) {

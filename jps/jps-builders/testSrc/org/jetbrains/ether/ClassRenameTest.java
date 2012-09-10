@@ -16,7 +16,7 @@ public class ClassRenameTest extends IncrementalTestCase {
     doTest().assertSuccessful();
   }
 
-  public void _testChangeCaseOfName() {
+  public void testChangeCaseOfName() {
     doTest().assertSuccessful();
   }
 }

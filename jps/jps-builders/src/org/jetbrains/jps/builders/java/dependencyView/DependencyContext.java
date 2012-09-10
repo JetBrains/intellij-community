@@ -84,20 +84,6 @@ class DependencyContext {
     }
   }
 
-  public int getFilePath(final String path) {
-    try {
-      if (StringUtil.isEmpty(path)) {
-        return myEmptyName;
-      }
-      final String _path = FileUtil.toSystemIndependentName(path);
-      //return myEnumerator.enumerate(SystemInfo.isFileSystemCaseSensitive ? _path : _path.toLowerCase(Locale.US));
-      return myEnumerator.enumerate(_path);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   public void close() {
     try {
       myEnumerator.close();

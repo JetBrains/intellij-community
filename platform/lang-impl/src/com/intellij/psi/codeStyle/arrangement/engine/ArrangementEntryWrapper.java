@@ -15,8 +15,10 @@
  */
 package com.intellij.psi.codeStyle.arrangement.engine;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +38,7 @@ import java.util.List;
  * </pre>
  * <p/>
  * Not thread-safe.
- * 
+ *
  * @author Denis Zhdanov
  * @since 8/31/12 12:06 PM
  */
@@ -51,15 +53,22 @@ public class ArrangementEntryWrapper<E extends ArrangementEntry> {
 
   private int myStartOffset;
   private int myEndOffset;
+  private int myBlankLinesBefore;
 
   @SuppressWarnings("unchecked")
   public ArrangementEntryWrapper(@NotNull E entry) {
     myEntry = entry;
     myStartOffset = entry.getStartOffset();
     myEndOffset = entry.getEndOffset();
+    ArrangementEntryWrapper<E> previous = null;
     for (ArrangementEntry child : entry.getChildren()) {
       ArrangementEntryWrapper<E> childWrapper = new ArrangementEntryWrapper<E>((E)child);
       childWrapper.setParent(this);
+      if (previous != null) {
+        previous.setNext(childWrapper);
+        childWrapper.setPrevious(previous);
+      }
+      previous = childWrapper;
       myChildren.add(childWrapper);
     }
   }
@@ -104,6 +113,46 @@ public class ArrangementEntryWrapper<E extends ArrangementEntry> {
     return myNext;
   }
 
+  public void placeBefore(@NotNull ArrangementEntryWrapper<E> anchor) {
+    if (myNext != null) {
+      myNext.setPrevious(myPrevious);
+    }
+    if (myPrevious != null) {
+      myPrevious.setNext(myNext);
+    }
+    setPrevious(anchor.getPrevious());
+    if (myPrevious != null) {
+      myPrevious.setNext(this);
+    }
+    setNext(anchor);
+    anchor.setPrevious(this);
+  }
+
+  public int getBlankLinesBefore() {
+    return myBlankLinesBefore;
+  }
+
+  @SuppressWarnings("AssignmentToForLoopParameter")
+  public void updateBlankLines(@NotNull Document document) {
+    int startLine = document.getLineNumber(getStartOffset());
+    myBlankLinesBefore = 0;
+    if (startLine <= 0) {
+      return;
+    }
+    
+    CharSequence text = document.getCharsSequence();
+    int lastLineFeed = document.getLineStartOffset(startLine) - 1;
+    for (int i = lastLineFeed - 1; i >= 0; i--) {
+      i = CharArrayUtil.shiftBackward(text, i, " \t");
+      if (text.charAt(i) == '\n') {
+        ++myBlankLinesBefore;
+      }
+      else {
+        break;
+      }
+    }
+  }
+  
   public void setNext(@Nullable ArrangementEntryWrapper<E> next) {
     myNext = next;
   }
@@ -120,7 +169,7 @@ public class ArrangementEntryWrapper<E extends ArrangementEntry> {
       child.applyShift(shift);
     }
   }
-  
+
   @Override
   public int hashCode() {
     return myEntry.hashCode();
@@ -141,6 +190,6 @@ public class ArrangementEntryWrapper<E extends ArrangementEntry> {
 
   @Override
   public String toString() {
-    return myEntry.toString();
+    return String.format("range: [%d; %d), entry: %s", myStartOffset, myEndOffset, myEntry.toString());
   }
 }

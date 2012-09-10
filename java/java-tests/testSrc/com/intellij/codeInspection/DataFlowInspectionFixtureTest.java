@@ -78,4 +78,7 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testFinalLoopVariableInstanceof() throws Throwable { doTest(); }
   public void testGreaterIsNotEquals() throws Throwable { doTest(); }
 
+  public void testChainedFinalFieldsDfa() throws Throwable { doTest(); }
+  public void testChainedFinalFieldAccessorsDfa() throws Throwable { doTest(); }
+
 }

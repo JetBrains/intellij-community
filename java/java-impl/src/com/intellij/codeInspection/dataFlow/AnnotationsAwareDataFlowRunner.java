@@ -43,7 +43,7 @@ public class AnnotationsAwareDataFlowRunner extends DataFlowRunner {
       //todo move out from generic runner
       for (PsiParameter parameter : method.getParameterList().getParameters()) {
         if (NullableNotNullManager.isNotNull(parameter)) {
-          final DfaVariableValue value = getFactory().getVarFactory().create(parameter, false);
+          final DfaVariableValue value = getFactory().getVarFactory().createVariableValue(parameter, false);
           for (final DfaMemoryState initialState : initialStates) {
             initialState.applyNotNull(value);
           }

@@ -67,7 +67,7 @@ public class ControlFlow {
   }
 
   public void removeVariable(PsiVariable variable) {
-    DfaVariableValue var = myFactory.getVarFactory().create(variable, false);
+    DfaVariableValue var = myFactory.getVarFactory().createVariableValue(variable, false);
     addInstruction(new FlushVariableInstruction(var));
   }
 

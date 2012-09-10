@@ -40,7 +40,6 @@ public class DfaUnboxedValue extends DfaValue {
   }
 
   public DfaValue createNegated() {
-    DfaVariableValue negVar = myFactory.getVarFactory().create(myVariable.getPsiVariable(), !myVariable.isNegated());
-    return myFactory.getBoxedFactory().createUnboxed(negVar);
+    return myFactory.getBoxedFactory().createUnboxed(myVariable.createNegated());
   }
 }
