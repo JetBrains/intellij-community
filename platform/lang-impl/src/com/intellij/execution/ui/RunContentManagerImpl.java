@@ -15,10 +15,7 @@
  */
 package com.intellij.execution.ui;
 
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.Executor;
-import com.intellij.execution.ExecutorRegistry;
-import com.intellij.execution.TerminateRemoteProcessDialog;
+import com.intellij.execution.*;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -35,6 +32,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -566,7 +564,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
     public void contentRemoveQuery(final ContentManagerEvent event) {
       if (event.getContent() == myContent) {
-        final boolean canClose = closeQuery();
+        final boolean canClose = closeQuery(false);
         if (!canClose) {
           event.consume();
         }
@@ -588,7 +586,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
       if (myContent == null) return true;
 
-      final boolean canClose = closeQuery();
+      final boolean canClose = closeQuery(true);
       if (canClose) {
         myContent.getManager().removeContent(myContent, true);
         myContent = null;
@@ -599,7 +597,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     public void projectClosing(final Project project) {
     }
 
-    private boolean closeQuery() {
+    private boolean closeQuery(boolean modal) {
       final RunContentDescriptor descriptor = getRunContentDescriptorByContent(myContent);
 
       if (descriptor == null) {
@@ -628,14 +626,38 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       else {
         processHandler.detachProcess();
       }
-      waitForProcess(descriptor);
+      waitForProcess(descriptor, modal);
       return true;
     }
   }
 
-  private void waitForProcess(final RunContentDescriptor descriptor) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
+  private void waitForProcess(final RunContentDescriptor descriptor, final boolean modal) {
+    final ProcessHandler processHandler = descriptor.getProcessHandler();
+    final boolean killable = !modal && (processHandler instanceof KillableProcess) && ((KillableProcess)processHandler).canKillProcess();
+
+    String title = ExecutionBundle.message("terminating.process.progress.title", descriptor.getDisplayName());
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, title, true) {
+
+      {
+        if (killable) {
+          String cancelText= ExecutionBundle.message("terminating.process.progress.kill");
+          setCancelText(cancelText);
+          setCancelTooltipText(cancelText);
+        }
+      }
+
+      @Override
+      public boolean isConditionalModal() {
+        return modal;
+      }
+
+      @Override
+      public boolean shouldStartInBackground() {
+        return !modal;
+      }
+
+      @Override
+      public void run(@NotNull final ProgressIndicator progressIndicator) {
         final Semaphore semaphore = new Semaphore();
         semaphore.down();
 
@@ -653,31 +675,34 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
           }
         });
 
-        final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-
-        if (progressIndicator != null) {
-          progressIndicator.setText(ExecutionBundle.message("waiting.for.vm.detach.progress.text"));
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            public void run() {
-              while (true) {
-                if (progressIndicator.isCanceled() || !progressIndicator.isRunning()) {
-                  semaphore.up();
-                  break;
-                }
-                try {
-                  synchronized (this) {
-                    wait(2000L);
-                  }
-                }
-                catch (InterruptedException ignore) {
+        progressIndicator.setText(ExecutionBundle.message("waiting.for.vm.detach.progress.text"));
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          public void run() {
+            while (true) {
+              if (progressIndicator.isCanceled() || !progressIndicator.isRunning()) {
+                semaphore.up();
+                break;
+              }
+              try {
+                synchronized (this) {
+                  wait(2000L);
                 }
               }
+              catch (InterruptedException ignore) {
+              }
             }
-          });
-        }
+          }
+        });
 
         semaphore.waitFor();
       }
-    }, ExecutionBundle.message("terminating.process.progress.title", descriptor.getDisplayName()), true, myProject);
+
+      @Override
+      public void onCancel() {
+        if (killable && !processHandler.isProcessTerminated()) {
+          ((KillableProcess)processHandler).killProcess();
+        }
+      }
+    });
   }
 }
