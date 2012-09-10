@@ -271,16 +271,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     getVariableState(var).setValue(value);
     if (value instanceof DfaNotNullValue) {
       DfaTypeValue dfaType = myFactory.getTypeFactory().create(((DfaNotNullValue)value).getType());
-      DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().create(var, dfaType, JavaTokenType.INSTANCEOF_KEYWORD, false);
+      DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().createRelation(var, dfaType, JavaTokenType.INSTANCEOF_KEYWORD, false);
       applyCondition(dfaInstanceof);
       applyCondition(compareToNull(var, true));
     }
     else if (value instanceof DfaTypeValue) {
-      DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().create(var, value, JavaTokenType.INSTANCEOF_KEYWORD, false);
+      DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().createRelation(var, value, JavaTokenType.INSTANCEOF_KEYWORD, false);
       applyInstanceofOrNull(dfaInstanceof);
     }
     else {
-      DfaRelationValue dfaEqual = myFactory.getRelationFactory().create(var, value, JavaTokenType.EQEQ, false);
+      DfaRelationValue dfaEqual = myFactory.getRelationFactory().createRelation(var, value, JavaTokenType.EQEQ, false);
       if (dfaEqual == null) return;
       applyCondition(dfaEqual);
 
@@ -556,7 +556,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       DfaVariableValue dfaNormalVar = isNegated ? (DfaVariableValue)dfaVar.createNegated() : dfaVar;
       DfaConstValue dfaTrue = myFactory.getConstFactory().getTrue();
       final DfaValue boxedTrue = myFactory.getBoxedFactory().createBoxed(dfaTrue);
-      DfaRelationValue dfaEqualsTrue = myFactory.getRelationFactory().create(dfaNormalVar, boxedTrue, JavaTokenType.EQEQ, isNegated);
+      DfaRelationValue dfaEqualsTrue = myFactory.getRelationFactory().createRelation(dfaNormalVar, boxedTrue, JavaTokenType.EQEQ, isNegated);
 
       return applyCondition(dfaEqualsTrue);
     }
@@ -565,7 +565,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       boolean isNegated = dfaVar.isNegated();
       DfaVariableValue dfaNormalVar = isNegated ? (DfaVariableValue)dfaVar.createNegated() : dfaVar;
       DfaConstValue dfaTrue = myFactory.getConstFactory().getTrue();
-      DfaRelationValue dfaEqualsTrue = myFactory.getRelationFactory().create(dfaNormalVar, dfaTrue, JavaTokenType.EQEQ, isNegated);
+      DfaRelationValue dfaEqualsTrue = myFactory.getRelationFactory().createRelation(dfaNormalVar, dfaTrue, JavaTokenType.EQEQ, isNegated);
 
       return applyCondition(dfaEqualsTrue);
     }
@@ -699,7 +699,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Nullable
   private DfaRelationValue compareToNull(DfaValue dfaVar, boolean negated) {
     DfaConstValue dfaNull = myFactory.getConstFactory().getNull();
-    return myFactory.getRelationFactory().create(dfaVar, dfaNull, JavaTokenType.EQEQ, negated);
+    return myFactory.getRelationFactory().createRelation(dfaVar, dfaNull, JavaTokenType.EQEQ, negated);
   }
 
   public DfaVariableState getVariableState(DfaVariableValue dfaVar) {
@@ -736,7 +736,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public void flushVariable(@NotNull DfaVariableValue variable) {
-    if (variable.getPsiVariable().hasModifierProperty(PsiModifier.FINAL)) {
+    PsiVariable psiVariable = variable.getPsiVariable();
+    if (psiVariable instanceof PsiField && psiVariable.hasModifierProperty(PsiModifier.FINAL)) {
       return;
     }
 

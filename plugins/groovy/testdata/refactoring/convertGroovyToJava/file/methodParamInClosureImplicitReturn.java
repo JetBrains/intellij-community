@@ -10,13 +10,13 @@ return null;
 
 public void foo(int x) {
 final groovy.lang.Reference<java.lang.Integer> i = new groovy.lang.Reference<java.lang.Integer>(x);
-org.codehaus.groovy.runtime.DefaultGroovyMethods.each(new java.util.ArrayList<java.lang.Integer>(java.util.Arrays.asList(1, 2, 3)), new groovy.lang.Closure<java.lang.Number>(this, this) {
-public java.lang.Number doCall(java.lang.Object it) {
+org.codehaus.groovy.runtime.DefaultGroovyMethods.each(new java.util.ArrayList<java.lang.Integer>(java.util.Arrays.asList(1, 2, 3)), new groovy.lang.Closure<java.lang.Integer>(this, this) {
+public java.lang.Integer doCall(java.lang.Object it) {
 org.codehaus.groovy.runtime.DefaultGroovyMethods.print(this, i.get());
 return setGroovyRef(i, i.get() + 1);
 }
 
-public java.lang.Number doCall() {
+public java.lang.Integer doCall() {
 return doCall(null);
 }
 

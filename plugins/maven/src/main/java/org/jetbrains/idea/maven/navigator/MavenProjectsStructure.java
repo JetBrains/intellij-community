@@ -243,6 +243,19 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     return myProjectToNodeMapping.get(project);
   }
 
+  private boolean isShown(Class aClass) {
+    Class<? extends MavenSimpleNode>[] classes = getVisibleNodesClasses();
+    if (classes == null) return true;
+
+    for (Class<? extends MavenSimpleNode> c : classes) {
+      if (c == aClass) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   enum DisplayKind {
     ALWAYS, NEVER, NORMAL
   }
@@ -674,7 +687,10 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       setErrorLevel(myMavenProject.getProblems().isEmpty() ? ErrorLevel.NONE : ErrorLevel.ERROR);
       myLifecycleNode.updateGoalsList();
       myPluginsNode.updatePlugins(myMavenProject);
-      myDependenciesNode.updateDependencies();
+
+      if (isShown(DependencyNode.class)) {
+        myDependenciesNode.updateDependencies();
+      }
 
       myTooltipCache = makeDescription();
 

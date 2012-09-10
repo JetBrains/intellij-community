@@ -230,7 +230,20 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
             public String convert(FileOrDir o) {
               return o.myPath.getPath();
             }
-          }, PairProcessor.TRUE);
+          }, new PairProcessor<FileOrDir, FileOrDir>() {
+              @Override
+              public boolean process(FileOrDir parent, FileOrDir child) {
+                if (! parent.myRecursive) {// if under non-recursive dirty dir, generally do not remove child with one exception...
+                  if (! child.myRecursive && ! child.myPath.isDirectory()) {
+                    if (Comparing.equal(child.myPath.getParentPath(), parent.myPath)) {
+                      return true; // only if dir non-recursively + non-recursive file child -> can be truncated to dir only
+                    }
+                  }
+                  return false;
+                }
+                return true;
+              }
+          });
           set.retainAll(newCollection);
         }
 

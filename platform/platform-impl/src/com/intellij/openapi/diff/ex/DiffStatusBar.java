@@ -17,6 +17,7 @@ package com.intellij.openapi.diff.ex;
 
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +53,7 @@ public class DiffStatusBar extends JPanel {
       public void paint(Graphics g) {
         setBackground(UIUtil.getPanelBackground());
         super.paint(g);
+        GraphicsUtil.setupAntialiasing(g);
         FontMetrics metrics = getFontMetrics(getFont());
 
         EditorColorsScheme colorScheme = myColorScheme != null

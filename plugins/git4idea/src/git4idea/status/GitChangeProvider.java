@@ -97,12 +97,12 @@ public class GitChangeProvider implements ChangeProvider {
       public String convert(VirtualFile o) {
         return o.getPath();
       }
-    }, new PairProcessor<String, VirtualFile>() {
+    }, new PairProcessor<VirtualFile, VirtualFile>() {
                                @Override
-                               public boolean process(String s, VirtualFile file) {
-                                 if (! existingInScope.contains(file)) {
-                                   debug("adding git root for check: " + file.getPath());
-                                   ((VcsModifiableDirtyScope) dirtyScope).addDirtyDirRecursively(new FilePathImpl(file));
+                               public boolean process(VirtualFile parent, VirtualFile child) {
+                                 if (! existingInScope.contains(child)) {
+                                   debug("adding git root for check: " + child.getPath());
+                                   ((VcsModifiableDirtyScope) dirtyScope).addDirtyDirRecursively(new FilePathImpl(child));
                                  }
                                  return true;
                                }

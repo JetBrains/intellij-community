@@ -227,24 +227,6 @@ public class BrowserUtil {
     return command;
   }
 
-  public static void addLaunchArgs(List<String> command, String[] launchArgs) {
-    if (launchArgs.length == 0) {
-      return;
-    }
-
-    if (SystemInfo.isMac && ExecUtil.getOpenCommandPath().equals(command.get(0))) {
-      if (isOpenCommandSupportArgs()) {
-        command.add("--args");
-      }
-      else {
-        LOG.warn("'open' command doesn't allow to pass command line arguments so they will be ignored: " + Arrays.toString(launchArgs));
-        return;
-      }
-    }
-
-    Collections.addAll(command, launchArgs);
-  }
-
   public static List<String> getOpenBrowserCommand(final @NonNls @NotNull String browserPath) {
     if (SystemInfo.isMac && !new File(browserPath).isFile()) {
       ArrayList<String> command = new ArrayList<String>();

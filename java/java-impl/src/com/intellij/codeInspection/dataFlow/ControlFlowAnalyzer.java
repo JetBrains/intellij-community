@@ -31,6 +31,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -704,7 +705,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState state, InstructionVisitor visitor) {
       DfaValue value = state.pop();
       DfaValueFactory factory = runner.getFactory();
-      state.applyCondition(factory.getRelationFactory().create(value, factory.getConstFactory().getNull(), JavaTokenType.EQEQ, true));
+      state.applyCondition(factory.getRelationFactory().createRelation(value, factory.getConstFactory().getNull(), JavaTokenType.EQEQ, true));
       return nextInstruction(runner, state);
     }
   }
@@ -923,52 +924,59 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  private void generateOther(PsiPolyadicExpression expression,
-                             IElementType op,
-                             PsiExpression[] operands,
-                             PsiType type) {
-    boolean comparing = op == JavaTokenType.EQEQ || op == JavaTokenType.NE;
+  private void generateOther(PsiPolyadicExpression expression, IElementType op, PsiExpression[] operands, PsiType type) {
+    op = substituteBinaryOperation(op, type);
+
     PsiExpression lExpr = operands[0];
     lExpr.accept(this);
     PsiType lType = lExpr.getType();
-    PsiExpression rExpr;
 
     for (int i = 1; i < operands.length; i++) {
-      rExpr = operands[i];
+      PsiExpression rExpr = operands[i];
       PsiType rType = rExpr.getType();
 
-      boolean comparingRef = comparing
-                             && !TypeConversionUtil.isPrimitiveAndNotNull(lType)
-                             && !TypeConversionUtil.isPrimitiveAndNotNull(rType);
-
-      boolean comparingPrimitiveNumerics = comparing &&
-                                           TypeConversionUtil.isPrimitiveAndNotNull(lType) &&
-                                           TypeConversionUtil.isPrimitiveAndNotNull(rType) &&
-                                           TypeConversionUtil.isNumericType(lType) &&
-                                           TypeConversionUtil.isNumericType(rType);
-
-      PsiType castType = comparingPrimitiveNumerics ? PsiType.LONG : type;
-
-      if (!comparingRef) {
-        generateBoxingUnboxingInstructionFor(lExpr,castType);
-      }
+      acceptBinaryRightOperand(op, type, lExpr, lType, rExpr, rType);
+      addInstruction(new BinopInstruction(op, expression.isPhysical() ? expression : null, expression.getProject()));
 
       lExpr = rExpr;
       lType = rType;
+    }
+  }
 
-      rExpr.accept(this);
-      if (!comparingRef) {
-        generateBoxingUnboxingInstructionFor(rExpr,castType);
-      }
+  @Nullable
+  private static IElementType substituteBinaryOperation(IElementType op, PsiType type) {
+    if (JavaTokenType.PLUS == op && (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_STRING))) {
+      return null;
+    }
+    else if (op == JavaTokenType.LT || op == JavaTokenType.GT) {
+      return JavaTokenType.NE;
+    }
+    return op;
+  }
 
-      if (JavaTokenType.PLUS == op) {
-        if (type == null || !type.equalsToText("java.lang.String")) {
-          op = null;
-        }
-      }
+  private void acceptBinaryRightOperand(@Nullable IElementType op, PsiType type,
+                                        PsiExpression lExpr, PsiType lType,
+                                        PsiExpression rExpr, PsiType rType) {
+    boolean comparing = op == JavaTokenType.EQEQ || op == JavaTokenType.NE;
+    boolean comparingRef = comparing
+                           && !TypeConversionUtil.isPrimitiveAndNotNull(lType)
+                           && !TypeConversionUtil.isPrimitiveAndNotNull(rType);
 
-      PsiElement psiAnchor = expression.isPhysical() ? expression : null;
-      addInstruction(new BinopInstruction(op, psiAnchor, expression.getProject()));
+    boolean comparingPrimitiveNumerics = comparing &&
+                                         TypeConversionUtil.isPrimitiveAndNotNull(lType) &&
+                                         TypeConversionUtil.isPrimitiveAndNotNull(rType) &&
+                                         TypeConversionUtil.isNumericType(lType) &&
+                                         TypeConversionUtil.isNumericType(rType);
+
+    PsiType castType = comparingPrimitiveNumerics ? PsiType.LONG : type;
+
+    if (!comparingRef) {
+      generateBoxingUnboxingInstructionFor(lExpr,castType);
+    }
+
+    rExpr.accept(this);
+    if (!comparingRef) {
+      generateBoxingUnboxingInstructionFor(rExpr,castType);
     }
   }
 
@@ -1084,7 +1092,6 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitConditionalExpression(PsiConditionalExpression expression) {
     startElement(expression);
 
-    DfaValue dfaValue = myFactory.create(expression);
     PsiExpression condition = expression.getCondition();
 
     PsiExpression thenExpression = expression.getThenExpression();
@@ -1340,7 +1347,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       for (final PsiExpression dimension : dimensions) {
         dimension.accept(this);
       }
-      for (PsiExpression dimension : dimensions) {
+      for (PsiExpression ignored : dimensions) {
         addInstruction(new PopInstruction());
       }
       final PsiArrayInitializerExpression arrayInitializer = expression.getArrayInitializer();

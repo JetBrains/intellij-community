@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -66,7 +67,7 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
             result.add(HighlightInfo.createHighlightInfo(HighlightInfoType.INFORMATION, element, null, DefaultHighlighter.KEYWORD));
           }
         }
-        else if (!(element instanceof GroovyPsiElement)) {
+        else if (!(element instanceof GroovyPsiElement || element instanceof PsiErrorElement)) {
           final TextAttributesKey attribute = getDeclarationAttribute(element);
           if (attribute != null) {
             result.add(HighlightInfo.createHighlightInfo(HighlightInfoType.INFORMATION, element, null, attribute));
