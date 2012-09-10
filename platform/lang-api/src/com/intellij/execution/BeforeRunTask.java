@@ -60,6 +60,11 @@ public abstract class BeforeRunTask<T extends BeforeRunTask> implements Cloneabl
     myIsEnabled = Boolean.valueOf(attribValue).booleanValue();
   }
 
+  //Task may aggregate several items or targets to do (e.g. BuildArtifactsBeforeRunTask)
+  public int getItemsCount() {
+    return 1;
+  }
+
   public BeforeRunTask clone() {
     try {
       return (BeforeRunTask)super.clone();

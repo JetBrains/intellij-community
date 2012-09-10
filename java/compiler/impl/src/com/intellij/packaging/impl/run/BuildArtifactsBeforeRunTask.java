@@ -67,6 +67,11 @@ public class BuildArtifactsBeforeRunTask extends BeforeRunTask<BuildArtifactsBef
     return task;
   }
 
+  @Override
+  public int getItemsCount() {
+    return myArtifactPointers.size();
+  }
+
   public List<ArtifactPointer> getArtifactPointers() {
     return Collections.unmodifiableList(myArtifactPointers);
   }

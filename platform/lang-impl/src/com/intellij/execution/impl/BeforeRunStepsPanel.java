@@ -35,24 +35,22 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.hash.HashSet;
-import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Vassiliy Kudryashov
  */
-class BeforeRunStepsPanel extends JPanel {
+class BeforeRunStepsPanel extends DropDownPanel {
   private final JCheckBox myShowSettingsBeforeRunCheckBox;
-  private final JCheckBox mySingletonCheckBox;
   private final JBList myList;
   private final CollectionListModel<BeforeRunTask> myModel;
   private RunConfiguration myRunConfiguration;
@@ -73,11 +71,13 @@ class BeforeRunStepsPanel extends JPanel {
       @Override
       public void intervalAdded(ListDataEvent e) {
         adjustVisibleRowCount();
+        updateText();
       }
 
       @Override
       public void intervalRemoved(ListDataEvent e) {
         adjustVisibleRowCount();
+        updateText();
       }
 
       @Override
@@ -130,14 +130,19 @@ class BeforeRunStepsPanel extends JPanel {
     });
 
     myShowSettingsBeforeRunCheckBox = new JCheckBox(ExecutionBundle.message("configuration.edit.before.run"));
-    mySingletonCheckBox = new JCheckBox(ExecutionBundle.message("configuration.singleton"));
+    myShowSettingsBeforeRunCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        updateText();
+      }
+    });
+
     myPanel = myDecorator.createPanel();
 
-    setLayout(new MigLayout("fill, ins 0, gap 10, hidemode 3"));
-    add(myShowSettingsBeforeRunCheckBox, "shrink, split 2");
-    add(mySingletonCheckBox, "shrink");
-    add(Box.createHorizontalGlue(), "push, grow, wrap");
-    add(myPanel, "grow, push, spanx 2");
+    JPanel wrapper = new JPanel(new BorderLayout());
+    wrapper.add(myShowSettingsBeforeRunCheckBox, BorderLayout.NORTH);
+    wrapper.add(myPanel, BorderLayout.CENTER);
+    setContent(wrapper);
   }
 
   @Nullable
@@ -159,11 +164,52 @@ class BeforeRunStepsPanel extends JPanel {
     myModel.replaceAll(originalTasks);
     myShowSettingsBeforeRunCheckBox.setSelected(settings.isEditBeforeRun());
     myShowSettingsBeforeRunCheckBox.setEnabled(!(isUnknown()));
-    mySingletonCheckBox.setSelected(settings.isSingleton());
-    mySingletonCheckBox.setEnabled(!(isUnknown()));
-    mySingletonCheckBox.setVisible(myRunConfiguration.getFactory().canConfigurationBeSingleton());
-
     myPanel.setVisible(checkBeforeRunTasksAbility(false));
+  }
+
+  private void updateText() {
+    StringBuilder sb = new StringBuilder();
+
+    if (myShowSettingsBeforeRunCheckBox.isSelected()) {
+      sb.append(ExecutionBundle.message("configuration.edit.before.run")).append(", ");
+    }
+
+    List<BeforeRunTask> tasks = myModel.getItems();
+    if (!tasks.isEmpty()) {
+      LinkedHashMap<BeforeRunTaskProvider, Integer> counter = new LinkedHashMap<BeforeRunTaskProvider, Integer>();
+      for (BeforeRunTask task : tasks) {
+        BeforeRunTaskProvider<BeforeRunTask> provider =
+          BeforeRunTaskProvider.getProvider(myRunConfiguration.getProject(), task.getProviderId());
+        if (provider != null) {
+          Integer count = counter.get(provider);
+          if (count == null) {
+            count = task.getItemsCount();
+          } else {
+            count+=task.getItemsCount();
+          }
+          counter.put(provider, count);
+        }
+      }
+      for (Iterator<Map.Entry<BeforeRunTaskProvider, Integer>> iterator = counter.entrySet().iterator(); iterator.hasNext(); ) {
+        Map.Entry<BeforeRunTaskProvider, Integer> entry = iterator.next();
+        BeforeRunTaskProvider provider = entry.getKey();
+        String name = provider.getName();
+        if (name.startsWith("Run ")) {
+          name = name.substring(4);
+        }
+        sb.append(name);
+        if (entry.getValue() > 1) {
+          sb.append(" (").append(entry.getValue().intValue()).append(")");
+        }
+        if (iterator.hasNext())
+          sb.append(", ");
+      }
+    }
+    if (sb.length() > 0) {
+      sb.insert(0, ": ");
+    }
+    sb.insert(0, ExecutionBundle.message("before.launch.panel.title"));
+    setTitle(sb.toString());
   }
 
   public List<BeforeRunTask> getTasks(boolean applyCurrentState) {
@@ -176,10 +222,6 @@ class BeforeRunStepsPanel extends JPanel {
 
   public boolean needEditBeforeRun() {
     return myShowSettingsBeforeRunCheckBox.isSelected();
-  }
-
-  public boolean isSingleton() {
-    return myRunConfiguration.getFactory().canConfigurationBeSingleton() && mySingletonCheckBox.isSelected();
   }
 
   private boolean checkBeforeRunTasksAbility(boolean checkOnlyAddAction) {

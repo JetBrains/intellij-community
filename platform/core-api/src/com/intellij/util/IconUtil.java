@@ -89,6 +89,26 @@ public class IconUtil {
 
     return new ImageIcon(img);
   }
+
+  public static Icon flip(@NotNull Icon icon, boolean horizontal) {
+    int w = icon.getIconWidth();
+    int h = icon.getIconHeight();
+    BufferedImage first = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+    Graphics2D g = first.createGraphics();
+    icon.paintIcon(new JPanel(), g, 0, 0);
+    g.dispose();
+
+    BufferedImage second = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+    g = second.createGraphics();
+    if (horizontal) {
+      g.drawImage(first, 0, 0, w, h, w, 0, 0, h, null);
+    }
+    else {
+      g.drawImage(first, 0, 0, w, h, 0, h, w, 0, null);
+    }
+    g.dispose();
+    return new ImageIcon(second);
+  }
   
   public static Icon getIcon(final VirtualFile file, @Iconable.IconFlags final int flags, @Nullable final Project project) {
     Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);

@@ -25,7 +25,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
-        <border type="etched" title-resource-bundle="messages/ExecutionBundle" title-key="before.launch.panel.title"/>
+        <border type="none"/>
         <children/>
       </grid>
       <vspacer id="6092a">

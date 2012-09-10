@@ -26,6 +26,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorConfigurable;
 import com.intellij.openapi.options.SettingsEditorListener;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +52,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private final String myHelpTopic;
   private final boolean myBrokenConfiguration;
   private boolean myStoreProjectConfiguration;
+  private boolean mySingleton;
 
 
   private SingleConfigurationConfigurable(RunnerAndConfigurationSettings settings, @Nullable Executor executor) {
@@ -90,6 +92,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
     runManager.shareConfiguration(runConfiguration, myStoreProjectConfiguration);
     settings.setName(getNameText());
+    settings.setSingleton(mySingleton);
     super.apply();
     RunManagerImpl.getInstanceImpl(getConfiguration().getProject()).fireRunConfigurationChanged(settings);
   }
@@ -111,6 +114,10 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
   public boolean isStoreProjectConfiguration() {
     return myStoreProjectConfiguration;
+  }
+
+  public boolean isSingleton() {
+    return mySingleton;
   }
 
   @Nullable
@@ -219,6 +226,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private JButton myFixButton;
     private JSeparator mySeparator;
     private JCheckBox myCbStoreProjectConfiguration;
+    private JBCheckBox myCbSingleton;
 
     private Runnable myQuickFix = null;
 
@@ -251,12 +259,16 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
           updateWarning();
         }
       });
-      myCbStoreProjectConfiguration.addActionListener(new ActionListener() {
+      ActionListener actionListener = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
           setModified(true);
+          myStoreProjectConfiguration = myCbStoreProjectConfiguration.isSelected();
+          mySingleton = myCbSingleton.isSelected();
         }
-      });
+      };
+      myCbStoreProjectConfiguration.addActionListener(actionListener);
+      myCbSingleton.addActionListener(actionListener);
       settingAnchor();
     }
 
@@ -266,13 +278,13 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myStoreProjectConfiguration = runManager.isConfigurationShared(settings);
       myCbStoreProjectConfiguration.setEnabled(!(runConfiguration instanceof UnknownRunConfiguration));
       myCbStoreProjectConfiguration.setSelected(myStoreProjectConfiguration);
-      myCbStoreProjectConfiguration.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          myStoreProjectConfiguration = myCbStoreProjectConfiguration.isSelected();
-        }
-      });
-
       myCbStoreProjectConfiguration.setVisible(!settings.isTemplate());
+
+      mySingleton = settings.isSingleton();
+      myCbSingleton.setEnabled(!(runConfiguration instanceof UnknownRunConfiguration));
+      myCbSingleton.setSelected(mySingleton);
+      ConfigurationFactory factory = settings.getFactory();
+      myCbSingleton.setVisible(factory != null && factory.canConfigurationBeSingleton());
     }
 
     private void settingAnchor() {
