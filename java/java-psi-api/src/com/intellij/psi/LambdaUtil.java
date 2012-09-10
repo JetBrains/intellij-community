@@ -92,8 +92,21 @@ public class LambdaUtil {
   public static boolean isLambdaFullyInferred(PsiLambdaExpression expression, PsiType functionalInterfaceType) {
     if (expression.getParameterList().getParametersCount() > 0 ||
         getFunctionalInterfaceReturnType(functionalInterfaceType) != PsiType.VOID) {   //todo check that void lambdas without params check
-      if (functionalInterfaceType instanceof PsiClassType && ((PsiClassType)functionalInterfaceType).isRaw()) return false;
+      if (!checkRawAcceptable(expression, functionalInterfaceType)) {
+        return false;
+      }
       return !dependsOnTypeParams(functionalInterfaceType, functionalInterfaceType, expression, null);
+    }
+    return true;
+  }
+
+  private static boolean checkRawAcceptable(PsiLambdaExpression expression, PsiType functionalInterfaceType) {
+    PsiElement parent = expression.getParent();
+    while (parent instanceof PsiParenthesizedExpression) {
+      parent = parent.getParent();
+    }
+    if (parent instanceof PsiExpressionList && functionalInterfaceType instanceof PsiClassType && ((PsiClassType)functionalInterfaceType).isRaw()){
+      return false;
     }
     return true;
   }
