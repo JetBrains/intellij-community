@@ -16,9 +16,11 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import gnu.trove.TObjectObjectProcedure;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.PrintStream;
 import java.util.*;
 
@@ -62,7 +64,11 @@ abstract class ObjectObjectMultiMaplet<K, V extends Streamable> implements Strea
     forEachEntry(new TObjectObjectProcedure<K, Collection<V>>() {
       @Override
       public boolean execute(final K a, final Collection<V> b) {
-        keys.add(new Pair<K, String>(a, a.toString()));
+        // on case-insensitive file systems save paths in normalized (lowercase) format in order to make tests run deterministically
+        final String keyStr = a instanceof File && !SystemInfo.isFileSystemCaseSensitive?
+                              ((File)a).getPath().toLowerCase(Locale.US) :
+                              a.toString();
+        keys.add(new Pair<K, String>(a, keyStr));
         return true;
       }
     });
