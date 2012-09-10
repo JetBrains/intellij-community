@@ -120,7 +120,7 @@ public class MavenArtifact implements Serializable {
   }
 
   public boolean isResolved() {
-    return myResolved && myFile.exists() && !myStubbed;
+    return myResolved && !myStubbed && myFile.exists();
   }
 
   @NotNull
