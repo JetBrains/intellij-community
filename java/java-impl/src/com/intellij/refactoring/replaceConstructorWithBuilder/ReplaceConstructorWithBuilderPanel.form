@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.refactoring.replaceConstructorWithBuilder.ReplaceConstructorWithBuilderDialog">
   <grid id="27dc6" binding="myWholePanel" layout-manager="GridBagLayout">
     <constraints>
-      <xy x="387" y="313" width="358" height="210"/>
+      <xy x="387" y="313" width="515" height="270"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -86,6 +86,7 @@
               <gridbag weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
+              <labelFor value="3e899"/>
               <text resource-bundle="messages/RefactoringBundle" key="target.destination.folder"/>
             </properties>
           </component>

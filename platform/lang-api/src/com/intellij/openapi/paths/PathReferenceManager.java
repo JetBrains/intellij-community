@@ -64,7 +64,6 @@ public abstract class PathReferenceManager {
    * @param endingSlashNotAllowed true if paths like "/foo/" should not be resolved.
    * @param relativePathsAllowed true if the folder of the file containing the PsiElement should be used as "root".
    *        Otherwise, web application root will be used.
-   * @param suitableFileTypes
    *@param additionalProviders additional providers to process.  @return created references or an empty array.
    */
   @NotNull

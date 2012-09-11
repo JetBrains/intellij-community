@@ -111,6 +111,15 @@ public class TypeConversionUtil {
         return boxedType != null && areTypesConvertible(boxedType, toType);
       }
       if (!fromIsPrimitive) {
+        if (fromType instanceof PsiClassType && ((PsiClassType)fromType).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_7)) {
+          final PsiClassType classType = (PsiClassType)fromType;
+          final PsiClass psiClass = classType.resolve();
+          if (psiClass == null || psiClass instanceof PsiTypeParameter) return false;
+          final PsiClassType boxedType = ((PsiPrimitiveType)toType).getBoxedType(psiClass.getManager(), psiClass.getResolveScope());
+          if (boxedType != null) {
+            return isAssignable(fromType, boxedType);
+          }
+        }
         return fromTypeRank == toTypeRank ||
                fromTypeRank <= MAX_NUMERIC_RANK && toTypeRank <= MAX_NUMERIC_RANK && fromTypeRank < toTypeRank;
       }

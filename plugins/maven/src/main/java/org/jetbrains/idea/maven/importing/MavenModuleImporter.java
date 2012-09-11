@@ -238,7 +238,7 @@ public class MavenModuleImporter {
     if (sdk != null) {
       String versionString = sdk.getVersionString();
       if (versionString != null) {
-        if (versionString.contains("1.5.") || versionString.contains("1.4.") || versionString.contains("1.3.") || versionString.contains("1.2.")) {
+        if (versionString.contains("1.5") || versionString.contains("1.4") || versionString.contains("1.3") || versionString.contains("1.2")) {
           return;
         }
       }

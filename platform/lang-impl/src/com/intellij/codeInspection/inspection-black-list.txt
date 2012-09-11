@@ -162,7 +162,6 @@ com.siyeh.ig.methodmetrics.MethodCouplingInspection
 com.siyeh.ig.methodmetrics.MultipleReturnPointsPerMethodInspection
 com.siyeh.ig.methodmetrics.NestingDepthInspection
 com.siyeh.ig.methodmetrics.NonCommentSourceStatementsInspection
-com.siyeh.ig.methodmetrics.ParametersPerConstructorInspection
 com.siyeh.ig.methodmetrics.ParametersPerMethodInspection
 com.siyeh.ig.methodmetrics.ThreeNegationsPerMethodInspection
 com.siyeh.ig.methodmetrics.ThrownExceptionsPerMethodInspection

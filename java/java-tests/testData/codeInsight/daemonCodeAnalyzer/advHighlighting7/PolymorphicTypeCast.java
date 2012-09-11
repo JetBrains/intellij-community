@@ -71,14 +71,20 @@ class C {
     MethodHandle mh1 = MethodHandles.convertArguments(mh0, MethodType.methodType(Integer.class, String.class));
     System.out.println((Integer) mh1.invokeExact("daddy"));
   }
+  
+  void supported() {
+    Object o = 42;
+    int i = (int) o;
+    String s = "";
+    int i1 = <error descr="Inconvertible types; cannot cast 'java.lang.String' to 'int'">(int) s</error>;
+    System.out.println(i);
+    m((int) o);
+  }
 
   void unsupported() {
     Object o = 42;
-    int i = <error descr="Inconvertible types; cannot cast 'java.lang.Object' to 'int'">(int) o</error>;
-    System.out.println(i);
-    m(<error descr="Inconvertible types; cannot cast 'java.lang.Object' to 'int'">(int) o</error>);
     if (<error descr="Inconvertible types; cannot cast 'java.lang.Object' to 'int'">o instanceof int</error>) {
-      i = (Integer) o;
+      int i = (Integer) o;
       System.out.println(i);
     }
   }
