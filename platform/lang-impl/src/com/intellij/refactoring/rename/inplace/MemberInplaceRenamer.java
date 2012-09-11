@@ -81,6 +81,15 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   }
 
   @Override
+  protected boolean acceptReference(PsiReference reference) {
+    final PsiElement element = reference.getElement();
+    if (element instanceof PsiNamedElement) {
+      return Comparing.strEqual(((PsiNamedElement)element).getName(), myElementToRename.getName());
+    }
+    return super.acceptReference(reference);
+  }
+
+  @Override
   protected PsiElement checkLocalScope() {
     PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     if (currentFile != null) {
