@@ -39,6 +39,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
+import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
@@ -430,31 +431,40 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   @Nullable
   private static VirtualFile handleExternalDeletion(VirtualFile file) {
     String path = file.getPath();
-    String[] options = {"Restore", "Save under a different name", "Discard changes"};
+    int result = suggestToRestoreDeletedFile(path, new String[]{"Restore", "Save under a different name", "Discard changes"});
+    if (result == 0) return createFile(new File(path));
+    if (result == 1) return saveUnderDifferentName(file);
+    return null;
+  }
+
+  @Nullable
+  private static VirtualFile saveUnderDifferentName(VirtualFile file) {
+    FileSaverDescriptor descriptor = new FileSaverDescriptor("Save File As...", "Save file under a different name");
+    FileSaverDialog dialog = FileChooserFactory.getInstance().createSaveFileDialog(descriptor, (Project)null);
+    VirtualFileWrapper wrapper = dialog.save(findValidParent(file), file.getName());
+    return wrapper == null ? null : createFile(wrapper.getFile());
+  }
+
+  private static int suggestToRestoreDeletedFile(String path, String[] options) {
     String message = "File has been deleted on disk: " + FileUtil.toSystemDependentName(path);
-    int result = Messages.showDialog(message, "File Deleted", options, 0, Messages.getQuestionIcon());
-    File newFile;
-    if (result == 0) {
-      newFile = new File(path);
-    } else if (result == 1) {
-      VirtualFile validParent = file;
-      while (validParent != null && !validParent.isValid()) {
-        validParent = validParent.getParent();
-      }
-      final VirtualFileWrapper wrapper = FileChooserFactory.getInstance().createSaveFileDialog(
-        new FileSaverDescriptor("Save File As...", "Save file under a different name"), (Project)null).save(validParent, file.getName());
-      if (wrapper == null) {
-        return null;
-      }
-      newFile = wrapper.getFile();
-    } else {
-      return null;
-    }
+    return Messages.showDialog(message, "File Deleted", options, 0, Messages.getQuestionIcon());
+  }
+
+  @Nullable
+  private static VirtualFile createFile(File newFile) {
     if (!FileUtil.createIfDoesntExist(newFile)) {
       return null;
     }
-
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(newFile);
+  }
+
+  @Nullable
+  private static VirtualFile findValidParent(VirtualFile file) {
+    VirtualFile validParent = file;
+    while (validParent != null && !validParent.isValid()) {
+      validParent = validParent.getParent();
+    }
+    return validParent;
   }
 
   private static void updateModifiedProperty(@NotNull VirtualFile file) {

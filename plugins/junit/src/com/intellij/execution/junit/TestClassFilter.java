@@ -20,12 +20,15 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.ide.util.ClassFilter;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -49,10 +52,14 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
   public Project getProject() { return myProject; }
 
   public boolean isAccepted(final PsiClass aClass) {
-    return ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(aClass) &&
-           (aClass.isInheritor(myBase, true) || JUnitUtil.isTestClass(aClass))
-           && !CompilerConfiguration.getInstance(getProject()).isExcludedFromCompilation(PsiUtilBase.getVirtualFile(aClass))
-      ;
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        return ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(aClass) &&
+               (aClass.isInheritor(myBase, true) || JUnitUtil.isTestClass(aClass))
+               && !CompilerConfiguration.getInstance(getProject()).isExcludedFromCompilation(PsiUtilCore.getVirtualFile(aClass)); 
+      }
+    });
   }
 
   public TestClassFilter intersectionWith(final GlobalSearchScope scope) {
@@ -78,9 +85,14 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
     }
     return new TestClassFilter(testCase, sourceScope.getGlobalSearchScope()){
       @Override
-      public boolean isAccepted(PsiClass aClass) {
+      public boolean isAccepted(final PsiClass aClass) {
         if (super.isAccepted(aClass)) {
-          final String qualifiedName = aClass.getQualifiedName();
+          final String qualifiedName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+            @Override
+            public String compute() {
+              return aClass.getQualifiedName();
+            }
+          });
           for (Pattern compilePattern : compilePatterns) {
             if (compilePattern.matcher(qualifiedName).matches()) {
               return true;

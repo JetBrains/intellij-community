@@ -25,13 +25,8 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.util.Processor;
-
-import java.util.List;
 
 public class UnSelectWordHandler extends EditorActionHandler {
   private final EditorActionHandler myOriginalHandler;
@@ -59,6 +54,11 @@ public class UnSelectWordHandler extends EditorActionHandler {
 
 
   private static void doAction(Editor editor, PsiFile file) {
+    if (file instanceof PsiCompiledFile) {
+      file = ((PsiCompiledFile)file).getDecompiledPsiFile();
+      if (file == null) return;
+    }
+
     if (!editor.getSelectionModel().hasSelection()) {
       return;
     }

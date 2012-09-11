@@ -440,6 +440,6 @@
     <daemon.changeLocalityDetector implementation="com.intellij.xml.XmlChangeLocalityDetector"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
-    <urlOpener implementation="com.intellij.ide.browsers.impl.UrlOpenerImpl" order="last"/>
+    <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
   </extensions>
 </idea-plugin>

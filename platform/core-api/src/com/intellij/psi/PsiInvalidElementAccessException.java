@@ -21,6 +21,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 
@@ -31,21 +32,25 @@ public class PsiInvalidElementAccessException extends RuntimeException {
   private final SoftReference<PsiElement> myElementReference;  // to prevent leaks, since exceptions are stored in IdeaLogger
 
   public PsiInvalidElementAccessException(PsiElement element) {
-    this(element, null, null);
+    this(element, (String)null);
   }
 
-  public PsiInvalidElementAccessException(PsiElement element, String message) {
-    this(element, message, null);
+  public PsiInvalidElementAccessException(PsiElement element, @Nullable String message) {
+    this(element, getMessageWithReason(element, message), null);
   }
 
-  public PsiInvalidElementAccessException(PsiElement element, Throwable cause) {
-    this(element, null, cause);
+  public PsiInvalidElementAccessException(PsiElement element, @Nullable Throwable cause) {
+    this(element, getMessageWithReason(element, null), cause);
   }
 
-  public PsiInvalidElementAccessException(PsiElement element, String message, Throwable cause) {
-    super((element != null ? "Element: " + element.getClass() + " because: " + reason(element) : "Unknown psi element") +
-          (message == null ? "" : "; " + message), cause);
+  public PsiInvalidElementAccessException(PsiElement element, @Nullable String message, @Nullable Throwable cause) {
+    super(message, cause);
     myElementReference = new SoftReference<PsiElement>(element);
+  }
+
+  private static String getMessageWithReason(@Nullable PsiElement element, @Nullable String message) {
+    return (element != null ? "Element: " + element.getClass() + " because: " + reason(element) : "Unknown psi element") +
+          (message == null ? "" : "; " + message);
   }
 
   @NonNls
@@ -71,6 +76,7 @@ public class PsiInvalidElementAccessException extends RuntimeException {
     return "psi is outdated";
   }
 
+  @Nullable
   public PsiElement getPsiElement() {
     return myElementReference.get();
   }
