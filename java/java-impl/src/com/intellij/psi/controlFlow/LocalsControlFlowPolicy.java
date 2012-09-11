@@ -40,13 +40,14 @@ public class LocalsControlFlowPolicy implements ControlFlowPolicy {
 
   @Nullable
   private PsiVariable checkCodeFragment(PsiElement refElement) {
-    PsiElement codeFragement;
-    if (refElement instanceof PsiParameter
-      && ((PsiParameter)refElement).getDeclarationScope() instanceof PsiMethod){
-      codeFragement = ((PsiMethod)((PsiParameter)refElement).getDeclarationScope()).getBody();
-    }
-    else{
-      codeFragement = ControlFlowUtil.findCodeFragment(refElement);
+    PsiElement codeFragement = ControlFlowUtil.findCodeFragment(refElement);
+    if (refElement instanceof PsiParameter) {
+      final PsiElement declarationScope = ((PsiParameter)refElement).getDeclarationScope();
+      if (declarationScope instanceof PsiMethod){
+        codeFragement = ((PsiMethod)declarationScope).getBody();
+      } else if (declarationScope instanceof PsiLambdaExpression) {
+        codeFragement = ((PsiLambdaExpression)declarationScope).getBody();
+      }
     }
     if (codeFragement == null) return null;
     if (myCodeFragment.getContainingFile() == codeFragement.getContainingFile() && //In order for jsp includes to work
