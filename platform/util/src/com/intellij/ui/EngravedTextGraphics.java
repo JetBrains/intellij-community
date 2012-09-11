@@ -25,7 +25,7 @@ import java.awt.*;
 import java.text.AttributedCharacterIterator;
 
 public class EngravedTextGraphics extends Graphics2DDelegate {
-  private final static Color SHADOW_COLOR = new Color(250, 250, 250, 140);
+  private final static Color SHADOW_COLOR = Gray._250.withAlpha(140);
   private final static boolean ALLOW_ENGRAVEMENT = SystemInfo.isMac;
   private Color myShadowColor;
   private int myXOffset;
