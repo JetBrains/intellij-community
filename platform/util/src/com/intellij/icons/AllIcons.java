@@ -557,6 +557,7 @@ public class AllIcons {
       public static final Icon Recording_stop = IconLoader.getIcon("/ide/macro/recording_stop.png"); // 16x16
 
     }
+    public static final Icon NoNotifications13 = IconLoader.getIcon("/ide/noNotifications13.png"); // 13x13
     public static final Icon Notifications = IconLoader.getIcon("/ide/notifications.png"); // 16x16
     public static final Icon Pipette = IconLoader.getIcon("/ide/pipette.png"); // 18x18
     public static final Icon Pipette_rollover = IconLoader.getIcon("/ide/pipette_rollover.png"); // 18x18
