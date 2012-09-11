@@ -115,7 +115,7 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
       rootSize.height -= (borderInsets.top + borderInsets.bottom) * 2;
 
       //noinspection HardCodedStringLiteral
-      final StringBuffer tipBuilder = new StringBuffer();
+      final StringBuilder tipBuilder = new StringBuilder();
       try {
         final String markupText = node.getMarkupTooltipText();
         if (markupText != null) {
