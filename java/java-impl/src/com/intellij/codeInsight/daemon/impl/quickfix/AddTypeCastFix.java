@@ -83,6 +83,9 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
   static PsiExpression createCastExpression(PsiExpression originalExpression, Project project, PsiType type) throws IncorrectOperationException {
     // remove nested casts
     PsiElement element = PsiUtil.deparenthesizeExpression(originalExpression);
+    if (element == null){
+      return null;
+    }
     PsiElementFactory factory = JavaPsiFacade.getInstance(originalExpression.getProject()).getElementFactory();
 
     PsiTypeCastExpression typeCast = (PsiTypeCastExpression)factory.createExpressionFromText("(Type)value", null);
