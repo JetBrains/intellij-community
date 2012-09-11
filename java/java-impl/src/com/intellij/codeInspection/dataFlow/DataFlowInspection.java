@@ -147,16 +147,13 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     Pair<Set<Instruction>, Set<Instruction>> constConditions = runner.getConstConditionalExpressions();
     Set<Instruction> trueSet = constConditions.getFirst();
     Set<Instruction> falseSet = constConditions.getSecond();
-    Set<Instruction> npeSet = runner.getNPEInstructions();
-    Set<Instruction> cceSet = runner.getCCEInstructions();
-    Set<Instruction> redundantInstanceofs = StandardDataFlowRunner.getRedundantInstanceofs(runner, visitor);
 
     ArrayList<Instruction> allProblems = new ArrayList<Instruction>();
     allProblems.addAll(trueSet);
     allProblems.addAll(falseSet);
-    allProblems.addAll(npeSet);
-    allProblems.addAll(cceSet);
-    allProblems.addAll(redundantInstanceofs);
+    allProblems.addAll(runner.getNPEInstructions());
+    allProblems.addAll(runner.getCCEInstructions());
+    allProblems.addAll(StandardDataFlowRunner.getRedundantInstanceofs(runner, visitor));
 
     Collections.sort(allProblems, new Comparator<Instruction>() {
       public int compare(Instruction i1, Instruction i2) {
@@ -168,82 +165,105 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
 
     for (Instruction instruction : allProblems) {
       if (instruction instanceof MethodCallInstruction) {
-        MethodCallInstruction mcInstruction = (MethodCallInstruction)instruction;
-        if (mcInstruction.getCallExpression() instanceof PsiMethodCallExpression) {
-          PsiMethodCallExpression callExpression = (PsiMethodCallExpression)mcInstruction.getCallExpression();
-          LocalQuickFix[] fix = createNPEFixes(callExpression.getMethodExpression().getQualifierExpression(), callExpression);
-
-          holder.registerProblem(callExpression,
-                                 InspectionsBundle.message("dataflow.message.npe.method.invocation"),
-                                 fix);
-        }
+        reportCallMayProduceNpe(holder, (MethodCallInstruction)instruction);
       }
       else if (instruction instanceof FieldReferenceInstruction) {
-        FieldReferenceInstruction frInstruction = (FieldReferenceInstruction)instruction;
-        PsiElement elementToAssert = frInstruction.getElementToAssert();
-        PsiExpression expression = frInstruction.getExpression();
-        if (expression instanceof PsiArrayAccessExpression) {
-          LocalQuickFix[] fix = createNPEFixes((PsiExpression)elementToAssert, expression);
-          holder.registerProblem(expression,
-                                 InspectionsBundle.message("dataflow.message.npe.array.access"),
-                                 fix);
-        }
-        else {
-          LocalQuickFix[] fix = createNPEFixes((PsiExpression)elementToAssert, expression);
-          holder.registerProblem(elementToAssert,
-                                 InspectionsBundle.message("dataflow.message.npe.field.access"),
-                                 fix);
-        }
+        reportFieldAccessMayProduceNpe(holder, (FieldReferenceInstruction)instruction);
       }
       else if (instruction instanceof TypeCastInstruction) {
-        TypeCastInstruction tcInstruction = (TypeCastInstruction)instruction;
-        PsiTypeCastExpression typeCast = tcInstruction.getCastExpression();
-        holder.registerProblem(typeCast.getCastType(),
-                               InspectionsBundle.message("dataflow.message.cce", typeCast.getOperand().getText()));
+        reportCastMayFail(holder, (TypeCastInstruction)instruction);
       }
       else if (instruction instanceof BranchingInstruction) {
-        PsiElement psiAnchor = ((BranchingInstruction)instruction).getPsiAnchor();
-        boolean underBinary = isAtRHSOfBooleanAnd(psiAnchor);
-        if (instruction instanceof InstanceofInstruction && visitor.isInstanceofRedundant((InstanceofInstruction)instruction)) {
-          if (visitor.canBeNull((BinopInstruction)instruction)) {
-            holder.registerProblem(psiAnchor,
-                                   InspectionsBundle.message("dataflow.message.redundant.instanceof"),
-                                   new RedundantInstanceofFix());
-          }
-          else {
-            final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(psiAnchor, true);
-            holder.registerProblem(psiAnchor,
-                                   InspectionsBundle.message(underBinary ? "dataflow.message.constant.condition.whenriched" : "dataflow.message.constant.condition", Boolean.toString(true)),
-                                   localQuickFix == null ? null : new LocalQuickFix[]{localQuickFix});
-          }
-        }
-        else if (psiAnchor instanceof PsiSwitchLabelStatement) {
-          if (falseSet.contains(instruction)) {
-            holder.registerProblem(psiAnchor,
-                                   InspectionsBundle.message("dataflow.message.unreachable.switch.label"));
-          }
-        }
-        else if (psiAnchor != null && !reportedAnchors.contains(psiAnchor) && !isCompileConstantInIfCondition(psiAnchor)) {
-          boolean evaluatesToTrue = trueSet.contains(instruction);
-          if (onTheLeftSideOfConditionalAssignemnt(psiAnchor)) {
-            holder.registerProblem(
-              psiAnchor,
-              InspectionsBundle.message("dataflow.message.pointless.assignment.expression", Boolean.toString(evaluatesToTrue)),
-              createSimplifyToAssignmentFix()
-            );
-          }
-          else if (shouldReportConditionAlwaysTrueOrFalse(psiAnchor, evaluatesToTrue)) {
-            final LocalQuickFix fix = createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue);
-            String message = InspectionsBundle.message(underBinary ?
-                                                       "dataflow.message.constant.condition.whenriched" :
-                                                       "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
-            holder.registerProblem(psiAnchor, message, fix == null ? null : new LocalQuickFix[]{fix});
-          }
-          reportedAnchors.add(psiAnchor);
-        }
+        handleBranchingInstruction(holder, visitor, trueSet, falseSet, reportedAnchors, (BranchingInstruction)instruction);
       }
     }
 
+    reportNullableArguments(runner, holder);
+    reportNullableAssignments(runner, holder);
+    reportUnboxedNullables(runner, holder);
+    reportNullableReturns(runner, holder);
+  }
+
+  private static void reportCallMayProduceNpe(ProblemsHolder holder, MethodCallInstruction mcInstruction) {
+    if (mcInstruction.getCallExpression() instanceof PsiMethodCallExpression) {
+      PsiMethodCallExpression callExpression = (PsiMethodCallExpression)mcInstruction.getCallExpression();
+      LocalQuickFix[] fix = createNPEFixes(callExpression.getMethodExpression().getQualifierExpression(), callExpression);
+
+      holder.registerProblem(callExpression,
+                             InspectionsBundle.message("dataflow.message.npe.method.invocation"),
+                             fix);
+    }
+  }
+
+  private static void reportFieldAccessMayProduceNpe(ProblemsHolder holder, FieldReferenceInstruction frInstruction) {
+    PsiElement elementToAssert = frInstruction.getElementToAssert();
+    PsiExpression expression = frInstruction.getExpression();
+    if (expression instanceof PsiArrayAccessExpression) {
+      LocalQuickFix[] fix = createNPEFixes((PsiExpression)elementToAssert, expression);
+      holder.registerProblem(expression,
+                             InspectionsBundle.message("dataflow.message.npe.array.access"),
+                             fix);
+    }
+    else {
+      LocalQuickFix[] fix = createNPEFixes((PsiExpression)elementToAssert, expression);
+      holder.registerProblem(elementToAssert,
+                             InspectionsBundle.message("dataflow.message.npe.field.access"),
+                             fix);
+    }
+  }
+
+  private static void reportCastMayFail(ProblemsHolder holder, TypeCastInstruction instruction) {
+    PsiTypeCastExpression typeCast = instruction.getCastExpression();
+    holder.registerProblem(typeCast.getCastType(),
+                           InspectionsBundle.message("dataflow.message.cce", typeCast.getOperand().getText()));
+  }
+
+  private void handleBranchingInstruction(ProblemsHolder holder,
+                                          StandardInstructionVisitor visitor,
+                                          Set<Instruction> trueSet,
+                                          Set<Instruction> falseSet, HashSet<PsiElement> reportedAnchors, BranchingInstruction instruction) {
+    PsiElement psiAnchor = instruction.getPsiAnchor();
+    boolean underBinary = isAtRHSOfBooleanAnd(psiAnchor);
+    if (instruction instanceof InstanceofInstruction && visitor.isInstanceofRedundant((InstanceofInstruction)instruction)) {
+      if (visitor.canBeNull((BinopInstruction)instruction)) {
+        holder.registerProblem(psiAnchor,
+                               InspectionsBundle.message("dataflow.message.redundant.instanceof"),
+                               new RedundantInstanceofFix());
+      }
+      else {
+        final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(psiAnchor, true);
+        holder.registerProblem(psiAnchor,
+                               InspectionsBundle.message(underBinary ? "dataflow.message.constant.condition.when.reached" : "dataflow.message.constant.condition", Boolean.toString(true)),
+                               localQuickFix == null ? null : new LocalQuickFix[]{localQuickFix});
+      }
+    }
+    else if (psiAnchor instanceof PsiSwitchLabelStatement) {
+      if (falseSet.contains(instruction)) {
+        holder.registerProblem(psiAnchor,
+                               InspectionsBundle.message("dataflow.message.unreachable.switch.label"));
+      }
+    }
+    else if (psiAnchor != null && !reportedAnchors.contains(psiAnchor) && !isCompileConstantInIfCondition(psiAnchor)) {
+      boolean evaluatesToTrue = trueSet.contains(instruction);
+      if (onTheLeftSideOfConditionalAssignemnt(psiAnchor)) {
+        holder.registerProblem(
+          psiAnchor,
+          InspectionsBundle.message("dataflow.message.pointless.assignment.expression", Boolean.toString(evaluatesToTrue)),
+          createSimplifyToAssignmentFix()
+        );
+      }
+      else if (shouldReportConditionAlwaysTrueOrFalse(psiAnchor, evaluatesToTrue) && !visitor.silenceConstantCondition(instruction)) {
+        final LocalQuickFix fix = createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue);
+        String message = InspectionsBundle.message(underBinary ?
+                                                   "dataflow.message.constant.condition.when.reached" :
+                                                   "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
+        holder.registerProblem(psiAnchor, message, fix == null ? null : new LocalQuickFix[]{fix});
+      }
+      reportedAnchors.add(psiAnchor);
+    }
+  }
+
+  private static void reportNullableArguments(StandardDataFlowRunner runner, ProblemsHolder holder) {
     Set<PsiExpression> exprs = runner.getNullableArguments();
     for (PsiExpression expr : exprs) {
       final String text = isNullLiteralExpression(expr)
@@ -252,22 +272,25 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       LocalQuickFix[] fixes = createNPEFixes(expr, expr);
       holder.registerProblem(expr, text, fixes);
     }
+  }
 
-    exprs = runner.getNullableAssignments();
-    for (PsiExpression expr : exprs) {
+  private static void reportNullableAssignments(StandardDataFlowRunner runner, ProblemsHolder holder) {
+    for (PsiExpression expr : runner.getNullableAssignments()) {
       final String text = isNullLiteralExpression(expr)
                           ? InspectionsBundle.message("dataflow.message.assigning.null")
                           : InspectionsBundle.message("dataflow.message.assigning.nullable");
       holder.registerProblem(expr, text);
     }
+  }
 
-    exprs = runner.getUnboxedNullables();
-    for (PsiExpression expr : exprs) {
+  private static void reportUnboxedNullables(StandardDataFlowRunner runner, ProblemsHolder holder) {
+    for (PsiExpression expr : runner.getUnboxedNullables()) {
       holder.registerProblem(expr, InspectionsBundle.message("dataflow.message.unboxing"));
     }
+  }
 
-    final Set<PsiReturnStatement> statements = runner.getNullableReturns();
-    for (PsiReturnStatement statement : statements) {
+  private static void reportNullableReturns(StandardDataFlowRunner runner, ProblemsHolder holder) {
+    for (PsiReturnStatement statement : runner.getNullableReturns()) {
       final PsiExpression expr = statement.getReturnValue();
       if (runner.isInNotNullMethod()) {
         final String text = isNullLiteralExpression(expr)

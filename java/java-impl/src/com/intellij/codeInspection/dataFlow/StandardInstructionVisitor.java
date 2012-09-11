@@ -36,6 +36,7 @@ import java.util.Set;
 public class StandardInstructionVisitor extends InstructionVisitor {
   private final Set<BinopInstruction> myReachable = new THashSet<BinopInstruction>();
   private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<BinopInstruction>();
+  private final Set<BinopInstruction> myNotToReportReachability = new THashSet<BinopInstruction>();
   private final Set<InstanceofInstruction> myUsefulInstanceofs = new THashSet<InstanceofInstruction>();
   private final FactoryMap<MethodCallInstruction, boolean[]> myParametersNotNull = new FactoryMap<MethodCallInstruction, boolean[]>() {
     @Override
@@ -298,7 +299,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       return null;
     }
 
+    if (isViaMethods(dfaLeft) || isViaMethods(dfaRight)) {
+      myNotToReportReachability.add(instruction);
+    }
     myCanBeNullInInstanceof.add(instruction);
+
     ArrayList<DfaInstructionState> states = new ArrayList<DfaInstructionState>();
 
     final DfaMemoryState trueCopy = memState.createCopy();
@@ -326,6 +331,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
 
     return states.toArray(new DfaInstructionState[states.size()]);
+  }
+
+  private static boolean isViaMethods(DfaValue dfa) {
+    return dfa instanceof DfaVariableValue && ((DfaVariableValue)dfa).isViaMethods();
   }
 
   private void handleInstanceof(InstanceofInstruction instruction, DfaValue dfaRight, DfaValue dfaLeft) {
@@ -396,5 +405,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   public boolean canBeNull(BinopInstruction instruction) {
     return myCanBeNullInInstanceof.contains(instruction);
+  }
+
+  public boolean silenceConstantCondition(BranchingInstruction instruction) {
+    return instruction instanceof BinopInstruction && myNotToReportReachability.contains(instruction);
   }
 }

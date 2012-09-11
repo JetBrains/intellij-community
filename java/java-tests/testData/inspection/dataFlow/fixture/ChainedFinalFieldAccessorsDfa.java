@@ -15,11 +15,9 @@ public class BrokenAlignment {
     if (data.inner() != null) {
       System.out.println(data.inner().hashCode());
       System.out.println(<warning descr="Method invocation 'data.inner().getText().hashCode()' may produce 'java.lang.NullPointerException'">data.inner().getText().hashCode()</warning>);
-      /*
       if (data.inner() != null) {
         System.out.println(data.inner().hashCode());
       }
-      */
 
       data = new Data(null, null);
       System.out.println(<warning descr="Method invocation 'data.inner().hashCode()' may produce 'java.lang.NullPointerException'">data.inner().hashCode()</warning>);
