@@ -28,10 +28,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  * @author ilyas
  */
 public class ExtractMethodTest extends LightGroovyTestCase {
-  @Override
-  protected String getBasePath() {
-    return TestUtils.testDataPath + "groovy/refactoring/extractMethod/";
-  }
+  final String basePath = TestUtils.testDataPath + 'groovy/refactoring/extractMethod/'
 
   private void doAntiTest(String errorMessage) {
     GroovyExtractMethodHandler handler = configureFromText(readInput().get(0));
@@ -94,7 +91,7 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   public void testVen3() throws Throwable { doTest(); }
   public void testForIn() throws Throwable { doTest(); }
   public void testInCatch() {doTest();}
-  
+
   public void testClosureIt() throws Throwable { doTest(); }
   public void testImplicitReturn() {doTest();}
 
@@ -109,7 +106,7 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   public void testLastBlockStatementInterruptsControlFlow() {doTest();}
 
   public void testAOOBE() {doTest();}
-  
+
   public void testWildCardReturnType() {doTest();}
   public void testParamChangedInsideExtractedMethod() {doTest();}
 
@@ -117,4 +114,6 @@ public class ExtractMethodTest extends LightGroovyTestCase {
 
   public void testArgsUsedOnlyInClosure() {doTest()}
   public void testArgsUsedOnlyInAnonymousClass() {doTest()}
+
+  public void testTwoVars() {doTest()}
 }

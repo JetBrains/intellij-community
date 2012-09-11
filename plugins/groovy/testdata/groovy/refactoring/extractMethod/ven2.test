@@ -1,6 +1,6 @@
 protected static def getGeneratedFileNames() {
     foo = 0
-    while (true) {
+    while (cond) {
 <begin>        println(foo)
         foo = ""
 <end>    }
@@ -10,7 +10,7 @@ protected static def getGeneratedFileNames() {
 -----
 protected static def getGeneratedFileNames() {
     foo = 0
-    while (true) {
+    while (cond) {
         foo = <caret>testMethod(foo)
     }
 
