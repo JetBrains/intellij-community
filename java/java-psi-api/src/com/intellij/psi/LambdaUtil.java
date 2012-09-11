@@ -113,13 +113,43 @@ public class LambdaUtil {
 
   @Nullable
   public static String checkInterfaceFunctional(PsiType functionalInterfaceType) {
-    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(functionalInterfaceType);
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+    final PsiClass aClass = resolveResult.getElement();
     if (aClass != null) {
+      if (checkReturnTypeApplicable(resolveResult, aClass)) {
+        return "No instance of type " + functionalInterfaceType.getPresentableText() + " exists so that lambda expression can be type-checked";
+      }
       return checkInterfaceFunctional(aClass);
     }
     return null;
   }
-  
+
+  private static boolean checkReturnTypeApplicable(PsiClassType.ClassResolveResult resolveResult, final PsiClass aClass) {
+    final MethodSignature methodSignature = getFunction(aClass);
+    if (methodSignature == null) return false;
+
+    for (PsiTypeParameter parameter : aClass.getTypeParameters()) {
+      if (parameter.getExtendsListTypes().length == 0) continue;
+      boolean depends = false;
+      final PsiType substitution = resolveResult.getSubstitutor().substitute(parameter);
+      if (substitution instanceof PsiWildcardType && !((PsiWildcardType)substitution).isBounded()) {
+        for (PsiType paramType : methodSignature.getParameterTypes()) {
+          if (depends(paramType, parameter, new TypeParamsChecker((PsiMethod)null, aClass){
+            @Override
+            public boolean startedInference() {
+              return true;
+            }
+          })) {
+            depends = true;
+            break;
+          }
+        }
+        if (!depends) return true;
+      }
+    }
+    return false;
+  }
+
   @Nullable
   public static String checkInterfaceFunctional(@NotNull PsiClass psiClass) {
     if (psiClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference

@@ -173,7 +173,10 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
           if (disabled[0]) return false;
         }
         final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
-        return functionalInterfaceType != null && LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType) != null && LambdaUtil.isLambdaFullyInferred(lambdaExpression, functionalInterfaceType);
+        return functionalInterfaceType != null && 
+               LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType) != null && 
+               LambdaUtil.isLambdaFullyInferred(lambdaExpression, functionalInterfaceType) && 
+               LambdaUtil.checkInterfaceFunctional(functionalInterfaceType) == null;
       }
       return false;
     }
