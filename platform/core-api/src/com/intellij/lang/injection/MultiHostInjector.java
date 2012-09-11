@@ -28,6 +28,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * @see com.intellij.psi.PsiLanguageInjectionHost
+ */
 public interface MultiHostInjector {
 
   ExtensionPointName<MultiHostInjector> MULTIHOST_INJECTOR_EP_NAME = ExtensionPointName.create("com.intellij.multiHostInjector");

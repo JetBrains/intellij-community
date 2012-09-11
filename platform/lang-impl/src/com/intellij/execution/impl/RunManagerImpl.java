@@ -761,10 +761,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     setActiveConfiguration(tempConfiguration);
   }
 
-  public static boolean isEditBeforeRun(@NotNull final RunnerAndConfigurationSettings configuration) {
-    return configuration.isEditBeforeRun();
-  }
-
   Collection<RunnerAndConfigurationSettings> getStableConfigurations() {
     final Map<Integer, RunnerAndConfigurationSettings> result =
       new LinkedHashMap<Integer, RunnerAndConfigurationSettings>(myConfigurations);
