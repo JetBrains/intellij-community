@@ -668,14 +668,14 @@ public class Switcher extends AnAction implements DumbAware {
         }, 300);
         if (jList.getModel().getSize() == 1) {
           goLeft();
-          ((DefaultListModel)jList.getModel()).removeElementAt(selectedIndex);
+          removeElementAt(jList, selectedIndex);
           this.remove(jList);
           this.remove(separator);
           final Dimension size = toolWindows.getSize();
           myPopup.setSize(new Dimension(size.width, myPopup.getSize().height));
         } else {
           goForward();
-          ((DefaultListModel)jList.getModel()).removeElementAt(selectedIndex);
+          removeElementAt(jList, selectedIndex);
           jList.setSize(jList.getPreferredSize());
         }
         pack();
@@ -687,6 +687,17 @@ public class Switcher extends AnAction implements DumbAware {
         } else {
           toolWindow.hide(null);
         }
+      }
+    }
+
+    private static void removeElementAt(JList jList, int index) {
+      final ListModel model = jList.getModel();
+      if (model instanceof DefaultListModel) {
+       ((DefaultListModel)model).removeElementAt(index);
+      } else if (model instanceof NameFilteringListModel) {
+        ((NameFilteringListModel)model).remove(index);
+      } else {
+        throw new IllegalArgumentException("Wrong list model " + model.getClass());
       }
     }
 
