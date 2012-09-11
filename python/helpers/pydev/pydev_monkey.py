@@ -102,7 +102,7 @@ def warn_multiproc():
     import pydev_log
 
     pydev_log.error_once(
-        "New process is launching. Breakpoints won't work.\n To debug that process please enable 'Attach to subprocess automatically while debugging' option in your run configuration.\n")
+        "New process is launching. Breakpoints won't work.\n To debug that process please enable 'Attach to subprocess automatically while debugging' option in the debugger settings.\n")
 
 
 def create_warn_multiproc(original_name):
