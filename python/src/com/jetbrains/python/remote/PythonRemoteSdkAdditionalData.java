@@ -345,7 +345,7 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
   public void save(@NotNull final Element rootElement) {
     super.save(rootElement);
 
-    rootElement.setAttribute(HOST, getHost());
+    rootElement.setAttribute(HOST, StringUtil.notNullize(getHost()));
     rootElement.setAttribute(PORT, Integer.toString(getPort()));
     rootElement.setAttribute(ANONYMOUS, Boolean.toString(isAnonymous()));
     rootElement.setAttribute(USERNAME, getSerializedUserName());
