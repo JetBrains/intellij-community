@@ -227,6 +227,34 @@ public class PyCopyPasteTest extends PyTestCase {
     doTest();
   }
 
+  public void testLineToEnd() {    //PY-7524
+    doTest();
+  }
+
+  public void testLineToPrev() {    //PY-7524
+    doTest();
+  }
+
+  public void testLineToBegin() {    //PY-7524
+    doTest();
+  }
+
+  public void testSelectionOneLine() {    //PY-7470
+    doTest();
+  }
+
+  public void testSelectionOneLine1() {    //PY-7470
+    doTest();
+  }
+
+  public void testSelectionOneLine2() {    //PY-7470
+    doTest();
+  }
+
+  public void testSelectionOneLine3() {    //PY-7470
+    doTest();
+  }
+
   private void doTest() {
     String name = getTestName(false);
 
