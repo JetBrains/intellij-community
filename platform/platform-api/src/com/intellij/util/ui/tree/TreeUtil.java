@@ -754,7 +754,7 @@ public final class TreeUtil {
 
   @NotNull
   public static ArrayList<TreeNode> childrenToArray(@NotNull final TreeNode node) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    //ApplicationManager.getApplication().assertIsDispatchThread();
     final ArrayList<TreeNode> result = new ArrayList<TreeNode>();
     for(int i = 0; i < node.getChildCount(); i++){
       TreeNode child = node.getChildAt(i);
