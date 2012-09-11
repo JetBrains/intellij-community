@@ -264,6 +264,9 @@ public class FileBasedStorage extends XmlElementStorage {
         LOG.info("Document was not loaded for " + myFileSpec + " file is " + (file == null ? "null" : "directory"));        
         return null;
       }
+      else if (file.getLength() == 0) {
+        return processReadException(null);
+      }
       else {
         return loadDocumentImpl(file);
       }
@@ -277,12 +280,15 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   @Nullable
-  private Document processReadException(final Exception e) {
-    myBlockSavingTheContent = isProjectOrModuleFile();
+  private Document processReadException(@Nullable final Exception e) {
+    boolean contentTruncated = e == null;
+    myBlockSavingTheContent = isProjectOrModuleFile() && !contentTruncated;
     if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      LOG.info(e);
-      final String message = "Cannot load settings from file '" + myFile.getPath() + "': " + e.getLocalizedMessage() + "\n" +
-                             getInvalidContentMessage();
+      if (e != null) {
+        LOG.info(e);
+      }
+      final String message = "Cannot load settings from file '" + myFile.getPath() + "': " + (e == null ? "content truncated" : e.getLocalizedMessage()) + "\n" +
+                             getInvalidContentMessage(contentTruncated);
       Notifications.Bus.notify(
         new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Load Settings", message, NotificationType.WARNING));
     }
@@ -294,8 +300,8 @@ public class FileBasedStorage extends XmlElementStorage {
     return myIsProjectSettings || myFileSpec.equals("$MODULE_FILE$");
   }
 
-  private String getInvalidContentMessage() {
-    return isProjectOrModuleFile() ? "Please correct the file content" : "File content will be recreated";
+  private String getInvalidContentMessage(boolean contentTruncated) {
+    return isProjectOrModuleFile() && !contentTruncated ? "Please correct the file content" : "File content will be recreated";
   }
 
   private static Document loadDocumentImpl(final VirtualFile file) throws IOException, JDOMException {
