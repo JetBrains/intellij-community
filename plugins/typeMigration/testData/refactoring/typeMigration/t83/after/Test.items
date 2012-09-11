@@ -6,4 +6,3 @@ Conversions:
 
 New expression type changes:
 Fails:
-(float)p->java.lang.Object
