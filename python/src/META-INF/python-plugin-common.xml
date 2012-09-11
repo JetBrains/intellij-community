@@ -736,6 +736,7 @@
     <useScopeEnlarger implementation="com.jetbrains.jinja2.findUsages.Jinja2UseScopeEnlarger"/>
     <usageTypeProvider implementation="com.jetbrains.jinja2.findUsages.Jinja2UsageTypeProvider"/>
     <lang.commenter language="Jinja2" implementationClass="com.jetbrains.jinja2.Jinja2Commenter"/>
+    <xml.zenCodingGenerator implementation="com.jetbrains.jinja2.Jinja2ZenCodingGenerator"/>
 
     <!-- Packaging -->
     <moduleService serviceInterface="com.jetbrains.python.packaging.PyPackageRequirementsSettings"
