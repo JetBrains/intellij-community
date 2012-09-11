@@ -53,7 +53,7 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithPar
     if (node != null) {
       final PsiElement psi = node.getPsi();
       if (psi != null) {
-        language = psi.getLanguage();
+        language = psi.getContainingFile().getLanguage();
       }
     }
     myLanguage = language;

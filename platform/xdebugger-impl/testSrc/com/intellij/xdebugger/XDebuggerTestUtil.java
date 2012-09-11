@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ui.UIUtil;
@@ -71,11 +72,22 @@ public class XDebuggerTestUtil {
     XDebuggerUtil.getInstance().toggleLineBreakpoint(project, file, line);
   }
 
-  public static <P extends XBreakpointProperties>void insertBreakpoint(final Project project, final P properties, final Class<? extends XBreakpointType<XBreakpoint<P>, P>> typeClass) {
+  public static <P extends XBreakpointProperties> XBreakpoint<P> insertBreakpoint(final Project project,
+                                                                                  final P properties,
+                                                                                  final Class<? extends XBreakpointType<XBreakpoint<P>, P>> typeClass) {
+    return new WriteAction<XBreakpoint<P>>() {
+      protected void run(final Result<XBreakpoint<P>> result) {
+        result.setResult(XDebuggerManager.getInstance(project).getBreakpointManager()
+                           .addBreakpoint((XBreakpointType<XBreakpoint<P>, P>)XDebuggerUtil.getInstance().findBreakpointType(typeClass),
+                                          properties));
+      }
+    }.execute().getResultObject();
+  }
+
+  public static void removeBreakpoint(final Project project, final XBreakpoint<?> breakpoint) {
     new WriteAction() {
       protected void run(final Result result) {
-        XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-        breakpointManager.addBreakpoint((XBreakpointType<XBreakpoint<P>,P>)XDebuggerUtil.getInstance().findBreakpointType(typeClass), properties);
+        XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint);
       }
     }.execute();
   }
@@ -267,6 +279,20 @@ public class XDebuggerTestUtil {
     UsefulTestCase.assertOrderedEquals(actualNames, expectedNames);
   }
 
+  public static void assertVariablesContain(List<XValue> vars, String... names) throws InterruptedException {
+    List<String> expectedNames = new ArrayList<String>(Arrays.asList(names));
+
+    List<String> actualNames = new ArrayList<String>();
+    for (XValue each : vars) {
+      actualNames.add(computePresentation(each).myName);
+    }
+
+    expectedNames.removeAll(actualNames);
+    UsefulTestCase.assertTrue("Missing variables:" + StringUtil.join(expectedNames, ", ")
+                              + "\nAll Variables: " + StringUtil.join(actualNames, ", "),
+                              expectedNames.isEmpty());
+  }
+
   public static void assertSourcePosition(final XValue value, VirtualFile file, int offset) {
     final XTestNavigatable n = new XTestNavigatable();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -327,7 +353,7 @@ public class XDebuggerTestUtil {
   public static void removeAllBreakpoints(@NotNull final Project project) {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     XBreakpoint<?>[] breakpoints = breakpointManager.getAllBreakpoints();
-    for (XBreakpoint b: breakpoints) {
+    for (XBreakpoint b : breakpoints) {
       breakpointManager.removeBreakpoint(b);
     }
   }

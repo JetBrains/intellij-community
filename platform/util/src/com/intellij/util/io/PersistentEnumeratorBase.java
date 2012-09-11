@@ -370,11 +370,11 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
 
   protected abstract int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException;
 
-  protected boolean isKeyAtIndex(Data value, int idx) throws IOException {
+  protected boolean isKeyAtIndex(final Data value, final int idx) throws IOException {
     if (myKeyStorage == null) return false;
 
     // check if previous serialized state is the same as for value
-    // this is much faster than myDataDescriptor.isEqualTo(valueOf(idx), value)
+    // this is much faster than myDataDescriptor.isEqualTo(valueOf(idx), value) for identical objects
     final boolean sameValue[] = new boolean[1];    // TODO: key storage lock
     final int addr = indexToAddr(idx);
     OutputStream comparer;
@@ -426,7 +426,9 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     myDataDescriptor.save(out, value);
     comparer.close();
 
-    return sameValue[0];
+    if (sameValue[0]) return true;
+
+    return myDataDescriptor.isEqual(valueOf(idx), value);
   }
 
   protected int writeData(final Data value, int hashCode) {

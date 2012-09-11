@@ -18,6 +18,7 @@ package com.intellij.util;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -123,6 +124,7 @@ public class CommonProcessors {
       return myValue != null;
     }
 
+    @Nullable
     public T getFoundValue() {
       return myValue;
     }

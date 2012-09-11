@@ -15,11 +15,14 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: Andrey.Vokin
@@ -37,13 +40,21 @@ public class CodeInsightTestCase extends LightPlatformCodeInsightFixtureTestCase
     int caretOffset = signature.indexOf(caretSignature);
     assert caretOffset >= 0;
     signature = signature.substring(0, caretOffset) + signature.substring(caretOffset + caretSignature.length());
+    @SuppressWarnings("ConstantConditions")
     int pos = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile).getText().indexOf(signature);
     assertTrue(pos >= 0);
     return pos + caretOffset;
   }
 
+  @Nullable
   protected PsiReference findReferenceBySignature(final String signature) {
     final int offset = findOffsetBySignature(signature);
     return myFixture.getFile().findReferenceAt(offset);
+  }
+
+  @Nullable
+  protected PsiFile findPsiFileInTempDirBy(final String relPath) {
+    final VirtualFile virtualFile = myFixture.getTempDirFixture().getFile(relPath);
+    return virtualFile != null && !virtualFile.isDirectory() ? PsiManager.getInstance(getProject()).findFile(virtualFile) : null;
   }
 }
