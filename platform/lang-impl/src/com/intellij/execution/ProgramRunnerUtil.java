@@ -72,7 +72,7 @@ public class ProgramRunnerUtil {
       return;
     }
 
-    if (!RunManagerImpl.canRunConfiguration(configuration, executor) || (showSettings && RunManagerImpl.isEditBeforeRun(configuration))) {
+    if (!RunManagerImpl.canRunConfiguration(configuration, executor) || (showSettings && configuration.isEditBeforeRun())) {
       if (!RunDialog.editConfiguration(project, configuration, "Edit configuration", executor)) {
         return;
       }
