@@ -227,31 +227,25 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
         if (runnable != null) {
           runnable.run();
         }
-
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
+        if (myProject.isDisposed() || editor.isDisposed()) return;
+        foldingModel.runBatchFoldingOperation(new Runnable() {
           @Override
           public void run() {
-            if (myProject.isDisposed() || editor.isDisposed()) return;
-            foldingModel.runBatchFoldingOperation(new Runnable() {
-              @Override
-              public void run() {
-                DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
-                Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
-                for (Editor otherEditor : editors) {
-                  if (otherEditor == editor) continue;
-                  documentFoldingInfo.loadFromEditor(otherEditor);
-                  break;
-                }
-                documentFoldingInfo.setToEditor(editor);
+            DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
+            Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
+            for (Editor otherEditor : editors) {
+              if (otherEditor == editor) continue;
+              documentFoldingInfo.loadFromEditor(otherEditor);
+              break;
+            }
+            documentFoldingInfo.setToEditor(editor);
 
-                documentFoldingInfo.clear();
-              }
-            });
+            documentFoldingInfo.clear();
           }
         });
       }
     };
-    editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
+    UIUtil.invokeLaterIfNeeded(operation);
   }
 
   @Override

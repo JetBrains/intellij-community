@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>NonFinalUtilityClass.java</file>
+    <line>4</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Utility class is not final</problem_class>
+    <description>Utility class &lt;code&gt;NonFinalUtilityClass&lt;/code&gt; is not final</description>
+  </problem>
+</problems>

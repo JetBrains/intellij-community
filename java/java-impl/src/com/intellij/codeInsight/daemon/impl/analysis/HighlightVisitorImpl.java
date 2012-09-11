@@ -982,16 +982,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   }
 
-  @Override public void visitReferenceParameterList(PsiReferenceParameterList list) {
-    myHolder.add(GenericsHighlightUtil.checkParametersOnRaw(list));
+  @Override
+  public void visitReferenceParameterList(PsiReferenceParameterList list) {
+    myHolder.add(GenericsHighlightUtil.checkParametersAllowed(list));
+    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkParametersOnRaw(list));
   }
 
   @Override public void visitReturnStatement(PsiReturnStatement statement) {
     try {
       myHolder.add(HighlightUtil.checkReturnStatementType(statement));
     }
-    catch (IndexNotReadyException ignore) {
-    }
+    catch (IndexNotReadyException ignore) { }
   }
 
   @Override public void visitStatement(PsiStatement statement) {

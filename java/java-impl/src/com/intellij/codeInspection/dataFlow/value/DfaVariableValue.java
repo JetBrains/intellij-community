@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DfaVariableValue extends DfaValue {
+
   public static class Factory {
     private final DfaVariableValue mySharedInstance;
     private final HashMap<String,ArrayList<DfaVariableValue>> myStringToObject;
@@ -46,12 +47,13 @@ public class DfaVariableValue extends DfaValue {
     }
 
     public DfaVariableValue createVariableValue(PsiVariable myVariable, boolean isNegated) {
-      return createVariableValue(myVariable, isNegated, null);
+      return createVariableValue(myVariable, isNegated, null, false);
     }
-    public DfaVariableValue createVariableValue(PsiVariable myVariable, boolean isNegated, @Nullable DfaVariableValue qualifier) {
+    public DfaVariableValue createVariableValue(PsiVariable myVariable, boolean isNegated, @Nullable DfaVariableValue qualifier, boolean viaMethods) {
       mySharedInstance.myVariable = myVariable;
       mySharedInstance.myIsNegated = isNegated;
       mySharedInstance.myQualifier = qualifier;
+      mySharedInstance.myViaMethods = viaMethods;
 
       String id = mySharedInstance.toString();
       ArrayList<DfaVariableValue> conditions = myStringToObject.get(id);
@@ -65,7 +67,7 @@ public class DfaVariableValue extends DfaValue {
         }
       }
 
-      DfaVariableValue result = new DfaVariableValue(myVariable, isNegated, myFactory, qualifier);
+      DfaVariableValue result = new DfaVariableValue(myVariable, isNegated, myFactory, qualifier, viaMethods);
       if (qualifier != null) {
         myQualifiersToChainedVariables.putValue(qualifier, result);
       }
@@ -87,12 +89,14 @@ public class DfaVariableValue extends DfaValue {
   private PsiVariable myVariable;
   @Nullable private DfaVariableValue myQualifier;
   private boolean myIsNegated;
+  private boolean myViaMethods;
 
-  private DfaVariableValue(PsiVariable variable, boolean isNegated, DfaValueFactory factory, @Nullable DfaVariableValue qualifier) {
+  private DfaVariableValue(PsiVariable variable, boolean isNegated, DfaValueFactory factory, @Nullable DfaVariableValue qualifier, boolean viaMethods) {
     super(factory);
     myVariable = variable;
     myIsNegated = isNegated;
     myQualifier = qualifier;
+    myViaMethods = viaMethods;
   }
 
   private DfaVariableValue(DfaValueFactory factory) {
@@ -111,7 +115,7 @@ public class DfaVariableValue extends DfaValue {
   }
 
   public DfaVariableValue createNegated() {
-    return myFactory.getVarFactory().createVariableValue(myVariable, !myIsNegated, myQualifier);
+    return myFactory.getVarFactory().createVariableValue(myVariable, !myIsNegated, myQualifier, myViaMethods);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -123,11 +127,16 @@ public class DfaVariableValue extends DfaValue {
   private boolean hardEquals(DfaVariableValue aVar) {
     return aVar.myVariable == myVariable &&
            aVar.myIsNegated == myIsNegated &&
+           aVar.myViaMethods == myViaMethods &&
            (myQualifier == null ? aVar.myQualifier == null : myQualifier.hardEquals(aVar.myQualifier));
   }
 
   @Nullable
   public DfaVariableValue getQualifier() {
     return myQualifier;
+  }
+
+  public boolean isViaMethods() {
+    return myViaMethods;
   }
 }

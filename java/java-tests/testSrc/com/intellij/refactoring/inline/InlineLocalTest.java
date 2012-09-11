@@ -158,6 +158,10 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
+  public void testLocalVarInsideLambdaBody1() throws Exception {
+    doTest(true);
+  }
+
   private void doTest(final boolean inlineDef, String conflictMessage) throws Exception {
     try {
       doTest(inlineDef);

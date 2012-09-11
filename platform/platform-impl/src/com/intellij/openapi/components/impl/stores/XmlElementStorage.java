@@ -163,9 +163,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     if (document != null) {
       loadState(result, document.getRootElement());
     }
-    else {
-      LOG.info("Document was not loaded for " + myFileSpec);      
-    }
 
     if (!myIsProjectSettings && useProvidersData) {
       for (RoamingType roamingType : RoamingType.values()) {
@@ -173,11 +170,9 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
           try {
             if (myStreamProvider.isEnabled()) {
               final Document sharedDocument = StorageUtil.loadDocument(myStreamProvider.loadContent(myFileSpec, roamingType));
-
               if (sharedDocument != null) {
                 filterComponentsDisabledForRoaming(sharedDocument.getRootElement(), roamingType);
                 filterOutOfDateComponents(sharedDocument.getRootElement());
-
                 loadState(result, sharedDocument.getRootElement());
               }
             }
@@ -186,10 +181,8 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
             LOG.warn(e);
           }
         }
-
       }
     }
-
 
     return result;
   }

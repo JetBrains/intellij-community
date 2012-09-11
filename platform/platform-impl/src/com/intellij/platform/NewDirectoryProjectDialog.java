@@ -79,6 +79,11 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
       List<DirectoryProjectGenerator> primaryGenerators = ContainerUtil.newArrayList();
       List<DirectoryProjectGenerator> otherGenerators = ContainerUtil.newArrayList();
       for (DirectoryProjectGenerator generator : generators) {
+        if (generator instanceof HideableProjectGenerator) {
+          if (((HideableProjectGenerator)generator).isHidden()) {
+            continue;
+          }
+        }
         boolean primary = true;
         if (generator instanceof WebProjectGenerator) {
           primary = ((WebProjectGenerator) generator).isPrimaryGenerator();

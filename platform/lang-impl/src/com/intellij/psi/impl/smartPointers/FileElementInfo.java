@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
@@ -32,13 +33,19 @@ import org.jetbrains.annotations.NotNull;
 class FileElementInfo implements SmartPointerElementInfo {
   protected final VirtualFile myVirtualFile;
   protected final Project myProject;
+  protected final Language myLanguage;
 
   public FileElementInfo(@NotNull PsiFile file) {
-    this(file.getProject(), file.getVirtualFile());
+    this(file.getProject(), file.getVirtualFile(), file.getLanguage());
   }
   protected FileElementInfo(@NotNull Project project, VirtualFile virtualFile) {
+    this(project, virtualFile, null);
+  }
+
+  protected FileElementInfo(@NotNull Project project, VirtualFile virtualFile, Language lang) {
     myVirtualFile = virtualFile;
     myProject = project;
+    myLanguage = lang;
   }
 
   @Override
@@ -60,7 +67,7 @@ class FileElementInfo implements SmartPointerElementInfo {
 
   @Override
   public PsiElement restoreElement() {
-    return SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject);
+    return SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject, myLanguage);
   }
 
   @Override

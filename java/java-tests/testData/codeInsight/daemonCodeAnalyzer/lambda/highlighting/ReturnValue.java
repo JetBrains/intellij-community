@@ -41,3 +41,25 @@ class Test1 {
     }</error>;
   }
 }
+
+class Test2 {
+  interface X<T extends Number> {
+    T foo();
+  }
+
+  {
+    X<?> x = <error descr="No instance of type X<?> exists so that lambda expression can be type-checked">() -> 123</error>;
+    X<? extends Number> x1 = () -> 123;
+    
+  }
+}
+
+class Test3 {
+  interface X<T> {
+    T foo();
+  }
+
+  {
+    X<?> x = () -> 123;
+  }
+}

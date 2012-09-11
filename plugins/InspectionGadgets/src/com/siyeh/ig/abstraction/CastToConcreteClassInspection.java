@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,43 +15,45 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class CastToConcreteClassInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreAbstractClasses = false;
 
+  @SuppressWarnings("PublicField")
+  public boolean ignoreInEquals = true;
+
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "cast.to.concrete.class.display.name");
+    return InspectionGadgetsBundle.message("cast.to.concrete.class.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    final PsiElement typeElement = (PsiElement)infos[0];
-    return InspectionGadgetsBundle.message(
-      "cast.to.concrete.class.problem.descriptor",
-      typeElement.getText());
+    final PsiType type= (PsiType)infos[0];
+    return InspectionGadgetsBundle.message("cast.to.concrete.class.problem.descriptor", type.getPresentableText());
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "cast.to.concrete.class.option"),
-      this, "ignoreAbstractClasses");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("cast.to.concrete.class.option"), "ignoreAbstractClasses");
+    panel.addCheckbox(InspectionGadgetsBundle.message("cast.to.concrete.class.ignore.equals.option"), "ignoreInEquals");
+    return panel;
   }
 
   @Override
@@ -59,49 +61,68 @@ public class CastToConcreteClassInspection extends BaseInspection {
     return new CastToConcreteClassVisitor();
   }
 
-  private class CastToConcreteClassVisitor
-    extends BaseInspectionVisitor {
+  private class CastToConcreteClassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitTypeCastExpression(
-      @NotNull PsiTypeCastExpression expression) {
+    public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
       super.visitTypeCastExpression(expression);
       final PsiTypeElement typeElement = expression.getCastType();
       if (typeElement == null) {
         return;
       }
-      if (!ConcreteClassUtil.typeIsConcreteClass(typeElement,
-                                                 ignoreAbstractClasses)) {
+      if (!ConcreteClassUtil.typeIsConcreteClass(typeElement, ignoreAbstractClasses)) {
         return;
       }
-      registerError(typeElement, typeElement);
+      if (ignoreInEquals) {
+        final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class);
+        if (MethodUtils.isEquals(method)) {
+          return;
+        }
+      }
+      registerError(typeElement, typeElement.getType());
     }
 
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       @NonNls
       final String referenceName = methodExpression.getReferenceName();
       if (!"cast".equals(referenceName)) {
         return;
       }
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
-      if (!(qualifier instanceof PsiClassObjectAccessExpression)) {
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      if (qualifier == null) {
         return;
       }
-      final PsiClassObjectAccessExpression classObjectAccessExpression =
-        (PsiClassObjectAccessExpression)qualifier;
-      final PsiTypeElement operand =
-        classObjectAccessExpression.getOperand();
-      if (!ConcreteClassUtil.typeIsConcreteClass(operand,
-                                                 ignoreAbstractClasses)) {
+      final PsiType type = qualifier.getType();
+      if (!(type instanceof PsiClassType)) {
         return;
       }
-      registerMethodCallError(expression, operand);
+      final PsiClassType classType = (PsiClassType)type;
+      final PsiClass aClass = classType.resolve();
+      if (aClass == null) {
+        return;
+      }
+      final String className = aClass.getQualifiedName();
+      if (!CommonClassNames.JAVA_LANG_CLASS.equals(className)) {
+        return;
+      }
+      final PsiType[] parameters = classType.getParameters();
+      if (parameters.length != 1) {
+        return;
+      }
+      final PsiType parameter = parameters[0];
+      if (!ConcreteClassUtil.typeIsConcreteClass(parameter, ignoreAbstractClasses)) {
+        return;
+      }
+      if (ignoreInEquals) {
+        final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class);
+        if (MethodUtils.isEquals(method)) {
+          return;
+        }
+      }
+      registerMethodCallError(expression, parameter);
     }
   }
 }
