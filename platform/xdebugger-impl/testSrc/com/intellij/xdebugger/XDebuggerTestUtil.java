@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ui.UIUtil;
@@ -276,6 +277,20 @@ public class XDebuggerTestUtil {
     Collections.sort(actualNames);
     Collections.sort(expectedNames);
     UsefulTestCase.assertOrderedEquals(actualNames, expectedNames);
+  }
+
+  public static void assertVariablesContain(List<XValue> vars, String... names) throws InterruptedException {
+    List<String> expectedNames = new ArrayList<String>(Arrays.asList(names));
+
+    List<String> actualNames = new ArrayList<String>();
+    for (XValue each : vars) {
+      actualNames.add(computePresentation(each).myName);
+    }
+
+    expectedNames.removeAll(actualNames);
+    UsefulTestCase.assertTrue("Missing variables:" + StringUtil.join(expectedNames, ", ")
+                              + "\nAll Variables: " + StringUtil.join(actualNames, ", "),
+                              expectedNames.isEmpty());
   }
 
   public static void assertSourcePosition(final XValue value, VirtualFile file, int offset) {
