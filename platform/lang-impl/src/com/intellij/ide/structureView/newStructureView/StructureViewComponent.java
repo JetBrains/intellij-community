@@ -154,6 +154,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myAutoScrollToSourceHandler = new MyAutoScrollToSourceHandler();
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler(myProject, this);
 
+    if (getSettings().SHOW_TOOLBAR) {
+      setToolbar(createToolbar());
+    }
+
     installTree();
 
     myCopyPasteDelegator = new CopyPasteDelegator(myProject, getTree()) {
@@ -162,6 +166,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         return getSelectedPsiElements();
       }
     };
+  }
+
+  private JComponent createToolbar() {
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.STRUCTURE_VIEW_TOOLBAR, createActionGroup(), true).getComponent();
   }
 
   private void installTree() {
@@ -367,7 +375,24 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   public ActionGroup getGearActions() {
-    return createActionGroup(true);
+    DefaultActionGroup group = createActionGroup(true);
+    group.addAction(new ToggleAction("Show Toolbar") {
+      @Override
+      public boolean isSelected(AnActionEvent e) {
+        return getSettings().SHOW_TOOLBAR;
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        setToolbar(state ? createToolbar() : null);
+        getSettings().SHOW_TOOLBAR = state;
+      }
+    }).setAsSecondary(true);
+    return group;
+  }
+
+  private StructureViewFactoryImpl.State getSettings() {
+    return ((StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject)).getState();
   }
 
   public AnAction[] getTitleActions() {
@@ -381,7 +406,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return createActionGroup(false);
   }
 
-  protected ActionGroup createActionGroup(boolean togglesOnly) {
+  protected DefaultActionGroup createActionGroup(boolean togglesOnly) {
     DefaultActionGroup result = new DefaultActionGroup();
     Sorter[] sorters = myTreeModel.getSorters();
     for (final Sorter sorter : sorters) {
@@ -522,9 +547,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       return;
     }
 
-    StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject);
-
-    if (!structureViewFactory.getState().AUTOSCROLL_FROM_SOURCE) {
+    if (!getSettings().AUTOSCROLL_FROM_SOURCE) {
       return;
     }
 
@@ -612,11 +635,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     protected boolean isAutoScrollMode() {
       return myShouldAutoScroll && !myProject.isDisposed()
-             && ((StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject)).getState().AUTOSCROLL_MODE;
+             && getSettings().AUTOSCROLL_MODE;
     }
 
     protected void setAutoScrollMode(boolean state) {
-      ((StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject)).getState().AUTOSCROLL_MODE = state;
+      getSettings().AUTOSCROLL_MODE = state;
     }
 
     protected void scrollToSource(Component tree) {
@@ -659,13 +682,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
 
     protected boolean isAutoScrollEnabled() {
-      StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject);
-      return structureViewFactory.getState().AUTOSCROLL_FROM_SOURCE;
+      return getSettings().AUTOSCROLL_FROM_SOURCE;
     }
 
     protected void setAutoScrollEnabled(boolean state) {
-      StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactory.getInstance(myProject);
-      structureViewFactory.getState().AUTOSCROLL_FROM_SOURCE = state;
+      getSettings().AUTOSCROLL_FROM_SOURCE = state;
       final FileEditor[] selectedEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
       if (selectedEditors.length > 0 && state) {
         scrollToSelectedElement();
