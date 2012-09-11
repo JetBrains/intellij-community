@@ -200,9 +200,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
 
   @SuppressWarnings({"UnresolvedPropertyKey"})
   public String getUnresolvedMessagePattern() {
-
-    PsiReference reference = getLastFileReference();
-    if (reference == null) reference = chooseReference();
+    final PsiReference reference = chooseReference();
 
     return reference instanceof EmptyResolveMessageProvider ?
            ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern() :
