@@ -44,6 +44,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -381,6 +382,9 @@ public class SvnHistoryProvider
         final SVNURL svnurl = SVNURL.parseURIEncoded(myUrl);
         SVNRevision operationalFrom = myFrom == null ? SVNRevision.HEAD : myFrom;
         final SVNURL rootURL = getRepositoryRoot(svnurl, myFrom);
+        if (rootURL == null) {
+          throw new VcsException("Could not find repository root for URL: " + myUrl);
+        }
         final String root = rootURL.toString();
         String relativeUrl = myUrl;
         if (myUrl.startsWith(root)) {
@@ -427,7 +431,12 @@ public class SvnHistoryProvider
     }
 
     private SVNURL getRepositoryRoot(SVNURL svnurl, SVNRevision operationalFrom) throws SVNException {
-      return myVcs.createRepository(svnurl).getRepositoryRoot(false);
+      final SVNRepository repository = myVcs.createRepository(svnurl);
+      final SVNURL root = repository.getRepositoryRoot(false);
+      if (root == null) {
+        return repository.getRepositoryRoot(true);
+      }
+      return root;
       /*final SVNWCClient wcClient = myVcs.createWCClient();
       try {
         final SVNInfo info;
