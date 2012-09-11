@@ -23,6 +23,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
@@ -180,6 +181,23 @@ public class ResolveClassTest extends ResolveTestCase {
 
     assertInstanceOf(ref.resolve(), PsiClass.class);
   }
+
+  public void testModuleSourceAsLibraryClasses() throws Exception {
+    final PsiReference ref = configure();
+    PsiFile psiFile = ref.getElement().getContainingFile();
+    final VirtualFile file = psiFile.getVirtualFile();
+    assertNotNull(file);
+    createFile(myModule, file.getParent(), "ModuleSourceAsLibraryClassesDep.java", loadFile("class/ModuleSourceAsLibraryClassesDep.java"));
+    ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", Collections.singletonList(file.getParent().getUrl()), Collections.<String>emptyList());
+    //need this to ensure that PsiJavaFileBaseImpl.myResolveCache is filled to reproduce IDEA-91309
+    DependenciesBuilder.analyzeFileDependencies(psiFile, new DependenciesBuilder.DependencyProcessor() {
+      @Override
+      public void process(PsiElement place, PsiElement dependency) {
+      }
+    });
+    assertInstanceOf(ref.resolve(), PsiClass.class);
+  }
+
 
   public void testStaticImportInTheSameClass() throws Exception {
     PsiReference ref = configure();

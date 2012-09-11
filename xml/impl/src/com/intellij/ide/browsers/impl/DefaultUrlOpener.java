@@ -42,21 +42,20 @@ public class DefaultUrlOpener extends UrlOpener {
   private static final Logger LOG = Logger.getInstance(DefaultUrlOpener.class);
 
   @Override
-  public boolean openUrl(BrowsersConfiguration.BrowserFamily family, String url) {
-    doLaunchBrowser(family, url, ArrayUtil.EMPTY_STRING_ARRAY, Conditions.<String>alwaysTrue(), false);
-    return true;
+  public boolean openUrl(BrowsersConfiguration.BrowserFamily family, @Nullable String url) {
+    return launchBrowser(family, url, ArrayUtil.EMPTY_STRING_ARRAY, Conditions.<String>alwaysTrue(), false);
   }
 
-  public static void doLaunchBrowser(final BrowsersConfiguration.BrowserFamily family,
-                                     @Nullable String url,
-                                     @NotNull String[] additionalParameters,
-                                     @NotNull Condition<String> browserSpecificParametersFilter,
-                                     final boolean forceOpenNewInstanceOnMac) {
+  public static boolean launchBrowser(final BrowsersConfiguration.BrowserFamily family,
+                                      @Nullable String url,
+                                      @NotNull String[] additionalParameters,
+                                      @NotNull Condition<String> browserSpecificParametersFilter,
+                                      final boolean forceOpenNewInstanceOnMac) {
     final WebBrowserSettings settings = BrowsersConfiguration.getInstance().getBrowserSettings(family);
     final String path = settings.getPath();
     if (StringUtil.isEmpty(path)) {
       Messages.showErrorDialog(XmlBundle.message("browser.path.not.specified", family.getName()), XmlBundle.message("browser.path.not.specified.title"));
-      return;
+      return false;
     }
 
     try {
@@ -65,14 +64,16 @@ public class DefaultUrlOpener extends UrlOpener {
                                 ? (additionalParameters.length == 0 ? Collections.<String>emptyList() : new ArrayList<String>())
                                 : ContainerUtil.findAll(specificSettings.getAdditionalParameters(), browserSpecificParametersFilter);
       Collections.addAll(parameters, additionalParameters);
-      launchBrowser(path, url == null ? null : BrowserUtil.escapeUrl(url), forceOpenNewInstanceOnMac, parameters);
+      doLaunchBrowser(path, url == null ? null : BrowserUtil.escapeUrl(url), forceOpenNewInstanceOnMac, parameters);
+      return true;
     }
     catch (IOException e) {
       Messages.showErrorDialog(e.getMessage(), XmlBundle.message("browser.error"));
+      return false;
     }
   }
 
-  private static void launchBrowser(String browserPath, @Nullable String url, boolean forceOpenNewInstanceOnMac, List<String> browserArgs)
+  private static void doLaunchBrowser(String browserPath, @Nullable String url, boolean forceOpenNewInstanceOnMac, List<String> browserArgs)
     throws IOException {
     List<String> command = BrowserUtil.getOpenBrowserCommand(browserPath);
     addArgs(command, browserArgs, url, forceOpenNewInstanceOnMac);

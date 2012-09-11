@@ -167,7 +167,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     }
 
     if (enclosingContext instanceof PsiMethod && methodName.equals(enclosingContext.getName()) &&
-        PsiTreeUtil.isAncestor(targetClass, parentClass, true)) {
+        PsiTreeUtil.isAncestor(targetClass, parentClass, true) && !ref.isQualified()) {
       FieldConflictsResolver.qualifyReference(ref, method, null);
     }
 

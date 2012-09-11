@@ -18,6 +18,7 @@ package com.intellij.core;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
@@ -44,7 +45,9 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
   public PsiClass[] getClasses(@NotNull PsiDirectory dir) {
     LOG.assertTrue(dir.isValid());
 
-    boolean onlyCompiled = FileIndexFacade.getInstance(dir.getProject()).isInLibraryClasses(dir.getVirtualFile());
+    FileIndexFacade index = FileIndexFacade.getInstance(dir.getProject());
+    VirtualFile virtualDir = dir.getVirtualFile();
+    boolean onlyCompiled = index.isInLibraryClasses(virtualDir) && !index.isInSourceContent(virtualDir);
 
     List<PsiClass> classes = null;
     for (PsiFile file : dir.getFiles()) {
