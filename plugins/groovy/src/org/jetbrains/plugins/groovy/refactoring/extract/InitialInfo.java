@@ -45,7 +45,7 @@ public class InitialInfo implements ExtractInfoHelper {
   private final Project myProject;
   private final GrStatement[] myStatements;
   private final boolean myHasReturnValue;
-  private String[] myArgumentNames;
+  private final String[] myArgumentNames;
 
   public InitialInfo(VariableInfo[] inputInfos,
                      VariableInfo[] outputInfos,
