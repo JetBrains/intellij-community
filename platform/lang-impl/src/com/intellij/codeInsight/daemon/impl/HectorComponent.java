@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlighingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.HectorComponentPanel;
@@ -33,6 +34,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
@@ -40,7 +42,6 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.ui.Gray;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
@@ -113,7 +114,7 @@ public class HectorComponent extends JPanel {
           int value = slider.getValue();
           for (Enumeration<Integer> enumeration = sliderLabels.keys(); enumeration.hasMoreElements();) {
             Integer key = enumeration.nextElement();
-            sliderLabels.get(key).setForeground(key.intValue() <= value ? Color.black : Gray._100);
+            sliderLabels.get(key).setForeground(key.intValue() <= value ? UIUtil.getLabelForeground() : UIUtil.getLabelDisabledForeground());
           }
         }
       });
@@ -230,6 +231,16 @@ public class HectorComponent extends JPanel {
         }
       })
       .createPopup();
+    Disposer.register(myFile.getProject(), new Disposable() {
+      @Override
+      public void dispose() {
+        final JBPopup oldHector = getOldHector();
+        if (oldHector != null && !oldHector.isDisposed()) {
+          Disposer.dispose(oldHector);
+        }
+        Disposer.dispose(hector);
+      }
+    });
     final JBPopup oldHector = getOldHector();
     if (oldHector != null){
       oldHector.cancel();

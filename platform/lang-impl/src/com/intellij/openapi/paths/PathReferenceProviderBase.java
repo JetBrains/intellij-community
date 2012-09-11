@@ -4,7 +4,6 @@ package com.intellij.openapi.paths;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -21,9 +20,7 @@ public abstract class PathReferenceProviderBase implements PathReferenceProvider
 
   public boolean createReferences(@NotNull final PsiElement psiElement, final @NotNull List<PsiReference> references, final boolean soft) {
 
-    final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(psiElement);
-    assert manipulator != null;
-    final TextRange range = manipulator.getRangeInElement(psiElement);
+    final TextRange range = ElementManipulators.getValueTextRange(psiElement);
     int offset = range.getStartOffset();
     int endOffset = range.getEndOffset();
     final String elementText = psiElement.getText();

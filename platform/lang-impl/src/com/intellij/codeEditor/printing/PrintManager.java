@@ -16,6 +16,7 @@
 
 package com.intellij.codeEditor.printing;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -28,12 +29,14 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.print.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -151,8 +154,14 @@ class PrintManager {
 
           printerJob.print();
         }
-        catch(PrinterException e) {
-          LOG.error(e);
+        catch(final PrinterException e) {
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
+            }
+          });
+          LOG.info(e);
         }
         catch(ProcessCanceledException e) {
           printerJob.cancel();

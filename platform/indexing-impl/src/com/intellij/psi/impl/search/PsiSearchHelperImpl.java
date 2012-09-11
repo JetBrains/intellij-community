@@ -38,7 +38,6 @@ import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
 import com.intellij.util.codeInsight.CommentUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -659,12 +658,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private static MultiMap<VirtualFile, RequestWithProcessor> createMultiMap() {
-    return new MultiMap<VirtualFile, RequestWithProcessor>(){
-      @Override
-      protected Collection<RequestWithProcessor> createCollection() {
-        return new SmartList<RequestWithProcessor>(); // usually there is just one request
-      }
-    };
+    // usually there is just one request
+    return MultiMap.createSmartList();
   }
 
   private static GlobalSearchScope uniteScopes(Collection<RequestWithProcessor> requests) {

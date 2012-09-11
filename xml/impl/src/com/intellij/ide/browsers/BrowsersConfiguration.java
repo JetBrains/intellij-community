@@ -19,7 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.browsers.chrome.ChromeSettings;
 import com.intellij.ide.browsers.firefox.FirefoxSettings;
-import com.intellij.ide.browsers.impl.UrlOpenerImpl;
+import com.intellij.ide.browsers.impl.DefaultUrlOpener;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -217,7 +217,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
                                    @Nullable final String url,
                                    final boolean forceOpenNewInstanceOnMac,
                                    String... parameters) {
-    UrlOpenerImpl.doLaunchBrowser(family, url, parameters, Conditions.<String>alwaysTrue(), forceOpenNewInstanceOnMac);
+    DefaultUrlOpener.launchBrowser(family, url, parameters, Conditions.<String>alwaysTrue(), forceOpenNewInstanceOnMac);
   }
 
   public static void launchBrowser(final @NotNull BrowserFamily family,
@@ -225,7 +225,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
                                    final boolean forceOpenNewInstanceOnMac,
                                    final Condition<String> browserSpecificParametersFilter,
                                    String... parameters) {
-    UrlOpenerImpl.doLaunchBrowser(family, url, parameters, browserSpecificParametersFilter, forceOpenNewInstanceOnMac);
+    DefaultUrlOpener.launchBrowser(family, url, parameters, browserSpecificParametersFilter, forceOpenNewInstanceOnMac);
   }
 
   @Nullable

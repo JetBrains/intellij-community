@@ -322,15 +322,12 @@ public class ArrangementEngine {
         previous = wrapper;
       }
       Changer changer;
-      // TODO den remove
-      changer = new NormalChanger();
-      // TODO den uncomment
-      //if (document instanceof DocumentEx) {
-      //  changer = new RangeMarkerAwareChanger<T>((DocumentEx)document);
-      //}
-      //else {
-      //  changer = new NormalChanger();
-      //}
+      if (document instanceof DocumentEx) {
+        changer = new RangeMarkerAwareChanger<T>((DocumentEx)document);
+      }
+      else {
+        changer = new DefaultChanger();
+      }
       return new Context<T>(rearranger, wrappers, document, rules, settings, changer);
     }
   }
@@ -365,7 +362,7 @@ public class ArrangementEngine {
                  @NotNull Context<E> context);
   }
 
-  private static class NormalChanger<E extends ArrangementEntry> implements Changer<E> {
+  private static class DefaultChanger<E extends ArrangementEntry> implements Changer<E> {
 
     @NotNull private String myParentText;
     private          int    myParentShift;
@@ -463,7 +460,7 @@ public class ArrangementEngine {
 
   private static class RangeMarkerAwareChanger<E extends ArrangementEntry> implements Changer<E> {
 
-    @NotNull private final Set<ArrangementEntryWrapper<E>> myNotMoved = new HashSet<ArrangementEntryWrapper<E>>();
+    @NotNull private final List<ArrangementEntryWrapper<E>> myWrappers = new ArrayList<ArrangementEntryWrapper<E>>();
     @NotNull private final DocumentEx myDocument;
 
     RangeMarkerAwareChanger(@NotNull DocumentEx document) {
@@ -472,8 +469,8 @@ public class ArrangementEngine {
 
     @Override
     public void prepare(@NotNull List<ArrangementEntryWrapper<E>> toArrange, @NotNull Context<E> context) {
-      myNotMoved.clear();
-      myNotMoved.addAll(toArrange);
+      myWrappers.clear();
+      myWrappers.addAll(toArrange);
       for (ArrangementEntryWrapper<E> wrapper : toArrange) {
         wrapper.updateBlankLines(myDocument);
       }
@@ -503,28 +500,32 @@ public class ArrangementEngine {
       if (oldWrapper.getStartOffset() > newWrapper.getStartOffset()) {
         insertionOffset -= newWrapper.getEndOffset() - newWrapper.getStartOffset();
       }
-      myDocument.moveText(newWrapper.getStartOffset(), newWrapper.getEndOffset(), oldWrapper.getStartOffset());
-      newWrapper.placeBefore(oldWrapper);
-      myNotMoved.remove(newWrapper);
-      for (ArrangementEntryWrapper<E> w : myNotMoved) {
-        if (w.getStartOffset() >= oldWrapper.getStartOffset() && w.getStartOffset() < newWrapper.getStartOffset()) {
-          w.applyShift(newWrapper.getEndOffset() - newWrapper.getStartOffset());
-        }
-        else if (w.getStartOffset() < oldWrapper.getStartOffset() && w.getStartOffset() > newWrapper.getStartOffset()) {
-          w.applyShift(newWrapper.getStartOffset() - newWrapper.getEndOffset());
+      if (newWrapper.getStartOffset() != oldWrapper.getStartOffset() || !newWrapper.equals(oldWrapper)) {
+        myDocument.moveText(newWrapper.getStartOffset(), newWrapper.getEndOffset(), oldWrapper.getStartOffset());
+        for (int i = myWrappers.size() - 1; i >= 0; i--) {
+          ArrangementEntryWrapper<E> w = myWrappers.get(i);
+          if (w == newWrapper) {
+            continue;
+          }
+          if (w.getStartOffset() >= oldWrapper.getStartOffset() && w.getStartOffset() < newWrapper.getStartOffset()) {
+            w.applyShift(newWrapper.getEndOffset() - newWrapper.getStartOffset());
+          }
+          else if (w.getStartOffset() < oldWrapper.getStartOffset() && w.getStartOffset() > newWrapper.getStartOffset()) {
+            w.applyShift(newWrapper.getStartOffset() - newWrapper.getEndOffset());
+          }
         }
       }
 
       if (desiredBlankLinesNumber >= 0 && lineFeedsDiff > 0) {
         myDocument.insertString(insertionOffset, StringUtil.repeat("\n", lineFeedsDiff));
-        shiftOffsets(newWrapper, null, lineFeedsDiff);
+        shiftOffsets(lineFeedsDiff, insertionOffset);
       }
 
       if (desiredBlankLinesNumber >= 0 && lineFeedsDiff < 0) {
         // Cut exceeding blank lines.
         int replacementStartOffset = getBlankLineOffset(-lineFeedsDiff, insertionOffset);
         myDocument.deleteString(replacementStartOffset, insertionOffset);
-        shiftOffsets(oldWrapper, null, lineFeedsDiff);
+        shiftOffsets(replacementStartOffset - insertionOffset, insertionOffset);
       }
 
       // Update wrapper ranges.
@@ -556,17 +557,18 @@ public class ArrangementEngine {
       CharSequence text = myDocument.getCharsSequence();
       for (int i = myDocument.getLineStartOffset(startLine - 1) - 1; i >= 0; i = CharArrayUtil.lastIndexOf(text, "\n", i - 1)) {
         if (--blankLinesNumber <= 0) {
-          return i;
+          return i + 1;
         }
       }
       return 0;
     }
 
-    private static void shiftOffsets(@Nullable ArrangementEntryWrapper<?> first, @Nullable ArrangementEntryWrapper<?> last, int shift) {
-      if (first == null) {
-        return;
-      }
-      for (ArrangementEntryWrapper<?> wrapper = first; wrapper != null && wrapper != last; wrapper = wrapper.getNext()) {
+    private void shiftOffsets(int shift, int changeOffset) {
+      for (int i = myWrappers.size() - 1; i >= 0; i--) {
+        ArrangementEntryWrapper<E> wrapper = myWrappers.get(i);
+        if (wrapper.getStartOffset() < changeOffset) {
+          break;
+        }
         wrapper.applyShift(shift);
       }
     }

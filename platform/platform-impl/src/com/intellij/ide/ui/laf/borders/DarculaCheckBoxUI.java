@@ -95,7 +95,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
       MacUIUtil.paintFocusRing(g, new Color(96, 175, 255), new Rectangle(1, 1, w - 2, h - 2));
     } else {
       g.setPaint(new GradientPaint(w / 2, 1, Gray._80, w / 2, h, Gray._65));
-      g.fillRoundRect(0, 0, w - 2, h - 2, 4, 4);
+      g.fillRoundRect(0, 0, w , h , 4, 4);
 
       g.setPaint(new GradientPaint(w / 2, 1, ColorUtil.toAlpha(Gray._120, 90), w / 2, h, ColorUtil.toAlpha(Gray._105, 90)));
       g.drawRoundRect(0, 1, w, h - 1, 4, 4);

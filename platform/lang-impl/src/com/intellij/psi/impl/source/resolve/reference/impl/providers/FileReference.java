@@ -359,7 +359,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   @Override
   public PsiFileSystemItem resolve() {
     ResolveResult[] resolveResults = multiResolve(false);
-   return resolveResults.length == 1 ? (PsiFileSystemItem)resolveResults[0].getElement() : null;
+    return resolveResults.length == 1 ? (PsiFileSystemItem)resolveResults[0].getElement() : null;
   }
 
   @Nullable

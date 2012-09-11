@@ -205,12 +205,10 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
 
           for (String param : mavenOptsList.getParameters()) {
             if (param.startsWith("-Xmx")) {
-              params.getVMParametersList().add(param);
               xmxSet = true;
             }
-            else if (param.startsWith("-Xms") || param.startsWith("-XX:MaxPermSize") || param.startsWith("-XX:PermSize")) {
-              params.getVMParametersList().add(param);
-            }
+
+            params.getVMParametersList().add(param);
           }
         }
 

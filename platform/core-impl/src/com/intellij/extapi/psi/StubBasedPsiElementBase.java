@@ -144,7 +144,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
       }
       PsiFile psi = (PsiFile)stub.getPsi();
       if (psi == null) {
-        throw new PsiInvalidElementAccessException(this);
+        throw new PsiInvalidElementAccessException(this, "no psi for file stub " + stub, null);
       }
       return psi;
     }
