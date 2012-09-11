@@ -60,4 +60,23 @@ public abstract class LiteralTextEscaper<T extends PsiLanguageInjectionHost> {
 
   public abstract boolean isOneLine();
 
+  public static <T extends PsiLanguageInjectionHost> LiteralTextEscaper<T> createSimple(T element) {
+    return new LiteralTextEscaper<T>(element) {
+      @Override
+      public boolean decode(@NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
+        outChars.append(rangeInsideHost.substring(myHost.getText()));
+        return true;
+      }
+
+      @Override
+      public int getOffsetInHost(int offsetInDecoded, @NotNull TextRange rangeInsideHost) {
+        return rangeInsideHost.getStartOffset() + offsetInDecoded;
+      }
+
+      @Override
+      public boolean isOneLine() {
+        return true;
+      }
+    };
+  }
 }

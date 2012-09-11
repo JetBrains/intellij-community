@@ -242,7 +242,10 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
         finally {
           viewProvider.setPatchingLeaves(false);
         }
-        assert parsedNode.getText().equals(documentText) : exceptionContext("After patch: doc:\n'" + documentText + "'\n---PSI:\n'" + parsedNode.getText() + "'\n---chars:\n'"+outChars+"'");
+        if (!parsedNode.getText().equals(documentText)) {
+          throw new AssertionError(exceptionContext(
+            "After patch: doc:\n'" + documentText + "'\n---PSI:\n'" + parsedNode.getText() + "'\n---chars:\n'" + outChars + "'"));
+        }
 
         virtualFile.setContent(null, documentWindow.getText(), false);
 
