@@ -17,21 +17,26 @@ package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
- * User: anna
- * Date: 3/28/12
+ * @author anna
+ * @since 3/28/12
  */
 public class JavaVersionServiceImpl extends JavaVersionService {
   private JavaSdkVersion myTestVersion = null;
 
-  public void setTestVersion(JavaSdkVersion testVersion) {
+  @TestOnly
+  public void setTestVersion(@Nullable JavaSdkVersion testVersion) {
     myTestVersion = testVersion;
   }
 
   @Override
   public boolean isAtLeast(PsiElement element, JavaSdkVersion version) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return myTestVersion != null && myTestVersion.isAtLeast(version);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return myTestVersion != null && myTestVersion.isAtLeast(version);
+    }
     return JavaSdkVersionUtil.isAtLeast(element, version);
   }
 }

@@ -151,11 +151,11 @@ public class EditorsSplitters extends JPanel {
     
     if (showEmptyText()) {
       UIUtil.applyRenderingHints(g);
-      g.setColor(Gray._100);
+      g.setColor(UIUtil.isUnderDarcula() ? Gray._200: Gray._100);
       g.setFont(UIUtil.getLabelFont().deriveFont(18f));
 
       final UIUtil.TextPainter painter = new UIUtil.TextPainter().withShadow(true).withLineSpacing(1.4f);
-      painter.appendLine("No files are open").underlined(Gray._150);
+      painter.appendLine("No files are open").underlined(UIUtil.isUnderDarcula() ? Gray._220 : Gray._150);
 
       if (!isProjectViewVisible()) {
         painter.appendLine("Open Project View with " + KeymapUtil.getShortcutText(new KeyboardShortcut(

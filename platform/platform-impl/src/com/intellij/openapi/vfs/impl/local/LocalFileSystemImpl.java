@@ -83,7 +83,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
     /** @deprecated implementation details (to remove in IDEA 13) */
     @Override
-    @NotNull
     public String getFileSystemRootPath() {
       return myFSRootPath;
     }

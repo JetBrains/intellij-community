@@ -2160,7 +2160,7 @@ public class UIUtil {
 
     public TextPainter() {
       myDrawShadow = isUnderAquaLookAndFeel();
-      myShadowColor = Gray._220;
+      myShadowColor = isUnderDarcula() ? Gray._0 : Gray._220;
       myLineSpacing = 1.0f;
     }
 
@@ -2287,14 +2287,16 @@ public class UIUtil {
           }
 
           if (myDrawShadow) {
+            int xOff = isUnderDarcula() ? 1 : 0;
+            int yOff = 1;
             final Color oldColor = g.getColor();
             g.setColor(myShadowColor);
 
             if (info.withBullet) {
-              g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0] + 1);
+              g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar) + xOff, yOffset[0] + yOff);
             }
 
-            g.drawString(pair.getFirst(), xOffset, yOffset[0] + 1);
+            g.drawString(pair.getFirst(), xOffset + xOff, yOffset[0] + yOff);
             g.setColor(oldColor);
           }
 
