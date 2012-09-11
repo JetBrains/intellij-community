@@ -172,7 +172,8 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     );
   }
 
-  public Collection<PsiElement> getAdditionalElementsToDelete(final PsiElement element, final Collection<PsiElement> allElementsToDelete,
+  public Collection<PsiElement> getAdditionalElementsToDelete(final PsiElement element,
+                                                              final Collection<PsiElement> allElementsToDelete,
                                                               final boolean askUser) {
     if (element instanceof PsiField) {
       PsiField field = (PsiField)element;
@@ -183,11 +184,12 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       if (aClass != null) {
         boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
         PsiMethod getter = PropertyUtil.findPropertyGetter(aClass, propertyName, isStatic, false);
-        if (allElementsToDelete.contains(getter)) getter = null;
+        if (allElementsToDelete.contains(getter) || getter != null && !getter.isPhysical()) getter = null;
         PsiMethod setter = PropertyUtil.findPropertySetter(aClass, propertyName, isStatic, false);
-        if (allElementsToDelete.contains(setter)) setter = null;
+        if (allElementsToDelete.contains(setter) || setter != null && !setter.isPhysical()) setter = null;
         if (askUser && (getter != null || setter != null)) {
-          final String message = RefactoringMessageUtil.getGetterSetterMessage(field.getName(), RefactoringBundle.message("delete.title"), getter, setter);
+          final String message =
+            RefactoringMessageUtil.getGetterSetterMessage(field.getName(), RefactoringBundle.message("delete.title"), getter, setter);
           if (Messages.showYesNoDialog(project, message, RefactoringBundle.message("safe.delete.title"), Messages.getQuestionIcon()) != 0) {
             getter = null;
             setter = null;
