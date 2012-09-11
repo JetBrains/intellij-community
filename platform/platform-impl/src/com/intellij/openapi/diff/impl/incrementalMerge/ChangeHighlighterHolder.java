@@ -78,7 +78,7 @@ class ChangeHighlighterHolder {
     RangeHighlighter highlighter = getMarkupModel().addLineHighlighter(line, layer, null);
     highlighter.setLineSeparatorColor(diffType.getTextBackground(myEditor));
     highlighterCreated(highlighter, diffType.getTextAttributes(myEditor), applied);
-    highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(diffType, false));
+    highlighter.setLineMarkerRenderer(DiffLineMarkerRenderer.createStandardInstance(diffType));
     return highlighter;
   }
 
@@ -89,7 +89,7 @@ class ChangeHighlighterHolder {
     TextAttributes attributes = type.getTextAttributes(myEditor);
     RangeHighlighter highlighter = getMarkupModel().addRangeHighlighter(start, end, layer, attributes, targetArea);
     highlighterCreated(highlighter, attributes, applied);
-    highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(type, false));
+    highlighter.setLineMarkerRenderer(DiffLineMarkerRenderer.createStandardInstance(type));
     return highlighter;
   }
 

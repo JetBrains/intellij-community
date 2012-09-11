@@ -95,8 +95,10 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
       rangeMarker.setGutterIconRenderer(gutterIconRenderer);
     }
 
-    boolean ensureAtLeastOneLineHigh = shouldIncreaseHighlightingHeight(fragment, editor, range);
-    rangeMarker.setLineMarkerRenderer(new DiffLineMarkerRenderer(type, ensureAtLeastOneLineHigh));
+    boolean adjustHeight = shouldIncreaseHighlightingHeight(fragment, editor, range);
+    rangeMarker.setLineMarkerRenderer(adjustHeight
+                                      ? DiffLineMarkerRenderer.createHeightAdjustingInstance(type, range)
+                                      : DiffLineMarkerRenderer.createStandardInstance(type));
 
     Color stripeBarColor = attributes.getErrorStripeColor();
     if (stripeBarColor != null) {
