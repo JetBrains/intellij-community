@@ -113,21 +113,6 @@ public class ArrangementEntryWrapper<E extends ArrangementEntry> {
     return myNext;
   }
 
-  public void placeBefore(@NotNull ArrangementEntryWrapper<E> anchor) {
-    if (myNext != null) {
-      myNext.setPrevious(myPrevious);
-    }
-    if (myPrevious != null) {
-      myPrevious.setNext(myNext);
-    }
-    setPrevious(anchor.getPrevious());
-    if (myPrevious != null) {
-      myPrevious.setNext(this);
-    }
-    setNext(anchor);
-    anchor.setPrevious(this);
-  }
-
   public int getBlankLinesBefore() {
     return myBlankLinesBefore;
   }
