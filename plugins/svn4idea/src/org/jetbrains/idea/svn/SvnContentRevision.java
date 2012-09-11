@@ -34,7 +34,6 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 
 /**
  * @author yole
@@ -129,8 +128,9 @@ class SvnContentRevision implements ContentRevision {
       throw new VcsException(e);
     }
     final byte[] bytes = buffer.toByteArray();
-    final Charset charset = myFile.getCharset();
-    return charset == null ? bytes : SvnUtil.decode(charset, bytes);
+    /*final Charset charset = myFile.getCharset();
+    return charset == null ? bytes : SvnUtil.decode(charset, bytes);*/
+    return bytes;
   }
 
   @NotNull
