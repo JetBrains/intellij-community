@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,82 +25,44 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.MakeClassFinalFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class OverridableMethodCallDuringObjectConstructionInspection
-  extends BaseInspection {
+public class OverridableMethodCallDuringObjectConstructionInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "overridable.method.call.in.constructor.display.name");
+    return InspectionGadgetsBundle.message("overridable.method.call.in.constructor.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "overridable.method.call.in.constructor.problem.descriptor");
+    return InspectionGadgetsBundle.message("overridable.method.call.in.constructor.problem.descriptor");
   }
 
+  @Override
   @NotNull
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-    final PsiMethodCallExpression methodCallExpression =
-      (PsiMethodCallExpression)infos[0];
-    final PsiClass callClass =
-      ClassUtils.getContainingClass(methodCallExpression);
+    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)infos[0];
+    final PsiClass callClass = ClassUtils.getContainingClass(methodCallExpression);
     final PsiMethod method = methodCallExpression.resolveMethod();
     if (method == null) {
       return InspectionGadgetsFix.EMPTY_ARRAY;
     }
     final PsiClass containingClass = method.getContainingClass();
-    if (!containingClass.equals(callClass) ||
-        MethodUtils.isOverridden(method)) {
+    if (containingClass == null || !containingClass.equals(callClass) || MethodUtils.isOverridden(method)) {
       return InspectionGadgetsFix.EMPTY_ARRAY;
     }
     final String methodName = method.getName();
-    if (!ClassUtils.isOverridden(containingClass)) {
-      return new InspectionGadgetsFix[]{
-        new MakeClassFinalFix(containingClass),
-        new MakeMethodFinalFix(methodName)};
-    }
-    else {
-      return new InspectionGadgetsFix[]{
-        new MakeMethodFinalFix(methodName)};
-    }
-  }
-
-  private static class MakeClassFinalFix extends InspectionGadgetsFix {
-
-    private final String className;
-
-    MakeClassFinalFix(PsiClass aClass) {
-      className = aClass.getName();
-    }
-
-    @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message(
-        "make.class.final.fix.name", className);
-    }
-
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement element = descriptor.getPsiElement();
-      final PsiClass containingClass =
-        PsiTreeUtil.getParentOfType(element, PsiClass.class);
-      if (containingClass == null) {
-        return;
-      }
-      final PsiModifierList modifierList =
-        containingClass.getModifierList();
-      if (modifierList == null) {
-        return;
-      }
-      modifierList.setModifierProperty(PsiModifier.FINAL, true);
-    }
+    return new InspectionGadgetsFix[]{
+      new MakeClassFinalFix(containingClass),
+      new MakeMethodFinalFix(methodName)
+    };
   }
 
   private static class MakeMethodFinalFix extends InspectionGadgetsFix {
@@ -111,42 +73,40 @@ public class OverridableMethodCallDuringObjectConstructionInspection
       this.methodName = methodName;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "make.method.final.fix.name", methodName);
     }
 
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement methodName = descriptor.getPsiElement();
       final PsiElement methodExpression = methodName.getParent();
-      final PsiMethodCallExpression methodCall =
-        (PsiMethodCallExpression)methodExpression.getParent();
+      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)methodExpression.getParent();
       final PsiMethod method = methodCall.resolveMethod();
-      assert method != null;
+      if (method == null) {
+        return;
+      }
       final PsiModifierList modifierList = method.getModifierList();
       modifierList.setModifierProperty(PsiModifier.FINAL, true);
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new OverridableMethodCallInConstructorVisitor();
   }
 
-  private static class OverridableMethodCallInConstructorVisitor
-    extends BaseInspectionVisitor {
+  private static class OverridableMethodCallInConstructorVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
-      final PsiMember member =
-        PsiTreeUtil.getParentOfType(call, PsiMethod.class,
-                                    PsiClassInitializer.class);
+      final PsiMember member = PsiTreeUtil.getParentOfType(call, PsiMethod.class, PsiClassInitializer.class);
       if (member instanceof PsiClassInitializer) {
-        final PsiClassInitializer classInitializer =
-          (PsiClassInitializer)member;
+        final PsiClassInitializer classInitializer = (PsiClassInitializer)member;
         if (classInitializer.hasModifierProperty(PsiModifier.STATIC)) {
           return;
         }
@@ -160,13 +120,10 @@ public class OverridableMethodCallDuringObjectConstructionInspection
       else {
         return;
       }
-      final PsiReferenceExpression methodExpression =
-        call.getMethodExpression();
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
+      final PsiReferenceExpression methodExpression = call.getMethodExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier != null) {
-        if (!(qualifier instanceof PsiThisExpression
-              || qualifier instanceof PsiSuperExpression)) {
+        if (!(qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression)) {
           return;
         }
       }
@@ -177,15 +134,12 @@ public class OverridableMethodCallDuringObjectConstructionInspection
       if (containingClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
-      final PsiMethod calledMethod =
-        (PsiMethod)methodExpression.resolve();
+      final PsiMethod calledMethod = (PsiMethod)methodExpression.resolve();
       if (calledMethod == null || !PsiUtil.canBeOverriden(calledMethod)) {
         return;
       }
-      final PsiClass calledMethodClass =
-        calledMethod.getContainingClass();
-      if (calledMethodClass == null ||
-          !calledMethodClass.equals(containingClass)) {
+      final PsiClass calledMethodClass = calledMethod.getContainingClass();
+      if (calledMethodClass == null || !calledMethodClass.equals(containingClass)) {
         return;
       }
       registerMethodCallError(call, call);
@@ -198,12 +152,10 @@ public class OverridableMethodCallDuringObjectConstructionInspection
       if (CloneUtils.isClone(method)) {
         return true;
       }
-      if (MethodUtils.simpleMethodMatches(method, null, "void",
-                                          "readObject", "java.io.ObjectInputStream")) {
+      if (MethodUtils.simpleMethodMatches(method, null, "void", "readObject", "java.io.ObjectInputStream")) {
         return true;
       }
-      return MethodUtils.simpleMethodMatches(method, null, "void",
-                                             "readObjectNoData");
+      return MethodUtils.simpleMethodMatches(method, null, "void", "readObjectNoData");
     }
   }
 }

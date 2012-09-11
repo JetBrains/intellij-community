@@ -16,10 +16,8 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Query;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
@@ -222,11 +220,5 @@ public class ClassUtils {
     else {
       return inSamePackage(baseClass, referencedClass);
     }
-  }
-
-  public static boolean isOverridden(PsiClass aClass) {
-    final Query<PsiClass> query = ClassInheritorsSearch.search(aClass);
-    final PsiClass result = query.findFirst();
-    return result != null;
   }
 }
