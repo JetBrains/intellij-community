@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Manages virtual file systems
+ * Manages virtual file systems.
  *
  * @see VirtualFileSystem
- * @see LocalFileSystem
- * @see JarFileSystem
  */
-public abstract class VirtualFileManager implements ModificationTracker{
-  public static final Topic<BulkFileListener> VFS_CHANGES = new Topic<BulkFileListener>("NewVirtualFileSystem changes", BulkFileListener.class);
+public abstract class VirtualFileManager implements ModificationTracker {
+  public static final Topic<BulkFileListener> VFS_CHANGES =
+    new Topic<BulkFileListener>("NewVirtualFileSystem changes", BulkFileListener.class);
 
   /**
    * Gets the instance of <code>VirtualFileManager</code>.
@@ -40,7 +39,7 @@ public abstract class VirtualFileManager implements ModificationTracker{
    * @return <code>VirtualFileManager</code>
    */
   @NotNull
-  public static VirtualFileManager getInstance(){
+  public static VirtualFileManager getInstance() {
     return ApplicationManager.getApplication().getComponent(VirtualFileManager.class);
   }
 
@@ -55,12 +54,12 @@ public abstract class VirtualFileManager implements ModificationTracker{
 
   /**
    * Refreshes the cached file system information from the physical file system.
-   * <p>
+   * <p/>
    * This method should be only called within write-action.
    * See {@link com.intellij.openapi.application.Application#runWriteAction}.
    *
    * @param asynchronous if <code>true</code> then the operation will be performed in a separate thread,
-   * otherwise will be performed immediately
+   *                     otherwise will be performed immediately
    */
   public abstract void refresh(boolean asynchronous);
 
@@ -88,14 +87,14 @@ public abstract class VirtualFileManager implements ModificationTracker{
   /**
    * Refreshes only the part of the file system needed for searching the file by the given URL and finds file
    * by the given URL.<br>
-   *
+   * <p/>
    * This method is useful when the file was created externally and you need to find <code>{@link VirtualFile}</code>
    * corresponding to it.<p>
-   *
+   * <p/>
    * This method should be only called within write-action.
    * See {@link com.intellij.openapi.application.Application#runWriteAction}.
    *
-   * @param url  the URL
+   * @param url the URL
    * @return <code>{@link VirtualFile}</code> if the file was found, <code>null</code> otherwise
    * @see VirtualFileSystem#findFileByPath
    * @see VirtualFileSystem#refreshAndFindFileByPath
@@ -106,7 +105,7 @@ public abstract class VirtualFileManager implements ModificationTracker{
   /**
    * Adds listener to the file system.
    *
-   * @param listener  the listener
+   * @param listener the listener
    * @see VirtualFileListener
    */
   public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener);
@@ -116,7 +115,7 @@ public abstract class VirtualFileManager implements ModificationTracker{
   /**
    * Removes listener form the file system.
    *
-   * @param listener  the listener
+   * @param listener the listener
    */
   public abstract void removeVirtualFileListener(@NotNull VirtualFileListener listener);
 
@@ -125,11 +124,11 @@ public abstract class VirtualFileManager implements ModificationTracker{
    * file systems.
    *
    * @param protocol the protocol
-   * @param path the path
+   * @param path     the path
    * @return URL
    */
   @NotNull
-  public static String constructUrl(@NotNull String protocol, @NotNull String path){
+  public static String constructUrl(@NotNull String protocol, @NotNull String path) {
     return protocol + "://" + path;
   }
 
@@ -141,7 +140,7 @@ public abstract class VirtualFileManager implements ModificationTracker{
    * @see VirtualFileSystem#getProtocol
    */
   @Nullable
-  public static String extractProtocol(@NotNull String url){
+  public static String extractProtocol(@NotNull String url) {
     int index = url.indexOf("://");
     if (index < 0) return null;
     return url.substring(0, index);
@@ -155,13 +154,14 @@ public abstract class VirtualFileManager implements ModificationTracker{
    * @return path
    */
   @NotNull
-  public static String extractPath(@NotNull String url){
+  public static String extractPath(@NotNull String url) {
     int index = url.indexOf("://");
     if (index < 0) return url;
     return url.substring(index + "://".length());
   }
 
   public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
+
   public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener, @NotNull Disposable parentDisposable);
 
   public abstract void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
