@@ -73,9 +73,7 @@ public final class ObjectNode<T> {
   void removeChild(@NotNull ObjectNode<T> child) {
     synchronized (myTree.treeLock) {
       assert myChildren != null: "No children to remove child: " + this + ' ' + child;
-      if (myChildren.remove(child)) {
-        myTree.putNode(child.getObject(), null);
-      }
+      myChildren.remove(child);
     }
   }
 
@@ -138,11 +136,11 @@ public final class ObjectNode<T> {
   private void remove() {
     myTree.putNode(myObject, null);
     synchronized (myTree.treeLock) {
-      if (myParent != null) {
-        myParent.removeChild(this);
+      if (myParent == null) {
+        myTree.removeRootObject(myObject);
       }
       else {
-        myTree.removeRootObject(myObject);
+        myParent.removeChild(this);
       }
     }
   }

@@ -67,14 +67,14 @@ public final class ObjectTree<T> {
       ObjectNode<T> childNode = getNode(child);
       if (childNode == null) {
         childNode = createNodeFor(child, parentNode);
-        myRootObjects.remove(child);
       }
       else {
-        ObjectNode<T> childParent = childNode.getParent();
-        if (childParent != null) {
-          childParent.removeChild(childNode);
+        ObjectNode<T> oldParent = childNode.getParent();
+        if (oldParent != null) {
+          oldParent.removeChild(childNode);
         }
       }
+      myRootObjects.remove(child);
       checkWasNotAddedAlready(childNode, child);
       parentNode.addChild(childNode);
 
@@ -96,12 +96,12 @@ public final class ObjectTree<T> {
   }
 
   @NotNull
-  private ObjectNode<T> getOrCreateNodeFor(@NotNull T object, @Nullable ObjectNode<T> parentNode) {
+  private ObjectNode<T> getOrCreateNodeFor(@NotNull T object, @Nullable ObjectNode<T> defaultParent) {
     final ObjectNode<T> node = getNode(object);
 
     if (node != null) return node;
 
-    return createNodeFor(object, parentNode);
+    return createNodeFor(object, defaultParent);
   }
 
   @NotNull
