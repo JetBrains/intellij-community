@@ -64,13 +64,21 @@ public class MakeClassFinalFix extends InspectionGadgetsFix {
     if (modifierList == null) {
       return;
     }
+    if (!isOnTheFly()) {
+      if (ClassInheritorsSearch.search(containingClass).findFirst() != null) {
+        return;
+      }
+      modifierList.setModifierProperty(PsiModifier.FINAL, true);
+      return;
+    }
     final MultiMap<PsiElement, String> conflicts = new MultiMap();
     final Query<PsiClass> search = ClassInheritorsSearch.search(containingClass);
     search.forEach(new Processor<PsiClass>() {
       @Override
       public boolean process(PsiClass aClass) {
-        conflicts.putValue(containingClass, RefactoringUIUtil.getDescription(containingClass, false) +
-                            " will no longer be overridable by " + RefactoringUIUtil.getDescription(aClass, false));
+        conflicts.putValue(containingClass, InspectionGadgetsBundle
+          .message("0.will.no.longer.be.overridable.by.1", RefactoringUIUtil.getDescription(containingClass, false),
+                   RefactoringUIUtil.getDescription(aClass, false)));
         return true;
       }
     });

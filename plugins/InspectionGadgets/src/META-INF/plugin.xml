@@ -469,6 +469,10 @@
                      key="non.final.field.in.enum.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.classlayout.NonFinalFieldInEnumInspection"/>
+    <localInspection language="JAVA" shortName="NonFinalUtilityClass" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="non.final.utility.class.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.classlayout.NonFinalUtilityClassInspection"/>
     <localInspection language="JAVA" shortName="NoopMethodInAbstractClass" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="noop.method.in.abstract.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
