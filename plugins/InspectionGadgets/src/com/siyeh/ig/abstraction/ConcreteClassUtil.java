@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,30 +21,33 @@ import org.jetbrains.annotations.Nullable;
 
 class ConcreteClassUtil {
 
-  private ConcreteClassUtil() {
-  }
+  private ConcreteClassUtil() {}
 
-  public static boolean typeIsConcreteClass(
-    @Nullable PsiTypeElement typeElement,
-    boolean ignoreCastToAbstractClass) {
+  public static boolean typeIsConcreteClass(@Nullable PsiTypeElement typeElement, boolean ignoreCastToAbstractClass) {
     if (typeElement == null) {
       return false;
     }
     final PsiType type = typeElement.getType();
+    return typeIsConcreteClass(type, ignoreCastToAbstractClass);
+  }
+
+  public static boolean typeIsConcreteClass(@Nullable PsiType type, boolean ignoreCastToAbstractClass) {
+    if (type == null) {
+      return false;
+    }
     final PsiType baseType = type.getDeepComponentType();
     if (!(baseType instanceof PsiClassType)) {
       return false;
     }
-    final PsiClass aClass = ((PsiClassType)baseType).resolve();
+    final PsiClassType classType = (PsiClassType)baseType;
+    final PsiClass aClass = classType.resolve();
     if (aClass == null) {
       return false;
     }
-    if (ignoreCastToAbstractClass &&
-        aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+    if (ignoreCastToAbstractClass && aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return false;
     }
-    if (aClass.isInterface() || aClass.isEnum() ||
-        aClass.isAnnotationType()) {
+    if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
       return false;
     }
     if (aClass instanceof PsiTypeParameter) {
