@@ -17,10 +17,12 @@
 package com.intellij.tasks.actions;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -52,11 +54,11 @@ public class SwitchTaskAction extends BaseTaskAction {
     DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     assert project != null;
-    final ListPopupImpl popup = createPopup(dataContext, true);
+    final ListPopupImpl popup = createPopup(dataContext, null, true);
     popup.showCenteredInCurrentWindow(project);
   }
 
-  public static ListPopupImpl createPopup(final DataContext dataContext, boolean withTitle) {
+  public static ListPopupImpl createPopup(final DataContext dataContext, @Nullable final Runnable onDispose, boolean withTitle) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final Ref<Boolean> shiftPressed = Ref.create(false);
     final Ref<JComponent> componentRef = Ref.create();
@@ -98,6 +100,14 @@ public class SwitchTaskAction extends BaseTaskAction {
     };
 
     final ListPopupImpl popup = (ListPopupImpl)JBPopupFactory.getInstance().createListPopup(step);
+    if (onDispose != null) {
+      Disposer.register(popup, new Disposable() {
+        @Override
+        public void dispose() {
+          onDispose.run();
+        }
+      });
+    }
     componentRef.set(popup.getComponent());
     if (items.size() <= 2) {
       return popup;

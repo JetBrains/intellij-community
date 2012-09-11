@@ -32,6 +32,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
@@ -417,7 +418,11 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
       public void run() {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            myTodoTreeBuilder.rebuildCache();
+            try {
+              myTodoTreeBuilder.rebuildCache();
+            }
+            catch (IndexNotReadyException ignore) {
+            }
           }
         });
         final Runnable runnable = new Runnable() {

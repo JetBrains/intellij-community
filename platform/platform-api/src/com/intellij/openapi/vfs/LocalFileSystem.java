@@ -130,7 +130,6 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
 
     /** @deprecated implementation details (to remove in IDEA 13) */
     @SuppressWarnings({"UnusedDeclaration"})
-    @NotNull
     String getFileSystemRootPath();
 
     /** @deprecated implementation details (to remove in IDEA 13) */

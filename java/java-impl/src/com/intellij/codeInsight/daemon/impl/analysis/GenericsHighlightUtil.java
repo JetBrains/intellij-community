@@ -51,11 +51,12 @@ import java.util.*;
  */
 public class GenericsHighlightUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil");
+
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
-  private GenericsHighlightUtil() {
-  }
+  private GenericsHighlightUtil() { }
 
+  @Nullable
   public static HighlightInfo checkInferredTypeArguments(PsiMethod genericMethod,
                                                          PsiMethodCallExpression call,
                                                          PsiSubstitutor substitutor) {
@@ -67,7 +68,8 @@ public class GenericsHighlightUtil {
       PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
       for (PsiClassType type : extendsTypes) {
         PsiType extendsType = substitutor.substitute(type);
-        if (substituted instanceof PsiWildcardType && TypeConversionUtil.erasure(extendsType).equals(TypeConversionUtil.erasure(((PsiWildcardType)substituted).getExtendsBound()))) {
+        if (substituted instanceof PsiWildcardType &&
+            TypeConversionUtil.erasure(extendsType).equals(TypeConversionUtil.erasure(((PsiWildcardType)substituted).getExtendsBound()))) {
           PsiType extendsBound = ((PsiWildcardType)substituted).getExtendsBound();
           if (extendsBound instanceof PsiClassType) {
             PsiType[] parameters = ((PsiClassType)extendsBound).getParameters();
@@ -103,7 +105,7 @@ public class GenericsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkParameterizedReferenceTypeArguments(PsiElement resolved,
+  public static HighlightInfo checkParameterizedReferenceTypeArguments(final PsiElement resolved,
                                                                        final PsiJavaCodeReferenceElement referenceElement,
                                                                        final PsiSubstitutor substitutor) {
     if (!(resolved instanceof PsiTypeParameterListOwner)) return null;
@@ -116,18 +118,14 @@ public class GenericsHighlightUtil {
                                                              final PsiReferenceParameterList referenceParameterList,
                                                              final PsiSubstitutor substitutor,
                                                              boolean registerIntentions) {
-    if (referenceParameterList != null) {
-      HighlightInfo info = HighlightUtil.checkGenericsFeature(referenceParameterList, referenceParameterList.getTypeParameterElements().length);
-      if (info != null) return info;
-    }
-
     PsiDiamondType.DiamondInferenceResult inferenceResult = null;
     PsiTypeElement[] referenceElements = null;
     if (referenceParameterList != null) {
       referenceElements = referenceParameterList.getTypeParameterElements();
       if (referenceElements.length == 1 && referenceElements[0].getType() instanceof PsiDiamondType) {
         if (!typeParameterListOwner.hasTypeParameters()) {
-          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceElements[0], "Diamond operator is not applicable for non-parameterized types");
+          final String description = JavaErrorMessages.message("generics.diamond.not.applicable");
+          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceElements[0], description);
         }
         inferenceResult = ((PsiDiamondType)referenceElements[0].getType()).resolveInferredTypes();
         final String errorMessage = inferenceResult.getErrorMessage();
@@ -165,9 +163,9 @@ public class GenericsHighlightUtil {
       if (description != null) {
         final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceParameterList, description);
         if (registerIntentions) {
-          PsiElement pparent = referenceParameterList.getParent().getParent();
-          if (pparent instanceof PsiTypeElement) {
-            PsiElement variable = pparent.getParent();
+          PsiElement grandParent = referenceParameterList.getParent().getParent();
+          if (grandParent instanceof PsiTypeElement) {
+            PsiElement variable = grandParent.getParent();
             if (variable instanceof PsiVariable) {
               if (targetParametersNum == 0) {
                 QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveTypeArgumentsFix(variable));
@@ -1029,7 +1027,7 @@ public class GenericsHighlightUtil {
       MethodSignatureBackedByPsiMethod superMethod = SuperMethodsSearch.search(method, null, true, false).findFirst();
       if (superMethod == null) {
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, overrideAnnotation,
-                                                                        JavaErrorMessages.message("method.doesnot.override.super"));
+                                                                        JavaErrorMessages.message("method.does.not.override.super"));
         PullAsAbstractUpFix.registerQuickFix(highlightInfo, method);
         return highlightInfo;
       }
@@ -1245,6 +1243,26 @@ public class GenericsHighlightUtil {
     return list;
   }
 
+  @Nullable
+  public static HighlightInfo checkParametersAllowed(PsiReferenceParameterList refParamList) {
+    HighlightInfo info = HighlightUtil.checkGenericsFeature(refParamList, refParamList.getTypeParameterElements().length);
+    if (info != null) return info;
+
+    if (refParamList.getTextLength() != 0) {
+      final PsiElement parent = refParamList.getParent();
+      if (parent instanceof PsiReferenceExpression) {
+        final PsiElement grandParent = parent.getParent();
+        if (!(grandParent instanceof PsiMethodCallExpression)) {
+          final String message = JavaErrorMessages.message("generics.reference.parameters.not.allowed");
+          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, refParamList, message);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
   public static HighlightInfo checkParametersOnRaw(PsiReferenceParameterList refParamList) {
     if (refParamList.getTypeArguments().length == 0) return null;
     JavaResolveResult resolveResult = null;
