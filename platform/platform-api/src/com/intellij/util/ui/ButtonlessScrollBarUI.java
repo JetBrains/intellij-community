@@ -119,11 +119,11 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   public static Color getTrackBackground() {
-    return UIUtil.isUnderDarcula() ? TRACK_BACKGROUND_DARK_VARIANT : TRACK_BACKGROUND;
+    return UIUtil.isUnderDarcula() ? UIUtil.getControlColor() : TRACK_BACKGROUND;
   }
 
   public static Color getTrackBorderColor() {
-    return UIUtil.isUnderDarcula() ? TRACK_BORDER_DARK_VARIANT : TRACK_BORDER;
+    return UIUtil.isUnderDarcula() ? UIUtil.getControlColor() : TRACK_BORDER;
   }
 
   public int getDecrButtonHeight() {

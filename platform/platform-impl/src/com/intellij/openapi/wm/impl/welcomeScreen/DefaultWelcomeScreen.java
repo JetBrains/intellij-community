@@ -38,7 +38,6 @@ import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +56,7 @@ import static java.awt.GridBagConstraints.*;
 
 /**
  * @author pti
+ * @author Konstantin Bulenkov
  */
 public class DefaultWelcomeScreen implements WelcomeScreen {
   private static final Insets ACTION_GROUP_CAPTION_INSETS = new Insets(20, 30, 5, 0);
@@ -75,26 +75,25 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
   private static final int ACTION_BUTTON_PADDING = 5;
 
   private static final Dimension ACTION_BUTTON_SIZE = new Dimension(66, 66);
-  private static final Dimension PLUGIN_LOGO_SIZE = new Dimension(16, 16);
 
   @NonNls private static final String CAPTION_FONT_NAME = "Tahoma";
   private static final Font TEXT_FONT = new Font(CAPTION_FONT_NAME, Font.PLAIN, 11);
   private static final Font LINK_FONT = new Font(CAPTION_FONT_NAME, Font.BOLD, 12);
   private static final Font GROUP_CAPTION_FONT = new Font(CAPTION_FONT_NAME, Font.BOLD, 18);
 
-  private static final Color WELCOME_PANEL_BACKGROUND = Color.WHITE;
+  private static final Color WELCOME_PANEL_BACKGROUND = UIUtil.isUnderDarcula() ? UIUtil.getControlColor() : Color.WHITE;
   private static final Color MAIN_PANEL_BACKGROUND = WELCOME_PANEL_BACKGROUND;
-  private static final Color PLUGINS_PANEL_BACKGROUND = Gray._248;
-  private static final Color PLUGINS_PANEL_BORDER = Gray._234;
-  private static final Color CAPTION_COLOR = new Color(47, 67, 96);
+  private static final Color PLUGINS_PANEL_BACKGROUND = UIUtil.isUnderDarcula() ? UIUtil.getControlColor() : Gray._248;
+  private static final Color PLUGINS_PANEL_BORDER = UIUtil.isUnderDarcula() ? PLUGINS_PANEL_BACKGROUND : Gray._234;
+  private static final Color CAPTION_COLOR = UIUtil.isUnderDarcula() ? DarculaColors.BLUE : new Color(47, 67, 96);
   public static final SimpleTextAttributes CAPTION_BOLD_UNDERLINE_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE | SimpleTextAttributes.STYLE_BOLD, CAPTION_COLOR);
   public static final SimpleTextAttributes CAPTION_UNDERLINE_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, CAPTION_COLOR);
   private static final Color DISABLED_CAPTION_COLOR = UIUtil.getInactiveTextColor();
   private static final Color ACTION_BUTTON_COLOR = WELCOME_PANEL_BACKGROUND;
-  private static final Color BUTTON_POPPED_COLOR = Gray._241;
-  private static final Color BUTTON_PUSHED_COLOR = Gray._228;
+  private static final Color BUTTON_POPPED_COLOR = UIUtil.isUnderDarcula() ? Gray.get(WELCOME_PANEL_BACKGROUND.getRed() + 10) : Gray._241;
+  private static final Color BUTTON_PUSHED_COLOR = UIUtil.isUnderDarcula() ? Gray.get(WELCOME_PANEL_BACKGROUND.getRed() + 5) : Gray._228;
 
   @NonNls private static final String HTML_PREFIX = "<html>";
   @NonNls private static final String HTML_SUFFIX = "</html>";
