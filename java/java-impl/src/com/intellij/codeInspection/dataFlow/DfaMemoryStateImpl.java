@@ -553,7 +553,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (dfaCond instanceof DfaUnboxedValue) {
       DfaVariableValue dfaVar = ((DfaUnboxedValue)dfaCond).getVariable();
       boolean isNegated = dfaVar.isNegated();
-      DfaVariableValue dfaNormalVar = isNegated ? (DfaVariableValue)dfaVar.createNegated() : dfaVar;
+      DfaVariableValue dfaNormalVar = isNegated ? dfaVar.createNegated() : dfaVar;
       DfaConstValue dfaTrue = myFactory.getConstFactory().getTrue();
       final DfaValue boxedTrue = myFactory.getBoxedFactory().createBoxed(dfaTrue);
       DfaRelationValue dfaEqualsTrue = myFactory.getRelationFactory().createRelation(dfaNormalVar, boxedTrue, JavaTokenType.EQEQ, isNegated);
@@ -563,7 +563,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (dfaCond instanceof DfaVariableValue) {
       DfaVariableValue dfaVar = (DfaVariableValue)dfaCond;
       boolean isNegated = dfaVar.isNegated();
-      DfaVariableValue dfaNormalVar = isNegated ? (DfaVariableValue)dfaVar.createNegated() : dfaVar;
+      DfaVariableValue dfaNormalVar = isNegated ? dfaVar.createNegated() : dfaVar;
       DfaConstValue dfaTrue = myFactory.getConstFactory().getTrue();
       DfaRelationValue dfaEqualsTrue = myFactory.getRelationFactory().createRelation(dfaNormalVar, dfaTrue, JavaTokenType.EQEQ, isNegated);
 
@@ -576,7 +576,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     if (!(dfaCond instanceof DfaRelationValue)) return true;
 
-    DfaRelationValue dfaRelation = (DfaRelationValue)dfaCond;
+    return applyRelationCondition((DfaRelationValue)dfaCond);
+  }
+
+  private boolean applyRelationCondition(DfaRelationValue dfaRelation) {
     DfaValue dfaLeft = dfaRelation.getLeftOperand();
     DfaValue dfaRight = dfaRelation.getRightOperand();
     if (dfaRight == null || dfaLeft == null) return false;
@@ -610,6 +613,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     if (dfaLeft instanceof DfaUnknownValue || dfaRight instanceof DfaUnknownValue) return true;
 
+    return applyEquivalenceRelation(dfaRelation, dfaLeft, dfaRight);
+  }
+
+  private boolean applyEquivalenceRelation(DfaRelationValue dfaRelation, DfaValue dfaLeft, DfaValue dfaRight) {
+    boolean isNegated = dfaRelation.isNonEquality();
+    if (!isNegated && !dfaRelation.isEquality()) {
+      return true;
+    }
     boolean result = applyRelation(dfaLeft, dfaRight, isNegated);
     if (dfaRight instanceof DfaConstValue) {
       Object constVal = ((DfaConstValue)dfaRight).getValue();

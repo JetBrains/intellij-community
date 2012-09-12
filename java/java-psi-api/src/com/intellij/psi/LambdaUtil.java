@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -215,11 +216,16 @@ public class LambdaUtil {
       }
     }
     if (checkReturnType) {
+      final String uniqueVarName =
+        JavaCodeStyleManager.getInstance(lambdaExpression.getProject()).suggestUniqueVariableName("l", lambdaExpression, true);
+      final PsiStatement assignmentFromText = JavaPsiFacade.getElementFactory(lambdaExpression.getProject())
+        .createStatementFromText(leftType.getCanonicalText() + " " + uniqueVarName + " = " + lambdaExpression.getText(), lambdaExpression);
+      final PsiLocalVariable localVariable = (PsiLocalVariable)((PsiDeclarationStatement)assignmentFromText).getDeclaredElements()[0];
       LOG.assertTrue(psiClass != null);
       PsiType methodReturnType = getReturnType(psiClass, methodSignature);
       if (methodReturnType != null) {
         methodReturnType = resolveResult.getSubstitutor().substitute(methodSignature.getSubstitutor().substitute(methodReturnType));
-        return checkReturnTypeCompatible(lambdaExpression, methodReturnType) == null;
+        return checkReturnTypeCompatible((PsiLambdaExpression)localVariable.getInitializer(), methodReturnType) == null;
       }
     }
     return true;
@@ -459,21 +465,21 @@ public class LambdaUtil {
         final PsiElement gParent = expressionList.getParent();
         if (gParent instanceof PsiCallExpression) {
           final PsiCallExpression contextCall = (PsiCallExpression)gParent;
-          return PsiResolveHelper.ourGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
-            @Override
-            public PsiType compute() {
-              final JavaResolveResult resolveResult = contextCall.resolveMethodGenerics();
-              final PsiElement resolve = resolveResult.getElement();
-              if (resolve instanceof PsiMethod) {
-                final PsiParameter[] parameters = ((PsiMethod)resolve).getParameterList().getParameters();
-                if (lambdaIdx < parameters.length) {
-                  if (!tryToSubstitute) return parameters[lambdaIdx].getType();
-                  return resolveResult.getSubstitutor().substitute(parameters[lambdaIdx].getType());
-                }
+          final JavaResolveResult resolveResult = contextCall.resolveMethodGenerics();
+            final PsiElement resolve = resolveResult.getElement();
+            if (resolve instanceof PsiMethod) {
+              final PsiParameter[] parameters = ((PsiMethod)resolve).getParameterList().getParameters();
+              if (lambdaIdx < parameters.length) {
+                if (!tryToSubstitute) return parameters[lambdaIdx].getType();
+                return PsiResolveHelper.ourGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
+                  @Override
+                  public PsiType compute() {
+                    return resolveResult.getSubstitutor().substitute(parameters[lambdaIdx].getType());
+                  }
+                });
               }
-              return null;
             }
-          });
+            return null;
         }
       }
     }
@@ -507,8 +513,8 @@ public class LambdaUtil {
           }
 
           final PsiParameterList parameterList = lambdaExpression.getParameterList();
+          final boolean add = currentStack.add(parameterList);
           try {
-            currentStack.add(parameterList);
             PsiType type = getFunctionalInterfaceType(lambdaExpression, true);
             if (type == null) {
               type = getFunctionalInterfaceType(lambdaExpression, false);
@@ -528,7 +534,7 @@ public class LambdaUtil {
             }
           }
           finally {
-            currentStack.remove(parameterList);
+            if (add) currentStack.remove(parameterList);
           }
         }
       }

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>AccessToStaticFieldLockedOnInstanceData.java</file>
+    <line>19</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Access to static field locked on instance data</problem_class>
+    <description>Access to static field &lt;code&gt;foo&lt;/code&gt; locked on instance data #loc</description>
+  </problem>
+
+  <problem>
+    <file>AccessToStaticFieldLockedOnInstanceData.java</file>
+    <line>20</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Access to static field locked on instance data</problem_class>
+    <description>Access to static field &lt;code&gt;foo&lt;/code&gt; locked on instance data #loc</description>
+  </problem>
+
+  <problem>
+    <file>AccessToStaticFieldLockedOnInstanceData.java</file>
+    <line>28</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Access to static field locked on instance data</problem_class>
+    <description>Access to static field &lt;code&gt;foo&lt;/code&gt; locked on instance data #loc</description>
+  </problem>
+
+  <problem>
+    <file>AccessToStaticFieldLockedOnInstanceData.java</file>
+    <line>29</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Access to static field locked on instance data</problem_class>
+    <description>Access to static field &lt;code&gt;foo&lt;/code&gt; locked on instance data #loc</description>
+  </problem>
+
+</problems>

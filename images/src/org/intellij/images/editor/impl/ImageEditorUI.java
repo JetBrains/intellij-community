@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageEditor;
@@ -206,6 +207,15 @@ final class ImageEditorUI extends JPanel implements DataProvider {
         public Dimension getPreferredSize() {
             return imageComponent.getSize();
         }
+
+      @Override
+      protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (UIUtil.isUnderDarcula()) {
+          g.setColor(UIUtil.getControlColor().brighter());
+          g.fillRect(0,0,getWidth(), getHeight());
+        }
+      }
     }
 
     private final class ImageWheelAdapter implements MouseWheelListener {

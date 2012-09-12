@@ -386,8 +386,14 @@ public class GrClassImplUtil {
       return Arrays.asList(grType.getInnerClasses());
     }
     List<PsiClass> result = new ArrayList<PsiClass>();
-    for (CandidateInfo info : CollectClassMembersUtil.getAllInnerClasses(grType, false).values()) {
-      ContainerUtil.addIfNotNull(result, (PsiClass)info.getElement());
+    try {
+      for (CandidateInfo info : CollectClassMembersUtil.getAllInnerClasses(grType, false).values()) {
+        ContainerUtil.addIfNotNull(result, (PsiClass)info.getElement());
+      }
+    }
+    catch (StackOverflowError e) {
+
+      throw new RuntimeException("lastParent=" + lastParent, e);
     }
     return result;
   }
