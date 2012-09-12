@@ -272,4 +272,50 @@ public class IconUtil {
   private static String getToolbarDecoratorIconsFolder() {
     return "/toolbarDecorator/" + (SystemInfo.isMac ? "mac/" : "");
   }
+
+  /**
+   * Result icons look like original but have equal (maximum) size 
+   */
+  public static Icon[] getEqualSizedIcons(@NotNull Icon... icons) {
+    Icon[] result = new Icon[icons.length];
+    int width = 0;
+    int height = 0;
+    for (Icon icon : icons) {
+      width = Math.max(width, icon.getIconWidth());
+      height = Math.max(height, icon.getIconHeight());
+    }
+    for (int i = 0; i < icons.length; i++) {
+      result[i] = new IconSizeWrapper(icons[i], width, height);
+    }
+    return result;
+  }
+
+  private static class IconSizeWrapper implements Icon {
+    private final Icon myIcon;
+    private final int myWidth;
+    private final int myHeight;
+
+    private IconSizeWrapper(Icon icon, int width, int height) {
+      myIcon = icon;
+      myWidth = width;
+      myHeight = height;
+    }
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      x += (myWidth - myIcon.getIconWidth()) / 2;
+      y += (myHeight - myIcon.getIconHeight()) / 2;
+      myIcon.paintIcon(c, g, x, y);
+    }
+
+    @Override
+    public int getIconWidth() {
+      return myWidth;
+    }
+
+    @Override
+    public int getIconHeight() {
+      return myHeight;
+    }
+  }
 }

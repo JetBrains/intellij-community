@@ -269,6 +269,6 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   @Override
   public String toString() {
-    return getType() + ": " + getName();
+    return getType().getDisplayName() + ": " + getName();
   }
 }

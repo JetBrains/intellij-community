@@ -19,32 +19,36 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * User: Vassiliy.Kudryashov
  */
 public class DropDownPanel extends JPanel {
-  private static final Icon DOWN = AllIcons.General.ComboArrow;
-  private static final Icon UP = IconUtil.flip(AllIcons.General.ComboArrow, false);
+  private static final Icon[] WRAPPERS = IconUtil.getEqualSizedIcons(AllIcons.General.ComboArrowRight, AllIcons.General.ComboArrow);
+  private static final Icon DOWN = WRAPPERS[0];
+  private static final Icon UP = WRAPPERS[1];
 
-  private final JLabel myLabel;
+  private final ButtonLabel myLabel;
   private @Nullable JComponent myContent;
   private boolean myExpanded = true;
+  private final List<ChangeListener> myListeners = new CopyOnWriteArrayList<ChangeListener>();
 
   public DropDownPanel() {
-    this(null, null, true);
+    this(null, null);
   }
 
-  public DropDownPanel(@Nullable String title, @Nullable JComponent content, boolean withSeparatorLine) {
+  public DropDownPanel(@Nullable String title, @Nullable JComponent content) {
     super(new BorderLayout());
-    myLabel = new ButtonLabel(withSeparatorLine);
+    myLabel = new ButtonLabel();
     add(myLabel, BorderLayout.NORTH);
     setTitle(title);
     setContent(content);
@@ -71,7 +75,7 @@ public class DropDownPanel extends JPanel {
     if (myExpanded == expanded) {
       return;
     }
-    myLabel.setIcon(expanded ? UP : DOWN);
+    myLabel.getLabel().setIcon(expanded ? UP : DOWN);
     if (myContent != null) {
       if (expanded) {
         add(myContent, BorderLayout.CENTER);
@@ -83,42 +87,42 @@ public class DropDownPanel extends JPanel {
     myExpanded = expanded;
     revalidate();
     repaint();
+    ChangeEvent changeEvent = new ChangeEvent(this);
+    for (ChangeListener listener : myListeners) {
+      listener.stateChanged(changeEvent);
+    }
   }
 
   public boolean isExpanded() {
     return myExpanded;
   }
 
-  private class ButtonLabel extends JLabel implements ActionButtonComponent {
+  public void addChangeListener(ChangeListener listener) {
+    if (listener != null) {
+      myListeners.add(listener);
+    }
+  }
+  public void removeChangeListener(ChangeListener listener) {
+    if (listener != null) {
+      myListeners.remove(listener);
+    }
+  }
+
+  private class ButtonLabel extends TitledSeparator implements ActionButtonComponent {
     private boolean myMouseDown;
     private boolean myRollover;
-    private final boolean myLine;
 
-    private ButtonLabel(boolean withSeparatorLine) {
-      myLine = withSeparatorLine;
-      setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-      setIconTextGap(2);
+    private ButtonLabel() {
+      setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 0));
+      myLabel.setIconTextGap(2);
       enableEvents(AWTEvent.MOUSE_EVENT_MASK);
     }
 
     @Override
     public void paintComponent(Graphics g) {
+      super.paintComponent(g);
       ActionButtonLook.IDEA_LOOK.paintBackground(g, this);
       ActionButtonLook.IDEA_LOOK.paintBorder(g, this);
-      super.paintComponent(g);
-      if (myLine) {
-        g.setColor(GroupedElementsRenderer.POPUP_SEPARATOR_FOREGROUND);
-        Icon icon = getIcon();
-        final FontMetrics fm = getFontMetrics(getFont());
-        String text = getText();
-        Border border = getBorder();
-        Insets insets = border != null ? border.getBorderInsets(this) : new Insets(0, 0, 0, 0);
-        int width = (icon != null ? icon.getIconWidth() : 0)
-                    + (text != null ? getIconTextGap() + fm.stringWidth(text) : 0)
-                    + insets.left;
-        final int lineY = (UIUtil.isUnderNativeMacLookAndFeel() ? 1 : 3) + fm.getHeight() / 2;
-        g.drawLine(width + 3, lineY, getWidth() - 3 - insets.right, lineY);
-      }
     }
 
     @Override
