@@ -19,13 +19,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PairProcessor;
-import com.intellij.util.containers.Convertor;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -36,7 +32,10 @@ import git4idea.config.GitVersion;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Git repository change provider
@@ -71,42 +70,16 @@ public class GitChangeProvider implements ChangeProvider {
       return;
     }
 
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    final Set<VirtualFile> rootsUnderGit = new HashSet<VirtualFile>(Arrays.asList(myVcsManager.getRootsUnderVcs(vcs)));
-    final Set<VirtualFile> inputColl = new HashSet<VirtualFile>(rootsUnderGit);
-    final Set<VirtualFile> existingInScope = new HashSet<VirtualFile>();
-    for (FilePath dir : dirtyScope.getRecursivelyDirtyDirectories()) {
-      VirtualFile vf = dir.getVirtualFile();
-      if (vf == null) {
-        vf = lfs.findFileByIoFile(dir.getIOFile());
-      }
-      if (vf == null) {
-        vf = lfs.refreshAndFindFileByIoFile(dir.getIOFile());
-      }
-      if (vf != null) {
-        existingInScope.add(vf);
-      } else {
-        PROFILE_LOG.error("Can not find virtual file for recursively dirty dir: " + dir.getIOFile().getPath());
+    final Collection<VirtualFile> affected = dirtyScope.getAffectedContentRootsWithCheck();
+    final Collection<VirtualFile> affectedContentRoots = dirtyScope.getAffectedContentRoots();
+    if (affectedContentRoots.size() != affected.size()) {
+      final Set<VirtualFile> set = new HashSet<VirtualFile>(affected);
+      set.removeAll(affectedContentRoots);
+      for (VirtualFile file : set) {
+        debug("adding git root for check: " + file.getPath());
+        ((VcsModifiableDirtyScope) dirtyScope).addDirtyDirRecursively(new FilePathImpl(file));
       }
     }
-    inputColl.addAll(existingInScope);
-    FileUtil.removeAncestors(inputColl, new Convertor<VirtualFile, String>() {
-      @Override
-      public String convert(VirtualFile o) {
-        return o.getPath();
-      }
-    }, new PairProcessor<String, VirtualFile>() {
-                               @Override
-                               public boolean process(String s, VirtualFile file) {
-                                 if (! existingInScope.contains(file)) {
-                                   debug("adding git root for check: " + file.getPath());
-                                   ((VcsModifiableDirtyScope) dirtyScope).addDirtyDirRecursively(new FilePathImpl(file));
-                                 }
-                                 return true;
-                               }
-                             });
-
-    final Collection<VirtualFile> affected = dirtyScope.getAffectedContentRoots();
     Collection<VirtualFile> roots = GitUtil.gitRootsForPaths(affected);
 
     try {
