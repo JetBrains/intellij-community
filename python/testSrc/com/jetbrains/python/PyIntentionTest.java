@@ -234,19 +234,19 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testTypeInDocstring() {
-    doDocTypeTest();
-  }
-
-  private void doDocTypeTest() {
     doTest(PyBundle.message("INTN.specify.type"));
   }
 
+  private void doDocReturnTypeTest() {
+    doTest(PyBundle.message("INTN.specify.return.type"));
+  }
+
   public void testTypeInDocstring1() {
-    doDocTypeTest();
+    doDocReturnTypeTest();
   }
 
   public void testTypeInDocstring2() {
-    doDocTypeTest();
+    doDocReturnTypeTest();
   }
 
   public void testTypeInPy3Annotation() {      //PY-7045
