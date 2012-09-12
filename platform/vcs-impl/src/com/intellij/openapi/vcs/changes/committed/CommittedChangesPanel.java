@@ -193,7 +193,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            updateFilteredModel(Collections.<CommittedChangeList>emptyList());
+            updateFilteredModel(Collections.<CommittedChangeList>emptyList(), true);
           }
         }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
@@ -214,7 +214,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
         cache.getProjectChangesAsync(mySettings, myMaxCount, cacheOnly,
                                      new Consumer<List<CommittedChangeList>>() {
                                        public void consume(final List<CommittedChangeList> committedChangeLists) {
-                                         updateFilteredModel(committedChangeLists);
+                                         updateFilteredModel(committedChangeLists, false);
                                          }
                                        },
                                      new Consumer<List<VcsException>>() {
@@ -254,11 +254,17 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     }
   }
 
-  private void updateFilteredModel(List<CommittedChangeList> committedChangeLists) {
+  private void updateFilteredModel(List<CommittedChangeList> committedChangeLists, final boolean reset) {
     if (committedChangeLists == null) {
       return;
     }
-    myBrowser.getEmptyText().setText(VcsBundle.message("committed.changes.empty.message"));
+    final String emptyText;
+    if (reset) {
+      emptyText = VcsBundle.message("committed.changes.not.loaded.message");
+    } else {
+      emptyText = VcsBundle.message("committed.changes.empty.message");
+    }
+    myBrowser.getEmptyText().setText(emptyText);
     myBrowser.setItems(committedChangeLists, CommittedChangesBrowserUseCase.COMMITTED);
   }
 
