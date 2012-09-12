@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -367,23 +368,28 @@ public class PackageAnnotator {
         }
       }
       boolean touchedClass = false;
-      for (final Object nameAndSig : classData.getMethodSigs()) {
+      final Collection methodSigs = classData.getMethodSigs();
+      for (final Object nameAndSig : methodSigs) {
         final int covered = classData.getStatus((String)nameAndSig);
         if (covered != LineCoverage.NONE) {
           toplevelClassCoverageInfo.coveredMethodCount++;
           touchedClass = true;
         }
       }
-      if (touchedClass) {
-        packageCoverageInfo.coveredClassCount++;
-      }
-      toplevelClassCoverageInfo.totalMethodCount += classData.getMethodSigs().size();
-      packageCoverageInfo.totalClassCount++;
+      if (!methodSigs.isEmpty()) {
+        if (touchedClass) {
+          packageCoverageInfo.coveredClassCount++;
+        }
+        toplevelClassCoverageInfo.totalMethodCount += methodSigs.size();
+        packageCoverageInfo.totalClassCount++;
 
-      packageCoverageInfo.coveredLineCount += toplevelClassCoverageInfo.fullyCoveredLineCount;
-      packageCoverageInfo.coveredLineCount += toplevelClassCoverageInfo.partiallyCoveredLineCount;
-      packageCoverageInfo.coveredMethodCount += toplevelClassCoverageInfo.coveredMethodCount;
-      packageCoverageInfo.totalMethodCount += toplevelClassCoverageInfo.totalMethodCount;
+        packageCoverageInfo.coveredLineCount += toplevelClassCoverageInfo.fullyCoveredLineCount;
+        packageCoverageInfo.coveredLineCount += toplevelClassCoverageInfo.partiallyCoveredLineCount;
+        packageCoverageInfo.coveredMethodCount += toplevelClassCoverageInfo.coveredMethodCount;
+        packageCoverageInfo.totalMethodCount += toplevelClassCoverageInfo.totalMethodCount;
+      } else {
+        return;
+      }
     } else {
       collectNonCoveredClassInfo(classFile, toplevelClassCoverageInfo, packageCoverageInfo);
     }

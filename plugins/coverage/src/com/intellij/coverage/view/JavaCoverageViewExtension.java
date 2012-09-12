@@ -178,6 +178,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     }
 
     for (PsiClass aClass : classes) {
+      if (myAnnotator.getClassCoverageInfo(aClass.getQualifiedName()) == null) continue;
       topLevelNodes.add(new CoverageListNode(aClass, mySuitesBundle, myStateBean));
     }
     return topLevelNodes;
@@ -249,6 +250,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
             }
           });
           for (PsiClass aClass : classes) {
+            if (myAnnotator.getClassCoverageInfo(aClass.getQualifiedName()) == null) continue;
             children.add(new CoverageListNode(aClass, mySuitesBundle, myStateBean));
           }
         }
@@ -257,6 +259,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
         for (CoverageSuite suite : mySuitesBundle.getSuites()) {
           final List<PsiClass> classes = ((JavaCoverageSuite)suite).getCurrentSuiteClasses(myProject);
           for (PsiClass aClass : classes) {
+            if (myAnnotator.getClassCoverageInfo(aClass.getQualifiedName()) == null) continue;
             children.add(new CoverageListNode(aClass, mySuitesBundle, myStateBean));
           }
         }
