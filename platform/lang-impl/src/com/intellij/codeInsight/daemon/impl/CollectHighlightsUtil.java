@@ -71,7 +71,7 @@ public class CollectHighlightsUtil {
 
   private static final int STARTING_TREE_HEIGHT = 100;
   
-  private static List<PsiElement> getElementsToHighlight(final PsiElement commonParent, final int startOffset, final int endOffset) {
+  private static List<PsiElement> getElementsToHighlight(@NotNull PsiElement commonParent, final int startOffset, final int endOffset) {
     final List<PsiElement> result = new ArrayList<PsiElement>();
     final int currentOffset = commonParent.getTextRange().getStartOffset();
     final Condition<PsiElement>[] filters = Extensions.getExtensions(EP_NAME);
@@ -122,6 +122,7 @@ public class CollectHighlightsUtil {
         if (offset > endOffset) break;
         children.push(child.getNextSibling());
         starts.push(offset);
+        assert element != null;
         elements.push(element);
         element = child;
         child = PsiUtilCore.NULL_PSI_ELEMENT;
