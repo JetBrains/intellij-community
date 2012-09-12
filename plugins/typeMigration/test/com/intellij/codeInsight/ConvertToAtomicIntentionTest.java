@@ -2,6 +2,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.openapi.application.PathManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
@@ -18,6 +19,7 @@ public class ConvertToAtomicIntentionTest extends LightQuickFixTestCase {
     return "/intentions/atomic";
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PathManager.getHomePath() + "/plugins/typeMigration/testData";

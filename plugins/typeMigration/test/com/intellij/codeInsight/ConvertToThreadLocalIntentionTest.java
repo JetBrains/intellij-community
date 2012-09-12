@@ -6,6 +6,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.openapi.application.PathManager;
+import org.jetbrains.annotations.NotNull;
 
 public class ConvertToThreadLocalIntentionTest extends LightQuickFixTestCase {
 
@@ -19,6 +20,7 @@ public class ConvertToThreadLocalIntentionTest extends LightQuickFixTestCase {
     return "/intentions/threadLocal";
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PathManager.getHomePath() + "/plugins/typeMigration/testData";
