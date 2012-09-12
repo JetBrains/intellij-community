@@ -16,6 +16,7 @@ import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.env.python.debug.PyTestTask;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.sdk.InvalidSdkException;
@@ -33,7 +34,7 @@ import java.util.Set;
  * Heavyweight integration tests of skeletons of Python binary modules.
  *
  * An environment test environment must have a 'skeletons' tag in order to be compatible with this test case. No specific packages are
- * required currently. Both Python 2 and Python 3 are OK. All platforms are OK.
+ * required currently. Both Python 2 and Python 3 are OK. All platforms are OK. At least one Python 2.6+ environment is required.
  *
  * @author vlan
  */
@@ -58,6 +59,25 @@ public class PythonSkeletonsTest extends PyTestCase {
         assertEquals(SkeletonVersionChecker.BUILTIN_NAME, header.getBinaryFile());
 
         // Run inspections on a file that uses builtins
+        myFixture.configureByFile("skeletons/" + getTestName(false) + ".py");
+        myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+        myFixture.checkHighlighting(true, false, false);
+      }
+    });
+  }
+
+  // PY-4349
+  public void testFakeNamedTuple() {
+    runTest(new SkeletonsTask() {
+      @Override
+      protected void runTestOn(@NotNull Sdk sdk) {
+        final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
+        // Named tuples have been introduced in Python 2.6
+        if (languageLevel.isOlderThan(LanguageLevel.PYTHON26)) {
+          return;
+        }
+
+        // Run inspections on code that uses named tuples
         myFixture.configureByFile("skeletons/" + getTestName(false) + ".py");
         myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
         myFixture.checkHighlighting(true, false, false);
