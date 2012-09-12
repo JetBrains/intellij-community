@@ -57,19 +57,19 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
 
   static {
     ourDefaultColors = new LinkedHashMap<String, Color>();
-    ourDefaultColors.put("Blue", new Color(220, 240, 255));
+    ourDefaultColors.put("Blue", new Color(0xdcf0ff));
     ourDefaultColors.put("Green", new Color(231, 250, 219));
     ourDefaultColors.put("Orange", new Color(246, 224, 202));
     ourDefaultColors.put("Rose", new Color(242, 206, 202));
     ourDefaultColors.put("Violet", new Color(222, 213, 241));
     ourDefaultColors.put("Yellow", new Color(255, 255, 228));
     ourDefaultDarkColors = new LinkedHashMap<String, Color>();
-    ourDefaultDarkColors.put("Blue", new Color(255-220, 255-240, 255-255));
-    ourDefaultDarkColors.put("Green", new Color(255-231, 255-250, 255-219));
-    ourDefaultDarkColors.put("Orange", new Color(255-246, 255-224, 255-202));
-    ourDefaultDarkColors.put("Rose", new Color(255-242, 255-206, 255-202));
-    ourDefaultDarkColors.put("Violet", new Color(255-222, 255-213, 255-241));
-    ourDefaultDarkColors.put("Yellow", new Color(255-255, 255-255, 255-228));
+    ourDefaultDarkColors.put("Blue", new Color(0x2B3557));
+    ourDefaultDarkColors.put("Green", new Color(0x253B10));
+    ourDefaultDarkColors.put("Orange", new Color(0xB85E3A));
+    ourDefaultDarkColors.put("Rose", new Color(0x4B193E));
+    ourDefaultDarkColors.put("Violet", new Color(0x341657));
+    ourDefaultDarkColors.put("Yellow", new Color(0x402D10));
   }
 
   public FileColorManagerImpl(@NotNull final Project project) {
