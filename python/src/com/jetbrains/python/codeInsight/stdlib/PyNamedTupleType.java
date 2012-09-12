@@ -1,6 +1,5 @@
 package com.jetbrains.python.codeInsight.stdlib;
 
-import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -30,9 +29,6 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   private final PsiElement myDeclaration;
   private final List<String> myFields;
 
-  private static final ImmutableSet<String> ourClassMembers = ImmutableSet.of("_fields", "_make");
-  private static final ImmutableSet<String> ourInstanceMembers = ImmutableSet.of("_asdict", "_replace");
-
   public PyNamedTupleType(PyClass tupleClass, PsiElement declaration, String name, List<String> fields, boolean isDefinition) {
     super(tupleClass, isDefinition);
     myDeclaration = declaration;
@@ -50,22 +46,10 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     if (classMembers != null && !classMembers.isEmpty()) {
       return classMembers;
     }
-    if (hasField(name)) {
+    if (myFields.contains(name)) {
       return Collections.singletonList(new RatedResolveResult(1000, new PyElementImpl(myDeclaration.getNode())));
     }
     return Collections.emptyList();
-  }
-
-  private boolean hasField(String name) {
-    if (myFields.contains(name)) {
-      return true;
-    }
-    if (myDefinition) {
-      return ourClassMembers.contains(name);
-    }
-    else {
-      return ourInstanceMembers.contains(name);
-    }
   }
 
   @Override
@@ -74,9 +58,6 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     Collections.addAll(result, super.getCompletionVariants(completionPrefix, location, context));
     for (String field : myFields) {
       result.add(LookupElementBuilder.create(field));
-    }
-    for (String s : myDefinition ? ourClassMembers : ourInstanceMembers) {
-      result.add(LookupElementBuilder.create(s));
     }
     return ArrayUtil.toObjectArray(result);
   }
@@ -128,7 +109,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
       }
     }
     if (fieldNames != null) {
-      PyClass tuple = PyBuiltinCache.getInstance(call).getClass(PyNames.TUPLE);
+      PyClass tuple = PyBuiltinCache.getInstance(call).getClass(PyNames.FAKE_NAMEDTUPLE);
       if (tuple != null) {
         return new PyNamedTupleType(tuple, call, name, fieldNames, true);
       }

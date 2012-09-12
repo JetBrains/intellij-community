@@ -1,7 +1,7 @@
 # encoding: utf-8
 # module builtins
 # from (built-in)
-# by generator 1.117
+# by generator 1.118
 """
 Built-in functions, exceptions, and other objects.
 
@@ -5192,6 +5192,36 @@ class __generator(object):
     def throw(self, type, value=None, traceback=None):
         '''Used to raise an exception inside the generator.'''
         pass
+
+
+class __namedtuple(tuple):
+    '''A mock base class for named tuples.'''
+
+    __slots__ = ()
+    _fields = ()
+
+    def __new__(cls, *args, **kwargs):
+        'Create a new instance of the named tuple.'
+        return tuple.__new__(cls, *args)
+
+    @classmethod
+    def _make(cls, iterable, new=tuple.__new__, len=len):
+        'Make a new named tuple object from a sequence or iterable.'
+        return new(cls, iterable)
+
+    def __repr__(self):
+        return ''
+
+    def _asdict(self):
+        'Return a new dict which maps field types to their values.'
+        return {}
+
+    def _replace(self, **kwargs):
+        'Return a new named tuple object replacing specified fields with new values.'
+        return self
+
+    def __getnewargs__(self):
+        return tuple(self)
 
 # variables with complex values
 

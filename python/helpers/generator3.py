@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.117" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.118" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -2082,6 +2082,40 @@ class __generator(object):
         pass
 """
                 self.classes_buf.out(0, txt)
+
+                # Fake <type 'namedtuple'>
+                if version[0] >= 3 or (version[0] == 2 and version[1] >= 6):
+                    namedtuple_text = """
+class __namedtuple(tuple):
+    '''A mock base class for named tuples.'''
+
+    __slots__ = ()
+    _fields = ()
+
+    def __new__(cls, *args, **kwargs):
+        'Create a new instance of the named tuple.'
+        return tuple.__new__(cls, *args)
+
+    @classmethod
+    def _make(cls, iterable, new=tuple.__new__, len=len):
+        'Make a new named tuple object from a sequence or iterable.'
+        return new(cls, iterable)
+
+    def __repr__(self):
+        return ''
+
+    def _asdict(self):
+        'Return a new dict which maps field types to their values.'
+        return {}
+
+    def _replace(self, **kwargs):
+        'Return a new named tuple object replacing specified fields with new values.'
+        return self
+
+    def __getnewargs__(self):
+        return tuple(self)
+"""
+                    self.classes_buf.out(0, namedtuple_text)
 
         else:
             self.classes_buf.out(0, "# no classes")
