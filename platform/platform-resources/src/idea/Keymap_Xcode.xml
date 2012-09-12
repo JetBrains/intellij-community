@@ -29,6 +29,9 @@
     <action id="ActivateStructureToolWindow">
       <keyboard-shortcut first-keystroke="meta 2" />
     </action>
+    <action id="FileStructurePopup">
+      <keyboard-shortcut first-keystroke="meta 6"/>
+    </action>
     <action id="AutoIndentLines">
       <keyboard-shortcut first-keystroke="meta alt I" />
       <keyboard-shortcut first-keystroke="control I" />
