@@ -624,35 +624,63 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!isNegated && !dfaRelation.isEquality()) {
       return true;
     }
-    boolean result = applyRelation(dfaLeft, dfaRight, isNegated);
-    if (dfaRight instanceof DfaConstValue) {
-      Object constVal = ((DfaConstValue)dfaRight).getValue();
-      if (constVal instanceof Boolean) {
-        boolean neg = !((Boolean)constVal).booleanValue();
-        DfaConstValue negVal = myFactory.getConstFactory().createFromValue(Boolean.valueOf(neg), PsiType.BOOLEAN);
-        result &= applyRelation(dfaLeft, negVal, !isNegated);
-      }
+    if (!applyRelation(dfaLeft, dfaRight, isNegated)) {
+      return false;
+    }
+    if (!checkCompareWithBooleanLiteral(dfaLeft, dfaRight, isNegated)) {
+      return false;
     }
     if (dfaLeft instanceof DfaVariableValue) {
-      PsiType type = ((DfaVariableValue)dfaLeft).getVariableType();
-      if (TypeConversionUtil.isPrimitiveWrapper(type)
-          && (!isNegated // from the fact (wrappers are not the same) does not follow (unboxed values are not equals)
-              || dfaRight instanceof DfaConstValue || dfaRight instanceof DfaBoxedValue && ((DfaBoxedValue)dfaRight).getWrappedValue() instanceof DfaConstValue)
-      ){
-        dfaLeft = myFactory.getBoxedFactory().createUnboxed(dfaLeft);
-        dfaRight = myFactory.getBoxedFactory().createUnboxed(dfaRight);
-        result &= applyRelation(dfaLeft, dfaRight, isNegated);
+      if (!applyUnboxedRelation((DfaVariableValue)dfaLeft, dfaRight, isNegated)) {
+        return false;
       }
-      else if (TypeConversionUtil.isPrimitiveAndNotNull(type)){
-        dfaLeft = myFactory.getBoxedFactory().createBoxed(dfaLeft);
-        dfaRight = myFactory.getBoxedFactory().createBoxed(dfaRight);
-        if (dfaLeft != null && dfaRight != null) {
-          result &= applyRelation(dfaLeft, dfaRight, isNegated);
-        }
+      if (!applyBoxedRelation((DfaVariableValue)dfaLeft, dfaRight, isNegated)) {
+        return false;
       }
     }
 
-    return result;
+    return true;
+  }
+
+  private boolean applyBoxedRelation(DfaVariableValue dfaLeft, DfaValue dfaRight, boolean negated) {
+    if (!TypeConversionUtil.isPrimitiveAndNotNull(dfaLeft.getVariableType())) return true;
+
+    DfaBoxedValue.Factory boxedFactory = myFactory.getBoxedFactory();
+    DfaValue boxedLeft = boxedFactory.createBoxed(dfaLeft);
+    DfaValue boxedRight = boxedFactory.createBoxed(dfaRight);
+    return boxedLeft == null || boxedRight == null || applyRelation(boxedLeft, boxedRight, negated);
+  }
+
+  private boolean applyUnboxedRelation(DfaVariableValue dfaLeft, DfaValue dfaRight, boolean negated) {
+    PsiType type = dfaLeft.getVariableType();
+    if (!TypeConversionUtil.isPrimitiveWrapper(type)) {
+      return true;
+    }
+    if (negated && !isMaybeBoxedConstant(dfaRight)) {
+      // from the fact (wrappers are not the same) does not follow (unboxed values are not equals)
+      return true;
+    }
+
+    DfaBoxedValue.Factory boxedFactory = myFactory.getBoxedFactory();
+    return applyRelation(boxedFactory.createUnboxed(dfaLeft), boxedFactory.createUnboxed(dfaRight), negated);
+  }
+
+  private static boolean isMaybeBoxedConstant(DfaValue val) {
+    return val instanceof DfaConstValue ||
+           (val instanceof DfaBoxedValue && ((DfaBoxedValue)val).getWrappedValue() instanceof DfaConstValue);
+  }
+
+  private boolean checkCompareWithBooleanLiteral(DfaValue dfaLeft, DfaValue dfaRight, boolean negated) {
+    if (dfaRight instanceof DfaConstValue) {
+      Object constVal = ((DfaConstValue)dfaRight).getValue();
+      if (constVal instanceof Boolean) {
+        DfaConstValue negVal = myFactory.getConstFactory().createFromValue(!((Boolean)constVal).booleanValue(), PsiType.BOOLEAN);
+        if (!applyRelation(dfaLeft, negVal, !negated)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   private static boolean isNaN(final DfaValue dfa) {
