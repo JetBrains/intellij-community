@@ -108,6 +108,10 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     }
   }
 
+  public Module getModule() {
+    return myModule;
+  }
+
   private boolean hasOption(@ScopeConstant int option) {
     return (myOptions & option) != 0;
   }

@@ -347,8 +347,8 @@ public class Transf implements ASTTransformation {
     myFixture.addFileToProject("dependent2/Bar2.groovy", "class Bar2 extends Bar1 {}");
     PsiFile main = myFixture.addFileToProject("Main.groovy", "class Main extends Bar2 {}");
 
-    Module dep1 = addModule('dependent1')
-    Module dep2 = addModule('dependent2')
+    Module dep1 = addModule('dependent1', true)
+    Module dep2 = addModule('dependent2', true)
     ModuleRootModificationUtil.addDependency dep2, dep1
     ModuleRootModificationUtil.addDependency myModule, dep2
 

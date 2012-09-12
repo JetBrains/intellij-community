@@ -27,6 +27,7 @@ import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -73,7 +74,7 @@ public class GroovyPositionManager implements PositionManager {
     try {
       int line = position.getLine() + 1;
       List<Location> locations = getDebugProcess().getVirtualMachineProxy().versionHigher("1.4")
-                                 ? type.locationsOfLine(DebugProcessImpl.JAVA_STRATUM, null, line)
+                                 ? type.locationsOfLine(DebugProcess.JAVA_STRATUM, null, line)
                                  : type.locationsOfLine(line);
       if (locations == null || locations.isEmpty()) throw new NoDataException();
       return locations;
@@ -218,17 +219,10 @@ public class GroovyPositionManager implements PositionManager {
 
     final String originalQName = refType.name().replace('/', '.');
     int dollar = originalQName.indexOf('$');
-    String qName = dollar >= 0 ? originalQName.substring(0, dollar) : originalQName;
+    String runtimeName = dollar >= 0 ? originalQName.substring(0, dollar) : originalQName;
+    String qName = getOriginalQualifiedName(refType, runtimeName);
 
-    String runtimeName = qName;
-    for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
-      if (helper.isAppropriateRuntimeName(runtimeName)) {
-        qName = helper.getOriginalScriptName(refType, runtimeName);
-        break;
-      }
-    }
-
-    final GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
+    GlobalSearchScope searchScope = addModuleContent(myDebugProcess.getSearchScope());
     try {
       final List<PsiClass> classes = GroovyShortNamesCache.getGroovyShortNamesCache(project).getClassesByFQName(qName, searchScope);
       PsiClass clazz = classes.size() == 1 ? classes.get(0) : null;
@@ -241,6 +235,14 @@ public class GroovyPositionManager implements PositionManager {
       return null;
     }
 
+    return getExtraScriptIfNotFound(project, refType, runtimeName, searchScope);
+  }
+
+  @Nullable
+  private static PsiFile getExtraScriptIfNotFound(Project project,
+                                                  ReferenceType refType,
+                                                  String runtimeName,
+                                                  GlobalSearchScope searchScope) {
     for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
       if (helper.isAppropriateRuntimeName(runtimeName)) {
         PsiFile file = helper.getExtraScriptIfNotFound(refType, runtimeName, project, searchScope);
@@ -248,6 +250,22 @@ public class GroovyPositionManager implements PositionManager {
       }
     }
     return null;
+  }
+
+  private static GlobalSearchScope addModuleContent(GlobalSearchScope scope) {
+    if (scope instanceof ModuleWithDependenciesScope) {
+      return scope.uniteWith(((ModuleWithDependenciesScope)scope).getModule().getModuleContentWithDependenciesScope());
+    }
+    return scope;
+  }
+
+  private static String getOriginalQualifiedName(ReferenceType refType, String runtimeName) {
+    for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
+      if (helper.isAppropriateRuntimeName(runtimeName)) {
+        return helper.getOriginalScriptName(refType, runtimeName);
+      }
+    }
+    return runtimeName;
   }
 
   @NotNull
@@ -259,10 +277,12 @@ public class GroovyPositionManager implements PositionManager {
         if (sourceImage instanceof GrTypeDefinition && !((GrTypeDefinition)sourceImage).isAnonymous()) {
           String qName = getClassNameForJvm((GrTypeDefinition)sourceImage);
           if (qName != null) return myDebugProcess.getVirtualMachineProxy().classesByName(qName);
-        } else if (sourceImage == null) {
+        }
+        else if (sourceImage == null) {
           final String scriptName = getScriptQualifiedName(position);
           if (scriptName != null) return myDebugProcess.getVirtualMachineProxy().classesByName(scriptName);
-        } else {
+        }
+        else {
           String enclosingName = findEnclosingName(position);
           if (enclosingName == null) return Collections.emptyList();
 
@@ -285,22 +305,23 @@ public class GroovyPositionManager implements PositionManager {
   }
 
   private static String getScriptFQName(GroovyFile groovyFile) {
-    String qName;
+    String packageName = groovyFile.getPackageName();
+    String fileName = getRuntimeScriptName(groovyFile);
+    return packageName.length() > 0 ? packageName + "." + fileName : fileName;
+  }
+
+  private static String getRuntimeScriptName(GroovyFile groovyFile) {
     VirtualFile vFile = groovyFile.getVirtualFile();
     assert vFile != null;
-    String packageName = groovyFile.getPackageName();
     String plainName = vFile.getNameWithoutExtension();
-    String fileName = plainName;
     if (groovyFile.isScript()) {
       for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
         if (helper.isAppropriateScriptFile(groovyFile)) {
-          fileName = helper.getRuntimeScriptName(plainName, groovyFile);
-          break;
+          return helper.getRuntimeScriptName(plainName, groovyFile);
         }
       }
     }
-    qName = packageName.length() > 0 ? packageName + "." + fileName : fileName;
-    return qName;
+    return plainName;
   }
 
   @Nullable

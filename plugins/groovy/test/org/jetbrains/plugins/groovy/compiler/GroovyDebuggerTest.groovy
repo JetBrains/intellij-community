@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.compiler
-
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.ContextUtil
 import com.intellij.debugger.engine.DebugProcessImpl
@@ -32,6 +31,7 @@ import com.intellij.debugger.impl.GenericDebuggerRunner
 import com.intellij.debugger.ui.DebuggerPanelsManager
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
+import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.OSProcessManager
@@ -40,6 +40,7 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -49,7 +50,6 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
-
 /**
  * @author peter
  */
@@ -89,28 +89,29 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
   }
 
   private void runDebugger(String mainClass, Closure cl) {
-    boolean trace = false//name == 'testClassOutOfSourceRoots'
+    runDebugger(createApplicationConfiguration(mainClass, myModule), cl)
+  }
+  private void runDebugger(RunProfile configuration, Closure cl) {
     make()
     edt {
       ProgramRunner runner = ProgramRunner.PROGRAM_RUNNER_EP.extensions.find { it.class == GenericDebuggerRunner }
-      runProcess(mainClass, myModule, DefaultDebugExecutor, [onTextAvailable: { evt, type -> if (trace) print evt.text}] as ProcessAdapter, runner)
+      def listener = [onTextAvailable: { evt, type -> }] as ProcessAdapter
+      runConfiguration(DefaultDebugExecutor, listener, runner, configuration);
     }
-    cl.call()
-    def handler = debugProcess.executionResult.processHandler
-    if (trace) {
-      println "terminated1?: " + handler.isProcessTerminated()
+    try {
+      cl.call()
     }
-    resume()
-    if (!handler.waitFor(20000)) {
-      if (handler instanceof OSProcessHandler) {
-        OSProcessManager.instance.killProcessTree(handler.process)
-      } else {
-        println "can't terminate $handler"
+    finally {
+      def handler = debugProcess.executionResult.processHandler
+      resume()
+      if (!handler.waitFor(20000)) {
+        if (handler instanceof OSProcessHandler) {
+          OSProcessManager.instance.killProcessTree(handler.process)
+        } else {
+          println "can't terminate $handler"
+        }
+        fail('too long waiting for process termination')
       }
-      fail('too long waiting for process termination')
-    }
-    if (trace) {
-      println "terminated2?: " + handler.isProcessTerminated()
     }
   }
 
@@ -210,17 +211,19 @@ cl.parseClass('''$mcText''', 'MyClass.groovy').foo(2)
 
     runDebugger 'Foo', {
       waitForBreakpoint()
-      SourcePosition position = managed {
-        EvaluationContextImpl context = evaluationContext()
-        Computable<SourcePosition> a = { ContextUtil.getSourcePosition(context) } as Computable<SourcePosition>
-        SourcePosition pos = ApplicationManager.getApplication().runReadAction (a)
-        pos
-      }
-      assert myClass == position.file.virtualFile
+      assert myClass == sourcePosition.file.virtualFile
       eval 'a', '2'
     }
   }
-  
+
+  private SourcePosition getSourcePosition() {
+    managed {
+      EvaluationContextImpl context = evaluationContext()
+      Computable<SourcePosition> a = { ContextUtil.getSourcePosition(context) } as Computable<SourcePosition>
+      return ApplicationManager.getApplication().runReadAction(a)
+    }
+  }
+
   void testAnonymousClassInScript() {
     myFixture.addFileToProject('Foo.groovy', '''\
 new Runnable() {
@@ -251,6 +254,23 @@ foo()
     runDebugger 'Foo', {
       waitForBreakpoint()
       eval 'x', '5'
+    }
+  }
+
+  public void "test navigation to script outside source root"() {
+    def module1 = addModule("module1", false)
+    def module2 = addModule("module2", true)
+    addGroovyLibrary(module1)
+    addGroovyLibrary(module2)
+    ModuleRootModificationUtil.addDependency(myModule, module1);
+
+    def scr = myFixture.addFileToProject('module1/Scr.groovy', 'println "hello"')
+    myFixture.addFileToProject('module2/Scr.groovy', 'println "hello"')
+
+    addBreakpoint('module1/Scr.groovy', 0)
+    runDebugger(createScriptConfiguration(scr.virtualFile.path, myModule)) {
+      waitForBreakpoint()
+      assert scr == sourcePosition.file
     }
   }
 

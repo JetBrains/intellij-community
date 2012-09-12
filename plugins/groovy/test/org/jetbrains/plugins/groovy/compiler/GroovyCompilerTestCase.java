@@ -21,6 +21,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.application.ApplicationConfigurationType;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.DefaultJavaProgramRunner;
@@ -60,6 +61,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
+import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
@@ -147,12 +150,12 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
   }
 
   protected Module addDependentModule() {
-    Module module = addModule("dependent");
+    Module module = addModule("dependent", true);
     ModuleRootModificationUtil.addDependency(module, myModule);
     return module;
   }
 
-  protected Module addModule(final String name) {
+  protected Module addModule(final String name, final boolean withSource) {
     return new WriteCommandAction<Module>(getProject()) {
       @Override
       protected void run(Result<Module> result) throws Throwable {
@@ -164,7 +167,11 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
 
         final Module dep = ModuleManager.getInstance(getProject()).findModuleByName(moduleName);
         ModuleRootModificationUtil.setModuleSdk(dep, ModuleRootManager.getInstance(myModule).getSdk());
-        PsiTestUtil.addSourceRoot(dep, depRoot);
+        if (withSource) {
+          PsiTestUtil.addSourceRoot(dep, depRoot);
+        } else {
+          PsiTestUtil.addContentRoot(dep, depRoot);
+        }
         IdeaTestUtil.setModuleLanguageLevel(dep, LanguageLevelModuleExtension.getInstance(myModule).getLanguageLevel());
 
         result.setResult(dep);
@@ -329,10 +336,14 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
                                       Module module,
                                       final Class<? extends Executor> executorClass,
                                       final ProcessListener listener, final ProgramRunner runner) throws ExecutionException {
-    final ApplicationConfiguration configuration =
-      new ApplicationConfiguration("app", getProject(), ApplicationConfigurationType.getInstance());
-    configuration.setModule(module);
-    configuration.setMainClassName(className);
+    final ApplicationConfiguration configuration = createApplicationConfiguration(className, module);
+    return runConfiguration(executorClass, listener, runner, configuration);
+  }
+
+  protected ProcessHandler runConfiguration(Class<? extends Executor> executorClass,
+                                          final ProcessListener listener,
+                                          ProgramRunner runner,
+                                          RunProfile configuration) throws ExecutionException {
     final Executor executor = Executor.EXECUTOR_EXTENSION_NAME.findExtension(executorClass);
     final ExecutionEnvironment environment = new ExecutionEnvironment(configuration, getProject(),
                                                                       new RunnerSettings<JDOMExternalizable>(null, null), null, null);
@@ -358,6 +369,22 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     });
     semaphore.waitFor();
     return processHandler.get();
+  }
+
+  protected ApplicationConfiguration createApplicationConfiguration(String className, Module module) {
+    final ApplicationConfiguration configuration =
+      new ApplicationConfiguration("app", getProject(), ApplicationConfigurationType.getInstance());
+    configuration.setModule(module);
+    configuration.setMainClassName(className);
+    return configuration;
+  }
+
+  protected GroovyScriptRunConfiguration createScriptConfiguration(String scriptPath, Module module) {
+    final GroovyScriptRunConfiguration configuration =
+      new GroovyScriptRunConfiguration("app", getProject(), GroovyScriptRunConfigurationType.getInstance().getConfigurationFactories()[0]);
+    configuration.setModule(module);
+    configuration.setScriptPath(scriptPath);
+    return configuration;
   }
 
   private static class ErrorReportingCallback implements CompileStatusNotification {
