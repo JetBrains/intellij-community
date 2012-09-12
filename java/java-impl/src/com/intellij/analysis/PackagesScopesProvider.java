@@ -23,6 +23,7 @@ package com.intellij.analysis;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.scope.ProjectProductionScope;
+import com.intellij.psi.search.scope.TestsScope;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,8 @@ public class PackagesScopesProvider extends CustomScopesProviderEx {
 
   public PackagesScopesProvider() {
     myProjectProductionScope = new ProjectProductionScope();
-    myScopes = Arrays.asList(myProjectProductionScope);
+    final NamedScope projectTestScope = new TestsScope();
+    myScopes = Arrays.asList(myProjectProductionScope, projectTestScope);
   }
 
   @Override

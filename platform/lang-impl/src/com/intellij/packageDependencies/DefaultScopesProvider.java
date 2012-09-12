@@ -47,7 +47,6 @@ public class DefaultScopesProvider extends CustomScopesProviderEx {
   public DefaultScopesProvider(Project project) {
     myProject = project;
     final NamedScope projectScope = new ProjectFilesScope();
-    final NamedScope projectTestScope = new TestsScope();
     final NamedScope nonProjectScope = new NonProjectFilesScope();
     final String text = FilePatternPackageSet.SCOPE_FILE + ":*//*";
     myProblemsScope = new NamedScope(IdeBundle.message("predefined.scope.problems.name"), new AbstractPackageSet(text) {
@@ -56,7 +55,7 @@ public class DefaultScopesProvider extends CustomScopesProviderEx {
                && WolfTheProblemSolver.getInstance(myProject).isProblemFile(file);
       }
     });
-    myScopes = Arrays.asList(projectScope, getProblemsScope(), getAllScope(), projectTestScope, nonProjectScope);
+    myScopes = Arrays.asList(projectScope, getProblemsScope(), getAllScope(), nonProjectScope);
   }
 
   @NotNull
