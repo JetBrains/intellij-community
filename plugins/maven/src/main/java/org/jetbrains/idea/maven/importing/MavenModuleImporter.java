@@ -17,6 +17,9 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
+import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -92,6 +95,25 @@ public class MavenModuleImporter {
     configLanguageLevel();
     configEncoding();
     configAnnotationProcessors();
+    excludeFromCompilationArchetypeResources();
+  }
+
+  private void excludeFromCompilationArchetypeResources() {
+    VirtualFile directoryFile = myMavenProject.getDirectoryFile();
+
+    VirtualFile archetypeResourcesDir = VfsUtil.findRelativeFile(directoryFile, "src", "main", "resources", "archetype-resources");
+
+    if (archetypeResourcesDir != null) {
+      Project project = myModule.getProject();
+
+      CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
+
+      if (!compilerConfiguration.isExcludedFromCompilation(archetypeResourcesDir)) {
+        ExcludedEntriesConfiguration cfg = compilerConfiguration.getExcludedEntriesConfiguration();
+
+        cfg.addExcludeEntryDescription(new ExcludeEntryDescription(archetypeResourcesDir, true, false, project));
+      }
+    }
   }
 
   public void preConfigFacets() {
