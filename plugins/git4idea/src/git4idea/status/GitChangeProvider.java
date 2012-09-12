@@ -85,11 +85,9 @@ public class GitChangeProvider implements ChangeProvider {
       }
       if (vf != null) {
         existingInScope.add(vf);
-      }
-      // we don't expect any vcs roots to be under deleted directories
-      /* else {
+      } else {
         PROFILE_LOG.error("Can not find virtual file for recursively dirty dir: " + dir.getIOFile().getPath());
-      }*/
+      }
     }
     inputColl.addAll(existingInScope);
     FileUtil.removeAncestors(inputColl, new Convertor<VirtualFile, String>() {
