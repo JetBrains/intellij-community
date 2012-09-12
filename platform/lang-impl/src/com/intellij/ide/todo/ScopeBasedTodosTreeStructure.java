@@ -47,9 +47,9 @@ public class ScopeBasedTodosTreeStructure extends TodoTreeStructure {
   public boolean accept(final PsiFile psiFile) {
     if (!psiFile.isValid()) return false;
     boolean isAffected = false;
-    final NamedScope scope = (NamedScope)myScopes.getSelectedItem();
+    final ScopeBasedTodosPanel.ScopeWrapper scope = (ScopeBasedTodosPanel.ScopeWrapper)myScopes.getSelectedItem();
     if (scope != null) {
-      final PackageSet value = scope.getValue();
+      final PackageSet value = scope.getNamedScope().getValue();
       if (value != null) {
         isAffected = value.contains(psiFile, NamedScopesHolder.getHolder(myProject, scope.getName(), DependencyValidationManager.getInstance(myProject)));
       }
