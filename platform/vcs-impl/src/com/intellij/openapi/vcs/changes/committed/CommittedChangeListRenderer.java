@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,16 +34,17 @@ import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.util.Date;
+import java.util.List;
 
 public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
   private static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.blue);
   private final IssueLinkRenderer myRenderer;
-  private final java.util.List<CommittedChangeListDecorator> myDecorators;
+  private final List<CommittedChangeListDecorator> myDecorators;
   private final Project myProject;
   private int myDateWidth;
   private int myFontSize;
 
-  public CommittedChangeListRenderer(final Project project, final java.util.List<CommittedChangeListDecorator> decorators) {
+  public CommittedChangeListRenderer(final Project project, final List<CommittedChangeListDecorator> decorators) {
     myProject = project;
     myRenderer = new IssueLinkRenderer(project, this);
     myDecorators = decorators;
@@ -98,14 +99,12 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     String date = ", " + getDateOfChangeList(changeList.getCommitDate());
     final FontMetrics fontMetrics = tree.getFontMetrics(tree.getFont());
     final FontMetrics boldMetrics = tree.getFontMetrics(tree.getFont().deriveFont(Font.BOLD));
-    int dateCommitterSize = 0;
     if (myDateWidth <= 0 || (fontMetrics.getFont().getSize() != myFontSize)) {
       myDateWidth = Math.max(fontMetrics.stringWidth(", Yesterday 00:00 PM "), fontMetrics.stringWidth(", 00/00/00 00:00 PM "));
       myDateWidth = Math.max(myDateWidth, fontMetrics.stringWidth(getDateOfChangeList(new Date(2000, 11, 31))));
       myFontSize = fontMetrics.getFont().getSize();
     }
-    dateCommitterSize += myDateWidth;
-    dateCommitterSize += boldMetrics.stringWidth(changeList.getCommitterName());
+    int dateCommitterSize = myDateWidth + boldMetrics.stringWidth(changeList.getCommitterName());
 
     final Pair<String, Boolean> descriptionInfo = getDescriptionOfChangeList(changeList.getName().trim());
     boolean truncated = descriptionInfo.getSecond().booleanValue();
@@ -120,13 +119,14 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
 
     int descMaxWidth = availableWidth - dateCommitterSize - 8;
     boolean partial = (changeList instanceof ReceivedChangeList) && ((ReceivedChangeList)changeList).isPartial();
+    int descWidth = 0;
     if (partial) {
       final String partialMarker = VcsBundle.message("committed.changes.partial.list") + " ";
       append(partialMarker, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-      descMaxWidth -= boldMetrics.stringWidth(partialMarker);
+      descWidth += boldMetrics.stringWidth(partialMarker);
     }
 
-    int descWidth = fontMetrics.stringWidth(description);
+    descWidth += fontMetrics.stringWidth(description);
 
     int numberWidth = 0;
     final AbstractVcs vcs = changeList.getVcs();
@@ -140,7 +140,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
       }
     }
 
-    if (description.length() == 0 && !truncated) {
+    if (description.isEmpty() && !truncated) {
       append(VcsBundle.message("committed.changes.empty.comment"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       appendAlign(descMaxWidth);
     }
