@@ -382,12 +382,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     addNodeAndCheckPending(throwInstruction);
 
     interruptFlow();
-    final PsiType type = RecursionManager.doPreventingRecursion(exception, true, new NullableComputable<PsiType>() {
-      @Override
-      public PsiType compute() {
-        return exception.getNominalType();
-      }
-    });
+    final PsiType type = getNominalTypeNoRecursion(exception);
     if (type != null) {
       ExceptionInfo info = findCatch(type);
       if (info != null) {
@@ -400,6 +395,15 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     else {
       addPendingEdge(null, throwInstruction);
     }
+  }
+
+  private static PsiType getNominalTypeNoRecursion(final GrExpression exception) {
+    return RecursionManager.doPreventingRecursion(exception, true, new NullableComputable<PsiType>() {
+      @Override
+      public PsiType compute() {
+        return exception.getNominalType();
+      }
+    });
   }
 
   private void interruptFlow() {
@@ -924,7 +928,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     final GrExpression condition = statement.getCondition();
     if (!(condition instanceof GrReferenceExpression)) return false;
 
-    PsiType type = TypesUtil.unboxPrimitiveTypeWrapper(condition.getNominalType());
+    PsiType type = TypesUtil.unboxPrimitiveTypeWrapper(getNominalTypeNoRecursion(condition));
     if (type == null) return false;
 
     if (type instanceof PsiPrimitiveType) {
