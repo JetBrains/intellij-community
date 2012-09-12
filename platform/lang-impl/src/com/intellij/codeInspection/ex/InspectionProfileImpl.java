@@ -499,7 +499,15 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return true;
   }
 
-  protected List<InspectionToolWrapper> createTools() {
+  private List<InspectionToolWrapper> createTools() {
+    if (mySource != null) {
+      return ContainerUtil.map(mySource.getAllTools(), new Function<ScopeToolState, InspectionToolWrapper>() {
+        @Override
+        public InspectionToolWrapper fun(ScopeToolState state) {
+          return (InspectionToolWrapper)state.getTool();
+        }
+      });
+    }
     return myRegistrar.createTools();
   }
 
@@ -554,15 +562,15 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     }
   }
 
-  
-
   private InspectionTool copyToolSettings(InspectionToolWrapper tool)
     throws WriteExternalException, InvalidDataException {
-    @NonNls String tempRoot = "config";
-    Element config = new Element(tempRoot);
-    tool.writeSettings(config);
     final InspectionTool inspectionTool = tool.createCopy();
-    inspectionTool.readSettings(config);
+    if (tool.isInitialized()) {
+      @NonNls String tempRoot = "config";
+      Element config = new Element(tempRoot);
+      tool.writeSettings(config);
+      inspectionTool.readSettings(config);
+    }
     return inspectionTool;
   }
 
