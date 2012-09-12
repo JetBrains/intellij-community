@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -463,12 +478,16 @@ public class DomUtil {
     return Pair.create(startToken.getTextRange().shiftRight(-tag.getTextRange().getStartOffset()), (PsiElement)tag);
   }
 
+  @SuppressWarnings("ForLoopReplaceableByForEach")
   public static <T extends DomElement> List<T> getChildrenOf(DomElement parent, final Class<T> type) {
-    final ArrayList<T> list = new ArrayList<T>();
+    final List<T> list = new SmartList<T>();
     List<? extends AbstractDomChildrenDescription> descriptions = parent.getGenericInfo().getChildrenDescriptions();
-    for (AbstractDomChildrenDescription description : descriptions) {
+    for (int i = 0, descriptionsSize = descriptions.size(); i < descriptionsSize; i++) {
+      AbstractDomChildrenDescription description = descriptions.get(i);
       if (description.getType() instanceof Class && type.isAssignableFrom((Class<?>)description.getType())) {
-        for (T value : (List<T>)description.getValues(parent)) {
+        List<T> values = (List<T>)description.getValues(parent);
+        for (int j = 0, valuesSize = values.size(); j < valuesSize; j++) {
+          T value = values.get(j);
           if (value.exists()) {
             list.add(value);
           }

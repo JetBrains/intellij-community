@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -404,11 +419,16 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     myManager.getApplicationComponent().getVisitorDescription(visitor.getClass()).acceptElement(visitor, getProxy());
   }
 
+  @SuppressWarnings("ForLoopReplaceableByForEach")
   public void acceptChildren(DomElementVisitor visitor) {
     ProgressManager.checkCanceled();
     final DomElement element = getProxy();
-    for (final AbstractDomChildrenDescription description : getGenericInfo().getChildrenDescriptions()) {
-      for (final DomElement value : description.getValues(element)) {
+    List<? extends AbstractDomChildrenDescription> descriptions = getGenericInfo().getChildrenDescriptions();
+    for (int i = 0, descriptionsSize = descriptions.size(); i < descriptionsSize; i++) {
+      AbstractDomChildrenDescription description = descriptions.get(i);
+      List<? extends DomElement> values = description.getValues(element);
+      for (int j = 0, valuesSize = values.size(); j < valuesSize; j++) {
+        DomElement value = values.get(j);
         value.accept(visitor);
       }
     }
