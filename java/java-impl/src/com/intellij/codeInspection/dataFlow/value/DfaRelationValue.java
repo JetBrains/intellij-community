@@ -25,13 +25,14 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+
+import static com.intellij.psi.JavaTokenType.*;
 
 public class DfaRelationValue extends DfaValue {
   private DfaValue myLeftOperand;
@@ -52,8 +53,8 @@ public class DfaRelationValue extends DfaValue {
 
     @Nullable
     public DfaRelationValue createRelation(DfaValue dfaLeft, DfaValue dfaRight, IElementType relation, boolean negated) {
-      if (dfaRight instanceof DfaTypeValue && JavaTokenType.INSTANCEOF_KEYWORD != relation) return null;
-      if (JavaTokenType.PLUS == relation) return null;
+      if (dfaRight instanceof DfaTypeValue && INSTANCEOF_KEYWORD != relation) return null;
+      if (PLUS == relation) return null;
 
       if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaUnboxedValue
           || dfaRight instanceof DfaVariableValue || dfaRight instanceof DfaBoxedValue || dfaRight instanceof DfaUnboxedValue) {
@@ -79,16 +80,16 @@ public class DfaRelationValue extends DfaValue {
                                                      final DfaValue dfaLeft,
                                                      final DfaValue dfaRight) {
       // To canonical form.
-      if (JavaTokenType.NE == relation) {
-        relation = JavaTokenType.EQEQ;
+      if (NE == relation) {
+        relation = EQEQ;
         negated = !negated;
       }
-      else if (JavaTokenType.LT == relation) {
-        relation = JavaTokenType.GE;
+      else if (LT == relation) {
+        relation = GE;
         negated = !negated;
       }
-      else if (JavaTokenType.LE == relation) {
-        relation = JavaTokenType.GT;
+      else if (LE == relation) {
+        relation = GT;
         negated = !negated;
       }
 
@@ -115,19 +116,10 @@ public class DfaRelationValue extends DfaValue {
     }
 
     private static IElementType getSymmetricOperation(IElementType sign) {
-      if (JavaTokenType.LT == sign) {
-        return JavaTokenType.GT;
-      }
-      else if (JavaTokenType.GE == sign) {
-        return JavaTokenType.LE;
-      }
-      else if (JavaTokenType.GT == sign) {
-        return JavaTokenType.LT;
-      }
-      else if (JavaTokenType.LE == sign) {
-        return JavaTokenType.GE;
-      }
-
+      if (LT == sign) return GT;
+      if (GE == sign) return LE;
+      if (GT == sign) return LT;
+      if (LE == sign) return GE;
       return sign;
     }
   }
@@ -166,6 +158,14 @@ public class DfaRelationValue extends DfaValue {
       && Comparing.equal(rel.myRightOperand,myRightOperand) &&
       rel.myRelation == myRelation &&
       rel.myIsNegated == myIsNegated;
+  }
+
+  public boolean isEquality() {
+    return myRelation == EQEQ && !myIsNegated;
+  }
+
+  public boolean isNonEquality() {
+    return myRelation == EQEQ && myIsNegated || myRelation == GT && !myIsNegated || myRelation == GE && myIsNegated;
   }
 
   @NonNls public String toString() {

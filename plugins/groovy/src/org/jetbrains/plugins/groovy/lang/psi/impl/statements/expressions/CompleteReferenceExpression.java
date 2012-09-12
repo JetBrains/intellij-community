@@ -341,14 +341,16 @@ public class CompleteReferenceExpression {
   }
 
   private static Set<String> addAllRestrictedProperties(GrReferenceExpression place) {
+    if (place.getQualifier() != null) {
+      return Collections.emptySet();
+    }
+
     Set<String> propertyNames = new HashSet<String>();
-    if (place.getQualifier()==null) {
-      for (GrTypeDefinition containingClass = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class);
-           containingClass != null;
-           containingClass = PsiTreeUtil.getParentOfType(containingClass, GrTypeDefinition.class)) {
-        for (PsiField field : containingClass.getAllFields()) {
-          propertyNames.add(field.getName());
-        }
+    for (GrTypeDefinition containingClass = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class);
+         containingClass != null;
+         containingClass = PsiTreeUtil.getParentOfType(containingClass, GrTypeDefinition.class)) {
+      for (PsiField field : containingClass.getFields()) {
+        propertyNames.add(field.getName());
       }
     }
     return propertyNames;
@@ -360,8 +362,8 @@ public class CompleteReferenceExpression {
   }
 
   private static class CompleteReferenceProcessor extends ResolverProcessor implements Consumer<Object> {
-    private static final Logger LOG = Logger.getInstance(
-      "#org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.CompleteReferenceExpression.CompleteReferenceProcessor");
+    private static final Logger LOG = Logger.getInstance(CompleteReferenceProcessor.class);
+
     private final Consumer<LookupElement> myConsumer;
     private final PrefixMatcher myMatcher;
     private final CompletionParameters myParameters;

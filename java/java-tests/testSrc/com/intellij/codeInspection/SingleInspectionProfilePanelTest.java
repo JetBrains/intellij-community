@@ -37,11 +37,14 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
     InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getProfile(PROFILE);
     profile.initInspectionTools(project);
+    assertEquals(0, InspectionProfileTest.countInitializedTools(profile));
 
     InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
+    assertEquals(0, InspectionProfileTest.countInitializedTools(model));
     SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(profileManager, PROFILE, model);
     panel.setVisible(true);
     panel.reset();
+    assertEquals(0, InspectionProfileTest.countInitializedTools(model));
 
     LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)model.getInspectionTool(myInspection.getShortName());
     assert wrapper != null;
@@ -50,7 +53,7 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
     tool.myAdditionalJavadocTags = "foo";
     model.setModified(true);
     panel.apply();
-
+    assertEquals(1, InspectionProfileTest.countInitializedTools(model));
 
     wrapper = (LocalInspectionToolWrapper)profile.getInspectionTool(myInspection.getShortName());
     assert wrapper != null;

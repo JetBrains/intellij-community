@@ -106,6 +106,10 @@ public final class EditExternallyAction extends AnAction {
   public void update(AnActionEvent e) {
     super.update(e);
 
+    doUpdate(e);
+  }
+
+  static void doUpdate(AnActionEvent e) {
     VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     final boolean isEnabled = isImages(files);
     if (e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) {

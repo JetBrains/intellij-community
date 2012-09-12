@@ -952,9 +952,6 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     if (JavaTokenType.PLUS == op && (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_STRING))) {
       return null;
     }
-    else if (op == JavaTokenType.LT || op == JavaTokenType.GT) {
-      return JavaTokenType.NE;
-    }
     return op;
   }
 
