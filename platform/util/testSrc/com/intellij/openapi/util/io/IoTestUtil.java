@@ -211,4 +211,24 @@ public class IoTestUtil {
     }
     return jarFile;
   }
+
+  public static File createTestDir(final String name) {
+    return createTestDir(new File(FileUtil.getTempDirectory()), name);
+  }
+
+  public static File createTestDir(final File parent, final String name) {
+    final File dir = new File(parent, name);
+    assertTrue(dir.getPath(), dir.mkdirs());
+    return dir;
+  }
+
+  public static File createTestFile(final String name) throws IOException {
+    return createTestFile(new File(FileUtil.getTempDirectory()), name);
+  }
+
+  public static File createTestFile(final File parent, final String name) throws IOException {
+    final File file = new File(parent, name);
+    assertTrue(file.getPath(), file.createNewFile());
+    return file;
+  }
 }

@@ -37,6 +37,7 @@ import java.util.Set;
 import static com.intellij.openapi.util.io.FileUtil.createTempDirectory;
 import static com.intellij.openapi.util.io.FileUtil.createTempFile;
 import static com.intellij.openapi.util.io.IoTestUtil.createTempLink;
+import static com.intellij.openapi.util.io.IoTestUtil.createTestDir;
 
 public class SymlinkHandlingTest extends LightPlatformLangTestCase {
   private LocalFileSystem myFileSystem;
@@ -46,18 +47,7 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myFileSystem = LocalFileSystem.getInstance();
-    myTempDir = createTempDirectory("test.", ".dir");
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      myFileSystem = null;
-      super.tearDown();
-    }
-    finally {
-      FileUtil.delete(myTempDir);
-    }
+    myTempDir = createTestDir("temp");
   }
 
   @Override
@@ -341,7 +331,7 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
   }
 */
 
-  public void testFindByLinkParentPath() throws Exception {
+  public void testTraversePathBehindLink() throws Exception {
     final File topDir = createTempDirectory(myTempDir, "top.", ".dir");
     final File subDir1 = createTempDirectory(topDir, "sub1.", ".dir");
     final File link = createTempLink(subDir1.getPath(), myTempDir + "/link");
