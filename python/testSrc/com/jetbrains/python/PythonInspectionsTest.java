@@ -43,11 +43,6 @@ public class PythonInspectionsTest extends PyTestCase {
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyUnreachableCodeInspection() {
-    LocalInspectionTool inspection = new PyUnreachableCodeInspection();
-    doTest(getTestName(false), inspection);
-  }
-
   public void testPyMethodParametersInspection() {
     doHighlightingTest(PyMethodParametersInspection.class);
   }
