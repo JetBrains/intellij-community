@@ -252,6 +252,20 @@ public class GroovyCompletionData {
     if (afterIfOrElse(context)) {
       result.addElement(keyword(PsiKeyword.ELSE, TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
+
+    if (isCommandCallWithOneArg(context)) {
+      result.addElement(keyword(PsiKeyword.ASSERT, TailType.HUMBLE_SPACE_BEFORE_WORD));
+      if (hasReturnValue(context)) {
+        result.addElement(keyword(PsiKeyword.RETURN, TailType.HUMBLE_SPACE_BEFORE_WORD));
+      }
+    }
+  }
+
+  private static boolean isCommandCallWithOneArg(PsiElement context) {
+    return context.getParent() instanceof GrReferenceExpression &&
+           context.getParent().getParent() instanceof GrApplicationStatement &&
+           ((GrApplicationStatement)context.getParent().getParent()).getExpressionArguments().length == 1 &&
+           ((GrApplicationStatement)context.getParent().getParent()).getNamedArguments().length == 0;
   }
 
   private static boolean hasReturnValue(PsiElement context) {
@@ -407,6 +421,9 @@ public class GroovyCompletionData {
       if (parent instanceof GrReferenceExpression) {
 
         PsiElement superParent = parent.getParent();
+
+        if (superParent instanceof GrClosableBlock) return true;
+
         if (superParent instanceof GrExpression) {
           superParent = superParent.getParent();
         }
