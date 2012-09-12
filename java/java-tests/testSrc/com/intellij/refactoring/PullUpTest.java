@@ -13,6 +13,7 @@ import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -161,6 +162,7 @@ public class PullUpTest extends LightRefactoringTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

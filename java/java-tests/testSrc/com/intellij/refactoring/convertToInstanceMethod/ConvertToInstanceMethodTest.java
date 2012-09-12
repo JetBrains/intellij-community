@@ -6,11 +6,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.LightRefactoringTestCase;
 import com.intellij.util.VisibilityUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
  */
 public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

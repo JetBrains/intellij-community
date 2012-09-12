@@ -13,12 +13,14 @@ import com.intellij.refactoring.makeStatic.MakeClassStaticProcessor;
 import com.intellij.refactoring.makeStatic.MakeStaticUtil;
 import com.intellij.refactoring.makeStatic.Settings;
 import com.intellij.refactoring.util.ParameterTablePanel;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
 public class MakeClassStaticTest extends LightRefactoringTestCase {
   private static final String TEST_ROOT = "/refactoring/makeClassStatic/";
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

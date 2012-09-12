@@ -14,6 +14,7 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameWrongRefHandler;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 
@@ -23,6 +24,7 @@ import java.util.HashSet;
 public class RenameLocalTest extends LightRefactoringTestCase {
   private static final String BASE_PATH = "/refactoring/renameLocal/";
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

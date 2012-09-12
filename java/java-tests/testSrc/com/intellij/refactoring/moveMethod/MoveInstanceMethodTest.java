@@ -9,6 +9,7 @@ import com.intellij.refactoring.LightRefactoringTestCase;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandler;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodProcessor;
 import com.intellij.util.VisibilityUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -95,6 +96,7 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
 
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

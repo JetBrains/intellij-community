@@ -33,12 +33,14 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class SuggestedParamTypesTest extends LightCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/refactoring/suggestedTypes/";
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

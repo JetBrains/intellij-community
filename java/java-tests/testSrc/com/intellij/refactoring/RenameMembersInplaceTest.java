@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
@@ -29,6 +30,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
   private static final String BASE_PATH = "/refactoring/renameInplace/";
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

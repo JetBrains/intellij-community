@@ -32,6 +32,7 @@ import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -39,6 +40,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/refactoring/extractMethod/";
   private boolean myCatchOnNewLine = true;
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

@@ -10,6 +10,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -130,6 +131,7 @@ public class XmlSmartEnterTest extends LightCodeInsightTestCase {
     return "";
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/";

@@ -7,6 +7,7 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.util.HashMap;
@@ -17,6 +18,7 @@ import java.util.HashMap;
 public class RenameCollisionsTest extends LightRefactoringTestCase {
   private static final String BASE_PATH = "/refactoring/renameCollisions/";
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

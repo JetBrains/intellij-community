@@ -19,8 +19,10 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.application.PluginPathManager;
 import com.siyeh.ig.controlflow.UnnecessaryReturnInspection;
+import org.jetbrains.annotations.NotNull;
 
 public class CommonIGInspectionsTest extends LightDaemonAnalyzerTestCase {
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test";

@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -34,6 +35,7 @@ public class XmlPerformanceTest extends LightQuickFixTestCase {
     return "performance/";
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/";

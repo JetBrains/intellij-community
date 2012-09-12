@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,7 +42,7 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
   }
 
   @Override
-  protected void configureByFile(String filePath) {
+  protected void configureByFile(@NotNull String filePath) {
     super.configureByFile(filePath);
 
     complete();

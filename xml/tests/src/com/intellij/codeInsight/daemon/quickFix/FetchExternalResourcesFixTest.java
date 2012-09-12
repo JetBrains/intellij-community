@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.PlatformTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -36,6 +37,7 @@ public class FetchExternalResourcesFixTest extends LightQuickFixTestCase {
     }
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/";

@@ -10,6 +10,7 @@ import com.intellij.refactoring.LightRefactoringTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
@@ -17,6 +18,7 @@ import java.util.Iterator;
  * @author yole
  */
 public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

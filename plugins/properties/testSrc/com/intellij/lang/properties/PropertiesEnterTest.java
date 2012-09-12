@@ -23,6 +23,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
@@ -34,6 +35,7 @@ public class PropertiesEnterTest extends LightPlatformCodeInsightTestCase {
     PlatformTestCase.initPlatformLangPrefix();
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("properties") + "/testData";

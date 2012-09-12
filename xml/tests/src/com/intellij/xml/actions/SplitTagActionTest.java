@@ -2,6 +2,7 @@ package com.intellij.xml.actions;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author spleaner
@@ -20,6 +21,7 @@ public class SplitTagActionTest extends LightIntentionActionTestCase {
     return "";
   }
 
+  @NotNull
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/xml/tests/testData/intentions/splitTag";
   }

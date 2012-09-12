@@ -15,6 +15,7 @@ import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.containers.HashSet;
 import junit.framework.Assert;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -174,6 +175,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
     return result;
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
