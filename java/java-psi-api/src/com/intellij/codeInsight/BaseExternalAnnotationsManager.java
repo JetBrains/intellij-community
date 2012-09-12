@@ -200,26 +200,34 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     String externalName = getExternalName(listOwner, false);
     String oldExternalName = getNormalizedExternalName(listOwner);
 
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(myPsiManager.getProject()).getElementFactory();
     for (PsiFile file : files) {
       if (!file.isValid()) continue;
       if (onlyWritable && !file.isWritable()) continue;
 
-      MultiMap<String, AnnotationData> fileData = getDataFromFile(file);
-      for (AnnotationData annotationData : ContainerUtil.concat(fileData.get(externalName), fileData.get(oldExternalName))) {
-        // don't add annotation, if there already is one with this FQ name
-        if (result.containsKey(annotationData.annotationClassFqName)) continue;
-
-        try {
-          PsiElementFactory factory = JavaPsiFacade.getInstance(myPsiManager.getProject()).getElementFactory();
-          PsiAnnotation annotation = factory.createAnnotationFromText(annotationData.annotationText, null);
-          result.put(annotationData.annotationClassFqName, annotation);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
+      final MultiMap<String, AnnotationData> fileData = getDataFromFile(file);
+      
+      collectAnnotations(result, fileData.get(externalName), factory);
+      collectAnnotations(result, fileData.get(oldExternalName), factory);
     }
     return result;
+  }
+
+  private static void collectAnnotations(Map<String, PsiAnnotation> result,
+                                         Collection<AnnotationData> dataCollection,
+                                         PsiElementFactory factory) {
+    for (AnnotationData annotationData : dataCollection) {
+      // don't add annotation, if there already is one with this FQ name
+      if (result.containsKey(annotationData.annotationClassFqName)) continue;
+
+      try {
+        PsiAnnotation annotation = factory.createAnnotationFromText(annotationData.annotationText, null);
+        result.put(annotationData.annotationClassFqName, annotation);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }
   }
 
   @NotNull
