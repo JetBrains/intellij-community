@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,78 +17,77 @@ package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class AccessToStaticFieldLockedOnInstanceInspection
-  extends BaseInspection {
+import javax.swing.*;
 
+public class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspection {
+
+  @SuppressWarnings("PublicField") public OrderedSet<String> ignoredClasses = new OrderedSet();
+
+  @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "access.to.static.field.locked.on.instance.display.name");
+    return InspectionGadgetsBundle.message("access.to.static.field.locked.on.instance.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "access.to.static.field.locked.on.instance.problem.descriptor");
+    return InspectionGadgetsBundle.message("access.to.static.field.locked.on.instance.problem.descriptor");
   }
 
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return UiUtils.createTreeClassChooserList(ignoredClasses, "Ignored Classes", "Choose class to ignore");
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new AccessToStaticFieldLockedOnInstanceVisitor();
   }
 
-  private static class AccessToStaticFieldLockedOnInstanceVisitor
-    extends BaseInspectionVisitor {
+  private class AccessToStaticFieldLockedOnInstanceVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceExpression(
-      @NotNull PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       boolean isLockedOnInstance = false;
       boolean isLockedOnClass = false;
-      final PsiMethod containingMethod =
-        PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
-      if (containingMethod != null &&
-          containingMethod.hasModifierProperty(
-            PsiModifier.SYNCHRONIZED)) {
-        if (containingMethod.hasModifierProperty(
-          PsiModifier.STATIC)) {
+      final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+      if (containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+        if (containingMethod.hasModifierProperty(PsiModifier.STATIC)) {
           isLockedOnClass = true;
         }
         else {
           isLockedOnInstance = true;
         }
       }
-      final PsiClass expressionClass =
-        PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+      final PsiClass expressionClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
       if (expressionClass == null) {
         return;
       }
       PsiElement elementToCheck = expression;
       while (true) {
-        final PsiSynchronizedStatement synchronizedStatement =
-          PsiTreeUtil.getParentOfType(elementToCheck,
-                                      PsiSynchronizedStatement.class);
-        if (synchronizedStatement == null ||
-            !PsiTreeUtil.isAncestor(expressionClass,
-                                    synchronizedStatement, true)) {
+        final PsiSynchronizedStatement synchronizedStatement = PsiTreeUtil.getParentOfType(elementToCheck, PsiSynchronizedStatement.class);
+        if (synchronizedStatement == null || !PsiTreeUtil.isAncestor(expressionClass, synchronizedStatement, true)) {
           break;
         }
-        final PsiExpression lockExpression =
-          synchronizedStatement.getLockExpression();
+        final PsiExpression lockExpression = synchronizedStatement.getLockExpression();
         if (lockExpression instanceof PsiReferenceExpression) {
-          final PsiReferenceExpression reference =
-            (PsiReferenceExpression)lockExpression;
-          final PsiElement referent = reference.resolve();
-          if (referent instanceof PsiField) {
-            final PsiField referentField = (PsiField)referent;
-            if (referentField.hasModifierProperty(
-              PsiModifier.STATIC)) {
+          final PsiReferenceExpression reference = (PsiReferenceExpression)lockExpression;
+          final PsiElement target = reference.resolve();
+          if (target instanceof PsiField) {
+            final PsiField lockField = (PsiField)target;
+            if (lockField.hasModifierProperty(PsiModifier.STATIC)) {
               isLockedOnClass = true;
             }
             else {
@@ -99,8 +98,7 @@ public class AccessToStaticFieldLockedOnInstanceInspection
         else if (lockExpression instanceof PsiThisExpression) {
           isLockedOnInstance = true;
         }
-        else if (lockExpression instanceof
-          PsiClassObjectAccessExpression) {
+        else if (lockExpression instanceof PsiClassObjectAccessExpression) {
           isLockedOnClass = true;
         }
         elementToCheck = synchronizedStatement;
@@ -108,18 +106,27 @@ public class AccessToStaticFieldLockedOnInstanceInspection
       if (!isLockedOnInstance || isLockedOnClass) {
         return;
       }
-      final PsiElement referent = expression.resolve();
-      if (!(referent instanceof PsiField)) {
+      final PsiElement target = expression.resolve();
+      if (!(target instanceof PsiField)) {
         return;
       }
-      final PsiField referredField = (PsiField)referent;
-      if (!referredField.hasModifierProperty(PsiModifier.STATIC) ||
-          ExpressionUtils.isConstant(referredField)) {
+      final PsiField lockedField = (PsiField)target;
+      if (!lockedField.hasModifierProperty(PsiModifier.STATIC) || ExpressionUtils.isConstant(lockedField)) {
         return;
       }
-      final PsiClass containingClass = referredField.getContainingClass();
+      final PsiClass containingClass = lockedField.getContainingClass();
       if (!PsiTreeUtil.isAncestor(containingClass, expression, false)) {
         return;
+      }
+      if (!ignoredClasses.isEmpty()) {
+        final PsiType type = lockedField.getType();
+        if (type instanceof PsiClassType) {
+          final PsiClassType classType = (PsiClassType)type;
+          final PsiClass aClass = classType.resolve();
+          if (aClass != null && ignoredClasses.contains(aClass.getQualifiedName())) {
+            return;
+          }
+        }
       }
       registerError(expression);
     }
