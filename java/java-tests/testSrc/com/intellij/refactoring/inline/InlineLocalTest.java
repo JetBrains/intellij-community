@@ -161,6 +161,10 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   public void testLocalVarInsideLambdaBody1() throws Exception {
     doTest(true);
   }
+  
+  public void testLocalVarInsideLambdaBody2() throws Exception {
+    doTest(true);
+  }
 
   public void testLocalVarInsideLambdaBodyWriteUsage() throws Exception {
     doTest(true, "Cannot perform refactoring.\n" +
