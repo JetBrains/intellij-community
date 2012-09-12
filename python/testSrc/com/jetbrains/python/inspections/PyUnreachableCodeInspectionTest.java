@@ -9,19 +9,29 @@ import com.jetbrains.python.psi.LanguageLevel;
 public class PyUnreachableCodeInspectionTest extends PyTestCase {
   private static final String TEST_DIRECTORY = "inspections/PyUnreachableCodeInspection/";
 
-  // All previous unreachable tests
+  // All previous unreachable tests, feel free to split them
   public void testUnreachable() {
-    doTest();
+    runWithLanguageLevel(LanguageLevel.PYTHON26, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
+      }
+    });
+  }
+
+  // PY-7420
+  public void testWithSuppressedExceptions() {
+    runWithLanguageLevel(LanguageLevel.PYTHON26, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
+      }
+    });
   }
 
   private void doTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
-      @Override
-      public void run() {
-        myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
-        myFixture.enableInspections(PyUnreachableCodeInspection.class);
-        myFixture.checkHighlighting(true, false, false);
-      }
-    });
+    myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
+    myFixture.enableInspections(PyUnreachableCodeInspection.class);
+    myFixture.checkHighlighting(true, false, false);
   }
 }
