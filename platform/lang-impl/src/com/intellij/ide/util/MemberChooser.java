@@ -180,7 +180,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     final FactoryMap<MemberChooserObject,ParentNode> map = new FactoryMap<MemberChooserObject,ParentNode>() {
       protected ParentNode create(final MemberChooserObject key) {
         ParentNode node = null;
-        if (key instanceof PsiElementMemberChooserObject) {
+        if (isContainerNode(key)) {
             final ContainerNode containerNode = new ContainerNode(rootNode, key, count);
             node = containerNode;
             myContainerNodes.add(containerNode);
@@ -199,6 +199,10 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       myElementToNodeMap.put(object, elementNode);
     }
     return new DefaultTreeModel(rootNode);
+  }
+
+  protected boolean isContainerNode(MemberChooserObject key) {
+    return key instanceof PsiElementMemberChooserObject;
   }
 
   public void selectElements(ClassMember[] elements) {
