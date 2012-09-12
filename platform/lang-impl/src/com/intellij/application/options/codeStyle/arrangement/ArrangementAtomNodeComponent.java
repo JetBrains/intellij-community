@@ -21,7 +21,6 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchConditio
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RoundedLineBorder;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +43,7 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
   public static final int HORIZONTAL_PADDING = 8;
 
   @NotNull private final ArrangementColorsService myColorsService = ServiceManager.getService(ArrangementColorsService.class);
-  
+
   @NotNull private final JPanel myRenderer = new JPanel(new GridBagLayout()) {
     @Override
     public void paint(Graphics g) {
@@ -79,12 +78,12 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
   };
   @NotNull private final RoundedLineBorder myBorder;
 
-  @NotNull private final  ArrangementAtomMatchCondition           myCondition;
-  @Nullable private final ActionButton                            myCloseButton;
-  @Nullable private final Consumer<ArrangementAtomMatchCondition> myCloseCallback;
+  @NotNull private final  ArrangementAtomMatchCondition myCondition;
+  @Nullable private final ActionButton                  myCloseButton;
+  @Nullable private final Runnable                      myCloseCallback;
 
   @NotNull private Color myBackgroundColor;
-  
+
   @Nullable private Dimension myLabelSize;
   @Nullable private Rectangle myScreenBounds;
   
@@ -94,7 +93,7 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
 
   public ArrangementAtomNodeComponent(@NotNull ArrangementNodeDisplayManager manager,
                                       @NotNull ArrangementAtomMatchCondition condition,
-                                      @Nullable Consumer<ArrangementAtomMatchCondition> closeCallback)
+                                      @Nullable Runnable closeCallback)
   {
     myCondition = condition;
     myCloseCallback = closeCallback;
@@ -235,7 +234,7 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
   public void handleMouseClick(@NotNull MouseEvent event) {
     Rectangle buttonBounds = getCloseButtonScreenLocation();
     if (buttonBounds != null && buttonBounds.contains(event.getLocationOnScreen()) && myCloseCallback != null) {
-      myCloseCallback.consume(myCondition);
+      myCloseCallback.run();
     }
   }
 

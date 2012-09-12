@@ -148,9 +148,9 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
         }
         else {
           myYToRestore = -1;
-          ArrangementRuleEditingModelImpl model = myRuleTree.getActiveModel();
-          if (model != null) {
-            Rectangle bounds = treeComponent.getPathBounds(new TreePath(model.getBottomMost().getPath()));
+          List<ArrangementRuleEditingModelImpl> models = myRuleTree.getActiveModels();
+          if (models.size() == 1) {
+            Rectangle bounds = treeComponent.getPathBounds(new TreePath(models.get(0).getBottomMost().getPath()));
             if (bounds != null) {
               myYToRestore = bounds.y;
               Rectangle viewRect = viewport.getViewRect();
@@ -190,21 +190,22 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
       }
     });
     myRuleTree.addEditingListener(new ArrangementRuleSelectionListener() {
-      @Override
-      public void onSelected(@NotNull ArrangementRuleEditingModel model) {
-        ruleEditor.updateState(model);
-        resetEditor.set(Boolean.FALSE);
-        try {
-          editorPane.setCollapsed(false);
-        }
-        finally {
-          resetEditor.set(Boolean.TRUE);
-        }
-      }
 
       @Override
-      public void selectionRemoved() {
-        editorPane.setCollapsed(true);
+      public void onSelectionChange(@NotNull List<? extends ArrangementRuleEditingModel> selectedModels) {
+        if (selectedModels.size() != 1) {
+          editorPane.setCollapsed(true);
+        }
+        else {
+          ruleEditor.updateState(selectedModels.get(0));
+          resetEditor.set(Boolean.FALSE);
+          try {
+            editorPane.setCollapsed(false);
+          }
+          finally {
+            resetEditor.set(Boolean.TRUE);
+          }
+        }
       }
     });
   }
@@ -233,8 +234,8 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
       @Override
       public void run() {
         treeComponent.requestFocus();
-        ArrangementRuleEditingModelImpl model = myRuleTree.getActiveModel();
-        if (model != null) {
+        List<ArrangementRuleEditingModelImpl> models = myRuleTree.getActiveModels();
+        for (ArrangementRuleEditingModelImpl model : models) {
           model.destroy();
         }
       }
