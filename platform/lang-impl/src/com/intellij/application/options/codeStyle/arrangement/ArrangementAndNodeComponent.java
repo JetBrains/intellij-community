@@ -46,12 +46,13 @@ public class ArrangementAndNodeComponent extends JPanel implements ArrangementNo
 
   @NotNull private final List<ArrangementNodeComponent> myComponents = new ArrayList<ArrangementNodeComponent>();
 
-  @NotNull private final ArrangementCompositeMatchCondition mySetting;
-  @Nullable private      Rectangle                          myScreenBounds;
+  @NotNull private final  ArrangementCompositeMatchCondition mySetting;
+  @Nullable private       Rectangle                          myScreenBounds;
 
   public ArrangementAndNodeComponent(@NotNull ArrangementCompositeMatchCondition setting,
                                      @NotNull ArrangementNodeComponentFactory factory,
-                                     @NotNull ArrangementNodeDisplayManager manager)
+                                     @NotNull ArrangementNodeDisplayManager manager,
+                                     @Nullable ArrangementRuleEditingModel model)
   {
     mySetting = setting;
     setLayout(null);
@@ -76,7 +77,7 @@ public class ArrangementAndNodeComponent extends JPanel implements ArrangementNo
     for (Object key : ordered) {
       ArrangementMatchCondition operand = operands.get(key);
       assert operand != null;
-      ArrangementNodeComponent component = factory.getComponent(operand);
+      ArrangementNodeComponent component = factory.getComponent(operand, model);
       myComponents.add(component);
       JComponent uiComponent = component.getUiComponent();
       Dimension size = uiComponent.getPreferredSize();

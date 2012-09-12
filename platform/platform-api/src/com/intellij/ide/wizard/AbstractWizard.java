@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +49,6 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   protected final ArrayList<T> mySteps;
   private JButton myPreviousButton;
   private JButton myNextButton;
-  private JButton myFinishButton;
   private JButton myCancelButton;
   private JButton myHelpButton;
   private JPanel myContentPanel;
@@ -80,7 +78,6 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     myCurrentStep = 0;
     myPreviousButton = new JButton(IdeBundle.message("button.wizard.previous"));
     myNextButton = new JButton(IdeBundle.message("button.wizard.next"));
-    myFinishButton = new JButton(IdeBundle.message("button.finish"));
     myCancelButton = new JButton(CommonBundle.getCancelButtonText());
     myHelpButton = new JButton(CommonBundle.getHelpButtonText());
     myContentPanel = new JPanel(new CardLayout());
@@ -133,13 +130,12 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       leftPanel.add(myCancelButton);
       panel.add(leftPanel, BorderLayout.WEST);
 
-      buttonPanel.add(myFinishButton);
       if (mySteps.size() > 1) {
         buttonPanel.add(Box.createHorizontalStrut(5));
         buttonPanel.add(myPreviousButton);
-        buttonPanel.add(Box.createHorizontalStrut(5));
-        buttonPanel.add(myNextButton);
       }
+      buttonPanel.add(Box.createHorizontalStrut(5));
+      buttonPanel.add(myNextButton);
     }
     else {
       panel.add(buttonPanel, BorderLayout.CENTER);
@@ -157,9 +153,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       }
       add(hGroup, vGroup, null, Box.createHorizontalGlue());
       if (mySteps.size() > 1) {
-        add(hGroup, vGroup, buttons, myPreviousButton, myNextButton);
+        add(hGroup, vGroup, buttons, myPreviousButton);
       }
-      add(hGroup, vGroup, buttons, myFinishButton, myCancelButton);
+      add(hGroup, vGroup, buttons, myNextButton, myCancelButton);
       if (helpAvailable && !UIUtil.isUnderGTKLookAndFeel()) {
         add(hGroup, vGroup, buttons, myHelpButton);
       }
@@ -177,12 +173,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     });
     myNextButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        doNextAction();
-      }
-    });
-    myFinishButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
+        if (isLastStep()) {
           // Commit data of current step and perform OK action
           final Step currentStep = mySteps.get(myCurrentStep);
           LOG.assertTrue(currentStep != null);
@@ -197,8 +188,12 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
             }
           }
         }
+        else {
+          doNextAction();
+        }
       }
-    );
+    });
+
     myCancelButton.addActionListener(
       new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
@@ -301,13 +296,6 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     final Component component = step.getComponent();
     if (component != null) {
       addStepComponent(component);
-    }
-
-    if (mySteps.size() > 1) {
-      myFinishButton.setText(IdeBundle.message("button.finish"));
-    }
-    else {
-      myFinishButton.setText(IdeBundle.message("button.ok"));
     }
   }
 
@@ -433,18 +421,48 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     myIcon.setIcon(step.getIcon());
 
-    if (SystemInfo.isMac && isLastStep()) {
-      myFinishButton.setVisible(false);
-      myNextButton.setText(UIUtil.removeMnemonic(IdeBundle.message("button.finish")));
-      myNextButton.setVisible(true);
-      myNextButton.setEnabled(myFinishButton.isEnabled());
-      myNextButton.setMnemonic('F');
+    updateButtons();
+
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (!isShowing()) return;
+
+        JComponent component = mySteps.get(getCurrentStep()).getPreferredFocusedComponent();
+        if (component != null) {
+          component.requestFocus();
+        }
+      }
+    });
+  }
+
+  protected boolean canGoNext() {
+    return true;
+  }
+
+  protected boolean canFinish() {
+    return isLastStep() && canGoNext();
+  }
+
+  protected void updateButtons() {
+    if (isLastStep()) {
+      if (mySteps.size() > 1) {
+        myNextButton.setText(UIUtil.removeMnemonic(IdeBundle.message("button.finish")));
+        myNextButton.setMnemonic('F');
+      }
+      else {
+        myNextButton.setText(IdeBundle.message("button.ok"));
+      }
+      myNextButton.setEnabled(canFinish());
     }
     else {
       myNextButton.setText(UIUtil.removeMnemonic(IdeBundle.message("button.wizard.next")));
-      myFinishButton.setVisible(true);
-      myNextButton.setEnabled(mySteps.size() == 1 || !isLastStep());
       myNextButton.setMnemonic('N');
+      myNextButton.setEnabled(canGoNext());
+    }
+
+    if (myNextButton.isEnabled()) {
+      getRootPane().setDefaultButton(myNextButton);
     }
 
     myPreviousButton.setEnabled(myCurrentStep > 0);
@@ -462,8 +480,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return myPreviousButton;
   }
 
+  @Deprecated
   protected JButton getFinishButton() {
-    return myFinishButton;
+    return new JButton();
   }
 
   public Component getCurrentStepComponent() {

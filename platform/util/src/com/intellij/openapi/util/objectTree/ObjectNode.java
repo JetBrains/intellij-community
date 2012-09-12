@@ -41,7 +41,6 @@ public final class ObjectNode<T> {
   private final Throwable myTrace;
 
   private final long myOwnModification;
-  private long myChildModification;
 
   public ObjectNode(@NotNull ObjectTree<T> tree, ObjectNode<T> parentNode, @NotNull T object, long modification) {
     myTree = tree;
@@ -52,6 +51,7 @@ public final class ObjectNode<T> {
     myOwnModification = modification;
   }
 
+  @SuppressWarnings("unchecked")
   @NotNull
   private ObjectNode<T>[] getChildrenArray() {
     synchronized (myTree.treeLock) {
@@ -60,34 +60,27 @@ public final class ObjectNode<T> {
     }
   }
 
-  public void addChild(@NotNull ObjectNode<T> child) {
+  void addChild(@NotNull ObjectNode<T> child) {
     synchronized (myTree.treeLock) {
-      ensureChildArray();
-      child.setParent(this);
+      if (myChildren == null) {
+        myChildren = new LinkedHashSet<ObjectNode<T>>(1);
+      }
       myChildren.add(child);
-      myTree.putNode(child.getObject(), child);
-
-      propagateChildModification(child.getModification());
+      child.myParent = this;
     }
   }
 
-  public void removeChild(@NotNull ObjectNode<T> child) {
+  void removeChild(@NotNull ObjectNode<T> child) {
     synchronized (myTree.treeLock) {
       assert myChildren != null: "No children to remove child: " + this + ' ' + child;
-      if (myChildren.remove(child)) {
-        child.setParent(null);
-        myTree.putNode(child.getObject(), null);
-        propagateChildModification(myTree.getNextModification());
-      }
+      myChildren.remove(child);
     }
-  }
-
-  private void setParent(ObjectNode<T> parent) {
-    myParent = parent;
   }
 
   public ObjectNode<T> getParent() {
-    return myParent;
+    synchronized (myTree.treeLock) {
+      return myParent;
+    }
   }
 
   @NotNull
@@ -98,13 +91,7 @@ public final class ObjectNode<T> {
     }
   }
 
-  private void ensureChildArray() {
-    if (myChildren == null) {
-      myChildren = new LinkedHashSet<ObjectNode<T>>(1);
-    }
-  }
-  
-  boolean execute(final boolean disposeTree, @NotNull final ObjectTreeAction<T> action) {
+  void execute(final boolean disposeTree, @NotNull final ObjectTreeAction<T> action) {
     ObjectTree.executeActionWithRecursiveGuard(this, myTree.getNodesInExecution(), new ObjectTreeAction<ObjectNode<T>>() {
       @Override
       public void execute(@NotNull ObjectNode<T> each) {
@@ -135,15 +122,7 @@ public final class ObjectNode<T> {
         }
 
         if (disposeTree) {
-          myTree.putNode(myObject, null);
-          synchronized (myTree.treeLock) {
-            if (myParent != null) {
-              myParent.removeChild(ObjectNode.this);
-            }
-            else {
-              myTree.removeRootObject(myObject);
-            }
-          }
+          remove();
         }
       }
 
@@ -152,8 +131,18 @@ public final class ObjectNode<T> {
 
       }
     });
+  }
 
-    return true;
+  private void remove() {
+    myTree.putNode(myObject, null);
+    synchronized (myTree.treeLock) {
+      if (myParent == null) {
+        myTree.removeRootObject(myObject);
+      }
+      else {
+        myParent.removeChild(this);
+      }
+    }
   }
 
   @NotNull
@@ -173,48 +162,39 @@ public final class ObjectNode<T> {
   @TestOnly
   void assertNoReferencesKept(@NotNull T aDisposable) {
     assert getObject() != aDisposable;
-    if (myChildren != null) {
-      for (ObjectNode<T> node: myChildren) {
-        node.assertNoReferencesKept(aDisposable);
-      }
-    }
-  }
-
-  public Throwable getAllocation() {
-    return myTrace;
-  }
-
-  public long getOwnModification() {
-    return myOwnModification;
-  }
-
-  public long getChildModification() {
-    return myChildModification;
-  }
-
-  private void propagateChildModification(long stamp) {
-    if (myChildModification < stamp) {
-      myChildModification = stamp;
-      if (getParent() != null) {
-        getParent().propagateChildModification(stamp);
-      }
-    }
-  }
-
-  public long getModification() {
-    return Math.max(getOwnModification(), getChildModification());
-  }
-
-  public <D extends Disposable> D findChildEqualTo(@NotNull D object) {
-    LinkedHashSet<ObjectNode<T>> children = myChildren;
-    if (children != null) {
-      for (ObjectNode<T> node : children) {
-        T nodeObject = node.getObject();
-        if (nodeObject.equals(object)) {
-          return (D)nodeObject;
+    synchronized (myTree.treeLock) {
+      if (myChildren != null) {
+        for (ObjectNode<T> node: myChildren) {
+          node.assertNoReferencesKept(aDisposable);
         }
       }
     }
-    return null;
+  }
+
+  Throwable getAllocation() {
+    return myTrace;
+  }
+
+  long getOwnModification() {
+    return myOwnModification;
+  }
+
+  long getModification() {
+    return getOwnModification();
+  }
+
+  <D extends Disposable> D findChildEqualTo(@NotNull D object) {
+    synchronized (myTree.treeLock) {
+      LinkedHashSet<ObjectNode<T>> children = myChildren;
+      if (children != null) {
+        for (ObjectNode<T> node : children) {
+          T nodeObject = node.getObject();
+          if (nodeObject.equals(object)) {
+            return (D)nodeObject;
+          }
+        }
+      }
+      return null;
+    }
   }
 }

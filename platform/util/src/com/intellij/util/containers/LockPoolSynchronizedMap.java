@@ -20,21 +20,30 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.concurrency.JBLock;
-import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements ConcurrentMap<K, V> {
-  private final JBLock r;
-  private final JBLock w;
+  private final Lock r;
+  private final Lock w;
+
+  private static final StripedLockHolder<ReentrantReadWriteLock> LOCKS = new StripedLockHolder<ReentrantReadWriteLock>(ReentrantReadWriteLock.class) {
+    @NotNull
+    @Override
+    protected ReentrantReadWriteLock create() {
+      return new ReentrantReadWriteLock();
+    }
+  };
 
   {
-    final JBReentrantReadWriteLock mutex = StripedJBReentrantReadWriteLocks.getInstance().allocateLock();
+    final ReentrantReadWriteLock mutex = LOCKS.allocateLock();
     r = mutex.readLock();
     w = mutex.writeLock();
   }
@@ -49,6 +58,7 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     super(initialCapacity, loadFactor);
   }
 
+  @Override
   public int size() {
     r.lock();
     try {
@@ -59,6 +69,7 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     }
   }
 
+  @Override
   public boolean isEmpty() {
     r.lock();
     try {
@@ -69,6 +80,7 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     }
   }
 
+  @Override
   public boolean containsKey(Object key) {
     r.lock();
     try {
@@ -79,6 +91,7 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     }
   }
 
+  @Override
   public boolean containsValue(Object value) {
     r.lock();
     try {
@@ -89,6 +102,7 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     }
   }
 
+  @Override
   public V get(Object key) {
     r.lock();
     try {
@@ -99,6 +113,7 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     }
   }
 
+  @Override
   public V put(K key, V value) {
     w.lock();
     try {
@@ -109,6 +124,7 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     }
   }
 
+  @Override
   public V remove(Object key) {
     w.lock();
     try {
@@ -119,6 +135,7 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     }
   }
 
+  @Override
   public void putAll(Map<? extends K, ? extends V> map) {
     w.lock();
     try {
@@ -129,6 +146,7 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     }
   }
 
+  @Override
   public void clear() {
     w.lock();
     try {
@@ -139,6 +157,7 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     }
   }
 
+  @Override
   public LockPoolSynchronizedMap<K, V> clone() {
     r.lock();
     try {
@@ -149,6 +168,7 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     }
   }
 
+  @Override
   public Set<K> keySet() {
     r.lock();
     try {
@@ -159,6 +179,7 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     }
   }
 
+  @Override
   public Set<Map.Entry<K, V>> entrySet() {
     r.lock();
     try {
@@ -169,6 +190,7 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     }
   }
 
+  @Override
   public Collection<V> values() {
     r.lock();
     try {
@@ -179,7 +201,8 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     }
   }
 
-  public boolean replace(K key, V oldValue, V newValue) {
+  @Override
+  public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
     w.lock();
     try {
       V prev = get(key);
@@ -187,12 +210,7 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
         return false;
       }
 
-      if (newValue == null) {
-        remove(key);
-      }
-      else {
-        put(key, newValue);
-      }
+      put(key, newValue);
       return true;
     }
     finally {
@@ -200,17 +218,13 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     }
   }
 
-  public V replace(K key, V newValue) {
+  @Override
+  public V replace(@NotNull K key, @NotNull V newValue) {
     w.lock();
     try {
       V prev = get(key);
 
-      if (newValue == null) {
-        remove(key);
-      }
-      else {
-        put(key, newValue);
-      }
+      put(key, newValue);
       return prev;
     }
     finally {
@@ -218,7 +232,8 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     }
   }
 
-  public V putIfAbsent(K key, V value) {
+  @Override
+  public V putIfAbsent(@NotNull K key, V value) {
     w.lock();
     try {
       V prev = get(key);
@@ -235,7 +250,8 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     }
   }
 
-  public boolean remove(Object key, Object oldValue) {
+  @Override
+  public boolean remove(@NotNull Object key, Object oldValue) {
     w.lock();
     try {
       V currentValue = get(key);

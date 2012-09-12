@@ -29,6 +29,7 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.TObjectHashingStrategy;
@@ -36,11 +37,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ResolveCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.ResolveCache");
-  private final Map[] myMaps = new Map[2*2*2]; //boolean physical, boolean incompleteCode, boolean isPoly
+  private final ConcurrentMap[] myMaps = new ConcurrentMap[2*2*2]; //boolean physical, boolean incompleteCode, boolean isPoly
   private final AtomicInteger myClearCount = new AtomicInteger(0);
   private final RecursionGuard myGuard = RecursionManager.createGuard("resolveCache");
 
@@ -99,7 +101,7 @@ public class ResolveCache {
 
     int clearCountOnStart = myClearCount.intValue();
     boolean physical = ref.getElement().isPhysical();
-    Map<TRef, Getter<TResult>> map = getMap(physical, incompleteCode, isPoly);
+    ConcurrentMap<TRef, Getter<TResult>> map = getMap(physical, incompleteCode, isPoly);
     Getter<TResult> reference = map.get(ref);
     TResult result = reference == null ? null : reference.get();
     if (result != null) {
@@ -154,7 +156,7 @@ public class ResolveCache {
     return resolve(ref, resolver, needToPreventRecursion, incompleteCode, false);
   }
 
-  private <TRef extends PsiReference,TResult> Map<TRef, Getter<TResult>> getMap(boolean physical, boolean incompleteCode, boolean isPoly) {
+  private <TRef extends PsiReference,TResult> ConcurrentMap<TRef, Getter<TResult>> getMap(boolean physical, boolean incompleteCode, boolean isPoly) {
     //noinspection unchecked
     return myMaps[(physical ? 0 : 1)*4 + (incompleteCode ? 0 : 1)*2 + (isPoly ? 0 : 1)];
   }
@@ -167,7 +169,7 @@ public class ResolveCache {
   private static final Getter<ResolveResult[]> EMPTY_POLY_RESULT = new StaticGetter<ResolveResult[]>(ResolveResult.EMPTY_ARRAY);
   private static final Getter<Object> NULL_RESULT = new StaticGetter<Object>(null);
   private static <TRef extends PsiReference, TResult> void cache(@NotNull TRef ref,
-                                                                 @NotNull Map<TRef, Getter<TResult>> map,
+                                                                 @NotNull ConcurrentMap<TRef, Getter<TResult>> map,
                                                                  TResult result,
                                                                  boolean isPoly) {
     // optimization: less contention
@@ -175,20 +177,19 @@ public class ResolveCache {
     if (cached != null && cached.get() == result) {
       return;
     }
-    Getter<TResult> reference;
     if (result == null) {
       // no use in creating SoftReference to null
       //noinspection unchecked
-      reference = (Getter<TResult>)NULL_RESULT;
+      cached = (Getter<TResult>)NULL_RESULT;
     }
     else if (isPoly && ((Object[])result).length == 0 && result.getClass() == ResolveResult[].class) {
       // no use in creating SoftReference to empty array
       //noinspection unchecked
-      reference = (Getter<TResult>)EMPTY_POLY_RESULT;
+      cached = (Getter<TResult>)EMPTY_POLY_RESULT;
     }
     else {
-      reference = new SoftGetter<TResult>(result);
+      cached = new SoftGetter<TResult>(result);
     }
-    map.put(ref, reference);
+    ConcurrencyUtil.cacheOrGet(map, ref, cached);
   }
 }

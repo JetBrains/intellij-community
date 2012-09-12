@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -71,7 +70,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
             for (String jarPath : jarPaths) {
               final String jarFile = jarPath.substring(0, jarPath.length() - JAR_SEPARATOR.length());
-              if (FileUtil.startsWith(jarFile, path, SystemInfo.isFileSystemCaseSensitive)) {
+              if (FileUtil.startsWith(jarFile, path)) {
                 VirtualFile jarRootToRefresh = markDirty(jarPath);
                 if (jarRootToRefresh != null) {
                   rootsToRefresh.add(jarRootToRefresh);

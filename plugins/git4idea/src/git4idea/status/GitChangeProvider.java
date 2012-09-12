@@ -71,42 +71,7 @@ public class GitChangeProvider implements ChangeProvider {
       return;
     }
 
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    final Set<VirtualFile> rootsUnderGit = new HashSet<VirtualFile>(Arrays.asList(myVcsManager.getRootsUnderVcs(vcs)));
-    final Set<VirtualFile> inputColl = new HashSet<VirtualFile>(rootsUnderGit);
-    final Set<VirtualFile> existingInScope = new HashSet<VirtualFile>();
-    for (FilePath dir : dirtyScope.getRecursivelyDirtyDirectories()) {
-      VirtualFile vf = dir.getVirtualFile();
-      if (vf == null) {
-        vf = lfs.findFileByIoFile(dir.getIOFile());
-      }
-      if (vf == null) {
-        vf = lfs.refreshAndFindFileByIoFile(dir.getIOFile());
-      }
-      if (vf != null) {
-        existingInScope.add(vf);
-      }
-      // we don't expect any vcs roots to be under deleted directories
-      /* else {
-        PROFILE_LOG.error("Can not find virtual file for recursively dirty dir: " + dir.getIOFile().getPath());
-      }*/
-    }
-    inputColl.addAll(existingInScope);
-    FileUtil.removeAncestors(inputColl, new Convertor<VirtualFile, String>() {
-      @Override
-      public String convert(VirtualFile o) {
-        return o.getPath();
-      }
-    }, new PairProcessor<VirtualFile, VirtualFile>() {
-                               @Override
-                               public boolean process(VirtualFile parent, VirtualFile child) {
-                                 if (! existingInScope.contains(child)) {
-                                   debug("adding git root for check: " + child.getPath());
-                                   ((VcsModifiableDirtyScope) dirtyScope).addDirtyDirRecursively(new FilePathImpl(child));
-                                 }
-                                 return true;
-                               }
-                             });
+    appendNestedVcsRootsToDirt(dirtyScope, vcs, myVcsManager);
 
     final Collection<VirtualFile> affected = dirtyScope.getAffectedContentRoots();
     Collection<VirtualFile> roots = GitUtil.gitRootsForPaths(affected);
@@ -139,6 +104,47 @@ public class GitChangeProvider implements ChangeProvider {
       // most probably the error happened because git is not configured
       vcs.getExecutableValidator().showNotificationOrThrow(e);
     }
+  }
+
+  public static void appendNestedVcsRootsToDirt(final VcsDirtyScope dirtyScope, GitVcs vcs, final ProjectLevelVcsManager vcsManager) {
+    final Set<FilePath> recursivelyDirtyDirectories = dirtyScope.getRecursivelyDirtyDirectories();
+    if (recursivelyDirtyDirectories.isEmpty()) {
+      return;
+    }
+
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    final Set<VirtualFile> rootsUnderGit = new HashSet<VirtualFile>(Arrays.asList(vcsManager.getRootsUnderVcs(vcs)));
+    final Set<VirtualFile> inputColl = new HashSet<VirtualFile>(rootsUnderGit);
+    final Set<VirtualFile> existingInScope = new HashSet<VirtualFile>();
+    for (FilePath dir : recursivelyDirtyDirectories) {
+      VirtualFile vf = dir.getVirtualFile();
+      if (vf == null) {
+        vf = lfs.findFileByIoFile(dir.getIOFile());
+      }
+      if (vf == null) {
+        vf = lfs.refreshAndFindFileByIoFile(dir.getIOFile());
+      }
+      if (vf != null) {
+        existingInScope.add(vf);
+      }
+    }
+    inputColl.addAll(existingInScope);
+    FileUtil.removeAncestors(inputColl, new Convertor<VirtualFile, String>() {
+                               @Override
+                               public String convert(VirtualFile o) {
+                                 return o.getPath();
+                               }
+                             }, new PairProcessor<VirtualFile, VirtualFile>() {
+                               @Override
+                               public boolean process(VirtualFile parent, VirtualFile child) {
+                                 if (! existingInScope.contains(child) && existingInScope.contains(parent)) {
+                                   debug("adding git root for check: " + child.getPath());
+                                   ((VcsModifiableDirtyScope)dirtyScope).addDirtyDirRecursively(new FilePathImpl(child));
+                                 }
+                                 return true;
+                               }
+                             }
+    );
   }
 
   private boolean isNewGitChangeProviderAvailable() {

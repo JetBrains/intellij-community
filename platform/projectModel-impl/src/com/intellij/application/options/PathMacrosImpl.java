@@ -28,8 +28,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.JBReentrantReadWriteLock;
-import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
@@ -38,6 +36,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author dsl
@@ -46,7 +45,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.PathMacrosImpl");
   private final Map<String, String> myLegacyMacros = new HashMap<String, String>();
   private final Map<String, String> myMacros = new HashMap<String, String>();
-  private final JBReentrantReadWriteLock myLock = LockFactory.createReadWriteLock();
+  private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   private final List<String> myIgnoredMacros = ContainerUtil.createEmptyCOWList();
 
   @NonNls

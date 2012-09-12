@@ -17,13 +17,13 @@ package com.intellij.application.options.codeStyle.arrangement;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author Denis Zhdanov
  * @since 8/15/12 9:14 AM
  */
 public interface ArrangementRuleSelectionListener {
 
-  void onSelected(@NotNull ArrangementRuleEditingModel settings);
-  
-  void selectionRemoved();
+  void onSelectionChange(@NotNull List<? extends ArrangementRuleEditingModel> selectedModels);
 }

@@ -1,7 +1,7 @@
-package org.jetbrains.plugins.groovy.refactoring.rename;
-
+package org.jetbrains.plugins.groovy.refactoring.rename
 
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
@@ -17,8 +17,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.refactoring.rename.inplace.GrVariableInplaceRenameHandler
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.psi.*
-
 /**
  * @author ven
  */
@@ -590,6 +588,22 @@ import groovy.transform.TupleConstructor
 @TupleConstructor
 class Y<caret>y {}
 """)
+    }
+  }
+
+  void testConstructor() {
+    myFixture.with {
+      configureByText('a.groovy', '''\
+class Foo {
+  def Fo<caret>o() {}
+}
+''')
+      renameElementAtCaret('Bar')
+      checkResult('''\
+class Bar {
+  def Ba<caret>r() {}
+}
+''')
     }
   }
 }

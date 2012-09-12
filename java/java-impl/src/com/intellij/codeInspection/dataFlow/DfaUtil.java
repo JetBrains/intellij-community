@@ -253,12 +253,12 @@ public class DfaUtil {
           ValuableDataFlowRunner.ValuableDfaVariableState state = (ValuableDataFlowRunner.ValuableDfaVariableState)entry.getValue();
           DfaVariableValue variableValue = entry.getKey();
           final PsiExpression psiExpression = state.myExpression;
-          if (psiExpression != null) {
+          if (psiExpression != null && variableValue.getQualifier() == null) {
             myValues.put(variableValue.getPsiVariable(), psiExpression);
           }
         }
         DfaValue value = instruction.getValue();
-        if (value instanceof DfaVariableValue) {
+        if (value instanceof DfaVariableValue && ((DfaVariableValue)value).getQualifier() == null) {
           if (memState.isNotNull((DfaVariableValue)value)) {
             myNotNulls.add(((DfaVariableValue)value).getPsiVariable());
           }

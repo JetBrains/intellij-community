@@ -1419,4 +1419,19 @@ class X {
     testHighlighting('''\
 def (a, b) = [a, a]''')
   }
+
+  public void testSwitchInLoopNoSoe() {
+    testHighlighting('''
+def foo(File f) {
+  while (true) {
+    switch (f.name) {
+      case 'foo': f = new File('bar')
+    }
+    if (f) {
+      return
+    }
+  }
+}''')
+
+  }
 }

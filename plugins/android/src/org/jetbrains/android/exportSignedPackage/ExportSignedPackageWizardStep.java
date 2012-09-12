@@ -48,9 +48,4 @@ public abstract class ExportSignedPackageWizardStep extends StepAdapter {
   public Icon getIcon() {
     return null;
   }
-
-  @Nullable
-  protected JComponent getPreferredFocusedComponent() {
-    return null;
-  }
 }

@@ -64,6 +64,15 @@ public class StubGenerator implements ClassItemGenerator {
     PsiModifier.NATIVE,
   };
 
+  private static final String[] STUB_FIELD_MODIFIERS = {
+    PsiModifier.PUBLIC,
+    PsiModifier.PROTECTED,
+    PsiModifier.PRIVATE,
+    PsiModifier.PACKAGE_LOCAL,
+    PsiModifier.STATIC,
+    PsiModifier.FINAL,
+  };
+
   private ClassNameProvider classNameProvider;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.StubGenerator");
 
@@ -227,7 +236,7 @@ public class StubGenerator implements ClassItemGenerator {
 
     writeThrowsList(text, method);
 
-    if (!isAbstract) {
+    if (!isAbstract && !method.hasModifierProperty(PsiModifier.NATIVE)) {
       /************* body **********/
       text.append("{\nreturn ");
       text.append(GroovyToJavaGenerator.getDefaultValueText(retType.getCanonicalText()));
@@ -370,7 +379,7 @@ public class StubGenerator implements ClassItemGenerator {
         continue; //does not have a java image
       }
 
-      ModifierListGenerator.writeModifiers(text, modifierList, STUB_MODIFIERS, false);
+      ModifierListGenerator.writeModifiers(text, modifierList, STUB_FIELD_MODIFIERS, false);
 
       //type
       PsiType declaredType =

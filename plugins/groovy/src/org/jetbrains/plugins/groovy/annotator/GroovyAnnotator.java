@@ -586,7 +586,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       myHolder.createErrorAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("constructors.are.not.allowed.in.anonymous.class"));
     }
 
-    if (!method.hasModifierProperty(ABSTRACT) && method.getBlock() == null) {
+    if (!method.hasModifierProperty(ABSTRACT) && method.getBlock() == null && !method.hasModifierProperty(NATIVE)) {
       final Annotation annotation = myHolder.createErrorAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("not.abstract.method.should.have.body"));
       annotation.registerFix(new AddMethodBodyFix(method));
     }
@@ -831,7 +831,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
-  private static void checkModifierIsNotAllowed(GrModifierList modifierList, @PsiModifier.ModifierConstant String modifier, String message, AnnotationHolder holder) {
+  private static void checkModifierIsNotAllowed(GrModifierList modifierList, @ModifierConstant String modifier, String message, AnnotationHolder holder) {
     if (modifierList.hasModifierProperty(modifier)) {
       PsiElement toHighlight = PsiUtil.findModifierInList(modifierList, modifier);
       if (toHighlight == null) toHighlight = modifierList;
@@ -1612,6 +1612,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     checkDuplicateModifiers(holder, modifiersList, method);
     checkOverrideAnnotation(holder, modifiersList, method);
 
+    checkModifierIsNotAllowed(modifiersList, VOLATILE, GroovyBundle.message("method.has.incorrect.modifier.volatile"), holder);
+
     if (method.hasModifierProperty(FINAL) && method.hasModifierProperty(ABSTRACT)) {
       final Annotation annotation = holder.createErrorAnnotation(modifiersList, GroovyBundle.message("illegal.combination.of.modifiers.abstract.and.final"));
       annotation.registerFix(new GrModifierFix(method, modifiersList, FINAL, false, false));
@@ -1622,7 +1624,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     boolean isMethodAbstract = modifiersList.hasExplicitModifier(ABSTRACT);
     if (method.getParent() instanceof GroovyFileBase) {
       if (isMethodAbstract) {
-        final Annotation annotation = holder.createErrorAnnotation(modifiersList, GroovyBundle.message("script.method.cannot.have.modifier.abstract"));
+        final Annotation annotation = holder.createErrorAnnotation(getModifierOrList(modifiersList, ABSTRACT), GroovyBundle.message("script.method.cannot.have.modifier.abstract"));
         registerMakeAbstractMethodNotAbstractFix(annotation, method, false);
       }
 
@@ -1643,7 +1645,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
           checkModifierIsNotAllowed(modifiersList, STATIC, GroovyBundle.message("static.declaration.in.inner.class"), holder);
 
           if (isMethodAbstract) {
-            final Annotation annotation = holder.createErrorAnnotation(modifiersList, GroovyBundle.message("anonymous.class.cannot.have.abstract.method"));
+            final Annotation annotation = holder.createErrorAnnotation(getModifierOrList(modifiersList, ABSTRACT), GroovyBundle.message("anonymous.class.cannot.have.abstract.method"));
             registerMakeAbstractMethodNotAbstractFix(annotation, method, false);
           }
         }
@@ -1658,6 +1660,18 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
           }
         }
       }
+
+    if (method.hasModifierProperty(NATIVE) && method.getBlock() != null) {
+      final Annotation annotation = holder.createErrorAnnotation(getModifierOrList(modifiersList, NATIVE), GroovyBundle.message("native.methods.cannot.have.body"));
+      annotation.registerFix(new GrModifierFix((PsiMember)modifiersList.getParent(), modifiersList, NATIVE, true, false));
+      annotation.registerFix(new DeleteMethodBodyFix(method));
+    }
+  }
+
+  @NotNull
+  private static PsiElement getModifierOrList(@NotNull GrModifierList modifiersList, @GrModifier.GrModifierConstant final String modifier) {
+    PsiElement m = PsiUtil.findModifierInList(modifiersList, modifier);
+    return m != null ? m : modifiersList;
   }
 
   private static void checkOverrideAnnotation(AnnotationHolder holder, GrModifierList list, GrMethod method) {

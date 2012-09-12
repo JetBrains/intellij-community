@@ -24,6 +24,7 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
@@ -108,6 +109,11 @@ public class DfaVariableValue extends DfaValue {
   @Nullable
   public PsiVariable getPsiVariable() {
     return myVariable;
+  }
+
+  @Nullable
+  public PsiType getVariableType() {
+    return myVariable == null ? null : myVariable.getType();
   }
 
   public boolean isNegated() {

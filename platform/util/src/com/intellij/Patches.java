@@ -75,13 +75,6 @@ public class Patches {
   public static final boolean APPLE_BUG_ID_3716835 = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.4.2.5");
 
   /**
-   * Use of JDK1.5 ReentrantReadWriteLock API eventually leads to JVM lock-up or core dump crashes.
-   * With this flag true, API is wrapped with alternative implementation via early days Doug Lea's API.
-   * @see com.intellij.util.concurrency.LockFactory
-   */
-  public static final boolean APPLE_BUG_ID_5359442 = SystemInfo.isMac && (!SystemInfo.isMacOSLeopard || !SystemInfo.isJavaVersionAtLeast("1.5.0_16"));
-
-  /**
    * Lion eAWT FullScreen mode leads to visual artifacts.
    */
   public static final boolean APPLE_BUG_ID_10207064 = SystemInfo.isMac && (!SystemInfo.isMacOSLeopard || !SystemInfo.isJavaVersionAtLeast("1.6.0_30"));

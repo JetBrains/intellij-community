@@ -33,15 +33,15 @@ class MavenDuplicatedInspectionTest extends MavenDomTestCase {
 
   <dependencies>
     <<warning>dependency</warning>>
-      <groupId>commons-collections</groupId>
-      <artifactId>commons-collections</artifactId>
-      <version>LATEST</version>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.2</version>
       <scope>provided</scope>
     </dependency>
     <<warning>dependency</warning>>
-      <groupId>commons-collections</groupId>
-      <artifactId>commons-collections</artifactId>
-      <version>LATEST</version>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.2</version>
     </dependency>
   </dependencies>
 """)
@@ -49,10 +49,10 @@ class MavenDuplicatedInspectionTest extends MavenDomTestCase {
     checkHighlighting()
   }
 
-  public void testDuplicatedInParent() {
+  public void testDuplicatedInParent1() {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection)
 
-    def m = createModulePom("child", """
+    createModulePom("child", """
   <groupId>mavenParent</groupId>
   <artifactId>child</artifactId>
   <version>1.0</version>
@@ -65,16 +65,10 @@ class MavenDuplicatedInspectionTest extends MavenDomTestCase {
 
   <dependencies>
     <dependency>
-      <groupId>commons-collections</groupId>
-      <artifactId>commons-collections</artifactId>
-      <version>LATEST</version>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.2</version>
       <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-      <version>LATEST</version>
-      <scope>compile</scope>
     </dependency>
   </dependencies>
 """)
@@ -91,15 +85,58 @@ class MavenDuplicatedInspectionTest extends MavenDomTestCase {
 
   <dependencies>
     <dependency>
-      <groupId>commons-collections</groupId>
-      <artifactId>commons-collections</artifactId>
-      <version>LATEST</version>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.2</version>
       <scope>provided</scope>
     </dependency>
+  </dependencies>
+""")
+
+    importProject()
+
+    checkHighlighting(myProjectPom, true, false, true)
+  }
+
+  public void testDuplicatedInParent2() {
+    myFixture.enableInspections(MavenDuplicateDependenciesInspection)
+
+    createModulePom("child", """
+  <groupId>mavenParent</groupId>
+  <artifactId>child</artifactId>
+  <version>1.0</version>
+
+<parent>
+  <groupId>mavenParent</groupId>
+  <artifactId>parent</artifactId>
+  <version>1.0</version>
+</parent>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.2</version>
+      <scope>compile</scope>
+    </dependency>
+  </dependencies>
+""")
+
+    createProjectPom("""
+  <groupId>mavenParent</groupId>
+  <artifactId>parent</artifactId>
+  <version>1.0</version>
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>child</module>
+  </modules>
+
+  <dependencies>
     <<warning>dependency</warning>>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-      <version>LATEST</version>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.2</version>
     </dependency>
   </dependencies>
 """)

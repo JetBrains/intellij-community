@@ -16,9 +16,12 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.codeStyle.arrangement.model.*;
-import com.intellij.util.Consumer;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Denis Zhdanov
@@ -26,34 +29,52 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ArrangementNodeComponentFactory {
 
-  @NotNull private final ArrangementNodeDisplayManager           myDisplayManager;
-  private                Consumer<ArrangementAtomMatchCondition> myRemoveConditionCallback;
+  @NotNull private final ArrangementNodeDisplayManager myDisplayManager;
+  @NotNull private final Runnable                      myRemoveConditionCallback;
 
   public ArrangementNodeComponentFactory(@NotNull ArrangementNodeDisplayManager manager,
-                                         @NotNull Consumer<ArrangementAtomMatchCondition> removeConditionCallback)
+                                         @NotNull Runnable removeConditionCallback)
   {
     myDisplayManager = manager;
     myRemoveConditionCallback = removeConditionCallback;
   }
 
   @NotNull
-  public ArrangementNodeComponent getComponent(@NotNull ArrangementMatchCondition node) {
+  public ArrangementNodeComponent getComponent(@NotNull final ArrangementMatchCondition node,
+                                               @Nullable final ArrangementRuleEditingModel model)
+  {
     final Ref<ArrangementNodeComponent> ref = new Ref<ArrangementNodeComponent>();
     node.invite(new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {
-        ref.set(new ArrangementAtomNodeComponent(myDisplayManager, condition, myRemoveConditionCallback));
+        ref.set(new ArrangementAtomNodeComponent(myDisplayManager, condition, prepareRemoveCallback(condition, model)));
       }
 
       @Override
       public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
         switch (condition.getOperator()) {
           case AND:
-            ref.set(new ArrangementAndNodeComponent(condition, ArrangementNodeComponentFactory.this, myDisplayManager)); break;
+            ref.set(new ArrangementAndNodeComponent(condition, ArrangementNodeComponentFactory.this, myDisplayManager, model)); break;
           case OR: // TODO den implement
         }
       }
     });
     return ref.get();
+  }
+
+  @Nullable
+  private Runnable prepareRemoveCallback(@NotNull final ArrangementMatchCondition condition,
+                                         @Nullable final ArrangementRuleEditingModel model)
+  {
+    if (model == null) {
+      return null;
+    }
+    return new Runnable() {
+      @Override
+      public void run() {
+        model.removeAndCondition(condition);
+        myRemoveConditionCallback.run();
+      }
+    };
   }
 }

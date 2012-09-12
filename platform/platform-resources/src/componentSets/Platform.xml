@@ -34,10 +34,12 @@
       <interface-class>com.intellij.openapi.vfs.LocalFileSystem</interface-class>
       <implementation-class>com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl</implementation-class>
     </component>
+
     <component>
       <interface-class>com.intellij.openapi.vfs.JarFileSystem</interface-class>
       <implementation-class>com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl</implementation-class>
     </component>
+
     <component>
       <implementation-class>com.intellij.openapi.vfs.ex.temp.TempFileSystem</implementation-class>
     </component>
@@ -155,7 +157,7 @@
     <component>
       <implementation-class>com.intellij.ui.EditorNotifications</implementation-class>
     </component>
-    
+
     <component>
       <interface-class>com.intellij.openapi.vfs.encoding.EncodingProjectManager</interface-class>
       <implementation-class>com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl</implementation-class>

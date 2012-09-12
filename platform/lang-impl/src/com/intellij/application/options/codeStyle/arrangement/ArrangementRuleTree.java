@@ -19,13 +19,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementConditionsGrouper;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
@@ -40,9 +40,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -84,10 +82,10 @@ public class ArrangementRuleTree {
                              @NotNull ArrangementNodeDisplayManager displayManager)
   {
     myGrouper = grouper;
-    myFactory = new ArrangementNodeComponentFactory(displayManager, new Consumer<ArrangementAtomMatchCondition>() {
+    myFactory = new ArrangementNodeComponentFactory(displayManager, new Runnable() {
       @Override
-      public void consume(@NotNull ArrangementAtomMatchCondition setting) {
-        removeConditionFromActiveModel(setting);
+      public void run() {
+        notifySelectionListeners(); 
       }
     });
     myRoot = new ArrangementTreeNode(null);
@@ -131,8 +129,9 @@ public class ArrangementRuleTree {
         }
         try {
           super.processMouseEvent(e);
-          if (mySkipSelectionChange && getActiveModel() == null) {
-            notifySelectionListeners(null);
+          List<ArrangementRuleEditingModelImpl> activeModels = getActiveModels();
+          if (mySkipSelectionChange && activeModels.isEmpty()) {
+            notifySelectionListeners();
           }
         }
         finally {
@@ -338,23 +337,26 @@ public class ArrangementRuleTree {
   /**
    * @return    matcher model for the selected tree row(s) if any; null otherwise
    */
-  @Nullable
-  public ArrangementRuleEditingModelImpl getActiveModel() {
+  @NotNull
+  public List<ArrangementRuleEditingModelImpl> getActiveModels() {
     TreePath[] paths = mySelectionModel.getSelectionPaths();
     if (paths == null) {
-      return null;
+      return Collections.emptyList();
     }
     
     // There is a possible case that particular settings node is represented on multiple rows and that non-leaf nodes are served
     // for more than one rule. No model is registered for them then and we want just to skip them.
+    List<ArrangementRuleEditingModelImpl> result = new ArrayList<ArrangementRuleEditingModelImpl>();
+    Set<ArrangementRuleEditingModelImpl> set = new HashSet<ArrangementRuleEditingModelImpl>();
     for (int i = paths.length - 1; i >= 0; i--) {
       int row = myTree.getRowForPath(paths[i]);
       ArrangementRuleEditingModelImpl model = myModels.get(row);
-      if (model != null) {
-        return model;
+      if (model != null && !set.contains(model)) {
+        result.add(model);
+        set.add(model);
       }
     }
-    return null;
+    return result;
   }
 
   /**
@@ -404,20 +406,15 @@ public class ArrangementRuleTree {
   }
   
   @NotNull
-  private ArrangementNodeComponent getNodeComponentAt(int row, @NotNull ArrangementMatchCondition condition) {
+  private ArrangementNodeComponent getNodeComponentAt(int row,
+                                                      @NotNull ArrangementMatchCondition condition,
+                                                      @Nullable ArrangementRuleEditingModelImpl model)
+  {
     ArrangementNodeComponent result = myRenderers.get(row);
     if (result == null || !result.getMatchCondition().equals(condition)) {
-      myRenderers.put(row, result = myFactory.getComponent(condition));
+      myRenderers.put(row, result = myFactory.getComponent(condition, model));
     }
     return result;
-  }
-
-  private void removeConditionFromActiveModel(@NotNull ArrangementAtomMatchCondition condition) {
-    ArrangementRuleEditingModel model = getActiveModel();
-    if (model != null) {
-      model.removeAndCondition(condition);
-      notifySelectionListeners(model);
-    }
   }
 
   private void onMouseMoved(@NotNull MouseEvent e) {
@@ -466,14 +463,10 @@ public class ArrangementRuleTree {
     myTree.repaint(location.x, location.y, bounds.width, bounds.height);
   }
 
-  private void notifySelectionListeners(@Nullable ArrangementRuleEditingModel model) {
+  private void notifySelectionListeners() {
+    List<ArrangementRuleEditingModelImpl> models = getActiveModels();
     for (ArrangementRuleSelectionListener listener : myListeners) {
-      if (model == null) {
-        listener.selectionRemoved();
-      }
-      else {
-        listener.onSelected(model);
-      }
+      listener.onSelectionChange(models);
     }
   }
 
@@ -490,12 +483,13 @@ public class ArrangementRuleTree {
         TreePath path = new TreePath(node.getPath());
         int row = myTree.getRowForPath(path);
         myRenderers.remove(row);
-        mySelectionModel.addSelectionPath(path);
         myTreeModel.nodeChanged(node);
-        mySelectionModel.addSelectionPath(path);
+        if (node == bottomMost) {
+          mySelectionModel.addSelectionPath(path);
+        }
         ArrangementMatchCondition matchCondition = node.getBackingCondition();
         if (matchCondition != null) {
-          getNodeComponentAt(row, matchCondition).setSelected(true);
+          getNodeComponentAt(row, matchCondition, model).setSelected(true);
         }
         if (node == topMost) {
           break;
@@ -568,8 +562,8 @@ public class ArrangementRuleTree {
    */
   @NotNull
   public ArrangementRuleEditingModel newModel() {
-    ArrangementRuleEditingModelImpl activeModel = getActiveModel();
-    final ArrangementTreeNode anchor = activeModel == null ? null : activeModel.getBottomMost();
+    List<ArrangementRuleEditingModelImpl> activeModels = getActiveModels();
+    final ArrangementTreeNode anchor = activeModels.size() != 1 ? null : activeModels.get(0).getBottomMost();
     doClearSelection();
     Pair<ArrangementRuleEditingModelImpl,TIntIntHashMap> pair = myModelBuilder.build(
       ArrangementRuleEditingModel.EMPTY_RULE, myTree, myRoot, anchor, myGrouper
@@ -605,15 +599,19 @@ public class ArrangementRuleTree {
       }
       
       if (row < 0) {
-        return myFactory.getComponent(node).getUiComponent();
+        return myFactory.getComponent(node, null).getUiComponent();
       }
-      ArrangementNodeComponent component = getNodeComponentAt(row, node);
+      ArrangementNodeComponent component = getNodeComponentAt(row, node, myModels.get(row));
       component.setSelected(selected);
       return component.getUiComponent();
     }
   }
   
   private class MySelectionModel extends DefaultTreeSelectionModel {
+
+    MySelectionModel() {
+      setSelectionMode(CONTIGUOUS_TREE_SELECTION);
+    }
 
     @Override
     public void addSelectionPath(TreePath path) {
@@ -631,28 +629,18 @@ public class ArrangementRuleTree {
       myAlarm.cancelAllRequests();
       myAlarm.addRequest(myRequest, EMPTY_RULE_REMOVE_DELAY_MILLIS);
       clearSelection();
-      ArrangementTreeNode component = (ArrangementTreeNode)path.getLastPathComponent();
+      ArrangementTreeNode node = (ArrangementTreeNode)path.getLastPathComponent();
+
+      super.addSelectionPath(path);
       
-      // Select all nodes which correspond to the first rule under the node denoted by the given path
-      // in case when non-leaf is selected.
-      if (component.getChildCount() > 0) {
-        for (ArrangementTreeNode node = component.getChildAt(0); node != null; node = node.getChildAt(0)) {
-          addSelectionPath(new TreePath(node.getPath()));
-          if (node.getChildCount() <= 0) {
-            break;
-          }
+      if (node.getChildCount() > 0) {
+        // Select the whole section.
+        for (ArrangementTreeNode child = node.getFirstChild(); child != null; child = child.getNextNode()) {
+          addSelectionPath(new TreePath(child.getPath()));
         }
       }
       
-      // Select the node itself.
-      super.addSelectionPath(path);
-      
-      // Select parent nodes from the same rule.
-      for (ArrangementTreeNode node = component.getParent(); node != null && node != myRoot; node = node.getParent()) {
-        addSelectionPath(new TreePath(node.getPath()));
-      }
-      
-      notifySelectionListeners(getActiveModel());
+      notifySelectionListeners();
     }
   }
   
@@ -681,7 +669,7 @@ public class ArrangementRuleTree {
     @Override
     public void afterModelDestroy(@NotNull TIntIntHashMap rowChanges) {
       processRowChanges(rowChanges);
-      if (getActiveModel() != null) {
+      if (!getActiveModels().isEmpty()) {
         return;
       }
       TreePath path = myTree.getPathForRow(mySelectedRowToRestore);
@@ -711,24 +699,25 @@ public class ArrangementRuleTree {
     public void run() {
       myAlarm.cancelAllRequests();
       Object[] values = myModels.getValues();
-      ArrangementRuleEditingModelImpl activeModel = getActiveModel();
+      Set<ArrangementRuleEditingModelImpl> activeModels = ContainerUtil.newHashSet(getActiveModels());
       boolean emptyRuleRemoved = false;
       for (Object value : values) {
         ArrangementRuleEditingModelImpl model = (ArrangementRuleEditingModelImpl)value;
-        if (model != null && model != activeModel && model.getRule() == ArrangementRuleEditingModel.EMPTY_RULE) {
+        if (model != null && !activeModels.contains(model) && model.getRule() == ArrangementRuleEditingModel.EMPTY_RULE) {
           model.destroy();
           emptyRuleRemoved = true;
         }
       }
 
-      if (!emptyRuleRemoved || activeModel == null || getActiveModel() != null /* Selection was above the destroyed model */) {
+      if (!emptyRuleRemoved || activeModels.isEmpty() || !getActiveModels().isEmpty() /* Selection was above the destroyed model */) {
         return;
       }
-
+      
+      doClearSelection();
       for (Object value : myModels.getValues()) {
         ArrangementRuleEditingModelImpl model = (ArrangementRuleEditingModelImpl)value;
-        if (activeModel.getRule().equals(model.getRule())) {
-          mySelectionModel.setSelectionPath(new TreePath(activeModel.getBottomMost().getPath()));
+        if (activeModels.contains(model)) {
+          mySelectionModel.addSelectionPath(new TreePath(model.getBottomMost().getPath()));
         }
       }
     }

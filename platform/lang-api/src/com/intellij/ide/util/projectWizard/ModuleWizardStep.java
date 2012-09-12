@@ -58,10 +58,6 @@ public abstract class ModuleWizardStep extends StepAdapter{
     return ICON;
   }
 
-  public JComponent getPreferredFocusedComponent() {
-    return null;
-  }
-
   public boolean isStepVisible() {
     return true;
   }

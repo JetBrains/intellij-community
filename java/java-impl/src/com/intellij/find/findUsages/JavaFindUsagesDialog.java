@@ -28,7 +28,7 @@ import javax.swing.*;
 
 public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> extends CommonFindUsagesDialog {
   private StateRestoringCheckBox myCbIncludeOverloadedMethods;
-  private boolean myIncludeOverloadedMethodsAvailable = false;
+  private boolean myIncludeOverloadedMethodsAvailable;
 
   protected JavaFindUsagesDialog(@NotNull PsiElement element,
                                  @NotNull Project project,
@@ -38,10 +38,13 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
                                  boolean isSingleFile,
                                  FindUsagesHandler handler) {
     super(element, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, handler);
-    myIncludeOverloadedMethodsAvailable = element instanceof PsiMethod && MethodSignatureUtil.hasOverloads((PsiMethod)element);
-    init();
   }
 
+  @Override
+  protected void init() {
+    myIncludeOverloadedMethodsAvailable = myPsiElement instanceof PsiMethod && MethodSignatureUtil.hasOverloads((PsiMethod)myPsiElement);
+    super.init();
+  }
 
   public void calcFindUsagesOptions(T options) {
     if (options instanceof JavaMethodFindUsagesOptions) {

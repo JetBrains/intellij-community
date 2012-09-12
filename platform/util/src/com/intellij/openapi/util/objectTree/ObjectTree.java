@@ -62,48 +62,56 @@ public final class ObjectTree<T> {
 
   public final void register(@NotNull T parent, @NotNull T child) {
     synchronized (treeLock) {
-      final ObjectNode<T> childNode = getOrCreateNodeFor(child);
-      checkValid(childNode, child);
+      ObjectNode<T> parentNode = getOrCreateNodeFor(parent, null);
 
-      final ObjectNode<T> parentNode = getOrCreateNodeFor(parent);
-
-      ObjectNode<T> childParent = childNode.getParent();
-      if (childParent != null) {
-        childParent.removeChild(childNode);
-        parentNode.addChild(childNode);
+      ObjectNode<T> childNode = getNode(child);
+      if (childNode == null) {
+        childNode = createNodeFor(child, parentNode);
       }
       else {
-        parentNode.addChild(childNode);
-        myRootObjects.remove(child);
+        ObjectNode<T> oldParent = childNode.getParent();
+        if (oldParent != null) {
+          oldParent.removeChild(childNode);
+        }
       }
+      myRootObjects.remove(child);
+      checkWasNotAddedAlready(childNode, child);
+      parentNode.addChild(childNode);
 
       fireRegistered(childNode.getObject());
     }
   }
 
-  private void checkValid(ObjectNode<T> childNode, @NotNull T child) {
-    boolean childIsInTree = childNode != null && childNode.getParent() != null;
+  private void checkWasNotAddedAlready(@NotNull ObjectNode<T> childNode, @NotNull T child) {
+    ObjectNode parent = childNode.getParent();
+    boolean childIsInTree = parent != null;
     if (!childIsInTree) return;
 
-    ObjectNode eachParent = childNode.getParent();
-    while (eachParent != null) {
-      if (eachParent.getObject() == child) {
-        LOG.error(child + " was already added as a child of: " + eachParent);
+    while (parent != null) {
+      if (parent.getObject() == child) {
+        LOG.error(child + " was already added as a child of: " + parent);
       }
-      eachParent = eachParent.getParent();
+      parent = parent.getParent();
     }
   }
 
   @NotNull
-  private ObjectNode<T> getOrCreateNodeFor(@NotNull T parentObject) {
-    final ObjectNode<T> parentNode = getNode(parentObject);
+  private ObjectNode<T> getOrCreateNodeFor(@NotNull T object, @Nullable ObjectNode<T> defaultParent) {
+    final ObjectNode<T> node = getNode(object);
 
-    if (parentNode != null) return parentNode;
+    if (node != null) return node;
 
-    final ObjectNode<T> parentless = new ObjectNode<T>(this, null, parentObject, getNextModification());
-    myRootObjects.add(parentObject);
-    putNode(parentObject, parentless);
-    return parentless;
+    return createNodeFor(object, defaultParent);
+  }
+
+  @NotNull
+  private ObjectNode<T> createNodeFor(@NotNull T object, @Nullable ObjectNode<T> parentNode) {
+    final ObjectNode<T> newNode = new ObjectNode<T>(this, parentNode, object, getNextModification());
+    if (parentNode == null) {
+      myRootObjects.add(object);
+    }
+    putNode(object, newNode);
+    return newNode;
   }
 
   public long getNextModification() {
@@ -121,9 +129,8 @@ public final class ObjectTree<T> {
         return false;
       }
     }
-    else {
-      return node.execute(disposeTree, action);
-    }
+    node.execute(disposeTree, action);
+    return true;
   }
 
   static <T> void executeActionWithRecursiveGuard(@NotNull T object,
@@ -264,8 +271,7 @@ public final class ObjectTree<T> {
     synchronized (treeLock) {
       ObjectNode<T> parentNode = getNode(parentDisposable);
       if (parentNode == null) return null;
-      D nodeObject = parentNode.findChildEqualTo(object);
-      return nodeObject;
+      return parentNode.findChildEqualTo(object);
     }
   }
 

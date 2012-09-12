@@ -27,6 +27,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.net.URL;
@@ -191,5 +192,10 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   @Override
   public String getMainToolId() {
     return getTool().getMainToolId();
+  }
+
+  @TestOnly
+  public boolean hasXmlMapping() {
+    return myEP != null;
   }
 }

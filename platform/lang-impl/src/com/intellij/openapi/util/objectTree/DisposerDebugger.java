@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.ui.debugger.extensions;
+package com.intellij.openapi.util.objectTree;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
@@ -62,8 +62,7 @@ import java.util.*;
 import java.util.List;
 
 public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.debugger.extensions.DisposerDebugger");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.DisposerDebugger");
 
   private JComponent myComponent;
   private JBTabsImpl myTreeTabs;

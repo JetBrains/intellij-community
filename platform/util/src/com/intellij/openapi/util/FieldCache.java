@@ -16,17 +16,15 @@
 
 package com.intellij.openapi.util;
 
-import com.intellij.util.concurrency.JBLock;
-import com.intellij.util.concurrency.JBReentrantReadWriteLock;
-import com.intellij.util.concurrency.LockFactory;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public abstract class FieldCache<T, Owner,AccessorParameter,Parameter> {
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("fieldCache");
-  private final JBLock r;
-  private final JBLock w;
+  private final ReentrantReadWriteLock.ReadLock r;
+  private final ReentrantReadWriteLock.WriteLock w;
 
   protected FieldCache() {
-    JBReentrantReadWriteLock ourLock = LockFactory.createReadWriteLock();
+    ReentrantReadWriteLock ourLock = new ReentrantReadWriteLock();
     r = ourLock.readLock();
     w = ourLock.writeLock();
   }

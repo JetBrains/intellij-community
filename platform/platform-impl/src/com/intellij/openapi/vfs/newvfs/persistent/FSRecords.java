@@ -30,9 +30,6 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.concurrency.JBLock;
-import com.intellij.util.concurrency.JBReentrantReadWriteLock;
-import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
@@ -46,6 +43,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @SuppressWarnings({"PointlessArithmeticExpression", "HardCodedStringLiteral"})
 public class FSRecords implements Forceable {
@@ -87,8 +85,8 @@ public class FSRecords implements Forceable {
 
   private static final String CHILDREN_ATT = "FsRecords.DIRECTORY_CHILDREN";
 
-  private static final JBLock r;
-  private static final JBLock w;
+  private static final ReentrantReadWriteLock.ReadLock r;
+  private static final ReentrantReadWriteLock.WriteLock w;
 
   private static volatile int ourLocalModificationCount = 0;
   private static volatile boolean ourIsDisposed;
@@ -100,12 +98,12 @@ public class FSRecords implements Forceable {
     //noinspection ConstantConditions
     assert HEADER_SIZE <= RECORD_SIZE;
 
-    JBReentrantReadWriteLock lock = LockFactory.createReadWriteLock();
+    ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     r = lock.readLock();
     w = lock.writeLock();
   }
 
-  private static class DbConnection {
+  static class DbConnection {
     private static boolean ourInitialized;
     private static final TObjectIntHashMap<String> myAttributeIds = new TObjectIntHashMap<String>();
 
@@ -411,7 +409,7 @@ public class FSRecords implements Forceable {
       myRecords.putInt(HEADER_CONNECTION_STATUS_OFFSET, SAFELY_CLOSED_MAGIC);
     }
 
-    public static void cleanRecord(final int id) {
+    static void cleanRecord(int id) {
       myRecords.put(id * RECORD_SIZE, ZEROES, 0, RECORD_SIZE);
     }
 
@@ -615,7 +613,7 @@ public class FSRecords implements Forceable {
     }
   }
 
-  private static void addToFreeRecordsList(int id) {
+  static void addToFreeRecordsList(int id) {
     DbConnection.addFreeRecord(id);
     setFlags(id, FREE_RECORD_FLAG, false);
   }
@@ -1409,14 +1407,14 @@ public class FSRecords implements Forceable {
                                         final IntArrayList validAttributeIds) {
     int parentId = getParent(id);
     assert parentId >= 0 && parentId < recordCount;
-    if (parentId > 0) {
-      final int parentFlags = getFlags(parentId);
-      assert (parentFlags & FREE_RECORD_FLAG) == 0;
-      assert (parentFlags & PersistentFS.IS_DIRECTORY_FLAG) != 0;
+    if (parentId > 0 && getParent(parentId) > 0) {
+      int parentFlags = getFlags(parentId);
+      assert (parentFlags & FREE_RECORD_FLAG) == 0 : parentId + ": "+Integer.toHexString(parentFlags);
+      assert (parentFlags & PersistentFS.IS_DIRECTORY_FLAG) != 0 : parentId + ": "+Integer.toHexString(parentFlags);
     }
 
     String name = getName(id);
-    LOG.assertTrue(parentId == 0 || name.length() > 0, "File with empty name found under " + getName(parentId) + ", id=" + id);
+    LOG.assertTrue(parentId == 0 || !name.isEmpty(), "File with empty name found under " + getName(parentId) + ", id=" + id);
 
     checkContentsStorageSanity(id);
     checkAttributesStorageSanity(id, usedAttributeRecordIds, validAttributeIds);
@@ -1460,7 +1458,7 @@ public class FSRecords implements Forceable {
         assert !usedAttributeRecordIds.contains(attDataRecordId);
         usedAttributeRecordIds.add(attDataRecordId);
         if (!validAttributeIds.contains(attId)) {
-          assert getNames().valueOf(attId).length() > 0;
+          assert !getNames().valueOf(attId).isEmpty();
           validAttributeIds.add(attId);
         }
         getAttributesStorage().checkSanity(attDataRecordId);
