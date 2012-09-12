@@ -1808,5 +1808,10 @@ public class JavaDocInfoGenerator {
       expression.getArgumentList().acceptChildren(this);
       myBuffer.append(")");
     }
+
+    @Override
+    public void visitLiteralExpression(PsiLiteralExpression expression) {
+      myBuffer.append(expression.getText());
+    }
   }
 }
