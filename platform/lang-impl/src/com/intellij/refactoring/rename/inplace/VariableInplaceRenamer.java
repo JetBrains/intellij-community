@@ -272,7 +272,11 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   protected boolean performRefactoring() {
     boolean bind = false;
     if (myInsertedName != null) {
-      CommandProcessor.getInstance().setCurrentCommandName(getCommandName());
+
+      if (getVariable() != null) {
+        CommandProcessor.getInstance().setCurrentCommandName(getCommandName());
+      }
+
       bind = true;
       if (!isIdentifier(myInsertedName, myLanguage)) {
         performOnInvalidIdentifier(myInsertedName, myNameSuggestions);
