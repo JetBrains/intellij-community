@@ -77,11 +77,9 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
   }
 
   @Nullable
-  protected static String getLineCommentPrefix(final PsiElement comment) {
+  protected static String getLineCommentPrefix(@NotNull final PsiElement comment) {
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(comment.getLanguage());
-    assert commenter != null;
-
-    return commenter.getLineCommentPrefix();
+    return commenter == null ? null : commenter.getLineCommentPrefix();
   }
 
   protected void createSuppression(final Project project,
