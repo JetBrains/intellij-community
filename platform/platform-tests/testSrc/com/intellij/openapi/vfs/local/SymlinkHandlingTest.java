@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.testFramework.LightPlatformLangTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -37,29 +36,8 @@ import java.util.Set;
 import static com.intellij.openapi.util.io.FileUtil.createTempDirectory;
 import static com.intellij.openapi.util.io.FileUtil.createTempFile;
 import static com.intellij.openapi.util.io.IoTestUtil.createTempLink;
-import static com.intellij.openapi.util.io.IoTestUtil.createTestDir;
 
-public class SymlinkHandlingTest extends LightPlatformLangTestCase {
-  private LocalFileSystem myFileSystem;
-  private File myTempDir;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFileSystem = LocalFileSystem.getInstance();
-    myTempDir = createTestDir("temp");
-  }
-
-  @Override
-  protected void runTest() throws Throwable {
-    if (SystemInfo.areSymLinksSupported) {
-      super.runTest();
-    }
-    else {
-      System.err.println("Skipped: " + getName());
-    }
-  }
-
+public class SymlinkHandlingTest extends SymlinkTestCase {
   public void testMissingLink() throws Exception {
     final File missingFile = new File(myTempDir, "missing_file");
     assertTrue(missingFile.getPath(), !missingFile.exists() || missingFile.delete());
@@ -355,13 +333,6 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
   private VirtualFile refreshAndFind(final File ioFile) {
     refresh();
     return myFileSystem.findFileByPath(ioFile.getPath());
-  }
-
-  private void refresh() {
-    final String tempPath = FileUtil.getTempDirectory();
-    final VirtualFile tempDir = myFileSystem.findFileByPath(tempPath);
-    assertNotNull(tempPath, tempDir);
-    tempDir.refresh(false, true);
   }
 
   private static void assertBrokenLink(@NotNull final VirtualFile link) {
