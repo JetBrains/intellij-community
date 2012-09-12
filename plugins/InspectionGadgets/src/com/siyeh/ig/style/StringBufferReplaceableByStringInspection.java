@@ -180,9 +180,11 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
                 result.append('(').append(argument.getText()).append(')');
               }
               else {
-                result.append(argument.getText());
                 if (type != null && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-                  result.append(".toString()");
+                  result.append("String.valueOf(").append(argument.getText()).append(")");
+                }
+                else {
+                  result.append(argument.getText());
                 }
               }
             }
@@ -280,7 +282,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
 
     public static boolean isAppend(PsiMethodCallExpression methodCallExpression) {
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      final String methodName = methodExpression.getReferenceName();
+      @NonNls final String methodName = methodExpression.getReferenceName();
       return "append".equals(methodName);
     }
   }
@@ -299,7 +301,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       if (!(grandParent instanceof PsiMethodCallExpression)) {
         break;
       }
-      final String name = referenceExpression.getReferenceName();
+      @NonNls final String name = referenceExpression.getReferenceName();
       if ("append".equals(name)) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
         final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
