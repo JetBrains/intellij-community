@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 @TestDataPath("$CONTENT_ROOT/../testData/")
 public abstract class PyTestCase extends UsefulTestCase {
   private static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor("2.5");
-  protected static final PyLightProjectDescriptor ourPy3Descriptor = new PyLightProjectDescriptor("3.1");
+  protected static final PyLightProjectDescriptor ourPy3Descriptor = new PyLightProjectDescriptor("3.2");
   private static final String PARSED_ERROR_MSG = "Operations should have been performed on stubs but caused file to be parsed";
 
   protected CodeInsightTestFixture myFixture;
