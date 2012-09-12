@@ -70,8 +70,8 @@ public abstract class BranchingInstruction extends Instruction {
     return "true".equals(text) || "false".equals(text);
   }
 
-  protected void setPsiAnchor(PsiElement psiAcnchor) {
-    myExpression = psiAcnchor;
-    isConstTrue = psiAcnchor != null && isBoolConst(psiAcnchor);
+  protected void setPsiAnchor(PsiElement psiAnchor) {
+    myExpression = psiAnchor;
+    isConstTrue = psiAnchor != null && isBoolConst(psiAnchor);
   }
 }
