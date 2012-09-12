@@ -55,6 +55,7 @@ public class SuppressManagerImpl extends SuppressManager {
   public SuppressIntentionAction[] createSuppressActions(@NotNull final HighlightDisplayKey displayKey) {
     return new SuppressIntentionAction[]{
         new SuppressByJavaCommentFix(displayKey),
+        new SuppressLocalWithCommentFix(displayKey),
         new SuppressParameterFix(displayKey),
         new SuppressFix(displayKey),
         new SuppressForClassFix(displayKey),

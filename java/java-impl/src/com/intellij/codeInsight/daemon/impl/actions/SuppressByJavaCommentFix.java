@@ -45,7 +45,20 @@ public class SuppressByJavaCommentFix extends SuppressByCommentFix {
                                    final Editor editor,
                                    final PsiElement element,
                                    final PsiElement container) throws IncorrectOperationException {
-    boolean added = false;
+    PsiElement declaredElement = getElementToAnnotate(element, container);
+    if (declaredElement != null) {
+      SuppressFix.addSuppressAnnotation(project, editor, container, (PsiLocalVariable)declaredElement, myID);
+    } else {
+      suppressWithComment(project, editor, element, container);
+    }
+  }
+
+  protected void suppressWithComment(Project project, Editor editor, PsiElement element, PsiElement container) {
+    super.createSuppression(project, editor, element, container);
+  }
+
+  @Nullable
+  protected static PsiElement getElementToAnnotate(PsiElement element, PsiElement container) {
     if (container instanceof PsiDeclarationStatement && SuppressManager.getInstance().canHave15Suppressions(element)) {
       final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)container;
       final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
@@ -53,15 +66,11 @@ public class SuppressByJavaCommentFix extends SuppressByCommentFix {
         if (declaredElement instanceof PsiLocalVariable) {
           final PsiModifierList modifierList = ((PsiLocalVariable)declaredElement).getModifierList();
           if (modifierList != null) {
-            SuppressFix.addSuppressAnnotation(project, editor, container, (PsiLocalVariable)declaredElement, myID);
-            added = true;
-            break;
+            return declaredElement;
           }
         }
       }
     }
-    if (!added) {
-      super.createSuppression(project, editor, element, container);
-    }
+    return null;
   }
 }
