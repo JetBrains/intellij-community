@@ -123,33 +123,6 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     currentStep.updateStep();
 
     super.updateStep();
-
-    updateButtons();
-
-    final JButton nextButton = getNextButton();
-    final JButton finishButton = getFinishButton();
-    final boolean isLastStep = isLastStep(getCurrentStep());
-
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (!isShowing()) {
-          return;
-        }
-        final JComponent preferredFocusedComponent = currentStep.getPreferredFocusedComponent();
-        if (preferredFocusedComponent != null) {
-          preferredFocusedComponent.requestFocus();
-        }
-        else {
-          if (isLastStep && finishButton.isVisible()) {
-            finishButton.requestFocus();
-          }
-          else {
-            nextButton.requestFocus();
-          }
-        }
-        getRootPane().setDefaultButton(isLastStep && finishButton.isVisible()? finishButton : nextButton);
-      }
-    });
   }
 
   protected void dispose() {
@@ -228,21 +201,6 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     final ModuleWizardStep step = getCurrentStepObject();
     step.onStepLeaving();
     super.doCancelAction();
-  }
-
-  private void updateButtons() {
-    final boolean isLastStep = isLastStep(getCurrentStep());
-    
-    if (SystemInfo.isMac) {
-      getNextButton().setEnabled(true);
-      getFinishButton().setVisible(false);
-      getNextButton().setText(isLastStep ? IdeBundle.message("button.finish") : IdeBundle.message("button.wizard.next"));
-      getRootPane().setDefaultButton(getNextButton());
-    } else {
-      getNextButton().setEnabled(!isLastStep);
-      getFinishButton().setEnabled(isLastStep);
-      getRootPane().setDefaultButton(isLastStep ? getFinishButton() : getNextButton());
-    }
   }
 
   private boolean isLastStep(int step) {

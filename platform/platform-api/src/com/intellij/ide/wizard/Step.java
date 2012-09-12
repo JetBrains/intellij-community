@@ -46,4 +46,6 @@ public interface Step {
    * method should not return <code>null</code>.
    */
   JComponent getComponent();
+
+  JComponent getPreferredFocusedComponent();
 }

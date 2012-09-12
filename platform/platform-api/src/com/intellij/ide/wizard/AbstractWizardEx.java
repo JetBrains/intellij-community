@@ -129,16 +129,16 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
     }
   }
 
-  private void updateButtons() {
+  protected void updateButtons() {
+    super.updateButtons();
     getPreviousButton().setEnabled(getCurrentStepObject().getPreviousStepId() != null);
-    getFinishButton().setEnabled(canFinish());
 
-    if (SystemInfo.isMac && isLastStep()) {
-      getNextButton().setEnabled(getFinishButton().isEnabled());
-    }
-    else {
-      getNextButton().setEnabled(getCurrentStepObject().isComplete() && !isLastStep());
-    }
+    getNextButton().setEnabled(getCurrentStepObject().isComplete() && !isLastStep() || isLastStep() && canFinish());
+  }
+
+  @Override
+  protected boolean canGoNext() {
+    return getCurrentStepObject().isComplete();
   }
 
   protected boolean isLastStep() {

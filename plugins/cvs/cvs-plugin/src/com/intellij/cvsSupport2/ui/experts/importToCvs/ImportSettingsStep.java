@@ -121,10 +121,10 @@ public class ImportSettingsStep extends WizardStep {
   private void checkFields() {
     final CvsWizard wizard = getWizard();
     if (!isValidInput()) {
-      wizard.disableNextAndFinish();
+      wizard.disableNext();
     }
     else {
-      wizard.enableNextAndFinish();
+      wizard.enableNext();
     }
   }
 

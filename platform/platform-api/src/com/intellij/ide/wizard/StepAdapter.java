@@ -50,4 +50,8 @@ public class StepAdapter implements Step {
       listener.stateChanged();
     }
   }
+
+  public JComponent getPreferredFocusedComponent() {
+    return null;
+  }
 }

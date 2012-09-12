@@ -58,13 +58,6 @@ public final class DataBindingWizard extends AbstractWizard{
     return myBeanStep.myTfShortClassName; 
   }
 
-  protected void updateStep() {
-    // "Finish" button is enabled only at the last step
-    getFinishButton().setEnabled(isLastStep());
-    super.updateStep();
-
-  }
-
   protected void doOKAction() {
     CommandProcessor.getInstance().executeCommand(
       myProject,

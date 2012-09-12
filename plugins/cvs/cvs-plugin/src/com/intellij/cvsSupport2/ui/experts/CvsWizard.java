@@ -30,25 +30,6 @@ public class CvsWizard extends AbstractWizard<WizardStep> {
   }
 
   @Override
-  protected void init() {
-    super.init();
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final boolean isLastStep = (getCurrentStep() + 1) == getNumberOfSteps();
-        final JButton defaultButton;
-        if (SystemInfo.isMac) {
-          defaultButton = getNextButton();
-        } else {
-          defaultButton = isLastStep ? getFinishButton() : getNextButton();
-        }
-        getRootPane().setDefaultButton(defaultButton);
-        updateStep();
-      }
-    });
-  }
-
-  @Override
   protected String getHelpID() {
     return null;
   }
@@ -79,19 +60,16 @@ public class CvsWizard extends AbstractWizard<WizardStep> {
     if (numberOfSteps == 0) return;
     final WizardStep currentStep = getCurrentStepObject();
     currentStep.activate();
-    final boolean enableNext = currentStep.nextIsEnabled();
-    getNextButton().setEnabled(enableNext && (!isLastStep() || SystemInfo.isMac));
-    getFinishButton().setEnabled(enableNext && isLastStep());
   }
 
-  public void disableNextAndFinish() {
-    if (getNextButton().isEnabled() || getFinishButton().isEnabled()) {
+  public void disableNext() {
+    if (getNextButton().isEnabled()) {
       updateStep();
     }
   }
 
-  public void enableNextAndFinish() {
-    if ((!getNextButton().isEnabled()) || (!getFinishButton().isEnabled())) {
+  public void enableNext() {
+    if ((!getNextButton().isEnabled())) {
       updateStep();
     }
   }

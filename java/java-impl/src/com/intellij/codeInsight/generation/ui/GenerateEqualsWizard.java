@@ -23,7 +23,6 @@ import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.*;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
@@ -138,7 +137,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
     addStep(new MyStep(myNonNullPanel));
 
     init();
-    updateStatus();
+    updateButtons();
   }
 
   public PsiField[] getEqualsFields() {
@@ -182,24 +181,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
     }
 
     super.doNextAction();
-    updateStatus();
-  }
-
-  protected void updateStep() {
-    super.updateStep();
-    final Component stepComponent = getCurrentStepComponent();
-    if (stepComponent instanceof MemberSelectionPanel) {
-      ((MemberSelectionPanel)stepComponent).getTable().requestFocus();
-    }
-
-    if (SystemInfo.isMac) {
-      getFinishButton().setVisible(false);
-
-      final JButton nextButton = getNextButton();
-      if (nextButton.isEnabled()) {
-        getRootPane().setDefaultButton(nextButton);
-      }
-    }
+    updateButtons();
   }
 
   protected String getHelpID() {
@@ -253,53 +235,35 @@ public class GenerateEqualsWizard extends AbstractWizard {
     myNonNullPanel.getTable().setMemberInfos(list);
   }
 
-  private void updateStatus() {
-    boolean finishEnabled = true;
-    boolean nextEnabled = true;
-    if (myEqualsPanel != null & getCurrentStep() < myEqualsStepCode) {
-      finishEnabled = false;
-    }
-
-    if (getCurrentStep() == myTestBoxedStep - 1) {
-      boolean anyNonBoxed = false;
+  @Override
+  protected int getNextStep(int step) {
+    if (step + 1 == myTestBoxedStep) {
       for (MemberInfo classField : myClassFields) {
         if (classField.isChecked()) {
           PsiField field = (PsiField)classField.getMember();
           if (!(field.getType() instanceof PsiPrimitiveType)) {
-            anyNonBoxed = true;
-            break;
+            return myTestBoxedStep;
           }
         }
       }
-      nextEnabled = anyNonBoxed;
+      return step;
     }
 
+    return super.getNextStep(step);
+  }
+
+  @Override
+  protected boolean canGoNext() {
     if (getCurrentStep() == myEqualsStepCode) {
-      boolean anyChecked = false;
       for (MemberInfo classField : myClassFields) {
         if (classField.isChecked()) {
-          anyChecked = true;
-          break;
+          return true;
         }
       }
-      finishEnabled &= anyChecked;
-      nextEnabled &= anyChecked;
+      return false;
     }
 
-    if (getCurrentStep() == myTestBoxedStep) {
-      finishEnabled = true;
-      nextEnabled = SystemInfo.isMac;
-    }
-
-    getFinishButton().setEnabled(finishEnabled);
-    getNextButton().setEnabled(nextEnabled);
-
-    if (finishEnabled && getFinishButton().isVisible()) {
-      getRootPane().setDefaultButton(getFinishButton());
-    }
-    else if (getNextButton().isEnabled()) {
-      getRootPane().setDefaultButton(getNextButton());
-    }
+    return true;
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -314,7 +278,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
 
   private class MyTableModelListener implements TableModelListener {
     public void tableChanged(TableModelEvent e) {
-      updateStatus();
+      updateButtons();
     }
   }
 
@@ -360,6 +324,10 @@ public class GenerateEqualsWizard extends AbstractWizard {
       return myPanel;
     }
 
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myPanel.getTable();
+    }
   }
 
   private static class MyMemberInfoFilter implements MemberInfoBase.Filter<PsiMember> {
