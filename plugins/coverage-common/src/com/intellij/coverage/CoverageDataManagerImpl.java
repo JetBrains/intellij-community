@@ -485,7 +485,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
           fileAnnotator = myAnnotators.remove(editor);
         }
         if (fileAnnotator != null) {
-          fileAnnotator.editorReleased();
+          Disposer.dispose(fileAnnotator);
         }
       }
     };

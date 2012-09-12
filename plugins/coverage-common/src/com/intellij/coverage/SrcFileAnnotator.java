@@ -32,10 +32,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -83,12 +80,10 @@ public class SrcFileAnnotator implements Disposable {
     myDocument = myEditor.getDocument();
   }
 
+  
   public void hideCoverageData() {
-    removeHighlights();
-  }
-
-  private void removeHighlights() {
-    final List<RangeHighlighter> highlighters = myFile.getUserData(COVERAGE_HIGHLIGHTERS);
+    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+    final List<RangeHighlighter> highlighters = myEditor.getUserData(COVERAGE_HIGHLIGHTERS);
     if (highlighters != null) {
       for (final RangeHighlighter highlighter : highlighters) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -98,48 +93,27 @@ public class SrcFileAnnotator implements Disposable {
           }
         });
       }
-      myFile.putUserData(COVERAGE_HIGHLIGHTERS, null);
+      myEditor.putUserData(COVERAGE_HIGHLIGHTERS, null);
     }
-    else {
-      final Map<FileEditor, EditorNotificationPanel> map = myFile.getCopyableUserData(NOTIFICATION_PANELS);
-      if (map != null) {
-        myFile.putCopyableUserData(NOTIFICATION_PANELS, null);
-        final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-        for (FileEditor fileEditor : map.keySet()) {
-          fileEditorManager.removeTopComponent(fileEditor, map.get(fileEditor));
-        }
-      }
-    }
-    final DocumentListener documentListener = myFile.getUserData(COVERAGE_DOCUMENT_LISTENER);
-    if (documentListener != null) {
-      myDocument.removeDocumentListener(documentListener);
-      myFile.putUserData(COVERAGE_DOCUMENT_LISTENER, null);
-    }
-  }
-
-  public void editorReleased() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-    final VirtualFile vFile = myFile.getVirtualFile();
-    LOG.assertTrue(vFile != null);
-    if (fileEditorManager.isFileOpen(vFile)) {
-      removeWarningMessage(fileEditorManager);
-    }
-    else {
-      removeHighlights();
-    }
-  }
-
-  private void removeWarningMessage(FileEditorManager fileEditorManager) {
+    
     final Map<FileEditor, EditorNotificationPanel> map = myFile.getCopyableUserData(NOTIFICATION_PANELS);
     if (map != null) {
+      final VirtualFile vFile = myFile.getVirtualFile();
+      LOG.assertTrue(vFile != null);
+      boolean freeAll = !fileEditorManager.isFileOpen(vFile);
+      myFile.putCopyableUserData(NOTIFICATION_PANELS, null);
       for (FileEditor fileEditor : map.keySet()) {
-        if (isCurrentEditor(fileEditor)) {
-          fileEditorManager.removeTopComponent(fileEditor, map.get(fileEditor));
-          map.remove(fileEditor);
-          break;
+        if (!freeAll && !isCurrentEditor(fileEditor)) {
+          continue;
         }
+        fileEditorManager.removeTopComponent(fileEditor, map.get(fileEditor));
       }
+    }
+
+    final DocumentListener documentListener = myEditor.getUserData(COVERAGE_DOCUMENT_LISTENER);
+    if (documentListener != null) {
+      myDocument.removeDocumentListener(documentListener);
+      myEditor.putUserData(COVERAGE_DOCUMENT_LISTENER, null);
     }
   }
 
@@ -292,7 +266,7 @@ public class SrcFileAnnotator implements Disposable {
       }
     }
 
-    if (myFile.getUserData(COVERAGE_HIGHLIGHTERS) != null) {
+    if (myEditor.getUserData(COVERAGE_HIGHLIGHTERS) != null) {
       //highlighters already collected - no need to do it twice
       return;
     }
@@ -390,7 +364,7 @@ public class SrcFileAnnotator implements Disposable {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (highlighters.size() > 0) {
-          myFile.putUserData(COVERAGE_HIGHLIGHTERS, highlighters);
+          myEditor.putUserData(COVERAGE_HIGHLIGHTERS, highlighters);
         }
       }
     });
@@ -400,7 +374,7 @@ public class SrcFileAnnotator implements Disposable {
       public void documentChanged(final DocumentEvent e) {
         myNewToOldLines = null;
         myOldToNewLines = null;
-        List<RangeHighlighter> rangeHighlighters = myFile.getUserData(COVERAGE_HIGHLIGHTERS);
+        List<RangeHighlighter> rangeHighlighters = myEditor.getUserData(COVERAGE_HIGHLIGHTERS);
         if (rangeHighlighters == null) rangeHighlighters = new ArrayList<RangeHighlighter>();
         int offset = e.getOffset();
         final int lineNumber = myDocument.getLineNumber(offset);
@@ -435,7 +409,7 @@ public class SrcFileAnnotator implements Disposable {
                         highlighters.add(rangeHighlighter);
                       }
                     }
-                    myFile.putUserData(COVERAGE_HIGHLIGHTERS, highlighters.size() > 0 ? highlighters : null);
+                    myEditor.putUserData(COVERAGE_HIGHLIGHTERS, highlighters.size() > 0 ? highlighters : null);
                   }
                 });
               }
@@ -445,7 +419,7 @@ public class SrcFileAnnotator implements Disposable {
       }
     };
     myDocument.addDocumentListener(documentListener);
-    myFile.putUserData(COVERAGE_DOCUMENT_LISTENER, documentListener);
+    myEditor.putUserData(COVERAGE_DOCUMENT_LISTENER, documentListener);
   }
 
   private static boolean classesArePresentInCoverageData(ProjectData data, Set<String> qualifiedNames) {
