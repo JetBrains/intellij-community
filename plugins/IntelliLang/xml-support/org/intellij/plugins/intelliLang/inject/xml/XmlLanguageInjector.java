@@ -164,7 +164,10 @@ public final class XmlLanguageInjector implements MultiHostInjector {
         return;
       }
 
-      for (BaseInjection injection : myConfiguration.getInjections(LanguageInjectionSupport.XML_SUPPORT_ID)) {
+      List<BaseInjection> injections = myConfiguration.getInjections(LanguageInjectionSupport.XML_SUPPORT_ID);
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0, size = injections.size(); i < size; i++) {
+        BaseInjection injection = injections.get(i);
         if (injection.acceptsPsiElement(attribute)) {
           final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
           if (language == null) continue;
@@ -173,7 +176,8 @@ public final class XmlLanguageInjector implements MultiHostInjector {
           final List<TextRange> ranges = injection.getInjectedArea(value);
           if (ranges.isEmpty()) continue;
           final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result = new ArrayList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>();
-          final InjectedLanguage l = InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
+          final InjectedLanguage l =
+            InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
           for (TextRange textRange : ranges) {
             result.add(Trinity.create((PsiLanguageInjectionHost)value, l, textRange));
           }
