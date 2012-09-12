@@ -149,6 +149,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
         return GlobalSearchScope.this.isSearchInLibraries();
       }
 
+      @NonNls
       @Override
       public String toString() {
         return "UnionToLocal: (" + GlobalSearchScope.this.toString() + ", " + scope + ")";
@@ -368,6 +369,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       return 31 * myScope1.hashCode() + myScope2.hashCode();
     }
 
+    @NonNls
     @Override
     public String toString() {
       return "Intersection: (" + myScope1 + ", " + myScope2 + ")";
@@ -518,9 +520,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
       FileTypeRestrictionScope that = (FileTypeRestrictionScope)o;
 
-      if (!Arrays.equals(myFileTypes, that.myFileTypes)) return false;
-
-      return true;
+      return Arrays.equals(myFileTypes, that.myFileTypes);
     }
 
     @Override
