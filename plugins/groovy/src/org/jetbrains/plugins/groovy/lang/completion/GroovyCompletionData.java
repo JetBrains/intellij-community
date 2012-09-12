@@ -405,7 +405,7 @@ public class GroovyCompletionData {
     }
     if (GroovyCompletionUtil.isNewStatement(context, true)) {
       final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(offset - 1, context);
-      if (leaf != null && leaf.getParent() instanceof GrStatementOwner) {
+      if (leaf != null && (leaf.getParent() instanceof GrStatementOwner || leaf.getParent() instanceof GrLabeledStatement)) {
         return true;
       }
     }
@@ -429,6 +429,7 @@ public class GroovyCompletionData {
         }
 
         if (superParent instanceof GrStatementOwner ||
+            superParent instanceof GrLabeledStatement ||
             superParent instanceof GrIfStatement ||
             superParent instanceof GrForStatement ||
             superParent instanceof GrWhileStatement) {

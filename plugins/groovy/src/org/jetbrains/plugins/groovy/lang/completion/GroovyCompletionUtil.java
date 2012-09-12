@@ -53,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -140,8 +141,13 @@ public class GroovyCompletionUtil {
   public static boolean isNewStatement(PsiElement element, boolean canBeAfterBrace) {
     PsiElement previousLeaf = getLeafByOffset(element.getTextRange().getStartOffset() - 1, element);
     previousLeaf = PsiImplUtil.realPrevious(previousLeaf);
-    if (previousLeaf != null && canBeAfterBrace && mLCURLY.equals(previousLeaf.getNode().getElementType())) {
-      return true;
+    if (previousLeaf != null) {
+      if (canBeAfterBrace && mLCURLY.equals(previousLeaf.getNode().getElementType())) {
+        return true;
+      }
+      if (mCOLON.equals(previousLeaf.getNode().getElementType()) && previousLeaf.getParent() instanceof GrLabeledStatement) {
+        return true;
+      }
     }
     return (previousLeaf == null || SEPARATORS.contains(previousLeaf.getNode().getElementType()));
   }
@@ -206,7 +212,8 @@ public class GroovyCompletionUtil {
       if (parent instanceof GrApplicationStatement) {
         parent = parent.getParent();
       }
-      if ((parent instanceof GrCodeBlock || parent instanceof GrCaseSection) && isNewStatement(context, true)) {
+      if ((parent instanceof GrCodeBlock || parent instanceof GrCaseSection || parent instanceof GrLabeledStatement) &&
+          isNewStatement(context, true)) {
         return true;
       }
     }
