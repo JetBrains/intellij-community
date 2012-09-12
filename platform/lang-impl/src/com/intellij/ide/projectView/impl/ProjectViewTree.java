@@ -29,6 +29,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.JBTreeWithHintProvider;
 import com.intellij.ui.tabs.FileColorManagerImpl;
+import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,7 +117,7 @@ public abstract class ProjectViewTree extends JBTreeWithHintProvider {
   }
 
   @Nullable
-  public static Color getColorForObject(Object object, Project project, @NotNull NullableFunction<Object, PsiElement> converter) {
+  public static Color getColorForObject(Object object, Project project, @NotNull Function<Object, PsiElement> converter) {
     Color color = null;
     final PsiElement psi = converter.fun(object);
     if (psi != null) {

@@ -345,9 +345,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         if (component instanceof LoadingNode && pathObjects.length > 1) {
           component = pathObjects[pathObjects.length - 2];
         }
-        final Object object = ((DefaultMutableTreeNode)component).getUserObject();
 
-        Color color = getFileColorFor(object);
+        Color color = getFileColorFor(((DefaultMutableTreeNode)component));
         if (color != null) {
           g.setColor(color);
           g.fillRect(0, bounds.y, getWidth(), bounds.height);
@@ -371,6 +370,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Nullable
   public Color getFileColorFor(Object object) {
     return null;
+  }
+
+  @Nullable
+  public Color getFileColorFor(DefaultMutableTreeNode node) {
+    return getFileColorFor(node.getUserObject());
   }
 
   @Override

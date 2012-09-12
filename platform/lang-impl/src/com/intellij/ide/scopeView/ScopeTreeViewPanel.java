@@ -26,6 +26,7 @@ import com.intellij.ide.projectView.ProjectViewNodeDecorator;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.scopeView.nodes.BasePsiNode;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.DeleteHandler;
@@ -67,6 +68,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.*;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
@@ -101,13 +103,24 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private final IdeView myIdeView = new MyIdeView();
   private final MyPsiTreeChangeAdapter myPsiTreeChangeAdapter = new MyPsiTreeChangeAdapter();
 
-  private final DnDAwareTree myTree = new DnDAwareTree();
+  private final DnDAwareTree myTree = new DnDAwareTree(){
+    @Override
+    public boolean isFileColorsEnabled() {
+      return ProjectViewTree.isFileColorsEnabledFor(this);
+    }
+
+    @Nullable
+    @Override
+    public Color getFileColorFor(DefaultMutableTreeNode node) {
+      return ProjectViewTree.getColorForObject(((PackageDependenciesNode)node).getPsiElement(), myProject, Function.ID);
+    }
+  };
   private final Project myProject;
   private FileTreeModelBuilder myBuilder;
 
   private String CURRENT_SCOPE_NAME;
 
-  private TreeExpansionMonitor myTreeExpansionMonitor;
+  private TreeExpansionMonitor<PackageDependenciesNode> myTreeExpansionMonitor;
   private CopyPasteDelegator myCopyPasteDelegator;
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
