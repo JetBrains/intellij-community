@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -146,7 +147,12 @@ public class DomImplUtil {
     if (!tag.isValid()) {
       throw new AssertionError("Invalid tag");
     }
-    return ContainerUtil.findAll(tag.getSubTags(), new Condition<XmlTag>() {
+    final XmlTag[] tags = tag.getSubTags();
+    if (tags.length == 0) {
+      return Collections.emptyList();
+    }
+
+    return ContainerUtil.findAll(tags, new Condition<XmlTag>() {
       public boolean value(XmlTag childTag) {
         try {
           return isNameSuitable(name, childTag.getLocalName(), childTag.getName(), childTag.getNamespace(), file);
@@ -166,6 +172,10 @@ public class DomImplUtil {
   }
 
   public static List<XmlTag> findSubTags(final XmlTag[] tags, final EvaluatedXmlName name, final XmlFile file) {
+    if (tags.length == 0) {
+      return Collections.emptyList();
+    }
+
     return ContainerUtil.findAll(tags, new Condition<XmlTag>() {
       public boolean value(XmlTag childTag) {
         return isNameSuitable(name, childTag, file);
@@ -248,12 +258,22 @@ public class DomImplUtil {
   }
 
   public static List<XmlTag> getCustomSubTags(final DomInvocationHandler handler, final XmlTag[] subTags, final XmlFile file) {
+    if (subTags.length == 0) {
+      return Collections.emptyList();
+    }
+
     final DomGenericInfoEx info = handler.getGenericInfo();
     final Set<XmlName> usedNames = new THashSet<XmlName>();
-    for (final DomCollectionChildDescription description : info.getCollectionChildrenDescriptions()) {
+    List<? extends DomCollectionChildDescription> collectionChildrenDescriptions = info.getCollectionChildrenDescriptions();
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0, size = collectionChildrenDescriptions.size(); i < size; i++) {
+      DomCollectionChildDescription description = collectionChildrenDescriptions.get(i);
       usedNames.add(description.getXmlName());
     }
-    for (final DomFixedChildDescription description : info.getFixedChildrenDescriptions()) {
+    List<? extends DomFixedChildDescription> fixedChildrenDescriptions = info.getFixedChildrenDescriptions();
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0, size = fixedChildrenDescriptions.size(); i < size; i++) {
+      DomFixedChildDescription description = fixedChildrenDescriptions.get(i);
       usedNames.add(description.getXmlName());
     }
     return ContainerUtil.findAll(subTags, new Condition<XmlTag>() {
