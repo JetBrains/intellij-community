@@ -152,11 +152,11 @@ public class ChooseCheckoutMode extends WizardStep {
         final StringBuilder message = composeLocationsMessage();
         myMessage.setText(message.toString());
         show(MESSAGE);
-        getWizard().enableNextAndFinish();
+        getWizard().enableNext();
       }
     }
     else if (selectedLocation == null) {
-      getWizard().disableNextAndFinish();
+      getWizard().disableNext();
     }
   }
 

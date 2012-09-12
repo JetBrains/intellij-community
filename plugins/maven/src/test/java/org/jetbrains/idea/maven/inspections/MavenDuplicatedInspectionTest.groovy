@@ -33,15 +33,15 @@ class MavenDuplicatedInspectionTest extends MavenDomTestCase {
 
   <dependencies>
     <<warning>dependency</warning>>
-      <groupId>commons-collections</groupId>
-      <artifactId>commons-collections</artifactId>
-      <version>LATEST</version>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.2</version>
       <scope>provided</scope>
     </dependency>
     <<warning>dependency</warning>>
-      <groupId>commons-collections</groupId>
-      <artifactId>commons-collections</artifactId>
-      <version>LATEST</version>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.2</version>
     </dependency>
   </dependencies>
 """)
@@ -52,7 +52,7 @@ class MavenDuplicatedInspectionTest extends MavenDomTestCase {
   public void testDuplicatedInParent() {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection)
 
-    def m = createModulePom("child", """
+    createModulePom("child", """
   <groupId>mavenParent</groupId>
   <artifactId>child</artifactId>
   <version>1.0</version>
@@ -65,9 +65,9 @@ class MavenDuplicatedInspectionTest extends MavenDomTestCase {
 
   <dependencies>
     <dependency>
-      <groupId>commons-collections</groupId>
-      <artifactId>commons-collections</artifactId>
-      <version>LATEST</version>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.2</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
@@ -91,9 +91,9 @@ class MavenDuplicatedInspectionTest extends MavenDomTestCase {
 
   <dependencies>
     <dependency>
-      <groupId>commons-collections</groupId>
-      <artifactId>commons-collections</artifactId>
-      <version>LATEST</version>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.2</version>
       <scope>provided</scope>
     </dependency>
     <<warning>dependency</warning>>

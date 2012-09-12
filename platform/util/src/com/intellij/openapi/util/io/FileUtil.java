@@ -109,34 +109,49 @@ public class FileUtil extends FileUtilRt {
     return isAncestor(ancestor.getPath(), file.getPath(), strict);
   }
 
-  public static boolean isAncestor(@NotNull String ancestor, @NotNull String descendant, boolean strict) {
+  public static boolean isAncestor(@NotNull String ancestor, @NotNull String file, boolean strict) {
     String ancestorPath = toCanonicalPath(ancestor);
-    String filePath = toCanonicalPath(descendant);
+    String filePath = toCanonicalPath(file);
 
     if (ancestorPath == null || filePath == null) {
       return false;
     }
 
-    return isCanonicalAncestor(strict, ancestorPath, filePath);
+    return startsWith(filePath, ancestorPath, strict, SystemInfo.isFileSystemCaseSensitive);
   }
 
-  private static boolean isCanonicalAncestor(boolean strict, String ancestorPath, String filePath) {
-    boolean startsWith = SystemInfo.isFileSystemCaseSensitive ? StringUtil.startsWith(filePath, ancestorPath)
-                                                              : StringUtil.startsWithIgnoreCase(filePath, ancestorPath);
-    if (!startsWith) {
-      return false;
-    }
+  public static boolean startsWith(@NotNull String path, @NotNull String start) {
+    return startsWith(path, start, false, SystemInfo.isFileSystemCaseSensitive);
+  }
 
-    return ancestorPath.length() > 0 && ancestorPath.charAt(ancestorPath.length() - 1) == '/' ||
-           filePath.length() > ancestorPath.length() && filePath.charAt(ancestorPath.length()) == '/' ||
-           !strict && filePath.length() == ancestorPath.length();
+  public static boolean startsWith(@NotNull String path, @NotNull String start, boolean caseSensitive) {
+    return startsWith(path, start, false, caseSensitive);
+  }
+
+  private static boolean startsWith(@NotNull String path, @NotNull String start, boolean strict, boolean caseSensitive) {
+    final int length1 = path.length();
+    final int length2 = start.length();
+    if (length2 == 0) return true;
+    if (length2 > length1) return false;
+    if (!path.regionMatches(!caseSensitive, 0, start, 0, length2)) return false;
+    if (length1 == length2) return !strict;
+    char last2 = start.charAt(length2 - 1);
+    char next1;
+    if (last2 == '/' || last2 == File.separatorChar) {
+      next1 = path.charAt(length2 - 1);
+    }
+    else {
+      next1 = path.charAt(length2);
+    }
+    return next1 == '/' || next1 == File.separatorChar;
   }
 
   /**
    * @param removeProcessor parent, child
    */
-  public static<T> Collection<T> removeAncestors(final Collection<T> files, final Convertor<T, String> convertor,
-                                                 final PairProcessor<T, T> removeProcessor) {
+  public static <T> Collection<T> removeAncestors(final Collection<T> files,
+                                                  final Convertor<T, String> convertor,
+                                                  final PairProcessor<T, T> removeProcessor) {
     if (files.isEmpty()) return files;
     final TreeMap<String, T> paths = new TreeMap<String, T>();
     for (T file : files) {
@@ -156,7 +171,7 @@ public class FileUtil extends FileUtilRt {
         // possible parents
         final String parent = ordered.get(j).getKey();
         if (parent == null) continue;
-        if (isCanonicalAncestor(false, parent, child) && removeProcessor.process(ordered.get(j).getValue(), entry.getValue())) {
+        if (startsWith(child, parent) && removeProcessor.process(ordered.get(j).getValue(), entry.getValue())) {
           parentNotFound = false;
           break;
         }
@@ -366,7 +381,7 @@ public class FileUtil extends FileUtilRt {
     }, null);
 
     try {
-// Attempt to execute on pooled thread
+      // attempt to execute on pooled thread
       final Class<?> aClass = Class.forName("com.intellij.openapi.application.ApplicationManager");
       final Method getApplicationMethod = aClass.getMethod("getApplication");
       final Object application = getApplicationMethod.invoke(null);
@@ -374,13 +389,12 @@ public class FileUtil extends FileUtilRt {
       executeOnPooledThreadMethod.invoke(application, deleteFilesTask);
     }
     catch (Exception e) {
-      //noinspection HardCodedStringLiteral
-      Thread t = new Thread(deleteFilesTask, "File deletion thread");
-      t.start();
+      new Thread(deleteFilesTask, "File deletion thread").start();
     }
     return deleteFilesTask;
   }
 
+  @Nullable
   private static File renameToTempFileOrDelete(@NotNull File file) {
     final File tempDir = new File(getTempDirectory());
     boolean isSameDrive = true;
@@ -821,28 +835,6 @@ public class FileUtil extends FileUtilRt {
     delete(source);
   }
 
-  public static boolean startsWith(@NotNull @NonNls String path, @NotNull @NonNls String start) {
-    return startsWith(path, start, SystemInfo.isFileSystemCaseSensitive);
-  }
-
-  public static boolean startsWith(@NotNull String path, @NotNull String start, final boolean caseSensitive) {
-    final int length1 = path.length();
-    final int length2 = start.length();
-    if (length2 == 0) return true;
-    if (length2 > length1) return false;
-    if (!path.regionMatches(!caseSensitive, 0, start, 0, length2)) return false;
-    if (length1 == length2) return true;
-    char last2 = start.charAt(length2 - 1);
-    char next1;
-    if (last2 == '/' || last2 == File.separatorChar) {
-      next1 = path.charAt(length2 - 1);
-    }
-    else {
-      next1 = path.charAt(length2);
-    }
-    return next1 == '/' || next1 == File.separatorChar;
-  }
-
   public static boolean filesEqual(@Nullable File file1, @Nullable File file2) {
     // on MacOS java.io.File.equals() is incorrectly case-sensitive
     return pathsEqual(file1 == null ? null : file1.getPath(),
@@ -874,9 +866,8 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static int pathHashCode(@Nullable String path) {
-    return StringUtil.isEmpty(path)? 0 : PATH_HASHING_STRATEGY.computeHashCode(toSystemIndependentName(path));
+    return StringUtil.isEmpty(path) || path == null ? 0 : PATH_HASHING_STRATEGY.computeHashCode(toSystemIndependentName(path));
   }
-
 
   @NotNull
   public static String getExtension(@NotNull String fileName) {
@@ -904,9 +895,12 @@ public class FileUtil extends FileUtilRt {
     if (dirs == null) return;
     for (File dir : dirs) {
       if (dir.isFile()) {
-        final String path = toSystemIndependentName(getRelativePath(absoluteRoot, dir));
-        if (pattern.matcher(path).matches()) {
-          files.add(dir);
+        final String relativePath = getRelativePath(absoluteRoot, dir);
+        if (relativePath != null) {
+          final String path = toSystemIndependentName(relativePath);
+          if (pattern.matcher(path).matches()) {
+            files.add(dir);
+          }
         }
       }
       else {

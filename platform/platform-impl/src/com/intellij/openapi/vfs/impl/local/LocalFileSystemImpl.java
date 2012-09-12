@@ -271,8 +271,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
   private void markPathsDirty(final List<String> dirtyFiles) {
     for (String dirtyFile : dirtyFiles) {
-      String path = dirtyFile.replace(File.separatorChar, '/');
-      VirtualFile file = findFileByPathIfCached(path);
+      VirtualFile file = findFileByPathIfCached(dirtyFile);
       if (file instanceof NewVirtualFile) {
         ((NewVirtualFile)file).markDirty();
       }
@@ -281,8 +280,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
   private void markFlatDirsDirty(final List<String> dirtyFiles) {
     for (String dirtyFile : dirtyFiles) {
-      String path = dirtyFile.replace(File.separatorChar, '/');
-      VirtualFile file = findFileByPathIfCached(path);
+      VirtualFile file = findFileByPathIfCached(dirtyFile);
       if (file instanceof NewVirtualFile) {
         final NewVirtualFile nvf = (NewVirtualFile)file;
         nvf.markDirty();
@@ -295,8 +293,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
   private void markRecursiveDirsDirty(final List<String> dirtyFiles) {
     for (String dirtyFile : dirtyFiles) {
-      String path = dirtyFile.replace(File.separatorChar, '/');
-      VirtualFile file = findFileByPathIfCached(path);
+      VirtualFile file = findFileByPathIfCached(dirtyFile);
       if (file instanceof NewVirtualFile) {
         ((NewVirtualFile)file).markDirtyRecursively();
       }

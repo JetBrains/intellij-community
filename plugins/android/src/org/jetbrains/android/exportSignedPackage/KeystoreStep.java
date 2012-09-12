@@ -89,7 +89,7 @@ class KeystoreStep extends ExportSignedPackageWizardStep implements ApkSigningSe
   }
 
   @Override
-  protected JComponent getPreferredFocusedComponent() {
+  public JComponent getPreferredFocusedComponent() {
     if (myKeyStorePathField.getText().length() == 0) {
       return myKeyStorePathField;
     }
