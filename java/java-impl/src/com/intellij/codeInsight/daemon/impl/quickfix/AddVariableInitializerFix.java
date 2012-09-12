@@ -54,6 +54,7 @@ public class AddVariableInitializerFix implements IntentionAction {
         && myVariable.isValid()
         && myVariable.getManager().isInProject(myVariable)
         && !myVariable.hasInitializer()
+        && !(myVariable instanceof PsiParameter)
         ;
   }
 
