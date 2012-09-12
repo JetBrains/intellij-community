@@ -25,7 +25,7 @@ public class PyOverrideTest extends PyTestCase {
   }
 
   private void doTest3k() {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON31);
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON32);
     try {
       doTest();
     }
