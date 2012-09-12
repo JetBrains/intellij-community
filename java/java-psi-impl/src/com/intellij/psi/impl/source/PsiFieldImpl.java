@@ -299,7 +299,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
         if (initializer == null) return null;
       }
       else{
-        String initializerText = getInitializerText();
+        String initializerText = stub.getInitializerText();
         if (initializerText == null) return null;
 
         if (PsiFieldStub.INITIALIZER_NOT_STORED.equals(initializerText)) return null;
