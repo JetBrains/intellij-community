@@ -17,32 +17,24 @@ package com.intellij.compiler.impl;
 
 import com.intellij.codeInsight.daemon.impl.actions.SuppressFix;
 import com.intellij.codeInsight.daemon.impl.actions.SuppressForClassFix;
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.HelpID;
-import com.intellij.compiler.options.CompilerConfigurable;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.errorTreeView.*;
-import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.errorTreeView.ErrorTreeElement;
+import com.intellij.ide.errorTreeView.NavigatableMessageElement;
+import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.java.LanguageLevel;
@@ -61,7 +53,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
   }
 
   protected void addExtraPopupMenuActions(DefaultActionGroup group) {
-    group.add(new ExcludeFromCompileAction());
+    group.add(new ExcludeFromCompileAction(myProject, this));
     group.addSeparator();
     group.add(new SuppressJavacWarningsAction());
     group.add(new SuppressJavacWarningForClassAction());
@@ -76,76 +68,6 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
 
   protected boolean shouldShowFirstErrorInEditor() {
     return CompilerWorkspaceConfiguration.getInstance(myProject).AUTO_SHOW_ERRORS_IN_EDITOR;
-  }
-
-  private static class CompilerPropertiesAction extends AnAction {
-
-    public CompilerPropertiesAction() {
-      super(CompilerBundle.message("action.compiler.properties.text"), null, AllIcons.General.IdeOptions);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-      if (project == null) return;
-      final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-      util.editConfigurable(project, new CompilerConfigurable(project));
-    }
-  }
-
-  private class ExcludeFromCompileAction extends AnAction {
-    public ExcludeFromCompileAction() {
-      super(CompilerBundle.message("actions.exclude.from.compile.text"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      VirtualFile file = getSelectedFile();
-
-      if (file != null && file.isValid()) {
-        ExcludeEntryDescription description = new ExcludeEntryDescription(file, false, true, myProject);
-        ((CompilerConfigurationImpl) CompilerConfiguration.getInstance(myProject)).getExcludedEntriesConfiguration().addExcludeEntryDescription(description);
-        FileStatusManager.getInstance(myProject).fileStatusesChanged();
-      }
-    }
-
-    private VirtualFile getSelectedFile() {
-      final ErrorTreeElement selectedElement = getSelectedErrorTreeElement();
-      if (selectedElement == null) return null;
-
-      String filePresentableText = getSelectedFilePresentableText(selectedElement);
-
-      if (filePresentableText == null) return null;
-
-      return LocalFileSystem.getInstance().findFileByPath(filePresentableText.replace('\\', '/'));
-    }
-
-    private String getSelectedFilePresentableText(final ErrorTreeElement selectedElement) {
-      String filePresentableText = null;
-
-      if (selectedElement instanceof GroupingElement) {
-        GroupingElement groupingElement = (GroupingElement)selectedElement;
-        filePresentableText = groupingElement.getName();
-      }
-      else {
-        NodeDescriptor parentDescriptor = getSelectedNodeDescriptor().getParentDescriptor();
-        if (parentDescriptor instanceof ErrorTreeNodeDescriptor) {
-          ErrorTreeNodeDescriptor treeNodeDescriptor = (ErrorTreeNodeDescriptor)parentDescriptor;
-          ErrorTreeElement element = treeNodeDescriptor.getElement();
-          if (element instanceof GroupingElement) {
-            GroupingElement groupingElement = (GroupingElement)element;
-            filePresentableText = groupingElement.getName();
-          }
-        }
-
-      }
-      return filePresentableText;
-    }
-
-    public void update(AnActionEvent e) {
-      final Presentation presentation = e.getPresentation();
-      final boolean isApplicable = getSelectedFile() != null;
-      presentation.setEnabled(isApplicable);
-      presentation.setVisible(isApplicable);
-    }
   }
 
   private class SuppressJavacWarningsAction extends AnAction {
@@ -181,7 +103,9 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
       presentation.setVisible(false);
       presentation.setEnabled(false);
       final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-      if (project == null) return;
+      if (project == null) {
+        return;
+      }
       final ErrorTreeElement errorTreeElement = getSelectedErrorTreeElement();
       if (errorTreeElement instanceof NavigatableMessageElement) {
         final NavigatableMessageElement messageElement = (NavigatableMessageElement)errorTreeElement;
@@ -192,17 +116,27 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
             if (navigatable instanceof OpenFileDescriptor) {
               final OpenFileDescriptor fileDescriptor = (OpenFileDescriptor)navigatable;
               final VirtualFile virtualFile = fileDescriptor.getFile();
-              final Module module = ModuleUtil.findModuleForFile(virtualFile, project);
-              if (module == null) return;
+              final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
+              if (module == null) {
+                return;
+              }
               final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
-              if (jdk == null) return;
+              if (jdk == null) {
+                return;
+              }
               final boolean is_1_5 = JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_5);
-              if (!is_1_5) return;
+              if (!is_1_5) {
+                return;
+              }
               final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-              if (psiFile == null) return;
+              if (psiFile == null) {
+                return;
+              }
               if (LanguageLevelUtil.getEffectiveLanguageLevel(module).compareTo(LanguageLevel.JDK_1_5) < 0) return;
               final PsiElement context = psiFile.findElementAt(fileDescriptor.getOffset());
-              if (context == null) return;
+              if (context == null) {
+                return;
+              }
               final String id = text[0].substring(1, text[0].indexOf("]"));
               final SuppressFix suppressInspectionFix = getSuppressAction(id);
               final boolean available = suppressInspectionFix.isAvailable(project, null, context);

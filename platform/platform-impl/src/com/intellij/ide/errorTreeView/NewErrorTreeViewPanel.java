@@ -94,7 +94,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     this(project, helpId, createExitAction, createToolbar, null);
   }
 
-  public NewErrorTreeViewPanel(Project project, String helpId, boolean createExitAction, boolean createToolbar, Runnable rerunAction) {
+  public NewErrorTreeViewPanel(Project project, String helpId, boolean createExitAction, boolean createToolbar, @Nullable Runnable rerunAction) {
     myProject = project;
     myHelpId = helpId;
     myCreateExitAction = createExitAction;
@@ -297,18 +297,19 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     return this;
   }
 
+  @Nullable
   private NavigatableMessageElement getSelectedMessageElement() {
     final ErrorTreeElement selectedElement = getSelectedErrorTreeElement();
     return selectedElement instanceof NavigatableMessageElement ? (NavigatableMessageElement)selectedElement : null;
   }
 
+  @Nullable
   public ErrorTreeElement getSelectedErrorTreeElement() {
-    ErrorTreeNodeDescriptor treeNodeDescriptor = getSelectedNodeDescriptor();
-    if (treeNodeDescriptor == null) return null;
-
-    return treeNodeDescriptor.getElement();
+    final ErrorTreeNodeDescriptor treeNodeDescriptor = getSelectedNodeDescriptor();
+    return treeNodeDescriptor == null? null : treeNodeDescriptor.getElement();
   }
 
+  @Nullable
   public ErrorTreeNodeDescriptor getSelectedNodeDescriptor() {
     TreePath path = myTree.getSelectionPath();
     if (path == null) {
@@ -444,7 +445,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
   }
 
-  private JPanel createToolbarPanel(Runnable rerunAction) {
+  private JPanel createToolbarPanel(@Nullable Runnable rerunAction) {
     AnAction closeMessageViewAction = new CloseTabToolbarAction() {
       public void actionPerformed(AnActionEvent e) {
         close();
