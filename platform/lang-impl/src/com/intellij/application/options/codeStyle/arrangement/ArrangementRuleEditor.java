@@ -109,7 +109,9 @@ public class ArrangementRuleEditor extends JPanel {
       return;
     }
 
-    Map<ArrangementSettingType, Collection<?>> available = ArrangementConfigUtil.buildAvailableConditions(myFilter, model.getRule().getMatcher().getCondition());
+    Map<ArrangementSettingType, Collection<?>> available = ArrangementConfigUtil.buildAvailableConditions(
+      myFilter, model.getRule().getMatcher().getCondition()
+    );
     for (Collection<?> ids : available.values()) {
       for (Object id : ids) {
         ArrangementAtomNodeComponent component = myComponents.get(id);
@@ -134,7 +136,7 @@ public class ArrangementRuleEditor extends JPanel {
       return;
     }
     ArrangementAtomNodeComponent clickedComponent = getNodeComponentAt(e.getLocationOnScreen());
-    if (clickedComponent == null) {
+    if (clickedComponent == null || !clickedComponent.isEnabled()) {
       return;
     }
     ArrangementAtomMatchCondition chosenCondition = clickedComponent.getMatchCondition();
@@ -170,6 +172,7 @@ public class ArrangementRuleEditor extends JPanel {
       }
     }
     myModel.addAndCondition(chosenCondition);
+    updateState(myModel);
   }
 
   @Nullable

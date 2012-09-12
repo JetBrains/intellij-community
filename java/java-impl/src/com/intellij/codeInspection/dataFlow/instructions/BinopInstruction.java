@@ -34,20 +34,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.psi.JavaTokenType.*;
+
 public class BinopInstruction extends BranchingInstruction {
+  private static final TokenSet ourSignificantOperations = TokenSet.create(EQEQ, NE, LT, GT, LE, GE, INSTANCEOF_KEYWORD, PLUS);
   private final IElementType myOperationSign;
   private final Project myProject;
 
   public BinopInstruction(IElementType opSign, PsiElement psiAnchor, @NotNull Project project) {
     myProject = project;
-    if (JavaTokenType.EQEQ == opSign || JavaTokenType.NE == opSign || JavaTokenType.INSTANCEOF_KEYWORD == opSign || JavaTokenType.PLUS == opSign) {
-      myOperationSign = opSign;
-    }
-    else {
-      myOperationSign = null;
-    }
+    myOperationSign = ourSignificantOperations.contains(opSign) ? opSign : null;
 
     setPsiAnchor(psiAnchor);
   }

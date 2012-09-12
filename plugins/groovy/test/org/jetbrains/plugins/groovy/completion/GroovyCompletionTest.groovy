@@ -1444,4 +1444,27 @@ def foo(Base<String> b){}
 foo(new Inh<String>()<caret>)
 ''')
   }
+
+  void testPropertiesOfBaseClass() {
+    myFixture.addFileToProject('Base.groovy', '''\
+class Base {
+  protected String foooo = 'field'
+
+  public String getFoooo() {'getter'}
+}
+''')
+    doBasicTest('''\
+class Inheritor extends Base {
+  def test() {
+    assert fooo<caret> == 'getter'
+  }
+}
+''', '''\
+class Inheritor extends Base {
+  def test() {
+    assert foooo<caret> == 'getter'
+  }
+}
+''')
+  }
 }

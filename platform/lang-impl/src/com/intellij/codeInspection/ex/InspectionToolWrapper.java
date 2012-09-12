@@ -57,8 +57,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   /** Copy ctor */
   protected InspectionToolWrapper(InspectionToolWrapper<T, E> other) {
     myEP = other.myEP;
-    //noinspection unchecked
-    myTool = other.myTool == null ? null : (T)InspectionToolRegistrar.instantiateTool(other.myTool.getClass());
+    myTool = other.myTool;
   }
 
   public abstract InspectionToolWrapper<T, E> createCopy();

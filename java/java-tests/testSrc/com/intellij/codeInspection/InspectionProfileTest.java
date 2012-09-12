@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.testFramework.LightIdeaTestCase;
 import org.jdom.Document;
@@ -220,6 +221,42 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext(false);
     context.setExternalProfile(profile);
     context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
+  }
+
+  public void testInspectionsInitialization() throws Exception {
+
+    InspectionProfileImpl foo = new InspectionProfileImpl("foo");
+    assertEquals(0, countInitializedTools(foo));
+    foo.initInspectionTools(getProject());
+    assertEquals(0, countInitializedTools(foo));
+
+    ModifiableModel model = foo.getModifiableModel();
+    assertEquals(0, countInitializedTools(model));
+    model.commit();
+    assertEquals(0, countInitializedTools(model));
+    assertEquals(0, countInitializedTools(foo));
+
+    model = foo.getModifiableModel();
+    assertEquals(0, countInitializedTools(model));
+    List<ScopeToolState> tools = ((InspectionProfileImpl)model).getAllTools();
+    for (ScopeToolState tool : tools) {
+      if (!tool.isEnabled()) {
+        tool.setEnabled(true);
+      }
+    }
+    model.commit();
+    assertEquals(0, countInitializedTools(model));
+  }
+
+  public static int countInitializedTools(Profile foo) {
+    int i = 0;
+    List<ScopeToolState> tools = ((InspectionProfileImpl)foo).getAllTools();
+    for (ScopeToolState tool : tools) {
+      InspectionProfileEntry entry = tool.getTool();
+      assertTrue(entry instanceof InspectionToolWrapper);
+      if (entry.isInitialized()) i++;
+    }
+    return i;
   }
 
   private static LocalInspectionToolWrapper createTool(String s) {

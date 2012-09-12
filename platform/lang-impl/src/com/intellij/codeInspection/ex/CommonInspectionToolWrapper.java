@@ -113,10 +113,6 @@ public class CommonInspectionToolWrapper extends InspectionToolWrapper<Inspectio
     getTool().cleanup();
   }
 
-  public boolean isEnabledByDefault() {
-    return getTool().isEnabledByDefault();
-  }
-
   @Nullable
   @Override
   public QuickFixAction[] getQuickFixes(RefEntity[] refElements) {

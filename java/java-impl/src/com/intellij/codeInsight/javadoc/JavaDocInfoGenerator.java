@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
@@ -53,22 +52,23 @@ import java.util.regex.Pattern;
 public class JavaDocInfoGenerator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.javadoc.JavaDocInfoGenerator");
 
-  private static final @NonNls Pattern ourNotDot = Pattern.compile("[^.]");
+  private static final @NonNls Pattern ourNotDot      = Pattern.compile("[^.]");
   private static final @NonNls Pattern ourWhitespaces = Pattern.compile("[ \\n\\r\\t]+");
 
-  private final Project myProject;
-  private final PsiElement myElement;
   private static final @NonNls String THROWS_KEYWORD = "throws";
-  private static final @NonNls String BR_TAG = "<br>";
-  private static final @NonNls String LINK_TAG = "link";
-  private static final @NonNls String LITERAL_TAG = "literal";
-  private static final @NonNls String CODE_TAG = "code";
-  private static final @NonNls String LINKPLAIN_TAG = "linkplain";
+  private static final @NonNls String BR_TAG         = "<br>";
+  private static final @NonNls String LINK_TAG       = "link";
+  private static final @NonNls String LITERAL_TAG    = "literal";
+  private static final @NonNls String CODE_TAG       = "code";
+  private static final @NonNls String LINKPLAIN_TAG  = "linkplain";
   private static final @NonNls String INHERITDOC_TAG = "inheritDoc";
-  private static final @NonNls String DOCROOT_TAG = "docRoot";
-  private static final @NonNls String VALUE_TAG = "value";
-
-  interface InheritDocProvider <T> {
+  private static final @NonNls String DOCROOT_TAG    = "docRoot";
+  private static final @NonNls String VALUE_TAG      = "value";
+  
+  private final Project    myProject;
+  private final PsiElement myElement;
+  
+  interface InheritDocProvider<T> {
     Pair<T, InheritDocProvider<T>> getInheritDoc();
 
     PsiClass getElement();
@@ -87,7 +87,8 @@ public class JavaDocInfoGenerator {
   private static final InheritDocProvider<PsiElement[]> ourEmptyElementsProvider = mapProvider(ourEmptyProvider, false);
 
   private static InheritDocProvider<PsiElement[]> mapProvider(final InheritDocProvider<PsiDocTag> i,
-                                                              final boolean dropFirst) {
+                                                              final boolean dropFirst)
+  {
     return new InheritDocProvider<PsiElement[]>() {
       public Pair<PsiElement[], InheritDocProvider<PsiElement[]>> getInheritDoc() {
         Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = i.getInheritDoc();
@@ -205,6 +206,7 @@ public class JavaDocInfoGenerator {
   @Nullable
   public String generateDocInfo(List<String> docURLs) {
     StringBuilder buffer = new StringBuilder();
+    
     if (myElement instanceof PsiClass) {
       generateClassJavaDoc(buffer, (PsiClass)myElement);
     }
@@ -545,6 +547,8 @@ public class JavaDocInfoGenerator {
   private static void appendInitializer(StringBuilder buffer, PsiVariable variable) {
     PsiExpression initializer = variable.getInitializer();
     if (initializer != null) {
+      buffer.append(" = ");
+
       String text = initializer.getText();
       text = text.trim();
       int index1 = text.indexOf('\n');
@@ -553,13 +557,15 @@ public class JavaDocInfoGenerator {
       if (index2 < 0) index2 = text.length();
       int index = Math.min(index1, index2);
       boolean trunc = index < text.length();
-      text = text.substring(0, index);
-      buffer.append(" = ");
-      text = StringUtil.replace(text, "<", "&lt;");
-      text = StringUtil.replace(text, ">", "&gt;");
-      buffer.append(text);
       if (trunc) {
+        text = text.substring(0, index);
+        text = StringUtil.replace(text, "<", "&lt;");
+        text = StringUtil.replace(text, ">", "&gt;");
+        buffer.append(text);
         buffer.append("...");
+      }
+      else {
+        initializer.accept(new MyVisitor(buffer));
       }
     }
   }
@@ -1760,6 +1766,47 @@ public class JavaDocInfoGenerator {
       }
 
       return comment.findTagByName("return");
+    }
+  }
+  
+  private static class MyVisitor extends JavaElementVisitor {
+
+    @NotNull private final StringBuilder myBuffer;
+
+    MyVisitor(@NotNull StringBuilder buffer) {
+      myBuffer = buffer;
+    }
+
+    @Override
+    public void visitNewExpression(PsiNewExpression expression) {
+      myBuffer.append("new ");
+      PsiType type = expression.getType();
+      if (type != null) {
+        generateType(myBuffer, type, expression);
+      }
+      myBuffer.append("(");
+      expression.acceptChildren(this);
+      myBuffer.append(")");
+    }
+
+    @Override
+    public void visitExpressionList(PsiExpressionList list) {
+      String separator = ", ";
+      PsiExpression[] expressions = list.getExpressions();
+      for (PsiExpression expression : expressions) {
+        expression.accept(this);
+        myBuffer.append(separator);
+      }
+      if (expressions.length > 0) {
+        myBuffer.setLength(myBuffer.length() - separator.length());
+      }
+    }
+
+    @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      myBuffer.append(expression.getMethodExpression().getText()).append("(");
+      expression.getArgumentList().acceptChildren(this);
+      myBuffer.append(")");
     }
   }
 }
