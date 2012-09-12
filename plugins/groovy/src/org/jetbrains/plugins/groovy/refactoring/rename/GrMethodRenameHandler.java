@@ -39,7 +39,9 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 public class GrMethodRenameHandler implements RenameHandler, TitledHandler {
   public boolean isAvailableOnDataContext(DataContext dataContext) {
     final PsiElement element = getElement(dataContext);
-    return element instanceof GrMethod && !GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)element);
+    return element instanceof GrMethod &&
+           !GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)element) &&
+           !((PsiMethod)element).isConstructor();
   }
 
   @Nullable
