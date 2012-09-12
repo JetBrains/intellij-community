@@ -719,7 +719,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       if (callNode != null) {
         final PsiElement element = callNode.getPsi();
         if (element instanceof PyCallExpression) {
-          withSelfAssertRaises = ((PyCallExpression)element).isCalleeText(SELF_ASSERT_RAISES);
+          final PyExpression callee = ((PyCallExpression)element).getCallee();
+          if (callee != null) {
+            final String repr = PyUtil.getReadableRepr(callee, true);
+            withSelfAssertRaises = SELF_ASSERT_RAISES.equals(repr);
+          }
         }
         if (element instanceof PyReferenceExpression){
           withSelfAssertRaises = SELF_ASSERT_RAISES.equals(element.getText());
