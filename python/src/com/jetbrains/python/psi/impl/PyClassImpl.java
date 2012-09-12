@@ -146,22 +146,23 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   public PsiElement[] getSuperClassElements() {
     final PyExpression[] superExpressions = getSuperClassExpressions();
     List<PsiElement> superClasses = new ArrayList<PsiElement>();
-    for(PyExpression expr: superExpressions) {
+    for(PyExpression expr : superExpressions) {
       if (expr instanceof PyReferenceExpression) {
-        PyReferenceExpression ref = (PyReferenceExpression) expr;
-        final PsiElement result = ref.getReference(PyResolveContext.noProperties()).resolve();
-        if (result != null) {
-          superClasses.add(result);
+        final PsiPolyVariantReference ref = ((PyReferenceExpression)expr).getReference(PyResolveContext.noProperties());
+        if (ref != null) {
+          final PsiElement result = ref.resolve();
+          if (result != null) {
+            superClasses.add(result);
+          }
         }
       }
     }
     return PsiUtilCore.toPsiElementArray(superClasses);
   }
 
-  /* The implementation is manifestly lazy wrt psi scanning and uses stack rather sparingly.
-   It must be more efficient on deep and wide hierarchies, but it was more fun than efficiency that produced it.
-   */
   public Iterable<PyClassRef> iterateAncestors() {
+    // The implementation is manifestly lazy wrt psi scanning and uses stack rather sparingly.
+    // It must be more efficient on deep and wide hierarchies, but it was more fun than efficiency that produced it.
     return new AncestorsIterable(this);
   }
 
@@ -361,17 +362,17 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     List<PyClass> result = new LinkedList<PyClass>(); // need to insert to 0th position on linearize
     while (true) {
       // filter blank sequences
-      List<List<PyClass>> nonblank_sequences = new ArrayList<List<PyClass>>(sequences.size());
+      List<List<PyClass>> nonBlankSequences = new ArrayList<List<PyClass>>(sequences.size());
       for (List<PyClass> item : sequences) {
-        if (item.size() > 0) nonblank_sequences.add(item);
+        if (item.size() > 0) nonBlankSequences.add(item);
       }
-      if (nonblank_sequences.isEmpty()) return result;
+      if (nonBlankSequences.isEmpty()) return result;
       // find a clean head
       PyClass head = null; // to keep compiler happy; really head is assigned in the loop at least once.
-      for (List<PyClass> seq : nonblank_sequences) {
+      for (List<PyClass> seq : nonBlankSequences) {
         head = seq.get(0);
         boolean head_in_tails = false;
-        for (List<PyClass> tail_seq : nonblank_sequences) {
+        for (List<PyClass> tail_seq : nonBlankSequences) {
           if (tail_seq.indexOf(head) > 0) { // -1 is not found, 0 is head, >0 is tail.
             head_in_tails = true;
             break;
@@ -384,7 +385,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       // our head is clean;
       result.add(head);
       // remove it from heads of other sequences
-      for (List<PyClass> seq : nonblank_sequences) {
+      for (List<PyClass> seq : nonBlankSequences) {
         if (seq.get(0) == head) seq.remove(0);
       }
     } // we either return inside the loop or die by assertion
@@ -449,9 +450,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     }
 
     public boolean process(T target) {
-      String fname = target.getName();
-      for (String name: myNames) {
-        if (name.equals(fname)) {
+      final String targetName = target.getName();
+      for (String name : myNames) {
+        if (name.equals(targetName)) {
           myResult = target;
           return false;
         }
@@ -540,9 +541,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       String doc = null;
       final String decoratorName = entry.getKey();
       for (PyFunction method : entry.getValue()) {
-        PyDecoratorList decolist = method.getDecoratorList();
-        if (decolist != null) {
-          for (PyDecorator deco : decolist.getDecorators()) {
+        final PyDecoratorList decoratorList = method.getDecoratorList();
+        if (decoratorList != null) {
+          for (PyDecorator deco : decoratorList.getDecorators()) {
             final PyQualifiedName qname = deco.getQualifiedName();
             if (qname != null) {
               if (qname.matches(PyNames.PROPERTY)) {
@@ -583,9 +584,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   private Property processStubProperties(@Nullable String name, @Nullable Processor<Property> propertyProcessor) {
     final PyClassStub stub = getStub();
     if (stub != null) {
-      for (StubElement substub : stub.getChildrenStubs()) {
-        if (substub.getStubType() == PyElementTypes.TARGET_EXPRESSION) {
-          final PyTargetExpressionStub targetStub = (PyTargetExpressionStub)substub;
+      for (StubElement subStub : stub.getChildrenStubs()) {
+        if (subStub.getStubType() == PyElementTypes.TARGET_EXPRESSION) {
+          final PyTargetExpressionStub targetStub = (PyTargetExpressionStub)subStub;
           PropertyStubStorage prop = targetStub.getCustomStub(PropertyStubStorage.class);
           if (prop != null && (name == null || name.equals(targetStub.getName()))) {
             Maybe<Callable> getter = fromPacked(prop.getGetter());
@@ -927,16 +928,16 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (containingFile instanceof PyFile && ((PyFile)containingFile).getLanguageLevel().isPy3K()) {
       return true;
     }
-    PyClass objclass = PyBuiltinCache.getInstance(this).getClass("object");
-    if (this == objclass) return true; // a rare but possible case
+    final PyClass objClass = PyBuiltinCache.getInstance(this).getClass("object");
+    if (this == objClass) return true; // a rare but possible case
     if (hasNewStyleMetaClass(this)) return true;
     for (PyClassRef ancestor : iterateAncestors()) {
-      PyClass pyClass = ancestor.getPyClass();
+      final PyClass pyClass = ancestor.getPyClass();
       if (pyClass == null) {
         // unknown, assume new-style class
         return true;
       }
-      if (pyClass == objclass) return true;
+      if (pyClass == objClass) return true;
       if (hasNewStyleMetaClass(pyClass)) {
         return true;
       }
