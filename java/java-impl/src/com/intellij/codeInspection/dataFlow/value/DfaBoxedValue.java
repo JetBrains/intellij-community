@@ -15,9 +15,8 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.psi.PsiVariable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +42,6 @@ public class DfaBoxedValue extends DfaValue {
 
   public static class Factory {
     private final Map<Object, DfaBoxedValue> cachedValues = new HashMap<Object, DfaBoxedValue>();
-    private final Map<Object, DfaBoxedValue> cachedNegatedValues = new HashMap<Object, DfaBoxedValue>();
     private final DfaValueFactory myFactory;
 
     public Factory(DfaValueFactory factory) {
@@ -55,19 +53,16 @@ public class DfaBoxedValue extends DfaValue {
       if (valueToWrap instanceof DfaUnboxedValue) return ((DfaUnboxedValue)valueToWrap).getVariable();
       Object o = valueToWrap instanceof DfaConstValue
                  ? ((DfaConstValue)valueToWrap).getValue()
-                 : valueToWrap instanceof DfaVariableValue ? ((DfaVariableValue)valueToWrap).getPsiVariable() : null;
+                 : valueToWrap instanceof DfaVariableValue ? valueToWrap : null;
       if (o == null) return null;
-      Map<Object, DfaBoxedValue> map = valueToWrap instanceof DfaVariableValue && ((DfaVariableValue)valueToWrap).isNegated() ? cachedNegatedValues : cachedValues;
-      DfaBoxedValue boxedValue = map.get(o);
+      DfaBoxedValue boxedValue = cachedValues.get(o);
       if (boxedValue == null) {
-        boxedValue = new DfaBoxedValue(valueToWrap, myFactory);
-        map.put(o, boxedValue);
+        cachedValues.put(o, boxedValue = new DfaBoxedValue(valueToWrap, myFactory));
       }
       return boxedValue;
     }
 
-    private final Map<PsiVariable, DfaUnboxedValue> cachedUnboxedValues = new THashMap<PsiVariable, DfaUnboxedValue>();
-    private final Map<PsiVariable, DfaUnboxedValue> cachedNegatedUnboxedValues = new THashMap<PsiVariable, DfaUnboxedValue>();
+    private final Map<DfaVariableValue, DfaUnboxedValue> cachedUnboxedValues = ContainerUtil.newTroveMap();
 
     @NotNull
     public DfaValue createUnboxed(DfaValue value) {
@@ -78,20 +73,15 @@ public class DfaBoxedValue extends DfaValue {
         if (value == value.myFactory.getConstFactory().getNull()) return DfaUnknownValue.getInstance();
         return value;
       }
-      DfaValue result;
       if (value instanceof DfaVariableValue) {
-        PsiVariable var = ((DfaVariableValue)value).getPsiVariable();
-        Map<PsiVariable, DfaUnboxedValue> map = ((DfaVariableValue)value).isNegated() ? cachedNegatedUnboxedValues : cachedUnboxedValues;
-        result = map.get(var);
+        DfaVariableValue var = (DfaVariableValue)value;
+        DfaUnboxedValue result = cachedUnboxedValues.get(var);
         if (result == null) {
-          result = new DfaUnboxedValue((DfaVariableValue)value, myFactory);
-          map.put(var, (DfaUnboxedValue)result);
+          cachedUnboxedValues.put(var, result = new DfaUnboxedValue(var, myFactory));
         }
+        return result;
       }
-      else {
-        result = DfaUnknownValue.getInstance();
-      }
-      return result;
+      return DfaUnknownValue.getInstance();
     }
 
   }

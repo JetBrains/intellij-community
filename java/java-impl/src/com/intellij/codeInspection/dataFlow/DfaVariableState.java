@@ -43,10 +43,8 @@ public class DfaVariableState implements Cloneable {
   private final Set<DfaTypeValue> myNotInstanceofValues;
   private boolean myNullable = false;
   private final boolean myVariableIsDeclaredNotNull;
-  private final PsiVariable myVar;
 
   public DfaVariableState(@Nullable PsiVariable var) {
-    myVar = var;
     myInstanceofValues = new HashSet<DfaTypeValue>();
     myNotInstanceofValues = new HashSet<DfaTypeValue>();
     myNullable = var != null && (NullableNotNullManager.isNullable(var) || isNullableInitialized(var, true));
@@ -82,7 +80,6 @@ public class DfaVariableState implements Cloneable {
   }
 
   protected DfaVariableState(final DfaVariableState toClone) {
-    myVar = toClone.myVar;
     myInstanceofValues = new THashSet<DfaTypeValue>(toClone.myInstanceofValues);
     myNotInstanceofValues = new THashSet<DfaTypeValue>(toClone.myNotInstanceofValues);
     myNullable = toClone.myNullable;
@@ -176,10 +173,6 @@ public class DfaVariableState implements Cloneable {
 
   public void setNullable(final boolean nullable) {
     myNullable = nullable;
-  }
-
-  public PsiVariable getVariable() {
-    return myVar;
   }
 
   public void setValue(DfaValue value) {

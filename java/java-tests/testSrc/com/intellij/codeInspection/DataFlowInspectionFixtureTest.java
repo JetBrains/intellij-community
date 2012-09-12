@@ -80,6 +80,7 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testNotGreaterIsNotEquals() throws Throwable { doTest(); }
 
   public void testChainedFinalFieldsDfa() throws Throwable { doTest(); }
+  public void testFinalFieldsDifferentInstances() throws Throwable { doTest(); }
   public void testChainedFinalFieldAccessorsDfa() throws Throwable { doTest(); }
 
 }

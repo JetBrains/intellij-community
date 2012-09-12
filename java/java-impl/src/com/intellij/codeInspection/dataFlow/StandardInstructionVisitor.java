@@ -127,7 +127,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
       if (qualifier instanceof DfaVariableValue) {
         final DfaNotNullValue.Factory factory = runner.getFactory().getNotNullFactory();
-        memState.setVarValue((DfaVariableValue)qualifier, factory.create(((DfaVariableValue)qualifier).getPsiVariable().getType()));
+        memState.setVarValue((DfaVariableValue)qualifier, factory.create(((DfaVariableValue)qualifier).getVariableType()));
       }
     }
 
@@ -168,7 +168,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (args.length <= parametersNotNull.length && revIdx < parametersNotNull.length && parametersNotNull[revIdx] && !memState.applyNotNull(arg)) {
         onPassingNullParameter(runner, args[revIdx]);
         if (arg instanceof DfaVariableValue) {
-          memState.setVarValue((DfaVariableValue)arg, factory.create(((DfaVariableValue)arg).getPsiVariable().getType()));
+          memState.setVarValue((DfaVariableValue)arg, factory.create(((DfaVariableValue)arg).getVariableType()));
         }
       }
     }
@@ -183,7 +183,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
           onInstructionProducesNPE(instruction, runner);
         }
         if (qualifier instanceof DfaVariableValue) {
-          memState.setVarValue((DfaVariableValue)qualifier, factory.create(((DfaVariableValue)qualifier).getPsiVariable().getType()));
+          memState.setVarValue((DfaVariableValue)qualifier, factory.create(((DfaVariableValue)qualifier).getVariableType()));
         }
       }
 
