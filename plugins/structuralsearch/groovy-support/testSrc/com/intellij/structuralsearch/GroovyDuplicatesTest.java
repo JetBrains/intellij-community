@@ -5,6 +5,7 @@ import com.intellij.dupLocator.DuplicatesTestCase;
 import com.intellij.dupLocator.util.DuplocatorUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.PathManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
@@ -12,6 +13,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
  */
 public class GroovyDuplicatesTest extends DuplicatesTestCase {
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PathManager.getHomePath() + "/plugins/structuralsearch/testData/groovy/duplicates/";
