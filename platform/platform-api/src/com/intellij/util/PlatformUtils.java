@@ -70,4 +70,8 @@ public class PlatformUtils {
   public static boolean isFlexIde() {
     return FLEX_PREFIX.equals(getPlatformPrefix());
   }
+
+  public static boolean isJavaIDE() {
+    return isIdea() || isCommunity();
+  }
 }

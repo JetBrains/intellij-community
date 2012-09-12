@@ -25,6 +25,7 @@ import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.TestsScope;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.PlatformUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +51,9 @@ public class FileColorsModel implements Cloneable {
   static {
     globalScopes = new HashMap<String, String>();
     globalScopes.put(NonProjectFilesScope.NAME, "file.colors.enable.non.project");
-    globalScopes.put(TestsScope.NAME, "file.colors.enable.tests");
+    if (PlatformUtils.isJavaIDE()) {
+      globalScopes.put(TestsScope.NAME, "file.colors.enable.tests");
+    }
 
     globalScopesColors = new HashMap<String, String>();
   }
