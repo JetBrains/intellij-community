@@ -136,7 +136,7 @@ public class ArrangementRuleEditor extends JPanel {
       return;
     }
     ArrangementAtomNodeComponent clickedComponent = getNodeComponentAt(e.getLocationOnScreen());
-    if (clickedComponent == null) {
+    if (clickedComponent == null || !clickedComponent.isEnabled()) {
       return;
     }
     ArrangementAtomMatchCondition chosenCondition = clickedComponent.getMatchCondition();

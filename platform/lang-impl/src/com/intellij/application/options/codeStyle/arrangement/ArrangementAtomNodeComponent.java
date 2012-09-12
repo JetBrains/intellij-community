@@ -196,6 +196,10 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
     myBackgroundColor = myColorsService.getBackgroundColor(selected);
   }
 
+  public boolean isEnabled() {
+    return myEnabled;
+  }
+
   /**
    * Instructs current component that it should {@link #getUiComponent() draw} itself according to the given 'enabled' state.
    *
