@@ -14,8 +14,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 public class PatternPackageReferenceSet extends PackageReferenceSet {
-  public PatternPackageReferenceSet(String text, int start, int end, PsiElement element, int startInElement) {
-    super(text.substring(start, end), element, start + startInElement);
+  public PatternPackageReferenceSet(String packageName, PsiElement element, int startInElement) {
+    super(packageName, element, startInElement);
   }
 
   @Override
@@ -44,7 +44,7 @@ public class PatternPackageReferenceSet extends PackageReferenceSet {
     }
   }
 
-   protected boolean processSubPackages(final PsiPackage pkg, final Processor<PsiPackage> processor) {
+   protected static boolean processSubPackages(final PsiPackage pkg, final Processor<PsiPackage> processor) {
     if (!processor.process(pkg)) return false;
     for (final PsiPackage aPackage : pkg.getSubPackages()) {
       if (!processSubPackages(aPackage, processor)) return false;
