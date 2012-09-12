@@ -336,7 +336,8 @@ public class ExpectedTypesProvider {
       final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
       final PsiMethod scopeMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
       if (scopeMethod != null) {
-        visitMethodReturnType(scopeMethod, LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType), insertSemicolonAfter(lambdaExpression));
+        visitMethodReturnType(scopeMethod, LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType), LambdaUtil
+          .insertSemicolonAfter(lambdaExpression));
       }
     }
 
@@ -349,7 +350,7 @@ public class ExpectedTypesProvider {
         final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
         method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
         type = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
-        tailTypeSemicolon = insertSemicolonAfter(lambdaExpression);
+        tailTypeSemicolon = LambdaUtil.insertSemicolonAfter(lambdaExpression);
       }
       else {
         method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
@@ -360,17 +361,6 @@ public class ExpectedTypesProvider {
       if (method != null) {
         visitMethodReturnType(method, type, tailTypeSemicolon);
       }
-    }
-
-    private static boolean insertSemicolonAfter(PsiLambdaExpression lambdaExpression) {
-       if (lambdaExpression.getBody() instanceof PsiCodeBlock) {
-         return true;
-       }
-      final PsiElement parent = lambdaExpression.getParent();
-      if (parent instanceof PsiExpressionList || parent instanceof PsiExpression) {
-        return false;
-      }
-      return true;
     }
 
     private void visitMethodReturnType(final PsiMethod scopeMethod, PsiType type, boolean tailTypeSemicolon) {

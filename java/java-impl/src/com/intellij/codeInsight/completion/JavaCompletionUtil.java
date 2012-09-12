@@ -841,7 +841,22 @@ public class JavaCompletionUtil {
         if (psiElement().beforeLeaf(psiElement().withText(".")).accepts(context.getFile().findElementAt(context.getTailOffset() - 1))) {
           return false;
         }
-        toInsert = TailType.SEMICOLON;
+
+        boolean insertAdditionalSemicolon = true;
+        final PsiReferenceExpression referenceExpression = PsiTreeUtil.getTopmostParentOfType(context.getFile().findElementAt(context.getStartOffset()), PsiReferenceExpression.class);
+        if (referenceExpression != null) {
+          PsiElement parent = referenceExpression.getParent();
+          if (parent instanceof PsiMethodCallExpression) {
+            parent = parent.getParent();
+          }
+          if (parent instanceof PsiLambdaExpression && !LambdaUtil.insertSemicolonAfter((PsiLambdaExpression)parent)) {
+            insertAdditionalSemicolon = false;
+          }
+        }
+        if (insertAdditionalSemicolon) {
+          toInsert = TailType.SEMICOLON;
+        }
+
       }
     }
     toInsert.processTail(context.getEditor(), context.getTailOffset());

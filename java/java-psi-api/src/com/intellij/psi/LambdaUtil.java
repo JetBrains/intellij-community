@@ -542,6 +542,17 @@ public class LambdaUtil {
     return new PsiLambdaParameterType(param);
   }
 
+  public static boolean insertSemicolonAfter(PsiLambdaExpression lambdaExpression) {
+     if (lambdaExpression.getBody() instanceof PsiCodeBlock) {
+       return true;
+     }
+    final PsiElement parent = lambdaExpression.getParent();
+    if (parent instanceof PsiExpressionList || parent instanceof PsiExpression) {
+      return false;
+    }
+    return true;
+  }
+
   private static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {
     private PsiMethod myMethod;
     private final PsiClass myClass;
