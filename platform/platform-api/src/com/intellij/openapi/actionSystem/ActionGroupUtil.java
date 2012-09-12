@@ -16,6 +16,8 @@
 
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -60,7 +62,7 @@ public class ActionGroupUtil {
                                             ActionManager.getInstance(),
                                             e.getModifiers());
     event.setInjectedContext(action.isInInjectedContext());
-    action.update(event);
+    ActionUtil.performDumbAwareUpdate(action, event, false);
 
     return presentation.isEnabled() && presentation.isVisible();
   }
