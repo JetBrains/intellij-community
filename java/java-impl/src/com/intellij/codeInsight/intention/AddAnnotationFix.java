@@ -103,7 +103,7 @@ public class AddAnnotationFix extends LocalQuickFixAndIntentionActionOnPsiElemen
     if (!PsiUtil.isLanguageLevel5OrHigher(startElement)) return false;
     final PsiModifierListOwner myModifierListOwner = (PsiModifierListOwner)startElement;
 
-    return !AnnotationUtil.isAnnotated(myModifierListOwner, myAnnotation, false);
+    return !AnnotationUtil.isAnnotated(myModifierListOwner, myAnnotation, false, false);
   }
 
   @Override

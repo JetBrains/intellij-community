@@ -43,7 +43,7 @@ public class LiteralExpressionTokenizer extends Tokenizer<PsiLiteralExpression> 
     }
 
     final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
-    if (listOwner != null && AnnotationUtil.isAnnotated(listOwner, Collections.singleton(AnnotationUtil.NON_NLS))) {
+    if (listOwner != null && AnnotationUtil.isAnnotated(listOwner, Collections.singleton(AnnotationUtil.NON_NLS), false, false)) {
       return;
     }
 

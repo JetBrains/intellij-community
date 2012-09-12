@@ -65,7 +65,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
     List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
-      if (!AnnotationUtil.isAnnotated(superMethod, myAnnotation, false) && superMethod.getManager().isInProject(superMethod)) {
+      if (!AnnotationUtil.isAnnotated(superMethod, myAnnotation, false, false) && superMethod.getManager().isInProject(superMethod)) {
         int ret = annotateBaseMethod(method, superMethod, project);
         if (ret != 0 && ret != 1) return;
         if (ret == 0) {
@@ -76,7 +76,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
     if (annotateOverriddenMethods()) {
       PsiMethod[] methods = OverridingMethodsSearch.search(method, GlobalSearchScope.allScope(project), true).toArray(PsiMethod.EMPTY_ARRAY);
       for (PsiMethod psiMethod : methods) {
-        if (!AnnotationUtil.isAnnotated(psiMethod, myAnnotation, false) && psiMethod.getManager().isInProject(psiMethod)) {
+        if (!AnnotationUtil.isAnnotated(psiMethod, myAnnotation, false, false) && psiMethod.getManager().isInProject(psiMethod)) {
           toAnnotate.add(psiMethod);
         }
       }

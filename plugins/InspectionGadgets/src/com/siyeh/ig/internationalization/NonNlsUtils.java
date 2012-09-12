@@ -289,6 +289,6 @@ public class NonNlsUtils {
     }
     final PsiModifierListOwner variable = (PsiModifierListOwner)element;
     return AnnotationUtil.isAnnotated(variable,
-                                      AnnotationUtil.NON_NLS, false);
+                                      AnnotationUtil.NON_NLS, false, false);
   }
 }

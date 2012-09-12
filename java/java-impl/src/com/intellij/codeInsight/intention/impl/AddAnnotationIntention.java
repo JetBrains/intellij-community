@@ -68,9 +68,9 @@ public abstract class AddAnnotationIntention extends BaseIntentionAction {
     Pair<String, String[]> annotations = getAnnotations(project);
     String toAdd = annotations.first;
     String[] toRemove = annotations.second;
-    if (toRemove.length > 0 && AnnotationUtil.isAnnotated(owner, toRemove[0], false)) return false;
+    if (toRemove.length > 0 && AnnotationUtil.isAnnotated(owner, toRemove[0], false, false)) return false;
     setText(AddAnnotationFix.calcText(owner, toAdd));
-    if (AnnotationUtil.isAnnotated(owner, toAdd, false)) return false;
+    if (AnnotationUtil.isAnnotated(owner, toAdd, false, false)) return false;
 
     if (owner instanceof PsiMethod) {
       PsiType returnType = ((PsiMethod)owner).getReturnType();

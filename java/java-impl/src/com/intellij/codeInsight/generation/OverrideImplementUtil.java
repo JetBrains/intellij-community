@@ -363,7 +363,7 @@ public class OverrideImplementUtil {
     for (OverrideImplementsAnnotationsHandler each : Extensions.getExtensions(OverrideImplementsAnnotationsHandler.EP_NAME)) {
       for (String annotation : each.getAnnotations(project)) {
         if (moduleScope != null && facade.findClass(annotation, moduleScope) == null) continue;
-        if (AnnotationUtil.isAnnotated(overridden, annotation, false)) {
+        if (AnnotationUtil.isAnnotated(overridden, annotation, false, false)) {
           annotate(method, annotation, each.annotationsToRemove(project, annotation));
         }
       }

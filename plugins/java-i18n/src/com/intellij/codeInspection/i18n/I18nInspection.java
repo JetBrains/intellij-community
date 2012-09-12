@@ -337,7 +337,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     if (containingClass == null || isClassNonNls(containingClass)) {
       return null;
     }
-    if (AnnotationUtil.isAnnotated(field, AnnotationUtil.NON_NLS, false)) {
+    if (AnnotationUtil.isAnnotated(field, AnnotationUtil.NON_NLS, false, false)) {
       return null;
     }
     final PsiExpression initializer = field.getInitializer();
@@ -452,7 +452,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
         if (PsiUtil.isLanguageLevel5OrHigher(expression)) {
           for (PsiModifierListOwner element : nonNlsTargets) {
-            if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, true)) {
+            if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, true, false)) {
               if (!element.getManager().isInProject(element) || facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
                 fixes.add(new AddAnnotationFix(AnnotationUtil.NON_NLS, element));
               }
@@ -637,7 +637,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
         return JavaI18nUtil.isMethodParameterAnnotatedWith(method, index, null, AnnotationUtil.NON_NLS, null, null);
       }
     }
-    return AnnotationUtil.isAnnotated(parent, AnnotationUtil.NON_NLS, false);
+    return AnnotationUtil.isAnnotated(parent, AnnotationUtil.NON_NLS, false, false);
   }
 
   private static boolean isInNonNlsEquals(PsiExpression expression, final Set<PsiModifierListOwner> nonNlsTargets) {
@@ -763,7 +763,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     }
     if (method == null) return false;
 
-    if (AnnotationUtil.isAnnotated(method, AnnotationUtil.NON_NLS, true)) {
+    if (AnnotationUtil.isAnnotated(method, AnnotationUtil.NON_NLS, true, false)) {
       return true;
     }
     nonNlsTargets.add(method);

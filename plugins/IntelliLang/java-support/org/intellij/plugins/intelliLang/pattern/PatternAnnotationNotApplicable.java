@@ -61,7 +61,7 @@ public class PatternAnnotationNotApplicable extends LocalInspectionTool {
         }
         else if (name != null) {
           final PsiClass psiClass = JavaPsiFacade.getInstance(annotation.getProject()).findClass(name, annotation.getResolveScope());
-          if (psiClass != null && AnnotationUtil.isAnnotated(psiClass, annotationName, false)) {
+          if (psiClass != null && AnnotationUtil.isAnnotated(psiClass, annotationName, false, false)) {
             checkAnnotation(annotation, holder);
           }
         }

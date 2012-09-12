@@ -73,8 +73,8 @@ public class TestOnlyInspection extends BaseJavaLocalInspectionTool {
 
   private static boolean isAnnotatedAsTestOnly(@Nullable PsiMethod m) {
     if (m == null) return false;
-    return AnnotationUtil.isAnnotated(m, AnnotationUtil.TEST_ONLY, false) ||
-           AnnotationUtil.isAnnotated(m, "com.google.common.annotations.VisibleForTesting", false);
+    return AnnotationUtil.isAnnotated(m, AnnotationUtil.TEST_ONLY, false, false) ||
+           AnnotationUtil.isAnnotated(m, "com.google.common.annotations.VisibleForTesting", false, false);
   }
 
   private boolean isInsideTestClass(PsiCallExpression e) {

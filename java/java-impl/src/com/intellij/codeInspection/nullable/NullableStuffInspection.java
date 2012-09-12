@@ -120,7 +120,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
           if (nameIdentifier != null && nameIdentifier.isPhysical()) {
             if (PropertyUtils.isSimpleGetter(getter)) {
               if (REPORT_NOT_ANNOTATED_GETTER) {
-                if (!AnnotationUtil.isAnnotated(getter, manager.getAllAnnotations()) &&
+                if (!AnnotationUtil.isAnnotated(getter, manager.getAllAnnotations(), false, false) &&
                     !TypeConversionUtil.isPrimitiveAndNotNull(getter.getReturnType())) {
                   holder.registerProblem(nameIdentifier, InspectionsBundle
                     .message("inspection.nullable.problems.annotated.field.getter.not.annotated", StringUtil.getShortName(anno)),
@@ -146,7 +146,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
             assert parameters.length == 1 : setter.getText();
             final PsiParameter parameter = parameters[0];
             LOG.assertTrue(parameter != null, setter.getText());
-            if (REPORT_NOT_ANNOTATED_GETTER && !AnnotationUtil.isAnnotated(parameter, manager.getAllAnnotations()) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
+            if (REPORT_NOT_ANNOTATED_GETTER && !AnnotationUtil.isAnnotated(parameter, manager.getAllAnnotations(), false, false) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
               final PsiIdentifier nameIdentifier1 = parameter.getNameIdentifier();
               assertValidElement(setter, parameter, nameIdentifier1);
               holder.registerProblem(nameIdentifier1,
@@ -181,7 +181,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
               PsiElement target = ((PsiReferenceExpression)rhs).resolve();
               if (target instanceof PsiParameter) {
                 PsiParameter parameter = (PsiParameter)target;
-                if (REPORT_NOT_ANNOTATED_GETTER && !AnnotationUtil.isAnnotated(parameter, manager.getAllAnnotations()) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
+                if (REPORT_NOT_ANNOTATED_GETTER && !AnnotationUtil.isAnnotated(parameter, manager.getAllAnnotations(), false, false) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
                   final PsiIdentifier nameIdentifier2 = parameter.getNameIdentifier();
                   assert nameIdentifier2 != null : parameter;
                   holder.registerProblem(nameIdentifier2, InspectionsBundle
@@ -324,7 +324,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
           if (!reported_not_annotated_parameter_overrides_notnull[i] && REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL) {
-            if (!AnnotationUtil.isAnnotated(parameter, nullableManager.getAllAnnotations()) &&
+            if (!AnnotationUtil.isAnnotated(parameter, nullableManager.getAllAnnotations(), false, false) &&
                 nullableManager.isNotNull(superParameter, false)) {
               reported_not_annotated_parameter_overrides_notnull[i] = true;
               holder.registerProblem(parameter.getNameIdentifier(),

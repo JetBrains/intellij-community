@@ -266,7 +266,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     }
 
     final PsiManager psiManager = PsiManager.getInstance(myProject);
-    if ((myTypeSelectorManager.isSuggestedType("java.lang.String") || (myLocalVariable != null && AnnotationUtil.isAnnotated(myLocalVariable, AnnotationUtil.NON_NLS, false)))&&
+    if ((myTypeSelectorManager.isSuggestedType("java.lang.String") || (myLocalVariable != null && AnnotationUtil.isAnnotated(myLocalVariable, AnnotationUtil.NON_NLS, false, false)))&&
         LanguageLevelProjectExtension.getInstance(psiManager.getProject()).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5) &&
         JavaPsiFacade.getInstance(psiManager.getProject()).findClass(AnnotationUtil.NON_NLS, myParentClass.getResolveScope()) != null) {
       final PropertiesComponent component = PropertiesComponent.getInstance(myProject);

@@ -237,14 +237,21 @@ public class AnnotationUtil {
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
                                     Collection<String> annotations,
                                     final boolean checkHierarchy) {
+    return isAnnotated(listOwner, annotations, checkHierarchy, true);
+  }
+
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
+                                    Collection<String> annotations,
+                                    final boolean checkHierarchy,
+                                    boolean skipExternal) {
     for (String annotation : annotations) {
-      if (isAnnotated(listOwner, annotation, checkHierarchy)) return true;
+      if (isAnnotated(listOwner, annotation, checkHierarchy, skipExternal)) return true;
     }
     return false;
   }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NonNls String annotationFQN, boolean checkHierarchy) {
-    return isAnnotated(listOwner, annotationFQN, checkHierarchy, false, null);
+    return isAnnotated(listOwner, annotationFQN, checkHierarchy, true, null);
   }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NonNls String annotationFQN, boolean checkHierarchy,
