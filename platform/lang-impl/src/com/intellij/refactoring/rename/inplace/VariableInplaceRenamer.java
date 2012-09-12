@@ -19,6 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
@@ -271,6 +272,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   protected boolean performRefactoring() {
     boolean bind = false;
     if (myInsertedName != null) {
+      CommandProcessor.getInstance().setCurrentCommandName(getCommandName());
       bind = true;
       if (!isIdentifier(myInsertedName, myLanguage)) {
         performOnInvalidIdentifier(myInsertedName, myNameSuggestions);
