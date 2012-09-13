@@ -21,12 +21,12 @@ import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.model.*;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementConditionsGrouper;
 import com.intellij.util.containers.hash.HashSet;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultTreeModel;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -44,9 +44,9 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   @NotNull private final Set<Listener> myListeners  = new HashSet<Listener>();
   @NotNull private final Set<Object>   myConditions = new HashSet<Object>();
 
-  @NotNull private final DefaultTreeModel             myTreeModel;
-  @NotNull private final ArrangementConditionsGrouper myGrouper;
-  private final          boolean                      myRootVisible;
+  @NotNull private final DefaultTreeModel                     myTreeModel;
+  @NotNull private final List<Set<ArrangementMatchCondition>> myGroupingRules;
+  private final          boolean                              myRootVisible;
 
   @NotNull private ArrangementTreeNode myTopMost;
   @NotNull private ArrangementTreeNode myBottomMost;
@@ -56,22 +56,22 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   /**
    * Creates new <code>ArrangementRuleEditingModelImpl</code> object.
    *
-   * @param model        tree model which holds target ui nodes. Basically, we need to perform ui nodes modification via it in order
-   *                     to generate corresponding events automatically
-   * @param rule         backing arrangement rule
-   * @param topMost      there is a possible case that a single settings node is shown in more than one visual line
-   *                     ({@link HierarchicalArrangementConditionNode}). This argument is the top-most UI node used for the
-   *                     settings node representation
-   * @param bottomMost   bottom-most UI node used for the given settings node representation 
-   * @param grouper      strategy that encapsulates information on how settings node should be displayed
-   * @param row          row number for which current model is registered at the given model mappings
-   * @param rootVisible  determines if the root should be count during rows calculations
+   * @param model           tree model which holds target ui nodes. Basically, we need to perform ui nodes modification via it in order
+   *                        to generate corresponding events automatically
+   * @param rule            backing arrangement rule
+   * @param topMost         there is a possible case that a single settings node is shown in more than one visual line
+   *                        ({@link HierarchicalArrangementConditionNode}). This argument is the top-most UI node used for the
+   *                        settings node representation
+   * @param bottomMost      bottom-most UI node used for the given settings node representation 
+   * @param groupingRules   grouping rules
+   * @param row             row number for which current model is registered at the given model mappings
+   * @param rootVisible     determines if the root should be count during rows calculations
    */
   public ArrangementRuleEditingModelImpl(@NotNull DefaultTreeModel model,
                                          @NotNull StdArrangementRule rule,
                                          @NotNull ArrangementTreeNode topMost,
                                          @NotNull ArrangementTreeNode bottomMost,
-                                         @NotNull ArrangementConditionsGrouper grouper,
+                                         @NotNull List<Set<ArrangementMatchCondition>> groupingRules,
                                          int row,
                                          boolean rootVisible)
   {
@@ -79,7 +79,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     myRule = rule;
     myTopMost = topMost;
     myBottomMost = bottomMost;
-    myGrouper = grouper;
+    myGroupingRules = groupingRules;
     myRow = row;
     myRootVisible = rootVisible;
     refreshConditions();
@@ -187,7 +187,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   
   private void applyNewCondition(@NotNull ArrangementMatchCondition newCondition) {
     myRule = new StdArrangementRule(new StdArrangementEntryMatcher(newCondition));
-    HierarchicalArrangementConditionNode grouped = myGrouper.group(newCondition);
+    HierarchicalArrangementConditionNode grouped = ArrangementUtil.group(newCondition, myGroupingRules);
     Pair<ArrangementTreeNode, Integer> replacement = ArrangementConfigUtil.map(null, grouped, null);
     ArrangementTreeNode newBottom = replacement.first;
     ArrangementTreeNode newTop = ArrangementConfigUtil.getRoot(newBottom);
