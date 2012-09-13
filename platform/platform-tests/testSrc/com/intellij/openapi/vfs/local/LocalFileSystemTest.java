@@ -288,7 +288,10 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
   }
 
   public void testHardLinks() throws Exception {
-    if (!SystemInfo.isWindows && !SystemInfo.isUnix) return;
+    if (!SystemInfo.isWindows && !SystemInfo.isUnix) {
+      System.err.println(getName() + " skipped: " + SystemInfo.OS_NAME);
+      return;
+    }
 
     final boolean safeWrite = GeneralSettings.getInstance().isUseSafeWrite();
     final File dir = FileUtil.createTempDirectory("hardlinks", "");
@@ -323,8 +326,17 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
   }
 
   public void testWindowsVirtualDirectory() throws Exception {
-    if (!SystemInfo.isWindows) return;
-    File file = new File("c:\\Documents and Settings\\desktop.ini");
+    if (!SystemInfo.isWindows) {
+      System.err.println(getName() + " skipped: " + SystemInfo.OS_NAME);
+      return;
+    }
+
+    File file = new File("C:\\Documents and Settings\\desktop.ini");
+    if (!file.exists()) {
+      System.err.println(getName() + " skipped: missing " + file);
+      return;
+    }
+
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNotNull("File not found: " + file, virtualFile);
 
