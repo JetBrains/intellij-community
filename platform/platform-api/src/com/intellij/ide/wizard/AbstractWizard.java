@@ -118,7 +118,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       panel.add(buttonPanel, BorderLayout.EAST);
       buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
 
-      myHelpButton.putClientProperty("JButton.buttonType", "help");
+      if (!UIUtil.isUnderDarcula()) {
+        myHelpButton.putClientProperty("JButton.buttonType", "help");
+      }
       if (UIUtil.isUnderAquaLookAndFeel()) {
         myHelpButton.setText("");
       }

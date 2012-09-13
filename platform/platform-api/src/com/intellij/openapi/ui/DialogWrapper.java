@@ -462,8 +462,10 @@ public abstract class DialogWrapper {
 
     if (hasHelpToMoveToLeftSide) {
       JButton helpButton = new JButton(getHelpAction());
-      helpButton.putClientProperty("JButton.buttonType", "help");
-      helpButton.setText("");
+      if (!UIUtil.isUnderDarcula()) {
+        helpButton.putClientProperty("JButton.buttonType", "help");
+        helpButton.setText("");
+      }
       helpButton.setMargin(insets);
       helpButton.setToolTipText(ActionsBundle.actionDescription("HelpTopics"));
       panel.add(helpButton, BorderLayout.WEST);
