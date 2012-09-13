@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,17 +25,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
-import com.siyeh.ig.psiutils.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -142,8 +139,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
       }
     }
 
-    private static class QualificationRemover
-      extends JavaRecursiveElementVisitor {
+    private static class QualificationRemover extends JavaRecursiveElementVisitor {
 
       private final String fullyQualifiedText;
       private final List<PsiElement> shortenedElements = new ArrayList();
@@ -157,11 +153,9 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
       }
 
       @Override
-      public void visitReferenceElement(
-        PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
-        final PsiElement parent = PsiTreeUtil.getParentOfType(reference,
-                                                              PsiImportStatementBase.class);
+        final PsiElement parent = PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class);
         if (parent != null) {
           return;
         }
@@ -175,8 +169,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
             qualifier.delete();
           }
           catch (IncorrectOperationException e) {
-            final Class<? extends QualificationRemover> aClass =
-              getClass();
+            final Class<? extends QualificationRemover> aClass = getClass();
             final String className = aClass.getName();
             final Logger logger = Logger.getInstance(className);
             logger.error(e);
@@ -192,43 +185,36 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
     return new UnnecessaryFullyQualifiedNameVisitor();
   }
 
-  private class UnnecessaryFullyQualifiedNameVisitor
-    extends BaseInspectionVisitor {
+  private class UnnecessaryFullyQualifiedNameVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceExpression(
-      PsiReferenceExpression expression) {
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       checkReference(expression);
     }
 
     @Override
-    public void visitReferenceElement(
-      PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       checkReference(reference);
     }
 
     private void checkReference(PsiJavaCodeReferenceElement reference) {
-      if (!reference.isQualified()) {
+      final PsiElement qualifier = reference.getQualifier();
+      if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
         return;
       }
       final PsiElement parent = reference.getParent();
-      if (parent instanceof PsiMethodCallExpression ||
-          parent instanceof PsiAssignmentExpression ||
-          parent instanceof PsiVariable) {
+      if (parent instanceof PsiMethodCallExpression || parent instanceof PsiAssignmentExpression || parent instanceof PsiVariable) {
         return;
       }
-      final PsiElement element = PsiTreeUtil.getParentOfType(reference,
-                                                             PsiImportStatementBase.class, PsiPackageStatement.class,
+      final PsiElement element = PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class, PsiPackageStatement.class,
                                                              JavaCodeFragment.class);
       if (element != null) {
         return;
       }
       if (m_ignoreJavadoc) {
-        final PsiElement containingComment =
-          PsiTreeUtil.getParentOfType(reference,
-                                      PsiDocComment.class);
+        final PsiElement containingComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
         if (containingComment != null) {
           return;
         }
@@ -237,35 +223,52 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
       if (!(containingFile instanceof PsiJavaFile)) {
         return;
       }
-      final PsiElement psiElement = reference.resolve();
-      if (!(psiElement instanceof PsiClass)) {
+      final PsiElement target = reference.resolve();
+      if (!(target instanceof PsiClass)) {
         return;
       }
-      PsiClass aClass = (PsiClass)psiElement;
-      final Project project = aClass.getProject();
-      final CodeStyleSettings styleSettings =
-        CodeStyleSettingsManager.getSettings(project);
-      if (!styleSettings.INSERT_INNER_CLASS_IMPORTS) {
-        aClass = ClassUtils.getOutermostContainingClass(aClass);
-      }
-      final String fqName = aClass.getQualifiedName();
-      if (fqName == null) {
+      final PsiJavaCodeReferenceElement qualifierReference = (PsiJavaCodeReferenceElement)qualifier;
+      final PsiElement qualifierTarget = qualifierReference.resolve();
+      if (!(qualifierTarget instanceof PsiPackage)) {
         return;
       }
-      final String referenceText = reference.getText();
-      final String text = StringUtils.stripAngleBrackets(referenceText);
-      if (!text.equals(fqName)) {
-        return;
+      final List<PsiJavaCodeReferenceElement> references = new ArrayList(2);
+      references.add(reference);
+      final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(reference.getProject());
+      if (styleSettings.INSERT_INNER_CLASS_IMPORTS) {
+        collectInnerClassNames(reference, references);
       }
-      if (!ImportUtils.nameCanBeImported(fqName, reference)) {
-        return;
+      Collections.reverse(references);
+      for (int i = 0, size = references.size(); i < size; i++) {
+        final PsiJavaCodeReferenceElement aReference = references.get(i);
+        final PsiElement referenceTarget = aReference.resolve();
+        if (!(referenceTarget instanceof PsiClass)) {
+          continue;
+        }
+        final PsiClass aClass = (PsiClass)referenceTarget;
+        final String qualifiedName = aClass.getQualifiedName();
+        if (qualifiedName == null) {
+          continue;
+        }
+        if (!ImportUtils.nameCanBeImported(qualifiedName, reference)) {
+          continue;
+        }
+        final boolean inSameFile = aClass.getContainingFile() == containingFile;
+        registerError(aReference, Boolean.valueOf(inSameFile));
+        break;
       }
-      final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
-      final String packageName = javaFile.getPackageName();
-      final String elementPackageName =
-        ClassUtil.extractPackageName(text);
-      final boolean inSameFile = elementPackageName.equals(packageName);
-      registerError(reference, Boolean.valueOf(inSameFile));
+    }
+
+    private void collectInnerClassNames(PsiJavaCodeReferenceElement reference, List<PsiJavaCodeReferenceElement> references) {
+      PsiElement rParent = reference.getParent();
+      while (rParent instanceof PsiJavaCodeReferenceElement) {
+        final PsiJavaCodeReferenceElement parentReference = (PsiJavaCodeReferenceElement)rParent;
+        if (!reference.equals(parentReference.getQualifier())) {
+          break;
+        }
+        references.add(parentReference);
+        rParent = rParent.getParent();
+      }
     }
   }
 }

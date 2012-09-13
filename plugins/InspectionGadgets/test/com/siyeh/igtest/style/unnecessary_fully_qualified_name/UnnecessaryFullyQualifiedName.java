@@ -37,4 +37,6 @@ enum SomeEnum {
     };
 
     public abstract void perform();
+
+    private java.   util.   List spaces;
 }
