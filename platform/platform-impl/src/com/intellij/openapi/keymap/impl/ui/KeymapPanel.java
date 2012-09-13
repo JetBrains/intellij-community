@@ -25,6 +25,7 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -854,6 +855,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       }
     }
     keymapManager.setActiveKeymap(mySelectedKeymap);
+    ActionToolbarImpl.updateAllToolbarsImmediately();
   }
 
   private void ensureNonEmptyKeymapNames() throws ConfigurationException {

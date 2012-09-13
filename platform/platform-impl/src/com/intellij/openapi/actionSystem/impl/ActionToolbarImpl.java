@@ -66,6 +66,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   public static void updateAllToolbarsImmediately() {
     for (ActionToolbarImpl toolbar : new ArrayList<ActionToolbarImpl>(ourToolbars)) {
       toolbar.updateActionsImmediately();
+      for (Component c : toolbar.getComponents()) {
+        if (c instanceof ActionButton) {
+          ((ActionButton)c).updateToolTipText();
+        }
+      }
     }
   }
 
