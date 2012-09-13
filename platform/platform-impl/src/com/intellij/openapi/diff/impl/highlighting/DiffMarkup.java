@@ -95,7 +95,7 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
       rangeMarker.setGutterIconRenderer(gutterIconRenderer);
     }
 
-    boolean adjustHeight = shouldIncreaseHighlightingHeight(fragment, editor, range);
+    boolean adjustHeight = shouldIncreaseHighlightingHeight(fragment);
     rangeMarker.setLineMarkerRenderer(adjustHeight
                                       ? DiffLineMarkerRenderer.createHeightAdjustingInstance(type, range)
                                       : DiffLineMarkerRenderer.createStandardInstance(type));
@@ -108,11 +108,8 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
     saveHighlighter(rangeMarker);
   }
 
-  private static boolean shouldIncreaseHighlightingHeight(@NotNull Fragment fragment, @NotNull Editor editor, @NotNull TextRange range) {
-    int startY = editor.offsetToLogicalPosition(range.getStartOffset()).line;
-    int endY = editor.offsetToLogicalPosition(range.getEndOffset()).line;
-    boolean onTheSameLine = (startY == endY);
-    return onTheSameLine && fragment instanceof InlineFragment;
+  private static boolean shouldIncreaseHighlightingHeight(@NotNull Fragment fragment) {
+    return fragment instanceof InlineFragment;
   }
 
   public void addLineMarker(int line, @Nullable TextAttributesKey type) {
