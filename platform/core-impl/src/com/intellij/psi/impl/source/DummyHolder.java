@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class DummyHolder extends PsiFileImpl {
   protected final PsiElement myContext;
@@ -46,7 +47,7 @@ public class DummyHolder extends PsiFileImpl {
     this(manager, null, context, null);
   }
 
-  public DummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table) {
+  public DummyHolder(@NotNull PsiManager manager, @Nullable TreeElement contentElement, PsiElement context, @Nullable CharTable table) {
     this(manager, contentElement, context, table, null, language(context, PlainTextLanguage.INSTANCE));
   }
 
@@ -60,7 +61,7 @@ public class DummyHolder extends PsiFileImpl {
     return contextLanguage;
   }
 
-  public DummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table, Boolean validity, Language language) {
+  public DummyHolder(@NotNull PsiManager manager, @Nullable TreeElement contentElement, @Nullable PsiElement context, @Nullable CharTable table, @Nullable Boolean validity, Language language) {
     super(TokenType.DUMMY_HOLDER, TokenType.DUMMY_HOLDER, new DummyHolderViewProvider(manager));
     myLanguage = language;
     ((DummyHolderViewProvider)getViewProvider()).setDummyHolder(this);
@@ -69,7 +70,7 @@ public class DummyHolder extends PsiFileImpl {
     if (contentElement instanceof FileElement) {
       myFileElement = (FileElement)contentElement;
       myFileElement.setPsi(this);
-      if (myTable != null) myFileElement.setCharTable(myTable);
+      myFileElement.setCharTable(myTable);
     }
     else if (contentElement != null) {
       getTreeElement().rawAddChildren(contentElement);
