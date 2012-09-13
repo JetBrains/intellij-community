@@ -154,17 +154,16 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
   }
 
   public void testFindRoot() throws IOException {
-    VirtualFile root, root2;
-
-    root = LocalFileSystem.getInstance().findFileByPath("wrong_path");
+    VirtualFile root = LocalFileSystem.getInstance().findFileByPath("wrong_path");
     assertNull(root);
 
+    VirtualFile root2;
     if (SystemInfo.isWindows) {
       root = LocalFileSystem.getInstance().findFileByPath("\\\\unit-133");
       assertNotNull(root);
       root2 = LocalFileSystem.getInstance().findFileByPath("//UNIT-133");
       assertNotNull(root2);
-      assertTrue(String.valueOf(root2), root == root2);
+      assertEquals(String.valueOf(root2), root, root2);
       RefreshQueue.getInstance().processSingleEvent(new VFileDeleteEvent(this, root, false));
 
       root = LocalFileSystem.getInstance().findFileByIoFile(new File("\\\\unit-133"));
@@ -177,7 +176,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
         assertEquals("C:", root.getPath());
 
         root2 = LocalFileSystem.getInstance().findFileByPath("C:\\");
-        assertTrue(String.valueOf(root2), root == root2);
+        assertEquals(String.valueOf(root2), root, root2);
       }
     }
     else if (SystemInfo.isUnix) {
@@ -194,11 +193,11 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     assertNotNull(root);
 
     root2 = VirtualFileManager.getInstance().findFileByUrl("jar://" + jarFile.getPath().replace(File.separator, "//") + "!/");
-    assertTrue(String.valueOf(root2), root == root2);
+    assertEquals(String.valueOf(root2), root, root2);
 
     if (!SystemInfo.isFileSystemCaseSensitive) {
       root2 = VirtualFileManager.getInstance().findFileByUrl("jar://" + jarFile.getPath().toUpperCase(Locale.US) + "!/");
-      assertTrue(String.valueOf(root2), root == root2);
+      assertEquals(String.valueOf(root2), root, root2);
     }
   }
 

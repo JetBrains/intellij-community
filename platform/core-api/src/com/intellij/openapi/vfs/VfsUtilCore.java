@@ -259,7 +259,7 @@ public class VfsUtilCore {
 
   public static boolean isInvalidLink(@NotNull VirtualFile link) {
     final VirtualFile target = link.getCanonicalFile();
-    return target == null || target == link || isAncestor(target, link, true);
+    return target == null || target.equals(link) || isAncestor(target, link, true);
   }
 
   @NotNull

@@ -195,6 +195,7 @@ public class PsiClassReferenceType extends PsiClassType {
     return getAnnotationsTextPrefix() + getCanonicalText();
   }
 
+  @NotNull
   public PsiJavaCodeReferenceElement getReference() {
     return myReference;
   }

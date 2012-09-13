@@ -30,4 +30,11 @@ public class BitUtil {
   public static boolean notSet(final int value, final int mask) {
     return (value & mask) == 0;
   }
+
+  /**
+   * @return {@code value} with the bit corresponding to the {@code mask} set (if setBit is true) or cleared (if setBit is false)
+   */
+  public static int set(final int value, final int mask, boolean setBit) {
+    return setBit ? value | mask : value & ~mask;
+  }
 }

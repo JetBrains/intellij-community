@@ -40,6 +40,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayFactory;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,14 +84,11 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
             final FileElement fileElement = file.loadTreeElement();
             node = myNode;
             if (node == null) {
-              String message = "Failed to bind stub to AST for element " +
-                               getClass() +
-                               " in " +
-                               (file.getVirtualFile() == null ? "<unknown file>" : file.getVirtualFile().getPath()) +
-                               "\nFile stub tree:\n" +
-                               (stubTree != null ? StringUtil.trimLog(((PsiFileStubImpl)stubTree.getRoot()).printTree(), 1024) : " is null") +
-                               "\nLoaded file AST:\n" +
-                               StringUtil.trimLog(DebugUtil.treeToString(fileElement, true), 1024);
+              @NonNls String message = "Failed to bind stub to AST for element " + getClass() + " in " +
+                                       (file.getVirtualFile() == null ? "<unknown file>" : file.getVirtualFile().getPath()) +
+                                       "\nFile stub tree:\n" +
+                                       (stubTree != null ? StringUtil.trimLog(((PsiFileStubImpl)stubTree.getRoot()).printTree(), 1024) : " is null") +
+                                       "\nLoaded file AST:\n" + StringUtil.trimLog(DebugUtil.treeToString(fileElement, true), 1024);
               throw new IllegalArgumentException(message);
             }
           }
@@ -105,12 +103,8 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   private ASTNode notBoundInExistingAst(PsiFileImpl file, FileElement treeElement, StubTree stubTree) {
-    String message = "this=" + this.getClass() +
-                     "; file.isPhysical=" + file.isPhysical() +
-                     "; node=" + myNode +
-                     "; file=" + file +
-                     "; tree=" + treeElement +
-                     "; stubTree=" + stubTree;
+    @NonNls String message = "this=" + this.getClass() + "; file.isPhysical=" + file.isPhysical() + "; node=" + myNode + "; file=" + file +
+                             "; tree=" + treeElement + "; stubTree=" + stubTree;
     PsiElement each = this;
     while (each != null) {
       message += "\n each of class " + each.getClass();
@@ -247,7 +241,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   @Nullable
-  public <Stub extends StubElement, Psi extends PsiElement> Psi getStubOrPsiChild(final IStubElementType<Stub, Psi> elementType) {
+  public <Psi extends PsiElement> Psi getStubOrPsiChild(final IStubElementType<? extends StubElement, Psi> elementType) {
     T stub = myStub;
     if (stub != null) {
       final StubElement<Psi> element = stub.findChildStubByType(elementType);
