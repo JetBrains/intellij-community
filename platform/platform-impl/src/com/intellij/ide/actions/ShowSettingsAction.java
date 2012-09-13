@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
 import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
@@ -46,11 +45,6 @@ public class ShowSettingsAction extends AnAction implements DumbAware {
       project = ProjectManager.getInstance().getDefaultProject();
     }
 
-    ConfigurableGroup[] group = {
-      new ProjectConfigurablesGroup(project),
-      new IdeConfigurablesGroup()
-    };
-
     final long startTime = System.nanoTime();
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
@@ -60,6 +54,7 @@ public class ShowSettingsAction extends AnAction implements DumbAware {
         }
       }
     });
-    ShowSettingsUtil.getInstance().showSettingsDialog(project, group);
+    ShowSettingsUtil.getInstance().showSettingsDialog(project, new ProjectConfigurablesGroup(project),
+                                                      new IdeConfigurablesGroup());
   }
 }
