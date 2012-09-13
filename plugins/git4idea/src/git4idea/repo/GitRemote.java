@@ -69,7 +69,13 @@ public final class GitRemote implements Comparable<GitRemote> {
   public static final GitRemote DOT = new GitRemote(".", Collections.singletonList("."), Collections.<String>emptyList(),
                                                          Collections.<String>emptyList(), Collections.<String>emptyList());
 
-  private final String myName;
+  /**
+   * Default remote name in Git is "origin".
+   * Usually all Git repositories have an "origin" remote, so it can be used as a default value in some cases.
+   */
+  public static final String ORIGIN_NAME = "origin";
+
+  @NotNull private final String myName;
   private final List<String> myUrls;
   private final Collection<String> myPushUrls;
   private final List<String> myFetchRefSpecs;
@@ -83,6 +89,7 @@ public final class GitRemote implements Comparable<GitRemote> {
     myPushRefSpecs = pushRefSpecs;
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }
