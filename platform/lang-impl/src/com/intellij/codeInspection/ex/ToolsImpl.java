@@ -146,7 +146,7 @@ public class ToolsImpl implements Tools {
     final String levelName = toolElement.getAttributeValue(LEVEL_ATTRIBUTE);
     final ProfileManager profileManager = profile.getProfileManager();
     final SeverityRegistrar registrar = ((SeverityProvider)profileManager).getOwnSeverityRegistrar();
-    HighlightDisplayLevel level = HighlightDisplayLevel.find(registrar.getSeverity(levelName));
+    HighlightDisplayLevel level = levelName != null ? HighlightDisplayLevel.find(registrar.getSeverity(levelName)) : null;
     if (level == null || level == HighlightDisplayLevel.DO_NOT_SHOW) {//from old profiles
       level = HighlightDisplayLevel.WARNING;
     }
