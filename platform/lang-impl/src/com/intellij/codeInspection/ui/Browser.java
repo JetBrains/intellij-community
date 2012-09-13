@@ -29,6 +29,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -440,14 +441,11 @@ class Browser extends JPanel {
       if (description == null) {
         description = underConstruction;
       }
-      if (description.startsWith("<html>")) {
-        page.append(description.substring(description.indexOf("<html>") + 6));
-      } else {
-        page.append(underConstruction);
-      }
+      page.append(UIUtil.getHtmlBody(description));
 
       page.append("</td></tr></table>");
       myHTMLViewer.setText(page.toString());
+      setupStyle();
     } finally {
       myCurrentEntity = null;
     }
