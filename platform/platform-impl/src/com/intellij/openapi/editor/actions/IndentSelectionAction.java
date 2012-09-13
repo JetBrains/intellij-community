@@ -28,6 +28,8 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.IndentStrategy;
+import com.intellij.openapi.editor.LanguageIndentStrategy;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -35,6 +37,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class IndentSelectionAction extends EditorAction {
   public IndentSelectionAction() {
@@ -99,12 +108,35 @@ public class IndentSelectionAction extends EditorAction {
     if (bulkMode) ((DocumentEx)document).setInBulkUpdate(true);
 
     try {
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      IndentStrategy indentStrategy = LanguageIndentStrategy.getIndentStrategy(file);
+      List<Integer> nonModifiableLines = new ArrayList<Integer>();
+      if (!LanguageIndentStrategy.isDefault(indentStrategy)) {
+        for (int i = startIndex; i <= endIndex; i++) {
+          if (!canIndent(document, file, i, indentStrategy)) {
+            nonModifiableLines.add(i);
+          }
+        }
+      }
       for(int i=startIndex; i<=endIndex; i++) {
-        EditorActionUtil.indentLine(project, editor, i, blockIndent);
+        if (!nonModifiableLines.contains(i)) {
+          EditorActionUtil.indentLine(project, editor, i, blockIndent);
+        }
       }
     }
     finally {
       if (bulkMode) ((DocumentEx)document).setInBulkUpdate(false);
     }
+  }
+
+  static boolean canIndent(Document document, PsiFile file, int line, @NotNull IndentStrategy indentStrategy) {
+    int offset = document.getLineStartOffset(line);
+    if (file != null) {
+      PsiElement element = file.findElementAt(offset);
+      if (element != null) {
+        return indentStrategy.canIndent(element);
+      }
+    }
+    return true;
   }
 }
