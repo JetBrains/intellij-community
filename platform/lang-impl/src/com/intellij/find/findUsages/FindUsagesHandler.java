@@ -99,7 +99,9 @@ public abstract class FindUsagesHandler {
     return options;
   }
 
-  public void processElementUsages(@NotNull final PsiElement element, @NotNull final Processor<UsageInfo> processor, @NotNull final FindUsagesOptions options) {
+  public void processElementUsages(@NotNull final PsiElement element,
+                                   @NotNull final Processor<UsageInfo> processor,
+                                   @NotNull final FindUsagesOptions options) {
     final ReadActionProcessor<PsiReference> refProcessor = new ReadActionProcessor<PsiReference>() {
       @Override
       public boolean processInReadAction(final PsiReference ref) {
@@ -196,7 +198,7 @@ public abstract class FindUsagesHandler {
     return false;
   }
 
-  public Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target, SearchScope searchScope) {
+  public Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target, @NotNull SearchScope searchScope) {
     return ReferencesSearch.search(target, searchScope, false).findAll();
   }
 }

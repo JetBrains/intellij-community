@@ -65,13 +65,13 @@ public class IdeaLogger extends Logger {
           ourCompilationTimestamp = s.trim();
         }
       }
-      catch (IOException e) {
+      catch (IOException ignored) {
       }
       finally {
         try {
           stream.close();
         }
-        catch (IOException e) {
+        catch (IOException ignored) {
         }
       }
     }
@@ -91,22 +91,27 @@ public class IdeaLogger extends Logger {
     }
   }
 
+  @Override
   public boolean isDebugEnabled() {
     return myLogger.isDebugEnabled();
   }
 
+  @Override
   public void debug(String message) {
     myLogger.debug(message);
   }
 
+  @Override
   public void debug(Throwable t) {
     myLogger.debug("", t);
   }
 
+  @Override
   public void debug(@NonNls String message, Throwable t) {
     myLogger.debug(message, t);
   }
 
+  @Override
   public void error(String message, @Nullable Throwable t, String... details) {
     if (t instanceof ProcessCanceledException) {
       myLogger.error(new Throwable("Do not log ProcessCanceledException").initCause(t));
@@ -121,12 +126,12 @@ public class IdeaLogger extends Logger {
     String detailString = StringUtil.join(details, "\n");
 
     if (ourErrorsOccurred == null) {
-      String s = message != null && message.length() > 0 ? "Error message is '" + message + "'" : "";
+      String s = message != null && !message.isEmpty() ? "Error message is '" + message + "'" : "";
       String mess = "Logger errors occurred. See IDEA logs for details. " + s;
-      ourErrorsOccurred = new Exception(mess + (detailString.length() > 0 ? "\nDetails: " + detailString : ""), t);
+      ourErrorsOccurred = new Exception(mess + (!detailString.isEmpty() ? "\nDetails: " + detailString : ""), t);
     }
 
-    myLogger.error(message + (detailString.length() > 0 ? "\nDetails: " + detailString : ""), t);
+    myLogger.error(message + (!detailString.isEmpty() ? "\nDetails: " + detailString : ""), t);
     logErrorHeader();
     if (t != null && t.getCause() != null) {
       myLogger.error("Original exception: ", t.getCause());
@@ -166,14 +171,17 @@ public class IdeaLogger extends Logger {
     }
   }
 
+  @Override
   public void info(String message) {
     myLogger.info(message);
   }
 
+  @Override
   public void info(String message, @Nullable Throwable t) {
     myLogger.info(message, t);
   }
 
+  @Override
   public void warn(@NonNls String message, @Nullable Throwable t) {
     myLogger.warn(message, t);
   }
@@ -184,6 +192,7 @@ public class IdeaLogger extends Logger {
 
   private static ApplicationInfoProvider getIdeaInfoProvider() {
     return new ApplicationInfoProvider() {
+      @Override
       public String getInfo() {
         final ApplicationInfoEx info = ApplicationInfoImpl.getShadowInstance();
         return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asString();
@@ -191,6 +200,7 @@ public class IdeaLogger extends Logger {
     };
   }
 
+  @Override
   public void setLevel(Level level) {
     myLogger.setLevel(level);
   }
