@@ -28,7 +28,7 @@ public abstract class ShowSettingsUtil {
     return ServiceManager.getService(ShowSettingsUtil.class);
   }
 
-  public abstract void showSettingsDialog(Project project, ConfigurableGroup[] group);
+  public abstract void showSettingsDialog(Project project, ConfigurableGroup... group);
 
   public abstract void showSettingsDialog(@Nullable Project project, Class toSelect);
 

@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
 import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
@@ -97,12 +96,8 @@ public class MacOSApplicationProvider implements ApplicationComponent {
             project = ProjectManager.getInstance().getDefaultProject();
           }
 
-          ConfigurableGroup[] group = new ConfigurableGroup[]{
-            new ProjectConfigurablesGroup(project),
-            new IdeConfigurablesGroup()
-          };
-
-          ShowSettingsUtil.getInstance().showSettingsDialog(project, group);
+          ShowSettingsUtil.getInstance().showSettingsDialog(project, new ProjectConfigurablesGroup(project),
+                                                            new IdeConfigurablesGroup());
           applicationEvent.setHandled(true);
         }
 
