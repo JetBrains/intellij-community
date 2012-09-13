@@ -108,7 +108,7 @@ public class MakeStaticUtil {
         PsiElement refElement = classReference.resolve();
         if (refElement instanceof PsiClass) {
           PsiClass hisClass = ((PsiClass) refElement).getContainingClass();
-          if (hisClass != originalMember && isPartOf(hisClass, containingClass)) {
+          if (hisClass != originalMember && isPartOf(hisClass, containingClass) && !((PsiClass)refElement).hasModifierProperty(PsiModifier.STATIC)) {
             classRefs.add(new InternalUsageInfo(element, refElement));
           }
         }

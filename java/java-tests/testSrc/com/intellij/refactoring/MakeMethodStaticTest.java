@@ -19,6 +19,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.refactoring.makeStatic.MakeMethodStaticProcessor;
 import com.intellij.refactoring.makeStatic.MakeStaticUtil;
 import com.intellij.refactoring.makeStatic.Settings;
@@ -176,6 +177,13 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
     configureByFile("/refactoring/makeMethodStatic/beforePreserveTypeParams.java");
     performWithFields();
     checkResultByFile("/refactoring/makeMethodStatic/afterPreserveTypeParams.java");
+  } 
+
+  public void testInnerStaticClassUsed() throws Exception {
+    configureByFile("/refactoring/makeMethodStatic/beforeInnerStaticClassUsed.java");
+    PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    assertTrue(element instanceof PsiMethod);
+    assertFalse(MakeStaticUtil.isParameterNeeded((PsiMethod)element));
   }
 
   public void testPreserveParametersAlignment() throws Exception {
