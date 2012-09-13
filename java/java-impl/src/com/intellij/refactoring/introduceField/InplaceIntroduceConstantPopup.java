@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
@@ -161,6 +162,11 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
     return IntroduceConstantDialog.createNameSuggestionGenerator(propName, myExpr != null && myExpr.isValid() ? myExpr : null, JavaCodeStyleManager.getInstance(myProject), null,
                                                                  myParentClass)
       .getSuggestedNameInfo(defaultType).names;
+  }
+
+  @Override
+  protected VariableKind getVariableKind() {
+    return VariableKind.STATIC_FINAL_FIELD;
   }
 
   @Override
