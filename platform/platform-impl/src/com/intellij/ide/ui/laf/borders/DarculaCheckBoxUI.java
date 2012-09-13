@@ -15,10 +15,9 @@
  */
 package com.intellij.ide.ui.laf.borders;
 
+import com.intellij.ide.ui.laf.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.MacUIUtil;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -89,18 +88,18 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
     final boolean armed = b.getModel().isArmed();
 
     if (c.hasFocus()) {
-      g.setPaint(new GradientPaint(w/2, 1, armed ? Gray._40: Gray._60, w/2, h, armed ? Gray._25 : Gray._45));
+      g.setPaint(new GradientPaint(w/2, 1, armed ? Gray._100: Gray._120, w/2, h, armed ? Gray._55 : Gray._75));
       g.fillRoundRect(0, 0, w - 2, h - 2, 4, 4);
 
-      MacUIUtil.paintFocusRing(g, new Color(96, 175, 255), new Rectangle(1, 1, w - 2, h - 2));
+      DarculaUIUtil.paintFocusRing(g, 1, 1, w - 2, h - 2);
     } else {
-      g.setPaint(new GradientPaint(w / 2, 1, Gray._80, w / 2, h, Gray._65));
+      g.setPaint(new GradientPaint(w / 2, 1, Gray._110, w / 2, h, Gray._95));
       g.fillRoundRect(0, 0, w , h , 4, 4);
 
-      g.setPaint(new GradientPaint(w / 2, 1, ColorUtil.toAlpha(Gray._120, 90), w / 2, h, ColorUtil.toAlpha(Gray._105, 90)));
+      g.setPaint(new GradientPaint(w / 2, 1, Gray._120.withAlpha(90), w / 2, h, Gray._105.withAlpha(90)));
       g.drawRoundRect(0, 1, w, h - 1, 4, 4);
 
-      g.setPaint(Gray._30);
+      g.setPaint(Gray._40.withAlpha(180));
       g.drawRoundRect(0, 0, w, h - 1, 4, 4);
     }
 

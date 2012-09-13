@@ -2160,7 +2160,7 @@ public class UIUtil {
 
     public TextPainter() {
       myDrawShadow = isUnderAquaLookAndFeel();
-      myShadowColor = isUnderDarcula() ? Gray._0 : Gray._220;
+      myShadowColor = isUnderDarcula() ? Gray._0.withAlpha(180) : Gray._220;
       myLineSpacing = 1.0f;
     }
 
