@@ -56,10 +56,9 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   @NonNls protected static final String NBSP = "&nbsp;";
   @NonNls protected static final String CODE_CLOSING = "</code>";
   @NonNls protected static final String CODE_OPENING = "<code>";
-  @NonNls protected static final String FONT_CLOSING = "</font>";
   @NonNls protected static final String B_OPENING = "<b>";
   @NonNls protected static final String B_CLOSING = "</b>";
-  @NonNls protected static final String FONT_OPENING = "<font style=\"font-family:verdana;";
+  
   @NonNls protected static final String CLOSE_TAG = "\">";
   @NonNls protected static final String A_HREF_OPENING = "<a HREF=\"";
   @NonNls protected static final String A_CLOSING = "</a>";
@@ -106,8 +105,6 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   }
 
   private void appendLocation(final StringBuffer buf, final RefElement refElement) {
-    buf.append(FONT_OPENING);
-    buf.append(CLOSE_TAG);
     final HTMLComposerExtension extension = getLanguageExtension(refElement);
     if (extension != null) {
       extension.appendLocation(refElement, buf);
@@ -117,7 +114,6 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
       buf.append(NBSP);
       appendElementReference(buf, refElement, false);
     }
-    buf.append(FONT_CLOSING);
   }
 
   @Nullable
@@ -197,12 +193,10 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   protected void appendQuickFix(@NonNls final StringBuffer buf, String text, int index) {
     if (myExporter == null) {
-      buf.append(FONT_OPENING);
-      buf.append(CLOSE_TAG);
       buf.append("<a HREF=\"file://bred.txt#invoke:").append(index);
       buf.append("\">");
       buf.append(text);
-      buf.append("</a></font>");
+      buf.append("</a>");
     }
   }
 
@@ -267,11 +261,9 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   public void appendListItem(StringBuffer buf, RefElement refElement) {
     startListItem(buf);
-    buf.append(FONT_OPENING);
     buf.append(CLOSE_TAG);
     appendElementReference(buf, refElement, true);
     appendAdditionalListItemInfo(buf, refElement);
-    buf.append(FONT_CLOSING);
     doneListItem(buf);
   }
 

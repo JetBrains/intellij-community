@@ -216,7 +216,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     }
 
     //noinspection HardCodedStringLiteral
-    buf.append("<br><font style=\"font-family:verdana;color:#808080\">");
+    buf.append("<br>");
     if (refElement instanceof RefClass) {
       RefClassImpl refClass = (RefClassImpl)refElement;
       if (refClass.isSuspicious()) {
@@ -251,9 +251,6 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
         buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis6", nUsageCount));
       }
     }
-
-    //noinspection HardCodedStringLiteral
-    buf.append("</font>");
   }
 
   private static int getDerivedRefsCount(RefMethod refMethod) {
@@ -343,8 +340,6 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     if (possibleChildren.size() > 0) {
       if (appendCallees){
         appendHeading(buf, InspectionsBundle.message("inspection.export.results.callees"));
-        @NonNls String font = "<font style=\"font-family:verdana;\" size = \"3\">";
-        buf.append(font);
       }
       @NonNls final String ul = "<ul>";
       buf.append(ul);
@@ -361,10 +356,6 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
       }
       @NonNls final String closeUl = "</ul>";
       buf.append(closeUl);
-      if (appendCallees){
-        @NonNls String closeFont = "</font>";
-        buf.append(closeFont);
-      }
     }
   }
 
