@@ -45,7 +45,7 @@ public class EditorUtil {
   
   private EditorUtil() { }
 
-  public static int getLastVisualLineColumnNumber(Editor editor, final int line) {
+  public static int getLastVisualLineColumnNumber(@NotNull Editor editor, final int line) {
     Document document = editor.getDocument();
     int lastLine = document.getLineCount() - 1;
     if (lastLine < 0) {
@@ -160,7 +160,7 @@ public class EditorUtil {
     return editor.logicalPositionToOffset(endLineLogicalPosition);
   }
 
-  public static float calcVerticalScrollProportion(Editor editor) {
+  public static float calcVerticalScrollProportion(@NotNull Editor editor) {
     Rectangle viewArea = editor.getScrollingModel().getVisibleAreaOnScrollingFinished();
     if (viewArea.height == 0) {
       return 0;
@@ -170,7 +170,7 @@ public class EditorUtil {
     return (location.y - viewArea.y) / (float) viewArea.height;
   }
 
-  public static void setVerticalScrollProportion(Editor editor, float proportion) {
+  public static void setVerticalScrollProportion(@NotNull Editor editor, float proportion) {
     Rectangle viewArea = editor.getScrollingModel().getVisibleArea();
     LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
     Point caretLocation = editor.logicalPositionToXY(caretPosition);
@@ -179,15 +179,15 @@ public class EditorUtil {
     editor.getScrollingModel().scrollVertically(yPos);
   }
 
-  public static void fillVirtualSpaceUntilCaret(final Editor editor) {
+  public static void fillVirtualSpaceUntilCaret(@NotNull Editor editor) {
     final LogicalPosition position = editor.getCaretModel().getLogicalPosition();
     fillVirtualSpaceUntil(editor, position.column, position.line);
   }
 
-  public static void fillVirtualSpaceUntil(final Editor editor, int columnNumber, int lineNumber) {
+  public static void fillVirtualSpaceUntil(@NotNull final Editor editor, int columnNumber, int lineNumber) {
     final int offset = editor.logicalPositionToOffset(new LogicalPosition(lineNumber, columnNumber));
     final String filler = EditorModificationUtil.calcStringToFillVirtualSpace(editor);
-    if (filler.length() > 0) {
+    if (!filler.isEmpty()) {
       new WriteAction(){
         @Override
         protected void run(final Result result) throws Throwable {
@@ -211,9 +211,13 @@ public class EditorUtil {
    * @param debugBuffer   buffer to hold debug info during the processing (if any)
    * @return              given text offset that identifies the same position that is pointed by the given visual column
    */
-  public static int calcOffset(EditorEx editor, CharSequence text, int start, int end, int columnNumber, int tabSize,
-                               @Nullable StringBuilder debugBuffer)
-  {
+  public static int calcOffset(@NotNull EditorEx editor,
+                               @NotNull CharSequence text,
+                               int start,
+                               int end,
+                               int columnNumber,
+                               int tabSize,
+                               @Nullable StringBuilder debugBuffer) {
     assert start >= 0 : "start (" + start + ") must not be negative. end (" + end + ")";
     assert end >= start : "start (" + start + ") must not be greater than end (" + end + ")";
     if (debugBuffer != null) {
@@ -275,8 +279,15 @@ public class EditorUtil {
    * @return                target offset that belongs to the <code>[start; end)</code> range and points to the target logical
    *                        column if any; <code>-1</code> otherwise
    */
-  private static int calcSoftWrapUnawareOffset(Editor editor, CharSequence text, int start, int end, int columnNumber, int tabSize, int x,
-                                               int[] currentColumn, @Nullable StringBuilder debugBuffer) {
+  private static int calcSoftWrapUnawareOffset(@NotNull Editor editor,
+                                               @NotNull CharSequence text,
+                                               int start,
+                                               int end,
+                                               int columnNumber,
+                                               int tabSize,
+                                               int x,
+                                               @NotNull int[] currentColumn,
+                                               @Nullable StringBuilder debugBuffer) {
     if (debugBuffer != null) {
       debugBuffer.append(String.format(
         "Starting calcSoftWrapUnawareOffset(). Target range: [%d; %d), target column number to map: %d, tab size: %d, "
@@ -313,7 +324,7 @@ public class EditorUtil {
     
     // Perform optimized processing if possible. 'Optimized' here means the processing when we exactly know how many logical
     // columns are occupied by tabulation symbols.
-    if (editor == null || useOptimization) {
+    if (useOptimization) {
       if (!hasTabs) {
         int result = start + columnNumber - currentColumn[0];
         if (result < end) {
@@ -431,11 +442,11 @@ public class EditorUtil {
     return tabSize - colNumber % tabSize;
   }
 
-  public static int calcColumnNumber(Editor editor, CharSequence text, int start, int offset) {
+  public static int calcColumnNumber(@NotNull Editor editor, @NotNull CharSequence text, int start, int offset) {
     return calcColumnNumber(editor, text, start, offset, getTabSize(editor));
   }
 
-  public static int calcColumnNumber(Editor editor, CharSequence text, final int start, final int offset, final int tabSize) {
+  public static int calcColumnNumber(@Nullable Editor editor, @NotNull CharSequence text, final int start, final int offset, final int tabSize) {
     boolean useOptimization = true;
     if (editor != null) {
       SoftWrap softWrap = editor.getSoftWrapModel().getSoftWrap(start);
@@ -488,7 +499,7 @@ public class EditorUtil {
     return editorImpl.calcColumnNumber(text, start, offset, tabSize);
   }
 
-  public static void setHandCursor(Editor view) {
+  public static void setHandCursor(@NotNull Editor view) {
     Cursor c = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
     // XXX: Workaround, simply view.getContentComponent().setCursor(c) doesn't work
     if (view.getContentComponent().getCursor() != c) {
@@ -496,25 +507,25 @@ public class EditorUtil {
     }
   }
 
-  public static FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style, Editor editor) {
+  public static FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style, @NotNull Editor editor) {
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     return ComplementaryFontsRegistry.getFontAbleToDisplay(c, colorsScheme.getEditorFontSize(), style, colorsScheme.getEditorFontName());
   }
 
-  public static int charWidth(char c, @JdkConstants.FontStyle int fontType, Editor editor) {
+  public static int charWidth(char c, @JdkConstants.FontStyle int fontType, @NotNull Editor editor) {
     return fontForChar(c, fontType, editor).charWidth(c);
   }
 
-  public static int getSpaceWidth(@JdkConstants.FontStyle int fontType, Editor editor) {
+  public static int getSpaceWidth(@JdkConstants.FontStyle int fontType, @NotNull Editor editor) {
     int width = charWidth(' ', fontType, editor);
     return width > 0 ? width : 1;
   }
 
-  public static int getTabSize(Editor editor) {
+  public static int getTabSize(@NotNull Editor editor) {
     return editor.getSettings().getTabSize(editor.getProject());
   }
 
-  public static int nextTabStop(int x, Editor editor) {
+  public static int nextTabStop(int x, @NotNull Editor editor) {
     int tabSize = getTabSize(editor);
     if (tabSize <= 0) {
       tabSize = 1;
@@ -522,7 +533,7 @@ public class EditorUtil {
     return nextTabStop(x, editor, tabSize);
   }
 
-  public static int nextTabStop(int x, Editor editor, int tabSize) {
+  public static int nextTabStop(int x, @NotNull Editor editor, int tabSize) {
     return nextTabStop(x, getSpaceWidth(Font.PLAIN, editor), tabSize);
   }
 
@@ -536,7 +547,7 @@ public class EditorUtil {
     return (nTabs + 1) * tabSize;
   }
 
-  public static int textWidthInColumns(@NotNull Editor editor, CharSequence text, int start, int end, int x) {
+  public static int textWidthInColumns(@NotNull Editor editor, @NotNull CharSequence text, int start, int end, int x) {
     int startToUse = start;
     int lastTabSymbolIndex = -1;
 
@@ -556,7 +567,6 @@ public class EditorUtil {
     }
 
     int result = 0;
-    int prevX;
     int spaceSize = getSpaceWidth(Font.PLAIN, editor);
 
     // Calculate number of columns up to the latest tabulation symbol.
@@ -566,7 +576,7 @@ public class EditorUtil {
         x = softWrap.getIndentInPixels();
       }
       char c = text.charAt(i);
-      prevX = x;
+      int prevX = x;
       switch (c) {
         case '\t': 
           x = nextTabStop(x, editor);
@@ -636,7 +646,7 @@ public class EditorUtil {
    *                  from <code>[1; tab size]</code> (check {@link #nextTabStop(int, Editor)} for more details)
    * @return          width in pixels required for target text representation
    */
-  public static int textWidth(@NotNull Editor editor, CharSequence text, int start, int end, @JdkConstants.FontStyle int fontType, int x) {
+  public static int textWidth(@NotNull Editor editor, @NotNull CharSequence text, int start, int end, @JdkConstants.FontStyle int fontType, int x) {
     int result = 0;
     for (int i = start; i < end; i++) {
       char c = text.charAt(i);
@@ -659,7 +669,7 @@ public class EditorUtil {
    * @return        surrounding logical positions
    * @see #calcSurroundingRange(Editor, VisualPosition, VisualPosition) 
    */
-  public static Pair<LogicalPosition, LogicalPosition> calcCaretLineRange(Editor editor) {
+  public static Pair<LogicalPosition, LogicalPosition> calcCaretLineRange(@NotNull Editor editor) {
     return calcSurroundingRange(editor, editor.getCaretModel().getVisualPosition(), editor.getCaretModel().getVisualPosition());
   }
 
@@ -685,7 +695,7 @@ public class EditorUtil {
    * @return          pair of the closest surrounding non-soft-wrapped logical positions for the visual line start and end
    */
   @SuppressWarnings("AssignmentToForLoopParameter")
-  public static Pair<LogicalPosition, LogicalPosition> calcSurroundingRange(Editor editor, VisualPosition start, VisualPosition end) {
+  public static Pair<LogicalPosition, LogicalPosition> calcSurroundingRange(@NotNull Editor editor, @NotNull VisualPosition start, @NotNull VisualPosition end) {
     final Document document = editor.getDocument();
     final FoldingModel foldingModel = editor.getFoldingModel();
 
@@ -734,19 +744,19 @@ public class EditorUtil {
     return new Pair<LogicalPosition, LogicalPosition>(first, second);
   }
 
-  public static void scrollToTheEnd(final Editor editor) {
+  public static void scrollToTheEnd(@NotNull Editor editor) {
     editor.getCaretModel().moveToOffset(editor.getDocument().getTextLength());
     editor.getSelectionModel().removeSelection();
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
-  public static boolean isChangeFontSize(MouseWheelEvent e) {
+  public static boolean isChangeFontSize(@NotNull MouseWheelEvent e) {
     return SystemInfo.isMac
            ? !e.isControlDown() && e.isMetaDown() && !e.isAltDown() && !e.isShiftDown()
            : e.isControlDown() && !e.isMetaDown() && !e.isAltDown() && !e.isShiftDown();
   }
 
-  public static boolean inVirtualSpace(Editor editor, LogicalPosition logicalPosition) {
+  public static boolean inVirtualSpace(@NotNull Editor editor, @NotNull LogicalPosition logicalPosition) {
     return !editor.offsetToLogicalPosition(editor.logicalPositionToOffset(logicalPosition)).equals(logicalPosition);
   }
 }

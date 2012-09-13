@@ -39,6 +39,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.containers.ConcurrentHashSet;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -53,10 +54,10 @@ import java.util.*;
 class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>, SpeedSearchFilter<IntentionActionWithTextCaching> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionListStep");
 
-  private final Set<IntentionActionWithTextCaching> myCachedIntentions = new THashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myCachedErrorFixes = new THashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myCachedInspectionFixes = new THashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myCachedGutters = new THashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
+  private final Set<IntentionActionWithTextCaching> myCachedIntentions = new ConcurrentHashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
+  private final Set<IntentionActionWithTextCaching> myCachedErrorFixes = new ConcurrentHashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
+  private final Set<IntentionActionWithTextCaching> myCachedInspectionFixes = new ConcurrentHashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
+  private final Set<IntentionActionWithTextCaching> myCachedGutters = new ConcurrentHashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
   private final IntentionManagerSettings mySettings;
   @Nullable
   private final IntentionHintComponent myIntentionHintComponent;
@@ -307,10 +308,10 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     if (a instanceof HighPriorityAction) {
       return group + 3;
     }                                                                                         
-    else if (a instanceof LowPriorityAction) {
+    if (a instanceof LowPriorityAction) {
       return group - 3;
     }
-    else if (a instanceof QuickFixWrapper) {
+    if (a instanceof QuickFixWrapper) {
       final LocalQuickFix quickFix = ((QuickFixWrapper)a).getFix();
       if (quickFix instanceof HighPriorityAction) {
         return group + 3;
@@ -326,15 +327,13 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     if (myCachedErrorFixes.contains(action)) {
       return 20;
     }
-    else if (myCachedInspectionFixes.contains(action)) {
+    if (myCachedInspectionFixes.contains(action)) {
       return 10;
     }
-    else if (action.getAction() instanceof EmptyIntentionAction) {
+    if (action.getAction() instanceof EmptyIntentionAction) {
       return -10;
     }
-    else {
-      return 0;
-    }
+    return 0;
   }
 
   @Override

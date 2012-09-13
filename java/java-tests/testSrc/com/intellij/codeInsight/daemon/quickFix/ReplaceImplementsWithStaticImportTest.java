@@ -21,8 +21,10 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.JavaTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceImplementsWithStaticImportTest extends LightQuickFixTestCase {
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

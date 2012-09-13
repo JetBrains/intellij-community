@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.LightRefactoringTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.NonNls;
 public class ChangeClassSignatureTest extends LightRefactoringTestCase {
   @NonNls private static final String DATA_PATH = "/refactoring/changeClassSignature/";
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

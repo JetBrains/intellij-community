@@ -31,13 +31,14 @@ import java.util.List;
 
 public class AntCompletionTest extends LightCodeInsightTestCase {
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("ant") + "/tests/data/psi/completion/";
   }
 
   @Override
-  protected void configureByFile(@TestDataFile @NonNls String filePath) {
+  protected void configureByFile(@NotNull @TestDataFile @NonNls String filePath) {
     super.configureByFile(filePath);
     AntSupport.markFileAsAntFile(myVFile, myFile.getProject(), true);
   }

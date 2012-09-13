@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim.Mossienko
@@ -8,6 +9,7 @@ import com.intellij.JavaTestUtil;
 public class CustomFileTypeCompletionTest extends LightCompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/customFileType/";
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

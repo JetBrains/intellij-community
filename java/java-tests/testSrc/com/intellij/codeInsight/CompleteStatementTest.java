@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorActionTestCase;
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -274,6 +275,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
     return IdeActions.ACTION_EDITOR_COMPLETE_STATEMENT;
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

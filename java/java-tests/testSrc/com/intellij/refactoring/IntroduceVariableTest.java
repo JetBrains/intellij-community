@@ -16,6 +16,7 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.containers.MultiMap;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -24,6 +25,7 @@ import java.util.Collection;
  */
 public class IntroduceVariableTest extends LightCodeInsightTestCase {
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

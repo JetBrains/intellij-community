@@ -114,7 +114,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @throws Exception
    */
-  protected void configureByFile(@TestDataFile @NonNls String filePath) {
+  protected void configureByFile(@TestDataFile @NonNls @NotNull String filePath) {
     try {
       String fullPath = getTestDataPath() + filePath;
 
@@ -130,6 +130,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   @NonNls
+  @NotNull
   protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath();
   }
@@ -141,10 +142,22 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @throws java.io.IOException
    */
   @NotNull
-  protected static Document configureFromFileText(@NonNls final String fileName, @NonNls final String fileText) throws IOException {
+  protected static Document configureFromFileText(@NonNls @NotNull final String fileName, @NonNls @NotNull final String fileText) throws IOException {
     return ApplicationManager.getApplication().runWriteAction(new Computable<Document>() {
       @Override
       public Document compute() {
+        if (myVFile != null) {
+          // avoid messing with invalid files, in case someone calls configureXXX() several times
+          PsiDocumentManager.getInstance(ourProject).commitAllDocuments();
+          FileEditorManager.getInstance(ourProject).closeFile(myVFile);
+          try {
+            myVFile.delete(this);
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+          myVFile = null;
+        }
         final Document fakeDocument = new DocumentImpl(fileText);
 
         int caretIndex = fileText.indexOf(CARET_MARKER);
@@ -200,14 +213,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
   }
 
-  protected static Editor createEditor(VirtualFile file) {
+  protected static Editor createEditor(@NotNull VirtualFile file) {
     Editor editor = FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), file, 0), false);
     ((EditorImpl)editor).setCaretActive();
     return editor;
   }
 
   @NotNull
-  private static Document setupFileEditorAndDocument(final String fileName, String fileText) throws IOException {
+  private static Document setupFileEditorAndDocument(@NotNull String fileName, @NotNull String fileText) throws IOException {
     EncodingProjectManager.getInstance(getProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
     EncodingProjectManager.getInstance(ProjectManager.getInstance().getDefaultProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
     PostprocessReformattingAspect.getInstance(ourProject).doPostponedFormatting();
@@ -273,7 +286,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @throws Exception
    */
-  protected void checkResultByFile(@NonNls String filePath) {
+  protected void checkResultByFile(@NonNls @NotNull String filePath) {
     checkResultByFile(null, filePath, false);
   }
 
@@ -285,7 +298,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
    * @throws Exception
    */
-  protected void checkResultByFile(@Nullable String message, final String filePath, final boolean ignoreTrailingSpaces) {
+  protected void checkResultByFile(@Nullable String message, @NotNull String filePath, final boolean ignoreTrailingSpaces) {
     bringRealEditorBack();
 
     getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
@@ -315,7 +328,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * Same as checkResultByFile but text is provided directly.
    * @param fileText
    */
-  protected void checkResultByText(@NonNls String fileText) {
+  protected void checkResultByText(@NonNls @NotNull String fileText) {
     checkResultByText(null, fileText, false, null);
   }
 
@@ -325,7 +338,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
      * @param fileText
      * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
      */
-  protected void checkResultByText(final String message, final String fileText, final boolean ignoreTrailingSpaces) {
+  protected void checkResultByText(final String message, @NotNull String fileText, final boolean ignoreTrailingSpaces) {
     checkResultByText(message, fileText, ignoreTrailingSpaces, null);  
   }
   
@@ -335,7 +348,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param fileText
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
    */
-  protected void checkResultByText(final String message, final String fileText, final boolean ignoreTrailingSpaces, final String filePath) {
+  protected void checkResultByText(final String message, @NotNull final String fileText, final boolean ignoreTrailingSpaces, final String filePath) {
     bringRealEditorBack();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

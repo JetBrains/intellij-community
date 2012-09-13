@@ -34,6 +34,7 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -333,7 +334,9 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       ContainerUtil.quickSort(list, new Comparator<PsiClass>() {
         @Override
         public int compare(PsiClass o1, PsiClass o2) {
-          return scope.compare(o2.getContainingFile().getVirtualFile(), o1.getContainingFile().getVirtualFile());
+          VirtualFile file2 = PsiUtil.getVirtualFile(o2);
+          VirtualFile file1 = PsiUtil.getVirtualFile(o1);
+          return scope.compare(file2, file1);
         }
       });
 

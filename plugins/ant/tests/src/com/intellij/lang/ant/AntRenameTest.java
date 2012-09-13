@@ -25,6 +25,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class AntRenameTest extends LightCodeInsightTestCase {
 
@@ -128,6 +129,7 @@ public class AntRenameTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("ant").replace('\\', '/') + "/tests/data/psi/rename/";

@@ -33,6 +33,7 @@ import javax.accessibility.AccessibleRole;
 import javax.accessibility.AccessibleStateSet;
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -92,7 +93,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
 
   private boolean myIconOpaque = true;
 
-  private boolean myAutoInvalidate = true;
+  private boolean myAutoInvalidate = !(this instanceof TreeCellRenderer);
 
   private AccessibleContext myContext = new MyAccessibleContext();
 

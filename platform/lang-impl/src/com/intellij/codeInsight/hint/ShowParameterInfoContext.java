@@ -116,7 +116,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
                                         ) {
     if (ParameterInfoController.isAlreadyShown(editor, elementStart)) return;
 
-    if (editor.isDisposed()) return;
+    if (editor.isDisposed() || !editor.getComponent().isVisible()) return;
     final ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor,handler);
     component.setParameterOwner(element);
     if (highlighted != null) {
