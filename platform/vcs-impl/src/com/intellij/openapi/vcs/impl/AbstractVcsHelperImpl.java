@@ -69,6 +69,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.MessageView;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
@@ -78,6 +79,7 @@ import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.io.File;
@@ -90,6 +92,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl");
 
   private final Project myProject;
+  private Consumer<VcsException> myCustomHandler = new Consumer<VcsException>() {
+    @Override
+    public void consume(VcsException e) {
+      throw new RuntimeException(e);
+    }
+  };
 
   public AbstractVcsHelperImpl(Project project) {
     myProject = project;
@@ -227,28 +235,29 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     return CommitChangeListDialog.commitChanges(myProject, changes, initialChangeList, executor, commitMessage);
   }
 
-  private void addDirectMessages(VcsErrorViewPanel vcsErrorViewPanel, List<VcsException> abstractVcsExceptions) {
+  private static void addDirectMessages(VcsErrorViewPanel vcsErrorViewPanel, List<VcsException> abstractVcsExceptions) {
     for (final VcsException exception : abstractVcsExceptions) {
       String[] messages = getExceptionMessages(exception);
       vcsErrorViewPanel.addMessage(getErrorCategory(exception), messages, exception.getVirtualFile(), -1, -1, null);
     }
   }
 
-  private String[] getExceptionMessages(VcsException exception) {
+  private static String[] getExceptionMessages(VcsException exception) {
     String[] messages = exception.getMessages();
     if (messages.length == 0) messages = new String[]{VcsBundle.message("exception.text.unknown.error")};
     final List<String> list = new ArrayList<String>();
     for (String message : messages) {
       list.addAll(StringUtil.split(StringUtil.convertLineSeparators(message), "\n"));
     }
-    return list.toArray(new String[list.size()]);
+    return ArrayUtil.toStringArray(list);
   }
 
   private void showErrorsImpl(final boolean isEmpty, final Getter<VcsException> firstGetter, @NotNull final String tabDisplayName,
                               final Consumer<VcsErrorViewPanel> viewFiller) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && !isEmpty) {
-      throw new RuntimeException(firstGetter.get());
-    } else if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!isEmpty) {
+        myCustomHandler.consume(firstGetter.get());
+      }
       return;
     }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -703,5 +712,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     public boolean isRevisionsReturned() {
       return myRevisionsReturned;
     }
+  }
+
+  @TestOnly
+  public static void setCustomExceptionHandler(Project project, Consumer<VcsException> customHandler) {
+    ((AbstractVcsHelperImpl)getInstance(project)).myCustomHandler = customHandler;
   }
 }
