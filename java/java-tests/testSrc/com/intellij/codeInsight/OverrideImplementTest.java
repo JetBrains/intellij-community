@@ -120,6 +120,18 @@ public class OverrideImplementTest extends LightCodeInsightTestCase {
     checkResultByFile(BASE_DIR + "after" + name + ".java");
   }
 
+  public void testImplementExtensionMethods() {
+    setLanguageLevel(LanguageLevel.JDK_1_8);
+    String name = getTestName(false);
+    configureByFile(BASE_DIR + "before" + name + ".java");
+    int offset = getEditor().getCaretModel().getOffset();
+    PsiElement context = getFile().findElementAt(offset);
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
+    assert psiClass != null;
+    OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), getEditor(), psiClass, true);
+    checkResultByFile(BASE_DIR + "after" + name + ".java");
+  }
+
   private void doTest(boolean copyJavadoc) {
     String name = getTestName(false);
     configureByFile(BASE_DIR + "before" + name + ".java");
