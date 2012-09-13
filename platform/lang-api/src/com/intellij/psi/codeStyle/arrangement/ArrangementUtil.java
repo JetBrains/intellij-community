@@ -21,14 +21,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.*;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Denis Zhdanov
@@ -296,6 +294,16 @@ public class ArrangementUtil {
       }
     }
     assert result != null;
+    return result;
+  }
+
+  public static <T> Set<T> flatten(@NotNull Iterable<? extends Iterable<T>> data) {
+    Set<T> result = ContainerUtilRt.newHashSet();
+    for (Iterable<T> i : data) {
+      for (T t : i) {
+        result.add(t);
+      }
+    }
     return result;
   }
 }

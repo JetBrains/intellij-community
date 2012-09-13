@@ -16,6 +16,7 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
@@ -55,11 +56,7 @@ public class ArrangementNodeDisplayManager {
     for (Map.Entry<ArrangementSettingType, Collection<?>> entry : map.entrySet()) {
       myMaxWidths.put(entry.getKey(), maxWidth(entry.getValue()));
     }
-    Set<ArrangementMatchCondition> groupingConditions = new HashSet<ArrangementMatchCondition>();
-    for (Set<ArrangementMatchCondition> rules : groupingRules) {
-      groupingConditions.addAll(rules);
-    }
-    myMaxGroupTextWidth = maxWidth(groupingConditions);
+    myMaxGroupTextWidth = maxWidth(ArrangementUtil.flatten(groupingRules));
   }
 
   private int maxWidth(Collection<?> values) {

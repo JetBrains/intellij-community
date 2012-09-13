@@ -69,9 +69,11 @@ public class ArrangementRuleEditingModelBuilder {
    * @param groupingRules  conditions grouping rules
    *                       {@link ArrangementStandardSettingsRepresentationAware#getDisplayValue(ArrangementModifier) group} setting
    *                       nodes for UI representation
-   * @return               collection of row changes at the form {@code 'old row -> new row'} (all rows are zero-based)
+   * @return               created model and collection of row changes at the form {@code 'old row -> new row'} (all rows are zero-based);
+   *                       <code>null</code> if no model has been created
    */
   @SuppressWarnings("MethodMayBeStatic")
+  @Nullable
   public Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> build(
     @NotNull StdArrangementRule rule,
     @NotNull JTree tree,
@@ -81,6 +83,14 @@ public class ArrangementRuleEditingModelBuilder {
   {
     HierarchicalArrangementConditionNode grouped = ArrangementUtil.group(rule.getMatcher().getCondition(), groupingRules);
     DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
+
+    if (grouped.getChild() == null) {
+      ArrangementTreeNode lastChild = root.getLastChild();
+      if (lastChild != null && grouped.getCurrent().equals(lastChild.getBackingCondition())) {
+        return null;
+      }
+    }
+    
     Pair<ArrangementTreeNode, Integer> pair = ArrangementConfigUtil.map(null, grouped, null);
     ArrangementTreeNode topMostNode = ArrangementConfigUtil.getRoot(pair.first);
     ArrangementConfigUtil.markRows(root, tree.isRootVisible());

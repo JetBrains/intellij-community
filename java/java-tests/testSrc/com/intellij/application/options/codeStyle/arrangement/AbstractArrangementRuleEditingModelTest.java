@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -64,6 +65,7 @@ public abstract class AbstractArrangementRuleEditingModelTest {
     Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> pair = myBuilder.build(
       new StdArrangementRule(new StdArrangementEntryMatcher(matchCondition)), myTree, myRoot, null, myGroupingRules
     );
+    assertNotNull(pair);
     myRowMappings.put(pair.first.getRow(), pair.first);
   }
 

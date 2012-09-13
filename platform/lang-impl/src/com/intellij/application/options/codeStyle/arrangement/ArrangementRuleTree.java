@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.ui.treeStructure.Tree;
@@ -324,8 +325,10 @@ public class ArrangementRuleTree {
   private void map(@NotNull List<StdArrangementRule> rules) {
     for (StdArrangementRule rule : rules) {
       Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> pair = myModelBuilder.build(rule, myTree, myRoot, null, myGroupingRules);
-      myModels.put(pair.first.getRow(), pair.first);
-      pair.first.addListener(myModelChangeListener);
+      if (pair != null) {
+        myModels.put(pair.first.getRow(), pair.first);
+        pair.first.addListener(myModelChangeListener);
+      }
     }
   }
 
@@ -374,8 +377,25 @@ public class ArrangementRuleTree {
     int[] rows = myModels.keys();
     Arrays.sort(rows);
     List<StdArrangementRule> result = new ArrayList<StdArrangementRule>();
+    ArrangementMatchCondition prevGroup = null;
+    Set<ArrangementMatchCondition> implicitGroupConditions = new HashSet<ArrangementMatchCondition>();
     for (int row : rows) {
-      result.add(myModels.get(row).getRule());
+      ArrangementRuleEditingModelImpl model = myModels.get(row);
+      ArrangementTreeNode topMost = model.getTopMost();
+      ArrangementMatchCondition currentGroup = topMost.getBackingCondition();
+      if (prevGroup != null && !prevGroup.equals(currentGroup)) {
+        result.add(new StdArrangementRule(new StdArrangementEntryMatcher(prevGroup)));
+        implicitGroupConditions.add(prevGroup);
+        prevGroup = null;
+      }
+      if (!myRoot.equals(topMost) && !topMost.equals(model.getBottomMost()) && !implicitGroupConditions.contains(currentGroup)) {
+        prevGroup = currentGroup;
+      }
+      result.add(model.getRule());
+    }
+
+    if (prevGroup != null) {
+      result.add(new StdArrangementRule(new StdArrangementEntryMatcher(prevGroup)));
     }
     return result;
   }
@@ -567,6 +587,7 @@ public class ArrangementRuleTree {
     Pair<ArrangementRuleEditingModelImpl,TIntIntHashMap> pair = myModelBuilder.build(
       ArrangementRuleEditingModel.EMPTY_RULE, myTree, myRoot, anchor, myGroupingRules
     );
+    assert pair != null;
     processRowChanges(pair.second);
     myModels.put(pair.first.getRow(), pair.first);
     pair.first.addListener(myModelChangeListener);
