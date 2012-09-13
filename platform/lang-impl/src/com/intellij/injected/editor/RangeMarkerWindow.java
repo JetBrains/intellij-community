@@ -78,7 +78,10 @@ public class RangeMarkerWindow implements RangeMarkerEx {
 
   @Override
   public boolean isValid() {
-    return myHostMarker.isValid() && myDocumentWindow.isValid();
+    if (!myHostMarker.isValid() || !myDocumentWindow.isValid()) return false;
+    int startOffset = getStartOffset();
+    int endOffset = getEndOffset();
+    return startOffset <= endOffset && endOffset <= myDocumentWindow.getTextLength();
   }
 
   @Override
