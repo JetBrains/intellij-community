@@ -254,6 +254,9 @@ public class ArrangementUtil {
         }
       }
     });
+    if (conditions.isEmpty()) {
+      return new HierarchicalArrangementConditionNode(condition);
+    }
     
     HierarchicalArrangementConditionNode result = null;
     for (Set<ArrangementMatchCondition> rules : groupingRules) {

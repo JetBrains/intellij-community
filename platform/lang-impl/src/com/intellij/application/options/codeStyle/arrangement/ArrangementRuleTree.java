@@ -342,7 +342,7 @@ public class ArrangementRuleTree {
   @NotNull
   public List<ArrangementRuleEditingModelImpl> getActiveModels() {
     TreePath[] paths = mySelectionModel.getSelectionPaths();
-    if (paths == null) {
+    if (paths == null || paths.length != 1) {
       return Collections.emptyList();
     }
     
@@ -655,8 +655,11 @@ public class ArrangementRuleTree {
       
       if (node.getChildCount() > 0) {
         // Select the whole section.
-        for (ArrangementTreeNode child = node.getFirstChild(); child != null; child = child.getNextNode()) {
+        for (ArrangementTreeNode child = node.getFirstChild(), last = node.getLastChild(); child != null; child = child.getNextNode()) {
           addSelectionPath(new TreePath(child.getPath()));
+          if (child == last) {
+            break;
+          }
         }
       }
       
