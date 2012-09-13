@@ -163,6 +163,7 @@ public class Splash extends JDialog implements StartupProgress {
   private static final class SplashImage implements Icon {
     private final Icon myIcon;
     private final Color myTextColor;
+    private boolean myRedrawing;
 
     public SplashImage(Icon originalIcon, Color textColor) {
       myIcon = originalIcon;
@@ -170,9 +171,12 @@ public class Splash extends JDialog implements StartupProgress {
     }
 
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      try {
-        Thread.sleep(10);
-      } catch (InterruptedException ignore) {}
+      if (!myRedrawing) {
+        try {
+          Thread.sleep(10);
+        } catch (InterruptedException ignore) {}
+        myRedrawing = true;
+      }
 
       myIcon.paintIcon(c, g, x, y);
 
