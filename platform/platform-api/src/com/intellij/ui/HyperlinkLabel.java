@@ -173,6 +173,10 @@ public class HyperlinkLabel extends HighlightableComponent {
     }
   }
 
+  public void doClick() {
+    fireHyperlinkEvent();
+  }
+
   public void setHtmlText(String text) {
     HTMLEditorKit.Parser parse = new ParserDelegator();
     final HighlightedText highlightedText = new HighlightedText();
