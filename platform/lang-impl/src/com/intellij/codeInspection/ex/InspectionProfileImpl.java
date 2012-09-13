@@ -77,8 +77,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private InspectionProfileImpl myBaseProfile = null;
   @NonNls private static final String VERSION_TAG = "version";
   @NonNls private static final String INSPECTION_TOOL_TAG = "inspection_tool";
-  @NonNls static final String ENABLED_TAG = "enabled";
-  @NonNls static final String LEVEL_TAG = "level";
+
   @NonNls private static final String CLASS_TAG = "class";
   @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
   @NonNls private static final String ROOT_ELEMENT_TAG = "inspections";
