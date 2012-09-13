@@ -533,7 +533,19 @@ public class OverrideImplementUtil {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, toImplement);
-    Collection<CandidateInfo> secondary = toImplement || aClass.isInterface() ? Collections.<CandidateInfo>emptyList() : getMethodsToOverrideImplement(aClass, true);
+    Collection<CandidateInfo> secondary = toImplement || aClass.isInterface() ?
+                                          ContainerUtil.<CandidateInfo>newArrayList() : getMethodsToOverrideImplement(aClass, true);
+
+    if (toImplement && PsiUtil.isLanguageLevel8OrHigher(aClass)) {
+      for (Iterator<CandidateInfo> iterator = candidates.iterator(); iterator.hasNext(); ) {
+        CandidateInfo candidate = iterator.next();
+        PsiElement element = candidate.getElement();
+        if (element instanceof PsiMethod && PsiUtil.isExtensionMethod((PsiMethod)element)) {
+          iterator.remove();
+          secondary.add(candidate);
+        }
+      }
+    }
 
     final MemberChooser<PsiMethodMember> chooser = showOverrideImplementChooser(editor, aClass, toImplement, candidates, secondary);
     if (chooser == null) return;
@@ -563,7 +575,7 @@ public class OverrideImplementUtil {
 
     final Ref<Boolean> merge = Ref.create(PropertiesComponent.getInstance(project).isTrueValue(PROP_COMBINED_OVERRIDE_IMPLEMENT));
     final MemberChooser<PsiMethodMember> chooser =
-      new MemberChooser<PsiMethodMember>(merge.get() ? all : onlyPrimary, false, true, project, PsiUtil.isLanguageLevel5OrHigher(aClass)) {
+      new MemberChooser<PsiMethodMember>(toImplement || merge.get() ? all : onlyPrimary, false, true, project, PsiUtil.isLanguageLevel5OrHigher(aClass)) {
         @Override
         protected void fillToolbarActions(DefaultActionGroup group) {
           super.fillToolbarActions(group);
@@ -597,11 +609,13 @@ public class OverrideImplementUtil {
     chooser.setCopyJavadocVisible(true);
 
     if (toImplement) {
-      chooser.selectElements((boolean)merge.get() ? all : onlyPrimary);
+      chooser.selectElements(onlyPrimary);
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      chooser.selectElements(all);
+      if (!toImplement) {
+        chooser.selectElements(all);
+      }
       chooser.close(DialogWrapper.OK_EXIT_CODE);
       return chooser;
     }

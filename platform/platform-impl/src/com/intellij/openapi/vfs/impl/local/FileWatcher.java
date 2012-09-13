@@ -41,6 +41,9 @@ import javax.swing.event.HyperlinkEvent;
 import java.io.*;
 import java.util.*;
 
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static com.intellij.util.containers.ContainerUtil.newArrayListWithExpectedSize;
+
 /**
  * @author max
  */
@@ -63,17 +66,17 @@ public class FileWatcher {
 
   private final Object LOCK = new Object();
 
-  private List<String> myDirtyPaths = new ArrayList<String>();
-  private List<String> myDirtyRecursivePaths = new ArrayList<String>();
-  private List<String> myDirtyDirs = new ArrayList<String>();
-  private List<String> myManualWatchRoots = new ArrayList<String>();
+  private List<String> myDirtyPaths = newArrayList();
+  private List<String> myDirtyRecursivePaths = newArrayList();
+  private List<String> myDirtyDirs = newArrayList();
 
-  private final List<Pair<String, String>> myMapping = new ArrayList<Pair<String, String>>();
-  private List<String> myRecursiveWatchRoots = new ArrayList<String>();
-  private List<String> myFlatWatchRoots = new ArrayList<String>();
+  private List<String> myManualWatchRoots = newArrayList();
+  private List<String> myRecursiveWatchRoots = newArrayList();
+  private List<String> myFlatWatchRoots = newArrayList();
 
-  private final Collection<String> myAllPaths = new ArrayList<String>(2);
-  private final Collection<String> myWatchedPaths = new ArrayList<String>(2);
+  private final List<Pair<String, String>> myMapping = newArrayList();
+  private final Collection<String> myAllPaths = newArrayListWithExpectedSize(2);
+  private final Collection<String> myWatchedPaths = newArrayListWithExpectedSize(2);
 
   private File executable;
   private volatile Process notifierProcess;

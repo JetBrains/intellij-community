@@ -22,18 +22,20 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  * @author Max Medvedev
  */
 public class GrBreakStringOnLineBreaksTest extends GrIntentionTestCase {
-  private static final String message = GroovyIntentionsBundle.message('gr.break.string.on.line.breaks.intention.name')
+  GrBreakStringOnLineBreaksTest() {
+    super(GroovyIntentionsBundle.message('gr.break.string.on.line.breaks.intention.name'))
+  }
 
   final String basePath = TestUtils.testDataPath + "intentions/breakStringOnLineBreaks/"
 
   void testSimple() {
-    doTextTest('''print 'ab<caret>c\\ncde\'''', message, '''\
+    doTextTest('''print 'ab<caret>c\\ncde\'''', '''\
 print 'abc\\n' +
         'cde\'''')
   }
 
   void testGString() {
-    doTextTest('''print "a<caret>\\n$x bc\\n"''', message, '''\
+    doTextTest('''print "a<caret>\\n$x bc\\n"''', '''\
 print "a\\n" +
         "$x bc\\n"''')
   }

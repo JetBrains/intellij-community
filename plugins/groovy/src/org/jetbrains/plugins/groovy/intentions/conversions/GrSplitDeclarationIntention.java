@@ -24,7 +24,10 @@ import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTupleDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -35,40 +38,84 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
  * @author Max Medvedev
  */
 public class GrSplitDeclarationIntention extends Intention {
+
+
   @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
-    if (element instanceof GrVariableDeclaration) {
-      GrVariable[] variables = ((GrVariableDeclaration)element).getVariables();
-      if (variables.length == 1) {
-        GrVariable var = variables[0];
-        GrExpression initializer = var.getInitializerGroovy();
-        if (initializer != null) {
-          GrExpression assignment = GroovyPsiElementFactory.getInstance(project)
-            .createExpressionFromText(var.getName() + " = " + initializer.getText());
-          initializer.delete();
-          element = GroovyRefactoringUtil.addBlockIntoParent(element);
-          element.getParent().addAfter(assignment, element);
-        }
+    if (!(element instanceof GrVariableDeclaration)) return;
+
+    GrVariableDeclaration declaration = (GrVariableDeclaration)element;
+
+    GrVariable[] variables = declaration.getVariables();
+    if (variables.length == 1) {
+      processSingleVar(project, declaration, variables[0]);
+    }
+    else if (variables.length > 1) {
+      GrTupleDeclaration tuple = declaration.getTupleDeclaration();
+      if (tuple == null || tuple.getInitializerGroovy() instanceof GrListOrMap) {
+        processMultipleVars(project, declaration);
       }
-      else if (variables.length > 1) {
-        String modifiers = ((GrVariableDeclaration)element).getModifierList().getText();
-        GrStatement[] sts = new GrStatement[variables.length];
-        for (int i = 0; i < variables.length; i++) {
-          sts[i] = createVarDeclaration(project, variables[i], modifiers);
-        }
-
-        element = GroovyRefactoringUtil.addBlockIntoParent(element);
-
-        for (int i = sts.length - 1; i >= 0; i--) {
-          element.getParent().addAfter(sts[i], element);
-        }
-
-        element.delete();
+      else {
+        processTuple(project, declaration);
       }
     }
   }
 
-  private static GrStatement createVarDeclaration(Project project, GrVariable variable, String modifiers) {
+  private static void processTuple(Project project, GrVariableDeclaration declaration) {
+    GrTupleDeclaration tuple = declaration.getTupleDeclaration();
+    assert tuple != null;
+    GrExpression initializer = tuple.getInitializerGroovy();
+    assert initializer != null;
+
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
+
+    GrVariable[] variables = declaration.getVariables();
+
+    StringBuilder assignmentBuilder = new StringBuilder();
+    assignmentBuilder.append('(');
+    for (GrVariable variable : variables) {
+      assignmentBuilder.append(variable.getName()).append(',');
+    }
+    assignmentBuilder.replace(assignmentBuilder.length() - 1, assignmentBuilder.length(), ")=");
+    assignmentBuilder.append(initializer.getText());
+
+    GrStatement assignment = factory.createStatementFromText(assignmentBuilder.toString());
+
+    declaration = GroovyRefactoringUtil.addBlockIntoParent(declaration);
+    declaration.getParent().addAfter(assignment, declaration);
+
+    initializer.delete();
+  }
+
+  private static void processMultipleVars(Project project, GrVariableDeclaration declaration) {
+    GrVariable[] variables = declaration.getVariables();
+    String modifiers = declaration.getModifierList().getText();
+    GrStatement[] sts = new GrStatement[variables.length];
+    for (int i = 0; i < variables.length; i++) {
+      sts[i] = createVarDeclaration(project, variables[i], modifiers, declaration.getTupleDeclaration() != null);
+    }
+
+    declaration = GroovyRefactoringUtil.addBlockIntoParent(declaration);
+
+    for (int i = sts.length - 1; i >= 0; i--) {
+      declaration.getParent().addAfter(sts[i], declaration);
+    }
+
+    declaration.delete();
+  }
+
+  private static void processSingleVar(Project project, GrVariableDeclaration declaration, GrVariable variable) {
+    GrExpression initializer = variable.getInitializerGroovy();
+    if (initializer != null) {
+      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
+      GrExpression assignment = factory.createExpressionFromText(variable.getName() + " = " + initializer.getText());
+      initializer.delete();
+      declaration = GroovyRefactoringUtil.addBlockIntoParent(declaration);
+      declaration.getParent().addAfter(assignment, declaration);
+    }
+  }
+
+  private static GrStatement createVarDeclaration(Project project, GrVariable variable, String modifiers, boolean isTuple) {
     StringBuilder builder = new StringBuilder();
     builder.append(modifiers).append(' ');
     GrTypeElement typeElement = variable.getTypeElementGroovy();
@@ -80,7 +127,12 @@ public class GrSplitDeclarationIntention extends Intention {
     if (initializer != null) {
       builder.append('=').append(initializer.getText());
     }
-    return GroovyPsiElementFactory.getInstance(project).createStatementFromText(builder.toString());
+    GrVariableDeclaration var =
+      (GrVariableDeclaration)GroovyPsiElementFactory.getInstance(project).createStatementFromText(builder.toString());
+    if (isTuple && (variable.getDeclaredType() != null || var.getModifierList().getModifiers().length > 1)) {
+      ((GrVariableDeclaration)var).getModifierList().setModifierProperty(GrModifier.DEF, false);
+    }
+    return var;
   }
 
   private String myText = "";
@@ -100,7 +152,13 @@ public class GrSplitDeclarationIntention extends Intention {
         if (element instanceof GrVariableDeclaration) {
           GrVariable[] variables = ((GrVariableDeclaration)element).getVariables();
           if (variables.length > 1 && GroovyRefactoringUtil.isLocalVariable(variables[0])) {
-            myText = GroovyIntentionsBundle.message("split.into.separate.declaration");
+            GrTupleDeclaration tuple = ((GrVariableDeclaration)element).getTupleDeclaration();
+            if (tuple == null || tuple.getInitializerGroovy() instanceof GrListOrMap) {
+              myText = GroovyIntentionsBundle.message("split.into.separate.declaration");
+            }
+            else {
+              myText = GroovyIntentionsBundle.message("split.into.declaration.and.assignment");
+            }
             return true;
           }
           else if (variables.length == 1 &&

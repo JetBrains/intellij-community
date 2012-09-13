@@ -64,7 +64,7 @@ public class ConvertMapToClassTest extends GrIntentionTestCase {
     doTest(true);
   }
 
-  private void doTest(boolean exists) {
+  protected void doTest(boolean exists) {
     myFixture.configureByFile(getTestName(true) + "/Test.groovy");
     String hint = GroovyIntentionsBundle.message("convert.map.to.class.intention.name");
     final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint);

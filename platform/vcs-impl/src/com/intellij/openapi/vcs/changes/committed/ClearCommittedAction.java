@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -30,6 +31,10 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
  * Time: 4:53 PM
  */
 public class ClearCommittedAction extends AnAction implements DumbAware {
+  public ClearCommittedAction() {
+    super("Clear", "Clears cached revisions", AllIcons.Vcs.Remove);
+  }
+
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     CommittedChangesPanel panel = ChangesViewContentManager.getInstance(project).getActiveComponent(CommittedChangesPanel.class);

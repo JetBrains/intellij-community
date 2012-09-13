@@ -92,12 +92,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl");
 
   private final Project myProject;
-  private Consumer<VcsException> myCustomHandler = new Consumer<VcsException>() {
-    @Override
-    public void consume(VcsException e) {
-      throw new RuntimeException(e);
-    }
-  };
+  private Consumer<VcsException> myCustomHandler = null;
 
   public AbstractVcsHelperImpl(Project project) {
     myProject = project;
@@ -256,7 +251,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                               final Consumer<VcsErrorViewPanel> viewFiller) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       if (!isEmpty) {
-        myCustomHandler.consume(firstGetter.get());
+        VcsException exception = firstGetter.get();
+        if (!handleCustom(exception)) {
+          throw new RuntimeException(exception);
+        }
       }
       return;
     }
@@ -274,6 +272,14 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         viewFiller.consume(errorTreeView);
       }
     });
+  }
+
+  public boolean handleCustom(VcsException exception) {
+    if (myCustomHandler != null) {
+      myCustomHandler.consume(exception);
+      return true;
+    }
+    return false;
   }
 
   @Override
