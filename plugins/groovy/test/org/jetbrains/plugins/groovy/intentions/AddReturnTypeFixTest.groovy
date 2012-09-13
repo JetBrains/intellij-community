@@ -21,24 +21,25 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
  * @author Max Medvedev
  */
 public class AddReturnTypeFixTest extends GrIntentionTestCase {
-  @Override
-  protected String getBasePath() {
-    return "${TestUtils.testDataPath}intentions/addReturnType/";
+  AddReturnTypeFixTest() {
+    super('Add return type')
   }
 
+  final String basePath = TestUtils.testDataPath + 'intentions/addReturnType/'
+
   void testSimple() {
-    doTextTest('def f<caret>oo() {}', 'Add return type', 'def void f<caret>oo() {}')
+    doTextTest('def f<caret>oo() {}', 'def void f<caret>oo() {}')
   }
 
   void testTypePrams() {
-    doTextTest('def <T> f<caret>oo() {}', 'Add return type', 'def <T> void f<caret>oo() {}')
+    doTextTest('def <T> f<caret>oo() {}', 'def <T> void f<caret>oo() {}')
   }
 
   void testReturnPrimitive() {
-    doTextTest('def foo() {re<caret>turn 2}', 'Add return type', 'def int foo() {re<caret>turn 2}')
+    doTextTest('def foo() {re<caret>turn 2}', 'def int foo() {re<caret>turn 2}')
   }
 
   void testReturn() {
-    doTextTest('def foo() {re<caret>turn "2"}', 'Add return type', 'def String foo() {re<caret>turn "2"}')
+    doTextTest('def foo() {re<caret>turn "2"}', 'def String foo() {re<caret>turn "2"}')
   }
 }

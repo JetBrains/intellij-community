@@ -24,8 +24,7 @@ import org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertString
  * @author Max Medvedev
  */
 public class ConvertStringToMultilineTest extends LightGroovyTestCase {
-  @Override
-  protected String getBasePath() {''}
+  final String basePath = ''
 
   void testPlainString() {
     doTest("print 'ab<caret>c'", "print '''abc'''")

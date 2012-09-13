@@ -25,10 +25,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 class RemoveUnnecessarySemicolonTest extends LightCodeInsightFixtureTestCase {
   private static final String hint = GroovyIntentionsBundle.message('remove.unnecessary.semicolons.name');
 
-  @Override
-  protected String getBasePath() {
-    return "${TestUtils.testDataPath}intentions/removeUnnecessaryBraces/";
-  }
+  final String basePath = TestUtils.testDataPath + 'intentions/removeUnnecessaryBraces/'
 
   void testSimpleCase1() {
     doTest('print 2;<caret>\nprint 3', 'print 2\nprint 3')
