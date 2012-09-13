@@ -58,7 +58,7 @@ public class PyModuleFindUsagesHandler extends FindUsagesHandler {
   }
 
   @Override
-  public Collection<PsiReference> findReferencesToHighlight(PsiElement target, SearchScope searchScope) {
+  public Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target, @NotNull SearchScope searchScope) {
     if (target instanceof PyImportedModule) {
       target = ((PyImportedModule) target).resolve();
     }
