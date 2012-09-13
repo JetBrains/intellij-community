@@ -300,7 +300,21 @@ public class ArrayUtil extends ArrayUtilRt {
     return append(src, element, (Class<T>)src.getClass().getComponentType());
   }
 
-  public static <T> T[] append(@NotNull final T[] src, final T element, ArrayFactory<T> factory) {
+  @NotNull
+  public static <T> T[] prepend(final T element, @NotNull final T[] array) {
+    return prepend(element, array, (Class<T>)array.getClass().getComponentType());
+  }
+
+  @NotNull
+  public static <T> T[] prepend(T element, @NotNull T[] array, @NotNull Class<T> type) {
+    int length = array.length;
+    T[] result = (T[])Array.newInstance(type, length + 1);
+    System.arraycopy(array, 0, result, 0, length);
+    result[length] = element;
+    return result;
+  }
+
+  public static <T> T[] append(@NotNull final T[] src, final T element, @NotNull ArrayFactory<T> factory) {
     int length = src.length;
     T[] result = factory.create(length + 1);
     System.arraycopy(src, 0, result, 0, length);
