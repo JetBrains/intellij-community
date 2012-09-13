@@ -148,6 +148,10 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
                   "Variable 'x' is accessed for writing.");
   }
   
+  public void testConditionExpr() throws Exception {
+    doTest(true);
+  }
+  
   public void testLambdaExpr() throws Exception {
     doTest(true);
   }
