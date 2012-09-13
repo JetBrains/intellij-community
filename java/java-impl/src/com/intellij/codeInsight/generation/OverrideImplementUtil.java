@@ -45,7 +45,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -80,8 +80,7 @@ public class OverrideImplementUtil {
 
   @NonNls private static final String PROP_COMBINED_OVERRIDE_IMPLEMENT = "OverrideImplement.combined";
 
-  private OverrideImplementUtil() {
-  }
+  private OverrideImplementUtil() { }
 
   @NotNull
   public static Collection<CandidateInfo> getMethodsToOverrideImplement(PsiClass aClass, boolean toImplement) {
@@ -218,7 +217,8 @@ public class OverrideImplementUtil {
     PsiSubstitutor substitutor = aClass.isInheritor(containingClass, true)
                                  ? TypeConversionUtil.getSuperClassSubstitutor(containingClass, aClass, PsiSubstitutor.EMPTY)
                                  : PsiSubstitutor.EMPTY;
-    return overrideOrImplementMethod(aClass, method, substitutor, toCopyJavaDoc, CodeStyleSettingsManager.getSettings(aClass.getProject()).INSERT_OVERRIDE_ANNOTATION);
+    return overrideOrImplementMethod(aClass, method, substitutor, toCopyJavaDoc,
+                                     CodeStyleSettingsManager.getSettings(aClass.getProject()).INSERT_OVERRIDE_ANNOTATION);
   }
 
   public static boolean isInsertOverride(PsiMethod superMethod, PsiClass targetClass) {
@@ -325,11 +325,11 @@ public class OverrideImplementUtil {
     }
 
     final PsiCodeBlock body = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createCodeBlockFromText("{}", null);
-    PsiCodeBlock oldbody = result.getBody();
-    if (oldbody != null){
-      oldbody.replace(body);
+    PsiCodeBlock oldBody = result.getBody();
+    if (oldBody != null) {
+      oldBody.replace(body);
     }
-    else{
+    else {
       result.add(body);
     }
 
@@ -356,7 +356,7 @@ public class OverrideImplementUtil {
     if (insertOverride && canInsertOverride(overridden, targetClass)) {
       annotate(method, Override.class.getName());
     }
-    final Module module = ModuleUtil.findModuleForPsiElement(targetClass);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(targetClass);
     final GlobalSearchScope moduleScope = module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : null;
     final Project project = targetClass.getProject();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
@@ -376,13 +376,6 @@ public class OverrideImplementUtil {
     if (fix.isAvailable(project, null, result.getContainingFile())) {
       fix.invoke(project, null, result.getContainingFile());
     }
-  }
-
-  public static boolean isOverridable(PsiMethod method) {
-    return !method.isConstructor()
-           && !method.hasModifierProperty(PsiModifier.STATIC)
-           && !method.hasModifierProperty(PsiModifier.FINAL)
-           && !method.hasModifierProperty(PsiModifier.PRIVATE);
   }
 
   @NotNull
@@ -437,20 +430,20 @@ public class OverrideImplementUtil {
   }
 
   @NotNull
-  public static String callSuper (PsiMethod superMethod, PsiMethod overriding) {
+  public static String callSuper(PsiMethod superMethod, PsiMethod overriding) {
     @NonNls StringBuilder buffer = new StringBuilder();
     if (!superMethod.isConstructor() && superMethod.getReturnType() != PsiType.VOID) {
       buffer.append("return ");
     }
     buffer.append("super");
-    PsiParameter[] parms = overriding.getParameterList().getParameters();
-    if (!superMethod.isConstructor()){
+    PsiParameter[] parameters = overriding.getParameterList().getParameters();
+    if (!superMethod.isConstructor()) {
       buffer.append(".");
       buffer.append(superMethod.getName());
     }
     buffer.append("(");
-    for (int i = 0; i < parms.length; i++) {
-      String name = parms[i].getName();
+    for (int i = 0; i < parameters.length; i++) {
+      String name = parameters[i].getName();
       if (i > 0) buffer.append(",");
       buffer.append(name);
     }
@@ -459,13 +452,15 @@ public class OverrideImplementUtil {
   }
 
   public static void setupMethodBody(PsiMethod result, PsiMethod originalMethod, PsiClass targetClass) throws IncorrectOperationException {
-    String templName = originalMethod.hasModifierProperty(PsiModifier.ABSTRACT) ?
-                       JavaTemplateUtil.TEMPLATE_IMPLEMENTED_METHOD_BODY : JavaTemplateUtil.TEMPLATE_OVERRIDDEN_METHOD_BODY;
-    FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templName);
+    boolean isAbstract = originalMethod.hasModifierProperty(PsiModifier.ABSTRACT) || PsiUtil.isExtensionMethod(originalMethod);
+    String templateName = isAbstract ? JavaTemplateUtil.TEMPLATE_IMPLEMENTED_METHOD_BODY : JavaTemplateUtil.TEMPLATE_OVERRIDDEN_METHOD_BODY;
+    FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templateName);
     setupMethodBody(result, originalMethod, targetClass, template);
   }
 
-  public static void setupMethodBody(final PsiMethod result, final PsiMethod originalMethod, final PsiClass targetClass,
+  public static void setupMethodBody(final PsiMethod result,
+                                     final PsiMethod originalMethod,
+                                     final PsiClass targetClass,
                                      final FileTemplate template) throws IncorrectOperationException {
     if (targetClass.isInterface()) {
       final PsiCodeBlock body = result.getBody();
@@ -613,7 +608,7 @@ public class OverrideImplementUtil {
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      if (!toImplement) {
+      if (!toImplement || onlyPrimary.length == 0) {
         chooser.selectElements(all);
       }
       chooser.close(DialogWrapper.OK_EXIT_CODE);

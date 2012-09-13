@@ -1,14 +1,7 @@
-class Test {
-    interface A<T> {
-        void m1(T t);
-        void m2();
-    }
+interface A<T> {
+    void m(T t) default { }
+}
 
-    interface B<T> extends A<T> {
-        void m1(T t) default { }
-    }
-
-    class MyClass<T> implements B<T> {
-        <caret>
-    }
+class MyClass<T> implements A<T> {
+    <caret>
 }

@@ -30,6 +30,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -59,6 +60,9 @@ public class OverrideImplementTest extends LightCodeInsightTestCase {
   public void testSubstituteBoundInMethodTypeParam() { doTest(false); }
   public void testClone() { doTest(false); }
   public void testOnTheLineWithExistingExpression() { doTest(false); }
+
+  public void testImplementExtensionMethods() { doTest8(false, true); }
+  public void testDoNotImplementExtensionMethods() { doTest8(false, true); }
 
   public void testLongFinalParameterList() {
     CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
@@ -120,32 +124,32 @@ public class OverrideImplementTest extends LightCodeInsightTestCase {
     checkResultByFile(BASE_DIR + "after" + name + ".java");
   }
 
-  public void testImplementExtensionMethods() {
+  private void doTest(boolean copyJavadoc) { doTest(copyJavadoc, null); }
+
+  private void doTest8(boolean copyJavadoc, @Nullable Boolean toImplement) {
     setLanguageLevel(LanguageLevel.JDK_1_8);
-    String name = getTestName(false);
-    configureByFile(BASE_DIR + "before" + name + ".java");
-    int offset = getEditor().getCaretModel().getOffset();
-    PsiElement context = getFile().findElementAt(offset);
-    PsiClass psiClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
-    assert psiClass != null;
-    OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), getEditor(), psiClass, true);
-    checkResultByFile(BASE_DIR + "after" + name + ".java");
+    doTest(copyJavadoc, toImplement);
   }
 
-  private void doTest(boolean copyJavadoc) {
+  private void doTest(boolean copyJavadoc, @Nullable Boolean toImplement) {
     String name = getTestName(false);
     configureByFile(BASE_DIR + "before" + name + ".java");
     int offset = getEditor().getCaretModel().getOffset();
     PsiElement context = getFile().findElementAt(offset);
     PsiClass psiClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
     assert psiClass != null;
-    PsiClassType[] implement = psiClass.getImplementsListTypes();
-    final PsiClass superClass = implement.length == 0 ? psiClass.getSuperClass() : implement[0].resolve();
-    assert superClass != null;
-    PsiMethod method = superClass.getMethods()[0];
-    final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, psiClass, PsiSubstitutor.EMPTY);
-    final List<PsiMethodMember> candidates = Collections.singletonList(new PsiMethodMember(method, substitutor));
-    OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(getEditor(), psiClass, candidates, copyJavadoc, true);
+    if (toImplement == null) {
+      PsiClassType[] implement = psiClass.getImplementsListTypes();
+      final PsiClass superClass = implement.length == 0 ? psiClass.getSuperClass() : implement[0].resolve();
+      assert superClass != null;
+      PsiMethod method = superClass.getMethods()[0];
+      final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, psiClass, PsiSubstitutor.EMPTY);
+      final List<PsiMethodMember> candidates = Collections.singletonList(new PsiMethodMember(method, substitutor));
+      OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(getEditor(), psiClass, candidates, copyJavadoc, true);
+    }
+    else {
+      OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), getEditor(), psiClass, toImplement);
+    }
     checkResultByFile(BASE_DIR + "after" + name + ".java");
   }
 }
