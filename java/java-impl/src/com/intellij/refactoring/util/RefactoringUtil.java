@@ -773,7 +773,7 @@ public class RefactoringUtil {
     return expression;
   }
 
-  private static PsiExpression createNewExpressionFromArrayInitializer(PsiArrayInitializerExpression initializer, PsiType forcedType)
+  public static PsiExpression createNewExpressionFromArrayInitializer(PsiArrayInitializerExpression initializer, PsiType forcedType)
     throws IncorrectOperationException {
     PsiType initializerType = null;
     if (initializer != null) {
