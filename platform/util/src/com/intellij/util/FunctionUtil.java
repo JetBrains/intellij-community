@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,20 +21,27 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class FunctionUtil {
-  private FunctionUtil() {
-  }
+  private FunctionUtil() { }
 
   @NotNull
   public static <T> Function<T, T> id() {
-    //noinspection unchecked
-    return Function.ID;
+    @SuppressWarnings("unchecked") Function<T, T> id = Function.ID;
+    return id;
   }
 
+  @NotNull
   public static <A, B> NullableFunction<A, B> nullConstant() {
-    //noinspection unchecked
-    return NullableFunction.NULL;
+    @SuppressWarnings("unchecked") NullableFunction<A, B> function = NullableFunction.NULL;
+    return function;
   }
 
+  @NotNull
+  public static <T> Function<T, String> string() {
+    @SuppressWarnings("unchecked") Function<T, String> function = Function.TO_STRING;
+    return function;
+  }
+
+  @NotNull
   public static <A, B> Function<A, B> constant(final B b) {
     return new Function<A, B>() {
       @Override
@@ -54,5 +61,4 @@ public class FunctionUtil {
       }
     };
   }
-
 }
