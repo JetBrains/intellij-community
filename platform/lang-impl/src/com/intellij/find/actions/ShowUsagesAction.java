@@ -251,7 +251,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }, 1000, new Runnable() {
       @Override
       public void run() {
-        rebuildPopup(usageView, usages, table, popup, presentation, popupPosition);
+        rebuildPopup(usageView, usages, table, popup, presentation, popupPosition, !processIcon.isDisposed());
       }
     });
 
@@ -329,6 +329,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                     popup.cancel();
                   }
                 }
+              }
+              else {
+                String title = presentation.getTabText();
+                boolean shouldShowMoreSeparator = visibleNodes.contains(MORE_USAGES_SEPARATOR_NODE);
+                String fullTitle = getFullTitle(usages, title, shouldShowMoreSeparator, visibleNodes.size() - (shouldShowMoreSeparator ? 1 : 0), false);
+                ((AbstractPopup)popup).setCaption(fullTitle);
               }
             }
           }
@@ -551,7 +557,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     PopupChooserBuilder builder = new PopupChooserBuilder(table);
     if (title != null) {
-      String result = getFullTitle(usages, title, hadMoreSeparator, visibleNodes.size() - 1);
+      String result = getFullTitle(usages, title, hadMoreSeparator, visibleNodes.size() - 1, true);
       builder.setTitle(result);
       builder.setAdText(getSecondInvocationTitle(options, handler));
     }
@@ -633,7 +639,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     JComponent content = popup[0].getContent();
 
     myWidth = (int)(toolBar.getPreferredSize().getWidth()
-                  + new JLabel(getFullTitle(usages, title, hadMoreSeparator, visibleNodes.size() - 1)).getPreferredSize().getWidth()
+                  + new JLabel(getFullTitle(usages, title, hadMoreSeparator, visibleNodes.size() - 1, true)).getPreferredSize().getWidth()
                   + settingsButton.getPreferredSize().getWidth());
     myWidth = -1;
     for (AnAction action : toolbar.getChildren(null)) {
@@ -645,7 +651,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   @NotNull
-  private static String getFullTitle(@NotNull List<Usage> usages, @NotNull String title, boolean hadMoreSeparator, int visibleNodesCount) {
+  private static String getFullTitle(@NotNull List<Usage> usages,
+                                     @NotNull String title,
+                                     boolean hadMoreSeparator,
+                                     int visibleNodesCount,
+                                     boolean findUsagesInProgress) {
+    if (findUsagesInProgress) title += " so far";
     String s;
     if (hadMoreSeparator) {
       s = "<b>Some</b> " + title + " " + "<b>(Only " + visibleNodesCount + " usages shown)</b>";
@@ -813,7 +824,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                             @NotNull final JTable table,
                             @NotNull final JBPopup popup,
                             @NotNull final UsageViewPresentation presentation,
-                            @NotNull final RelativePoint popupPosition) {
+                            @NotNull final RelativePoint popupPosition,
+                            boolean findUsagesInProgress) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (popup.isDisposed()) return;
 
@@ -833,7 +845,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       filtered = filtered(usages, usageView);
 
       String title = presentation.getTabText();
-      fullTitle = getFullTitle(usages, title, shouldShowMoreSeparator, nodes.size() - (shouldShowMoreSeparator ? 1 : 0));
+      fullTitle = getFullTitle(usages, title, shouldShowMoreSeparator, nodes.size() - (shouldShowMoreSeparator ? 1 : 0), findUsagesInProgress);
     }
 
     ((AbstractPopup)popup).setCaption(fullTitle);

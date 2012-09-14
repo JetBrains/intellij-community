@@ -630,7 +630,12 @@ public class ArrangementRuleTree {
     return condition instanceof ArrangementCompositeMatchCondition
            && ((ArrangementCompositeMatchCondition)condition).getOperands().isEmpty();
   }
-  
+
+  public void disposeUI() {
+    Container parent = EMPTY_RENDERER.getParent();
+    if (parent != null) parent.remove(EMPTY_RENDERER);
+  }
+
   private class MyCellRenderer implements TreeCellRenderer {
     @Override
     public Component getTreeCellRendererComponent(JTree tree,
@@ -645,7 +650,7 @@ public class ArrangementRuleTree {
       if (node == null) {
         return EMPTY_RENDERER;
       }
-      else if (isEmptyCondition(node)) {
+      if (isEmptyCondition(node)) {
         return NEW_CONDITION_RENDERER;
       }
       
