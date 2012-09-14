@@ -282,14 +282,13 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       if (value instanceof String) {
         String message = (String) value;
         myIssueLinkRenderer.appendTextWithLinks(message);
-        setToolTipText(message);
       }
     }
 
 
   }
 
-  private class MessageColumnInfo extends VcsColumnInfo<String> {
+  private static class MessageColumnInfo extends VcsColumnInfo<String> {
     private final MessageRenderer myRenderer;
 
     public MessageColumnInfo(Project project) {
