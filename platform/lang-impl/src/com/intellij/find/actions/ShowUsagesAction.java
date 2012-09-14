@@ -656,13 +656,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                      boolean hadMoreSeparator,
                                      int visibleNodesCount,
                                      boolean findUsagesInProgress) {
-    if (findUsagesInProgress) title += " so far";
     String s;
     if (hadMoreSeparator) {
-      s = "<b>Some</b> " + title + " " + "<b>(Only " + visibleNodesCount + " usages shown)</b>";
+      s = "<b>Some</b> " + title + " " + "<b>(Only " + visibleNodesCount + " usages shown" +(findUsagesInProgress ? " so far" : "")+")</b>";
     }
     else {
-      s = title + " (" + UsageViewBundle.message("usages.n", usages.size()) + ")";
+      s = title + " (" + UsageViewBundle.message("usages.n", usages.size()) + (findUsagesInProgress ? " so far" : "") + ")";
     }
     return "<html><nobr>" + s + "</nobr></html>";
   }
