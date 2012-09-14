@@ -97,7 +97,7 @@ public class HighlightDisplayKey {
 
   @Nullable
   public static HighlightDisplayKey register(@NonNls @NotNull final String name,
-                                             @NonNls @NotNull final String displayName,
+                                             @NotNull final Computable<String> displayName,
                                              @NonNls @NotNull final String id,
                                              @NonNls @Nullable final String alternativeID) {
     final HighlightDisplayKey key = register(name, displayName, id);
