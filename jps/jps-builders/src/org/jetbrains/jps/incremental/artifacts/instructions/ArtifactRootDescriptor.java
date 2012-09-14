@@ -5,7 +5,7 @@ import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
-import org.jetbrains.jps.incremental.artifacts.ArtifactSourceToOutputMapping;
+import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +46,7 @@ public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
 
   public abstract void copyFromRoot(String filePath,
                                     int rootIndex, String outputPath,
-                                    CompileContext context, ArtifactSourceToOutputMapping srcOutMapping,
+                                    CompileContext context, SourceToOutputMapping srcOutMapping,
                                     ArtifactOutputToSourceMapping outSrcMapping) throws IOException;
 
   public SourceFileFilter getFilter() {

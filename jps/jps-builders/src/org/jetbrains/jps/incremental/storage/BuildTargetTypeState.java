@@ -29,7 +29,7 @@ public class BuildTargetTypeState {
                               BuildTargetsState state) {
     myTargetType = targetType;
     myTargetsState = state;
-    myTargetsFile = new File(dataStorageRoot, "targets" + File.separator + targetType.getTypeId() + File.separator + "targets.dat");
+    myTargetsFile = new File(state.getTargetTypeDataRoot(targetType), "targets.dat");
     myTargetIds = new HashMap<BuildTarget, Integer>();
     load(rootsIndex, artifactRootsIndex);
   }

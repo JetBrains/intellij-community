@@ -6,7 +6,7 @@ import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
-import org.jetbrains.jps.incremental.artifacts.ArtifactSourceToOutputMapping;
+import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +30,7 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
 
   public void copyFromRoot(String filePath,
                            int rootIndex, String outputPath,
-                           CompileContext context, ArtifactSourceToOutputMapping srcOutMapping,
+                           CompileContext context, SourceToOutputMapping srcOutMapping,
                            ArtifactOutputToSourceMapping outSrcMapping) throws IOException {
     final File file = new File(FileUtil.toSystemDependentName(filePath));
     if (!file.exists()) return;

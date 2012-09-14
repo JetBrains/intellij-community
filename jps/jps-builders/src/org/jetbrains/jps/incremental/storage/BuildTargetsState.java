@@ -48,8 +48,16 @@ public class BuildTargetsState {
     }
   }
 
+  public File getTargetTypeDataRoot(BuildTargetType targetType) {
+    return new File(getTargetsDataRoot(), targetType.getTypeId());
+  }
+
+  public File getTargetsDataRoot() {
+    return new File(myDataStorageRoot, "targets");
+  }
+
   private File getTargetTypesFile() {
-    return new File(myDataStorageRoot, "targets" + File.separator + "targetTypes.dat");
+    return new File(getTargetsDataRoot(), "targetTypes.dat");
   }
 
   public void save() {
@@ -97,5 +105,9 @@ public class BuildTargetsState {
 
   public int getFreeId() {
     return myMaxTargetId.incrementAndGet();
+  }
+
+  public File getTargetDataRoot(BuildTarget target) {
+    return new File(getTargetTypeDataRoot(target.getTargetType()), target.getId());
   }
 }

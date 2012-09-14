@@ -62,7 +62,7 @@ public class BuildRunner {
     BuildDataManager dataManager = null;
     try {
       projectTimestamps = new ProjectTimestamps(dataStorageRoot, targetsState);
-      dataManager = new BuildDataManager(dataStorageRoot, STORE_TEMP_CACHES_IN_MEMORY);
+      dataManager = new BuildDataManager(dataStorageRoot, targetsState, STORE_TEMP_CACHES_IN_MEMORY);
       if (dataManager.versionDiffers()) {
         myForceCleanCaches = true;
         msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Dependency data format has changed, project rebuild required"));
@@ -79,8 +79,9 @@ public class BuildRunner {
       }
       myForceCleanCaches = true;
       FileUtil.delete(dataStorageRoot);
+      targetsState = new BuildTargetsState(dataStorageRoot, index, artifactRootsIndex);
       projectTimestamps = new ProjectTimestamps(dataStorageRoot, targetsState);
-      dataManager = new BuildDataManager(dataStorageRoot, STORE_TEMP_CACHES_IN_MEMORY);
+      dataManager = new BuildDataManager(dataStorageRoot, targetsState, STORE_TEMP_CACHES_IN_MEMORY);
       // second attempt succeded
       msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
     }

@@ -8,8 +8,8 @@ import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
-import org.jetbrains.jps.incremental.artifacts.ArtifactSourceToOutputMapping;
 import org.jetbrains.jps.incremental.artifacts.JarPathUtil;
+import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 
 import java.io.*;
 import java.util.Collections;
@@ -64,7 +64,7 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
 
   public void copyFromRoot(final String filePath,
                            final int rootIndex, final String outputPath,
-                           CompileContext context, final ArtifactSourceToOutputMapping srcOutMapping,
+                           CompileContext context, final SourceToOutputMapping srcOutMapping,
                            final ArtifactOutputToSourceMapping outSrcMapping) throws IOException {
     context.getLoggingManager().getArtifactBuilderLogger().fileCopied(filePath);
     processEntries(new EntryProcessor() {

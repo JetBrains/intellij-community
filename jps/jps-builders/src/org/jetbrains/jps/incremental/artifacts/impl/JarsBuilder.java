@@ -39,6 +39,7 @@ import org.jetbrains.jps.incremental.artifacts.instructions.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 
 import java.io.*;
 import java.util.*;
@@ -56,17 +57,15 @@ public class JarsBuilder {
   private final Set<JarInfo> myJarsToBuild;
   private final CompileContext myContext;
   private Map<JarInfo, File> myBuiltJars;
-  private final ArtifactSourceToOutputMapping mySrcOutMapping;
+  private final SourceToOutputMapping mySrcOutMapping;
   private final ArtifactOutputToSourceMapping myOutSrcMapping;
-  private final ArtifactInstructionsBuilder myInstructions;
 
   public JarsBuilder(Set<JarInfo> jarsToBuild,
                      CompileContext context,
-                     ArtifactSourceToOutputMapping srcOutMapping,
+                     SourceToOutputMapping srcOutMapping,
                      ArtifactOutputToSourceMapping outSrcMapping, ArtifactInstructionsBuilder instructions) {
     mySrcOutMapping = srcOutMapping;
     myOutSrcMapping = outSrcMapping;
-    myInstructions = instructions;
     DependentJarsEvaluator evaluator = new DependentJarsEvaluator();
     for (JarInfo jarInfo : jarsToBuild) {
       evaluator.addJarWithDependencies(jarInfo);

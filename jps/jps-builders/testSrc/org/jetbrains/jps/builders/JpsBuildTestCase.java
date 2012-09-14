@@ -74,7 +74,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       ArtifactRootsIndex artifactRootsIndex = new ArtifactRootsIndex(myModel, index);
       BuildTargetsState targetsState = new BuildTargetsState(myDataStorageRoot, index, artifactRootsIndex);
       ProjectTimestamps timestamps = new ProjectTimestamps(myDataStorageRoot, targetsState);
-      BuildDataManager dataManager = new BuildDataManager(myDataStorageRoot, true);
+      BuildDataManager dataManager = new BuildDataManager(myDataStorageRoot, targetsState, true);
       return new ProjectDescriptor(myModel, new BuildFSState(true), timestamps, dataManager, buildLoggingManager, index, targetsState,
                                    artifactRootsIndex);
     }

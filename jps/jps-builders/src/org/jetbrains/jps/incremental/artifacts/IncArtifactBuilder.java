@@ -16,6 +16,7 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 
@@ -79,13 +80,13 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
       }
 
       context.processMessage(new ProgressMessage("Building artifact '" + target.getArtifact().getName() + "'..."));
-      final ArtifactSourceToOutputMapping srcOutMapping = state.getOrCreateSrcOutMapping();
+      final SourceToOutputMapping srcOutMapping = pd.dataManager.getSourceToOutputMap(target);
       final ArtifactOutputToSourceMapping outSrcMapping = state.getOrCreateOutSrcMapping();
 
       final TIntObjectHashMap<Set<String>> filesToProcess = new TIntObjectHashMap<Set<String>>();
       MultiMap<String, String> filesToDelete = new MultiMap<String, String>();
       for (String sourcePath : deletedFiles) {
-        final List<String> outputPaths = srcOutMapping.getState(sourcePath);
+        final Collection<String> outputPaths = srcOutMapping.getState(sourcePath);
         if (outputPaths != null) {
           for (String outputPath : outputPaths) {
             filesToDelete.putValue(outputPath, sourcePath);
@@ -105,7 +106,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
         for (File file : entry.getValue()) {
           String sourcePath = file.getPath();
           addFileToProcess(filesToProcess, rootIndex, sourcePath, deletedFiles);
-          final List<String> outputPaths = srcOutMapping.getState(sourcePath);
+          final Collection<String> outputPaths = srcOutMapping.getState(sourcePath);
           if (outputPaths != null) {
             changedOutputPaths.addAll(outputPaths);
             for (String outputPath : outputPaths) {
@@ -183,7 +184,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
   }
 
   private static void deleteOutdatedFiles(MultiMap<String, String> filesToDelete, CompileContext context,
-                                          ArtifactSourceToOutputMapping srcOutMapping,
+                                          SourceToOutputMapping srcOutMapping,
                                           ArtifactOutputToSourceMapping outSrcMapping) throws IOException {
     if (filesToDelete.isEmpty()) return;
 

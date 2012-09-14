@@ -12,7 +12,6 @@ import org.jetbrains.jps.incremental.artifacts.ArtifactsBuildData;
 import java.io.*;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -20,7 +19,7 @@ import java.util.Map;
  *         Date: 10/7/11
  */
 public class BuildDataManager implements StorageOwner {
-  private static final int VERSION = 11;
+  private static final int VERSION = 12;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildDataManager");
   private static final String SRC_TO_OUTPUTS_STORAGE = "src-out";
   private static final String SRC_TO_FORM_STORAGE = "src-form";
@@ -34,10 +33,12 @@ public class BuildDataManager implements StorageOwner {
   private final ModuleOutputRootsLayout myOutputRootsLayout;
   private final Mappings myMappings;
   private final File myDataStorageRoot;
+  private final BuildTargetsState myTargetsState;
   private final File myVersionFile;
 
-  public BuildDataManager(final File dataStorageRoot, final boolean useMemoryTempCaches) throws IOException {
+  public BuildDataManager(final File dataStorageRoot, BuildTargetsState targetsState, final boolean useMemoryTempCaches) throws IOException {
     myDataStorageRoot = dataStorageRoot;
+    myTargetsState = targetsState;
     mySrcToFormMap = new SourceToFormMapping(new File(getSourceToFormsRoot(), "data"));
     myOutputRootsLayout = new ModuleOutputRootsLayout(new File(getOutputsLayoutRoot(), "data"));
     myMappings = new Mappings(getMappingsRoot(), useMemoryTempCaches);
@@ -49,14 +50,12 @@ public class BuildDataManager implements StorageOwner {
     return new File(myDataStorageRoot, "output-roots");
   }
 
-  public SourceToOutputMapping getSourceToOutputMap(final ModuleBuildTarget target) throws IOException {
-    final boolean testSources = target.isTests();
+  public SourceToOutputMapping getSourceToOutputMap(final BuildTarget target) throws IOException {
     SourceToOutputMapping mapping;
     synchronized (mySourceToOutputLock) {
       mapping = mySourceToOutputs.get(target);
       if (mapping == null) {
-        String lowerCaseModuleName = target.getModuleName().toLowerCase(Locale.US);
-        mapping = new SourceToOutputMapping(new File(getSourceToOutputRoot(lowerCaseModuleName, testSources), "data"));
+        mapping = new SourceToOutputMapping(new File(myTargetsState.getTargetDataRoot(target), "src-out" + File.separator + "data"));
         mySourceToOutputs.put(target, mapping);
       }
     }
@@ -211,10 +210,6 @@ public class BuildDataManager implements StorageOwner {
 
   public File getSourceToFormsRoot() {
     return new File(myDataStorageRoot, SRC_TO_FORM_STORAGE);
-  }
-
-  public File getSourceToOutputRoot(String moduleName, boolean forTests) {
-    return new File(getSourceToOutputsRoot(), (forTests? "tests" : "production") + "/" + moduleName);
   }
 
   private File getSourceToOutputsRoot() {

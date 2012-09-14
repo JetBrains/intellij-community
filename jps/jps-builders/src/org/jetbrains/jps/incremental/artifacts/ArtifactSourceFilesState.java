@@ -14,6 +14,7 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.CompositeStorageOwner;
+import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.storage.StorageOwner;
 
 import java.io.File;
@@ -25,9 +26,7 @@ import java.util.*;
  */
 public class ArtifactSourceFilesState extends CompositeStorageOwner {
   private final ArtifactBuildTarget myTarget;
-  private ArtifactSourceToOutputMapping mySrcOutMapping;
   private ArtifactOutputToSourceMapping myOutSrcMapping;
-  private final File mySrcOutMappingsFile;
   private File myOutSrcMappingsFile;
   private final ProjectDescriptor myProjectDescriptor;
 
@@ -37,15 +36,7 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
     int artifactId = projectDescriptor.getTargetsState().getBuildTargetId(target);
     myProjectDescriptor = projectDescriptor;
     myTarget = target;
-    mySrcOutMappingsFile = new File(new File(mappingsDir, String.valueOf(artifactId)), "src-out");
     myOutSrcMappingsFile = new File(new File(mappingsDir, String.valueOf(artifactId)), "out-src");
-  }
-
-  public ArtifactSourceToOutputMapping getOrCreateSrcOutMapping() throws IOException {
-    if (mySrcOutMapping == null) {
-      mySrcOutMapping = new ArtifactSourceToOutputMapping(mySrcOutMappingsFile);
-    }
-    return mySrcOutMapping;
   }
 
   public ArtifactOutputToSourceMapping getOrCreateOutSrcMapping() throws IOException {
@@ -57,7 +48,7 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
 
   @Override
   protected Collection<? extends StorageOwner> getChildStorages() {
-    return Arrays.asList(mySrcOutMapping, myOutSrcMapping);
+    return Collections.singletonList(myOutSrcMapping);
   }
 
   public void ensureFsStateInitialized(final BuildDataManager dataManager, final CompileContext context) throws IOException {
@@ -70,7 +61,7 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
       final Set<String> currentPaths = new HashSet<String>();
       fsState.clearDeletedPaths(myTarget);
       markDirtyFiles(builder, dataManager, currentPaths, false);
-      final ArtifactSourceToOutputMapping mapping = getOrCreateSrcOutMapping();
+      final SourceToOutputMapping mapping = dataManager.getSourceToOutputMap(myTarget);
       final Iterator<String> iterator = mapping.getKeysIterator();
       while (iterator.hasNext()) {
         String path = iterator.next();
