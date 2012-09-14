@@ -10,8 +10,10 @@ import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElementFactory;
@@ -68,9 +70,13 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
 
   protected ProjectDescriptor createProjectDescriptor(final BuildLoggingManager buildLoggingManager) {
     try {
-      ProjectTimestamps timestamps = new ProjectTimestamps(myDataStorageRoot);
+      ModuleRootsIndex index = new ModuleRootsIndex(myModel, myDataStorageRoot);
+      ArtifactRootsIndex artifactRootsIndex = new ArtifactRootsIndex(myModel, index);
+      BuildTargetsState targetsState = new BuildTargetsState(myDataStorageRoot, index, artifactRootsIndex);
+      ProjectTimestamps timestamps = new ProjectTimestamps(myDataStorageRoot, targetsState);
       BuildDataManager dataManager = new BuildDataManager(myDataStorageRoot, true);
-      return new ProjectDescriptor(myModel, new BuildFSState(true), timestamps, dataManager, buildLoggingManager);
+      return new ProjectDescriptor(myModel, new BuildFSState(true), timestamps, dataManager, buildLoggingManager, index, targetsState,
+                                   artifactRootsIndex);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

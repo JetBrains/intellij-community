@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
 import org.jetbrains.jps.incremental.artifacts.ArtifactSourceToOutputMapping;
 import org.jetbrains.jps.incremental.artifacts.JarPathUtil;
@@ -26,8 +27,8 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
                                         @NotNull String pathInJar,
                                         @NotNull SourceFileFilter filter,
                                         int index,
-                                        int artifactId, String artifactName) {
-    super(jarFile, filter, index, artifactId, artifactName);
+                                        ArtifactBuildTarget target) {
+    super(jarFile, filter, index, target);
     myPathInJar = pathInJar;
   }
 

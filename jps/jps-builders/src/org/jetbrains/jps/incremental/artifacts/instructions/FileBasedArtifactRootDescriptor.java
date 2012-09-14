@@ -4,6 +4,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
 import org.jetbrains.jps.incremental.artifacts.ArtifactSourceToOutputMapping;
 
@@ -18,9 +19,8 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   public FileBasedArtifactRootDescriptor(@NotNull File file,
                                          @NotNull SourceFileFilter filter,
                                          int index,
-                                         int artifactId,
-                                         String artifactName) {
-    super(file, filter, index, artifactId, artifactName);
+                                         ArtifactBuildTarget target) {
+    super(file, filter, index, target);
   }
 
   @Override

@@ -176,7 +176,7 @@ public class FSOperations {
     else { // is file
       boolean markDirty = forceDirty;
       if (!markDirty) {
-        markDirty = tsStorage.getStamp(file) != FileSystemUtil.lastModified(file);
+        markDirty = tsStorage.getStamp(file, rd.target) != FileSystemUtil.lastModified(file);
       }
       if (markDirty) {
         // if it is full project rebuild, all storages are already completely cleared;

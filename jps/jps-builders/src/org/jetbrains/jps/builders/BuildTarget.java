@@ -1,5 +1,8 @@
 package org.jetbrains.jps.builders;
 
+import org.jetbrains.jps.incremental.ModuleRootsIndex;
+import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
+
 import java.util.Collection;
 
 /**
@@ -19,4 +22,6 @@ public abstract class BuildTarget {
   }
 
   public abstract Collection<? extends BuildTarget> computeDependencies();
+
+  public abstract BuildRootDescriptor findRootDescriptor(String rootId, ModuleRootsIndex index, ArtifactRootsIndex artifactRootsIndex);
 }

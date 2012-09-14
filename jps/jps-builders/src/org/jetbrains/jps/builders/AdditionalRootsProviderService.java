@@ -1,9 +1,9 @@
 package org.jetbrains.jps.builders;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.model.module.JpsModule;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
@@ -12,7 +12,7 @@ import java.util.List;
  */
 public abstract class AdditionalRootsProviderService {
   @NotNull
-  public List<String> getAdditionalSourceRoots(@NotNull JpsModule module, BuildDataManager dataManager) {
+  public List<String> getAdditionalSourceRoots(@NotNull JpsModule module, File dataStorageRoot) {
     return Collections.emptyList();
   }
 }

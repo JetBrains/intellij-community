@@ -1,7 +1,7 @@
 package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.builders.BuildTargetType;
 
 import java.util.Collections;
 import java.util.List;
@@ -10,7 +10,7 @@ import java.util.List;
  * @author nik
  */
 public abstract class BuilderService {
-  public List<JavaModuleBuildTargetType> getTargetTypes() {
+  public List<? extends BuildTargetType> getTargetTypes() {
     return Collections.emptyList();
   }
 

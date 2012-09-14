@@ -14,17 +14,15 @@ import org.jetbrains.android.util.AndroidNativeLibData;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.*;
+import org.jetbrains.jps.JpsPathUtil;
+import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
-import org.jetbrains.jps.incremental.IgnoredFilePatterns;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ProjectBuildException;
-import org.jetbrains.jps.incremental.ProjectLevelBuilder;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
-import org.jetbrains.jps.incremental.storage.TimestampValidityState;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
@@ -222,7 +220,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       assetsStorage = new AndroidFileSetStorage(dataStorageRoot, assetsStorageName);
 
       final String manifestStorageName = releaseBuild ? "manifest_packaging_release" : "manifest_packaging_dev";
-      manifestStorage = new TimestampStorage(AndroidJpsUtil.getStorageFile(dataStorageRoot, manifestStorageName));
+      manifestStorage = new TimestampStorage(AndroidJpsUtil.getStorageFile(dataStorageRoot, manifestStorageName), context.getProjectDescriptor().getTargetsState());
 
       final Set<JpsModule> modulesToUpdateState = new HashSet<JpsModule>();
 
@@ -246,7 +244,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
             !(context.isMake() &&
               checkUpToDate(module, resourcesStates, resourcesStorage) &&
               checkUpToDate(module, assetsStates, assetsStorage) &&
-              manifestFile.lastModified() == manifestStorage.getStamp(manifestFile))) {
+              manifestFile.lastModified() == manifestStorage.getStamp(manifestFile, new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION)))) {
 
           updateState = packageResources(extension, manifestFile, context);
 
@@ -266,7 +264,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
 
         final File manifestFile = manifestFiles.get(module);
         if (manifestFile != null) {
-          manifestStorage.update(manifestFile, new TimestampValidityState(manifestFile.lastModified()));
+          manifestStorage.saveStamp(manifestFile, new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION), manifestFile.lastModified());
         }
       }
     }

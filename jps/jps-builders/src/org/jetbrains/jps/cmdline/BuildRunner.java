@@ -10,12 +10,14 @@ import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
 import org.jetbrains.jps.incremental.artifacts.JpsBuilderArtifactService;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.JpsModel;
@@ -51,10 +53,15 @@ public class BuildRunner {
   }
 
   public ProjectDescriptor load(MessageHandler msgHandler, File dataStorageRoot, BuildFSState fsState) throws IOException {
+    final JpsModel jpsModel = myModelLoader.loadModel();
+    ModuleRootsIndex index = new ModuleRootsIndex(jpsModel, dataStorageRoot);
+    ArtifactRootsIndex artifactRootsIndex = new ArtifactRootsIndex(jpsModel, index);
+    BuildTargetsState targetsState = new BuildTargetsState(dataStorageRoot, index, artifactRootsIndex);
+
     ProjectTimestamps projectTimestamps = null;
     BuildDataManager dataManager = null;
     try {
-      projectTimestamps = new ProjectTimestamps(dataStorageRoot);
+      projectTimestamps = new ProjectTimestamps(dataStorageRoot, targetsState);
       dataManager = new BuildDataManager(dataStorageRoot, STORE_TEMP_CACHES_IN_MEMORY);
       if (dataManager.versionDiffers()) {
         myForceCleanCaches = true;
@@ -72,14 +79,14 @@ public class BuildRunner {
       }
       myForceCleanCaches = true;
       FileUtil.delete(dataStorageRoot);
-      projectTimestamps = new ProjectTimestamps(dataStorageRoot);
+      projectTimestamps = new ProjectTimestamps(dataStorageRoot, targetsState);
       dataManager = new BuildDataManager(dataStorageRoot, STORE_TEMP_CACHES_IN_MEMORY);
       // second attempt succeded
       msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
     }
 
-    final JpsModel jpsModel = myModelLoader.loadModel();
-    return new ProjectDescriptor(jpsModel, fsState, projectTimestamps, dataManager, BuildLoggingManager.DEFAULT);
+    return new ProjectDescriptor(jpsModel, fsState, projectTimestamps, dataManager, BuildLoggingManager.DEFAULT, index, targetsState,
+                                 artifactRootsIndex);
   }
 
   public void runBuild(ProjectDescriptor pd, CanceledStatus cs, @Nullable Callbacks.ConstantAffectionResolver constantSearch,

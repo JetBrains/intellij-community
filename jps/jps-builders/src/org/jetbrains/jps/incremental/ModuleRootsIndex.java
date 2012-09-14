@@ -9,7 +9,6 @@ import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.builders.AdditionalRootsProviderService;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
-import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -35,7 +34,7 @@ public class ModuleRootsIndex {
   private static final Key<Map<File, RootDescriptor>> ROOT_DESCRIPTOR_MAP = Key.create("_root_to_descriptor_map");
   private static final Key<Map<JpsModule, List<RootDescriptor>>> MODULE_ROOT_MAP = Key.create("_module_to_root_map");
 
-  public ModuleRootsIndex(JpsModel model, BuildDataManager dataManager) {
+  public ModuleRootsIndex(JpsModel model, File dataStorageRoot) {
     myIgnoredFilePatterns = new IgnoredFilePatterns(model.getGlobal().getFileTypesConfiguration().getIgnoredPatternString());
     final Collection<JpsModule> allModules = model.getProject().getModules();
     myTotalModuleCount = allModules.size();
@@ -59,7 +58,7 @@ public class ModuleRootsIndex {
         moduleRoots.add(descriptor);
       }
       for (AdditionalRootsProviderService provider : rootsProviders) {
-        final List<String> roots = provider.getAdditionalSourceRoots(module, dataManager);
+        final List<String> roots = provider.getAdditionalSourceRoots(module, dataStorageRoot);
         for (String path : roots) {
           File root = new File(path);
           final RootDescriptor descriptor = new RootDescriptor(moduleName, root, new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION), false, true, false);

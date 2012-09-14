@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.artifacts.impl.ArtifactSorter;
@@ -60,24 +61,24 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
           context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot build '" + artifact.getName() + "' artifact: output path is not specified"));
           break;
         }
-        buildArtifact(artifact, context);
+        buildArtifact(new ArtifactBuildTarget(artifact), context);
       }
     }
   }
 
-  private static void buildArtifact(JpsArtifact artifact, final CompileContext context) throws ProjectBuildException {
+  private static void buildArtifact(ArtifactBuildTarget target, final CompileContext context) throws ProjectBuildException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     try {
-      final ArtifactSourceFilesState state = pd.dataManager.getArtifactsBuildData().getOrCreateState(artifact, pd);
+      final ArtifactSourceFilesState state = pd.dataManager.getArtifactsBuildData().getOrCreateState(target, pd);
       state.ensureFsStateInitialized(pd.dataManager, context);
-      final Collection<String> deletedFiles = pd.fsState.getAndClearDeletedPaths(artifact.getName());
-      final Map<Integer, Set<String>> filesToRecompile = pd.fsState.getFilesToRecompile(artifact.getName());
+      final Collection<String> deletedFiles = pd.fsState.getAndClearDeletedPaths(target);
+      final Map<BuildRootDescriptor, Set<File>> filesToRecompile = pd.fsState.getSourcesToRecompile(context, target);
       if (deletedFiles.isEmpty() && filesToRecompile.isEmpty()) {
         state.markUpToDate(context);
         return;
       }
 
-      context.processMessage(new ProgressMessage("Building artifact '" + artifact.getName() + "'..."));
+      context.processMessage(new ProgressMessage("Building artifact '" + target.getArtifact().getName() + "'..."));
       final ArtifactSourceToOutputMapping srcOutMapping = state.getOrCreateSrcOutMapping();
       final ArtifactOutputToSourceMapping outSrcMapping = state.getOrCreateOutSrcMapping();
 
@@ -99,9 +100,10 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
       }
 
       Set<String> changedOutputPaths = new THashSet<String>();
-      for (Map.Entry<Integer, Set<String>> entry : filesToRecompile.entrySet()) {
-        int rootIndex = entry.getKey();
-        for (String sourcePath : entry.getValue()) {
+      for (Map.Entry<BuildRootDescriptor, Set<File>> entry : filesToRecompile.entrySet()) {
+        int rootIndex = ((ArtifactRootDescriptor)entry.getKey()).getRootIndex();
+        for (File file : entry.getValue()) {
+          String sourcePath = file.getPath();
           addFileToProcess(filesToProcess, rootIndex, sourcePath, deletedFiles);
           final List<String> outputPaths = srcOutMapping.getState(sourcePath);
           if (outputPaths != null) {
@@ -117,9 +119,9 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
           }
         }
       }
-      for (Set<String> paths : filesToRecompile.values()) {
-        for (String sourcePath : paths) {
-          srcOutMapping.remove(sourcePath);
+      for (Set<File> files : filesToRecompile.values()) {
+        for (File file : files) {
+          srcOutMapping.remove(file.getPath());
         }
       }
       for (String outputPath : changedOutputPaths) {
@@ -129,7 +131,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
       deleteOutdatedFiles(filesToDelete, context, srcOutMapping, outSrcMapping);
       context.checkCanceled();
 
-      final ArtifactInstructionsBuilder instructions = pd.getArtifactRootsIndex().getInstructionsBuilder(artifact);
+      final ArtifactInstructionsBuilder instructions = pd.getArtifactRootsIndex().getInstructionsBuilder(target.getArtifact());
       final Set<JarInfo> changedJars = new THashSet<JarInfo>();
       instructions.processRoots(new ArtifactRootProcessor() {
         @Override
@@ -229,7 +231,11 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
         for (Pair<String, String> pair : paths) {
           File file = new File(pair.getFirst(), pair.getSecond());
           for (ArtifactRootDescriptor descriptor : rootsIndex.getDescriptors(file)) {
-            fsState.markRecompile(descriptor, FileUtil.toSystemIndependentName(file.getAbsolutePath()));
+            try {
+              fsState.markDirty(null, file, descriptor, null);
+            }
+            catch (IOException ignored) {
+            }
           }
         }
       }
@@ -241,7 +247,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
         for (String path : paths) {
           File file = new File(FileUtil.toSystemDependentName(path));
           for (ArtifactRootDescriptor descriptor : index.getDescriptors(file)) {
-            state.registerDeleted(descriptor.getArtifactName(), path);
+            state.registerDeleted(descriptor.getTarget(), file);
           }
         }
       }
