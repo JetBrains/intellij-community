@@ -235,13 +235,14 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
 
   @NotNull
   public <T extends DomElement> List<DomElementProblemDescriptor> checkFileElement(@NotNull final DomFileElement<T> domFileElement,
-                                                                                   @NotNull final DomElementsInspection<T> inspection) {
+                                                                                   @NotNull final DomElementsInspection<T> inspection,
+                                                                                   boolean onTheFly) {
     final DomElementsProblemsHolder problemHolder = getProblemHolder(domFileElement);
     if (isHolderUpToDate(domFileElement) && problemHolder.isInspectionCompleted(inspection)) {
       return problemHolder.getAllProblems(inspection);
     }
 
-    final DomElementAnnotationHolder holder = new DomElementAnnotationHolderImpl();
+    final DomElementAnnotationHolder holder = new DomElementAnnotationHolderImpl(onTheFly);
     inspection.checkFileElement(domFileElement, holder);
     return appendProblems(domFileElement, holder, inspection.getClass());
   }

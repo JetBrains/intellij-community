@@ -116,18 +116,10 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     if (valueElement != null && !isSoftReference(element)) {
       final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
       final PsiReference[] psiReferences = myProvider.getReferencesByElement(valueElement, new ProcessingContext());
-      GenericDomValueReference domReference = null;
-      for (final PsiReference reference : psiReferences) {
-        if (reference instanceof GenericDomValueReference) {
-          domReference = (GenericDomValueReference)reference;
-          break;
-        }
-      }
+      GenericDomValueReference domReference = ContainerUtil.findInstance(psiReferences, GenericDomValueReference.class);
       final Converter converter = WrappingConverter.getDeepestConverter(element.getConverter(), element);
-      final boolean domReferenceResolveOK = domReference != null && !hasBadResolve(domReference)
-        || domReference != null && converter instanceof ResolvingConverter && ((ResolvingConverter)converter).getAdditionalVariants(domReference.getConvertContext()).contains(element.getStringValue());
       boolean hasBadResolve = false;
-      if (!domReferenceResolveOK) {
+      if (!(domReference != null && isDomResolveOK(element, domReference, converter))) {
         for (final PsiReference reference : psiReferences) {
           if (reference != domReference && hasBadResolve(reference)) {
             hasBadResolve = true;
@@ -156,6 +148,11 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
       return list;
     }
     return Collections.emptyList();
+  }
+
+  private static boolean isDomResolveOK(GenericDomValue element, GenericDomValueReference domReference, Converter converter) {
+    return !hasBadResolve(domReference)
+      || converter instanceof ResolvingConverter && ((ResolvingConverter)converter).getAdditionalVariants(domReference.getConvertContext()).contains(element.getStringValue());
   }
 
   @NotNull

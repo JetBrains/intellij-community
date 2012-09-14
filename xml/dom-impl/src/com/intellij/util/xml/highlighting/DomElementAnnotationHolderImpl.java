@@ -38,6 +38,16 @@ import java.util.List;
 public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemDescriptor> implements DomElementAnnotationHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementAnnotationHolderImpl");
   private final SmartList<Annotation> myAnnotations = new SmartList<Annotation>();
+  private final boolean myOnTheFly;
+
+  public DomElementAnnotationHolderImpl(boolean onTheFly) {
+    myOnTheFly = onTheFly;
+  }
+
+  @Override
+  public boolean isOnTheFly() {
+    return myOnTheFly;
+  }
 
   @NotNull
   public DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, @Nullable String message, LocalQuickFix... fixes) {
