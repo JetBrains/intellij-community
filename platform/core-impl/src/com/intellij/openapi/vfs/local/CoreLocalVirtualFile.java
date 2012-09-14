@@ -34,10 +34,10 @@ public class CoreLocalVirtualFile extends VirtualFile {
   private VirtualFile[] myChildren;
   private final boolean isDirectory;
 
-  public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull File ioFile) {
+  public CoreLocalVirtualFile(CoreLocalFileSystem fileSystem, File ioFile) {
     myFileSystem = fileSystem;
     myIoFile = ioFile;
-    isDirectory = ioFile.isDirectory();
+    isDirectory = ioFile == null || ioFile.isDirectory();
   }
 
   @NotNull
@@ -138,11 +138,13 @@ public class CoreLocalVirtualFile extends VirtualFile {
 
     CoreLocalVirtualFile that = (CoreLocalVirtualFile)o;
 
-    return myIoFile.equals(that.myIoFile);
+    if (myIoFile != null ? !myIoFile.equals(that.myIoFile) : that.myIoFile != null) return false;
+
+    return true;
   }
 
   @Override
   public int hashCode() {
-    return myIoFile.hashCode();
+    return myIoFile != null ? myIoFile.hashCode() : 0;
   }
 }
