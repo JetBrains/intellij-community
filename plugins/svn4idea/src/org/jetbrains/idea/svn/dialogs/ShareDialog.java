@@ -18,7 +18,13 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport;
+import com.intellij.openapi.vcs.ui.CommitMessage;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -26,6 +32,8 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.text.MessageFormat;
 
 public class ShareDialog extends RepositoryBrowserDialog {
@@ -40,6 +48,8 @@ public class ShareDialog extends RepositoryBrowserDialog {
   private JRadioButton mySameNameAsLocal;
   private JRadioButton myTrunk;
   private JCheckBox myCreateStandard;
+  private CommitMessage myCommitMessage;
+  private JComponent myPrefferedFocused;
 
   public ShareDialog(Project project, final String name) {
     super(project, false, "Point to repository location");
@@ -50,6 +60,7 @@ public class ShareDialog extends RepositoryBrowserDialog {
     myTrunk.setToolTipText(MessageFormat.format(ourStandart, myName));
 
     myRepositoriesLabel.setFont(myRepositoriesLabel.getFont().deriveFont(Font.BOLD));
+    myPrefferedFocused = (JComponent) getRepositoryBrowser().getPreferredFocusedComponent();
   }
 
   public void init() {
@@ -67,6 +78,12 @@ public class ShareDialog extends RepositoryBrowserDialog {
     });
     getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
     ((RepositoryTreeModel) getRepositoryBrowser().getRepositoryTree().getModel()).setShowFiles(false);
+    getRepositoryBrowser().getPreferredFocusedComponent().addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        myPrefferedFocused = (JComponent)getRepositoryBrowser().getPreferredFocusedComponent();
+      }
+    });
   }
 
   private void updateOptionsTexts(String selectedURL) {
@@ -86,6 +103,11 @@ public class ShareDialog extends RepositoryBrowserDialog {
     mySameNameAsLocal.setEnabled(enabled);
     myTrunk.setEnabled(enabled);
     myCreateStandard.setEnabled(enabled && myTrunk.isSelected());
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myPrefferedFocused;
   }
 
   protected Action[] createActions() {
@@ -130,8 +152,9 @@ public class ShareDialog extends RepositoryBrowserDialog {
     wrapper.add(repositoryPanel, gb);
     ++ gb.gridy;
     gb.fill = GridBagConstraints.NONE;
-    gb.weightx = 0;
+    gb.weightx = 1;
     gb.weighty = 0;
+    gb.fill = GridBagConstraints.HORIZONTAL;
     wrapper.add(createFolderPanel(), gb);
     return wrapper;
   }
@@ -150,7 +173,30 @@ public class ShareDialog extends RepositoryBrowserDialog {
     return myCreateStandard.isSelected();
   }
 
+  public String getCommitText() {
+    return myCommitMessage.getComment();
+  }
+
   private JComponent createFolderPanel() {
+    final Project project = myVCS.getProject();
+    myCommitMessage = new CommitMessage(project) {
+      @Override
+      public Dimension getPreferredSize() {
+        final Dimension superValue = super.getPreferredSize();
+        return new Dimension(superValue.width, superValue.height > 90 ? superValue.height : 90);
+      }
+
+      @Override
+      public void addNotify() {
+        super.addNotify();
+        myCommitMessage.getEditorField().getFocusTarget().addFocusListener(new FocusAdapter() {
+          @Override
+          public void focusGained(FocusEvent e) {
+            myPrefferedFocused = myCommitMessage.getEditorField();
+          }
+        });
+      }
+    };
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                                          new Insets(1, 1, 1, 1), 0, 0);
@@ -189,6 +235,23 @@ public class ShareDialog extends RepositoryBrowserDialog {
     gb.insets.top = 0;
     gb.insets.left = 10;
     panel.add(myCreateStandard, gb);
+
+    ++ gb.gridy;
+    gb.gridx = 0;
+    gb.insets.top = 1;
+    gb.insets.left = 1;
+    gb.weightx = 1;
+    gb.fill = GridBagConstraints.HORIZONTAL;
+
+    final LocalChangeList list = ChangeListManager.getInstance(project).getDefaultChangeList();
+    String text = list.getComment();
+    text = StringUtil.isEmptyOrSpaces(text) ? (list.hasDefaultName() ? "" : list.getName()) : text;
+    myCommitMessage.setText(text);
+    panel.add(myCommitMessage, gb);
+    myCommitMessage.setSeparatorText("Commit Comment Prefix");
+    for (EditChangelistSupport support : Extensions.getExtensions(EditChangelistSupport.EP_NAME, project)) {
+      support.installSearch(myCommitMessage.getEditorField(), myCommitMessage.getEditorField());
+    }
 
     myTrunk.setSelected(true);
 

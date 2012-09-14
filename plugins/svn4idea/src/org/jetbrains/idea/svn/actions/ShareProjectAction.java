@@ -136,23 +136,23 @@ public class ShareProjectAction extends BasicAction {
                 final SVNURL parenUrl = SVNURL.parseURIEncoded(parent);
                 final SVNURL checkoutUrl;
                 final SVNRevision revision;
-                
+                final String commitText = shareDialog.getCommitText();
                 if (ShareDialog.ShareTarget.useSelected.equals(shareTarget)) {
                   checkoutUrl = parenUrl;
                   revision = SVNRevision.HEAD;
                 } else if (ShareDialog.ShareTarget.useProjectName.equals(shareTarget)) {
-                  final Pair<SVNRevision, SVNURL> pair = createRemoteFolder(activeVcs, parenUrl, file.getName());
+                  final Pair<SVNRevision, SVNURL> pair = createRemoteFolder(activeVcs, parenUrl, file.getName(), commitText);
                   revision = pair.getFirst();
                   checkoutUrl = pair.getSecond();
                 } else {
-                  final Pair<SVNRevision, SVNURL> pair = createRemoteFolder(activeVcs, parenUrl, file.getName());
-                  final Pair<SVNRevision, SVNURL> trunkPair = createRemoteFolder(activeVcs, pair.getSecond(), "trunk");
+                  final Pair<SVNRevision, SVNURL> pair = createRemoteFolder(activeVcs, parenUrl, file.getName(), commitText);
+                  final Pair<SVNRevision, SVNURL> trunkPair = createRemoteFolder(activeVcs, pair.getSecond(), "trunk", commitText);
                   checkoutUrl = trunkPair.getSecond();
                   revision = trunkPair.getFirst();
 
                   if (shareDialog.createStandardStructure()) {
-                    createRemoteFolder(activeVcs, pair.getSecond(), "branches");
-                    createRemoteFolder(activeVcs, pair.getSecond(), "tags");
+                    createRemoteFolder(activeVcs, pair.getSecond(), "branches", commitText);
+                    createRemoteFolder(activeVcs, pair.getSecond(), "tags", commitText);
                   }
                 }
 
@@ -215,7 +215,10 @@ public class ShareProjectAction extends BasicAction {
     return folderEmpty[0];
   }
 
-  private static Pair<SVNRevision, SVNURL> createRemoteFolder(final SvnVcs vcs, final SVNURL parent, final String folderName) throws SVNException {
+  private static Pair<SVNRevision, SVNURL> createRemoteFolder(final SvnVcs vcs,
+                                                              final SVNURL parent,
+                                                              final String folderName,
+                                                              String commitText) throws SVNException {
     SVNURL url = parent.appendPath(folderName, false);
     final String urlText = url.toString();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -225,7 +228,7 @@ public class ShareProjectAction extends BasicAction {
     }
     final SVNCommitInfo info =
       vcs.createCommitClient().doMkDir(new SVNURL[]{url}, SvnBundle.message("share.directory.commit.message", folderName,
-                                                                            ApplicationNamesInfo.getInstance().getFullProductName()));
+                                                                            ApplicationNamesInfo.getInstance().getFullProductName(), commitText));
     return new Pair<SVNRevision, SVNURL>(SVNRevision.create(info.getNewRevision()), url);
   }
 

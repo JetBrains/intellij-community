@@ -29,11 +29,11 @@ public class SeparatorFactory {
   }
 
   @Deprecated
-  public static JComponent createSeparator(String textWithMnemonic, @Nullable JComponent labelFor, boolean boldFont, boolean smallFont) {
+  public static TitledSeparatorWithMnemonic createSeparator(String textWithMnemonic, @Nullable JComponent labelFor, boolean boldFont, boolean smallFont) {
     return new TitledSeparatorWithMnemonic(textWithMnemonic, labelFor);
   }
 
-  public static JComponent createSeparator(String textWithMnemonic, @Nullable JComponent labelFor) {
+  public static TitledSeparatorWithMnemonic createSeparator(String textWithMnemonic, @Nullable JComponent labelFor) {
     return new TitledSeparatorWithMnemonic(textWithMnemonic, labelFor);
   }
 

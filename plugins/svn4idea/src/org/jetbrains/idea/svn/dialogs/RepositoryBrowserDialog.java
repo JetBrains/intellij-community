@@ -85,7 +85,7 @@ import java.util.Map;
 public class RepositoryBrowserDialog extends DialogWrapper {
 
   private final Project myProject;
-  private final SvnVcs myVCS;
+  protected final SvnVcs myVCS;
   private RepositoryBrowserComponent myRepositoryBrowser;
 
   @NonNls public static final String COPY_OF_PREFIX = "CopyOf";
