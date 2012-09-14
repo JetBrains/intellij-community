@@ -19,9 +19,6 @@ package com.intellij.openapi.keymap.impl.ui;
 import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.application.options.ImportSchemeAction;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
@@ -30,10 +27,8 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Factory;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
@@ -50,7 +45,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 
 /**
  * User: anna
@@ -62,12 +56,7 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
   private final JPanel myRightPanel = new JPanel(new BorderLayout());
   private int myCurrentIndex = -1;
   private QuickListPanel myQuickListPanel = null;
-
-
   private final KeymapPanel myKeymapPanel;
-  private JComponent myToolbar;
-  private DetailsComponent myDetailsComponent;
-  private JScrollPane myListScrollPane;
 
   public QuickListsPanel(KeymapPanel panel) {
     super(new BorderLayout());
@@ -76,25 +65,6 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
     splitter.setFirstComponent(createQuickListsPanel());
     splitter.setSecondComponent(myRightPanel);
     add(splitter, BorderLayout.CENTER);
-  }
-
-  public void initUi() {
-    myDetailsComponent = new DetailsComponent();
-    myDetailsComponent.setContent(myRightPanel);
-
-    myQuickListsList.getEmptyText().setText(KeyMapBundle.message("no.quick.lists"));
-  }
-
-  public JComponent getToolbar() {
-    return myToolbar;
-  }
-
-  public JComponent getMaster() {
-    return myListScrollPane;
-  }
-
-  public DetailsComponent getDetails() {
-    return myDetailsComponent;
   }
 
   public void reset() {
@@ -129,8 +99,6 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
   }
 
   private JPanel createQuickListsPanel() {
-    JPanel panel = new JPanel();
-    panel.setLayout(new BorderLayout());
     myQuickListsList = new JBList(myQuickListsModel);
     myQuickListsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myQuickListsList.setCellRenderer(new MyQuickListCellRenderer());
@@ -138,7 +106,7 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
       public void valueChanged(ListSelectionEvent e) {
         myRightPanel.removeAll();
         final Object selectedValue = myQuickListsList.getSelectedValue();
-        if (selectedValue instanceof QuickList){
+        if (selectedValue instanceof QuickList) {
           final QuickList quickList = (QuickList)selectedValue;
           updateRightPanel(quickList);
           myQuickListsList.repaint();
@@ -152,70 +120,58 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
 
     addDescriptionLabel();
 
-    myListScrollPane = ScrollPaneFactory.createScrollPane(myQuickListsList);
-    myListScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    final Dimension dimension = new Dimension(120, -1);
-    myListScrollPane.setPreferredSize(dimension);
-    myListScrollPane.setMinimumSize(dimension);
-    panel.add(myListScrollPane, BorderLayout.CENTER);
-
-    DefaultActionGroup group = new DefaultActionGroup();
-    ReorderableListController<QuickList> controller = ReorderableListController.create(myQuickListsList, group);
-    final ReorderableListController<QuickList>.AddActionDescription addActionDescription =
-      controller.addAddAction(KeyMapBundle.message("add.keymap.label"), new Factory<QuickList>() {
-        public QuickList create() {
-          return new QuickList(createUniqueName(), "", ArrayUtil.EMPTY_STRING_ARRAY, false);
-        }
-      }, true);
-    addActionDescription.addPostHandler(new ReorderableListController.ActionNotification<QuickList>() {
-      public void afterActionPerformed(final QuickList change) {
+    ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myQuickListsList).setAddAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        QuickList quickList = new QuickList(createUniqueName(), "", ArrayUtil.EMPTY_STRING_ARRAY, false);
+        myQuickListsModel.addElement(quickList);
+        myQuickListsList.clearSelection();
+        ListScrollingUtil.selectItem(myQuickListsList, quickList);
         myKeymapPanel.processCurrentKeymapChanged();
       }
-    });
-    final ReorderableListController<QuickList>.RemoveActionDescription removeActionDescription =
-      controller.addRemoveAction(KeyMapBundle.message("remove.keymap.label"));
-    removeActionDescription.addPostHandler(new ReorderableListController.ActionNotification<List<QuickList>>() {
-      public void afterActionPerformed(final List<QuickList> change) {
+    }).setRemoveAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        ListUtil.removeSelectedItems(myQuickListsList);
         myQuickListsList.repaint();
         myKeymapPanel.processCurrentKeymapChanged();
       }
-    });
+    }).disableUpDownActions();
 
-    SchemesManager<QuickList,QuickList> schemesManager = QuickListsManager.getInstance().getSchemesManager();
+    SchemesManager<QuickList, QuickList> schemesManager = QuickListsManager.getInstance().getSchemesManager();
     if (schemesManager.isExportAvailable()) {
-      group.add(new ExportSchemeAction<QuickList, QuickList>(schemesManager){
+      toolbarDecorator.addExtraAction(AnActionButton.fromAction(new ExportSchemeAction<QuickList, QuickList>(schemesManager) {
         protected QuickList getSelectedScheme() {
           return (QuickList)myQuickListsList.getSelectedValue();
         }
-      });
+      }));
     }
 
     if (schemesManager.isImportAvailable()) {
-      group.add(new ImportSchemeAction<QuickList,QuickList>(QuickListsManager.getInstance().getSchemesManager()){
-        protected Collection<QuickList> collectCurrentSchemes() {
-          return collectElements();
-        }
+      toolbarDecorator.addExtraAction(
+        AnActionButton.fromAction(new ImportSchemeAction<QuickList, QuickList>(QuickListsManager.getInstance().getSchemesManager()) {
+          protected Collection<QuickList> collectCurrentSchemes() {
+            return collectElements();
+          }
 
-        protected Component getPanel() {
-          return myQuickListsList;
-        }
+          protected Component getPanel() {
+            return myQuickListsList;
+          }
 
-        protected void importScheme(final QuickList scheme) {
-          myQuickListsModel.addElement(scheme);
-          myQuickListsList.clearSelection();
-          ListScrollingUtil.selectItem(myQuickListsList, scheme);
-
-        }
-      });
+          protected void importScheme(final QuickList scheme) {
+            myQuickListsModel.addElement(scheme);
+            myQuickListsList.clearSelection();
+            ListScrollingUtil.selectItem(myQuickListsList, scheme);
+          }
+        }));
     }
 
-    myToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
-    panel.add(myToolbar, BorderLayout.NORTH);
-    return panel;
+    return toolbarDecorator.createPanel();
   }
 
   private void addDescriptionLabel() {
-    final JLabel descLabel =new JLabel("<html>Quick Lists allow you to define commonly used groups of actions (for example, refactoring or VCS actions)" +
+    final JLabel descLabel =
+      new JLabel("<html>Quick Lists allow you to define commonly used groups of actions (for example, refactoring or VCS actions)" +
                  " and to assign keyboard shortcuts to such groups.</html>");
     descLabel.setBorder(new EmptyBorder(0, 25, 0, 25));
     myRightPanel.add(descLabel, BorderLayout.CENTER);
@@ -246,7 +202,7 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
 
   private void updateRightPanel(final QuickList quickList) {
     final int index = myQuickListsList.getSelectedIndex();
-    if (myQuickListPanel != null && myCurrentIndex > -1 && myCurrentIndex < myQuickListsModel.getSize()){
+    if (myQuickListPanel != null && myCurrentIndex > -1 && myCurrentIndex < myQuickListsModel.getSize()) {
       updateList(myCurrentIndex);
       myKeymapPanel.processCurrentKeymapChanged();
     }
@@ -261,13 +217,9 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
     myQuickListPanel.addDescriptionListener(documentAdapter);
     myRightPanel.add(myQuickListPanel.getPanel(), BorderLayout.CENTER);
     myCurrentIndex = index;
-
-    if (myDetailsComponent != null) {
-      myDetailsComponent.setText(quickList.getDisplayName());
-    }
   }
 
-  private void updateList(int index)  {
+  private void updateList(int index) {
     if (myQuickListPanel == null) return;
     QuickList oldQuickList = (QuickList)myQuickListsModel.getElementAt(index);
 
@@ -281,9 +233,6 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
 
     if (oldQuickList != null && !newQuickList.getName().equals(oldQuickList.getName())) {
       myKeymapPanel.quickListRenamed(oldQuickList, newQuickList);
-      if (myDetailsComponent != null) {
-        myDetailsComponent.setText(newQuickList.getDisplayName());
-      }
     }
   }
 
@@ -300,7 +249,7 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
 
 
   public QuickList[] getCurrentQuickListIds() {
-    if (myCurrentIndex > - 1 && myQuickListsModel.getSize() > myCurrentIndex){
+    if (myCurrentIndex > -1 && myQuickListsModel.getSize() > myCurrentIndex) {
       updateList(myCurrentIndex);
     }
     int size = myQuickListsModel.size();
