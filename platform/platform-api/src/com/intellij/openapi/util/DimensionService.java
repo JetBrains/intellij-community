@@ -20,6 +20,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ScreenUtil;
 import gnu.trove.TObjectIntHashMap;
@@ -263,8 +264,19 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
   private static String realKey(String key, @Nullable Project project) {
     if (project == null) return key;
 
-    final JFrame frame = WindowManager.getInstance().getFrame(project);
-    if (frame == null) return key; //during frame initialization
+    JFrame frame = WindowManager.getInstance().getFrame(project);
+    if (frame == null) {
+      final IdeFrame[] frames = WindowManager.getInstance().getAllFrames();
+      for (IdeFrame ideFrame : frames) {
+        if (ideFrame instanceof JFrame) {
+          frame = (JFrame)ideFrame;
+          break;
+        }
+      }
+      if (frame == null) {
+        return key; //during frame initialization
+      }
+    }
 
     final Point topLeft = frame.getLocation();
     Point center = new Point(topLeft.x + frame.getWidth() / 2, topLeft.y + frame.getHeight() / 2);
