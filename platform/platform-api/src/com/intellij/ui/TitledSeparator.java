@@ -16,7 +16,9 @@
 
 package com.intellij.ui;
 
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,42 +32,44 @@ public class TitledSeparator extends JPanel {
   public static int SEPARATOR_LEFT_INSET = 6;
   public static int SEPARATOR_RIGHT_INSET = 3;
 
-
-  protected final JLabel myLabel = new JLabel();
+  protected final JBLabel myLabel = new JBLabel() {
+    @Override
+    public Font getFont() {
+      return UIUtil.getTitledBorderFont();
+    }
+  };
   protected final JSeparator mySeparator = new JSeparator(SwingConstants.HORIZONTAL);
+  private String originalText;
 
   public TitledSeparator() {
     this("");
   }
 
   public TitledSeparator(String text) {
+    this(text, null);
+  }
+
+  public TitledSeparator(String text, @Nullable JComponent labelFor) {
+    super();
     setLayout(new GridBagLayout());
-    add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 3, 0, 0), 0, 0));
+    add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     add(mySeparator,
         new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                                new Insets(2, SEPARATOR_LEFT_INSET, 0, SEPARATOR_RIGHT_INSET), 0, 0));
     setBorder(IdeBorderFactory.createEmptyBorder(TOP_INSET, 0, BOTTOM_INSET, 0));
 
     setText(text);
-    updateUI();
-  }
-
-  @Override
-  public void updateUI() {
-    super.updateUI();
-    if (myLabel != null) {
-      myLabel.setFont(UIUtil.getTitledBorderFont());
-    }
+    setLabelFor(labelFor);
   }
 
   public String getText() {
-    return myLabel.getText();
+    return originalText;
   }
 
   public void setText(String text) {
-    myLabel.setText(text);
+    originalText = text;
+    myLabel.setText(UIUtil.replaceMnemonicAmpersand(originalText));
   }
-
   public void setTitleFont(Font font) {
     myLabel.setFont(font);
   }
@@ -80,5 +84,21 @@ public class TitledSeparator extends JPanel {
 
   public JSeparator getSeparator() {
     return mySeparator;
+  }
+
+
+  public Component getLabelFor() {
+    return myLabel.getLabelFor();
+  }
+
+  public void setLabelFor(Component labelFor) {
+    myLabel.setLabelFor(labelFor);
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    super.setEnabled(enabled);
+    myLabel.setEnabled(enabled);
+    mySeparator.setEnabled(enabled);
   }
 }
