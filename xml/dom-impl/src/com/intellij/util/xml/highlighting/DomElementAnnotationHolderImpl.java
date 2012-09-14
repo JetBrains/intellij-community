@@ -114,7 +114,9 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
     return size();
   }
 
-  private static LocalQuickFix[] getQuickFixes(final GenericDomValue element, PsiReference reference) {
+  private LocalQuickFix[] getQuickFixes(final GenericDomValue element, PsiReference reference) {
+    if (!myOnTheFly) return LocalQuickFix.EMPTY_ARRAY;
+
     final List<LocalQuickFix> result = new SmartList<LocalQuickFix>();
     final Converter converter = WrappingConverter.getDeepestConverter(element.getConverter(), element);
     if (converter instanceof ResolvingConverter) {
