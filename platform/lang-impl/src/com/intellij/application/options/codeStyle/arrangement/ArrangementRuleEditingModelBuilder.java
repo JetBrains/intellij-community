@@ -85,7 +85,10 @@ public class ArrangementRuleEditingModelBuilder {
     DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
 
     if (grouped.getChild() == null) {
-      ArrangementTreeNode lastChild = root.getLastChild();
+      ArrangementTreeNode lastChild = null;
+      if (root.getChildCount() > 0) {
+        lastChild = root.getLastChild();
+      }
       if (lastChild != null && grouped.getCurrent().equals(lastChild.getBackingCondition())) {
         return null;
       }
