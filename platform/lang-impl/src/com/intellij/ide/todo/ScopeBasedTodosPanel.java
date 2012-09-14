@@ -21,6 +21,7 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ide.util.scopeChooser.IgnoringComboBox;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -101,12 +102,12 @@ public class ScopeBasedTodosPanel extends TodoPanel {
     final ArrayList<ScopeWrapper> scopes = new ArrayList<ScopeWrapper>();
     final DependencyValidationManager manager = DependencyValidationManager.getInstance(project);
 
-    scopes.add(new ScopeWrapper("Predefined Scopes", true));
+    scopes.add(new ScopeWrapper("Predefined Scopes"));
     List<NamedScope> predefinedScopesList = manager.getPredefinedScopes();
     NamedScope[] predefinedScopes = predefinedScopesList.toArray(new NamedScope[predefinedScopesList.size()]);
     predefinedScopes = NonProjectFilesScope.removeFromList(predefinedScopes);
     for (NamedScope predefinedScope : predefinedScopes) {
-      scopes.add(new ScopeWrapper(predefinedScope, false));
+      scopes.add(new ScopeWrapper(predefinedScope));
     }
 
     collectEditableScopes(scopes, manager, "Custom Project Scopes");
@@ -126,9 +127,9 @@ public class ScopeBasedTodosPanel extends TodoPanel {
   private static void collectEditableScopes(ArrayList<ScopeWrapper> scopes, NamedScopesHolder manager, String separatorTitle) {
     NamedScope[] editableScopes = manager.getEditableScopes();
     if (editableScopes.length > 0) {
-      scopes.add(new ScopeWrapper(separatorTitle, true));
+      scopes.add(new ScopeWrapper(separatorTitle));
       for (NamedScope scope : editableScopes) {
-        scopes.add(new ScopeWrapper(scope, false));
+        scopes.add(new ScopeWrapper(scope));
       }
     }
   }
@@ -138,7 +139,12 @@ public class ScopeBasedTodosPanel extends TodoPanel {
     JPanel panel = new JPanel(new BorderLayout());
     final JComponent component = super.createCenterComponent();
     panel.add(component, BorderLayout.CENTER);
-    myScopes = new JComboBox();
+    myScopes = new IgnoringComboBox() {
+      @Override
+      protected boolean isIgnored(Object item) {
+        return item instanceof ScopeWrapper && ((ScopeWrapper)item).isSeparator();
+      }
+    };
     
     JPanel chooserPanel = new JPanel(new GridBagLayout());
     final JLabel scopesLabel = new JLabel("Scope:");
@@ -168,13 +174,13 @@ public class ScopeBasedTodosPanel extends TodoPanel {
     private final boolean mySeparator;
     private NamedScope myNamedScope;
 
-    private ScopeWrapper(NamedScope namedScope, boolean separator) {
+    private ScopeWrapper(NamedScope namedScope) {
+      mySeparator = false;
       myNamedScope = namedScope;
-      mySeparator = separator;
       myName = myNamedScope.getName();
     }
-    private ScopeWrapper(String name, boolean separator) {
-      mySeparator = separator;
+    private ScopeWrapper(String name) {
+      mySeparator = true;
       myName = name;
     }
 
