@@ -20,7 +20,6 @@
  */
 package com.intellij.profile.codeInspection.ui;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -113,10 +112,7 @@ public class InspectionConfigTreeNode extends CheckedTreeNode {
   @Override
   public String toString() {
     if (userObject instanceof Descriptor) {
-      final String displayNameByKey = HighlightDisplayKey.getDisplayNameByKey(((Descriptor)userObject).getKey());
-      if (displayNameByKey != null) {
-        return displayNameByKey;
-      }
+      return ((Descriptor)userObject).getText();
     }
     return super.toString();
   }

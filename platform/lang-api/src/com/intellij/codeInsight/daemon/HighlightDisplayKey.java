@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,7 @@ public class HighlightDisplayKey {
 
   private static final Map<String,HighlightDisplayKey> ourNameToKeyMap = new THashMap<String, HighlightDisplayKey>();
   private static final Map<String,HighlightDisplayKey> ourIdToKeyMap = new THashMap<String, HighlightDisplayKey>();
-  private static final Map<HighlightDisplayKey, String> ourKeyToDisplayNameMap = new THashMap<HighlightDisplayKey, String>();
+  private static final Map<HighlightDisplayKey, Computable<String>> ourKeyToDisplayNameMap = new THashMap<HighlightDisplayKey, Computable<String>>();
   private static final Map<HighlightDisplayKey, String> ourKeyToAlternativeIDMap = new THashMap<HighlightDisplayKey, String>();
 
   private final String myName;
@@ -57,14 +58,33 @@ public class HighlightDisplayKey {
     return new HighlightDisplayKey(name);
   }
 
+  /**
+   * @see #register(String, com.intellij.openapi.util.Computable)
+   */
   @Nullable
   public static HighlightDisplayKey register(@NonNls @NotNull final String name, @NotNull final String displayName) {
     return register(name, displayName, name);
   }
 
   @Nullable
+  public static HighlightDisplayKey register(@NonNls @NotNull final String name, @NotNull Computable<String> displayName) {
+    return register(name, displayName, name);
+  }
+
+
+  /**
+   * @see #register(String, com.intellij.openapi.util.Computable, String)
+   */
+  @Nullable
   public static HighlightDisplayKey register(@NonNls @NotNull final String name,
                                              @NotNull final String displayName,
+                                             @NotNull @NonNls final String id) {
+    return register(name, new Computable.PredefinedValueComputable<String>(displayName), id);
+  }
+
+  @Nullable
+  public static HighlightDisplayKey register(@NonNls @NotNull final String name,
+                                             @NotNull final Computable<String> displayName,
                                              @NotNull @NonNls final String id) {
     if (find(name) != null) {
       LOG.info("Key with name \'" + name + "\' already registered");
@@ -106,7 +126,13 @@ public class HighlightDisplayKey {
 
   @Nullable
   public static String getDisplayNameByKey(@Nullable HighlightDisplayKey key) {
-    return key == null ? null : ourKeyToDisplayNameMap.get(key);
+    if (key == null) {
+      return null;
+    }
+    else {
+      final Computable<String> computable = ourKeyToDisplayNameMap.get(key);
+      return computable == null ? null : computable.compute();
+    }
   }
 
   public static String getAlternativeID(@NotNull HighlightDisplayKey key) {
