@@ -340,6 +340,8 @@
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.whiteSpaceFormattingStrategy"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.indentStrategy"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
   <extensionPoint name="gotoDeclarationHandler"
                   interface="com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler"/>
