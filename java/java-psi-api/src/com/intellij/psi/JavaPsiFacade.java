@@ -135,7 +135,7 @@ public abstract class JavaPsiFacade {
    * @param packageName the package name to check.
    * @return true if it is part of the package prefix, false otherwise.
    */
-  public abstract boolean isPartOfPackagePrefix(String packageName);
+  public abstract boolean isPartOfPackagePrefix(@NotNull String packageName);
 
   /**
    * Checks if the specified PSI element belongs to the specified package.
@@ -155,5 +155,6 @@ public abstract class JavaPsiFacade {
    */
   public abstract boolean arePackagesTheSame(@NotNull PsiElement element1, @NotNull PsiElement element2);
 
+  @NotNull
   public abstract Project getProject();
 }
