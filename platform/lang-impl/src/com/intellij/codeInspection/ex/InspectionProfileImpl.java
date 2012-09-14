@@ -477,11 +477,11 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
           }
         };
         if (tool instanceof LocalInspectionToolWrapper) {
-          key = HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getID(),
+          key = HighlightDisplayKey.register(shortName, computable, ((LocalInspectionToolWrapper)tool).getID(),
                                              ((LocalInspectionToolWrapper)tool).getAlternativeID());
         }
         else {
-          key = HighlightDisplayKey.register(shortName, tool.getDisplayName());
+          key = HighlightDisplayKey.register(shortName, computable);
         }
       }
 
