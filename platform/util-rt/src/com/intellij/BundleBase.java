@@ -67,7 +67,10 @@ public abstract class BundleBase {
     return messageOrDefault(bundle, key, null, params);
   }
 
-  public static String replaceMnemonicAmpersand(final String value) {
+  @Nullable
+  public static String replaceMnemonicAmpersand(@Nullable final String value) {
+    if (value == null)
+      return null;
     if (value.indexOf('&') >= 0) {
       boolean useMacMnemonic = value.contains("&&");
       StringBuilder realValue = new StringBuilder();
