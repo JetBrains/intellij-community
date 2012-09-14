@@ -78,7 +78,7 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
    * @return point stored under the specified <code>key</code>. The method returns
    * <code>null</code> if there is no stored value under the <code>key</code>. If point
    * is outside of current screen bounds then the method returns <code>null</code>. It
-   * properly works in multimonitor configuration.
+   * properly works in multi-monitor configuration.
    * @exception java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
    * @param key a String key to perform a query for.
    */

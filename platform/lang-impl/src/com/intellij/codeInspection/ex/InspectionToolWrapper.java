@@ -159,7 +159,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   @Nullable
   public String getStaticDescription() {
-    return myEP == null ? getTool().getStaticDescription() : null;
+    return getTool().getStaticDescription();
   }
 
   @Override
