@@ -3,7 +3,6 @@ package com.intellij.structuralsearch.inspection.highlightTemplate;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Key;
@@ -21,7 +20,7 @@ import java.util.List;
 /**
  * @author Eugene.Kudelevsky
  */
-public class SSBasedInspectionCompiledPatternsCache implements StartupActivity, DumbAware {
+public class SSBasedInspectionCompiledPatternsCache implements StartupActivity {
   private static final Key<MatcherImpl.CompiledOptions> COMPILED_OPTIONS_KEY = Key.create("SSR_INSPECTION_COMPILED_OPTIONS_KEY");
 
   @Override
