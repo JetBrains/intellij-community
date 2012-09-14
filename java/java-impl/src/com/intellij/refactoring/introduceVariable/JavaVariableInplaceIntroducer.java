@@ -159,7 +159,7 @@ public class JavaVariableInplaceIntroducer extends InplaceVariableIntroducer<Psi
             if (psiVariable.getInitializer() != null) {
               appendTypeCasts(getOccurrenceMarkers(), file, myProject, psiVariable);
             }
-            if (myConflictResolver != null && isIdentifier(myInsertedName, psiVariable.getLanguage())) {
+            if (myConflictResolver != null && myInsertedName != null && isIdentifier(myInsertedName, psiVariable.getLanguage())) {
               myConflictResolver.apply(psiVariable.getName());
             }
           }
