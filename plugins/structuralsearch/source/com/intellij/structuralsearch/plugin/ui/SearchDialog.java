@@ -37,10 +37,7 @@ import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.structuralsearch.plugin.replace.ui.NavigateSearchResultsDialog;
 import com.intellij.structuralsearch.plugin.ui.actions.DoSearchAction;
-import com.intellij.ui.GuiUtils;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.ui.TitledSeparatorWithMnemonic;
+import com.intellij.ui.*;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -55,11 +52,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 // Class to show the user the request for search
 
@@ -664,8 +658,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     if (myShowScopePanel) {
       JPanel scopePanel = new JPanel(new GridBagLayout());
 
-      TitledSeparatorWithMnemonic separator =
-        new TitledSeparatorWithMnemonic(SSRBundle.message("search.dialog.scope.label"), myScopeChooserCombo.getComboBox());
+      TitledSeparator separator = new TitledSeparator(SSRBundle.message("search.dialog.scope.label"), myScopeChooserCombo.getComboBox());
       scopePanel.add(separator, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                                        new Insets(5, 0, 0, 0), 0, 0));
 
