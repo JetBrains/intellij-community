@@ -20,6 +20,7 @@ import com.intellij.lang.LanguageDependentMembersRefactoringSupport;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;
@@ -36,6 +37,7 @@ public class MemberDependenciesStorage<T extends NavigatablePsiElement, C extend
     myDependencyGraph = new HashMap<T, Set<T>>();
   }
 
+  @Nullable
   protected Set<T> getMemberDependencies(T member) {
     Set<T> result = myDependencyGraph.get(member);
     if (result == null) {

@@ -438,7 +438,7 @@ public class XPathEvalAction extends XPathAction {
         }
 
       @Override
-      public void highlightUsages(PsiFile file, Editor editor, boolean clearHighlights) {
+      public void highlightUsages(@NotNull PsiFile file, @NotNull Editor editor, boolean clearHighlights) {
         throw new UnsupportedOperationException();
       }
 

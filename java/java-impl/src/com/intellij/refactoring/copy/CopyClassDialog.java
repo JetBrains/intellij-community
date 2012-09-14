@@ -44,7 +44,6 @@ import java.awt.*;
 class CopyClassDialog extends DialogWrapper{
   @NonNls private static final String RECENTS_KEY = "CopyClassDialog.RECENTS_KEY";
   private final JLabel myInformationLabel = new JLabel();
-  private final JLabel myNameLabel = new JLabel();
   private EditorTextField myNameField;
   private final JLabel myPackageLabel = new JLabel();
   private ReferenceEditorComboWithBrowseButton myTfPackage;
@@ -97,9 +96,7 @@ class CopyClassDialog extends DialogWrapper{
   }
 
   protected JComponent createNorthPanel() {
-    myNameLabel.setText(RefactoringBundle.message("copy.files.new.name.label"));
     myNameField = new EditorTextField("");
-    myNameLabel.setLabelFor(myNameField);
 
     String qualifiedName = getQualifiedName();
     myTfPackage = new PackageNameReferenceEditorCombo(qualifiedName, myProject, RECENTS_KEY, RefactoringBundle.message("choose.destination.package"));
@@ -119,7 +116,7 @@ class CopyClassDialog extends DialogWrapper{
 
     return FormBuilder.createFormBuilder()
       .addComponent(myInformationLabel)
-      .addLabeledComponent(myNameLabel, myNameField, UIUtil.LARGE_VGAP)
+      .addLabeledComponent(RefactoringBundle.message("copy.files.new.name.label"), myNameField, UIUtil.LARGE_VGAP)
       .addLabeledComponent(myPackageLabel, myTfPackage)
       .addLabeledComponent(label, myDestinationCB)
       .getPanel();
@@ -153,7 +150,7 @@ class CopyClassDialog extends DialogWrapper{
     final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(manager.getProject()).getNameHelper();
     if (packageName.length() > 0 && !nameHelper.isQualifiedName(packageName)) {
       errorString[0] = RefactoringBundle.message("invalid.target.package.name.specified");
-    } else if ("".equals(className)) {
+    } else if (className != null && className.isEmpty()) {
       errorString[0] = RefactoringBundle.message("no.class.name.specified");
     } else {
       if (!nameHelper.isIdentifier(className)) {

@@ -20,8 +20,12 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchConditio
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Denis Zhdanov
@@ -29,14 +33,19 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ArrangementNodeComponentFactory {
 
+  @NotNull private final Set<ArrangementMatchCondition> myGroupingConditions = ContainerUtilRt.newHashSet();
   @NotNull private final ArrangementNodeDisplayManager myDisplayManager;
   @NotNull private final Runnable                      myRemoveConditionCallback;
 
   public ArrangementNodeComponentFactory(@NotNull ArrangementNodeDisplayManager manager,
-                                         @NotNull Runnable removeConditionCallback)
+                                         @NotNull Runnable removeConditionCallback,
+                                         @NotNull List<Set<ArrangementMatchCondition>> groupingRules)
   {
     myDisplayManager = manager;
     myRemoveConditionCallback = removeConditionCallback;
+    for (Set<ArrangementMatchCondition> rules : groupingRules) {
+      myGroupingConditions.addAll(rules);
+    }
   }
 
   @NotNull
@@ -47,14 +56,22 @@ public class ArrangementNodeComponentFactory {
     node.invite(new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {
-        ref.set(new ArrangementAtomNodeComponent(myDisplayManager, condition, prepareRemoveCallback(condition, model)));
+        ArrangementNodeComponent component;
+        if (myGroupingConditions.contains(condition)) {
+          component = new ArrangementGroupingNodeComponent(myDisplayManager, condition);
+        }
+        else {
+          component = new ArrangementAtomNodeComponent(myDisplayManager, condition, prepareRemoveCallback(condition, model));
+        }
+        ref.set(component);
       }
 
       @Override
       public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
         switch (condition.getOperator()) {
           case AND:
-            ref.set(new ArrangementAndNodeComponent(condition, ArrangementNodeComponentFactory.this, myDisplayManager, model)); break;
+            ref.set(new ArrangementAndNodeComponent(condition, ArrangementNodeComponentFactory.this, myDisplayManager, model));
+            break;
           case OR: // TODO den implement
         }
       }

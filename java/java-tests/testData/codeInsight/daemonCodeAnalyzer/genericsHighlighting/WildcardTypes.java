@@ -217,3 +217,30 @@ class IDEA73377 {
     return <error descr="Inconvertible types; cannot cast 'java.util.Iterator<java.util.Map.Entry<capture<?>,capture<?>>>' to 'java.util.Iterator<java.util.Map.Entry<java.util.Map.Entry<?,?>,?>>'">(Iterator<Map.Entry<Map.Entry<?, ?>, ?>>)map.entrySet().iterator()</error>;
   }
 }
+
+class IDEA91481 {
+  void bar(){
+    BeanBuilder<? extends DirectBean> builder = <warning descr="Unchecked cast: 'IDEA91481.BeanBuilder<capture<? extends IDEA91481.Bean>>' to 'IDEA91481.BeanBuilder<? extends IDEA91481.DirectBean>'">(BeanBuilder<?  extends DirectBean>) builder()</warning>;
+    System.out.println(builder);
+  }
+
+  BeanBuilder<? extends Bean> builder() {
+    return null;
+  }
+
+  class BeanBuilder<<warning descr="Type parameter 'T' is never used">T</warning>> {}
+  class Bean {}
+  class DirectBean extends Bean {}
+}
+
+class IDEA89640 {
+  interface X {}
+  class Y<<warning descr="Type parameter 'T' is never used">T</warning> extends X> {}
+
+  public static void main(String[] args) {
+    Y<? extends X> a = null;
+    Y<? extends X> b = null;
+    boolean flag = a  != b; 
+    System.out.println(flag);
+  }
+}

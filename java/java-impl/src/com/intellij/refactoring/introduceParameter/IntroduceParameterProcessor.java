@@ -346,8 +346,10 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
         LOG.assertTrue(myLocalVariable != null);
         myParameterInitializer = factory.createExpressionFromText(myLocalVariable.getName(), myLocalVariable);
       }
-      else {
-        myParameterInitializer = RefactoringUtil.convertInitializerToNormalExpression(myParameterInitializer, initializerType);
+      else if (myParameterInitializer instanceof PsiArrayInitializerExpression){
+        final PsiExpression newExprArrayInitializer =
+          RefactoringUtil.createNewExpressionFromArrayInitializer((PsiArrayInitializerExpression)myParameterInitializer, initializerType);
+        myParameterInitializer = (PsiExpression)myParameterInitializer.replace(newExprArrayInitializer);
       }
 
       myInitializerWrapper = new JavaExpressionWrapper(myParameterInitializer);

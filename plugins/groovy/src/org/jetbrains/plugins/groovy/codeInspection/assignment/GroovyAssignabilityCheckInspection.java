@@ -53,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTupleDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -239,6 +240,56 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       GrExpression rValue = assignment.getRValue();
       if (rValue == null) return;
 
+      if (lValue instanceof GrTupleExpression) {
+        checkTupleAssignment(((GrTupleExpression)lValue), rValue);
+      }
+      else {
+        checkAssignment(lValue, rValue);
+      }
+    }
+
+    private void checkTupleAssignment(GrTupleExpression tupleExpression, GrExpression initializer) {
+      GrExpression[] lValues = tupleExpression.getExpressions();
+      if (initializer instanceof GrListOrMap) {
+        GrExpression[] initializers = ((GrListOrMap)initializer).getInitializers();
+        for (int i = 0; i < lValues.length; i++) {
+          GrExpression lValue = lValues[i];
+          if (initializers.length >= i) break;
+          GrExpression rValue = initializers[i];
+          checkAssignment(lValue, rValue);
+        }
+      }
+      else {
+        PsiType type = initializer.getType();
+        PsiType rType = com.intellij.psi.util.PsiUtil.extractIterableTypeParameter(type, false);
+
+        for (GrExpression lValue : lValues) {
+          PsiType lType = lValue.getNominalType();
+          // For assignments with spread dot
+          if (isListAssignment(lValue) && lType != null && lType instanceof PsiClassType) {
+            final PsiClassType pct = (PsiClassType)lType;
+            final PsiClass clazz = pct.resolve();
+            if (clazz != null && CommonClassNames.JAVA_UTIL_LIST.equals(clazz.getQualifiedName())) {
+              final PsiType[] types = pct.getParameters();
+              if (types.length == 1 && types[0] != null && rType != null) {
+                checkAssignability(types[0], rType, tupleExpression, lValue);
+              }
+            }
+            return;
+          }
+          if (lValue instanceof GrReferenceExpression && ((GrReferenceExpression)lValue).resolve() instanceof GrReferenceExpression) {
+            //lvalue is not-declared variable
+            return;
+          }
+
+          if (lType != null && rType != null) {
+            checkAssignability(lType, rType, tupleExpression, lValue);
+          }
+        }
+      }
+    }
+
+    private void checkAssignment(GrExpression lValue, GrExpression rValue) {
       PsiType lType = lValue.getNominalType();
       PsiType rType = rValue.getType();
       // For assignments with spread dot
@@ -273,6 +324,21 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       super.visitVariable(variable);
 
       PsiType varType = variable.getType();
+
+      //check tuple assignment:  def (int x, int y) = foo()
+      if (variable.getParent() instanceof GrTupleDeclaration) {
+        GrTupleDeclaration tuple = (GrTupleDeclaration)variable.getParent();
+        GrExpression initializer = tuple.getInitializerGroovy();
+        if (initializer == null) return;
+        if (!(initializer instanceof GrListOrMap)) {
+          PsiType type = initializer.getType();
+          if (type == null) return;
+          PsiType valueType = com.intellij.psi.util.PsiUtil.extractIterableTypeParameter(type, false);
+          checkAssignability(varType, valueType, tuple, variable.getNameIdentifierGroovy());
+          return;
+        }
+      }
+
       GrExpression initializer = variable.getInitializerGroovy();
       if (initializer == null) return;
 
@@ -283,6 +349,17 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       }
 
       checkAssignability(varType, initializer);
+    }
+
+    private void checkAssignability(@NotNull PsiType lType,
+                                    @Nullable PsiType rType,
+                                    @NotNull GroovyPsiElement context,
+                                    @NotNull final PsiElement elementToHighlight) {
+      if (rType == null) return;
+      if (!TypesUtil.isAssignable(lType, rType, context)) {
+        final String message = GroovyBundle.message("cannot.assign", rType.getPresentableText(), lType.getPresentableText());
+        registerError(elementToHighlight, message, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      }
     }
 
     private static boolean isNewInstanceInitialingByTuple(GrExpression initializer) {

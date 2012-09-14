@@ -25,12 +25,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.ui.EditorCustomization;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.EditorTextFieldProvider;
-import com.intellij.ui.SeparatorFactory;
+import com.intellij.openapi.vcs.*;
+import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,12 +35,14 @@ import java.awt.*;
 import java.util.EnumSet;
 import java.util.Set;
 
-public class CommitMessage extends JPanel implements Disposable {
+public class CommitMessage extends AbstractDataProviderPanel implements Disposable, CommitMessageI {
 
   public static final Key<DataContext> DATA_CONTEXT_KEY = Key.create("commit message data context");
   private final EditorTextField myEditorField;
   private final Project         myProject;
   private Consumer<String> myMessageConsumer;
+  private final TitledSeparator mySeparator;
+  private boolean myCheckSpelling;
 
   public CommitMessage(Project project) {
     super(new BorderLayout());
@@ -64,9 +62,9 @@ public class CommitMessage extends JPanel implements Disposable {
 
     JPanel labelPanel = new JPanel(new BorderLayout());
     labelPanel.setBorder(BorderFactory.createEmptyBorder());
-    JComponent separator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myEditorField.getComponent(), true, true);
+    mySeparator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myEditorField.getComponent(), true, true);
     JPanel separatorPanel = new JPanel(new BorderLayout());
-    separatorPanel.add(separator, BorderLayout.SOUTH);
+    separatorPanel.add(mySeparator, BorderLayout.SOUTH);
     separatorPanel.add(Box.createVerticalGlue(), BorderLayout.NORTH);
     labelPanel.add(separatorPanel, BorderLayout.CENTER);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, getToolbarActions(), true);
@@ -77,6 +75,22 @@ public class CommitMessage extends JPanel implements Disposable {
     add(labelPanel, BorderLayout.NORTH);
 
     setBorder(BorderFactory.createEmptyBorder());
+  }
+
+  @Override
+  public void calcData(DataKey key, DataSink sink) {
+    if (key.is(VcsDataKeys.COMMIT_MESSAGE_CONTROL.getName())) {
+      sink.put(VcsDataKeys.COMMIT_MESSAGE_CONTROL, this);
+    }
+  }
+
+  public void setSeparatorText(final String text) {
+    mySeparator.setText(text);
+  }
+
+  @Override
+  public void setCommitMessage(String currentDescription) {
+    setText(currentDescription);
   }
 
   private static EditorTextField createEditorField(final Project project, final boolean checkSpelling) {
@@ -130,7 +144,13 @@ public class CommitMessage extends JPanel implements Disposable {
     myEditorField.selectAll();
   }
 
+  @Override
+  public boolean isCheckSpelling() {
+    return myCheckSpelling;
+  }
+
   public void setCheckSpelling(boolean check) {
+    myCheckSpelling = check;
     Editor editor = myEditorField.getEditor();
     if (!(editor instanceof EditorEx)) {
       return;

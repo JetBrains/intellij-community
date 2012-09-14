@@ -48,7 +48,7 @@ public class JUnit4Framework extends JavaTestFramework {
   }
 
   protected String getMarkerClassFQName() {
-    return "org.junit.Test";
+    return JUnitUtil.TEST_ANNOTATION;
   }
 
   @NotNull
@@ -70,7 +70,7 @@ public class JUnit4Framework extends JavaTestFramework {
   @Override
   protected PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
     for (PsiMethod each : clazz.getMethods()) {
-      if (AnnotationUtil.isAnnotated(each, "org.junit.Before", false)) return each;
+      if (AnnotationUtil.isAnnotated(each, JUnitUtil.BEFORE_ANNOTATION_NAME, false)) return each;
     }
     return null;
   }
@@ -79,7 +79,7 @@ public class JUnit4Framework extends JavaTestFramework {
   @Override
   protected PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
     for (PsiMethod each : clazz.getMethods()) {
-      if (AnnotationUtil.isAnnotated(each, "org.junit.After", false)) return each;
+      if (AnnotationUtil.isAnnotated(each, JUnitUtil.AFTER_ANNOTATION_NAME, false)) return each;
     }
     return null;
   }
@@ -102,7 +102,7 @@ public class JUnit4Framework extends JavaTestFramework {
                                                    CommonBundle.getWarningTitle(),
                                                    Messages.getWarningIcon());
       if (exit == DialogWrapper.OK_EXIT_CODE) {
-        new AddAnnotationFix("org.junit.Before", existingMethod).invoke(existingMethod.getProject(), null, existingMethod.getContainingFile());
+        new AddAnnotationFix(JUnitUtil.BEFORE_ANNOTATION_NAME, existingMethod).invoke(existingMethod.getProject(), null, existingMethod.getContainingFile());
         return existingMethod;
       }
     }
@@ -120,7 +120,7 @@ public class JUnit4Framework extends JavaTestFramework {
   @Override
   public boolean isIgnoredMethod(PsiElement element) {
     final PsiMethod testMethod = element instanceof PsiMethod ? JUnitUtil.getTestMethod(element) : null;
-    return testMethod != null && AnnotationUtil.isAnnotated(testMethod, Ignore.class.getName(), false);
+    return testMethod != null && AnnotationUtil.isAnnotated(testMethod, JUnitUtil.IGNORE_ANNOTATION, false);
   }
 
   @Override
@@ -147,7 +147,7 @@ public class JUnit4Framework extends JavaTestFramework {
 
   @Override
   public boolean isParameterized(PsiClass clazz) {
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(clazz, "org.junit.runner.RunWith");
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(clazz, JUnitUtil.RUN_WITH);
     if (annotation != null) {
       final PsiAnnotationMemberValue value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       if (value instanceof PsiClassObjectAccessExpression) {

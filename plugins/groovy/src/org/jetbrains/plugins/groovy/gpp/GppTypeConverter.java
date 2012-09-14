@@ -76,7 +76,7 @@ public class GppTypeConverter extends GrTypeConverter {
         return true;
       }
     }
-    else if (rType instanceof GrClosureType) {
+    else if (rType instanceof GrClosureType && hasTypedContext(context)) {
       final PsiType[] methodParameters = GppClosureParameterTypeProvider.findSingleAbstractMethodSignature(lType);
       if (isClosureOverride(methodParameters, (GrClosureType)rType, context)) return true;
     }

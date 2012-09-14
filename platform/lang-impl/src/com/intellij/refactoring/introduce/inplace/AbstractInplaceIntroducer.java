@@ -505,8 +505,9 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   @Override
   protected boolean performRefactoring() {
+    final String newName = getInputName();
     if (getLocalVariable() == null && myExpr == null ||
-        getInputName() == null ||
+        newName == null ||
         getLocalVariable() != null && !getLocalVariable().isValid() ||
         myExpr != null && !myExpr.isValid()) {
       super.moveOffsetAfter(false);
@@ -521,7 +522,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       }.execute();
     }
 
-    if (!isIdentifier(getInputName(), myExpr != null ? myExpr.getLanguage() : getLocalVariable().getLanguage())) return false;
+    if (!isIdentifier(newName, myExpr != null ? myExpr.getLanguage() : getLocalVariable().getLanguage())) return false;
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {

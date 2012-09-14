@@ -55,7 +55,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
   }
 
   /**
-   * This method is called internally in {@link com.intellij.util.xml.highlighting.DomElementAnnotationsManager#checkFileElement(com.intellij.util.xml.DomFileElement, DomElementsInspection)},
+   * This method is called internally in {@link DomElementAnnotationsManager#checkFileElement(com.intellij.util.xml.DomFileElement, DomElementsInspection, boolean)}
    * it should add some problems to the annotation holder. The default implementation performs recursive tree traversal, and calls
    * {@link #checkDomElement(com.intellij.util.xml.DomElement, DomElementAnnotationHolder, DomHighlightingHelper)} for each element. 
    * @param domFileElement file element to check
@@ -143,7 +143,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
                                              @SuppressWarnings("UnusedParameters") final boolean isOnTheFly) {
     final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(manager.getProject());
 
-    final List<DomElementProblemDescriptor> list = annotationsManager.checkFileElement(domFileElement, this);
+    final List<DomElementProblemDescriptor> list = annotationsManager.checkFileElement(domFileElement, this, isOnTheFly);
     if (list.isEmpty()) return ProblemDescriptor.EMPTY_ARRAY;
 
     List<ProblemDescriptor> problems =

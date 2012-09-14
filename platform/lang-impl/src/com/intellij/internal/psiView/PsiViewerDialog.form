@@ -71,7 +71,7 @@
                           </component>
                         </children>
                       </scrollpane>
-                      <component id="1a9fa" class="com.intellij.ui.TitledSeparatorWithMnemonic" binding="myPsiTreeSeparator">
+                      <component id="1a9fa" class="com.intellij.ui.TitledSeparator" binding="myPsiTreeSeparator">
                         <constraints>
                           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                         </constraints>
@@ -106,7 +106,7 @@
                             </constraints>
                             <properties/>
                           </component>
-                          <component id="287f6" class="com.intellij.ui.TitledSeparatorWithMnemonic" binding="myRefsSeparator">
+                          <component id="287f6" class="com.intellij.ui.TitledSeparator" binding="myRefsSeparator">
                             <constraints>
                               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                             </constraints>
@@ -137,7 +137,7 @@
                               </component>
                             </children>
                           </scrollpane>
-                          <component id="62949" class="com.intellij.ui.TitledSeparatorWithMnemonic" binding="myBlockTreeSeparator">
+                          <component id="62949" class="com.intellij.ui.TitledSeparator" binding="myBlockTreeSeparator">
                             <constraints>
                               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                             </constraints>
@@ -261,7 +261,7 @@
           </component>
         </children>
       </grid>
-      <component id="bd033" class="com.intellij.ui.TitledSeparatorWithMnemonic" binding="myTextSeparator">
+      <component id="9944b" class="com.intellij.ui.TitledSeparator" binding="myTextSeparator">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>

@@ -26,7 +26,10 @@ import com.intellij.codeInspection.ui.actions.SuppressActionWrapper;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -35,7 +38,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +45,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.text.Document;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 import java.awt.*;
@@ -123,6 +129,7 @@ class Browser extends JPanel {
         try {
           String html = generateHTML(newEntity, tool);
           myHTMLViewer.read(new StringReader(html), null);
+          setupStyle();
           myHTMLViewer.setCaretPosition(0);
         }
         catch (Exception e) {
@@ -140,6 +147,7 @@ class Browser extends JPanel {
     try {
       String html = generateHTML(refEntity, descriptor);
       myHTMLViewer.read(new StringReader(html), null);
+      setupStyle();
       myHTMLViewer.setCaretPosition(0);
     }
     catch (Exception e) {
@@ -253,7 +261,27 @@ class Browser extends JPanel {
     };
     myHTMLViewer.addHyperlinkListener(myHyperLinkListener);
 
-    add(ScrollPaneFactory.createScrollPane(myHTMLViewer, SideBorder.LEFT), BorderLayout.CENTER);
+    final JScrollPane pane = ScrollPaneFactory.createScrollPane(myHTMLViewer);
+    pane.setBorder(null);
+    add(pane, BorderLayout.CENTER);
+    setupStyle();
+  }
+
+  private void setupStyle() {
+    Document document = myHTMLViewer.getDocument();
+    if (!(document instanceof StyledDocument)) {
+      return;
+    }
+
+    StyledDocument styledDocument = (StyledDocument)document;
+    
+    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    EditorColorsScheme scheme = colorsManager.getGlobalScheme();
+
+    Style style = styledDocument.addStyle("active", null);
+    StyleConstants.setFontFamily(style, scheme.getEditorFontName());
+    StyleConstants.setFontSize(style, scheme.getEditorFontSize());
+    styledDocument.setCharacterAttributes(0, document.getLength(), style, false);
   }
 
   public void addClickListener(ClickListener listener) {
@@ -295,8 +323,8 @@ class Browser extends JPanel {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static void insertHeaderFooter(final StringBuffer buf) {
-    buf.insert(0, "<HTML><BODY><font style=\"font-family:verdana;\" size = \"3\">");
-    buf.append("</font></BODY></HTML>");
+    buf.insert(0, "<HTML><BODY>");
+    buf.append("</BODY></HTML>");
   }
 
   private String generateHTML(final RefEntity refEntity, final CommonProblemDescriptor descriptor) {
@@ -349,20 +377,19 @@ class Browser extends JPanel {
           }
           if (!activeSuppressActions.isEmpty()) {
             int idx = 0;
-            @NonNls String font = "<font style=\"font-family:verdana;\" size = \"3\">";
-            buf.append(font);
             @NonNls final String br = "<br>";
-            buf.append(br).append(br);
+            buf.append(br);
             HTMLComposerImpl.appendHeading(buf, InspectionsBundle.message("inspection.export.results.suppress"));
             for (AnAction suppressAction : activeSuppressActions) {
               buf.append(br);
+              if (idx == activeSuppressActions.size() - 1) {
+                buf.append(br);
+              }
               HTMLComposer.appendAfterHeaderIndention(buf);
               @NonNls final String href = "<a HREF=\"file://bred.txt#suppress:" + idx + "\">" + suppressAction.getTemplatePresentation().getText() + "</a>";
               buf.append(href);
               idx++;
             }
-            @NonNls String closeFont = "</font>";
-            buf.append(closeFont);
           }
         }
       }
@@ -414,14 +441,11 @@ class Browser extends JPanel {
       if (description == null) {
         description = underConstruction;
       }
-      if (description.startsWith("<html>")) {
-        page.append(description.substring(description.indexOf("<html>") + 6));
-      } else {
-        page.append(underConstruction);
-      }
+      page.append(UIUtil.getHtmlBody(description));
 
       page.append("</td></tr></table>");
       myHTMLViewer.setText(page.toString());
+      setupStyle();
     } finally {
       myCurrentEntity = null;
     }

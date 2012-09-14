@@ -15,7 +15,6 @@
  */
 package git4idea.util;
 
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -26,12 +25,11 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.Function;
 import git4idea.GitBranch;
-import git4idea.GitDeprecatedRemote;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NonNls;
@@ -175,42 +173,6 @@ public class GitUIUtil {
   }
 
   /**
-   * Create list cell renderer for remotes. It shows both name and url and highlights the default
-   * remote for the branch with bold.
-   *
-   *
-   *
-   * @param defaultRemote a default remote
-   * @param fetchUrl      if true, the fetch url is shown
-   * @return a list cell renderer for virtual files (it renders presentable URL
-   */
-  public static ListCellRendererWrapper<GitDeprecatedRemote> getGitRemoteListCellRenderer(final String defaultRemote, final boolean fetchUrl) {
-    return new ListCellRendererWrapper<GitDeprecatedRemote>() {
-      @Override
-      public void customize(final JList list, final GitDeprecatedRemote remote, final int index, final boolean selected, final boolean hasFocus) {
-        final String text;
-        if (remote == null) {
-          text = GitBundle.getString("util.remote.renderer.none");
-        }
-        else if (".".equals(remote.name())) {
-          text = GitBundle.getString("util.remote.renderer.self");
-        }
-        else {
-          String key;
-          if (defaultRemote != null && defaultRemote.equals(remote.name())) {
-            key = "util.remote.renderer.default";
-          }
-          else {
-            key = "util.remote.renderer.normal";
-          }
-          text = GitBundle.message(key, remote.name(), fetchUrl ? remote.fetchUrl() : remote.pushUrl());
-        }
-        setText(text);
-      }
-    };
-  }
-
-  /**
    * Setup root chooser with specified elements and link selection to the current branch label.
    *
    * @param project            a context project
@@ -248,16 +210,6 @@ public class GitUIUtil {
       listener.actionPerformed(null);
       gitRootChooser.addActionListener(listener);
     }
-  }
-
-  /**
-   * Get root from the chooser
-   *
-   * @param gitRootChooser the chooser constructed with {@link #setupRootChooser(Project, List, VirtualFile, JComboBox, JLabel)}.
-   * @return the current selection
-   */
-  public static VirtualFile getRootFromRootChooser(JComboBox gitRootChooser) {
-    return (VirtualFile)gitRootChooser.getSelectedItem();
   }
 
   /**
@@ -315,63 +267,6 @@ public class GitUIUtil {
    */
   public static void showTabErrors(Project project, String title, List<VcsException> errors) {
     AbstractVcsHelper.getInstance(project).showErrors(errors, title);
-  }
-
-  /**
-   * Setup remotes combobox. The default remote for the current branch is selected by default.
-   * This method gets current branch for the project.
-   *
-   * @param project        the project
-   * @param root           the git root
-   * @param remoteCombobox the combobox to update
-   * @param fetchUrl       if true, the fetch url is shown instead of push url
-   */
-  public static void setupRemotes(final Project project, final VirtualFile root, final JComboBox remoteCombobox, final boolean fetchUrl) {
-    final GitRepository repo = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
-    assert repo != null : "GitRepository can't be null for root " + root;
-    GitBranch gitBranch = repo.getCurrentBranch();
-
-    final String branch = gitBranch != null ? gitBranch.getName() : null;
-    setupRemotes(project, root, branch, remoteCombobox, fetchUrl);
-
-  }
-
-  /**
-   * Setup remotes combobox. The default remote for the current branch is selected by default.
-   *
-   * @param project        the project
-   * @param root           the git root
-   * @param currentBranch  the current branch
-   * @param remoteCombobox the combobox to update
-   * @param fetchUrl       if true, the fetch url is shown for remotes, push otherwise
-   */
-  public static void setupRemotes(final Project project,
-                                  final VirtualFile root,
-                                  final String currentBranch,
-                                  final JComboBox remoteCombobox,
-                                  final boolean fetchUrl) {
-    try {
-      List<GitDeprecatedRemote> remotes = GitDeprecatedRemote.list(project, root);
-      String remote = null;
-      if (currentBranch != null) {
-        remote = GitConfigUtil.getValue(project, root, "branch." + currentBranch + ".remote");
-      }
-      remoteCombobox.setRenderer(getGitRemoteListCellRenderer(remote, fetchUrl));
-      GitDeprecatedRemote toSelect = null;
-      remoteCombobox.removeAllItems();
-      for (GitDeprecatedRemote r : remotes) {
-        remoteCombobox.addItem(r);
-        if (r.name().equals(remote)) {
-          toSelect = r;
-        }
-      }
-      if (toSelect != null) {
-        remoteCombobox.setSelectedItem(toSelect);
-      }
-    }
-    catch (VcsException e) {
-      GitVcs.getInstance(project).showErrors(Collections.singletonList(e), GitBundle.getString("pull.retrieving.remotes"));
-    }
   }
 
   /**

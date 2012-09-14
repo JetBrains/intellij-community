@@ -112,13 +112,12 @@ public class DescriptorComposer extends HTMLComposerImpl {
       int idx = 0;
       for (QuickFix fix : fixes) {
         //noinspection HardCodedStringLiteral
-        buf.append("<font style=\"font-family:verdana;\"");
         //noinspection HardCodedStringLiteral
         buf.append("<a HREF=\"file://bred.txt#invokelocal:" + (idx++));
         buf.append("\">");
         buf.append(fix.getName());
         //noinspection HardCodedStringLiteral
-        buf.append("</a></font>");
+        buf.append("</a>");
         //noinspection HardCodedStringLiteral
         buf.append("<br>");
         appendAfterHeaderIndention(buf);
@@ -156,7 +155,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
     }
     else {
       //noinspection HardCodedStringLiteral
-      anchor.append("<font style=\"font-family:verdana; font-weight:bold; color:#FF0000\";>");
+      anchor.append("<font style=\"font-weight:bold; color:#FF0000\";>");
       anchor.append(InspectionsBundle.message("inspection.export.results.invalidated.item"));
       //noinspection HardCodedStringLiteral
       anchor.append("</font>");

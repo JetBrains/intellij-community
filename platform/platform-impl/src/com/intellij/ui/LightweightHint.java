@@ -316,16 +316,14 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     if (myIsRealPopup) {
       return myPopup != null && myPopup.isVisible();
     }
-    else if (myCurrentIdeTooltip != null) {
+    if (myCurrentIdeTooltip != null) {
       return myComponent.isShowing() || IdeTooltipManager.getInstance().isQueuedToShow(myCurrentIdeTooltip);
     }
-    else {
-      return myComponent.isShowing();
-    }
+    return myComponent.isShowing();
   }
 
   public final boolean isRealPopup() {
-    return myIsRealPopup | myForceShowAsPopup;
+    return myIsRealPopup || myForceShowAsPopup;
   }
 
   @Override

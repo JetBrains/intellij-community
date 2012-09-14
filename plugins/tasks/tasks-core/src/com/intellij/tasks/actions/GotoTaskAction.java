@@ -11,14 +11,12 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiManager;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.doc.TaskPsiElement;
-import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -28,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -65,11 +62,52 @@ public class GotoTaskAction extends GotoActionBase {
                                  boolean everywhere,
                                  @NotNull ProgressIndicator cancelled,
                                  @NotNull Processor<Object> consumer) {
-        Object[] elements = base.getModel().getElementsByName("", false, pattern);
-        for (Object element : elements) {
+        List<Task> cachedTasks = new TaskSearchSupport(project).getLocalAndCachedTasks(pattern);
+        List<TaskPsiElement> taskPsiElements = ContainerUtil.map(cachedTasks, new Function<Task, TaskPsiElement>() {
+          @Override
+          public TaskPsiElement fun(Task task) {
+            return new TaskPsiElement(PsiManager.getInstance(project), task);
+          }
+        });
+
+        CREATE_NEW_TASK_ACTION.setTaskName(pattern);
+        cancelled.checkCanceled();
+        if (!consumer.process(CREATE_NEW_TASK_ACTION)) return;
+
+        boolean cachedTasksFound = taskPsiElements.size() != 0;
+        if (cachedTasksFound) {
+          cancelled.checkCanceled();
+          if (!consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return;
+        }
+
+        for (Object element : taskPsiElements) {
           cancelled.checkCanceled();
           if (!consumer.process(element)) return;
         }
+
+        //int i = 0;
+        //while (true) {
+          List<Task> tasks = new TaskSearchSupport(project).getRepositoryTasks(pattern, ChooseByNameBase.MAXIMUM_LIST_SIZE_LIMIT, 0, true);
+          if (tasks.size() == 0) return;
+          tasks.removeAll(cachedTasks);
+          taskPsiElements = ContainerUtil.map(tasks, new Function<Task, TaskPsiElement>() {
+            @Override
+            public TaskPsiElement fun(Task task) {
+              return new TaskPsiElement(PsiManager.getInstance(project), task);
+            }
+          });
+
+          if (!cachedTasksFound && taskPsiElements.size() != 0) {
+            cancelled.checkCanceled();
+            if (!consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return;
+          }
+
+          for (Object element : taskPsiElements) {
+            cancelled.checkCanceled();
+            if (!consumer.process(element)) return;
+          }
+          //i += ChooseByNameBase.MAXIMUM_LIST_SIZE_LIMIT;
+        //}
       }
     }, "", false, 0);
     popup.setShowListForEmptyPattern(true);
@@ -117,12 +155,10 @@ public class GotoTaskAction extends GotoActionBase {
 
   private static class GotoTaskPopupModel extends SimpleChooseByNameModel {
     private ListCellRenderer myListCellRenderer;
-    private final Project myProject;
 
 
     protected GotoTaskPopupModel(@NotNull Project project) {
       super(project, "Enter task name:", null);
-      myProject = project;
       myListCellRenderer = new TaskCellRenderer(project);
     }
 
@@ -133,34 +169,7 @@ public class GotoTaskAction extends GotoActionBase {
 
     @Override
     protected Object[] getElementsByName(String name, String pattern) {
-      List<Task> tasks = new ArrayList<Task>();
-      tasks.addAll(TaskManager.getManager(myProject).getLocalTasks(pattern));
-      ContainerUtil.sort(tasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
-      tasks.addAll(ContainerUtil.filter(TaskManager.getManager(myProject).getIssues(pattern), new Condition<Task>() {
-        @Override
-        public boolean value(Task task) {
-          return TaskManager.getManager(myProject).findTask(task.getId()) == null;
-        }
-      }));
-
-      List<TaskPsiElement> taskPsiElements = ContainerUtil.map(tasks, new Function<Task, TaskPsiElement>() {
-        @Override
-        public TaskPsiElement fun(Task task) {
-          return new TaskPsiElement(PsiManager.getInstance(myProject), task);
-        }
-      });
-      TaskPsiElement[] result2 = new TaskPsiElement[taskPsiElements.size()];
-      ArrayUtil.copy(taskPsiElements, result2, 0);
-
-      final boolean foundTaskListEmpty = taskPsiElements.size() == 0;
-      Object[] result = new Object[taskPsiElements.size() + 1 + (foundTaskListEmpty ? 0 : 1)];
-      result[0] = CREATE_NEW_TASK_ACTION;
-      CREATE_NEW_TASK_ACTION.setTaskName(pattern);
-      if (!foundTaskListEmpty) {
-        result[1] = ChooseByNameBase.NON_PREFIX_SEPARATOR;
-      }
-      ArrayUtil.copy(taskPsiElements, result, foundTaskListEmpty ? 1 : 2);
-      return result;
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
     @Override

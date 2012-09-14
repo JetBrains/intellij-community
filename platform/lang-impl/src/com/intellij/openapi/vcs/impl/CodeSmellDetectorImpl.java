@@ -45,7 +45,6 @@ import com.intellij.util.ui.MessageCategory;
 import com.intellij.vcsUtil.Rethrow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.util.LocaleServiceProviderPool;
 
 import java.util.*;
 
@@ -61,14 +60,17 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     myProject = project;
   }
 
+  @Override
   public void showCodeSmellErrors(final List<CodeSmellInfo> smellList) {
     Collections.sort(smellList, new Comparator<CodeSmellInfo>() {
+      @Override
       public int compare(final CodeSmellInfo o1, final CodeSmellInfo o2) {
         return o1.getTextRange().getStartOffset() - o2.getTextRange().getStartOffset();
       }
     });
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (myProject.isDisposed()) return;
         if (smellList.isEmpty()) {
@@ -104,6 +106,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
   }
 
 
+  @Override
   public List<CodeSmellInfo> findCodeSmells(final List<VirtualFile> filesToCheck) throws ProcessCanceledException {
     final List<CodeSmellInfo> result = new ArrayList<CodeSmellInfo>();
     final PsiManager manager = PsiManager.getInstance(myProject);
@@ -111,6 +114,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
       public void run() {
         try {
           @Nullable final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();

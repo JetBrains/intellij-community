@@ -30,6 +30,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.ApplicationProfileManager;
@@ -77,8 +78,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private InspectionProfileImpl myBaseProfile = null;
   @NonNls private static final String VERSION_TAG = "version";
   @NonNls private static final String INSPECTION_TOOL_TAG = "inspection_tool";
-  @NonNls static final String ENABLED_TAG = "enabled";
-  @NonNls static final String LEVEL_TAG = "level";
+
   @NonNls private static final String CLASS_TAG = "class";
   @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
   @NonNls private static final String ROOT_ELEMENT_TAG = "inspections";
@@ -469,12 +469,19 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       final String shortName = tool.getShortName();
       HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
       if (key == null) {
+        final InspectionEP extension = tool.getExtension();
+        Computable<String> computable = extension == null ? new Computable.PredefinedValueComputable<String>(tool.getDisplayName()) : new Computable<String>() {
+          @Override
+          public String compute() {
+            return extension.getDisplayName();
+          }
+        };
         if (tool instanceof LocalInspectionToolWrapper) {
-          key = HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getID(),
+          key = HighlightDisplayKey.register(shortName, computable, ((LocalInspectionToolWrapper)tool).getID(),
                                              ((LocalInspectionToolWrapper)tool).getAlternativeID());
         }
         else {
-          key = HighlightDisplayKey.register(shortName, tool.getDisplayName());
+          key = HighlightDisplayKey.register(shortName, computable);
         }
       }
 

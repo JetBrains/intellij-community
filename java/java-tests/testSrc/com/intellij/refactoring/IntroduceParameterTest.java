@@ -249,6 +249,10 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
   }
 
+  public void testArrayInitializer() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, true, false, false, false);
+  }
+
   public void testIncompleteEnumDefinition() throws Exception {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false, false, "Incomplete call(Root()): 2 parameters expected but only 0 found\n" +
                                                                                                       "Incomplete call(Root()): expected to delete the 1 parameter but only 0 parameters found");

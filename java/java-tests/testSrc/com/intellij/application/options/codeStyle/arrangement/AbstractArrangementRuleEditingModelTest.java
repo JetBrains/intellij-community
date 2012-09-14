@@ -33,7 +33,10 @@ import org.junit.Before;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -46,7 +49,7 @@ public abstract class AbstractArrangementRuleEditingModelTest {
   @NotNull protected JTree                                              myTree;
   @NotNull protected ArrangementTreeNode                                myRoot;
   @NotNull protected TIntObjectHashMap<ArrangementRuleEditingModelImpl> myRowMappings;
-  @NotNull protected JavaRearranger                                     myGrouper;
+  @NotNull protected List<Set<ArrangementMatchCondition>>               myGroupingRules;
 
   @Before
   public void setUp() {
@@ -55,13 +58,14 @@ public abstract class AbstractArrangementRuleEditingModelTest {
     myTree = new Tree(myRoot);
     myTree.expandPath(new TreePath(myRoot));
     myRowMappings = new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();
-    myGrouper = new JavaRearranger();
+    myGroupingRules = new JavaRearranger().getGroupingConditions();
   }
 
   protected void configure(@NotNull ArrangementMatchCondition matchCondition) {
-    Pair<ArrangementRuleEditingModelImpl,TIntIntHashMap> pair = myBuilder.build(
-      new StdArrangementRule(new StdArrangementEntryMatcher(matchCondition)), myTree, myRoot, null, myGrouper
+    Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> pair = myBuilder.build(
+      new StdArrangementRule(new StdArrangementEntryMatcher(matchCondition)), myTree, myRoot, null, myGroupingRules
     );
+    assertNotNull(pair);
     myRowMappings.put(pair.first.getRow(), pair.first);
   }
 

@@ -42,11 +42,12 @@ public class JUnitUtil {
   @NonNls public static final String TESTCASE_CLASS = "junit.framework.TestCase";
   @NonNls private static final String TEST_INTERFACE = "junit.framework.Test";
   @NonNls private static final String TESTSUITE_CLASS = "junit.framework.TestSuite";
-  @NonNls private static final String TEST_ANNOTATION = "org.junit.Test";
+  @NonNls public static final String TEST_ANNOTATION = "org.junit.Test";
+  @NonNls public static final String IGNORE_ANNOTATION = "org.junit.Ignore";
   @NonNls public static final String RUN_WITH = "org.junit.runner.RunWith";
   @NonNls public static final String SUITE_METHOD_NAME = "suite";
-  private static final String BEFORE_ANNOTATION_NAME = "org.junit.Before";
-  private static final String AFTER_ANNOTATION_NAME = "org.junit.After";
+  public static final String BEFORE_ANNOTATION_NAME = "org.junit.Before";
+  public static final String AFTER_ANNOTATION_NAME = "org.junit.After";
   private static final String PARAMETRIZED_PARAMETERS_ANNOTATION_NAME = "org.junit.runners.Parameterized.Parameters";
   private static final String AFTER_CLASS_ANNOTATION_NAME = "org.junit.AfterClass";
   private static final String BEFORE_CLASS_ANNOTATION_NAME = "org.junit.BeforeClass";

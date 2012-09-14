@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 Bas Leijdekkers
+ * Copyright 2006-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,19 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.WeakestTypeFinder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -231,9 +230,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
               containingClass.isInterface()) {
             return;
           }
-          final Query<MethodSignatureBackedByPsiMethod> superSearch =
-            SuperMethodsSearch.search(method, null, true, false);
-          if (superSearch.findFirst() != null) {
+          if (MethodUtils.hasSuper(method)) {
             // do not try to weaken parameters of methods with
             // super methods
             return;
@@ -307,15 +304,12 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     @Override
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
-      if (isOnTheFly() &&
-          !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      if (isOnTheFly() && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
         // checking methods with greater visibility is too expensive.
         // for error checking in the editor
         return;
       }
-      final Query<MethodSignatureBackedByPsiMethod> superSearch =
-        SuperMethodsSearch.search(method, null, true, false);
-      if (superSearch.findFirst() != null) {
+      if (MethodUtils.hasSuper(method)) {
         // do not try to weaken methods with super methods
         return;
       }
@@ -338,8 +332,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         weakestClasses.remove(javaLangObjectClass);
       }
       if (onlyWeakentoInterface) {
-        for (Iterator<PsiClass> iterator = weakestClasses.iterator();
-             iterator.hasNext(); ) {
+        for (Iterator<PsiClass> iterator = weakestClasses.iterator(); iterator.hasNext(); ) {
           final PsiClass weakestClass = iterator.next();
           if (!weakestClass.isInterface()) {
             iterator.remove();

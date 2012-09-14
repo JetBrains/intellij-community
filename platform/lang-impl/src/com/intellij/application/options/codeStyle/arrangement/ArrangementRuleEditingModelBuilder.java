@@ -16,11 +16,11 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementConditionNode;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementConditionsGrouper;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsRepresentationAware;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Holds glue logic between arrangement settings and their representation -
@@ -47,7 +49,7 @@ public class ArrangementRuleEditingModelBuilder {
    * <ol>
    *   <li>
    *     {@link HierarchicalArrangementConditionNode Groups} given {@link ArrangementMatchCondition settings} using
-   *     the given {@link ArrangementConditionsGrouper#group(ArrangementMatchCondition) strategy};
+   *     the given grouping rules;
    *   </li>
    *   <li>
    *     Build {@link DefaultMutableTreeNode tree nodes} for the {@link HierarchicalArrangementConditionNode groiping-aware nodes}
@@ -64,21 +66,34 @@ public class ArrangementRuleEditingModelBuilder {
    * @param root           UI tree settings root to use (may be not the same as the tree root)
    * @param anchor         node after which should be previous sibling for the root node of the inserted condition;
    *                       <code>null</code> as an indication that new condition nodes should be inserted as the last 'root' child
-   * @param grouper        strategy that knows how to
+   * @param groupingRules  conditions grouping rules
    *                       {@link ArrangementStandardSettingsRepresentationAware#getDisplayValue(ArrangementModifier) group} setting
    *                       nodes for UI representation
-   * @return               collection of row changes at the form {@code 'old row -> new row'} (all rows are zero-based)
+   * @return               created model and collection of row changes at the form {@code 'old row -> new row'} (all rows are zero-based);
+   *                       <code>null</code> if no model has been created
    */
   @SuppressWarnings("MethodMayBeStatic")
+  @Nullable
   public Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> build(
     @NotNull StdArrangementRule rule,
     @NotNull JTree tree,
     @NotNull ArrangementTreeNode root,
     @Nullable ArrangementTreeNode anchor,
-    @NotNull ArrangementConditionsGrouper grouper)
+    @NotNull List<Set<ArrangementMatchCondition>> groupingRules)
   {
-    HierarchicalArrangementConditionNode grouped = grouper.group(rule.getMatcher().getCondition());
+    HierarchicalArrangementConditionNode grouped = ArrangementUtil.group(rule.getMatcher().getCondition(), groupingRules);
     DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
+
+    if (grouped.getChild() == null) {
+      ArrangementTreeNode lastChild = null;
+      if (root.getChildCount() > 0) {
+        lastChild = root.getLastChild();
+      }
+      if (lastChild != null && grouped.getCurrent().equals(lastChild.getBackingCondition())) {
+        return null;
+      }
+    }
+    
     Pair<ArrangementTreeNode, Integer> pair = ArrangementConfigUtil.map(null, grouped, null);
     ArrangementTreeNode topMostNode = ArrangementConfigUtil.getRoot(pair.first);
     ArrangementConfigUtil.markRows(root, tree.isRootVisible());
@@ -99,7 +114,7 @@ public class ArrangementRuleEditingModelBuilder {
       rule,
       topMostNode,
       pair.first,
-      grouper,
+      groupingRules,
       row,
       tree.isRootVisible()
     );

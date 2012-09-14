@@ -324,11 +324,10 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
       myComposer.appendElementReference(buf, ((RefElement)refElement.getOwner()), isPackageIncluded);
     }
     else if (isPackageIncluded) {
-      @NonNls final String color = "color:#808080\">";
-      buf.append(" ").append(HTMLComposerImpl.CODE_OPENING).append(HTMLComposerImpl.FONT_OPENING).append(color).append("(");
+      buf.append(" ").append(HTMLComposerImpl.CODE_OPENING).append("(");
       myComposer.appendQualifiedName(buf, refElement.getOwner());
 //      buf.append(RefUtil.getPackageName(refElement));
-      buf.append(")").append(HTMLComposerImpl.FONT_CLOSING).append(HTMLComposerImpl.CODE_CLOSING);
+      buf.append(")").append(HTMLComposerImpl.CODE_CLOSING);
     }
   }
 

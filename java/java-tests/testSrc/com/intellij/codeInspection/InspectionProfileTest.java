@@ -248,6 +248,20 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertEquals(0, countInitializedTools(model));
   }
 
+  public void testInspectionInitializationForSerialization() throws Exception {
+    InspectionProfileImpl foo = new InspectionProfileImpl("foo");
+    foo.readExternal(JDOMUtil.loadDocument("<profile version=\"1.0\" is_locked=\"false\">\n" +
+                                           "    <option name=\"myName\" value=\"idea.default\" />\n" +
+                                           "    <option name=\"myLocal\" value=\"false\" />\n" +
+                                           "    <inspection_tool class=\"AbstractMethodCallInConstructor\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+                                           "    <inspection_tool class=\"AssignmentToForLoopParameter\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                                           "      <option name=\"m_checkForeachParameters\" value=\"false\" />\n" +
+                                           "    </inspection_tool>\n" +
+                                           "</profile>").getRootElement());
+    foo.initInspectionTools(getProject());
+    assertEquals(1, countInitializedTools(foo));
+  }
+
   public static int countInitializedTools(Profile foo) {
     int i = 0;
     List<ScopeToolState> tools = ((InspectionProfileImpl)foo).getAllTools();

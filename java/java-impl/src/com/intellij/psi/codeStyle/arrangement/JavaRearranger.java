@@ -28,6 +28,9 @@ import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.model.*;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementConditionsGrouper;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +75,23 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     MODIFIERS_BY_TYPE.put(FIELD, concat(commonModifiers, TRANSIENT, VOLATILE));
   }
 
-  private static final List<StdArrangementRule> DEFAULT_RULES = new ArrayList<StdArrangementRule>(); 
+  @NotNull private static final List<Set<ArrangementMatchCondition>> GROUPING_RULES = ContainerUtilRt.newArrayList();
+  static {
+    GROUPING_RULES.add(new HashSet<ArrangementMatchCondition>(
+      ContainerUtil.map(
+        SUPPORTED_TYPES,
+        new Function<ArrangementEntryType, ArrangementMatchCondition>() {
+          @Override
+          public ArrangementMatchCondition fun(ArrangementEntryType type) {
+            return new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, type);
+          }
+        }
+      )
+    ));
+  }
+
+  private static final List<StdArrangementRule> DEFAULT_RULES = new ArrayList<StdArrangementRule>();
+
   static {
     ArrangementModifier[] visibility = {PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE};
     for (ArrangementModifier modifier : visibility) {
@@ -164,7 +183,8 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
         else {
           return commonSettings.BLANK_LINES_AROUND_METHOD;
         }
-      default: return commonSettings.BLANK_LINES_AROUND_CLASS;
+      default:
+        return commonSettings.BLANK_LINES_AROUND_CLASS;
     }
   }
 
@@ -211,45 +231,8 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
 
   @NotNull
   @Override
-  public HierarchicalArrangementConditionNode group(@NotNull ArrangementMatchCondition node) {
-    final Ref<HierarchicalArrangementConditionNode> result = new Ref<HierarchicalArrangementConditionNode>();
-    node.invite(new ArrangementMatchConditionVisitor() {
-      @Override
-      public void visit(@NotNull ArrangementAtomMatchCondition condition) {
-        result.set(new HierarchicalArrangementConditionNode(condition));
-      }
-
-      @Override
-      public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
-        ArrangementMatchCondition typeNode = null;
-        for (ArrangementMatchCondition n : condition.getOperands()) {
-          if (n instanceof ArrangementAtomMatchCondition && ((ArrangementAtomMatchCondition)n).getType() == ArrangementSettingType.TYPE) {
-            typeNode = n;
-            break;
-          }
-        }
-        if (typeNode == null) {
-          result.set(new HierarchicalArrangementConditionNode(condition));
-        }
-        else {
-          HierarchicalArrangementConditionNode parent = new HierarchicalArrangementConditionNode(typeNode);
-          ArrangementCompositeMatchCondition compositeWithoutType = new ArrangementCompositeMatchCondition(condition.getOperator());
-          for (ArrangementMatchCondition n : condition.getOperands()) {
-            if (n != typeNode) {
-              compositeWithoutType.addOperand(n);
-            }
-          }
-          if (compositeWithoutType.getOperands().size() == 1) {
-            parent.setChild(new HierarchicalArrangementConditionNode(compositeWithoutType.getOperands().iterator().next()));
-          }
-          else {
-            parent.setChild(new HierarchicalArrangementConditionNode(compositeWithoutType));
-          }
-          result.set(parent);
-        }
-      }
-    }); 
-    return result.get();
+  public List<Set<ArrangementMatchCondition>> getGroupingConditions() {
+    return GROUPING_RULES;
   }
 
   @Nullable

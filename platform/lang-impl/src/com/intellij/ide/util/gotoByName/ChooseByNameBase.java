@@ -125,7 +125,7 @@ public abstract class ChooseByNameBase {
   private final String[][] myNames = new String[2][];
   private volatile CalcElementsThread myCalcElementsThread;
   private static int VISIBLE_LIST_SIZE_LIMIT = 10;
-  private static final int MAXIMUM_LIST_SIZE_LIMIT = 30;
+  public static final int MAXIMUM_LIST_SIZE_LIMIT = 30;
   private int myMaximumListSizeLimit = MAXIMUM_LIST_SIZE_LIMIT;
   @NonNls private static final String NOT_FOUND_IN_PROJECT_CARD = "syslib";
   @NonNls private static final String NOT_FOUND_CARD = "nfound";
@@ -1413,18 +1413,14 @@ public abstract class ChooseByNameBase {
   public static final String NON_PREFIX_SEPARATOR = "non-prefix matches:";
 
   public static Component renderNonPrefixSeparatorComponent(Color backgroundColor) {
-    final TitledSeparator separator = new TitledSeparator();
-    separator.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
-    separator.setBackground(backgroundColor);
-    return separator;
-    /*
     final JPanel panel = new JPanel(new BorderLayout());
     final JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
-    panel.setPreferredSize(new Dimension(0, 3));
-    panel.add(separator, BorderLayout.SOUTH);
+    panel.add(separator, BorderLayout.CENTER);
+    if (!UIUtil.isUnderAquaBasedLookAndFeel()) {
+      separator.setBorder(new EmptyBorder(3, 0, 2, 0));
+    }
     panel.setBackground(backgroundColor);
     return panel;
-*/
   }
 
   private class CalcElementsThread implements Runnable {

@@ -25,7 +25,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TitledSeparatorWithMnemonic;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -62,7 +62,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
 
   protected JComponent createCenterPanel() {
     JPanel mainPanel = new JPanel(new GridBagLayout());
-    final TitledSeparatorWithMnemonic separator = new TitledSeparatorWithMnemonic();
+    final TitledSeparator separator = new TitledSeparator();
     mainPanel.add(separator, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
 
     myList = createTargetVariableChooser();
@@ -116,7 +116,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true));
     for (PsiClass aClass : myThisClassesMap.keySet()) {
       final String text = RefactoringBundle.message("move.method.this.parameter.label", aClass.getName());
-      panel.add(new TitledSeparatorWithMnemonic(text, null));
+      panel.add(new TitledSeparator(text, null));
 
       String suggestedName = MoveInstanceMethodHandler.suggestParameterNameForThisClass(aClass);
       final EditorTextField field = new EditorTextField(suggestedName, getProject(), StdFileTypes.JAVA);

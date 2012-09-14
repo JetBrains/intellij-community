@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,6 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.util.Query;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -33,6 +30,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
+import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -43,8 +41,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BooleanMethodNameMustStartWithQuestionInspection
-  extends BaseInspection {
+public class BooleanMethodNameMustStartWithQuestionInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreBooleanMethods = false;
@@ -58,9 +55,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection
   /**
    * @noinspection PublicField
    */
-  @NonNls public String questionString =
-    "is,can,has,should,could,will,shall,check,contains,equals,add," +
-    "put,remove,startsWith,endsWith";
+  @NonNls public String questionString = "is,can,has,should,could,will,shall,check,contains,equals,add,put,remove,startsWith,endsWith";
 
   List<String> questionList = new ArrayList(32);
 
@@ -71,15 +66,13 @@ public class BooleanMethodNameMustStartWithQuestionInspection
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "boolean.method.name.must.start.with.question.display.name");
+    return InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "boolean.method.name.must.start.with.question.problem.descriptor");
+    return InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.problem.descriptor");
   }
 
   @Override
@@ -142,8 +135,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection
     return new BooleanMethodNameMustStartWithQuestionVisitor();
   }
 
-  private class BooleanMethodNameMustStartWithQuestionVisitor
-    extends BaseInspectionVisitor {
+  private class BooleanMethodNameMustStartWithQuestionVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -152,16 +144,13 @@ public class BooleanMethodNameMustStartWithQuestionInspection
         return;
       }
       else if (!returnType.equals(PsiType.BOOLEAN)) {
-        if (ignoreBooleanMethods ||
-            !returnType.equalsToText(
-              CommonClassNames.JAVA_LANG_BOOLEAN)) {
+        if (ignoreBooleanMethods || !returnType.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
           return;
         }
       }
       if (ignoreInAnnotationInterface) {
         final PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null &&
-            containingClass.isAnnotationType()) {
+        if (containingClass != null && containingClass.isAnnotationType()) {
           return;
         }
       }
@@ -172,9 +161,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection
         }
       }
       if (onlyWarnOnBaseMethods) {
-        final Query<MethodSignatureBackedByPsiMethod> superSearch =
-          SuperMethodsSearch.search(method, null, true, false);
-        if (superSearch.findFirst() != null) {
+        if (MethodUtils.hasSuper(method)) {
           return;
         }
       }

@@ -39,9 +39,9 @@ public abstract class HTMLComposer {
 
   public static void appendHeading(@NonNls StringBuffer buf, String name){
     buf.append(
-      "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font style=\"font-family:verdana; font-weight:bold; color:#005555; size = 3\">");
+      "&nbsp;&nbsp;<font style=\"font-weight:bold; color:#005555;\">");
     buf.append(name);
-    buf.append(":</font>");
+    buf.append("</font>");
   }
 
   public abstract void appendElementReference(StringBuffer buf, RefElement refElement, boolean isPackageIncluded);
@@ -55,7 +55,7 @@ public abstract class HTMLComposer {
   public abstract void startListItem(@NonNls StringBuffer buf);
 
   public static void appendAfterHeaderIndention(@NonNls StringBuffer buf) {
-    buf.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+    buf.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
   }
 
   public abstract void appendNoProblems(StringBuffer buf);

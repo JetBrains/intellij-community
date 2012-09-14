@@ -1005,14 +1005,29 @@ public class GenericsHighlightUtil {
   public static HighlightInfo checkClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
     PsiType type = expression.getOperand().getType();
     if (type instanceof PsiClassType) {
-      PsiClass aClass = ((PsiClassType)type).resolve();
-      if (aClass instanceof PsiTypeParameter) {
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                 expression.getOperand(),
-                                                 JavaErrorMessages.message("cannot.select.dot.class.from.type.variable"));
+      return canSelectFrom((PsiClassType)type, expression.getOperand());
+    } else if (type instanceof PsiArrayType) {
+      final PsiType arrayComponentType = type.getDeepComponentType();
+      if (arrayComponentType instanceof PsiClassType) {
+        return canSelectFrom((PsiClassType)arrayComponentType, expression.getOperand());
       }
     }
 
+    return null;
+  }
+
+  @Nullable
+  private static HighlightInfo canSelectFrom(PsiClassType type, PsiTypeElement operand) {
+    PsiClass aClass = type.resolve();
+    if (aClass instanceof PsiTypeParameter) {
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                               operand,
+                                               JavaErrorMessages.message("cannot.select.dot.class.from.type.variable"));
+    } else if (type.getParameters().length > 0) {
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                               operand,
+                                               "Cannot select from parameterized type");
+    }
     return null;
   }
 

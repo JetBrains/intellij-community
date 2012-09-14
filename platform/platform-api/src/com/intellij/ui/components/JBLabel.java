@@ -27,7 +27,6 @@ import java.awt.*;
 public class JBLabel extends JLabel implements AnchorableComponent {
   private UIUtil.ComponentStyle myComponentStyle = UIUtil.ComponentStyle.REGULAR;
   private UIUtil.FontColor myFontColor = UIUtil.FontColor.NORMAL;
-  private boolean myFontColorSet = false;
   private JComponent myAnchor = null;
 
   public JBLabel() {
@@ -85,13 +84,14 @@ public class JBLabel extends JLabel implements AnchorableComponent {
 
   public void setFontColor(@NotNull UIUtil.FontColor fontColor) {
     myFontColor = fontColor;
-    setForeground(UIUtil.getLabelFontColor(myFontColor));
-    myFontColorSet = true;
   }
 
   @Override
-  public void setForeground(Color fg) {
-    if (!myFontColorSet) super.setForeground(fg);
+  public Color getForeground() {
+    if (myFontColor != null) {
+      return UIUtil.getLabelFontColor(myFontColor);
+    }
+    return super.getForeground();
   }
 
   @Override

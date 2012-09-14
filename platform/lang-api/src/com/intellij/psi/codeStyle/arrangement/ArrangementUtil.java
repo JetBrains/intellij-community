@@ -21,13 +21,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.*;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Denis Zhdanov
@@ -224,5 +223,90 @@ public class ArrangementUtil {
         "Can't parse type for the given condition of class '%s': %s", condition.getClass(), condition
       ));
     }
+  }
+
+  @SuppressWarnings("AssignmentToForLoopParameter")
+  @NotNull
+  public static HierarchicalArrangementConditionNode group(@NotNull ArrangementMatchCondition condition,
+                                                           @NotNull List<Set<ArrangementMatchCondition>> groupingRules)
+  {
+    if (groupingRules.isEmpty()) {
+      // No grouping rules have been provided, use a flat structure. 
+      return new HierarchicalArrangementConditionNode(condition);
+    }
+
+    final List<ArrangementMatchCondition> conditions = new ArrayList<ArrangementMatchCondition>();
+    condition.invite(new ArrangementMatchConditionVisitor() {
+      @Override
+      public void visit(@NotNull ArrangementAtomMatchCondition condition) {
+        conditions.add(condition);
+      }
+
+      @Override
+      public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
+        if (condition.getOperator() == ArrangementOperator.AND && conditions.isEmpty() /* Don't process nested composite conditions*/) {
+          for (ArrangementMatchCondition operand : condition.getOperands()) {
+            conditions.add(operand);
+          }
+        }
+        else {
+          conditions.add(condition);
+        }
+      }
+    });
+    if (conditions.isEmpty()) {
+      return new HierarchicalArrangementConditionNode(condition);
+    }
+    
+    HierarchicalArrangementConditionNode result = null;
+    for (Set<ArrangementMatchCondition> rules : groupingRules) {
+      for (ArrangementMatchCondition rule : rules) {
+        for (int i = 0; i < conditions.size(); i++) {
+          ArrangementMatchCondition c = conditions.get(i);
+          if (rule.equals(c)) {
+            conditions.remove(i--);
+            HierarchicalArrangementConditionNode node = new HierarchicalArrangementConditionNode(c);
+            if (result == null) {
+              result = node;
+            }
+            else {
+              result.setChild(node);
+            }
+          }
+        }
+      }
+    }
+
+    if (!conditions.isEmpty()) {
+      HierarchicalArrangementConditionNode node;
+      if (conditions.size() == 1) {
+        node = new HierarchicalArrangementConditionNode(conditions.get(0));
+      }
+      else {
+        ArrangementCompositeMatchCondition c = new ArrangementCompositeMatchCondition(ArrangementOperator.AND);
+        for (ArrangementMatchCondition operand : conditions) {
+          c.addOperand(operand);
+        }
+        node = new HierarchicalArrangementConditionNode(c);
+      }
+      if (result == null) {
+        result = node;
+      }
+      else {
+        result.setChild(node);
+      }
+    }
+    assert result != null;
+    return result;
+  }
+
+  public static <T> Set<T> flatten(@NotNull Iterable<? extends Iterable<T>> data) {
+    Set<T> result = ContainerUtilRt.newHashSet();
+    for (Iterable<T> i : data) {
+      for (T t : i) {
+        result.add(t);
+      }
+    }
+    return result;
   }
 }

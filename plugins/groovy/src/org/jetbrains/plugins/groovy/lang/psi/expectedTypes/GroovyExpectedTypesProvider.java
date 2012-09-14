@@ -48,8 +48,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -443,13 +443,24 @@ public class GroovyExpectedTypesProvider {
 
     public void visitAssignmentExpression(GrAssignmentExpression expression) {
       GrExpression rValue = expression.getRValue();
+      GrExpression lValue = expression.getLValue();
       if (myExpression.equals(rValue)) {
-        PsiType lType = expression.getLValue().getType();
+        PsiType lType = lValue.getNominalType();
         if (lType != null) {
           myResult = new TypeConstraint[]{SubtypeConstraint.create(lType)};
         }
+        else if (lValue instanceof GrReferenceExpression) {
+          GroovyResolveResult result = ((GrReferenceExpression)lValue).advancedResolve();
+          PsiElement resolved = result.getElement();
+          if (resolved instanceof GrVariable) {
+            PsiType type = ((GrVariable)resolved).getTypeGroovy();
+            if (type != null) {
+              myResult = new TypeConstraint[]{SubtypeConstraint.create(result.getSubstitutor().substitute(type))};
+            }
+          }
+        }
       }
-      else if (myExpression.equals(expression.getLValue())) {
+      else if (myExpression.equals(lValue)) {
         if (rValue != null) {
           PsiType rType = rValue.getType();
           if (rType != null) {

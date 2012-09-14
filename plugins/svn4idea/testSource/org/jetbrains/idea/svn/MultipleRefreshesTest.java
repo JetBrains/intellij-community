@@ -32,7 +32,7 @@ import java.util.List;
 @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
 public class MultipleRefreshesTest {
 
-  private SvnChangesCorrectlyRefreshedTest myTest;
+  private final SvnChangesCorrectlyRefreshedTest myTest;
 
   @Before
   public void setUp() throws Exception {

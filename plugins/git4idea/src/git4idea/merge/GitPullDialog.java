@@ -16,40 +16,38 @@
 package git4idea.merge;
 
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.ArrayUtil;
+import com.intellij.ui.ListCellRendererWrapper;
 import git4idea.GitBranch;
-import git4idea.GitDeprecatedRemote;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
-import git4idea.jgit.GitHttpAdapter;
+import git4idea.repo.GitBranchTrackInfo;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * Git pull dialog
  */
 public class GitPullDialog extends DialogWrapper {
+
+  private static final Logger LOG = Logger.getInstance(GitPullDialog.class);
+
   /**
    * root panel
    */
@@ -87,10 +85,6 @@ public class GitPullDialog extends DialogWrapper {
    */
   private JComboBox myRemote;
   /**
-   * Get branches button
-   */
-  private JButton myGetBranchesButton;
-  /**
    * The branch chooser
    */
   private ElementsChooser<String> myBranchChooser;
@@ -98,6 +92,7 @@ public class GitPullDialog extends DialogWrapper {
    * The context project
    */
   private final Project myProject;
+  private final GitRepositoryManager myRepositoryManager;
 
   /**
    * A constructor
@@ -110,6 +105,7 @@ public class GitPullDialog extends DialogWrapper {
     super(project, true);
     setTitle(GitBundle.getString("pull.title"));
     myProject = project;
+    myRepositoryManager = GitUtil.getRepositoryManager(myProject);
     GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myGitRoot, myCurrentBranch);
     myGitRoot.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -118,8 +114,13 @@ public class GitPullDialog extends DialogWrapper {
     });
     setOKButtonText(GitBundle.getString("pull.button"));
     updateRemotes();
-    setupBranches();
-    setupGetBranches();
+    updateBranches();
+    myRemote.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        updateBranches();
+      }
+    });
     final ElementsChooser.ElementsMarkListener<String> listener = new ElementsChooser.ElementsMarkListener<String>() {
       public void elementMarkChanged(final String element, final boolean isMarked) {
         validateDialog();
@@ -135,82 +136,15 @@ public class GitPullDialog extends DialogWrapper {
   }
 
   /**
-   * Setup branch updating
-   */
-  private void setupBranches() {
-    ((JTextField)myRemote.getEditor().getEditorComponent()).getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        updateBranches();
-      }
-    });
-    updateBranches();
-  }
-
-  /**
    * Validate dialog and enable buttons
    */
   private void validateDialog() {
-    if (getRemote().trim().length() == 0) {
+    String selectedRemote = getRemote();
+    if (StringUtil.isEmptyOrSpaces(selectedRemote)) {
       setOKActionEnabled(false);
       return;
     }
     setOKActionEnabled(myBranchChooser.getMarkedElements().size() != 0);
-  }
-
-  /**
-   * Setup get branches button
-   */
-  private void setupGetBranches() {
-    final JTextField textField = (JTextField)myRemote.getEditor().getEditorComponent();
-    final DocumentAdapter listener = new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        validateDialog();
-        myGetBranchesButton.setEnabled(textField.getText().trim().length() != 0);
-      }
-    };
-    textField.getDocument().addDocumentListener(listener);
-    listener.changedUpdate(null);
-    myGetBranchesButton.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        myBranchChooser.removeAllElements();
-        Collection<String> remoteBranches = getRemoteBranches((GitDeprecatedRemote)myRemote.getSelectedItem());
-        for (String branch : remoteBranches) {
-          myBranchChooser.addElement(branch, false);
-        }
-      }
-    });
-  }
-
-  @NotNull
-  private Collection<String> getRemoteBranches(@NotNull GitDeprecatedRemote remote) {
-    if (GitHttpAdapter.shouldUseJGit(remote.fetchUrl())) {
-      GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(gitRoot());
-      if (repository == null) {
-        return Collections.emptyList();
-      }
-      return GitHttpAdapter.lsRemote(repository, remote.name(), remote.fetchUrl());
-    }
-    return lsRemoteNatively(remote);
-  }
-
-  @NotNull
-  private Collection<String> lsRemoteNatively(@NotNull GitDeprecatedRemote remote) {
-    GitSimpleHandler h = new GitSimpleHandler(myProject, gitRoot(), GitCommand.LS_REMOTE);
-    h.addParameters("--heads", remote.toString());
-    String output = GitHandlerUtil.doSynchronously(h, GitBundle.getString("pull.getting.remote.branches"), h.printableCommandLine());
-    if (output == null) {
-      return Collections.emptyList();
-    }
-
-    Collection<String> remoteBranches = new ArrayList<String>();
-    for (String line : output.split("\n")) {
-      if (line.length() == 0) {
-        continue;
-      }
-      line = line.trim().substring(line.indexOf(GitBranch.REFS_HEADS_PREFIX) + GitBranch.REFS_HEADS_PREFIX.length());
-      remoteBranches.add(line);
-    }
-    return remoteBranches;
   }
 
   /**
@@ -245,64 +179,158 @@ public class GitPullDialog extends DialogWrapper {
     }
 
     final List<String> markedBranches = myBranchChooser.getMarkedElements();
+    String remote = getRemote();
+    LOG.assertTrue(remote != null, "Selected remote can't be null here.");
     if (pull) {
-      h.addParameters(getRemote());
-      h.addParameters(ArrayUtil.toStringArray(markedBranches));
-    } else {
+      // git pull origin master (remote branch name in the format local to that remote)
+      h.addParameters(remote);
       for (String branch : markedBranches) {
-        h.addParameters(getRemote() + "/" + branch);
+        h.addParameters(remoteRemotePrefix(branch, remote));
+      }
+    } else {
+      // git merge origin/master (remote branch name in format of this repository)
+      for (String branch : markedBranches) {
+        h.addParameters(remote + "/" + branch);
       }
     }
     return h;
   }
 
-  /**
-   * Update branches
-   */
-  private void updateBranches() {
-    try {
-      String item = getRemote();
-      myBranchChooser.removeAllElements();
-      GitDeprecatedRemote r = null;
-      final int count = myRemote.getItemCount();
-      for (int i = 0; i < count; i++) {
-        GitDeprecatedRemote candidate = (GitDeprecatedRemote)myRemote.getItemAt(i);
-        if (candidate.name().equals(item)) {
-          r = candidate;
-          break;
-        }
-      }
-      if (r == null) {
-        return;
-      }
-      GitDeprecatedRemote.Info ri = r.localInfo(myProject, gitRoot());
-      String toSelect = ri.getRemoteForLocal(currentBranch());
-      for (String trackedBranch : ri.trackedBranches()) {
-        myBranchChooser.addElement(trackedBranch, trackedBranch.equals(toSelect));
-      }
+  @NotNull
+  private static String remoteRemotePrefix(@NotNull String branch, @NotNull String remote) {
+    String prefix = remote + "/";
+    if (branch.startsWith(prefix)) {
+      return branch.substring(prefix.length());
     }
-    catch (VcsException e) {
-      GitVcs.getInstance(myProject).showErrors(Collections.singletonList(e), GitBundle.getString("pull.retrieving.remotes"));
-    }
-    finally {
-      validateDialog();
-    }
+    LOG.error(String.format("Remote branch name seems to be invalid. Branch: %s, remote: %s", branch, remote));
+    return branch;
   }
 
-  /**
-   * @return current local branch for the git or null
-   */
-  @Nullable
-  private String currentBranch() {
-    String text = myCurrentBranch.getText();
-    return text.equals(GitUIUtil.NO_CURRENT_BRANCH) ? null : text;
+  private void updateBranches() {
+    String selectedRemote = getRemote();
+    myBranchChooser.removeAllElements();
+
+    if (selectedRemote == null) {
+      return;
+    }
+
+    GitRepository repository = getRepository();
+    if (repository == null) {
+      return;
+    }
+
+    GitBranchTrackInfo trackInfo = GitUtil.getTrackInfoForCurrentBranch(repository);
+    String currentRemoteBranch = trackInfo == null ? null : trackInfo.getRemoteBranchInLocalFormat();
+    for (GitBranch remoteBranch : repository.getBranches().getRemoteBranches()) {
+      if (belongsToRemote(remoteBranch, selectedRemote)) {
+        myBranchChooser.addElement(remoteBranch.getName(), remoteBranch.getName().equals(currentRemoteBranch));
+      }
+    }
+
+    validateDialog();
+  }
+
+  private static boolean belongsToRemote(@NotNull GitBranch branch, @NotNull String remote) {
+    return branch.getName().startsWith(remote + "/");
   }
 
   /**
    * Update remotes for the git root
    */
   private void updateRemotes() {
-    GitUIUtil.setupRemotes(myProject, gitRoot(), currentBranch(), myRemote, true);
+    GitRepository repository = getRepository();
+    if (repository == null) {
+      return;
+    }
+
+    GitRemote currentRemote = getCurrentOrDefaultRemote(repository);
+    myRemote.setRenderer(getGitRemoteListCellRenderer(currentRemote != null ? currentRemote.getName() : null));
+    myRemote.removeAllItems();
+    for (GitRemote remote : repository.getRemotes()) {
+      myRemote.addItem(remote);
+    }
+    myRemote.setSelectedItem(currentRemote);
+  }
+
+  /**
+   * If the current branch is a tracking branch, returns its remote.
+   * Otherwise tries to guess: if there is origin, returns origin, otherwise returns the first remote in the list.
+   */
+  @Nullable
+  private static GitRemote getCurrentOrDefaultRemote(@NotNull GitRepository repository) {
+    Collection<GitRemote> remotes = repository.getRemotes();
+    if (remotes.isEmpty()) {
+      return null;
+    }
+
+    GitBranchTrackInfo trackInfo = GitUtil.getTrackInfoForCurrentBranch(repository);
+    if (trackInfo != null) {
+      return trackInfo.getRemote();
+    }
+    else {
+      GitRemote origin = getOriginRemote(remotes);
+      if (origin != null) {
+        return origin;
+      }
+      else {
+        return remotes.iterator().next();
+      }
+    }
+  }
+
+  @Nullable
+  private static GitRemote getOriginRemote(@NotNull Collection<GitRemote> remotes) {
+    for (GitRemote remote : remotes) {
+      if (remote.getName().equals(GitRemote.ORIGIN_NAME)) {
+        return remote;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private GitRepository getRepository() {
+    VirtualFile root = gitRoot();
+    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    if (repository == null) {
+      LOG.error("Repository is null for " + root);
+      return null;
+    }
+    return repository;
+  }
+
+  /**
+   * Create list cell renderer for remotes. It shows both name and url and highlights the default
+   * remote for the branch with bold.
+   *
+   *
+   * @param defaultRemote a default remote
+   * @return a list cell renderer for virtual files (it renders presentable URL
+   */
+  public ListCellRendererWrapper<GitRemote> getGitRemoteListCellRenderer(final String defaultRemote) {
+    return new ListCellRendererWrapper<GitRemote>(myRemote) {
+      @Override
+      public void customize(final JList list, final GitRemote remote, final int index, final boolean selected, final boolean hasFocus) {
+        final String text;
+        if (remote == null) {
+          text = GitBundle.getString("util.remote.renderer.none");
+        }
+        else if (".".equals(remote.getName())) {
+          text = GitBundle.getString("util.remote.renderer.self");
+        }
+        else {
+          String key;
+          if (defaultRemote != null && defaultRemote.equals(remote.getName())) {
+            key = "util.remote.renderer.default";
+          }
+          else {
+            key = "util.remote.renderer.normal";
+          }
+          text = GitBundle.message(key, remote.getName(), remote.getFirstUrl());
+        }
+        setText(text);
+      }
+    };
   }
 
   /**
@@ -343,11 +371,10 @@ public class GitPullDialog extends DialogWrapper {
     return "reference.VersionControl.Git.Pull";
   }
 
-  /**
-   * @return remote key
-   */
+  @Nullable
   public String getRemote() {
-    return ((JTextField)myRemote.getEditor().getEditorComponent()).getText();
+    GitRemote remote = (GitRemote)myRemote.getSelectedItem();
+    return remote == null ? null : remote.getName();
   }
 
   @Override

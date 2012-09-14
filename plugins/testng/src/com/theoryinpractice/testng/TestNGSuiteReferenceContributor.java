@@ -60,7 +60,7 @@ public class TestNGSuiteReferenceContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(ourListenerClassPattern, new JavaClassReferenceProvider());
 
     final JavaClassReferenceProvider methodSelectorProvider = new JavaClassReferenceProvider();
-    methodSelectorProvider.setOption(JavaClassReferenceProvider.EXTEND_CLASS_NAMES, new String[]{IMethodSelector.class.getName()});
+    methodSelectorProvider.setOption(JavaClassReferenceProvider.EXTEND_CLASS_NAMES, new String[]{"org.testng.IMethodSelector"});
     registrar.registerReferenceProvider(ourMethodSelectorPattern, methodSelectorProvider);
 
     registrar.registerReferenceProvider(ourSuiteFilePattern, new PathListReferenceProvider(){

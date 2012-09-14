@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,8 +94,7 @@ public class FileCopyPasteUtil {
   public static List<File> getFileList(@NotNull final Transferable transferable) {
     try {
       if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-        @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
-        final List<File> fileList = (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor);
+        @SuppressWarnings({"unchecked"}) final List<File> fileList = (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor);
         return fileList;
       }
       else {

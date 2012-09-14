@@ -403,8 +403,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
         if (formats == null || formats.length == 0) {
           return Collections.emptySet();
         }
-        @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
-        final Set<DataFlavor> set = DataTransferer.getInstance().getFlavorsForFormats(formats, FLAVOR_MAP).keySet();
+        @SuppressWarnings({"unchecked"}) final Set<DataFlavor> set = DataTransferer.getInstance().getFlavorsForFormats(formats, FLAVOR_MAP).keySet();
         return set;
       }
       catch (IllegalAccessException ignore) { }

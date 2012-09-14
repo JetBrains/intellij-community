@@ -114,7 +114,7 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
   }
 
   @Nullable
-  private static PsiType getSingleMethodParameterType(@Nullable PsiType type, int index, GrClosableBlock closure) {
+  public static PsiType getSingleMethodParameterType(@Nullable PsiType type, int index, GrClosableBlock closure) {
     final PsiType[] signature = findSingleAbstractMethodSignature(type);
     if (signature != null && GrClosureSignatureUtil.isSignatureApplicable(GrClosureSignatureUtil.createSignature(closure), signature, closure)) {
       return signature.length > index ?  signature[index] : PsiType.NULL;

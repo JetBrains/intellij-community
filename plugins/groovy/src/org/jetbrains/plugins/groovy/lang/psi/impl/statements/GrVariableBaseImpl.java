@@ -317,7 +317,7 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
   public void deleteChildInternal(@NotNull ASTNode child) {
     final PsiElement psi = child.getPsi();
     if (psi == getInitializerGroovy()) {
-      deleteChildInternal(findChildByType(GroovyTokenTypes.mASSIGN).getNode());
+      deleteChildInternal(findNotNullChildByType(GroovyTokenTypes.mASSIGN).getNode());
     }
     super.deleteChildInternal(child);
   }

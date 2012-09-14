@@ -23,7 +23,7 @@
           </vspacer>
           <component id="e003e" class="javax.swing.JTextField" binding="repositoryTxt">
             <constraints>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="1" use-parent-layout="false"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
           </component>
@@ -45,7 +45,7 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="&amp;Revision"/>
+                  <text value="&amp;Revision:"/>
                 </properties>
               </component>
               <component id="8b024" class="javax.swing.JTextField" binding="revisionTxt">
@@ -93,7 +93,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
           </nested-form>
-          <component id="76372" class="com.intellij.ui.TitledSeparatorWithMnemonic">
+          <component id="78cf" class="com.intellij.ui.TitledSeparator">
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>

@@ -289,7 +289,7 @@ public class FileChooserDescriptor implements Cloneable {
 
   @Nullable
   public <T> T getUserData(@NotNull DataKey<T> key) {
-    @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"}) final T t = (T)myUserData.get(key.getName());
+    @SuppressWarnings({"unchecked"}) final T t = (T)myUserData.get(key.getName());
     return t;
   }
 

@@ -17,9 +17,6 @@ package com.intellij.cvsSupport2.ui.experts;
 
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
-
-import javax.swing.*;
 
 /**
  * author: lesya
@@ -56,10 +53,16 @@ public class CvsWizard extends AbstractWizard<WizardStep> {
   @Override
   public void updateStep() {
     super.updateStep();
+  }
+
+  @Override
+  protected boolean canGoNext() {
     final int numberOfSteps = getNumberOfSteps();
-    if (numberOfSteps == 0) return;
+    if (numberOfSteps == 0) return false;
+
     final WizardStep currentStep = getCurrentStepObject();
     currentStep.activate();
+    return currentStep.nextIsEnabled();
   }
 
   public void disableNext() {

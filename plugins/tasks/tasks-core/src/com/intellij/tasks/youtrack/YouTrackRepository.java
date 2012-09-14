@@ -59,7 +59,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     if (request != null) {
       query += " " + request;
     }
-    String requestUrl = "/rest/project/issues/?filter=" + encodeUrl(query) + "&max=" + max;
+    String requestUrl = "/rest/project/issues/?filter=" + encodeUrl(query) + "&max=" + max + "&after" + since;
     HttpMethod method = doREST(requestUrl, false);
     InputStream stream = method.getResponseBodyAsStream();
 

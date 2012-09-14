@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
@@ -104,14 +105,17 @@ public class JarHandlerBase {
 
   @Nullable
   public JarFile getJar() {
-    JarFile jar = myJarFile.get();
-    if (jar == null) {
-      jar = createJarFile();
-      if (jar != null)
-        myJarFile.set(jar);
-    }
+    synchronized (lock) {
+      JarFile jar = myJarFile.get();
+      if (jar == null) {
+        jar = createJarFile();
+        if (jar != null) {
+          myJarFile.set(jar);
+        }
+      }
 
-    return jar;
+      return jar;
+    }
   }
 
   @Nullable
@@ -121,7 +125,7 @@ public class JarHandlerBase {
       @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") final ZipFile zipFile = new ZipFile(getMirrorFile(originalFile));
 
       class MyJarEntry implements JarFile.JarEntry {
-        private ZipEntry myEntry;
+        private final ZipEntry myEntry;
 
         MyJarEntry(ZipEntry entry) {
           myEntry = entry;
@@ -156,8 +160,7 @@ public class JarHandlerBase {
         @Override
         public JarFile.JarEntry getEntry(String name) {
           ZipEntry entry = zipFile.getEntry(name);
-          if (entry == null)
-            return null;
+          if (entry == null) return null;
           return new MyJarEntry(entry);
         }
 
@@ -249,20 +252,20 @@ public class JarHandlerBase {
 
   private String getRelativePath(final VirtualFile file) {
     final String path = file.getPath().substring(myBasePath.length() + 1);
-    return path.startsWith("/") ? path.substring(1) : path;
+    return StringUtil.startsWithChar(path, '/') ? path.substring(1) : path;
   }
 
   @Nullable
   private JarFile.JarEntry convertToEntry(VirtualFile file) {
     String path = getRelativePath(file);
     final JarFile jar = getJar();
-    return jar != null ? jar.getEntry(path) : null;
+    return jar == null ? null : jar.getEntry(path);
   }
 
   public long getLength(@NotNull final VirtualFile file) {
+    final JarFile.JarEntry entry = convertToEntry(file);
     synchronized (lock) {
-      final JarFile.JarEntry entry = convertToEntry(file);
-      return entry != null ? entry.getSize() : DEFAULT_LENGTH;
+      return entry == null ? DEFAULT_LENGTH : entry.getSize();
     }
   }
 
@@ -273,12 +276,11 @@ public class JarHandlerBase {
 
   @NotNull
   public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
+    final JarFile.JarEntry entry = convertToEntry(file);
+    if (entry == null) {
+      return ArrayUtil.EMPTY_BYTE_ARRAY;
+    }
     synchronized (lock) {
-      final JarFile.JarEntry entry = convertToEntry(file);
-      if (entry == null) {
-        return new byte[0];
-      }
-
       final JarFile jar = getJar();
       assert jar != null : file;
 
@@ -296,9 +298,9 @@ public class JarHandlerBase {
 
   public long getTimeStamp(@NotNull final VirtualFile file) {
     if (file.getParent() == null) return getOriginalFile().lastModified(); // Optimization
+    final JarFile.JarEntry entry = convertToEntry(file);
     synchronized (lock) {
-      final JarFile.JarEntry entry = convertToEntry(file);
-      return entry != null ? entry.getTime() : DEFAULT_TIMESTAMP;
+      return entry == null ? DEFAULT_TIMESTAMP : entry.getTime();
     }
   }
 
@@ -322,10 +324,10 @@ public class JarHandlerBase {
 
   @Nullable
   public FileAttributes getAttributes(@NotNull final VirtualFile file) {
+    final JarFile.JarEntry entry = convertToEntry(file);
     synchronized (lock) {
       final EntryInfo entryInfo = getEntryInfo(getRelativePath(file));
       if (entryInfo == null) return null;
-      final JarFile.JarEntry entry = convertToEntry(file);
       final long length = entry != null ? entry.getSize() : DEFAULT_LENGTH;
       final long timeStamp = entry != null ? entry.getTime() : DEFAULT_TIMESTAMP;
       return new FileAttributes(entryInfo.isDirectory, false, false, false, length, timeStamp, false);

@@ -192,9 +192,12 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       for (ClassMember member : members) {
         if (member instanceof PsiElementClassMember) {
           final PsiDocCommentOwner owner = ((PsiElementClassMember)member).getElement();
-          if (owner != null && owner.getTextRange().contains(offset)) {
-            preselection = member;
-            break;
+          if (owner != null) {
+            final TextRange textRange = owner.getTextRange();
+            if (textRange != null && textRange.contains(offset)) {
+              preselection = member;
+              break;
+            }
           }
         }
       }

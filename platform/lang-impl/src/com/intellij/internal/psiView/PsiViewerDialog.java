@@ -128,10 +128,10 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   private JPanel myBlockStructurePanel;
   private JSplitPane myBlockRefSplitPane;
   private JCheckBox myShowBlocksCheckBox;
-   private TitledSeparatorWithMnemonic myTextSeparator;
-  private TitledSeparatorWithMnemonic myPsiTreeSeparator;
-  private TitledSeparatorWithMnemonic myRefsSeparator;
-  private TitledSeparatorWithMnemonic myBlockTreeSeparator;
+  private TitledSeparator myTextSeparator;
+  private TitledSeparator myPsiTreeSeparator;
+  private TitledSeparator myRefsSeparator;
+  private TitledSeparator myBlockTreeSeparator;
   @Nullable
   private BlockTreeBuilder myBlockTreeBuilder;
   private RangeHighlighter myHighlighter;

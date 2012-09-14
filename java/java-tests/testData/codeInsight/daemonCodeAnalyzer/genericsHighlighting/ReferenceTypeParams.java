@@ -1,3 +1,4 @@
+import java.lang.Object;
 import java.util.*;
 
 class C<T,U> {
@@ -125,4 +126,16 @@ class IDontCompile {
 
 abstract class GenericTest99<E extends Enum<E>> {
     GenericTest99<<error descr="Type parameter 'java.lang.Enum' is not within its bound; should extend 'java.lang.Enum<java.lang.Enum>'">Enum</error>> local;
+}
+
+class ClassLiteral<T> {
+  {
+    Object c1 = <error descr="Cannot select from a type variable">T</error>.class;
+    Object c2 = <error descr="Cannot select from a type variable">T[]</error>.class;
+    
+    Object c3 = <error descr="Cannot select from parameterized type">List<String></error>.class;
+    Object c4 = <error descr="Cannot select from parameterized type">List<String>[]</error>.class;
+    Object c5 = List[].class;
+    Object c6 = List.class;
+  }
 }
