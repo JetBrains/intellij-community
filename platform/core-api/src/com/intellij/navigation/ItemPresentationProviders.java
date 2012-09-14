@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class ItemPresentationProviders extends ClassExtension<ItemPresentationPr
 
   @Nullable
   public static <T extends NavigationItem> ItemPresentationProvider<T> getItemPresentationProvider(@NotNull T element) {
-    @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"}) final ItemPresentationProvider<T> provider = INSTANCE.forClass(element.getClass());
+    @SuppressWarnings({"unchecked"}) final ItemPresentationProvider<T> provider = INSTANCE.forClass(element.getClass());
     return provider;
   }
 

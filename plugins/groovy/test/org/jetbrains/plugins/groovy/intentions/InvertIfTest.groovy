@@ -5,27 +5,23 @@ package org.jetbrains.plugins.groovy.intentions
  */
 class InvertIfTest extends GrIntentionTestCase {
 
-  String intentionName = GroovyIntentionsBundle.message("invert.if.intention.name")
+  InvertIfTest() {
+    super(GroovyIntentionsBundle.message("invert.if.intention.name"))
+  }
 
-  public void testDoNotTriggerOnIncompleteIf() throws Exception {
+  public void testDoNotTriggerOnIncompleteIf() {
     doAntiTest '''
 i<caret>f () {
   succes
 } else {
   no_succes
 }
-''', intentionName
+'''
 
   }
 
-  private void doTest(String before, String after) {
-
-    doTextTest before, intentionName, after
-  }
-
-  public void testSimpleCondition() throws Exception {
-
-    doTest '''
+  public void testSimpleCondition() {
+    doTextTest '''
 i<caret>f (a) {
     succes
 } else {
@@ -39,9 +35,9 @@ i<caret>f (a) {
 '''
   }
 
-  public void testCallCondition() throws Exception {
+  public void testCallCondition() {
 
-    doTest '''
+    doTextTest '''
 i<caret>f (func()) {
     succes
 } else {
@@ -55,8 +51,8 @@ i<caret>f (func()) {
 '''
   }
 
-  public void testComplexCondition() throws Exception {
-    doTest '''
+  public void testComplexCondition() {
+    doTextTest '''
 i<caret>f (a && b) {
     succes
 } else {
@@ -70,8 +66,8 @@ i<caret>f (a && b) {
 '''
   }
 
-  public void testNegatedComplexCondition() throws Exception {
-    doTest '''
+  public void testNegatedComplexCondition() {
+    doTextTest '''
 i<caret>f (!(a && b)) {
     succes
 } else {
@@ -85,8 +81,8 @@ i<caret>f (!(a && b)) {
 '''
   }
 
-  public void testNegatedSimpleCondition() throws Exception {
-    doTest '''
+  public void testNegatedSimpleCondition() {
+    doTextTest '''
 i<caret>f (!a) {
     succes
 } else {
@@ -100,8 +96,8 @@ i<caret>f (!a) {
 '''
   }
 
-  public void testNoElseBlock() throws Exception {
-    doTest '''
+  public void testNoElseBlock() {
+    doTextTest '''
 i<caret>f (a) {
     succes
 }
@@ -112,8 +108,8 @@ i<caret>f (a) {
 '''
   }
 
-  public void testEmptyThenBlockIsRemoved() throws Exception {
-    doTest '''
+  public void testEmptyThenBlockIsRemoved() {
+    doTextTest '''
 i<caret>f (a) {
 } else {
     no_succes

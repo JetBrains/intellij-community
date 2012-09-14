@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -113,6 +114,11 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
     return IntroduceFieldDialog.
       createGenerator(forStatic, localVariable, initializer, localVariable != null, null, parentClass, parentClass.getProject()).
       getSuggestedNameInfo(defaultType);
+  }
+
+  @Override
+  protected VariableKind getVariableKind() {
+    return VariableKind.FIELD;
   }
 
   public void setReplaceAllOccurrences(boolean replaceAllOccurrences) {

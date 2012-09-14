@@ -58,7 +58,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
@@ -71,7 +70,12 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   private DependencyValidationManager myValidationManager;
 
   public ScopeChooserCombo() {
-    super(new IgnoringComboBox());
+    super(new IgnoringComboBox(){
+      @Override
+      protected boolean isIgnored(Object item) {
+        return item instanceof ScopeSeparator;
+      }
+    });
   }
 
   public ScopeChooserCombo(final Project project, boolean suggestSearchInLibs, boolean prevSearchWholeFiles, String preselect) {
@@ -422,49 +426,6 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     final JComboBox combo = getComboBox();
     int idx = combo.getSelectedIndex();
     return idx < 0 ? null : ((ScopeDescriptor)combo.getSelectedItem()).getDisplay();
-  }
-
-  private static class IgnoringComboBox extends JComboBox {
-    private int myDirection = 0;
-
-    @Override
-    public void processKeyEvent(KeyEvent e) {
-      if (e.getID() == KeyEvent.KEY_PRESSED && e.getModifiers() == 0) {
-        if (e.getKeyCode() == KeyEvent.VK_UP) {
-          myDirection = -1;
-        }
-        else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-          myDirection = 1;
-        }
-      }
-      try {
-        super.processKeyEvent(e);
-      }
-      finally {
-        myDirection = 0;
-      }
-    }
-
-    @Override
-    public void setSelectedItem(final Object item) {
-      if (!(item instanceof ScopeSeparator)) {
-        super.setSelectedItem(item);
-      }
-    }
-
-    @Override
-    public void setSelectedIndex(final int anIndex) {
-      Object item = getItemAt(anIndex);
-      if (!(item instanceof ScopeSeparator)) {
-        super.setSelectedIndex(anIndex);
-      }
-      else if (myDirection != 0) {
-        item = getItemAt(anIndex + myDirection);
-        if (!(item instanceof ScopeSeparator)) {
-          super.setSelectedIndex(anIndex + myDirection);
-        }
-      }
-    }
   }
 
   private static class ScopeSeparator extends ScopeDescriptor {

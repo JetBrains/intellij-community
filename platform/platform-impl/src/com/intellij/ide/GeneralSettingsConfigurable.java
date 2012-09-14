@@ -17,6 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.*;
+import com.intellij.ui.components.JBRadioButton;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,12 +53,8 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     settings.setSyncOnFrameActivation(myComponent.myChkSyncOnFrameActivation.isSelected());
     settings.setSaveOnFrameDeactivation(myComponent.myChkSaveOnFrameDeactivation.isSelected());
     settings.setConfirmExit(myComponent.myConfirmExit.isSelected());
-    if (myComponent.myConfirmFrameToOpenCheckBox.isSelected()) {
-      settings.setConfirmOpenNewProject(GeneralSettings.OPEN_PROJECT_ASK);
-    }
-    else if (settings.getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
-      settings.setConfirmOpenNewProject(GeneralSettings.OPEN_PROJECT_NEW_WINDOW);
-    }
+    settings.setConfirmOpenNewProject(getConfirmOpenNewProject());
+
     settings.setAutoSaveIfInactive(myComponent.myChkAutoSaveIfInactive.isSelected());
     try {
       int newInactiveTimeout = Integer.parseInt(myComponent.myTfInactiveTimeout.getText());
@@ -69,6 +66,18 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     settings.setUseSafeWrite(myComponent.myChkUseSafeWrite.isSelected());
   }
 
+  private int getConfirmOpenNewProject() {
+    if (myComponent.myConfirmWindowToOpenProject.isSelected()) {
+      return GeneralSettings.OPEN_PROJECT_ASK;
+    }
+    else if (myComponent.myOpenProjectInNewWindow.isSelected()) {
+      return GeneralSettings.OPEN_PROJECT_NEW_WINDOW;
+    }
+    else {
+      return GeneralSettings.OPEN_PROJECT_SAME_WINDOW;
+    }
+  }
+
   public boolean isModified() {
     if (super.isModified()) return true;
     boolean isModified = false;
@@ -78,11 +87,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     isModified |= settings.isSaveOnFrameDeactivation() != myComponent.myChkSaveOnFrameDeactivation.isSelected();
     isModified |= settings.isAutoSaveIfInactive() != myComponent.myChkAutoSaveIfInactive.isSelected();
     isModified |= settings.isConfirmExit() != myComponent.myConfirmExit.isSelected();
-
-    int openProjectOption = settings.getConfirmOpenNewProject();
-
-    boolean savedOptionIsAsk = openProjectOption == GeneralSettings.OPEN_PROJECT_ASK;
-    isModified |= myComponent.myConfirmFrameToOpenCheckBox.isSelected() != savedOptionIsAsk;
+    isModified |= settings.getConfirmOpenNewProject() != getConfirmOpenNewProject();
 
     int inactiveTimeout = -1;
     try {
@@ -133,7 +138,17 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     myComponent.myTfInactiveTimeout.setEditable(settings.isAutoSaveIfInactive());
     myComponent.myChkUseSafeWrite.setSelected(settings.isUseSafeWrite());
     myComponent.myConfirmExit.setSelected(settings.isConfirmExit());
-    myComponent.myConfirmFrameToOpenCheckBox.setSelected(settings.getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK);
+    switch (settings.getConfirmOpenNewProject()) {
+      case GeneralSettings.OPEN_PROJECT_ASK:
+        myComponent.myConfirmWindowToOpenProject.setSelected(true);
+        break;
+      case GeneralSettings.OPEN_PROJECT_NEW_WINDOW:
+        myComponent.myOpenProjectInNewWindow.setSelected(true);
+        break;
+      case GeneralSettings.OPEN_PROJECT_SAME_WINDOW:
+        myComponent.myOpenProjectInSameWindow.setSelected(true);
+        break;
+    }
   }
 
   public void disposeUIResources() {
@@ -156,7 +171,9 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     private JCheckBox myChkUseSafeWrite;
     private JCheckBox myConfirmExit;
     private JPanel myPluginOptionsPanel;
-    private JCheckBox myConfirmFrameToOpenCheckBox;
+    private JBRadioButton myOpenProjectInNewWindow;
+    private JBRadioButton myOpenProjectInSameWindow;
+    private JBRadioButton myConfirmWindowToOpenProject;
 
     public MyComponent() { }
   }

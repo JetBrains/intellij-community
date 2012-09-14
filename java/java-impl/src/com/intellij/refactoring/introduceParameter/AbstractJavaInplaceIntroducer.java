@@ -42,6 +42,8 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
 
   protected abstract PsiVariable createFieldToStartTemplateOn(String[] names, PsiType psiType);
   protected abstract String[] suggestNames(PsiType defaultType, String propName);
+  protected abstract VariableKind getVariableKind();
+
 
 
   @Override
@@ -51,9 +53,17 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
     final String propertyName = variable != null
                                 ? JavaCodeStyleManager.getInstance(myProject).variableNameToPropertyName(variable.getName(), VariableKind.LOCAL_VARIABLE)
                                 : null;
-    return suggestNames(defaultType, propertyName);
+    final String[] names = suggestNames(defaultType, propertyName);
+    if (propertyName != null && names.length > 1) {
+      final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
+      final String paramName = javaCodeStyleManager.propertyNameToVariableName(propertyName, getVariableKind());
+      final int idx = ArrayUtil.find(names, paramName);
+      if (idx > -1) {
+        ArrayUtil.swap(names, 0, idx);
+      }
+    }
+    return names;
   }
-
 
   @Override
   protected PsiVariable createFieldToStartTemplateOn(boolean replaceAll, String[] names) {

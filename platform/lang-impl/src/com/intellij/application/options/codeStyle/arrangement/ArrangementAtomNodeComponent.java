@@ -100,24 +100,16 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
     myLabel.setHorizontalAlignment(SwingConstants.CENTER);
     myLabel.setText(manager.getDisplayValue(condition));
     myLabelSize = new Dimension(manager.getMaxWidth(condition.getType()), myLabel.getPreferredSize().height);
-    
-    final ArrangementRemoveConditionAction action;
-    if (closeCallback == null) {
-      myCloseButton = null;
-      action = null;
-    }
-    else {
-      action = new ArrangementRemoveConditionAction();
 
-      Icon buttonIcon = action.getTemplatePresentation().getIcon();
-      Dimension buttonSize = new Dimension(buttonIcon.getIconWidth(), buttonIcon.getIconHeight());
-      myCloseButton = new ActionButton(action, action.getTemplatePresentation().clone(), ArrangementConstants.RULE_TREE_PLACE, buttonSize) {
-        @Override
-        protected Icon getIcon() {
-          return myCloseButtonHovered ? action.getTemplatePresentation().getHoveredIcon() : action.getTemplatePresentation().getIcon();
-        }
-      };
-    }
+    final ArrangementRemoveConditionAction action = new ArrangementRemoveConditionAction();
+    Icon buttonIcon = action.getTemplatePresentation().getIcon();
+    Dimension buttonSize = new Dimension(buttonIcon.getIconWidth(), buttonIcon.getIconHeight());
+    myCloseButton = new ActionButton(action, action.getTemplatePresentation().clone(), ArrangementConstants.RULE_TREE_PLACE, buttonSize) {
+      @Override
+      protected Icon getIcon() {
+        return myCloseButtonHovered ? action.getTemplatePresentation().getHoveredIcon() : action.getTemplatePresentation().getIcon();
+      }
+    };
     
     GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.CENTER).insets(0, 0, 0, 0);
 
@@ -131,7 +123,7 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
       @Override
       public void paint(Graphics g) {
         Rectangle buttonBounds = getCloseButtonScreenLocation();
-        if (buttonBounds != null && action != null) {
+        if (buttonBounds != null) {
           Point mouseScreenLocation = MouseInfo.getPointerInfo().getLocation();
           myCloseButtonHovered = buttonBounds.contains(mouseScreenLocation);
         }
@@ -143,9 +135,7 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
       }
     };
     roundBorderPanel.add(labelPanel, new GridBag().fillCellHorizontally());
-    if (myCloseButton != null) {
-      roundBorderPanel.add(myCloseButton, new GridBag().anchor(GridBagConstraints.CENTER).insets(VERTICAL_PADDING, 0, 0, 0));
-    }
+    roundBorderPanel.add(myCloseButton, new GridBag().anchor(GridBagConstraints.CENTER).insets(VERTICAL_PADDING, 0, 0, 0));
     myBorder = IdeBorderFactory.createRoundedBorder(arcSize);
     roundBorderPanel.setBorder(myBorder);
     roundBorderPanel.setOpaque(false);

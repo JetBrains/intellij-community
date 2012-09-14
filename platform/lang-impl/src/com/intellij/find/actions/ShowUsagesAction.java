@@ -224,11 +224,13 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     final List<Usage> usages = new ArrayList<Usage>();
     final Set<UsageNode> visibleNodes = new LinkedHashSet<UsageNode>();
+    UsageInfoToUsageConverter.TargetElementsDescriptor descriptor =
+      new UsageInfoToUsageConverter.TargetElementsDescriptor(handler.getPrimaryElements(), handler.getSecondaryElements());
 
     final MyTable table = new MyTable();
     final AsyncProcessIcon processIcon = new AsyncProcessIcon("xxx");
-    final JBPopup popup = createUsagePopup(usages, visibleNodes, handler, editor, popupPosition, maxUsages, usageView, options, table, presentation,
-                                           processIcon);
+    final JBPopup popup = createUsagePopup(usages, descriptor, visibleNodes, handler, editor, popupPosition,
+                                           maxUsages, usageView, options, table, presentation, processIcon);
 
     Disposer.register(popup, usageView);
 
@@ -288,7 +290,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       }
     };
 
-    final ProgressIndicator indicator = FindUsagesManager.startProcessUsages(handler, collect, options, new Runnable() {
+    final ProgressIndicator indicator = FindUsagesManager.startProcessUsages(handler, descriptor, collect, options, new Runnable() {
       @Override
       public void run() {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -456,6 +458,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
   @NotNull
   private JBPopup createUsagePopup(@NotNull final List<Usage> usages,
+                                   @NotNull final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor,
                                    @NotNull Set<UsageNode> visibleNodes,
                                    @NotNull final FindUsagesHandler handler,
                                    final Editor editor,
@@ -613,8 +616,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
         FindUsagesManager.SearchData data = new FindUsagesManager.SearchData();
         data.myOptions = options;
-        SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(handler.getPsiElement());
-        data.myElements = new SmartPsiElementPointer[]{pointer};
+        List<SmartPsiElementPointer<PsiElement>> plist = descriptor.getAllElementPointers();
+
+        data.myElements = plist.toArray(new SmartPsiElementPointer[plist.size()]);
         findUsagesManager.rerunAndRecallFromHistory(data);
       }
     });

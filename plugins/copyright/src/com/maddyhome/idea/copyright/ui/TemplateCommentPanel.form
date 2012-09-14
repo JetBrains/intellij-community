@@ -147,7 +147,7 @@
                 </constraints>
                 <properties>
                   <labelFor value="fcbea"/>
-                  <text value="Length"/>
+                  <text value="Length:"/>
                 </properties>
               </component>
               <component id="7a6fe" class="javax.swing.JLabel" binding="lblLengthAfter">
@@ -156,7 +156,7 @@
                 </constraints>
                 <properties>
                   <labelFor value="ee688"/>
-                  <text value="Length"/>
+                  <text value="Length:"/>
                 </properties>
               </component>
               <component id="fcbea" class="javax.swing.JTextField" binding="txtLengthBefore">
@@ -189,7 +189,7 @@
                 </constraints>
                 <properties>
                   <labelFor value="679a0"/>
-                  <text value="Separator"/>
+                  <text value="Separator:"/>
                 </properties>
               </component>
               <component id="30865" class="javax.swing.JCheckBox" binding="cbBox">
@@ -203,9 +203,7 @@
               <component id="679a0" class="javax.swing.JTextField" binding="txtFiller">
                 <constraints>
                   <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
-                    <minimum-size width="20" height="-1"/>
-                    <preferred-size width="20" height="-1"/>
-                    <maximum-size width="20" height="-1"/>
+                    <preferred-size width="50" height="-1"/>
                   </grid>
                 </constraints>
                 <properties/>

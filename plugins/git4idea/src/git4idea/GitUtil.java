@@ -39,6 +39,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.changes.GitCommittedChangeList;
 import git4idea.commands.GitCommand;
@@ -46,6 +47,7 @@ import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -908,6 +910,19 @@ public class GitUtil {
         }
       }
     }.queue();
+  }
+
+
+  /**
+   * Returns the tracking information (remote and the name of the remote branch), or null if we are not on a branch.
+   */
+  @Nullable
+  public static GitBranchTrackInfo getTrackInfoForCurrentBranch(@NotNull GitRepository repository) {
+    GitBranch currentBranch = repository.getCurrentBranch();
+    if (currentBranch == null) {
+      return null;
+    }
+    return GitBranchUtil.getTrackInfoForBranch(repository, currentBranch);
   }
 
 }

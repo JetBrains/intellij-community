@@ -308,12 +308,10 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   @NotNull
   public static ProgressIndicator startProcessUsages(@NotNull FindUsagesHandler handler,
+                                                     @NotNull UsageInfoToUsageConverter.TargetElementsDescriptor descriptor,
                                                      @NotNull final Processor<Usage> processor,
                                                      @NotNull FindUsagesOptions findUsagesOptions,
                                                      @NotNull final Runnable onComplete) {
-    final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor =
-      new UsageInfoToUsageConverter.TargetElementsDescriptor(handler.getPrimaryElements(), handler.getSecondaryElements());
-
     final UsageSearcher usageSearcher = createUsageSearcher(descriptor, handler, findUsagesOptions, null);
 
     final ProgressIndicatorBase indicator = new ProgressIndicatorBase();

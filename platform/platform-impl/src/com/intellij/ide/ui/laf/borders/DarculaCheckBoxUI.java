@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf.borders;
 import com.intellij.ide.ui.laf.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.EmptyIcon;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -129,5 +130,10 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
                                                   textRect.y + fm.getAscent());
       }
     }
+  }
+
+  @Override
+  public Icon getDefaultIcon() {
+    return EmptyIcon.create(20);
   }
 }

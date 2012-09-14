@@ -162,7 +162,7 @@ public abstract class VirtualFileVisitor {
     if (myParameters == null || myParameters.isEmpty()) {
       return null;
     }
-    @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"}) final T value = (T)myParameters.peek().get(parameter);
+    @SuppressWarnings({"unchecked"}) final T value = (T)myParameters.peek().get(parameter);
     return value;
   }
 

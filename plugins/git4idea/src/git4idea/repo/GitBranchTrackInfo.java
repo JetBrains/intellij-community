@@ -55,10 +55,20 @@ public class GitBranchTrackInfo {
    * The name is local for that remote (i.e. without the remote prefix),
    * and the name is simplified (i.e. without the {@code refs/heads/} prefix).<br/>
    * For example, returns {@code master}, and not {@code origin/master} or {@code refs/heads/master} or {@code refs/remotes/origin/master}.
+   * @see #getRemoteBranchInLocalFormat()
    */
   @NotNull
   public String getRemoteBranch() {
     return myRemoteBranch;
+  }
+
+  /**
+   * Returns the name of the remote branch in the local format, i.e. {@code origin/master}.
+   * @see #getRemoteBranch()
+   */
+  @NotNull
+  public String getRemoteBranchInLocalFormat() {
+    return getRemote().getName() + "/" + getRemoteBranch();
   }
 
   public boolean isMerge() {
@@ -70,7 +80,7 @@ public class GitBranchTrackInfo {
     return String.format("%s %s %s %b", myBranch, myRemote, myRemoteBranch, myMerge);
   }
 
-  @SuppressWarnings("ConstantConditions")
+  @SuppressWarnings("ConstantConditions") // fields may possibly become null in future
   @Override
   public boolean equals(Object o) {
 
@@ -87,7 +97,7 @@ public class GitBranchTrackInfo {
     return true;
   }
 
-  @SuppressWarnings("ConstantConditions")
+  @SuppressWarnings("ConstantConditions") // fields may possibly become null in future
   @Override
   public int hashCode() {
     int result = myBranch != null ? myBranch.hashCode() : 0;

@@ -282,14 +282,13 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       if (value instanceof String) {
         String message = (String) value;
         myIssueLinkRenderer.appendTextWithLinks(message);
-        setToolTipText(message);
       }
     }
 
 
   }
 
-  private class MessageColumnInfo extends VcsColumnInfo<String> {
+  private static class MessageColumnInfo extends VcsColumnInfo<String> {
     private final MessageRenderer myRenderer;
 
     public MessageColumnInfo(Project project) {
@@ -854,7 +853,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
       int selectionSize = sel.size();
       if (selectionSize > 1) {
-        myDiffHandler.showDiffForTwo(myFilePath, sel.get(0), sel.get(sel.size() - 1));
+        myDiffHandler.showDiffForTwo(myFilePath, sel.get(0).getRevision(), sel.get(sel.size() - 1).getRevision());
       }
       else if (selectionSize == 1) {
         final TableView<TreeNodeOnVcsRevision> flatView = myDualView.getFlatView();

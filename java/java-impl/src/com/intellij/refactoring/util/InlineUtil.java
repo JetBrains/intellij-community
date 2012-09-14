@@ -55,7 +55,8 @@ public class InlineUtil {
     PsiExpression expr = (PsiExpression)replaceDiamondWithInferredTypesIfNeeded(initializer, ref);
     PsiType exprType = expr.getType();
     if (exprType != null && (!varType.equals(exprType) && varType instanceof PsiPrimitiveType
-                             || !TypeConversionUtil.isAssignable(varType, exprType))) {
+                             || !TypeConversionUtil.isAssignable(varType, exprType) 
+                             || expr instanceof PsiConditionalExpression)) {
       boolean matchedTypes = false;
       //try explicit type arguments
       final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();

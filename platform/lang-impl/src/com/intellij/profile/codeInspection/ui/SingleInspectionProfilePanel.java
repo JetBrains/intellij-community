@@ -752,7 +752,6 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
 
       myOptionsPanel.removeAll();
-      myOptionsPanel.add(SeparatorFactory.createSeparator("Options", null), BorderLayout.NORTH);
 
       final NamedScope scope = node.getScope();
       if (scope != null || node.isInspectionNode()) {
@@ -781,14 +780,14 @@ public class SingleInspectionProfilePanel extends JPanel {
         final JPanel withSeverity = new JPanel(new GridBagLayout());
         withSeverity.add(new JLabel(InspectionsBundle.message("inspection.severity")),
                          new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
-                                                GridBagConstraints.NONE, new Insets(0, IdeBorderFactory.TITLED_BORDER_INDENT, 10, 10), 0, 0));
+                                                GridBagConstraints.NONE, new Insets(0, 0, 10, 10), 0, 0));
         withSeverity.add(chooser, new GridBagConstraints(1, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST,
                                                          GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
 
         final JComponent comp = descriptor.getState().getAdditionalConfigPanel();
         withSeverity.add(comp != null ? comp : new JPanel(),
                          new GridBagConstraints(0, 1, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
-                                                GridBagConstraints.BOTH, new Insets(0, IdeBorderFactory.TITLED_BORDER_INDENT, 0, 0), 0, 0));
+                                                GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
         myOptionsPanel.add(withSeverity, BorderLayout.CENTER);
       }
@@ -893,6 +892,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     myRightSplitter.setProportion(myProperties.getFloat(HORIZONTAL_DIVIDER_PROPORTION, 0.5f));
 
     myOptionsPanel = new JPanel(new BorderLayout());
+    myOptionsPanel.setBorder(IdeBorderFactory.createTitledBorder("Options", false,
+                                                                   new Insets(0, 0, 0, 0)));
     initOptionsAndDescriptionPanel();
     myRightSplitter.setSecondComponent(myOptionsPanel);
     myRightSplitter.setHonorComponentsMinimumSize(true);

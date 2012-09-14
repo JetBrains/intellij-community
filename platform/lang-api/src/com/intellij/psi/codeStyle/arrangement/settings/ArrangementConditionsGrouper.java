@@ -16,8 +16,10 @@
 package com.intellij.psi.codeStyle.arrangement.settings;
 
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementConditionNode;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Strategy which hints on how arrangement match conditions should be grouped at the UI.
@@ -32,19 +34,31 @@ public interface ArrangementConditionsGrouper {
   /**
    * Allows to answer if and how should be grouped given match conditions.
    * <p/>
-   * Example: given condition is a composite <code>'AND'</code> condition with the following operands:
-   * <code>'type: field; modifier: public; modifier: static; modifier: final'</code>. We might want to show it like below:
+   * Example: we have the following composite <code>'AND'</code> conditions below:
+   * <pre>
+   * <ul>
+   *   <li><code>'type: field; modifier: public; modifier: static; modifier: final'</code>;</li>
+   *   <li><code>'type: field; modifier: private; modifier: static; modifier: final'</code>;</li>
+   *   <li><code>'type: method; modifier: public; modifier: static;'</code>;</li>
+   *   <li><code>'type: method; modifier: private; modifier: static;'</code>;</li>
+   * </ul>
+   * </pre>
+   * We might want to show it like below:
    * <pre>
    *   field
    *     |
-   *      ---public---static---final
+   *     |---public---static---final
+   *     |---private---static---final
+   *   method
+   *     |
+   *     |---public---static
+   *     |---private---static
    * </pre>
-   * That means that we'll return a {@link HierarchicalArrangementConditionNode} with condition <code>'type: field'</code> and
-   * a single child node with composite <code>'AND'</code> condition <code>'modifier: public; modifier: static; modifier: final'</code>.
-   *
-   * @param condition  settings node which conditions should be grouped
-   * @return           grouping-aware node
+   * That means that we'll return a list with the single set which contains <code>'type: field'</code> and <code>'type: method'</code>
+   * conditions.
+   * 
+   * @return    grouping rules to use
    */
   @NotNull
-  HierarchicalArrangementConditionNode group(@NotNull ArrangementMatchCondition condition);
+  List<Set<ArrangementMatchCondition>> getGroupingConditions();
 }

@@ -1,6 +1,7 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -15,7 +16,7 @@ import java.awt.event.MouseEvent;
  */
 public class HideableTitledPanel extends JPanel {
 
-  private TitledSeparatorWithMnemonic myTitledSeparator;
+  private TitledSeparator myTitledSeparator;
   private boolean myOn;
   private final JComponent myContent;
   private Dimension myPreviousContentSize;
@@ -24,7 +25,7 @@ public class HideableTitledPanel extends JPanel {
     super(new BorderLayout());
     myContent = content;
     add(myContent, BorderLayout.CENTER);
-    myTitledSeparator = new TitledSeparatorWithMnemonic("", null);
+    myTitledSeparator = new TitledSeparator(title, null);
     add(myTitledSeparator, BorderLayout.NORTH);
     myTitledSeparator.getLabel().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     myTitledSeparator.getLabel().addMouseListener(new MouseAdapter() {
@@ -40,7 +41,6 @@ public class HideableTitledPanel extends JPanel {
     });
 
     setOn(on);
-    setTitle(title);
   }
 
   public void setOn(boolean on) {
@@ -64,6 +64,7 @@ public class HideableTitledPanel extends JPanel {
   protected void on() {
     myOn = true;
     myTitledSeparator.getLabel().setIcon(AllIcons.General.ComboArrowDown);
+    myTitledSeparator.getLabel().setDisabledIcon(IconLoader.getTransparentIcon(AllIcons.General.ComboArrowDown, 0.5f));
     myTitledSeparator.getLabel().setIconTextGap(5);
     myContent.setVisible(true);
     adjustWindow();
@@ -74,7 +75,9 @@ public class HideableTitledPanel extends JPanel {
   protected void off() {
     myOn = false;
     myTitledSeparator.getLabel().setIcon(AllIcons.General.ComboArrowRight);
-    myTitledSeparator.getLabel().setIconTextGap(5 + AllIcons.General.ComboArrowDown.getIconWidth() - AllIcons.General.ComboArrowRight.getIconWidth());
+    myTitledSeparator.getLabel().setDisabledIcon(IconLoader.getTransparentIcon(AllIcons.General.ComboArrowRight, 0.5f));
+    myTitledSeparator.getLabel()
+      .setIconTextGap(5 + AllIcons.General.ComboArrowDown.getIconWidth() - AllIcons.General.ComboArrowRight.getIconWidth());
     myContent.setVisible(false);
     myPreviousContentSize = myContent.getSize();
     adjustWindow();
@@ -109,7 +112,7 @@ public class HideableTitledPanel extends JPanel {
 
   @Override
   public void setEnabled(boolean enabled) {
-    myTitledSeparator.myLabel.setForeground(enabled ? UIUtil.getActiveTextColor() : UIUtil.getInactiveTextColor());
+    myTitledSeparator.setEnabled(enabled);
     myContent.setEnabled(enabled);
   }
 
@@ -118,7 +121,7 @@ public class HideableTitledPanel extends JPanel {
     super.addNotify();
     final int mnemonicIndex = UIUtil.getDisplayMnemonicIndex(getTitle());
     if (mnemonicIndex != -1) {
-      getActionMap().put("tt", new AbstractAction() {
+      getActionMap().put("Collapse/Expand on mnemonic", new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
           if (myOn) {
@@ -130,7 +133,8 @@ public class HideableTitledPanel extends JPanel {
         }
       });
       final Character mnemonicCharacter = UIUtil.removeMnemonic(getTitle()).toUpperCase().charAt(mnemonicIndex);
-      getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(mnemonicCharacter, InputEvent.ALT_MASK, false), "tt");
+      getInputMap(WHEN_IN_FOCUSED_WINDOW)
+        .put(KeyStroke.getKeyStroke(mnemonicCharacter, InputEvent.ALT_MASK, false), "Collapse/Expand on mnemonic");
     }
   }
 }

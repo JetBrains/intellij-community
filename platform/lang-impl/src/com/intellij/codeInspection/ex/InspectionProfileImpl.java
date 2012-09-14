@@ -30,6 +30,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.ApplicationProfileManager;
@@ -468,12 +469,19 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       final String shortName = tool.getShortName();
       HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
       if (key == null) {
+        final InspectionEP extension = tool.getExtension();
+        Computable<String> computable = extension == null ? new Computable.PredefinedValueComputable<String>(tool.getDisplayName()) : new Computable<String>() {
+          @Override
+          public String compute() {
+            return extension.getDisplayName();
+          }
+        };
         if (tool instanceof LocalInspectionToolWrapper) {
-          key = HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getID(),
+          key = HighlightDisplayKey.register(shortName, computable, ((LocalInspectionToolWrapper)tool).getID(),
                                              ((LocalInspectionToolWrapper)tool).getAlternativeID());
         }
         else {
-          key = HighlightDisplayKey.register(shortName, tool.getDisplayName());
+          key = HighlightDisplayKey.register(shortName, computable);
         }
       }
 

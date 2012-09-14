@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,16 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.psi.*;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.util.Query;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveModifierFix;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ProtectedMemberInFinalClassInspection extends BaseInspection {
@@ -31,15 +32,13 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "protected.member.in.final.class.display.name");
+    return InspectionGadgetsBundle.message("protected.member.in.final.class.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "protected.member.in.final.class.problem.descriptor");
+    return InspectionGadgetsBundle.message("protected.member.in.final.class.problem.descriptor");
   }
 
   @Override
@@ -52,46 +51,33 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
     return new ProtectedMemberInFinalClassVisitor();
   }
 
-  private static class ProtectedMemberInFinalClassVisitor
-    extends BaseInspectionVisitor {
+  private static class ProtectedMemberInFinalClassVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      //no call to super, so we don't drill into anonymous classes
       if (!method.hasModifierProperty(PsiModifier.PROTECTED)) {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
+      if (containingClass == null || !containingClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
-      if (!containingClass.hasModifierProperty(PsiModifier.FINAL)) {
+      if (MethodUtils.hasSuper(method)) {
         return;
       }
-      final Query<MethodSignatureBackedByPsiMethod> superMethodQuery =
-        SuperMethodsSearch.search(method, null, true, false);
-      if (superMethodQuery.findFirst() != null) {
-        return;
-      }
-      registerModifierError(PsiModifier.PROTECTED, method,
-                            PsiModifier.PROTECTED);
+      registerModifierError(PsiModifier.PROTECTED, method, PsiModifier.PROTECTED);
     }
 
     @Override
     public void visitField(@NotNull PsiField field) {
-      //no call to super, so we don't drill into anonymous classes
       if (!field.hasModifierProperty(PsiModifier.PROTECTED)) {
         return;
       }
       final PsiClass containingClass = field.getContainingClass();
-      if (containingClass == null) {
+      if (containingClass == null || !containingClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
-      if (!containingClass.hasModifierProperty(PsiModifier.FINAL)) {
-        return;
-      }
-      registerModifierError(PsiModifier.PROTECTED, field,
-                            PsiModifier.PROTECTED);
+      registerModifierError(PsiModifier.PROTECTED, field, PsiModifier.PROTECTED);
     }
   }
 }

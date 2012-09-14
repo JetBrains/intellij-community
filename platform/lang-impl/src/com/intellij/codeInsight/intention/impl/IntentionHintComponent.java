@@ -390,7 +390,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
     String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
       ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
-    if (acceleratorsText.length() > 0) {
+    if (!acceleratorsText.isEmpty()) {
       myIconLabel.setToolTipText(CodeInsightBundle.message("lightbulb.tooltip", acceleratorsText));
     }
   }

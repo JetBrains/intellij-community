@@ -32,6 +32,10 @@ public class TypesDistinctProver {
   }
 
   public static boolean provablyDistinct(PsiType type1, PsiType type2) {
+    return provablyDistinct(type1, type2, 0);
+  }
+
+  private static boolean provablyDistinct(PsiType type1, PsiType type2, int level) {
     if (type1 instanceof PsiClassType && ((PsiClassType)type1).resolve() instanceof PsiTypeParameter) return false;
     if (type2 instanceof PsiClassType && ((PsiClassType)type2).resolve() instanceof PsiTypeParameter) return false;
     if (type1 instanceof PsiWildcardType) {
@@ -40,7 +44,7 @@ public class TypesDistinctProver {
       }
 
       if (type2 instanceof PsiCapturedWildcardType) {
-        return ((PsiWildcardType)type1).isExtends() ||
+        return ((PsiWildcardType)type1).isExtends() && level > 0 ||
                provablyDistinct((PsiWildcardType)type1, ((PsiCapturedWildcardType)type2).getWildcard());
       }
 
@@ -75,9 +79,9 @@ public class TypesDistinctProver {
         return proveArrayTypeDistinct(((PsiWildcardType)type1).getManager().getProject(), (PsiArrayType)type2, type1);
       }
     }
-    if (type1 instanceof PsiCapturedWildcardType) return provablyDistinct(((PsiCapturedWildcardType)type1).getWildcard(), type2);
+    if (type1 instanceof PsiCapturedWildcardType) return provablyDistinct(((PsiCapturedWildcardType)type1).getWildcard(), type2, level +1);
 
-    if (type2 instanceof PsiWildcardType || type2 instanceof PsiCapturedWildcardType) return provablyDistinct(type2, type1);
+    if (type2 instanceof PsiWildcardType || type2 instanceof PsiCapturedWildcardType) return provablyDistinct(type2, type1, level +1);
 
 
     final PsiClassType.ClassResolveResult classResolveResult1 = PsiUtil.resolveGenericsClassInType(type1);
@@ -94,7 +98,7 @@ public class TypesDistinctProver {
             if (!TypeConversionUtil.isAssignable(type, substitutedType1 != null ? substitutedType1 : substitutedType2, false)) return true;
           }
         } else {
-          if (provablyDistinct(substitutedType1, substitutedType2)) return true;
+          if (provablyDistinct(substitutedType1, substitutedType2, level + 1)) return true;
           if (substitutedType1 instanceof PsiWildcardType && !((PsiWildcardType)substitutedType1).isBounded()) return true;
         }
       }
@@ -121,7 +125,7 @@ public class TypesDistinctProver {
       if (boundClass1 != null && boundClass2 != null) {
         return proveExtendsBoundsDistinct(type1, type2, boundClass1, boundClass2);
       }
-      return provablyDistinct(extendsBound1, extendsBound2);
+      return provablyDistinct(extendsBound1, extendsBound2, 1);
     }
     if (type2.isExtends()) return provablyDistinct(type2, type1);
     if (type1.isExtends() && type2.isSuper()) {

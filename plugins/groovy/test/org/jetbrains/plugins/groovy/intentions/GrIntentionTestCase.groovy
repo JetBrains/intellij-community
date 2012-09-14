@@ -19,14 +19,27 @@ package org.jetbrains.plugins.groovy.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.Function
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 
 /**
  * @author Maxim.Medvedev
  */
 public abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCase {
-  protected void doTest(String hint, boolean intentionExists) {
+
+  @Nullable
+  protected final String myHint;
+
+  GrIntentionTestCase(@Nullable String hint = null) {
+    myHint = hint
+  }
+
+  protected void doTest(@NotNull String hint = myHint, boolean intentionExists) {
+    assertNotNull(hint)
     myFixture.configureByFile(getTestName(false) + ".groovy");
     final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint);
     if (intentionExists) {
@@ -34,18 +47,13 @@ public abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCas
       PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
       myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
     }
-    else {
-      if (list.size() > 0) {
-        StringBuilder text = new StringBuilder("available intentions:");
-        for (IntentionAction intentionAction : list) {
-          text.append(intentionAction.familyName).append(", ");
-        }
-        fail(text.toString());
-      }
+    else if (list.size() > 0) {
+      fail StringUtil.join(list, {it.familyName} as Function<IntentionAction, String>, ',')
     }
   }
 
-  protected void doTextTest(String before, String hint, String after, Class<? extends LocalInspectionTool>... inspections) {
+  protected void doTextTest(String before, String hint = myHint, String after, Class<? extends LocalInspectionTool>... inspections) {
+    assertNotNull(hint)
     myFixture.configureByText("a.groovy", before);
     myFixture.enableInspections(inspections)
     final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint);
@@ -54,7 +62,8 @@ public abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCas
     myFixture.checkResult(after);
   }
 
-  protected void doAntiTest(String before, String hint, Class<? extends LocalInspectionTool>... inspections) {
+  protected void doAntiTest(String before, String hint = myHint, Class<? extends LocalInspectionTool>... inspections) {
+    assertNotNull(hint)
     myFixture.configureByText("a.groovy", before);
     myFixture.enableInspections(inspections)
     assertEmpty(myFixture.filterAvailableIntentions(hint));

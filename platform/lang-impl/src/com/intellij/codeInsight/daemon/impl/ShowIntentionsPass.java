@@ -175,7 +175,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
   }
 
-  private void updateActions(DaemonCodeAnalyzerImpl codeAnalyzer) {
+  private void updateActions(@NotNull DaemonCodeAnalyzerImpl codeAnalyzer) {
     IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
     if (!myShowBulb || hintComponent == null) {
       return;
@@ -192,7 +192,10 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
   }
 
-  public static void getActionsToShow(@NotNull final Editor hostEditor, @NotNull final PsiFile hostFile, @NotNull final IntentionsInfo intentions, int passIdToShowIntentionsFor) {
+  public static void getActionsToShow(@NotNull final Editor hostEditor,
+                                      @NotNull final PsiFile hostFile,
+                                      @NotNull final IntentionsInfo intentions,
+                                      int passIdToShowIntentionsFor) {
     final PsiElement psiElement = hostFile.findElementAt(hostEditor.getCaretModel().getOffset());
     LOG.assertTrue(psiElement == null || psiElement.isValid(), psiElement);
 

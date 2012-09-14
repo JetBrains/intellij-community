@@ -58,6 +58,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.CacheOneStepIterator;
 import com.intellij.util.containers.Convertor;
@@ -597,8 +598,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       setTitle2(createComponentForTitle(title2, sep2, false));
     }
     else {
-      setTitle1(title1);
-      setTitle2(title2);
+      setTitle1(new JBLabel(title1 == null ? "" : title1));
+      setTitle2(new JBLabel(title2 == null ? "" : title2));
     }
   }
 

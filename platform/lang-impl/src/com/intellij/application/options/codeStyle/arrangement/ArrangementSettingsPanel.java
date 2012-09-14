@@ -30,6 +30,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.settings.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
@@ -51,6 +52,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Generic GUI for showing standard arrangement settings.
@@ -76,11 +78,15 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     if (mySettingsAware instanceof ArrangementStandardSettingsRepresentationAware) {
       representationManager = (ArrangementStandardSettingsRepresentationAware)mySettingsAware;
     }
-    final ArrangementNodeDisplayManager displayManager = new ArrangementNodeDisplayManager(mySettingsAware, representationManager);
-    ArrangementConditionsGrouper grouper = DefaultArrangementSettingsGrouper.INSTANCE;
+    
+    List<Set<ArrangementMatchCondition>> groupingRules = Collections.emptyList();
     if (mySettingsAware instanceof ArrangementConditionsGrouper) {
-      grouper = (ArrangementConditionsGrouper)mySettingsAware;
+      groupingRules = ((ArrangementConditionsGrouper)mySettingsAware).getGroupingConditions();
     }
+
+    final ArrangementNodeDisplayManager displayManager = new ArrangementNodeDisplayManager(
+      mySettingsAware, representationManager, groupingRules
+    );
 
     final ActionManager actionManager = ActionManager.getInstance();
     final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ArrangementConstants.ACTION_GROUP_RULE_EDITOR_TOOL_WINDOW);
@@ -90,7 +96,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     toolbarControl.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.TOP | SideBorder.RIGHT));
     myContent.add(toolbarControl, new GridBag().weightx(1).fillCellHorizontally().coverLine());
 
-    myRuleTree = new ArrangementRuleTree(getRules(settings), grouper, displayManager);
+    myRuleTree = new ArrangementRuleTree(getRules(settings), groupingRules, displayManager);
     final Tree treeComponent = myRuleTree.getTreeComponent();
     actionToolbar.setTargetComponent(treeComponent);
     JBScrollPane scrollPane = new JBScrollPane(treeComponent);

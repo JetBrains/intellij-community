@@ -616,7 +616,8 @@ public class HighlightUtil {
     boolean isIncorrect = false;
     if (variable instanceof PsiLocalVariable ||
         variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiCatchSection ||
-        variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement) {
+        variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement ||
+        variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiLambdaExpression) {
       @SuppressWarnings("unchecked")
       PsiElement scope = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class, PsiResourceList.class);
       VariablesNotProcessor proc = new VariablesNotProcessor(variable, false) {
@@ -627,8 +628,7 @@ public class HighlightUtil {
       };
       PsiScopesUtil.treeWalkUp(proc, identifier, scope);
       if (scope instanceof PsiResourceList && proc.size() == 0) {
-        @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
-        NavigatablePsiElement parent = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class);
+        @SuppressWarnings({"unchecked"}) NavigatablePsiElement parent = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class);
         scope = parent;
         PsiScopesUtil.treeWalkUp(proc, identifier, scope);
       }
@@ -1811,8 +1811,7 @@ public class HighlightUtil {
           referencedClass = PsiUtil.resolveClassInType(type);
         }
         else if (qualifier instanceof PsiThisExpression || qualifier == null) {
-          @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
-          PsiMethod parent = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiMember.class);
+          @SuppressWarnings({"unchecked"}) PsiMethod parent = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiMember.class);
           resolved = parent;
           expression = qualifier == null ? expression : qualifier;
           if (resolved != null) {

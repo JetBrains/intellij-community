@@ -19,10 +19,11 @@ package org.jetbrains.plugins.groovy.intentions
  * @author Andreas Arledal
  */
 class ReplaceTernaryWithIfElseTest extends GrIntentionTestCase {
+  ReplaceTernaryWithIfElseTest() {
+    super(GroovyIntentionsBundle.message("replace.ternary.with.if.else.intention.name"))
+  }
 
-  String intentionName = GroovyIntentionsBundle.message("replace.ternary.with.if.else.intention.name")
-
-//  public void testDoNotTriggerOnIncompleteIf() throws Exception {
+//  public void testDoNotTriggerOnIncompleteIf() {
 //    doAntiTest '''
 //i<caret>f () {
 //  succes
@@ -33,20 +34,16 @@ class ReplaceTernaryWithIfElseTest extends GrIntentionTestCase {
 //
 //  }
 
-  public void testDoNotTriggerOnIncompleteTernary() throws Exception {
+  public void testDoNotTriggerOnIncompleteTernary() {
     doAntiTest '''
 return aaa ? <caret>bbb
-''', intentionName
+'''
   }
 
-  private void doTest(String before, String after) {
+  
+  public void testSimpleCondition() {
 
-    doTextTest before, intentionName, after
-  }
-
-  public void testSimpleCondition() throws Exception {
-
-    doTest '''
+    doTextTest '''
 return aaa <caret>? bbb : ccc
 ''', '''\
 if (aaa)<caret> {
@@ -57,9 +54,9 @@ if (aaa)<caret> {
 '''
   }
 
-  public void testCaretAfterQuestionMark() throws Exception {
+  public void testCaretAfterQuestionMark() {
 
-    doTest '''
+    doTextTest '''
 return aaa ?<caret> bbb : ccc
 ''', '''\
 if (aaa)<caret> {
@@ -70,9 +67,9 @@ if (aaa)<caret> {
 '''
   }
 
-  public void testCaretInfrontOfConditional() throws Exception {
+  public void testCaretInfrontOfConditional() {
 
-    doTest '''
+    doTextTest '''
 return <caret>aaa ? bbb : ccc
 ''', '''\
 if (aaa)<caret> {
@@ -83,9 +80,9 @@ if (aaa)<caret> {
 '''
   }
 
-  public void testCaretInfrontOfElse() throws Exception {
+  public void testCaretInfrontOfElse() {
 
-    doTest '''
+    doTextTest '''
 return aaa ? bbb <caret>: ccc
 ''', '''\
 if (aaa)<caret> {
@@ -96,9 +93,9 @@ if (aaa)<caret> {
 '''
   }
 
-  public void testCaretAfterElse() throws Exception {
+  public void testCaretAfterElse() {
 
-    doTest '''
+    doTextTest '''
 return aaa ? bbb :<caret> ccc
 ''', '''\
 if (aaa)<caret> {
@@ -109,9 +106,9 @@ if (aaa)<caret> {
 '''
   }
 
-  public void testCaretBeforeElseReturn() throws Exception {
+  public void testCaretBeforeElseReturn() {
 
-    doTest '''
+    doTextTest '''
 return aaa ? bbb : <caret>ccc
 ''', '''\
 if (aaa)<caret> {
@@ -122,9 +119,9 @@ if (aaa)<caret> {
 '''
   }
 
-  public void testCaretBeforeReturnStatement() throws Exception {
+  public void testCaretBeforeReturnStatement() {
 
-    doTest '''
+    doTextTest '''
 <caret>return aaa ? bbb : ccc
 ''', '''\
 if (aaa)<caret> {

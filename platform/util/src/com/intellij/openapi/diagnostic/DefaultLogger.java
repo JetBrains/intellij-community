@@ -23,19 +23,24 @@ public class DefaultLogger extends Logger {
   public DefaultLogger(String category) {
   }
 
+  @Override
   public boolean isDebugEnabled() {
     return false;
   }
 
+  @Override
   public void debug(String message) {
   }
 
+  @Override
   public void debug(Throwable t) {
   }
 
+  @Override
   public void debug(@NonNls String message, Throwable t) {
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral", "UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
   public void error(String message, @Nullable Throwable t, String... details) {
     System.err.println("ERROR: " + message);
@@ -50,15 +55,19 @@ public class DefaultLogger extends Logger {
     throw new AssertionError(message);
   }
 
+  @Override
   public void info(String message) {
   }
 
+  @Override
   public void info(String message, Throwable t) {
   }
 
+  @Override
   public void warn(@NonNls String message, Throwable t) {
   }
 
+  @Override
   public void setLevel(Level level) {
   }
 }

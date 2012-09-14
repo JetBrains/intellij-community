@@ -231,4 +231,12 @@ public class IoTestUtil {
     assertTrue(file.getPath(), file.createNewFile());
     return file;
   }
+
+  public static void delete(final File... files) {
+    for (File file : files) {
+      if (file != null) {
+        FileUtil.delete(file);
+      }
+    }
+  }
 }

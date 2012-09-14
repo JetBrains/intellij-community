@@ -198,4 +198,8 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   public boolean hasXmlMapping() {
     return myEP != null;
   }
+
+  public E getExtension() {
+    return myEP;
+  }
 }

@@ -253,11 +253,16 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   @Override
-  public List<Task> getIssues(String query, boolean forceRequest) {
-    List<Task> tasks = getIssuesFromRepositories(query, 50, 0, forceRequest);
+  public List<Task> getIssues(String query, int max, long since, boolean forceRequest) {
+    List<Task> tasks = getIssuesFromRepositories(query, max, since, forceRequest);
     if (tasks == null) return getCachedIssues();
     myIssueCache.putAll(ContainerUtil.newMapFromValues(tasks.iterator(), KEY_CONVERTOR));
     return tasks;
+  }
+
+  @Override
+  public List<Task> getIssues(String query, boolean forceRequest) {
+    return getIssues(query, 50, 0, forceRequest);
   }
 
   @Override
@@ -295,17 +300,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     synchronized (myTasks) {
       return myTasks.values().toArray(new LocalTaskImpl[myTasks.size()]);
     }
-  }
-
-  @Override
-  public List<LocalTask> getLocalTasks(final String query) {
-    List<LocalTask> tasks = new ArrayList<LocalTask>();
-    for (LocalTask localTask : getLocalTasks()) {
-      if (TaskUtil.getTrimmedSummary(localTask).toLowerCase().contains(query.toLowerCase())) {
-        tasks.add(localTask);
-      }
-    }
-    return tasks;
   }
 
   @Override

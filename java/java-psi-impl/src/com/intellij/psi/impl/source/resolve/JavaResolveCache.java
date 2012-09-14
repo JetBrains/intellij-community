@@ -24,13 +24,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
@@ -90,14 +88,21 @@ public class JavaResolveCache {
     PsiType type = getCachedType(expr);
     if (type == null) {
       type = f.fun(expr);
-      if (type == null) {
-        type = TypeConversionUtil.NULL_TYPE;
-      }
-      SoftReference<PsiType> ref = new SoftReference<PsiType>(type);
+      if (type == null) type = TypeConversionUtil.NULL_TYPE;
+      Reference<PsiType> ref = new SoftReference<PsiType>(type);
       Reference<PsiType> storedRef = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, expr, ref);
 
-      PsiType stored = storedRef.get();
+      PsiType stored = ref == storedRef ? type : storedRef.get();
       type = stored == null ? type : stored;
+      if (type instanceof PsiClassReferenceType) {
+        // convert reference-based class type to the PsiImmediateClassType, since the reference may become invalid
+        PsiClassType.ClassResolveResult result = ((PsiClassReferenceType)type).resolveGenerics();
+        PsiClass psiClass = result.getElement();
+        type = psiClass == null
+               ? type // for type with unresolved reference, leave it in the cache
+                      // for clients still might be able to retrieve its getCanonicalText() from the reference text
+               : new PsiImmediateClassType(psiClass, result.getSubstitutor(), ((PsiClassReferenceType)type).getLanguageLevel(), type.getAnnotations());
+      }
     }
 
     if (!type.isValid()) {

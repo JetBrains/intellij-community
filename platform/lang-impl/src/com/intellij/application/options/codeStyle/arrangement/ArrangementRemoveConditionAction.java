@@ -32,7 +32,5 @@ public class ArrangementRemoveConditionAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    // TODO den implement
-    System.out.println("ArrangementRemoveConditionAction.actionPerformed()");
   }
 }

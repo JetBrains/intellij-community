@@ -37,6 +37,7 @@ import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.ui.CommitHelper;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
+import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
@@ -631,21 +632,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           changeProvider.getChanges(scope, builder, myUpdateChangesProgressIndicator, gate);
         }
         catch (final VcsException e) {
-          LOG.info(e);
-          if (e instanceof VcsConnectionProblem) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                ((VcsConnectionProblem)e).attemptQuickFix(false);
-              }
-            });
-          }
-          if (myUpdateException == null) {
-            if (ApplicationManager.getApplication().isUnitTestMode()) {
-              e.printStackTrace();
-            }
-            myUpdateException = e;
-          }
+          handleUpdateException(e);
         }
       }
     } catch (Throwable t) {
@@ -655,6 +642,31 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       if (! myUpdater.isStopped()) {
         dataHolder.notifyDoneProcessingChanges();
       }
+    }
+  }
+
+  private void handleUpdateException(final VcsException e) {
+    LOG.info(e);
+
+    if (e instanceof VcsConnectionProblem) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          ((VcsConnectionProblem)e).attemptQuickFix(false);
+        }
+      });
+    }
+
+    if (myUpdateException == null) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        AbstractVcsHelper helper = AbstractVcsHelper.getInstance(myProject);
+        if (helper instanceof AbstractVcsHelperImpl && ((AbstractVcsHelperImpl)helper).handleCustom(e)) {
+          return;
+        }
+        //noinspection CallToPrintStackTrace
+        e.printStackTrace();
+      }
+      myUpdateException = e;
     }
   }
 

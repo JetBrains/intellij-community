@@ -82,10 +82,6 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
     }
   }
 
-  public boolean hasImports() {
-    return !myPseudoImports.isEmpty();
-  }
-
   @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
@@ -120,14 +116,14 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
     if (other instanceof PsiJavaFile) {
       if (myContext != null) return JavaPsiFacade.getInstance(myContext.getProject()).arePackagesTheSame(myContext, other);
       final String packageName = ((PsiJavaFile)other).getPackageName();
-      return "".equals(packageName);
+      return packageName.isEmpty();
     }
     return false;
   }
 
   public boolean isInPackage(PsiPackage aPackage) {
     if (myContext != null) return JavaPsiFacade.getInstance(myContext.getProject()).isInPackage(myContext, aPackage);
-    return aPackage == null || "".equals(aPackage.getQualifiedName());
+    return aPackage == null || aPackage.getQualifiedName().isEmpty();
   }
 
 

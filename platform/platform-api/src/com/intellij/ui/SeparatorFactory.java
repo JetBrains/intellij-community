@@ -29,17 +29,17 @@ public class SeparatorFactory {
   }
 
   @Deprecated
-  public static TitledSeparatorWithMnemonic createSeparator(String textWithMnemonic, @Nullable JComponent labelFor, boolean boldFont, boolean smallFont) {
-    return new TitledSeparatorWithMnemonic(textWithMnemonic, labelFor);
+  public static TitledSeparator createSeparator(String text, @Nullable JComponent labelFor, boolean boldFont, boolean smallFont) {
+    return new TitledSeparator(text, labelFor);
   }
 
-  public static TitledSeparatorWithMnemonic createSeparator(String textWithMnemonic, @Nullable JComponent labelFor) {
-    return new TitledSeparatorWithMnemonic(textWithMnemonic, labelFor);
+  public static TitledSeparator createSeparator(String text, @Nullable JComponent labelFor) {
+    return new TitledSeparator(text, labelFor);
   }
 
   @Deprecated
-  public static JComponent createSeparatorWithBoldTitle(String textWithMnemonic, @Nullable JComponent labelFor) {
-    TitledSeparatorWithMnemonic separator = new TitledSeparatorWithMnemonic(textWithMnemonic, labelFor);
+  public static JComponent createSeparatorWithBoldTitle(String text, @Nullable JComponent labelFor) {
+    TitledSeparator separator = new TitledSeparator(text, labelFor);
     separator.setTitleFont(separator.getTitleFont().deriveFont(Font.BOLD));
     return separator;
   }

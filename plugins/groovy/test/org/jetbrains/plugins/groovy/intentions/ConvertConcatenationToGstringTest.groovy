@@ -33,49 +33,44 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  * @author Maxim.Medvedev
  */
 public class ConvertConcatenationToGstringTest extends GrIntentionTestCase {
-
-  private static final String CONVERT_TO_GSTRING = "Convert to GString";
+  ConvertConcatenationToGstringTest() {
+    super("Convert to GString")
+  }
 
   @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return new DefaultLightProjectDescriptor() {
-      @Override
-      public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
-        final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
-        final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/");
-        modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
-        modifiableModel.commit();
-      }
-    };
+  final LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor() {
+    @Override
+    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
+      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/");
+      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
+      modifiableModel.commit();
+    }
+  }
+  
+  final String basePath = TestUtils.testDataPath + 'intentions/convertConcatenationToGstring/'
+
+  public void testSimpleCase() {
+    doTest(true);
   }
 
-  @Override
-  protected String getBasePath() {
-    return "${TestUtils.testDataPath}intentions/convertConcatenationToGstring/";
+  public void testVeryComplicatedCase() {
+    doTest(true);
   }
 
-  public void testSimpleCase() throws Exception {
-    doTest(CONVERT_TO_GSTRING, true);
+  public void testQuotes() {
+    doTest(true);
   }
 
-  public void testVeryComplicatedCase() throws Exception {
-    doTest(CONVERT_TO_GSTRING, true);
+  public void testQuotes2() {
+    doTest(true);
   }
 
-  public void testQuotes() throws Exception {
-    doTest(CONVERT_TO_GSTRING, true);
-  }
-
-  public void testQuotes2() throws Exception {
-    doTest(CONVERT_TO_GSTRING, true);
-  }
-
-  public void testQuotesInMultilineString() throws Exception {
-    doTest(CONVERT_TO_GSTRING, true);
+  public void testQuotesInMultilineString() {
+    doTest(true);
   }
 
   public void testDot() {
-    doTest(CONVERT_TO_GSTRING, true);
+    doTest(true);
   }
 }

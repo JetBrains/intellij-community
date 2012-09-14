@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.*;
@@ -276,36 +277,39 @@ public abstract class JavaFileManagerBase implements JavaFileManager, Disposable
   private PsiClass findClassInIndex(String qName, GlobalSearchScope scope) {
     VirtualFile bestFile = null;
     PsiClass bestClass = null;
-
     final Collection<? extends PsiElement> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
 
     for (PsiElement found : classes) {
       if (notClass(found)) continue;
 
       PsiClass aClass = (PsiClass)found;
+      PsiFile file = aClass.getContainingFile();
+      if (file == null) {
+        LOG.error("aClass=" + aClass);
+        continue;
+      }
       final boolean valid = aClass.isValid();
+      VirtualFile vFile = file.getVirtualFile();
       if (!valid) {
-        LOG.error("Invalid class "+aClass+"; "+aClass.getContainingFile());
+        LOG.error("Invalid class " + aClass + "; " +
+                  file + (file.isValid() ? "" : " (invalid)") +
+                  "; virtualFile:" + vFile +
+                  (vFile != null && !vFile.isValid() ? " (invalid)" : "") +
+                  "; id=" + (vFile == null ? 0 : ((VirtualFileWithId)vFile).getId()),
+                  new PsiInvalidElementAccessException(aClass));
         continue;
       }
 
       final String qualifiedName = aClass.getQualifiedName();
       if (qualifiedName == null || !qualifiedName.equals(qName)) continue;
 
-      PsiFile file = aClass.getContainingFile();
-      if (file == null) {
-        LOG.error("aClass=" + aClass);
-        continue;
-      }
 
-      VirtualFile vFile = file.getVirtualFile();
       if (!hasAcceptablePackage(vFile)) continue;
       if (bestFile == null || scope.compare(vFile, bestFile) > 0) {
         bestFile = vFile;
         bestClass = aClass;
       }
     }
-
     return bestClass;
   }
 

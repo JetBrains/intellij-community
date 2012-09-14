@@ -68,7 +68,7 @@ public class PackagePanel {
         public void run(AnActionButton button) {
           removeEntryFromPackages(packageTable, packageList);
         }
-      }).disableUpDownActions().setPreferredSize(new Dimension(-1, 150)).createPanel();
+      }).disableUpDownActions().setPreferredSize(new Dimension(-1, 100)).createPanel();
 
     UIUtil.addBorder(panel, IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.packages.to.use.import.with"), false));
 

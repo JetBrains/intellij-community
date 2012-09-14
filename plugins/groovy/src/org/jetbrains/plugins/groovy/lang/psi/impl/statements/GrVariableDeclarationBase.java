@@ -14,6 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -109,6 +110,16 @@ public abstract class GrVariableDeclarationBase extends GrStubElementBase<EmptyS
   @Nullable
   public GrTupleDeclaration getTupleDeclaration() {
     return findChildByClass(GrTupleDeclaration.class);
+  }
+
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    final PsiElement psi = child.getPsi();
+    GrTupleDeclaration tuple = getTupleDeclaration();
+    if (tuple != null && psi == tuple.getInitializerGroovy()) {
+      deleteChildInternal(findNotNullChildByType(GroovyTokenTypes.mASSIGN).getNode());
+    }
+    super.deleteChildInternal(child);
   }
 
   @Override

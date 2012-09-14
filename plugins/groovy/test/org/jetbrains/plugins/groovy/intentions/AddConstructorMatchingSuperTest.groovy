@@ -26,10 +26,11 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 public class AddConstructorMatchingSuperTest extends GrIntentionTestCase {
   private static final String HINT = "Create constructor matching super"
 
-  @Override
-  protected String getBasePath() {
-    return "${TestUtils.testDataPath}intentions/constructorMatchingSuper/"
+  AddConstructorMatchingSuperTest() {
+    super(HINT)
   }
+
+  final String basePath = TestUtils.testDataPath + 'intentions/constructorMatchingSuper/'
 
   void testGroovyToGroovy() {
     doTextTest('''\
@@ -39,7 +40,7 @@ class Base {
 
 class Derived exten<caret>ds Base {
 }
-''', HINT, '''\
+''', '''\
 class Base {
     Base(int p, @Anno int x) throws Exception {}
 }
@@ -61,7 +62,7 @@ class Base {
     doTextTest('''\
 class Derived exten<caret>ds Base {
 }
-''', HINT, '''\
+''', '''\
 class Derived extends Base {
     <caret>def Derived(int p, @Anno int x) throws Exception {
         super(p, x)

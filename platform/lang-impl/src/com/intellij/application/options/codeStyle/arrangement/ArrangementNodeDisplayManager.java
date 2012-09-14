@@ -16,9 +16,11 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsRepresentationAware;
@@ -27,9 +29,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Encapsulates various functionality related to showing arrangement nodes to end-users.
@@ -44,15 +45,18 @@ public class ArrangementNodeDisplayManager {
 
   @NotNull private final TObjectIntHashMap<ArrangementSettingType> myMaxWidths = new TObjectIntHashMap<ArrangementSettingType>();
   @NotNull private ArrangementStandardSettingsRepresentationAware myRepresentationManager;
+  private final int myMaxGroupTextWidth;
 
   public ArrangementNodeDisplayManager(@NotNull ArrangementStandardSettingsAware filter,
-                                       @NotNull ArrangementStandardSettingsRepresentationAware representationManager)
+                                       @NotNull ArrangementStandardSettingsRepresentationAware representationManager,
+                                       @NotNull List<Set<ArrangementMatchCondition>> groupingRules)
   {
     myRepresentationManager = representationManager;
     Map<ArrangementSettingType, Collection<?>> map = ArrangementConfigUtil.buildAvailableConditions(filter, null);
     for (Map.Entry<ArrangementSettingType, Collection<?>> entry : map.entrySet()) {
       myMaxWidths.put(entry.getKey(), maxWidth(entry.getValue()));
     }
+    myMaxGroupTextWidth = maxWidth(ArrangementUtil.flatten(groupingRules));
   }
 
   private int maxWidth(Collection<?> values) {
@@ -99,6 +103,10 @@ public class ArrangementNodeDisplayManager {
     return myMaxWidths.get(type);
   }
 
+  public int getMaxGroupTextWidth() {
+    return myMaxGroupTextWidth;
+  }
+  
   /**
    * Asks current manager to sort in-place given arrangement condition ids ('field', 'class', 'method', 'public', 'static', 'final' etc).
    * 
