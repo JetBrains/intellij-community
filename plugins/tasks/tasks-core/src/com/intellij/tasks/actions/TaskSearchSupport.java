@@ -17,6 +17,7 @@
 package com.intellij.tasks.actions;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
@@ -25,18 +26,44 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
 /**
-* @author Dmitry Avdeev
-*/
+ * @author Dmitry Avdeev
+ */
 public class TaskSearchSupport {
   protected Matcher myMatcher;
   private final TaskManagerImpl myManager;
 
   public TaskSearchSupport(final Project project) {
     myManager = (TaskManagerImpl)TaskManager.getManager(project);
+  }
+
+  public List<Task> getLocalAndCachedTasks(String pattern) {
+    List<Task> tasks = new ArrayList<Task>();
+      ContainerUtil.addAll(tasks, myManager.getLocalTasks());
+      ContainerUtil.addAll(tasks, ContainerUtil.filter(myManager.getCachedIssues(), new Condition<Task>() {
+        @Override
+        public boolean value(final Task task) {
+          return myManager.findTask(task.getId()) == null;
+        }
+      }));
+    final Matcher matcher = getMatcher(pattern);
+    List<Task> filteredTasks = ContainerUtil.mapNotNull(tasks, new NullableFunction<Task, Task>() {
+      public Task fun(Task task) {
+        return matcher.matches(task.getId()) || matcher.matches(task.getSummary()) ? task : null;
+      }
+    });
+    ContainerUtil.sort(filteredTasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
+    return filteredTasks;
+  }
+
+  public List<Task> getRepositoryTasks(String pattern, int max, long since, boolean forceRequest) {
+    List<Task> tasks = myManager.getIssues(pattern, max, since, forceRequest);
+    ContainerUtil.sort(tasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
+    return tasks;
   }
 
   public List<Task> getItems(String pattern, boolean cached, boolean autopopup) {

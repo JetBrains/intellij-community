@@ -43,6 +43,8 @@ public abstract class TaskManager {
 
   public abstract List<Task> getIssues(@Nullable String query, boolean forceRequest);
 
+
+  public abstract List<Task> getIssues(String query, int max, long since, boolean forceRequest);
   /**
    * Returns already cached issues.
    * @return cached issues.
@@ -53,8 +55,6 @@ public abstract class TaskManager {
   public abstract Task updateIssue(String id); 
 
   public abstract LocalTask[] getLocalTasks();
-
-  public abstract List<LocalTask> getLocalTasks(String query);
 
   public abstract LocalTask addTask(Task issue);
 
