@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  
+  <problem>
+    <file>MethodOverloadsParentMethod.java</file>
+    <line>5</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method overloads method of superclass</problem_class>
+    <description>Method &lt;code&gt;foo()&lt;/code&gt; overloads a compatible method of a superclass, when overriding might have been intended #loc</description>
+  </problem>
+
+  <problem>
+    <file>MethodOverloadsParentMethod.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method overloads method of superclass</problem_class>
+    <description>Method &lt;code&gt;equals()&lt;/code&gt; overloads a compatible method of a superclass, when overriding might have been intended #loc</description>
+  </problem>
+
+  <problem>
+    <file>MethodOverloadsParentMethod.java</file>
+    <line>9</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method overloads method of superclass</problem_class>
+    <description>Method &lt;code&gt;bla()&lt;/code&gt; overloads a compatible method of a superclass, when overriding might have been intended #loc</description>
+  </problem>
+</problems>
