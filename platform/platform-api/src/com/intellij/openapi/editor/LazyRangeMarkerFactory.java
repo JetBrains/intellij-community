@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,6 +31,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,8 +55,8 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
         List<LazyMarker> markers = lazyMarkers.toStrongList();
         List<LazyMarker> markersToRemove = new ArrayList<LazyMarker>();
         for (final LazyMarker marker : markers) {
-          if (marker.getFile() == docFile) {
-            marker.ensureDelegate();
+          if (Comparing.equal(marker.getFile(), docFile)) {
+            marker.getOrCreateDelegate();
             markersToRemove.add(marker);
           }
         }
@@ -128,12 +130,12 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
       return myFile;
     }
 
-    @NotNull
-    public final RangeMarker ensureDelegate() {
+    @Nullable
+    private RangeMarker getOrCreateDelegate() {
       if (myDelegate == null) {
         Document document = FileDocumentManager.getInstance().getDocument(myFile);
         if (document == null) {
-          LOG.error("Document is null for "+myFile+"; valid:"+myFile.isValid()+"; type:"+myFile.getFileType()+"; marker.isValid():"+isValid());
+          return null;
         }
         myDelegate = createDelegate(myFile, document);
       }
@@ -146,7 +148,7 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
     @Override
     @NotNull
     public Document getDocument() {
-      return ensureDelegate().getDocument();
+      return getOrCreateDelegate().getDocument();
     }
 
     @Override
@@ -162,32 +164,36 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
 
     @Override
     public boolean isValid() {
-      return myDelegate == null ? myFile.isValid() && FileDocumentManager.getInstance().getDocument(myFile) != null : myDelegate.isValid();
+      RangeMarker delegate = getOrCreateDelegate();
+      return delegate != null && delegate.isValid();
     }
 
     @Override
     public void setGreedyToLeft(boolean greedy) {
-      ensureDelegate().setGreedyToLeft(greedy);
+      getOrCreateDelegate().setGreedyToLeft(greedy);
     }
 
     @Override
     public void setGreedyToRight(boolean greedy) {
-      ensureDelegate().setGreedyToRight(greedy);
+      getOrCreateDelegate().setGreedyToRight(greedy);
     }
 
     @Override
     public boolean isGreedyToRight() {
-      return ensureDelegate().isGreedyToRight();
+      return getOrCreateDelegate().isGreedyToRight();
     }
 
     @Override
     public boolean isGreedyToLeft() {
-      return ensureDelegate().isGreedyToLeft();
+      return getOrCreateDelegate().isGreedyToLeft();
     }
 
     @Override
     public void dispose() {
-      ensureDelegate().dispose();
+      RangeMarker delegate = getOrCreateDelegate();
+      if (delegate != null) {
+        delegate.dispose();
+      }
     }
   }
 
