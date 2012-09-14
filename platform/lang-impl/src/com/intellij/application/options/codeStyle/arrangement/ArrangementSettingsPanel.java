@@ -118,8 +118,29 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     setupKeyboardActions(actionManager, treeComponent);
 
     setupScrollingHelper(treeComponent, scrollPane, editorPane);
+    setupCanvasWidthUpdater(scrollPane);
   }
 
+  private void setupCanvasWidthUpdater(@NotNull JBScrollPane scrollPane) {
+    final JViewport viewport = scrollPane.getViewport();
+    viewport.addChangeListener(new ChangeListener() {
+
+      private int myWidth;
+
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        Rectangle visibleRect = viewport.getVisibleRect();
+        if (visibleRect == null || visibleRect.width <= 0) {
+          return;
+        }
+        if (myWidth != visibleRect.width) {
+          myWidth = visibleRect.width;
+          myRuleTree.updateCanvasWidth(myWidth);
+        }
+      }
+    });
+  }
+  
   /**
    * The general idea is to configure UI in a way that it automatically changes tree viewport 'y' coordinate in order to make
    * target rule visible on rule editor opening.

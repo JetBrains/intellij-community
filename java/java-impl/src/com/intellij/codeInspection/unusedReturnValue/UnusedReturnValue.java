@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,16 +57,19 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
       final RefMethod refMethod = (RefMethod)refEntity;
 
       if (refMethod.isConstructor()) return null;
-      if (refMethod.hasSuperMethods()) return null;
+      if (!refMethod.getSuperMethods().isEmpty()) return null;  
       if (refMethod.getInReferences().size() == 0) return null;
 
       if (!refMethod.isReturnValueUsed()) {
         final PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
         if (IGNORE_BUILDER_PATTERN && PropertyUtil.isSimplePropertySetter(psiMethod)) return null;
+
+        final boolean isNative = psiMethod.hasModifierProperty(PsiModifier.NATIVE);
+        if (refMethod.isExternalOverride() && !isNative) return null;
         return new ProblemDescriptor[]{manager.createProblemDescriptor(psiMethod.getNavigationElement(),
                                                                        InspectionsBundle
                                                                          .message("inspection.unused.return.value.problem.descriptor"),
-                                                                       getFix(processor), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                       !isNative ? getFix(processor) : null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                                                        false)};
       }
     }

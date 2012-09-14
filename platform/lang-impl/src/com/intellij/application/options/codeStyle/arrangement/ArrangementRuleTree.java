@@ -74,6 +74,7 @@ public class ArrangementRuleTree {
   @NotNull private final ArrangementNodeComponentFactory      myFactory;
   @NotNull private final List<Set<ArrangementMatchCondition>> myGroupingRules;
 
+  private int     myCanvasWidth;
   private boolean myExplicitSelectionChange;
   private boolean mySkipSelectionChange;
 
@@ -199,6 +200,35 @@ public class ArrangementRuleTree {
     }
   }
 
+  public void updateCanvasWidth(final int width) {
+    myCanvasWidth = width;
+    myRenderers.forEachKey(new TIntProcedure() {
+      @Override
+      public boolean execute(int row) {
+        doUpdateCanvasWidth(row); 
+        return true;
+      }
+    });
+  }
+
+  private void doUpdateCanvasWidth(int row) {
+    if (myCanvasWidth <= 0) {
+      return;
+    }
+    ArrangementNodeComponent component = myRenderers.get(row);
+    if (component == null) {
+      return;
+    }
+    if (!component.onCanvasWidthChange(myCanvasWidth)) {
+      return;
+    }
+
+    TreePath path = myTree.getPathForRow(row);
+    if (path != null) {
+      myTreeModel.nodeChanged((TreeNode)path.getLastPathComponent());
+    }
+  }
+  
   private void selectPreviousRule() {
     ArrangementTreeNode currentSelectionBottom = getCurrentSelectionBottom();
 
@@ -342,7 +372,7 @@ public class ArrangementRuleTree {
   @NotNull
   public List<ArrangementRuleEditingModelImpl> getActiveModels() {
     TreePath[] paths = mySelectionModel.getSelectionPaths();
-    if (paths == null || paths.length != 1) {
+    if (paths == null) {
       return Collections.emptyList();
     }
     
@@ -432,6 +462,7 @@ public class ArrangementRuleTree {
     ArrangementNodeComponent result = myRenderers.get(row);
     if (result == null || !result.getMatchCondition().equals(condition)) {
       myRenderers.put(row, result = myFactory.getComponent(condition, model));
+      doUpdateCanvasWidth(row);
     }
     return result;
   }
@@ -619,7 +650,9 @@ public class ArrangementRuleTree {
       }
       
       if (row < 0) {
-        return myFactory.getComponent(node, null).getUiComponent();
+        ArrangementNodeComponent component = myFactory.getComponent(node, null);
+        doUpdateCanvasWidth(row);
+        return component.getUiComponent();
       }
       ArrangementNodeComponent component = getNodeComponentAt(row, node, myModels.get(row));
       component.setSelected(selected);

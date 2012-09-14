@@ -356,7 +356,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   public boolean hasSuperMethods() {
-    return !getSuperMethods().isEmpty() || isLibraryOverride(new HashSet<RefMethod>());
+    return !getSuperMethods().isEmpty() || isExternalOverride();
   }
 
   public boolean isReferenced() {

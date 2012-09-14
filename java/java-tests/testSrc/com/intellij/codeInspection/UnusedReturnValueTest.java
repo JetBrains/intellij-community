@@ -31,6 +31,10 @@ public class UnusedReturnValueTest extends InspectionTestCase {
     doTest();
   }
 
+  public void testNative() throws Exception {
+    doTest();
+  }
+
   public void testHierarchy() throws Exception {
     doTest();
   }

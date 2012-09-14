@@ -145,9 +145,9 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     if (catchBlock != null) {
       catchBlock.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
-          final PsiExpression left = expression.getLExpression();
-          if (left instanceof PsiReferenceExpression && parameter.equals(((PsiReferenceExpression)left).resolve())) {
+        public void visitReferenceExpression(PsiReferenceExpression expression) {
+          super.visitReferenceExpression(expression);
+          if (expression.resolve() == parameter && PsiUtil.isAccessedForWriting(expression)) {
             result[0] = false;
             stopWalking();
           }
