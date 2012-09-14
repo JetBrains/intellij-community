@@ -30,6 +30,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +56,7 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
         List<LazyMarker> markersToRemove = new ArrayList<LazyMarker>();
         for (final LazyMarker marker : markers) {
           if (Comparing.equal(marker.getFile(), docFile)) {
-            marker.ensureDelegate();
+            marker.getOrCreateDelegate();
             markersToRemove.add(marker);
           }
         }
@@ -129,10 +130,13 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
       return myFile;
     }
 
-    @NotNull
-    public final RangeMarker ensureDelegate() {
+    @Nullable
+    private RangeMarker getOrCreateDelegate() {
       if (myDelegate == null) {
         Document document = FileDocumentManager.getInstance().getDocument(myFile);
+        if (document == null) {
+          return null;
+        }
         myDelegate = createDelegate(myFile, document);
       }
       return myDelegate;
@@ -144,7 +148,7 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
     @Override
     @NotNull
     public Document getDocument() {
-      return ensureDelegate().getDocument();
+      return getOrCreateDelegate().getDocument();
     }
 
     @Override
@@ -160,32 +164,36 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
 
     @Override
     public boolean isValid() {
-      return myDelegate != null ? myDelegate.isValid() : myFile.isValid();
+      RangeMarker delegate = getOrCreateDelegate();
+      return delegate != null && delegate.isValid();
     }
 
     @Override
     public void setGreedyToLeft(boolean greedy) {
-      ensureDelegate().setGreedyToLeft(greedy);
+      getOrCreateDelegate().setGreedyToLeft(greedy);
     }
 
     @Override
     public void setGreedyToRight(boolean greedy) {
-      ensureDelegate().setGreedyToRight(greedy);
+      getOrCreateDelegate().setGreedyToRight(greedy);
     }
 
     @Override
     public boolean isGreedyToRight() {
-      return ensureDelegate().isGreedyToRight();
+      return getOrCreateDelegate().isGreedyToRight();
     }
 
     @Override
     public boolean isGreedyToLeft() {
-      return ensureDelegate().isGreedyToLeft();
+      return getOrCreateDelegate().isGreedyToLeft();
     }
 
     @Override
     public void dispose() {
-      ensureDelegate().dispose();
+      RangeMarker delegate = getOrCreateDelegate();
+      if (delegate != null) {
+        delegate.dispose();
+      }
     }
   }
 
