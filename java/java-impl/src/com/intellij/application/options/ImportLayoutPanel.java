@@ -61,7 +61,7 @@ public abstract class ImportLayoutPanel extends JPanel {
 
   public ImportLayoutPanel() {
     super(new BorderLayout());
-    setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.import.layout"), false));
+    setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.import.layout"), false, new Insets(0, 0, 0, 0)));
 
     myCbLayoutStaticImportsSeparately.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
@@ -131,7 +131,7 @@ public abstract class ImportLayoutPanel extends JPanel {
         }
       }).setButtonComparator(ApplicationBundle.message("button.add.package"), ApplicationBundle.message("button.add.blank"),
                              "Remove", "Up", "Down")
-        .setPreferredSize(new Dimension(-1, 200)).createPanel(), BorderLayout.CENTER);
+        .setPreferredSize(new Dimension(-1, 100)).createPanel(), BorderLayout.CENTER);
   }
 
 
