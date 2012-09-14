@@ -49,7 +49,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
+import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
+import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -401,7 +405,13 @@ public class HighlightClassUtil {
       if (aClass.isInterface()) {
         boolean isImplements = list.equals(aClass.getImplementsList());
         if (isImplements) {
-          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, JavaErrorMessages.message("implements.after.interface"));
+          final HighlightInfo highlightInfo =
+            HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, JavaErrorMessages.message("implements.after.interface"));
+          final PsiClassType[] referencedTypes = list.getReferencedTypes();
+          if (referencedTypes.length > 0) {
+            QuickFixAction.registerQuickFixAction(highlightInfo, new ChangeExtendsToImplementsFix(aClass, referencedTypes[0]));
+          }
+          return highlightInfo;
         }
       }
     }

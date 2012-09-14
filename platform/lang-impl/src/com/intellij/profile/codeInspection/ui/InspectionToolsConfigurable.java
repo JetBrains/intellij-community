@@ -105,7 +105,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
         final ModifiableModel model = SingleInspectionProfilePanel.createNewProfile(-1, getSelectedObject(), myWholePanel, "", existingProfileNames);
         if (model != null) {
           addProfile((InspectionProfileImpl)model);
-          myDeletedProfiles.remove(model.getName());
+          myDeletedProfiles.remove(getProfilePrefix(model) + model.getName());
           myDeleteButton.setEnabled(true);
         }
       }
@@ -115,7 +115,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       public void actionPerformed(ActionEvent e) {
         final InspectionProfileImpl selectedProfile = (InspectionProfileImpl)myProfiles.getSelectedItem();
         ((DefaultComboBoxModel)myProfiles.getModel()).removeElement(selectedProfile);
-        myDeletedProfiles.add(selectedProfile.getName());
+        myDeletedProfiles.add(getProfilePrefix(selectedProfile) + selectedProfile.getName());
         myDeleteButton.setEnabled(isDeleteEnabled(selectedProfile));
       }
     });
@@ -177,7 +177,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
             if (Messages.showOkCancelDialog(myWholePanel, "Profile with name \'" + profile.getName() + "\' already exists. Do you want to overwrite it?", "Warning", Messages.getInformationIcon()) != DialogWrapper.OK_EXIT_CODE) return;
           }
           addProfile((InspectionProfileImpl)profile.getModifiableModel());
-          myDeletedProfiles.remove(profile.getName());
+          myDeletedProfiles.remove(getProfilePrefix(profile) + profile.getName());
           myDeleteButton.setEnabled(true);
         }
         catch (InvalidDataException e1) {
@@ -228,7 +228,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
           final InspectionProfileImpl modifiableModel = (InspectionProfileImpl)model.getModifiableModel();
           modifiableModel.setModified(true);
           addProfile(modifiableModel);
-          myDeletedProfiles.remove(model.getName());
+          myDeletedProfiles.remove(getProfilePrefix(model) + model.getName());
           myDeleteButton.setEnabled(true);
         }
       }
@@ -244,7 +244,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     final String modelName = model.getName();
     final SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(myProjectProfileManager, modelName, model);
     myPanel.add(modelName, panel);
-    if (!myPanels.containsKey(modelName)) {
+    if (!myPanels.containsKey(getProfilePrefix(model) + modelName)) {
       ((DefaultComboBoxModel)myProfiles.getModel()).addElement(model);
     }
     putProfile(model, panel);
@@ -323,7 +323,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     final Map<String, SingleInspectionProfilePanel> panels = new LinkedHashMap<String, SingleInspectionProfilePanel>();
     for (final String name : myPanels.keySet()) {
       if (myDeletedProfiles.remove(name)) {
-        deleteProfile(name);
+        final String profileName = getProfilePanel(name).getSelectedProfile().getName();
+        deleteProfile(profileName);
       }
       else {
         final SingleInspectionProfilePanel panel = getProfilePanel(name);

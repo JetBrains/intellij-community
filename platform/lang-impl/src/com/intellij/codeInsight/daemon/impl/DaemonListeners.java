@@ -181,7 +181,12 @@ class DaemonListeners implements Disposable {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         // mem leak after closing last editor otherwise
-        myDaemonCodeAnalyzer.hideLastIntentionHint();
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            myDaemonCodeAnalyzer.hideLastIntentionHint();
+          }
+        });
       }
     };
     EditorFactory.getInstance().addEditorFactoryListener(editorFactoryListener, this);

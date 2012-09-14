@@ -111,6 +111,11 @@ public class ArrangementAndNodeComponent extends JPanel implements ArrangementNo
   }
 
   @Override
+  public boolean onCanvasWidthChange(int width) {
+    return false;
+  }
+
+  @Override
   public void setSelected(boolean selected) {
     for (ArrangementNodeComponent component : myComponents) {
       component.setSelected(selected);

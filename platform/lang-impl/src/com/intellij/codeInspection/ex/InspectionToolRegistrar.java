@@ -131,47 +131,45 @@ public class InspectionToolRegistrar {
     }
   }
 
-  /*
-  private void printExtension(Class aClass, InspectionTool tool) {
-    StringBuilder builder = new StringBuilder(tool instanceof GlobalInspectionToolWrapper ? "<globalInspection" : "<localInspection");
-    if (tool instanceof LocalInspectionToolWrapper) {
-      String id = ((LocalInspectionToolWrapper)tool).getID();
-      if (!id.equals(tool.getShortName())) {
-        builder.append(" suppressId=\"").append(id).append('"');
-      }
-      String alternativeID = ((LocalInspectionToolWrapper)tool).getAlternativeID();
-      if (alternativeID != null) {
-        builder.append(" alternativeId=\"").append(alternativeID).append('"');
-      }
-    }
-    builder.append(" shortName=\"").append(tool.getShortName()).append('"');
-
-    CommonBundle.lastKey = null;
-    String displayName = tool.getDisplayName();
-    String lastBundle = CommonBundle.lastBundle;
-    if (CommonBundle.lastKey != null) {
-      builder.append(" bundle=\"").append(lastBundle).append("\" key=\"").append(CommonBundle.lastKey).append('"');
-    }
-    else {
-      builder.append(" displayName=\"").append(displayName).append('"');
-    }
-    CommonBundle.lastKey = null;
-    String groupName = tool.getGroupDisplayName();
-    if (CommonBundle.lastKey != null) {
-      if (lastBundle == null || !lastBundle.equals(CommonBundle.lastBundle) ) {
-        builder.append(" groupBundle=\"").append(CommonBundle.lastBundle).append('"');
-      }
-      builder.append(" groupKey=\"").append(CommonBundle.lastKey).append('"');
-    }
-    else {
-      builder.append(" groupName=\"").append(groupName).append('"');
-    }
-    builder.append(" enabledByDefault=\"" + tool.isEnabledByDefault() + "\" ");
-    builder.append(" level=\"").append(tool.getDefaultLevel()).append('"');
-    builder.append(" implementationClass=\"" + aClass.getName() + "\"/>");
-    System.out.println(builder);
-  }
-  */
+  //private static void printExtension(Class aClass, InspectionTool tool) {
+  //  StringBuilder builder = new StringBuilder(tool instanceof GlobalInspectionToolWrapper ? "<globalInspection" : "<localInspection");
+  //  if (tool instanceof LocalInspectionToolWrapper) {
+  //    String id = ((LocalInspectionToolWrapper)tool).getID();
+  //    if (!id.equals(tool.getShortName())) {
+  //      builder.append(" suppressId=\"").append(id).append('"');
+  //    }
+  //    String alternativeID = ((LocalInspectionToolWrapper)tool).getAlternativeID();
+  //    if (alternativeID != null) {
+  //      builder.append(" alternativeId=\"").append(alternativeID).append('"');
+  //    }
+  //  }
+  //  builder.append(" shortName=\"").append(tool.getShortName()).append('"');
+  //
+  //  CommonBundle.lastKey = null;
+  //  String displayName = tool.getDisplayName();
+  //  String lastBundle = CommonBundle.lastBundle;
+  //  if (CommonBundle.lastKey != null) {
+  //    builder.append(" bundle=\"").append(lastBundle).append("\" key=\"").append(CommonBundle.lastKey).append('"');
+  //  }
+  //  else {
+  //    builder.append(" displayName=\"").append(displayName).append('"');
+  //  }
+  //  CommonBundle.lastKey = null;
+  //  String groupName = tool.getGroupDisplayName();
+  //  if (CommonBundle.lastKey != null) {
+  //    if (lastBundle == null || !lastBundle.equals(CommonBundle.lastBundle) ) {
+  //      builder.append(" groupBundle=\"").append(CommonBundle.lastBundle).append('"');
+  //    }
+  //    builder.append(" groupKey=\"").append(CommonBundle.lastKey).append('"');
+  //  }
+  //  else {
+  //    builder.append(" groupName=\"").append(groupName).append('"');
+  //  }
+  //  builder.append(" enabledByDefault=\"" + tool.isEnabledByDefault() + "\" ");
+  //  builder.append(" level=\"").append(tool.getDefaultLevel()).append('"');
+  //  builder.append(" implementationClass=\"" + aClass.getName() + "\"/>");
+  //  System.out.println(builder);
+  //}
 
   private Factory<InspectionToolWrapper> registerInspectionTool(final Class aClass, boolean store) {
     if (LocalInspectionTool.class.isAssignableFrom(aClass)) {

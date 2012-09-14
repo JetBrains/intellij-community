@@ -232,3 +232,15 @@ class IDEA91481 {
   class Bean {}
   class DirectBean extends Bean {}
 }
+
+class IDEA89640 {
+  interface X {}
+  class Y<<warning descr="Type parameter 'T' is never used">T</warning> extends X> {}
+
+  public static void main(String[] args) {
+    Y<? extends X> a = null;
+    Y<? extends X> b = null;
+    boolean flag = a  != b; 
+    System.out.println(flag);
+  }
+}

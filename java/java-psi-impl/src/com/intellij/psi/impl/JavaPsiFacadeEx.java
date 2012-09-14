@@ -22,6 +22,7 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.JavaPsiFacade;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 public abstract class JavaPsiFacadeEx extends JavaPsiFacade {
@@ -30,5 +31,5 @@ public abstract class JavaPsiFacadeEx extends JavaPsiFacade {
   }
 
   @TestOnly
-  public abstract void setAssertOnFileLoadingFilter(final VirtualFileFilter filter);
+  public abstract void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter);
 }

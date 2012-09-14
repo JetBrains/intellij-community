@@ -106,6 +106,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     for (ArrangementModifier modifier : visibility) {
       and(FIELD, modifier);
     }
+    and(FIELD);
     and(CONSTRUCTOR);
     and(METHOD, STATIC);
     and(METHOD);

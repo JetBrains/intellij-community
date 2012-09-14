@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>CloneDeclaresCloneNonSupportedException.java</file>
+    <line>11</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'clone()' does not declare 'CloneNotSupportedException'</problem_class>
+    <description>&lt;code&gt;clone()&lt;/code&gt; does not declare 'CloneNotSupportedException'</description>
+  </problem>
+</problems>

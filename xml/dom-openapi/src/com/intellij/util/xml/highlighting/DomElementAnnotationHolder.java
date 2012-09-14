@@ -29,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 
 public interface DomElementAnnotationHolder extends Iterable<DomElementProblemDescriptor>{
 
+  boolean isOnTheFly();
+
   @NotNull
   DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, @Nullable String message, LocalQuickFix... fixes);
 

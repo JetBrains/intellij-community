@@ -467,6 +467,25 @@ public class ContainerUtil extends ContainerUtilRt {
     }
   }
 
+  /**
+   * Adds all not-null elements from the {@code elements}, ignoring nulls
+   */
+  public static <T> void addAllNotNull(@NotNull Collection<T> collection, @NotNull Iterable<? extends T> elements) {
+    addAll(collection, elements.iterator());
+  }
+
+  /**
+   * Adds all not-null elements from the {@code elements}, ignoring nulls
+   */
+  public static <T> void addAllNotNull(@NotNull Collection<T> collection, @NotNull Iterator<? extends T> elements) {
+    while (elements.hasNext()) {
+      T o = elements.next();
+      if (o != null) {
+        collection.add(o);
+      }
+    }
+  }
+
   @NotNull
   public static <T> List<T> collect(@NotNull Iterator<T> iterator) {
     if (!iterator.hasNext()) return Collections.emptyList();
@@ -855,6 +874,19 @@ public class ContainerUtil extends ContainerUtilRt {
     //noinspection ManualArrayToCollectionCopy
     for (T element : elements) {
       collection.add(element);
+    }
+    return collection;
+  }
+
+  /**
+   * Adds all not-null elements from the {@code elements}, ignoring nulls
+   */
+  public static <T, A extends T, C extends Collection<T>> C addAllNotNull(@NotNull C collection, @NotNull A... elements) {
+    //noinspection ManualArrayToCollectionCopy
+    for (T element : elements) {
+      if (element != null) {
+        collection.add(element);
+      }
     }
     return collection;
   }
