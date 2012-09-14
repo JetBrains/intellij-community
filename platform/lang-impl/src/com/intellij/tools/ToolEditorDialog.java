@@ -16,6 +16,7 @@
 
 package com.intellij.tools;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.macro.MacrosDialog;
@@ -36,8 +37,11 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Consumer;
+import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
@@ -55,6 +59,8 @@ public class ToolEditorDialog extends DialogWrapper {
   private final JCheckBox myShowInProjectTreeCheckbox = new JCheckBox(ToolsBundle.message("tools.menu.project.checkbox"));
   private final JCheckBox myShowInSearchResultsPopupCheckbox = new JCheckBox(ToolsBundle.message("tools.menu.search.checkbox"));
   private final JCheckBox myUseConsoleCheckbox = new JCheckBox(ToolsBundle.message("tools.open.console.checkbox"));
+  private final JCheckBox myShowConsoleOnStdOutCheckbox = new JCheckBox(ExecutionBundle.message("logs.show.console.on.stdout"));
+  private final JCheckBox myShowConsoleOnStdErrCheckbox = new JCheckBox(ExecutionBundle.message("logs.show.console.on.stderr"));
   private final JCheckBox mySynchronizedAfterRunCheckbox = new JCheckBox(ToolsBundle.message("tools.synchronize.files.checkbox"));
   private boolean myEnabled;
 
@@ -179,6 +185,8 @@ public class ToolEditorDialog extends DialogWrapper {
     setTitle(ToolsBundle.message("tools.edit.title"));
     init();
     addListeners();
+    myShowConsoleOnStdOutCheckbox.setVisible(false);
+    myShowConsoleOnStdErrCheckbox.setVisible(false);
   }
 
   private JPanel createCommandPane() {
@@ -375,6 +383,14 @@ public class ToolEditorDialog extends DialogWrapper {
         handleOKButton();
       }
     });
+
+    myUseConsoleCheckbox.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        myShowConsoleOnStdOutCheckbox.setVisible(myUseConsoleCheckbox.isSelected());
+        myShowConsoleOnStdErrCheckbox.setVisible(myUseConsoleCheckbox.isSelected());
+      }
+    });
   }
 
   private void handleOKButton() {
@@ -392,6 +408,8 @@ public class ToolEditorDialog extends DialogWrapper {
     tool.setShownInProjectViews(myShowInProjectTreeCheckbox.isSelected());
     tool.setShownInSearchResultsPopup(myShowInSearchResultsPopupCheckbox.isSelected());
     tool.setUseConsole(myUseConsoleCheckbox.isSelected());
+    tool.setShowConsoleOnStdOut(myShowConsoleOnStdOutCheckbox.isSelected());
+    tool.setShowConsoleOnStdErr(myShowConsoleOnStdErrCheckbox.isSelected());
     tool.setFilesSynchronizedAfterRun(mySynchronizedAfterRunCheckbox.isSelected());
     tool.setEnabled(myEnabled);
 
@@ -428,6 +446,8 @@ public class ToolEditorDialog extends DialogWrapper {
     myShowInProjectTreeCheckbox.setSelected(tool.isShownInProjectViews());
     myShowInSearchResultsPopupCheckbox.setSelected(tool.isShownInSearchResultsPopup());
     myUseConsoleCheckbox.setSelected(tool.isUseConsole());
+    myShowConsoleOnStdOutCheckbox.setSelected(tool.isShowConsoleOnStdOut());
+    myShowConsoleOnStdErrCheckbox.setSelected(tool.isShowConsoleOnStdErr());
     mySynchronizedAfterRunCheckbox.setSelected(tool.synchronizeAfterExecution());
     myEnabled = tool.isEnabled();
     myTfCommandWorkingDirectory.setText(toCurrentSystemFormat(tool.getWorkingDirectory()));
@@ -453,11 +473,13 @@ public class ToolEditorDialog extends DialogWrapper {
   }
 
   private JPanel getOptionsPanel() {
-    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+    JPanel panel = new JPanel(new MigLayout("fill, gap 10"));
     panel.setBorder(IdeBorderFactory.createTitledBorder(ToolsBundle.message("tools.options.group"), true));
     panel.add(mySynchronizedAfterRunCheckbox);
     panel.add(myUseConsoleCheckbox);
-    panel.add(myOutputFiltersButton);
+    panel.add(myOutputFiltersButton, "ax right, wrap");
+    panel.add(myShowConsoleOnStdOutCheckbox);
+    panel.add(myShowConsoleOnStdErrCheckbox, "spanx 2");
     return panel;
   }
 

@@ -133,7 +133,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
     myConsole = null;
   }
 
-  public void addChangeListener(final ChangeListener listener, final Disposable parent) {
+  public void addChangeListener(@NotNull final ChangeListener listener, @NotNull final Disposable parent) {
     if (myConsole instanceof ObservableConsoleView) {
       ((ObservableConsoleView)myConsole).addChangeListener(listener, parent);
     } else {

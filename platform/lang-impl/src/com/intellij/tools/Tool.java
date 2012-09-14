@@ -52,6 +52,8 @@ public class Tool implements SchemeElement {
   private boolean myEnabled;
 
   private boolean myUseConsole;
+  private boolean myShowConsoleOnStdOut;
+  private boolean myShowConsoleOnStdErr;
   private boolean mySynchronizeAfterExecution;
 
   private String myWorkingDirectory;
@@ -103,6 +105,14 @@ public class Tool implements SchemeElement {
     return myUseConsole;
   }
 
+  public boolean isShowConsoleOnStdOut() {
+    return myShowConsoleOnStdOut;
+  }
+
+  public boolean isShowConsoleOnStdErr() {
+    return myShowConsoleOnStdErr;
+  }
+
   public boolean synchronizeAfterExecution() {
     return mySynchronizeAfterExecution;
   }
@@ -137,6 +147,14 @@ public class Tool implements SchemeElement {
 
   void setUseConsole(boolean useConsole) {
     myUseConsole = useConsole;
+  }
+
+  void setShowConsoleOnStdOut(boolean showConsole) {
+    myShowConsoleOnStdOut = showConsole;
+  }
+
+  void setShowConsoleOnStdErr(boolean showConsole) {
+    myShowConsoleOnStdErr = showConsole;
   }
 
   public void setFilesSynchronizedAfterRun(boolean synchronizeAfterRun) {
@@ -192,6 +210,8 @@ public class Tool implements SchemeElement {
     myShownInSearchResultsPopup = source.myShownInSearchResultsPopup;
     myEnabled = source.myEnabled;
     myUseConsole = source.myUseConsole;
+    myShowConsoleOnStdOut = source.myShowConsoleOnStdOut;
+    myShowConsoleOnStdErr = source.myShowConsoleOnStdErr;
     mySynchronizeAfterExecution = source.mySynchronizeAfterExecution;
     myWorkingDirectory = source.myWorkingDirectory;
     myProgram = source.myProgram;
@@ -215,6 +235,8 @@ public class Tool implements SchemeElement {
       myShownInSearchResultsPopup == source.myShownInSearchResultsPopup &&
       myEnabled == source.myEnabled &&
       myUseConsole == source.myUseConsole &&
+      myShowConsoleOnStdOut == source.myShowConsoleOnStdOut &&
+      myShowConsoleOnStdErr == source.myShowConsoleOnStdErr &&
       mySynchronizeAfterExecution == source.mySynchronizeAfterExecution &&
       Comparing.equal(myWorkingDirectory, source.myWorkingDirectory) &&
       Comparing.equal(myProgram, source.myProgram) &&
