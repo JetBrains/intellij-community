@@ -1,4 +1,5 @@
 /*
+/*
  * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,10 +17,9 @@
 
 package com.intellij.application.options.codeStyle;
 
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,7 +34,6 @@ public class CodeStyleSchemesPanel{
 
   private final CodeStyleSchemesModel myModel;
   private JPanel myPanel;
-  private JBScrollPane myJBScrollPane;
   private JButton myManageButton;
 
   private boolean myIsReset = false;
@@ -80,8 +79,6 @@ public class CodeStyleSchemesPanel{
         showManageSchemesDialog();
       }
     });
-    
-    myJBScrollPane.setBorder(null);
   }
 
   private void onCombo() {
