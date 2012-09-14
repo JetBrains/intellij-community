@@ -41,7 +41,7 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
   private final EditorTextField myEditorField;
   private final Project         myProject;
   private Consumer<String> myMessageConsumer;
-  private final TitledSeparatorWithMnemonic mySeparator;
+  private final TitledSeparator mySeparator;
   private boolean myCheckSpelling;
 
   public CommitMessage(Project project) {
