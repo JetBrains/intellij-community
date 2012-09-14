@@ -30,7 +30,8 @@
       <keyboard-shortcut first-keystroke="meta 2" />
     </action>
     <action id="FileStructurePopup">
-      <keyboard-shortcut first-keystroke="meta 6"/>
+      <keyboard-shortcut first-keystroke="control 6"/>
+      <keyboard-shortcut first-keystroke="meta F12"/>
     </action>
     <action id="AutoIndentLines">
       <keyboard-shortcut first-keystroke="meta alt I" />
@@ -54,9 +55,9 @@
       <keyboard-shortcut first-keystroke="alt ESCAPE" />
     </action>
     <action id="CollapseRegion">
+      <keyboard-shortcut first-keystroke="meta alt LEFT" />
       <keyboard-shortcut first-keystroke="meta SUBTRACT" />
       <keyboard-shortcut first-keystroke="meta MINUS" />
-      <keyboard-shortcut first-keystroke="meta alt LEFT" />
     </action>
     <action id="CollapseSelection" />
     <action id="Console.History.Next" />
@@ -167,9 +168,9 @@
       <keyboard-shortcut first-keystroke="meta OPEN_BRACKET" />
     </action>
     <action id="ExpandRegion">
+      <keyboard-shortcut first-keystroke="meta alt RIGHT"/>
       <keyboard-shortcut first-keystroke="meta ADD" />
       <keyboard-shortcut first-keystroke="meta EQUALS" />
-      <keyboard-shortcut first-keystroke="meta alt RIGHT" />
     </action>
     <action id="ExternalJavaDoc">
       <keyboard-shortcut first-keystroke="shift F1" />
@@ -291,12 +292,12 @@
     <action id="ResizeToolWindowDown" />
     <action id="ResizeToolWindowUp" />
     <action id="Resume">
+      <keyboard-shortcut first-keystroke="control Y"/>
       <keyboard-shortcut first-keystroke="F9" />
-      <keyboard-shortcut first-keystroke="control Y" />
     </action>
     <action id="Run">
+      <keyboard-shortcut first-keystroke="meta R"/>
       <keyboard-shortcut first-keystroke="shift F10" />
-      <keyboard-shortcut first-keystroke="meta R" />
     </action>
     <action id="SaveAll">
       <keyboard-shortcut first-keystroke="meta alt S" />
@@ -316,8 +317,8 @@
       <keyboard-shortcut first-keystroke="F6" />
     </action>
     <action id="Stop">
+      <keyboard-shortcut first-keystroke="meta PERIOD"/>
       <keyboard-shortcut first-keystroke="meta F2" />
-      <keyboard-shortcut first-keystroke="meta PERIOD" />
     </action>
     <action id="Vcs.QuickListPopupAction" />
     <action id="AddFilesToProjectAction">
