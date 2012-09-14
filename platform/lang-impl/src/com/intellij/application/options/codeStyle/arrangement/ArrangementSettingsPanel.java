@@ -351,4 +351,10 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   protected String getTabTitle() {
     return ApplicationBundle.message("arrangement.title.settings.tab");
   }
+
+  @Override
+  public void dispose() {
+    super.dispose();
+    myRuleTree.disposeUI();
+  }
 }
