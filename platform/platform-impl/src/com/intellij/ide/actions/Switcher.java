@@ -957,6 +957,13 @@ public class Switcher extends AnAction implements DumbAware {
         }
       }
 
+      @Nullable
+      @Override
+      protected Object findElement(String s) {
+        final List<SpeedSearchObjectWithWeight> elements = SpeedSearchObjectWithWeight.findElement(s, this);
+        return elements.isEmpty() ? null : elements.get(0).node;
+      }
+
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
         final MyList list = getSelectedList();
