@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.embedder;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.codehaus.plexus.component.repository.ComponentDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -139,8 +140,8 @@ public class MavenServerEmbedderTest extends MavenImportingTestCase {
     MavenModel project = result.projectData.mavenModel;
     assertNotNull(project);
     assertEquals("project", project.getMavenId().getArtifactId());
-    assertPathEquals(myProjectRoot.getPath() + "/target", project.getBuild().getDirectory());
-    assertPathEquals(myProjectRoot.getPath() + "/src/main/java", project.getBuild().getSources().get(0));
+    PlatformTestUtil.assertPathsEqual(myProjectRoot.getPath() + "/target", project.getBuild().getDirectory());
+    PlatformTestUtil.assertPathsEqual(myProjectRoot.getPath() + "/src/main/java", project.getBuild().getSources().get(0));
   }
 
   public void testResolvingProjectWithExtensions() throws Exception {

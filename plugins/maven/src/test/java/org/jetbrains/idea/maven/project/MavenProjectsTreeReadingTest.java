@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Function;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -2165,9 +2166,9 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     updateAll(myProjectPom);
 
     MavenProject project = myTree.getRootProjects().get(0);
-    assertPathEquals(pathFromBasedir("my-target"), project.getBuildDirectory());
-    assertPathEquals(pathFromBasedir("my-target/classes"), project.getOutputDirectory());
-    assertPathEquals(pathFromBasedir("my-target/test-classes"), project.getTestOutputDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target"), project.getBuildDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target/classes"), project.getOutputDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target/test-classes"), project.getTestOutputDirectory());
 
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
     try {
@@ -2177,9 +2178,9 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
       embeddersManager.releaseInTests();
     }
 
-    assertPathEquals(pathFromBasedir("my-target"), project.getBuildDirectory());
-    assertPathEquals(pathFromBasedir("my-target/classes"), project.getOutputDirectory());
-    assertPathEquals(pathFromBasedir("my-target/test-classes"), project.getTestOutputDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target"), project.getBuildDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target/classes"), project.getOutputDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target/test-classes"), project.getTestOutputDirectory());
   }
 
   private static class MyLoggingListener extends MavenProjectsTree.ListenerAdapter {

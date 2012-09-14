@@ -23,6 +23,7 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Document;
@@ -38,6 +39,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -428,6 +430,12 @@ public class PlatformTestUtil {
     return true;
   }
 
+  public static void assertPathsEqual(@Nullable String expected, @Nullable String actual) {
+    if (expected != null) expected = FileUtil.toSystemIndependentName(expected);
+    if (actual != null) actual = FileUtil.toSystemIndependentName(actual);
+    assertEquals(expected, actual);
+  }
+
   public static class TestInfo {
     private final ThrowableRunnable test; // runnable to measure
     private final int expectedMs;           // millis the test is expected to run
@@ -582,6 +590,7 @@ public class PlatformTestUtil {
     return map;
   }
 
+  @SuppressWarnings("UnsafeVfsRecursion")
   public static void assertDirectoriesEqual(VirtualFile dirAfter, VirtualFile dirBefore, @Nullable VirtualFileFilter fileFilter) throws IOException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -756,5 +765,19 @@ public class PlatformTestUtil {
   public static <T> T notNull(@Nullable T t) {
     assertNotNull(t);
     return t;
+  }
+
+  public static void deleteFiles(VirtualFile... files) throws IOException {
+    AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(PlatformTestUtil.class);
+    try {
+      for (VirtualFile file : files) {
+        if (file != null) {
+          file.delete(PlatformTestUtil.class);
+        }
+      }
+    }
+    finally {
+      token.finish();
+    }
   }
 }

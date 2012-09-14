@@ -485,12 +485,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
     }.execute().getResultObject();
   }
 
-  protected static void assertPathEquals(String expected, String actual) {
-    if (expected != null) expected = FileUtil.toSystemIndependentName(expected);
-    if (actual != null) actual = FileUtil.toSystemIndependentName(actual);
-    assertEquals(expected, actual);
-  }
-
   protected static <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, Collection<T> expected) {
     assertOrderedElementsAreEqual(actual, expected.toArray());
   }
