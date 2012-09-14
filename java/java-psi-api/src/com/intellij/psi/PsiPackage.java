@@ -110,5 +110,9 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
   @NonNls
   String getName();
 
+  /**
+   * This method is intended to be used in dumb mode only.
+   * Most likely, it should be hidden in implementation.
+   */
   boolean containsClassNamed(String name);
 }

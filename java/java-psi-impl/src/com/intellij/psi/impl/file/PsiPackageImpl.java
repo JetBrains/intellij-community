@@ -210,7 +210,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       NameHint nameHint = processor.getHint(NameHint.KEY);
       if (nameHint != null) {
         final String shortName = nameHint.getName(state);
-        if (containsClassNamed(shortName) && processClassesByName(processor, state, place, scope, shortName)) return false;
+        if (processClassesByName(processor, state, place, scope, shortName)) return false;
       }
       else if (prefixMatcher != null) {
         for (String className : getClassNamesCache()) {
