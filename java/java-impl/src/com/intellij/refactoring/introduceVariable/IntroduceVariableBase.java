@@ -41,6 +41,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
@@ -154,7 +155,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   }
 
   public static boolean isPreferStatements() {
-    return Boolean.valueOf(PropertiesComponent.getInstance().getOrInit(PREFER_STATEMENTS_OPTION, "false")).booleanValue();
+    return Boolean.valueOf(PropertiesComponent.getInstance().getOrInit(PREFER_STATEMENTS_OPTION, "false")).booleanValue() || Registry.is(PREFER_STATEMENTS_OPTION, false);
   }
 
   public static List<PsiExpression> collectExpressions(final PsiFile file, final Editor editor, final int offset, final PsiElement... statementsInRange) {
