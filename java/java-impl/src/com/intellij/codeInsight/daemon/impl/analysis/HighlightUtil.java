@@ -628,8 +628,7 @@ public class HighlightUtil {
       };
       PsiScopesUtil.treeWalkUp(proc, identifier, scope);
       if (scope instanceof PsiResourceList && proc.size() == 0) {
-        @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
-        NavigatablePsiElement parent = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class);
+        @SuppressWarnings({"unchecked"}) NavigatablePsiElement parent = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class);
         scope = parent;
         PsiScopesUtil.treeWalkUp(proc, identifier, scope);
       }
@@ -1812,8 +1811,7 @@ public class HighlightUtil {
           referencedClass = PsiUtil.resolveClassInType(type);
         }
         else if (qualifier instanceof PsiThisExpression || qualifier == null) {
-          @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
-          PsiMethod parent = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiMember.class);
+          @SuppressWarnings({"unchecked"}) PsiMethod parent = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiMember.class);
           resolved = parent;
           expression = qualifier == null ? expression : qualifier;
           if (resolved != null) {

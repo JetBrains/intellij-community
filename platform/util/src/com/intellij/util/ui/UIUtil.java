@@ -2092,7 +2092,7 @@ public class UIUtil {
     Component eachParent = c;
     while (eachParent != null) {
       if (cls.isAssignableFrom(eachParent.getClass())) {
-        @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"}) final T t = (T)eachParent;
+        @SuppressWarnings({"unchecked"}) final T t = (T)eachParent;
         return t;
       }
 
@@ -2121,7 +2121,7 @@ public class UIUtil {
   @Nullable
   public static <T extends JComponent> T findComponentOfType(JComponent parent, Class<T> cls) {
     if (parent == null || cls.isAssignableFrom(parent.getClass())) {
-      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"}) final T t = (T)parent;
+      @SuppressWarnings({"unchecked"}) final T t = (T)parent;
       return t;
     }
     for (Component component : parent.getComponents()) {
@@ -2142,7 +2142,7 @@ public class UIUtil {
   private static <T extends JComponent> void findComponentsOfType(JComponent parent, Class<T> cls, ArrayList<T> result) {
     if (parent == null) return;
     if (cls.isAssignableFrom(parent.getClass())) {
-      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"}) final T t = (T)parent;
+      @SuppressWarnings({"unchecked"}) final T t = (T)parent;
       result.add(t);
     }
     for (Component c : parent.getComponents()) {
@@ -2354,8 +2354,7 @@ public class UIUtil {
     Component eachParent = c;
     while (eachParent != null) {
       if (eachParent instanceof JComponent) {
-        @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
-        WeakReference<JRootPane> pane = (WeakReference<JRootPane>)((JComponent)eachParent).getClientProperty(ROOT_PANE);
+        @SuppressWarnings({"unchecked"}) WeakReference<JRootPane> pane = (WeakReference<JRootPane>)((JComponent)eachParent).getClientProperty(ROOT_PANE);
         if (pane != null) return pane.get();
       }
       eachParent = eachParent.getParent();

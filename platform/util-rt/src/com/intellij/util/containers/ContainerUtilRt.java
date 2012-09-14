@@ -252,7 +252,7 @@ public class ContainerUtilRt {
 
   @NotNull
   public static <T> List<T> emptyList() {
-    @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"}) final List<T> list = (List<T>)EmptyList.INSTANCE;
+    @SuppressWarnings({"unchecked"}) final List<T> list = (List<T>)EmptyList.INSTANCE;
     return list;
   }
 

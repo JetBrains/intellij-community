@@ -705,9 +705,7 @@ public class ArrayUtil extends ArrayUtilRt {
   @NotNull
   public static <E> E[] ensureExactSize(int count, @NotNull E[] sample) {
     if (count == sample.length) return sample;
-
-    @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
-    final E[] array = (E[])Array.newInstance(sample.getClass().getComponentType(), count);
+    @SuppressWarnings({"unchecked"}) final E[] array = (E[])Array.newInstance(sample.getClass().getComponentType(), count);
     return array;
   }
 
