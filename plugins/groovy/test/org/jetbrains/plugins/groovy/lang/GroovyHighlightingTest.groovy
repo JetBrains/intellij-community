@@ -1434,4 +1434,25 @@ def foo(File f) {
 }''')
 
   }
+
+
+  void testTupleAssignment() {
+    testHighlighting('''\
+def (String x, int y)
+(x, <warning descr="Cannot assign 'String' to 'Integer'">y</warning>) = foo()
+
+print x + y
+
+List<String> foo() {[]}
+''', GroovyAssignabilityCheckInspection)
+  }
+
+  void testTupleDeclaration() {
+    testHighlighting('''\
+def (int <warning descr="Cannot assign 'String' to 'int'">x</warning>, String y) = foo()
+
+List<String> foo() {[]}
+''', GroovyAssignabilityCheckInspection)
+  }
+
 }
