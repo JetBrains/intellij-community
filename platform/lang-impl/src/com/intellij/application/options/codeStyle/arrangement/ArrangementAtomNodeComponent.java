@@ -170,6 +170,11 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
   }
 
   @Override
+  public boolean onCanvasWidthChange(int width) {
+    return false;
+  }
+
+  @Override
   public ArrangementNodeComponent getNodeComponentAt(@NotNull RelativePoint point) {
     return (myScreenBounds != null && myScreenBounds.contains(point.getScreenPoint())) ? this : null;
   }
