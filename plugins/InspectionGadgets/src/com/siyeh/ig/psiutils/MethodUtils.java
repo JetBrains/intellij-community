@@ -259,6 +259,9 @@ public class MethodUtils {
   }
 
   public static boolean hasInThrows(@NotNull PsiMethod method, @NotNull String... exceptions) {
+    if (exceptions.length == 0) {
+      throw new IllegalArgumentException("no exceptions specified");
+    }
     final PsiReferenceList throwsList = method.getThrowsList();
     final PsiJavaCodeReferenceElement[] references = throwsList.getReferenceElements();
     for (PsiJavaCodeReferenceElement reference : references) {
