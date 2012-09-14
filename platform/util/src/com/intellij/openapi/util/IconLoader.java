@@ -216,10 +216,10 @@ public final class IconLoader {
    * @param icon
    */
   @Nullable
-  public static Icon getDisabledIcon(final Icon icon) {
-    if (icon == null) {
-      return null;
-    }
+  public static Icon getDisabledIcon(Icon icon) {
+    if (icon instanceof LazyIcon) icon = ((LazyIcon)icon).getOrComputeIcon();
+    if (icon == null) return null;
+
     Icon disabledIcon = ourIcon2DisabledIcon.get(icon);
     if (disabledIcon == null) {
       if (!isGoodSize(icon)) {
