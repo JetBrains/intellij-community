@@ -169,12 +169,15 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
         "Arrangement rule modification - removing a condition '%s'. Model: '%s', row: %d", condition, myRule, myRow
       ));
     }
-    ArrangementMatchCondition matchCondition = getCondition();
-    if (matchCondition.equals(condition)) {
-      destroy();
-      return;
-    }
     
+    if (condition.equals(myBottomMost.getBackingCondition())) {
+      if (myTopMost != myBottomMost && myTopMost.getChildCount() > 1) {
+        destroy();
+        return;
+      }
+    }
+
+    ArrangementMatchCondition matchCondition = getCondition();
     assert matchCondition instanceof ArrangementCompositeMatchCondition;
     ArrangementMatchCondition newCondition = matchCondition.clone();
     ArrangementCompositeMatchCondition composite = (ArrangementCompositeMatchCondition)newCondition;

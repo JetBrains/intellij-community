@@ -521,8 +521,6 @@ public class ArrangementRuleTree {
   }
 
   private void processRowChanges(TIntIntHashMap rowChanges) {
-    expandAll(myTree, new TreePath(myTreeModel.getRoot()));
-
     // Refresh models.
     myModels.forEachValue(myModelNodesRefresher);
 
@@ -541,6 +539,8 @@ public class ArrangementRuleTree {
       }
     });
     putAll(changedModelMappings, myModels);
+    
+    expandAll(myTree, new TreePath(myTreeModel.getRoot()));
 
     // Drop JTree visual caches.
     rowChanges.forEachEntry(new TIntIntProcedure() {
@@ -678,7 +678,7 @@ public class ArrangementRuleTree {
 
     @Override
     public void beforeModelDestroy(@NotNull ArrangementRuleEditingModelImpl model) {
-      mySelectedRowToRestore = myTree.getRowForPath(new TreePath(model.getTopMost().getPath()));
+      mySelectedRowToRestore = myTree.getRowForPath(new TreePath(model.getBottomMost().getPath()));
       for (ArrangementTreeNode node = model.getBottomMost(); node != null; node = node.getParent()) {
         int row = myTree.getRowForPath(new TreePath(node.getPath()));
         myRenderers.remove(row);
