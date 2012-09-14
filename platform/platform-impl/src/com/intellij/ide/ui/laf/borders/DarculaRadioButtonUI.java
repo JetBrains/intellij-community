@@ -17,7 +17,9 @@ package com.intellij.ide.ui.laf.borders;
 
 import com.intellij.ide.ui.laf.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.EmptyIcon;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -86,7 +88,9 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
     if (b.hasFocus()) {
-      DarculaUIUtil.paintFocusOval(g, x-6, y-3, w-3, h-3);
+      int sysOffX = SystemInfo.isMac ? 0 : 1;
+      int sysOffY = SystemInfo.isMac ? 0 : -1;
+      DarculaUIUtil.paintFocusOval(g, x-6  + sysOffX, y-3 + sysOffY, w-3, h-3);
     } else {
       g.setPaint(new GradientPaint(w / 2, 1, Gray._180.withAlpha(90), w / 2, h, Gray._125.withAlpha(90)));
       g.drawOval(0, 2, w - 2, h - 2);
@@ -122,5 +126,10 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
                                                   mnemIndex, textRect.x, textRect.y + fm.getAscent());
       }
     }
+  }
+
+  @Override
+  public Icon getDefaultIcon() {
+    return EmptyIcon.create(20);
   }
 }
