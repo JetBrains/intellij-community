@@ -117,8 +117,7 @@ public class CustomizableActionsPanel {
           if (actionId != null) {
             final AnAction action = actionManager.getAction(actionId);
             myEditIconButton.setEnabled(action != null &&
-                                        (!action.isDefaultIcon() ||
-                                         (action.getTemplatePresentation() != null && action.getTemplatePresentation().getIcon() == null)));
+                                        action.getTemplatePresentation() != null);
           }
           else {
             myEditIconButton.setEnabled(false);
@@ -744,7 +743,7 @@ public class CustomizableActionsPanel {
           if (action != null &&
               action.getTemplatePresentation() != null &&
               action.getTemplatePresentation().getIcon() != null) {
-            mySetIconButton.setEnabled(!action.isDefaultIcon());
+            mySetIconButton.setEnabled(true);
             return;
           }
         }
