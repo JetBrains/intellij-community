@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.diff.impl.incrementalMerge.ui;
+package com.intellij.openapi.diff.impl.settings;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Workspace-wide settings for merge tool UI customization.
+ * Workspace-wide settings for diff and merge tool UI customization.
+ * Note that this is not a {@link PersistentStateComponent} itself. Instead both subclasses (separate for diff and merge) are.
+ * This is done to let diff and merge tools have separate editor settings (for example, one may want to hide line numbers and enable soft
+ * wraps for merge, because 3 columns occupy more space).
  *
  * @author Kirill Likhodedov
  */
-@State(name = "MergeToolSettings", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
-public class MergeToolSettings implements PersistentStateComponent<MergeToolSettings.State>  {
+public class DiffMergeSettings {
 
   private State myState = new State();
 
@@ -38,17 +37,15 @@ public class MergeToolSettings implements PersistentStateComponent<MergeToolSett
     public boolean SOFT_WRAPS = false;
   }
 
-  @Override
   public State getState() {
     return myState;
   }
 
-  @Override
   public void loadState(State state) {
     myState = state;
   }
 
-  public void setPreference(@NotNull MergeToolEditorSetting setting, boolean state) {
+  public void setPreference(@NotNull DiffMergeEditorSetting setting, boolean state) {
     switch (setting) {
       case WHITESPACES:
         setShowWhiteSpaces(state);
@@ -65,7 +62,7 @@ public class MergeToolSettings implements PersistentStateComponent<MergeToolSett
     }
   }
 
-  public boolean getPreference(@NotNull MergeToolEditorSetting setting) {
+  public boolean getPreference(@NotNull DiffMergeEditorSetting setting) {
     switch (setting) {
       case WHITESPACES:
         return isShowWhitespaces();
@@ -79,35 +76,35 @@ public class MergeToolSettings implements PersistentStateComponent<MergeToolSett
     return false;
   }
 
-  public void setShowLineNumbers(boolean state) {
+  private void setShowLineNumbers(boolean state) {
     myState.LINE_NUMBERS = state;
   }
 
-  public boolean isShowLineNumbers() {
+  private boolean isShowLineNumbers() {
     return myState.LINE_NUMBERS;
   }
 
-  public void setShowWhiteSpaces(boolean state) {
+  private void setShowWhiteSpaces(boolean state) {
     myState.WHITESPACES = state;
   }
 
-  public boolean isShowWhitespaces() {
+  private boolean isShowWhitespaces() {
     return myState.WHITESPACES;
   }
 
-  public void setShowIndentLines(boolean state) {
+  private void setShowIndentLines(boolean state) {
     myState.INDENT_LINES = state;
   }
 
-  public boolean isShowIndentLines() {
+  private boolean isShowIndentLines() {
     return myState.INDENT_LINES;
   }
 
-  public void setUseSoftWraps(boolean state) {
+  private void setUseSoftWraps(boolean state) {
     myState.SOFT_WRAPS = state;
   }
 
-  public boolean isUseSoftWraps() {
+  private boolean isUseSoftWraps() {
     return myState.SOFT_WRAPS;
   }
 

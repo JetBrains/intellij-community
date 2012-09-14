@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.diff.impl.incrementalMerge.ui;
+package com.intellij.openapi.diff.impl.settings;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,16 +31,18 @@ import java.util.Collection;
  * The "gear" action allowing to configure merge tool visual preferences, such as displaying whitespaces, line numbers and soft wraps.
  *
  * @author Kirill Likhodedov
- * @see MergeToolSettings
+ * @see DiffMergeSettings
  */
-class MergeToolSettingsAction extends AnAction {
+public class DiffMergeSettingsAction extends AnAction {
 
-  private final Collection<Editor> myEditors;
-  private final ActionGroup myActionGroup;
+  @NotNull private final Collection<Editor> myEditors;
+  @NotNull private final ActionGroup myActionGroup;
+  @NotNull private final DiffMergeSettings mySettings;
 
-  MergeToolSettingsAction(@NotNull Collection<Editor> editors) {
+  public DiffMergeSettingsAction(@NotNull Collection<Editor> editors, @NotNull DiffMergeSettings settings) {
     super(AllIcons.General.Gear);
     myEditors = editors;
+    mySettings = settings;
     myActionGroup = new MergeToolActionGroup();
   }
 
@@ -64,10 +64,10 @@ class MergeToolSettingsAction extends AnAction {
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[] {
-        new MergeToolToggleAction("EditorToggleShowWhitespaces", MergeToolEditorSetting.WHITESPACES, myEditors),
-        new MergeToolToggleAction("EditorToggleShowLineNumbers", MergeToolEditorSetting.LINE_NUMBERS, myEditors),
-        new MergeToolToggleAction("EditorToggleShowIndentLines", MergeToolEditorSetting.INDENT_LINES, myEditors),
-        new MergeToolToggleAction("EditorToggleUseSoftWraps", MergeToolEditorSetting.SOFT_WRAPS, myEditors)
+        new DiffMergeToggleAction("EditorToggleShowWhitespaces", DiffMergeEditorSetting.WHITESPACES, myEditors, mySettings),
+        new DiffMergeToggleAction("EditorToggleShowLineNumbers", DiffMergeEditorSetting.LINE_NUMBERS, myEditors, mySettings),
+        new DiffMergeToggleAction("EditorToggleShowIndentLines", DiffMergeEditorSetting.INDENT_LINES, myEditors, mySettings),
+        new DiffMergeToggleAction("EditorToggleUseSoftWraps", DiffMergeEditorSetting.SOFT_WRAPS, myEditors, mySettings)
       };
     }
   }
@@ -75,51 +75,39 @@ class MergeToolSettingsAction extends AnAction {
   /**
    * Common class for all actions toggling merge tool editor settings.
    */
-  private static class MergeToolToggleAction extends ToggleAction {
+  private static class DiffMergeToggleAction extends ToggleAction {
 
-    private final MergeToolEditorSetting mySetting;
-    private final Collection<Editor> myEditors;
+    @NotNull private final DiffMergeEditorSetting mySetting;
+    @NotNull private final Collection<Editor> myEditors;
+    @NotNull private final DiffMergeSettings mySettings;
 
-    private MergeToolToggleAction(String actionId, MergeToolEditorSetting setting, Collection<Editor> editors) {
+    private DiffMergeToggleAction(@NotNull String actionId, @NotNull DiffMergeEditorSetting setting, @NotNull Collection<Editor> editors,
+                                  @NotNull DiffMergeSettings settings) {
       super(ActionsBundle.actionText(actionId), ActionsBundle.actionDescription(actionId), null);
       mySetting = setting;
       myEditors = editors;
+      mySettings = settings;
     }
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return getPreference(e, mySetting);
+      return getPreference(mySetting);
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      setPreference(e, mySetting, state);
+      setPreference(mySetting, state);
       for (Editor editor : myEditors) {
         mySetting.apply(editor, state);
       }
     }
 
-    private static void setPreference(AnActionEvent event, MergeToolEditorSetting preference, boolean state) {
-      MergeToolSettings settings = getSettings(event.getProject());
-      if (settings != null) {
-        settings.setPreference(preference, state);
-      }
+    private void setPreference(DiffMergeEditorSetting preference, boolean state) {
+      mySettings.setPreference(preference, state);
     }
 
-    private static boolean getPreference(AnActionEvent event, MergeToolEditorSetting preference) {
-      MergeToolSettings settings = getSettings(event.getProject());
-      if (settings != null) {
-        return settings.getPreference(preference);
-      }
-      return false;
-    }
-
-    @Nullable
-    private static MergeToolSettings getSettings(@Nullable Project project) {
-      if (project != null) {
-        return ServiceManager.getService(project, MergeToolSettings.class);
-      }
-      return null;
+    private boolean getPreference(DiffMergeEditorSetting preference) {
+      return mySettings.getPreference(preference);
     }
   }
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.diff.impl.incrementalMerge.ui;
+package com.intellij.openapi.diff.impl.settings;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -21,37 +21,38 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * <p>
- *   Properties of the editors used in the merge tool. Most of them are customizable by the user.
+ *   Editor preferences used in diff and merge tools.
+ *   Most of them are customizable by the user.
  * </p>
  *
  * @author Kirill Likhodedov
- * @see MergeToolSettings
+ * @see DiffMergeSettings
  */
-enum MergeToolEditorSetting {
+public enum DiffMergeEditorSetting {
   WHITESPACES(false) {
     @Override
-    protected void apply(@NotNull Editor editor, boolean state) {
+    public void apply(@NotNull Editor editor, boolean state) {
       editor.getSettings().setWhitespacesShown(state);
       editor.getComponent().repaint();
     }
   },
   LINE_NUMBERS(false) {
     @Override
-    protected void apply(@NotNull Editor editor, boolean state) {
+    public void apply(@NotNull Editor editor, boolean state) {
       editor.getSettings().setLineNumbersShown(state);
       editor.getComponent().repaint();
     }
   },
   INDENT_LINES(false) {
     @Override
-    protected void apply(@NotNull Editor editor, boolean state) {
+    public void apply(@NotNull Editor editor, boolean state) {
       editor.getSettings().setIndentGuidesShown(state);
       editor.getComponent().repaint();
     }
   },
   SOFT_WRAPS(false) {
     @Override
-    protected void apply(@NotNull Editor editor, boolean state) {
+    public void apply(@NotNull Editor editor, boolean state) {
       editor.getSettings().setUseSoftWraps(state);
       if (editor instanceof EditorEx) {
         ((EditorEx)editor).reinitSettings();
@@ -61,13 +62,13 @@ enum MergeToolEditorSetting {
 
   private final boolean myDefault;
 
-  MergeToolEditorSetting(boolean aDefault) {
+  DiffMergeEditorSetting(boolean aDefault) {
     myDefault = aDefault;
   }
 
-  protected abstract void apply(@NotNull Editor editor, boolean state);
+  public abstract void apply(@NotNull Editor editor, boolean state);
 
-  boolean getDefault() {
+  public boolean getDefault() {
     return myDefault;
   }
 

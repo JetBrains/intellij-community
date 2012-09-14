@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.actions.MergeActionGroup;
@@ -32,6 +33,7 @@ import com.intellij.openapi.diff.impl.fragments.FragmentList;
 import com.intellij.openapi.diff.impl.highlighting.DiffPanelState;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.processing.HorizontalDiffSplitter;
+import com.intellij.openapi.diff.impl.settings.*;
 import com.intellij.openapi.diff.impl.splitter.DiffDividerPaint;
 import com.intellij.openapi.diff.impl.splitter.LineBlocks;
 import com.intellij.openapi.diff.impl.util.*;
@@ -71,6 +73,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseListener;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -97,13 +100,19 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private boolean myIsRequestFocus = true;
   private boolean myIsSyncScroll;
 
-  private static final DiffRequest.ToolbarAddons TOOL_BAR = new DiffRequest.ToolbarAddons() {
-    public void customize(DiffToolbar toolbar) {
-      ActionManager actionManager = ActionManager.getInstance();
-      toolbar.addAction(actionManager.getAction("DiffPanel.Toolbar"));
-      toolbar.addAction(actionManager.getAction("ContextHelp"));
-    }
-  };
+  private DiffRequest.ToolbarAddons createToolbar() {
+    return new DiffRequest.ToolbarAddons() {
+      public void customize(DiffToolbar toolbar) {
+        ActionManager actionManager = ActionManager.getInstance();
+        toolbar.addAction(actionManager.getAction("DiffPanel.Toolbar"));
+        toolbar.addAction(actionManager.getAction("ContextHelp"));
+        toolbar.addSeparator();
+        toolbar.addAction(new DiffMergeSettingsAction(Arrays.asList(getEditor1(), getEditor2()),
+                                                      ServiceManager.getService(myProject, DiffToolSettings.class)));
+      }
+    };
+  }
+
   private boolean myDisposed = false;
   private final GenericDataProvider myDataProvider;
   private final Project myProject;
@@ -115,7 +124,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myProject = project;
     myIsHorizontal = horizontal;
     myOptions = new DiffPanelOptions(this);
-    myPanel = new DiffPanelOuterComponent(TextDiffType.DIFF_TYPES, TOOL_BAR);
+    myPanel = new DiffPanelOuterComponent(TextDiffType.DIFF_TYPES, null);
     myPanel.disableToolbar(!enableToolbar);
     if (enableToolbar) myPanel.resetToolbar();
     myOwnerWindow = owner;
@@ -231,10 +240,12 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     });
   }
 
+  @Nullable
   public Editor getEditor1() {
     return myLeftSide.getEditor();
   }
 
+  @Nullable
   public Editor getEditor2() {
     if (myDisposed) LOG.error("Disposed");
     Editor editor = myRightSide.getEditor();
@@ -557,8 +568,11 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     setTitles(data);
 
     setWindowTitle(myOwnerWindow, data.getWindowTitle());
+    myPanel.setToolbarActions(createToolbar());
     data.customizeToolbar(myPanel.resetToolbar());
     myPanel.registerToolbarActions();
+    initEditorSettings(getEditor1());
+    initEditorSettings(getEditor2());
 
     final JComponent oldBottomComponent = myPanel.getBottomComponent();
     if (oldBottomComponent instanceof Disposable) {
@@ -586,6 +600,18 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
       myPanel.requestScrollEditors();
     }
+  }
+
+  private static void initEditorSettings(@Nullable Editor editor) {
+    if (editor == null) {
+      return;
+    }
+    Project project = editor.getProject();
+    DiffMergeSettings settings = project == null ? null : ServiceManager.getService(project, DiffToolSettings.class);
+    for (DiffMergeEditorSetting property : DiffMergeEditorSetting.values()) {
+      property.apply(editor, settings == null ? property.getDefault() : settings.getPreference(property));
+    }
+    ((EditorEx)editor).getGutterComponentEx().setShowDefaultGutterPopup(false);
   }
 
   private void setTitles(@NotNull DiffRequest data) {
