@@ -262,10 +262,8 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
 
   @NotNull
   private static String realKey(String key, @Nullable Project project) {
-    if (project == null) return key;
-
-    JFrame frame = WindowManager.getInstance().getFrame(project);
-    if (frame == null) {
+    JFrame frame = null;
+    if (project == null) {
       final IdeFrame[] frames = WindowManager.getInstance().getAllFrames();
       for (IdeFrame ideFrame : frames) {
         if (ideFrame instanceof JFrame) {
@@ -273,9 +271,12 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
           break;
         }
       }
-      if (frame == null) {
+    } else {
+      frame = WindowManager.getInstance().getFrame(project);
+    }
+
+    if (frame == null) {
         return key; //during frame initialization
-      }
     }
 
     final Point topLeft = frame.getLocation();
