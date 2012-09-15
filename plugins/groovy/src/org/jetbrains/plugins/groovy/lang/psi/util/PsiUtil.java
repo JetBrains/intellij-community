@@ -435,6 +435,7 @@ public class PsiUtil {
         PsiElement stopAt = PsiTreeUtil.findCommonParent(place, resolveContext);
         while (place != null && place != stopAt && !(place instanceof GrMember)) {
           if (place instanceof PsiFile) break;
+          if (place instanceof GrClosableBlock) return true;
           place = place.getParent();
         }
         if (place == null || place instanceof PsiFile || place == stopAt) return true;
@@ -448,6 +449,7 @@ public class PsiUtil {
         while (place != null) {
           place = place.getParent();
           if (place instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)place, containingClass, true)) return true;
+          if (place instanceof GrClosableBlock) return true;
           if (place instanceof PsiMember && ((PsiMember)place).hasModifierProperty(PsiModifier.STATIC)) {
             return false;
           }

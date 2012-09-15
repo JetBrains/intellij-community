@@ -18,6 +18,7 @@ package com.intellij.util.containers;
 
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.*;
@@ -77,7 +78,7 @@ public class MultiMap<K, V> implements Serializable {
     list.addAll(values);
   }
 
-  public void putValue(K key, V value) {
+  public void putValue(@Nullable K key, V value) {
     Collection<V> list = myMap.get(key);
     if (list == null) {
       list = createCollection();

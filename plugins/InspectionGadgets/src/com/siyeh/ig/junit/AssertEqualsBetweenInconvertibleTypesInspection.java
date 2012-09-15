@@ -17,7 +17,6 @@ package com.siyeh.ig.junit;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -85,8 +84,7 @@ public class AssertEqualsBetweenInconvertibleTypesInspection extends BaseInspect
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       final int argumentIndex;
-      if (firstParameterType.equalsToText(
-        CommonClassNames.JAVA_LANG_STRING)) {
+      if (firstParameterType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         if (arguments.length < 3) {
           return;
         }
@@ -110,17 +108,9 @@ public class AssertEqualsBetweenInconvertibleTypesInspection extends BaseInspect
       }
       final PsiType parameterType1 = parameters[argumentIndex].getType();
       final PsiType parameterType2 = parameters[argumentIndex + 1].getType();
-      if (!parameterType1.equals(parameterType2)) {
+      final PsiClassType objectType = TypeUtils.getObjectType(expression);
+      if (!objectType.equals(parameterType1) || !objectType.equals(parameterType2)) {
         return;
-      }
-      if (type2 instanceof PsiPrimitiveType && parameterType2.equals(TypeUtils.getObjectType(expression))) {
-        final PsiPrimitiveType primitiveType = (PsiPrimitiveType)type2;
-        final PsiManager manager = expression.getManager();
-        final GlobalSearchScope scope = expression.getResolveScope();
-        final PsiClassType boxedType = primitiveType.getBoxedType(manager, scope);
-        if (boxedType != null && TypeConversionUtil.areTypesConvertible(type1, boxedType)) {
-          return;
-        }
       }
       if (TypeConversionUtil.areTypesConvertible(type1, type2)) {
         return;
