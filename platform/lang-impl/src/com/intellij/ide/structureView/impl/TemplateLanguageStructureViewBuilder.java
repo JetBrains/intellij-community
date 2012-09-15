@@ -94,7 +94,8 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
                 if (structureViewWrapper == null) return;
 
                 Language baseLanguage = provider.getTemplateDataLanguage();
-                if (baseLanguage == myTemplateDataLanguage && isPsiValid()) {
+                if (baseLanguage == myTemplateDataLanguage
+                    && (myBaseStructureViewDescriptor == null || isPsiValid(myBaseStructureViewDescriptor))) {
                   updateBaseLanguageView();
                 }
                 else {
@@ -113,9 +114,8 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter);
   }
 
-  private boolean isPsiValid() {
-    if (myBaseStructureViewDescriptor == null) return true;
-    final StructureViewComponent view = (StructureViewComponent)myBaseStructureViewDescriptor.structureView;
+  private static boolean isPsiValid(@NotNull StructureViewComposite.StructureViewDescriptor baseStructureViewDescriptor) {
+    final StructureViewComponent view = (StructureViewComponent)baseStructureViewDescriptor.structureView;
     if (view.isDisposed()) return false;
 
     final Object root = view.getTreeStructure().getRootElement();
