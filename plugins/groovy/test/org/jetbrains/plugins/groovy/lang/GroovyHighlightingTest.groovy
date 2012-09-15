@@ -1474,4 +1474,22 @@ foo<warning descr="'foo' in '_' cannot be applied to '(groovy.lang.Closure<java.
 ''', GroovyAssignabilityCheckInspection)
   }
 
+  void testInstanceMethodUsedInStaticClosure() {
+    testHighlighting('''\
+class A {
+    static staticClosure = {
+        foo()
+    }
+
+    def staticMethod() {
+        foo()
+    }
+
+    def foo() { }
+}
+
+
+''')
+  }
+
 }
