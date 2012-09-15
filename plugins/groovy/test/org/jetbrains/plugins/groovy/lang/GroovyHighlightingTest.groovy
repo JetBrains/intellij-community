@@ -1492,4 +1492,16 @@ class A {
 ''')
   }
 
+  void testVarargsWithoutTypeName() {
+    testHighlighting('''\
+def foo(String key, ... params) {
+
+}
+
+foo('anc')
+foo('abc', 1, '')
+foo<warning descr="'foo' in '_' cannot be applied to '(java.lang.Integer)'">(5)</warning>
+''', GroovyAssignabilityCheckInspection)
+  }
+
 }
