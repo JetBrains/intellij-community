@@ -20,10 +20,10 @@ import com.intellij.cvsSupport2.config.ImportConfiguration;
 import com.intellij.cvsSupport2.ui.experts.CvsWizard;
 import com.intellij.cvsSupport2.ui.experts.WizardStep;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.DocumentAdapter;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -33,6 +33,7 @@ import java.util.Collection;
  * author: lesya
  */
 public class ImportSettingsStep extends WizardStep {
+
   private JPanel myPanel;
   private JTextField myModuleName;
   private JTextField myVendor;
@@ -47,9 +48,10 @@ public class ImportSettingsStep extends WizardStep {
 
   private JCheckBox myCheckoutAfterImport;
   private JCheckBox myMakeCheckedOutFilesReadOnly;
+  private JLabel myModuleNameErrorMessage;
   private JLabel myVendorErrorMessage;
   private JLabel myReleaseTagErrorMessage;
-  private JLabel myNameLabel;
+  private JLabel myModuleNameLabel;
   private JLabel myVendorLabel;
   private JLabel myReleaseTagLabel;
   private JLabel myLogMessageLabel;
@@ -70,14 +72,18 @@ public class ImportSettingsStep extends WizardStep {
     mySelectImportLocationStep = selectImportLocationStep;
     myImportConfiguration = importConfiguration;
 
-    checkFields();
-
-    final MyDocumentListener listener = new MyDocumentListener();
+    final DocumentAdapter listener = new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        checkFields();
+      }
+    };
+    myModuleName.getDocument().addDocumentListener(listener);
     myVendor.getDocument().addDocumentListener(listener);
     myReleaseTag.getDocument().addDocumentListener(listener);
 
     myLogMessageLabel.setLabelFor(myLogMessage);
-    myNameLabel.setLabelFor(myModuleName);
+    myModuleNameLabel.setLabelFor(myModuleName);
     myReleaseTagLabel.setLabelFor(myReleaseTag);
     myVendorLabel.setLabelFor(myVendor);
 
@@ -115,6 +121,13 @@ public class ImportSettingsStep extends WizardStep {
     final JTextField[] fields = new JTextField[]{myReleaseTag, myVendor};
     boolean result = CvsFieldValidator.checkField(myVendor, fields, true, myVendorErrorMessage, null);
     result &= CvsFieldValidator.checkField(myReleaseTag, fields, true, myReleaseTagErrorMessage, null);
+    final String moduleName = myModuleName.getText().trim();
+    if (moduleName.isEmpty()) {
+      CvsFieldValidator.reportError(myModuleNameErrorMessage, CvsBundle.message("error.message.field.cannot.be.empty"), null);
+    }
+    else {
+      myModuleNameErrorMessage.setText(" ");
+    }
     return result;
   }
 
@@ -186,25 +199,5 @@ public class ImportSettingsStep extends WizardStep {
 
   public Collection<FileExtension> getFileExtensions() {
     return myImportConfiguration.getExtensions();
-  }
-
-  private class MyDocumentListener implements DocumentListener {
-
-    public MyDocumentListener() {}
-
-    @Override
-    public void changedUpdate(DocumentEvent e) {
-      checkFields();
-    }
-
-    @Override
-    public void insertUpdate(DocumentEvent e) {
-      checkFields();
-    }
-
-    @Override
-    public void removeUpdate(DocumentEvent e) {
-      checkFields();
-    }
   }
 }
