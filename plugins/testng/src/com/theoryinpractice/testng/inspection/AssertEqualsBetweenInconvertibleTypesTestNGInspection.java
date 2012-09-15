@@ -125,9 +125,9 @@ public class AssertEqualsBetweenInconvertibleTypesTestNGInspection extends BaseJ
         return;
       }
       myProblemsHolder.registerProblem(referenceNameElement,
-                                       "<code>#ref()</code> between objects of inconvertible types ''" +
-                                       StringUtil.escapeXml(type1.getPresentableText()) + "'' and ''" +
-                                       StringUtil.escapeXml(type2.getPresentableText()) + "'' #loc");
+                                       "<code>#ref()</code> between objects of inconvertible types '" +
+                                       StringUtil.escapeXml(type1.getPresentableText()) + "' and '" +
+                                       StringUtil.escapeXml(type2.getPresentableText()) + "' #loc");
     }
   }
 }
