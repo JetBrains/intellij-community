@@ -114,7 +114,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
   }
 
   private boolean isPsiValid() {
-    if (myBaseStructureViewDescriptor == null) return false;
+    if (myBaseStructureViewDescriptor == null) return true;
     final StructureViewComponent view = (StructureViewComponent)myBaseStructureViewDescriptor.structureView;
     if (view.isDisposed()) return false;
 
