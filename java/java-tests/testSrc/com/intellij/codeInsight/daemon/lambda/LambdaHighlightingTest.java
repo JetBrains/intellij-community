@@ -100,6 +100,10 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testLambdaRawOrNot() throws Exception {
     doTest();
   }
+
+  public void testReturnTypeCompatibility1() throws Exception {
+    doTest();
+  }
   
   public void testNoInferenceResult() throws Exception {
     doTest();
