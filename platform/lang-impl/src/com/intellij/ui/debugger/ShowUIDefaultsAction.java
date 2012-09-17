@@ -18,7 +18,9 @@ package com.intellij.ui.debugger;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorPicker;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
@@ -29,6 +31,8 @@ import javax.swing.plaf.ColorUIResource;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.EventObject;
 
@@ -48,6 +52,13 @@ public class ShowUIDefaultsAction extends AnAction {
       data[i][1] = defaults.get(key);
       i++;
     }
+
+    Arrays.sort(data, new Comparator<Object[]>() {
+      @Override
+      public int compare(Object[] o1, Object[] o2) {
+        return StringUtil.naturalCompare(o1[0].toString(), o2[0].toString());
+      }
+    });
 
     new DialogWrapper(getEventProject(e)) {
       {
@@ -90,14 +101,16 @@ public class ShowUIDefaultsAction extends AnAction {
             final JLabel label = new JLabel(value == null ? "" : value.toString());
             panel.add(label, BorderLayout.CENTER);
             if (value instanceof Color) {
-              panel.setBackground((Color)value);
+              final Color c = (Color)value;
+              label.setText(String.format("[r=%d,g=%d,b=%d] hex=0x%s", c.getRed(), c.getGreen(), c.getBlue(), ColorUtil.toHex(c)));
+              panel.setBackground(c);
               return panel;
             } else if (value instanceof Icon) {
-              final Icon icon = (Icon)value;
-              if (icon.getIconHeight() <= 20) {
-                label.setIcon(icon);
-              }
-              label.setText(String.format("(%dx%d) %s)",icon.getIconWidth(), icon.getIconHeight(), label.getText()));
+              //final Icon icon = (Icon)value;
+              //if (icon.getIconHeight() <= 20) {
+              //  //label.setIcon(icon);
+              //}
+              //label.setText(String.format("(%dx%d) %s)",icon.getIconWidth(), icon.getIconHeight(), label.getText()));
               return panel;
             } else if (value instanceof Border) {
               try {
