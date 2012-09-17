@@ -24,7 +24,7 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   }
 
   @Override
-  public String toString() {
+  protected String getFullPath() {
     return myRoot.getPath();
   }
 

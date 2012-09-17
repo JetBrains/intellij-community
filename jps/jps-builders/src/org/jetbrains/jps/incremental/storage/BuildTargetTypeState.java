@@ -2,15 +2,15 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
-import org.jetbrains.jps.incremental.ModuleRootsIndex;
-import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
 
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author nik
@@ -18,23 +18,20 @@ import java.util.Map;
 public class BuildTargetTypeState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildTargetTypeState");
   private final Map<BuildTarget, Integer> myTargetIds;
+  private final ConcurrentMap<BuildTarget, BuildTargetConfiguration> myConfigurations = new ConcurrentHashMap<BuildTarget, BuildTargetConfiguration>();
   private final BuildTargetType myTargetType;
   private final BuildTargetsState myTargetsState;
   private final File myTargetsFile;
 
-  public BuildTargetTypeState(File dataStorageRoot,
-                              BuildTargetType targetType,
-                              ModuleRootsIndex rootsIndex,
-                              ArtifactRootsIndex artifactRootsIndex,
-                              BuildTargetsState state) {
+  public BuildTargetTypeState(BuildTargetType targetType, BuildTargetsState state) {
     myTargetType = targetType;
     myTargetsState = state;
     myTargetsFile = new File(state.getTargetTypeDataRoot(targetType), "targets.dat");
     myTargetIds = new HashMap<BuildTarget, Integer>();
-    load(rootsIndex, artifactRootsIndex);
+    load();
   }
 
-  private boolean load(ModuleRootsIndex rootsIndex, ArtifactRootsIndex artifactRootsIndex) {
+  private boolean load() {
     try {
       DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(myTargetsFile)));
       try {
@@ -44,7 +41,7 @@ public class BuildTargetTypeState {
           String stringId = IOUtil.readString(input);
           int intId = input.readInt();
           myTargetsState.markUsedId(intId);
-          BuildTarget target = myTargetType.createTarget(stringId, rootsIndex, artifactRootsIndex);
+          BuildTarget target = myTargetType.createTarget(stringId, myTargetsState.getRootsIndex(), myTargetsState.getArtifactRootsIndex());
           if (target != null) {
             myTargetIds.put(target, intId);
           }
@@ -90,5 +87,15 @@ public class BuildTargetTypeState {
       myTargetIds.put(target, myTargetsState.getFreeId());
     }
     return myTargetIds.get(target);
+  }
+
+  public BuildTargetConfiguration getConfiguration(BuildTarget target) {
+    BuildTargetConfiguration configuration = myConfigurations.get(target);
+    if (configuration == null) {
+      configuration = new BuildTargetConfiguration(target, myTargetsState);
+      myConfigurations.putIfAbsent(target, configuration);
+      configuration = myConfigurations.get(target);
+    }
+    return configuration;
   }
 }

@@ -3,6 +3,7 @@ package org.jetbrains.jps.builders;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
 import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
 
+import java.io.PrintWriter;
 import java.util.Collection;
 
 /**
@@ -23,5 +24,13 @@ public abstract class BuildTarget {
 
   public abstract Collection<? extends BuildTarget> computeDependencies();
 
+  public void writeConfiguration(PrintWriter out, ModuleRootsIndex index, ArtifactRootsIndex rootsIndex) {
+  }
+
   public abstract BuildRootDescriptor findRootDescriptor(String rootId, ModuleRootsIndex index, ArtifactRootsIndex artifactRootsIndex);
+
+  @Override
+  public String toString() {
+    return myTargetType.getTypeId() + " '" + getId() + "'";
+  }
 }

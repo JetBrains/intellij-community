@@ -21,6 +21,7 @@ import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -301,7 +302,7 @@ public class IncProjectBuilder {
     myProjectDescriptor.fsState.clearAll();
   }
 
-  private static void clearOutputFiles(CompileContext context, ModuleBuildTarget target) throws IOException {
+  public static void clearOutputFiles(CompileContext context, BuildTarget target) throws IOException {
     final SourceToOutputMapping map = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
     for (String srcPath : map.getKeys()) {
       final Collection<String> outs = map.getState(srcPath);
@@ -909,10 +910,12 @@ public class IncProjectBuilder {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final Timestamps timestamps = pd.timestamps.getStorage();
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      if (context.isProjectRebuild()) {
+      BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
+      if (context.isProjectRebuild() || configuration.isTargetDirty()) {
         FSOperations.markDirtyFiles(context, target, timestamps, true,
                                     target.isTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION, null);
         updateOutputRootsLayout(context, target);
+        configuration.save();
       }
       else {
         if (context.isMake()) {

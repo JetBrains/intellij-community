@@ -137,6 +137,7 @@ public class BuildDataManager implements StorageOwner {
 
   public void close() throws IOException {
     try {
+      myTargetsState.save();
       myArtifactsBuildData.close();
     }
     finally {

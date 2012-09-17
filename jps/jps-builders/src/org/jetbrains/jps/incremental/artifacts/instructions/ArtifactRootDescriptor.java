@@ -9,6 +9,7 @@ import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * @author nik
@@ -28,6 +29,17 @@ public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
 
   public final String getArtifactName() {
     return myTarget.getId();
+  }
+
+  @Override
+  public String toString() {
+    return getFullPath();
+  }
+
+  protected abstract String getFullPath();
+
+  public void writeConfiguration(PrintWriter out) {
+    out.println(getFullPath());
   }
 
   public ArtifactBuildTarget getTarget() {

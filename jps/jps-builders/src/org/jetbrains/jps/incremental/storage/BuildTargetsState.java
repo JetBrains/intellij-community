@@ -84,11 +84,24 @@ public class BuildTargetsState {
     return getTypeState(target.getTargetType()).getTargetId(target);
   }
 
-  public BuildTargetTypeState getTypeState(BuildTargetType type) {
+  public BuildTargetConfiguration getTargetConfiguration(@NotNull BuildTarget target) {
+    return getTypeState(target.getTargetType()).getConfiguration(target);
+  }
+
+  public ModuleRootsIndex getRootsIndex() {
+    return myRootsIndex;
+  }
+
+  public ArtifactRootsIndex getArtifactRootsIndex() {
+    return myArtifactRootsIndex;
+  }
+
+  private BuildTargetTypeState getTypeState(BuildTargetType type) {
     BuildTargetTypeState state = myTypeStates.get(type);
     if (state == null) {
-      state = new BuildTargetTypeState(myDataStorageRoot, type, myRootsIndex, myArtifactRootsIndex, this);
+      state = new BuildTargetTypeState(type, this);
       myTypeStates.putIfAbsent(type, state);
+      state = myTypeStates.get(type);
     }
     return state;
   }

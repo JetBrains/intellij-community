@@ -6,16 +6,14 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactInstructionsBuilder;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
 import org.jetbrains.jps.incremental.artifacts.instructions.DestinationInfo;
 import org.jetbrains.jps.incremental.artifacts.instructions.SourceFileFilter;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
-import org.jetbrains.jps.incremental.storage.BuildDataManager;
-import org.jetbrains.jps.incremental.storage.CompositeStorageOwner;
-import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
-import org.jetbrains.jps.incremental.storage.StorageOwner;
+import org.jetbrains.jps.incremental.storage.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,8 +52,13 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
   public void ensureFsStateInitialized(final BuildDataManager dataManager, final CompileContext context) throws IOException {
     ArtifactInstructionsBuilder builder = myProjectDescriptor.getArtifactRootsIndex().getInstructionsBuilder(myTarget.getArtifact());
     BuildFSState fsState = myProjectDescriptor.fsState;
-    if (context.isProjectRebuild() || context.getScope().isRecompilationForced(myTarget)) {
+    BuildTargetConfiguration configuration = myProjectDescriptor.getTargetsState().getTargetConfiguration(myTarget);
+    if (context.isProjectRebuild() || configuration.isTargetDirty() || context.getScope().isRecompilationForced(myTarget)) {
+      IncProjectBuilder.clearOutputFiles(context, myTarget);
+      myProjectDescriptor.dataManager.getSourceToOutputMap(myTarget).clean();
+      getOrCreateOutSrcMapping().clean();
       markDirtyFiles(builder, dataManager, null, true);
+      configuration.save();
     }
     else if (fsState.markInitialScanPerformed(myTarget)) {
       final Set<String> currentPaths = new HashSet<String>();

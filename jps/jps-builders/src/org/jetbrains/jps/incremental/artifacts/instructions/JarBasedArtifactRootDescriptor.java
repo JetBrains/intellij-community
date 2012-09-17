@@ -32,11 +32,6 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
     myPathInJar = pathInJar;
   }
 
-  @Override
-  public String toString() {
-    return myRoot.getPath() + JarPathUtil.JAR_SEPARATOR + myPathInJar;
-  }
-
   public void processEntries(EntryProcessor processor) throws IOException {
     String prefix = StringUtil.trimStart(myPathInJar, "/");
     if (!StringUtil.endsWithChar(prefix, '/')) prefix += "/";
@@ -60,6 +55,11 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
     finally {
       zipFile.close();
     }
+  }
+
+  @Override
+  protected String getFullPath() {
+    return myRoot.getPath() + JarPathUtil.JAR_SEPARATOR + myPathInJar;
   }
 
   public void copyFromRoot(final String filePath,

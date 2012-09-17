@@ -35,4 +35,9 @@ public abstract class JpsCompositePackagingElementBase<Self extends JpsComposite
   public <E extends JpsPackagingElement> E addChild(@NotNull E child) {
     return myContainer.getChild(CHILDREN_ROLE).addChild(child);
   }
+
+  @Override
+  public void removeChild(@NotNull JpsPackagingElement child) {
+    myContainer.getChild(CHILDREN_ROLE).removeChild(child);
+  }
 }

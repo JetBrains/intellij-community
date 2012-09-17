@@ -198,7 +198,6 @@ final class BuildSession implements Runnable, CanceledStatus {
       saveFsState(dataStorageRoot, fsState);
       final ProjectDescriptor pd = myProjectDescriptor;
       if (pd != null) {
-        pd.getTargetsState().save();
         pd.release();
       }
     }

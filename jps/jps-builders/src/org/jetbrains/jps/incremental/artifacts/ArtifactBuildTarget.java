@@ -1,11 +1,16 @@
 package org.jetbrains.jps.incremental.artifacts;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
+import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
+import org.jetbrains.jps.incremental.artifacts.instructions.DestinationInfo;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 
+import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -45,6 +50,15 @@ public class ArtifactBuildTarget extends BuildTarget {
   @Override
   public int hashCode() {
     return myArtifact.hashCode();
+  }
+
+  @Override
+  public void writeConfiguration(PrintWriter out, ModuleRootsIndex index, ArtifactRootsIndex rootsIndex) {
+    out.println(StringUtil.notNullize(myArtifact.getOutputPath()));
+    for (Pair<ArtifactRootDescriptor, DestinationInfo> pair : rootsIndex.getInstructionsBuilder(myArtifact).getInstructions()) {
+      pair.getFirst().writeConfiguration(out);
+      out.println("->" + pair.getSecond().getOutputPath());
+    }
   }
 
   @Override

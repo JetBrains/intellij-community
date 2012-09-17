@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental.artifacts;
 
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.*;
@@ -71,6 +72,10 @@ public class LayoutElementTestUtil {
 
     public LayoutElementCreator dirCopy(String dirPath) {
       return element(myFactory.createDirectoryCopy(dirPath));
+    }
+
+    public LayoutElementCreator parentDirCopy(String filePath) {
+      return dirCopy(PathUtil.getParentPath(filePath));
     }
 
     public LayoutElementCreator module(JpsModule module) {
