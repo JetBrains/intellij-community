@@ -119,6 +119,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     myEntryTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
     new SpeedSearchBase<JBTable>(myEntryTable) {
+      @Override
       public int getSelectedIndex() {
         return myEntryTable.getSelectedRow();
       }
@@ -128,6 +129,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         return myEntryTable.convertRowIndexToModel(viewIndex);
       }
 
+      @Override
       public Object[] getAllElements() {
         final int count = myModel.getRowCount();
         Object[] elements = new Object[count];
@@ -137,10 +139,12 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         return elements;
       }
 
+      @Override
       public String getElementText(Object element) {
         return getCellAppearance((ClasspathTableItem<?>)element, getStructureConfigurableContext(), false).getText();
       }
 
+      @Override
       public void selectElement(Object element, String selectedText) {
         final int count = myModel.getRowCount();
         for (int row = 0; row < count; row++) {
@@ -158,6 +162,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
     myEntryTable.registerKeyboardAction(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           final int[] selectedRows = myEntryTable.getSelectedRows();
           boolean currentlyMarked = true;
@@ -206,10 +211,12 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     final AnAction navigateAction = new AnAction(ProjectBundle.message("classpath.panel.navigate.action.text")) {
+      @Override
       public void actionPerformed(AnActionEvent e) {
         navigate(false);
       }
 
+      @Override
       public void update(AnActionEvent e) {
         final Presentation presentation = e.getPresentation();
         presentation.setEnabled(false);
@@ -303,6 +310,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
     // we need to register our listener before ToolbarDecorator registers its own. Otherwise
     myEntryTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) {
           return;
@@ -328,21 +336,25 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
               return selectedValue.hasSubStep();
             }
 
+            @Override
             public boolean isMnemonicsNavigationEnabled() {
               return true;
             }
 
+            @Override
             public PopupStep onChosen(final AddItemPopupAction<?> selectedValue, final boolean finalChoice) {
               if (selectedValue.hasSubStep()) {
                 return selectedValue.createSubStep();
               }
               return doFinalStep(new Runnable() {
+                @Override
                 public void run() {
                   selectedValue.execute();
                 }
               });
             }
 
+            @Override
             @NotNull
             public String getTextFor(AddItemPopupAction<?> value) {
               return "&" + value.getIndex() + "  " + value.getTitle();
@@ -445,11 +457,13 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     context.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(context, getRootModel().getModule()));
   }
 
+  @Override
   @NotNull
   public LibraryTableModifiableModelProvider getModifiableModelProvider(@NotNull String tableLevel) {
     if (LibraryTableImplUtil.MODULE_LEVEL.equals(tableLevel)) {
       final LibraryTable moduleLibraryTable = getRootModel().getModuleLibraryTable();
       return new LibraryTableModifiableModelProvider() {
+        @Override
         public LibraryTable.ModifiableModel getModifiableModel() {
           return moduleLibraryTable.getModifiableModel();
         }
@@ -641,6 +655,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       myContext = context;
     }
 
+    @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
       setPaintFocusBorder(false);
       setFocusBorderAroundIcon(true);
@@ -662,6 +677,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       myBlankPanel = new JPanel();
     }
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       if (!table.isCellEditable(row, column)) {
         myBlankPanel.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
@@ -676,10 +692,12 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       super(myEntryTable, myState.getProject());
     }
 
+    @Override
     protected boolean isEnabled() {
       return getSelectedElement() != null;
     }
 
+    @Override
     protected ProjectStructureElement getSelectedElement() {
       final OrderEntry entry = getSelectedEntry();
       if (entry instanceof LibraryOrderEntry) {
@@ -703,6 +721,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       return null;
     }
 
+    @Override
     protected RelativePoint getPointToShowResults() {
       Rectangle rect = myEntryTable.getCellRect(myEntryTable.getSelectedRow(), 1, false);
       Point location = rect.getLocation();

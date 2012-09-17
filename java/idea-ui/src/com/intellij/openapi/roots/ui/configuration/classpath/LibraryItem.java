@@ -37,6 +37,7 @@ class LibraryItem extends ClasspathTableItem<LibraryOrderEntry> {
     myContext = context;
   }
 
+  @Override
   public boolean isEditable() {
     return myEntry != null && myEntry.isValid();
   }

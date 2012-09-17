@@ -25,10 +25,12 @@ public class BackAction extends NavigationAction {
     super(c, "Back");
   }
 
+  @Override
   protected void doUpdate(final AnActionEvent e) {
     e.getPresentation().setEnabled(getHistory(e).canGoBack());
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     getHistory(e).back();
   }

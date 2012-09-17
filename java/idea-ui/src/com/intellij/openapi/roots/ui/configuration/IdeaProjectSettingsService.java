@@ -40,18 +40,22 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
     myProject = project;
   }
 
+  @Override
   public void openProjectSettings() {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(myProject);
     ShowSettingsUtil.getInstance().editConfigurable(myProject, config, new Runnable() {
+      @Override
       public void run() {
         config.selectProjectGeneralSettings(true);
       }
     });
   }
 
+  @Override
   public void openGlobalLibraries() {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(myProject);
     ShowSettingsUtil.getInstance().editConfigurable(myProject, config, new Runnable() {
+      @Override
       public void run() {
         config.selectGlobalLibraries(true);
       }
@@ -63,6 +67,7 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
     return true;
   }
 
+  @Override
   public void openModuleSettings(final Module module) {
     ModulesConfigurator.showDialog(myProject, module.getName(), null);
   }
@@ -72,6 +77,7 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
     return true;
   }
 
+  @Override
   public void openModuleLibrarySettings(final Module module) {
     ModulesConfigurator.showDialog(myProject, module.getName(), ClasspathEditor.NAME);
   }
@@ -81,6 +87,7 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
     return true;
   }
 
+  @Override
   public void openContentEntriesSettings(final Module module) {
     ModulesConfigurator.showDialog(myProject, module.getName(), ContentEntriesEditor.NAME);
   }
@@ -105,9 +112,11 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
     return true;
   }
 
+  @Override
   public void openLibraryOrSdkSettings(@NotNull final OrderEntry orderEntry) {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(myProject);
     ShowSettingsUtil.getInstance().editConfigurable(myProject, config, new Runnable() {
+      @Override
       public void run() {
         if (orderEntry instanceof JdkOrderEntry) {
           config.select(((JdkOrderEntry)orderEntry).getJdk(), true);
@@ -118,6 +127,7 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
     });
   }
 
+  @Override
   public boolean processModulesMoved(final Module[] modules, @Nullable final ModuleGroup targetGroup) {
     final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(myProject);
     if (rootConfigurable.updateProjectTree(modules, targetGroup)) { //inside project root editor

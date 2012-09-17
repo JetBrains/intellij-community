@@ -59,6 +59,7 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
     myProjectStructureElement = new ModuleProjectStructureElement(myContext, myModule);
   }
 
+  @Override
   public void setDisplayName(String name) {
     name = name.trim();
     final ModifiableModuleModel modifiableModuleModel = myConfigurator.getModuleModel();
@@ -81,18 +82,22 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
     return myProjectStructureElement;
   }
 
+  @Override
   public Module getEditableObject() {
     return myModule;
   }
 
+  @Override
   public String getBannerSlogan() {
     return ProjectBundle.message("project.roots.module.banner.text", myModuleName);
   }
 
+  @Override
   public String getDisplayName() {
     return myModuleName;
   }
 
+  @Override
   public Icon getIcon(final boolean open) {
     return ModuleType.get(myModule).getIcon();
   }
@@ -101,6 +106,7 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
     return myModule;
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {
@@ -109,22 +115,27 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
   }
 
 
+  @Override
   public JComponent createOptionsPanel() {
     return getModuleEditor().getPanel();
   }
 
+  @Override
   public boolean isModified() {
     return false;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     //do nothing
   }
 
+  @Override
   public void reset() {
     //do nothing
   }
 
+  @Override
   public void disposeUIResources() {
     //do nothing
   }
@@ -133,10 +144,12 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
     return myConfigurator.getModuleEditor(myModule);
   }
 
+  @Override
   public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
     return getModuleEditor().navigateTo(place, requestFocus);
   }
 
+  @Override
   public void queryPlace(@NotNull final Place place) {
     final ModuleEditor editor = getModuleEditor();
     if (editor != null) {
@@ -144,6 +157,7 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
     }
   }
 
+  @Override
   public void setHistory(final History history) {
   }
 }

@@ -32,6 +32,7 @@ public abstract class JavaContentEntryEditor extends ContentEntryEditor {
     myCompilerExtension = getModel().getModuleExtension(CompilerModuleExtension.class);
   }
 
+  @Override
   protected ContentRootPanel createContentRootPane() {
     return new JavaContentRootPanel(this) {
       @Nullable

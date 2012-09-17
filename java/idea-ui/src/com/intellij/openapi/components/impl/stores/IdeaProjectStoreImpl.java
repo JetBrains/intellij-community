@@ -32,12 +32,15 @@ public class IdeaProjectStoreImpl extends ProjectWithModulesStoreImpl {
     super(project);
   }
 
+  @Override
   protected StateStorageManager createStateStorageManager() {
     return new ProjectStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(), myProject) {
+      @Override
       public StorageData createWsStorageData() {
         return new IdeaWsStorageData(ROOT_TAG_NAME, myProject);
       }
 
+      @Override
       public StorageData createIprStorageData() {
         return new IdeaIprStorageData(ROOT_TAG_NAME, myProject);
       }
@@ -53,6 +56,7 @@ public class IdeaProjectStoreImpl extends ProjectWithModulesStoreImpl {
       super(storageData);
     }
 
+    @Override
     public StorageData clone() {
       return new IdeaWsStorageData(this);
     }
@@ -68,10 +72,12 @@ public class IdeaProjectStoreImpl extends ProjectWithModulesStoreImpl {
       super(storageData);
     }
 
+    @Override
     public StorageData clone() {
       return new IdeaIprStorageData(this);
     }
 
+    @Override
     protected void convert(final Element root, final int originalVersion) {
       if (originalVersion < 1) {
         Convertor01.execute(root);

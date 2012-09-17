@@ -35,11 +35,13 @@ public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
     return "ProjectLibrariesConfigurable.UI";
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "Libraries";
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getId() {
@@ -47,10 +49,12 @@ public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
   }
 
 
+  @Override
   public StructureLibraryTableModifiableModelProvider getModelProvider() {
     return myContext.getProjectLibrariesProvider();
   }
 
+  @Override
   public BaseLibrariesConfigurable getOppositeGroup() {
     return GlobalLibrariesConfigurable.getInstance(myProject);
   }
@@ -64,6 +68,7 @@ public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
     return LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getPresentation();
   }
 
+  @Override
   protected String getAddText() {
     return ProjectBundle.message("add.new.project.library.text");
   }

@@ -62,26 +62,32 @@ public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> im
     return myProjectStructureElement;
   }
 
+  @Override
   public void setDisplayName(final String name) {
     myProjectJdk.setName(name);
   }
 
+  @Override
   public Sdk getEditableObject() {
     return myProjectJdk;
   }
 
+  @Override
   public String getBannerSlogan() {
     return ProjectBundle.message("project.roots.jdk.banner.text", myProjectJdk.getName());
   }
 
+  @Override
   public String getDisplayName() {
     return myProjectJdk.getName();
   }
 
+  @Override
   public Icon getIcon(boolean open) {
     return ((SdkType) myProjectJdk.getSdkType()).getIcon();
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {
@@ -89,33 +95,41 @@ public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> im
   }
 
 
+  @Override
   public JComponent createOptionsPanel() {
     return mySdkEditor.createComponent();
   }
 
+  @Override
   public boolean isModified() {
     return mySdkEditor.isModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     mySdkEditor.apply();
   }
 
+  @Override
   public void reset() {
     mySdkEditor.reset();
   }
 
+  @Override
   public void disposeUIResources() {
     mySdkEditor.disposeUIResources();
   }
 
+  @Override
   public void setHistory(final History history) {
   }
 
+  @Override
   public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
     return mySdkEditor.navigateTo(place, requestFocus);
   }
 
+  @Override
   public void queryPlace(@NotNull final Place place) {
     mySdkEditor.queryPlace(place);
   }

@@ -152,6 +152,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
             return;
           }
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               for (Object selectedElement : selectedElements) {
                 if (selectedElement instanceof ItemElement) {
@@ -263,6 +264,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     return null;
   }
 
+  @Override
   public LibraryEditor getLibraryEditor() {
     return myLibraryEditorComputable.compute();
   }
@@ -317,6 +319,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     librariesChanged(false);
   }
 
+  @Override
   public void dispose() {
     if (myPropertiesEditor != null) {
       myPropertiesEditor.disposeUIResources();
@@ -382,6 +385,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       return getBaseDirectory();
     }
 
+    @Override
     public void actionPerformed(@Nullable AnActionEvent e) {
       VirtualFile toSelect = getFileToSelect();
       List<OrderRoot> roots = selectRoots(toSelect);
@@ -424,6 +428,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     final List<OrderRoot> rootsToAttach = filterAlreadyAdded(roots);
     if (!rootsToAttach.isEmpty()) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           getLibraryEditor().addRoots(rootsToAttach);
         }

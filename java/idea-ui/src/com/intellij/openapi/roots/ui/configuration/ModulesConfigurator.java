@@ -71,6 +71,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private final Project myProject;
   private final List<ModuleEditor> myModuleEditors = new ArrayList<ModuleEditor>();
   private final Comparator<ModuleEditor> myModuleEditorComparator = new Comparator<ModuleEditor>() {
+    @Override
     public int compare(ModuleEditor editor1, ModuleEditor editor2) {
       return ModulesAlphaComparator.INSTANCE.compare(editor1.getModule(), editor2.getModule());
     }
@@ -104,6 +105,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   public void disposeUIResources() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         for (final ModuleEditor moduleEditor : myModuleEditors) {
           Disposer.dispose(moduleEditor);
@@ -118,11 +120,13 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   }
 
+  @Override
   @NotNull
   public Module[] getModules() {
     return myModuleModel.getModules();
   }
 
+  @Override
   @Nullable
   public Module getModule(String name) {
     final Module moduleByName = myModuleModel.findModuleByName(name);
@@ -142,6 +146,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return null;
   }
 
+  @Override
   public ModuleRootModel getRootModel(@NotNull Module module) {
     return getOrCreateModuleEditor(module).getRootModel();
   }
@@ -167,6 +172,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
     moduleEditor.addChangeListener(this);
     Disposer.register(moduleEditor, new Disposable() {
+      @Override
       public void dispose() {
         moduleEditor.removeChangeListener(ModulesConfigurator.this);
       }
@@ -174,6 +180,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return moduleEditor;
   }
 
+  @Override
   public FacetModel getFacetModel(@NotNull Module module) {
     return myFacetsConfigurator.getOrCreateModifiableModel(module);
   }
@@ -182,6 +189,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         if (!myModuleEditors.isEmpty()) {
           LOG.error("module editors was not disposed");
@@ -200,6 +208,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     myModified = false;
   }
 
+  @Override
   public void moduleStateChanged(final ModifiableRootModel moduleRootModel) {
     for (ModuleEditor.ChangeListener listener : myAllModulesChangeListeners) {
       listener.moduleStateChanged(moduleRootModel);
@@ -304,6 +313,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     myFacetsConfigurator.applyEditors();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         try {
           final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
@@ -365,6 +375,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         modules.addAll(commitedModules);
       }
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+         @Override
          public void run() {
            for (Module module : modules) {
              getOrCreateModuleEditor(module);
@@ -379,6 +390,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private Module createModule(final ModuleBuilder builder) {
     final Exception[] ex = new Exception[]{null};
     final Module module = ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
+      @Override
       @SuppressWarnings({"ConstantConditions"})
       public Module compute() {
         try {
@@ -402,6 +414,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     final Module module = createModule(moduleBuilder);
     if (module != null) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           getOrCreateModuleEditor(module);
           Collections.sort(myModuleEditors, myModuleEditorComparator);
@@ -499,6 +512,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   public static boolean showArtifactSettings(@NotNull Project project, @Nullable final Artifact artifact) {
     final ProjectStructureConfigurable configurable = ProjectStructureConfigurable.getInstance(project);
     return ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
+      @Override
       public void run() {
         configurable.select(artifact, true);
       }
@@ -510,9 +524,11 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     final Project project = facet.getModule().getProject();
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(project);
     return ShowSettingsUtil.getInstance().editConfigurable(project, config, new Runnable() {
+      @Override
       public void run() {
         final ModuleStructureConfigurable modulesConfig = config.getModulesConfig();
         config.select(facet, true).doWhenDone(new Runnable() {
+          @Override
           public void run() {
             if (tabNameToSelect != null) {
               FacetEditorImpl facetEditor = modulesConfig.getFacetConfigurator().getOrCreateEditor(facet);
@@ -527,6 +543,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   public static boolean showDialog(Project project, @Nullable final String moduleToSelect, @Nullable final String editorNameToSelect) {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(project);
     return ShowSettingsUtil.getInstance().editConfigurable(project, config, new Runnable() {
+      @Override
       public void run() {
         config.select(moduleToSelect, editorNameToSelect, true);
       }

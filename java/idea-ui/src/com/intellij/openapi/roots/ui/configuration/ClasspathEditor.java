@@ -58,23 +58,28 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     registerDisposable(disposable);
   }
 
+  @Override
   public boolean isModified() {
     return super.isModified() || (myClasspathFormatPanel != null && myClasspathFormatPanel.isModified());
   }
 
+  @Override
   public String getHelpTopic() {
     return "projectStructure.modules.dependencies";
   }
 
+  @Override
   public String getDisplayName() {
     return NAME;
   }
 
+  @Override
   public void saveData() {
     myPanel.stopEditing();
     flushChangesToModel();
   }
 
+  @Override
   public void apply () throws ConfigurationException {
     if(myClasspathFormatPanel!=null) {
       myClasspathFormatPanel.apply();
@@ -90,10 +95,12 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     }
   }
 
+  @Override
   public JComponent createComponentImpl() {
     myPanel = new ClasspathPanelImpl(getState());
 
     myPanel.addListener(new OrderPanelListener() {
+      @Override
       public void entryMoved() {
         flushChangesToModel();
       }
@@ -132,15 +139,18 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     myPanel.selectOrderEntry(entry);
   }
 
+  @Override
   public void moduleStateChanged() {
     if (myPanel != null) {
       myPanel.initFromModel();
     }
   }
 
+  @Override
   public void beforeRootsChange(ModuleRootEvent event) {
   }
 
+  @Override
   public void rootsChanged(ModuleRootEvent event) {
     if (myPanel != null) {
       myPanel.rootsChanged();

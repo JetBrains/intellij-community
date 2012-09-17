@@ -46,16 +46,20 @@ import java.util.List;
 public class JdkListConfigurable extends BaseStructureConfigurable {
   private final ProjectSdksModel myJdksTreeModel;
   private final SdkModel.Listener myListener = new SdkModel.Listener() {
+    @Override
     public void sdkAdded(Sdk sdk) {
     }
 
+    @Override
     public void beforeSdkRemove(Sdk sdk) {
     }
 
+    @Override
     public void sdkChanged(Sdk sdk, String previousName) {
       updateName();
     }
 
+    @Override
     public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
       updateName();
     }
@@ -82,35 +86,42 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     return "JdkListConfigurable.UI";
   }
 
+  @Override
   protected void processRemovedItems() {
   }
 
+  @Override
   protected boolean wasObjectStored(final Object editableObject) {
     return false;
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "SDKs";
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {
     return myCurrentConfigurable != null ? myCurrentConfigurable.getHelpTopic() : "reference.settingsdialog.project.structure.jdk";
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getId() {
     return "jdk.list";
   }
 
+  @Override
   @Nullable
   public Runnable enableSearch(final String option) {
     return null;
   }
 
+  @Override
   protected void loadTree() {
     final HashMap<Sdk,Sdk> sdks = myJdksTreeModel.getProjectSdks();
     for (Sdk sdk : sdks.keySet()) {
@@ -142,6 +153,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     return false;
   }
 
+  @Override
   public void dispose() {
     myJdksTreeModel.removeListener(myListener);
     myJdksTreeModel.disposeUIResources();
@@ -151,11 +163,13 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     return myJdksTreeModel;
   }
 
+  @Override
   public void reset() {
     super.reset();
     myTree.setRootVisible(false);
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     boolean modifiedJdks = false;
     for (int i = 0; i < myRoot.getChildCount(); i++) {
@@ -170,6 +184,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     myJdksTreeModel.setProjectSdk(ProjectRootManager.getInstance(myProject).getProjectSdk());
   }
 
+  @Override
   public boolean isModified() {
     return super.isModified() || myJdksTreeModel.isModified();
   }
@@ -178,11 +193,14 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     return ServiceManager.getService(project, JdkListConfigurable.class);
   }
 
+  @Override
   public AbstractAddGroup createAddAction() {
     return new AbstractAddGroup(ProjectBundle.message("add.new.jdk.text")) {
+      @Override
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
         DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);
         myJdksTreeModel.createAddActions(group, myTree, new Consumer<Sdk>() {
+          @Override
           public void consume(final Sdk projectJdk) {
             addJdkNode(projectJdk, true);
           }
@@ -192,11 +210,13 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     };
   }
 
+  @Override
   protected void removeJdk(final Sdk jdk) {
     myJdksTreeModel.removeSdk(jdk);
     myContext.getDaemonAnalyzer().removeElement(new SdkProjectStructureElement(myContext, jdk));
   }
 
+  @Override
   protected
   @Nullable
   String getEmptySelectionString() {

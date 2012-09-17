@@ -38,6 +38,7 @@ class ProjectStructureElementRenderer extends ColoredTreeCellRenderer {
     myContext = context;
   }
 
+  @Override
   public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     if (value instanceof MasterDetailsComponent.MyNode) {
       final MasterDetailsComponent.MyNode node = (MasterDetailsComponent.MyNode)value;

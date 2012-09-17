@@ -52,6 +52,7 @@ public class InlineArtifactAction extends DumbAwareAction {
     e.getPresentation().setEnabled(element instanceof ArtifactPackagingElement && node != null && node.getParentElement(element) != null);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final LayoutTreeComponent treeComponent = myEditor.getLayoutTreeComponent();
     final LayoutTreeSelection selection = treeComponent.getSelection();
@@ -67,6 +68,7 @@ public class InlineArtifactAction extends DumbAwareAction {
     if (!treeComponent.checkCanModifyChildren(parent, parentNode, Collections.singletonList(node))) return;
 
     treeComponent.editLayout(new Runnable() {
+      @Override
       public void run() {
         parent.removeChild(element);
         final ArtifactEditorContext context = myEditor.getContext();

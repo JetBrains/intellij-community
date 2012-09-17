@@ -51,18 +51,22 @@ public abstract class ModuleJdkConfigurable implements Disposable {
   private final ProjectSdksModel myJdksModel;
   private boolean myFreeze = false;
   private final SdkModel.Listener myListener = new SdkModel.Listener() {
+    @Override
     public void sdkAdded(Sdk sdk) {
       reloadModel();
     }
 
+    @Override
     public void beforeSdkRemove(Sdk sdk) {
       reloadModel();
     }
 
+    @Override
     public void sdkChanged(Sdk sdk, String previousName) {
       reloadModel();
     }
 
+    @Override
     public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
       reloadModel();
     }
@@ -105,6 +109,7 @@ public abstract class ModuleJdkConfigurable implements Disposable {
     myCbModuleJdk = new JdkComboBox(myJdksModel);
     myCbModuleJdk.insertItemAt(new JdkComboBox.ProjectJdkComboBoxItem(), 0);
     myCbModuleJdk.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (myFreeze) return;
 
@@ -123,6 +128,7 @@ public abstract class ModuleJdkConfigurable implements Disposable {
     final JButton setUpButton = new JButton(ApplicationBundle.message("button.new"));
     myCbModuleJdk
       .setSetupButton(setUpButton, project, myJdksModel, new JdkComboBox.ProjectJdkComboBoxItem(), new Condition<Sdk>() {
+        @Override
         public boolean value(Sdk jdk) {
           final Sdk projectJdk = myJdksModel.getProjectSdk();
           if (projectJdk == null) {
@@ -144,6 +150,7 @@ public abstract class ModuleJdkConfigurable implements Disposable {
                                                        new Insets(0, 4, 7, 0), 0, 0));
     final JButton editButton = new JButton(ApplicationBundle.message("button.edit"));
     myCbModuleJdk.setEditButton(editButton, getRootModel().getModule().getProject(), new Computable<Sdk>() {
+      @Override
       @Nullable
       public Sdk compute() {
         return getRootModel().getSdk();
@@ -179,6 +186,7 @@ public abstract class ModuleJdkConfigurable implements Disposable {
     myFreeze = false;
   }
 
+  @Override
   public void dispose() {
     myModuleEditor = null;
     myCbModuleJdk = null;

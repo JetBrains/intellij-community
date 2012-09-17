@@ -74,6 +74,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
   @Override
   protected void configureUiHelper(TreeUIHelper helper) {
     final Convertor<TreePath, String> convertor = new Convertor<TreePath, String>() {
+      @Override
       public String convert(final TreePath path) {
         final SimpleNode node = getNodeFor(path);
         if (node instanceof PackagingElementNode) {
@@ -89,14 +90,17 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     return getSelection().getNodes();
   }
 
+  @Override
   public boolean canStartDragging(DnDAction action, Point dragOrigin) {
     return !getNodesToDrag().isEmpty();
   }
 
+  @Override
   public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
     return new DnDDragStartBean(new LayoutNodesDraggingObject(myArtifactsEditor, getNodesToDrag()));
   }
 
+  @Override
   public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
     final List<PackagingElementNode<?>> nodes = getNodesToDrag();
     if (nodes.size() == 1) {
@@ -105,12 +109,15 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     return DnDAwareTree.getDragImage(this, ProjectBundle.message("drag.n.drop.text.0.packaging.elements", nodes.size()), dragOrigin);
   }
 
+  @Override
   public void dragDropEnd() {
   }
 
+  @Override
   public void dropActionChanged(int gestureModifiers) {
   }
 
+  @Override
   public void dispose() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       DnDManager.getInstance().unregisterSource(this);
@@ -145,6 +152,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
   public List<PackagingElementNode<?>> findNodes(final Collection<? extends PackagingElement<?>> elements) {
     final List<PackagingElementNode<?>> nodes = new ArrayList<PackagingElementNode<?>>();
     TreeUtil.traverseDepth(getRootNode(), new TreeUtil.Traverse() {
+      @Override
       public boolean accept(Object node) {
         final Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
         if (userObject instanceof PackagingElementNode) {
@@ -215,6 +223,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
       if (stopped && currentElement != null) {
         final RenameablePackagingElement finalCurrentElement = currentElement;
         myArtifactsEditor.getLayoutTreeComponent().editLayout(new Runnable() {
+          @Override
           public void run() {
             finalCurrentElement.rename(newValue);
           }

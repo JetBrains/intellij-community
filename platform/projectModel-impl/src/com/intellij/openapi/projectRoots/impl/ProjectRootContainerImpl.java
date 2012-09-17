@@ -59,22 +59,26 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     }
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getRootFiles(@NotNull OrderRootType type) {
     return myFiles.get(type);
   }
 
+  @Override
   @NotNull
   public ProjectRoot[] getRoots(@NotNull OrderRootType type) {
     return myRoots.get(type).getProjectRoots();
   }
 
+  @Override
   public void startChange() {
     LOG.assertTrue(!myInsideChange);
 
     myInsideChange = true;
   }
 
+  @Override
   public void finishChange() {
     LOG.assertTrue(myInsideChange);
     HashMap<OrderRootType, VirtualFile[]> oldRoots = new HashMap<OrderRootType, VirtualFile[]>(myFiles);
@@ -115,32 +119,38 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   }
 
 
+  @Override
   public void removeRoot(@NotNull ProjectRoot root, @NotNull OrderRootType type) {
     LOG.assertTrue(myInsideChange);
     myRoots.get(type).remove(root);
   }
 
+  @Override
   @NotNull
   public ProjectRoot addRoot(@NotNull VirtualFile virtualFile, @NotNull OrderRootType type) {
     LOG.assertTrue(myInsideChange);
     return myRoots.get(type).add(virtualFile);
   }
 
+  @Override
   public void addRoot(@NotNull ProjectRoot root, @NotNull OrderRootType type) {
     LOG.assertTrue(myInsideChange);
     myRoots.get(type).add(root);
   }
 
+  @Override
   public void removeAllRoots(@NotNull OrderRootType type ) {
     LOG.assertTrue(myInsideChange);
     myRoots.get(type).clear();
   }
 
+  @Override
   public void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType type) {
     LOG.assertTrue(myInsideChange);
     myRoots.get(type).remove(root);
   }
 
+  @Override
   public void removeAllRoots() {
     LOG.assertTrue(myInsideChange);
     for (CompositeProjectRoot myRoot : myRoots.values()) {
@@ -148,6 +158,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     }
   }
 
+  @Override
   public void update() {
     LOG.assertTrue(myInsideChange);
     for (CompositeProjectRoot myRoot : myRoots.values()) {
@@ -155,12 +166,14 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     }
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     for (PersistentOrderRootType type : OrderRootType.getAllPersistentTypes()) {
       read(element, type);
     }
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         myFiles = new HashMap<OrderRootType, VirtualFile[]>();
         for(OrderRootType rootType: myRoots.keySet()) {
@@ -182,6 +195,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     List<PersistentOrderRootType> allTypes = OrderRootType.getSortedRootTypes();
     for (PersistentOrderRootType type : allTypes) {

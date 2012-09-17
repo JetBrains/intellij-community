@@ -70,6 +70,7 @@ public class ArtifactPropertiesEditors {
   public void addTabs(TabbedPaneWrapper tabbedPane) {
     List<String> sortedTabs = new ArrayList<String>(myMainPanels.keySet());
     Collections.sort(sortedTabs, new Comparator<String>() {
+      @Override
       public int compare(String o1, String o2) {
         int i1 = STANDARD_TABS_ORDER.indexOf(o1);
         if (i1 == -1) i1 = STANDARD_TABS_ORDER.size();

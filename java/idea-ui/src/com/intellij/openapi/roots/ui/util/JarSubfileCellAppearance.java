@@ -26,10 +26,12 @@ public class JarSubfileCellAppearance extends ValidFileCellAppearance {
     super(file);
   }
 
+  @Override
   protected Icon getIcon() {
     return FileTypes.ARCHIVE.getIcon();
   }
 
+  @Override
   protected int getSplitUrlIndex(String url) {
     int jarNameEnd = url.lastIndexOf(JarFileSystem.JAR_SEPARATOR.charAt(0));
     String jarUrl = jarNameEnd >= 0 ? url.substring(0, jarNameEnd) : url;

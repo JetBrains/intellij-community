@@ -49,6 +49,7 @@ public class FacetConfigurable extends ProjectStructureElementConfigurable<Facet
   }
 
 
+  @Override
   public void setDisplayName(String name) {
     name = name.trim();
     if (!name.equals(myFacetName)) {
@@ -66,14 +67,17 @@ public class FacetConfigurable extends ProjectStructureElementConfigurable<Facet
     return myModulesConfigurator.getFacetsConfigurator();
   }
 
+  @Override
   public Facet getEditableObject() {
     return myFacet;
   }
 
+  @Override
   public String getBannerSlogan() {
     return ProjectBundle.message("facet.banner.text", myFacetName);
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return getEditor().getComponent();
   }
@@ -82,16 +86,19 @@ public class FacetConfigurable extends ProjectStructureElementConfigurable<Facet
     return getFacetsConfigurator().getOrCreateEditor(myFacet);
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return myFacetName;
   }
 
+  @Override
   @Nullable
   public Icon getIcon(boolean open) {
     return myFacet.getType().getIcon();
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {
@@ -99,16 +106,20 @@ public class FacetConfigurable extends ProjectStructureElementConfigurable<Facet
     return facetEditor != null ? facetEditor.getHelpTopic() : null;
   }
 
+  @Override
   public boolean isModified() {
     return false;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
   }
 
+  @Override
   public void reset() {
   }
 
+  @Override
   public void disposeUIResources() {
   }
 }

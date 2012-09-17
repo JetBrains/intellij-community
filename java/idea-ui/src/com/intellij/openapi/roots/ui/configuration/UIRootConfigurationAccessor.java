@@ -36,6 +36,7 @@ public class UIRootConfigurationAccessor extends RootConfigurationAccessor {
     myProject = project;
   }
 
+  @Override
   @Nullable
   public Library getLibrary(Library library, final String libraryName, final String libraryLevel) {
     final StructureConfigurableContext context = ProjectStructureConfigurable.getInstance(myProject).getContext();
@@ -53,12 +54,14 @@ public class UIRootConfigurationAccessor extends RootConfigurationAccessor {
     return library;
   }
 
+  @Override
   @Nullable
   public Sdk getSdk(final Sdk sdk, final String sdkName) {
     final ProjectSdksModel model = ProjectStructureConfigurable.getInstance(myProject).getJdkConfig().getJdksTreeModel();
     return sdkName != null ? model.findSdk(sdkName) : sdk;
   }
 
+  @Override
   public Module getModule(final Module module, final String moduleName) {
     if (module == null) {
       return ModuleStructureConfigurable.getInstance(myProject).getModule(moduleName);
@@ -66,10 +69,12 @@ public class UIRootConfigurationAccessor extends RootConfigurationAccessor {
     return module;
   }
 
+  @Override
   public Sdk getProjectSdk(final Project project) {
     return ProjectStructureConfigurable.getInstance(project).getProjectJdksModel().getProjectSdk();
   }
 
+  @Override
   @Nullable
   public String getProjectSdkName(final Project project) {
     final String projectJdkName = ProjectRootManager.getInstance(project).getProjectSdkName();

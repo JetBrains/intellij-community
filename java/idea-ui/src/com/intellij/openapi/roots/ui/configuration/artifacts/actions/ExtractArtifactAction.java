@@ -48,6 +48,7 @@ public class ExtractArtifactAction extends LayoutTreeActionBase {
     return myArtifactEditor.getLayoutTreeComponent().getSelection().getCommonParentElement() != null;
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final LayoutTreeComponent treeComponent = myArtifactEditor.getLayoutTreeComponent();
     final LayoutTreeSelection selection = treeComponent.getSelection();
@@ -73,6 +74,7 @@ public class ExtractArtifactAction extends LayoutTreeActionBase {
     final ModifiableArtifactModel model = myArtifactEditor.getContext().getOrCreateModifiableArtifactModel();
     final ModifiableArtifact artifact = model.addArtifact(dialog.getArtifactName(), dialog.getArtifactType());
     treeComponent.editLayout(new Runnable() {
+      @Override
       public void run() {
         for (PackagingElement<?> element : selectedElements) {
           artifact.getRootElement().addOrFindChild(ArtifactUtil.copyWithChildren(element, project));

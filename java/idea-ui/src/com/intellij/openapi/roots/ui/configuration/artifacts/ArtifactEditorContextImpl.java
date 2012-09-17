@@ -58,57 +58,70 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
     myEditor = editor;
   }
 
+  @Override
   @NotNull
   public ModifiableArtifactModel getOrCreateModifiableArtifactModel() {
     return myParent.getOrCreateModifiableArtifactModel();
   }
 
+  @Override
   public ModifiableModuleModel getModifiableModuleModel() {
     return myParent.getModifiableModuleModel();
   }
 
+  @Override
   @NotNull
   public ModifiableRootModel getOrCreateModifiableRootModel(@NotNull Module module) {
     return myParent.getOrCreateModifiableRootModel(module);
   }
 
+  @Override
   public ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType) {
     return myParent.getManifestFile(element, artifactType);
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myParent.getProject();
   }
 
+  @Override
   public CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact) {
     return myParent.getRootElement(artifact);
   }
 
+  @Override
   public void editLayout(@NotNull Artifact artifact, Runnable runnable) {
     myParent.editLayout(artifact, runnable);
   }
 
+  @Override
   public ArtifactEditor getOrCreateEditor(Artifact artifact) {
     return myParent.getOrCreateEditor(artifact);
   }
 
+  @Override
   public ArtifactEditor getThisArtifactEditor() {
     return myEditor;
   }
 
+  @Override
   public void selectArtifact(@NotNull Artifact artifact) {
     ProjectStructureConfigurable.getInstance(getProject()).select(artifact, true);
   }
 
+  @Override
   public void selectFacet(@NotNull Facet<?> facet) {
     ProjectStructureConfigurable.getInstance(getProject()).select(facet, true);
   }
 
+  @Override
   public void selectModule(@NotNull Module module) {
     ProjectStructureConfigurable.getInstance(getProject()).select(module.getName(), null, true);
   }
 
+  @Override
   public void selectLibrary(@NotNull Library library) {
     final LibraryTable table = library.getTable();
     if (table != null) {
@@ -133,6 +146,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
     }
   }
 
+  @Override
   public List<Artifact> chooseArtifacts(final List<? extends Artifact> artifacts, final String title) {
     ChooseArtifactsDialog dialog = new ChooseArtifactsDialog(getProject(), artifacts, title, null);
     dialog.show();
@@ -140,21 +154,25 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   }
 
 
+  @Override
   @NotNull
   public ArtifactModel getArtifactModel() {
     return myParent.getArtifactModel();
   }
 
+  @Override
   @NotNull
   public ModulesProvider getModulesProvider() {
     return myParent.getModulesProvider();
   }
 
+  @Override
   @NotNull
   public FacetsProvider getFacetsProvider() {
     return myParent.getFacetsProvider();
   }
 
+  @Override
   public Library findLibrary(@NotNull String level, @NotNull String libraryName) {
     return myParent.findLibrary(level, libraryName);
   }
@@ -165,25 +183,30 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
     return myParent.getManifestFileProvider();
   }
 
+  @Override
   public void queueValidation() {
     myParent.queueValidation(getArtifact());
   }
 
+  @Override
   @NotNull
   public ArtifactType getArtifactType() {
     return myEditor.getArtifact().getArtifactType();
   }
 
+  @Override
   public List<Module> chooseModules(final List<Module> modules, final String title) {
     return new ChooseModulesDialog(getProject(), modules, title, null).showAndGetResult();
   }
 
+  @Override
   public List<Library> chooseLibraries(final String title) {
     final ChooseLibrariesFromTablesDialog dialog = ChooseLibrariesFromTablesDialog.createDialog(title, getProject(), false);
     dialog.show();
     return dialog.isOK() ? dialog.getSelectedLibraries() : Collections.<Library>emptyList();
   }
 
+  @Override
   public Artifact getArtifact() {
     return myEditor.getArtifact();
   }

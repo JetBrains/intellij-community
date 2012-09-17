@@ -48,14 +48,17 @@ public class AnnotationsEditor extends ModuleElementsEditor {
     super(state);
   }
 
+  @Override
   public String getHelpTopic() {
     return "project.paths.annotations";//todo
   }
 
+  @Override
   public String getDisplayName() {
     return NAME;
   }
 
+  @Override
   public void saveData() {
     TableUtil.stopEditing(myTable);
     final int count = myTable.getRowCount();
@@ -67,6 +70,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
     getModel().getModuleExtension(JavaModuleExternalPaths.class).setExternalAnnotationUrls(urls);
   }
 
+  @Override
   public JComponent createComponentImpl() {
     final DefaultTableModel tableModel = createModel();
     myTable = new JBTable(tableModel);
@@ -127,6 +131,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
     return tableModel;
   }
 
+  @Override
   public void moduleStateChanged() {
     if (myTable != null) {
       final DefaultTableModel tableModel = createModel();
@@ -137,6 +142,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
   private static class MyRenderer extends ColoredTableCellRenderer {
     private static final Border NO_FOCUS_BORDER = BorderFactory.createEmptyBorder(1, 1, 1, 1);
 
+    @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
       setPaintFocusBorder(false);
       setFocusBorderAroundIcon(true);
@@ -148,18 +154,22 @@ public class AnnotationsEditor extends ModuleElementsEditor {
   }
 
   private static class MyTableModel extends DefaultTableModel implements ItemRemovable{
+    @Override
     public String getColumnName(int column) {
       return null;
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
       return TableItem.class;
     }
 
+    @Override
     public int getColumnCount() {
       return 1;
     }
 
+    @Override
     public boolean isCellEditable(int row, int column) {
       return false;
     }

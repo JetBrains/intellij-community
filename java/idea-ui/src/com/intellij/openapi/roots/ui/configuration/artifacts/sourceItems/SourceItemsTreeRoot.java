@@ -31,6 +31,7 @@ public class SourceItemsTreeRoot extends SourceItemNodeBase {
     super(context, null, new RootNodePresentation(), artifactsEditor);
   }
 
+  @Override
   protected PackagingSourceItem getSourceItem() {
     return null;
   }

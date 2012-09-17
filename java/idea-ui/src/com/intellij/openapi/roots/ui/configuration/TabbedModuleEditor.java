@@ -49,6 +49,7 @@ public abstract class TabbedModuleEditor extends ModuleEditor {
     restoreSelectedEditor();
 
     myTabbedPane.addChangeListener(new javax.swing.event.ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         saveSelectedEditor();
         if (myHistory != null) {
@@ -59,10 +60,12 @@ public abstract class TabbedModuleEditor extends ModuleEditor {
     return myTabbedPane.getComponent();
   }
 
+  @Override
   protected void restoreSelectedEditor() {
     selectEditor(getSavedSelectedEditor());
   }
 
+  @Override
   public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
     if (place != null) {
       selectEditor((String)place.getPath(SELECTED_EDITOR_NAME));
@@ -70,6 +73,7 @@ public abstract class TabbedModuleEditor extends ModuleEditor {
     return new ActionCallback.Done();
   }
 
+  @Override
   public void queryPlace(@NotNull final Place place) {
     place.putPath(SELECTED_EDITOR_NAME, getSavedSelectedEditor());
   }
@@ -79,6 +83,7 @@ public abstract class TabbedModuleEditor extends ModuleEditor {
     return myTabbedPane == null || myTabbedPane.getSelectedIndex() == -1 ? null : myTabbedPane.getTitleAt(myTabbedPane.getSelectedIndex());
   }
 
+  @Override
   public void selectEditor(@Nullable String name) {
     if (name != null) {
       getPanel();
@@ -102,6 +107,7 @@ public abstract class TabbedModuleEditor extends ModuleEditor {
     return -1;
   }
 
+  @Override
   @Nullable
   public ModuleConfigurationEditor getEditor(@NotNull String displayName) {
     int index = getEditorTabIndex(displayName);

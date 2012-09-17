@@ -38,20 +38,24 @@ public class LibraryTreeStructure extends AbstractTreeStructure {
     myComponentDescriptor = componentDescriptor;
     myRootElement = new Object();
     myRootElementDescriptor = new NodeDescriptor(null, null) {
+      @Override
       public boolean update() {
         myName = ProjectBundle.message("library.root.node");
         return false;
       }
+      @Override
       public Object getElement() {
         return myRootElement;
       }
     };
   }
 
+  @Override
   public Object getRootElement() {
     return myRootElement;
   }
 
+  @Override
   public Object[] getChildElements(Object element) {
     if (element == myRootElement) {
       ArrayList<LibraryTableTreeContentElement> elements = new ArrayList<LibraryTableTreeContentElement>(3);
@@ -84,13 +88,16 @@ public class LibraryTreeStructure extends AbstractTreeStructure {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public void commit() {
   }
 
+  @Override
   public boolean hasSomethingToCommit() {
     return false;
   }
 
+  @Override
   public Object getParentElement(Object element) {
     Object rootElement = getRootElement();
     if (element == rootElement) {
@@ -102,6 +109,7 @@ public class LibraryTreeStructure extends AbstractTreeStructure {
     return rootElement;
   }
 
+  @Override
   @NotNull
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
     if (element == myRootElement) {

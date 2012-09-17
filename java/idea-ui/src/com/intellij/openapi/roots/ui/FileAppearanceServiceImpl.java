@@ -88,6 +88,7 @@ public class FileAppearanceServiceImpl extends FileAppearanceService {
     return appearance;
   }
 
+  @Override
   @NotNull
   public CellAppearanceEx forInvalidUrl(@NotNull final String text) {
     return SimpleTextCellAppearance.invalid(text, PlatformIcons.INVALID_ENTRY_ICON);

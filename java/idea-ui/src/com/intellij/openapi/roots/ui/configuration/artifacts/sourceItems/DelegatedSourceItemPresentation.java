@@ -32,31 +32,38 @@ public class DelegatedSourceItemPresentation extends SourceItemPresentation {
     myPresentation = presentation;
   }
 
+  @Override
   public String getPresentableName() {
     return myPresentation.getPresentableName();
   }
 
+  @Override
   public String getSearchName() {
     return myPresentation.getSearchName();
   }
 
+  @Override
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     myPresentation.render(presentationData, mainAttributes, commentAttributes);
   }
 
+  @Override
   @Nullable
   public String getTooltipText() {
     return myPresentation.getTooltipText();
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return myPresentation.canNavigateToSource();
   }
 
+  @Override
   public void navigateToSource() {
     myPresentation.navigateToSource();
   }
 
+  @Override
   public int getWeight() {
     return myPresentation.getWeight();
   }

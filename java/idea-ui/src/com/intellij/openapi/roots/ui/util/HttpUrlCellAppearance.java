@@ -25,6 +25,7 @@ public class HttpUrlCellAppearance extends ValidFileCellAppearance {
     super(file);
   }
 
+  @Override
   protected Icon getIcon() {
     return PlatformIcons.WEB_ICON;
   }

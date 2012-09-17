@@ -33,6 +33,7 @@ public abstract class ArtifactEditorNavigateActionBase extends DumbAwareAction {
     registerCustomShortcutSet(CommonShortcuts.getEditSource(), contextComponent);
   }
 
+  @Override
   public void update(final AnActionEvent e) {
     final TreeNodePresentation presentation = getPresentation();
     e.getPresentation().setEnabled(presentation != null && presentation.canNavigateToSource());
@@ -41,6 +42,7 @@ public abstract class ArtifactEditorNavigateActionBase extends DumbAwareAction {
   @Nullable
   protected abstract TreeNodePresentation getPresentation();
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     final TreeNodePresentation presentation = getPresentation();
     if (presentation != null) {

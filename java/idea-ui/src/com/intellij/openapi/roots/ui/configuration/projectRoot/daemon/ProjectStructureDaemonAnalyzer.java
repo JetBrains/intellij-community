@@ -53,6 +53,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   private void doCheck(final ProjectStructureElement element) {
     final ProjectStructureProblemsHolderImpl problemsHolder = new ProjectStructureProblemsHolderImpl();
     new ReadAction() {
+      @Override
       protected void run(final Result result) {
         if (myStopped.get()) return;
 
@@ -63,6 +64,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
       }
     }.execute();
     invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (myStopped.get()) return;
 
@@ -80,6 +82,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
 
   private void doCollectUsages(final ProjectStructureElement element) {
     final List<ProjectStructureElementUsage> usages = new ReadAction<List<ProjectStructureElementUsage>>() {
+      @Override
       protected void run(final Result<List<ProjectStructureElementUsage>> result) {
         if (myStopped.get()) return;
 
@@ -91,6 +94,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     }.execute().getResultObject();
 
     invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (myStopped.get() || usages == null) return;
 
@@ -224,6 +228,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     }
   }
 
+  @Override
   public void dispose() {
     myStopped.set(true);
     myAnalyzerQueue.cancelAllUpdates();
@@ -252,6 +257,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     LOG.debug("analyzer started");
     myAnalyzerQueue.activate();
     myAnalyzerQueue.queue(new Update("reset") {
+      @Override
       public void run() {
         myStopped.set(false);
       }
@@ -296,6 +302,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
       return myEqualityObjects;
     }
 
+    @Override
     public void run() {
       try {
         doUpdate(myElement, myCheck, myCollectUsages);

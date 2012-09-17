@@ -44,6 +44,7 @@ public class OutputEditor extends ModuleElementsEditor {
     myAnnotationsEditor = new AnnotationsEditor(state);
   }
 
+  @Override
   protected JComponent createComponentImpl() {
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(new EmptyBorder(UIUtil.PANEL_SMALL_INSETS));
@@ -60,17 +61,20 @@ public class OutputEditor extends ModuleElementsEditor {
     return panel;
   }
 
+  @Override
   public void saveData() {
     myCompilerOutputEditor.saveData();
     myJavadocEditor.saveData();
     myAnnotationsEditor.saveData();
   }
 
+  @Override
   public String getDisplayName() {
     return ProjectBundle.message("project.roots.path.tab.title");
   }
 
 
+  @Override
   public void moduleStateChanged() {
     super.moduleStateChanged();
     myCompilerOutputEditor.moduleStateChanged();
@@ -79,6 +83,7 @@ public class OutputEditor extends ModuleElementsEditor {
   }
 
 
+  @Override
   public void moduleCompileOutputChanged(final String baseUrl, final String moduleName) {
     super.moduleCompileOutputChanged(baseUrl, moduleName);
     myCompilerOutputEditor.moduleCompileOutputChanged(baseUrl, moduleName);
@@ -86,6 +91,7 @@ public class OutputEditor extends ModuleElementsEditor {
     myAnnotationsEditor.moduleCompileOutputChanged(baseUrl, moduleName);
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {

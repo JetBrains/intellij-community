@@ -130,10 +130,12 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
                                 @Nullable final Condition<Sdk> additionalSetup,
                                 final String actionGroupTitle) {
     setUpButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final JdkListConfigurable configurable = JdkListConfigurable.getInstance(project);
         DefaultActionGroup group = new DefaultActionGroup();
         jdksModel.createAddActions(group, JdkComboBox.this, new Consumer<Sdk>() {
+          @Override
           public void consume(final Sdk jdk) {
             configurable.addJdkNode(jdk, false);
             reloadModel(firstItem, project);
@@ -162,6 +164,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
 
   public void setEditButton(final JButton editButton, final Project project, final Computable<Sdk> retrieveJDK){
     editButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final Sdk projectJdk = retrieveJDK.compute();
         if (projectJdk != null) {
@@ -170,6 +173,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
       }
     });
     addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final JdkComboBoxItem selectedItem = getSelectedItem();
         if (selectedItem instanceof ProjectJdkComboBoxItem) {
@@ -182,6 +186,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
     });
   }
 
+  @Override
   public JdkComboBoxItem getSelectedItem() {
     return (JdkComboBoxItem)super.getSelectedItem();
   }
@@ -246,6 +251,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
       projectJdks = ContainerUtil.filter(projectJdks, myFilter);
     }
     Collections.sort(projectJdks, new Comparator<Sdk>() {
+      @Override
       public int compare(final Sdk o1, final Sdk o2) {
         return o1.getName().compareToIgnoreCase(o2.getName());
       }
@@ -263,6 +269,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
         jdks = filtered.toArray(new Sdk[filtered.size()]); 
       }
       Arrays.sort(jdks, new Comparator<Sdk>() {
+        @Override
         public int compare(final Sdk s1, final Sdk s2) {
           return s1.getName().compareToIgnoreCase(s2.getName());
         }
@@ -273,6 +280,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
     }
 
     // implements javax.swing.ListModel
+    @Override
     public JdkComboBoxItem getElementAt(int index) {
       return (JdkComboBoxItem)super.getElementAt(index);
     }
@@ -327,6 +335,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
       mySdkName = name;
     }
 
+    @Override
     public String getSdkName() {
       return mySdkName;
     }

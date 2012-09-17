@@ -39,6 +39,7 @@ public class NewModuleAction extends AnAction implements DumbAware {
     super(ProjectBundle.message("module.new.action"), ProjectBundle.message("module.new.action.description"), null);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = getEventProject(e);
     if (project == null) {
@@ -93,6 +94,7 @@ public class NewModuleAction extends AnAction implements DumbAware {
   protected void processCreatedModule(final Module module, final Object dataFromContext) {
   }
 
+  @Override
   public void update(AnActionEvent e) {
     super.update(e);
     e.getPresentation().setEnabled(getEventProject(e) != null);

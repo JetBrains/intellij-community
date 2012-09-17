@@ -43,6 +43,7 @@ public class ArtifactSourceItem extends PackagingSourceItem {
     myArtifact = artifact;
   }
 
+  @Override
   public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     final ArtifactPointer pointer = ArtifactPointerManager.getInstance(context.getProject()).createPointer(myArtifact, context.getArtifactModel());
     return new DelegatedSourceItemPresentation(new ArtifactElementPresentation(pointer, context)) {
@@ -53,6 +54,7 @@ public class ArtifactSourceItem extends PackagingSourceItem {
     };
   }
 
+  @Override
   @NotNull
   public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
     final Project project = context.getProject();

@@ -56,6 +56,7 @@ public class PutSourceItemIntoDefaultLocationAction extends PutIntoDefaultLocati
     presentation.setEnabled(enabled);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     myArtifactEditor.getLayoutTreeComponent().putIntoDefaultLocations(mySourceItemsTree.getSelectedItems());
   }

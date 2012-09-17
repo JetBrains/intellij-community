@@ -73,6 +73,7 @@ public class StructureConfigurableContext implements Disposable, LibraryEditorLi
     return myDaemonAnalyzer;
   }
 
+  @Override
   public void dispose() {
   }
 
@@ -109,6 +110,7 @@ public class StructureConfigurableContext implements Disposable, LibraryEditorLi
     myLibraryEditorListeners.addListener(listener, parentDisposable);
   }
 
+  @Override
   public void libraryRenamed(@NotNull Library library, String oldName, String newName) {
     myLibraryEditorListeners.getMulticaster().libraryRenamed(library, oldName, newName);
   }

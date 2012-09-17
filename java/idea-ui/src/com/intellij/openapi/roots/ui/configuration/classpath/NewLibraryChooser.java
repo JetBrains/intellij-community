@@ -53,6 +53,7 @@ class NewLibraryChooser implements ClasspathElementChooser<Library> {
     myProject = project;
   }
 
+  @Override
   @NotNull
   public List<Library> chooseElements() {
     return ContainerUtil.createMaybeSingletonList(createLibrary());

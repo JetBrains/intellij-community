@@ -30,10 +30,12 @@ public class OrderRootTypeElementDescriptor extends NodeDescriptor<OrderRootType
     myName = text;
   }
 
+  @Override
   public boolean update() {
     return false;
   }
 
+  @Override
   public OrderRootTypeElement getElement() {
     return myElement;
   }

@@ -79,9 +79,11 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
     return MasterDetailsStateService.getInstance(myProject);
   }
 
+  @Override
   protected void initTree() {
     super.initTree();
     new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
+      @Override
       public String convert(final TreePath treePath) {
         return ((MyNode)treePath.getLastPathComponent()).getDisplayName();
       }
@@ -90,6 +92,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
     myTree.setRootVisible(false);
   }
 
+  @Override
   public void reset() {
     super.reset();
 
@@ -125,6 +128,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
     return null;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     super.apply();
     boolean modifiedJdks = false;
@@ -141,11 +145,13 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
  }
 
 
+  @Override
   public boolean isModified() {
     return super.isModified() || myProjectJdksModel.isModified();
   }
 
 
+  @Override
   public void disposeUIResources() {
     final Splitter splitter = extractSplitter();
     if (splitter != null) {
@@ -155,12 +161,14 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
     super.disposeUIResources();
   }
 
+  @Override
   @Nullable
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     final ArrayList<AnAction> actions = new ArrayList<AnAction>();
     DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);
     group.getTemplatePresentation().setIcon(IconUtil.getAddIcon());
     myProjectJdksModel.createAddActions(group, myTree, new Consumer<Sdk>() {
+      @Override
       public void consume(final Sdk projectJdk) {
         addNode(new MyNode(new JdkConfigurable(((ProjectJdkImpl)projectJdk), myProjectJdksModel, TREE_UPDATER, myHistory, myProject), false), myRoot);
         selectNodeInTree(findNodeByObject(myRoot, projectJdk));
@@ -171,6 +179,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
     return actions;
   }
 
+  @Override
   protected void processRemovedItems() {
     final Set<Sdk> jdks = new HashSet<Sdk>();
     for(int i = 0; i < myRoot.getChildCount(); i++){
@@ -186,6 +195,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
     }
   }
 
+  @Override
   protected boolean wasObjectStored(Object editableObject) {
     //noinspection RedundantCast
     return myProjectJdksModel.getProjectSdks().containsKey((Sdk)editableObject);
@@ -200,17 +210,20 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
     selectNodeInTree(projectJdk);
   }
 
+  @Override
   @Nullable
   public String getDisplayName() {
     return null;
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {
     return null;
   }
 
+  @Override
   protected
   @Nullable
   String getEmptySelectionString() {

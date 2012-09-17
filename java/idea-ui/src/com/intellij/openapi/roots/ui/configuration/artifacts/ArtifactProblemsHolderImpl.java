@@ -47,6 +47,7 @@ public class ArtifactProblemsHolderImpl extends ArtifactProblemsHolderBase {
     myProblemsHolder = problemsHolder;
   }
 
+  @Override
   public void registerError(@NotNull String message,
                             @NotNull String problemTypeId,
                             @Nullable List<PackagingElement<?>> pathToPlace,
@@ -54,6 +55,7 @@ public class ArtifactProblemsHolderImpl extends ArtifactProblemsHolderBase {
     registerProblem(message, pathToPlace, ProjectStructureProblemType.error(problemTypeId), quickFixes);
   }
 
+  @Override
   public void registerWarning(@NotNull String message,
                               @NotNull String problemTypeId, @Nullable List<PackagingElement<?>> pathToPlace,
                               @NotNull ArtifactProblemQuickFix... quickFixes) {

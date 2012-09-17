@@ -28,19 +28,23 @@ import java.awt.event.MouseEvent;
  * @author nik
  */
 public class SimpleDnDAwareTree extends SimpleTree implements DnDAware {
+  @Override
   public void processMouseEvent(MouseEvent e) {
     if (getToolTipText() == null && e.getID() == MouseEvent.MOUSE_ENTERED) return;
     super.processMouseEvent(e);
   }
 
+  @Override
   public boolean isOverSelection(Point point) {
     return TreeUtil.isOverSelection(this, point);
   }
 
+  @Override
   public void dropSelectionButUnderPoint(Point point) {
     TreeUtil.dropSelectionButUnderPoint(this, point);
   }
 
+  @Override
   @NotNull
   public JComponent getComponent() {
     return this;

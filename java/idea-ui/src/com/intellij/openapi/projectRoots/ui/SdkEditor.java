@@ -38,6 +38,7 @@ import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +60,7 @@ import java.util.Set;
  */
 public class SdkEditor implements Configurable, Place.Navigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.ui.SdkEditor");
+  @NonNls private static final String SDK_TAB = "sdkTab";
 
   private Sdk mySdk;
   private final Map<OrderRootType, SdkPathEditor> myPathEditors = new HashMap<OrderRootType, SdkPathEditor>();
@@ -108,14 +110,17 @@ public class SdkEditor implements Configurable, Place.Navigator {
     }
   }
 
+  @Override
   public String getDisplayName(){
     return ProjectBundle.message("sdk.configure.editor.title");
   }
 
+  @Override
   public String getHelpTopic(){
     return null;
   }
 
+  @Override
   public JComponent createComponent(){
     return myMainPanel;
   }
@@ -136,6 +141,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     }
 
     myTabbedPane.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(final ChangeEvent e) {
         myHistory.pushQueryPlace();
       }
@@ -156,6 +162,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   protected TextFieldWithBrowseButton createHomeComponent() {
     return new TextFieldWithBrowseButton(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         doSelectHomePath();
       }
@@ -173,6 +180,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     return ProjectBundle.message("sdk.configure.general.home.path");
   }
 
+  @Override
   public boolean isModified(){
     boolean isModified = !Comparing.equal(mySdk == null? null : mySdk.getName(), myInitialName);
     isModified = isModified || !Comparing.equal(FileUtil.toSystemIndependentName(getHomeValue()), FileUtil.toSystemIndependentName(myInitialPath));
@@ -186,9 +194,10 @@ public class SdkEditor implements Configurable, Place.Navigator {
     return isModified;
   }
 
+  @Override
   public void apply() throws ConfigurationException{
-    if(!Comparing.equal(myInitialName, (mySdk == null) ? "" : mySdk.getName())){
-      if(mySdk == null || mySdk.getName().length() == 0){
+    if(!Comparing.equal(myInitialName, mySdk == null ? "" : mySdk.getName())){
+      if(mySdk == null || mySdk.getName().isEmpty()){
         throw new ConfigurationException(ProjectBundle.message("sdk.list.name.required.error"));
       }
     }
@@ -201,6 +210,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
         pathEditor.apply(sdkModificator);
       }
       ApplicationManager.getApplication().runWriteAction(new Runnable() { // fix SCR #29193
+        @Override
         public void run() {
           sdkModificator.commitChanges();
         }
@@ -212,6 +222,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     }
   }
 
+  @Override
   public void reset(){
     if (mySdk == null){
       setHomePathValue("");
@@ -242,6 +253,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     }
   }
 
+  @Override
   public void disposeUIResources(){
     for (final SdkType sdkType : myAdditionalDataConfigurables.keySet()) {
       final AdditionalDataConfigurable configurable = myAdditionalDataConfigurables.get(sdkType);
@@ -266,10 +278,10 @@ public class SdkEditor implements Configurable, Place.Navigator {
   private void setHomePathValue(String absolutePath) {
     myHomeComponent.setText(absolutePath);
     final Color fg;
-    if (absolutePath != null && absolutePath.length() > 0) {
+    if (absolutePath != null && !absolutePath.isEmpty()) {
       final File homeDir = new File(absolutePath);
       boolean homeMustBeDirectory = mySdk == null || ((SdkType) mySdk.getSdkType()).getHomeChooserDescriptor().isChooseFolders();
-      fg = homeDir.exists() && (homeDir.isDirectory() == homeMustBeDirectory)
+      fg = homeDir.exists() && homeDir.isDirectory() == homeMustBeDirectory
            ? UIUtil.getFieldForegroundColor() 
            : PathEditor.INVALID_COLOR;
     }
@@ -337,7 +349,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     }
     int i = 0;
     while(allNames.contains(newSdkName)){
-      newSdkName = suggestedName + " (" + (++i) + ")";
+      newSdkName = suggestedName + " (" + ++i + ")";
     }
     return newSdkName;
   }
@@ -377,38 +389,47 @@ public class SdkEditor implements Configurable, Place.Navigator {
   }
 
   private class EditedSdkModificator implements SdkModificator {
+    @Override
     public String getName() {
       return mySdk.getName();
     }
 
+    @Override
     public void setName(String name) {
       ((ProjectJdkImpl)mySdk).setName(name);
     }
 
+    @Override
     public String getHomePath() {
       return getHomeValue();
     }
 
+    @Override
     public void setHomePath(String path) {
       doSetHomePath(path, (SdkType)mySdk.getSdkType());
     }
 
+    @Override
     public String getVersionString() {
       return myVersionString != null? myVersionString : mySdk.getVersionString();
     }
 
+    @Override
     public void setVersionString(String versionString) {
       throw new UnsupportedOperationException(); // not supported for this editor
     }
 
+    @Override
     public SdkAdditionalData getSdkAdditionalData() {
       return mySdk.getSdkAdditionalData();
     }
 
+    @Override
     public void setSdkAdditionalData(SdkAdditionalData data) {
       throw new UnsupportedOperationException(); // not supported for this editor
     }
 
+    @Override
     public VirtualFile[] getRoots(OrderRootType rootType) {
       final PathEditor editor = myPathEditors.get(rootType);
       if (editor == null) {
@@ -417,41 +438,51 @@ public class SdkEditor implements Configurable, Place.Navigator {
       return editor.getRoots();
     }
 
+    @Override
     public void addRoot(VirtualFile root, OrderRootType rootType) {
       myPathEditors.get(rootType).addPaths(root);
     }
 
+    @Override
     public void removeRoot(VirtualFile root, OrderRootType rootType) {
       myPathEditors.get(rootType).removePaths(root);
     }
 
+    @Override
     public void removeRoots(OrderRootType rootType) {
       myPathEditors.get(rootType).clearList();
     }
 
+    @Override
     public void removeAllRoots() {
       for(PathEditor editor: myPathEditors.values()) {
         editor.clearList();
       }
     }
 
+    @Override
     public void commitChanges() {
     }
 
+    @Override
     public boolean isWritable() {
       return true;
     }
   }
 
+  @Override
   public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
-    myTabbedPane.setSelectedTitle((String)place.getPath("sdkTab"));
+    if (place == null) return new ActionCallback.Done();
+    myTabbedPane.setSelectedTitle((String)place.getPath(SDK_TAB));
     return new ActionCallback.Done();
   }
 
+  @Override
   public void queryPlace(@NotNull final Place place) {
-    place.putPath("sdkTab", myTabbedPane.getSelectedTitle());
+    place.putPath(SDK_TAB, myTabbedPane.getSelectedTitle());
   }
 
+  @Override
   public void setHistory(final History history) {
   }
 }
