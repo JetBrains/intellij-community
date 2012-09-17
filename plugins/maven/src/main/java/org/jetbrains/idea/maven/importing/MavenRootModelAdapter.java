@@ -119,6 +119,18 @@ public class MavenRootModelAdapter {
     e.addSourceFolder(url.getUrl(), testSource);
   }
 
+  public void addSourceFolderSoft(String path, boolean testSource) {
+    if (!exists(path)) return;
+
+    Url url = toUrl(path);
+    ContentEntry e = getContentRootFor(url);
+    if (e == null) return;
+
+    if (!hasCollision(path)) {
+      e.addSourceFolder(url.getUrl(), testSource);
+    }
+  }
+
   public boolean hasRegisteredSourceSubfolder(File f) {
     String url = toUrl(f.getPath()).getUrl();
     for (ContentEntry eachEntry : myRootModel.getContentEntries()) {
@@ -184,6 +196,31 @@ public class MavenRootModelAdapter {
         }
       }
     }
+  }
+
+  public boolean hasCollision(String sourceRootPath) {
+    Url url = toUrl(sourceRootPath);
+
+    for (ContentEntry eachEntry : myRootModel.getContentEntries()) {
+      for (SourceFolder eachFolder : eachEntry.getSourceFolders()) {
+        String ancestor = url.getUrl();
+        String child = eachFolder.getUrl();
+        if (isEqualOrAncestor(ancestor, child) || isEqualOrAncestor(child, ancestor)) {
+          return true;
+        }
+      }
+
+      for (ExcludeFolder eachFolder : eachEntry.getExcludeFolders()) {
+        String ancestor = url.getUrl();
+        String child = eachFolder.getUrl();
+
+        if (isEqualOrAncestor(ancestor, child) || isEqualOrAncestor(child, ancestor)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   public void useModuleOutput(String production, String test) {
