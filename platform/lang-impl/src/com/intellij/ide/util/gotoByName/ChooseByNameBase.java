@@ -948,7 +948,10 @@ public abstract class ChooseByNameBase {
 
             cancelCalcElementsThread();
 
-            final ListCellRenderer cellRenderer = myList.getCellRenderer();
+            ListCellRenderer cellRenderer = myList.getCellRenderer();
+            if (cellRenderer instanceof ExpandedItemListCellRendererWrapper) {
+              cellRenderer = ((ExpandedItemListCellRendererWrapper)cellRenderer).getWrappee();
+            }
             if (cellRenderer instanceof MatcherHolder) {
               final String pattern = transformPattern(text);
               final Matcher matcher = buildPatternMatcher(isSearchInAnyPlace() ? "*" + pattern + "*" : pattern);
