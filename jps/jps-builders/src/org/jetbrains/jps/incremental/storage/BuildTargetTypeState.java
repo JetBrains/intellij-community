@@ -32,6 +32,10 @@ public class BuildTargetTypeState {
   }
 
   private boolean load() {
+    if (!myTargetsFile.exists()) {
+      return false;
+    }
+
     try {
       DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(myTargetsFile)));
       try {
