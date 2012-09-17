@@ -55,7 +55,9 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -69,6 +71,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 
 public abstract class InspectionToolsConfigurable extends BaseConfigurable implements ErrorsConfigurable, SearchableConfigurable,
                                                                                       Configurable.NoScroll {
@@ -130,65 +133,73 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
           }
         };
         descriptor.setDescription("Choose profile file");
-        final VirtualFile file = FileChooser.chooseFile(descriptor, myWholePanel, project, null);
-        if (file == null) return;
-        InspectionProfileImpl profile =
-        new InspectionProfileImpl("TempProfile", InspectionToolRegistrar.getInstance(), myProfileManager);
-        try {
-          Element rootElement = JDOMUtil.loadDocument(VfsUtil.virtualToIoFile(file)).getRootElement();
-          if (Comparing.strEqual(rootElement.getName(), "component")) {//import right from .idea/inspectProfiles/xxx.xml
-            rootElement = (Element)rootElement.getChildren().get(0);
-          }
-          final Set<String> levels = new HashSet<String>();
-          for (Object o : rootElement.getChildren("inspection_tool")) {
-            final Element inspectElement = (Element)o;
-            levels.add(inspectElement.getAttributeValue("level"));
-            for (Object s : inspectElement.getChildren("scope")) {
-              levels.add(((Element)s).getAttributeValue("level"));
-            }
-          }
-          for (Iterator<String> iterator = levels.iterator(); iterator.hasNext();) {
-            String level = iterator.next();
-            if (myProfileManager.getOwnSeverityRegistrar().getSeverity(level) != null) {
-              iterator.remove();
-            }
-          }
-          if (!levels.isEmpty()) {
-            if (Messages.showYesNoDialog(myWholePanel, "Undefined severities detected: " +
-                                                          StringUtil.join(levels, ", ") +
-                                                          ". Do you want to create them?", "Warning", Messages.getWarningIcon()) ==
-                DialogWrapper.OK_EXIT_CODE) {
-              for (String level : levels) {
-                final TextAttributes textAttributes = CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes();
-                HighlightInfoType.HighlightInfoTypeImpl info
-                  = new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(level, 50), com.intellij.openapi.editor.colors
-                  .TextAttributesKey.createTextAttributesKey(level));
-                myProfileManager.getOwnSeverityRegistrar()
-                  .registerSeverity(new SeverityRegistrar.SeverityBasedTextAttributes(textAttributes.clone(), info),
-                                    textAttributes.getErrorStripeColor());
+        FileChooser.chooseFiles(descriptor, project, myWholePanel, null, new Consumer<List<VirtualFile>>() {
+          @Override
+          public void consume(List<VirtualFile> files) {
+            final VirtualFile file = ContainerUtil.getFirstItem(files);
+            if (file == null) return;
+            InspectionProfileImpl profile =
+              new InspectionProfileImpl("TempProfile", InspectionToolRegistrar.getInstance(), myProfileManager);
+            try {
+              Element rootElement = JDOMUtil.loadDocument(VfsUtil.virtualToIoFile(file)).getRootElement();
+              if (Comparing.strEqual(rootElement.getName(), "component")) {//import right from .idea/inspectProfiles/xxx.xml
+                rootElement = (Element)rootElement.getChildren().get(0);
               }
+              final Set<String> levels = new HashSet<String>();
+              for (Object o : rootElement.getChildren("inspection_tool")) {
+                final Element inspectElement = (Element)o;
+                levels.add(inspectElement.getAttributeValue("level"));
+                for (Object s : inspectElement.getChildren("scope")) {
+                  levels.add(((Element)s).getAttributeValue("level"));
+                }
+              }
+              for (Iterator<String> iterator = levels.iterator(); iterator.hasNext(); ) {
+                String level = iterator.next();
+                if (myProfileManager.getOwnSeverityRegistrar().getSeverity(level) != null) {
+                  iterator.remove();
+                }
+              }
+              if (!levels.isEmpty()) {
+                if (Messages.showYesNoDialog(myWholePanel, "Undefined severities detected: " +
+                                                           StringUtil.join(levels, ", ") +
+                                                           ". Do you want to create them?", "Warning", Messages.getWarningIcon()) ==
+                    DialogWrapper.OK_EXIT_CODE) {
+                  for (String level : levels) {
+                    final TextAttributes textAttributes = CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes();
+                    HighlightInfoType.HighlightInfoTypeImpl info
+                      = new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(level, 50), com.intellij.openapi.editor.colors
+                      .TextAttributesKey.createTextAttributesKey(level));
+                    myProfileManager.getOwnSeverityRegistrar()
+                      .registerSeverity(new SeverityRegistrar.SeverityBasedTextAttributes(textAttributes.clone(), info),
+                                        textAttributes.getErrorStripeColor());
+                  }
+                }
+              }
+              profile.readExternal(rootElement);
+              profile.setLocal(true);
+              profile.initInspectionTools(null);
+              profile.setModified(true);
+              if (getProfilePanel(profile) != null) {
+                if (Messages.showOkCancelDialog(myWholePanel, "Profile with name \'" +
+                                                              profile.getName() +
+                                                              "\' already exists. Do you want to overwrite it?", "Warning",
+                                                Messages.getInformationIcon()) != DialogWrapper.OK_EXIT_CODE) return;
+              }
+              addProfile((InspectionProfileImpl)profile.getModifiableModel());
+              myDeletedProfiles.remove(getProfilePrefix(profile) + profile.getName());
+              myDeleteButton.setEnabled(true);
+            }
+            catch (InvalidDataException e1) {
+              LOG.error(e1);
+            }
+            catch (JDOMException e1) {
+              LOG.error(e1);
+            }
+            catch (IOException e1) {
+              LOG.error(e1);
             }
           }
-          profile.readExternal(rootElement);
-          profile.setLocal(true);
-          profile.initInspectionTools(null);
-          profile.setModified(true);
-          if (getProfilePanel(profile) != null) {
-            if (Messages.showOkCancelDialog(myWholePanel, "Profile with name \'" + profile.getName() + "\' already exists. Do you want to overwrite it?", "Warning", Messages.getInformationIcon()) != DialogWrapper.OK_EXIT_CODE) return;
-          }
-          addProfile((InspectionProfileImpl)profile.getModifiableModel());
-          myDeletedProfiles.remove(getProfilePrefix(profile) + profile.getName());
-          myDeleteButton.setEnabled(true);
-        }
-        catch (InvalidDataException e1) {
-          LOG.error(e1);
-        }
-        catch (JDOMException e1) {
-          LOG.error(e1);
-        }
-        catch (IOException e1) {
-          LOG.error(e1);
-        }
+        });
       }
     });
 
@@ -196,26 +207,35 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       public void actionPerformed(ActionEvent e) {
         final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
         descriptor.setDescription("Choose directory to store profile file");
-        final VirtualFile file = FileChooser.chooseFile(descriptor, myWholePanel, project, null);
-        if (file == null) return;
-        final Element element = new Element("inspections");
-        try {
-          final SingleInspectionProfilePanel panel = getSelectedPanel();
-          LOG.assertTrue(panel != null);
-          final InspectionProfileImpl profile = (InspectionProfileImpl)panel.getSelectedProfile();
-          profile.writeExternal(element);
-          final String filePath = FileUtil.toSystemDependentName(file.getPath()) + File.separator + FileUtil.sanitizeFileName(profile.getName()) + ".xml";
-          if (new File(filePath).isFile()) {
-            if (Messages.showOkCancelDialog(myWholePanel, "File \'" + filePath + "\' already exist. Do you want to overwrite it?", "Warning", Messages.getQuestionIcon()) != DialogWrapper.OK_EXIT_CODE) return;
+        FileChooser.chooseFiles(descriptor, project, myWholePanel, null, new Consumer<List<VirtualFile>>() {
+          @Override
+          public void consume(List<VirtualFile> files) {
+            final VirtualFile file = ContainerUtil.getFirstItem(files);
+            if (file == null) return;
+            final Element element = new Element("inspections");
+            try {
+              final SingleInspectionProfilePanel panel = getSelectedPanel();
+              LOG.assertTrue(panel != null);
+              final InspectionProfileImpl profile = (InspectionProfileImpl)panel.getSelectedProfile();
+              profile.writeExternal(element);
+              final String filePath =
+                FileUtil.toSystemDependentName(file.getPath()) + File.separator + FileUtil.sanitizeFileName(profile.getName()) + ".xml";
+              if (new File(filePath).isFile()) {
+                if (Messages
+                      .showOkCancelDialog(myWholePanel, "File \'" + filePath + "\' already exist. Do you want to overwrite it?", "Warning",
+                                          Messages.getQuestionIcon()) != DialogWrapper.OK_EXIT_CODE) return;
+              }
+              JDOMUtil.writeDocument(new Document(element), filePath, SystemProperties.getLineSeparator());
+            }
+            catch (WriteExternalException e1) {
+              LOG.error(e1);
+            }
+            catch (IOException e1) {
+              LOG.error(e1);
+            }
           }
-          JDOMUtil.writeDocument(new Document(element), filePath, SystemProperties.getLineSeparator());
-        }
-        catch (WriteExternalException e1) {
-          LOG.error(e1);
-        }
-        catch (IOException e1) {
-          LOG.error(e1);
-        }
+        });
+
       }
     });
 
