@@ -91,7 +91,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
   public static final SimpleTextAttributes CAPTION_UNDERLINE_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, CAPTION_COLOR);
   private static final Color DISABLED_CAPTION_COLOR = UIUtil.getInactiveTextColor();
-  private static final Color ACTION_BUTTON_COLOR = WELCOME_PANEL_BACKGROUND;
+  private static final Color ACTION_BUTTON_COLOR = Gray._0.withAlpha(0);
   private static final Color BUTTON_POPPED_COLOR = UIUtil.isUnderDarcula() ? Gray.get(WELCOME_PANEL_BACKGROUND.getRed() + 10) : Gray._241;
   private static final Color BUTTON_PUSHED_COLOR = UIUtil.isUnderDarcula() ? Gray.get(WELCOME_PANEL_BACKGROUND.getRed() + 5) : Gray._228;
 
@@ -324,7 +324,8 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
           actionLabel.setIcon(null);
         }
       });
-      
+      actionLabel.setOpaque(false);
+      actionLabel.setIconOpaque(false);
       action.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_0 + row, InputEvent.ALT_DOWN_MASK)),
                                        rootPane, this);
       myRecentProjectsPanel.add(actionLabel, new GridBagConstraints(1, row++, 1, 1, 1, 0, NORTHWEST, HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
