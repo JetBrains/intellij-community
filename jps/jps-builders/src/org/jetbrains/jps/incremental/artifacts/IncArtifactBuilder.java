@@ -104,7 +104,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
       for (Map.Entry<BuildRootDescriptor, Set<File>> entry : filesToRecompile.entrySet()) {
         int rootIndex = ((ArtifactRootDescriptor)entry.getKey()).getRootIndex();
         for (File file : entry.getValue()) {
-          String sourcePath = file.getPath();
+          String sourcePath = FileUtil.toSystemIndependentName(file.getPath());
           addFileToProcess(filesToProcess, rootIndex, sourcePath, deletedFiles);
           final Collection<String> outputPaths = srcOutMapping.getState(sourcePath);
           if (outputPaths != null) {
