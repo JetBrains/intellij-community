@@ -44,3 +44,7 @@ class C {
     }.m();
   }
 }
+
+class D {
+  <error descr="Extension methods can only be used within an interface">void m()</error> default { }
+}
