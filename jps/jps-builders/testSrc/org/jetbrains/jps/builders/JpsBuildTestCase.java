@@ -3,7 +3,7 @@ package org.jetbrains.jps.builders;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import junit.framework.Assert;
+import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.api.CanceledStatus;
@@ -141,7 +141,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       builder.build(scope, make, rebuild, forceCleanCaches);
     }
     catch (RebuildRequestedException e) {
-      Assert.fail(e.getMessage());
+      throw new AssertionFailedError(e.getMessage());
     }
     return result;
   }
