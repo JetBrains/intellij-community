@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -40,17 +41,21 @@ public interface Rearranger<E extends ArrangementEntry> {
   LanguageExtension<Rearranger<?>> EXTENSION = new LanguageExtension<Rearranger<?>>("com.intellij.lang.rearranger");
 
   /**
-   * Tries to wrap given element to the corresponding arrangement entry.
+   * Tries to wrap given element into arrangement entry at the target context.
    * <p/>
    * This is useful in a situation when new element is generated and we're deciding where to insert it (e.g. new field is
    * generated and we want to insert it according to the arrangement rules like 'fields before methods').
    * 
    * @param element  element to wrap into format eligible for further processing by arrangement engine
-   * @return         arrangement entry for the given element if it's possible to perform the mapping;
+   * @return         arrangement entry for the given element if it's possible to perform the mapping and list of arrangement entries
+   *                 available at the given context plus newly created entry for the given element;
    *                 <code>null</code> otherwise
    */
   @Nullable
-  E wrap(@NotNull PsiElement element);
+  Pair<E, List<E>> parseWithNew(@NotNull PsiElement root,
+                                @Nullable Document document,
+                                @NotNull Collection<TextRange> ranges,
+                                @NotNull PsiElement element);
   
   /**
    * Allows to build rearranger-interested data for the given element.

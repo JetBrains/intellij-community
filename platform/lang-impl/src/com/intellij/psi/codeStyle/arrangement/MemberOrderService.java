@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
@@ -44,7 +45,7 @@ public class MemberOrderService {
   
   /**
    * Tries to find an element at the given context which should be the previous sibling for the given 'member'element according to the
-   * {@link CommonCodeStyleSettings#getArrangementRules() user-defined arrangement rules}.
+   * {@link CommonCodeStyleSettings#getArrangementSettings() user-defined arrangement rules}.
    * <p/>
    * E.g. the IDE might generate given 'member' element and wants to know element after which it should be inserted
    * 
@@ -64,30 +65,31 @@ public class MemberOrderService {
       return null;
     }
 
-    List<? extends ArrangementRule> rules = settings.getArrangementRules();
-    if (rules.isEmpty() && rearranger instanceof ArrangementStandardSettingsAware) {
-      rules = ((ArrangementStandardSettingsAware)rearranger).getDefaultRules();
-    }
-
-    if (rules == null) {
-      return null;
-    }
-
-    ArrangementEntry memberEntry = rearranger.wrap(member);
-    if (memberEntry == null) {
-      return null;
+    ArrangementSettings arrangementSettings = settings.getArrangementSettings();
+    if (arrangementSettings == null && rearranger instanceof ArrangementStandardSettingsAware) {
+      List<StdArrangementRule> rules = ((ArrangementStandardSettingsAware)rearranger).getDefaultRules();
+      if (rules != null && !rules.isEmpty()) {
+        arrangementSettings = new StdArrangementSettings(rules);
+      }
     }
     
-    List<? extends ArrangementEntry> entries = rearranger.parse(context, null, Collections.singleton(context.getTextRange()));
-    if (entries.isEmpty()) {
+    if (arrangementSettings == null) {
       return null;
     }
 
+    Pair<? extends ArrangementEntry,? extends List<? extends ArrangementEntry>> pair =
+      rearranger.parseWithNew(context, null, Collections.singleton(context.getTextRange()), member);
+    if (pair == null || pair.second.isEmpty()) {
+      return null;
+    }
+
+    ArrangementEntry memberEntry = pair.first;
+    List<? extends ArrangementEntry> entries = pair.second;
     ArrangementEntry parentEntry = entries.get(0);
     List<? extends ArrangementEntry> nonArranged = parentEntry.getChildren();
     List<ArrangementEntry> entriesWithNew = new ArrayList<ArrangementEntry>(nonArranged);
     entriesWithNew.add(memberEntry);
-    List<ArrangementEntry> arranged = ArrangementEngine.arrange(entriesWithNew, rules);
+    List<ArrangementEntry> arranged = ArrangementEngine.arrange(entriesWithNew, arrangementSettings.getRules());
     int i = arranged.indexOf(memberEntry);
     
     if (i <= 0) {

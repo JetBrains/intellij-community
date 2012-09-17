@@ -74,7 +74,7 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
   
   protected void doTest(@NotNull String initial,
                         @NotNull String expected,
-                        @NotNull List<ArrangementRule> rules,
+                        @NotNull List<StdArrangementRule> rules,
                         Collection<TextRange> ranges = null)
   {
     def (String textToUse, List<TextRange> rangesToUse) = parseRanges(initial)
@@ -89,7 +89,7 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
     
     myFixture.configureByText(fileType, textToUse)
     def settings = CodeStyleSettingsManager.getInstance(myFixture.project).currentSettings.getCommonSettings(language)
-    settings.arrangementRules = rules
+    settings.arrangementSettings = new StdArrangementSettings(rules)
     ArrangementEngine engine = ServiceManager.getService(myFixture.project, ArrangementEngine)
     engine.arrange(myFixture.file, rangesToUse);
     junit.framework.Assert.assertEquals(expected, myFixture.editor.document.text);
