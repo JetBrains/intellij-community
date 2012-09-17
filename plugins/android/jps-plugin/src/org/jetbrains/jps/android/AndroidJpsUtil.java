@@ -577,7 +577,11 @@ class AndroidJpsUtil {
 
   @NotNull
   public static File getGeneratedSourcesStorage(@NotNull JpsModule module, BuildDataManager dataManager) {
-    final File dataStorageRoot = dataManager.getDataStorageRoot();
+    return getGeneratedSourcesStorage(module, dataManager.getDataStorageRoot());
+  }
+
+  @NotNull
+  public static File getGeneratedSourcesStorage(@NotNull JpsModule module, final File dataStorageRoot) {
     final File androidStorageRoot = new File(dataStorageRoot, ANDROID_STORAGE_DIR);
     final File generatedSourcesRoot = new File(androidStorageRoot, GENERATED_SOURCES_FOLDER_NAME);
     return new File(generatedSourcesRoot, module.getName());

@@ -26,10 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
-import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
-import com.intellij.psi.codeStyle.arrangement.Rearranger;
-import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
+import com.intellij.psi.codeStyle.arrangement.*;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Stack;
@@ -70,14 +67,15 @@ public class ArrangementEngine {
     }
 
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings();
-    List<? extends ArrangementRule> arrangementRules = settings.getCommonSettings(file.getLanguage()).getArrangementRules();
-    if (arrangementRules.isEmpty() && rearranger instanceof ArrangementStandardSettingsAware) {
+    ArrangementSettings arrangementSettings = settings.getCommonSettings(file.getLanguage()).getArrangementSettings();
+    if (arrangementSettings == null && rearranger instanceof ArrangementStandardSettingsAware) {
       List<StdArrangementRule> defaultRules = ((ArrangementStandardSettingsAware)rearranger).getDefaultRules();
-      if (defaultRules != null) {
-        arrangementRules = defaultRules;
+      if (defaultRules != null && !defaultRules.isEmpty()) {
+        arrangementSettings = new StdArrangementSettings(defaultRules);
       }
     }
-    if (arrangementRules.isEmpty()) {
+    
+    if (arrangementSettings == null) {
       return;
     }
 
@@ -89,7 +87,9 @@ public class ArrangementEngine {
       documentEx = null;
     }
 
-    final Context<? extends ArrangementEntry> context = Context.from(rearranger, document, file, ranges, arrangementRules, settings);
+    final Context<? extends ArrangementEntry> context = Context.from(
+      rearranger, document, file, ranges, arrangementSettings.getRules(), settings
+    );
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override

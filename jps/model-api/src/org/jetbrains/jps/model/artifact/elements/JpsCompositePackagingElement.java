@@ -12,4 +12,6 @@ public interface JpsCompositePackagingElement extends JpsPackagingElement {
   List<JpsPackagingElement> getChildren();
 
   <E extends JpsPackagingElement> E addChild(@NotNull E child);
+
+  void removeChild(@NotNull JpsPackagingElement child);
 }

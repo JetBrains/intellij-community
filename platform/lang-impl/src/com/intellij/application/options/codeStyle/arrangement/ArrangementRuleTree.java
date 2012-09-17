@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
+import com.intellij.psi.codeStyle.arrangement.StdArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
@@ -78,7 +79,7 @@ public class ArrangementRuleTree {
   private boolean myExplicitSelectionChange;
   private boolean mySkipSelectionChange;
 
-  public ArrangementRuleTree(@NotNull List<StdArrangementRule> rules,
+  public ArrangementRuleTree(@Nullable StdArrangementSettings settings,
                              @NotNull List<Set<ArrangementMatchCondition>> groupingRules,
                              @NotNull ArrangementNodeDisplayManager displayManager)
   {
@@ -185,7 +186,7 @@ public class ArrangementRuleTree {
       }
     });
     
-    setRules(rules);
+    setSettings(settings);
     
     myTree.setShowsRootHandles(false);
     myTree.setCellRenderer(new MyCellRenderer());
@@ -403,10 +404,10 @@ public class ArrangementRuleTree {
    * @return    rules configured at the current tree at the moment
    */
   @NotNull
-  public List<StdArrangementRule> getRules() {
+  public StdArrangementSettings getSettings() {
     int[] rows = myModels.keys();
     Arrays.sort(rows);
-    List<StdArrangementRule> result = new ArrayList<StdArrangementRule>();
+    List<StdArrangementRule> rules = new ArrayList<StdArrangementRule>();
     ArrangementMatchCondition prevGroup = null;
     Set<ArrangementMatchCondition> implicitGroupConditions = new HashSet<ArrangementMatchCondition>();
     for (int row : rows) {
@@ -414,27 +415,32 @@ public class ArrangementRuleTree {
       ArrangementTreeNode topMost = model.getTopMost();
       ArrangementMatchCondition currentGroup = topMost.getBackingCondition();
       if (prevGroup != null && !prevGroup.equals(currentGroup)) {
-        result.add(new StdArrangementRule(new StdArrangementEntryMatcher(prevGroup)));
+        rules.add(new StdArrangementRule(new StdArrangementEntryMatcher(prevGroup)));
         implicitGroupConditions.add(prevGroup);
         prevGroup = null;
       }
       if (!myRoot.equals(topMost) && !topMost.equals(model.getBottomMost()) && !implicitGroupConditions.contains(currentGroup)) {
         prevGroup = currentGroup;
       }
-      result.add(model.getRule());
+      rules.add(model.getRule());
     }
 
     if (prevGroup != null) {
-      result.add(new StdArrangementRule(new StdArrangementEntryMatcher(prevGroup)));
+      rules.add(new StdArrangementRule(new StdArrangementEntryMatcher(prevGroup)));
     }
-    return result;
+    return new StdArrangementSettings(rules);
   }
 
-  public void setRules(@NotNull List<StdArrangementRule> rules) {
+  public void setSettings(@Nullable StdArrangementSettings settings) {
     myRenderers.clear();
     myModels.clear();
     while (myRoot.getChildCount() > 0)
     myTreeModel.removeNodeFromParent(myRoot.getFirstChild());
+    if (settings == null) {
+      return;
+    }
+
+    List<StdArrangementRule> rules = settings.getRules();
     map(rules);
     expandAll(myTree, new TreePath(myRoot));
 
@@ -631,6 +637,7 @@ public class ArrangementRuleTree {
            && ((ArrangementCompositeMatchCondition)condition).getOperands().isEmpty();
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   public void disposeUI() {
     Container parent = EMPTY_RENDERER.getParent();
     if (parent != null) parent.remove(EMPTY_RENDERER);

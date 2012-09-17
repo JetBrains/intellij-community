@@ -3,15 +3,16 @@ package org.jetbrains.jps.builders;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import junit.framework.Assert;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElementFactory;
@@ -68,9 +69,13 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
 
   protected ProjectDescriptor createProjectDescriptor(final BuildLoggingManager buildLoggingManager) {
     try {
-      ProjectTimestamps timestamps = new ProjectTimestamps(myDataStorageRoot);
-      BuildDataManager dataManager = new BuildDataManager(myDataStorageRoot, true);
-      return new ProjectDescriptor(myModel, new BuildFSState(true), timestamps, dataManager, buildLoggingManager);
+      ModuleRootsIndex index = new ModuleRootsIndex(myModel, myDataStorageRoot);
+      ArtifactRootsIndex artifactRootsIndex = new ArtifactRootsIndex(myModel, index);
+      BuildTargetsState targetsState = new BuildTargetsState(myDataStorageRoot, index, artifactRootsIndex);
+      ProjectTimestamps timestamps = new ProjectTimestamps(myDataStorageRoot, targetsState);
+      BuildDataManager dataManager = new BuildDataManager(myDataStorageRoot, targetsState, true);
+      return new ProjectDescriptor(myModel, new BuildFSState(true), timestamps, dataManager, buildLoggingManager, index, targetsState,
+                                   artifactRootsIndex);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -135,7 +140,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       builder.build(scope, make, rebuild, forceCleanCaches);
     }
     catch (RebuildRequestedException e) {
-      Assert.fail(e.getMessage());
+      throw new RuntimeException(e);
     }
     return result;
   }

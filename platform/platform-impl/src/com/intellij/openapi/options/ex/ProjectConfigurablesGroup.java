@@ -28,7 +28,7 @@ public class ProjectConfigurablesGroup extends ConfigurablesGroupBase implements
   private final Project myProject;
 
   public ProjectConfigurablesGroup(Project project) {
-    super(project, ConfigurableExtensionPointUtil.PROJECT_CONFIGURABLES, true);
+    super(project, Configurable.PROJECT_CONFIGURABLE, true);
     myProject = project;
   }
 

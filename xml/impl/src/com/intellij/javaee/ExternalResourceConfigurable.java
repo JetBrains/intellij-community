@@ -18,7 +18,6 @@ package com.intellij.javaee;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -45,7 +44,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ExternalResourceConfigurable extends BaseConfigurable
-  implements SearchableConfigurable, OptionalConfigurable, Configurable.NoScroll, Configurable.Composite {
+  implements SearchableConfigurable, Configurable.NoScroll, Configurable.Composite {
   private JPanel myPanel;
   private List<NameLocationPair> myPairs;
   private List<String> myIgnoredUrls;
@@ -395,9 +394,5 @@ public class ExternalResourceConfigurable extends BaseConfigurable
   @Nullable
   public Runnable enableSearch(String option) {
     return null;
-  }
-
-  public boolean needDisplay() {
-    return true;
   }
 }

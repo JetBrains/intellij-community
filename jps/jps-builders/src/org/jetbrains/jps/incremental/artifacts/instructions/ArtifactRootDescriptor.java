@@ -1,37 +1,49 @@
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
-import org.jetbrains.jps.incremental.artifacts.ArtifactSourceToOutputMapping;
+import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * @author nik
  */
-public abstract class ArtifactRootDescriptor {
+public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
   protected final File myRoot;
   private final SourceFileFilter myFilter;
   private final int myRootIndex;
-  private final int myArtifactId;
-  private final String myArtifactName;
+  private final ArtifactBuildTarget myTarget;
 
-  protected ArtifactRootDescriptor(File root, @NotNull SourceFileFilter filter, int index, int artifactId, String artifactName) {
+  protected ArtifactRootDescriptor(File root, @NotNull SourceFileFilter filter, int index, ArtifactBuildTarget target) {
     myRoot = root;
     myFilter = filter;
     myRootIndex = index;
-    myArtifactId = artifactId;
-    myArtifactName = artifactName;
+    myTarget = target;
   }
 
   public final String getArtifactName() {
-    return myArtifactName;
+    return myTarget.getId();
   }
 
-  public int getArtifactId() {
-    return myArtifactId;
+  @Override
+  public String toString() {
+    return getFullPath();
+  }
+
+  protected abstract String getFullPath();
+
+  public void writeConfiguration(PrintWriter out) {
+    out.println(getFullPath());
+  }
+
+  public ArtifactBuildTarget getTarget() {
+    return myTarget;
   }
 
   @NotNull
@@ -39,9 +51,14 @@ public abstract class ArtifactRootDescriptor {
     return myRoot;
   }
 
+  @Override
+  public String getRootId() {
+    return String.valueOf(myRootIndex);
+  }
+
   public abstract void copyFromRoot(String filePath,
                                     int rootIndex, String outputPath,
-                                    CompileContext context, ArtifactSourceToOutputMapping srcOutMapping,
+                                    CompileContext context, SourceToOutputMapping srcOutMapping,
                                     ArtifactOutputToSourceMapping outSrcMapping) throws IOException;
 
   public SourceFileFilter getFilter() {

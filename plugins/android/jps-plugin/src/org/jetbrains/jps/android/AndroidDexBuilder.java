@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.android.model.JpsAndroidSdkProperties;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -431,7 +432,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
     if (context.isMake()) {
       final AndroidFileSetState oldState = proguardStateStorage.getState(module.getName());
 
-      if (!areFilesChanged(proguardCfgFiles, context) && newState.equalsTo(oldState)) {
+      if (!areFilesChanged(proguardCfgFiles, module, context) && newState.equalsTo(oldState)) {
         final Set<String> dirtyOutputDirs = context.getUserData(DIRTY_OUTPUT_DIRS);
         assert dirtyOutputDirs != null;
         boolean outputDirsDirty = false;
@@ -474,17 +475,17 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
       final Timestamps timestamps = context.getProjectDescriptor().timestamps.getStorage();
 
       for (File file : proguardCfgFiles) {
-        timestamps.saveStamp(file, file.lastModified());
+        timestamps.saveStamp(file, new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION), file.lastModified());
       }
     }
     return success;
   }
 
-  private static boolean areFilesChanged(@NotNull File[] files, @NotNull CompileContext context) throws IOException {
+  private static boolean areFilesChanged(@NotNull File[] files, JpsModule module, @NotNull CompileContext context) throws IOException {
     final Timestamps timestamps = context.getProjectDescriptor().timestamps.getStorage();
 
     for (File file : files) {
-      if (timestamps.getStamp(file) != file.lastModified()) {
+      if (timestamps.getStamp(file, new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION)) != file.lastModified()) {
         return true;
       }
     }

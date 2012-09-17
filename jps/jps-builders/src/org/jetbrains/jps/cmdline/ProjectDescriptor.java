@@ -6,6 +6,7 @@ import org.jetbrains.jps.incremental.ModuleRootsIndex;
 import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.JpsProject;
@@ -28,6 +29,7 @@ public final class ProjectDescriptor {
   public final ProjectTimestamps timestamps;
   public final BuildDataManager dataManager;
   private final BuildLoggingManager myLoggingManager;
+  private final BuildTargetsState myTargetsState;
   public ModuleRootsIndex rootsIndex;
   private final ArtifactRootsIndex myArtifactRootsIndex;
   private int myUseCounter = 1;
@@ -38,15 +40,17 @@ public final class ProjectDescriptor {
                            BuildFSState fsState,
                            ProjectTimestamps timestamps,
                            BuildDataManager dataManager,
-                           BuildLoggingManager loggingManager) {
+                           BuildLoggingManager loggingManager,
+                           final ModuleRootsIndex moduleRootsIndex,
+                           final BuildTargetsState targetsState, final ArtifactRootsIndex artifactRootsIndex) {
     this.jpsModel = jpsModel;
     this.jpsProject = jpsModel.getProject();
     this.fsState = fsState;
     this.timestamps = timestamps;
     this.dataManager = dataManager;
     myLoggingManager = loggingManager;
-    rootsIndex = new ModuleRootsIndex(jpsModel, dataManager);
-    myArtifactRootsIndex = new ArtifactRootsIndex(jpsModel, dataManager, rootsIndex);
+    rootsIndex = moduleRootsIndex;
+    myArtifactRootsIndex = artifactRootsIndex;
     myProjectJavaSdks = new HashSet<JpsSdk<?>>();
     myEncodingConfiguration = new CompilerEncodingConfiguration(jpsModel, rootsIndex);
     for (JpsModule module : jpsProject.getModules()) {
@@ -55,6 +59,11 @@ public final class ProjectDescriptor {
         myProjectJavaSdks.add(sdk);
       }
     }
+    myTargetsState = targetsState;
+  }
+
+  public BuildTargetsState getTargetsState() {
+    return myTargetsState;
   }
 
   public CompilerEncodingConfiguration getEncodingConfiguration() {

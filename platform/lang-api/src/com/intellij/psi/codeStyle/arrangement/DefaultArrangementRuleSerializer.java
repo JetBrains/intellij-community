@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
+import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
 import com.intellij.psi.codeStyle.arrangement.match.DefaultArrangementEntryMatcherSerializer;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
@@ -22,51 +23,99 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+
 /**
  * @author Denis Zhdanov
  * @since 7/18/12 10:37 AM
  */
-public class DefaultArrangementRuleSerializer implements ArrangementRuleSerializer {
+public class DefaultArrangementRuleSerializer implements ArrangementSettingsSerializer {
 
-  public static final ArrangementRuleSerializer INSTANCE = new DefaultArrangementRuleSerializer();
+  public static final ArrangementSettingsSerializer INSTANCE = new DefaultArrangementRuleSerializer();
 
+  @NotNull @NonNls private static final String GROUPS_ELEMENT_NAME     = "groups";
+  @NotNull @NonNls private static final String GROUP_ELEMENT_NAME      = "group";
+  @NotNull @NonNls private static final String RULES_ELEMENT_NAME      = "rules";
   @NotNull @NonNls private static final String RULE_ELEMENT_NAME       = "rule";
   @NotNull @NonNls private static final String MATCHER_ELEMENT_NAME    = "match";
   @NotNull @NonNls private static final String ORDER_TYPE_ELEMENT_NAME = "order";
 
   @NotNull private final DefaultArrangementEntryMatcherSerializer myMatcherSerializer = new DefaultArrangementEntryMatcherSerializer();
 
-  @Nullable
   @Override
-  public StdArrangementRule deserialize(@NotNull Element element) {
-    Element matcherElement = element.getChild(MATCHER_ELEMENT_NAME);
-    if (matcherElement == null) {
-      return null;
+  public void serialize(ArrangementSettings s, @NotNull Element holder) {
+    if (!(s instanceof StdArrangementSettings)) {
+      return;
     }
-
-    StdArrangementEntryMatcher matcher = null;
-    for (Object o : matcherElement.getChildren()) {
-      matcher = myMatcherSerializer.deserialize((Element)o);
-      if (matcher != null) {
-        break;
+    
+    StdArrangementSettings settings = (StdArrangementSettings)s;
+    
+    List<ArrangementGroupingType> groupings = settings.getGroupings();
+    if (!groupings.isEmpty()) {
+      Element groupingsElement = new Element(GROUPS_ELEMENT_NAME);
+      holder.addContent(groupingsElement);
+      for (ArrangementGroupingType group : groupings) {
+        groupingsElement.addContent(new Element(GROUP_ELEMENT_NAME).setText(group.toString()));
       }
     }
 
-    if (matcher == null) {
-      return null;
+    List<StdArrangementRule> rules = settings.getRules();
+    if (!rules.isEmpty()) {
+      Element rulesElement = new Element(RULES_ELEMENT_NAME);
+      holder.addContent(rulesElement);
+      for (StdArrangementRule rule : rules) {
+        rulesElement.addContent(serialize(rule));
+      }
     }
-
-    Element orderTypeElement = element.getChild(ORDER_TYPE_ELEMENT_NAME);
-    ArrangementEntryOrderType orderType = ArrangementRule.DEFAULT_ORDER_TYPE;
-    if (orderTypeElement != null) {
-      orderType = ArrangementEntryOrderType.valueOf(orderTypeElement.getText());
-    }
-
-    return new StdArrangementRule(matcher, orderType);
   }
 
   @Nullable
   @Override
+  public ArrangementSettings deserialize(@NotNull Element element) {
+    StdArrangementSettings result = new StdArrangementSettings();
+    Element groups = element.getChild(GROUPS_ELEMENT_NAME);
+    if (groups != null) {
+      for (Object group : groups.getChildren(GROUP_ELEMENT_NAME)) {
+        Element groupElement = (Element)group;
+        result.addGrouping(ArrangementGroupingType.valueOf(groupElement.getText()));
+      }
+    }
+
+    Element rulesElement = element.getChild(RULES_ELEMENT_NAME);
+    if (rulesElement != null) {
+      for (Object o : rulesElement.getChildren(RULE_ELEMENT_NAME)) {
+        Element ruleElement = (Element)o;
+        Element matcherElement = ruleElement.getChild(MATCHER_ELEMENT_NAME);
+        if (matcherElement == null) {
+          continue;
+        }
+
+        StdArrangementEntryMatcher matcher = null;
+        for (Object c : matcherElement.getChildren()) {
+          matcher = myMatcherSerializer.deserialize((Element)c);
+          if (matcher != null) {
+            break;
+          }
+        }
+
+        if (matcher == null) {
+          return null;
+        }
+
+        Element orderTypeElement = element.getChild(ORDER_TYPE_ELEMENT_NAME);
+        ArrangementEntryOrderType orderType = ArrangementRule.DEFAULT_ORDER_TYPE;
+        if (orderTypeElement != null) {
+          orderType = ArrangementEntryOrderType.valueOf(orderTypeElement.getText());
+        }
+        result.addRule(new StdArrangementRule(matcher, orderType));
+      }
+    }
+    
+    return result;
+  }
+
+  @Nullable
   public Element serialize(@NotNull ArrangementRule rule) {
     Element matcherElement = myMatcherSerializer.serialize(rule.getMatcher());
     if (matcherElement == null) {

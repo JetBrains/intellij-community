@@ -142,7 +142,7 @@ public class FSOperations {
     final ModuleRootsIndex rootsIndex = context.getProjectDescriptor().rootsIndex;
     final Set<File> excludes = new HashSet<File>(rootsIndex.getModuleExcludes(target.getModule()));
     final Collection<RootDescriptor> roots = new ArrayList<RootDescriptor>();
-    for (RootDescriptor rd : rootsIndex.getModuleRoots(context, target.getModuleName())) {
+    for (RootDescriptor rd : rootsIndex.getModuleRoots(context, target.getModule())) {
       roots.add(rd);
     }
     for (RootDescriptor rd : roots) {
@@ -176,7 +176,7 @@ public class FSOperations {
     else { // is file
       boolean markDirty = forceDirty;
       if (!markDirty) {
-        markDirty = tsStorage.getStamp(file) != FileSystemUtil.lastModified(file);
+        markDirty = tsStorage.getStamp(file, rd.target) != FileSystemUtil.lastModified(file);
       }
       if (markDirty) {
         // if it is full project rebuild, all storages are already completely cleared;

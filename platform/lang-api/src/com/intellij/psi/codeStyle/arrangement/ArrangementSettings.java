@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.cvsSupport2.actions.merge;
+package com.intellij.psi.codeStyle.arrangement;
 
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.merge.MergeData;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
- * @author lesya
+ * Holds arrangement rules.
+ * <p/>
+ * Implementations of this interface are expected to provide correct {@link #equals(Object)} & {@link #hashCode()} implementations.
+ * 
+ * @author Denis Zhdanov
+ * @since 9/17/12 11:51 AM
  */
-interface MergeDataProvider {
+public interface ArrangementSettings {
+  
   @NotNull
-  MergeData createData() throws VcsException;
+  List<? extends ArrangementRule> getRules();
 }

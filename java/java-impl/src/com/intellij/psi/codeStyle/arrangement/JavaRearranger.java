@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -140,10 +141,20 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
 
   @Nullable
   @Override
-  public JavaElementArrangementEntry wrap(@NotNull PsiElement element) {
-    List<JavaElementArrangementEntry> result = new ArrayList<JavaElementArrangementEntry>();
-    element.accept(new JavaArrangementVisitor(result, null, Collections.singleton(element.getTextRange())));
-    return result.size() == 1 ? result.get(0) : null;
+  public Pair<JavaElementArrangementEntry, List<JavaElementArrangementEntry>> parseWithNew(@NotNull PsiElement root,
+                                                                                           @Nullable Document document,
+                                                                                           @NotNull Collection<TextRange> ranges,
+                                                                                           @NotNull PsiElement element)
+  {
+    List<JavaElementArrangementEntry> existingEntries = new ArrayList<JavaElementArrangementEntry>();
+    root.accept(new JavaArrangementVisitor(existingEntries, document, ranges));
+
+    List<JavaElementArrangementEntry> newEntry = new ArrayList<JavaElementArrangementEntry>();
+    element.accept(new JavaArrangementVisitor(newEntry, document, Collections.singleton(element.getTextRange())));
+    if (newEntry.size() != 1) {
+      return null;
+    }
+    return Pair.create(newEntry.get(0), existingEntries);
   }
 
   @NotNull

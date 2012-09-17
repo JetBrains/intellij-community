@@ -51,7 +51,6 @@ import static com.intellij.util.io.TestFileSystemItem.fs;
  * @author nik
  */
 public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
-  private ProjectDescriptor myDescriptor;
   private File myProjectDir;
   private TestArtifactBuilderLogger myArtifactBuilderLogger;
   private JpsSdk<JpsDummyElement> myJdk;
@@ -69,7 +68,6 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
         FileUtil.delete(new File(FileUtil.toSystemDependentName(outputPath)));
       }
     }
-    myDescriptor.release();
     myProjectDir = null;
     super.tearDown();
   }
@@ -150,14 +148,18 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   }
 
   private BuildResult doBuild(boolean force, JpsArtifact... artifacts) {
-    if (myDescriptor == null) {
-      myDescriptor = createProjectDescriptor(new BuildLoggingManager(myArtifactBuilderLogger, new JavaBuilderLoggerImpl()));
-      myDescriptor.incUsageCounter();
+    BuildResult result;
+    ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(myArtifactBuilderLogger, new JavaBuilderLoggerImpl()));
+    try {
+      myArtifactBuilderLogger.clear();
+      final CompileScope scope = new AllProjectScope(descriptor.jpsProject,
+                                                     new HashSet<JpsArtifact>(Arrays.asList(artifacts)), force);
+      result = doBuild(descriptor, scope, !force, false, false);
     }
-    myArtifactBuilderLogger.clear();
-    final CompileScope scope = new AllProjectScope(myDescriptor.jpsProject,
-                                                   new HashSet<JpsArtifact>(Arrays.asList(artifacts)), force);
-    return doBuild(myDescriptor, scope, !force, false, false);
+    finally {
+      descriptor.release();
+    }
+    return result;
   }
 
   protected static String getJUnitJarPath() {
@@ -211,7 +213,11 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   }
 
   protected static void assertOutput(JpsArtifact a, TestFileSystemBuilder expected) {
-    expected.build().assertDirectoryEqual(new File(FileUtil.toSystemDependentName(a.getOutputPath())));
+    assertOutput(a.getOutputPath(), expected);
+  }
+
+  protected static void assertOutput(final String outputPath, TestFileSystemBuilder expected) {
+    expected.build().assertDirectoryEqual(new File(FileUtil.toSystemDependentName(outputPath)));
   }
 
   protected void assertDeleted(String... filePaths) {

@@ -498,7 +498,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   private void fireModification(final Configurable actual) {
 
-    Collection<Configurable> toCheck = colectAllParentsAndSiblings(actual);
+    Collection<Configurable> toCheck = collectAllParentsAndSiblings(actual);
 
     for (Configurable configurable : toCheck) {
       fireModificationForItem(configurable);
@@ -506,7 +506,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   }
 
-  private Collection<Configurable> colectAllParentsAndSiblings(final Configurable actual) {
+  private Collection<Configurable> collectAllParentsAndSiblings(final Configurable actual) {
     ArrayList<Configurable> result = new ArrayList<Configurable>();
     Configurable nearestParent = getContext().getParentConfigurable(actual);
 

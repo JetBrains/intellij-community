@@ -16,7 +16,6 @@ import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.incremental.Utils;
-import org.jetbrains.jps.incremental.artifacts.ArtifactSourceTimestampStorage;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.FSState;
@@ -167,7 +166,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       if (fsStateStream != null) {
         try {
           try {
-            fsState.load(fsStateStream, pd);
+            fsState.load(fsStateStream, pd.rootsIndex, pd.getArtifactRootsIndex());
             applyFSEvent(pd, myInitialFSDelta);
           }
           finally {
@@ -249,7 +248,6 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
 
     final Timestamps timestamps = pd.timestamps.getStorage();
-    ArtifactSourceTimestampStorage artifactTimestamps = pd.dataManager.getArtifactsBuildData().getTimestampStorage();
 
     for (String deleted : event.getDeletedPathsList()) {
       final File file = new File(deleted);
@@ -270,8 +268,7 @@ final class BuildSession implements Runnable, CanceledStatus {
           LOG.info("Applying deleted path from fs event to artifacts: " + file.getPath());
         }
         for (ArtifactRootDescriptor rootDescriptor : descriptor)
-          pd.fsState.registerDeleted(rootDescriptor.getArtifactName(), rootDescriptor.getArtifactId(), deleted,
-                                     artifactTimestamps);
+          pd.fsState.registerDeleted(rootDescriptor.getTarget(), file, timestamps);
       }
     }
     for (String changed : event.getChangedPathsList()) {
@@ -293,7 +290,7 @@ final class BuildSession implements Runnable, CanceledStatus {
           LOG.info("Applying dirty path from fs event to artifacts: " + file.getPath());
         }
         for (ArtifactRootDescriptor descriptor : descriptors) {
-          pd.fsState.markDirty(descriptor, changed, artifactTimestamps);
+          pd.fsState.markDirty(null, file, descriptor, timestamps);
         }
       }
     }
