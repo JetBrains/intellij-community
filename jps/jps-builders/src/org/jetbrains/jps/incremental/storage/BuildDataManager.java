@@ -85,12 +85,7 @@ public class BuildDataManager implements StorageOwner {
     finally {
       try {
         synchronized (mySourceToOutputLock) {
-          try {
-            closeSourceToOutputStorages();
-          }
-          finally {
-            FileUtil.delete(getSourceToOutputsRoot());
-          }
+          closeSourceToOutputStorages();
         }
       }
       finally {
@@ -114,6 +109,7 @@ public class BuildDataManager implements StorageOwner {
           }
         }
       }
+      myTargetsState.clean();
     }
     saveVersion();
   }
@@ -211,10 +207,6 @@ public class BuildDataManager implements StorageOwner {
 
   public File getSourceToFormsRoot() {
     return new File(myDataStorageRoot, SRC_TO_FORM_STORAGE);
-  }
-
-  private File getSourceToOutputsRoot() {
-    return new File(myDataStorageRoot, SRC_TO_OUTPUTS_STORAGE);
   }
 
   public File getMappingsRoot() {

@@ -123,4 +123,8 @@ public class BuildTargetsState {
   public File getTargetDataRoot(BuildTarget target) {
     return new File(getTargetTypeDataRoot(target.getTargetType()), target.getId());
   }
+
+  public void clean() {
+    FileUtil.delete(getTargetsDataRoot());
+  }
 }
