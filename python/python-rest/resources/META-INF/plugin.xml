@@ -2,7 +2,7 @@
   <name>Python ReStructureText Integration</name>
   <id>org.jetbrains.plugins.python-rest</id>
   <version>VERSION</version>
-  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
 
   <depends>com.intellij.modules.ultimate</depends>
   <depends>com.intellij.modules.python</depends>

@@ -1,7 +1,6 @@
 package com.jetbrains.python.codeInsight.controlflow;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.CollectionFactory;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
@@ -16,7 +15,7 @@ import java.util.Stack;
  * @author traff
  */
 public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
-  private Stack<Assertion> myStack = CollectionFactory.stack();
+  private Stack<Assertion> myStack = new Stack<Assertion>();
   private boolean myPositive = true;
 
   public List<Assertion> getDefinitions() {

@@ -9,9 +9,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.Function;
-import com.jetbrains.python.PyIcons;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import icons.PythonIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -275,13 +275,13 @@ public class PyStructureViewElement implements StructureViewTreeElement {
           icon.setIcon(normal_icon, 0);
           Icon overlay = null;
           if (myVisibility == Visibility.PRIVATE || myVisibility == Visibility.PROTECTED) {
-            overlay = PyIcons.PRIVATE;
+            overlay = PythonIcons.Python.Icons.Nodes.Lock;
           }
           else if (myVisibility == Visibility.PREDEFINED) {
-            overlay = PyIcons.PREDEFINED;
+            overlay = PythonIcons.Python.Icons.Nodes.Cyan_dot;
           }
           else if (myVisibility == Visibility.INVISIBLE) {
-            overlay = PyIcons.INVISIBLE;
+            overlay = PythonIcons.Python.Icons.Nodes.Red_inv_triangle;
           }
           if (overlay != null) {
             icon.setIcon(overlay, 1);

@@ -121,7 +121,7 @@ public class PyStringFormatInspection extends PyInspection {
           if (PyNames.DICT.equals(rightExpression.getName())) return -1;
 
           final PsiElement pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain(resolveContext).getElement();
-          if (!(pyElement instanceof PyExpression)) {
+          if (pyElement == rightExpression || !(pyElement instanceof PyExpression)) {
             return -1;
           }
           if (pyElement instanceof PyDictLiteralExpression) {

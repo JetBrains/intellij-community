@@ -6,11 +6,11 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.util.ProcessingContext;
-import com.jetbrains.python.PyIcons;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -51,7 +51,7 @@ public class PySpecialMethodNamesCompletionContributor extends CompletionContrib
               .create(entry.getKey() + entry.getValue().getSignature())
               .bold()
               .withTypeText("predefined")
-              .withIcon(PyIcons.PREDEFINED)
+              .withIcon(PythonIcons.Python.Icons.Nodes.Cyan_dot)
             ;
             result.addElement(TailTypeDecorator.withTail(item, TailType.CASE_COLON));
           }

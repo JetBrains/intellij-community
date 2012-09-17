@@ -14,7 +14,7 @@ public class PySdkListCellRenderer extends HtmlListCellRenderer<Sdk> {
   private final Map<Sdk, SdkModificator> mySdkModificators;
 
   public PySdkListCellRenderer(ListCellRenderer listCellRenderer, Map<Sdk, SdkModificator> sdkModificators) {
-    super(listCellRenderer);
+    super();
     mySdkModificators = sdkModificators;
   }
 

@@ -205,7 +205,7 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
   }
 
   @Override
-  public void addChangeListener(ChangeListener listener, Disposable parent) {
+  public void addChangeListener(@NotNull ChangeListener listener, @NotNull Disposable parent) {
     myPydevConsoleView.addChangeListener(listener, parent);
     if (myTextConsole instanceof ObservableConsoleView) {
       ((ObservableConsoleView)myTextConsole).addChangeListener(listener, parent);

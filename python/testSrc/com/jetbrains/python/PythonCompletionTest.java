@@ -475,15 +475,6 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
-  public void testNamedTuple() {  //
-    final String testName = "completion/" + getTestName(true);
-    myFixture.configureByFile(testName + ".py");
-    myFixture.completeBasic();
-    final List<String> strings = myFixture.getLookupElementStrings();
-    assertTrue(strings.contains("lat"));
-    assertTrue(strings.contains("long"));
-  }
-
   public void testPrivateMemberType() {  // PY-4589
     doTest();
   }

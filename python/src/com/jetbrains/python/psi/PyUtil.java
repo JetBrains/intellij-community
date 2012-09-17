@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -357,7 +358,11 @@ public class PyUtil {
   @NotNull
   public static List<PyClass> getAllSuperClasses(@NotNull PyClass pyClass) {
     List<PyClass> superClasses = new ArrayList<PyClass>();
-    for (PyClass ancestor : pyClass.iterateAncestorClasses()) superClasses.add(ancestor);
+    for (PyClass ancestor : pyClass.iterateAncestorClasses()) {
+      if (!PyNames.FAKE_OLD_BASE.equals(ancestor.getName())) {
+        superClasses.add(ancestor);
+      }
+    }
     return superClasses;
   }
 
@@ -1039,9 +1044,6 @@ public class PyUtil {
     else if (expression instanceof PySequenceExpression) {
       valuesLength = ((PySequenceExpression)expression).getElements().length;
     }
-    else if (expression instanceof PyDictLiteralExpression) {
-      valuesLength = ((PyDictLiteralExpression)expression).getElements().length;
-    }
     else if (expression instanceof PyStringLiteralExpression) {
       valuesLength = ((PyStringLiteralExpression)expression).getStringValue().length();
     }
@@ -1104,6 +1106,31 @@ public class PyUtil {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public static <T extends PyExpression> T findProblemElement(Editor editor, PsiFile file, @NotNull final Class<? extends T>... classes) {
+    for (Class claz : classes) {
+      PsiElement problemElement = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset() - 1), claz);
+      if (problemElement != null) return (T)problemElement;
+
+      problemElement = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), claz);
+      if (problemElement != null) return (T)problemElement;
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiElement findNonWhitespaceAtOffset(PsiFile psiFile, int caretOffset) {
+    PsiElement element = psiFile.findElementAt(caretOffset);
+    if (element == null) {
+      return null;
+    }
+    while (caretOffset > 0 && element instanceof PsiWhiteSpace) {
+      caretOffset--;
+      element = psiFile.findElementAt(caretOffset);
+    }
+    return element;
   }
 }
 

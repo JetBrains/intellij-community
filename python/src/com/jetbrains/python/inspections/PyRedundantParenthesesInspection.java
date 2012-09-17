@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.actions.RedundantParenthesesQuickFix;
@@ -55,8 +56,9 @@ public class PyRedundantParenthesesInspection extends PyInspection {
     public void visitPyParenthesizedExpression(final PyParenthesizedExpression node) {
       PyExpression expression = node.getContainedExpression();
       if (node.getText().contains("\n")) return;
-      if (expression instanceof PyReferenceExpression
-              || expression instanceof PyNumericLiteralExpression) {
+      PyYieldExpression yieldExpression = PsiTreeUtil.getParentOfType(expression, PyYieldExpression.class, false);
+      if (yieldExpression != null && yieldExpression.isDelegating()) return;
+      if (expression instanceof PyReferenceExpression || expression instanceof PyLiteralExpression) {
         if (myIgnorePercOperator) {
           PsiElement parent = node.getParent();
           if (parent instanceof PyBinaryExpression) {
@@ -76,12 +78,14 @@ public class PyRedundantParenthesesInspection extends PyInspection {
           registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
       }
       else if (expression instanceof PyBinaryExpression) {
+        PyBinaryExpression binaryExpression = (PyBinaryExpression)expression;
+
         if (node.getParent() instanceof PyPrefixExpression)
           return;
-        if (((PyBinaryExpression)expression).getOperator() == PyTokenTypes.AND_KEYWORD ||
-            ((PyBinaryExpression)expression).getOperator() == PyTokenTypes.OR_KEYWORD) {
-          if (((PyBinaryExpression)expression).getLeftExpression() instanceof PyParenthesizedExpression &&
-            ((PyBinaryExpression)expression).getRightExpression() instanceof PyParenthesizedExpression) {
+        if (binaryExpression.getOperator() == PyTokenTypes.AND_KEYWORD ||
+            binaryExpression.getOperator() == PyTokenTypes.OR_KEYWORD) {
+          if (binaryExpression.getLeftExpression() instanceof PyParenthesizedExpression &&
+            binaryExpression.getRightExpression() instanceof PyParenthesizedExpression) {
             registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
           }
         }

@@ -28,7 +28,7 @@ public class SkeletonVersionChecker {
 
   @NonNls static final String REQUIRED_VERSION_FNAME = "required_gen_version";
   @NonNls static final String DEFAULT_NAME = "(default)"; // version required if a package is not explicitly mentioned
-  @NonNls static final String BUILTIN_NAME = "(built-in)"; // version required for built-ins
+  @NonNls public static final String BUILTIN_NAME = "(built-in)"; // version required for built-ins
   private TreeMap<PyQualifiedName, Integer> myExplicitVersion; // versions of regularly named packages
   private Integer myDefaultVersion; // version of (default)
   private Integer myBuiltinsVersion; // version of (built-it)

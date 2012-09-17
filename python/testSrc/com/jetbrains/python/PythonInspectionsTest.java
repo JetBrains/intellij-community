@@ -43,11 +43,6 @@ public class PythonInspectionsTest extends PyTestCase {
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyUnreachableCodeInspection() {
-    LocalInspectionTool inspection = new PyUnreachableCodeInspection();
-    doTest(getTestName(false), inspection);
-  }
-
   public void testPyMethodParametersInspection() {
     doHighlightingTest(PyMethodParametersInspection.class);
   }
@@ -258,12 +253,6 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPyChainedComparisonsInspection() {
     doHighlightingTest(PyChainedComparisonsInspection.class);
-  }
-
-  public void testPyRedundantParenthesesInspection() {
-    myFixture.configureByFile("inspections/PyRedundantParenthesesInspection/test.py");
-    myFixture.enableInspections(PyRedundantParenthesesInspection.class);
-    myFixture.checkHighlighting(true, false, true);
   }
 
   public void testPyBroadExceptionInspection() {

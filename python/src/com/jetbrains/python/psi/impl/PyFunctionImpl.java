@@ -44,9 +44,6 @@ import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsMo
  * Implements PyFunction.
  */
 public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> implements PyFunction {
-  private static final Icon PROPERTY_GETTER = PythonIcons.Python.Icons.PropertyGetter;
-  private static final Icon PROPERTY_SETTER = PythonIcons.Python.Icons.PropertySetter;
-  private static final Icon PROPERTY_DELETER = PythonIcons.Python.Icons.PropertyDeleter;
 
   public PyFunctionImpl(ASTNode astNode) {
     super(astNode);
@@ -92,13 +89,13 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       final Property property = getProperty();
       if (property != null) {
         if (property.getGetter().valueOrNull() == this) {
-          return PROPERTY_GETTER;
+          return PythonIcons.Python.Icons.PropertyGetter;
         }
         if (property.getSetter().valueOrNull() == this) {
-          return PROPERTY_SETTER;
+          return PythonIcons.Python.Icons.PropertySetter;
         }
         if (property.getDeleter().valueOrNull() == this) {
-          return PROPERTY_DELETER;
+          return PythonIcons.Python.Icons.PropertyDeleter;
         }
         return PlatformIcons.PROPERTY_ICON;
       }

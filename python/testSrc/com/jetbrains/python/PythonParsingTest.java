@@ -343,6 +343,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  // EA-30244
+  public void testEqYieldEq() {
+    doTest();
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON25);
   }

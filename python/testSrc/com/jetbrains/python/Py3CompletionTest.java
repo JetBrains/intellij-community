@@ -4,6 +4,8 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyTestCase;
 
+import java.util.List;
+
 /**
  * @author yole
  */
@@ -19,6 +21,16 @@ public class Py3CompletionTest extends PyTestCase {
 
   public void testPropertyAfterAccessor() {  // PY-5951
     doTest();
+  }
+
+  public void testNamedTuple() {
+    final String testName = "completion/" + getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasic();
+    final List<String> strings = myFixture.getLookupElementStrings();
+    assertNotNull(strings);
+    assertTrue(strings.contains("lat"));
+    assertTrue(strings.contains("long"));
   }
 
   private void doTest() {

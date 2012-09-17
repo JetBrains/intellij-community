@@ -45,7 +45,7 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
   private boolean myHyperlink;
 
   public PythonConsoleView(final Project project, final String title, Sdk sdk) {
-    super(project, new PythonLanguageConsole(project, title, sdk));
+    super(new PythonLanguageConsole(project, title, sdk));
     getPythonLanguageConsole().setPythonConsoleView(this);
     getPythonLanguageConsole().setPrompt(PyConsoleUtil.ORDINARY_PROMPT);
     setUpdateFoldingsEnabled(false);

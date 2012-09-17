@@ -24,10 +24,8 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.116" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.118" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
-
-VERSION_CONTROL_HEADER_FORMAT = '# from %s by generator %s'
 
 import sys
 import os
@@ -1836,9 +1834,8 @@ class ModuleRedeclarator(object):
         else:
             mod_name = " does not know its name"
         out(0, "# module ", p_name, mod_name) # line 2
-        out(0, VERSION_CONTROL_HEADER_FORMAT % (
-            self.mod_filename or getattr(self.module, "__file__", "(built-in)"), VERSION)
-        ) # line 3
+        out(0, "# from %s" % (self.mod_filename or getattr(self.module, "__file__", "(built-in)"))) # line 3
+        out(0, "# by generator %s" % VERSION) # line 4
         if p_name == BUILTIN_MOD_NAME and version[0] == 2 and version[1] >= 6:
             out(0, "from __future__ import print_function")
         self.outDocAttr(out, self.module, 0)
@@ -2085,6 +2082,40 @@ class __generator(object):
         pass
 """
                 self.classes_buf.out(0, txt)
+
+                # Fake <type 'namedtuple'>
+                if version[0] >= 3 or (version[0] == 2 and version[1] >= 6):
+                    namedtuple_text = """
+class __namedtuple(tuple):
+    '''A mock base class for named tuples.'''
+
+    __slots__ = ()
+    _fields = ()
+
+    def __new__(cls, *args, **kwargs):
+        'Create a new instance of the named tuple.'
+        return tuple.__new__(cls, *args)
+
+    @classmethod
+    def _make(cls, iterable, new=tuple.__new__, len=len):
+        'Make a new named tuple object from a sequence or iterable.'
+        return new(cls, iterable)
+
+    def __repr__(self):
+        return ''
+
+    def _asdict(self):
+        'Return a new dict which maps field types to their values.'
+        return {}
+
+    def _replace(self, **kwargs):
+        'Return a new named tuple object replacing specified fields with new values.'
+        return self
+
+    def __getnewargs__(self):
+        return tuple(self)
+"""
+                    self.classes_buf.out(0, namedtuple_text)
 
         else:
             self.classes_buf.out(0, "# no classes")
@@ -2485,7 +2516,8 @@ def processOne(name, mod_file_name, doing_builtins):
             if outfile is not None and not outfile.closed:
                 outfile.write("# encoding: %s\n" % OUT_ENCODING)
                 outfile.write("# module %s\n" % name)
-                outfile.write(VERSION_CONTROL_HEADER_FORMAT % (mod_file_name, VERSION))
+                outfile.write("# from %s\n" % mod_file_name)
+                outfile.write("# by generator %s\n" % VERSION)
                 outfile.write("\n\n")
                 outfile.write("# Skeleton generation error:\n#\n#     " + (msg % args) + "\n")
             if debug_mode:

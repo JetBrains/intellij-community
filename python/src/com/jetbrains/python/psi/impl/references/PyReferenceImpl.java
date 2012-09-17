@@ -150,9 +150,15 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       // TODO: This check may slow down resolving, but it is the current solution to the comprehension scopes problem
       final PyComprehensionElement definitionComprehension = PsiTreeUtil.getParentOfType(definition, PyComprehensionElement.class);
       if (definitionComprehension != null) {
-        final PyComprehensionElement elementComprehension = PsiTreeUtil.getParentOfType(element, PyComprehensionElement.class);
-        if (elementComprehension == null || !PsiTreeUtil.isAncestor(definitionComprehension, elementComprehension, false)) {
-          continue;
+        final boolean isAtLeast30 = LanguageLevel.forElement(definitionComprehension).isAtLeast(LanguageLevel.PYTHON30);
+        final boolean isListComprehension = definitionComprehension instanceof PyListCompExpression;
+        if (!isListComprehension || isAtLeast30) {
+          if (true) {
+            final PyComprehensionElement elementComprehension = PsiTreeUtil.getParentOfType(element, PyComprehensionElement.class);
+            if (elementComprehension == null || !PsiTreeUtil.isAncestor(definitionComprehension, elementComprehension, false)) {
+              continue;
+            }
+          }
         }
       }
       if (definition instanceof NameDefiner && !(definition instanceof PsiNamedElement)) {
@@ -221,6 +227,19 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           else if (owner == originalOwner && !scope.isGlobal(referencedName)) {
             final ResolveResultList latest = resolveToLatestDefs(owner, myElement, referencedName);
             if (!latest.isEmpty()) {
+              if (myElement instanceof PyTargetExpression) {
+                final RatedResolveResult result = latest.get(0);
+                final PsiElement element = result.getElement();
+                if (element instanceof PyTargetExpression) {
+                  if (PyPsiUtils.isBefore(element, myElement)) {
+                    return latest;
+                  }
+                  else {
+                    ret.poke(myElement, getRate(myElement));
+                    return ret;
+                  }
+                }
+              }
               return latest;
             }
             if (owner instanceof PyClass) {
@@ -462,8 +481,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   private boolean resolvesToSameLocal(PsiElement element, String elementName, ScopeOwner ourScopeOwner, ScopeOwner theirScopeOwner) {
-    PsiElement ourContainer = PsiTreeUtil.getParentOfType(getElement(), ScopeOwner.class, PyComprehensionElement.class);
-    PsiElement theirContainer = PsiTreeUtil.getParentOfType(element, ScopeOwner.class, PyComprehensionElement.class);
+    final PsiElement ourContainer = findContainer(getElement());
+    final PsiElement theirContainer = findContainer(element);
     if (ourContainer != null) {
       if (ourContainer == theirContainer) {
         return true;
@@ -486,6 +505,15 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
     }
     return false;
+  }
+
+  @Nullable
+  private static PsiElement findContainer(@NotNull PsiElement element) {
+    final PyElement parent = PsiTreeUtil.getParentOfType(element, ScopeOwner.class, PyComprehensionElement.class);
+    if (parent instanceof PyListCompExpression && LanguageLevel.forElement(element).isOlderThan(LanguageLevel.PYTHON30)) {
+      return findContainer(parent);
+    }
+    return parent;
   }
 
   private boolean resolvesToSameGlobal(PsiElement element, String elementName, ScopeOwner ourScopeOwner, ScopeOwner theirScopeOwner,

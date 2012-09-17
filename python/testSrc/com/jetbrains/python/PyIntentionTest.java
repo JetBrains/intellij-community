@@ -237,6 +237,18 @@ public class PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.specify.type"));
   }
 
+  private void doDocReturnTypeTest() {
+    doTest(PyBundle.message("INTN.specify.return.type"));
+  }
+
+  public void testTypeInDocstring1() {
+    doDocReturnTypeTest();
+  }
+
+  public void testTypeInDocstring2() {
+    doDocReturnTypeTest();
+  }
+
   public void testTypeInPy3Annotation() {      //PY-7045
     doTest(PyBundle.message("INTN.specify.type.in.annotation"), LanguageLevel.PYTHON32);
   }
@@ -246,10 +258,32 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testTypeAssertion() {
-    doTest(PyBundle.message("INTN.insert.assertion"));
+    doTestTypeAssertion();
   }
 
   public void testTypeAssertion1() { //PY-7089
+    doTestTypeAssertion();
+  }
+
+  public void testTypeAssertion2() {
+    doTestTypeAssertion();
+  }
+
+  public void testTypeAssertion3() {                   //PY-7403
+    setLanguageLevel(LanguageLevel.PYTHON33);
+    try {
+      doNegativeTest(PyBundle.message("INTN.insert.assertion"));
+    }
+    finally {
+      setLanguageLevel(null);
+    }
+  }
+
+  public void testTypeAnnotation3() {  //PY-7087
+    doTest(PyBundle.message("INTN.specify.type.in.annotation"), LanguageLevel.PYTHON32);
+  }
+
+  private void doTestTypeAssertion() {
     doTest(PyBundle.message("INTN.insert.assertion"));
   }
 
@@ -264,6 +298,10 @@ public class PyIntentionTest extends PyTestCase {
   // PY-7383
   public void testYieldFrom() {
     doTest(PyBundle.message("INTN.yield.from"), LanguageLevel.PYTHON33);
+  }
+
+  public void testUnicodeStringConcatToFormat() { //PY-7463
+    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
   }
 
   private void doDocStubTest() {

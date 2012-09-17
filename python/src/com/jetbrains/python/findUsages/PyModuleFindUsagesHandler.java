@@ -14,6 +14,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyImportedModule;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -49,7 +50,7 @@ public class PyModuleFindUsagesHandler extends FindUsagesHandler {
                                       isSingleFile,
                                       this) {
       @Override
-      public void configureLabelComponent(final SimpleColoredComponent coloredComponent) {
+      public void configureLabelComponent(@NotNull final SimpleColoredComponent coloredComponent) {
         coloredComponent.append(myElement instanceof PsiDirectory ? "Package " : "Module ");
         coloredComponent.append(myElement.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
@@ -57,7 +58,10 @@ public class PyModuleFindUsagesHandler extends FindUsagesHandler {
   }
 
   @Override
-  public Collection<PsiReference> findReferencesToHighlight(PsiElement target, SearchScope searchScope) {
+  public Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target, @NotNull SearchScope searchScope) {
+    if (target instanceof PyImportedModule) {
+      target = ((PyImportedModule) target).resolve();
+    }
     if (target instanceof PyFile && PyNames.INIT_DOT_PY.equals(((PyFile)target).getName())) {
       List<PsiReference> result = new ArrayList<PsiReference>();
       result.addAll(super.findReferencesToHighlight(target, searchScope));
