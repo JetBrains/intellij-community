@@ -1,0 +1,10 @@
+package x;
+
+import y.Lib;
+
+public class Util {
+  public static int utilMethod() {
+    Lib.libMethod();
+    return 0;
+  }
+}
