@@ -910,48 +910,42 @@ public class IncProjectBuilder {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final Timestamps timestamps = pd.timestamps.getStorage();
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
+      final BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
       if (context.isProjectRebuild() || configuration.isTargetDirty()) {
-        FSOperations.markDirtyFiles(context, target, timestamps, true,
-                                    target.isTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION, null);
+        FSOperations.markDirtyFiles(context, target, timestamps, true, target.isTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION, null);
         updateOutputRootsLayout(context, target);
         configuration.save();
       }
       else {
         if (context.isMake()) {
           if (pd.fsState.markInitialScanPerformed(target)) {
-            initModuleFSState(context, target);
-            updateOutputRootsLayout(context, target);
+            boolean forceMarkDirty = false;
+            final File currentOutput = context.getProjectPaths().getModuleOutputDir(target.getModule(), target.isTests());
+            if (currentOutput != null) {
+              final Pair<String, String> outputsPair = pd.dataManager.getOutputRootsLayout().getState(target.getModuleName());
+              if (outputsPair != null) {
+                final String previousPath = target.isTests() ? outputsPair.second : outputsPair.first;
+                forceMarkDirty = StringUtil.isEmpty(previousPath) || !FileUtil.filesEqual(currentOutput, new File(previousPath));
+              }
+              else {
+                forceMarkDirty = true;
+              }
+            }
+            initModuleFSState(context, target, forceMarkDirty);
           }
         }
         else {
           // forced compilation mode
           if (context.getScope().isRecompilationForced(target)) {
-            FSOperations.markDirtyFiles(context, target, timestamps, true,
-                                        target.isTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION,
-                                        null);
-            updateOutputRootsLayout(context, target);
+            initModuleFSState(context, target, true);
           }
         }
       }
     }
   }
 
-  private static void initModuleFSState(CompileContext context, ModuleBuildTarget target) throws IOException {
-    boolean forceMarkDirty = false;
-    final File currentOutput = context.getProjectPaths().getModuleOutputDir(target.getModule(), target.isTests());
+  private static void initModuleFSState(CompileContext context, ModuleBuildTarget target, final boolean forceMarkDirty) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
-    if (currentOutput != null) {
-      Pair<String, String> outputsPair = pd.dataManager.getOutputRootsLayout().getState(target.getModuleName());
-      if (outputsPair != null) {
-        final String previousPath = target.isTests() ? outputsPair.second : outputsPair.first;
-        forceMarkDirty = StringUtil.isEmpty(previousPath) || !FileUtil.filesEqual(currentOutput, new File(previousPath));
-      }
-      else {
-        forceMarkDirty = true;
-      }
-    }
-
     final Timestamps timestamps = pd.timestamps.getStorage();
     final THashSet<File> currentFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
     FSOperations.markDirtyFiles(context, target, timestamps, forceMarkDirty, target.isTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION, currentFiles);
@@ -968,6 +962,8 @@ public class IncProjectBuilder {
         fsState.registerDeleted(target, file, timestamps);
       }
     }
+    
+    updateOutputRootsLayout(context, target);
   }
 
   private static void updateOutputRootsLayout(CompileContext context, ModuleBuildTarget target) throws IOException {
