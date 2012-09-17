@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileSystemUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
@@ -56,7 +57,7 @@ public class FSOperations {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     pd.fsState.clearContextRoundData(context);
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      markDirtyFiles(context, target, pd.timestamps.getStorage(), true, target.isTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, null);
+      markDirtyFiles(context, target, pd.timestamps.getStorage(), true, null);
     }
   }
 
@@ -88,7 +89,7 @@ public class FSOperations {
 
     final Timestamps timestamps = context.getProjectDescriptor().timestamps.getStorage();
     for (ModuleBuildTarget target : dirtyTargets) {
-      markDirtyFiles(context, target, timestamps, true, target.isTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.BOTH, null);
+      markDirtyFiles(context, target, timestamps, true, null);
     }
 
     if (context.isMake()) {
@@ -135,10 +136,8 @@ public class FSOperations {
 
   static void markDirtyFiles(CompileContext context,
                              ModuleBuildTarget target,
-                             final Timestamps tsStorage,
-                             final boolean forceMarkDirty,
-                             @NotNull final DirtyMarkScope scope,
-                             @Nullable final Set<File> currentFiles) throws IOException {
+                             Timestamps timestamps, boolean forceMarkDirty,
+                             @Nullable THashSet<File> currentFiles) throws IOException {
     final ModuleRootsIndex rootsIndex = context.getProjectDescriptor().rootsIndex;
     final Set<File> excludes = new HashSet<File>(rootsIndex.getModuleExcludes(target.getModule()));
     final Collection<RootDescriptor> roots = new ArrayList<RootDescriptor>();
@@ -146,21 +145,14 @@ public class FSOperations {
       roots.add(rd);
     }
     for (RootDescriptor rd : roots) {
-      if (scope == DirtyMarkScope.TESTS) {
-        if (!rd.isTestRoot) {
-          continue;
-        }
-      }
-      else if (scope == DirtyMarkScope.PRODUCTION) {
-        if (rd.isTestRoot) {
-          continue;
-        }
+      if (target.isTests() != rd.isTestRoot) {
+        continue;
       }
       if (!rd.root.exists()) {
         continue;
       }
       context.getProjectDescriptor().fsState.clearRecompile(rd);
-      traverseRecursively(context, rd, rd.root, excludes, tsStorage, forceMarkDirty, currentFiles);
+      traverseRecursively(context, rd, rd.root, excludes, timestamps, forceMarkDirty, currentFiles);
     }
   }
 
@@ -188,9 +180,5 @@ public class FSOperations {
         currentFiles.add(file);
       }
     }
-  }
-
-  public enum DirtyMarkScope{
-    PRODUCTION, TESTS, BOTH
   }
 }

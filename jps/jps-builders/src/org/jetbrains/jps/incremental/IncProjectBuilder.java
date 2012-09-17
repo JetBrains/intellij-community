@@ -894,7 +894,7 @@ public class IncProjectBuilder {
         final Timestamps timestamps = pd.timestamps.getStorage();
         final List<RootDescriptor> roots = pd.rootsIndex.getModuleRoots(context, target.getModule());
         for (RootDescriptor rd : roots) {
-          if (target.isTests() ? rd.isTestRoot : !rd.isTestRoot) {
+          if (target.isTests() == rd.isTestRoot) {
             marked |= fsState.markAllUpToDate(context.getScope(), rd, timestamps, context.getCompilationStartStamp());
           }
         }
@@ -912,7 +912,7 @@ public class IncProjectBuilder {
     for (ModuleBuildTarget target : chunk.getTargets()) {
       final BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
       if (context.isProjectRebuild() || configuration.isTargetDirty()) {
-        FSOperations.markDirtyFiles(context, target, timestamps, true, target.isTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION, null);
+        FSOperations.markDirtyFiles(context, target, timestamps, true, null);
         updateOutputRootsLayout(context, target);
         configuration.save();
       }
@@ -937,7 +937,8 @@ public class IncProjectBuilder {
         else {
           // forced compilation mode
           if (context.getScope().isRecompilationForced(target)) {
-            initModuleFSState(context, target, true);
+            FSOperations.markDirtyFiles(context, target, timestamps, true, null);
+            updateOutputRootsLayout(context, target);
           }
         }
       }
@@ -948,7 +949,7 @@ public class IncProjectBuilder {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final Timestamps timestamps = pd.timestamps.getStorage();
     final THashSet<File> currentFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-    FSOperations.markDirtyFiles(context, target, timestamps, forceMarkDirty, target.isTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION, currentFiles);
+    FSOperations.markDirtyFiles(context, target, timestamps, forceMarkDirty, currentFiles);
 
     // handle deleted paths
     final BuildFSState fsState = pd.fsState;
