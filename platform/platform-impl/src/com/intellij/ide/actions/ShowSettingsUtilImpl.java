@@ -52,7 +52,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     }
   }
 
-  private static void _showSettingsDialog(final Project project, ConfigurableGroup[] group, Configurable toSelect) {
+  private static void _showSettingsDialog(final Project project, ConfigurableGroup[] group, @Nullable Configurable toSelect) {
     group = filterEmptyGroups(group);
 
     new OptionsEditorDialog(project, group, toSelect).show();
