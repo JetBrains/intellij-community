@@ -36,7 +36,9 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -82,6 +84,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
   public boolean ignoreAssignedToConstants = false;
   public boolean ignoreToString = false;
   @NonNls public String nonNlsCommentPattern = "NON-NLS";
+  private boolean ignoreForEnumConstants = false;
 
   private static final LocalQuickFix I18N_QUICK_FIX = new I18nizeQuickFix();
   private static final I18nizeConcatenationQuickFix I18N_CONCATENATION_QUICK_FIX = new I18nizeConcatenationQuickFix();
@@ -102,8 +105,29 @@ public class I18nInspection extends BaseLocalInspectionTool {
     return ArrayUtil.mergeArrays(actions, super.getSuppressActions(element));
   }
 
+  private static final String SKIP_FOR_ENUM = "ignoreForEnumConstant";
+  @Override
+  public void writeSettings(Element node) throws WriteExternalException {
+    super.writeSettings(node);
+    if (ignoreForEnumConstants) {
+      final Element e = new Element("option");
+      e.setAttribute("name", SKIP_FOR_ENUM);
+      e.setAttribute("value", Boolean.toString(ignoreForEnumConstants));
+      node.addContent(e);
+    }
+  }
+
   public void readSettings(Element node) throws InvalidDataException {
     super.readSettings(node);
+    for (Object o : node.getChildren()) {
+      if (o instanceof Element && Comparing.strEqual(node.getAttributeValue("name"), SKIP_FOR_ENUM)) {
+        final String ignoreForConstantsAttr = node.getAttributeValue("value");
+        if (ignoreForConstantsAttr != null) {
+          ignoreForEnumConstants = Boolean.parseBoolean(ignoreForConstantsAttr);
+        }
+        break;
+      }
+    }
     cacheNonNlsCommentPattern();
   }
 
@@ -184,6 +208,13 @@ public class I18nInspection extends BaseLocalInspectionTool {
         ignoreToString = chkToString.isSelected();
       }
     });
+    
+    final JCheckBox ignoreEnumConstants = new JCheckBox("Ignore enum constants", ignoreForEnumConstants);
+    ignoreEnumConstants.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        ignoreForEnumConstants = ignoreEnumConstants.isSelected();
+      }
+    });
 
     final GridBagConstraints gc = new GridBagConstraints();
     gc.fill = GridBagConstraints.HORIZONTAL;
@@ -228,6 +259,9 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
     gc.gridy ++;
     panel.add(nonAlpha, gc);
+
+    gc.gridy ++;
+    panel.add(ignoreEnumConstants, gc);
 
     gc.gridy ++;
     gc.anchor = GridBagConstraints.NORTHWEST;
@@ -522,6 +556,9 @@ public class I18nInspection extends BaseLocalInspectionTool {
     if (ignoreForExceptionConstructors && isArgOfExceptionConstructor(expression)) {
       return false;
     }
+    if (ignoreForEnumConstants && isArgOfEnumConstant(expression)) {
+      return false;
+    }
     if (!ignoreForExceptionConstructors && isArgOfSpecifiedExceptionConstructor(expression, ignoreForSpecifiedExceptionConstructors.split(","))) {
       return false;
     }
@@ -558,6 +595,15 @@ public class I18nInspection extends BaseLocalInspectionTool {
     }
 
     return true;
+  }
+
+  private boolean isArgOfEnumConstant(PsiLiteralExpression expression) {
+    final PsiElement parent = PsiTreeUtil.getParentOfType(expression, PsiExpressionList.class, PsiClass.class);
+    if (!(parent instanceof PsiExpressionList)) {
+      return false;
+    }
+    final PsiElement grandparent = parent.getParent();
+    return grandparent instanceof PsiEnumConstant;
   }
 
   public void cacheNonNlsCommentPattern() {
