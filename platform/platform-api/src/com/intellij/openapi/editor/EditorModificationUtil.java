@@ -338,15 +338,15 @@ public class EditorModificationUtil {
         assert end != null;
 
         int column = Math.min(start.column, end.column);
-        int startLine = Math.min(start.line, end.line);
-        int endLine = Math.max(start.line, end.line);
+        final int[] startOffsets = selectionModel.getBlockSelectionStarts();
         deleteBlockSelection(editor);
-        for (int i = startLine; i <= endLine; i++) {
-          editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(i, column));
+        for (int i = startOffsets.length - 1; i >= 0; i--) {
+          LogicalPosition position = editor.offsetToLogicalPosition(startOffsets[i]);
+          editor.getCaretModel().moveToLogicalPosition(position);
           insertStringAtCaret(editor, str, toProcessOverwriteMode, true);
         }
-        selectionModel.setBlockSelection(new LogicalPosition(startLine, column + str.length()),
-                                         new LogicalPosition(endLine, column + str.length()));
+        selectionModel.setBlockSelection(new LogicalPosition(start.line, column + str.length()),
+                                         new LogicalPosition(end.line, column + str.length()));
       }
     }
     else {

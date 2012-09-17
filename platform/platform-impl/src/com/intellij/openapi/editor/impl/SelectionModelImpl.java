@@ -47,6 +47,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyClipboardOwner;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,6 +67,8 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   private LogicalPosition myBlockEnd;
   private TextAttributes myTextAttributes;
   private DocumentEvent myIsInUpdate;
+  private int[] myBlockSelectionStarts;
+  private int[] myBlockSelectionEnds;
 
   private class MyRangeMarker extends RangeMarkerImpl {
     private VisualPosition myStartPosition;
@@ -463,6 +466,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     
     myBlockStart = blockStart;
     myBlockEnd = blockEnd;
+    recalculateBlockOffsets();
 
     final int[] newStarts = getBlockSelectionStarts();
     final int[] newEnds = getBlockSelectionEnds();
@@ -562,27 +566,65 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return null;
   }
 
+  private void recalculateBlockOffsets() {
+    TIntArrayList startOffsets = new TIntArrayList();
+    TIntArrayList endOffsets = new TIntArrayList();
+    final int startLine = Math.min(myBlockStart.line, myBlockEnd.line);
+    final int endLine = Math.max(myBlockStart.line, myBlockEnd.line);
+    final int startColumn = Math.min(myBlockStart.column, myBlockEnd.column);
+    final int endColumn = Math.max(myBlockStart.column, myBlockEnd.column);
+    FoldingModelImpl foldingModel = myEditor.getFoldingModel();
+    DocumentEx document = myEditor.getDocument();
+    boolean insideFoldRegion = false;
+    for (int line = startLine; line <= endLine; line++) {
+      int startOffset = myEditor.logicalPositionToOffset(new LogicalPosition(line, startColumn));
+      FoldRegion startRegion = foldingModel.getCollapsedRegionAtOffset(startOffset);
+      boolean startInsideFold = startRegion != null && startRegion.getStartOffset() < startOffset;
+
+      int endOffset = myEditor.logicalPositionToOffset(new LogicalPosition(line, endColumn));
+      FoldRegion endRegion = foldingModel.getCollapsedRegionAtOffset(endOffset);
+      boolean endInsideFold = endRegion != null && endRegion.getStartOffset() < endOffset;
+
+      if (!startInsideFold && !endInsideFold) {
+        startOffsets.add(startOffset);
+        endOffsets.add(endOffset);
+      }
+      else if (startInsideFold && endInsideFold) {
+        if (insideFoldRegion) {
+          startOffsets.add(Math.max(document.getLineStartOffset(line), startRegion.getStartOffset()));
+          endOffsets.add(Math.min(document.getLineEndOffset(line), endRegion.getEndOffset()));
+        }
+      }
+      else if (startInsideFold && !endInsideFold) {
+        if (startRegion.getEndOffset() < endOffset) {
+          startOffsets.add(Math.max(document.getLineStartOffset(line), startRegion.getStartOffset()));
+          endOffsets.add(endOffset);
+        }
+        insideFoldRegion = false;
+      }
+      else {
+        startOffsets.add(startOffset);
+        endOffsets.add(Math.min(document.getLineEndOffset(line), endRegion.getEndOffset()));
+        insideFoldRegion = true;
+      }
+    }
+    
+    myBlockSelectionStarts = startOffsets.toNativeArray();
+    myBlockSelectionEnds = endOffsets.toNativeArray();
+  }
+  
   @Override
   @NotNull
   public int[] getBlockSelectionStarts() {
     if (hasSelection()) {
       return new int[]{getSelectionStart()};
     }
-    if (!hasBlockSelection()) {
+    else if (!hasBlockSelection() || myBlockSelectionStarts == null) {
       return ArrayUtil.EMPTY_INT_ARRAY;
     }
-
-    int lineCount = Math.abs(myBlockEnd.line - myBlockStart.line) + 1;
-    int startLine = Math.min(myBlockStart.line, myBlockEnd.line);
-
-    int startColumn = Math.min(myBlockStart.column, myBlockEnd.column);
-
-    int[] res = new int[lineCount];
-    for (int i = startLine; i < startLine + lineCount; i++) {
-      res[i - startLine] = myEditor.logicalPositionToOffset(new LogicalPosition(i, startColumn));
+    else {
+      return myBlockSelectionStarts;
     }
-
-    return res;
   }
 
   @Override
@@ -591,23 +633,12 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     if (hasSelection()) {
       return new int[]{getSelectionEnd()};
     }
-
-    if (!hasBlockSelection()) {
+    else if (!hasBlockSelection() || myBlockSelectionEnds == null) {
       return ArrayUtil.EMPTY_INT_ARRAY;
     }
-
-    int lineCount = Math.abs(myBlockEnd.line - myBlockStart.line) + 1;
-    int startLine = Math.min(myBlockStart.line, myBlockEnd.line);
-
-    int startColumn = Math.min(myBlockStart.column, myBlockEnd.column);
-    int columnCount = Math.abs(myBlockEnd.column - myBlockStart.column);
-
-    int[] res = new int[lineCount];
-    for (int i = startLine; i < startLine + lineCount; i++) {
-      res[i - startLine] = myEditor.logicalPositionToOffset(new LogicalPosition(i, startColumn + columnCount));
+    else {
+      return myBlockSelectionEnds;
     }
-
-    return res;
   }
 
   @Override
