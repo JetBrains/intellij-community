@@ -122,12 +122,12 @@ public abstract class ModuleLevelBuilder extends Builder {
             if (!newlyAffectedFiles.isEmpty()) {
 
               if (LOG.isDebugEnabled()) {
-                final List<Pair<File, String>> wrongFiles =
+                final List<Pair<File, JpsModule>> wrongFiles =
                   checkAffectedFilesInCorrectModules(context, newlyAffectedFiles, moduleBasedFilter);
                 if (!wrongFiles.isEmpty()) {
                   LOG.debug("Wrong affected files for module chunk " + chunk.getName() + ": ");
-                  for (Pair<File, String> pair : wrongFiles) {
-                    final String name = pair.second != null ? pair.second : "null";
+                  for (Pair<File, JpsModule> pair : wrongFiles) {
+                    final String name = pair.second != null ? pair.second.getName() : "null";
                     LOG.debug("\t[" + name + "] " + pair.first.getPath());
                   }
                 }
@@ -177,17 +177,17 @@ public abstract class ModuleLevelBuilder extends Builder {
     }
   }
 
-  private static List<Pair<File, String>> checkAffectedFilesInCorrectModules(CompileContext context,
+  private static List<Pair<File, JpsModule>> checkAffectedFilesInCorrectModules(CompileContext context,
                                                                              Collection<File> affected,
                                                                              ModulesBasedFileFilter moduleBasedFilter) {
     if (affected.isEmpty()) {
       return Collections.emptyList();
     }
-    final List<Pair<File, String>> result = new ArrayList<Pair<File, String>>();
+    final List<Pair<File, JpsModule>> result = new ArrayList<Pair<File, JpsModule>>();
     for (File file : affected) {
       if (!moduleBasedFilter.accept(file)) {
         final RootDescriptor moduleAndRoot = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, file);
-        result.add(Pair.create(file, moduleAndRoot != null ? moduleAndRoot.module : null));
+        result.add(Pair.create(file, moduleAndRoot != null ? moduleAndRoot.target.getModule() : null));
       }
     }
     return result;
@@ -195,14 +195,11 @@ public abstract class ModuleLevelBuilder extends Builder {
 
   private static boolean chunkContainsAffectedFiles(CompileContext context, ModuleChunk chunk, final Set<File> affected)
     throws IOException {
-    final Set<String> chunkModules = new HashSet<String>();
-    for (JpsModule module : chunk.getModules()) {
-      chunkModules.add(module.getName());
-    }
+    final Set<JpsModule> chunkModules = chunk.getModules();
     if (!chunkModules.isEmpty()) {
       for (File file : affected) {
         final RootDescriptor moduleAndRoot = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, file);
-        if (moduleAndRoot != null && chunkModules.contains(moduleAndRoot.module)) {
+        if (moduleAndRoot != null && chunkModules.contains(moduleAndRoot.target.getModule())) {
           return true;
         }
       }

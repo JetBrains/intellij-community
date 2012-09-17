@@ -14,8 +14,6 @@ import java.io.File;
 */
 public final class RootDescriptor extends BuildRootDescriptor {
   @NotNull
-  public final String module;
-  @NotNull
   public final File root;
   @NotNull
   public final ModuleBuildTarget target;
@@ -23,13 +21,11 @@ public final class RootDescriptor extends BuildRootDescriptor {
   public final boolean isGeneratedSources;
   public final boolean isTemp;
 
-  public RootDescriptor(@NotNull final String moduleName,
-                        @NotNull File root,
+  public RootDescriptor(@NotNull File root,
                         @NotNull ModuleBuildTarget target,
                         boolean isTestRoot,
                         boolean isGenerated,
                         boolean isTemp) {
-    this.module = moduleName;
     this.root = root;
     this.target = target;
     this.isTestRoot = isTestRoot;
@@ -40,7 +36,7 @@ public final class RootDescriptor extends BuildRootDescriptor {
   @Override
   public String toString() {
     return "RootDescriptor{" +
-           "module='" + module + '\'' +
+           "target='" + target + '\'' +
            ", root=" + root +
            ", test=" + isTestRoot +
            ", generated=" + isGeneratedSources +

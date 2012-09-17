@@ -53,7 +53,7 @@ public class ModuleRootsIndex {
       for (JpsModuleSourceRoot sourceRoot : module.getSourceRoots()) {
         final File root = JpsPathUtil.urlToFile(sourceRoot.getUrl());
         final boolean testRoot = JavaSourceRootType.TEST_SOURCE.equals(sourceRoot.getRootType());
-        final RootDescriptor descriptor = new RootDescriptor(moduleName, root, new ModuleBuildTarget(module, JavaModuleBuildTargetType.getInstance(testRoot)), testRoot, false, false);
+        final RootDescriptor descriptor = new RootDescriptor(root, new ModuleBuildTarget(module, JavaModuleBuildTargetType.getInstance(testRoot)), testRoot, false, false);
         myRootToDescriptorMap.put(root, descriptor);
         moduleRoots.add(descriptor);
       }
@@ -61,7 +61,7 @@ public class ModuleRootsIndex {
         final List<String> roots = provider.getAdditionalSourceRoots(module, dataStorageRoot);
         for (String path : roots) {
           File root = new File(path);
-          final RootDescriptor descriptor = new RootDescriptor(moduleName, root, new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION), false, true, false);
+          final RootDescriptor descriptor = new RootDescriptor(root, new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION), false, true, false);
           moduleRoots.add(descriptor);
           myRootToDescriptorMap.put(root, descriptor);
         }
@@ -178,7 +178,7 @@ public class ModuleRootsIndex {
       moduleRoots = new ArrayList<RootDescriptor>();
       moduleToRootMap.put(module, moduleRoots);
     }
-    final RootDescriptor descriptor = new RootDescriptor(module.getName(), root, new ModuleBuildTarget(module, JavaModuleBuildTargetType.getInstance(isTestRoot)), isTestRoot, true, true);
+    final RootDescriptor descriptor = new RootDescriptor(root, new ModuleBuildTarget(module, JavaModuleBuildTargetType.getInstance(isTestRoot)), isTestRoot, true, true);
     rootToDescriptorMap.put(root, descriptor);
     moduleRoots.add(descriptor);
     return descriptor;
