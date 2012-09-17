@@ -53,7 +53,6 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
         final CheckForUpdateResult result = UpdateChecker.checkForUpdates(instance, true);
 
         final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(true, hostsConfigurable, indicator);
-        if (updatedPlugins == null) return;
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
