@@ -119,15 +119,6 @@ public class ModuleRootsIndex {
   }
 
   @NotNull
-  public List<RootDescriptor> getModuleRoots(@Nullable CompileContext context, String moduleName) {
-    final JpsModule module = getModuleByName(moduleName);
-    if (module == null) {
-      return Collections.emptyList();
-    }
-    return getModuleRoots(context, module);
-  }
-
-  @NotNull
   public List<RootDescriptor> getModuleRoots(@Nullable CompileContext context, JpsModule module) {
     List<RootDescriptor> descriptors = myModuleToRootsMap.get(module);
     if (context != null) {

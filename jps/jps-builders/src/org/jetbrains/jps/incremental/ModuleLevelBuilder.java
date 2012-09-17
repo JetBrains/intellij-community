@@ -274,7 +274,7 @@ public abstract class ModuleLevelBuilder extends Builder {
       if (rd == null) {
         return true;
       }
-      final JpsModule moduleOfFile = myContext.getProjectDescriptor().rootsIndex.getModuleByName(rd.module);
+      final JpsModule moduleOfFile = rd.target.getModule();
       if (myChunkModules.contains(moduleOfFile)) {
         return true;
       }

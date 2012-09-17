@@ -892,7 +892,7 @@ public class IncProjectBuilder {
           fsState.markInitialScanPerformed(target);
         }
         final Timestamps timestamps = pd.timestamps.getStorage();
-        final List<RootDescriptor> roots = pd.rootsIndex.getModuleRoots(context, target.getModuleName());
+        final List<RootDescriptor> roots = pd.rootsIndex.getModuleRoots(context, target.getModule());
         for (RootDescriptor rd : roots) {
           if (target.isTests() ? rd.isTestRoot : !rd.isTestRoot) {
             marked |= fsState.markAllUpToDate(context.getScope(), rd, timestamps, context.getCompilationStartStamp());

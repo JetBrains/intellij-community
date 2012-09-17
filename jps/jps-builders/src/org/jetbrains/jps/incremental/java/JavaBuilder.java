@@ -195,7 +195,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
           if (descriptor == null) {
             continue;
           }
-          for (RootDescriptor rd : context.getProjectDescriptor().rootsIndex.getModuleRoots(context, descriptor.module)) {
+          for (RootDescriptor rd : context.getProjectDescriptor().rootsIndex.getModuleRoots(context, descriptor.target.getModule())) {
             final File boundSource = getBoundSource(rd.root, form);
             if (boundSource == null) {
               continue;

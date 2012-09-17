@@ -142,7 +142,7 @@ public class FSOperations {
     final ModuleRootsIndex rootsIndex = context.getProjectDescriptor().rootsIndex;
     final Set<File> excludes = new HashSet<File>(rootsIndex.getModuleExcludes(target.getModule()));
     final Collection<RootDescriptor> roots = new ArrayList<RootDescriptor>();
-    for (RootDescriptor rd : rootsIndex.getModuleRoots(context, target.getModuleName())) {
+    for (RootDescriptor rd : rootsIndex.getModuleRoots(context, target.getModule())) {
       roots.add(rd);
     }
     for (RootDescriptor rd : roots) {
