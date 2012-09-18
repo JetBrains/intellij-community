@@ -1331,6 +1331,14 @@ class Foo {
     myFixture.checkResult('class <caret>')
   }
 
+  public void "test check for class existing globally when typing comma"() {
+    myFixture.addClass('package p; public class XYZ {}')
+    myFixture.addClass('public class XYZAspect {}')
+    myFixture.configureByText 'a.java', 'class Foo extends Map<caret>'
+    type '<XYZ, XYZ>'
+    myFixture.checkResult 'class Foo extends Map<XYZ, XYZ><caret>'
+  }
+
   void joinCompletion() {
     myTester.joinCompletion()
   }
