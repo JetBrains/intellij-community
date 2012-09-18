@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.options.ex;
 
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableEP;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -43,6 +40,11 @@ public class ConfigurableWrapper implements SearchableConfigurable, Configurable
   public static boolean isNoScroll(Configurable configurable) {
     return configurable instanceof NoScroll ||
            (configurable instanceof ConfigurableWrapper && ((ConfigurableWrapper)configurable).getConfigurable() instanceof NoScroll);
+  }
+
+  public static boolean isNonDefaultProject(Configurable configurable) {
+    return configurable instanceof NonDefaultProjectConfigurable ||
+           (configurable instanceof ConfigurableWrapper && ((ConfigurableWrapper)configurable).myEp.nonDefaultProject);
   }
 
   private final ConfigurableEP myEp;
