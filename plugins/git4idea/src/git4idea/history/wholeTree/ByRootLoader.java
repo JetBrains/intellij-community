@@ -154,11 +154,7 @@ public class ByRootLoader extends TaskDescriptor {
       public void consume(List<ChangesFilter.Filter> filters) {
         for (String hash : hashes) {
           try {
-            final List<String> parameters = new ArrayList<String>();
-            final List<VirtualFile> paths = new ArrayList<VirtualFile>();
-            ChangesFilter.filtersToParameters(filters, parameters, paths);
-            final SHAHash shaHash = GitChangeUtils.commitExists(myProject, myRootHolder.getRoot(), hash, paths,
-                                                                parameters.toArray(new String[parameters.size()]));
+            final SHAHash shaHash = GitChangeUtils.commitExists(myProject, myRootHolder.getRoot(), hash, Collections.<VirtualFile>emptyList());
             if (shaHash == null) continue;
             if (controlSet.contains(shaHash)) continue;
             controlSet.add(shaHash);
@@ -175,6 +171,14 @@ public class ByRootLoader extends TaskDescriptor {
             }
             final List<GitCommit> commits = myLowLevelAccess.getCommitDetails(Collections.singletonList(shaHash.getValue()), mySymbolicRefs);
             if (commits.isEmpty()) continue;
+            assert commits.size() == 1;
+            final GitCommit commitDetails = commits.get(0);
+            boolean isOk = true;
+            for (ChangesFilter.Filter filter : filters) {
+              isOk = filter.getMemoryFilter().applyInMemory(commitDetails);
+              if (! isOk) break;
+            }
+            if (! isOk) continue;
 
             myDetailsCache.acceptAnswer(commits, myRootHolder.getRoot());
             appendCommits(result, commits);
