@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.ui.laf.borders;
+package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ide.ui.laf.DarculaUIUtil;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.Gray;

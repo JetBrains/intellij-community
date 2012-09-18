@@ -20,6 +20,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.darcula.DarculaLaf;
+import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.idea.StartupUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -672,7 +674,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  static void initInputMapDefaults(UIDefaults defaults){
+  public static void initInputMapDefaults(UIDefaults defaults){
     // Make ENTER work in JTrees
     InputMap treeInputMap = (InputMap)defaults.get("Tree.focusInputMap");
     if(treeInputMap!=null){ // it's really possible. For example,  GTK+ doesn't have such map

@@ -16,7 +16,7 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.ui.laf.DarculaInstaller;
+import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.ComboBox;

@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.ui.laf;
+package com.intellij.ide.ui.laf.darcula;
 
+import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;

@@ -13,23 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.ui.laf;
+package com.intellij.ide.ui.laf.darcula;
 
-import com.intellij.util.ui.MacUIUtil;
+import com.intellij.ide.IdeBundle;
+import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
+import javax.swing.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaUIUtil {
-  public static final Color GLOW_COLOR = new Color(96, 175, 255);
+public class DarculaLookAndFeelInfo extends UIManager.LookAndFeelInfo {
+    @NonNls public static final String CLASS_NAME = "idea.dark.laf.classname";
+    public DarculaLookAndFeelInfo(){
+      super(IdeBundle.message("idea.dark.look.and.feel"), CLASS_NAME);
+    }
 
-  public static void paintFocusRing(Graphics g, int x, int y, int width, int height) {
-    MacUIUtil.paintFocusRing((Graphics2D)g, GLOW_COLOR, new Rectangle(x, y, width, height));
-  }
+    public boolean equals(Object obj){
+      return (obj instanceof DarculaLookAndFeelInfo);
+    }
 
-  public static void paintFocusOval(Graphics g, int x, int y, int width, int height) {
-    MacUIUtil.paintFocusRing((Graphics2D)g, GLOW_COLOR, new Rectangle(x, y, width, height), true);
-  }
+    public int hashCode(){
+      return getName().hashCode();
+    }
 }

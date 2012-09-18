@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.ui.laf;
+package com.intellij.ide.ui.laf.darcula;
 
+import com.intellij.ide.ui.laf.IdeaLaf;
+import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
