@@ -113,7 +113,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
           newText = new String(text);   // to indent correctly (see PasteHandler)
         }
 
-        if (element instanceof PsiWhiteSpace &&
+        if ((element instanceof PsiWhiteSpace || element.getTextOffset() == 0) &&
             (StringUtil.countChars(element.getText(), '\n') <= 2 && !StringUtil.isEmptyOrSpaces(text))) {
           newText += "\n";
         }

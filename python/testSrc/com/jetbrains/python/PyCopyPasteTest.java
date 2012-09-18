@@ -255,6 +255,10 @@ public class PyCopyPasteTest extends PyTestCase {
     doTest();
   }
 
+  public void testBeginningOfFile() {    //PY-7524
+    doTest();
+  }
+
   private void doTest() {
     String name = getTestName(false);
 
