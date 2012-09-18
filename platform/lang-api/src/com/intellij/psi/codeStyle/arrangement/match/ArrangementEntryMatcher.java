@@ -16,11 +16,10 @@
 package com.intellij.psi.codeStyle.arrangement.match;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
-import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Defines a contract for strategy that determines if an {@link ArrangementRule arrangement rule} matches particular
+ * Defines a contract for strategy that determines if an {@link ArrangementMatchRule arrangement rule} matches particular
  * {@link ArrangementEntry arrangement entry}.
  * <p/>
  * Implementations of this interface are expected to provide correct {@link #equals(Object)} & {@link #hashCode()} implementations.

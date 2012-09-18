@@ -13,41 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.arrangement;
+package com.intellij.psi.codeStyle.arrangement.group;
 
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Container for the strategies to be used during file entries arrangement. 
+ * Encapsulates information about grouping rules to use during arrangement.
  * <p/>
- * Example: we can define a rule like 'private final non-static fields' or 'public static methods' etc.
- * <p/>
- * Not thread-safe.
+ * E.g. a rule might look like 'keep together class methods which implement methods from particular interface'.
  * 
  * @author Denis Zhdanov
- * @since 7/17/12 11:07 AM
+ * @since 9/18/12 8:50 AM
  */
-public class ArrangementRule {
+public class ArrangementGroupingRule {
 
-  @NotNull public static final ArrangementEntryOrderType DEFAULT_ORDER_TYPE = ArrangementEntryOrderType.KEEP;
-
-  @NotNull private final ArrangementEntryMatcher   myMatcher;
+  @NotNull private final ArrangementGroupingType   myGroupingType;
   @NotNull private final ArrangementEntryOrderType myOrderType;
 
-  public ArrangementRule(@NotNull ArrangementEntryMatcher matcher) {
-    this(matcher, DEFAULT_ORDER_TYPE);
-  }
-
-  public ArrangementRule(@NotNull ArrangementEntryMatcher matcher, @NotNull ArrangementEntryOrderType type) {
-    myMatcher = matcher;
-    myOrderType = type;
+  public ArrangementGroupingRule(@NotNull ArrangementGroupingType groupingType, @NotNull ArrangementEntryOrderType orderType) {
+    myGroupingType = groupingType;
+    myOrderType = orderType;
   }
 
   @NotNull
-  public ArrangementEntryMatcher getMatcher() {
-    return myMatcher;
+  public ArrangementGroupingType getRule() {
+    return myGroupingType;
   }
 
   @NotNull
@@ -57,7 +48,7 @@ public class ArrangementRule {
 
   @Override
   public int hashCode() {
-    int result = myMatcher.hashCode();
+    int result = myGroupingType.hashCode();
     result = 31 * result + myOrderType.hashCode();
     return result;
   }
@@ -67,12 +58,16 @@ public class ArrangementRule {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    ArrangementRule that = (ArrangementRule)o;
-    return myOrderType == that.myOrderType && myMatcher.equals(that.myMatcher);
+    ArrangementGroupingRule rule = (ArrangementGroupingRule)o;
+
+    if (myOrderType != rule.myOrderType) return false;
+    if (!myGroupingType.equals(rule.myGroupingType)) return false;
+
+    return true;
   }
 
   @Override
   public String toString() {
-    return String.format("matcher: %s, sort type: %s", myMatcher, myOrderType);
+    return String.format("(%s, %s)", myGroupingType, myOrderType);
   }
 }

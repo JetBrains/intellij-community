@@ -55,7 +55,7 @@ public class ArrangementUtil {
     if (rearranger instanceof ArrangementSettingsSerializer) {
       return (ArrangementSettingsSerializer)rearranger;
     }
-    return DefaultArrangementRuleSerializer.INSTANCE;
+    return DefaultArrangementSettingsSerializer.INSTANCE;
   }
   
   //endregion

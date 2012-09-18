@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +68,7 @@ public class MemberOrderService {
 
     ArrangementSettings arrangementSettings = settings.getArrangementSettings();
     if (arrangementSettings == null && rearranger instanceof ArrangementStandardSettingsAware) {
-      List<StdArrangementRule> rules = ((ArrangementStandardSettingsAware)rearranger).getDefaultRules();
+      List<StdArrangementMatchRule> rules = ((ArrangementStandardSettingsAware)rearranger).getDefaultRules();
       if (rules != null && !rules.isEmpty()) {
         arrangementSettings = new StdArrangementSettings(rules);
       }
@@ -78,7 +79,7 @@ public class MemberOrderService {
     }
 
     Pair<? extends ArrangementEntry,? extends List<? extends ArrangementEntry>> pair =
-      rearranger.parseWithNew(context, null, Collections.singleton(context.getTextRange()), member);
+      rearranger.parseWithNew(context, null, Collections.singleton(context.getTextRange()), member, arrangementSettings);
     if (pair == null || pair.second.isEmpty()) {
       return null;
     }

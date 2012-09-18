@@ -15,7 +15,8 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
+import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -28,33 +29,33 @@ import java.util.List;
  */
 public class StdArrangementSettings implements ArrangementSettings {
 
-  @NotNull private final List<StdArrangementRule>      myRules     = new ArrayList<StdArrangementRule>();
-  @NotNull private final List<ArrangementGroupingType> myGroupings = new ArrayList<ArrangementGroupingType>();
+  @NotNull private final List<StdArrangementMatchRule> myRules     = new ArrayList<StdArrangementMatchRule>();
+  @NotNull private final List<ArrangementGroupingRule> myGroupings = new ArrayList<ArrangementGroupingRule>();
 
   public StdArrangementSettings() {
   }
 
-  public StdArrangementSettings(@NotNull Collection<StdArrangementRule> rules) {
+  public StdArrangementSettings(@NotNull Collection<StdArrangementMatchRule> rules) {
     myRules.addAll(rules);
   }
 
   @NotNull
   @Override
-  public List<StdArrangementRule> getRules() {
+  public List<StdArrangementMatchRule> getRules() {
     return myRules;
   }
 
   @NotNull
-  public List<ArrangementGroupingType> getGroupings() {
+  public List<ArrangementGroupingRule> getGroupings() {
     return myGroupings;
   }
 
-  public void addRule(@NotNull StdArrangementRule rule) {
+  public void addRule(@NotNull StdArrangementMatchRule rule) {
     myRules.add(rule);
   }
 
-  public void addGrouping(@NotNull ArrangementGroupingType grouping) {
-    myGroupings.add(grouping);
+  public void addGrouping(@NotNull ArrangementGroupingRule rule) {
+    myGroupings.add(rule);
   }
 
   @Override

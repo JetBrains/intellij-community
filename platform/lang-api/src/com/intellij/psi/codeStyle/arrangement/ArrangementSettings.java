@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
+import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -28,7 +30,10 @@ import java.util.List;
  * @since 9/17/12 11:51 AM
  */
 public interface ArrangementSettings {
+
+  @NotNull
+  List<ArrangementGroupingRule> getGroupings();
   
   @NotNull
-  List<? extends ArrangementRule> getRules();
+  List<? extends ArrangementMatchRule> getRules();
 }

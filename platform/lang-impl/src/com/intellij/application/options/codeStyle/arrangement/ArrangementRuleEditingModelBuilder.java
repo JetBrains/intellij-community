@@ -17,7 +17,7 @@ package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
-import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementConditionNode;
@@ -75,7 +75,7 @@ public class ArrangementRuleEditingModelBuilder {
   @SuppressWarnings("MethodMayBeStatic")
   @Nullable
   public Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> build(
-    @NotNull StdArrangementRule rule,
+    @NotNull StdArrangementMatchRule rule,
     @NotNull JTree tree,
     @NotNull ArrangementTreeNode root,
     @Nullable ArrangementTreeNode anchor,

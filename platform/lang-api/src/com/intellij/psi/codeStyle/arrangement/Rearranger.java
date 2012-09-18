@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,16 +47,20 @@ public interface Rearranger<E extends ArrangementEntry> {
    * This is useful in a situation when new element is generated and we're deciding where to insert it (e.g. new field is
    * generated and we want to insert it according to the arrangement rules like 'fields before methods').
    * 
-   * @param element  element to wrap into format eligible for further processing by arrangement engine
-   * @return         arrangement entry for the given element if it's possible to perform the mapping and list of arrangement entries
-   *                 available at the given context plus newly created entry for the given element;
-   *                 <code>null</code> otherwise
+   * @param element   element to wrap into format eligible for further processing by arrangement engine
+   * @param settings  arrangement settings to use. The primary idea is to make the rearranger aware about
+   *                  {@link ArrangementGroupingType grouping rules} (if any). E.g. it's not worth to process java method bodies
+   *                  in order to build method dependency graph if no such grouping rule is defined
+   * @return          arrangement entry for the given element if it's possible to perform the mapping and list of arrangement entries
+   *                  available at the given context plus newly created entry for the given element;
+   *                  <code>null</code> otherwise
    */
   @Nullable
   Pair<E, List<E>> parseWithNew(@NotNull PsiElement root,
                                 @Nullable Document document,
                                 @NotNull Collection<TextRange> ranges,
-                                @NotNull PsiElement element);
+                                @NotNull PsiElement element,
+                                @Nullable ArrangementSettings settings);
   
   /**
    * Allows to build rearranger-interested data for the given element.
@@ -63,10 +68,16 @@ public interface Rearranger<E extends ArrangementEntry> {
    * @param root      root element which children should be parsed for the rearrangement
    * @param document  document which corresponds to the target PSI tree
    * @param ranges    target offsets ranges to use for filtering given root's children
+   * @param settings  arrangement settings to use. The primary idea is to make the rearranger aware about
+   *                  {@link ArrangementGroupingType grouping rules} (if any). E.g. it's not worth to process java method bodies
+   *                  in order to build method dependency graph if no such grouping rule is defined
    * @return          given root's children which are subject for further rearrangement
    */
   @NotNull
-  List<E> parse(@NotNull PsiElement root, @Nullable Document document, @NotNull Collection<TextRange> ranges);
+  List<E> parse(@NotNull PsiElement root,
+                @Nullable Document document,
+                @NotNull Collection<TextRange> ranges,
+                @Nullable ArrangementSettings settings);
 
   /**
    * Allows to answer how many blank lines should be inserted before the target arrangement entry which position is changed.

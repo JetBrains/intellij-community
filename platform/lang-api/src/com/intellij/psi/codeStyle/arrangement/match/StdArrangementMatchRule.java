@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.arrangement;
+package com.intellij.psi.codeStyle.arrangement.match;
 
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
 import org.jetbrains.annotations.NotNull;
@@ -27,13 +28,13 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 8/28/12 2:59 PM
  */
-public class StdArrangementRule extends ArrangementRule {
+public class StdArrangementMatchRule extends ArrangementMatchRule {
 
-  public StdArrangementRule(@NotNull StdArrangementEntryMatcher matcher) {
+  public StdArrangementMatchRule(@NotNull StdArrangementEntryMatcher matcher) {
     super(matcher);
   }
 
-  public StdArrangementRule(@NotNull StdArrangementEntryMatcher matcher, @NotNull ArrangementEntryOrderType type) {
+  public StdArrangementMatchRule(@NotNull StdArrangementEntryMatcher matcher, @NotNull ArrangementEntryOrderType type) {
     super(matcher, type);
   }
 

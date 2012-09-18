@@ -17,7 +17,7 @@ package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.JavaRearranger;
-import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
@@ -63,7 +63,7 @@ public abstract class AbstractArrangementRuleEditingModelTest {
 
   protected void configure(@NotNull ArrangementMatchCondition matchCondition) {
     Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> pair = myBuilder.build(
-      new StdArrangementRule(new StdArrangementEntryMatcher(matchCondition)), myTree, myRoot, null, myGroupingRules
+      new StdArrangementMatchRule(new StdArrangementEntryMatcher(matchCondition)), myTree, myRoot, null, myGroupingRules
     );
     assertNotNull(pair);
     myRowMappings.put(pair.first.getRow(), pair.first);

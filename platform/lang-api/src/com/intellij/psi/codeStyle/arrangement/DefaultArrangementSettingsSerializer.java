@@ -15,9 +15,13 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.match.DefaultArrangementEntryMatcherSerializer;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -30,14 +34,17 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 7/18/12 10:37 AM
  */
-public class DefaultArrangementRuleSerializer implements ArrangementSettingsSerializer {
+public class DefaultArrangementSettingsSerializer implements ArrangementSettingsSerializer {
 
-  public static final ArrangementSettingsSerializer INSTANCE = new DefaultArrangementRuleSerializer();
+  public static final  ArrangementSettingsSerializer INSTANCE = new DefaultArrangementSettingsSerializer();
+  private static final Logger                        LOG      =
+    Logger.getInstance("#" + DefaultArrangementSettingsSerializer.class.getName());
 
   @NotNull @NonNls private static final String GROUPS_ELEMENT_NAME     = "groups";
   @NotNull @NonNls private static final String GROUP_ELEMENT_NAME      = "group";
   @NotNull @NonNls private static final String RULES_ELEMENT_NAME      = "rules";
   @NotNull @NonNls private static final String RULE_ELEMENT_NAME       = "rule";
+  @NotNull @NonNls private static final String TYPE_ELEMENT_NAME       = "type";
   @NotNull @NonNls private static final String MATCHER_ELEMENT_NAME    = "match";
   @NotNull @NonNls private static final String ORDER_TYPE_ELEMENT_NAME = "order";
 
@@ -48,23 +55,26 @@ public class DefaultArrangementRuleSerializer implements ArrangementSettingsSeri
     if (!(s instanceof StdArrangementSettings)) {
       return;
     }
-    
+
     StdArrangementSettings settings = (StdArrangementSettings)s;
-    
-    List<ArrangementGroupingType> groupings = settings.getGroupings();
+
+    List<ArrangementGroupingRule> groupings = settings.getGroupings();
     if (!groupings.isEmpty()) {
       Element groupingsElement = new Element(GROUPS_ELEMENT_NAME);
       holder.addContent(groupingsElement);
-      for (ArrangementGroupingType group : groupings) {
-        groupingsElement.addContent(new Element(GROUP_ELEMENT_NAME).setText(group.toString()));
+      for (ArrangementGroupingRule group : groupings) {
+        Element groupElement = new Element(GROUP_ELEMENT_NAME);
+        groupingsElement.addContent(groupElement);
+        groupElement.addContent(new Element(TYPE_ELEMENT_NAME).setText(group.getRule().toString()));
+        groupElement.addContent(new Element(ORDER_TYPE_ELEMENT_NAME).setText(group.getOrderType().toString()));
       }
     }
 
-    List<StdArrangementRule> rules = settings.getRules();
+    List<StdArrangementMatchRule> rules = settings.getRules();
     if (!rules.isEmpty()) {
       Element rulesElement = new Element(RULES_ELEMENT_NAME);
       holder.addContent(rulesElement);
-      for (StdArrangementRule rule : rules) {
+      for (StdArrangementMatchRule rule : rules) {
         rulesElement.addContent(serialize(rule));
       }
     }
@@ -78,7 +88,15 @@ public class DefaultArrangementRuleSerializer implements ArrangementSettingsSeri
     if (groups != null) {
       for (Object group : groups.getChildren(GROUP_ELEMENT_NAME)) {
         Element groupElement = (Element)group;
-        result.addGrouping(ArrangementGroupingType.valueOf(groupElement.getText()));
+        try {
+          ArrangementGroupingType type = ArrangementGroupingType.valueOf(groupElement.getChildText(TYPE_ELEMENT_NAME));
+          ArrangementEntryOrderType orderType = ArrangementEntryOrderType.valueOf(groupElement.getChildText(ORDER_TYPE_ELEMENT_NAME));
+          ArrangementGroupingRule groupingRule = new ArrangementGroupingRule(type, orderType);
+          result.addGrouping(groupingRule);
+        }
+        catch (Exception e) {
+          LOG.warn(String.format("Can't deserialize grouping rule '%s'", groupElement.getText()), e);
+        }
       }
     }
 
@@ -104,11 +122,16 @@ public class DefaultArrangementRuleSerializer implements ArrangementSettingsSeri
         }
 
         Element orderTypeElement = element.getChild(ORDER_TYPE_ELEMENT_NAME);
-        ArrangementEntryOrderType orderType = ArrangementRule.DEFAULT_ORDER_TYPE;
+        ArrangementEntryOrderType orderType = ArrangementMatchRule.DEFAULT_ORDER_TYPE;
         if (orderTypeElement != null) {
-          orderType = ArrangementEntryOrderType.valueOf(orderTypeElement.getText());
+          try {
+            orderType = ArrangementEntryOrderType.valueOf(orderTypeElement.getText());
+          }
+          catch (Exception e) {
+            LOG.warn(String.format("Can't deserialize matching rule order type for '%s'", ruleElement.getText()), e);
+          }
         }
-        result.addRule(new StdArrangementRule(matcher, orderType));
+        result.addRule(new StdArrangementMatchRule(matcher, orderType));
       }
     }
     
@@ -116,7 +139,7 @@ public class DefaultArrangementRuleSerializer implements ArrangementSettingsSeri
   }
 
   @Nullable
-  public Element serialize(@NotNull ArrangementRule rule) {
+  public Element serialize(@NotNull ArrangementMatchRule rule) {
     Element matcherElement = myMatcherSerializer.serialize(rule.getMatcher());
     if (matcherElement == null) {
       return null;
@@ -124,7 +147,7 @@ public class DefaultArrangementRuleSerializer implements ArrangementSettingsSeri
     
     Element result = new Element(RULE_ELEMENT_NAME);
     result.addContent(new Element(MATCHER_ELEMENT_NAME).addContent(matcherElement));
-    if (rule.getOrderType() != ArrangementRule.DEFAULT_ORDER_TYPE) {
+    if (rule.getOrderType() != ArrangementMatchRule.DEFAULT_ORDER_TYPE) {
       result.addContent(new Element(ORDER_TYPE_ELEMENT_NAME).setText(rule.getOrderType().toString()));
     }
     return result;

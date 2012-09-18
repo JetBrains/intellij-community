@@ -18,7 +18,7 @@ package com.intellij.application.options.codeStyle.arrangement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.StdArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
@@ -353,8 +353,8 @@ public class ArrangementRuleTree {
     tree.expandPath(parent);
   }
 
-  private void map(@NotNull List<StdArrangementRule> rules) {
-    for (StdArrangementRule rule : rules) {
+  private void map(@NotNull List<StdArrangementMatchRule> rules) {
+    for (StdArrangementMatchRule rule : rules) {
       Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> pair = myModelBuilder.build(rule, myTree, myRoot, null, myGroupingRules);
       if (pair != null) {
         myModels.put(pair.first.getRow(), pair.first);
@@ -407,7 +407,7 @@ public class ArrangementRuleTree {
   public StdArrangementSettings getSettings() {
     int[] rows = myModels.keys();
     Arrays.sort(rows);
-    List<StdArrangementRule> rules = new ArrayList<StdArrangementRule>();
+    List<StdArrangementMatchRule> rules = new ArrayList<StdArrangementMatchRule>();
     ArrangementMatchCondition prevGroup = null;
     Set<ArrangementMatchCondition> implicitGroupConditions = new HashSet<ArrangementMatchCondition>();
     for (int row : rows) {
@@ -415,7 +415,7 @@ public class ArrangementRuleTree {
       ArrangementTreeNode topMost = model.getTopMost();
       ArrangementMatchCondition currentGroup = topMost.getBackingCondition();
       if (prevGroup != null && !prevGroup.equals(currentGroup)) {
-        rules.add(new StdArrangementRule(new StdArrangementEntryMatcher(prevGroup)));
+        rules.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(prevGroup)));
         implicitGroupConditions.add(prevGroup);
         prevGroup = null;
       }
@@ -426,7 +426,7 @@ public class ArrangementRuleTree {
     }
 
     if (prevGroup != null) {
-      rules.add(new StdArrangementRule(new StdArrangementEntryMatcher(prevGroup)));
+      rules.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(prevGroup)));
     }
     return new StdArrangementSettings(rules);
   }
@@ -440,13 +440,13 @@ public class ArrangementRuleTree {
       return;
     }
 
-    List<StdArrangementRule> rules = settings.getRules();
+    List<StdArrangementMatchRule> rules = settings.getRules();
     map(rules);
     expandAll(myTree, new TreePath(myRoot));
 
     if (ArrangementConstants.LOG_RULE_MODIFICATION) {
       LOG.info("Arrangement tree is refreshed. Given rules:");
-      for (StdArrangementRule rule : rules) {
+      for (StdArrangementMatchRule rule : rules) {
         LOG.info("  " + rule.toString());
       }
       LOG.info("Following models have been built:");
