@@ -180,7 +180,7 @@ public class GroovyOverrideImplementUtil {
     if (returnType != null) {
       returnTypeText = returnType.getPresentableText();
     }
-    Properties properties = new Properties();
+    Properties properties = FileTemplateManager.getInstance().getDefaultProperties(project);
 
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnTypeText);
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType));
