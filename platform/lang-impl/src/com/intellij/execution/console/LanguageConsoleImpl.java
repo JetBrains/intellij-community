@@ -575,9 +575,11 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       sink.put(OpenFileDescriptor.NAVIGATE_IN_EDITOR, myConsoleEditor);
       return;
     }
-    FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
-    final Object o = ((FileEditorManagerImpl)editorManager).getData(key.getName(), myConsoleEditor, myVirtualFile);
-    sink.put(key, o);
+    else if (getProject().isInitialized()) {
+      FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
+      final Object o = ((FileEditorManagerImpl)editorManager).getData(key.getName(), myConsoleEditor, myVirtualFile);
+      sink.put(key, o);
+    }
   }
 
   private void installEditorFactoryListener() {
