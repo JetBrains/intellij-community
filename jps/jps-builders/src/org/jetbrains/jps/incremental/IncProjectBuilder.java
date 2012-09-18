@@ -937,8 +937,7 @@ public class IncProjectBuilder {
         else {
           // forced compilation mode
           if (context.getScope().isRecompilationForced(target)) {
-            FSOperations.markDirtyFiles(context, target, timestamps, true, null);
-            updateOutputRootsLayout(context, target);
+            initModuleFSState(context, target, true);
           }
         }
       }
