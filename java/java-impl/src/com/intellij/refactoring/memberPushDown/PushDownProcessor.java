@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ import java.util.*;
 
 public class PushDownProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.memberPushDown.PushDownProcessor");
+
   private final MemberInfo[] myMemberInfos;
   private PsiClass myClass;
   private final DocCommentPolicy myJavaDocPolicy;
@@ -309,7 +310,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
           if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
             PsiUtil.setModifierProperty(method, PsiModifier.PROTECTED, true);
           }
-          RefactoringUtil.abstractizeMethod(myClass, method);
+          RefactoringUtil.makeMethodAbstract(myClass, method);
           myJavaDocPolicy.processOldJavaDoc(method.getDocComment());
         }
         else {
@@ -326,7 +327,6 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
       }
     }
   }
-
 
   private void pushDownToClass(PsiClass targetClass) throws IncorrectOperationException {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
@@ -363,15 +363,25 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
           final boolean wasInterface = myClass.isInterface();
           newMember = (PsiMethod)targetClass.add(method);
           if (wasInterface) {
-            PsiUtil.setModifierProperty(newMember, PsiModifier.ABSTRACT, true);
-            PsiUtil.setModifierProperty(newMember, PsiModifier.PUBLIC, true);
-          } else if (memberInfo.isToAbstract()) {
+            if (!targetClass.isInterface()) {
+              PsiUtil.setModifierProperty(newMember, PsiModifier.PUBLIC, true);
+              final PsiJavaToken extMethodMarker = PsiUtil.findExtensionMethodMarker((PsiMethod)newMember);
+              if (extMethodMarker == null) {
+                PsiUtil.setModifierProperty(newMember, PsiModifier.ABSTRACT, true);
+              }
+              else {
+                extMethodMarker.delete();
+              }
+            }
+          }
+          else if (memberInfo.isToAbstract()) {
             if (newMember.hasModifierProperty(PsiModifier.PRIVATE)) {
               PsiUtil.setModifierProperty(newMember, PsiModifier.PROTECTED, true);
             }
             myJavaDocPolicy.processNewJavaDoc(((PsiMethod)newMember).getDocComment());
           }
-        } else { //abstract method: remove @Override
+        }
+        else { //abstract method: remove @Override
           final PsiAnnotation annotation = AnnotationUtil.findAnnotation(methodBySignature, "java.lang.Override");
           if (annotation != null) {
             annotation.delete();
@@ -379,10 +389,12 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
           final PsiDocComment oldDocComment = method.getDocComment();
           if (oldDocComment != null) {
             final PsiDocComment docComment = methodBySignature.getDocComment();
-            if (myJavaDocPolicy.getJavaDocPolicy() == DocCommentPolicy.COPY || myJavaDocPolicy.getJavaDocPolicy() == DocCommentPolicy.MOVE) {
+            final int policy = myJavaDocPolicy.getJavaDocPolicy();
+            if (policy == DocCommentPolicy.COPY || policy == DocCommentPolicy.MOVE) {
               if (docComment != null) {
                 docComment.replace(oldDocComment);
-              } else {
+              }
+              else {
                 methodBySignature.getParent().addBefore(oldDocComment, methodBySignature);
               }
             }
@@ -428,7 +440,5 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
         ((JavaRefactoringListenerManagerImpl)listenerManager).fireMemberMoved(myClass, newMember);
       }
     }
-
   }
-
 }

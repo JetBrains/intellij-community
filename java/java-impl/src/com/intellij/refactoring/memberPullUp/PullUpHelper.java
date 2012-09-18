@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,12 +76,10 @@ public class PullUpHelper extends BaseRefactoringProcessor{
   private final boolean myIsTargetInterface;
   private final MemberInfo[] myMembersToMove;
   private final DocCommentPolicy myJavaDocPolicy;
-  private HashSet<PsiMember> myMembersAfterMove = null;
+  private Set<PsiMember> myMembersAfterMove = null;
   private final PsiManager myManager;
 
-
-  public PullUpHelper(PsiClass sourceClass, PsiClass targetSuperClass, MemberInfo[] membersToMove,
-                      DocCommentPolicy javaDocPolicy) {
+  public PullUpHelper(PsiClass sourceClass, PsiClass targetSuperClass, MemberInfo[] membersToMove, DocCommentPolicy javaDocPolicy) {
     super(sourceClass.getProject());
     mySourceClass = sourceClass;
     myTargetSuperClass = targetSuperClass;
@@ -161,10 +160,9 @@ public class PullUpHelper extends BaseRefactoringProcessor{
     return RefactoringBundle.message("pullUp.command", UsageViewUtil.getDescriptiveName(mySourceClass));
   }
 
-  public void moveMembersToBase()
-          throws IncorrectOperationException {
-    final HashSet<PsiMember> movedMembers = new HashSet<PsiMember>();
-    myMembersAfterMove = new HashSet<PsiMember>();
+  public void moveMembersToBase() throws IncorrectOperationException {
+    final Set<PsiMember> movedMembers = ContainerUtil.newHashSet();
+    myMembersAfterMove = ContainerUtil.newHashSet();
 
     // build aux sets
     for (MemberInfo info : myMembersToMove) {
@@ -224,10 +222,10 @@ public class PullUpHelper extends BaseRefactoringProcessor{
         if (method.findDeepestSuperMethods().length == 0) {
           deleteOverrideAnnotationIfFound(methodCopy);
         }
-        final boolean isOriginalMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
+        final boolean isOriginalMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT) || PsiUtil.isExtensionMethod(method);
         if (myIsTargetInterface || info.isToAbstract()) {
           ChangeContextUtil.clearContextInfo(method);
-          RefactoringUtil.abstractizeMethod(myTargetSuperClass, methodCopy);
+          RefactoringUtil.makeMethodAbstract(myTargetSuperClass, methodCopy);
           RefactoringUtil.replaceMovedMemberTypeParameters(methodCopy, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
 
           myJavaDocPolicy.processCopiedJavaDoc(methodCopy.getDocComment(), method.getDocComment(), isOriginalMethodAbstract);
