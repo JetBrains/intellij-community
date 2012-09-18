@@ -73,27 +73,28 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
     new ArrangementAtomMatchCondition(ArrangementUtil.parseType(condition), condition)
   }
   
-  protected void doTest(@NotNull String initial,
-                        @NotNull String expected,
-                        @NotNull List<StdArrangementMatchRule> rules,
-                        Collection<TextRange> ranges = null)
+  protected void doTest(@NotNull args)
+  //protected void doTest(@NotNull String initial,
+  //                      @NotNull String expected,
+  //                      @NotNull List<StdArrangementMatchRule> rules,
+  //                      Collection<TextRange> ranges = null)
   {
-    def (String textToUse, List<TextRange> rangesToUse) = parseRanges(initial)
-    if (rangesToUse && ranges) {
+    def (String textToUse, List<TextRange> rangesToUse) = parseRanges(args.initial)
+    if (rangesToUse && args.ranges) {
       junit.framework.Assert.fail(
-      "Duplicate ranges info detected: explicitly given: $ranges, derived from markup: $rangesToUse. Text:\n$initial"
+      "Duplicate ranges info detected: explicitly given: $args.ranges, derived from markup: $rangesToUse. Text:\n$args.initial"
       )
     }
     if (!rangesToUse) {
-      rangesToUse = ranges ?: [TextRange.from(0, initial.length())]
+      rangesToUse = args.ranges ?: [TextRange.from(0, args.initial.length())]
     }
     
     myFixture.configureByText(fileType, textToUse)
     def settings = CodeStyleSettingsManager.getInstance(myFixture.project).currentSettings.getCommonSettings(language)
-    settings.arrangementSettings = new StdArrangementSettings(rules)
+    settings.arrangementSettings = new StdArrangementSettings(args.groups ?: [], args.rules)
     ArrangementEngine engine = ServiceManager.getService(myFixture.project, ArrangementEngine)
     engine.arrange(myFixture.file, rangesToUse);
-    junit.framework.Assert.assertEquals(expected, myFixture.editor.document.text);
+    junit.framework.Assert.assertEquals(args.expected, myFixture.editor.document.text);
   }
   
   @NotNull

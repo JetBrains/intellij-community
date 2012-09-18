@@ -31,10 +31,10 @@ class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
     commonSettings.BLANK_LINES_AROUND_METHOD = 0
     commonSettings.BLANK_LINES_AROUND_CLASS = 0
   }
-  
+
   void testFieldsBeforeMethods() {
     doTest(
-            '''\
+      initial: '''\
 class Test {
   public void test() {}
    private int i;
@@ -45,7 +45,7 @@ public void test() {
     private int i;
   private int j;
 }''',
-            '''\
+      expected: '''\
 class Test {
    private int i;
   public void test() {}
@@ -56,13 +56,13 @@ class Test2 {
 public void test() {
 }
 }''',
-            [rule(FIELD)]
+      rules: [rule(FIELD)]
     )
   }
 
   void testAnonymousClassAtFieldInitializer() {
     doTest(
-            '''\
+      initial: '''\
 class Test {
   private Object first = new Object() {
     int inner1;
@@ -81,7 +81,7 @@ class Test {
     };
   }));
 }''',
-            '''\
+      expected: '''\
 class Test {
   private Object first = new Object() {
     int inner1;
@@ -100,13 +100,13 @@ class Test {
     return null;
   }
 }''',
-            [rule(FIELD)]
+      rules: [rule(FIELD)]
     )
   }
-  
+
   void testAnonymousClassAtMethod() {
     doTest(
-            '''\
+      initial: '''\
 class Test {
    void declaration() {
      Object o = new Object() {
@@ -122,7 +122,7 @@ class Test {
      });
    }
 }''',
-            '''\
+      expected: '''\
 class Test {
    double d;
    void declaration() {
@@ -138,33 +138,33 @@ class Test {
      });
    }
 }''',
-            [rule(FIELD)]
+      rules: [rule(FIELD)]
     )
   }
-  
+
   void testInnerClassInterfaceAndEnum() {
     doTest(
-            '''\
+      initial: '''\
 class Test {
    enum E { ONE, TWO }
    class Inner {}
    interface Intf {}
 }''',
-            '''\
+      expected: '''\
 class Test {
    interface Intf {}
    enum E { ONE, TWO }
    class Inner {}
 }''',
-            [rule(INTERFACE),
-             rule(ENUM),
-             rule(CLASS)]
+      rules: [rule(INTERFACE),
+              rule(ENUM),
+              rule(CLASS)]
     )
   }
-  
+
   void testRanges() {
     doTest(
-            '''\
+      initial: '''\
 class Test {
   void outer1() {}
 <range>  String outer2() {}
@@ -180,7 +180,7 @@ class Test {
     });
   }
 }''',
-            '''\
+      expected: '''\
 class Test {
   void outer1() {}
   int i;
@@ -196,39 +196,41 @@ class Test {
     });
   }
 }''',
-            [rule(FIELD)]
+      rules: [rule(FIELD)]
     )
   }
 
   void testMethodsAndConstructors() {
-    doTest('''\
+    doTest(
+      initial: '''\
 class Test {
   abstract void method1();
   Test() {}
   abstract void method2();
 }''',
-           '''\
+      expected: '''\
 class Test {
   Test() {}
   abstract void method1();
   abstract void method2();
 }''',
-           [rule(CONSTRUCTOR), rule(METHOD)])
+      rules: [rule(CONSTRUCTOR), rule(METHOD)])
   }
 
   void testConstructorAsMethod() {
-    doTest('''\
+    doTest(
+      initial: '''\
 class Test {
   private int i;
   Test() {}
   public int j;
 }''',
-           '''\
+      expected: '''\
 class Test {
   public int j;
   Test() {}
   private int i;
 }''',
-           [rule(FIELD, PUBLIC), rule(METHOD), rule(FIELD)])
+      rules: [rule(FIELD, PUBLIC), rule(METHOD), rule(FIELD)])
   }
 }

@@ -26,9 +26,9 @@ class JavaRearrangerByTypeAndModifierTest extends AbstractJavaRearrangerTest {
   void testComplex() {
     commonSettings.BLANK_LINES_AROUND_METHOD = 0
     commonSettings.BLANK_LINES_AROUND_CLASS = 0
-    
+
     doTest(
-            '''\
+      initial: '''\
 class Test {
    private enum PrivateEnum {}
    protected static class ProtectedStaticInner {}
@@ -42,7 +42,7 @@ class Test {
    public int publicField;
    public static int publicStaticField;
 }''',
-            '''\
+      expected: '''\
 class Test {
    public static int publicStaticField;
    public int publicField;
@@ -56,51 +56,55 @@ class Test {
    public class PublicInner {}
    protected static class ProtectedStaticInner {}
 }''',
-            [rule(FIELD, PUBLIC, STATIC),
-             rule(FIELD, PUBLIC),
-             rule(FIELD, VOLATILE),
-             rule(FIELD, PRIVATE),
-             rule(METHOD, ABSTRACT),
-             rule(METHOD, PUBLIC),
-             rule(METHOD),
-             rule(INTERFACE),
-             rule(ENUM),
-             rule(CLASS, PUBLIC),
-             rule(CLASS)]
+      rules: [rule(FIELD, PUBLIC, STATIC),
+              rule(FIELD, PUBLIC),
+              rule(FIELD, VOLATILE),
+              rule(FIELD, PRIVATE),
+              rule(METHOD, ABSTRACT),
+              rule(METHOD, PUBLIC),
+              rule(METHOD),
+              rule(INTERFACE),
+              rule(ENUM),
+              rule(CLASS, PUBLIC),
+              rule(CLASS)]
     )
   }
 
   void testInstanceInitializationBlockBoundToField() {
-    doTest('''\
+    doTest(
+      initial: '''\
 class Test {
   private int i;
   public int j;
   { j = 1; }
   protected int k;
-}''', '''\
+}''',
+      expected: '''\
 class Test {
   public int j;
   { j = 1; }
   protected int k;
   private int i;
 }''',
-           [rule(FIELD, PUBLIC), rule(FIELD, PROTECTED), rule(FIELD, PRIVATE)])
+      rules: [rule(FIELD, PUBLIC), rule(FIELD, PROTECTED), rule(FIELD, PRIVATE)])
   }
-  
+
   void testInstanceInitializationBlockAsFirstChild() {
-    doTest('''\
+    doTest(
+      initial: '''\
 class Test {
   { j = 1; }
   private int i;
   public int j;
   protected int k;
-}''', '''\
+}''',
+      expected: '''\
 class Test {
   { j = 1; }
   public int j;
   protected int k;
   private int i;
 }''',
-           [rule(FIELD, PUBLIC), rule(FIELD, PROTECTED), rule(FIELD, PRIVATE)])
+      rules: [rule(FIELD, PUBLIC), rule(FIELD, PROTECTED), rule(FIELD, PRIVATE)])
   }
 }

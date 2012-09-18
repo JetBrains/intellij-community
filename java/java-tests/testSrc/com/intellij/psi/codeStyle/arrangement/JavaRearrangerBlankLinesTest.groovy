@@ -16,15 +16,13 @@
 package com.intellij.psi.codeStyle.arrangement
 
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.*
-import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PACKAGE_PRIVATE
-import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PUBLIC
-import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.STATIC
+import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.*
 /**
  * @author Denis Zhdanov
  * @since 8/30/12 12:14 PM
  */
 public class JavaRearrangerBlankLinesTest extends AbstractJavaRearrangerTest {
-  
+
   void testPreserveRelativeBlankLines() {
     commonSettings.BLANK_LINES_AROUND_CLASS = 2
     commonSettings.BLANK_LINES_AROUND_FIELD = 1
@@ -32,7 +30,7 @@ public class JavaRearrangerBlankLinesTest extends AbstractJavaRearrangerTest {
     commonSettings.BLANK_LINES_AROUND_FIELD_IN_INTERFACE = 2
     commonSettings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE = 3
     doTest(
-            '''\
+      initial: '''\
 class Test {
   private void method1() {}
 
@@ -49,7 +47,7 @@ interface MyInterface {
   int i = 0;
   int j = 0;
 }''',
-            '''\
+      expected: '''\
 interface MyInterface {
   int i = 0;
 
@@ -79,13 +77,13 @@ class Test {
 
   private void method1() {}
 }''',
-            [rule(INTERFACE),
-             rule(CLASS),
-             rule(FIELD, STATIC),
-             rule(FIELD, PUBLIC),
-             rule(FIELD),
-             rule(METHOD, PUBLIC),
-             rule(METHOD)]
+      rules: [rule(INTERFACE),
+              rule(CLASS),
+              rule(FIELD, STATIC),
+              rule(FIELD, PUBLIC),
+              rule(FIELD),
+              rule(METHOD, PUBLIC),
+              rule(METHOD)]
     )
   }
 
@@ -93,7 +91,7 @@ class Test {
     commonSettings.BLANK_LINES_AROUND_FIELD = 0
     commonSettings.BLANK_LINES_AROUND_METHOD = 1
     doTest(
-            '''\
+      initial: '''\
 class Test {
 
     void test1() {
@@ -105,7 +103,7 @@ class Test {
     int i;
     int j;
 }''',
-            '''\
+      expected: '''\
 class Test {
 
     int i;
@@ -117,7 +115,7 @@ class Test {
     void test2() {
     }
 }''',
-            [rule(FIELD, PACKAGE_PRIVATE), rule(METHOD)]
+      rules: [rule(FIELD, PACKAGE_PRIVATE), rule(METHOD)]
     )
   }
 }
