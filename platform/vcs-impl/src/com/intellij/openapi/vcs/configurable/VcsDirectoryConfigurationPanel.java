@@ -74,6 +74,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   private final VcsConfiguration myVcsConfiguration;
   private final @NotNull Map<String, VcsRootChecker> myCheckers;
   private JCheckBox myShowVcsRootErrorNotification;
+  private JCheckBox myShowChangedRecursively;
 
   private class MyDirectoryRenderer extends ColoredTableCellRenderer {
     private final Project myProject;
@@ -256,6 +257,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
 
     myRecentlyChangedConfigurable.reset();
     myBaseRevisionTexts.setSelected(myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF);
+    myShowChangedRecursively.setSelected(myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
   }
 
   public static DefaultComboBoxModel buildVcsWrappersModel(final Project project) {
@@ -333,6 +335,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     panel.add(createMappingsTable(), gb.nextLine().next().fillCell().weighty(1));
     panel.add(createProjectMappingDescription(), gb.nextLine().next().fillCellHorizontally());
     panel.add(createErrorList(), gb.nextLine().next().fillCellHorizontally());
+    panel.add(createShowRecursivelyDirtyOption(), gb.nextLine().next().fillCellHorizontally());
     panel.add(createStoreBaseRevisionOption(), gb.nextLine().next().fillCellHorizontally());
     panel.add(createShowChangedOption(), gb.nextLine().next().fillCellHorizontally());
     panel.add(createShowVcsRootErrorNotificationOption(), gb.nextLine().next().fillCellHorizontally());
@@ -437,6 +440,11 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     return myShowVcsRootErrorNotification;
   }
 
+  private JComponent createShowRecursivelyDirtyOption() {
+    myShowChangedRecursively = new JCheckBox("Show directories with changed descendants", myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
+    return myShowChangedRecursively;
+  }
+
   public void reset() {
     initializeModel();
   }
@@ -446,6 +454,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     myRecentlyChangedConfigurable.apply();
     myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF = myBaseRevisionTexts.isSelected();
     myVcsConfiguration.SHOW_VCS_ERROR_NOTIFICATIONS = myShowVcsRootErrorNotification.isSelected();
+    myVcsConfiguration.SHOW_DIRTY_RECURSIVELY = myShowChangedRecursively.isSelected();
     initializeModel();
   }
 
@@ -453,6 +462,9 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     if (myRecentlyChangedConfigurable.isModified()) return true;
     if (myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF != myBaseRevisionTexts.isSelected()) return true;
     if (myVcsConfiguration.SHOW_VCS_ERROR_NOTIFICATIONS != myShowVcsRootErrorNotification.isSelected()) {
+      return true;
+    }
+    if (myVcsConfiguration.SHOW_DIRTY_RECURSIVELY != myShowChangedRecursively.isSelected()) {
       return true;
     }
     return !myModel.getItems().equals(myVcsManager.getDirectoryMappings());

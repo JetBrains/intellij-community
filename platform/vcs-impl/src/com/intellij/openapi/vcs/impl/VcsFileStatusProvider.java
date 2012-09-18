@@ -22,15 +22,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -42,6 +40,7 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
   private final ProjectLevelVcsManager myVcsManager;
   private final ChangeListManager myChangeListManager;
   private final VcsDirtyScopeManager myDirtyScopeManager;
+  private final VcsConfiguration myConfiguration;
   private boolean myHaveEmptyContentRevisions;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsFileStatusProvider");
@@ -50,12 +49,13 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
                                final FileStatusManagerImpl fileStatusManager,
                                final ProjectLevelVcsManager vcsManager,
                                ChangeListManager changeListManager,
-                               VcsDirtyScopeManager dirtyScopeManager) {
+                               VcsDirtyScopeManager dirtyScopeManager, VcsConfiguration configuration) {
     myProject = project;
     myFileStatusManager = fileStatusManager;
     myVcsManager = vcsManager;
     myChangeListManager = changeListManager;
     myDirtyScopeManager = dirtyScopeManager;
+    myConfiguration = configuration;
     myHaveEmptyContentRevisions = true;
     myFileStatusManager.setFileStatusProvider(this);
 
@@ -132,6 +132,11 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
         myDirtyScopeManager.fileDirty(file);
       }
     }
+  }
+
+  @Override
+  public ThreeState getNotChangedDirectoryParentingStatus(VirtualFile vf) {
+    return myConfiguration.SHOW_DIRTY_RECURSIVELY ? myChangeListManager.haveChangesUnder(vf) : ThreeState.NO;
   }
 
   @Override

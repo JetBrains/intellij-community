@@ -36,6 +36,12 @@ public class FileStatusFactory {
     return result;
   }
 
+  public synchronized FileStatus createOnlyColorForFileStatus(@NonNls String id, final Color color) {
+    FileStatus result = new FileStatusImpl.OnlyColorFileStatus(id, ColorKey.createColorKey("FILESTATUS_" + id, color), null);
+    myStatuses.add(result);
+    return result;
+  }
+
   public synchronized FileStatus[] getAllFileStatuses() {
     return myStatuses.toArray(new FileStatus[myStatuses.size()]);
   }

@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.ThreeState;
 import com.intellij.util.continuation.ContinuationPause;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,4 +156,5 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   public abstract List<VirtualFile> getModifiedWithoutEditing();
 
+  public abstract ThreeState haveChangesUnder(VirtualFile vf);
 }

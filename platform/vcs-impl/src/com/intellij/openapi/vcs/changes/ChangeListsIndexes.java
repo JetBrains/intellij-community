@@ -27,16 +27,16 @@ import java.io.File;
 import java.util.*;
 
 public class ChangeListsIndexes {
-  private final Map<String, FileStatus> myFileToStatus;
+  private final TreeMap<String, FileStatus> myFileToStatus;
   private final Map<String, VcsKey> myFileToVcs;
 
   ChangeListsIndexes() {
-    myFileToStatus = new HashMap<String, FileStatus>();
+    myFileToStatus = new TreeMap<String, FileStatus>();
     myFileToVcs = new HashMap<String, VcsKey>();
   }
 
   ChangeListsIndexes(final ChangeListsIndexes idx) {
-    myFileToStatus = new HashMap<String, FileStatus>(idx.myFileToStatus);
+    myFileToStatus = new TreeMap<String, FileStatus>(idx.myFileToStatus);
     myFileToVcs = new HashMap<String, VcsKey>(idx.myFileToVcs);
   }
 
@@ -132,11 +132,7 @@ public class ChangeListsIndexes {
     return result;
   }
 
-  public List<File> getAffectedPaths() {
-    final List<File> result = new ArrayList<File>(myFileToStatus.size());
-    for (String path : myFileToStatus.keySet()) {
-      result.add(new File(path));
-    }
-    return result;
+  public SortedSet<String> getAffectedPaths() {
+    return Collections.unmodifiableSortedSet((SortedSet<String>)myFileToStatus.keySet());
   }
 }

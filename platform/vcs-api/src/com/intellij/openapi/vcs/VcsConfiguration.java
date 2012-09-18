@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.ide.todo.TodoPanelSettings;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.IgnoreSpaceEnum;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -88,6 +87,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public Boolean SHOW_PATCH_IN_EXPLORER = null;
   public boolean SHOW_FILE_HISTORY_DETAILS = true;
   public boolean SHOW_VCS_ERROR_NOTIFICATIONS = true;
+  public boolean SHOW_DIRTY_RECURSIVELY = false;
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),

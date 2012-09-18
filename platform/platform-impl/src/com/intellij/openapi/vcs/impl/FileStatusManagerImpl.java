@@ -37,6 +37,7 @@ import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +52,7 @@ import java.util.Map;
  */
 public class FileStatusManagerImpl extends FileStatusManager implements ProjectComponent {
   private final Map<VirtualFile, FileStatus> myCachedStatuses = Collections.synchronizedMap(new HashMap<VirtualFile, FileStatus>());
+  private final Map<VirtualFile, Boolean> myWhetherExactlyParentToChanged = Collections.synchronizedMap(new HashMap<VirtualFile, Boolean>());
   private final Project myProject;
   private final List<FileStatusListener> myListeners = ContainerUtil.createEmptyCOWList();
   private FileStatusProvider myFileStatusProvider;
@@ -172,9 +174,24 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     }
 
     myCachedStatuses.clear();
+    myWhetherExactlyParentToChanged.clear();
 
     for (FileStatusListener listener : myListeners) {
       listener.fileStatusesChanged();
+    }
+  }
+
+  private void cacheChangedFileStatus(final VirtualFile vf, final FileStatus fs) {
+    myCachedStatuses.put(vf, fs);
+    if (FileStatus.NOT_CHANGED.equals(fs)) {
+      final ThreeState parentingStatus = myFileStatusProvider.getNotChangedDirectoryParentingStatus(vf);
+      if (ThreeState.YES.equals(parentingStatus)) {
+        myWhetherExactlyParentToChanged.put(vf, true);
+      } else if (ThreeState.UNSURE.equals(parentingStatus)) {
+        myWhetherExactlyParentToChanged.put(vf, false);
+      }
+    } else {
+      myWhetherExactlyParentToChanged.remove(vf);
     }
   }
 
@@ -195,12 +212,12 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       return;
     }
     if (cachedStatus == null) {
-      myCachedStatuses.put(file, FileStatusNull.INSTANCE);
+      cacheChangedFileStatus(file, FileStatusNull.INSTANCE);
       return;
     }
     FileStatus newStatus = calcStatus(file);
     if (cachedStatus == newStatus) return;
-    myCachedStatuses.put(file, newStatus);
+    cacheChangedFileStatus(file, newStatus);
 
     for (FileStatusListener listener : myListeners) {
       listener.fileStatusChanged(file);
@@ -215,7 +232,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     FileStatus status = getCachedStatus(file);
     if (status == null || status == FileStatusNull.INSTANCE) {
       status = calcStatus(file);
-      myCachedStatuses.put(file, status);
+      cacheChangedFileStatus(file, status);
     }
 
     return status;
@@ -227,6 +244,16 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
 
   public void removeFileStatusListener(FileStatusListener listener) {
     myListeners.remove(listener);
+  }
+
+  @Override
+  public Color getNotChangedDirectoryColor(VirtualFile vf) {
+    final Color notChangedColor = FileStatus.NOT_CHANGED.getColor();
+    if (vf == null || ! vf.isDirectory()) {
+      return notChangedColor;
+    }
+    final Boolean exactMatch = myWhetherExactlyParentToChanged.get(vf);
+    return exactMatch == null ? notChangedColor : (exactMatch ? FileStatus.NOT_CHANGED_IMMEDIATE.getColor() : FileStatus.NOT_CHANGED_RECURSIVE.getColor());
   }
 
   public void refreshFileStatusFromDocument(final VirtualFile file, final Document doc) {

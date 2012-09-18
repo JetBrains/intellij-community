@@ -110,40 +110,59 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean isAncestor(@NotNull String ancestor, @NotNull String file, boolean strict) {
+    return ! ThreeState.NO.equals(isAncestorThreeState(ancestor, file, strict));
+  }
+
+  public static ThreeState isAncestorThreeState(@NotNull String ancestor, @NotNull String file, boolean strict) {
     String ancestorPath = toCanonicalPath(ancestor);
     String filePath = toCanonicalPath(file);
 
     if (ancestorPath == null || filePath == null) {
-      return false;
+      return ThreeState.NO;
     }
 
-    return startsWith(filePath, ancestorPath, strict, SystemInfo.isFileSystemCaseSensitive);
+    return startsWith(filePath, ancestorPath, strict, SystemInfo.isFileSystemCaseSensitive, true);
   }
 
   public static boolean startsWith(@NotNull String path, @NotNull String start) {
-    return startsWith(path, start, false, SystemInfo.isFileSystemCaseSensitive);
+    return ! ThreeState.NO.equals(startsWith(path, start, false, SystemInfo.isFileSystemCaseSensitive, false));
   }
 
   public static boolean startsWith(@NotNull String path, @NotNull String start, boolean caseSensitive) {
-    return startsWith(path, start, false, caseSensitive);
+    return ! ThreeState.NO.equals(startsWith(path, start, false, caseSensitive, false));
   }
 
-  private static boolean startsWith(@NotNull String path, @NotNull String start, boolean strict, boolean caseSensitive) {
+  /**
+   * @return ThreeState.YES if same path or immediate parent
+   */
+  private static ThreeState startsWith(@NotNull String path, @NotNull String start, boolean strict, boolean caseSensitive,
+                                       boolean checkImmediateParent) {
     final int length1 = path.length();
     final int length2 = start.length();
-    if (length2 == 0) return true;
-    if (length2 > length1) return false;
-    if (!path.regionMatches(!caseSensitive, 0, start, 0, length2)) return false;
-    if (length1 == length2) return !strict;
+    if (length2 == 0) return length1 == 0 ? ThreeState.YES : ThreeState.UNSURE;
+    if (length2 > length1) return ThreeState.NO;
+    if (!path.regionMatches(!caseSensitive, 0, start, 0, length2)) return ThreeState.NO;
+    if (length1 == length2) {
+      return strict ? ThreeState.NO : ThreeState.YES;
+    }
     char last2 = start.charAt(length2 - 1);
     char next1;
+    int slashOrSeparatorIdx = length2;
     if (last2 == '/' || last2 == File.separatorChar) {
-      next1 = path.charAt(length2 - 1);
+      slashOrSeparatorIdx = length2 - 1;
+    }
+    next1 = path.charAt(slashOrSeparatorIdx);
+    if (next1 == '/' || next1 == File.separatorChar) {
+      if (! checkImmediateParent) return ThreeState.YES;
+
+      if (slashOrSeparatorIdx == length1 - 1) return ThreeState.YES;
+      int idxNext = path.indexOf(next1, slashOrSeparatorIdx + 1);
+      idxNext = idxNext == -1 ? path.indexOf(next1 == '/' ? '\\' : '/', slashOrSeparatorIdx + 1) : idxNext;
+      return idxNext == -1 ? ThreeState.YES : ThreeState.UNSURE;
     }
     else {
-      next1 = path.charAt(length2);
+      return ThreeState.NO;
     }
-    return next1 == '/' || next1 == File.separatorChar;
   }
 
   /**
