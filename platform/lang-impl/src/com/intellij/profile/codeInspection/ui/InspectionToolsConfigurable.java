@@ -126,7 +126,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     final Project project = projectProfileManager.getProject();
     myImportButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false){
+        final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
           @Override
           public boolean isFileSelectable(VirtualFile file) {
             return file.getFileType().equals(StdFileTypes.XML);
@@ -178,14 +178,15 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
               profile.readExternal(rootElement);
               profile.setLocal(true);
               profile.initInspectionTools(null);
-              profile.setModified(true);
               if (getProfilePanel(profile) != null) {
                 if (Messages.showOkCancelDialog(myWholePanel, "Profile with name \'" +
                                                               profile.getName() +
                                                               "\' already exists. Do you want to overwrite it?", "Warning",
                                                 Messages.getInformationIcon()) != DialogWrapper.OK_EXIT_CODE) return;
               }
-              addProfile((InspectionProfileImpl)profile.getModifiableModel());
+              final ModifiableModel model = profile.getModifiableModel();
+              model.setModified(true);
+              addProfile((InspectionProfileImpl)model);
               myDeletedProfiles.remove(getProfilePrefix(profile) + profile.getName());
               myDeleteButton.setEnabled(true);
             }
