@@ -39,9 +39,9 @@ public class DeleteLineAction extends TextComponentEditorAction {
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
       SelectionModel selectionModel = editor.getSelectionModel();
+      Document document = editor.getDocument();
 
       if (selectionModel.hasSelection()) {
-        Document document = editor.getDocument();
         int selectionStart = selectionModel.getSelectionStart();
         int selectionEnd = selectionModel.getSelectionEnd();
         selectionModel.removeSelection();
@@ -66,9 +66,14 @@ public class DeleteLineAction extends TextComponentEditorAction {
         document.deleteString(lineStartOffset, nextLineStartOffset);
         return;
       }
-      final VisualPosition position = editor.getCaretModel().getVisualPosition();
-      editor.getSelectionModel().selectLineAtCaret();
+      VisualPosition position = editor.getCaretModel().getVisualPosition();
+      selectionModel.selectLineAtCaret();
+      boolean removeLastSymbol = selectionModel.getSelectionEnd() == document.getTextLength() && document.getLineCount() > 1;
       EditorModificationUtil.deleteSelectedText(editor);
+      if (removeLastSymbol) {
+        document.deleteString(document.getTextLength() - 1, document.getTextLength());
+        position = new VisualPosition(position.line - 1, position.column);
+      }
       editor.getCaretModel().moveToVisualPosition(position);
     }
   }
