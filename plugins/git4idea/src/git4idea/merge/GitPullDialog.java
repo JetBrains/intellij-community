@@ -185,19 +185,19 @@ public class GitPullDialog extends DialogWrapper {
       // git pull origin master (remote branch name in the format local to that remote)
       h.addParameters(remote);
       for (String branch : markedBranches) {
-        h.addParameters(remoteRemotePrefix(branch, remote));
+        h.addParameters(removeRemotePrefix(branch, remote));
       }
     } else {
       // git merge origin/master (remote branch name in format of this repository)
       for (String branch : markedBranches) {
-        h.addParameters(remote + "/" + branch);
+        h.addParameters(branch);
       }
     }
     return h;
   }
 
   @NotNull
-  private static String remoteRemotePrefix(@NotNull String branch, @NotNull String remote) {
+  private static String removeRemotePrefix(@NotNull String branch, @NotNull String remote) {
     String prefix = remote + "/";
     if (branch.startsWith(prefix)) {
       return branch.substring(prefix.length());
