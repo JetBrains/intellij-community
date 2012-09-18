@@ -51,6 +51,8 @@ public class PushDownTest extends LightRefactoringTestCase {
   public void testSameClassInterface() { doTestImplements(); }
   public void testPreserveTypeArgs() { doTestImplements(); }
   public void testSubstTypeArgs() { doTestImplements(); }
+  public void testExtensionMethodToInterface() { doTest(); }
+  public void testExtensionMethodToClass() { doTest(); }
 
   private void doTest() {
     doTest(false);
