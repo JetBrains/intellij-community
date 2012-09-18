@@ -253,10 +253,10 @@
     <projectConfigurable instance="com.intellij.compiler.options.CompilerConfigurable" order="after project"/>
     <!-- Compiler -->
 
-    <projectConfigurable instance="com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable"/>
+    <projectConfigurable instance="com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable" id="Template Data Languages" key="template.data.language.configurable" bundle="messages.LangBundle" />
 
     <!-- Scopes -->
-    <projectConfigurable instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable"/>
+    <projectConfigurable instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable" id="project.scopes" key="scopes.display.name" bundle="messages.IdeBundle" />
 
     <!-- Application Configurables -->
 
