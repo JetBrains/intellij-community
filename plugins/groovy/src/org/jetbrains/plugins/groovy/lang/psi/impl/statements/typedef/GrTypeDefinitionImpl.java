@@ -209,6 +209,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   public void checkDelete() throws IncorrectOperationException {
+    CheckUtil.checkWritable(this);
   }
 
   public void delete() throws IncorrectOperationException {
@@ -553,7 +554,22 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @Nullable
   public PsiElement getScope() {
-    return null;
+    final GrTypeDefinitionStub stub = getStub();
+    if (stub != null) {
+      return stub.getParentStub().getPsi();
+    }
+
+    ASTNode treeElement = getNode();
+    ASTNode parent = treeElement.getTreeParent();
+
+    while (parent != null) {
+      if (parent.getElementType() instanceof IStubElementType && !(parent.getElementType() == GroovyElementTypes.CLASS_BODY)) {
+        return parent.getPsi();
+      }
+      parent = parent.getTreeParent();
+    }
+
+    return getContainingFile();
   }
 
   public boolean isInheritor(@NotNull PsiClass baseClass, boolean checkDeep) {
