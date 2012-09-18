@@ -120,7 +120,13 @@ public class ImplementationSearcher {
         @Override
         public void run() {
           try {
-            DefinitionsSearch.search(element).forEach(new PsiElementProcessorAdapter<PsiElement>(collectProcessor));
+            DefinitionsSearch.search(element).forEach(new PsiElementProcessorAdapter<PsiElement>(collectProcessor){
+              @Override
+              public boolean processInReadAction(PsiElement element) {
+                if (!accept(element)) return true;
+                return super.processInReadAction(element);
+              }
+            });
             result[0] = collectProcessor.toArray();
           }
           catch (IndexNotReadyException e) {
@@ -132,6 +138,10 @@ public class ImplementationSearcher {
         return null;
       }
       return result[0];
+    }
+    
+    protected boolean accept(PsiElement element) {
+      return true;
     }
   }
 

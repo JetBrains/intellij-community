@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import java.util.Comparator;
 
 class UrlComparator implements Comparator<String> {
+  @Override
   public int compare(String url1, String url2) {
     return url1.compareToIgnoreCase(url2);
     /*

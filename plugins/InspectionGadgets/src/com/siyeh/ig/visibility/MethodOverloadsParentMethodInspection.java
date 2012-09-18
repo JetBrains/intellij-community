@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,72 +15,81 @@
  */
 package com.siyeh.ig.visibility;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
 public class MethodOverloadsParentMethodInspection extends BaseInspection {
 
+  @SuppressWarnings("PublicField")
+  public boolean reportIncompatibleParameters = false;
+
+  @Override
   @NotNull
   public String getID() {
     return "MethodOverloadsMethodOfSuperclass";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("method.overloads.display.name");
   }
 
+  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix();
   }
 
+  @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "method.overloads.problem.descriptor");
+    return InspectionGadgetsBundle.message("method.overloads.problem.descriptor");
   }
 
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("method.overloads.report.incompatible.option"),
+                                          this, "reportIncompatibleParameters");
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MethodOverloadsParentMethodVisitor();
   }
 
-  private static class MethodOverloadsParentMethodVisitor
-    extends BaseInspectionVisitor {
+  private class MethodOverloadsParentMethodVisitor extends BaseInspectionVisitor {
+
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
+      if (method.hasModifierProperty(PsiModifier.PRIVATE) || method.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      if (method.getNameIdentifier() == null || method.isConstructor()) {
+        return;
+      }
       final PsiClass aClass = method.getContainingClass();
       if (aClass == null) {
         return;
       }
-      if (method.hasModifierProperty(PsiModifier.PRIVATE)
-          || method.hasModifierProperty(PsiModifier.STATIC)) {
-        return;
-      }
-      if (method.getNameIdentifier() == null) {
-        return;
-      }
-
-      if (method.isConstructor()) {
-        return;
-      }
-      final Query<MethodSignatureBackedByPsiMethod> superMethodQuery =
-        SuperMethodsSearch.search(method, null, true, false);
-      if (superMethodQuery.findFirst() != null) {
+      if (MethodUtils.hasSuper(method)) {
         return;
       }
       PsiClass ancestorClass = aClass.getSuperClass();
@@ -97,45 +106,19 @@ public class MethodOverloadsParentMethodInspection extends BaseInspection {
       }
     }
 
-    private static boolean methodOverloads(PsiMethod method,
-                                           PsiClass ancestorClass) {
-      if (methodOverrides(method, ancestorClass)) {
-        return false;
-      }
-      final String methName = method.getName();
+    private boolean methodOverloads(PsiMethod method, PsiClass ancestorClass) {
+      final String methodName = method.getName();
       final PsiParameterList parameterList = method.getParameterList();
       final PsiParameter[] parameters = parameterList.getParameters();
-      final PsiMethod[] methods =
-        ancestorClass.findMethodsByName(methName, false);
+      final PsiMethod[] methods = ancestorClass.findMethodsByName(methodName, false);
       for (final PsiMethod testMethod : methods) {
         if (!testMethod.hasModifierProperty(PsiModifier.PRIVATE) &&
             !testMethod.hasModifierProperty(PsiModifier.STATIC) &&
-            !isOverriddenInClass(testMethod,
-                                 method.getContainingClass())) {
-          final PsiParameterList testParameterList =
-            testMethod.getParameterList();
-          final PsiParameter[] testParameters =
-            testParameterList.getParameters();
-          if (testParameters.length == parameters.length &&
-              !parametersAreCompatible(parameters,
-                                       testParameters)) {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-
-    private static boolean isOverriddenInClass(PsiMethod method,
-                                               PsiClass aClass) {
-      final PsiMethod[] methods = aClass.getMethods();
-      for (PsiMethod testMethod : methods) {
-        final String testMethodName = testMethod.getName();
-        if (testMethodName.equals(method.getName())) {
-          final PsiMethod[] superMethods =
-            testMethod.findSuperMethods(true);
-          for (final PsiMethod superMethod : superMethods) {
-            if (superMethod.equals(method)) {
+            !isOverriddenInClass(testMethod, method.getContainingClass())) {
+          final PsiParameterList testParameterList = testMethod.getParameterList();
+          final PsiParameter[] testParameters = testParameterList.getParameters();
+          if (testParameters.length == parameters.length) {
+            if (reportIncompatibleParameters || parametersAreCompatible(parameters, testParameters)) {
               return true;
             }
           }
@@ -144,29 +127,21 @@ public class MethodOverloadsParentMethodInspection extends BaseInspection {
       return false;
     }
 
-    private static boolean parametersAreCompatible(
-      PsiParameter[] parameters, PsiParameter[] testParameters) {
+    private boolean isOverriddenInClass(PsiMethod method, PsiClass aClass) {
+      return aClass.findMethodsBySignature(method, false).length > 0;
+    }
+
+    private boolean parametersAreCompatible(PsiParameter[] parameters, PsiParameter[] testParameters) {
       for (int i = 0; i < parameters.length; i++) {
         final PsiParameter parameter = parameters[i];
         final PsiType parameterType = parameter.getType();
         final PsiParameter testParameter = testParameters[i];
         final PsiType testParameterType = testParameter.getType();
-        if (!parameterType.isAssignableFrom(testParameterType)) {
+        if (!parameterType.isAssignableFrom(testParameterType) && !testParameterType.isAssignableFrom(parameterType)) {
           return false;
         }
       }
       return true;
-    }
-
-    private static boolean methodOverrides(PsiMethod meth,
-                                           PsiClass ancestorClass) {
-      final PsiMethod[] superMethods = meth.findSuperMethods(true);
-      for (final PsiMethod superMethod : superMethods) {
-        if (ancestorClass.equals(superMethod.getContainingClass())) {
-          return true;
-        }
-      }
-      return false;
     }
   }
 }

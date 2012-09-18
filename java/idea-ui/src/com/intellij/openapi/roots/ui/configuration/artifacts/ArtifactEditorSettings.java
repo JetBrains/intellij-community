@@ -41,6 +41,7 @@ public class ArtifactEditorSettings implements PersistentStateComponent<Artifact
     myTypesToShowContent.addAll(typesToShowContent);
   }
 
+  @Override
   public ArtifactEditorSettingsState getState() {
     final ArtifactEditorSettingsState state = new ArtifactEditorSettingsState();
     state.mySortElements = mySortElements;
@@ -50,6 +51,7 @@ public class ArtifactEditorSettings implements PersistentStateComponent<Artifact
     return state;
   }
 
+  @Override
   public void loadState(ArtifactEditorSettingsState state) {
     mySortElements = state.mySortElements;
     myTypesToShowContent.clear();

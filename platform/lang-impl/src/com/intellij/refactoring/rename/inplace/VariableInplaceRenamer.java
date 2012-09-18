@@ -310,7 +310,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   }
 
   protected void revertStateOnFinish() {
-    if (!isIdentifier(myInsertedName, myLanguage)) {
+    if (myInsertedName == null || !isIdentifier(myInsertedName, myLanguage)) {
       revertState();
     }
   }

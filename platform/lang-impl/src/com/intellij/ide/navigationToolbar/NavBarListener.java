@@ -327,8 +327,6 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
   public void windowLostFocus(WindowEvent e) {
     final Window window = e.getWindow();
     final Window oppositeWindow = e.getOppositeWindow();
-    System.out.println(window);
-    System.out.println(oppositeWindow);
   }
 
   //---- Ignored

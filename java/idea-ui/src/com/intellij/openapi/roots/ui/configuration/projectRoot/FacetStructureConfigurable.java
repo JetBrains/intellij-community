@@ -122,6 +122,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     FilteringTreeBuilder.revalidateTree(myTree);
   }
 
+  @Override
   protected void loadTree() {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
@@ -220,6 +221,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     return editor;
   }
 
+  @Override
   public void reset() {
     myFacetTypeEditors.clear();
     super.reset();
@@ -227,6 +229,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   }
 
 
+  @Override
   public void apply() throws ConfigurationException {
     super.apply();
     for (FacetTypeEditor editor : myFacetTypeEditors.values()) {
@@ -234,6 +237,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     }
   }
 
+  @Override
   public boolean isModified() {
     return super.isModified() || isEditorsModified();
   }
@@ -247,6 +251,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     return false;
   }
 
+  @Override
   public void disposeUIResources() {
     super.disposeUIResources();
 
@@ -256,6 +261,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     myFacetTypeEditors.clear();
   }
 
+  @Override
   @NotNull
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     ArrayList<AnAction> actions = new ArrayList<AnAction>();
@@ -275,6 +281,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     return actions;
   }
 
+  @Override
   protected List<Facet> removeFacet(final Facet facet) {
     List<Facet> removed = super.removeFacet(facet);
     ModuleStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
@@ -284,6 +291,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     return removed;
   }
 
+  @Override
   protected boolean updateMultiSelection(final List<NamedConfigurable> selectedConfigurables) {
     return updateMultiSelection(selectedConfigurables, getDetailsComponent());
   }
@@ -320,6 +328,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     return true;
   }
 
+  @Override
   protected void updateSelection(@Nullable final NamedConfigurable configurable) {
     disposeMultipleSettingsEditor();
     if (configurable instanceof FacetTypeConfigurable) {
@@ -335,22 +344,27 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     }
   }
 
+  @Override
   @Nullable
   protected AbstractAddGroup createAddAction() {
     return null;
   }
 
+  @Override
   protected void processRemovedItems() {
   }
 
+  @Override
   protected boolean wasObjectStored(final Object editableObject) {
     return false;
   }
 
+  @Override
   public String getDisplayName() {
     return ProjectBundle.message("project.facets.display.name");
   }
 
+  @Override
   public String getHelpTopic() {
     final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(DataManager.getInstance().getDataContext());
     if (myTree.equals(component)) {
@@ -376,15 +390,18 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     return "reference.settingsdialog.project.structure.facet";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return "project.facets";
   }
 
+  @Override
   public Runnable enableSearch(final String option) {
     return null;
   }
 
+  @Override
   public void dispose() {
   }
 
@@ -393,6 +410,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
       super(facetConfigurable);
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
       FacetConfigurable facetConfigurable = (FacetConfigurable)getConfigurable();
@@ -407,11 +425,13 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
       registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree);
     }
 
+    @Override
     public void update(final AnActionEvent e) {
       NamedConfigurable selected = getSelectedConfigurable();
       e.getPresentation().setEnabled(selected instanceof FacetConfigurable);
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       NamedConfigurable selected = getSelectedConfigurable();
       if (selected instanceof FacetConfigurable) {

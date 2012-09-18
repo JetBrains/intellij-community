@@ -16,6 +16,7 @@
 
 package com.maddyhome.idea.copyright;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
@@ -31,8 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiFile;
@@ -90,51 +89,58 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
   }
 
 
+  @Override
   public void projectOpened() {
-    if (myProject != null) {
-      final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-      DocumentListener listener = new DocumentAdapter() {
-        @Override
-        public void documentChanged(DocumentEvent e) {
-          final Document document = e.getDocument();
-          final VirtualFile virtualFile = fileDocumentManager.getFile(document);
-          if (virtualFile != null && NewFileTracker.getInstance().contains(virtualFile)) {
-            NewFileTracker.getInstance().remove(virtualFile);
-            if (FileTypeUtil.getInstance().isSupportedFile(virtualFile)) {
-              final Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(virtualFile);
-              if (module != null) {
-                final PsiFile file = PsiManager.getInstance(myProject).findFile(virtualFile);
-                if (file != null) {
-                  ApplicationManager.getApplication().invokeLater(new Runnable() {
-                    public void run() {
-                      if (myProject.isDisposed()) return;
-                      if (file.isValid() && file.isWritable()) {
-                        final CopyrightProfile opts = getCopyrightOptions(file);
-                        if (opts != null) {
-                          new UpdateCopyrightProcessor(myProject, module, file).run();
-                        }
-                      }
-                    }
-                  }, ModalityState.NON_MODAL, myProject.getDisposed());
-                }
+    DocumentListener listener = new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        final Document document = e.getDocument();
+        final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+        if (virtualFile == null) return;
+        if (!NewFileTracker.getInstance().poll(virtualFile)) return;
+        if (!FileTypeUtil.getInstance().isSupportedFile(virtualFile)) return;
+        final Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(virtualFile);
+        if (module == null) return;
+        final PsiFile file = PsiManager.getInstance(myProject).findFile(virtualFile);
+        if (file == null) return;
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (myProject.isDisposed()) return;
+            if (file.isValid() && file.isWritable()) {
+              final CopyrightProfile opts = getCopyrightOptions(file);
+              if (opts != null) {
+                new UpdateCopyrightProcessor(myProject, module, file).run();
               }
             }
           }
-        }
-      };
-      final EditorFactory factory = EditorFactory.getInstance();
-      if (factory != null) {
-        factory.getEventMulticaster().addDocumentListener(listener, myProject);
+        }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
+    };
+    final EditorFactory factory = EditorFactory.getInstance();
+    if (factory != null) {
+      factory.getEventMulticaster().addDocumentListener(listener, myProject);
+    }
+
+    // make sure there is no huge pile of new files in tests
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      Disposer.register(myProject, new Disposable() {
+        @Override
+        public void dispose() {
+          NewFileTracker.getInstance().clear();
+        }
+      });
     }
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "CopyrightManager";
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     clearCopyrights();
     final Element module2copyright = element.getChild(MODULE2COPYRIGHT);
@@ -155,6 +161,7 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
     myOptions.readExternal(element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     for (CopyrightProfile copyright : myCopyrights.values()) {
       final Element copyrightElement = new Element(COPYRIGHT);
@@ -174,6 +181,7 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
   }
 
 
+  @Override
   public Element getState() {
     try {
       final Element e = new Element("settings");
@@ -186,6 +194,7 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
     }
   }
 
+  @Override
   public void loadState(Element state) {
     try {
       readExternal(state);
@@ -279,6 +288,7 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
   }
 
   public static class CopyrightStateSplitter implements StateSplitter {
+    @Override
     public List<Pair<Element, String>> splitState(Element e) {
       final UniqueNameGenerator generator = new UniqueNameGenerator();
       final List<Pair<Element, String>> result = new ArrayList<Pair<Element, String>>();
@@ -306,6 +316,7 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
       return result;
     }
 
+    @Override
     public void mergeStatesInto(Element target, Element[] elements) {
       for (Element element : elements) {
         if (element.getName().equals("copyright")) {

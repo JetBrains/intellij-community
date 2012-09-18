@@ -41,11 +41,13 @@ import java.util.List;
 public class PathUtilEx {
 
   private static final Function<Module, Sdk> MODULE_JDK = new Function<Module, Sdk>() {
+    @Override
     public Sdk fun(Module module) {
       return ModuleRootManager.getInstance(module).getSdk();
     }
   };
   private static final Convertor<Sdk, String> JDK_VERSION = new Convertor<Sdk, String>() {
+    @Override
     public String convert(Sdk jdk) {
       return jdk.getVersionString();
     }

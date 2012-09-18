@@ -33,6 +33,7 @@ public class LayoutTreeFindUsagesAction extends ArtifactEditorFindUsagesActionBa
     myLayoutTreeComponent = layoutTreeComponent;
   }
 
+  @Override
   protected ProjectStructureElement getSelectedElement() {
     PackagingElement<?> packagingElement = myLayoutTreeComponent.getSelection().getElementIfSingle();
     if (packagingElement == null) return null;

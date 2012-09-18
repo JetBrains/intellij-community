@@ -78,20 +78,31 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
         if (!PsiUtil.isLanguageLevel5OrHigher(expression) || !REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD) return;
         final PsiMethod psiMethod = expression.resolveMethod();
         if (psiMethod != null && (psiMethod.getManager().isInProject(psiMethod) || CodeStyleSettingsManager.getInstance().getCurrentSettings().USE_EXTERNAL_ANNOTATIONS)) {
+          final NullableNotNullManager nullableNotNullManager = NullableNotNullManager.getInstance(holder.getProject());
+          final PsiClass annotationsClass =
+            JavaPsiFacade.getInstance(holder.getProject()).findClass(nullableNotNullManager.getDefaultNullable(), psiMethod.getResolveScope());
+          if (annotationsClass == null) return;
           final PsiParameterList parameterList = psiMethod.getParameterList();
           final PsiParameter[] parameters = parameterList.getParameters();
           final PsiExpression[] expressions = expression.getArgumentList().getExpressions();
           for (int i = 0, expressionsLength = expressions.length; i < Math.min(expressionsLength, parameters.length); i++) {
             PsiExpression psiExpression = expressions[i];
-            if (psiExpression.getType() == PsiType.NULL) {
+            boolean nullablePassedAsParameter = false;
+            if (psiExpression instanceof PsiMethodCallExpression) {
+              final PsiMethod method = expression.resolveMethod();
+              nullablePassedAsParameter = nullableNotNullManager.isNullable(method, false);
+            } else if (psiExpression instanceof PsiReferenceExpression) {
+              final PsiElement resolve = ((PsiReferenceExpression)psiExpression).resolve();
+              if (resolve instanceof PsiModifierListOwner) {
+                nullablePassedAsParameter = nullableNotNullManager.isNullable((PsiModifierListOwner)resolve, false);
+              }
+            }
+            final PsiType exprType = psiExpression.getType();
+            if (exprType == PsiType.NULL || nullablePassedAsParameter) {
               final PsiParameter parameter = parameters[i];
               if (!NullableNotNullManager.isNullable(parameter) && !NullableNotNullManager.isNotNull(parameter)) {
-                final PsiClass annotationsClass =
-                  JavaPsiFacade.getInstance(holder.getProject()).findClass(NullableNotNullManager.getInstance(holder.getProject()).getDefaultNullable(),
-                                                                           psiMethod.getResolveScope());
-                if (annotationsClass != null) {
-                  holder.registerProblem(psiExpression, "Null is passed to parameter which is not yet @Nullable", new MyAddNullableAnnotationFix(parameter));
-                }
+                holder.registerProblem(psiExpression, "Nullable value is passed to parameter which is not yet @Nullable", 
+                                       new MyAddNullableAnnotationFix(parameter));
               }
             }
           }

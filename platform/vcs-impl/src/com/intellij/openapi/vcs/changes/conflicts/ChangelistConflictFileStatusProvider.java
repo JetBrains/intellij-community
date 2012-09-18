@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.impl.FileStatusProvider;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -70,5 +71,10 @@ public class ChangelistConflictFileStatusProvider implements FileStatusProvider 
 
   public void refreshFileStatusFromDocument(VirtualFile file, Document doc) {
 
+  }
+
+  @Override
+  public ThreeState getNotChangedDirectoryParentingStatus(VirtualFile vf) {
+    throw new UnsupportedOperationException("Shouldn't be called");
   }
 }

@@ -54,4 +54,20 @@ public class FileStatusImpl implements FileStatus {
   public String getId() {
     return myStatus;
   }
+
+  public static class OnlyColorFileStatus extends FileStatusImpl {
+    public OnlyColorFileStatus(String status, ColorKey key, String text) {
+      super(status, key, text);
+    }
+
+    @Override
+    public String getId() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getText() {
+      throw new UnsupportedOperationException();
+    }
+  }
 }

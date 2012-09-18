@@ -268,7 +268,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     for (ScopeToolState tool : tools) {
       InspectionProfileEntry entry = tool.getTool();
       assertTrue(entry instanceof InspectionToolWrapper);
-      if (entry.isInitialized() && ((InspectionToolWrapper)entry).hasXmlMapping()) {
+      if (entry.isInitialized()) {
         i++;
       }
     }

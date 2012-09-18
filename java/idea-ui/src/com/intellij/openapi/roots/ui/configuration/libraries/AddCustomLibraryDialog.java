@@ -79,16 +79,19 @@ public class AddCustomLibraryDialog extends DialogWrapper {
     return new AddCustomLibraryDialog(description, librariesContainer, module, modifiableRootModel, beforeLibraryAdded);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel.getMainPanel();
   }
 
+  @Override
   protected void doOKAction() {
     final LibraryCompositionSettings settings = myPanel.apply();
     if (settings != null && settings.downloadFiles(myPanel.getMainPanel())) {
       if (myModifiableRootModel == null) {
         final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
         new WriteAction() {
+          @Override
           protected void run(final Result result) {
             addLibraries(model, settings);
             model.commit();

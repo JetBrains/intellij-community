@@ -50,5 +50,7 @@ public abstract class FileStatusManager {
    */
   public Color getStatusColor(VirtualFile file){
     return getStatus(file).getColor();
-  }  
+  }
+
+  public abstract Color getNotChangedDirectoryColor(VirtualFile vf);
 }

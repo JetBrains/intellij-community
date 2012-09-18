@@ -74,15 +74,17 @@ public class UsedByMemberDependencyGraph<T extends NavigatablePsiElement, C exte
       myDependenciesToDependent = new HashMap<T, HashSet<T>>();
       for (T member : myMembers) {
         Set<T> dependent = myMemberDependenciesStorage.getMemberDependencies(member);
-        for (final T aDependent : dependent) {
-          if (mySelectedNormal.contains(aDependent) && !mySelectedAbstract.contains(aDependent)) {
-            myDependencies.add(member);
-            HashSet<T> deps = myDependenciesToDependent.get(member);
-            if (deps == null) {
-              deps = new HashSet<T>();
-              myDependenciesToDependent.put(member, deps);
+        if (dependent != null) {
+          for (final T aDependent : dependent) {
+            if (mySelectedNormal.contains(aDependent) && !mySelectedAbstract.contains(aDependent)) {
+              myDependencies.add(member);
+              HashSet<T> deps = myDependenciesToDependent.get(member);
+              if (deps == null) {
+                deps = new HashSet<T>();
+                myDependenciesToDependent.put(member, deps);
+              }
+              deps.add(aDependent);
             }
-            deps.add(aDependent);
           }
         }
       }

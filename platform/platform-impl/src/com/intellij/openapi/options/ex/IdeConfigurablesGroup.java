@@ -16,6 +16,7 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.OptionsBundle;
 
@@ -28,7 +29,7 @@ import com.intellij.openapi.options.OptionsBundle;
  */
 public class IdeConfigurablesGroup extends ConfigurablesGroupBase implements ConfigurableGroup {
   public IdeConfigurablesGroup() {
-    super(ApplicationManager.getApplication(), ConfigurableExtensionPointUtil.APPLICATION_CONFIGURABLES, true);
+    super(ApplicationManager.getApplication(), Configurable.APPLICATION_CONFIGURABLE, true);
   }
 
   public String getDisplayName() {

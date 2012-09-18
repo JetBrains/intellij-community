@@ -20,12 +20,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlusMinus;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -429,7 +431,12 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   public List<File> getAffectedPaths() {
-    return myIdx.getAffectedPaths();
+    final SortedSet<String> set = myIdx.getAffectedPaths();
+    final List<File> result = new ArrayList<File>(set.size());
+    for (String path : set) {
+      result.add(new File(path));
+    }
+    return result;
   }
 
   @NotNull
@@ -684,6 +691,15 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       }
     }
     return null;
+  }
+
+  public ThreeState haveChangesUnder(final VirtualFile vf) {
+    final String absolutePath = new File(vf.getPath()).getAbsolutePath();
+    final SortedSet<String> tailSet = myIdx.getAffectedPaths().tailSet(absolutePath);
+    for (String path : tailSet) {
+      return FileUtil.isAncestorThreeState(absolutePath, path, false);
+    }
+    return ThreeState.NO;
   }
 
   @NotNull

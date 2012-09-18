@@ -47,18 +47,22 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
   private final Project myProject;
   private final ProjectSdksModel myJdksModel;
   private final SdkModel.Listener myListener = new SdkModel.Listener() {
+    @Override
     public void sdkAdded(Sdk sdk) {
       reloadModel();
     }
 
+    @Override
     public void beforeSdkRemove(Sdk sdk) {
       reloadModel();
     }
 
+    @Override
     public void sdkChanged(Sdk sdk, String previousName) {
       reloadModel();
     }
 
+    @Override
     public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
       reloadModel();
     }
@@ -77,12 +81,14 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     return myJdksModel.findSdk(myCbProjectJdk.getSelectedJdk());
   }
 
+  @Override
   public JComponent createComponent() {
     if (myJdkPanel == null) {
       myJdkPanel = new JPanel(new GridBagLayout());
       myCbProjectJdk = new JdkComboBox(myJdksModel);
       myCbProjectJdk.insertItemAt(new JdkComboBox.NoneJdkComboBoxItem(), 0);
       myCbProjectJdk.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           if (myFreeze) return;
           myJdksModel.setProjectSdk(myCbProjectJdk.getSelectedJdk());
@@ -96,6 +102,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
       myJdkPanel.add(setUpButton, new GridBagConstraints(1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0));
       final JButton editButton = new JButton(ApplicationBundle.message("button.edit"));
       myCbProjectJdk.setEditButton(editButton, myProject, new Computable<Sdk>() {
+        @Override
         @Nullable
         public Sdk compute() {
           return myJdksModel.getProjectSdk();
@@ -136,15 +143,18 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     }
   }
 
+  @Override
   public boolean isModified() {
     final Sdk projectJdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
     return !Comparing.equal(projectJdk, getSelectedProjectJdk());
   }
 
+  @Override
   public void apply() {
     ProjectRootManager.getInstance(myProject).setProjectSdk(getSelectedProjectJdk());
   }
 
+  @Override
   public void reset() {
     reloadModel();
 
@@ -161,6 +171,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     }
   }
 
+  @Override
   public void disposeUIResources() {
     myJdksModel.removeListener(myListener);
     myJdkPanel = null;

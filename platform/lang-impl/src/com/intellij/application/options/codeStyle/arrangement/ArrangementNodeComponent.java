@@ -50,6 +50,17 @@ public interface ArrangementNodeComponent {
   void setScreenBounds(@Nullable Rectangle bounds);
 
   /**
+   * Notifies current component that canvas (container where current component is painted) width has been changed.
+   * <p/>
+   * The intended usage is to allow component to draw something up to/at the right screen size.
+   * 
+   * @param width  new canvas width
+   * @return       <code>true</code> if current component's representation has been changed;
+   *               <code>false</code> otherwise
+   */
+  boolean onCanvasWidthChange(int width);
+
+  /**
    * Instructs current component that it should {@link #getUiComponent() draw} itself according to the given 'selected' state.
    *
    * @param selected  flag that indicates if current component should be drawn as 'selected'

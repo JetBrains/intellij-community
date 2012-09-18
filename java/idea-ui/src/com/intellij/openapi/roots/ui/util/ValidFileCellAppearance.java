@@ -28,14 +28,17 @@ public class ValidFileCellAppearance extends BaseTextCommentCellAppearance {
     myFile = file;
   }
 
+  @Override
   protected Icon getIcon() {
     return myFile.getFileType().getIcon();
   }
 
+  @Override
   protected String getSecondaryText() {
     return getSubname(true);
   }
 
+  @Override
   protected String getPrimaryText() {
     return getSubname(false);
   }

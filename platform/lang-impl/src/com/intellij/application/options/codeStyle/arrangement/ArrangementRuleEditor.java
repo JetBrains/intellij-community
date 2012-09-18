@@ -15,7 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
@@ -33,7 +33,7 @@ import java.util.*;
 import java.util.List;
 
 /**
- * Control for managing {@link ArrangementEntryMatcher matching rule conditions} for a single {@link ArrangementRule}.
+ * Control for managing {@link ArrangementEntryMatcher matching rule conditions} for a single {@link ArrangementMatchRule}.
  * <p/>
  * Not thread-safe.
  * 

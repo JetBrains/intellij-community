@@ -217,7 +217,12 @@ public class TaskVcsTest extends TaskManagerTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    AllVcses.getInstance(getProject()).unregisterManually(myVcs);
+    try {
+      AllVcses.getInstance(getProject()).unregisterManually(myVcs);
+    }
+    finally {
+      myVcs = null;
+    }
     super.tearDown();
   }
 

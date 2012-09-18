@@ -26,10 +26,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
-import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
-import com.intellij.psi.codeStyle.arrangement.Rearranger;
-import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
+import com.intellij.psi.codeStyle.arrangement.*;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Stack;
@@ -70,14 +69,15 @@ public class ArrangementEngine {
     }
 
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings();
-    List<? extends ArrangementRule> arrangementRules = settings.getCommonSettings(file.getLanguage()).getArrangementRules();
-    if (arrangementRules.isEmpty() && rearranger instanceof ArrangementStandardSettingsAware) {
-      List<StdArrangementRule> defaultRules = ((ArrangementStandardSettingsAware)rearranger).getDefaultRules();
-      if (defaultRules != null) {
-        arrangementRules = defaultRules;
+    ArrangementSettings arrangementSettings = settings.getCommonSettings(file.getLanguage()).getArrangementSettings();
+    if (arrangementSettings == null && rearranger instanceof ArrangementStandardSettingsAware) {
+      List<StdArrangementMatchRule> defaultRules = ((ArrangementStandardSettingsAware)rearranger).getDefaultRules();
+      if (defaultRules != null && !defaultRules.isEmpty()) {
+        arrangementSettings = new StdArrangementSettings(defaultRules);
       }
     }
-    if (arrangementRules.isEmpty()) {
+    
+    if (arrangementSettings == null) {
       return;
     }
 
@@ -89,7 +89,9 @@ public class ArrangementEngine {
       documentEx = null;
     }
 
-    final Context<? extends ArrangementEntry> context = Context.from(rearranger, document, file, ranges, arrangementRules, settings);
+    final Context<? extends ArrangementEntry> context = Context.from(
+      rearranger, document, file, ranges, arrangementSettings, settings
+    );
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -205,7 +207,7 @@ public class ArrangementEngine {
   @SuppressWarnings("AssignmentToForLoopParameter")
   @NotNull
   public static <E extends ArrangementEntry> List<E> arrange(@NotNull Collection<E> entries,
-                                                             @NotNull List<? extends ArrangementRule> rules)
+                                                             @NotNull List<? extends ArrangementMatchRule> rules)
   {
     List<E> arranged = new ArrayList<E>();
     Set<E> unprocessed = new LinkedHashSet<E>();
@@ -229,7 +231,7 @@ public class ArrangementEngine {
 
     Set<E> matched = new HashSet<E>();
 
-    for (ArrangementRule rule : rules) {
+    for (ArrangementMatchRule rule : rules) {
       matched.clear();
       for (E entry : unprocessed) {
         if (entry.canBeMatched() && rule.getMatcher().isMatched(entry)) {
@@ -284,14 +286,14 @@ public class ArrangementEngine {
     @NotNull public final Rearranger<E>                          rearranger;
     @NotNull public final Collection<ArrangementEntryWrapper<E>> wrappers;
     @NotNull public final Document                               document;
-    @NotNull public final List<? extends ArrangementRule>        rules;
+    @NotNull public final List<? extends ArrangementMatchRule>   rules;
     @NotNull public final CodeStyleSettings                      settings;
     @NotNull public final Changer                                changer;
 
     private Context(@NotNull Rearranger<E> rearranger,
                     @NotNull Collection<ArrangementEntryWrapper<E>> wrappers,
                     @NotNull Document document,
-                    @NotNull List<? extends ArrangementRule> rules,
+                    @NotNull List<? extends ArrangementMatchRule> rules,
                     @NotNull CodeStyleSettings settings, @NotNull Changer changer)
     {
       this.rearranger = rearranger;
@@ -306,10 +308,10 @@ public class ArrangementEngine {
                                                                @NotNull Document document,
                                                                @NotNull PsiElement root,
                                                                @NotNull Collection<TextRange> ranges,
-                                                               @NotNull List<? extends ArrangementRule> rules,
-                                                               @NotNull CodeStyleSettings settings)
+                                                               @NotNull ArrangementSettings arrangementSettings,
+                                                               @NotNull CodeStyleSettings codeStyleSettings)
     {
-      Collection<T> entries = rearranger.parse(root, document, ranges);
+      Collection<T> entries = rearranger.parse(root, document, ranges, arrangementSettings);
       Collection<ArrangementEntryWrapper<T>> wrappers = new ArrayList<ArrangementEntryWrapper<T>>();
       ArrangementEntryWrapper<T> previous = null;
       for (T entry : entries) {
@@ -328,7 +330,7 @@ public class ArrangementEngine {
       else {
         changer = new DefaultChanger();
       }
-      return new Context<T>(rearranger, wrappers, document, rules, settings, changer);
+      return new Context<T>(rearranger, wrappers, document, arrangementSettings.getRules(), codeStyleSettings, changer);
     }
   }
 

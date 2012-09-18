@@ -54,24 +54,29 @@ public class SidePanel extends JPanel {
     myList = new JBList(myModel);
 
     final ListItemDescriptor descriptor = new ListItemDescriptor() {
+      @Override
       public String getTextFor(final Object value) {
         return myPlace2Presentation.get(value).getText();
       }
 
+      @Override
       public String getTooltipFor(final Object value) {
         return getTextFor(value);
       }
 
+      @Override
       public Icon getIconFor(final Object value) {
         return null;
         //return myPlace2Presentation.get(value).getIcon();
       }
 
+      @Override
       public boolean hasSeparatorAboveOf(final Object value) {
         final int index = myPlaces.indexOf(value);
         return myIndex2Separator.get(index) != null;
       }
 
+      @Override
       public String getCaptionAboveOf(final Object value) {
         return myIndex2Separator.get(myPlaces.indexOf(value));
       }
@@ -84,6 +89,7 @@ public class SidePanel extends JPanel {
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     myList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(final ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) return;
         final Object value = myList.getSelectedValue();

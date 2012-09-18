@@ -32,6 +32,7 @@ public abstract class JavaContentRootPanel extends ContentRootPanel {
     super(callback, true, true);
   }
 
+  @Override
   @Nullable
   protected JComponent createAdditionalComponent(ContentFolder folder) {
     if (folder instanceof SourceFolder) {
@@ -44,6 +45,7 @@ public abstract class JavaContentRootPanel extends ContentRootPanel {
     final IconActionComponent iconComponent = new IconActionComponent(AllIcons.Modules.SetPackagePrefix,
                                                                       AllIcons.Modules.SetPackagePrefixRollover,
                                                                       ProjectBundle.message("module.paths.package.prefix.tooltip"), new Runnable() {
+      @Override
       public void run() {
         final String message = ProjectBundle.message("module.paths.package.prefix.prompt",
                                                      toRelativeDisplayPath(folder.getUrl(), getContentEntry().getUrl() + ":"));

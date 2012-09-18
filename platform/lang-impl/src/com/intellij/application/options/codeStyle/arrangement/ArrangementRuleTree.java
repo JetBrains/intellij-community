@@ -18,7 +18,8 @@ package com.intellij.application.options.codeStyle.arrangement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
+import com.intellij.psi.codeStyle.arrangement.StdArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
@@ -74,10 +75,11 @@ public class ArrangementRuleTree {
   @NotNull private final ArrangementNodeComponentFactory      myFactory;
   @NotNull private final List<Set<ArrangementMatchCondition>> myGroupingRules;
 
+  private int     myCanvasWidth;
   private boolean myExplicitSelectionChange;
   private boolean mySkipSelectionChange;
 
-  public ArrangementRuleTree(@NotNull List<StdArrangementRule> rules,
+  public ArrangementRuleTree(@Nullable StdArrangementSettings settings,
                              @NotNull List<Set<ArrangementMatchCondition>> groupingRules,
                              @NotNull ArrangementNodeDisplayManager displayManager)
   {
@@ -184,7 +186,7 @@ public class ArrangementRuleTree {
       }
     });
     
-    setRules(rules);
+    setSettings(settings);
     
     myTree.setShowsRootHandles(false);
     myTree.setCellRenderer(new MyCellRenderer());
@@ -199,6 +201,35 @@ public class ArrangementRuleTree {
     }
   }
 
+  public void updateCanvasWidth(final int width) {
+    myCanvasWidth = width;
+    myRenderers.forEachKey(new TIntProcedure() {
+      @Override
+      public boolean execute(int row) {
+        doUpdateCanvasWidth(row); 
+        return true;
+      }
+    });
+  }
+
+  private void doUpdateCanvasWidth(int row) {
+    if (myCanvasWidth <= 0) {
+      return;
+    }
+    ArrangementNodeComponent component = myRenderers.get(row);
+    if (component == null) {
+      return;
+    }
+    if (!component.onCanvasWidthChange(myCanvasWidth)) {
+      return;
+    }
+
+    TreePath path = myTree.getPathForRow(row);
+    if (path != null) {
+      myTreeModel.nodeChanged((TreeNode)path.getLastPathComponent());
+    }
+  }
+  
   private void selectPreviousRule() {
     ArrangementTreeNode currentSelectionBottom = getCurrentSelectionBottom();
 
@@ -322,8 +353,8 @@ public class ArrangementRuleTree {
     tree.expandPath(parent);
   }
 
-  private void map(@NotNull List<StdArrangementRule> rules) {
-    for (StdArrangementRule rule : rules) {
+  private void map(@NotNull List<StdArrangementMatchRule> rules) {
+    for (StdArrangementMatchRule rule : rules) {
       Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> pair = myModelBuilder.build(rule, myTree, myRoot, null, myGroupingRules);
       if (pair != null) {
         myModels.put(pair.first.getRow(), pair.first);
@@ -342,7 +373,7 @@ public class ArrangementRuleTree {
   @NotNull
   public List<ArrangementRuleEditingModelImpl> getActiveModels() {
     TreePath[] paths = mySelectionModel.getSelectionPaths();
-    if (paths == null || paths.length != 1) {
+    if (paths == null) {
       return Collections.emptyList();
     }
     
@@ -373,10 +404,10 @@ public class ArrangementRuleTree {
    * @return    rules configured at the current tree at the moment
    */
   @NotNull
-  public List<StdArrangementRule> getRules() {
+  public StdArrangementSettings getSettings() {
     int[] rows = myModels.keys();
     Arrays.sort(rows);
-    List<StdArrangementRule> result = new ArrayList<StdArrangementRule>();
+    List<StdArrangementMatchRule> rules = new ArrayList<StdArrangementMatchRule>();
     ArrangementMatchCondition prevGroup = null;
     Set<ArrangementMatchCondition> implicitGroupConditions = new HashSet<ArrangementMatchCondition>();
     for (int row : rows) {
@@ -384,33 +415,38 @@ public class ArrangementRuleTree {
       ArrangementTreeNode topMost = model.getTopMost();
       ArrangementMatchCondition currentGroup = topMost.getBackingCondition();
       if (prevGroup != null && !prevGroup.equals(currentGroup)) {
-        result.add(new StdArrangementRule(new StdArrangementEntryMatcher(prevGroup)));
+        rules.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(prevGroup)));
         implicitGroupConditions.add(prevGroup);
         prevGroup = null;
       }
       if (!myRoot.equals(topMost) && !topMost.equals(model.getBottomMost()) && !implicitGroupConditions.contains(currentGroup)) {
         prevGroup = currentGroup;
       }
-      result.add(model.getRule());
+      rules.add(model.getRule());
     }
 
     if (prevGroup != null) {
-      result.add(new StdArrangementRule(new StdArrangementEntryMatcher(prevGroup)));
+      rules.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(prevGroup)));
     }
-    return result;
+    return new StdArrangementSettings(rules);
   }
 
-  public void setRules(@NotNull List<StdArrangementRule> rules) {
+  public void setSettings(@Nullable StdArrangementSettings settings) {
     myRenderers.clear();
     myModels.clear();
     while (myRoot.getChildCount() > 0)
     myTreeModel.removeNodeFromParent(myRoot.getFirstChild());
+    if (settings == null) {
+      return;
+    }
+
+    List<StdArrangementMatchRule> rules = settings.getRules();
     map(rules);
     expandAll(myTree, new TreePath(myRoot));
 
     if (ArrangementConstants.LOG_RULE_MODIFICATION) {
       LOG.info("Arrangement tree is refreshed. Given rules:");
-      for (StdArrangementRule rule : rules) {
+      for (StdArrangementMatchRule rule : rules) {
         LOG.info("  " + rule.toString());
       }
       LOG.info("Following models have been built:");
@@ -432,6 +468,7 @@ public class ArrangementRuleTree {
     ArrangementNodeComponent result = myRenderers.get(row);
     if (result == null || !result.getMatchCondition().equals(condition)) {
       myRenderers.put(row, result = myFactory.getComponent(condition, model));
+      doUpdateCanvasWidth(row);
     }
     return result;
   }
@@ -599,7 +636,13 @@ public class ArrangementRuleTree {
     return condition instanceof ArrangementCompositeMatchCondition
            && ((ArrangementCompositeMatchCondition)condition).getOperands().isEmpty();
   }
-  
+
+  @SuppressWarnings("MethodMayBeStatic")
+  public void disposeUI() {
+    Container parent = EMPTY_RENDERER.getParent();
+    if (parent != null) parent.remove(EMPTY_RENDERER);
+  }
+
   private class MyCellRenderer implements TreeCellRenderer {
     @Override
     public Component getTreeCellRendererComponent(JTree tree,
@@ -614,12 +657,14 @@ public class ArrangementRuleTree {
       if (node == null) {
         return EMPTY_RENDERER;
       }
-      else if (isEmptyCondition(node)) {
+      if (isEmptyCondition(node)) {
         return NEW_CONDITION_RENDERER;
       }
       
       if (row < 0) {
-        return myFactory.getComponent(node, null).getUiComponent();
+        ArrangementNodeComponent component = myFactory.getComponent(node, null);
+        doUpdateCanvasWidth(row);
+        return component.getUiComponent();
       }
       ArrangementNodeComponent component = getNodeComponentAt(row, node, myModels.get(row));
       component.setSelected(selected);

@@ -39,9 +39,11 @@ public class Util{
   public static VirtualFile showSpecifyJavadocUrlDialog(JComponent parent, String initialValue){
     final String url = Messages.showInputDialog(parent, ProjectBundle.message("sdk.configure.javadoc.url.prompt"),
                                                 ProjectBundle.message("sdk.configure.javadoc.url.title"), Messages.getQuestionIcon(), initialValue, new InputValidator() {
+      @Override
       public boolean checkInput(String inputString) {
         return true;
       }
+      @Override
       public boolean canClose(String inputString) {
         try {
           new URL(inputString);

@@ -332,4 +332,8 @@ public class TargetElementUtilBase {
   }
 
   protected final LanguageExtension<TargetElementEvaluator> targetElementEvaluator = new LanguageExtension<TargetElementEvaluator>("com.intellij.targetElementEvaluator");
+
+  public boolean acceptImplementationForReference(PsiReference reference, PsiElement element) {
+    return true;
+  }
 }

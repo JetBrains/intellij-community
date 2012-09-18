@@ -27,9 +27,9 @@ import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.root
  */
 public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
   public void testCopyChangedFile() {
-    String file1 = createFile("a.txt", "aaa");
-    String file2 = createFile("b.txt", "bbb");
-    final JpsArtifact a = addArtifact(root().fileCopy(file1).fileCopy(file2));
+    String file1 = createFile("dir/a.txt", "aaa");
+    createFile("dir/b.txt", "bbb");
+    final JpsArtifact a = addArtifact(root().parentDirCopy(file1));
     buildAll();
     assertOutput(a, fs().file("a.txt", "aaa").file("b.txt", "bbb"));
 
@@ -37,15 +37,15 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
 
     change(file1, "xxx");
     buildAll();
-    assertCopied("a.txt");
+    assertCopied("dir/a.txt");
     assertOutput(a, fs().file("a.txt", "xxx").file("b.txt", "bbb"));
     buildAllAndAssertUpToDate();
   }
 
   public void testRemoveDeletedFile() {
-    String file1 = createFile("a.txt");
-    String file2 = createFile("b.txt");
-    final JpsArtifact a = addArtifact("a", root().fileCopy(file1).fileCopy(file2));
+    String file1 = createFile("dir/a.txt");
+    createFile("dir/b.txt");
+    final JpsArtifact a = addArtifact("a", root().parentDirCopy(file1));
     buildAll();
     assertOutput(a, fs().file("a.txt").file("b.txt"));
 
@@ -57,30 +57,30 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
   }
 
   public void testPackChangedFile() {
-    String file1 = createFile("a.txt", "aaa");
-    String file2 = createFile("b.txt", "bbb");
-    final JpsArtifact a = addArtifact(archive("a.jar").fileCopy(file1).fileCopy(file2));
+    String file1 = createFile("dir/a.txt", "aaa");
+    createFile("dir/b.txt", "bbb");
+    final JpsArtifact a = addArtifact(archive("a.jar").parentDirCopy(file1));
     buildAll();
     assertOutput(a, fs().archive("a.jar").file("a.txt", "aaa").file("b.txt", "bbb"));
     buildAllAndAssertUpToDate();
 
     change(file1, "xxx");
     buildAll();
-    assertCopied("a.txt", "b.txt");
+    assertCopied("dir/a.txt", "dir/b.txt");
     assertOutput(a, fs().archive("a.jar").file("a.txt", "xxx").file("b.txt", "bbb"));
     buildAllAndAssertUpToDate();
   }
 
   public void testRemoveDeletedFileFromArchive() {
-    String file1 = createFile("a.txt");
-    String file2 = createFile("b.txt");
-    final JpsArtifact a = addArtifact("a", archive("a.jar").fileCopy(file1).fileCopy(file2));
+    String file1 = createFile("dir/a.txt");
+    createFile("dir/b.txt");
+    final JpsArtifact a = addArtifact("a", archive("a.jar").parentDirCopy(file1));
     buildAll();
     assertOutput(a, fs().archive("a.jar").file("a.txt").file("b.txt"));
 
     delete(file1);
     buildAll();
-    assertDeletedAndCopied("out/artifacts/a/a.jar", "b.txt");
+    assertDeletedAndCopied("out/artifacts/a/a.jar", "dir/b.txt");
     assertOutput(a, fs().archive("a.jar").file("b.txt"));
     buildAllAndAssertUpToDate();
   }
@@ -120,7 +120,7 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
 
   public void testRenameFile() throws Exception {
     final String file = createFile("a/a.txt");
-    final JpsArtifact a = addArtifact(root().dirCopy(PathUtil.getParentPath(file)));
+    final JpsArtifact a = addArtifact(root().parentDirCopy(file));
     buildAll();
 
     assertOutput(a, fs().file("a.txt"));
@@ -132,7 +132,7 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
   //IDEADEV-25840
   public void testUpdateFileIfCaseOfLetterInNameChanged() throws Exception {
     final String file = createFile("a/a.txt");
-    final JpsArtifact a = addArtifact("a", root().dirCopy(PathUtil.getParentPath(file)));
+    final JpsArtifact a = addArtifact("a", root().parentDirCopy(file));
     buildAll();
 
     assertOutput(a, fs().file("a.txt"));
@@ -144,8 +144,8 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
   //IDEADEV-41556
   public void testDeleteFilesFromSelectedArtifactsOnly() throws Exception {
     final String file = createFile("a/a.txt");
-    final JpsArtifact a1 = addArtifact("a1", root().dirCopy(PathUtil.getParentPath(file)));
-    final JpsArtifact a2 = addArtifact("a2", root().dirCopy(PathUtil.getParentPath(file)));
+    final JpsArtifact a1 = addArtifact("a1", root().parentDirCopy(file));
+    final JpsArtifact a2 = addArtifact("a2", root().parentDirCopy(file));
 
     buildAll();
     assertOutput(a1, fs().file("a.txt"));

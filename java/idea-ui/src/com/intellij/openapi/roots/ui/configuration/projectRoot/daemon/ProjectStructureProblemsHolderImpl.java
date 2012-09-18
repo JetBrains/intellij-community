@@ -15,6 +15,7 @@ import java.util.List;
 public class ProjectStructureProblemsHolderImpl implements ProjectStructureProblemsHolder {
   private List<ProjectStructureProblemDescription> myProblemDescriptions;
 
+  @Override
   public void registerProblem(@NotNull String message, @Nullable String description,
                               @NotNull ProjectStructureProblemType problemType,
                               @NotNull PlaceInProjectStructure place,
@@ -23,6 +24,7 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
     registerProblem(new ProjectStructureProblemDescription(message, description, place, problemType, fixes));
   }
 
+  @Override
   public void registerProblem(final @NotNull ProjectStructureProblemDescription description) {
     if (myProblemDescriptions == null) {
       myProblemDescriptions = new SmartList<ProjectStructureProblemDescription>();

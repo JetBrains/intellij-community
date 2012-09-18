@@ -29,25 +29,30 @@ public class Place implements ComparableObject {
 
   private LinkedHashMap<String, Object> myPath = new LinkedHashMap<String, Object>();
 
+  @Override
   @NotNull
   public final Object[] getEqualityObjects() {
     return new Object[] {myPath};
   }
 
+  @Override
   public final boolean equals(final Object obj) {
     return ComparableObjectCheck.equals(this, obj);
   }
 
+  @Override
   public final int hashCode() {
     return ComparableObjectCheck.hashCode(this, super.hashCode());
   }
 
+  @NotNull
   public Place putPath(String name, Object value) {
     myPath.put(name, value);
     return this;
   }
 
-  public @Nullable
+  @Nullable
+  public
   Object getPath(String name) {
     return myPath.get(name);
   }
@@ -99,9 +104,8 @@ public class Place implements ComparableObject {
   public static ActionCallback goFurther(Object object, Place place, final boolean requestFocus) {
     if (object instanceof Navigator) {
       return ((Navigator)object).navigateTo(place, requestFocus);
-    } else {
-      return new ActionCallback.Done();
     }
+    return new ActionCallback.Done();
   }
 
   public static void queryFurther(final Object object, final Place place) {

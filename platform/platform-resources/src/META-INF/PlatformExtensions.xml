@@ -225,7 +225,10 @@
   <ComponentRoamingType component="RestoreUpdateTree" type="DISABLED"/>
   <ComponentRoamingType component="PropertiesComponent" type="DISABLED"/>
 
-  <projectConfigurable instance="com.intellij.javaee.ExternalResourceConfigurable"/>
+  <projectConfigurable instance="com.intellij.javaee.ExternalResourceConfigurable" key="display.name.edit.external.resource"
+                       bundle="messages.XmlBundle" id="preferences.externalResources">
+    <configurable instance="com.intellij.javaee.XMLCatalogConfigurable" displayName="XML Catalog" id="xml.catalog"/>
+  </projectConfigurable>
 
   <bundledKeymapProvider implementation="com.intellij.openapi.keymap.impl.DefaultBundledKeymaps"/>
   <!-- <checkinHandlerFactory implementation="com.intellij.openapi.vcs.CheckRemoteStatusCheckinHandlerFactory"/> -->

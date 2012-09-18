@@ -24,6 +24,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +74,17 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
       presentation.setAttributesKey(CodeInsightColors.ERRORS_ATTRIBUTES);
     }
 
-    Color fgColor = getFileStatus().getColor();
+    setForcedForeground(presentation);
+
+    if (hasProblemFileBeneath() ) {
+      presentation.setAttributesKey(CodeInsightColors.ERRORS_ATTRIBUTES);
+    }
+  }
+
+  protected void setForcedForeground(PresentationData presentation) {
+    final FileStatus status = getFileStatus();
+    Color fgColor = getFileStatusColor(status);
+    fgColor = fgColor == null ? status.getColor() : fgColor;
 
     if (valueIsCut()) {
       fgColor = CopyPasteManager.CUT_COLOR;
@@ -80,10 +92,6 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
 
     if (presentation.getForcedTextForeground() == null) {
       presentation.setForcedTextForeground(fgColor);
-    }
-
-    if (hasProblemFileBeneath() ) {
-      presentation.setAttributesKey(CodeInsightColors.ERRORS_ATTRIBUTES);
     }
   }
 
@@ -176,6 +184,19 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
     return null;
   }
 
+  public Color getFileStatusColor(final FileStatus status) {
+    if (FileStatus.NOT_CHANGED.equals(status)) {
+      final VirtualFile vf = getVirtualFile();
+      if (vf != null && vf.isDirectory()) {
+        return FileStatusManager.getInstance(myProject).getNotChangedDirectoryColor(vf);
+      }
+    }
+    return status.getColor();
+  }
+
+  protected VirtualFile getVirtualFile() {
+    return null;
+  }
 
   public FileStatus getFileStatus() {
     return FileStatus.NOT_CHANGED;

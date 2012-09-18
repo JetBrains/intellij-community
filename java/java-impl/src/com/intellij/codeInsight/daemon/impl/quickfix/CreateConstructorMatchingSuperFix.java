@@ -17,9 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.generation.ConstructorBodyGenerator;
-import com.intellij.codeInsight.generation.GenerateMembersUtil;
-import com.intellij.codeInsight.generation.PsiMethodMember;
+import com.intellij.codeInsight.generation.*;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
@@ -147,7 +145,9 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
               }
               derived = (PsiMethod)formatter.reformat(derived);
               derived = (PsiMethod)JavaCodeStyleManager.getInstance(project).shortenClassReferences(derived);
-              derived = (PsiMethod)GenerateMembersUtil.insert(targetClass, derived, null, true);
+              PsiGenerationInfo<PsiMethod> info = OverrideImplementUtil.createGenerationInfo(derived);
+              info.insert(targetClass, null, true);
+              derived = info.getPsiMember();
             }
             if (derived != null) {
               editor.getCaretModel().moveToOffset(derived.getTextRange().getStartOffset());

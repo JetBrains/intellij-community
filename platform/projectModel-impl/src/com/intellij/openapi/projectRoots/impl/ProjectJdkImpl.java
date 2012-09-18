@@ -68,6 +68,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     myRootContainer.addProjectRootContainerListener(myRootProvider);
   }
 
+  @Override
   @NotNull
   public SdkTypeId getSdkType() {
     if (mySdkType == null) {
@@ -76,24 +77,28 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     return mySdkType;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myName;
   }
 
+  @Override
   public void setName(@NotNull String name) {
     myName = name;
   }
 
+  @Override
   public final void setVersionString(String versionString) {
-    myVersionString = versionString == null || "".equals(versionString) ? null : versionString;
+    myVersionString = versionString == null || versionString.isEmpty() ? null : versionString;
     myVersionDefined = true;
   }
 
+  @Override
   public String getVersionString() {
     if (myVersionString == null && !myVersionDefined) {
       String homePath = getHomePath();
-      if (homePath != null && homePath.length() > 0) {
+      if (homePath != null && !homePath.isEmpty()) {
         setVersionString(getSdkType().getVersionString(this));
       }
     }
@@ -105,10 +110,12 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     myVersionString = null;
   }
 
+  @Override
   public String getHomePath() {
     return myHomePath;
   }
 
+  @Override
   public VirtualFile getHomeDirectory() {
     if (myHomePath == null) {
       return null;
@@ -116,6 +123,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     return StandardFileSystems.local().findFileByPath(myHomePath);
   }
 
+   @Override
    public void readExternal(Element element) throws InvalidDataException {
     myName = element.getChild(ELEMENT_NAME).getAttributeValue(ATTRIBUTE_VALUE);
     final Element typeChild = element.getChild(ELEMENT_TYPE);
@@ -164,6 +172,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
      }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     element.setAttribute(ELEMENT_VERSION, "2");
 
@@ -199,6 +208,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     element.addContent(additional);
   }
 
+  @Override
   public void setHomePath(String path) {
     final boolean changes = myHomePath == null? path != null : !myHomePath.equals(path);
     myHomePath = path;
@@ -208,6 +218,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     }
   }
 
+  @Override
   @NotNull
   public Object clone() {
     ProjectJdkImpl newJdk = new ProjectJdkImpl("", mySdkType);
@@ -215,6 +226,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     return newJdk;
   }
 
+  @Override
   @NotNull
   public RootProvider getRootProvider() {
     return myRootProvider;
@@ -247,6 +259,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
   }
 
   private class MyRootProvider extends RootProviderBaseImpl implements ProjectRootListener {
+    @Override
     @NotNull
     public String[] getUrls(@NotNull OrderRootType rootType) {
       final ProjectRoot[] rootFiles = myRootContainer.getRoots(rootType);
@@ -257,6 +270,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
       return ArrayUtil.toStringArray(result);
     }
 
+    @Override
     @NotNull
     public VirtualFile[] getFiles(@NotNull final OrderRootType rootType) {
       return myRootContainer.getRootFiles(rootType);
@@ -264,6 +278,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
 
     private final Set<RootSetChangedListener> myListeners = new HashSet<RootSetChangedListener>();
 
+    @Override
     public void addRootSetChangedListener(@NotNull RootSetChangedListener listener) {
       synchronized (this) {
         myListeners.add(listener);
@@ -271,15 +286,18 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
       super.addRootSetChangedListener(listener);
     }
 
+    @Override
     public void addRootSetChangedListener(@NotNull final RootSetChangedListener listener, @NotNull Disposable parentDisposable) {
       super.addRootSetChangedListener(listener, parentDisposable);
       Disposer.register(parentDisposable, new Disposable() {
+        @Override
         public void dispose() {
           removeRootSetChangedListener(listener);
         }
       });
     }
 
+    @Override
     public void removeRootSetChangedListener(@NotNull RootSetChangedListener listener) {
       super.removeRootSetChangedListener(listener);
       synchronized (this) {
@@ -287,6 +305,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
       }
     }
 
+    @Override
     public void rootsChanged() {
       synchronized (this) {
         if (myListeners.isEmpty()) {
@@ -294,6 +313,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
         }
       }
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           fireRootSetChanged();
         }
@@ -302,6 +322,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
   }
 
   // SdkModificator implementation
+  @Override
   @NotNull
   public SdkModificator getSdkModificator() {
     ProjectJdkImpl sdk = (ProjectJdkImpl)clone();
@@ -311,6 +332,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     return sdk;
   }
 
+  @Override
   public void commitChanges() {
     LOG.assertTrue(isWritable());
     myRootContainer.finishChange();
@@ -318,14 +340,17 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     myOrigin = null;
   }
 
+  @Override
   public SdkAdditionalData getSdkAdditionalData() {
     return myAdditionalData;
   }
 
+  @Override
   public void setSdkAdditionalData(SdkAdditionalData data) {
     myAdditionalData = data;
   }
 
+  @Override
   public VirtualFile[] getRoots(OrderRootType rootType) {
     final ProjectRoot[] roots = myRootContainer.getRoots(rootType); // use getRoots() cause the data is most up-to-date there
     final List<VirtualFile> files = new ArrayList<VirtualFile>(roots.length);
@@ -335,27 +360,37 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     return VfsUtilCore.toVirtualFileArray(files);
   }
 
+  @Override
   public void addRoot(VirtualFile root, OrderRootType rootType) {
     myRootContainer.addRoot(root, rootType);
   }
 
+  @Override
   public void removeRoot(VirtualFile root, OrderRootType rootType) {
     myRootContainer.removeRoot(root, rootType);
   }
 
+  @Override
   public void removeRoots(OrderRootType rootType) {
     myRootContainer.removeAllRoots(rootType);
   }
 
+  @Override
   public void removeAllRoots() {
     myRootContainer.removeAllRoots();
   }
 
+  @Override
   public boolean isWritable() {
     return myOrigin != null;
   }
 
   public void update() {
     myRootContainer.update();
+  }
+
+  @Override
+  public String toString() {
+    return getName() + ": "+ getVersionString() + " ("+getHomePath()+")";
   }
 }

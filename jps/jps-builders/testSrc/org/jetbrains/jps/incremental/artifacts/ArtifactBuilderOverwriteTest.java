@@ -1,5 +1,6 @@
 package org.jetbrains.jps.incremental.artifacts;
 
+import com.intellij.util.PathUtil;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
@@ -64,10 +65,9 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
 
   public void testOverwriteFileByArchive() {
     final String xFile = createFile("x.txt", "1");
-    final String jarFile = createFile("junit.jar", "123");
+    final String jarFile = createFile("lib/junit.jar", "123");
     JpsArtifact a = addArtifact(root()
-                               .archive("junit.jar").fileCopy(xFile).end()
-                               .fileCopy(jarFile));
+                               .archive("junit.jar").fileCopy(xFile).end().parentDirCopy(jarFile));
     buildAll();
     assertOutput(a, fs().archive("junit.jar").file("x.txt", "1"));
     buildAllAndAssertUpToDate();
@@ -86,11 +86,10 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
   }
 
   public void testOverwriteArchiveByFile() {
-    final String xFile = createFile("x.txt", "1");
-    final String jarFile = createFile("jdom.jar", "123");
-    JpsArtifact a = addArtifact(root()
-                               .fileCopy(jarFile)
-                               .archive("jdom.jar").fileCopy(xFile));
+    final String xFile = createFile("d/x.txt", "1");
+    final String jarFile = createFile("lib/jdom.jar", "123");
+    JpsArtifact a = addArtifact(root().parentDirCopy(jarFile)
+                               .archive("jdom.jar").parentDirCopy(xFile));
     buildAll();
     assertOutput(a, fs().file("jdom.jar", "123"));
     buildAllAndAssertUpToDate();
@@ -100,7 +99,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
 
     change(jarFile, "321");
     buildAll();
-    assertCopied("jdom.jar");
+    assertCopied("lib/jdom.jar");
     assertOutput(a, fs().file("jdom.jar", "321"));
     buildAllAndAssertUpToDate();
 
@@ -114,9 +113,8 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
     final String fooFile = createFile("d3/xxx.txt", "foo");
     final JpsArtifact a = addArtifact(
       root().dir("ddd")
-         .fileCopy(firstFile)
-         .fileCopy(fooFile)
-         .fileCopy(secondFile).end()
+         .dirCopy(PathUtil.getParentPath(firstFile))
+         .dirCopy(PathUtil.getParentPath(fooFile)).parentDirCopy(secondFile).end()
     );
     buildAll();
     assertOutput(a, fs().dir("ddd").file("xxx.txt", "first"));
@@ -145,7 +143,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
     final String firstFile = createFile("d1/xxx.txt", "1");
     final String secondFile = createFile("d2/xxx.txt", "2");
     final JpsArtifact a = addArtifact("a",
-      root().dir("ddd").fileCopy(firstFile).fileCopy(secondFile).fileCopy(createFile("y.txt"))
+      root().dir("ddd").dirCopy(PathUtil.getParentPath(firstFile)).parentDirCopy(secondFile).fileCopy(createFile("y.txt"))
     );
     buildAll();
     assertOutput(a, fs().dir("ddd").file("xxx.txt", "1").file("y.txt"));
@@ -164,15 +162,15 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
 
   public void testUpdateManifest() {
     final String manifestText1 = "Manifest-Version: 1.0\r\nMain-Class: A\r\n\r\n";
-    final String manifest = createFile("MANIFEST.MF", manifestText1);
-    final JpsArtifact a = addArtifact("a", archive("a.jar").dir("META-INF").fileCopy(manifest).fileCopy(createFile("a.txt")));
+    final String manifest = createFile("d/MANIFEST.MF", manifestText1);
+    final JpsArtifact a = addArtifact("a", archive("a.jar").dir("META-INF").parentDirCopy(manifest).fileCopy(createFile("a.txt")));
     buildAll();
     assertOutput(a, fs().archive("a.jar").dir("META-INF").file("MANIFEST.MF", manifestText1).file("a.txt"));
 
     final String manifestText2 = "Manifest-Version: 1.0\r\nMain-Class: B\r\n\r\n";
     change(manifest, manifestText2);
     buildAll();
-    assertCopied("MANIFEST.MF", "a.txt");
+    assertCopied("d/MANIFEST.MF", "a.txt");
     assertOutput(a, fs().archive("a.jar").dir("META-INF").file("MANIFEST.MF", manifestText2).file("a.txt"));
     buildAllAndAssertUpToDate();
 

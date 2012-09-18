@@ -87,7 +87,6 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
     myToolWindow.setAvailable(true, null);
     myToolWindow.setToHideOnEmptyContent(false);
-    myToolWindow.setAutoHide(false);
 
     final Rectangle rectangle = WindowManager.getInstance().getIdeFrame(myProject).suggestChildFrameBounds();
     myToolWindow.setDefaultState(ToolWindowAnchor.RIGHT, ToolWindowType.FLOATING, rectangle);

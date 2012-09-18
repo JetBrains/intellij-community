@@ -44,21 +44,26 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
     return jdk;
   }
 
+  @Override
   public String getPresentableName() {
     return ProjectBundle.message("sdk.java.name");
   }
 
+  @Override
   public AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel, SdkModificator sdkModificator) {
     return null;
   }
 
+  @Override
   public void saveAdditionalData(SdkAdditionalData additionalData, Element additional) {
   }
 
+  @Override
   public String getBinPath(Sdk sdk) {
     return getConvertedHomePath(sdk) + "bin";
   }
 
+  @Override
   @NonNls
   public String getToolsPath(Sdk sdk) {
     final String versionString = sdk.getVersionString();
@@ -66,6 +71,7 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
     return getConvertedHomePath(sdk) + "lib" + File.separator + (isJdk1_x? "classes.zip" : "tools.jar");
   }
 
+  @Override
   public String getVMExecutablePath(Sdk sdk) {
     return getBinPath(sdk) + File.separator + VM_EXE_NAME;
   }
@@ -78,19 +84,23 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
     return path;
   }
 
+  @Override
   public String suggestHomePath() {
     return null;
   }
 
+  @Override
   public boolean isValidSdkHome(String path) {
     return JdkUtil.checkForJdk(new File(path));
   }
 
+  @Override
   public String suggestSdkName(String currentSdkName, String sdkHome) {
     return currentSdkName;
   }
 
 
+  @Override
   public final String getVersionString(final String sdkHome) {
     return SdkVersionUtil.detectJdkVersion(sdkHome);
   }

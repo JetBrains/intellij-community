@@ -20,49 +20,36 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 
-public class NewFileTracker
-{
-    public static NewFileTracker getInstance()
-    {
-        return instance;
-    }
+public class NewFileTracker {
+  public static NewFileTracker getInstance() {
+    return instance;
+  }
 
-    public boolean contains(VirtualFile file)
-    {
-        synchronized (newfiles)
-        {
-            return newfiles.contains(file);
-        }
-    }
+  public boolean poll(@NotNull VirtualFile file) {
+    return newFiles.remove(file);
+  }
 
-    public void remove(VirtualFile file)
-    {
-        synchronized (newfiles)
-        {
-            newfiles.remove(file);
-        }
-    }
+  private NewFileTracker() {
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+      @Override
+      public void fileCreated(VirtualFileEvent event) {
+        newFiles.add(event.getFile());
+      }
+    });
+  }
 
-    private NewFileTracker()
-    {
-        VirtualFileManager manager = VirtualFileManager.getInstance();
-        manager.addVirtualFileListener(new VirtualFileAdapter()
-        {
-            public void fileCreated(VirtualFileEvent event)
-            {
-                synchronized (newfiles)
-                {
-                    newfiles.add(event.getFile());
-                }
-            }
-        });
-    }
+  private final Set<VirtualFile> newFiles = Collections.synchronizedSet(new THashSet<VirtualFile>());
+  private static final NewFileTracker instance = new NewFileTracker();
 
-    private final Set<VirtualFile> newfiles = new HashSet<VirtualFile>();
-
-    private static final NewFileTracker instance = new NewFileTracker();
+  @TestOnly
+  public void clear() {
+    newFiles.clear();
+  }
 }

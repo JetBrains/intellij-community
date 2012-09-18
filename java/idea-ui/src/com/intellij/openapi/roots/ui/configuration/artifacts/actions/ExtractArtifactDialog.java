@@ -73,10 +73,12 @@ public class ExtractArtifactDialog extends DialogWrapper implements IExtractArti
     return myMainPanel;
   }
 
+  @Override
   public String getArtifactName() {
     return myNameField.getText();
   }
 
+  @Override
   public ArtifactType getArtifactType() {
     return (ArtifactType)myTypeBox.getSelectedItem();
   }

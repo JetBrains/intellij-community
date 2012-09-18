@@ -71,6 +71,19 @@ public final class SourceToOutputMapping extends AbstractStateStorage<String, Co
     return normalized;
   }
 
+  public void removeValue(String sourcePath, String outputPath) throws IOException {
+    final Collection<String> outputPaths = getState(FileUtil.toSystemIndependentName(sourcePath));
+    if (outputPaths != null) {
+      outputPaths.remove(FileUtil.toSystemIndependentName(outputPath));
+      if (outputPaths.isEmpty()) {
+        remove(sourcePath);
+      }
+      else {
+        update(sourcePath, outputPaths);
+      }
+    }
+  }
+
   protected static class StringCollectionExternalizer implements DataExternalizer<Collection<String>> {
 
     public void save(DataOutput out, Collection<String> value) throws IOException {

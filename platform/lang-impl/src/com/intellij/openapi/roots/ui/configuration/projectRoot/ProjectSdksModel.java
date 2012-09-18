@@ -57,14 +57,17 @@ public class ProjectSdksModel implements SdkModel {
   private Sdk myProjectSdk;
   private boolean myInitialized = false;
 
+  @Override
   public Listener getMulticaster() {
     return mySdkEventsDispatcher.getMulticaster();
   }
 
+  @Override
   public Sdk[] getSdks() {
     return myProjectSdks.values().toArray(new Sdk[myProjectSdks.size()]);
   }
 
+  @Override
   @Nullable
   public Sdk findSdk(String sdkName) {
     for (Sdk projectJdk : myProjectSdks.values()) {
@@ -73,10 +76,12 @@ public class ProjectSdksModel implements SdkModel {
     return null;
   }
 
+  @Override
   public void addListener(Listener listener) {
     mySdkEventsDispatcher.addListener(listener);
   }
 
+  @Override
   public void removeListener(Listener listener) {
     mySdkEventsDispatcher.removeListener(listener);
   }
@@ -125,6 +130,7 @@ public class ProjectSdksModel implements SdkModel {
     final ArrayList<Sdk> itemsInTable = new ArrayList<Sdk>();
     // Delete removed and fill itemsInTable
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
         for (final Sdk tableItem : allFromTable) {
@@ -138,6 +144,7 @@ public class ProjectSdksModel implements SdkModel {
       }
     });
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         // Now all removed items are deleted from table, itemsInTable contains all items in table
         final ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
@@ -164,7 +171,7 @@ public class ProjectSdksModel implements SdkModel {
     Sdk itemWithError = null;
     for (Sdk currItem : myProjectSdks.values()) {
       String currName = currItem.getName();
-      if (currName.length() == 0) {
+      if (currName.isEmpty()) {
         itemWithError = currItem;
         errorString[0] = ProjectBundle.message("sdk.list.name.required.error");
         break;
@@ -228,6 +235,7 @@ public class ProjectSdksModel implements SdkModel {
       final AnAction addAction = new DumbAwareAction(type.getPresentableName(),
                                               null,
                                               type.getIconForAddAction()) {
+          @Override
           public void actionPerformed(AnActionEvent e) {
             doAdd(type, updateTree);
           }
@@ -257,6 +265,7 @@ public class ProjectSdksModel implements SdkModel {
     });
   }
 
+  @Override
   public void addSdk(Sdk sdk) {
     doAdd((ProjectJdkImpl) sdk, null);
   }

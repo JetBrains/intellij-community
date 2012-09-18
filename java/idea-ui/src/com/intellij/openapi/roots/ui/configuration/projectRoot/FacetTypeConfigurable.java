@@ -35,40 +35,50 @@ public class FacetTypeConfigurable extends NamedConfigurable<FacetType> {
     myFacetType = facetType;
   }
 
+  @Override
   public void setDisplayName(final String name) {
   }
 
+  @Override
   public FacetType getEditableObject() {
     return myFacetType;
   }
 
+  @Override
   public String getBannerSlogan() {
     return ProjectBundle.message("facet.type.banner.text", myFacetType.getPresentableName());
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return myFacetStructureConfigurable.getOrCreateFacetTypeEditor(myFacetType).createComponent();
   }
 
+  @Override
   public String getDisplayName() {
     return myFacetType.getPresentableName();
   }
 
+  @Override
   public String getHelpTopic() {
     final FacetTypeEditor editor = myFacetStructureConfigurable.getFacetTypeEditor(myFacetType);
     return editor != null ? editor.getHelpTopic() : null;
   }
 
+  @Override
   public boolean isModified() {
     return false;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
   }
 
+  @Override
   public void reset() {
   }
 
+  @Override
   public void disposeUIResources() {
   }
 

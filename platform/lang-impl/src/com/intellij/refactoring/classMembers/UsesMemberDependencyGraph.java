@@ -31,6 +31,7 @@ import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -88,19 +89,24 @@ public class UsesMemberDependencyGraph<T extends NavigatablePsiElement, C extend
     }
     else {
       for (final T member : members) {
-        for (final T dependency : myMemberDependenciesStorage.getMemberDependencies(member)) {
-          addDependency(dependency, member);
+        final Set<T> dependencies = myMemberDependenciesStorage.getMemberDependencies(member);
+        if (dependencies != null) {
+          for (final T dependency : dependencies) {
+            addDependency(dependency, member);
+          }
         }
       }
     }
   }
 
-  private void buildDepsRecursively(final T sourceElement, final Set<T> members) {
-    for (T member : members) {
-      if (!myDependencies.contains(member)) {
-        addDependency(member, sourceElement);
-        if (!mySelectedAbstract.contains(member)) {
-          buildDepsRecursively(member, myMemberDependenciesStorage.getMemberDependencies(member));
+  private void buildDepsRecursively(final T sourceElement, @Nullable final Set<T> members) {
+    if (members != null) {
+      for (T member : members) {
+        if (!myDependencies.contains(member)) {
+          addDependency(member, sourceElement);
+          if (!mySelectedAbstract.contains(member)) {
+            buildDepsRecursively(member, myMemberDependenciesStorage.getMemberDependencies(member));
+          }
         }
       }
     }

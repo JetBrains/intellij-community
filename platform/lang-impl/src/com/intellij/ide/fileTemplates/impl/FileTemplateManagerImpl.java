@@ -25,8 +25,6 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -59,7 +57,7 @@ import java.util.*;
  * locking policy: if the class needs to take a read or write action, the LOCK lock must be taken
  * _inside_, not outside of the read action
  */
-public class FileTemplateManagerImpl extends FileTemplateManager implements ExportableComponent, JDOMExternalizable {
+public class FileTemplateManagerImpl extends FileTemplateManager implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl");
 
   private static final String TEMPLATES_DIR = "fileTemplates";
@@ -87,11 +85,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   private static final String ELEMENT_DELETED_INCLUDES = "deleted_includes";
   private static final String ELEMENT_RECENT_TEMPLATES = "recent_templates";
   private static final String ELEMENT_TEMPLATES = "templates";
-  private static final String ELEMENT_INTERNAL_TEMPLATE = "internal_template";
-  private static final String ELEMENT_TEMPLATE = "template";
-  private static final String ATTRIBUTE_NAME = "name";
-  private static final String ATTRIBUTE_REFORMAT = "reformat";
-  private static final String ATTRIBUTE_ENABLED = "enabled";
 
   private final FTManager[] myAllManagers;
   private final FileTypeManagerEx myTypeManager;
@@ -113,7 +106,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     myDirToManagerMap.put(INCLUDES_DIR + "/", myPatternsManager);
     myDirToManagerMap.put(CODETEMPLATES_DIR + "/", myCodeTemplatesManager);
     myDirToManagerMap.put(J2EE_TEMPLATES_DIR + "/", myJ2eeTemplatesManager);
-    
+
     myAllManagers = new FTManager[]{myDefaultTemplatesManager, myInternalTemplatesManager, myPatternsManager, myCodeTemplatesManager, myJ2eeTemplatesManager};
 
     loadDefaultTemplates();
@@ -279,16 +272,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   }
 
   @NotNull
-  public File[] getExportFiles() {
-    return new File[]{myDefaultTemplatesManager.getConfigRoot(false), PathManager.getDefaultOptionsFile()};
-  }
-
-  @NotNull
-  public String getPresentableName() {
-    return IdeBundle.message("item.file.templates");
-  }
-
-  @NotNull
   public FileTemplate[] getAllTemplates() {
     final Collection<FileTemplateBase> templates = myDefaultTemplatesManager.getAllTemplates(false);
     return templates.toArray(new FileTemplate[templates.size()]);
@@ -362,6 +345,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   }
 
   public void readExternal(Element element) throws InvalidDataException {
+
     final Element recentElement = element.getChild(ELEMENT_RECENT_TEMPLATES);
     if (recentElement != null) {
       myRecentList.readExternal(recentElement);
@@ -386,35 +370,18 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       final List children = templatesElement.getChildren();
       for (final Object child : children) {
         final Element childElement = (Element)child;
-        boolean reformat = Boolean.TRUE.toString().equals(childElement.getAttributeValue(ATTRIBUTE_REFORMAT));
+        boolean reformat =
+          Boolean.TRUE.toString().equals(childElement.getAttributeValue(ExportableFileTemplateSettings.ATTRIBUTE_REFORMAT));
         if (!reformat) {
-          final String name = childElement.getAttributeValue(ATTRIBUTE_NAME);
+          final String name = childElement.getAttributeValue(ExportableFileTemplateSettings.ATTRIBUTE_NAME);
           templateNamesWithReformatOff.add(name);
         }
       }
     }
-    
-    for (final FTManager manager : myAllManagers) {
-      final Element templatesGroup = element.getChild(getXmlElementGroupName(manager));
-      if (templatesGroup == null) {
-        continue;
-      }
-      final List children = templatesGroup.getChildren(ELEMENT_TEMPLATE);
-      
-      for (final Object elem : children) {
-        final Element child = (Element)elem;
-        final String qName = child.getAttributeValue(ATTRIBUTE_NAME);
-        final FileTemplateBase template = manager.getTemplate(qName);
-        if (template == null) {
-          continue;
-        }
-        final boolean reformat = Boolean.TRUE.toString().equals(child.getAttributeValue(ATTRIBUTE_REFORMAT));
-        template.setReformatCode(reformat);
-        if (template instanceof BundledFileTemplate) {
-          final boolean enabled = Boolean.parseBoolean(child.getAttributeValue(ATTRIBUTE_ENABLED, "true"));
-          ((BundledFileTemplate)template).setEnabled(enabled);
-        }
-      }
+
+    ExportableFileTemplateSettings exportableFileTemplateSettings = ServiceManager.getService(ExportableFileTemplateSettings.class);
+    if (!exportableFileTemplateSettings.isLoaded()) {
+      ExportableFileTemplateSettings.doLoad(this, element);
     }
 
     // apply data loaded from older format
@@ -466,27 +433,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     element.addContent(recentElement);
     myRecentList.writeExternal(recentElement);
 
-    for (FTManager manager : myAllManagers) {
-      final Element templatesGroup = new Element(getXmlElementGroupName(manager));
-      element.addContent(templatesGroup);
-      for (FileTemplateBase template : manager.getAllTemplates(true)) {
-        // save only those settings that differ from defaults
-        boolean shouldSave = template.isReformatCode() != FileTemplateBase.DEFAULT_REFORMAT_CODE_VALUE;
-        if (template instanceof BundledFileTemplate) {
-          shouldSave |= ((BundledFileTemplate)template).isEnabled() != FileTemplateBase.DEFAULT_ENABLED_VALUE;
-        }
-        if (!shouldSave) {
-          continue;
-        }
-        final Element templateElement = new Element(ELEMENT_TEMPLATE);
-        templateElement.setAttribute(ATTRIBUTE_NAME, template.getQualifiedName());
-        templateElement.setAttribute(ATTRIBUTE_REFORMAT, Boolean.toString(template.isReformatCode()));
-        if (template instanceof BundledFileTemplate) {
-          templateElement.setAttribute(ATTRIBUTE_ENABLED, Boolean.toString(((BundledFileTemplate)template).isEnabled()));
-        }
-        templatesGroup.addContent(templateElement);
-      }
-    }
     //Element deletedTemplatesElement = new Element(ELEMENT_DELETED_TEMPLATES);
     //element.addContent(deletedTemplatesElement);
     //myDefaultTemplatesManager.getDeletedTemplates().writeExternal(deletedTemplatesElement);
@@ -518,10 +464,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   //  templateElement.setAttribute(ATTRIBUTE_REFORMAT, Boolean.toString(template.isReformatCode()));
   //  return templateElement;
   //}
-
-  private static String getXmlElementGroupName(FTManager manager) {
-    return manager.getName().toLowerCase(Locale.US) + "_" + "templates";
-  }
 
   private void validateRecentNames() {
     final Collection<FileTemplateBase> allTemplates = myDefaultTemplatesManager.getAllTemplates(false);
@@ -714,4 +656,13 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     }
 
   }
+
+  FTManager[] getAllManagers() {
+    return myAllManagers;
+  }
+
+  FTManager getDefaultTemplatesManager() {
+    return myDefaultTemplatesManager;
+  }
+
 }

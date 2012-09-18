@@ -29,9 +29,11 @@ import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.concurrency.Job;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -45,6 +47,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -81,13 +84,13 @@ import java.util.*;
 /**
  * This class also controls the auto-reparse and auto-hints.
  */
-public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMExternalizable, ProjectComponent {
+public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMExternalizable, NamedComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl");
 
   private static final Key<List<LineMarkerInfo>> MARKERS_IN_EDITOR_DOCUMENT_KEY = Key.create("MARKERS_IN_EDITOR_DOCUMENT");
   private final Project myProject;
   private final DaemonCodeAnalyzerSettings mySettings;
-  private final EditorTracker myEditorTracker;
+  @NotNull private final EditorTracker myEditorTracker;
   private DaemonProgressIndicator myUpdateProgress = new DaemonProgressIndicator(); //guarded by this
 
   private final Runnable myUpdateRunnable = createUpdateRunnable();
@@ -100,26 +103,27 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private final FileStatusMap myFileStatusMap;
   private DaemonCodeAnalyzerSettings myLastSettings;
 
-  private IntentionHintComponent myLastIntentionHint; //guarded by this
+  private volatile IntentionHintComponent myLastIntentionHint;
   private volatile boolean myDisposed;     // the only possible transition: false -> true
   private volatile boolean myInitialized;  // the only possible transition: false -> true
 
   @NonNls private static final String DISABLE_HINTS_TAG = "disable_hints";
   @NonNls private static final String FILE_TAG = "file";
   @NonNls private static final String URL_ATT = "url";
-  private DaemonListeners myDaemonListeners;
   private final PassExecutorService myPassExecutorService;
-  private int myModificationCount = 0;
 
   private volatile boolean allowToInterrupt = true;
-  private StatusBarUpdater myStatusBarUpdater;
 
-  public DaemonCodeAnalyzerImpl(@NotNull Project project, DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings, EditorTracker editorTracker) {
+  public DaemonCodeAnalyzerImpl(@NotNull Project project,
+                                @NotNull DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings,
+                                @NotNull EditorTracker editorTracker,
+                                @NotNull final NamedScopeManager namedScopeManager,
+                                @NotNull final DependencyValidationManager dependencyValidationManager) {
     myProject = project;
 
     mySettings = daemonCodeAnalyzerSettings;
     myEditorTracker = editorTracker;
-    myLastSettings = (DaemonCodeAnalyzerSettings)mySettings.clone();
+    myLastSettings = (DaemonCodeAnalyzerSettings)daemonCodeAnalyzerSettings.clone();
 
     myFileStatusMap = new FileStatusMap(myProject);
     myPassExecutorService = new PassExecutorService(myProject) {
@@ -142,6 +146,42 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     Disposer.register(project, myPassExecutorService);
     Disposer.register(project, myFileStatusMap);
     DaemonProgressIndicator.setDebug(LOG.isDebugEnabled());
+
+
+    assert !myInitialized : "Double Initializing";
+    Disposer.register(myProject, new StatusBarUpdater(myProject));
+
+    //myDaemonListeners = new DaemonListeners(myProject, this, editorTracker, editorFactory,
+    //                                        psiDocumentManager, commandProcessor,
+    //                                        editorColorsManager, application,
+    //                                        inspectionProfileManager, inspectionProjectProfileManager,
+    //                                        todoConfiguration, actionManagerEx,
+    //                                        virtualFileManager, namedScopeManager,
+    //                                        dependencyValidationManager);
+    //Disposer.register(myProject, myDaemonListeners);
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        reloadScopes(dependencyValidationManager, namedScopeManager);
+      }
+    },project.getDisposed());
+
+
+    myInitialized = true;
+    myDisposed = false;
+    myFileStatusMap.markAllFilesDirty();
+    Disposer.register(project, new Disposable() {
+      @Override
+      public void dispose() {
+        assert myInitialized : "Disposing not initialized component";
+        assert !myDisposed : "Double dispose";
+
+        stopProcess(false);
+
+        myDisposed = true;
+        myLastSettings = null;
+      }
+    });
   }
 
   static boolean hasErrors(@NotNull Project project, @NotNull Document document) {
@@ -262,9 +302,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   @TestOnly
   public void prepareForTest() {
-    if (!myInitialized) {
-      projectOpened();
-    }
+    //if (!myInitialized) {
+    //  projectOpened();
+    //}
     setUpdateByTimerEnabled(false);
     waitForTermination();
   }
@@ -272,14 +312,14 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   @TestOnly
   public void cleanupAfterTest(boolean dispose) {
     if (!myProject.isOpen()) return;
-    stopProcess(false);
-    if (dispose) {
-      projectClosed();
-      Disposer.dispose(myStatusBarUpdater);
-      myStatusBarUpdater = null;
-      Disposer.dispose(myDaemonListeners);
-      myDaemonListeners = null;
-    }
+    //stopProcess(false);
+    //if (dispose) {
+    //  projectClosed();
+    //  Disposer.dispose(myStatusBarUpdater);
+    //  myStatusBarUpdater = null;
+    //  Disposer.dispose(myDaemonListeners);
+    //  myDaemonListeners = null;
+    //}
     setUpdateByTimerEnabled(false);
     waitForTermination();
   }
@@ -294,40 +334,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return "DaemonCodeAnalyzer";
   }
 
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @Override
-  public void projectOpened() {
-    assert !myInitialized : "Double Initializing";
-    myStatusBarUpdater = new StatusBarUpdater(myProject);
-    Disposer.register(myProject, myStatusBarUpdater);
-
-    myDaemonListeners = new DaemonListeners(myProject, this, myEditorTracker);
-    Disposer.register(myProject, myDaemonListeners);
-    reloadScopes();
-
-    myInitialized = true;
-    myDisposed = false;
-    myFileStatusMap.markAllFilesDirty();
-  }
-
-  @Override
-  public void projectClosed() {
-    assert myInitialized : "Disposing not initialized component";
-    assert !myDisposed : "Double dispose";
-
-    stopProcess(false);
-
-    myDisposed = true;
-    myLastSettings = null;
-  }
-
   void repaintErrorStripeRenderer(@NotNull Editor editor) {
     if (!myProject.isInitialized()) return;
     final Document document = editor.getDocument();
@@ -340,11 +346,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   private final List<Pair<NamedScope, NamedScopesHolder>> myScopes = ContainerUtil.createEmptyCOWList();
-  void reloadScopes() {
+  void reloadScopes(@NotNull DependencyValidationManager dependencyValidationManager, @NotNull NamedScopeManager namedScopeManager) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<Pair<NamedScope, NamedScopesHolder>> scopeList = new ArrayList<Pair<NamedScope, NamedScopesHolder>>();
-    final DependencyValidationManager dependencyValidationManager = DependencyValidationManager.getInstance(myProject);
-    addScopesToList(scopeList, NamedScopeManager.getInstance(myProject));
+    addScopesToList(scopeList, namedScopeManager);
     addScopesToList(scopeList, dependencyValidationManager);
     myScopes.clear();
     myScopes.addAll(scopeList);
@@ -456,7 +461,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   @NotNull
-  public List<TextEditorHighlightingPass> getPassesToShowProgressFor(Document document) {
+  List<TextEditorHighlightingPass> getPassesToShowProgressFor(Document document) {
     List<TextEditorHighlightingPass> allPasses = myPassExecutorService.getAllSubmittedPasses();
     List<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>(allPasses.size());
     for (TextEditorHighlightingPass pass : allPasses) {
@@ -467,7 +472,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return result;
   }
 
-  public boolean isAllAnalysisFinished(@NotNull PsiFile file) {
+  boolean isAllAnalysisFinished(@NotNull PsiFile file) {
     if (myDisposed) return false;
     Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
     return document != null &&
@@ -488,11 +493,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return myFileStatusMap;
   }
 
-  public synchronized int getModificationCount() {
-    return myModificationCount;
-  }
-  
-  public synchronized boolean isRunning() {
+  synchronized boolean isRunning() {
     return myUpdateProgress != null && !myUpdateProgress.isCanceled();
   }
 
@@ -509,7 +510,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   private synchronized void cancelUpdateProgress(final boolean start, @NonNls String reason) {
     PassExecutorService.log(myUpdateProgress, null, reason, start);
-    myModificationCount++;
 
     if (myUpdateProgress != null) {
       myUpdateProgress.cancel();
@@ -541,12 +541,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     });
   }
 
-  public static boolean processHighlightsOverlappingOutside(@NotNull Document document,
-                                                            @NotNull Project project,
-                                                            @Nullable("null means all") final HighlightSeverity minSeverity,
-                                                            final int startOffset,
-                                                            final int endOffset,
-                                                            @NotNull final Processor<HighlightInfo> processor) {
+  static boolean processHighlightsOverlappingOutside(@NotNull Document document,
+                                                     @NotNull Project project,
+                                                     @Nullable("null means all") final HighlightSeverity minSeverity,
+                                                     final int startOffset,
+                                                     final int endOffset,
+                                                     @NotNull final Processor<HighlightInfo> processor) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
 
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
@@ -634,13 +634,17 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return markup.getUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY);
   }
 
-  public static void setLineMarkers(@NotNull Document document, List<LineMarkerInfo> lineMarkers, Project project) {
+  static void setLineMarkers(@NotNull Document document, List<LineMarkerInfo> lineMarkers, Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
     markup.putUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY, lineMarkers);
   }
 
-  public synchronized void setLastIntentionHint(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor, @NotNull ShowIntentionsPass.IntentionsInfo intentions, boolean hasToRecreate) {
+  void setLastIntentionHint(@NotNull Project project,
+                                         @NotNull PsiFile file,
+                                         @NotNull Editor editor,
+                                         @NotNull ShowIntentionsPass.IntentionsInfo intentions,
+                                         boolean hasToRecreate) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     hideLastIntentionHint();
     IntentionHintComponent hintComponent = IntentionHintComponent.showIntentionHint(project, file, editor, intentions, false);
@@ -650,15 +654,17 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myLastIntentionHint = hintComponent;
   }
 
-  public synchronized void hideLastIntentionHint() {
-    if (myLastIntentionHint != null && myLastIntentionHint.isVisible()) {
-      myLastIntentionHint.hide();
+  void hideLastIntentionHint() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    IntentionHintComponent hint = myLastIntentionHint;
+    if (hint != null && hint.isVisible()) {
+      hint.hide();
       myLastIntentionHint = null;
     }
   }
 
   @Nullable
-  public synchronized IntentionHintComponent getLastIntentionHint() {
+  IntentionHintComponent getLastIntentionHint() {
     return myLastIntentionHint;
   }
 
@@ -715,12 +721,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         Runnable runnable = new Runnable() {
           @Override
           public void run() {
-            PassExecutorService.log(myUpdateProgress, null, "Update Runnable. myUpdateByTimerEnabled:",myUpdateByTimerEnabled," something disposed:",PowerSaveMode.isEnabled() || myDisposed || !myProject.isInitialized()," activeEditors:",myProject.isDisposed() ? null : myDaemonListeners.getSelectedEditors());
+            PassExecutorService.log(getUpdateProgress(), null, "Update Runnable. myUpdateByTimerEnabled:",myUpdateByTimerEnabled," something disposed:",PowerSaveMode.isEnabled() || myDisposed || !myProject.isInitialized()," activeEditors:",myProject.isDisposed() ? null : getSelectedEditors());
             if (!myUpdateByTimerEnabled) return;
             if (myDisposed) return;
             ApplicationManager.getApplication().assertIsDispatchThread();
 
-            final Collection<FileEditor> activeEditors = myDaemonListeners.getSelectedEditors();
+            final Collection<FileEditor> activeEditors = getSelectedEditors();
             if (activeEditors.isEmpty()) return;
 
             ApplicationManager.getApplication().assertIsDispatchThread();
@@ -776,7 +782,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   public boolean canChangeFileSilently(@NotNull PsiFileSystemItem file) {
-    return myDaemonListeners.canChangeFileSilently(file);
+    return DaemonListeners.getInstance(myProject).canChangeFileSilently(file);
   }
 
   @Override
@@ -784,6 +790,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     for(ReferenceImporter importer: Extensions.getExtensions(ReferenceImporter.EP_NAME)) {
       if (importer.autoImportReferenceAtCursor(editor, file)) break;
     }
+  }
+
+  synchronized DaemonProgressIndicator getUpdateProgress() {
+    return myUpdateProgress;
   }
 
   @NotNull
@@ -797,8 +807,40 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     allowToInterrupt = can;
   }
 
-  @TestOnly
-  public synchronized DaemonProgressIndicator getUpdateProgress() {
-    return myUpdateProgress;
+  @NotNull
+  private Collection<FileEditor> getSelectedEditors() {
+    // Editors in modal context
+    List<Editor> editors = getActiveEditors();
+
+    Collection<FileEditor> activeFileEditors = new THashSet<FileEditor>(editors.size());
+    for (Editor editor : editors) {
+      TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
+      activeFileEditors.add(textEditor);
+    }
+    if (ApplicationManager.getApplication().getCurrentModalityState() != ModalityState.NON_MODAL) {
+      return activeFileEditors;
+    }
+
+    // Editors in tabs.
+    Collection<FileEditor> result = new THashSet<FileEditor>();
+    Collection<Document> documents = new THashSet<Document>(activeFileEditors.size());
+    final FileEditor[] tabEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
+    for (FileEditor tabEditor : tabEditors) {
+      if (tabEditor instanceof TextEditor) {
+        documents.add(((TextEditor)tabEditor).getEditor().getDocument());
+      }
+      result.add(tabEditor);
+    }
+    // do not duplicate documents
+    for (FileEditor fileEditor : activeFileEditors) {
+      if (fileEditor instanceof TextEditor && documents.contains(((TextEditor)fileEditor).getEditor().getDocument())) continue;
+      result.add(fileEditor);
+    }
+    return result;
+  }
+
+  @NotNull
+  private List<Editor> getActiveEditors() {
+    return myEditorTracker.getActiveEditors();
   }
 }

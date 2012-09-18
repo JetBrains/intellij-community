@@ -780,13 +780,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   @Override
-  public boolean isCheckCommitMessageSpelling() {
+  public boolean isCheckSpelling() {
     VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
     return configuration == null || configuration.CHECK_COMMIT_MESSAGE_SPELLING;
   }
 
   @Override
-  public void setCheckCommitMessageSpelling(boolean checkSpelling) {
+  public void setCheckSpelling(boolean checkSpelling) {
     VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
     if (configuration != null) {
       configuration.CHECK_COMMIT_MESSAGE_SPELLING = checkSpelling;

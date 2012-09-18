@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
@@ -498,7 +499,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   private void fireModification(final Configurable actual) {
 
-    Collection<Configurable> toCheck = colectAllParentsAndSiblings(actual);
+    Collection<Configurable> toCheck = collectAllParentsAndSiblings(actual);
 
     for (Configurable configurable : toCheck) {
       fireModificationForItem(configurable);
@@ -506,7 +507,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   }
 
-  private Collection<Configurable> colectAllParentsAndSiblings(final Configurable actual) {
+  private Collection<Configurable> collectAllParentsAndSiblings(final Configurable actual) {
     ArrayList<Configurable> result = new ArrayList<Configurable>();
     Configurable nearestParent = getContext().getParentConfigurable(actual);
 
@@ -1270,7 +1271,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     void set(final ContentWrapper wrapper) {
       myOwnDetails.setDetailsModeEnabled(true);
-      wrapper.setContent(myComponent, getContext().getErrors().get(myConfigurable), !(myConfigurable instanceof Configurable.NoScroll));
+      wrapper.setContent(myComponent, getContext().getErrors().get(myConfigurable), !ConfigurableWrapper.isNoScroll(myConfigurable));
     }
 
     boolean isShowing() {

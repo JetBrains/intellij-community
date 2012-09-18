@@ -1182,15 +1182,24 @@ class FormatProcessor {
     return myLastWhiteSpace;
   }
 
-  private static int calcShift(final IndentInside lastLineIndent, final IndentInside whiteSpaceIndent,
-                               final CommonCodeStyleSettings.IndentOptions options)
+  /**
+   * Calculates difference in visual columns between the given indents.
+   * 
+   * @param oldIndent  old indent
+   * @param newIndent  new indent
+   * @param options    indent options to use
+   * @return           difference in visual columns between the given indents
+   */
+  private static int calcShift(@NotNull final IndentInside oldIndent,
+                               @NotNull final IndentInside newIndent,
+                               @NotNull final CommonCodeStyleSettings.IndentOptions options)
   {
-    if (lastLineIndent.equals(whiteSpaceIndent)) return 0;
+    if (oldIndent.equals(newIndent)) return 0;
     if (options.USE_TAB_CHARACTER) {
-      return whiteSpaceIndent.tabs - lastLineIndent.getTabsCount(options);
+      return (newIndent.tabs - oldIndent.getTabsCount(options)) * options.TAB_SIZE;
     }
     else {
-      return whiteSpaceIndent.whiteSpaces - lastLineIndent.getSpacesCount(options);
+      return newIndent.whiteSpaces - oldIndent.getSpacesCount(options);
     }
   }
 

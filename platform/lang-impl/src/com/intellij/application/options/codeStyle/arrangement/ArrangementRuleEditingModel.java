@@ -16,7 +16,7 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementOperator;
-import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
@@ -37,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
 public interface ArrangementRuleEditingModel {
 
   @NotNull
-  StdArrangementRule EMPTY_RULE = new StdArrangementRule(new StdArrangementEntryMatcher(
+  StdArrangementMatchRule EMPTY_RULE = new StdArrangementMatchRule(new StdArrangementEntryMatcher(
     new ArrangementCompositeMatchCondition(ArrangementOperator.AND)
   ));
 
@@ -45,7 +45,7 @@ public interface ArrangementRuleEditingModel {
   ArrangementMatchCondition getCondition();
 
   @NotNull
-  StdArrangementRule getRule();
+  StdArrangementMatchRule getRule();
 
   /**
    * Asks current model to destroy itself.

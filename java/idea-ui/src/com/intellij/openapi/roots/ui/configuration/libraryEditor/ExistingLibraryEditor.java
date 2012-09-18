@@ -107,6 +107,7 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
     return ((LibraryEx)myLibrary).getProperties();
   }
 
+  @Override
   public void dispose() {
     if (myModel != null) {
       // dispose if wasn't committed

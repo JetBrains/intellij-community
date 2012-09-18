@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
  *         Date: Oct 28, 2004
  */
 public class DefaultModuleConfigurationEditorFactoryImpl extends DefaultModuleConfigurationEditorFactory {
+  @Override
   public ModuleConfigurationEditor createModuleContentRootsEditor(ModuleConfigurationState state) {
     final ModifiableRootModel rootModel = state.getRootModel();
     final Module module = rootModel.getModule();
@@ -31,10 +32,12 @@ public class DefaultModuleConfigurationEditorFactoryImpl extends DefaultModuleCo
     return new ContentEntriesEditor(moduleName, state);
   }
 
+  @Override
   public ModuleConfigurationEditor createClasspathEditor(ModuleConfigurationState state) {
     return new ClasspathEditor(state);
   }
 
+  @Override
   public ModuleConfigurationEditor createOutputEditor(ModuleConfigurationState state) {
     return new OutputEditor(state);
   }

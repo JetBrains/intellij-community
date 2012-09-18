@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -162,7 +163,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
   private static String getMethodTypes(PsiMethod method) {
     final StringBuilder buf = new StringBuilder();
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
-      buf.append(", ").append(parameter.getType().getCanonicalText()).append(".class");
+      buf.append(", ").append(((PsiClassReferenceType)parameter.getType()).getReference().getReferenceName()).append(".class");
     }
     return buf.toString();
   }

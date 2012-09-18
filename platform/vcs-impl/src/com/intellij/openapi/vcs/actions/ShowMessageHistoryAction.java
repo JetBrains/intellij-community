@@ -17,12 +17,13 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.actions.ContentChooser;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.CheckinProjectPanel;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.ui.Refreshable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,24 +45,32 @@ public class ShowMessageHistoryAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
     super.update(e);
 
-    final CheckinProjectPanel panel = (CheckinProjectPanel)CheckinProjectPanel.PANEL_KEY.getData(e.getDataContext());
+    final DataContext dc = e.getDataContext();
+    final Project project = PlatformDataKeys.PROJECT.getData(dc);
+    Object panel = CheckinProjectPanel.PANEL_KEY.getData(dc);
+    if (! (panel instanceof CommitMessageI)) {
+      panel = VcsDataKeys.COMMIT_MESSAGE_CONTROL.getData(dc);
+    }
 
-    if (panel == null) {
+    if (project == null || panel == null) {
       e.getPresentation().setVisible(false);
       e.getPresentation().setEnabled(false);
     }
     else {
       e.getPresentation().setVisible(true);
-      final ArrayList<String> recentMessages = VcsConfiguration.getInstance(panel.getProject()).getRecentMessages();
+      final ArrayList<String> recentMessages = VcsConfiguration.getInstance(project).getRecentMessages();
       e.getPresentation().setEnabled(!recentMessages.isEmpty());
     }
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final CheckinProjectPanel panel = (CheckinProjectPanel)CheckinProjectPanel.PANEL_KEY.getData(e.getDataContext());
+    CommitMessageI commitMessageI;
+    final DataContext dc = e.getDataContext();
+    final Project project = PlatformDataKeys.PROJECT.getData(dc);
+    final Refreshable panel = CheckinProjectPanel.PANEL_KEY.getData(dc);
+    commitMessageI = (panel instanceof CommitMessageI) ? (CommitMessageI)panel : VcsDataKeys.COMMIT_MESSAGE_CONTROL.getData(dc);
 
-    if (panel != null) {
-      final Project project = panel.getProject();
+    if (commitMessageI != null && project != null) {
       final VcsConfiguration configuration = VcsConfiguration.getInstance(project);
 
 
@@ -90,7 +99,7 @@ public class ShowMessageHistoryAction extends AnAction implements DumbAware {
           final int selectedIndex = contentChooser.getSelectedIndex();
 
           if (selectedIndex >= 0) {
-            panel.setCommitMessage(contentChooser.getAllContents().get(selectedIndex));
+            commitMessageI.setCommitMessage(contentChooser.getAllContents().get(selectedIndex));
           }
         }
       }

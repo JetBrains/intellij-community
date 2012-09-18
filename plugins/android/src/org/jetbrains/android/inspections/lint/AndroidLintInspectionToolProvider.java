@@ -4,7 +4,6 @@ import com.android.tools.lint.checks.*;
 import com.android.tools.lint.detector.api.Issue;
 import com.android.tools.lint.detector.api.LintConstants;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
@@ -12,94 +11,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidLintInspectionToolProvider implements InspectionToolProvider {
+public class AndroidLintInspectionToolProvider {
 
   /*
    Missing: DeprecationDetector, NamespaceDetector.TYPO, NamespaceDetector.UNUSED
    Also detectors based on CLASS_FILE scope are missing
     */
-
-  @Override
-  public Class[] getInspectionClasses() {
-    return new Class[]{
-      AndroidLintContentDescriptionInspection.class,
-      AndroidLintAdapterViewChildrenInspection.class,
-      AndroidLintScrollViewCountInspection.class,
-      AndroidLintMissingPrefixInspection.class,
-      AndroidLintDuplicateIdsInspection.class,
-      AndroidLintGridLayoutInspection.class,
-      AndroidLintHardcodedTextInspection.class,
-      AndroidLintInefficientWeightInspection.class,
-      AndroidLintNestedWeightsInspection.class,
-      AndroidLintDisableBaselineAlignmentInspection.class,
-      AndroidLintManifestOrderInspection.class,
-      AndroidLintMergeRootFrameInspection.class,
-      AndroidLintNestedScrollingInspection.class,
-      AndroidLintObsoleteLayoutParamInspection.class,
-      AndroidLintProguardInspection.class,
-      AndroidLintPxUsageInspection.class,
-      AndroidLintScrollViewSizeInspection.class,
-      AndroidLintExportedServiceInspection.class,
-      AndroidLintGrantAllUrisInspection.class,
-      AndroidLintStateListReachableInspection.class,
-      AndroidLintTextFieldsInspection.class,
-      AndroidLintTooManyViewsInspection.class,
-      AndroidLintTooDeepLayoutInspection.class,
-      AndroidLintTypographyDashesInspection.class,
-      AndroidLintTypographyQuotesInspection.class,
-      AndroidLintTypographyFractionsInspection.class,
-      AndroidLintTypographyEllipsisInspection.class,
-      AndroidLintTypographyOtherInspection.class,
-      AndroidLintUseCompoundDrawablesInspection.class,
-      AndroidLintUselessParentInspection.class,
-      AndroidLintUselessLeafInspection.class,
-      AndroidLintButtonOrderInspection.class,
-      AndroidLintBackButtonInspection.class,
-      AndroidLintButtonCaseInspection.class,
-      AndroidLintResourceAsColorInspection.class,
-      AndroidLintExtraTextInspection.class,
-      AndroidLintHardcodedDebugModeInspection.class,
-      AndroidLintDrawAllocationInspection.class,
-      AndroidLintSparseArrayInspection.class,
-      AndroidLintUseValueOfInspection.class,
-      AndroidLintLibraryCustomViewInspection.class,
-      AndroidLintPrivateResourceInspection.class,
-      AndroidLintSdCardPathInspection.class,
-      AndroidLintStyleCycleInspection.class,
-      AndroidLintTextViewEditsInspection.class,
-      AndroidLintEnforceUTF8Inspection.class,
-      AndroidLintUnknownIdInLayoutInspection.class,
-      AndroidLintSuspiciousImportInspection.class,
-      AndroidLintMultipleUsesSdkInspection.class,
-      AndroidLintUsesMinSdkAttributesInspection.class,
-      AndroidLintProguardSplitConfigInspection.class,
-      AndroidLintWorldWriteableFilesInspection.class,
-
-      // batch-mode-only
-      AndroidLintInconsistentArraysInspection.class,
-      AndroidLintDuplicateIncludedIdsInspection.class,
-      AndroidLintIconExpectedSizeInspection.class,
-      AndroidLintIconDipSizeInspection.class,
-      AndroidLintIconLocationInspection.class,
-      AndroidLintIconDensitiesInspection.class,
-      AndroidLintIconMissingDensityFolderInspection.class,
-      AndroidLintGifUsageInspection.class,
-      AndroidLintIconDuplicatesInspection.class,
-      AndroidLintIconDuplicatesConfigInspection.class,
-      AndroidLintIconNoDpiInspection.class,
-      AndroidLintOverdrawInspection.class,
-      AndroidLintMissingTranslationInspection.class,
-      AndroidLintExtraTranslationInspection.class,
-      AndroidLintUnusedResourcesInspection.class,
-      AndroidLintUnusedIdsInspection.class,
-      AndroidLintAlwaysShowActionInspection.class,
-      AndroidLintStringFormatCountInspection.class,
-      AndroidLintStringFormatMatchesInspection.class,
-      AndroidLintStringFormatInvalidInspection.class,
-      AndroidLintWrongViewCastInspection.class,
-      AndroidLintUnknownIdInspection.class
-    };
-  }
 
   /**
    * Batch-mode-only inspections

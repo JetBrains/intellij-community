@@ -25,11 +25,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
-import com.intellij.psi.codeStyle.arrangement.Rearranger;
-import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
+import com.intellij.psi.codeStyle.arrangement.*;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.settings.*;
 import com.intellij.ui.IdeBorderFactory;
@@ -96,7 +96,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     toolbarControl.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.TOP | SideBorder.RIGHT));
     myContent.add(toolbarControl, new GridBag().weightx(1).fillCellHorizontally().coverLine());
 
-    myRuleTree = new ArrangementRuleTree(getRules(settings), groupingRules, displayManager);
+    myRuleTree = new ArrangementRuleTree(getSettings(settings), groupingRules, displayManager);
     final Tree treeComponent = myRuleTree.getTreeComponent();
     actionToolbar.setTargetComponent(treeComponent);
     JBScrollPane scrollPane = new JBScrollPane(treeComponent);
@@ -118,8 +118,29 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     setupKeyboardActions(actionManager, treeComponent);
 
     setupScrollingHelper(treeComponent, scrollPane, editorPane);
+    setupCanvasWidthUpdater(scrollPane);
   }
 
+  private void setupCanvasWidthUpdater(@NotNull JBScrollPane scrollPane) {
+    final JViewport viewport = scrollPane.getViewport();
+    viewport.addChangeListener(new ChangeListener() {
+
+      private int myWidth;
+
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        Rectangle visibleRect = viewport.getVisibleRect();
+        if (visibleRect == null || visibleRect.width <= 0) {
+          return;
+        }
+        if (myWidth != visibleRect.width) {
+          myWidth = visibleRect.width;
+          myRuleTree.updateCanvasWidth(myWidth);
+        }
+      }
+    });
+  }
+  
   /**
    * The general idea is to configure UI in a way that it automatically changes tree viewport 'y' coordinate in order to make
    * target rule visible on rule editor opening.
@@ -262,26 +283,16 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   }
 
   @SuppressWarnings("unchecked")
-  @NotNull
-  private List<StdArrangementRule> getRules(@NotNull CodeStyleSettings settings) {
-    List<ArrangementRule> storedRules = settings.getCommonSettings(myLanguage).getArrangementRules();
-    if (storedRules.isEmpty()) {
-      List<StdArrangementRule> defaultRules = mySettingsAware.getDefaultRules();
+  @Nullable
+  private StdArrangementSettings getSettings(@NotNull CodeStyleSettings settings) {
+    StdArrangementSettings result = (StdArrangementSettings)settings.getCommonSettings(myLanguage).getArrangementSettings();
+    if (result == null) {
+      List<StdArrangementMatchRule> defaultRules = mySettingsAware.getDefaultRules();
       if (defaultRules != null) {
-        return defaultRules;
+        result = new StdArrangementSettings(defaultRules);
       }
     }
-    else {
-      // We use unchecked cast here in assumption that current rearranger is based on standard settings if it uses standard
-      // settings-based rule editor.
-      // Note: unchecked cast for the whole collection doesn't work here (compiler error).
-      List<StdArrangementRule> result = new ArrayList<StdArrangementRule>();
-      for (ArrangementRule rule : storedRules) {
-        result.add((StdArrangementRule)rule);
-      }
-      return result;
-    }
-    return Collections.emptyList();
+    return result;
   }
 
   private static void setupKeyboardActions(@NotNull ActionManager actionManager, @NotNull Tree treeComponent) {
@@ -308,17 +319,17 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   @Override
   public boolean isModified(@NotNull CodeStyleSettings settings) {
-    return !getRules(settings).equals(myRuleTree.getRules());
+    return !Comparing.equal(getSettings(settings), myRuleTree.getSettings());
   }
 
   @Override
   public void apply(@NotNull CodeStyleSettings settings) {
-    settings.getCommonSettings(myLanguage).setArrangementRules(myRuleTree.getRules());
+    settings.getCommonSettings(myLanguage).setArrangementSettings(myRuleTree.getSettings());
   }
 
   @Override
   protected void resetImpl(@NotNull CodeStyleSettings settings) {
-    myRuleTree.setRules(getRules(settings));
+    myRuleTree.setSettings(getSettings(settings));
   }
 
   @Override
@@ -329,5 +340,11 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   @Override
   protected String getTabTitle() {
     return ApplicationBundle.message("arrangement.title.settings.tab");
+  }
+
+  @Override
+  public void dispose() {
+    super.dispose();
+    myRuleTree.disposeUI();
   }
 }

@@ -39,6 +39,7 @@ class ItemElement extends LibraryTableTreeContentElement {
     return myParent;
   }
 
+  @Override
   public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryRootsComponent parentEditor) {
     return new ItemElementDescriptor(parentDescriptor, this);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,9 @@ import java.awt.event.ActionListener;
 public class CvsFieldValidator {
   public static final char[] INVALID_CHARACTERS = new char[]{'`', '$', '.', ',', ':', ';', '@', '\'', ' '};
 
-  private CvsFieldValidator() {
-  }
+  private CvsFieldValidator() {}
 
-  private static void reportError(JLabel errorLabel, String message, TagNameFieldOwner tagNameFieldOwner) {
+  public static void reportError(JLabel errorLabel, String message, TagNameFieldOwner tagNameFieldOwner) {
     @NonNls final String text = "<html><font color='red'><b>" + message + "</b></font></html>";
     errorLabel.setText(text);
     if (tagNameFieldOwner != null) {
@@ -45,6 +44,7 @@ public class CvsFieldValidator {
   public static void installOn(final TagNameFieldOwner dialog, final JTextField field, final JLabel label) {
     installOn(dialog, field, label, new AbstractButton[0]);
     field.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       public void textChanged(DocumentEvent event) {
         checkTagNameField(dialog, field, label);
       }
@@ -57,6 +57,7 @@ public class CvsFieldValidator {
                                final JLabel label,
                                AbstractButton[] buttons) {
     field.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       public void textChanged(DocumentEvent event) {
         checkTagNameField(dialog, field, label);
       }
@@ -64,6 +65,7 @@ public class CvsFieldValidator {
 
     for (AbstractButton button : buttons) {
       button.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           checkTagNameField(dialog, field, label);
         }
@@ -86,13 +88,12 @@ public class CvsFieldValidator {
     }
   }
 
-
   public static boolean checkField(JTextField field,
                                    JTextField[] shouldDifferFrom,
                                    boolean shouldStartFromLetter,
                                    JLabel errorMessage, TagNameFieldOwner tagNameFieldOwner) {
-    String text = field.getText().trim();
-    if (text.length() == 0) {
+    final String text = field.getText().trim();
+    if (text.isEmpty()) {
       reportError(errorMessage, CvsBundle.message("error.message.field.cannot.be.empty"), tagNameFieldOwner);
       return false;
     }
@@ -112,7 +113,6 @@ public class CvsFieldValidator {
       }
     }
 
-
     if (shouldStartFromLetter && !Character.isLetter(text.charAt(0))) {
       reportError(errorMessage, CvsBundle.message("error.message.field.value.must.start.with.a.letter"), tagNameFieldOwner);
       return false;
@@ -121,6 +121,4 @@ public class CvsFieldValidator {
     errorMessage.setText(" ");
     return true;
   }
-
-
 }

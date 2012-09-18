@@ -24,6 +24,7 @@ import com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCalls
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -102,9 +103,12 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
           final PsiMethod psiMethod = ((PsiMethodCallExpression)gParent).resolveMethod();
           if (psiMethod != null && NullableNotNullManager.isNotNull(psiMethod)) {
             final PsiClass superClass = PsiUtil.resolveClassInType(operand.getType());
-            for (PsiMethod method : psiMethod.findSuperMethods(superClass)) {
-              if (NullableNotNullManager.isNullable(method)) {
-                return null;
+            final PsiClass containingClass = psiMethod.getContainingClass();
+            if (containingClass != null && superClass != null && containingClass.isInheritor(superClass, true)) {
+              for (PsiMethod method : psiMethod.findSuperMethods(superClass)) {
+                if (NullableNotNullManager.isNullable(method)) {
+                  return null;
+                }
               }
             }
           }

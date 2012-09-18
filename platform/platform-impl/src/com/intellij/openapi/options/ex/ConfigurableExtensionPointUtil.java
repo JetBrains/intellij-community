@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.options.ex;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurableProvider;
@@ -33,8 +32,6 @@ import java.util.List;
  * @author nik
  */
 public class ConfigurableExtensionPointUtil {
-  public static final ExtensionPointName<ConfigurableEP> APPLICATION_CONFIGURABLES = ExtensionPointName.create("com.intellij.applicationConfigurable");
-  public static final ExtensionPointName<ConfigurableEP> PROJECT_CONFIGURABLES = ExtensionPointName.create("com.intellij.projectConfigurable");
 
   private ConfigurableExtensionPointUtil() {
   }
@@ -43,7 +40,7 @@ public class ConfigurableExtensionPointUtil {
   public static List<Configurable> buildConfigurablesList(final ConfigurableEP[] extensions, final Configurable[] components, @Nullable ConfigurableFilter filter) {
     List<Configurable> result = new ArrayList<Configurable>();
     for (ConfigurableEP extension : extensions) {
-      ContainerUtil.addIfNotNull(extension.createConfigurable(), result);
+      ContainerUtil.addIfNotNull(ConfigurableWrapper.wrapConfigurable(extension), result);
     }
     ContainerUtil.addAll(result, components);
 
@@ -65,12 +62,12 @@ public class ConfigurableExtensionPointUtil {
    */
   @NotNull
   public static <T extends Configurable> T findProjectConfigurable(@NotNull Project project, @NotNull Class<T> configurableClass) {
-    return findConfigurable(project.getExtensions(PROJECT_CONFIGURABLES), configurableClass);
+    return findConfigurable(project.getExtensions(Configurable.PROJECT_CONFIGURABLE), configurableClass);
   }
 
   @NotNull
   public static <T extends Configurable> T findApplicationConfigurable(@NotNull Class<T> configurableClass) {
-    return findConfigurable(APPLICATION_CONFIGURABLES.getExtensions(), configurableClass);
+    return findConfigurable(Configurable.APPLICATION_CONFIGURABLE.getExtensions(), configurableClass);
   }
 
   @NotNull
@@ -88,12 +85,12 @@ public class ConfigurableExtensionPointUtil {
 
   @Nullable
   public static Configurable createProjectConfigurableForProvider(@NotNull Project project, Class<? extends ConfigurableProvider> providerClass) {
-    return createConfigurableForProvider(project.getExtensions(PROJECT_CONFIGURABLES), providerClass);
+    return createConfigurableForProvider(project.getExtensions(Configurable.PROJECT_CONFIGURABLE), providerClass);
   }
 
   @Nullable
   public static Configurable createApplicationConfigurableForProvider(Class<? extends ConfigurableProvider> providerClass) {
-    return createConfigurableForProvider(APPLICATION_CONFIGURABLES.getExtensions(), providerClass);
+    return createConfigurableForProvider(Configurable.APPLICATION_CONFIGURABLE.getExtensions(), providerClass);
   }
 
   @Nullable

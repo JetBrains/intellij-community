@@ -38,6 +38,7 @@ public class LayoutNodesDraggingObject extends PackagingElementDraggingObject {
     myNodes = nodes;
   }
 
+  @Override
   public List<PackagingElement<?>> createPackagingElements(ArtifactEditorContext context) {
     final List<PackagingElement<?>> result = new ArrayList<PackagingElement<?>>();
 

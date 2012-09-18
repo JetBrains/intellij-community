@@ -46,6 +46,7 @@ public class RemovePackagingElementAction extends LayoutTreeActionBase {
     return true;
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     myArtifactEditor.removeSelectedElements();
   }

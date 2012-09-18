@@ -258,6 +258,7 @@ public class GenericsUtil {
             if (((PsiWildcardType)acceptedBound).isExtends() != wildcardType.isExtends()) return PsiWildcardType.createUnbounded(manager);
             return acceptedBound;
           }
+          if (wildcardType.isExtends() && acceptedBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return PsiWildcardType.createUnbounded(manager);
           if (acceptedBound.equals(bound)) return wildcardType;
           return wildcardType.isExtends()
                  ? PsiWildcardType.createExtends(manager, acceptedBound)

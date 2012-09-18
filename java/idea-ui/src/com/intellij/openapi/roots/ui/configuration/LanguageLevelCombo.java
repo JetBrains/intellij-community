@@ -51,6 +51,7 @@ public class LanguageLevelCombo extends ComboBox {
     setSelectedItem(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
   }
 
+  @Override
   public void setSelectedItem(Object anObject) {
     if (anObject == null) {
       anObject = USE_PROJECT_LANGUAGE_LEVEL;

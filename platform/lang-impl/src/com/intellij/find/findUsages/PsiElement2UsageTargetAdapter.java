@@ -54,7 +54,7 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
   private final SmartPsiElementPointer myPointer;
   private final MyItemPresentation myPresentation;
 
-  public PsiElement2UsageTargetAdapter(final PsiElement element) {
+  public PsiElement2UsageTargetAdapter(@NotNull PsiElement element) {
     myPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
 
     if (!(element instanceof NavigationItem)) {
@@ -70,6 +70,7 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
   }
 
   @Override
+  @NotNull
   public ItemPresentation getPresentation() {
     return myPresentation;
   }
@@ -121,31 +122,23 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
   }
 
   @Override
-  public void highlightUsages(PsiFile file, Editor editor, boolean clearHighlights) {
+  public void highlightUsages(@NotNull PsiFile file, @NotNull Editor editor, boolean clearHighlights) {
     PsiElement target = getElement();
 
     if (file instanceof PsiCompiledFile) file = ((PsiCompiledFile)file).getDecompiledPsiFile();
 
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(target.getProject())).getFindUsagesManager();
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(target, true);
-    Collection<PsiReference> refs;
 
     // in case of injected file, use host file to highlight all occurrences of the target in each injected file
     PsiFile context = InjectedLanguageUtil.getTopLevelFile(file);
     SearchScope searchScope = new LocalSearchScope(context);
-    if (handler != null) {
-      refs = handler.findReferencesToHighlight(target, searchScope);
-    }
-    else {
-      refs = ReferencesSearch.search(target, searchScope, false).findAll();
-    }
+    Collection<PsiReference> refs = handler == null
+                                    ? ReferencesSearch.search(target, searchScope, false).findAll()
+                                    : handler.findReferencesToHighlight(target, searchScope);
 
-    new HighlightUsagesHandler.DoHighlightRunnable(new ArrayList<PsiReference>(refs),
-                                                   target.getProject(),
-                                                   target,
-                                                   editor,
-                                                   context,
-                                                   clearHighlights).run();
+    new HighlightUsagesHandler.DoHighlightRunnable(new ArrayList<PsiReference>(refs), target.getProject(), target,
+                                                   editor, context, clearHighlights).run();
   }
 
   @Override

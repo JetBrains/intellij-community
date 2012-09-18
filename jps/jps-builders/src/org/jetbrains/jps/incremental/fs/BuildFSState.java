@@ -7,9 +7,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.builders.BuildRootDescriptor;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.incremental.artifacts.ArtifactFilesDelta;
-import org.jetbrains.jps.incremental.artifacts.ArtifactSourceTimestampStorage;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.JpsProject;
@@ -41,17 +41,12 @@ public class BuildFSState extends FSState {
   }
 
   @Override
-  public boolean markInitialScanPerformed(ModuleBuildTarget target) {
+  public boolean markInitialScanPerformed(BuildTarget target) {
     return myAlwaysScanFS || super.markInitialScanPerformed(target);
   }
 
   @Override
-  public boolean markInitialScanPerformed(String artifactName) {
-    return myAlwaysScanFS || super.markInitialScanPerformed(artifactName);
-  }
-
-  @Override
-  public Map<File, Set<File>> getSourcesToRecompile(@NotNull CompileContext context, ModuleBuildTarget target) {
+  public Map<BuildRootDescriptor, Set<File>> getSourcesToRecompile(@NotNull CompileContext context, BuildTarget target) {
     final FilesDelta lastRoundDelta = getRoundDelta(LAST_ROUND_DELTA_KEY, context);
     if (lastRoundDelta != null) {
       return lastRoundDelta.getSourcesToRecompile();
@@ -59,25 +54,21 @@ public class BuildFSState extends FSState {
     return super.getSourcesToRecompile(context, target);
   }
 
-  public Map<Integer, Set<String>> getFilesToRecompile(String artifactName) {
-    return getDelta(artifactName).getFilesToRecompile();
-  }
-
   @Override
-  public boolean markDirty(@Nullable CompileContext context, File file, final RootDescriptor rd, @Nullable Timestamps tsStorage) throws IOException {
+  public boolean markDirty(@Nullable CompileContext context, File file, final BuildRootDescriptor rd, @Nullable Timestamps tsStorage) throws IOException {
     final FilesDelta roundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
     if (roundDelta != null && isInCurrentContextTargets(context, rd)) {
-      roundDelta.markRecompile(rd.root, file);
+      roundDelta.markRecompile(rd, file);
     }
     return super.markDirty(context, file, rd, tsStorage);
   }
 
-  private static boolean isInCurrentContextTargets(CompileContext context, RootDescriptor rd) {
+  private static boolean isInCurrentContextTargets(CompileContext context, BuildRootDescriptor rd) {
     if (context == null) {
       return false;
     }
-    Set<? extends ModuleBuildTarget> targets = CONTEXT_TARGETS_KEY.get(context, Collections.<ModuleBuildTarget>emptySet());
-    return targets.contains(rd.target);
+    Set<ModuleBuildTarget> targets = CONTEXT_TARGETS_KEY.get(context, Collections.<ModuleBuildTarget>emptySet());
+    return targets.contains(rd.getTarget());
   }
 
   @Override
@@ -87,7 +78,7 @@ public class BuildFSState extends FSState {
       final FilesDelta roundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
       if (roundDelta != null) {
         if (isInCurrentContextTargets(context, rd)) {
-          roundDelta.markRecompile(rd.root, file);
+          roundDelta.markRecompile(rd, file);
         }
       }
     }
@@ -120,13 +111,14 @@ public class BuildFSState extends FSState {
   }
 
   public boolean processFilesToRecompile(CompileContext context, final ModuleBuildTarget target, final FileProcessor processor) throws IOException {
-    final Map<File, Set<File>> data = getSourcesToRecompile(context, target);
+    final Map<BuildRootDescriptor, Set<File>> data = getSourcesToRecompile(context, target);
     JpsProject project = context.getProjectDescriptor().jpsProject;
     final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getCompilerExcludes();
     final CompileScope scope = context.getScope();
     synchronized (data) {
-      for (Map.Entry<File, Set<File>> entry : data.entrySet()) {
-        final String root = FileUtil.toSystemIndependentName(entry.getKey().getPath());
+      for (Map.Entry<BuildRootDescriptor, Set<File>> entry : data.entrySet()) {
+        File rootFile = entry.getKey().getRootFile();
+        final String rootPath = FileUtil.toSystemIndependentName(rootFile.getPath());
         for (File file : entry.getValue()) {
           if (!scope.isAffected(target, file)) {
             continue;
@@ -134,7 +126,7 @@ public class BuildFSState extends FSState {
           if (excludes.isExcluded(file)) {
             continue;
           }
-          if (!processor.apply(target, file, root)) {
+          if (!processor.apply(target, file, rootPath)) {
             return false;
           }
         }
@@ -149,7 +141,7 @@ public class BuildFSState extends FSState {
   public boolean markAllUpToDate(CompileScope scope, final RootDescriptor rd, final Timestamps stamps, final long compilationStartStamp) throws IOException {
     boolean marked = false;
     final FilesDelta delta = getDelta(rd.target);
-    final Set<File> files = delta.clearRecompile(rd.root);
+    final Set<File> files = delta.clearRecompile(rd);
     if (files != null) {
       final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(scope.getJpsProject()).getCompilerExcludes();
       for (File file : files) {
@@ -159,42 +151,41 @@ public class BuildFSState extends FSState {
             if (!rd.isGeneratedSources && stamp > compilationStartStamp) {
               // if the file was modified after the compilation had started,
               // do not save the stamp considering file dirty
-              delta.markRecompile(rd.root, file);
+              delta.markRecompile(rd, file);
               if (Utils.IS_TEST_MODE) {
                 LOG.info("Timestamp after compilation started; marking dirty again: " + file.getPath());
               }
             }
             else {
               marked = true;
-              stamps.saveStamp(file, stamp);
+              stamps.saveStamp(file, rd.target, stamp);
             }
           }
           else {
             if (Utils.IS_TEST_MODE) {
               LOG.info("Not affected by compile scope; marking dirty again: " + file.getPath());
             }
-            delta.markRecompile(rd.root, file);
+            delta.markRecompile(rd, file);
           }
         }
         else {
-          stamps.removeStamp(file);
+          stamps.removeStamp(file, rd.target);
         }
       }
     }
     return marked;
   }
 
-  public boolean markAllUpToDate(ArtifactRootDescriptor descriptor, ArtifactSourceTimestampStorage storage, long compilationStartStamp)
+  public boolean markAllUpToDate(ArtifactRootDescriptor descriptor, Timestamps storage, long compilationStartStamp)
     throws IOException {
     boolean marked = false;
-    ArtifactFilesDelta delta = getDelta(descriptor.getArtifactName());
-    Set<String> paths = delta.clearRecompile(descriptor.getRootIndex());
-    if (paths != null) {
-      for (String path : paths) {
-        File file = new File(FileUtil.toSystemDependentName(path));
+    FilesDelta delta = getDelta(descriptor.getTarget());
+    Set<File> files = delta.clearRecompile(descriptor);
+    if (files != null) {
+      for (File file : files) {
         long stamp = FileSystemUtil.lastModified(file);
         marked = true;
-        storage.update(descriptor.getArtifactId(), path, stamp);
+        storage.saveStamp(file, descriptor.getTarget(), stamp);
       }
     }
     return marked;

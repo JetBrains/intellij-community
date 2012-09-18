@@ -61,7 +61,12 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       }
       else {
         for (PresentableNodeDescriptor.ColoredFragment each : coloredText) {
-          doAppend(each.getText(), each.getAttributes(), true);
+          SimpleTextAttributes simpleTextAttributes = each.getAttributes();
+          if (each.getAttributes().getFgColor() == null && presentation.getForcedTextForeground() != null) {
+            simpleTextAttributes = addColorToSimpleTextAttributes(each.getAttributes(),
+              presentation.getForcedTextForeground() != null ? presentation.getForcedTextForeground() : color);
+          }
+          doAppend(each.getText(), simpleTextAttributes, true);
         }
       }
 
@@ -106,6 +111,10 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
   protected SimpleTextAttributes getSimpleTextAttributes(final PresentableNodeDescriptor node, final Color color) {
     SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(node.getPresentation(), getColorsScheme());
 
+    return addColorToSimpleTextAttributes(simpleTextAttributes, color);
+  }
+
+  private SimpleTextAttributes addColorToSimpleTextAttributes(SimpleTextAttributes simpleTextAttributes, Color color) {
     if (color != null) {
       final TextAttributes textAttributes = simpleTextAttributes.toTextAttributes();
       textAttributes.setForegroundColor(color);

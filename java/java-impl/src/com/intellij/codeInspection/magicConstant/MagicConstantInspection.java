@@ -22,12 +22,10 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.AnnotationOrderRootType;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -35,9 +33,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -58,8 +54,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.magicConstant.MagicConstantInspection");
-
   @Nls
   @NotNull
   @Override
@@ -180,12 +174,13 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     final Sdk finalJdk = jdk;
 
     String path = finalJdk.getHomePath();
-    String text = "No annotations attached to the JDK " + finalJdk.getName() + (path == null ? "" : " (" + FileUtil.toSystemDependentName(path) + ")");
+    String text = "No IDEA annotations attached to the JDK " + finalJdk.getName() + (path == null ? "" : " (" + FileUtil.toSystemDependentName(path) + ")")
+                  +", some issues will not be found";
     holder.registerProblem(file, text, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new LocalQuickFix() {
       @NotNull
       @Override
       public String getName() {
-        return "Attach annotations to the JDK";
+        return "Attach annotations";
       }
 
       @NotNull
@@ -199,33 +194,13 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            attachJdkAnnotations(finalJdk);
+            SdkModificator modificator = finalJdk.getSdkModificator();
+            JavaSdkImpl.attachJdkAnnotations(modificator);
+            modificator.commitChanges();
           }
         });
       }
     });
-  }
-
-  private static void attachJdkAnnotations(@NotNull Sdk jdk) {
-    LocalFileSystem lfs = LocalFileSystem.getInstance();
-    // community idea under idea
-    VirtualFile root = lfs.findFileByPath(FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/java/jdkAnnotations");
-
-    if (root == null) {  // idea under idea
-      root = lfs.findFileByPath(FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/community/java/jdkAnnotations");
-    }
-    if (root == null) { // build
-      root = VirtualFileManager.getInstance().findFileByUrl("jar://"+ FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/");
-    }
-    if (root == null) {
-      LOG.error("jdk annotations not found in: "+ FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/");
-      return;
-    }
-
-    SdkModificator modificator = jdk.getSdkModificator();
-    modificator.removeRoot(root, AnnotationOrderRootType.getInstance());
-    modificator.addRoot(root, AnnotationOrderRootType.getInstance());
-    modificator.commitChanges();
   }
 
   private static void checkExpression(PsiExpression expression,

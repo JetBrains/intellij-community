@@ -63,6 +63,10 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
     doTest(2, "num", "num2", "num3");
   }
 
+  public void testGenerics() throws Exception {
+    doTest(0, "foo");
+  }
+
   private void doTest(int index, String... expected) {
     configureByFile(getTestName(false) + ".java");
     assertStringItems(expected);

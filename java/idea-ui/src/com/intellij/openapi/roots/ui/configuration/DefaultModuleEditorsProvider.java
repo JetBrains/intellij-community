@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DefaultModuleEditorsProvider implements ModuleConfigurationEditorProvider {
+  @Override
   public ModuleConfigurationEditor[] createEditors(ModuleConfigurationState state) {
     ModifiableRootModel rootModel = state.getRootModel();
     Module module = rootModel.getModule();

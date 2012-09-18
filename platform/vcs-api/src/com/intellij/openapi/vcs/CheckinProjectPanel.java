@@ -29,9 +29,9 @@ import java.util.Collection;
  * included in the checkin operation, getting/setting the commit message and so on).
  * The active check-in dialog can be retrieved from the using {@link Refreshable#PANEL_KEY}
  *
- * @see com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory#createHandler(CheckinProjectPanel, CommitContext)
+ * @see com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory#createHandler(CommitMessageI, CommitContext)
  */
-public interface CheckinProjectPanel extends Refreshable {
+public interface CheckinProjectPanel extends Refreshable, CommitMessageI {
   JComponent getComponent();
 
   JComponent getPreferredFocusedComponent();
@@ -83,13 +83,6 @@ public interface CheckinProjectPanel extends Refreshable {
    */
   Collection<VirtualFile> getRoots();
 
-  /**
-   * Sets the description for the check-in.
-   *
-   * @param currentDescription the description text.
-   */
-  void setCommitMessage(final String currentDescription);
-
   void setWarning(final String s);
 
   /**
@@ -101,16 +94,4 @@ public interface CheckinProjectPanel extends Refreshable {
   String getCommitMessage();
 
   String getCommitActionName();
-
-  /**
-   * @return    <code>true</code> if commit message is checked for spelling errors; <code>false</code> otherwise
-   */
-  boolean isCheckCommitMessageSpelling();
-  
-  /**
-   * Allows to define whether commit message should be checked for spelling errors.
-   * 
-   * @param checkSpelling  <code>true</code> if commit message should be checked for spelling errors; <code>false</code> otherwise
-   */
-  void setCheckCommitMessageSpelling(boolean checkSpelling);
 }

@@ -422,7 +422,7 @@ public class OverrideImplementUtil {
     for (MethodImplementor implementor : getImplementors()) {
       final GenerationInfo info = implementor.createGenerationInfo(s, mergeIfExists);
       if (info instanceof PsiGenerationInfo) {
-        @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"}) final PsiGenerationInfo<PsiMethod> psiGenerationInfo = (PsiGenerationInfo<PsiMethod>)info;
+        @SuppressWarnings({"unchecked"}) final PsiGenerationInfo<PsiMethod> psiGenerationInfo = (PsiGenerationInfo<PsiMethod>)info;
         return psiGenerationInfo;
       }
     }

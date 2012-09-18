@@ -17,7 +17,9 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.Convertor;
+import junit.framework.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -88,5 +90,24 @@ public class FileUtilTest {
     final String[] expectedResult = {"/a","/b/c","/d/e"};
     @SuppressWarnings("unchecked") final Collection<String> result = FileUtil.removeAncestors(Arrays.asList(arr), Convertor.SELF, PairProcessor.TRUE);
     assertArrayEquals(expectedResult, result.toArray(new String[result.size()]));
+  }
+
+  @Test
+  public void testCheckImmediateChildren() throws Exception {
+    final String root = "/a";
+    final String[] arr = {"/a/b/c", "/a", "/a/b", "/d/e", "/b/c", "/a/d", "/a/b/c/d/e"};
+    final ThreeState[] expectedResult = {ThreeState.UNSURE, ThreeState.YES, ThreeState.YES, ThreeState.NO, ThreeState.NO, ThreeState.YES, ThreeState.UNSURE};
+    final ThreeState[] expectedResult2 = {ThreeState.UNSURE, ThreeState.NO, ThreeState.YES, ThreeState.NO, ThreeState.NO, ThreeState.YES, ThreeState.UNSURE};
+
+    for (int i = 0; i < arr.length; i++) {
+      String s = arr[i];
+      final ThreeState state = FileUtil.isAncestorThreeState(root, s, false);
+      Assert.assertEquals("" + i, expectedResult[i], state);
+    }
+    for (int i = 0; i < arr.length; i++) {
+      String s = arr[i];
+      final ThreeState state = FileUtil.isAncestorThreeState(root, s, true);
+      Assert.assertEquals("" + i, expectedResult2[i], state);
+    }
   }
 }

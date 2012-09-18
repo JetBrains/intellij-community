@@ -18,12 +18,14 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
@@ -43,6 +45,7 @@ import java.util.regex.Pattern;
  * @since Sep 17, 2004
  */
 public class JavaSdkImpl extends JavaSdk {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.JavaSdkImpl");
   // do not use javaw.exe for Windows because of issues with encoding
   @NonNls private static final String VM_EXE_NAME = "java";
   @NonNls private final Pattern myVersionStringPattern = Pattern.compile("^(.*)java version \"([1234567890_.]*)\"(.*)$");
@@ -87,19 +90,21 @@ public class JavaSdkImpl extends JavaSdk {
     return AllIcons.General.AddJdk;
   }
 
+  @NonNls
+  @Override
   @Nullable
-  public String getDefaultDocumentationUrl(final @NotNull Sdk sdk) {
+  public String getDefaultDocumentationUrl(@NotNull final Sdk sdk) {
     final JavaSdkVersion version = getVersion(sdk);
     if (version == JavaSdkVersion.JDK_1_5) {
       return "http://docs.oracle.com/javase/1.5.0/docs/api/";
     }
-    else if (version == JavaSdkVersion.JDK_1_6) {
+    if (version == JavaSdkVersion.JDK_1_6) {
       return "http://docs.oracle.com/javase/6/docs/api/";
     }
-    else if (version == JavaSdkVersion.JDK_1_7) {
+    if (version == JavaSdkVersion.JDK_1_7) {
       return "http://docs.oracle.com/javase/7/docs/api/";
     }
-    else if (version == JavaSdkVersion.JDK_1_8) {
+    if (version == JavaSdkVersion.JDK_1_8) {
       return "http://download.java.net/jdk8/docs/api/";
     }
     return null;
@@ -198,7 +203,7 @@ public class JavaSdkImpl extends JavaSdk {
   @Override
   public String suggestSdkName(String currentSdkName, String sdkHome) {
     final String suggestedName;
-    if (currentSdkName != null && currentSdkName.length() > 0) {
+    if (currentSdkName != null && !currentSdkName.isEmpty()) {
       final Matcher matcher = myVersionStringPattern.matcher(currentSdkName);
       final boolean replaceNameWithVersion = matcher.matches();
       if (replaceNameWithVersion){
@@ -212,11 +217,7 @@ public class JavaSdkImpl extends JavaSdk {
     }
     else {
       String versionString = getVersionString(sdkHome);
-      if (versionString != null) {
-        suggestedName = getVersionNumber(versionString);
-      } else {
-        suggestedName = ProjectBundle.message("sdk.java.unknown.name");
-      }
+      suggestedName = versionString == null ? ProjectBundle.message("sdk.java.unknown.name") : getVersionNumber(versionString);
     }
     return suggestedName;
   }
@@ -291,7 +292,29 @@ public class JavaSdkImpl extends JavaSdk {
         sdkModificator.addRoot(appleDocs, JavadocOrderRootType.getInstance());
       }
     }
+    attachJdkAnnotations(sdkModificator);
     sdkModificator.commitChanges();
+  }
+
+  public static void attachJdkAnnotations(@NotNull SdkModificator modificator) {
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    // community idea under idea
+    VirtualFile root = lfs.findFileByPath(FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/java/jdkAnnotations");
+
+    if (root == null) {  // idea under idea
+      root = lfs.findFileByPath(FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/community/java/jdkAnnotations");
+    }
+    if (root == null) { // build
+      root = VirtualFileManager.getInstance().findFileByUrl("jar://"+ FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/");
+    }
+    if (root == null) {
+      LOG.error("jdk annotations not found in: "+ FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/");
+      return;
+    }
+
+    OrderRootType annoType = AnnotationOrderRootType.getInstance();
+    modificator.removeRoot(root, annoType);
+    modificator.addRoot(root, annoType);
   }
 
   private final Map<String, String> myCachedVersionStrings = new HashMap<String, String>();
@@ -302,7 +325,7 @@ public class JavaSdkImpl extends JavaSdk {
       return myCachedVersionStrings.get(sdkHome);
     }
     String versionString = getJdkVersion(sdkHome);
-    if (versionString != null && versionString.length() == 0) {
+    if (versionString != null && versionString.isEmpty()) {
       versionString = null;
     }
 
@@ -374,7 +397,7 @@ public class JavaSdkImpl extends JavaSdk {
     return sdkVersion != null && sdkVersion.isAtLeast(version);
   }
 
-  private static File getPathForJdkNamed(String name) {
+  private static File getPathForJdkNamed(@NonNls String name) {
     File mockJdkCEPath = new File(PathManager.getHomePath(), "java/" + name);
     if (mockJdkCEPath.exists()) {
       return mockJdkCEPath;
@@ -384,7 +407,7 @@ public class JavaSdkImpl extends JavaSdk {
   public static Sdk getMockJdk17() {
     return getMockJdk17("java 1.7");
   }
-  public static Sdk getMockJdk17(String name) {
+  public static Sdk getMockJdk17(@NonNls String name) {
     return createMockJdk(getMockJdk17Path().getPath(), name, getInstance());
   }
   public static Sdk getMockJdk14() {
@@ -416,7 +439,7 @@ public class JavaSdkImpl extends JavaSdk {
     sdkModificator.commitChanges();
   }
 
-  private static Sdk createMockJdk(String jdkHome, final String versionName, JavaSdk javaSdk) {
+  private static Sdk createMockJdk(String jdkHome, @NonNls final String versionName, JavaSdk javaSdk) {
     File jdkHomeFile = new File(jdkHome);
     if (!jdkHomeFile.exists()) return null;
 
@@ -453,7 +476,7 @@ public class JavaSdkImpl extends JavaSdk {
         result.add(vFile);
       }
     }
-    return VfsUtil.toVirtualFileArray(result);
+    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   private static void addSources(File file, SdkModificator sdkModificator) {

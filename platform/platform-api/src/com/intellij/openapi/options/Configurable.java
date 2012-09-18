@@ -42,16 +42,14 @@ import org.jetbrains.annotations.Nullable;
  * where 'class-name' implements {@link ConfigurableProvider} means that method {@link ConfigurableProvider#createConfigurable()}
  * will be used to create instance each time when the dialog is opened.
  * </ul>
+ *
+ * @see SearchableConfigurable
  */
 public interface Configurable extends UnnamedConfigurable {
-  /**
-   * @deprecated projectConfigurable extensions aren't of type Configurable anymore
-   */
-  ExtensionPointName<Configurable> PROJECT_CONFIGURABLES = ExtensionPointName.create("com.intellij.projectConfigurable");
-  /**
-   * @deprecated applicationConfigurable extensions aren't of type Configurable anymore
-   */
-  ExtensionPointName<Configurable> APPLICATION_CONFIGURABLES = ExtensionPointName.create("com.intellij.applicationConfigurable");
+
+  ExtensionPointName<ConfigurableEP> APPLICATION_CONFIGURABLE = ExtensionPointName.create("com.intellij.applicationConfigurable");
+
+  ExtensionPointName<ConfigurableEP> PROJECT_CONFIGURABLE = ExtensionPointName.create("com.intellij.projectConfigurable");
 
   /**
    * Returns the user-visible name of the settings component.

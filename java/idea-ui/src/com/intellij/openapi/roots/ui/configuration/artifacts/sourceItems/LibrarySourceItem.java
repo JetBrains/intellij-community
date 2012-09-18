@@ -70,6 +70,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
     return LibraryPackagingElement.getKindForLibrary(myLibrary);
   }
 
+  @Override
   @NotNull
   public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
     return PackagingElementFactory.getInstance().createLibraryElements(myLibrary);

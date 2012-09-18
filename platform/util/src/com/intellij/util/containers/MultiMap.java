@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.util.containers;
 
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.*;
@@ -77,7 +78,7 @@ public class MultiMap<K, V> implements Serializable {
     list.addAll(values);
   }
 
-  public void putValue(K key, V value) {
+  public void putValue(@Nullable K key, V value) {
     Collection<V> list = myMap.get(key);
     if (list == null) {
       list = createCollection();
@@ -222,7 +223,7 @@ public class MultiMap<K, V> implements Serializable {
 
   @NotNull
   public static <K, V> MultiMap<K, V> emptyInstance() {
-    @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"}) final MultiMap<K, V> empty = EMPTY;
+    @SuppressWarnings({"unchecked"}) final MultiMap<K, V> empty = EMPTY;
     return empty;
   }
 

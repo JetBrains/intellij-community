@@ -39,7 +39,7 @@ public interface UsageTarget extends NavigationItem {
    */
   void findUsagesInEditor(@NotNull FileEditor editor);
 
-  void highlightUsages(PsiFile file, Editor editor, boolean clearHighlights);
+  void highlightUsages(@NotNull PsiFile file, @NotNull Editor editor, boolean clearHighlights);
 
   boolean isValid();
   boolean isReadOnly();

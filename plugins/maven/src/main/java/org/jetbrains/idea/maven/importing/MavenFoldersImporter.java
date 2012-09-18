@@ -170,6 +170,9 @@ public class MavenFoldersImporter {
 
     myModel.unregisterAll(targetDir.getPath(), true, false);
 
+    myModel.addSourceFolder(myMavenProject.getAnnotationProcessorDirectory(true), true);
+    myModel.addSourceFolder(myMavenProject.getAnnotationProcessorDirectory(false), false);
+
     for (File f : getChildren(targetDir)) {
       if (!f.isDirectory()) continue;
 
@@ -185,9 +188,6 @@ public class MavenFoldersImporter {
         }
       }
     }
-
-    myModel.addSourceFolder(myMavenProject.getAnnotationProcessorDirectory(true), true);
-    myModel.addSourceFolder(myMavenProject.getAnnotationProcessorDirectory(false), false);
 
     List<String> facetExcludes = new ArrayList<String>();
     for (MavenImporter each : MavenImporter.getSuitableImporters(myMavenProject)) {
@@ -212,7 +212,7 @@ public class MavenFoldersImporter {
   private void configGeneratedSourceFolder(@NotNull File targetDir, boolean isTestSources) {
     switch (myImportingSettings.getGeneratedSourcesFolder()) {
       case GENERATED_SOURCE_FOLDER:
-        addAsSourceFolder(targetDir, isTestSources);
+        myModel.addSourceFolder(targetDir.getPath(), isTestSources);
         break;
 
       case SUBFOLDER:
@@ -224,7 +224,7 @@ public class MavenFoldersImporter {
 
         for (JavaModuleSourceRoot root : sourceRoots) {
           if (targetDir.equals(root.getDirectory())) {
-            addAsSourceFolder(targetDir, isTestSources);
+            myModel.addSourceFolder(targetDir.getPath(), isTestSources);
             return;
           }
 

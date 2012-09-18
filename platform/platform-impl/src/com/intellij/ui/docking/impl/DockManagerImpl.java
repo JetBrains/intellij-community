@@ -66,19 +66,19 @@ import java.util.List;
   storages = {@Storage(
     file = StoragePathMacros.WORKSPACE_FILE)})
 
-public class DockManagerImpl extends DockManager implements PersistentStateComponent<Element>{
+public class DockManagerImpl extends DockManager implements PersistentStateComponent<Element> {
 
-  private Project myProject;
+  private final Project myProject;
 
-  private Map<String, DockContainerFactory> myFactories = new HashMap<String, DockContainerFactory>();
+  private final Map<String, DockContainerFactory> myFactories = new HashMap<String, DockContainerFactory>();
 
-  private Set<DockContainer> myContainers = new HashSet<DockContainer>();
+  private final Set<DockContainer> myContainers = new HashSet<DockContainer>();
 
-  private MutualMap<DockContainer, DockWindow> myWindows = new MutualMap<DockContainer, DockWindow>();
+  private final MutualMap<DockContainer, DockWindow> myWindows = new MutualMap<DockContainer, DockWindow>();
 
   private MyDragSession myCurrentDragSession;
 
-  private BusyObject.Impl myBusyObject = new BusyObject.Impl() {
+  private final BusyObject.Impl myBusyObject = new BusyObject.Impl() {
     @Override
     public boolean isReady() {
       return myCurrentDragSession == null;
@@ -224,15 +224,15 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
   private class MyDragSession implements DragSession {
 
-    private JWindow myWindow;
+    private final JWindow myWindow;
 
     private Image myDragImage;
-    private Image myDefaultDragImage;
+    private final Image myDefaultDragImage;
 
-    private DockableContent myContent;
+    private final DockableContent myContent;
 
     private DockContainer myCurrentOverContainer;
-    private JLabel myImageContainer;
+    private final JLabel myImageContainer;
 
     private MyDragSession(MouseEvent me, DockableContent content) {
       myWindow = new JWindow();
@@ -319,7 +319,8 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
         if (myCurrentOverContainer == null) {
           createNewDockContainerFor(myContent, point);
           stopCurrentDragSession();
-        } else {
+        }
+        else {
           myCurrentOverContainer.add(myContent, point);
           stopCurrentDragSession();
         }
@@ -352,7 +353,6 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
     return null;
   }
-
 
 
   private DockContainerFactory getFactory(String type) {
@@ -402,14 +402,14 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
   private class DockWindow extends FrameWrapper implements IdeEventQueue.EventDispatcher {
 
-    private String myId;
-    private DockContainer myContainer;
+    private final String myId;
+    private final DockContainer myContainer;
 
-    private VerticalBox myNorthPanel = new VerticalBox();
-    private Map<String, IdeRootPaneNorthExtension> myNorthExtensions = new LinkedHashMap<String, IdeRootPaneNorthExtension>();
+    private final VerticalBox myNorthPanel = new VerticalBox();
+    private final Map<String, IdeRootPaneNorthExtension> myNorthExtensions = new LinkedHashMap<String, IdeRootPaneNorthExtension>();
 
-    private NonOpaquePanel myUiContainer;
-    private NonOpaquePanel myDockContentUiContainer;
+    private final NonOpaquePanel myUiContainer;
+    private final NonOpaquePanel myDockContentUiContainer;
 
     private DockWindow(String id, Project project, DockContainer container, boolean dialog) {
       super(project, null, dialog);
@@ -428,7 +428,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
         center.setOpaque(true);
         center.setBackground(JBTabsImpl.MAC_AQUA_BG_COLOR);
       }
-      
+
       center.add(myNorthPanel, BorderLayout.NORTH);
 
       myDockContentUiContainer = new NonOpaquePanel(new BorderLayout());
@@ -470,7 +470,6 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
           public void extensionRemoved(@NotNull IdeRootPaneNorthExtension extension, @Nullable PluginDescriptor pluginDescriptor) {
             updateNorthPanel();
           }
-
         });
 
       UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
@@ -493,7 +492,8 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       myNorthPanel.setVisible(UISettings.getInstance().SHOW_NAVIGATION_BAR &&
                               !(myContainer instanceof DockContainer.Dialog));
 
-      IdeRootPaneNorthExtension[] extensions = Extensions.getArea(myProject).getExtensionPoint(IdeRootPaneNorthExtension.EP_NAME).getExtensions();
+      IdeRootPaneNorthExtension[] extensions =
+        Extensions.getArea(myProject).getExtensionPoint(IdeRootPaneNorthExtension.EP_NAME).getExtensions();
       HashSet<String> processedKeys = new HashSet<String>();
       for (IdeRootPaneNorthExtension each : extensions) {
         processedKeys.add(each.getKey());
@@ -522,7 +522,8 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       if (transparent) {
         WindowManagerEx.getInstanceEx().setAlphaModeEnabled(getFrame(), true);
         WindowManagerEx.getInstanceEx().setAlphaModeRatio(getFrame(), 0.5f);
-      } else {
+      }
+      else {
         WindowManagerEx.getInstanceEx().setAlphaModeEnabled(getFrame(), true);
         WindowManagerEx.getInstanceEx().setAlphaModeRatio(getFrame(), 0f);
       }

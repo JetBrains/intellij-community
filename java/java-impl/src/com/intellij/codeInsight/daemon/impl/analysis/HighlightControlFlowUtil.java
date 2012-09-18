@@ -23,6 +23,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -698,7 +699,11 @@ public class HighlightControlFlowUtil {
           return null;
         }
       }
-      String description = JavaErrorMessages.message("variable.must.be.final", context.getText());
+      if (PsiUtil.getLanguageLevel(variable).isAtLeast(LanguageLevel.JDK_1_8) && 
+          isEffectivelyFinal(variable, innerClass, context)) {
+        return null;
+      }
+      final String description = JavaErrorMessages.message("variable.must.be.final", context.getText());
 
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, context, description);
       QuickFixAction.registerQuickFixAction(highlightInfo, new VariableAccessFromInnerClassFix(variable, innerClass));
@@ -706,33 +711,11 @@ public class HighlightControlFlowUtil {
     }  else {
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(context, PsiLambdaExpression.class);
       if (lambdaExpression != null && !PsiTreeUtil.isAncestor(lambdaExpression, variable, true)) {
-        boolean effectivelyFinal;
-        if (variable instanceof PsiParameter) {
-          final PsiElement parent = variable.getParent();
-          if (parent instanceof PsiParameterList && parent.getParent() == lambdaExpression) {
-            return null;
-          }
-          effectivelyFinal = notAccessedForWriting(variable, new LocalSearchScope(((PsiParameter)variable).getDeclarationScope()));
-        } else {
-          final ControlFlow controlFlow;
-          try {
-            controlFlow = getControlFlow(PsiUtil.getVariableCodeBlock(variable, context));
-          }
-          catch (AnalysisCanceledException e) {
-            return null;
-          }
-
-          if (ControlFlowUtil.isVariableDefinitelyAssigned(variable, controlFlow)) {
-            final Collection<ControlFlowUtil.VariableInfo> initializedTwice = ControlFlowUtil.getInitializedTwice(controlFlow);
-            effectivelyFinal = !initializedTwice.contains(new ControlFlowUtil.VariableInfo(variable, null));
-            if (effectivelyFinal) {
-              effectivelyFinal = notAccessedForWriting(variable, new LocalSearchScope(lambdaExpression));
-            }
-          } else {
-            effectivelyFinal = false;
-          }
+        final PsiElement parent = variable.getParent();
+        if (parent instanceof PsiParameterList && parent.getParent() == lambdaExpression) {
+          return null;
         }
-        if (!effectivelyFinal ) {
+        if (!isEffectivelyFinal(variable, lambdaExpression, context)) {
           return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, context, "Variable used in lambda expression should be effectively final");
         }
       }
@@ -740,6 +723,32 @@ public class HighlightControlFlowUtil {
     return null;
   }
 
+  private static boolean isEffectivelyFinal(PsiVariable variable, PsiElement scope, PsiJavaCodeReferenceElement context) {
+    boolean effectivelyFinal;
+    if (variable instanceof PsiParameter) {
+      effectivelyFinal = notAccessedForWriting(variable, new LocalSearchScope(((PsiParameter)variable).getDeclarationScope()));
+    } else {
+      final ControlFlow controlFlow;
+      try {
+        controlFlow = getControlFlow(PsiUtil.getVariableCodeBlock(variable, context));
+      }
+      catch (AnalysisCanceledException e) {
+        return true;
+      }
+
+      if (ControlFlowUtil.isVariableDefinitelyAssigned(variable, controlFlow)) {
+        final Collection<ControlFlowUtil.VariableInfo> initializedTwice = ControlFlowUtil.getInitializedTwice(controlFlow);
+        effectivelyFinal = !initializedTwice.contains(new ControlFlowUtil.VariableInfo(variable, null));
+        if (effectivelyFinal) {
+          effectivelyFinal = notAccessedForWriting(variable, new LocalSearchScope(scope));
+        }
+      } else {
+        effectivelyFinal = false;
+      }
+    }
+    return effectivelyFinal;
+  }
+  
   private static boolean notAccessedForWriting(PsiVariable variable, final LocalSearchScope searchScope) {
     for (PsiReference reference : ReferencesSearch.search(variable, searchScope)) {
       final PsiElement element = reference.getElement();

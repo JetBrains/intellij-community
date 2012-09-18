@@ -42,11 +42,6 @@ public class FindVariableUsagesDialog extends JavaFindUsagesDialog<JavaVariableF
   }
 
   @Override
-  protected JPanel createFindWhatPanel(){
-    return null;
-  }
-
-  @Override
   protected JPanel createAllOptionsPanel() {
     return getPsiElement() instanceof PsiField ? super.createAllOptionsPanel() : createUsagesOptionsPanel();
   }

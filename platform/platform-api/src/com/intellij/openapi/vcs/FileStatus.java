@@ -22,6 +22,10 @@ import java.awt.*;
 
 public interface FileStatus {
   Color COLOR_NOT_CHANGED = null; // deliberately null, do not use hardcoded Color.BLACK
+  Color COLOR_NOT_CHANGED_RECURSIVE = new Color(138, 164, 200);
+  Color COLOR_NOT_CHANGED_IMMEDIATE = new Color(50, 100, 180);
+  Color t = new Color(47, 109, 255);
+
   Color COLOR_MERGE = new Color(117, 3, 220);
   Color COLOR_MODIFIED = new Color(0, 50, 160);
   Color COLOR_MISSING = Gray._97;
@@ -32,6 +36,10 @@ public interface FileStatus {
   Color COLOR_UNKNOWN = new Color(153, 51, 0);
 
   FileStatus NOT_CHANGED = FileStatusFactory.getInstance().createFileStatus("NOT_CHANGED", VcsBundle.message("file.status.name.up.to.date"), COLOR_NOT_CHANGED);
+  FileStatus NOT_CHANGED_IMMEDIATE = FileStatusFactory.getInstance().createFileStatus("NOT_CHANGED_IMMEDIATE", VcsBundle.message(
+    "file.status.name.up.to.date.immediate.children"), COLOR_NOT_CHANGED_IMMEDIATE);
+  FileStatus NOT_CHANGED_RECURSIVE = FileStatusFactory.getInstance().createFileStatus("NOT_CHANGED_RECURSIVE", VcsBundle.message(
+    "file.status.name.up.to.date.recursive.children"), COLOR_NOT_CHANGED_RECURSIVE);
   FileStatus DELETED = FileStatusFactory.getInstance().createFileStatus("DELETED", VcsBundle.message("file.status.name.deleted"), COLOR_MISSING);
   FileStatus MODIFIED = FileStatusFactory.getInstance().createFileStatus("MODIFIED", VcsBundle.message("file.status.name.modified"), COLOR_MODIFIED);
   FileStatus ADDED = FileStatusFactory.getInstance().createFileStatus("ADDED", VcsBundle.message("file.status.name.added"), COLOR_ADDED);

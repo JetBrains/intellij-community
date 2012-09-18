@@ -1027,6 +1027,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return getChangesIn(new FilePathImpl(dir));
   }
 
+  @Override
+  public ThreeState haveChangesUnder(final VirtualFile vf) {
+    if (vf == null || ! vf.isValid() || ! vf.isDirectory()) return ThreeState.NO;
+    synchronized (myDataLock) {
+      return myWorker.haveChangesUnder(vf);
+    }
+  }
+
   @NotNull
   public Collection<Change> getChangesIn(final FilePath dirPath) {
     synchronized (myDataLock) {

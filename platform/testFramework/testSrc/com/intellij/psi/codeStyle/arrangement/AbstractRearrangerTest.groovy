@@ -24,6 +24,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
@@ -55,7 +56,7 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
   }
   
   @NotNull
-  protected StdArrangementRule rule(@NotNull Object ... conditions) {
+  protected StdArrangementMatchRule rule(@NotNull Object ... conditions) {
     def condition
     if (conditions.length == 1) {
       condition = atom(conditions[0])
@@ -64,7 +65,7 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
       condition = ArrangementUtil.and(conditions.collect { atom(it) } as ArrangementMatchCondition[])
     }
     
-    new StdArrangementRule(new StdArrangementEntryMatcher(condition))
+    new StdArrangementMatchRule(new StdArrangementEntryMatcher(condition))
   }
   
   @NotNull
@@ -74,7 +75,7 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
   
   protected void doTest(@NotNull String initial,
                         @NotNull String expected,
-                        @NotNull List<ArrangementRule> rules,
+                        @NotNull List<StdArrangementMatchRule> rules,
                         Collection<TextRange> ranges = null)
   {
     def (String textToUse, List<TextRange> rangesToUse) = parseRanges(initial)
@@ -89,7 +90,7 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
     
     myFixture.configureByText(fileType, textToUse)
     def settings = CodeStyleSettingsManager.getInstance(myFixture.project).currentSettings.getCommonSettings(language)
-    settings.arrangementRules = rules
+    settings.arrangementSettings = new StdArrangementSettings(rules)
     ArrangementEngine engine = ServiceManager.getService(myFixture.project, ArrangementEngine)
     engine.arrange(myFixture.file, rangesToUse);
     junit.framework.Assert.assertEquals(expected, myFixture.editor.document.text);

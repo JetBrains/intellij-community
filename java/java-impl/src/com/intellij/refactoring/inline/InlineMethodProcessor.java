@@ -18,6 +18,9 @@ package com.intellij.refactoring.inline;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -78,6 +81,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private final String myDescriptiveName;
   private Map<PsiField, PsiClassInitializer> myAddedClassInitializers;
   private PsiMethod myMethodCopy;
+  private Map<Language,InlineHandler.Inliner> myInliners;
 
   public InlineMethodProcessor(@NotNull Project project,
                                @NotNull PsiMethod method,
@@ -190,6 +194,32 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
+    ArrayList<PsiReference> refs = convertUsagesToRefs(usagesIn);
+    myInliners = GenericInlineHandler.initializeInliners(myMethod, new InlineHandler.Settings() {
+      @Override
+      public boolean isOnlyOneReferenceToInline() {
+        return myInlineThisOnly;
+      }
+    }, refs);
+
+    //hack to prevent conflicts 'Cannot inline reference from Java'
+    myInliners.put(JavaLanguage.INSTANCE, new InlineHandler.Inliner() {
+      @Nullable
+      @Override
+      public MultiMap<PsiElement, String> getConflicts(PsiReference reference, PsiElement referenced) {
+        return MultiMap.emptyInstance();
+      }
+
+      @Override
+      public void inlineUsage(UsageInfo usage, PsiElement referenced) {
+        throw new UnsupportedOperationException("Don't invoke this method!");
+      }
+    });
+
+    for (PsiReference ref : refs) {
+      GenericInlineHandler.collectConflicts(ref, myMethod, myInliners, conflicts);
+    }
+
     final PsiReturnStatement[] returnStatements = RefactoringUtil.findReturnStatements(myMethod);
     for (PsiReturnStatement statement : returnStatements) {
       PsiExpression value = statement.getReturnValue();
@@ -212,6 +242,14 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     addInaccessibleSuperCallsConflicts(usagesIn, conflicts);
 
     return showConflicts(conflicts, usagesIn);
+  }
+
+  private static ArrayList<PsiReference> convertUsagesToRefs(UsageInfo[] usagesIn) {
+    ArrayList<PsiReference> refs = new ArrayList<PsiReference>();
+    for (UsageInfo info : usagesIn) {
+      refs.add(info.getReference());
+    }
+    return refs;
   }
 
   private boolean checkReadOnly() {
@@ -365,6 +403,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             else if (element instanceof PsiEnumConstant) {
               inlineConstructorCall((PsiEnumConstant) element);
             }
+            else {
+              GenericInlineHandler.inlineReference(usage, myMethod, myInliners);
+            }
           }
           myMethod.delete();
         }
@@ -377,6 +418,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
               refExprList.add((PsiReferenceExpression)element);
             } else if (element instanceof PsiImportStaticReferenceElement) {
               imports2Delete.add(PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class));
+            }
+            else {
+              GenericInlineHandler.inlineReference(usage, myMethod, myInliners);
             }
           }
           PsiReferenceExpression[] refs = refExprList.toArray(new PsiReferenceExpression[refExprList.size()]);
@@ -411,7 +455,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           constructorCall.resolveMethodGenerics().getSubstitutor().substitute(((PsiEllipsisType)varargType).getComponentType());
         final PsiExpression[] exprs = new PsiExpression[parameters.length];
         System.arraycopy(instanceCreationArguments, 0, exprs, 0, parameters.length - 1);
-        StringBuffer varargs = new StringBuffer();
+        StringBuilder varargs = new StringBuilder();
         for (int i = parameters.length - 1; i < instanceCreationArguments.length; i++) {
           if (varargs.length() > 0) varargs.append(", ");
           varargs.append(instanceCreationArguments[i].getText());

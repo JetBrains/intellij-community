@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
@@ -103,23 +104,20 @@ public class MethodUtils {
           continue;
         }
         if (parameterType != null &&
-            !EquivalenceChecker.typesAreEquivalent(type,
-                                                   parameterType)) {
+            !EquivalenceChecker.typesAreEquivalent(type, parameterType)) {
           return false;
         }
       }
     }
     if (returnType != null) {
       final PsiType methodReturnType = method.getReturnType();
-      if (!EquivalenceChecker.typesAreEquivalent(returnType,
-                                                 methodReturnType)) {
+      if (!EquivalenceChecker.typesAreEquivalent(returnType, methodReturnType)) {
         return false;
       }
     }
     if (containingClassName != null) {
       final PsiClass containingClass = method.getContainingClass();
-      return InheritanceUtil.isInheritor(containingClass,
-                                         containingClassName);
+      return InheritanceUtil.isInheritor(containingClass, containingClassName);
     }
     return true;
   }
@@ -160,23 +158,20 @@ public class MethodUtils {
           continue;
         }
         if (parameterType != null &&
-            !EquivalenceChecker.typesAreEquivalent(type,
-                                                   parameterType)) {
+            !EquivalenceChecker.typesAreEquivalent(type, parameterType)) {
           return false;
         }
       }
     }
     if (returnType != null) {
       final PsiType methodReturnType = method.getReturnType();
-      if (!EquivalenceChecker.typesAreEquivalent(returnType,
-                                                 methodReturnType)) {
+      if (!EquivalenceChecker.typesAreEquivalent(returnType, methodReturnType)) {
         return false;
       }
     }
     if (containingClassName != null) {
       final PsiClass containingClass = method.getContainingClass();
-      return InheritanceUtil.isInheritor(containingClass,
-                                         containingClassName);
+      return InheritanceUtil.isInheritor(containingClass, containingClassName);
     }
     return true;
   }
@@ -192,34 +187,25 @@ public class MethodUtils {
     final PsiElementFactory factory = psiFacade.getElementFactory();
     try {
       if (parameterTypeStrings != null) {
-        final PsiType[] parameterTypes =
-          new PsiType[parameterTypeStrings.length];
+        final PsiType[] parameterTypes = new PsiType[parameterTypeStrings.length];
         for (int i = 0; i < parameterTypeStrings.length; i++) {
           final String parameterTypeString = parameterTypeStrings[i];
-          parameterTypes[i] = factory.createTypeFromText(
-            parameterTypeString, method);
+          parameterTypes[i] = factory.createTypeFromText(parameterTypeString, method);
         }
         if (returnTypeString != null) {
-          final PsiType returnType =
-            factory.createTypeFromText(returnTypeString,
-                                       method);
-          return methodMatches(method, containingClassName, returnType,
-                               methodName, parameterTypes);
+          final PsiType returnType = factory.createTypeFromText(returnTypeString, method);
+          return methodMatches(method, containingClassName, returnType, methodName, parameterTypes);
         }
         else {
-          return methodMatches(method, containingClassName, null,
-                               methodName, parameterTypes);
+          return methodMatches(method, containingClassName, null, methodName, parameterTypes);
         }
       }
       else if (returnTypeString != null) {
-        final PsiType returnType =
-          factory.createTypeFromText(returnTypeString, method);
-        return methodMatches(method, containingClassName, returnType,
-                             methodName);
+        final PsiType returnType = factory.createTypeFromText(returnTypeString, method);
+        return methodMatches(method, containingClassName, returnType, methodName);
       }
       else {
-        return methodMatches(method, containingClassName, null,
-                             methodName);
+        return methodMatches(method, containingClassName, null, methodName);
       }
     }
     catch (IncorrectOperationException e) {
@@ -227,16 +213,23 @@ public class MethodUtils {
     }
   }
 
+  public static boolean hasSuper(@NotNull PsiMethod method) {
+    if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      return false;
+    }
+    return SuperMethodsSearch.search(method, null, true, false).findFirst() != null;
+  }
 
   public static boolean isOverridden(PsiMethod method) {
-    final Query<PsiMethod> overridingMethodQuery =
-      OverridingMethodsSearch.search(method);
+    if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      return false;
+    }
+    final Query<PsiMethod> overridingMethodQuery = OverridingMethodsSearch.search(method);
     final PsiMethod result = overridingMethodQuery.findFirst();
     return result != null;
   }
 
-  public static boolean isOverriddenInHierarchy(PsiMethod method,
-                                                PsiClass baseClass) {
+  public static boolean isOverriddenInHierarchy(PsiMethod method, PsiClass baseClass) {
     // previous implementation:
     // final Query<PsiMethod> search = OverridingMethodsSearch.search(method);
     //for (PsiMethod overridingMethod : search) {
@@ -246,12 +239,9 @@ public class MethodUtils {
     //    }
     //}
     // was extremely slow and used an enormous amount of memory for clone()
-    final Query<PsiClass> search =
-      ClassInheritorsSearch.search(baseClass, baseClass.getUseScope(),
-                                   true, true, true);
+    final Query<PsiClass> search = ClassInheritorsSearch.search(baseClass, baseClass.getUseScope(), true, true, true);
     for (PsiClass inheritor : search) {
-      final PsiMethod overridingMethod =
-        inheritor.findMethodBySignature(method, false);
+      final PsiMethod overridingMethod = inheritor.findMethodBySignature(method, false);
       if (overridingMethod != null) {
         return true;
       }
@@ -266,5 +256,27 @@ public class MethodUtils {
     }
     final PsiStatement[] statements = body.getStatements();
     return statements.length == 0;
+  }
+
+  public static boolean hasInThrows(@NotNull PsiMethod method, @NotNull String... exceptions) {
+    if (exceptions.length == 0) {
+      throw new IllegalArgumentException("no exceptions specified");
+    }
+    final PsiReferenceList throwsList = method.getThrowsList();
+    final PsiJavaCodeReferenceElement[] references = throwsList.getReferenceElements();
+    for (PsiJavaCodeReferenceElement reference : references) {
+      final PsiElement target = reference.resolve();
+      if (!(target instanceof PsiClass)) {
+        continue;
+      }
+      final PsiClass aClass = (PsiClass)target;
+      final String qualifiedName = aClass.getQualifiedName();
+      for (String exception : exceptions) {
+        if (exception.equals(qualifiedName)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

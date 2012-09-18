@@ -36,10 +36,12 @@ public abstract class ArtifactEditorFindUsagesActionBase extends FindUsagesInPro
     myArtifactContext = artifactContext;
   }
 
+  @Override
   protected boolean isEnabled() {
     return getSelectedElement() != null;
   }
 
+  @Override
   protected RelativePoint getPointToShowResults() {
     final int selectedRow = myTree.getSelectionRows()[0];
     final Rectangle rowBounds = myTree.getRowBounds(selectedRow);

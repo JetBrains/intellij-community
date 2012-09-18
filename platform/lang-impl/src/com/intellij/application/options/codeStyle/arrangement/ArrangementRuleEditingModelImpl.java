@@ -18,7 +18,7 @@ package com.intellij.application.options.codeStyle.arrangement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
-import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.model.*;
 import com.intellij.util.containers.hash.HashSet;
@@ -48,10 +48,10 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   @NotNull private final List<Set<ArrangementMatchCondition>> myGroupingRules;
   private final          boolean                              myRootVisible;
 
-  @NotNull private ArrangementTreeNode myTopMost;
-  @NotNull private ArrangementTreeNode myBottomMost;
-  @NotNull private StdArrangementRule  myRule;
-  private          int                 myRow;
+  @NotNull private ArrangementTreeNode     myTopMost;
+  @NotNull private ArrangementTreeNode     myBottomMost;
+  @NotNull private StdArrangementMatchRule myRule;
+  private          int                     myRow;
 
   /**
    * Creates new <code>ArrangementRuleEditingModelImpl</code> object.
@@ -68,7 +68,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
    * @param rootVisible     determines if the root should be count during rows calculations
    */
   public ArrangementRuleEditingModelImpl(@NotNull DefaultTreeModel model,
-                                         @NotNull StdArrangementRule rule,
+                                         @NotNull StdArrangementMatchRule rule,
                                          @NotNull ArrangementTreeNode topMost,
                                          @NotNull ArrangementTreeNode bottomMost,
                                          @NotNull List<Set<ArrangementMatchCondition>> groupingRules,
@@ -104,7 +104,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
 
   @NotNull
   @Override
-  public StdArrangementRule getRule() {
+  public StdArrangementMatchRule getRule() {
     return myRule;
   }
 
@@ -189,7 +189,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   }
   
   private void applyNewCondition(@NotNull ArrangementMatchCondition newCondition) {
-    myRule = new StdArrangementRule(new StdArrangementEntryMatcher(newCondition));
+    myRule = new StdArrangementMatchRule(new StdArrangementEntryMatcher(newCondition));
     HierarchicalArrangementConditionNode grouped = ArrangementUtil.group(newCondition, myGroupingRules);
     Pair<ArrangementTreeNode, Integer> replacement = ArrangementConfigUtil.map(null, grouped, null);
     ArrangementTreeNode newBottom = replacement.first;

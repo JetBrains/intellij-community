@@ -24,7 +24,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -54,6 +56,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private JPanel myContentPanel;
   private TallImageComponent myIcon;
   private Component myCurrentStepComponent;
+  private final Alarm myFocusAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Map<Component, String> myComponentToIdMap = new HashMap<Component, String>();
   private final StepListener myStepListener = new StepListener() {
     public void stateChanged() {
@@ -349,13 +352,10 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   protected void doNextAction() {
     // Commit data of current step
     final Step currentStep = mySteps.get(myCurrentStep);
-    boolean lastStep = isLastStep();
     LOG.assertTrue(currentStep != null);
+    LOG.assertTrue(!isLastStep());
     try {
       currentStep._commit(false);
-      if (SystemInfo.isMac && lastStep) {
-        doOKAction();
-      }
     }
     catch (final CommitStepException exc) {
       Messages.showErrorDialog(
@@ -365,10 +365,8 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       return;
     }
 
-    if (!SystemInfo.isMac || !lastStep) {
-      myCurrentStep = getNextStep(myCurrentStep);
-      updateStep();
-    }
+    myCurrentStep = getNextStep(myCurrentStep);
+    updateStep();
   }
 
   /**
@@ -425,17 +423,21 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     updateButtons();
 
-    SwingUtilities.invokeLater(new Runnable() {
+    JComponent component = mySteps.get(getCurrentStep()).getPreferredFocusedComponent();
+    requestFocusTo(component != null ? component : myNextButton);
+  }
+
+  private void requestFocusTo(final JComponent component) {
+    myFocusAlarm.cancelAllRequests();
+    myFocusAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        if (!isShowing()) return;
-
-        JComponent component = mySteps.get(getCurrentStep()).getPreferredFocusedComponent();
-        if (component != null) {
-          component.requestFocus();
+        if (component.isVisible()) {
+          final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(component);
+          focusManager.requestFocus(component, false);
         }
       }
-    });
+    }, 50);
   }
 
   protected boolean canGoNext() {

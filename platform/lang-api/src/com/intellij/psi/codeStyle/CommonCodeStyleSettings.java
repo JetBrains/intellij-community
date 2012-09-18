@@ -19,7 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.*;
-import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
+import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -31,8 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -42,15 +40,15 @@ import java.util.Set;
  * @author Rustam Vishnyakov
  */
 public class CommonCodeStyleSettings {
-  
-  @NonNls private static final String ARRANGEMENT_ELEMENT_NAME = "arrangementRules";
-  
-  private final List<ArrangementRule> myArrangementRules
-    = new ArrayList<ArrangementRule>();
-  private final Language          myLanguage;
-  private CodeStyleSettings myRootSettings;
-  private IndentOptions     myIndentOptions;
-  private FileType          myFileType;
+
+  @NonNls private static final String ARRANGEMENT_ELEMENT_NAME = "arrangement";
+
+  private final Language myLanguage;
+
+  private ArrangementSettings myArrangementSettings;
+  private CodeStyleSettings   myRootSettings;
+  private IndentOptions       myIndentOptions;
+  private FileType            myFileType;
 
   @NonNls private static final String INDENT_OPTIONS_TAG = "indentOptions";
 
@@ -122,14 +120,13 @@ public class CommonCodeStyleSettings {
     return myIndentOptions;
   }
 
-  @NotNull
-  public List<ArrangementRule> getArrangementRules() {
-    return myArrangementRules;
+  @Nullable
+  public ArrangementSettings getArrangementSettings() {
+    return myArrangementSettings;
   }
 
-  public void setArrangementRules(@NotNull List<? extends ArrangementRule> rules) {
-    myArrangementRules.clear();
-    myArrangementRules.addAll(rules);
+  public void setArrangementSettings(@NotNull ArrangementSettings settings) {
+    myArrangementSettings = settings;
   }
 
   @SuppressWarnings("unchecked")
@@ -141,8 +138,8 @@ public class CommonCodeStyleSettings {
       IndentOptions targetIndentOptions = commonSettings.initIndentOptions();
       targetIndentOptions.copyFrom(myIndentOptions);
     }
-    if (!myArrangementRules.isEmpty()) {
-      rootSettings.setArrangementRules(getArrangementRules());
+    if (myArrangementSettings != null) {
+      rootSettings.setArrangementSettings(myArrangementSettings);
     }
     return commonSettings;
   }
@@ -214,7 +211,7 @@ public class CommonCodeStyleSettings {
     }
     Element arrangementRulesContainer = element.getChild(ARRANGEMENT_ELEMENT_NAME);
     if (arrangementRulesContainer != null) {
-      myArrangementRules.addAll(ArrangementUtil.readExternal(arrangementRulesContainer, myLanguage));
+      myArrangementSettings = ArrangementUtil.readExternal(arrangementRulesContainer, myLanguage);
     }
   }
 
@@ -234,9 +231,9 @@ public class CommonCodeStyleSettings {
       }
     }
 
-    if (!myArrangementRules.isEmpty()) {
+    if (myArrangementSettings != null) {
       Element container = new Element(ARRANGEMENT_ELEMENT_NAME);
-      ArrangementUtil.writeExternal(container, myArrangementRules, myLanguage);
+      ArrangementUtil.writeExternal(container, myArrangementSettings, myLanguage);
       if (!container.getChildren().isEmpty()) {
         element.addContent(container);
       }

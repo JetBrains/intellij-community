@@ -1434,4 +1434,74 @@ def foo(File f) {
 }''')
 
   }
+
+
+  void testTupleAssignment() {
+    testHighlighting('''\
+def (String x, int y)
+(x, <warning descr="Cannot assign 'String' to 'Integer'">y</warning>) = foo()
+
+print x + y
+
+List<String> foo() {[]}
+''', GroovyAssignabilityCheckInspection)
+  }
+
+  void testTupleDeclaration() {
+    testHighlighting('''\
+def (int <warning descr="Cannot assign 'String' to 'int'">x</warning>, String y) = foo()
+
+List<String> foo() {[]}
+''', GroovyAssignabilityCheckInspection)
+  }
+
+  void testCastClosureToInterface() {
+    testHighlighting('''\
+interface Function<D, F> {
+    F fun(D d)
+}
+
+def foo(Function<String, String> function) {
+ //   print function.fun('abc')
+}
+
+
+foo<warning descr="'foo' in '_' cannot be applied to '(Function<java.lang.Double,java.lang.Double>)'">({println  it.byteValue()} as Function<Double, Double>)</warning>
+foo({println  it.substring(1)} as Function)
+foo({println  it.substring(1)} as Function<String, String>)
+foo<warning descr="'foo' in '_' cannot be applied to '(groovy.lang.Closure<java.lang.Void>)'">({println  it})</warning>
+
+''', GroovyAssignabilityCheckInspection)
+  }
+
+  void testInstanceMethodUsedInStaticClosure() {
+    testHighlighting('''\
+class A {
+    static staticClosure = {
+        foo()
+    }
+
+    def staticMethod() {
+        foo()
+    }
+
+    def foo() { }
+}
+
+
+''')
+  }
+
+  void testVarargsWithoutTypeName() {
+    testHighlighting('''\
+def foo(String key, ... params) {
+
+}
+
+foo('anc')
+foo('abc', 1, '')
+foo<warning descr="'foo' in '_' cannot be applied to '(java.lang.Integer)'">(5)</warning>
+''', GroovyAssignabilityCheckInspection)
+  }
+
 }

@@ -46,10 +46,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.targets.AliasingPsiTarget;
 import com.intellij.psi.targets.AliasingPsiTargetMapper;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.refactoring.util.JavaNonCodeSearchElementDescriptionProvider;
 import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
@@ -175,28 +172,24 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         if (setter != null) accessors.add(setter);
         accessors.addAll(PropertyUtil.getAccessors(containingClass, fieldName));
         if (!accessors.isEmpty()) {
-          final boolean doSearch;
           boolean containsPhysical = ContainerUtil.find(accessors, new Condition<PsiMethod>() {
             @Override
             public boolean value(PsiMethod psiMethod) {
               return psiMethod.isPhysical();
             }
           }) != null;
-          if (!containsPhysical) {
-            doSearch = true;
-          }
-          else {
-            doSearch = Messages.showOkCancelDialog(FindBundle.message("find.field.accessors.prompt", fieldName),
-                                           FindBundle.message("find.field.accessors.title"),
-                                           CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText(),
-                                           Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE;
-          }
+          final boolean doSearch = !containsPhysical ||
+                                   Messages.showOkCancelDialog(FindBundle.message("find.field.accessors.prompt", fieldName),
+                                                               FindBundle.message("find.field.accessors.title"),
+                                                               CommonBundle.getYesButtonText(),
+                                                               CommonBundle.getNoButtonText(), Messages.getQuestionIcon()) ==
+                                   DialogWrapper.OK_EXIT_CODE;
           if (doSearch) {
             final Set<PsiElement> elements = new THashSet<PsiElement>();
             for (PsiMethod accessor : accessors) {
               ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(accessor, ACTION_STRING));
             }
-            return PsiUtilBase.toPsiElementArray(elements);
+            return PsiUtilCore.toPsiElementArray(elements);
           }
         }
       }
@@ -720,7 +713,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   }
 
   @Override
-  public Collection<PsiReference> findReferencesToHighlight(@NotNull final PsiElement target, final SearchScope searchScope) {
+  public Collection<PsiReference> findReferencesToHighlight(@NotNull final PsiElement target, @NotNull final SearchScope searchScope) {
     if (target instanceof PsiMethod) {
       final PsiMethod[] superMethods = ((PsiMethod)target).findDeepestSuperMethods();
       if (superMethods.length == 0) {

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.IgnoredFilePatterns;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
+import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,14 +21,12 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
   private final Map<String, JarInfo> myJarByPath;
   private final List<Pair<ArtifactRootDescriptor, DestinationInfo>> myInstructions;
   private final ModuleRootsIndex myRootsIndex;
-  private final int myArtifactId;
-  private final String myArtifactName;
   private int myRootIndex;
+  private ArtifactBuildTarget myBuildTarget;
 
-  public ArtifactInstructionsBuilderImpl(ModuleRootsIndex rootsIndex, int artifactId, String artifactName) {
+  public ArtifactInstructionsBuilderImpl(ModuleRootsIndex rootsIndex, ArtifactBuildTarget target) {
     myRootsIndex = rootsIndex;
-    myArtifactId = artifactId;
-    myArtifactName = artifactName;
+    myBuildTarget = target;
     myJarByPath = new HashMap<String, JarInfo>();
     myInstructions = new ArrayList<Pair<ArtifactRootDescriptor, DestinationInfo>>();
   }
@@ -74,12 +73,12 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
 
   public FileBasedArtifactRootDescriptor createFileBasedRoot(@NotNull File file,
                                                          @NotNull SourceFileFilter filter) {
-    return new FileBasedArtifactRootDescriptor(file, filter, myRootIndex++, myArtifactId, myArtifactName);
+    return new FileBasedArtifactRootDescriptor(file, filter, myRootIndex++, myBuildTarget);
   }
 
   public JarBasedArtifactRootDescriptor createJarBasedRoot(@NotNull File jarFile,
                                                        @NotNull String pathInJar,
                                                        @NotNull SourceFileFilter filter) {
-    return new JarBasedArtifactRootDescriptor(jarFile, pathInJar, filter, myRootIndex, myArtifactId, myArtifactName);
+    return new JarBasedArtifactRootDescriptor(jarFile, pathInJar, filter, myRootIndex, myBuildTarget);
   }
 }

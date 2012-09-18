@@ -64,6 +64,7 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
     myContext = context;
     myProject = project;
     context.getDaemonAnalyzer().addListener(new ProjectStructureDaemonAnalyzerListener() {
+      @Override
       public void problemsChanged(@NotNull ProjectStructureElement element) {
         if (element instanceof ArtifactProjectStructureElement) {
           final Artifact originalArtifact = ((ArtifactProjectStructureElement)element).getOriginalArtifact();
@@ -81,11 +82,13 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
     artifactEditor.getValidationManager().updateProblems(holder);
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   @NotNull
   public ArtifactModel getArtifactModel() {
     if (myModifiableModel != null) {
@@ -94,6 +97,7 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
     return ArtifactManager.getInstance(myProject);
   }
 
+  @Override
   @NotNull
   public Artifact getOriginalArtifact(@NotNull Artifact artifact) {
     if (myModifiableModel != null) {
@@ -102,14 +106,17 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
     return artifact;
   }
 
+  @Override
   public ModifiableModuleModel getModifiableModuleModel() {
     return myContext.getModulesConfigurator().getModuleModel();
   }
 
+  @Override
   public void queueValidation(Artifact artifact) {
     myContext.getDaemonAnalyzer().queueUpdate(getOrCreateArtifactElement(artifact));
   }
 
+  @Override
   public CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact) {
     artifact = getOriginalArtifact(artifact);
     if (myModifiableModel != null) {
@@ -130,9 +137,11 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
     return root;
   }
 
+  @Override
   public void editLayout(@NotNull final Artifact artifact, final Runnable action) {
     final Artifact originalArtifact = getOriginalArtifact(artifact);
     new WriteAction() {
+      @Override
       protected void run(final Result result) {
         final ModifiableArtifact modifiableArtifact = getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(originalArtifact);
         if (modifiableArtifact.getRootElement() == originalArtifact.getRootElement()) {
@@ -149,6 +158,7 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
     return myArtifactEditors.get(getOriginalArtifact(artifact));
   }
 
+  @Override
   public ArtifactEditorImpl getOrCreateEditor(Artifact artifact) {
     artifact = getOriginalArtifact(artifact);
     ArtifactEditorImpl artifactEditor = myArtifactEditors.get(artifact);
@@ -165,6 +175,7 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
     return myModifiableModel;
   }
 
+  @Override
   @NotNull
   public ModifiableArtifactModel getOrCreateModifiableArtifactModel() {
     if (myModifiableModel == null) {
@@ -174,20 +185,24 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
     return myModifiableModel;
   }
 
+  @Override
   public ArtifactEditorSettings getDefaultSettings() {
     return myDefaultSettings;
   }
 
+  @Override
   @NotNull
   public ModulesProvider getModulesProvider() {
     return myContext.getModulesConfigurator();
   }
 
+  @Override
   @NotNull
   public FacetsProvider getFacetsProvider() {
     return myContext.getModulesConfigurator().getFacetsConfigurator();
   }
 
+  @Override
   public Library findLibrary(@NotNull String level, @NotNull String libraryName) {
     final Library library = DefaultPackagingElementResolvingContext.findLibrary(myProject, level, libraryName);
     return library != null ? myContext.getLibraryModel(library) : myContext.getLibrary(libraryName, level);
@@ -199,6 +214,7 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
     return myManifestFileProvider;
   }
 
+  @Override
   public ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType) {
     return myManifestFilesInfo.getManifestFile(element, artifactType, this);
   }
@@ -237,6 +253,7 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
     }
   }
 
+  @Override
   @NotNull
   public ArtifactProjectStructureElement getOrCreateArtifactElement(@NotNull Artifact artifact) {
     ArtifactProjectStructureElement element = myArtifactElements.get(getOriginalArtifact(artifact));
@@ -247,6 +264,7 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
     return element;
   }
 
+  @Override
   public ModifiableRootModel getOrCreateModifiableRootModel(Module module) {
     final ModuleEditor editor = myContext.getModulesConfigurator().getOrCreateModuleEditor(module);
     return editor.getModifiableRootModelProxy();

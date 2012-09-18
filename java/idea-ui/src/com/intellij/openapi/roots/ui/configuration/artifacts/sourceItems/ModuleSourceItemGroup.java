@@ -45,6 +45,7 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
     myModule = module;
   }
 
+  @Override
   public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new ModuleSourceItemPresentation(myModule, context);
   }
@@ -57,6 +58,7 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
     return myModule.hashCode();
   }
 
+  @Override
   @NotNull
   public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
     final Set<Module> modules = new LinkedHashSet<Module>();

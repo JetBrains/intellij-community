@@ -44,6 +44,7 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
     super(moduleName, state, true, true);
   }
 
+  @Override
   protected ContentEntryEditor createContentEntryEditor(final String contentEntryUrl) {
     return new JavaContentEntryEditor(contentEntryUrl) {
       @Override
@@ -53,6 +54,7 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
     };
   }
 
+  @Override
   protected ContentEntryTreeEditor createContentEntryTreeEditor(Project project) {
     return new ContentEntryTreeEditor(project, true, true);
   }
@@ -63,6 +65,7 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
     if (!contentEntries.isEmpty()) {
       final ContentEntry[] contentEntriesArray = contentEntries.toArray(new ContentEntry[contentEntries.size()]);
       addSourceRoots(myProject, contentEntriesArray, new Runnable() {
+        @Override
         public void run() {
           addContentEntryPanels(contentEntriesArray);
         }
@@ -86,8 +89,10 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
     final ProgressIndicator progressIndicator = new SmoothProgressAdapter(progressWindow, project);
 
     final Runnable searchRunnable = new Runnable() {
+      @Override
       public void run() {
         final Runnable process = new Runnable() {
+          @Override
           public void run() {
             for (final File file : fileToEntryMap.keySet()) {
               progressIndicator.setText(ProjectBundle.message("module.paths.searching.source.roots.progress", file.getPath()));
@@ -102,6 +107,7 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
     };
 
     final Runnable addSourcesRunnable = new Runnable() {
+      @Override
       public void run() {
         for (final ContentEntry contentEntry : contentEntries) {
           final Collection<JavaModuleSourceRoot> suggestedRoots = entryToRootMap.get(contentEntry);
@@ -122,17 +128,20 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
     };
 
     new SwingWorker() {
+      @Override
       public Object construct() {
         searchRunnable.run();
         return null;
       }
 
+      @Override
       public void finished() {
         addSourcesRunnable.run();
       }
     }.start();
   }
 
+  @Override
   protected JPanel createBottomControl(Module module) {
     final JPanel innerPanel = new JPanel(new GridBagLayout());
     innerPanel.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 6));

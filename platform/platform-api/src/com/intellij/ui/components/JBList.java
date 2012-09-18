@@ -22,7 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.ExpandableItemsHandlerFactory;
-import com.intellij.ui.ExpandedItemRendererComponentWrapper;
+import com.intellij.ui.ExpandedItemListCellRendererWrapper;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -205,16 +205,13 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
 
   @Override
   public void setCellRenderer(final ListCellRenderer cellRenderer) {
-    super.setCellRenderer(new ListCellRenderer() {
-      @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        Component result = cellRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (myExpandableItemsHandler != null && myExpandableItemsHandler.getExpandedItems().contains(index)) {
-          result = new ExpandedItemRendererComponentWrapper(result);
-        }
-        return result;
-      }
-    });
+    // myExpandableItemsHandler may not yeb be initialized
+    //noinspection ConstantConditions
+    if (myExpandableItemsHandler == null) {
+      super.setCellRenderer(cellRenderer);
+      return;
+    }
+    super.setCellRenderer(new ExpandedItemListCellRendererWrapper(cellRenderer, myExpandableItemsHandler));
   }
 
   public <T> void installCellRenderer(@NotNull final NotNullFunction<T, JComponent> fun) {

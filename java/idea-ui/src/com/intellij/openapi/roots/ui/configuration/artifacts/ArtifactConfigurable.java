@@ -36,6 +36,7 @@ public class ArtifactConfigurable extends ArtifactConfigurableBase {
     super(originalArtifact, artifactsStructureContext, updateTree, true);
   }
 
+  @Override
   public void setDisplayName(String name) {
     final String oldName = getArtifact().getName();
     if (name != null && !name.equals(oldName) && !myIsInUpdateName) {
@@ -55,6 +56,7 @@ public class ArtifactConfigurable extends ArtifactConfigurableBase {
     }
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return getEditor().createMainComponent();
   }
@@ -70,6 +72,7 @@ public class ArtifactConfigurable extends ArtifactConfigurableBase {
 
     artifactTypeBox.setSelectedItem(getArtifact().getArtifactType());
     artifactTypeBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final ArtifactType selected = (ArtifactType)artifactTypeBox.getSelectedItem();
         if (selected != null && !Comparing.equal(selected, getArtifact().getArtifactType())) {
@@ -84,17 +87,21 @@ public class ArtifactConfigurable extends ArtifactConfigurableBase {
     return panel;
   }
 
+  @Override
   public boolean isModified() {
     return getEditor().isModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     getEditor().apply();
   }
 
+  @Override
   public void reset() {
   }
 
+  @Override
   public String getHelpTopic() {
     return getEditor().getHelpTopic();
   }

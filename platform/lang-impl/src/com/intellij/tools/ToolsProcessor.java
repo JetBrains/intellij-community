@@ -42,6 +42,8 @@ class ToolsProcessor extends BaseSchemeProcessor<ToolsGroup> {
   @NonNls private static final String SHOW_IN_SEARCH_POPUP = "showInSearchPopup";
   @NonNls private static final String DISABLED = "disabled";
   @NonNls private static final String USE_CONSOLE = "useConsole";
+  @NonNls private static final String SHOW_CONSOLE_ON_STDOUT = "showConsoleOnStdOut";
+  @NonNls private static final String SHOW_CONSOLE_ON_STDERR = "showConsoleOnStdErr";
   @NonNls private static final String SYNCHRONIZE_AFTER_EXECUTION = "synchronizeAfterRun";
   @NonNls private static final String EXEC = "exec";
   @NonNls private static final String WORKING_DIRECTORY = "WORKING_DIRECTORY";
@@ -76,6 +78,8 @@ class ToolsProcessor extends BaseSchemeProcessor<ToolsGroup> {
       tool.setShownInSearchResultsPopup(Boolean.valueOf(element.getAttributeValue(SHOW_IN_SEARCH_POPUP)).booleanValue());
       tool.setEnabled(!Boolean.valueOf(element.getAttributeValue(DISABLED)).booleanValue());
       tool.setUseConsole(Boolean.valueOf(element.getAttributeValue(USE_CONSOLE)).booleanValue());
+      tool.setShowConsoleOnStdOut(Boolean.valueOf(element.getAttributeValue(SHOW_CONSOLE_ON_STDOUT)).booleanValue());
+      tool.setShowConsoleOnStdErr(Boolean.valueOf(element.getAttributeValue(SHOW_CONSOLE_ON_STDERR)).booleanValue());
       tool.setFilesSynchronizedAfterRun(Boolean.valueOf(element.getAttributeValue(SYNCHRONIZE_AFTER_EXECUTION)).booleanValue());
 
       Element exec = element.getChild(EXEC);
@@ -150,6 +154,8 @@ class ToolsProcessor extends BaseSchemeProcessor<ToolsGroup> {
     element.setAttribute(SHOW_IN_SEARCH_POPUP, Boolean.toString(tool.isShownInSearchResultsPopup()));
     element.setAttribute(DISABLED, Boolean.toString(!tool.isEnabled()));
     element.setAttribute(USE_CONSOLE, Boolean.toString(tool.isUseConsole()));
+    element.setAttribute(SHOW_CONSOLE_ON_STDOUT, Boolean.toString(tool.isShowConsoleOnStdOut()));
+    element.setAttribute(SHOW_CONSOLE_ON_STDERR, Boolean.toString(tool.isShowConsoleOnStdErr()));
     element.setAttribute(SYNCHRONIZE_AFTER_EXECUTION, Boolean.toString(tool.synchronizeAfterExecution()));
 
     Element taskElement = new Element(EXEC);

@@ -105,17 +105,11 @@ public class AssertEqualsBetweenInconvertibleTypesTestNGInspection extends BaseJ
       if (type2 == null) {
         return;
       }
-      if (!parameterType1.equals(parameterType2)) {
-        return;
-      }
       final PsiManager manager = expression.getManager();
       final GlobalSearchScope scope = expression.getResolveScope();
-      if (type2 instanceof PsiPrimitiveType && parameterType2.equals(PsiType.getJavaLangObject(manager, scope))) {
-        final PsiPrimitiveType primitiveType = (PsiPrimitiveType)type2;
-        final PsiClassType boxedType = primitiveType.getBoxedType(manager, scope);
-        if (boxedType != null && TypeConversionUtil.areTypesConvertible(type1, boxedType)) {
-          return;
-        }
+      final PsiClassType objectType = PsiType.getJavaLangObject(manager, scope);
+      if (!objectType.equals(parameterType1) || !objectType.equals(parameterType2)) {
+        return;
       }
       if (TypeConversionUtil.areTypesConvertible(type1, type2)) {
         return;
@@ -125,9 +119,9 @@ public class AssertEqualsBetweenInconvertibleTypesTestNGInspection extends BaseJ
         return;
       }
       myProblemsHolder.registerProblem(referenceNameElement,
-                                       "<code>#ref()</code> between objects of inconvertible types ''" +
-                                       StringUtil.escapeXml(type1.getPresentableText()) + "'' and ''" +
-                                       StringUtil.escapeXml(type2.getPresentableText()) + "'' #loc");
+                                       "<code>#ref()</code> between objects of inconvertible types '" +
+                                       StringUtil.escapeXml(type1.getPresentableText()) + "' and '" +
+                                       StringUtil.escapeXml(type2.getPresentableText()) + "' #loc");
     }
   }
 }

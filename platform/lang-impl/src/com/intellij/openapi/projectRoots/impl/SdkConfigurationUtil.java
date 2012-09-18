@@ -129,6 +129,7 @@ public class SdkConfigurationUtil {
 
   public static void removeSdk(final Sdk sdk) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ProjectJdkTable.getInstance().removeJdk(sdk);
       }
@@ -174,6 +175,7 @@ public class SdkConfigurationUtil {
 
   public static void setDirectoryProjectSdk(@NotNull final Project project, @Nullable final Sdk sdk) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ProjectRootManager.getInstance(project).setProjectSdk(sdk);
         final Module[] modules = ModuleManager.getInstance(project).getModules();
@@ -238,6 +240,7 @@ public class SdkConfigurationUtil {
   @Nullable
   public static Sdk createAndAddSDK(final String path, SdkType sdkType) {
     VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      @Override
       public VirtualFile compute() {
         return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
       }

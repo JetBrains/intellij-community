@@ -41,6 +41,7 @@ import java.util.*;
  */
 public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItemsProvider {
 
+  @Override
   @NotNull
   public Collection<? extends PackagingSourceItem> getSourceItems(@NotNull ArtifactEditorContext editorContext, @NotNull Artifact artifact,
                                                                   PackagingSourceItem parent) {
@@ -110,6 +111,7 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
                                                           final Module... allModules) {
     final Set<Module> modules = new HashSet<Module>(Arrays.asList(allModules));
     ArtifactUtil.processPackagingElements(artifact, ProductionModuleOutputElementType.ELEMENT_TYPE, new Processor<ModuleOutputPackagingElement>() {
+      @Override
       public boolean process(ModuleOutputPackagingElement moduleOutputPackagingElement) {
         modules.remove(moduleOutputPackagingElement.findModule(context));
         return true;
@@ -122,6 +124,7 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
                                                              List<Library> librariesList) {
     final Set<VirtualFile> roots = new HashSet<VirtualFile>();
     ArtifactUtil.processPackagingElements(artifact, PackagingElementFactoryImpl.FILE_COPY_ELEMENT_TYPE, new Processor<FileCopyPackagingElement>() {
+      @Override
       public boolean process(FileCopyPackagingElement fileCopyPackagingElement) {
         final VirtualFile root = fileCopyPackagingElement.getLibraryRoot();
         if (root != null) {

@@ -43,6 +43,7 @@ class AddNewLibraryDependencyAction extends ChooseAndAddAction<Library> {
     myLibraryType = libraryType;
   }
 
+  @Override
   protected ClasspathTableItem<?> createTableItem(final Library item) {
     final OrderEntry[] entries = myClasspathPanel.getRootModel().getOrderEntries();
     for (OrderEntry entry : entries) {
@@ -56,6 +57,7 @@ class AddNewLibraryDependencyAction extends ChooseAndAddAction<Library> {
     return ClasspathTableItem.createLibItem(myClasspathPanel.getRootModel().addLibraryEntry(item), myContext);
   }
 
+  @Override
   protected ClasspathElementChooser<Library> createChooser() {
     return new NewLibraryChooser(myClasspathPanel.getProject(), myClasspathPanel.getRootModel(), myLibraryType, myContext, myClasspathPanel.getComponent());
   }

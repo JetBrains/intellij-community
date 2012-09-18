@@ -101,10 +101,12 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
     return mySettingsElement;
   }
 
+  @Override
   public DetailsComponent getDetailsComponent() {
     return myDetailsComponent;
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     myDetailsComponent = new DetailsComponent();
     myDetailsComponent.setContent(myPanel);
@@ -152,6 +154,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
 
 
     myProjectCompilerOutput.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         if (myFreeze) return;
         myModulesConfigurator.processModuleCompilerOutputChanged(getCompilerOutputUrl());
@@ -159,12 +162,14 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
     });
   }
 
+  @Override
   public void disposeUIResources() {
     if (myProjectJdkConfigurable != null) {
       myProjectJdkConfigurable.disposeUIResources();
     }
   }
 
+  @Override
   public void reset() {
     myFreeze = true;
     try {
@@ -187,6 +192,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   }
 
 
+  @Override
   public void apply() throws ConfigurationException {
     final CompilerProjectExtension compilerProjectExtension = CompilerProjectExtension.getInstance(myProject);
     assert compilerProjectExtension != null : myProject;
@@ -196,6 +202,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
     }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         // set the output path first so that handlers of RootsChanged event sent after JDK is set
         // would see the updated path
@@ -227,26 +234,32 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   }
 
 
+  @Override
   public void setDisplayName(final String name) {
     //do nothing
   }
 
+  @Override
   public Project getEditableObject() {
     return myProject;
   }
 
+  @Override
   public String getBannerSlogan() {
     return ProjectBundle.message("project.roots.project.banner.text", myProject.getName());
   }
 
+  @Override
   public String getDisplayName() {
     return ProjectBundle.message("project.roots.project.display.name");
   }
 
+  @Override
   public Icon getIcon(boolean open) {
     return AllIcons.Nodes.Project;
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {
@@ -254,6 +267,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   }
 
 
+  @Override
   @SuppressWarnings({"SimplifiableIfStatement"})
   public boolean isModified() {
     if (!LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel().equals(myLanguageLevelCombo.getSelectedItem())) {

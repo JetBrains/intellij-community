@@ -67,24 +67,29 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
 
   public abstract LibraryTablePresentation getLibraryTablePresentation();
 
+  @Override
   protected void processRemovedItems() {
   }
 
+  @Override
   protected boolean wasObjectStored(final Object editableObject) {
     return false;
   }
 
+  @Override
   @Nullable
   public Runnable enableSearch(final String option) {
     return null;
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {
     return "reference.settingsdialog.project.structure.library";
   }
 
+  @Override
   public boolean isModified() {
     boolean isModified = false;
     for (final LibrariesModifiableModel provider : myContext.myLevel2Providers.values()) {
@@ -104,11 +109,13 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     }
   }
 
+  @Override
   public void reset() {
     super.reset();
     myTree.setRootVisible(false);
   }
 
+  @Override
   protected void loadTree() {
     createLibrariesNode(myContext.createModifiableModelProvider(myLevel));
   }
@@ -144,6 +151,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
       myRoot.add(new MyNode(new LibraryConfigurable(modelProvider, library, myContext, TREE_UPDATER)));
     }
     TreeUtil.sort(myRoot, new Comparator() {
+      @Override
       public int compare(final Object o1, final Object o2) {
         MyNode node1 = (MyNode)o1;
         MyNode node2 = (MyNode)o2;
@@ -153,9 +161,11 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     ((DefaultTreeModel)myTree.getModel()).reload(myRoot);
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     super.apply();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         for (final LibrariesModifiableModel provider : myContext.myLevel2Providers.values()) {
           provider.deferredCommit();
@@ -182,6 +192,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     }
   }
 
+  @Override
   public void dispose() {
     if (myContext != null) {
       for (final LibrariesModifiableModel provider : myContext.myLevel2Providers.values()) {
@@ -190,6 +201,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     }
   }
 
+  @Override
   @NotNull
   protected List<? extends AnAction> createCopyActions(boolean fromPopup) {
     final ArrayList<AnAction> actions = new ArrayList<AnAction>();
@@ -202,8 +214,10 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     return actions;
   }
 
+  @Override
   protected AbstractAddGroup createAddAction() {
     return new AbstractAddGroup(getAddText()) {
+      @Override
       @NotNull
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
         return CreateNewLibraryAction.createActionOrGroup(getAddText(), BaseLibrariesConfigurable.this, myProject);
@@ -252,6 +266,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     }
   }
 
+  @Override
   protected boolean removeLibrary(final Library library) {
     final LibraryTable table = library.getTable();
     if (table != null) {
@@ -309,6 +324,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     return false;
   }
 
+  @Override
   @Nullable
   protected String getEmptySelectionString() {
     return "Select a library to view or edit its details here";
@@ -319,6 +335,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
       super(CommonBundle.message("button.copy"), CommonBundle.message("button.copy"), COPY_ICON);
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       final Object o = getSelectedObject();
       if (o instanceof LibraryEx) {
@@ -337,6 +354,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
       }
     }
 
+    @Override
     public void update(final AnActionEvent e) {
       if (myTree.getSelectionPaths() == null || myTree.getSelectionPaths().length != 1) {
         e.getPresentation().setEnabled(false);

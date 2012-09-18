@@ -1056,11 +1056,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public void assertIsDispatchThread() {
+    if (ShutDownTracker.isShutdownHookRunning()) return;
+    Integer safeCounter = ourEdtSafe.get();
+    if (safeCounter != null && safeCounter > 0) return;
     assertIsDispatchThread("Access is allowed from event dispatch thread only.");
   }
 
   private static void assertIsDispatchThread(String message) {
-    if (ShutDownTracker.isShutdownHookRunning()) return;
     final Thread currentThread = Thread.currentThread();
     if (ourDispatchThread == currentThread) return;
 
@@ -1068,9 +1070,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       ourDispatchThread = currentThread;
     }
     if (ourDispatchThread == currentThread) return;
-
-    Integer safeCounter = ourEdtSafe.get();
-    if (safeCounter != null && safeCounter > 0) return;
 
     LOG.error(message,
               "Current thread: " + describe(Thread.currentThread()),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.util.Query;
 import com.intellij.util.ui.CheckBox;
 import com.intellij.util.ui.FormBuilder;
 import com.siyeh.InspectionGadgetsBundle;
@@ -33,6 +30,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
+import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -43,15 +41,12 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NonBooleanMethodNameMayNotStartWithQuestionInspection
-  extends BaseInspection {
+public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField
    */
-  @NonNls public String questionString =
-    "is,can,has,should,could,will,shall,check,contains,equals," +
-    "startsWith,endsWith";
+  @NonNls public String questionString = "is,can,has,should,could,will,shall,check,contains,equals,startsWith,endsWith";
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreBooleanMethods = false;
@@ -68,15 +63,13 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.boolean.method.name.must.not.start.with.question.display.name");
+    return InspectionGadgetsBundle.message("non.boolean.method.name.must.not.start.with.question.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "non.boolean.method.name.must.not.start.with.question.problem.descriptor");
+    return InspectionGadgetsBundle.message("non.boolean.method.name.must.not.start.with.question.problem.descriptor");
   }
 
   @Override
@@ -133,8 +126,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection
       if (returnType == null || returnType.equals(PsiType.BOOLEAN)) {
         return;
       }
-      if (ignoreBooleanMethods && returnType.equalsToText(
-        CommonClassNames.JAVA_LANG_BOOLEAN)) {
+      if (ignoreBooleanMethods && returnType.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
         return;
       }
       final String name = method.getName();
@@ -156,9 +148,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection
         return;
       }
       if (onlyWarnOnBaseMethods) {
-        final Query<MethodSignatureBackedByPsiMethod> superSearch =
-          SuperMethodsSearch.search(method, null, true, false);
-        if (superSearch.findFirst() != null) {
+        if (MethodUtils.hasSuper(method)) {
           return;
         }
       }

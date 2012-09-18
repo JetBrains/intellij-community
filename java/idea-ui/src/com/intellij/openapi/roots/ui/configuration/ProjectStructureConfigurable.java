@@ -140,28 +140,33 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     myUiState.sideProportion = sideProportion != null ? Float.parseFloat(sideProportion) : 0;
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getId() {
     return "project.structure";
   }
 
+  @Override
   @Nullable
   public Runnable enableSearch(final String option) {
     return null;
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return ProjectBundle.message("project.settings.display.name");
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {
     return mySelectedConfigurable != null ? mySelectedConfigurable.getHelpTopic() : "";
   }
 
+  @Override
   public JComponent createComponent() {
     myComponent = new MyPanel();
 
@@ -171,6 +176,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     initSidePanel();
 
     final JPanel left = new JPanel(new BorderLayout()) {
+      @Override
       public Dimension getMinimumSize() {
         final Dimension original = super.getMinimumSize();
         return new Dimension(Math.max(original.width, 100), original.height);
@@ -258,6 +264,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     addConfigurable(myModulesConfig);
   }
 
+  @Override
   public boolean isModified() {
     for (Configurable each : myName2Config) {
       if (each.isModified()) return true;
@@ -266,6 +273,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     return false;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     for (Configurable each : myName2Config) {
       if (each instanceof BaseStructureConfigurable && each.isModified()) {
@@ -281,6 +289,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     myContext.getDaemonAnalyzer().clearCaches();
   }
 
+  @Override
   public void reset() {
     // need this to ensure VFS operations will not block because of storage flushing
     // and other maintenance IO tasks run in background
@@ -327,6 +336,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     mySplitter.getFirstComponent().setVisible(false);
   }
 
+  @Override
   public void disposeUIResources() {
     if (!myUiInitialized) return;
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
@@ -360,10 +370,12 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     return myHistory;
   }
 
+  @Override
   public void setHistory(final History history) {
     myHistory = history;
   }
 
+  @Override
   public void queryPlace(@NotNull final Place place) {
     place.putPath(CATEGORY, mySelectedConfigurable);
     Place.queryFurther(mySelectedConfigurable, place);
@@ -449,6 +461,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     return ModuleStructureConfigurable.getInstance(myProject).selectOrderEntry(module, orderEntry);
   }
 
+  @Override
   public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
     final Configurable toSelect = (Configurable)place.getPath(CATEGORY);
 
@@ -580,6 +593,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
       super(new BorderLayout());
     }
 
+    @Override
     @Nullable
     public Object getData(@NonNls final String dataId) {
       if (KEY.is(dataId)) {
@@ -591,6 +605,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
       }
     }
 
+    @Override
     public Dimension getPreferredSize() {
       return new Dimension(1024, 768);
     }
@@ -604,6 +619,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     }
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myToFocus;
   }

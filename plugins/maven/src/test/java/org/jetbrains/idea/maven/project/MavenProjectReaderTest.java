@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -260,18 +261,18 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("project-1", p.getBuild().getFinalName());
     assertEquals(null, p.getBuild().getDefaultGoal());
     assertSize(1, p.getBuild().getSources());
-    assertPathEquals(pathFromBasedir("src/main/java"), p.getBuild().getSources().get(0));
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("src/main/java"), p.getBuild().getSources().get(0));
     assertSize(1, p.getBuild().getTestSources());
-    assertPathEquals(pathFromBasedir("src/test/java"), p.getBuild().getTestSources().get(0));
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("src/test/java"), p.getBuild().getTestSources().get(0));
     assertEquals(1, p.getBuild().getResources().size());
     assertResource(p.getBuild().getResources().get(0), pathFromBasedir("src/main/resources"),
                    false, null, Collections.<String>emptyList(), Collections.<String>emptyList());
     assertEquals(1, p.getBuild().getTestResources().size());
     assertResource(p.getBuild().getTestResources().get(0), pathFromBasedir("src/test/resources"),
                    false, null, Collections.<String>emptyList(), Collections.<String>emptyList());
-    assertPathEquals(pathFromBasedir("target"), p.getBuild().getDirectory());
-    assertPathEquals(pathFromBasedir("target/classes"), p.getBuild().getOutputDirectory());
-    assertPathEquals(pathFromBasedir("target/test-classes"), p.getBuild().getTestOutputDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("target"), p.getBuild().getDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("target/classes"), p.getBuild().getOutputDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("target/test-classes"), p.getBuild().getTestOutputDirectory());
   }
 
   public void testDefaultsForParent() throws Exception {
@@ -362,18 +363,18 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("xxx", p.getBuild().getFinalName());
     assertEquals("someGoal", p.getBuild().getDefaultGoal());
     assertSize(1, p.getBuild().getSources());
-    assertPathEquals(pathFromBasedir("mySrc"), p.getBuild().getSources().get(0));
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("mySrc"), p.getBuild().getSources().get(0));
     assertSize(1, p.getBuild().getTestSources());
-    assertPathEquals(pathFromBasedir("myTestSrc"), p.getBuild().getTestSources().get(0));
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("myTestSrc"), p.getBuild().getTestSources().get(0));
     assertEquals(1, p.getBuild().getResources().size());
     assertResource(p.getBuild().getResources().get(0), pathFromBasedir("myRes"),
                    true, "dir", Collections.singletonList("**.properties"), Collections.singletonList("**.xml"));
     assertEquals(1, p.getBuild().getTestResources().size());
     assertResource(p.getBuild().getTestResources().get(0), pathFromBasedir("myTestRes"),
                    false, null, Collections.singletonList("**.properties"), Collections.<String>emptyList());
-    assertPathEquals(pathFromBasedir("myOutput"), p.getBuild().getDirectory());
-    assertPathEquals(pathFromBasedir("myClasses"), p.getBuild().getOutputDirectory());
-    assertPathEquals(pathFromBasedir("myTestClasses"), p.getBuild().getTestOutputDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("myOutput"), p.getBuild().getDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("myClasses"), p.getBuild().getOutputDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("myTestClasses"), p.getBuild().getTestOutputDirectory());
   }
 
   public void testOutputPathsAreBasedOnTargetPath() throws Exception {
@@ -386,9 +387,9 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
     MavenModel p = readProject(myProjectPom);
 
-    assertPathEquals(pathFromBasedir("my-target"), p.getBuild().getDirectory());
-    assertPathEquals(pathFromBasedir("my-target/classes"), p.getBuild().getOutputDirectory());
-    assertPathEquals(pathFromBasedir("my-target/test-classes"), p.getBuild().getTestOutputDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target"), p.getBuild().getDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target/classes"), p.getBuild().getOutputDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target/test-classes"), p.getBuild().getTestOutputDirectory());
   }
 
   public void testDoesNotIncludeResourcesWithoutDirectory() throws Exception {
@@ -437,18 +438,18 @@ public class MavenProjectReaderTest extends MavenTestCase {
     MavenModel p = readProject(myProjectPom);
 
     assertSize(1, p.getBuild().getSources());
-    assertPathEquals(pathFromBasedir("subDir/mySrc"), p.getBuild().getSources().get(0));
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("subDir/mySrc"), p.getBuild().getSources().get(0));
     assertSize(1, p.getBuild().getTestSources());
-    assertPathEquals(pathFromBasedir("subDir/myTestSrc"), p.getBuild().getTestSources().get(0));
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("subDir/myTestSrc"), p.getBuild().getTestSources().get(0));
     assertEquals(1, p.getBuild().getResources().size());
     assertResource(p.getBuild().getResources().get(0), pathFromBasedir("subDir/myRes"),
                    false, null, Collections.<String>emptyList(), Collections.<String>emptyList());
     assertEquals(1, p.getBuild().getTestResources().size());
     assertResource(p.getBuild().getTestResources().get(0), pathFromBasedir("subDir/myTestRes"),
                    false, null, Collections.<String>emptyList(), Collections.<String>emptyList());
-    assertPathEquals(pathFromBasedir("subDir/myOutput"), p.getBuild().getDirectory());
-    assertPathEquals(pathFromBasedir("subDir/myClasses"), p.getBuild().getOutputDirectory());
-    assertPathEquals(pathFromBasedir("subDir/myTestClasses"), p.getBuild().getTestOutputDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("subDir/myOutput"), p.getBuild().getDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("subDir/myClasses"), p.getBuild().getOutputDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("subDir/myTestClasses"), p.getBuild().getTestOutputDirectory());
   }
 
   public void testExpandingProperties() throws Exception {
@@ -851,7 +852,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "</parent>");
 
     MavenModel p = readProject(module);
-    assertPathEquals(pathFromBasedir(module.getParent(), "custom"), p.getBuild().getDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir(module.getParent(), "custom"), p.getBuild().getDirectory());
   }
 
   public void testExpandingPropertiesAfterInheritingSettingsFromParent() throws Exception {
@@ -874,7 +875,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "</parent>");
 
     MavenModel p = readProject(module);
-    assertPathEquals(pathFromBasedir(module.getParent(), "subDir/custom"), p.getBuild().getDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir(module.getParent(), "subDir/custom"), p.getBuild().getDirectory());
   }
 
   public void testExpandingPropertiesAfterInheritingSettingsFromParentProfiles() throws Exception {
@@ -902,7 +903,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "</parent>");
 
     MavenModel p = readProject(module, "one");
-    assertPathEquals(pathFromBasedir(module.getParent(), "subDir/custom"), p.getBuild().getDirectory());
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir(module.getParent(), "subDir/custom"), p.getBuild().getDirectory());
   }
 
   public void testPropertiesFromProfilesXmlOldStyle() throws Exception {
@@ -1601,9 +1602,9 @@ public class MavenProjectReaderTest extends MavenTestCase {
                               String targetPath,
                               List<String> includes,
                               List<String> excludes) {
-    assertPathEquals(dir, resource.getDirectory());
+    PlatformTestUtil.assertPathsEqual(dir, resource.getDirectory());
     assertEquals(filtered, resource.isFiltered());
-    assertPathEquals(targetPath, resource.getTargetPath());
+    PlatformTestUtil.assertPathsEqual(targetPath, resource.getTargetPath());
     assertOrderedElementsAreEqual(resource.getIncludes(), includes);
     assertOrderedElementsAreEqual(resource.getExcludes(), excludes);
   }

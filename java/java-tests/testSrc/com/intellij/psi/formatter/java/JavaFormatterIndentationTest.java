@@ -516,4 +516,24 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "}";
     doTextTest(text, text);
   }
+
+  public void testMultilineCommentAndTabsIndent() {
+    // IDEA-91703
+    String initial = 
+      "\t/*\n" +
+      "\t\t* comment\n" +
+      "\t */\n" +
+      "class Test {\n" +
+      "}";
+
+    String expected =
+      "/*\n" +
+      "\t* comment\n" +
+      " */\n" +
+      "class Test {\n" +
+      "}";
+    
+    getIndentOptions().USE_TAB_CHARACTER = true;
+    doTextTest(initial, expected);
+  }
 }

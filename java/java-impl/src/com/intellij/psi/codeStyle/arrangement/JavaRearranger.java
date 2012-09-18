@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -25,6 +26,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.*;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementConditionsGrouper;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
@@ -90,7 +92,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     ));
   }
 
-  private static final List<StdArrangementRule> DEFAULT_RULES = new ArrayList<StdArrangementRule>();
+  private static final List<StdArrangementMatchRule> DEFAULT_RULES = new ArrayList<StdArrangementMatchRule>();
 
   static {
     ArrangementModifier[] visibility = {PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE};
@@ -106,6 +108,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     for (ArrangementModifier modifier : visibility) {
       and(FIELD, modifier);
     }
+    and(FIELD);
     and(CONSTRUCTOR);
     and(METHOD, STATIC);
     and(METHOD);
@@ -117,7 +120,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
 
   private static void and(@NotNull Object... conditions) {
     if (conditions.length == 1) {
-      DEFAULT_RULES.add(new StdArrangementRule(new StdArrangementEntryMatcher(new ArrangementAtomMatchCondition(
+      DEFAULT_RULES.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(new ArrangementAtomMatchCondition(
         ArrangementUtil.parseType(conditions[0]), conditions[0]
       ))));
       return;
@@ -127,7 +130,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     for (Object condition : conditions) {
       composite.addOperand(new ArrangementAtomMatchCondition(ArrangementUtil.parseType(condition), condition));
     }
-    DEFAULT_RULES.add(new StdArrangementRule(new StdArrangementEntryMatcher(composite)));
+    DEFAULT_RULES.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(composite)));
   }
 
   @NotNull
@@ -139,17 +142,30 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
 
   @Nullable
   @Override
-  public JavaElementArrangementEntry wrap(@NotNull PsiElement element) {
-    List<JavaElementArrangementEntry> result = new ArrayList<JavaElementArrangementEntry>();
-    element.accept(new JavaArrangementVisitor(result, null, Collections.singleton(element.getTextRange())));
-    return result.size() == 1 ? result.get(0) : null;
+  public Pair<JavaElementArrangementEntry, List<JavaElementArrangementEntry>> parseWithNew(
+    @NotNull PsiElement root,
+    @Nullable Document document,
+    @NotNull Collection<TextRange> ranges,
+    @NotNull PsiElement element,
+    @Nullable ArrangementSettings settings)
+  {
+    List<JavaElementArrangementEntry> existingEntries = new ArrayList<JavaElementArrangementEntry>();
+    root.accept(new JavaArrangementVisitor(existingEntries, document, ranges));
+
+    List<JavaElementArrangementEntry> newEntry = new ArrayList<JavaElementArrangementEntry>();
+    element.accept(new JavaArrangementVisitor(newEntry, document, Collections.singleton(element.getTextRange())));
+    if (newEntry.size() != 1) {
+      return null;
+    }
+    return Pair.create(newEntry.get(0), existingEntries);
   }
 
   @NotNull
   @Override
   public List<JavaElementArrangementEntry> parse(@NotNull PsiElement root,
                                                  @Nullable Document document,
-                                                 @NotNull Collection<TextRange> ranges)
+                                                 @NotNull Collection<TextRange> ranges,
+                                                 @Nullable ArrangementSettings settings)
   {
     // Following entries are subject to arrangement: class, interface, field, method.
     List<JavaElementArrangementEntry> result = new ArrayList<JavaElementArrangementEntry>();
@@ -237,7 +253,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
 
   @Nullable
   @Override
-  public List<StdArrangementRule> getDefaultRules() {
+  public List<StdArrangementMatchRule> getDefaultRules() {
     return DEFAULT_RULES;
   }
 }

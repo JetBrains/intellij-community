@@ -48,6 +48,7 @@ public class RenamePackagingElementAction extends DumbAwareAction {
     e.getPresentation().setVisible(visible);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final LayoutTreeSelection selection = myArtifactEditor.getLayoutTreeComponent().getSelection();
     final PackagingElementNode<?> node = selection.getNodeIfSingle();
