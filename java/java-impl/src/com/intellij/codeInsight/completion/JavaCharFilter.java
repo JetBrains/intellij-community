@@ -115,7 +115,7 @@ public class JavaCharFilter extends CharFilter {
       return Result.HIDE_LOOKUP;
     }
 
-    if ((c == '[' || c == '<' || c == '.' || c == ' ' || c == '(') &&
+    if ((c == '[' || c == '<' || c == '.' || c == ' ' || c == '(' || c == ',') &&
         isNonImportedClassEntered((LookupImpl)lookup, c == '.')) {
       return Result.HIDE_LOOKUP;
     }

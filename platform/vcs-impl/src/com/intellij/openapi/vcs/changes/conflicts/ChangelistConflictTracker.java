@@ -149,9 +149,7 @@ public class ChangelistConflictTracker {
   }
 
   private void checkOneFile(VirtualFile file, LocalChangeList defaultList) {
-    if (file == null) return;
-    final LocalChangeList changeList = myChangeListManager.getChangeList(file);
-    if (Comparing.equal(changeList, defaultList) || ChangesUtil.isInternalOperation(file)) {
+    if (file == null || Comparing.equal(myChangeListManager.getChangeList(file), defaultList) || ChangesUtil.isInternalOperation(file)) {
       return;
     }
 

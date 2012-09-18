@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,28 @@
  */
 package com.intellij.cvsSupport2.actions.merge;
 
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.containers.Stack;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.Stack;
+import java.io.*;
 
 /**
  * @author lesya
  */
 public class CvsConflictsParser {
-  private static final String RIGHT = "<<<<<<<";
-  private static final String LEFT = "=======";
-  private static final String END = ">>>>>>>";
 
-  enum State {
+  private static final String LEFT = "<<<<<<< ";
+  private static final String RIGHT = "=======";
+  private static final String END = ">>>>>>> ";
+  private static final int LENGTH = RIGHT.length();
+
+  private enum State {
     RIGHT, LEFT
   }
 
-  private final StringBuffer myLeftBuffer = new StringBuffer();
-  private final StringBuffer myCenterBuffer = new StringBuffer();
-  private final StringBuffer myRightBuffer = new StringBuffer();
-  private final Stack<State> myStateStack;
+  private final StringBuilder myLeftBuffer = new StringBuilder();
+  private final StringBuilder myCenterBuffer = new StringBuilder();
+  private final StringBuilder myRightBuffer = new StringBuilder();
+  private final Stack<State> myStateStack = new Stack<State>();
 
   public String getLeftVersion() {
     return myLeftBuffer.toString();
@@ -52,10 +50,7 @@ public class CvsConflictsParser {
     return myRightBuffer.toString();
   }
 
-  private CvsConflictsParser() {
-
-    myStateStack = new Stack<State>();
-  }
+  private CvsConflictsParser() {}
 
   public static CvsConflictsParser createOn(InputStream merged) throws IOException {
     final CvsConflictsParser result = new CvsConflictsParser();
@@ -64,30 +59,12 @@ public class CvsConflictsParser {
   }
 
   private void parseFile(final InputStream merged) throws IOException {
-    final InputStreamReader isr = new InputStreamReader(merged);
-    final BufferedReader br = new BufferedReader(isr);
+    final BufferedReader br = new BufferedReader(new InputStreamReader(merged));
     try {
-      String line;
-      while ((line = br.readLine()) != null) {
-        String cutLine = findMarkerAndWriteTail(line, RIGHT);
-        if (cutLine != null) {
-          processRightMarker(cutLine);
-          continue;
+      for (String line; (line = br.readLine()) != null; ) {
+        if (!processLeftMarker(line) && !processRightMarker(line) && !processEndMarker(line)) {
+          appendToMainOrCurrent(line);
         }
-
-        cutLine = findMarkerAndWriteTail(line, LEFT);
-        if (cutLine != null) {
-          processLeftMarker(cutLine);
-          continue;
-        }
-
-        cutLine = findMarkerAndWriteTail(line, END);
-        if (cutLine != null) {
-          processEndMarker(cutLine);
-          continue;
-        }
-
-        appendToMainOrCurrent(line);
       }
     }
     finally {
@@ -95,85 +72,88 @@ public class CvsConflictsParser {
     }
   }
 
-  private void appendToMainOrCurrent(final String line) {
+  private boolean processLeftMarker(String line) {
+    final int idx = line.lastIndexOf(LEFT);
+    if (idx < 0) {
+      return false;
+    }
     if (myStateStack.isEmpty()) {
-      appendLine(line);
-    } else {
-      appendToCurrentBuffer(line);
-    }
-  }
-
-  @Nullable
-  private String findMarkerAndWriteTail(final String s, final String marker) {
-    final int idx = s.indexOf(marker);
-    if (idx == -1) {
-      return null;
-    }
-    final String startFragment = s.substring(0, idx);
-    if (startFragment.length() > 0) {
-      appendToMainOrCurrent(startFragment);
-    }
-    return s.substring(idx);
-  }
-
-  private void processEndMarker(final String line) {
-    if (myStateStack.isEmpty()) {
-      appendLine(line);
-    }
-    else {
-      myStateStack.pop();
-      if (!myStateStack.isEmpty()) {
-        appendToCurrentBuffer(line);
+      final String fragment = line.substring(0, idx);
+      if (!fragment.isEmpty()) {
+        appendToMainOrCurrent(fragment);
       }
     }
+    else {
+      appendToMainOrCurrent(line);
+    }
+    myStateStack.push(State.LEFT);
+    return true;
   }
 
-  private void processLeftMarker(final String line) {
-    if (myStateStack.isEmpty()) {
-      appendLine(line);
+  private boolean processRightMarker(String line) {
+    if (!line.endsWith(RIGHT)) {
+      return false;
     }
-    else if (myStateStack.peek() == State.LEFT) {
+    if (!myStateStack.isEmpty() && myStateStack.peek() == State.LEFT) {
+      if (myStateStack.size() > 1) {
+        appendToMainOrCurrent(line);
+      }
+      else {
+        final String fragment = line.substring(0, line.length() - LENGTH);
+        if (!fragment.isEmpty()) {
+          appendToMainOrCurrent(fragment);
+        }
+      }
       myStateStack.pop();
       myStateStack.push(State.RIGHT);
+    }
+    else {
+      appendToMainOrCurrent(line);
+    }
+    return true;
+  }
+
+  private boolean processEndMarker(String line) {
+    final int idx = line.lastIndexOf(END);
+    if (idx < 0) {
+      return false;
+    }
+    if (!myStateStack.isEmpty()) {
       if (myStateStack.size() > 1) {
-        appendToCurrentBuffer(line);
+        appendToMainOrCurrent(line);
+      }
+      else {
+        final String fragment = line.substring(0, idx);
+        if (!fragment.isEmpty()) {
+          appendToMainOrCurrent(fragment);
+        }
+      }
+      myStateStack.pop();
+    }
+    else {
+      appendToMainOrCurrent(line);
+    }
+    return true;
+  }
+
+  private void appendToMainOrCurrent(String line) {
+    if (myStateStack.isEmpty()) {
+      append(line, myLeftBuffer);
+      append(line, myCenterBuffer);
+      append(line, myRightBuffer);
+    } else {
+      if (myStateStack.get(0) == State.RIGHT) {
+        append(line, myRightBuffer);
+      } else {
+        append(line, myLeftBuffer);
       }
     }
-    else {
-      appendToCurrentBuffer(line);
-    }
   }
 
-  private void processRightMarker(final String line) {
-    if (myStateStack.isEmpty()) {
-      myStateStack.push(State.LEFT);
+  private static void append(String line, StringBuilder out) {
+    if (out.length() > 0) {
+      out.append("\n");
     }
-    else {
-      myStateStack.push(State.LEFT);
-      appendToCurrentBuffer(line);
-    }
+    out.append(line);
   }
-
-  private void appendToCurrentBuffer(final String line) {
-    if (myStateStack.get(0) == State.RIGHT) {
-      appendLine(line, myRightBuffer);
-    } else {
-      appendLine(line, myLeftBuffer);
-    }
-  }
-
-  private void appendLine(final String line) {
-    appendLine(line, myLeftBuffer);
-    appendLine(line, myCenterBuffer);
-    appendLine(line, myRightBuffer);
-  }
-
-  private static void appendLine(final String line, final StringBuffer buffer) {
-    if (buffer.length() > 0) {
-      buffer.append("\n");
-    }
-    buffer.append(line);
-
-  }
-
 }

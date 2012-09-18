@@ -139,3 +139,9 @@ class ClassLiteral<T> {
     Object c6 = List.class;
   }
 }
+
+class Outer<E> {
+    final Inner[] i = <error descr="Generic array creation">new Inner[10]</error>;
+    class Inner {
+    }
+}

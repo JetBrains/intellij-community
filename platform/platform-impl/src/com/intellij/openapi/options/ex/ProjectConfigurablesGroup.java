@@ -17,7 +17,6 @@ package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 
@@ -50,7 +49,7 @@ public class ProjectConfigurablesGroup extends ConfigurablesGroupBase implements
   protected ConfigurableFilter getConfigurableFilter() {
     return new ConfigurableFilter() {
       public boolean isIncluded(final Configurable configurable) {
-        return !isDefault() || !(configurable instanceof NonDefaultProjectConfigurable);
+        return !isDefault() || !ConfigurableWrapper.isNonDefaultProject(configurable);
       }
     };
   }

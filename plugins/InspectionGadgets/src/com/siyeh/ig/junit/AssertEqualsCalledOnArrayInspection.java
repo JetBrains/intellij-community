@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Bas Leijdekkers
+ * Copyright 2010-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -32,15 +33,13 @@ public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "assertequals.called.on.arrays.display.name");
+    return InspectionGadgetsBundle.message("assertequals.called.on.arrays.display.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "assertequals.called.on.arrays.problem.descriptor");
+    return InspectionGadgetsBundle.message("assertequals.called.on.arrays.problem.descriptor");
   }
 
   @Override
@@ -51,30 +50,26 @@ public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
   private static class AssertEqualsCalledOnArrayFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "assertequals.called.on.arrays.quickfix");
+      return InspectionGadgetsBundle.message("assertequals.called.on.arrays.quickfix");
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement methodNameIdentifier = descriptor.getPsiElement();
-      final PsiReferenceExpression methodExpression =
-        (PsiReferenceExpression)methodNameIdentifier.getParent();
+      final PsiReferenceExpression methodExpression = (PsiReferenceExpression)methodNameIdentifier.getParent();
       if (methodExpression == null) {
         return;
       }
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
         replaceExpression(methodExpression, "assertArrayEquals");
       }
       else {
         final String qualifierText = qualifier.getText();
-        replaceExpression(methodExpression,
-                          qualifierText + ".assertArrayEquals");
+        replaceExpression(methodExpression, qualifierText + ".assertArrayEquals");
       }
     }
   }
@@ -84,17 +79,13 @@ public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
     return new AssertEqualsOnArrayVisitor();
   }
 
-  private static class AssertEqualsOnArrayVisitor
-    extends BaseInspectionVisitor {
+  private static class AssertEqualsOnArrayVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      @NonNls final String methodName =
-        methodExpression.getReferenceName();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      @NonNls final String methodName = methodExpression.getReferenceName();
       if (!"assertEquals".equals(methodName)) {
         return;
       }
@@ -117,8 +108,17 @@ public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
       else {
         return;
       }
-      if (!(type1 instanceof PsiArrayType) ||
-          !(type2 instanceof PsiArrayType)) {
+      if (!(type1 instanceof PsiArrayType) || !(type2 instanceof PsiArrayType)) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (!InheritanceUtil.isInheritor(containingClass, "junit.framework.Assert") &&
+          !InheritanceUtil.isInheritor(containingClass, "org.junit.Assert") &&
+          !InheritanceUtil.isInheritor(containingClass, "org.testng.AssertJUnit")) {
         return;
       }
       registerMethodCallError(expression);

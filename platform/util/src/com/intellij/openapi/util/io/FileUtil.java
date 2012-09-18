@@ -720,88 +720,100 @@ public class FileUtil extends FileUtilRt {
     if (path == null || path.isEmpty()) {
       return path;
     }
-
-    final StringBuilder result = new StringBuilder(path.length());
-    int start = 0;
-    boolean separator = false;
-    int dots = 0;
-
-    if (SystemInfo.isWindows && separatorChar == '\\' && path.startsWith("\\\\")) {
-      result.append("\\\\");
-      start = 2;
-      separator = true;
+    else if (".".equals(path)) {
+      return "";
     }
 
+    path = path.replace(separatorChar, '/');
+    if (path.indexOf('/') == -1) {
+      return path;
+    }
+
+    int start = pathRootEnd(path) + 1, dots = 0;
+    boolean separator = true;
+
+    StringBuilder result = new StringBuilder(path.length());
+    result.append(path, 0, start);
+
     for (int i = start; i < path.length(); ++i) {
-      final char c = path.charAt(i);
-      if (c == separatorChar || c == '/') {
+      char c = path.charAt(i);
+      if (c == '/') {
         if (!separator) {
-          if (dots == 1) {
-          }
-          else if (dots == 2) {
-            traverse(result, path);
-          }
-          else {
-            StringUtil.repeatSymbol(result, '.', dots);
-            result.append('/');
-          }
+          processDots(result, dots, start);
           dots = 0;
         }
         separator = true;
       }
-      else {
-        if (c == '.') {
-          if (separator || dots > 0) {
-            ++dots;
-          }
-          else {
-            result.append(c);
-          }
+      else if (c == '.') {
+        if (separator || dots > 0) {
+          ++dots;
         }
         else {
-          if (dots > 0) {
-            StringUtil.repeatSymbol(result, '.', dots);
-            dots = 0;
-          }
           result.append(c);
         }
+        separator = false;
+      }
+      else {
+        if (dots > 0) {
+          StringUtil.repeatSymbol(result, '.', dots);
+          dots = 0;
+        }
+        result.append(c);
         separator = false;
       }
     }
 
     if (dots > 0) {
-      traverse(result, path);
+      processDots(result, dots, start);
     }
 
-    if (StringUtil.endsWithChar(result, '/')) {
-      int toKeep = pathRootEnd(result) + 1;
-      if (toKeep < 0 || toKeep < result.length()) {
-        result.deleteCharAt(result.length() - 1);
-      }
+    int lastChar = result.length() - 1;
+    if (lastChar >= 0 && result.charAt(lastChar) == '/' && lastChar > start) {
+      result.deleteCharAt(lastChar);
     }
 
     return result.toString();
   }
 
-  private static void traverse(StringBuilder path, String originalPath) {
-    int pos = StringUtil.lastIndexOf(path, '/', 0, path.length() - 1);
-    if (pos < 0) {
-      pos = pathRootEnd(path);
-      if (pos < 0) {
-        throw new IllegalArgumentException("Illegal path: '" + originalPath + "'");
-      }
-    }
-    path.delete(pos + 1, path.length());
-  }
-
-  private static int pathRootEnd(StringBuilder path) {
+  private static int pathRootEnd(CharSequence path) {
     if (path.length() > 0 && path.charAt(0) == '/') {
       return 0;
+    }
+    else if (path.length() > 1 && path.charAt(0) == '/' && path.charAt(1) == '/') {
+      return 1;
     }
     else if (path.length() > 2 && path.charAt(1) == ':' && path.charAt(2) == '/') {
       return 2;
     }
     return -1;
+  }
+
+  private static void processDots(StringBuilder result, int dots, int start) {
+    if (dots == 2) {
+      int pos = -1;
+      if (!StringUtil.endsWith(result, "/../") && !StringUtil.equals(result, "../")) {
+        pos = StringUtil.lastIndexOf(result, '/', start, result.length() - 1);
+        if (pos >= 0) {
+          ++pos;  // separator found, trim to next char
+        }
+        else if (start > 0) {
+          pos = start;  // path is absolute, trim to root ('/..' -> '/')
+        }
+        else if (result.length() > 0) {
+          pos = 0;  // path is relative, trim to default ('a/..' -> '')
+        }
+      }
+      if (pos >= 0) {
+        result.delete(pos, result.length());
+      }
+      else {
+        result.append("../");  // impossible to traverse, keep as-is
+      }
+    }
+    else if (dots != 1) {
+      StringUtil.repeatSymbol(result, '.', dots);
+      result.append('/');
+    }
   }
 
   @NotNull

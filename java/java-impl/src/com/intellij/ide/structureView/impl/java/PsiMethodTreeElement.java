@@ -19,10 +19,14 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.SortableTreeElement;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.util.Function;
@@ -34,6 +38,8 @@ import java.util.Collection;
 import java.util.HashSet;
 
 public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> implements SortableTreeElement {
+  private String myLocation;
+
   public PsiMethodTreeElement(PsiMethod method, boolean isInherited) {
     super(isInherited, method);
   }
@@ -52,7 +58,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
 
     final String fileText = psiFile.getText();
     if (fileText == null) return result;
-    
+
     if (!range.substring(fileText).contains(PsiKeyword.CLASS)) return result;
 
     element.accept(new JavaRecursiveElementWalkingVisitor(){
@@ -75,6 +81,34 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
     ), ":", ": ");
   }
 
+
+  @Override
+  public String getLocationString() {
+    if (!Registry.is("show.method.base.class.in.java.file.structure")) return null;
+    if (myLocation == null) {
+      final PsiMethod method = getElement();
+      try {
+        final MethodSignatureBackedByPsiMethod baseMethod = SuperMethodsSearch.search(method, null, true, false).findFirst();
+        if (baseMethod != null && method != baseMethod.getMethod()) {
+          PsiMethod base = baseMethod.getMethod();
+          PsiClass baseClass = base.getContainingClass();
+          if (baseClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(baseClass.getQualifiedName())) {
+            if (baseClass.getMethods().length > 1 || !base.getModifierList().hasExplicitModifier(PsiModifier.ABSTRACT)) {
+              myLocation = '\u2191' + baseClass.getName();
+            }
+          }
+        }
+      }
+      catch (IndexNotReadyException e) {
+        //some searchers (EJB) require indices. What shall we do?
+      }
+
+      if (myLocation == null) {
+        myLocation = "";
+      }
+    }
+    return StringUtil.isEmpty(myLocation) ? null : myLocation;
+  }
 
   @Override
   public TextAttributesKey getTextAttributesKey() {

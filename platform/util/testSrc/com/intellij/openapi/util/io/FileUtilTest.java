@@ -16,6 +16,7 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.Convertor;
@@ -27,10 +28,6 @@ import java.util.Collection;
 
 import static org.junit.Assert.*;
 
-/**
- * @author Roman Shevchenko
- * @since 12.04.2012
- */
 public class FileUtilTest {
   private static final char UNIX_SEPARATOR = '/';
   private static final char WINDOWS_SEPARATOR = '\\';
@@ -41,6 +38,7 @@ public class FileUtilTest {
     assertEquals("  ", FileUtil.toCanonicalPath("  "));
 
     assertEquals("/", FileUtil.toCanonicalPath("/", UNIX_SEPARATOR));
+    assertEquals("/", FileUtil.toCanonicalPath("/./", UNIX_SEPARATOR));
     assertEquals("a/b", FileUtil.toCanonicalPath("a/b/", UNIX_SEPARATOR));
     assertEquals("/a/b", FileUtil.toCanonicalPath("/a/////b/", UNIX_SEPARATOR));
     assertEquals("/a/b", FileUtil.toCanonicalPath("/a/././b/", UNIX_SEPARATOR));
@@ -54,6 +52,24 @@ public class FileUtilTest {
     assertEquals("a...b", FileUtil.toCanonicalPath("a...b", UNIX_SEPARATOR));
     assertEquals("a../b", FileUtil.toCanonicalPath("a../b", UNIX_SEPARATOR));
     assertEquals("a./.b", FileUtil.toCanonicalPath("a./.b", UNIX_SEPARATOR));
+    assertEquals("a", FileUtil.toCanonicalPath("a/b/..", UNIX_SEPARATOR));
+    assertEquals("a/b", FileUtil.toCanonicalPath("a/b/.", UNIX_SEPARATOR));
+    assertEquals("a/b/...", FileUtil.toCanonicalPath("a/b/...", UNIX_SEPARATOR));
+    assertEquals("...", FileUtil.toCanonicalPath("...", UNIX_SEPARATOR));
+    assertEquals(".local", FileUtil.toCanonicalPath(".local/", UNIX_SEPARATOR));
+    assertEquals("file.ext", FileUtil.toCanonicalPath("file.ext", UNIX_SEPARATOR));
+    assertEquals("file.", FileUtil.toCanonicalPath("file.", UNIX_SEPARATOR));
+    assertEquals("file..", FileUtil.toCanonicalPath("file..", UNIX_SEPARATOR));
+    assertEquals("", FileUtil.toCanonicalPath(".", UNIX_SEPARATOR));
+    assertEquals("", FileUtil.toCanonicalPath("./", UNIX_SEPARATOR));
+    assertEquals("", FileUtil.toCanonicalPath("a/..", UNIX_SEPARATOR));
+    assertEquals("b", FileUtil.toCanonicalPath("a/..//b", UNIX_SEPARATOR));
+    assertEquals("..", FileUtil.toCanonicalPath("..", UNIX_SEPARATOR));
+    assertEquals("..", FileUtil.toCanonicalPath("../", UNIX_SEPARATOR));
+    assertEquals("../..", FileUtil.toCanonicalPath("../..", UNIX_SEPARATOR));
+    assertEquals("../../..", FileUtil.toCanonicalPath("../../..///./", UNIX_SEPARATOR));
+    assertEquals("../a....", FileUtil.toCanonicalPath("../a....//", UNIX_SEPARATOR));
+    assertEquals("..", FileUtil.toCanonicalPath("../a..../../", UNIX_SEPARATOR));
 
     assertEquals("C:/", FileUtil.toCanonicalPath("C:\\", WINDOWS_SEPARATOR));
     assertEquals("a/b", FileUtil.toCanonicalPath("a\\b\\", WINDOWS_SEPARATOR));
@@ -89,7 +105,7 @@ public class FileUtilTest {
     final String[] arr = {"/a/b/c", "/a", "/a/b", "/d/e", "/b/c", "/a/d", "/b/c/ttt", "/a/ewq.euq"};
     final String[] expectedResult = {"/a","/b/c","/d/e"};
     @SuppressWarnings("unchecked") final Collection<String> result = FileUtil.removeAncestors(Arrays.asList(arr), Convertor.SELF, PairProcessor.TRUE);
-    assertArrayEquals(expectedResult, result.toArray(new String[result.size()]));
+    assertArrayEquals(expectedResult, ArrayUtil.toStringArray(result));
   }
 
   @Test

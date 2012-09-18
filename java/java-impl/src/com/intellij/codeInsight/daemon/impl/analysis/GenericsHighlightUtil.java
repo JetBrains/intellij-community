@@ -874,23 +874,10 @@ public class GenericsHighlightUtil {
   @Nullable
   public static HighlightInfo checkGenericArrayCreation(PsiElement element, PsiType type) {
     if (type instanceof PsiArrayType) {
-      PsiType componentType = type.getDeepComponentType();
-      if (componentType instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)componentType;
-        PsiType[] parameters = classType.getParameters();
-        for (PsiType parameter : parameters) {
-          if (!(parameter instanceof PsiWildcardType) || ((PsiWildcardType)parameter).getBound() != null) {
-            return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                     element,
-                                                     JavaErrorMessages.message("generic.array.creation"));
-          }
-        }
-        final PsiClass resolved = ((PsiClassType)PsiUtil.convertAnonymousToBaseType(classType)).resolve();
-        if (resolved instanceof PsiTypeParameter) {
-          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                   element,
-                                                   JavaErrorMessages.message("generic.array.creation"));
-        }
+      if (!isReifiableType(((PsiArrayType)type).getComponentType())) {
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                                 element,
+                                                 JavaErrorMessages.message("generic.array.creation"));
       }
     }
 
@@ -1179,7 +1166,18 @@ public class GenericsHighlightUtil {
       if (resolved instanceof PsiTypeParameter) {
         return false;
       }
-      return parameters.length == 0;
+      if (parameters.length == 0) {
+        if (resolved != null) {
+          final PsiClass containingClass = resolved.getContainingClass();
+          if (containingClass != null) {
+            final PsiTypeParameter[] containingClassTypeParameters = containingClass.getTypeParameters();
+            if (containingClassTypeParameters.length > 0) {
+              return false;
+            }
+          }
+        }
+        return true;
+      }
     }
 
     return false;
