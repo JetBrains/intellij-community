@@ -77,7 +77,7 @@ public class GrModifierFix implements IntentionAction {
     }
   }
 
-  private static String toPresentableText(String modifier) {
+  public static String toPresentableText(String modifier) {
     return GroovyBundle.message(modifier + ".visibility.presentation");
   }
 
@@ -87,7 +87,7 @@ public class GrModifierFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myModifierList != null && myModifierList.isValid();
+    return myModifierList.isValid();
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
