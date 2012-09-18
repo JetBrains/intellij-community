@@ -40,7 +40,7 @@ public class ConfigurableExtensionPointUtil {
   public static List<Configurable> buildConfigurablesList(final ConfigurableEP[] extensions, final Configurable[] components, @Nullable ConfigurableFilter filter) {
     List<Configurable> result = new ArrayList<Configurable>();
     for (ConfigurableEP extension : extensions) {
-      ContainerUtil.addIfNotNull(extension.createConfigurable(), result);
+      ContainerUtil.addIfNotNull(ConfigurableWrapper.wrapConfigurable(extension), result);
     }
     ContainerUtil.addAll(result, components);
 

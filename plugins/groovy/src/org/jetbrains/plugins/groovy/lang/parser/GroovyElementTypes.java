@@ -128,9 +128,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
     public void indexStub(GrMethodStub stub, IndexSink sink) {
       super.indexStub(stub, sink);
       String name = stub.getName();
-      if (name != null) {
-        sink.occurrence(GrAnnotationMethodNameIndex.KEY, name);
-      }
+      sink.occurrence(GrAnnotationMethodNameIndex.KEY, name);
     }
   };
 
@@ -236,8 +234,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType NAMED_ARGUMENT = new GroovyElementType("Compound argument");
   GroovyElementType SPREAD_ARGUMENT = new GroovyElementType("Spread argument");
   GroovyElementType ARGUMENT_LABEL = new GroovyElementType("Argument label");
-  // Simple expression
-  GroovyElementType PATH_PROPERTY = new GroovyElementType("Path name selector");
   GroovyElementType REFERENCE_EXPRESSION = new GroovyElementType("Reference expressions");
   GroovyElementType THIS_REFERENCE_EXPRESSION = new GroovyElementType("This reference expressions");
   GroovyElementType SUPER_REFERENCE_EXPRESSION = new GroovyElementType("Super reference expressions");
@@ -313,7 +309,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType ANNOTATION_ARRAY_INITIALIZER = new GroovyElementType("annotation array initializer");
   GroovyElementType ANNOTATION_ARGUMENTS = new GroovyElementType("annotation arguments");
   GroovyElementType ANNOTATION_MEMBER_VALUE_PAIR = new GroovyElementType("annotation member value pair");
-  GroovyElementType ANNOTATION_MEMBER_VALUE_PAIRS = new GroovyElementType("annotation member value pairs");
 
   GrStubElementType<GrAnnotationStub, GrAnnotation> ANNOTATION = new GrStubElementType<GrAnnotationStub, GrAnnotation>("annotation") {
 

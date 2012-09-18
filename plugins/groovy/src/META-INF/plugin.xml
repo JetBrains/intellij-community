@@ -530,6 +530,10 @@
                      displayName="'continue' or 'break' inside 'finally' block"
                      groupName="Error handling" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.exception.GroovyContinueOrBreakFromFinallyBlockInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" shortName="GrMethodMayBeStatic"
+                     displayName="Method may be static"
+                     groupName="Declaration" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStaticInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyReturnFromFinallyBlock"
                      displayName="'return' inside 'finally' block" groupName="Error handling"
                      enabledByDefault="false" level="WARNING"

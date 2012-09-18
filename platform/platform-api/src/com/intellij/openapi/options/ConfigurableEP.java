@@ -22,17 +22,37 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableFactory;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
 /**
  * @author nik
+ * @see Configurable
  */
+@Tag("configurable")
 public class ConfigurableEP extends AbstractExtensionPointBean {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.ConfigurableEP");
 
+  @Attribute("displayName")
+  public String displayName;
+
+  @Attribute("key")
+  public String key;
+
+  @Attribute("bundle")
+  public String bundle;
+
+  @Property(surroundWithTag = false)
+  @AbstractCollection(surroundWithTag = false)
+  public ConfigurableEP[] children;
+
+  @Attribute("id")
+  public String id;
   /**
    * @deprecated use '{@link #instanceClass instance}' or '{@link #providerClass provider}' attribute instead
    */
@@ -46,10 +66,12 @@ public class ConfigurableEP extends AbstractExtensionPointBean {
   private final AtomicNotNullLazyValue<NullableFactory<Configurable>> myFactory;
   private final PicoContainer myPicoContainer;
 
+  @SuppressWarnings("UnusedDeclaration")
   public ConfigurableEP() {
     this(ApplicationManager.getApplication().getPicoContainer());
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   public ConfigurableEP(Project project) {
     this(project.getPicoContainer());
   }
