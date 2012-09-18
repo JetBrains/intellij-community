@@ -18,9 +18,11 @@ package com.intellij.openapi.options.ex;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -29,7 +31,7 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  *         Date: 9/17/12
  */
-public class ConfigurableWrapper implements Configurable, Configurable.Composite {
+public class ConfigurableWrapper implements SearchableConfigurable, Configurable.Composite {
 
   private static final ConfigurableWrapper[] EMPTY_ARRAY = new ConfigurableWrapper[0];
 
@@ -106,5 +108,18 @@ public class ConfigurableWrapper implements Configurable, Configurable.Composite
   @Override
   public Configurable[] getConfigurables() {
     return myKids;
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return myEp.id;
+  }
+
+  @Nullable
+  @Override
+  public Runnable enableSearch(String option) {
+    final Configurable configurable = getConfigurable();
+    return configurable instanceof SearchableConfigurable ? ((SearchableConfigurable)configurable).enableSearch(option) : null;
   }
 }

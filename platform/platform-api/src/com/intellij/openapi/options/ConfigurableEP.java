@@ -51,6 +51,8 @@ public class ConfigurableEP extends AbstractExtensionPointBean {
   @AbstractCollection(surroundWithTag = false)
   public ConfigurableEP[] children;
 
+  @Attribute("id")
+  public String id;
   /**
    * @deprecated use '{@link #instanceClass instance}' or '{@link #providerClass provider}' attribute instead
    */

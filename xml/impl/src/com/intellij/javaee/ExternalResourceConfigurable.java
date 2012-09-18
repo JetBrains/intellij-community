@@ -18,7 +18,6 @@ package com.intellij.javaee;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -30,7 +29,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlBundle;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,7 +42,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ExternalResourceConfigurable extends BaseConfigurable
-  implements SearchableConfigurable, Configurable.NoScroll {
+  implements Configurable.NoScroll {
   private JPanel myPanel;
   private List<NameLocationPair> myPairs;
   private List<String> myIgnoredUrls;
@@ -54,7 +52,6 @@ public class ExternalResourceConfigurable extends BaseConfigurable
   private HtmlLanguageLevelForm myHtmlLanguageLevelForm;
   @Nullable private final Project myProject;
   private final List<NameLocationPair> myNewPairs;
-  private Configurable[] myConfigurables;
 
   @SuppressWarnings("UnusedDeclaration")
   public ExternalResourceConfigurable(@Nullable Project project) {
@@ -241,7 +238,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable
   }
 
   public String getHelpTopic() {
-    return getId();
+    return "preferences.externalResources";
   }
 
   @Nullable
@@ -377,15 +374,5 @@ public class ExternalResourceConfigurable extends BaseConfigurable
     public String getColumnName(int column) {
       return myNames[column];
     }
-  }
-
-  @NotNull
-  public String getId() {
-    return "preferences.externalResources";
-  }
-
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
   }
 }
