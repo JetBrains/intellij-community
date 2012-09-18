@@ -82,8 +82,11 @@ public class SvnLazyPropertyContentRevision implements ContentRevision, MarkerVc
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, SvnBundle.message("progress.title.loading.file.properties"),
-                                                                        false, myProject);
+      final boolean completed = ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(runnable, SvnBundle.message("progress.title.loading.file.properties"), true, myProject);
+      if (! completed) {
+        return "Properties load for revision " + getRevisionNumber().asString() + " was canceled.";
+      }
     }
     else {
       runnable.run();
