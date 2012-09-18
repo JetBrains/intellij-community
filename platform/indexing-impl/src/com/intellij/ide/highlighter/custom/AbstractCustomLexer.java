@@ -77,6 +77,9 @@ public class AbstractCustomLexer extends LexerBase {
     for (TokenParser tokenParser : myTokenParsers) {
       if (tokenParser.hasToken(myPosition)) {
         tokenParser.getTokenInfo(myCurrentToken);
+        if (myCurrentToken.getEnd() <= myCurrentToken.getStart()) {
+          throw new AssertionError(tokenParser);
+        }
         tokenFound = true;
         break;
       }
