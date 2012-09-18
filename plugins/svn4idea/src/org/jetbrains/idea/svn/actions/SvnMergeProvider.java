@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.actions;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -45,6 +46,7 @@ import java.util.Arrays;
 public class SvnMergeProvider implements MergeProvider {
 
   private final Project myProject;
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.actions.SvnMergeProvider");
 
   public SvnMergeProvider(final Project project) {
     myProject = project;
@@ -68,7 +70,11 @@ public class SvnMergeProvider implements MergeProvider {
             oldFile = info.getConflictOldFile();
             newFile = info.getConflictNewFile();
             workingFile = info.getConflictWrkFile();
-            mergeCase = workingFile.getName().contains("working");
+            mergeCase = workingFile == null || workingFile.getName().contains("working");
+            // for debug
+            if (workingFile == null) {
+              LOG.info("Null working file when merging text conflict for " + file.getPath() + " old file: " + oldFile + " new file: " + newFile);
+            }
             if (mergeCase) {
               // this is merge case
               oldFile = info.getConflictNewFile();

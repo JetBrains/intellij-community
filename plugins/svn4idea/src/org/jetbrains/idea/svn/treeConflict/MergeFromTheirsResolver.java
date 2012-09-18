@@ -374,7 +374,14 @@ public class MergeFromTheirsResolver {
                   context.handleException(new VcsException("Can not create file: " + file.getPath(), true), false);
                   return;
                 }
-                child.setBinaryContent(((BinaryContentRevision) change.getAfterRevision()).getBinaryContent());
+                final BinaryContentRevision revision = (BinaryContentRevision)change.getAfterRevision();
+                final byte[] content = revision.getBinaryContent();
+                // actually it was the fix for IDEA-91572 Error saving merged data: Argument 0 for @NotNull parameter of > com/intellij/
+                if (content == null) {
+                  context.handleException(new VcsException("Can not load Theirs content for file " + file.getPath()), false);
+                  return;
+                }
+                child.setBinaryContent(content);
               } else {
                 final FilePath path = change.getBeforeRevision().getFile();
                 dirtyPaths.add(path);
