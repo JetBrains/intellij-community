@@ -42,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
  * where 'class-name' implements {@link ConfigurableProvider} means that method {@link ConfigurableProvider#createConfigurable()}
  * will be used to create instance each time when the dialog is opened.
  * </ul>
+ *
+ * @see SearchableConfigurable
  */
 public interface Configurable extends UnnamedConfigurable {
 

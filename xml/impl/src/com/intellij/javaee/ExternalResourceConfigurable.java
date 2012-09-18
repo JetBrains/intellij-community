@@ -56,6 +56,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable
   private final List<NameLocationPair> myNewPairs;
   private Configurable[] myConfigurables;
 
+  @SuppressWarnings("UnusedDeclaration")
   public ExternalResourceConfigurable(@Nullable Project project) {
     this(project, Collections.<NameLocationPair>emptyList());
   }
