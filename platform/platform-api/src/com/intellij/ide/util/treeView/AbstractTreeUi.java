@@ -3834,11 +3834,11 @@ public class AbstractTreeUi {
             }
           }
 
-          Set<Object> toSelect = new THashSet<Object>();
           clearSelection();
-          ContainerUtil.addAll(toSelect, elements);
+          Set<Object> toSelect = new THashSet<Object>();
+          ContainerUtil.addAllNotNull(toSelect, elements);
           if (addToSelection) {
-            toSelect.addAll(currentElements);
+            ContainerUtil.addAllNotNull(toSelect, currentElements);
           }
 
           if (checkIfInStructure) {

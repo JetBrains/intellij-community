@@ -107,8 +107,9 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
 
   @Override
   public PsiType getDeclaredType() {
-    final PsiType type = super.getDeclaredType();
-    if (type != null && isVarArgs()) {
+    PsiType type = super.getDeclaredType();
+    if (isVarArgs()) {
+      if (type == null) type = TypesUtil.getJavaLangObject(this);
       return new PsiEllipsisType(type);
     }
     return type;

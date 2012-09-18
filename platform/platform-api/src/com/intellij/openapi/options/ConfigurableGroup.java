@@ -22,11 +22,13 @@ package com.intellij.openapi.options;
  * User: max
  * Date: Dec 9, 2003
  * Time: 3:21:22 PM
- * To change this template use Options | File Templates.
  */
 public interface ConfigurableGroup extends Configurable.Composite {
+
   String getDisplayName();
 
+  /** No one use it */
+  @Deprecated
   String getShortName();
 
 }

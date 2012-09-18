@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>ProtectedMemberInFinalClass.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'protected' member in 'final' class</problem_class>
+    <description>Class member declared &lt;code&gt;protected&lt;/code&gt; in 'final' class #loc</description>
+  </problem>
+
+  <problem>
+    <file>ProtectedMemberInFinalClass.java</file>
+    <line>4</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'protected' member in 'final' class</problem_class>
+    <description>Class member declared &lt;code&gt;protected&lt;/code&gt; in 'final' class #loc</description>
+  </problem>
+</problems>

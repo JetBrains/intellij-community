@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
-import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
@@ -52,21 +51,22 @@ public class TemplateEditorUtil {
   }
 
   public static Editor createEditor(boolean isReadOnly, CharSequence text, @Nullable Map<TemplateContextType, Boolean> context) {
-    Document doc = ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(true);
-    doc.setText(text);
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    return createEditor(isReadOnly, createDocument(text, context, project), project);
+  }
+
+  private static Document createDocument(CharSequence text, @Nullable Map<TemplateContextType, Boolean> context, Project project) {
     if (context != null) {
       for (Map.Entry<TemplateContextType, Boolean> entry : context.entrySet()) {
         if (entry.getValue()) {
-          doc = entry.getKey().createDocument(text, project);
-          break;
+          return entry.getKey().createDocument(text, project);
         }
       }
     }
 
-    return createEditor(isReadOnly, doc, project);
+    return EditorFactory.getInstance().createDocument(text);
   }
-    
+
   private static Editor createEditor(boolean isReadOnly, final Document document, final Project project) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Editor editor = (isReadOnly ? editorFactory.createViewer(document, project) : editorFactory.createEditor(document, project));

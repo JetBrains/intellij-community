@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebugSessionAdapter;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -54,6 +55,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private EvaluationMode myMode;
   private final XSourcePosition mySourcePosition;
   private final SwitchModeAction mySwitchModeAction;
+  private final XDebugSessionAdapter mySessionListener;
 
   public XDebuggerEvaluationDialog(@NotNull XDebugSession session,
                                    final @NotNull XDebuggerEditorsProvider editorsProvider,
@@ -67,6 +69,19 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     setModal(false);
     setOKButtonText(XDebuggerBundle.message("xdebugger.button.evaluate"));
     setCancelButtonText(XDebuggerBundle.message("xdebugger.evaluate.dialog.close"));
+
+    mySessionListener = new XDebugSessionAdapter() {
+      @Override
+      public void sessionStopped() {
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            close(CANCEL_EXIT_CODE);
+          }
+        });
+      }
+    };
+    mySession.addSessionListener(mySessionListener);
 
     myTreePanel = new XDebuggerTreePanel(session, editorsProvider, myDisposable, sourcePosition, XDebuggerActions.EVALUATE_DIALOG_TREE_POPUP_GROUP);
     myResultPanel = new JPanel(new BorderLayout());
@@ -99,6 +114,12 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     }
     switchToMode(mode, text);
     init();
+  }
+
+  @Override
+  protected void dispose() {
+    mySession.removeSessionListener(mySessionListener);
+    super.dispose();
   }
 
   protected void doOKAction() {

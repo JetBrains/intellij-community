@@ -20,6 +20,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ScreenUtil;
 import gnu.trove.TObjectIntHashMap;
@@ -77,7 +78,7 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
    * @return point stored under the specified <code>key</code>. The method returns
    * <code>null</code> if there is no stored value under the <code>key</code>. If point
    * is outside of current screen bounds then the method returns <code>null</code>. It
-   * properly works in multimonitor configuration.
+   * properly works in multi-monitor configuration.
    * @exception java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
    * @param key a String key to perform a query for.
    */
@@ -261,10 +262,22 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
 
   @NotNull
   private static String realKey(String key, @Nullable Project project) {
-    if (project == null) return key;
+    JFrame frame = null;
+    if (project == null) {
+      final IdeFrame[] frames = WindowManager.getInstance().getAllFrames();
+      for (IdeFrame ideFrame : frames) {
+        if (ideFrame instanceof JFrame) {
+          frame = (JFrame)ideFrame;
+          break;
+        }
+      }
+    } else {
+      frame = WindowManager.getInstance().getFrame(project);
+    }
 
-    final JFrame frame = WindowManager.getInstance().getFrame(project);
-    if (frame == null) return key; //during frame initialization
+    if (frame == null) {
+        return key; //during frame initialization
+    }
 
     final Point topLeft = frame.getLocation();
     Point center = new Point(topLeft.x + frame.getWidth() / 2, topLeft.y + frame.getHeight() / 2);

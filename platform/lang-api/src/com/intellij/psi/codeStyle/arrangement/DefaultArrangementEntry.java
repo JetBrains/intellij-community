@@ -28,14 +28,16 @@ import java.util.List;
  * @since 7/20/12 4:53 PM
  */
 public class DefaultArrangementEntry implements ArrangementEntry {
-  
+
   @NotNull private final List<ArrangementEntry> myChildren = new ArrayList<ArrangementEntry>();
 
-  @Nullable private List<ArrangementEntry> myDependencies;
-  @Nullable     ArrangementEntry myParent;
-  private final int              myStartOffset;
-  private final int              myEndOffset;
-  private final boolean          myCanBeMatched;
+  @Nullable private final ArrangementEntry       myParent;
+  @Nullable private       List<ArrangementEntry> myDependencies;
+  @Nullable private       ArrangementEntry       myPreComputedPrevious;
+
+  private final int     myStartOffset;
+  private final int     myEndOffset;
+  private final boolean myCanBeMatched;
 
   public DefaultArrangementEntry(@Nullable ArrangementEntry parent, int startOffset, int endOffset, boolean canBeMatched) {
     myCanBeMatched = canBeMatched;
@@ -87,5 +89,14 @@ public class DefaultArrangementEntry implements ArrangementEntry {
   @Override
   public boolean canBeMatched() {
     return myCanBeMatched;
+  }
+
+  @Nullable
+  public ArrangementEntry getPreComputedPrevious() {
+    return myPreComputedPrevious;
+  }
+
+  public void setPreComputedPrevious(@Nullable ArrangementEntry preComputedPrevious) {
+    myPreComputedPrevious = preComputedPrevious;
   }
 }

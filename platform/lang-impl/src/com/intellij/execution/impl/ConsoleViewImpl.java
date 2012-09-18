@@ -1512,7 +1512,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   @Override
-  public void addChangeListener(final ChangeListener listener, final Disposable parent) {
+  public void addChangeListener(@NotNull final ChangeListener listener, @NotNull final Disposable parent) {
     myListeners.add(listener);
     Disposer.register(parent, new Disposable() {
       @Override

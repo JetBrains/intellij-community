@@ -151,7 +151,7 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
   public void testIgnoredFile() {
     final String file = createFile("a/.svn/a.txt");
     createFile("a/svn/b.txt");
-    final JpsArtifact a = addArtifact(root().dirCopy(PathUtil.getParentPath(PathUtil.getParentPath(file))));
+    final JpsArtifact a = addArtifact(root().parentDirCopy(PathUtil.getParentPath(file)));
     buildAll();
     assertOutput(a, fs().dir("svn").file("b.txt"));
   }
@@ -159,7 +159,7 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
   public void testIgnoredFileInArchive() {
     final String file = createFile("a/.svn/a.txt");
     createFile("a/svn/b.txt");
-    final JpsArtifact a = addArtifact(archive("a.jar").dirCopy(PathUtil.getParentPath(PathUtil.getParentPath(file))));
+    final JpsArtifact a = addArtifact(archive("a.jar").parentDirCopy(PathUtil.getParentPath(file)));
     buildAll();
     assertOutput(a, fs().archive("a.jar").dir("svn").file("b.txt"));
   }

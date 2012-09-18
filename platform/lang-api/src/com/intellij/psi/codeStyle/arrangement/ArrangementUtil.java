@@ -39,73 +39,25 @@ public class ArrangementUtil {
 
   //region Serialization
 
-  @NotNull
-  public static List<ArrangementRule> readExternal(@NotNull Element element, @NotNull Language language) {
-    final List<ArrangementRule> result = new ArrayList<ArrangementRule>();
-    ArrangementRuleSerializer serializer = getSerializer(language);
-    for (Object child : element.getChildren()) {
-      ArrangementRule rule = serializer.deserialize((Element)child);
-      if (rule != null) {
-        result.add(rule);
-      }
-    }
-    return result;
+  @Nullable
+  public static ArrangementSettings readExternal(@NotNull Element element, @NotNull Language language) {
+    ArrangementSettingsSerializer serializer = getSerializer(language);
+    return serializer.deserialize(element);
   }
 
-  public static void writeExternal(@NotNull Element element, @NotNull List<ArrangementRule> rules, @NotNull Language language) {
-    if (rules.isEmpty()) {
-      return;
-    }
-
-    ArrangementRuleSerializer serializer = getSerializer(language);
-    for (ArrangementRule rule : rules) {
-      Element e = serializer.serialize(rule);
-      if (e != null) {
-        element.addContent(e);
-      }
-    }
+  public static void writeExternal(@NotNull Element element, @NotNull ArrangementSettings settings, @NotNull Language language) {
+    ArrangementSettingsSerializer serializer = getSerializer(language);
+    serializer.serialize(settings, element);
   }
 
-  private static ArrangementRuleSerializer getSerializer(@NotNull Language language) {
+  private static ArrangementSettingsSerializer getSerializer(@NotNull Language language) {
     Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(language);
-    if (rearranger instanceof ArrangementRuleSerializer) {
-      return new CompositeArrangementRuleSerializer((ArrangementRuleSerializer)rearranger, DefaultArrangementRuleSerializer.INSTANCE);
+    if (rearranger instanceof ArrangementSettingsSerializer) {
+      return (ArrangementSettingsSerializer)rearranger;
     }
-    return DefaultArrangementRuleSerializer.INSTANCE;
+    return DefaultArrangementSettingsSerializer.INSTANCE;
   }
   
-  private static class CompositeArrangementRuleSerializer implements ArrangementRuleSerializer {
-
-    @NotNull private final List<ArrangementRuleSerializer> mySerializers = new ArrayList<ArrangementRuleSerializer>();
-
-    CompositeArrangementRuleSerializer(@NotNull ArrangementRuleSerializer ... serializers) {
-      mySerializers.addAll(Arrays.asList(serializers));
-    }
-
-    @Nullable
-    @Override
-    public ArrangementRule deserialize(@NotNull Element element) {
-      for (ArrangementRuleSerializer serializer : mySerializers) {
-        ArrangementRule rule = serializer.deserialize(element);
-        if (rule != null) {
-          return rule;
-        }
-      }
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public Element serialize(ArrangementRule rule) {
-      for (ArrangementRuleSerializer serializer : mySerializers) {
-        Element element = serializer.serialize(rule);
-        if (element != null) {
-          return element;
-        }
-      }
-      return null;
-    }
-  }
   //endregion
 
   @NotNull

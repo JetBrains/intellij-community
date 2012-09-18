@@ -6,9 +6,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
-import org.jetbrains.jps.incremental.artifacts.ArtifactSourceToOutputMapping;
 import org.jetbrains.jps.incremental.artifacts.JarPathUtil;
+import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 
 import java.io.*;
 import java.util.Collections;
@@ -26,14 +27,9 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
                                         @NotNull String pathInJar,
                                         @NotNull SourceFileFilter filter,
                                         int index,
-                                        int artifactId, String artifactName) {
-    super(jarFile, filter, index, artifactId, artifactName);
+                                        ArtifactBuildTarget target) {
+    super(jarFile, filter, index, target);
     myPathInJar = pathInJar;
-  }
-
-  @Override
-  public String toString() {
-    return myRoot.getPath() + JarPathUtil.JAR_SEPARATOR + myPathInJar;
   }
 
   public void processEntries(EntryProcessor processor) throws IOException {
@@ -61,9 +57,14 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
     }
   }
 
+  @Override
+  protected String getFullPath() {
+    return myRoot.getPath() + JarPathUtil.JAR_SEPARATOR + myPathInJar;
+  }
+
   public void copyFromRoot(final String filePath,
                            final int rootIndex, final String outputPath,
-                           CompileContext context, final ArtifactSourceToOutputMapping srcOutMapping,
+                           CompileContext context, final SourceToOutputMapping srcOutMapping,
                            final ArtifactOutputToSourceMapping outSrcMapping) throws IOException {
     context.getLoggingManager().getArtifactBuilderLogger().fileCopied(filePath);
     processEntries(new EntryProcessor() {

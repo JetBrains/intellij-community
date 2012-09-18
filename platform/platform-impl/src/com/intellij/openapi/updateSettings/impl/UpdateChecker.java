@@ -460,7 +460,7 @@ public final class UpdateChecker {
       final String title = IdeBundle.message("updates.info.dialog.title");
       final String message = "You already have the latest version of " + ApplicationInfo.getInstance().getVersionName() + " installed.<br> " +
                              "To configure automatic update settings, see the <a href=\"updates\">Updates</a> dialog of your IDE settings";
-      NotificationGroup.balloonGroup("update.available.group")
+      new NotificationGroup("update.available.group", NotificationDisplayType.STICKY_BALLOON, true)
         .createNotification(title, message, NotificationType.INFORMATION, new NotificationListener() {
           @Override
           public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {

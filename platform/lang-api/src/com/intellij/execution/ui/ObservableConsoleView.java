@@ -17,12 +17,13 @@
 package com.intellij.execution.ui;
 
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
 public interface ObservableConsoleView  {
 
-  void addChangeListener(ChangeListener listener, Disposable parent);
+  void addChangeListener(@NotNull ChangeListener listener, @NotNull Disposable parent);
 
   interface ChangeListener {
     void contentAdded(Collection<ConsoleViewContentType> types);

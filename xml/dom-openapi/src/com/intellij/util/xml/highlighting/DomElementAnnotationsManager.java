@@ -52,12 +52,16 @@ public abstract class DomElementAnnotationsManager {
    * Calls {@link com.intellij.util.xml.highlighting.DomElementsInspection#checkFileElement(com.intellij.util.xml.DomFileElement, DomElementAnnotationHolder)}
    * with appropriate parameters if needed, saves the collected problems to {@link com.intellij.util.xml.highlighting.DomElementsProblemsHolder}, which
    * can then be obtained from {@link #getProblemHolder(com.intellij.util.xml.DomElement)} method, and returns them.
+   *
    * @param element file element being checked
    * @param inspection inspection to run on the given file element
+   * @param onTheFly
    * @return collected DOM problem descriptors
    */
   @NotNull
-  public abstract <T extends DomElement> List<DomElementProblemDescriptor> checkFileElement(@NotNull DomFileElement<T> element, @NotNull DomElementsInspection<T> inspection);
+  public abstract <T extends DomElement> List<DomElementProblemDescriptor> checkFileElement(@NotNull DomFileElement<T> element,
+                                                                                            @NotNull DomElementsInspection<T> inspection,
+                                                                                            boolean onTheFly);
 
   public abstract void dropAnnotationsCache();
 

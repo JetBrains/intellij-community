@@ -30,7 +30,7 @@ import java.awt.*;
 /**
 * @author Konstantin Bulenkov
 */
-final class IdeaLaf extends MetalLookAndFeel {
+public final class IdeaLaf extends MetalLookAndFeel {
   public void initComponentDefaults(UIDefaults defaults) {
     super.initComponentDefaults(defaults);
     LafManagerImpl.initInputMapDefaults(defaults);

@@ -71,26 +71,8 @@ public class GenericInlineHandler {
       allReferences = usagesRef.get();
     }
 
-    final Map<Language, InlineHandler.Inliner> inliners = new HashMap<Language, InlineHandler.Inliner>();
-
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    for (PsiReference ref : allReferences) {
-      final Language language = ref.getElement().getLanguage();
-      if (inliners.containsKey(language)) continue;
-
-      InlineHandler.Inliner inliner = null;
-      final List<InlineHandler> handlers = InlineHandlers.getInlineHandlers(language);
-      for (InlineHandler handler : handlers) {
-        inliner = handler.createInliner(element, settings);
-        if (inliner != null) {
-          inliners.put(language, inliner);
-          break;
-        }
-      }
-      if (inliner == null) {
-        conflicts.putValue(null, "Cannot inline reference from " + language.getID());
-      }
-    }
+    final Map<Language, InlineHandler.Inliner> inliners = initializeInliners(element, settings, allReferences);
 
     for (PsiReference reference : allReferences) {
       collectConflicts(reference, element, inliners, conflicts);
@@ -152,10 +134,30 @@ public class GenericInlineHandler {
     return true;
   }
 
-  private static void collectConflicts(final PsiReference reference,
-                                       final PsiElement element,
-                                       final Map<Language, InlineHandler.Inliner> inliners,
-                                       final MultiMap<PsiElement, String> conflicts) {
+  public static Map<Language, InlineHandler.Inliner> initializeInliners(PsiElement element,
+                                                                        InlineHandler.Settings settings,
+                                                                        Collection<? extends PsiReference> allReferences) {
+    final Map<Language, InlineHandler.Inliner> inliners = new HashMap<Language, InlineHandler.Inliner>();
+    for (PsiReference ref : allReferences) {
+      final Language language = ref.getElement().getLanguage();
+      if (inliners.containsKey(language)) continue;
+
+      final List<InlineHandler> handlers = InlineHandlers.getInlineHandlers(language);
+      for (InlineHandler handler : handlers) {
+        InlineHandler.Inliner inliner = handler.createInliner(element, settings);
+        if (inliner != null) {
+          inliners.put(language, inliner);
+          break;
+        }
+      }
+    }
+    return inliners;
+  }
+
+  public static void collectConflicts(final PsiReference reference,
+                                      final PsiElement element,
+                                      final Map<Language, InlineHandler.Inliner> inliners,
+                                      final MultiMap<PsiElement, String> conflicts) {
     final Language language = reference.getElement().getLanguage();
     final InlineHandler.Inliner inliner = inliners.get(language);
     if (inliner != null) {
@@ -166,12 +168,17 @@ public class GenericInlineHandler {
         }
       }
     }
+    else {
+      conflicts.putValue(reference.getElement(), "Cannot inline reference from " + language.getID());
+    }
   }
 
-  private static void inlineReference(final UsageInfo usage,
-                                      final PsiElement element,
-                                      final Map<Language, InlineHandler.Inliner> inliners) {
-    final Language language = usage.getElement().getLanguage();
+  public static void inlineReference(final UsageInfo usage,
+                                     final PsiElement element,
+                                     final Map<Language, InlineHandler.Inliner> inliners) {
+    PsiElement usageElement = usage.getElement();
+    if (usageElement == null) return;
+    final Language language = usageElement.getLanguage();
     final InlineHandler.Inliner inliner = inliners.get(language);
     if (inliner != null) {
       inliner.inlineUsage(usage, element);

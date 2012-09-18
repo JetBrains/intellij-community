@@ -78,7 +78,7 @@ public abstract class AbstractFieldPanel extends JPanel {
   }
 
   public boolean isEnabled() {
-    return getComponent().isEnabled();
+    return myComponent != null && myComponent.isEnabled();
   }
 
   protected TextFieldWithBrowseButton.MyDoClickAction getDoClickAction() { return myDoClickAction; }

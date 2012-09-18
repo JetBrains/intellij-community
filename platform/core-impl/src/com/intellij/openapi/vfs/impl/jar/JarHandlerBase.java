@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.Reference;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Map;
@@ -46,7 +47,7 @@ public class JarHandlerBase {
   private static final long DEFAULT_TIMESTAMP = -1L;
 
   private final TimedReference<JarFile> myJarFile = new TimedReference<JarFile>(null);
-  private SoftReference<Map<String, EntryInfo>> myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(null);
+  private Reference<Map<String, EntryInfo>> myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(null);
   private final Object lock = new Object();
 
   protected final String myBasePath;
@@ -59,7 +60,7 @@ public class JarHandlerBase {
     public EntryInfo(final String shortName, final EntryInfo parent, final boolean directory) {
       this.shortName = shortName;
       this.parent = parent;
-      this.isDirectory = directory;
+      isDirectory = directory;
     }
   }
 
@@ -88,7 +89,7 @@ public class JarHandlerBase {
           while (entries.hasMoreElements()) {
             JarFile.JarEntry entry = entries.nextElement();
             final String name = entry.getName();
-            final boolean isDirectory = name.endsWith("/");
+            final boolean isDirectory = StringUtil.endsWithChar(name, '/');
             getOrCreate(isDirectory ? name.substring(0, name.length() - 1) : name, isDirectory, map);
           }
 
@@ -105,17 +106,19 @@ public class JarHandlerBase {
 
   @Nullable
   public JarFile getJar() {
-    synchronized (lock) {
-      JarFile jar = myJarFile.get();
-      if (jar == null) {
-        jar = createJarFile();
-        if (jar != null) {
-          myJarFile.set(jar);
+    JarFile jar = myJarFile.get();
+    if (jar == null) {
+      synchronized (lock) {
+        jar = myJarFile.get();
+        if (jar == null) {
+          jar = createJarFile();
+          if (jar != null) {
+            myJarFile.set(jar);
+          }
         }
       }
-
-      return jar;
     }
+    return jar;
   }
 
   @Nullable

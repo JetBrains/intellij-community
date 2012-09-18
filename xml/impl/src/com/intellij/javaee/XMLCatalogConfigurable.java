@@ -18,11 +18,9 @@ package com.intellij.javaee;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -30,7 +28,7 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  *         Date: 7/20/12
  */
-public class XMLCatalogConfigurable extends BaseConfigurable implements SearchableConfigurable {
+public class XMLCatalogConfigurable extends BaseConfigurable {
 
   private TextFieldWithBrowseButton myPropertyFile;
   private JPanel myPanel;
@@ -79,16 +77,5 @@ public class XMLCatalogConfigurable extends BaseConfigurable implements Searchab
   @Override
   public void disposeUIResources() {
 
-  }
-
-  @NotNull
-  @Override
-  public String getId() {
-    return "xml.catalog";
-  }
-
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
   }
 }

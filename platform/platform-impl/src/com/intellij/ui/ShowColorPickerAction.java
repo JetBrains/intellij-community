@@ -28,13 +28,11 @@ public class ShowColorPickerAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getProject();
-    if (project != null) {
-      final IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
-      if (frame != null) {
-        final ColorPicker.ColorPickerDialog picker = new ColorPicker.ColorPickerDialog(frame.getComponent(), "Color Picker", null, true);
-        picker.setModal(false);
-        picker.show();
-      }
+    final IdeFrame frame = project == null ? WindowManager.getInstance().getAllFrames()[0] : WindowManager.getInstance().getIdeFrame(project);
+    if (frame != null) {
+      final ColorPicker.ColorPickerDialog picker = new ColorPicker.ColorPickerDialog(frame.getComponent(), "Color Picker", null, true);
+      picker.setModal(false);
+      picker.show();
     }
   }
 }

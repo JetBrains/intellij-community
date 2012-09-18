@@ -34,7 +34,7 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -43,6 +43,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -51,7 +52,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author max
  */
 public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
-  private ArrayList<PsiElementFinder> myElementFinders;
+  private PsiElementFinder[] myElementFinders; //benign data race
   private final PsiNameHelper myNameHelper;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private final ConcurrentMap<String, PsiPackage> myPackageCache = new ConcurrentHashMap<String, PsiPackage>();
@@ -102,9 +103,9 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
     if (DumbService.getInstance(getProject()).isDumb()) {
-      final List<PsiClass> classes = findClassesInDumbMode(qualifiedName, scope);
-      if (!classes.isEmpty()) {
-        return classes.get(0);
+      PsiClass[] classes = findClassesInDumbMode(qualifiedName, scope);
+      if (classes.length != 0) {
+        return classes[0];
       }
       return null;
     }
@@ -118,42 +119,46 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   }
 
   @NotNull
-  private List<PsiClass> findClassesInDumbMode(String qualifiedName, GlobalSearchScope scope) {
+  private PsiClass[] findClassesInDumbMode(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     final String packageName = StringUtil.getPackageName(qualifiedName);
     final PsiPackage pkg = findPackage(packageName);
     final String className = StringUtil.getShortName(qualifiedName);
     if (pkg == null && packageName.length() < qualifiedName.length()) {
-      final List<PsiClass> containingClasses = findClassesInDumbMode(packageName, scope);
-      if (containingClasses.size() == 1) {
-        return filterByName(className, containingClasses.get(0).getInnerClasses());
+      PsiClass[] containingClasses = findClassesInDumbMode(packageName, scope);
+      if (containingClasses.length == 1) {
+        return filterByName(className, containingClasses[0].getInnerClasses());
       }
 
-      return Collections.emptyList();
+      return PsiClass.EMPTY_ARRAY;
     }
 
     if (pkg == null || !pkg.containsClassNamed(className)) {
-      return Collections.emptyList();
+      return PsiClass.EMPTY_ARRAY;
     }
 
     return filterByName(className, pkg.getClasses(scope));
   }
 
-  private static List<PsiClass> filterByName(String className, PsiClass[] classes) {
-    final List<PsiClass> foundClasses = new SmartList<PsiClass>();
+  @NotNull
+  private static PsiClass[] filterByName(@NotNull String className, @NotNull PsiClass[] classes) {
+    if (classes.length == 0) return PsiClass.EMPTY_ARRAY;
+    if (classes.length == 1) {
+      return className.equals(classes[0].getName()) ? classes : PsiClass.EMPTY_ARRAY;
+    }
+    List<PsiClass> foundClasses = new SmartList<PsiClass>();
     for (PsiClass psiClass : classes) {
       if (className.equals(psiClass.getName())) {
         foundClasses.add(psiClass);
       }
     }
-    return foundClasses;
+    return foundClasses.isEmpty() ? PsiClass.EMPTY_ARRAY : foundClasses.toArray(new PsiClass[foundClasses.size()]);
   }
 
   @Override
   @NotNull
   public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     if (DumbService.getInstance(getProject()).isDumb()) {
-      final List<PsiClass> classes = findClassesInDumbMode(qualifiedName, scope);
-      return classes.toArray(new PsiClass[classes.size()]);
+      return findClassesInDumbMode(qualifiedName, scope);
     }
 
     List<PsiClass> classes = new SmartList<PsiClass>();
@@ -165,8 +170,9 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return classes.toArray(new PsiClass[classes.size()]);
   }
 
-  private ArrayList<PsiElementFinder> finders() {
-    ArrayList<PsiElementFinder> answer = myElementFinders;
+  @NotNull
+  private PsiElementFinder[] finders() {
+    PsiElementFinder[] answer = myElementFinders;
     if (answer == null) {
       answer = calcFinders();
       myElementFinders = answer;
@@ -175,11 +181,12 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return answer;
   }
 
-  private ArrayList<PsiElementFinder> calcFinders() {
-    ArrayList<PsiElementFinder> elementFinders = new ArrayList<PsiElementFinder>();
+  @NotNull
+  private PsiElementFinder[] calcFinders() {
+    List<PsiElementFinder> elementFinders = new ArrayList<PsiElementFinder>();
     elementFinders.add(new PsiElementFinderImpl());
     ContainerUtil.addAll(elementFinders, myProject.getExtensions(PsiElementFinder.EP_NAME));
-    return elementFinders;
+    return elementFinders.toArray(new PsiElementFinder[elementFinders.size()]);
   }
 
   @Override
@@ -205,16 +212,18 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return null;
   }
 
-  private List<PsiElementFinder> filteredFinders() {
+  @NotNull
+  private PsiElementFinder[] filteredFinders() {
     DumbService dumbService = DumbService.getInstance(getProject());
-    List<PsiElementFinder> finders = finders();
+    PsiElementFinder[] finders = finders();
     if (dumbService.isDumb()) {
-      finders = dumbService.filterByDumbAwareness(finders);
+      List<PsiElementFinder> list = dumbService.filterByDumbAwareness(Arrays.asList(finders));
+      finders = list.toArray(new PsiElementFinder[list.size()]);
     }
     return finders;
   }
 
-    @Override
+  @Override
   @NotNull
   public PsiJavaParserFacade getParserFacade() {
     return getElementFactory(); // TODO: lighter implementation which doesn't mark all the elements as generated.
@@ -232,7 +241,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return myNameHelper;
   }
 
-  public Set<String> getClassNames(PsiPackage psiPackage, GlobalSearchScope scope) {
+  @NotNull
+  public Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     Set<String> result = new HashSet<String>();
     for (PsiElementFinder finder : filteredFinders()) {
       result.addAll(finder.getClassNames(psiPackage, scope));
@@ -240,7 +250,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return result;
   }
 
-  public PsiClass[] getClasses(PsiPackage psiPackage, GlobalSearchScope scope) {
+  @NotNull
+  public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     List<PsiClass> result = null;
     for (PsiElementFinder finder : filteredFinders()) {
       PsiClass[] classes = finder.getClasses(psiPackage, scope);
@@ -252,7 +263,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return result == null ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
   }
 
-  public boolean processPackageDirectories(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope, Processor<PsiDirectory> consumer) {
+  public boolean processPackageDirectories(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiDirectory> consumer) {
     for (PsiElementFinder finder : filteredFinders()) {
       if (!finder.processPackageDirectories(psiPackage, scope, consumer)) {
         return false;
@@ -261,7 +272,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return true;
   }
 
-  public PsiPackage[] getSubPackages(PsiPackage psiPackage, GlobalSearchScope scope) {
+  @NotNull
+  public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     LinkedHashSet<PsiPackage> result = new LinkedHashSet<PsiPackage>();
     for (PsiElementFinder finder : filteredFinders()) {
       PsiPackage[] packages = finder.getSubPackages(psiPackage, scope);
@@ -334,8 +346,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       ContainerUtil.quickSort(list, new Comparator<PsiClass>() {
         @Override
         public int compare(PsiClass o1, PsiClass o2) {
-          VirtualFile file2 = PsiUtil.getVirtualFile(o2);
-          VirtualFile file1 = PsiUtil.getVirtualFile(o1);
+          VirtualFile file2 = PsiUtilCore.getVirtualFile(o2);
+          VirtualFile file1 = PsiUtilCore.getVirtualFile(o1);
           return scope.compare(file2, file1);
         }
       });
@@ -343,6 +355,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       return list.toArray(new PsiClass[list.size()]);
     }
 
+    @NotNull
     @Override
     public Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
       Set<String> names = null;
@@ -362,7 +375,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
 
     @Override
-    public boolean processPackageDirectories(@NotNull PsiPackage psiPackage, @NotNull final GlobalSearchScope scope, final Processor<PsiDirectory> consumer) {
+    public boolean processPackageDirectories(@NotNull PsiPackage psiPackage, @NotNull final GlobalSearchScope scope, @NotNull final Processor<PsiDirectory> consumer) {
       final PsiManager psiManager = PsiManager.getInstance(getProject());
       PackageIndex.getInstance(getProject()).getDirsByPackageName(psiPackage.getQualifiedName(), false).forEach(new ReadActionProcessor<VirtualFile>() {
         @Override
@@ -378,7 +391,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
 
   @Override
-  public boolean isPartOfPackagePrefix(String packageName) {
+  public boolean isPartOfPackagePrefix(@NotNull String packageName) {
     final Collection<String> packagePrefixes = myFileManager.getNonTrivialPackagePrefixes();
     for (final String subpackageName : packagePrefixes) {
       if (isSubpackageOf(subpackageName, packageName)) return true;
@@ -386,7 +399,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return false;
   }
 
-  private static boolean isSubpackageOf(final String subpackageName, String packageName) {
+  private static boolean isSubpackageOf(@NotNull String subpackageName, @NotNull String packageName) {
     return subpackageName.equals(packageName) ||
            subpackageName.startsWith(packageName) && subpackageName.charAt(packageName.length()) == '.';
   }
@@ -423,6 +436,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   }
 
   @Override
+  @NotNull
   public Project getProject() {
     return myProject;
   }
@@ -433,8 +447,9 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return PsiElementFactory.SERVICE.getInstance(myProject);
   }
 
+  @TestOnly
   @Override
-  public void setAssertOnFileLoadingFilter(final VirtualFileFilter filter) {
+  public void setAssertOnFileLoadingFilter(@NotNull final VirtualFileFilter filter) {
     ((PsiManagerImpl)PsiManager.getInstance(myProject)).setAssertOnFileLoadingFilter(filter);
   }
 }

@@ -60,6 +60,7 @@ public abstract class CommandLineState implements RunnableState {
     return myEnvironment.getExecutionTarget();
   }
 
+  @NotNull
   public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
     final ProcessHandler processHandler = startProcess();
     final ConsoleView console = createConsole(executor);

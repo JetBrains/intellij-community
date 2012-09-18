@@ -22,6 +22,8 @@ import com.intellij.refactoring.RefactoringBundle;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public abstract class InlineOptionsWithSearchSettingsDialog extends InlineOptionsDialog {
   protected JCheckBox myCbSearchInComments;
@@ -41,8 +43,24 @@ public abstract class InlineOptionsWithSearchSettingsDialog extends InlineOption
   protected void doAction() {
     final boolean searchInNonJava = myCbSearchTextOccurences.isSelected();
     final boolean searchInComments = myCbSearchInComments.isSelected();
-    saveSearchInCommentsAndStrings(searchInComments);
-    saveSearchInTextOccurrences(searchInNonJava);
+    if (myCbSearchInComments.isEnabled() ) {
+      saveSearchInCommentsAndStrings(searchInComments);
+    }
+    if (myCbSearchTextOccurences.isEnabled()) {
+      saveSearchInTextOccurrences(searchInNonJava);
+    }
+  }
+
+  public void setEnabledSearchSettngs(boolean enabled) {
+    myCbSearchInComments.setEnabled(enabled);
+    myCbSearchTextOccurences.setEnabled(enabled);
+    if (enabled) {
+      myCbSearchInComments.setSelected(isSearchInCommentsAndStrings());
+      myCbSearchTextOccurences.setSelected(isSearchForTextOccurrences());
+    } else {
+      myCbSearchInComments.setSelected(false);
+      myCbSearchTextOccurences.setSelected(false);
+    }
   }
 
   @Override
@@ -64,6 +82,15 @@ public abstract class InlineOptionsWithSearchSettingsDialog extends InlineOption
     panel.add(myCbSearchInComments, gbc);
     gbc.gridx = 1;
     panel.add(myCbSearchTextOccurences, gbc);
+    final ActionListener actionListener = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        setEnabledSearchSettngs(myRbInlineAll.isSelected());
+      }
+    };
+    myRbInlineThisOnly.addActionListener(actionListener);
+    myRbInlineAll.addActionListener(actionListener);
+    setEnabledSearchSettngs(myRbInlineAll.isSelected());
     return panel;
   }
 }

@@ -97,11 +97,13 @@ public abstract class PsiElementFinder {
     return PsiClass.EMPTY_ARRAY;
   }
 
+  @NotNull
   public Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     return getClassNames(getClasses(psiPackage, scope));
   }
 
-  protected static Set<String> getClassNames(PsiClass[] classes) {
+  @NotNull
+  protected static Set<String> getClassNames(@NotNull PsiClass[] classes) {
     if (classes.length == 0) {
       return Collections.emptySet();
     }
@@ -113,7 +115,7 @@ public abstract class PsiElementFinder {
     return names;
   }
 
-  public boolean processPackageDirectories(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope, Processor<PsiDirectory> consumer) {
+  public boolean processPackageDirectories(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiDirectory> consumer) {
     return true;
   }
 }

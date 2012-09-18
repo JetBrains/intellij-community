@@ -201,8 +201,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       final ModuleRootsIndex rootsIndex = context.getProjectDescriptor().rootsIndex;
       RootDescriptor descriptor = rootsIndex.getModuleAndRoot(context, new File(item.sourcePath));
       if (descriptor != null) {
-        JpsModule srcModule = rootsIndex.getModuleByName(descriptor.module);
-        if (srcModule != null && srcModule != chunk.representativeModule()) {
+        JpsModule srcModule = descriptor.target.getModule();
+        if (srcModule != chunk.representativeModule()) {
           File output = new File(item.outputPath);
 
           //todo honor package prefixes
@@ -263,9 +263,9 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         final String outputPath = FileUtil.toSystemIndependentName(item.outputPath);
         final RootDescriptor moduleAndRoot = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, new File(sourcePath));
         if (moduleAndRoot != null) {
-          final String moduleName = moduleAndRoot.module;
+          final JpsModule module = moduleAndRoot.target.getModule();
           context.getProjectDescriptor().dataManager.getSourceToOutputMap(moduleAndRoot.target).appendData(sourcePath, outputPath);
-          String moduleOutputPath = generationOutputs.get(context.getProjectDescriptor().rootsIndex.getModuleByName(moduleName));
+          String moduleOutputPath = generationOutputs.get(module);
           generatedEvent.add(moduleOutputPath, FileUtil.getRelativePath(moduleOutputPath, outputPath, '/'));
         }
         callback.associate(outputPath, sourcePath, new ClassReader(FileUtil.loadFileBytes(new File(outputPath))));

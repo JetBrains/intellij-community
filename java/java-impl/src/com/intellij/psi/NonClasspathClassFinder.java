@@ -130,6 +130,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   }
 
 
+  @NotNull
   @Override
   public Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     final List<VirtualFile> classRoots = getClassRoots();
@@ -177,7 +178,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   @Override
   public boolean processPackageDirectories(@NotNull PsiPackage psiPackage,
                                            @NotNull GlobalSearchScope scope,
-                                           Processor<PsiDirectory> consumer) {
+                                           @NotNull Processor<PsiDirectory> consumer) {
     final List<VirtualFile> classRoots = getClassRoots();
     if (classRoots.isEmpty()) {
       return true;

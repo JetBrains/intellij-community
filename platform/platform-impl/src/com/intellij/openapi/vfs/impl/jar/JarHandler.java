@@ -22,6 +22,7 @@ package com.intellij.openapi.vfs.impl.jar;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
@@ -43,6 +44,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public class JarHandler extends JarHandlerBase implements FileSystemInterface {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.jar.JarHandler");
+
   @NonNls private static final String JARS_FOLDER = "jars";
 
   private final JarFileSystemImpl myFileSystem;
@@ -112,17 +115,17 @@ public class JarHandler extends JarHandlerBase implements FileSystemInterface {
       FileUtil.copy(original, mirror);
     }
     catch (final IOException e) {
-      final String path1 = original.getPath();
-      final String path2 = mirror.getPath();
+      LOG.warn(e);
+      final String path = original.getPath();
+      final String message = VfsBundle.message("jar.copy.error.message", path, mirror.getPath(), e.getMessage());
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          Messages.showErrorDialog(VfsBundle.message("jar.copy.error.message", path1, path2, e.getMessage()),
-                                   VfsBundle.message("jar.copy.error.title"));
+          Messages.showErrorDialog(message, VfsBundle.message("jar.copy.error.title"));
         }
       }, ModalityState.NON_MODAL);
 
-      myFileSystem.setNoCopyJarForPath(path1);
+      myFileSystem.setNoCopyJarForPath(path);
       return original;
     }
 

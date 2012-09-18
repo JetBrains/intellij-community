@@ -247,16 +247,12 @@ public abstract class InspectionProfileEntry {
    * Override this method to return a html inspection description. Otherwise it will be loaded from resources using ID.
    *
    * @return hard-code inspection description.
-   * @deprecated this won't work for inspections configured via {@link InspectionEP}
    */
   @Nullable
   public String getStaticDescription() {
     return null;
   }
 
-  /**
-   * @deprecated this won't work for inspections configured via {@link InspectionEP}
-   */
   @Nullable
   public String getDescriptionFileName() {
     return null;

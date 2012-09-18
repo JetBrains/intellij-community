@@ -1,5 +1,7 @@
 package org.jetbrains.jps.incremental.storage;
 
+import org.jetbrains.jps.builders.BuildTarget;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -10,11 +12,11 @@ import java.io.IOException;
 public interface Timestamps {
   void force();
 
-  void saveStamp(File file, long timestamp) throws IOException;
+  void saveStamp(File file, BuildTarget buildTarget, long timestamp) throws IOException;
 
-  void removeStamp(File file) throws IOException;
+  void removeStamp(File file, BuildTarget buildTarget) throws IOException;
 
   void clean() throws IOException;
 
-  long getStamp(File file) throws IOException;
+  long getStamp(File file, BuildTarget target) throws IOException;
 }

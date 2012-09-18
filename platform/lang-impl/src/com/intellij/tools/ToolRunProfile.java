@@ -16,21 +16,20 @@
 package com.intellij.tools;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.process.ColoredProcessHandler;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessTerminatedListener;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -89,11 +88,21 @@ public class ToolRunProfile implements ModuleRunProfile{
         return processHandler;
       }
 
+      @NotNull
       public ExecutionResult execute(@NotNull final Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
         final ExecutionResult result = super.execute(executor, runner);
         final ProcessHandler processHandler = result.getProcessHandler();
         if (processHandler != null) {
           processHandler.addProcessListener(new ToolProcessAdapter(project, myTool.synchronizeAfterExecution(), getName()));
+          processHandler.addProcessListener(new ProcessAdapter() {
+            @Override
+            public void onTextAvailable(ProcessEvent event, Key outputType) {
+              if ((outputType == ProcessOutputTypes.STDOUT && myTool.isShowConsoleOnStdOut())
+                || (outputType == ProcessOutputTypes.STDERR && myTool.isShowConsoleOnStdErr())) {
+                ExecutionManager.getInstance(project).getContentManager().toFrontRunContent(executor, processHandler);
+              }
+            }
+          });
         }
         return result;
       }

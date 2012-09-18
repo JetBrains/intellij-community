@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement.settings;
 
-import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
@@ -40,7 +40,7 @@ public interface ArrangementStandardSettingsAware {
    *          <code>null</code> as an indication that no default rules are available
    */
   @Nullable
-  List<StdArrangementRule> getDefaultRules();
+  List<StdArrangementMatchRule> getDefaultRules();
   
   /**
    * Allows to answer if given entry type can be applied for the rule specified by the given settings node.

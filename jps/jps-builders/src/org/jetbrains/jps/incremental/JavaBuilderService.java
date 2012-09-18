@@ -15,7 +15,7 @@ import java.util.List;
 public class JavaBuilderService extends BuilderService {
   @Override
   public List<JavaModuleBuildTargetType> getTargetTypes() {
-    return Arrays.asList(JavaModuleBuildTargetType.PRODUCTION, JavaModuleBuildTargetType.TEST);
+    return JavaModuleBuildTargetType.ALL_TYPES;
   }
 
   @NotNull

@@ -1455,4 +1455,53 @@ List<String> foo() {[]}
 ''', GroovyAssignabilityCheckInspection)
   }
 
+  void testCastClosureToInterface() {
+    testHighlighting('''\
+interface Function<D, F> {
+    F fun(D d)
+}
+
+def foo(Function<String, String> function) {
+ //   print function.fun('abc')
+}
+
+
+foo<warning descr="'foo' in '_' cannot be applied to '(Function<java.lang.Double,java.lang.Double>)'">({println  it.byteValue()} as Function<Double, Double>)</warning>
+foo({println  it.substring(1)} as Function)
+foo({println  it.substring(1)} as Function<String, String>)
+foo<warning descr="'foo' in '_' cannot be applied to '(groovy.lang.Closure<java.lang.Void>)'">({println  it})</warning>
+
+''', GroovyAssignabilityCheckInspection)
+  }
+
+  void testInstanceMethodUsedInStaticClosure() {
+    testHighlighting('''\
+class A {
+    static staticClosure = {
+        foo()
+    }
+
+    def staticMethod() {
+        foo()
+    }
+
+    def foo() { }
+}
+
+
+''')
+  }
+
+  void testVarargsWithoutTypeName() {
+    testHighlighting('''\
+def foo(String key, ... params) {
+
+}
+
+foo('anc')
+foo('abc', 1, '')
+foo<warning descr="'foo' in '_' cannot be applied to '(java.lang.Integer)'">(5)</warning>
+''', GroovyAssignabilityCheckInspection)
+  }
+
 }

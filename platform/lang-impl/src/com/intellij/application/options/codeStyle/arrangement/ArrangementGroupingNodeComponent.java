@@ -34,10 +34,14 @@ import java.awt.event.MouseEvent;
  * @since 9/12/12 5:39 PM
  */
 public class ArrangementGroupingNodeComponent extends JPanel implements ArrangementNodeComponent {
-
+  
+  private static final int TOP_INSET = 3;
+  
   @NotNull private final ArrangementColorsService myColorsService = ServiceManager.getService(ArrangementColorsService.class);
   @NotNull private final ArrangementAtomMatchCondition myCondition;
+
   @Nullable private Rectangle myScreenBounds;
+  @NotNull private  Dimension myPreferredSize;
   private           boolean   mySelected;
 
   public ArrangementGroupingNodeComponent(@NotNull ArrangementNodeDisplayManager manager,
@@ -46,9 +50,9 @@ public class ArrangementGroupingNodeComponent extends JPanel implements Arrangem
     myCondition = condition;
     String text = StringUtil.capitalize(StringUtil.pluralize(manager.getDisplayValue(myCondition.getValue())));
     setLayout(new GridBagLayout());
-    add(new JLabel(String.format("<html><i>%s", text)), new GridBag().anchor(GridBagConstraints.CENTER).weightx(1).insets(0, 12, 0, 0));
-    Dimension size = getPreferredSize();
-    setPreferredSize(new Dimension(manager.getMaxGroupTextWidth() * 5, size.height * 2));
+    GridBag constraints = new GridBag().anchor(GridBagConstraints.WEST).weightx(1).insets(TOP_INSET * 2, 20, 0, 0);
+    add(new JLabel(String.format("<html><i>%s", text)), constraints);
+    myPreferredSize = super.getPreferredSize();
   }
 
   @NotNull
@@ -81,6 +85,21 @@ public class ArrangementGroupingNodeComponent extends JPanel implements Arrangem
   }
 
   @Override
+  public boolean onCanvasWidthChange(int width) {
+    if (width > 0 && myPreferredSize.width != width) {
+      myPreferredSize = new Dimension(width - UIUtil.getTreeLeftChildIndent(), myPreferredSize.height);
+      return true;
+    }
+    return false;
+  }
+
+  @NotNull
+  @Override
+  public Dimension getPreferredSize() {
+    return myPreferredSize;
+  }
+
+  @Override
   public void setSelected(boolean selected) {
     mySelected = selected;
   }
@@ -101,7 +120,7 @@ public class ArrangementGroupingNodeComponent extends JPanel implements Arrangem
     Rectangle bounds = getBounds();
     g.setColor(UIManager.getColor("Tree.hash"));
     int cornerX = UIUtil.getTreeLeftChildIndent();
-    int y = 3;
+    int y = TOP_INSET;
     g.drawLine(cornerX, y, bounds.width, y);
     g.drawLine(cornerX, y, cornerX, y + bounds.height);
     if (mySelected) {

@@ -30,7 +30,11 @@ import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLoggerImpl;
 import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaLibraryType;
+import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -138,8 +142,11 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   }
 
   protected JpsModule addModule() {
-    String moduleName = StringUtil.capitalize(getProjectName());
-    String srcPath = getAbsolutePath("src");
+    return addModule(StringUtil.capitalize(getProjectName()), "src");
+  }
+
+  protected JpsModule addModule(final String moduleName, final String srcRootRelativePath) {
+    String srcPath = getAbsolutePath(srcRootRelativePath);
     return addModule(moduleName, new String[]{srcPath}, null, getOrCreateJdk());
   }
 
@@ -209,6 +216,16 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
       myJdk = addJdk("IDEA jdk");
     }
     return myJdk;
+  }
+
+  protected JpsLibrary addLibrary(final String jarPath) {
+    JpsLibrary library = myJpsProject.addLibrary("l", JpsJavaLibraryType.INSTANCE);
+    library.addRoot(new File(getAbsolutePath(jarPath)), JpsOrderRootType.COMPILED);
+    return library;
+  }
+
+  protected void addTestRoot(JpsModule module, final String testRootRelativePath) {
+    module.addSourceRoot(getUrl(testRootRelativePath), JavaSourceRootType.TEST_SOURCE);
   }
 
   private static class TestJavaBuilderLogger implements JavaBuilderLogger {

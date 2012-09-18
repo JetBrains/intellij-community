@@ -31,12 +31,12 @@ public class Gray extends Color {
   }
 
   public Color withAlpha(int alpha) {
-    assert 0 <= alpha && alpha <= 255 : "Alpha should be in range 0..255";
+    assert 0 <= alpha && alpha <= 255 : "Alpha " + alpha + "is incorrect. Alpha should be in range 0..255";
     return new Gray(getRed(), alpha);
   }
 
   public static Gray get(int gray) {
-    assert 0 <= gray && gray <= 255 : "Gray should be in range 0..255";
+    assert 0 <= gray && gray <= 255 : "Gray == " + gray +"Gray should be in range 0..255";
     return cache[gray];
   }
 

@@ -37,10 +37,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author max
@@ -96,13 +93,22 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
   @Override
   @Nullable
   public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    final PsiExpression initializer = field.getInitializer();
-    if (initializer != null) return checkElement(initializer, manager, isOnTheFly);
-
+    List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
+    appendProblems(manager, isOnTheFly, result, field.getInitializer());
+    appendProblems(manager, isOnTheFly, result, field.getModifierList());
     if (field instanceof PsiEnumConstant) {
-      return checkElement(((PsiEnumConstant)field).getArgumentList(), manager, isOnTheFly);
+      appendProblems(manager, isOnTheFly, result, ((PsiEnumConstant)field).getArgumentList());
     }
-    return null;
+    return result.isEmpty() ? null : result.toArray(new ProblemDescriptor[result.size()]);
+  }
+
+  private static void appendProblems(InspectionManager manager, boolean isOnTheFly, List<ProblemDescriptor> result, PsiElement element) {
+    if (element != null){
+      final ProblemDescriptor[] descriptors = checkElement(element, manager, isOnTheFly);
+      if (descriptors != null) {
+        Collections.addAll(result, descriptors);
+      }
+    }
   }
 
   @Nullable

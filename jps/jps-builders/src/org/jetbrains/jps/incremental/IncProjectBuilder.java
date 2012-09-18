@@ -21,6 +21,7 @@ import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -301,7 +302,7 @@ public class IncProjectBuilder {
     myProjectDescriptor.fsState.clearAll();
   }
 
-  private static void clearOutputFiles(CompileContext context, ModuleBuildTarget target) throws IOException {
+  public static void clearOutputFiles(CompileContext context, BuildTarget target) throws IOException {
     final SourceToOutputMapping map = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
     for (String srcPath : map.getKeys()) {
       final Collection<String> outs = map.getState(srcPath);
@@ -891,9 +892,9 @@ public class IncProjectBuilder {
           fsState.markInitialScanPerformed(target);
         }
         final Timestamps timestamps = pd.timestamps.getStorage();
-        final List<RootDescriptor> roots = pd.rootsIndex.getModuleRoots(context, target.getModuleName());
+        final List<RootDescriptor> roots = pd.rootsIndex.getModuleRoots(context, target.getModule());
         for (RootDescriptor rd : roots) {
-          if (target.isTests() ? rd.isTestRoot : !rd.isTestRoot) {
+          if (target.isTests() == rd.isTestRoot) {
             marked |= fsState.markAllUpToDate(context.getScope(), rd, timestamps, context.getCompilationStartStamp());
           }
         }
@@ -909,49 +910,45 @@ public class IncProjectBuilder {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final Timestamps timestamps = pd.timestamps.getStorage();
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      if (context.isProjectRebuild()) {
-        FSOperations.markDirtyFiles(context, target, timestamps, true,
-                                    target.isTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION, null);
+      final BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
+      if (context.isProjectRebuild() || configuration.isTargetDirty()) {
+        FSOperations.markDirtyFiles(context, target, timestamps, true, null);
         updateOutputRootsLayout(context, target);
+        configuration.save();
       }
       else {
         if (context.isMake()) {
           if (pd.fsState.markInitialScanPerformed(target)) {
-            initModuleFSState(context, target);
-            updateOutputRootsLayout(context, target);
+            boolean forceMarkDirty = false;
+            final File currentOutput = context.getProjectPaths().getModuleOutputDir(target.getModule(), target.isTests());
+            if (currentOutput != null) {
+              final Pair<String, String> outputsPair = pd.dataManager.getOutputRootsLayout().getState(target.getModuleName());
+              if (outputsPair != null) {
+                final String previousPath = target.isTests() ? outputsPair.second : outputsPair.first;
+                forceMarkDirty = StringUtil.isEmpty(previousPath) || !FileUtil.filesEqual(currentOutput, new File(previousPath));
+              }
+              else {
+                forceMarkDirty = true;
+              }
+            }
+            initModuleFSState(context, target, forceMarkDirty);
           }
         }
         else {
           // forced compilation mode
           if (context.getScope().isRecompilationForced(target)) {
-            FSOperations.markDirtyFiles(context, target, timestamps, true,
-                                        target.isTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION,
-                                        null);
-            updateOutputRootsLayout(context, target);
+            initModuleFSState(context, target, true);
           }
         }
       }
     }
   }
 
-  private static void initModuleFSState(CompileContext context, ModuleBuildTarget target) throws IOException {
-    boolean forceMarkDirty = false;
-    final File currentOutput = context.getProjectPaths().getModuleOutputDir(target.getModule(), target.isTests());
+  private static void initModuleFSState(CompileContext context, ModuleBuildTarget target, final boolean forceMarkDirty) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
-    if (currentOutput != null) {
-      Pair<String, String> outputsPair = pd.dataManager.getOutputRootsLayout().getState(target.getModuleName());
-      if (outputsPair != null) {
-        final String previousPath = target.isTests() ? outputsPair.second : outputsPair.first;
-        forceMarkDirty = StringUtil.isEmpty(previousPath) || !FileUtil.filesEqual(currentOutput, new File(previousPath));
-      }
-      else {
-        forceMarkDirty = true;
-      }
-    }
-
     final Timestamps timestamps = pd.timestamps.getStorage();
     final THashSet<File> currentFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-    FSOperations.markDirtyFiles(context, target, timestamps, forceMarkDirty, target.isTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION, currentFiles);
+    FSOperations.markDirtyFiles(context, target, timestamps, forceMarkDirty, currentFiles);
 
     // handle deleted paths
     final BuildFSState fsState = pd.fsState;
@@ -965,6 +962,8 @@ public class IncProjectBuilder {
         fsState.registerDeleted(target, file, timestamps);
       }
     }
+    
+    updateOutputRootsLayout(context, target);
   }
 
   private static void updateOutputRootsLayout(CompileContext context, ModuleBuildTarget target) throws IOException {

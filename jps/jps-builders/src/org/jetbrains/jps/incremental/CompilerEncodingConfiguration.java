@@ -23,7 +23,7 @@ public class CompilerEncodingConfiguration {
   private final Map<String, String> myUrlToCharset;
   private final String myProjectCharset;
   private final ModuleRootsIndex myRootsIndex;
-  private Map<String, Set<String>> myModuleCharsetMap;
+  private Map<JpsModule, Set<String>> myModuleCharsetMap;
 
   public CompilerEncodingConfiguration(JpsModel jpsModel, ModuleRootsIndex index) {
     JpsEncodingProjectConfiguration configuration = JpsEncodingConfigurationService.getInstance().getEncodingConfiguration(jpsModel.getProject());
@@ -32,15 +32,15 @@ public class CompilerEncodingConfiguration {
     myRootsIndex = index;
   }
 
-  public Map<String, Set<String>> getModuleCharsetMap() {
+  public Map<JpsModule, Set<String>> getModuleCharsetMap() {
     if (myModuleCharsetMap == null) {
       myModuleCharsetMap = computeModuleCharsetMap();
     }
     return myModuleCharsetMap;
   }
 
-  private Map<String, Set<String>> computeModuleCharsetMap() {
-    final Map<String, Set<String>> map = new THashMap<String, Set<String>>();
+  private Map<JpsModule, Set<String>> computeModuleCharsetMap() {
+    final Map<JpsModule, Set<String>> map = new THashMap<JpsModule, Set<String>>();
     final List<ModuleLevelBuilder> builders = BuilderRegistry.getInstance().getModuleLevelBuilders();
     for (Map.Entry<String, String> entry : myUrlToCharset.entrySet()) {
       final String fileUrl = entry.getKey();
@@ -51,7 +51,7 @@ public class CompilerEncodingConfiguration {
       final RootDescriptor rootDescriptor = myRootsIndex.getModuleAndRoot(null, file);
       if (rootDescriptor == null) continue;
 
-      final String module = rootDescriptor.module;
+      final JpsModule module = rootDescriptor.target.getModule();
       Set<String> set = map.get(module);
       if (set == null) {
         set = new LinkedHashSet<String>();
@@ -92,7 +92,7 @@ public class CompilerEncodingConfiguration {
   @Nullable
   public String getPreferredModuleChunkEncoding(@NotNull ModuleChunk moduleChunk) {
     for (JpsModule module : moduleChunk.getModules()) {
-      final Set<String> encodings = getModuleCharsetMap().get(module.getName());
+      final Set<String> encodings = getModuleCharsetMap().get(module);
       final String encoding = ContainerUtil.getFirstItem(encodings, null);
       if (encoding != null) {
         return encoding;
@@ -103,10 +103,10 @@ public class CompilerEncodingConfiguration {
 
   @NotNull
   public Set<String> getAllModuleChunkEncodings(@NotNull ModuleChunk moduleChunk) {
-    final Map<String, Set<String>> map = getModuleCharsetMap();
+    final Map<JpsModule, Set<String>> map = getModuleCharsetMap();
     Set<String> encodings = new HashSet<String>();
     for (JpsModule module : moduleChunk.getModules()) {
-      final Set<String> moduleEncodings = map.get(module.getName());
+      final Set<String> moduleEncodings = map.get(module);
       if (moduleEncodings != null) {
         encodings.addAll(moduleEncodings);
       }

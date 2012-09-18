@@ -70,6 +70,13 @@ public class JavaI18nUtil extends I18nUtil {
   public static boolean mustBePropertyKey(@NotNull Project project,
                                           @NotNull PsiLiteralExpression expression,
                                           @NotNull Map<String, Object> annotationAttributeValues) {
+    final PsiElement parent = expression.getParent();
+    if (parent instanceof PsiVariable) {
+      final PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiVariable)parent, AnnotationUtil.PROPERTY_KEY);
+      if (annotation != null) {
+        return processAnnotationAttributes(annotationAttributeValues, annotation); 
+      }
+    }
     return isPassedToAnnotatedParam(project, expression, AnnotationUtil.PROPERTY_KEY, annotationAttributeValues, null);
   }
 
@@ -191,17 +198,7 @@ public class JavaI18nUtil extends I18nUtil {
     }
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(param, annFqn);
     if (annotation != null) {
-      if (annotationAttributeValues != null) {
-        final PsiAnnotationParameterList parameterList = annotation.getParameterList();
-        final PsiNameValuePair[] attributes = parameterList.getAttributes();
-        for (PsiNameValuePair attribute : attributes) {
-          final String name = attribute.getName();
-          if (annotationAttributeValues.containsKey(name)) {
-            annotationAttributeValues.put(name, attribute.getValue());
-          }
-        }
-      }
-      return true;
+      return processAnnotationAttributes(annotationAttributeValues, annotation);
     }
     if (nonNlsTargets != null) {
       nonNlsTargets.add(param);
@@ -213,6 +210,20 @@ public class JavaI18nUtil extends I18nUtil {
     }
 
     return false;
+  }
+
+  private static boolean processAnnotationAttributes(@Nullable Map<String, Object> annotationAttributeValues, @NotNull PsiAnnotation annotation) {
+    if (annotationAttributeValues != null) {
+      final PsiAnnotationParameterList parameterList = annotation.getParameterList();
+      final PsiNameValuePair[] attributes = parameterList.getAttributes();
+      for (PsiNameValuePair attribute : attributes) {
+        final String name = attribute.getName();
+        if (annotationAttributeValues.containsKey(name)) {
+          annotationAttributeValues.put(name, attribute.getValue());
+        }
+      }
+    }
+    return true;
   }
 
   public static boolean isValidPropertyReference(@NotNull Project project,

@@ -34,6 +34,7 @@ import java.awt.image.BufferedImage;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -47,6 +48,12 @@ public final class IconLoader {
    * This cache contains mapping between icons and disabled icons.
    */
   private static final Map<Icon, Icon> ourIcon2DisabledIcon = new WeakHashMap<Icon, Icon>(200);
+  private static final Map<String, String> ourDeprecatedIconsReplacements = new HashMap<String, String>();
+
+  static {
+    ourDeprecatedIconsReplacements.put("/general/toolWindowDebugger.png", "AllIcons.Toolwindows.ToolWindowDebugger");
+    ourDeprecatedIconsReplacements.put("/general/toolWindowChanges.png", "AllIcons.Toolwindows.ToolWindowChanges");
+  }
 
   private static final ImageIcon EMPTY_ICON = new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
     @NonNls
@@ -140,7 +147,8 @@ public final class IconLoader {
   }
 
   @Nullable
-  public static Icon findIcon(@NotNull final String path, @NotNull final Class aClass, boolean computeNow) {
+  public static Icon findIcon(@NotNull String path, @NotNull final Class aClass, boolean computeNow) {
+    path = undeprecate(path);
     if (isReflectivePath(path)) return getReflectiveIcon(path, aClass.getClassLoader());
 
     final ByClass icon = new ByClass(aClass, path);
@@ -150,6 +158,11 @@ public final class IconLoader {
     }
 
     return icon;
+  }
+
+  private static String undeprecate(String path) {
+    String replacement = ourDeprecatedIconsReplacements.get(path);
+    return replacement != null ? replacement : path;
   }
 
   private static boolean isReflectivePath(String path) {
@@ -169,7 +182,8 @@ public final class IconLoader {
   }
 
   @Nullable
-  public static Icon findIcon(final String path, final ClassLoader classLoader) {
+  public static Icon findIcon(String path, final ClassLoader classLoader) {
+    path = undeprecate(path);
     if (isReflectivePath(path)) return getReflectiveIcon(path, classLoader);
     if (!path.startsWith("/")) return null;
 
@@ -202,10 +216,10 @@ public final class IconLoader {
    * @param icon
    */
   @Nullable
-  public static Icon getDisabledIcon(final Icon icon) {
-    if (icon == null) {
-      return null;
-    }
+  public static Icon getDisabledIcon(Icon icon) {
+    if (icon instanceof LazyIcon) icon = ((LazyIcon)icon).getOrComputeIcon();
+    if (icon == null) return null;
+
     Icon disabledIcon = ourIcon2DisabledIcon.get(icon);
     if (disabledIcon == null) {
       if (!isGoodSize(icon)) {

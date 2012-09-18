@@ -306,7 +306,14 @@ public class LambdaUtil {
   @Nullable
   private static PsiType getReturnType(PsiClass psiClass, MethodSignature methodSignature) {
     final PsiMethod method = getMethod(psiClass, methodSignature);
-    return method != null ? method.getReturnType() : null;
+    if (method != null) {
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) return null;
+      return TypeConversionUtil.getSuperClassSubstitutor(containingClass, psiClass, PsiSubstitutor.EMPTY).substitute(method.getReturnType());
+    }
+    else {
+      return null;
+    }
   }
 
   @Nullable
