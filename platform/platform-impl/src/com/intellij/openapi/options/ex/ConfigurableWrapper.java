@@ -38,6 +38,11 @@ public class ConfigurableWrapper implements Configurable, Configurable.Composite
     return ep.displayName != null || ep.key != null ? new ConfigurableWrapper(ep) : ep.createConfigurable();
   }
 
+  public static boolean isNoScroll(Configurable configurable) {
+    return configurable instanceof NoScroll ||
+           (configurable instanceof ConfigurableWrapper && ((ConfigurableWrapper)configurable).getConfigurable() instanceof NoScroll);
+  }
+
   private final ConfigurableEP myEp;
   private final ConfigurableWrapper[] myKids;
 

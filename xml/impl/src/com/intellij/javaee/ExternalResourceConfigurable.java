@@ -44,7 +44,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ExternalResourceConfigurable extends BaseConfigurable
-  implements SearchableConfigurable, Configurable.NoScroll, Configurable.Composite {
+  implements SearchableConfigurable, Configurable.NoScroll {
   private JPanel myPanel;
   private List<NameLocationPair> myPairs;
   private List<String> myIgnoredUrls;
@@ -282,14 +282,6 @@ public class ExternalResourceConfigurable extends BaseConfigurable
     if (!dialog.isOK()) return null;
     setModified(true);
     return dialog.getPair().myName;
-  }
-
-  @Override
-  public Configurable[] getConfigurables() {
-    if (myConfigurables == null) {
-      myConfigurables = new Configurable[]{new XMLCatalogConfigurable()};
-    }
-    return myConfigurables;
   }
 
   private static class PathRenderer extends DefaultTableCellRenderer {
