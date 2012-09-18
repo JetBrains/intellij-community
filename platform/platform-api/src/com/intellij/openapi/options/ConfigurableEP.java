@@ -53,6 +53,10 @@ public class ConfigurableEP extends AbstractExtensionPointBean {
 
   @Attribute("id")
   public String id;
+
+  @Attribute("nonDefaultProject")
+  public boolean nonDefaultProject;
+
   /**
    * @deprecated use '{@link #instanceClass instance}' or '{@link #providerClass provider}' attribute instead
    */

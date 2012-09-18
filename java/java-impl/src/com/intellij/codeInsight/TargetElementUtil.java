@@ -29,7 +29,10 @@ import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 public class TargetElementUtil extends TargetElementUtilBase {
   public static final int NEW_AS_CONSTRUCTOR = 0x04;
@@ -256,7 +259,8 @@ public class TargetElementUtil extends TargetElementUtilBase {
             psiClass = PsiTreeUtil.getParentOfType((PsiReferenceExpression)reference, PsiClass.class);
           }
           final PsiClass containingClass = ((PsiMember)element).getContainingClass();
-          return psiClass != null && containingClass != null && containingClass.isInheritor(psiClass, true);
+          if (containingClass == psiClass) return true;
+          return psiClass != null && containingClass != null && (containingClass.isInheritor(psiClass, true) || psiClass.isInheritor(containingClass, true));
         }
       });
     }

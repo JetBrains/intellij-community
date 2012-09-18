@@ -472,7 +472,7 @@ public class OverrideImplementUtil {
     if (returnType == null) {
       returnType = PsiType.VOID;
     }
-    Properties properties = new Properties();
+    Properties properties = FileTemplateManager.getInstance().getDefaultProperties(targetClass.getProject());
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType.getPresentableText());
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType));
     properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(originalMethod, result));

@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
@@ -31,16 +32,14 @@ import java.util.Collection;
 
 public class ConvertInterfaceToClassIntention extends Intention {
 
-  private static void changeInterfaceToClass(PsiClass anInterface)
-    throws IncorrectOperationException {
+  private static void changeInterfaceToClass(PsiClass anInterface) throws IncorrectOperationException {
     final PsiIdentifier nameIdentifier = anInterface.getNameIdentifier();
     assert nameIdentifier != null;
     final PsiElement whiteSpace = nameIdentifier.getPrevSibling();
     assert whiteSpace != null;
     final PsiElement interfaceToken = whiteSpace.getPrevSibling();
     assert interfaceToken != null;
-    final PsiKeyword interfaceKeyword =
-      (PsiKeyword)interfaceToken.getOriginalElement();
+    final PsiKeyword interfaceKeyword = (PsiKeyword)interfaceToken.getOriginalElement();
     final Project project = anInterface.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory factory = psiFacade.getElementFactory();
@@ -52,16 +51,25 @@ public class ConvertInterfaceToClassIntention extends Intention {
       return;
     }
     classModifierList.setModifierProperty(PsiModifier.ABSTRACT, true);
+
     final PsiElement parent = anInterface.getParent();
     if (parent instanceof PsiClass) {
       classModifierList.setModifierProperty(PsiModifier.STATIC, true);
     }
+
     final PsiMethod[] methods = anInterface.getMethods();
     for (final PsiMethod method : methods) {
+      final PsiJavaToken marker = PsiUtil.findExtensionMethodMarker(method);
       final PsiModifierList modifierList = method.getModifierList();
       modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
-      modifierList.setModifierProperty(PsiModifier.ABSTRACT, true);
+      if (marker != null) {
+        marker.delete();
+      }
+      else {
+        modifierList.setModifierProperty(PsiModifier.ABSTRACT, true);
+      }
     }
+
     final PsiField[] fields = anInterface.getFields();
     for (final PsiField field : fields) {
       final PsiModifierList modifierList = field.getModifierList();
@@ -71,6 +79,7 @@ public class ConvertInterfaceToClassIntention extends Intention {
         modifierList.setModifierProperty(PsiModifier.FINAL, true);
       }
     }
+
     final PsiClass[] innerClasses = anInterface.getInnerClasses();
     for (PsiClass innerClass : innerClasses) {
       final PsiModifierList modifierList = innerClass.getModifierList();
