@@ -69,6 +69,7 @@ public class ApplicationConfigurationType implements ConfigurationType {
     return new ConfigurationFactory[]{myFactory};
   }
 
+  @Nullable
   public static PsiClass getMainClass(PsiElement element) {
     while (element != null) {
       if (element instanceof PsiClass) {
