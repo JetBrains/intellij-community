@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ZipperUpdater;
@@ -91,9 +92,7 @@ public class ChangelistConflictTracker {
           localSet.addAll(myCheckSet);
           myCheckSet.clear();
         }
-        for (VirtualFile file : localSet) {
-          checkFile(file);
-        }
+        checkFiles(localSet);
       }
     };
     myDocumentListener = new DocumentAdapter() {
@@ -114,52 +113,62 @@ public class ChangelistConflictTracker {
     myChangeListListener = new ChangeListAdapter() {
       @Override
       public void changeListChanged(ChangeList list) {
-        checkList(list);
+        if (myChangeListManager.isDefaultChangeList(list)) {
+          clearChanges(list.getChanges());
+        }
       }
 
       @Override
       public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
-        checkList(toList);  
+        if (myChangeListManager.isDefaultChangeList(toList)) {
+          clearChanges(changes);
+        }
       }
 
       @Override
       public void changesRemoved(Collection<Change> changes, ChangeList fromList) {
-        clearChanges(changes, true);
+        clearChanges(changes);
       }
 
       @Override
       public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList) {
-        clearChanges(newDefaultList.getChanges(), true);  
+        clearChanges(newDefaultList.getChanges());
       }
     };
   }
 
-  private void checkFile(final VirtualFile file) {
-    if (file == null || isFromActiveChangelist(file) || ChangesUtil.isInternalOperation(file)) {
-      return;
-    }
+  private void checkFiles(final Collection<VirtualFile> files) {
     myChangeListManager.invokeAfterUpdate(new Runnable() {
       public void run() {
-
-        if (!isFromActiveChangelist(file)) {
-          String path = file.getPath();
-          Conflict conflict = myConflicts.get(path);
-          boolean newConflict = false;
-          if (conflict == null) {
-            conflict = new Conflict();
-            myConflicts.put(path, conflict);
-            newConflict = true;
-          }
-          conflict.timestamp = System.currentTimeMillis();
-          conflict.changelistId = myChangeListManager.getDefaultChangeList().getId();
-
-          if (newConflict && myOptions.HIGHLIGHT_CONFLICTS) {
-            myFileStatusManager.fileStatusChanged(file);
-            myEditorNotifications.updateNotifications(file);
-          }
+        final LocalChangeList list = myChangeListManager.getDefaultChangeList();
+        for (VirtualFile file : files) {
+          checkOneFile(file, list);
         }
       }
     }, InvokeAfterUpdateMode.SILENT, null, null);
+  }
+
+  private void checkOneFile(VirtualFile file, LocalChangeList defaultList) {
+    final LocalChangeList changeList = myChangeListManager.getChangeList(file);
+    if (file == null || Comparing.equal(changeList, defaultList) || ChangesUtil.isInternalOperation(file)) {
+      return;
+    }
+
+    String path = file.getPath();
+    Conflict conflict = myConflicts.get(path);
+    boolean newConflict = false;
+    if (conflict == null) {
+      conflict = new Conflict();
+      myConflicts.put(path, conflict);
+      newConflict = true;
+    }
+    conflict.timestamp = System.currentTimeMillis();
+    conflict.changelistId = defaultList.getId();
+
+    if (newConflict && myOptions.HIGHLIGHT_CONFLICTS) {
+      myFileStatusManager.fileStatusChanged(file);
+      myEditorNotifications.updateNotifications(file);
+    }
   }
 
   public boolean isWritingAllowed(@NotNull VirtualFile file) {
@@ -173,21 +182,19 @@ public class ChangelistConflictTracker {
     return changeList == null || myChangeListManager.isDefaultChangeList(changeList);
   }
 
-  private void checkList(ChangeList list) {
-    clearChanges(list.getChanges(), myChangeListManager.isDefaultChangeList(list));
-  }
-
-  private void clearChanges(Collection<Change> changes, boolean removeConflict) {
+  private void clearChanges(Collection<Change> changes) {
     for (Change change : changes) {
       ContentRevision revision = change.getAfterRevision();
       if (revision != null) {
         FilePath filePath = revision.getFile();
         String path = filePath.getPath();
-        if (removeConflict) {
-          myConflicts.remove(path);
-          myEditorNotifications.updateNotifications(filePath.getVirtualFile());
+        final Conflict wasRemoved = myConflicts.remove(path);
+        final VirtualFile file = filePath.getVirtualFile();
+        if (wasRemoved != null && file != null) {
+          myEditorNotifications.updateNotifications(file);
+          // we need to update status
+          myFileStatusManager.fileStatusChanged(file);
         }
-        myFileStatusManager.fileStatusChanged(filePath.getVirtualFile());
       }
     }
   }
