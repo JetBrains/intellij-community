@@ -69,6 +69,55 @@ public interface ArrangementEntry {
    */
   @Nullable
   List<? extends ArrangementEntry> getDependencies();
+
+  /**
+   * There is a possible case that we want to group arrangement entries by particular condition (e.g. group all methods from the same
+   * interface together at the implementation class using the same order as interface). That grouping logic is assumed
+   * to be implemented at the language-specific arrangement processing.
+   * <p/>
+   * Example: say, we have an interface with more than one method and its implementation class:
+   * <pre>
+   *   interface MyInterface {
+   *     void method1();
+   *     void method2();
+   *   }
+   *   
+   *   class MyImpl implements MyInterface {
+   *     public void method2() {
+   *     }
+   *     public boolean equals(Object o) {
+   *       return this == o;
+   *     }
+   *     public void method1() {
+   *     }
+   *     public int hashCode() {
+   *       return 1;
+   *     }
+   *   }
+   * </pre>
+   * We can have arrangement rules like 'group overriden methods from the same entities together preserving their order'.
+   * Expected arrangement result looks like below then:
+   * <pre>
+   *   class MyImpl implements MyInterface {
+   *     public void method1() {
+   *     }
+   *     public void method2() {
+   *     }
+   *     public int hashCode() {
+   *       return 1;
+   *     }
+   *     public boolean equals(Object o) {
+   *       return this == o;
+   *     }
+   *   }
+   * </pre>
+   * Here entry for the <code>'method2'</code> is assumed to return <code>'method1'</code> entry and
+   * <code>'equals()'</code> returns <code>'hashCode()'</code> if current method is called on them.
+   * 
+   * @return  entry after which the current one should be located after arrangement
+   */
+  @Nullable
+  ArrangementEntry getPreComputedPrevious();
   
   /**
    * @return    start offset of the current entry (inclusive) within the target document. Rearranger engine uses this information
