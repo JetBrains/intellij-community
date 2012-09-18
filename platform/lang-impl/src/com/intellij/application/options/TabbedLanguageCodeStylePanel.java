@@ -357,7 +357,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
 //========================================================================================================================================
 
-  private class MySpacesPanel extends CodeStyleSpacesPanel {
+  protected class MySpacesPanel extends CodeStyleSpacesPanel {
 
     public MySpacesPanel(CodeStyleSettings settings) {
       super(settings);
@@ -381,7 +381,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
   }
 
-  private class MyBlankLinesPanel extends CodeStyleBlankLinesPanel {
+  protected class MyBlankLinesPanel extends CodeStyleBlankLinesPanel {
 
     public MyBlankLinesPanel(CodeStyleSettings settings) {
       super(settings);
@@ -401,7 +401,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   }
 
-  private class MyWrappingAndBracesPanel extends WrappingAndBracesPanel {
+  protected class MyWrappingAndBracesPanel extends WrappingAndBracesPanel {
 
     public MyWrappingAndBracesPanel(CodeStyleSettings settings) {
       super(settings);

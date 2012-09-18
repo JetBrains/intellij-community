@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -552,7 +552,6 @@ public class RefactoringUtil {
   }
 
   private static void removeFinalParameters(PsiMethod method) throws IncorrectOperationException {
-    // Remove final parameters
     PsiParameterList paramList = method.getParameterList();
     PsiParameter[] params = paramList.getParameters();
 
@@ -566,7 +565,6 @@ public class RefactoringUtil {
   public static PsiElement getAnchorElementForMultipleExpressions(@NotNull PsiExpression[] occurrences, PsiElement scope) {
     PsiElement anchor = null;
     for (PsiExpression occurrence : occurrences) {
-    //  if (!occurrence.isPhysical()) continue;
       if (scope != null && !PsiTreeUtil.isAncestor(scope, occurrence, false)) {
         continue;
       }
@@ -777,7 +775,6 @@ public class RefactoringUtil {
     throws IncorrectOperationException {
     PsiType initializerType = null;
     if (initializer != null) {
-//        initializerType = myExpresssion.getType();
       if (forcedType != null) {
         initializerType = forcedType;
       }
@@ -799,13 +796,23 @@ public class RefactoringUtil {
     return result;
   }
 
+  /** @deprecated use {@linkplain #makeMethodAbstract(com.intellij.psi.PsiClass, com.intellij.psi.PsiMethod)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public static void abstractizeMethod(PsiClass targetClass, PsiMethod method) throws IncorrectOperationException {
-    PsiCodeBlock body = method.getBody();
-    if (body != null) {
-      body.delete();
+    makeMethodAbstract(targetClass, method);
+  }
+
+  public static void makeMethodAbstract(@NotNull PsiClass targetClass, @NotNull PsiMethod method) throws IncorrectOperationException {
+    final boolean isExtension = PsiUtil.isExtensionMethod(method);
+    if (!isExtension) {
+      PsiCodeBlock body = method.getBody();
+      if (body != null) {
+        body.delete();
+      }
+
+      PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, true);
     }
 
-    PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, true);
     PsiUtil.setModifierProperty(method, PsiModifier.FINAL, false);
     PsiUtil.setModifierProperty(method, PsiModifier.SYNCHRONIZED, false);
     PsiUtil.setModifierProperty(method, PsiModifier.NATIVE, false);

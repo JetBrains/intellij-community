@@ -1,5 +1,17 @@
 /*
- * Copyright (c) 2005 JetBrains s.r.o. All Rights Reserved.
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.intellij.refactoring;
 
@@ -21,120 +33,123 @@ import org.jetbrains.annotations.NotNull;
 public class PullUpTest extends LightRefactoringTestCase {
   private static final String BASE_PATH = "/refactoring/pullUp/";
 
-
-  public void testQualifiedThis() throws Exception {
+  public void testQualifiedThis() {
     doTest(new RefactoringTestUtil.MemberDescriptor("Inner", PsiClass.class));
   }
 
-  public void testQualifiedSuper() throws Exception {
+  public void testQualifiedSuper() {
     doTest(new RefactoringTestUtil.MemberDescriptor("Inner", PsiClass.class));
   }
 
-  public void testQualifiedReference() throws Exception {     // IDEADEV-25008
+  public void testQualifiedReference() {     // IDEADEV-25008
     doTest(new RefactoringTestUtil.MemberDescriptor("x", PsiField.class),
            new RefactoringTestUtil.MemberDescriptor("getX", PsiMethod.class),
            new RefactoringTestUtil.MemberDescriptor("setX", PsiMethod.class));
   }
 
-  public void testPullUpInheritedStaticClasses() throws Exception {
+  public void testPullUpInheritedStaticClasses() {
     doTest(new RefactoringTestUtil.MemberDescriptor("C", PsiClass.class),
            new RefactoringTestUtil.MemberDescriptor("D", PsiClass.class));
   }
 
-  public void testPullUpPrivateInnerClassWithPrivateConstructor() throws Exception {
+  public void testPullUpPrivateInnerClassWithPrivateConstructor() {
     doTest(new RefactoringTestUtil.MemberDescriptor("C", PsiClass.class));
   }
 
-  public void testPullUpAndAbstractize() throws Exception {
+  public void testPullUpAndMakeAbstract() {
     doTest(new RefactoringTestUtil.MemberDescriptor("a", PsiMethod.class),
            new RefactoringTestUtil.MemberDescriptor("b", PsiMethod.class, true));
   }
 
-  public void testTryCatchFieldInitializer() throws Exception {
+  public void testTryCatchFieldInitializer() {
     doTest(new RefactoringTestUtil.MemberDescriptor("field", PsiField.class));
   }
 
-  public void testIfFieldInitializationWithNonMovedField() throws Exception {
+  public void testIfFieldInitializationWithNonMovedField() {
     doTest(new RefactoringTestUtil.MemberDescriptor("f", PsiField.class));
   }
 
-  public void testIfFieldMovedInitialization() throws Exception {
+  public void testIfFieldMovedInitialization() {
     doTest(new RefactoringTestUtil.MemberDescriptor("f", PsiField.class));
   }
 
-  public void testMultipleConstructorsFieldInitialization() throws Exception {
+  public void testMultipleConstructorsFieldInitialization() {
     doTest(new RefactoringTestUtil.MemberDescriptor("f", PsiField.class));
   }
 
-  public void testMultipleConstructorsFieldInitializationNoGood() throws Exception {
+  public void testMultipleConstructorsFieldInitializationNoGood() {
     doTest(new RefactoringTestUtil.MemberDescriptor("f", PsiField.class));
   }
 
-
-  public void testRemoveOverride() throws Exception {
+  public void testRemoveOverride() {
     setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest(new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class));
   }
 
-  public void testTypeParamErasure() throws Exception {
+  public void testTypeParamErasure() {
     doTest(new RefactoringTestUtil.MemberDescriptor("f", PsiField.class));
   }
 
-  public void testTypeParamSubst() throws Exception {
+  public void testTypeParamSubst() {
     doTest(new RefactoringTestUtil.MemberDescriptor("f", PsiField.class));
   }
 
-  public void testTypeArgument() throws Exception {
+  public void testTypeArgument() {
     doTest(new RefactoringTestUtil.MemberDescriptor("f", PsiField.class));
   }
 
-  public void testGenericsInAbstractMethod() throws Exception {
+  public void testGenericsInAbstractMethod() {
     doTest(new RefactoringTestUtil.MemberDescriptor("method", PsiMethod.class, true));
   }
 
-  public void testReplaceDuplicatesInInheritors() throws Exception {
+  public void testReplaceDuplicatesInInheritors() {
     doTest(new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, false));
   }
 
-  public void testGenericsInImplements() throws Exception {
+  public void testGenericsInImplements() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("I", PsiClass.class));
   }
 
-  public void testUpdateStaticRefs() throws Exception {
+  public void testUpdateStaticRefs() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
-  public void testRemoveOverrideFromPulledMethod() throws Exception {
+  public void testRemoveOverrideFromPulledMethod() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
-  public void testPreserveOverrideInPulledMethod() throws Exception {
+  public void testPreserveOverrideInPulledMethod() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
-  public void testMergeInterfaces() throws Exception {
+  public void testMergeInterfaces() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("I", PsiClass.class));
   }
 
-  public void testTypeParamsConflictingNames() throws Exception {
+  public void testTypeParamsConflictingNames() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   } 
 
-  public void testEscalateVisibility() throws Exception {
+  public void testEscalateVisibility() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
-  private void doTest(RefactoringTestUtil.MemberDescriptor... membersToFind) throws Exception {
+  public void testExtensionMethod() {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
+  }
+
+  private void doTest(RefactoringTestUtil.MemberDescriptor... membersToFind) {
     doTest(true, membersToFind);
   }
 
-  private void doTest(final boolean checkMemebersMovedCount, RefactoringTestUtil.MemberDescriptor... membersToFind) throws Exception {
+  private void doTest(final boolean checkMembersMovedCount, RefactoringTestUtil.MemberDescriptor... membersToFind) {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement elementAt = getFile().findElementAt(getEditor().getCaretModel().getOffset());
     final PsiClass sourceClass = PsiTreeUtil.getParentOfType(elementAt, PsiClass.class);
     assertNotNull(sourceClass);
 
     PsiClass targetClass = sourceClass.getSuperClass();
+    assertNotNull(targetClass);
     if (!targetClass.isWritable()) {
       final PsiClass[] interfaces = sourceClass.getInterfaces();
       assertEquals(1, interfaces.length);
@@ -156,7 +171,7 @@ public class PullUpTest extends LightRefactoringTestCase {
     helper.run();
     UIUtil.dispatchAllInvocationEvents();
     JavaRefactoringListenerManager.getInstance(getProject()).removeMoveMembersListener(listener);
-    if (checkMemebersMovedCount) {
+    if (checkMembersMovedCount) {
       assertEquals(countMoved[0], membersToFind.length);
     }
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
