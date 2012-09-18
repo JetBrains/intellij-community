@@ -1,37 +1,63 @@
 /*
- * User: anna
- * Date: 13-Mar-2008
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.intellij.refactoring;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author anna
+ * @since 13-Mar-2008
+ */
 public class PushDownTest extends LightRefactoringTestCase {
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
+  private static final String BASE_PATH = "/refactoring/pushDown/";
 
-  private void doTest() throws Exception {
+  public void testTypeParameter() { doTest(); }
+  public void testTypeParameterErasure() { doTest(); }
+  public void testFieldTypeParameter() { doTest(); }
+  public void testBodyTypeParameter() { doTest(); }
+  public void testDisagreeTypeParameter() { doTest(true); }
+  public void testFieldAndReferencedClass() { doTest(); }
+  public void testFieldAndStaticReferencedClass() { doTest(); }
+  public void testThisRefInAnonymous() { doTest(); }
+  public void testSuperOverHierarchyConflict() { doTest(true); }
+  public void testSuperOverHierarchy() { doTest(); }
+  public void testMethodTypeParametersList() { doTest(); }
+  public void testMethodFromInterfaceToAbstractClass() { doTest(); }
+  public void testOverridingMethodWithSubst() { doTest(); }
+  public void testSameClassInterface() { doTestImplements(); }
+  public void testPreserveTypeArgs() { doTestImplements(); }
+  public void testSubstTypeArgs() { doTestImplements(); }
+
+  private void doTest() {
     doTest(false);
   }
 
-  private void doTest(final boolean failure) throws Exception {
-    final String filePath = "/refactoring/pushDown/" + getTestName(false) + ".java";
-    configureByFile(filePath);
+  private void doTest(final boolean failure) {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
 
     final PsiElement targetElement = TargetElementUtilBase.findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on member name", targetElement instanceof PsiMember);
@@ -66,78 +92,13 @@ public class PushDownTest extends LightRefactoringTestCase {
       }
     }.run();
 
-    checkResultByFile(filePath + ".after");
-  }
-
-  public void testTypeParameter() throws Exception {
-    doTest();
-  }
-
-  public void testTypeParameterErasure() throws Exception {
-    doTest();
-  }
-
-  public void testFieldTypeParameter() throws Exception {
-    doTest();
-  }
-
-  public void testBodyTypeParameter() throws Exception {
-    doTest();
-  }
-
-  public void testDisagreeTypeParameter() throws Exception {
-    doTest(true);
-  }
-
-  public void testFieldAndReferencedClass() throws Exception {
-    doTest();
-  }
-
-  public void testFieldAndStaticReferencedClass() throws Exception {
-    doTest();
-  }
-
-  public void testThisRefInAnonymous() throws Exception {
-    doTest();
-  }
-
-  public void testSuperOverHierarchyConflict() throws Exception {
-    doTest(true);
-  }
-
-  public void testSuperOverHierarchy() throws Exception {
-    doTest();
-  }
-
-  public void testMethodTypeParametersList() throws Exception {
-    doTest();
-  }
-
-  public void testMethodFromInterfaceToAbstractClass() throws Exception {
-    doTest();
-  }
-
-  public void testOverridingMethodWithSubst() throws Exception {
-    doTest();
-  }
-
-  public void testSameClassInterface() throws Exception {
-    doTestImplements();
-  }
-
-  public void testPreserveTypeArgs() throws Exception {
-    doTestImplements();
-  }
-  
-  public void testSubstTypeArgs() throws Exception {
-    doTestImplements();
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
   private void doTestImplements() {
-    final String filePath = "/refactoring/pushDown/" + getTestName(false) + ".java";
-    configureByFile(filePath);
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
 
-    PsiClass currentClass = JavaPsiFacade.getInstance(getProject()).findClass("Test");
+    PsiClass currentClass = JavaPsiFacade.getInstance(getProject()).findClass("Test", GlobalSearchScope.projectScope(getProject()));
     MemberInfoStorage memberInfoStorage = new MemberInfoStorage(currentClass, new MemberInfo.Filter<PsiMember>() {
       @Override
       public boolean includeMember(PsiMember element) {
@@ -157,6 +118,6 @@ public class PushDownTest extends LightRefactoringTestCase {
       }
     }.run();
 
-    checkResultByFile(filePath + ".after");
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 }
