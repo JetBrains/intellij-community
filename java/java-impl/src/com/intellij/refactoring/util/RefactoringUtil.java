@@ -775,7 +775,6 @@ public class RefactoringUtil {
     throws IncorrectOperationException {
     PsiType initializerType = null;
     if (initializer != null) {
-//        initializerType = myExpresssion.getType();
       if (forcedType != null) {
         initializerType = forcedType;
       }
@@ -798,6 +797,7 @@ public class RefactoringUtil {
   }
 
   /** @deprecated use {@linkplain #makeMethodAbstract(com.intellij.psi.PsiClass, com.intellij.psi.PsiMethod)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public static void abstractizeMethod(PsiClass targetClass, PsiMethod method) throws IncorrectOperationException {
     makeMethodAbstract(targetClass, method);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -309,7 +309,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
           if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
             PsiUtil.setModifierProperty(method, PsiModifier.PROTECTED, true);
           }
-          RefactoringUtil.abstractizeMethod(myClass, method);
+          RefactoringUtil.makeMethodAbstract(myClass, method);
           myJavaDocPolicy.processOldJavaDoc(method.getDocComment());
         }
         else {
@@ -326,7 +326,6 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
       }
     }
   }
-
 
   private void pushDownToClass(PsiClass targetClass) throws IncorrectOperationException {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
