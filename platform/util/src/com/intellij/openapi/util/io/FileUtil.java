@@ -685,8 +685,14 @@ public class FileUtil extends FileUtilRt {
     if (path == null || path.isEmpty()) {
       return path;
     }
-
+    
     path = path.replace(separator, '/');
+    
+    // optimization for file names
+    if (path.indexOf('/') == -1 && !path.equals(".") && !path.equals("..")) {
+      return path;
+    }
+    
     final StringTokenizer tok = new StringTokenizer(path, "/");
     final Stack<String> stack = new Stack<String>();
     while (tok.hasMoreTokens()) {

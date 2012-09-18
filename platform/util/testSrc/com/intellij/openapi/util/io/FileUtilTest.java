@@ -39,6 +39,12 @@ public class FileUtilTest {
     assertEquals("", FileUtil.toCanonicalPath(""));
     assertEquals("  ", FileUtil.toCanonicalPath("  "));
 
+    assertEquals("", FileUtil.toCanonicalPath("."));
+    assertEquals("/", FileUtil.toCanonicalPath("/./"));
+    assertEquals("", FileUtil.toCanonicalPath(".."));
+    assertEquals("foo/baz", FileUtil.toCanonicalPath("foo/bar/../baz"));
+    assertEquals("foo.bar", FileUtil.toCanonicalPath("foo.bar"));
+    
     assertEquals("/", FileUtil.toCanonicalPath("/", UNIX_SEPARATOR));
     assertEquals("a/b", FileUtil.toCanonicalPath("a/b/", UNIX_SEPARATOR));
     assertEquals("/a/b", FileUtil.toCanonicalPath("/a/////b/", UNIX_SEPARATOR));
