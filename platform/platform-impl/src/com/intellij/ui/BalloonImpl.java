@@ -46,6 +46,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Range;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -165,14 +166,14 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
   private boolean myShadow = false;
   private Layer myLayer;
   private boolean myBlockClicks;
-  private Point myPrevMousePoint = null;
+  private RelativePoint myPrevMousePoint = null;
 
   public boolean isInsideBalloon(MouseEvent me) {
     return isInside(new RelativePoint(me));
   }
 
   @Override
-  public boolean isInside(RelativePoint target) {
+  public boolean isInside(@NotNull RelativePoint target) {
     Component cmp = target.getOriginalComponent();
 
     if (!cmp.isShowing()) return true;
@@ -180,15 +181,19 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
     if (SwingUtilities.isDescendingFrom(cmp, myComp) || cmp == myComp) return true;
     if (myComp == null || !myComp.isShowing()) return false;
     Rectangle rectangleOnScreen = new Rectangle(myComp.getLocationOnScreen(), myComp.getSize());
-    if (rectangleOnScreen.contains(target.getScreenPoint())) return true;
-    
+    return rectangleOnScreen.contains(target.getScreenPoint());
+  }
+
+  public boolean isMovingForward(RelativePoint target) {
     try {
-      // TODO vassiliy fix.
-      return false;
-      //return ScreenUtil.isMovementTowards(myPrevMousePoint, target.getScreenPoint(), rectangleOnScreen);
+      if (myComp == null || !myComp.isShowing()) return false;
+      if (myPrevMousePoint == null) return true;
+      if (myPrevMousePoint.getComponent() != target.getComponent()) return false;
+      Rectangle rectangleOnScreen = new Rectangle(myComp.getLocationOnScreen(), myComp.getSize());
+      return ScreenUtil.isMovementTowards(myPrevMousePoint.getScreenPoint(), target.getScreenPoint(), rectangleOnScreen);
     }
     finally {
-      myPrevMousePoint = target.getScreenPoint();
+      myPrevMousePoint = target;
     }
   }
 
