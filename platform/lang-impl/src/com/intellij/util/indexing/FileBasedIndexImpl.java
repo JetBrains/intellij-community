@@ -1228,7 +1228,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   @Override
   public <K> void scheduleRebuild(@NotNull final ID<K, ?> indexId, @NotNull final Throwable e) {
     LOG.info(e);
-    requestRebuild(indexId);
+    requestRebuild(indexId, new Throwable(e));
     try {
       checkRebuild(indexId, false);
     }
@@ -1238,7 +1238,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   private void checkRebuild(@NotNull final ID<?, ?> indexId, final boolean cleanupOnly) {
     final AtomicInteger status = ourRebuildStatus.get(indexId);
-    if (status.get() == OK) return;
+    if (status.get() == OK) {
+      return;
+    }
     if (status.compareAndSet(REQUIRES_REBUILD, REBUILD_IN_PROGRESS)) {
       cleanupProcessedFlag();
 
@@ -1265,6 +1267,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         rebuildRunnable.run();
       }
       else {
+        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
@@ -1557,7 +1560,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   public void requestRebuild(ID<?, ?> indexId, Throwable throwable) {
     cleanupProcessedFlag();
     LOG.info("Rebuild requested for index " + indexId, throwable);
-    ourRebuildStatus.get(indexId).set(REQUIRES_REBUILD);
+    ourRebuildStatus.get(indexId).compareAndSet(OK, REQUIRES_REBUILD);
   }
 
   private <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
