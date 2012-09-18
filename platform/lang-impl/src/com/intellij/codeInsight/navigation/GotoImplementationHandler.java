@@ -26,11 +26,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class GotoImplementationHandler extends GotoTargetHandler {
@@ -46,12 +49,30 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     PsiElement source = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
     if (source == null) return null;
     final GotoData gotoData;
+    final PsiReference reference = TargetElementUtilBase.findReference(editor, offset);
+    final TargetElementUtilBase instance = TargetElementUtilBase.getInstance();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      gotoData = new GotoData(source, new ImplementationSearcher.FirstImplementationsSearcher().searchImplementations(editor, source, offset),
-                              Collections.<AdditionalAction>emptyList());
-      gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset);
+      gotoData = new GotoData(source, new ImplementationSearcher.FirstImplementationsSearcher(){
+        @Override
+        protected boolean accept(PsiElement element) {
+          return instance.acceptImplementationForReference(reference, element);
+        }
+      }.searchImplementations(editor, source, offset), Collections.<AdditionalAction>emptyList());
+      
+      gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset, reference);
     } else {
-      gotoData = new GotoData(source, new ImplementationSearcher().searchImplementations(editor, source, offset),
+      gotoData = new GotoData(source, new ImplementationSearcher(){
+        @Override
+        protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, int offset) {
+          final List<PsiElement> result = new ArrayList<PsiElement>();
+          for (PsiElement targetElement : targetElements) {
+            if (instance.acceptImplementationForReference(reference, element)) {
+              result.add(targetElement);
+            }
+          }
+          return result.toArray(new PsiElement[result.size()]);
+        }
+      }.searchImplementations(editor, source, offset),
                               Collections.<AdditionalAction>emptyList());
     }
     return gotoData;
@@ -72,12 +93,14 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     private final int myOffset;
     private final GotoData myGotoData;
     private final Map<Object, PsiElementListCellRenderer> renderers = new HashMap<Object, PsiElementListCellRenderer>();
+    private final PsiReference myReference;
 
-    public ImplementationsUpdaterTask(GotoData gotoData, Editor editor, int offset) {
+    public ImplementationsUpdaterTask(GotoData gotoData, Editor editor, int offset, final PsiReference reference) {
       super(gotoData.source.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS);
       myEditor = editor;
       myOffset = offset;
       myGotoData = gotoData;
+      myReference = reference;
     }
 
     @Override
@@ -91,12 +114,13 @@ public class GotoImplementationHandler extends GotoTargetHandler {
       new ImplementationSearcher.BackgroundableImplementationSearcher() {
         @Override
         protected void processElement(PsiElement element) {
+          indicator.checkCanceled();
+          if (!TargetElementUtilBase.getInstance().acceptImplementationForReference(myReference, element)) return;
           if (myGotoData.addTarget(element)) {
             if (!updateComponent(element, createComparator(renderers, myGotoData))) {
               indicator.cancel();
             }
           }
-          indicator.checkCanceled();
         }
       }.searchImplementations(myEditor, myGotoData.source, myOffset);
     }

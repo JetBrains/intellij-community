@@ -16,7 +16,9 @@
 package com.intellij.codeInsight;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -238,5 +240,26 @@ public class TargetElementUtil extends TargetElementUtilBase {
       return false;
     }
     return super.includeSelfInGotoImplementation(element);
+  }
+
+  @Override
+  public boolean acceptImplementationForReference(final PsiReference reference, final PsiElement element) {
+    if (reference instanceof PsiReferenceExpression && element instanceof PsiMember) {
+      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          final PsiExpression expression = ((PsiReferenceExpression)reference).getQualifierExpression();
+          final PsiClass psiClass;
+          if (expression != null) {
+            psiClass = PsiUtil.resolveClassInType(expression.getType());
+          } else {
+            psiClass = PsiTreeUtil.getParentOfType((PsiReferenceExpression)reference, PsiClass.class);
+          }
+          final PsiClass containingClass = ((PsiMember)element).getContainingClass();
+          return psiClass != null && containingClass != null && containingClass.isInheritor(psiClass, true);
+        }
+      });
+    }
+    return super.acceptImplementationForReference(reference, element);
   }
 }
