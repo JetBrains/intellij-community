@@ -33,15 +33,18 @@ public class ContentEntriesEditor extends JavaContentEntriesEditor {
     super(moduleName, state);
   }
 
+  @Override
   public void disposeUIResources() {
     if (myLanguageLevelConfigurable != null) myLanguageLevelConfigurable.disposeUIResources();
     super.disposeUIResources();
   }
 
+  @Override
   public boolean isModified() {
     return super.isModified() || myLanguageLevelConfigurable != null && myLanguageLevelConfigurable.isModified();
   }
 
+  @Override
   protected void addAdditionalSettingsToPanel(final JPanel mainPanel) {
     myLanguageLevelConfigurable = new LanguageLevelConfigurable() {
       @Override
@@ -53,6 +56,7 @@ public class ContentEntriesEditor extends JavaContentEntriesEditor {
     myLanguageLevelConfigurable.reset();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myLanguageLevelConfigurable.apply();
     super.apply();

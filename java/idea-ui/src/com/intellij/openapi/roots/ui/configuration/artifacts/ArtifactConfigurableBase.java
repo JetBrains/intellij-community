@@ -50,23 +50,28 @@ public abstract class ArtifactConfigurableBase extends ProjectStructureElementCo
     return myArtifactsStructureContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact);
   }
 
+  @Override
   public Artifact getEditableObject() {
     return getArtifact();
   }
 
+  @Override
   public String getBannerSlogan() {
     return ProjectBundle.message("banner.slogan.artifact.0", getDisplayName());
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return getArtifact().getName();
   }
 
+  @Override
   public Icon getIcon(boolean open) {
     return getArtifact().getArtifactType().getIcon();
   }
 
+  @Override
   public void disposeUIResources() {
   }
 }

@@ -21,9 +21,11 @@ public interface HistoryListener {
   void navigationFinished(Place from, Place to);
 
   class Adapter implements HistoryListener {
+    @Override
     public void navigationStarted(final Place from, final Place to) {
     }
 
+    @Override
     public void navigationFinished(final Place from, final Place to) {
     }
   }

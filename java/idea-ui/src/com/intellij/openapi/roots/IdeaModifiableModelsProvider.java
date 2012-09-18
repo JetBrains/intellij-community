@@ -20,6 +20,7 @@ import java.lang.reflect.Proxy;
  * @author Dennis.Ushakov
  */
 public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
+  @Override
   @Nullable
   public ModifiableRootModel getModuleModifiableModel(final Module module) {
     final Project project = module.getProject();
@@ -41,6 +42,7 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
     return context != null ? context.getModulesConfigurator() : null;
   }
 
+  @Override
   public void commitModuleModifiableModel(final ModifiableRootModel model) {
     if (!(model instanceof Proxy)) {
       model.commit();
@@ -48,6 +50,7 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
     //IDEA should commit this model instead of us, because it is was given from StructureConfigurableContext
   }
 
+  @Override
   public void disposeModuleModifiableModel(final ModifiableRootModel model) {
     if (!(model instanceof Proxy)) {
       model.dispose();
@@ -72,6 +75,7 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
     }
   }
 
+  @Override
   public LibraryTable.ModifiableModel getLibraryTableModifiableModel() {
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {

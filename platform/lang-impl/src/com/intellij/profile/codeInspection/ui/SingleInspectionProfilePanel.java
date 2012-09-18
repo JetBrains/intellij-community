@@ -1129,15 +1129,13 @@ public class SingleInspectionProfilePanel extends JPanel {
     protected void onlineFilter() {
       if (mySelectedProfile == null) return;
       final String filter = getFilter();
-      if (filter != null && filter.length() > 0) {
-        mySelectedProfile.getExpandedNodes().saveVisibleState(myTree);
-      }
+      mySelectedProfile.getExpandedNodes().saveVisibleState(myTree);
       fillTreeData(filter, true);
       reloadModel();
-      TreeUtil.expandAll(myTree);
       if (filter == null || filter.length() == 0) {
-        TreeUtil.collapseAll(myTree, 0);
         restoreTreeState();
+      } else {
+        TreeUtil.expandAll(myTree);
       }
     }
   }

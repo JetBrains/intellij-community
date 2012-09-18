@@ -26,15 +26,15 @@ public class GrMethodMayBeStaticTest extends LightGroovyTestCase {
   void testSimple() {
     myFixture.configureByText('_.groovy', '''\
 class A {
-  def <warning descr="Method can be static">foo</warning>() {
+  def <warning descr="Method may be static">foo</warning>() {
     print 2
   }
 
-  def <warning descr="Method can be static">bar</warning>() {
+  def <warning descr="Method may be static">bar</warning>() {
     [1, 2 ].each {3}
   }
 
-  def <warning descr="Method can be static">abc</warning>() {
+  def <warning descr="Method may be static">abc</warning>() {
     new A().bar()
   }
 
@@ -46,11 +46,11 @@ class A {
     Inner ref = null
   }
 
-  def <warning descr="Method can be static">y</warning>() {
+  def <warning descr="Method may be static">y</warning>() {
     staticMethod()
   }
 
-  def <warning descr="Method can be static">z</warning>() {
+  def <warning descr="Method may be static">z</warning>() {
     StaticInner i = null
   }
 

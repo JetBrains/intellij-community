@@ -57,6 +57,7 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
     return myFile;
   }
 
+  @Override
   @NotNull
   public String getPresentableString() {
     String path = VirtualFileManager.extractPath(myUrl);
@@ -66,6 +67,7 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
     return path.replace('/', File.separatorChar);
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getVirtualFiles() {
     if (!myInitialized) initialize();
@@ -78,11 +80,13 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
     return myFileArray;
   }
 
+  @Override
   @NotNull
   public String[] getUrls() {
     return new String[]{myUrl};
   }
 
+  @Override
   public boolean isValid() {
     if (!myInitialized) {
       initialize();
@@ -91,6 +95,7 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
     return myFile != null && myFile.isValid();
   }
 
+  @Override
   public void update() {
     initialize();
   }
@@ -114,6 +119,7 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
     return myUrl;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     String url = element.getAttributeValue(ATTRIBUTE_URL);
     myUrl = migrateJdkAnnotationsToCommunityForDevIdea(url);
@@ -131,6 +137,7 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
     return url;
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     if (!myInitialized) {
       initialize();

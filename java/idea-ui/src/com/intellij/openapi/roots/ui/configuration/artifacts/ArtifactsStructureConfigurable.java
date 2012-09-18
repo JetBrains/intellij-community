@@ -80,6 +80,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     });
 
     context.getModulesConfigurator().addAllModuleChangeListener(new ModuleEditor.ChangeListener() {
+      @Override
       public void moduleStateChanged(ModifiableRootModel moduleRootModel) {
         for (ProjectStructureElement element : getProjectStructureElements()) {
           myContext.getDaemonAnalyzer().queueUpdate(element);
@@ -88,12 +89,14 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     });
 
     final ItemsChangeListener listener = new ItemsChangeListener() {
+      @Override
       public void itemChanged(@Nullable Object deletedItem) {
         if (deletedItem instanceof Library || deletedItem instanceof Module) {
           onElementDeleted();
         }
       }
 
+      @Override
       public void itemsExternallyChanged() {
       }
     };
@@ -102,6 +105,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     globalLibrariesConfig.addItemsChangeListener(listener);
 
     context.addLibraryEditorListener(new LibraryEditorListener() {
+      @Override
       public void libraryRenamed(@NotNull Library library, String oldName, String newName) {
         final Artifact[] artifacts = myPackagingEditorContext.getArtifactModel().getArtifacts();
         for (Artifact artifact : artifacts) {
@@ -124,6 +128,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
       return;
     }
     myPackagingEditorContext.editLayout(artifact, new Runnable() {
+      @Override
       public void run() {
         final ModifiableArtifact modifiableArtifact = myPackagingEditorContext.getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(artifact);
         ArtifactUtil.processPackagingElements(modifiableArtifact, LibraryElementType.LIBRARY_ELEMENT_TYPE, new PackagingElementProcessor<LibraryPackagingElement>() {
@@ -174,11 +179,13 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     myDefaultSettings.loadState(((ArtifactStructureConfigurableState)myState).getDefaultArtifactSettings());
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return ProjectBundle.message("display.name.artifacts");
   }
 
+  @Override
   protected void loadTree() {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
@@ -234,6 +241,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     return myPackagingEditorContext.getOrCreateModifiableArtifactModel();
   }
 
+  @Override
   protected AbstractAddGroup createAddAction() {
     return new AbstractAddGroup(ProjectBundle.message("add.new.header.text")) {
       @NotNull
@@ -309,6 +317,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     final ModifiableArtifactModel modifiableModel = myPackagingEditorContext.getActualModifiableModel();
     if (modifiableModel != null) {
       new WriteAction() {
+        @Override
         protected void run(final Result result) {
           modifiableModel.commit();
         }
@@ -338,22 +347,27 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     myContext.getDaemonAnalyzer().removeElement(myPackagingEditorContext.getOrCreateArtifactElement(artifact));
   }
 
+  @Override
   protected void processRemovedItems() {
   }
 
+  @Override
   protected boolean wasObjectStored(Object editableObject) {
     return false;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return "project.artifacts";
   }
 
+  @Override
   public Runnable enableSearch(String option) {
     return null;
   }
 
+  @Override
   public void dispose() {
   }
 

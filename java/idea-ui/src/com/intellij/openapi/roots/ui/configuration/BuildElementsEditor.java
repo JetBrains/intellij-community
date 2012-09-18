@@ -61,6 +61,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     super(state);
   }
 
+  @Override
   public JComponent createComponentImpl() {
     myInheritCompilerOutput = new JRadioButton(ProjectBundle.message("project.inherit.compile.output.path"));
     myPerModuleCompilerOutput = new JRadioButton(ProjectBundle.message("project.module.compile.output.path"));
@@ -69,6 +70,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     group.add(myPerModuleCompilerOutput);
 
     final ActionListener listener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         enableCompilerSettings(!myInheritCompilerOutput.isSelected());
       }
@@ -78,12 +80,14 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     myPerModuleCompilerOutput.addActionListener(listener);
 
     myOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.output.title"), new CommitPathRunnable() {
+      @Override
       public void saveUrl(String url) {
         if (getCompilerExtension().isCompilerOutputPathInherited()) return;  //do not override settings if any
         getCompilerExtension().setCompilerOutputPath(url);
       }
     });
     myTestsOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.test.output.title"), new CommitPathRunnable() {
+      @Override
       public void saveUrl(String url) {
         if (getCompilerExtension().isCompilerOutputPathInherited()) return; //do not override settings if any
         getCompilerExtension().setCompilerOutputPathForTests(url);
@@ -92,6 +96,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
 
     myCbExcludeOutput = new JCheckBox(ProjectBundle.message("module.paths.exclude.output.checkbox"), getCompilerExtension().isExcludeOutput());
     myCbExcludeOutput.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         getCompilerExtension().setExcludeOutput(myCbExcludeOutput.isSelected());
       }
@@ -184,6 +189,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     InsertPathAction.addTo(textField, outputPathsChooserDescriptor);
     FileChooserFactory.getInstance().installFileCompletion(textField, outputPathsChooserDescriptor, true, null);
     final Runnable commitRunnable = new Runnable() {
+      @Override
       public void run() {
         if (!getModel().isWritable()) {
           return;
@@ -207,12 +213,14 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     };
 
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         commitRunnable.run();
       }
     });
 
     return new CommitableFieldPanel(textField, null, null, new BrowseFilesListener(textField, title, "", outputPathsChooserDescriptor) {
+      @Override
       public void actionPerformed(ActionEvent e) {
         super.actionPerformed(e);
         commitRunnable.run();
@@ -220,16 +228,19 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     }, null, commitRunnable);
   }
 
+  @Override
   public void saveData() {
     myOutputPathPanel.commit();
     myTestsOutputPathPanel.commit();
     getCompilerExtension().commit();
   }
 
+  @Override
   public String getDisplayName() {
     return ProjectBundle.message("output.tab.title");
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {
@@ -237,11 +248,13 @@ public class BuildElementsEditor extends ModuleElementsEditor {
   }
 
 
+  @Override
   public void moduleStateChanged() {
     //if content enties tree was changed
     myCbExcludeOutput.setSelected(getCompilerExtension().isExcludeOutput());
   }
 
+  @Override
   public void moduleCompileOutputChanged(final String baseUrl, final String moduleName) {
     if (getCompilerExtension().isCompilerOutputPathInherited()) {
       if (baseUrl != null) {

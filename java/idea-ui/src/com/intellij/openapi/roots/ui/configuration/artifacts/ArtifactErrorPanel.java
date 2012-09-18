@@ -52,6 +52,7 @@ public class ArtifactErrorPanel {
       }
     });
     myFixButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (!myCurrentQuickFixes.isEmpty()) {
           if (myCurrentQuickFixes.size() == 1) {

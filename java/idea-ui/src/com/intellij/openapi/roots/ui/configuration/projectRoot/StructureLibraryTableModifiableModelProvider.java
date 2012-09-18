@@ -30,6 +30,7 @@ public class StructureLibraryTableModifiableModelProvider implements LibraryTabl
     myContext = context;
   }
 
+  @Override
   public LibrariesModifiableModel getModifiableModel() {
     return myContext.myLevel2Providers.get(myLevel);
   }

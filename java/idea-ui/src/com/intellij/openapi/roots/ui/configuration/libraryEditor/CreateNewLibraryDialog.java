@@ -75,6 +75,7 @@ public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
     final LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)library.getModifiableModel();
     myLibraryEditor.applyTo(model);
     new WriteAction() {
+      @Override
       protected void run(final Result result) {
         model.commit();
       }
@@ -87,6 +88,7 @@ public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
     formBuilder.addLabeledComponent("&Level:", myLibraryLevelCombobox);
   }
 
+  @Override
   protected boolean shouldCheckName(String newName) {
     return true;
   }

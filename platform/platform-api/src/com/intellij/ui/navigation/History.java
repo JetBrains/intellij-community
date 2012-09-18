@@ -105,10 +105,12 @@ public final class History {
     try {
       final ActionCallback callback = myRoot.navigateTo(next, false);
       callback.doWhenDone(new Runnable() {
+        @Override
         public void run() {
           myCurrentPos = nextPos;
         }
       }).doWhenProcessed(new Runnable() {
+        @Override
         public void run() {
           myNavigatedNow = false;
           fireFinished(from, next);
@@ -178,6 +180,7 @@ public final class History {
   public void addListener(final HistoryListener listener, Disposable parent) {
     myListeners.add(listener);
     Disposer.register(parent, new Disposable() {
+      @Override
       public void dispose() {
         myListeners.remove(listener);
       }

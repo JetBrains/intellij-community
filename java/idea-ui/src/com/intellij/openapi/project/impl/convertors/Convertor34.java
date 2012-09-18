@@ -211,6 +211,7 @@ public class Convertor34 {
           addModule(modulePath, moduleManager);
 
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(modulePath));
             }
@@ -375,26 +376,32 @@ public class Convertor34 {
   }
 
   private static abstract class EmptyRootProcessor implements RootElementProcessor {
+    @Override
     public void processSimpleRoot(Element root) {
       cannotProcess(root);
     }
 
+    @Override
     public void processJdkRoot(Element root) {
       cannotProcess(root);
     }
 
+    @Override
     public void processOutputRoot(Element root) {
       cannotProcess(root);
     }
 
+    @Override
     public void processExcludedOutputRoot(Element root) {
       cannotProcess(root);
     }
 
+    @Override
     public void processLibraryRoot(Element root) {
       cannotProcess(root);
     }
 
+    @Override
     public void processEjbRoot(Element root) {
       cannotProcess(root);
     }
@@ -576,25 +583,30 @@ public class Convertor34 {
     @SuppressWarnings({"HardCodedStringLiteral"})
     private class JavaDocRootProcessor extends EmptyRootProcessor {
 
+      @Override
       protected void cannotProcess(Element root) {
         addProblem(JAVA_DOC_ROOTS_CANNOT_BE_CONVERTED);
       }
 
+      @Override
       protected String classId() {
         return "JavaDocRootProcessor";
       }
     }
 
     private class ProjectRootProcessor extends EmptyRootProcessor {
+      @Override
       public void processSimpleRoot(Element root) {
         final String value = root.getAttributeValue("url");
         myProjectRoots.add(value);
       }
 
+      @Override
       public void processEjbRoot(Element root) {
         // todo[cdr,dsl] implement conversion of EJB roots
       }
 
+      @Override
       protected String classId() {
         return "ProjectRootProcessor";
       }
@@ -609,6 +621,7 @@ public class Convertor34 {
     @SuppressWarnings({"HardCodedStringLiteral"})
     private class SourceRootProcessor extends EmptyRootProcessor {
 
+      @Override
       public void processSimpleRoot(Element root) {
         final String url = root.getAttributeValue("url");
         boolean found = false;
@@ -632,16 +645,20 @@ public class Convertor34 {
         }
       }
 
+      @Override
       public void processJdkRoot(Element root) {
       }
 
+      @Override
       public void processLibraryRoot(Element root) {
       }
 
+      @Override
       public void processEjbRoot(Element root) {
         // todo[cdr,dsl] implement conversion of EJB roots
       }
 
+      @Override
       protected String classId() {
         return "SourceRootProcessor";
       }
@@ -649,6 +666,7 @@ public class Convertor34 {
 
     @SuppressWarnings({"HardCodedStringLiteral"})
     private class ExcludeRootsProcessor extends EmptyRootProcessor {
+      @Override
       public void processSimpleRoot(Element root) {
         final String url = root.getAttributeValue("url");
         for (int i = 0; i < myProjectRoots.size(); i++) {
@@ -659,26 +677,31 @@ public class Convertor34 {
         }
       }
 
+      @Override
       public void processEjbRoot(Element root) {
         // todo[cdr,dsl] implement conversion of EJB roots
       }
 
+      @Override
       protected String classId() {
         return "ExcludeRootsProcessor";
       }
 
+      @Override
       public void processJdkRoot(Element root) {
         // [dsl]: fix for SCR24517
         // [dsl]: I have no idea how such project can be configured in Ariadna,
         // [dsl]: and what does it mean, but such projects do exist....
       }
 
+      @Override
       public void processExcludedOutputRoot(Element root) {
       }
     }
 
     @SuppressWarnings({"HardCodedStringLiteral"})
     private class ClassPathRootProcessor extends EmptyRootProcessor {
+      @Override
       public void processSimpleRoot(Element root) {
         final Element orderEntry = new Element("orderEntry");
         orderEntry.setAttribute("type", "module-library");
@@ -692,6 +715,7 @@ public class Convertor34 {
         myModuleRootManager.addContent(orderEntry);
       }
 
+      @Override
       public void processJdkRoot(Element root) {
         final Element orderEntry = new Element("orderEntry");
         orderEntry.setAttribute("type", "jdk");
@@ -699,6 +723,7 @@ public class Convertor34 {
         myModuleRootManager.addContent(orderEntry);
       }
 
+      @Override
       public void processLibraryRoot(Element root) {
         final String libraryName = root.getAttributeValue("name");
         final Element orderEntry = new Element("orderEntry");
@@ -708,14 +733,17 @@ public class Convertor34 {
         myModuleRootManager.addContent(orderEntry);
       }
 
+      @Override
       public void processEjbRoot(Element root) {
         // todo[cdr,dsl] implement conversion of EJB roots
       }
 
+      @Override
       protected String classId() {
         return "ClassPathProcessor";
       }
 
+      @Override
       public void processOutputRoot(Element root) {
         final Element orderEntry = new Element("orderEntry");
         orderEntry.setAttribute("type", "sourceFolder");
@@ -752,6 +780,7 @@ public class Convertor34 {
       myTargetElement = targetElement;
     }
 
+    @Override
     public void processSimpleRoot(Element root) {
       final String url = root.getAttributeValue("url");
       final Element newRoot = new Element("root");
@@ -759,10 +788,12 @@ public class Convertor34 {
       myTargetElement.addContent(newRoot);
     }
 
+    @Override
     public void processEjbRoot(Element root) {
       // todo[cdr,dsl] implement conversion of EJB roots
     }
 
+    @Override
     protected String classId() {
       return "SimpleRootProcessor";
     }

@@ -46,12 +46,14 @@ public class ProjectJdksEditor extends DialogWrapper {
     super(parent, true);
     myConfigurable = configurable;
     SwingUtilities.invokeLater(new Runnable(){
+      @Override
       public void run() {
         myConfigurable.selectNodeInTree(jdk != null ? jdk.getName() : null);
       }
     });
     setTitle(ProjectBundle.message("sdk.configure.title"));
     Disposer.register(myDisposable, new Disposable() {
+      @Override
       public void dispose() {
         if (myConfigurable != null) {
           myConfigurable.disposeUIResources();
@@ -66,11 +68,13 @@ public class ProjectJdksEditor extends DialogWrapper {
     this(jdk, PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), parent);
   }
 
+  @Override
   protected JComponent createCenterPanel(){
     myConfigurable.reset();
     return myConfigurable.createComponent();
   }
 
+  @Override
   protected void doOKAction(){
     try{
       myProjectJdk = myConfigurable.getSelectedJdk(); //before dispose
@@ -83,6 +87,7 @@ public class ProjectJdksEditor extends DialogWrapper {
     }
   }
 
+  @Override
   protected String getDimensionServiceKey(){
     return "#com.intellij.openapi.projectRoots.ui.ProjectJdksEditor";
   }

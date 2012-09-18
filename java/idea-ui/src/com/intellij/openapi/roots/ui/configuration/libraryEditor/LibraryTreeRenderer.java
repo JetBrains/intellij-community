@@ -25,6 +25,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 
 public class LibraryTreeRenderer extends ColoredTreeCellRenderer {
+    @Override
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
       Object userObject = node.getUserObject();
@@ -35,6 +36,7 @@ public class LibraryTreeRenderer extends ColoredTreeCellRenderer {
       }
     }
 
+    @Override
     public Font getFont() {
       Font font = super.getFont();
       if (font == null) {

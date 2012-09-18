@@ -112,6 +112,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
                                                    FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myShowSpecificContentOptionsGroup = createShowSpecificContentOptionsGroup();
     myShowSpecificContentOptionsButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, myShowSpecificContentOptionsGroup).getComponent().show(myShowSpecificContentOptionsButton, 0, 0);
       }
@@ -162,6 +163,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myDispatcher.addListener(listener);
   }
 
+  @Override
   public ArtifactEditorContextImpl getContext() {
     return myContext;
   }
@@ -170,19 +172,23 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myDispatcher.removeListener(listener);
   }
 
+  @Override
   public Artifact getArtifact() {
     return myContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact);
   }
 
+  @Override
   public CompositePackagingElement<?> getRootElement() {
     return myLayoutTreeComponent.getRootElement();
   }
 
+  @Override
   public void rebuildTries() {
     myLayoutTreeComponent.rebuildTree();
     mySourceItemsTree.rebuildTree();
   }
 
+  @Override
   public void queueValidation() {
     myContext.queueValidation();
   }
@@ -208,6 +214,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     link.setIcon(AllIcons.General.Help);
     link.setUseIconAsLink(true);
     link.addHyperlinkListener(new HyperlinkListener() {
+      @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           final JLabel label = new JLabel(ProjectBundle.message("artifact.source.items.tree.tooltip"));
@@ -227,6 +234,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
 
     myShowContentCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final ThreeStateCheckBox.State state = myShowContentCheckBox.getState();
         if (state == ThreeStateCheckBox.State.SELECTED) {
@@ -336,6 +344,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return popupActionGroup;
   }
 
+  @Override
   public ComplexElementSubstitutionParameters getSubstitutionParameters() {
     return mySubstitutionParameters;
   }
@@ -349,15 +358,18 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return group;
   }
 
+  @Override
   public JComponent getMainComponent() {
     return myMainPanel;
   }
 
+  @Override
   public void addNewPackagingElement(@NotNull PackagingElementType<?> type) {
     myLayoutTreeComponent.addNewPackagingElement(type);
     mySourceItemsTree.rebuildTree();
   }
 
+  @Override
   public void removeSelectedElements() {
     myLayoutTreeComponent.removeSelectedElements();
   }
@@ -411,14 +423,17 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
         || myLayoutTreeComponent.isPropertiesModified();
   }
 
+  @Override
   public void dispose() {
     myDisposed = true;
   }
 
+  @Override
   public boolean isDisposed() {
     return myDisposed;
   }
 
+  @Override
   public LayoutTreeComponent getLayoutTreeComponent() {
     return myLayoutTreeComponent;
   }
@@ -435,6 +450,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
         final String extension = FileUtil.getExtension(name);
         if (fileName.equals(oldFileName) && extension.length() > 0) {
           myLayoutTreeComponent.editLayout(new Runnable() {
+            @Override
             public void run() {
               ((ArchivePackagingElement)getRootElement()).setArchiveFileName(ArtifactUtil.suggestArtifactFileName(newArtifactName) + "." + extension);
             }
@@ -445,18 +461,22 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     }
   }
 
+  @Override
   public void updateLayoutTree() {
     myLayoutTreeComponent.rebuildTree();
   }
 
+  @Override
   public void putLibraryIntoDefaultLocation(@NotNull Library library) {
     myLayoutTreeComponent.putIntoDefaultLocations(Collections.singletonList(new LibrarySourceItem(library)));
   }
 
+  @Override
   public void putModuleIntoDefaultLocation(@NotNull Module module) {
     myLayoutTreeComponent.putIntoDefaultLocations(Collections.singletonList(new ModuleOutputSourceItem(module)));
   }
 
+  @Override
   public void addToClasspath(final CompositePackagingElement<?> element, List<String> classpath) {
     myLayoutTreeComponent.saveElementProperties();
     ManifestFileConfiguration manifest = myContext.getManifestFile(element, getArtifact().getArtifactType());
@@ -509,6 +529,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   }
 
   private class MyDataProvider implements TypeSafeDataProvider {
+    @Override
     public void calcData(DataKey key, DataSink sink) {
       if (ARTIFACTS_EDITOR_KEY.equals(key)) {
         sink.put(ARTIFACTS_EDITOR_KEY, ArtifactEditorImpl.this);

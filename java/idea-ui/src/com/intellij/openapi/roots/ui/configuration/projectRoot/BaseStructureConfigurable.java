@@ -80,6 +80,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   public void init(StructureConfigurableContext context) {
     myContext = context;
     myContext.getDaemonAnalyzer().addListener(new ProjectStructureDaemonAnalyzerListener() {
+      @Override
       public void problemsChanged(@NotNull ProjectStructureElement element) {
         if (!myTree.isShowing()) return;
 
@@ -94,6 +95,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     return MasterDetailsStateService.getInstance(myProject);
   }
 
+  @Override
   public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
     if (place == null) return new ActionCallback.Done();
 
@@ -115,6 +117,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     }
 
     final ActionCallback result = new ActionCallback().doWhenDone(new Runnable() {
+      @Override
       public void run() {
         myAutoScrollEnabled = true;
       }
@@ -124,6 +127,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     myAutoScrollHandler.cancelAllRequests();
     final MyNode nodeToSelect = node != null ? node : nodeByName;
     selectNodeInTree(nodeToSelect, requestFocus).doWhenDone(new Runnable() {
+      @Override
       public void run() {
         setSelectedNode(nodeToSelect);
         Place.goFurther(config, place, requestFocus).notifyWhenDone(result);
@@ -134,6 +138,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   }
 
 
+  @Override
   public void queryPlace(@NotNull final Place place) {
     if (myCurrentConfigurable != null) {
       place.putPath(TREE_OBJECT, myCurrentConfigurable.getEditableObject());
@@ -141,12 +146,14 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     }
   }
 
+  @Override
   protected void initTree() {
     if (myWasTreeInitialized) return;
     myWasTreeInitialized = true;
 
     super.initTree();
     new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
+      @Override
       public String convert(final TreePath treePath) {
         return ((MyNode)treePath.getLastPathComponent()).getDisplayName();
       }
@@ -155,6 +162,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     myTree.setCellRenderer(new ProjectStructureElementRenderer(myContext));
   }
 
+  @Override
   public void disposeUIResources() {
     if (myUiDisposed) return;
 
@@ -174,18 +182,22 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   protected void addCollapseExpandActions(final List<AnAction> result) {
     final TreeExpander expander = new TreeExpander() {
+      @Override
       public void expandAll() {
         TreeUtil.expandAll(myTree);
       }
 
+      @Override
       public boolean canExpand() {
         return true;
       }
 
+      @Override
       public void collapseAll() {
         TreeUtil.collapseAll(myTree, 0);
       }
 
+      @Override
       public boolean canCollapse() {
         return true;
       }
@@ -214,6 +226,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       super(parentComponent, myProject);
     }
 
+    @Override
     protected boolean isEnabled() {
       final TreePath selectionPath = myTree.getSelectionPath();
       if (selectionPath != null){
@@ -224,14 +237,17 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       }
     }
 
+    @Override
     protected StructureConfigurableContext getContext() {
       return myContext;
     }
 
+    @Override
     protected ProjectStructureElement getSelectedElement() {
       return BaseStructureConfigurable.this.getSelectedElement();
     }
 
+    @Override
     protected RelativePoint getPointToShowResults() {
       final int selectedRow = myTree.getSelectionRows()[0];
       final Rectangle rowBounds = myTree.getRowBounds(selectedRow);
@@ -242,6 +258,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   }
 
 
+  @Override
   public void reset() {
     myUiDisposed = false;
 
@@ -269,6 +286,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   protected abstract void loadTree();
  
 
+  @Override
   @NotNull
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
@@ -305,6 +323,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   protected class MyRemoveAction extends MyDeleteAction {
     public MyRemoveAction() {
       super(new Condition<Object[]>() {
+        @Override
         public boolean value(final Object[] objects) {
           Object[] editableObjects = ContainerUtil.mapNotNull(objects, new Function<Object, Object>() {
             @Override
@@ -323,6 +342,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       });
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       final TreePath[] paths = myTree.getSelectionPaths();
       if (paths == null) return;
@@ -437,10 +457,12 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       this(text, IconUtil.getAddIcon());
     }
 
+    @Override
     public ActionGroup getActionGroup() {
       return this;
     }
 
+    @Override
     public int getDefaultIndex() {
         return 0;
       }

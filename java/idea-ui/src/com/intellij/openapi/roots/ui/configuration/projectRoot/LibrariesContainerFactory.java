@@ -153,6 +153,7 @@ public class LibrariesContainerFactory {
       return createLibrary(editor, level);
     }
 
+    @Override
     @NotNull
     public Library[] getAllLibraries() {
       Library[] libraries = getLibraries(LibraryLevel.GLOBAL);
@@ -206,11 +207,13 @@ public class LibrariesContainerFactory {
       myRootModel = rootModel;
     }
 
+    @Override
     @Nullable
     public Project getProject() {
       return myProject;
     }
 
+    @Override
     @NotNull
     public Library[] getLibraries(@NotNull final LibraryLevel libraryLevel) {
       if (libraryLevel == LibraryLevel.MODULE && myModule != null) {
@@ -246,11 +249,13 @@ public class LibrariesContainerFactory {
       return libraries.toArray(new Library[libraries.size()]);
     }
 
+    @Override
     @NotNull
     public VirtualFile[] getLibraryFiles(@NotNull final Library library, @NotNull final OrderRootType rootType) {
       return library.getFiles(rootType);
     }
 
+    @Override
     public boolean canCreateLibrary(@NotNull final LibraryLevel level) {
       if (level == LibraryLevel.MODULE) {
         return myRootModel != null;
@@ -321,11 +326,13 @@ public class LibrariesContainerFactory {
       return null;
     }
 
+    @Override
     @Nullable
     public Project getProject() {
       return myContext.getProject();
     }
 
+    @Override
     @NotNull
     public Library[] getLibraries(@NotNull final LibraryLevel libraryLevel) {
       LibraryTableModifiableModelProvider provider = getProvider(libraryLevel);
@@ -345,10 +352,12 @@ public class LibrariesContainerFactory {
       }
     }
 
+    @Override
     public boolean canCreateLibrary(@NotNull final LibraryLevel level) {
       return level == LibraryLevel.GLOBAL || level == LibraryLevel.PROJECT;
     }
 
+    @Override
     @NotNull
     public VirtualFile[] getLibraryFiles(@NotNull final Library library, @NotNull final OrderRootType rootType) {
       LibrariesModifiableModel projectLibrariesModel = myContext.getProjectLibrariesProvider().getModifiableModel();

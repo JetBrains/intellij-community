@@ -32,20 +32,24 @@ class LibraryTableTreeBuilder extends AbstractTreeBuilder {
     initRootNode();
   }
 
+  @Override
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
     return false;
   }
 
+  @Override
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     final Object element = nodeDescriptor.getElement();
     final Object rootElement = getTreeStructure().getRootElement();
     return rootElement.equals(element) || element instanceof OrderRootTypeElement;
   }
 
+  @Override
   protected boolean isSmartExpand() {
     return false;
   }
 
+  @Override
   @NotNull
   protected ProgressIndicator createProgressIndicator() {
     return new StatusBarProgress();

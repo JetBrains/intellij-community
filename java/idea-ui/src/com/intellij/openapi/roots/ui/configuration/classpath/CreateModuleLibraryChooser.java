@@ -122,6 +122,7 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
     return false;
   }
 
+  @Override
   @NotNull
   public List<Library> chooseElements() {
     final FileChooserDescriptor chooserDescriptor;

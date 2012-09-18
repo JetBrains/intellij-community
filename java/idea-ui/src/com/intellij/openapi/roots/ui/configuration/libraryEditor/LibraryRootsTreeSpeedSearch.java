@@ -31,6 +31,7 @@ class LibraryRootsTreeSpeedSearch extends TreeSpeedSearch {
     super(tree);
   }
 
+  @Override
   public boolean isMatchingElement(Object element, String pattern) {
     Object userObject = ((DefaultMutableTreeNode)((TreePath)element).getLastPathComponent()).getUserObject();
     if (userObject instanceof ItemElementDescriptor) {

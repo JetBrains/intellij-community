@@ -529,14 +529,14 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   public LineBlocks getLineBlocks() { return myLineBlocks; }
 
-  static JComponent createComponentForTitle(@NotNull String title, @NotNull final LineSeparator separator, boolean left) {
+  static JComponent createComponentForTitle(@Nullable String title, @NotNull final LineSeparator separator, boolean left) {
     JPanel bottomPanel = new JPanel(new BorderLayout());
     JLabel sepLabel = new JLabel(separator.name());
     sepLabel.setForeground(separator.equals(LineSeparator.CRLF) ? Color.RED : Color.BLUE);
     bottomPanel.add(sepLabel, left ? BorderLayout.EAST : BorderLayout.WEST);
 
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(new JLabel(title));
+    panel.add(new JLabel(title == null ? "" : title));
     panel.add(bottomPanel, BorderLayout.SOUTH);
     return panel;
   }

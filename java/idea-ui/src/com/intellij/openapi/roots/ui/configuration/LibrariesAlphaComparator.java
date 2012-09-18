@@ -28,6 +28,7 @@ import java.util.Comparator;
 public class LibrariesAlphaComparator implements Comparator<Library> {
   public static LibrariesAlphaComparator INSTANCE = new LibrariesAlphaComparator();
 
+  @Override
   public int compare(Library library1, Library library2) {
     String name1 = library1.getName();
     if (name1 != null && name1.length() == 0) {

@@ -38,6 +38,7 @@ class AddNewModuleLibraryAction extends AddItemPopupAction<Library> {
     myContext = context;
   }
 
+  @Override
   protected ClasspathTableItem<?> createTableItem(final Library item) {
     final OrderEntry[] entries = myClasspathPanel.getRootModel().getOrderEntries();
     for (OrderEntry entry : entries) {
@@ -52,6 +53,7 @@ class AddNewModuleLibraryAction extends AddItemPopupAction<Library> {
     return null;
   }
 
+  @Override
   protected ClasspathElementChooser<Library> createChooser() {
     final LibraryTable.ModifiableModel moduleLibraryModel = myClasspathPanel.getRootModel().getModuleLibraryTable().getModifiableModel();
     return new CreateModuleLibraryChooser(myClasspathPanel, moduleLibraryModel);

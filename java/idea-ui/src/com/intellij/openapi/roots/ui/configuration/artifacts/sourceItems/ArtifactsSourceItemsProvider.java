@@ -34,6 +34,7 @@ import java.util.List;
  * @author nik
  */
 public class ArtifactsSourceItemsProvider extends PackagingSourceItemsProvider {
+  @Override
   @NotNull
   public Collection<? extends PackagingSourceItem> getSourceItems(@NotNull ArtifactEditorContext editorContext,
                                                                   @NotNull Artifact artifact,
@@ -66,10 +67,12 @@ public class ArtifactsSourceItemsProvider extends PackagingSourceItemsProvider {
       return 0;
     }
 
+    @Override
     public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
       return new ArtifactsGroupPresentation();
     }
 
+    @Override
     @NotNull
     public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
       return Collections.emptyList();

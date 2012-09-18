@@ -95,6 +95,7 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
     myBuilder.initRootNode();
   }
 
+  @Override
   public void dispose() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       DnDManager.getInstance().unregisterSource(this);
@@ -105,10 +106,12 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
     return getSelectedNodes(DefaultMutableTreeNode.class, null);
   }
 
+  @Override
   public boolean canStartDragging(DnDAction action, Point dragOrigin) {
     return !getSelectedItems().isEmpty();
   }
 
+  @Override
   public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
     List<PackagingSourceItem> items = getSelectedItems();
     return new DnDDragStartBean(new SourceItemsDraggingObject(items.toArray(new PackagingSourceItem[items.size()])));
@@ -136,6 +139,7 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
     return items;
   }
 
+  @Override
   public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
     final DefaultMutableTreeNode[] nodes = getSelectedTreeNodes();
     if (nodes.length == 1) {
@@ -144,9 +148,11 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
     return DnDAwareTree.getDragImage(this, ProjectBundle.message("drag.n.drop.text.0.packaging.elements", nodes.length), dragOrigin);
   }
 
+  @Override
   public void dragDropEnd() {
   }
 
+  @Override
   public void dropActionChanged(int gestureModifiers) {
   }
 

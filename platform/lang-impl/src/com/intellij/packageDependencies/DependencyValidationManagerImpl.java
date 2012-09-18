@@ -64,6 +64,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     super(project);
   }
 
+  @Override
   @NotNull
   public List<NamedScope> getPredefinedScopes() {
     final List<NamedScope> predefinedScopes = new ArrayList<NamedScope>();
@@ -92,10 +93,12 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     return null;
   }
 
+  @Override
   public boolean hasRules() {
     return !myRules.isEmpty();
   }
 
+  @Override
   @Nullable
   public DependencyRule getViolatorDependencyRule(PsiFile from, PsiFile to) {
     for (DependencyRule dependencyRule : myRules) {
@@ -105,6 +108,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     return null;
   }
 
+  @Override
   @NotNull
   public DependencyRule[] getViolatorDependencyRules(PsiFile from, PsiFile to) {
     ArrayList<DependencyRule> result = new ArrayList<DependencyRule>();
@@ -116,6 +120,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     return result.toArray(new DependencyRule[result.size()]);
   }
 
+  @Override
   public
   @NotNull
   DependencyRule[] getApplicableRules(PsiFile file) {
@@ -128,26 +133,32 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     return result.toArray(new DependencyRule[result.size()]);
   }
 
+  @Override
   public boolean skipImportStatements() {
     return SKIP_IMPORT_STATEMENTS;
   }
 
+  @Override
   public void setSkipImportStatements(final boolean skip) {
     SKIP_IMPORT_STATEMENTS = skip;
   }
 
+  @Override
   public Map<String, PackageSet> getUnnamedScopes() {
     return myUnnamedScopes;
   }
 
+  @Override
   public DependencyRule[] getAllRules() {
     return myRules.toArray(new DependencyRule[myRules.size()]);
   }
 
+  @Override
   public void removeAllRules() {
     myRules.clear();
   }
 
+  @Override
   public void addRule(DependencyRule rule) {
     appendUnnamedScope(rule.getFromScope());
     appendUnnamedScope(rule.getToScope());
@@ -170,10 +181,12 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     }
   }
 
+  @Override
   public String getDisplayName() {
     return IdeBundle.message("shared.scopes.node.text");
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.Ide.SharedScope;
   }
@@ -245,6 +258,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     }
   }
 
+  @Override
   @Nullable
   public NamedScope getScope(@Nullable final String name) {
     final NamedScope scope = super.getScope(name);
@@ -286,6 +300,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   }
 
   public static class ScopesStateSplitter implements StateSplitter {
+     @Override
      public List<Pair<Element, String>> splitState(Element e) {
       final UniqueNameGenerator generator = new UniqueNameGenerator();
       final List<Pair<Element, String>> result = new ArrayList<Pair<Element, String>>();
@@ -306,6 +321,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
        return result;
     }
 
+    @Override
     public void mergeStatesInto(Element target, Element[] elements) {
       for (Element element : elements) {
         if (element.getName().equals("scope")) {

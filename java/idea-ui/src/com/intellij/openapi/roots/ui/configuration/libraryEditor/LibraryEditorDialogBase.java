@@ -48,14 +48,17 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
     myLibraryRootsComponent.setContextModule(module);
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorDialog";
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
   }
 
+  @Override
   protected final void doOKAction() {
     if (!validateAndApply()) {
       return;
@@ -97,6 +100,7 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
     return myLibraryRootsComponent;
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     String currentName = myLibraryRootsComponent.getLibraryEditor().getName();
     myNameField = new JTextField(currentName);
@@ -110,6 +114,7 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
   protected void addNorthComponents(FormBuilder formBuilder) {
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myLibraryRootsComponent.getComponent();
   }

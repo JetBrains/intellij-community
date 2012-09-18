@@ -60,6 +60,7 @@ public interface ConfigurationErrors {
                            @NotNull final PairProcessor<ConfigurationErrors, ConfigurationError> fun) {
       if (!project.isInitialized()) {
         StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+           @Override
            public void run() {
              fun.process(project.getMessageBus().syncPublisher(TOPIC), error);
            }
@@ -73,6 +74,7 @@ public interface ConfigurationErrors {
       else {
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             fun.process(bus.syncPublisher(TOPIC), error);
           }

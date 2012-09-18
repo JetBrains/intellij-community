@@ -56,10 +56,12 @@ public class LibrariesModifiableModel implements LibraryTableBase.ModifiableMode
     myLibraryEditorListener = libraryEditorListener;
   }
 
+  @Override
   public Library createLibrary(String name) {
     return createLibrary(name, null);
   }
 
+  @Override
   public Library createLibrary(String name, @Nullable PersistentLibraryKind type) {
     final Library library = ((LibraryTableBase.ModifiableModelEx)getLibrariesModifiableModel()).createLibrary(name, type);
     //createLibraryEditor(library);                     \
@@ -68,6 +70,7 @@ public class LibrariesModifiableModel implements LibraryTableBase.ModifiableMode
     return library;
   }
 
+  @Override
   public void removeLibrary(@NotNull Library library) {
     if (getLibrariesModifiableModel().getLibraryByName(library.getName()) == null) return;
 
@@ -82,24 +85,29 @@ public class LibrariesModifiableModel implements LibraryTableBase.ModifiableMode
     }
   }
 
+  @Override
   public void commit() {
     //do nothing  - do deffered commit
   }
 
+  @Override
   @NotNull
   public Iterator<Library> getLibraryIterator() {
     return getLibrariesModifiableModel().getLibraryIterator();
   }
 
+  @Override
   public Library getLibraryByName(@NotNull String name) {
     return getLibrariesModifiableModel().getLibraryByName(name);
   }
 
+  @Override
   @NotNull
   public Library[] getLibraries() {
     return getLibrariesModifiableModel().getLibraries();
   }
 
+  @Override
   public boolean isChanged() {
     for (LibraryEditor libraryEditor : myLibrary2EditorMap.values()) {
       if (libraryEditor.hasChanges()) return true;

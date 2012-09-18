@@ -305,6 +305,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       return this;
     }
 
+    @Override
     public abstract void onViewChange(@Nullable Object data);
   }
 
@@ -660,6 +661,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       return this;
     }
 
+    @Override
     public abstract void onViewChange(Object data);
 
     @Override
@@ -672,6 +674,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
   @NotNull
   private static <T> List<T> concat(@NotNull final List<? extends T> list1, @NotNull final List<? extends T> list2) {
     return new AbstractList<T>() {
+      @Override
       public T get(int index) {
         if (index < list1.size()) {
           return list1.get(index);
@@ -680,6 +683,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
         return list2.get(index - list1.size());
       }
 
+      @Override
       public int size() {
         return list1.size() + list2.size();
       }

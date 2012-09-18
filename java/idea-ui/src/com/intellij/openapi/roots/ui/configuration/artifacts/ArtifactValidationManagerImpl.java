@@ -46,6 +46,7 @@ public class ArtifactValidationManagerImpl implements Disposable {
     myErrorPanel = new ArtifactErrorPanel(artifactEditor);
   }
 
+  @Override
   public void dispose() {
   }
 

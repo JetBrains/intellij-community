@@ -269,6 +269,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     }
   }
 
+  @Override
   public void dispose() {
     try {
       for (final ModuleConfigurationEditor myEditor : myEditors) {
@@ -328,6 +329,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       myDelegateModel = model;
     }
 
+    @Override
     public Object invoke(Object object, Method method, Object[] params) throws Throwable {
       final boolean needUpdate = myCheckedNames.contains(method.getName());
       try {
@@ -357,6 +359,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       myDelegateTable = table;
     }
 
+    @Override
     public Object invoke(Object object, Method method, Object[] params) throws Throwable {
       final boolean needUpdate = myCheckedNames.contains(method.getName());
       try {
@@ -403,6 +406,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       myDelegateLibrary = delegateLibrary;
     }
 
+    @Override
     public Object invoke(Object object, Method method, Object[] params) throws Throwable {
       try {
         final Object result = method.invoke(myDelegateLibrary, unwrapParams(params));
@@ -417,6 +421,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       }
     }
 
+    @Override
     public Object getDelegate() {
       return myDelegateLibrary;
     }
@@ -429,6 +434,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       myDelegateModel = delegateModel;
     }
 
+    @Override
     public Object invoke(Object object, Method method, Object[] params) throws Throwable {
       final boolean needUpdate = METHOD_COMMIT.equals(method.getName());
       try {
@@ -457,6 +463,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       myDelegateModel = delegateModel;
     }
 
+    @Override
     public Object invoke(Object object, Method method, Object[] params) throws Throwable {
       final boolean needUpdate = METHOD_COMMIT.equals(method.getName());
       try {
@@ -533,6 +540,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       super(new BorderLayout());
     }
 
+    @Override
     public Object getData(String dataId) {
       if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
         return getModule();
@@ -542,6 +550,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   }
 
+  @Override
   public void setHistory(final History history) {
   }
 }

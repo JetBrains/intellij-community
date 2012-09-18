@@ -329,7 +329,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       return;
     }
     else if (myToolWindow != null) {
-      if (allowReuse) {
+      if (allowReuse && !myToolWindow.isAutoHide()) {
         final Content content = myToolWindow.getContentManager().getSelectedContent();
         if (content != null) {
           final DocumentationComponent component = (DocumentationComponent)content.getComponent();

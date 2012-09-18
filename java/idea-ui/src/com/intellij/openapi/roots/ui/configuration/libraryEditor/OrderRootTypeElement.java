@@ -50,6 +50,7 @@ public class OrderRootTypeElement extends LibraryTableTreeContentElement {
     return obj instanceof OrderRootTypeElement && ((OrderRootTypeElement)obj).getOrderRootType().equals(myRootType);
   }
 
+  @Override
   public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryRootsComponent parentEditor) {
     return new OrderRootTypeElementDescriptor(parentDescriptor, this, myNodeText, myIcon);
   }

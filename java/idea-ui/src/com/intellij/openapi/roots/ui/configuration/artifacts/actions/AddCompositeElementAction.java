@@ -39,6 +39,7 @@ public class AddCompositeElementAction extends DumbAwareAction {
     getTemplatePresentation().setIcon(elementType.getCreateElementIcon());
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     myArtifactEditor.addNewPackagingElement(myElementType);
   }

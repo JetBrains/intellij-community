@@ -31,37 +31,46 @@ class ModuleConfigurableWrapper implements ModuleConfigurationEditor {
     myModuleConfigurable = moduleConfigurable;
   }
 
+  @Override
   public void saveData() {
 
   }
 
+  @Override
   public void moduleStateChanged() {
   }
 
+  @Override
   public String getDisplayName() {
     return myModuleConfigurable.getDisplayName();
   }
 
+  @Override
   public String getHelpTopic() {
     return myModuleConfigurable.getHelpTopic();
   }
 
+  @Override
   public JComponent createComponent() {
     return myModuleConfigurable.createComponent();
   }
 
+  @Override
   public boolean isModified() {
     return myModuleConfigurable.isModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myModuleConfigurable.apply();
   }
 
+  @Override
   public void reset() {
     myModuleConfigurable.reset();
   }
 
+  @Override
   public void disposeUIResources() {
     myModuleConfigurable.disposeUIResources();
   }

@@ -41,11 +41,13 @@ class CompositeProjectRoot implements ProjectRoot {
     return myRoots.toArray(new ProjectRoot[myRoots.size()]);
   }
 
+  @Override
   @NotNull
   public String getPresentableString() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getVirtualFiles() {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
@@ -56,6 +58,7 @@ class CompositeProjectRoot implements ProjectRoot {
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
+  @Override
   @NotNull
   public String[] getUrls() {
     final List<String> result = new ArrayList<String>();
@@ -65,6 +68,7 @@ class CompositeProjectRoot implements ProjectRoot {
     return ArrayUtil.toStringArray(result);
   }
 
+  @Override
   public boolean isValid() {
     return true;
   }
@@ -89,7 +93,7 @@ class CompositeProjectRoot implements ProjectRoot {
       ProjectRoot projectRoot = iterator.next();
       if (projectRoot instanceof SimpleProjectRoot) {
         SimpleProjectRoot r = (SimpleProjectRoot)projectRoot;
-        if (r.getFile() != null && r.getFile().equals(root)) {
+        if (root.equals(r.getFile())) {
           iterator.remove();
         }
       }
@@ -117,6 +121,7 @@ class CompositeProjectRoot implements ProjectRoot {
     }
   }
 
+  @Override
   public void update() {
     for (ProjectRoot root : myRoots) {
       root.update();

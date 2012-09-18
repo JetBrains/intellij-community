@@ -25,6 +25,7 @@ import com.intellij.projectImport.ProjectOpenProcessor;
 import java.io.File;
 
 public class ProjectImporterCheckoutListener implements CheckoutListener {
+  @Override
   public boolean processCheckedOutDirectory(Project project, File directory) {
     final File[] files = directory.listFiles();
     if (files != null) {

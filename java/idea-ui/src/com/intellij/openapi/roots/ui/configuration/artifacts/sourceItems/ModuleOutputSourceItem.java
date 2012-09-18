@@ -61,6 +61,7 @@ public class ModuleOutputSourceItem extends PackagingSourceItem {
     };
   }
 
+  @Override
   @NotNull
   public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
     final ModulePointer modulePointer = ModulePointerManager.getInstance(context.getProject()).create(myModule);

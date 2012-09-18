@@ -38,6 +38,7 @@ public class DevelopPluginsAction extends AnAction implements DumbAware {
                                              ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     try {
       if (new File(PLUGIN_URL).isFile()) {

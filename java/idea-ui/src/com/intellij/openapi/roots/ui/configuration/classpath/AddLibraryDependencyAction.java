@@ -86,6 +86,7 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
     return false;
   }
 
+  @Override
   @Nullable
   protected ClasspathTableItem<?> createTableItem(final Library item) {
     // clear invalid order entry corresponding to added library if any
@@ -129,11 +130,13 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
     return null;
   }
 
+  @Override
   protected ClasspathElementChooser<Library> createChooser() {
     return new ExistingLibraryChooser();
   }
 
   class ExistingLibraryChooser implements ClasspathElementChooser<Library> {
+    @Override
     @NotNull
     public List<Library> chooseElements() {
       final Predicate<Library> condition = LibraryEditingUtil.getNotAddedLibrariesCondition(myClasspathPanel.getRootModel());

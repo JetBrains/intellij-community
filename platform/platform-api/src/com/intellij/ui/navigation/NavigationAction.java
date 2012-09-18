@@ -34,6 +34,7 @@ abstract class NavigationAction extends AnAction implements DumbAware {
     getTemplatePresentation().setIcon(original.getTemplatePresentation().getIcon());
   }
 
+  @Override
   public final void update(final AnActionEvent e) {
     e.getPresentation().setEnabled(getHistory(e) != null);
     if (e.getPresentation().isEnabled()) {

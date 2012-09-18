@@ -38,6 +38,7 @@ public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
   public LanguageLevelConfigurable() {
     myLanguageLevelCombo = new LanguageLevelCombo();
     myLanguageLevelCombo.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         final Object languageLevel = myLanguageLevelCombo.getSelectedItem();
         getLanguageLevelExtension().setLanguageLevel(languageLevel instanceof LanguageLevel ? (LanguageLevel)languageLevel : null);
@@ -53,22 +54,27 @@ public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
                 new GridBagConstraints(2, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(12, 6, 12, 0), 0, 0));
   }
 
+  @Override
   public JComponent createComponent() {
     return myPanel;
   }
 
+  @Override
   public boolean isModified() {
     return getLanguageLevelExtension().isChanged();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     getLanguageLevelExtension().commit();
   }
 
+  @Override
   public void reset() {
     myLanguageLevelCombo.setSelectedItem(getLanguageLevelExtension().getLanguageLevel());
   }
 
+  @Override
   public void disposeUIResources() {
     myPanel = null;
     myLanguageLevelCombo = null;

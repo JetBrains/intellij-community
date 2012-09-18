@@ -112,6 +112,7 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
     return null;
   }
 
+  @Override
   public boolean nodeHasFacetOfType(final FacetInfo facet, FacetTypeId typeId) {
     final Module selectedModule = getSelectedModule();
     if (selectedModule == null) {
@@ -121,6 +122,7 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
     return facetTreeModel.hasFacetOfType(facet, typeId);
   }
 
+  @Override
   public Facet createFacet(final FacetInfo parent, FacetType type) {
     return createAndAddFacet(type, getSelectedModule(), getFacetConfigurator().getFacet(parent));
   }
@@ -131,6 +133,7 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
     return facet;
   }
 
+  @Override
   public Collection<FacetInfo> getFacetsByType(final FacetType<?,?> type) {
     final Module selectedModule = getSelectedModule();
     if (selectedModule == null) return Collections.emptyList();
@@ -147,6 +150,7 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
     return infos;
   }
 
+  @Override
   @Nullable
   public FacetInfo getParent(final FacetInfo facetInfo) {
     final Module module = getFacetConfigurator().getFacet(facetInfo).getModule();
@@ -178,12 +182,14 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
     return null;
   }
 
+  @Override
   @Nullable
   public ModuleType getSelectedModuleType() {
     final Module module = getSelectedModule();
     return module != null ? ModuleType.get(module) : null;
   }
 
+  @Override
   @Nullable
   public FacetInfo getSelectedFacetInfo() {
     final Facet facet = getSelectedFacet();

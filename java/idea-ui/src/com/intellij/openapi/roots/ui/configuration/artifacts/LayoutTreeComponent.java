@@ -91,6 +91,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     Disposer.register(this, myBuilder);
 
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         updatePropertiesPanel(false);
       }
@@ -181,6 +182,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     final List<? extends PackagingElement<?>> children = type.chooseAndCreate(myContext, getArtifact(), parent);
     final PackagingElementNode<?> finalParentNode = parentNode;
     editLayout(new Runnable() {
+      @Override
       public void run() {
         CompositePackagingElement<?> actualParent = getOrCreateModifiableParent(parent, finalParentNode);
         for (PackagingElement<?> child : children) {
@@ -287,6 +289,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     final DefaultMutableTreeNode treeNode = TreeUtil.findNodeWithObject(myTree.getRootNode(), node);
     myTreeStructure.clearCaches();
     myBuilder.addSubtreeToUpdate(treeNode, new Runnable() {
+      @Override
       public void run() {
         List<PackagingElementNode<?>> nodes = myTree.findNodes(toSelect);
         myBuilder.select(ArrayUtil.toObjectArray(nodes), null);
@@ -335,6 +338,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     if (!checkCanRemove(selection.getNodes())) return;
 
     editLayout(new Runnable() {
+      @Override
       public void run() {
         removeNodes(selection.getNodes());
       }
@@ -407,12 +411,14 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     return myTreePanel;
   }
 
+  @Override
   public void dispose() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       DnDManager.getInstance().unregisterTarget(this, myTree);
     }
   }
 
+  @Override
   public boolean update(DnDEvent aEvent) {
     aEvent.setDropPossible(false);
     aEvent.hideHighlighter();
@@ -437,6 +443,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     return false;
   }
 
+  @Override
   public void drop(DnDEvent aEvent) {
     final Object object = aEvent.getAttachedObject();
     if (object instanceof PackagingElementDraggingObject) {
@@ -449,6 +456,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
       }
       final List<PackagingElement<?>> toSelect = new ArrayList<PackagingElement<?>>();
       editLayout(new Runnable() {
+        @Override
         public void run() {
           draggingObject.beforeDrop();
           final CompositePackagingElement<?> parent = getOrCreateModifiableParent(targetElement, targetNode);
@@ -476,9 +484,11 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     return null;
   }
 
+  @Override
   public void cleanUpOnLeave() {
   }
 
+  @Override
   public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
   }
 
@@ -520,6 +530,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   public void putIntoDefaultLocations(@NotNull final List<? extends PackagingSourceItem> items) {
     final List<PackagingElement<?>> toSelect = new ArrayList<PackagingElement<?>>();
     editLayout(new Runnable() {
+      @Override
       public void run() {
         final CompositePackagingElement<?> rootElement = getArtifact().getRootElement();
         final ArtifactType artifactType = getArtifact().getArtifactType();
@@ -556,6 +567,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     final List<PackagingElement<?>> toSelect = new ArrayList<PackagingElement<?>>();
     final CompositePackagingElement<?> rootElement = getArtifact().getRootElement();
     editLayout(new Runnable() {
+      @Override
       public void run() {
         final CompositePackagingElement<?> archive = PackagingElementFactory.getInstance().getOrCreateArchive(rootElement, pathToJar);
         for (PackagingSourceItem item : items) {
@@ -607,6 +619,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     public void save() {
       if (myCurrentPanel != null && myCurrentPanel.isModified()) {
         editLayout(new Runnable() {
+          @Override
           public void run() {
             myCurrentPanel.apply();
           }

@@ -88,6 +88,7 @@ public class SurroundElementWithAction extends LayoutTreeActionBase {
         @Override
         public PopupStep onChosen(final CompositePackagingElementType selectedValue, boolean finalChoice) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
             public void run() {
               surroundWith(selectedValue, parent, selected, treeComponent);
             }
@@ -108,6 +109,7 @@ public class SurroundElementWithAction extends LayoutTreeActionBase {
     final CompositePackagingElement<?> newParent = type.createComposite(parent, baseName, myArtifactEditor.getContext());
     if (newParent != null) {
       treeComponent.editLayout(new Runnable() {
+        @Override
         public void run() {
           for (PackagingElement<?> element : selected) {
             newParent.addOrFindChild(ArtifactUtil.copyWithChildren(element, project));

@@ -40,6 +40,7 @@ class ItemElementDescriptor extends NodeDescriptor<ItemElement> {
       setIcon(getIconForUrl(url, element.isValid(), element.isJarDirectory()));
     }
 
+    @Override
     public boolean update() {
       Color color = myElement.isValid()? Color.BLACK : Color.RED;
       final boolean changes = !color.equals(myColor);
@@ -47,6 +48,7 @@ class ItemElementDescriptor extends NodeDescriptor<ItemElement> {
       return changes;
     }
 
+    @Override
     public ItemElement getElement() {
       return myElement;
     }

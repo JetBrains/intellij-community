@@ -42,6 +42,7 @@ class AddModuleDependencyAction extends AddItemPopupAction<Module> {
     myClasspathPanel = classpathPanel;
   }
 
+  @Override
   protected ClasspathTableItem<?> createTableItem(final Module item) {
     return ClasspathTableItem.createItem(myClasspathPanel.getRootModel().addModuleOrderEntry(item), myContext);
   }
@@ -61,6 +62,7 @@ class AddModuleDependencyAction extends AddItemPopupAction<Module> {
     return elements;
   }
 
+  @Override
   protected ClasspathElementChooser<Module> createChooser() {
     final List<Module> chooseItems = getNotAddedModules();
     if (chooseItems.isEmpty()) {
@@ -88,6 +90,7 @@ class AddModuleDependencyAction extends AddItemPopupAction<Module> {
       myClasspathPanel = classpathPanel;
     }
 
+    @Override
     @NotNull
     public List<Module> chooseElements() {
       ChooseModulesDialog dialog = new ChooseModulesDialog(myClasspathPanel.getComponent(), myItems, myTitle, myDescription);

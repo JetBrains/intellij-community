@@ -23,6 +23,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
+import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
@@ -77,9 +79,9 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     MODIFIERS_BY_TYPE.put(FIELD, concat(commonModifiers, TRANSIENT, VOLATILE));
   }
 
-  @NotNull private static final List<Set<ArrangementMatchCondition>> GROUPING_RULES = ContainerUtilRt.newArrayList();
+  @NotNull private static final List<Set<ArrangementMatchCondition>> UI_GROUPING_RULES = ContainerUtilRt.newArrayList();
   static {
-    GROUPING_RULES.add(new HashSet<ArrangementMatchCondition>(
+    UI_GROUPING_RULES.add(new HashSet<ArrangementMatchCondition>(
       ContainerUtil.map(
         SUPPORTED_TYPES,
         new Function<ArrangementEntryType, ArrangementMatchCondition>() {
@@ -92,8 +94,12 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     ));
   }
 
-  private static final List<StdArrangementMatchRule> DEFAULT_RULES = new ArrayList<StdArrangementMatchRule>();
+  private static final List<ArrangementGroupingRule> DEFAULT_GROUPING_RULES = new ArrayList<ArrangementGroupingRule>();
+  static {
+    DEFAULT_GROUPING_RULES.add(new ArrangementGroupingRule(ArrangementGroupingType.GETTERS_AND_SETTERS));
+  }
 
+  private static final List<StdArrangementMatchRule> DEFAULT_MATCH_RULES = new ArrayList<StdArrangementMatchRule>();
   static {
     ArrangementModifier[] visibility = {PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE};
     for (ArrangementModifier modifier : visibility) {
@@ -118,9 +124,11 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     and(CLASS);
   }
 
+  private static final StdArrangementSettings DEFAULT_SETTINGS = new StdArrangementSettings(DEFAULT_GROUPING_RULES, DEFAULT_MATCH_RULES);
+
   private static void and(@NotNull Object... conditions) {
     if (conditions.length == 1) {
-      DEFAULT_RULES.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(new ArrangementAtomMatchCondition(
+      DEFAULT_MATCH_RULES.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(new ArrangementAtomMatchCondition(
         ArrangementUtil.parseType(conditions[0]), conditions[0]
       ))));
       return;
@@ -130,7 +138,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     for (Object condition : conditions) {
       composite.addOperand(new ArrangementAtomMatchCondition(ArrangementUtil.parseType(condition), condition));
     }
-    DEFAULT_RULES.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(composite)));
+    DEFAULT_MATCH_RULES.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(composite)));
   }
 
   @NotNull
@@ -149,17 +157,18 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     @NotNull PsiElement element,
     @Nullable ArrangementSettings settings)
   {
-    List<JavaElementArrangementEntry> existingEntries = new ArrayList<JavaElementArrangementEntry>();
-    root.accept(new JavaArrangementVisitor(existingEntries, document, ranges));
+    Set<ArrangementGroupingType> groupingRules = getGroupingRules(settings);
+    JavaArrangementParseInfo existingEntriesInfo = new JavaArrangementParseInfo();
+    root.accept(new JavaArrangementVisitor(existingEntriesInfo, document, ranges, groupingRules));
 
-    List<JavaElementArrangementEntry> newEntry = new ArrayList<JavaElementArrangementEntry>();
-    element.accept(new JavaArrangementVisitor(newEntry, document, Collections.singleton(element.getTextRange())));
-    if (newEntry.size() != 1) {
+    JavaArrangementParseInfo newEntryInfo = new JavaArrangementParseInfo();
+    element.accept(new JavaArrangementVisitor(newEntryInfo, document, Collections.singleton(element.getTextRange()), groupingRules));
+    if (newEntryInfo.getEntries().size() != 1) {
       return null;
     }
-    return Pair.create(newEntry.get(0), existingEntries);
+    return Pair.create(newEntryInfo.getEntries().get(0), existingEntriesInfo.getEntries());
   }
-
+  
   @NotNull
   @Override
   public List<JavaElementArrangementEntry> parse(@NotNull PsiElement root,
@@ -168,9 +177,32 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
                                                  @Nullable ArrangementSettings settings)
   {
     // Following entries are subject to arrangement: class, interface, field, method.
-    List<JavaElementArrangementEntry> result = new ArrayList<JavaElementArrangementEntry>();
-    root.accept(new JavaArrangementVisitor(result, document, ranges));
-    return result;
+    JavaArrangementParseInfo parseInfo = new JavaArrangementParseInfo();
+    root.accept(new JavaArrangementVisitor(parseInfo, document, ranges, getGroupingRules(settings)));
+    setupGettersAndSetters(parseInfo);
+    return parseInfo.getEntries();
+  }
+
+  private static void setupGettersAndSetters(@NotNull JavaArrangementParseInfo info) {
+    Collection<JavaArrangementPropertyInfo> properties = info.getProperties();
+    for (JavaArrangementPropertyInfo propertyInfo : properties) {
+      JavaElementArrangementEntry getter = propertyInfo.getGetter();
+      JavaElementArrangementEntry setter = propertyInfo.getSetter();
+      if (getter != null && setter != null) {
+        setter.addDependency(getter);
+      }
+    }
+  }
+  
+  @NotNull
+  private static Set<ArrangementGroupingType> getGroupingRules(ArrangementSettings settings) {
+    Set<ArrangementGroupingType> groupingRules = EnumSet.noneOf(ArrangementGroupingType.class);
+    if (settings != null) {
+      for (ArrangementGroupingRule rule : settings.getGroupings()) {
+        groupingRules.add(rule.getRule());
+      }
+    }
+    return groupingRules;
   }
 
   @Override
@@ -248,12 +280,12 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
   @NotNull
   @Override
   public List<Set<ArrangementMatchCondition>> getGroupingConditions() {
-    return GROUPING_RULES;
+    return UI_GROUPING_RULES;
   }
 
   @Nullable
   @Override
-  public List<StdArrangementMatchRule> getDefaultRules() {
-    return DEFAULT_RULES;
+  public StdArrangementSettings getDefaultSettings() {
+    return DEFAULT_SETTINGS;
   }
 }

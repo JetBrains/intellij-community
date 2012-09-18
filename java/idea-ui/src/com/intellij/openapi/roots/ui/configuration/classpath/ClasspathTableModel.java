@@ -84,6 +84,7 @@ class ClasspathTableModel extends AbstractTableModel implements ItemRemovable {
   }
 
 
+  @Override
   public void removeRow(int row) {
     removeDataRow(row);
   }
@@ -92,10 +93,12 @@ class ClasspathTableModel extends AbstractTableModel implements ItemRemovable {
     myItems.clear();
   }
 
+  @Override
   public int getRowCount() {
     return myItems.size();
   }
 
+  @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
     final ClasspathTableItem<?> item = myItems.get(rowIndex);
     if (columnIndex == EXPORT_COLUMN) {
@@ -111,6 +114,7 @@ class ClasspathTableModel extends AbstractTableModel implements ItemRemovable {
     return null;
   }
 
+  @Override
   public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
     final ClasspathTableItem<?> item = myItems.get(rowIndex);
     if (columnIndex == EXPORT_COLUMN) {
@@ -121,6 +125,7 @@ class ClasspathTableModel extends AbstractTableModel implements ItemRemovable {
     }
   }
 
+  @Override
   public String getColumnName(int column) {
     if (column == EXPORT_COLUMN) {
       return EXPORT_COLUMN_NAME;
@@ -131,6 +136,7 @@ class ClasspathTableModel extends AbstractTableModel implements ItemRemovable {
     return "";
   }
 
+  @Override
   public Class getColumnClass(int column) {
     if (column == EXPORT_COLUMN) {
       return Boolean.class;
@@ -144,10 +150,12 @@ class ClasspathTableModel extends AbstractTableModel implements ItemRemovable {
     return super.getColumnClass(column);
   }
 
+  @Override
   public int getColumnCount() {
     return 3;
   }
 
+  @Override
   public boolean isCellEditable(int row, int column) {
     if (column == EXPORT_COLUMN || column == SCOPE_COLUMN) {
       final ClasspathTableItem<?> item = myItems.get(row);

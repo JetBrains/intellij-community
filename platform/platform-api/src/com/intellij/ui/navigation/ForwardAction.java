@@ -25,10 +25,12 @@ public class ForwardAction extends NavigationAction {
     super(c, "Forward");
   }
 
+  @Override
   protected void doUpdate(final AnActionEvent e) {
     e.getPresentation().setEnabled(getHistory(e).canGoForward());
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     getHistory(e).forward();
   }

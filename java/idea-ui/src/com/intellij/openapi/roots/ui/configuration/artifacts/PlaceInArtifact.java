@@ -61,6 +61,7 @@ public class PlaceInArtifact extends PlaceInProjectStructure {
   public ActionCallback navigate() {
     final Artifact artifact = myContext.getArtifactModel().getArtifactByOriginal(myArtifact);
     return ProjectStructureConfigurable.getInstance(myContext.getProject()).select(myArtifact, true).doWhenDone(new Runnable() {
+      @Override
       public void run() {
         final ArtifactEditorEx artifactEditor = (ArtifactEditorEx)myContext.getOrCreateEditor(artifact);
         if (myParentPath != null && myPackagingElement != null) {

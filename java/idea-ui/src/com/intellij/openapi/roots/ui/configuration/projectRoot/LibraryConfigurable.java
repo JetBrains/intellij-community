@@ -59,6 +59,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
     myProjectStructureElement = new LibraryProjectStructureElement(context, myLibrary);
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     myLibraryEditorComponent = new LibraryRootsComponent(myProject, new Computable<LibraryEditor>() {
       @Override
@@ -67,6 +68,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
       }
     });
     myLibraryEditorComponent.addListener(new Runnable() {
+      @Override
       public void run() {
         myContext.getDaemonAnalyzer().queueUpdate(myProjectStructureElement);
         updateName();
@@ -75,6 +77,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
     return myLibraryEditorComponent.getComponent();
   }
 
+  @Override
   public boolean isModified() {
     return myLibraryEditorComponent != null && myLibraryEditorComponent.hasChanges();
   }
@@ -85,14 +88,17 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
     return myProjectStructureElement;
   }
 
+  @Override
   public void apply() {
     applyProperties();
   }
 
+  @Override
   public void reset() {
     resetProperties();
   }
 
+  @Override
   public void disposeUIResources() {
     if (myLibraryEditorComponent != null) {
       Disposer.dispose(myLibraryEditorComponent);
@@ -100,6 +106,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
     }
   }
 
+  @Override
   public void setDisplayName(final String name) {
     if (!myUpdatingName) {
       getLibraryEditor().setName(name);
@@ -123,10 +130,12 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
     }
   }
 
+  @Override
   public Library getEditableObject() {
     return myLibrary;
   }
 
+  @Override
   public String getBannerSlogan() {
     final LibraryTable libraryTable = myLibrary.getTable();
     String libraryType = libraryTable == null
@@ -135,6 +144,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
     return ProjectBundle.message("project.roots.library.banner.text", getDisplayName(), libraryType);
   }
 
+  @Override
   public String getDisplayName() {
     if (myModel.getModifiableModel().hasLibraryEditor(myLibrary)) {
       return getLibraryEditor().getName();
@@ -166,10 +176,12 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
     }
   }
 
+  @Override
   public Icon getIcon(boolean open) {
     return LibraryPresentationManager.getInstance().getNamedLibraryIcon(myLibrary, myContext);
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {

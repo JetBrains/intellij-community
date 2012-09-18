@@ -57,6 +57,7 @@ public class HideContentAction extends DumbAwareAction {
     e.getPresentation().setVisible(false);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final LayoutTreeSelection selection = myArtifactEditor.getLayoutTreeComponent().getSelection();
     final PackagingElementNode<?> node = selection.getNodeIfSingle();

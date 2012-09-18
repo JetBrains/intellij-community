@@ -42,6 +42,7 @@ import javax.swing.*;
 
 public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
 
+  @Override
   public SdkPathEditor createPathEditor(Sdk sdk) {
     return new JavadocPathsEditor(sdk);
   }

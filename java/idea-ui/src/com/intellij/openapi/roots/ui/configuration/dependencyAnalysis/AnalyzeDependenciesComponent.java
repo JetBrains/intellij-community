@@ -95,6 +95,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
     getSplitter().setProportion(0.3f);
     myMessageBusConnection = myModule.getProject().getMessageBus().connect();
     myMessageBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+      @Override
       public void rootsChanged(ModuleRootEvent event) {
         myClasspaths.clear();
         updateTree();

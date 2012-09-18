@@ -49,6 +49,7 @@ public class SourceItemNode extends SourceItemNodeBase {
     }
   }
 
+  @Override
   public PackagingSourceItem getSourceItem() {
     return mySourceItem;
   }

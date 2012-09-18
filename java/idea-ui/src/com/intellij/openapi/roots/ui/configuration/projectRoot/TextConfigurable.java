@@ -45,48 +45,59 @@ public class TextConfigurable<T> extends NamedConfigurable<T> {
     myObject = object;
   }
 
+  @Override
   public void setDisplayName(final String name) {
     //do nothing
   }
 
+  @Override
   public boolean isModified() {
     return false;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     //do nothing
   }
 
+  @Override
   public void reset() {
     //do nothing
   }
 
+  @Override
   public void disposeUIResources() {
     //do nothing
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {
     return null;
   }
 
+  @Override
   public T getEditableObject() {
     return myObject;
   }
 
+  @Override
   public String getBannerSlogan() {
     return myBannerSlogan;
   }
 
+  @Override
   public String getDisplayName() {
     return myDisplayName;
   }
 
+  @Override
   public Icon getIcon(final boolean open) {
     return myClosedIcon;
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new PanelWithText(myDescriptionText);
   }

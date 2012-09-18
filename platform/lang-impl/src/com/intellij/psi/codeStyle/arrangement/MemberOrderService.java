@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
-import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -68,10 +67,7 @@ public class MemberOrderService {
 
     ArrangementSettings arrangementSettings = settings.getArrangementSettings();
     if (arrangementSettings == null && rearranger instanceof ArrangementStandardSettingsAware) {
-      List<StdArrangementMatchRule> rules = ((ArrangementStandardSettingsAware)rearranger).getDefaultRules();
-      if (rules != null && !rules.isEmpty()) {
-        arrangementSettings = new StdArrangementSettings(rules);
-      }
+      arrangementSettings = ((ArrangementStandardSettingsAware)rearranger).getDefaultSettings();
     }
     
     if (arrangementSettings == null) {
