@@ -81,6 +81,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
     ), ":", ": ");
   }
 
+
   @Override
   public String getLocationString() {
     if (!Registry.is("show.method.base.class.in.java.file.structure")) return null;
@@ -93,7 +94,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
           PsiClass baseClass = base.getContainingClass();
           if (baseClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(baseClass.getQualifiedName())) {
             if (baseClass.getMethods().length > 1 || !base.getModifierList().hasExplicitModifier(PsiModifier.ABSTRACT)) {
-              myLocation = baseClass.getName();
+              myLocation = '\u2191' + baseClass.getName();
             }
           }
         }
