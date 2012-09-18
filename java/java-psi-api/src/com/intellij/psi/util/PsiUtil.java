@@ -966,10 +966,15 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static boolean isExtensionMethod(@Nullable final PsiMethod method) {
-    if (method == null) return false;
+    return findExtensionMethodMarker(method) != null;
+  }
+
+  @Nullable
+  public static PsiJavaToken findExtensionMethodMarker(@Nullable final PsiMethod method) {
+    if (method == null) return null;
     final PsiCodeBlock body = method.getBody();
-    if (body == null) return false;
+    if (body == null) return null;
     final PsiElement previous = PsiTreeUtil.skipSiblingsBackward(body, PsiComment.class, PsiWhiteSpace.class);
-    return isJavaToken(previous, JavaTokenType.DEFAULT_KEYWORD);
+    return previous instanceof PsiJavaToken && isJavaToken(previous, JavaTokenType.DEFAULT_KEYWORD) ? (PsiJavaToken)previous : null;
   }
 }
