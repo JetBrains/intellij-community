@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -25,7 +26,7 @@ import java.awt.*;
 public class ColorChooserServiceImpl extends ColorChooserService {
   @Nullable
   @Override
-  public Color showDialog(Component parent, String caption, Color preselectedColor, boolean enableOpacity) {
-    return ColorPicker.showDialog(parent, caption, preselectedColor, enableOpacity);
+  public Color showDialog(Component parent, String caption, Color preselectedColor, boolean enableOpacity, @Nullable PsiElement element) {
+    return ColorPicker.showDialog(parent, caption, preselectedColor, enableOpacity, element);
   }
 }

@@ -15,21 +15,21 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-/**
- * @author Konstantin Bulenkov
- */
-public abstract class ColorChooserService {
-  public static ColorChooserService getInstance() {
-    return ServiceManager.getService(ColorChooserService.class);
-  }
+public interface ColorPickerListener {
 
-  @Nullable
-  public abstract Color showDialog(Component parent, String caption, Color preselectedColor, boolean enableOpacity,
-                                   @Nullable PsiElement element);
+  /**
+   * Color was changed by user
+   * @param color
+   */
+  void colorChanged(Color color);
+
+  /**
+   * Dialog was closed
+   * @param color resulting color or <code>null</code> if dialog was cancelled
+   */
+  void closed(@Nullable Color color);
 }
