@@ -33,7 +33,6 @@ public class DefaultArrangementEntry implements ArrangementEntry {
 
   @Nullable private final ArrangementEntry       myParent;
   @Nullable private       List<ArrangementEntry> myDependencies;
-  @Nullable private       ArrangementEntry       myPreComputedPrevious;
 
   private final int     myStartOffset;
   private final int     myEndOffset;
@@ -89,14 +88,5 @@ public class DefaultArrangementEntry implements ArrangementEntry {
   @Override
   public boolean canBeMatched() {
     return myCanBeMatched;
-  }
-
-  @Nullable
-  public ArrangementEntry getPreComputedPrevious() {
-    return myPreComputedPrevious;
-  }
-
-  public void setPreComputedPrevious(@Nullable ArrangementEntry preComputedPrevious) {
-    myPreComputedPrevious = preComputedPrevious;
   }
 }

@@ -28,10 +28,13 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.arrangement.*;
-import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
+import com.intellij.psi.codeStyle.arrangement.Rearranger;
+import com.intellij.psi.codeStyle.arrangement.StdArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.settings.*;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementConditionsGrouper;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsRepresentationAware;
+import com.intellij.psi.codeStyle.arrangement.settings.DefaultArrangementSettingsRepresentationManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
@@ -287,10 +290,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   private StdArrangementSettings getSettings(@NotNull CodeStyleSettings settings) {
     StdArrangementSettings result = (StdArrangementSettings)settings.getCommonSettings(myLanguage).getArrangementSettings();
     if (result == null) {
-      List<StdArrangementMatchRule> defaultRules = mySettingsAware.getDefaultRules();
-      if (defaultRules != null) {
-        result = new StdArrangementSettings(defaultRules);
-      }
+      result = mySettingsAware.getDefaultSettings();
     }
     return result;
   }

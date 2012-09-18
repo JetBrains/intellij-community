@@ -23,10 +23,13 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine
+import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule
+import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition
+import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 /**
@@ -53,6 +56,16 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
   @NotNull
   protected CommonCodeStyleSettings getCommonSettings() {
     CodeStyleSettingsManager.getInstance(myFixture.project).currentSettings.getCommonSettings(language)
+  }
+
+  @NotNull
+  protected ArrangementGroupingRule group(@NotNull ArrangementGroupingType type) {
+    group(type, ArrangementEntryOrderType.KEEP)
+  }
+  
+  @NotNull
+  protected ArrangementGroupingRule group(@NotNull ArrangementGroupingType type, @NotNull ArrangementEntryOrderType order) {
+    new ArrangementGroupingRule(type, order)
   }
   
   @NotNull

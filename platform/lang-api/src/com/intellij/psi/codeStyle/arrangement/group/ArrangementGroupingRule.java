@@ -31,6 +31,10 @@ public class ArrangementGroupingRule {
   @NotNull private final ArrangementGroupingType   myGroupingType;
   @NotNull private final ArrangementEntryOrderType myOrderType;
 
+  public ArrangementGroupingRule(@NotNull ArrangementGroupingType groupingType) {
+    this(groupingType, ArrangementEntryOrderType.KEEP);
+  }
+  
   public ArrangementGroupingRule(@NotNull ArrangementGroupingType groupingType, @NotNull ArrangementEntryOrderType orderType) {
     myGroupingType = groupingType;
     myOrderType = orderType;

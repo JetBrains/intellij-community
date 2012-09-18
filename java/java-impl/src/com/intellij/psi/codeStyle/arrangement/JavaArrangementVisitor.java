@@ -18,19 +18,20 @@ package com.intellij.psi.codeStyle.arrangement;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class JavaArrangementVisitor extends JavaElementVisitor {
-
+  
+  private static final String NULL_CONTENT = "no content";
+  
   private static final Map<String, ArrangementModifier> MODIFIERS = new HashMap<String, ArrangementModifier>();
   static {
     MODIFIERS.put(PsiModifier.PUBLIC, ArrangementModifier.PUBLIC);
@@ -48,17 +49,20 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
   @NotNull private final Stack<JavaElementArrangementEntry>           myStack   = new Stack<JavaElementArrangementEntry>();
   @NotNull private final Map<PsiElement, JavaElementArrangementEntry> myEntries = new HashMap<PsiElement, JavaElementArrangementEntry>();
 
-  @NotNull private final List<JavaElementArrangementEntry> myRootEntries;
-  @NotNull private       Collection<TextRange>             myRanges;
-  @Nullable private      Document                          myDocument;
+  @NotNull private final  JavaArrangementParseInfo     myInfo;
+  @NotNull private final  Collection<TextRange>        myRanges;
+  @NotNull private final  Set<ArrangementGroupingType> myGroupingRules;
+  @Nullable private final Document                     myDocument;
 
-  public JavaArrangementVisitor(@NotNull List<JavaElementArrangementEntry> entries,
+  public JavaArrangementVisitor(@NotNull JavaArrangementParseInfo infoHolder,
                                 @Nullable Document document,
-                                @NotNull Collection<TextRange> ranges)
+                                @NotNull Collection<TextRange> ranges,
+                                @NotNull Set<ArrangementGroupingType> groupingRules)
   {
-    myRootEntries = entries;
+    myInfo = infoHolder;
     myDocument = document;
     myRanges = ranges;
+    myGroupingRules = groupingRules;
   }
 
   @Override
@@ -99,7 +103,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     if (entry == null) {
       return;
     }
-    
+
     PsiElement classLBrace = null;
     PsiClass clazz = initializer.getContainingClass();
     if (clazz != null) {
@@ -126,7 +130,48 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
   public void visitMethod(PsiMethod method) {
     ArrangementEntryType type = method.isConstructor() ? ArrangementEntryType.CONSTRUCTOR : ArrangementEntryType.METHOD;
     JavaElementArrangementEntry entry = createNewEntry(method, type, method.getName(), true);
+    if (entry == null) {
+      return;
+    }
+    
     processEntry(entry, method, method.getBody());
+    parseProperties(method, entry);
+  }
+
+  private void parseProperties(PsiMethod method, JavaElementArrangementEntry entry) {
+    if (!myGroupingRules.contains(ArrangementGroupingType.GETTERS_AND_SETTERS)) {
+      return;
+    }
+
+    String propertyName = null;
+    boolean getter = true;
+    if (PropertyUtil.isSimplePropertyGetter(method)) {
+      propertyName = PropertyUtil.getPropertyNameByGetter(method);
+    }
+    else if (PropertyUtil.isSimplePropertySetter(method)) {
+      propertyName = PropertyUtil.getPropertyNameBySetter(method);
+      getter = false;
+    }
+
+    if (propertyName == null) {
+      return;
+    }
+
+    PsiClass containingClass = method.getContainingClass();
+    String className = null;
+    if (containingClass != null) {
+      className = containingClass.getQualifiedName();
+    }
+    if (className == null) {
+      className = NULL_CONTENT;
+    }
+
+    if (getter) {
+      myInfo.registerGetter(propertyName, className, entry);
+    }
+    else {
+      myInfo.registerSetter(propertyName, className, entry);
+    }
   }
 
   @Override
@@ -203,7 +248,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     }
     myEntries.put(element, entry);
     if (current == null) {
-      myRootEntries.add(entry);
+      myInfo.addEntry(entry);
     }
     else {
       current.addChild(entry);

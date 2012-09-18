@@ -20,7 +20,7 @@ import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,14 +29,22 @@ import java.util.List;
  */
 public class StdArrangementSettings implements ArrangementSettings {
 
-  @NotNull private final List<StdArrangementMatchRule> myRules     = new ArrayList<StdArrangementMatchRule>();
   @NotNull private final List<ArrangementGroupingRule> myGroupings = new ArrayList<ArrangementGroupingRule>();
+  @NotNull private final List<StdArrangementMatchRule> myRules     = new ArrayList<StdArrangementMatchRule>();
 
   public StdArrangementSettings() {
   }
 
-  public StdArrangementSettings(@NotNull Collection<StdArrangementMatchRule> rules) {
-    myRules.addAll(rules);
+  @SuppressWarnings("unchecked")
+  public StdArrangementSettings(@NotNull List<StdArrangementMatchRule> rules) {
+    this(Collections.EMPTY_LIST, rules);
+  }
+
+  public StdArrangementSettings(@NotNull List<ArrangementGroupingRule> groupingRules,
+                                @NotNull List<StdArrangementMatchRule> matchRules)
+  {
+    myGroupings.addAll(groupingRules);
+    myRules.addAll(matchRules);
   }
 
   @NotNull
