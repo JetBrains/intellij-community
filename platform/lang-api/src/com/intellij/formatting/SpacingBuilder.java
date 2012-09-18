@@ -88,6 +88,10 @@ public class SpacingBuilder {
       return SpacingBuilder.this;
     }
 
+    public SpacingBuilder lineBreakInCodeIf(boolean option) {
+      return option ? lineBreakInCode() : SpacingBuilder.this;
+    }
+
     public SpacingBuilder lineBreakInCode() {
       for (RuleCondition condition : myConditions) {
         myRules.add(new SpacingRule(condition, 0, 0, 1,
