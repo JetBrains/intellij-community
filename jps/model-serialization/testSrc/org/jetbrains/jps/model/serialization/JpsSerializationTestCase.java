@@ -18,8 +18,10 @@ public abstract class JpsSerializationTestCase extends JpsModelTestCase {
   private String myProjectHomePath;
 
   protected void loadProject(final String relativePath) {
-    final String path = getTestDataFileAbsolutePath(relativePath);
+    loadProjectByAbsolutePath(getTestDataFileAbsolutePath(relativePath));
+  }
 
+  protected void loadProjectByAbsolutePath(String path) {
     myProjectHomePath = FileUtilRt.toSystemIndependentName(path);
     if (myProjectHomePath.endsWith(".ipr")) {
       myProjectHomePath = PathUtil.getParentPath(myProjectHomePath);

@@ -1,5 +1,6 @@
 package org.jetbrains.jps.model.serialization;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
@@ -122,7 +123,7 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
 
   public void testLoadIdeaProject() {
     long start = System.currentTimeMillis();
-    loadProject("..");
+    loadProjectByAbsolutePath(PathManager.getHomePath());
     assertTrue(myProject.getModules().size() > 0);
     System.out.println("JpsProjectSerializationTest: " + myProject.getModules().size() + " modules, " + myProject.getLibraryCollection().getLibraries().size() + " libraries and " +
                        JpsArtifactService.getInstance().getArtifacts(myProject).size() + " artifacts loaded in " + (System.currentTimeMillis() - start) + "ms");
