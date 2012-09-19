@@ -101,7 +101,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
 
 
   public InspectionToolsConfigurable(InspectionProjectProfileManager projectProfileManager, InspectionProfileManager profileManager) {
-//    InspectionToolRegistrar.getInstance().buildInspectionSearchIndexIfNecessary();
+    InspectionToolRegistrar.getInstance().buildInspectionSearchIndexIfNecessary();
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final Set<String> existingProfileNames = myPanels.keySet();
