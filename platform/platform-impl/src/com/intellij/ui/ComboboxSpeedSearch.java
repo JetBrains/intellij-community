@@ -39,6 +39,7 @@ public class ComboboxSpeedSearch extends SpeedSearchBase<JComboBox> {
 
   protected void selectElement(Object element, String selectedText) {
     myComponent.setSelectedItem(element);
+    myComponent.repaint();
   }
 
   protected int getSelectedIndex() {
