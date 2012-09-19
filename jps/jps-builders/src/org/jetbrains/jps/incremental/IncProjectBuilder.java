@@ -98,7 +98,7 @@ public class IncProjectBuilder {
     myBuilderParams = builderParams;
     myCancelStatus = cs;
     myConstantSearch = constantSearch;
-    myTotalModulesWork = (float)pd.rootsIndex.getTotalModuleCount() * 2;  /* multiply by 2 to reflect production and test sources */
+    myTotalModulesWork = pd.jpsProject.getModules().size() * 2;  /* multiply by 2 to reflect production and test sources */
     myTotalModuleLevelBuilderCount = builderRegistry.getModuleLevelBuilderCount();
   }
 

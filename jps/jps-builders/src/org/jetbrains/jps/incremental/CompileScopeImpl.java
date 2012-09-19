@@ -11,13 +11,14 @@ import java.util.*;
  * @author nik
  */
 public class CompileScopeImpl extends CompileScope {
+  protected final boolean myForcedCompilation;
   private final Collection<? extends BuildTargetType> myTypes;
   private final Collection<BuildTarget> myTargets;
   private final Map<BuildTarget, Set<File>> myFiles;
 
-  public CompileScopeImpl(boolean forcedCompilation,
-                          Collection<? extends BuildTargetType> types, Collection<BuildTarget> targets, Map<BuildTarget, Set<File>> files) {
-    super(forcedCompilation);
+  public CompileScopeImpl(boolean forcedCompilation, Collection<? extends BuildTargetType> types, Collection<BuildTarget> targets,
+                          Map<BuildTarget, Set<File>> files) {
+    myForcedCompilation = forcedCompilation;
     myTypes = types;
     myTargets = targets;
     myFiles = files;

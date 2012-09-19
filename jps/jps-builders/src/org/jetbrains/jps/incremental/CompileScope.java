@@ -10,12 +10,6 @@ import java.io.File;
  *         Date: 1/15/12
  */
 public abstract class CompileScope {
-  protected final boolean myForcedCompilation;
-
-  protected CompileScope(boolean forcedCompilation) {
-    myForcedCompilation = forcedCompilation;
-  }
-
   public abstract boolean isAffected(BuildTarget target, @NotNull File file);
 
   public abstract boolean isAffected(@NotNull BuildTarget target);

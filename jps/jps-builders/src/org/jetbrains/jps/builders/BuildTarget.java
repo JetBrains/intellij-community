@@ -1,5 +1,6 @@
 package org.jetbrains.jps.builders;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
 import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
 
@@ -27,6 +28,7 @@ public abstract class BuildTarget {
   public void writeConfiguration(PrintWriter out, ModuleRootsIndex index, ArtifactRootsIndex rootsIndex) {
   }
 
+  @Nullable
   public abstract BuildRootDescriptor findRootDescriptor(String rootId, ModuleRootsIndex index, ArtifactRootsIndex artifactRootsIndex);
 
   @Override
