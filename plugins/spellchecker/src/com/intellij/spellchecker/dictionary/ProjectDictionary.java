@@ -60,21 +60,18 @@ public class ProjectDictionary implements EditableDictionary {
     if (word == null || dictionaries == null) {
       return false;
     }
-    int negatives = 0;
+    int errors = 0;
     for (Dictionary dictionary : dictionaries) {
       try {
         if (dictionary.contains(word)) {
           return true;
         }
-        else {
-          negatives++;
-        }
       }
       catch (EncodingException e) {
-        //System.out.println("e.getMessage() = " + e.getMessage() + " " + word);
+        errors++;
       }
     }
-    if (negatives==dictionaries.size()) throw new EncodingException("WORD_OF_ENTIRELY_UNKNOWN_LETTERS_FOR_ALL");
+    if (errors==dictionaries.size()) throw new EncodingException("WORD_OF_ENTIRELY_UNKNOWN_LETTERS_FOR_ALL");
     return false;
   }
 

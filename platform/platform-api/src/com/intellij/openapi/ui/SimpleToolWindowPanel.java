@@ -74,13 +74,18 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
     });
   }
 
-  public void setToolbar(JComponent c) {
+  public void setToolbar(@Nullable JComponent c) {
+    if (c == null) {
+      remove(myToolbar);
+    }
     myToolbar = c;
 
-    if (myVertical) {
-      add(c, BorderLayout.NORTH);
-    } else {
-      add(c, BorderLayout.WEST);
+    if (c != null) {
+      if (myVertical) {
+        add(c, BorderLayout.NORTH);
+      } else {
+        add(c, BorderLayout.WEST);
+      }
     }
 
     revalidate();

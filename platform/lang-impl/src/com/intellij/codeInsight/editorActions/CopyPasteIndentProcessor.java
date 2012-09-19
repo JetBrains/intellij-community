@@ -108,11 +108,7 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
           final int offset = getLineStartSafeOffset(initialDocument, lineNumber);
           final int caretColumn = caretOffset - offset;
 
-          if (bounds.getStartOffset() != offset) {         //selection
-            startLine += 1;
-            toIndent = Math.abs(bounds.getStartOffset() - offset);
-          }
-          else {
+          if (bounds.getStartOffset() == offset) {
             String toString = initialDocument.getText(TextRange.create(offset, initialDocument.getLineEndOffset(lineNumber)));
             toIndent = StringUtil.findFirst(toString, new CharFilter() {
               @Override
@@ -123,6 +119,12 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
             if (toIndent < 0 || toString.startsWith("\n")) {
               toIndent = caretColumn;
             }
+          }
+          else if (isNotApplicable(initialDocument, offset))
+            return;
+          else {                       // selection
+            startLine += 1;
+            toIndent = Math.abs(bounds.getStartOffset() - offset);
           }
         }
 
@@ -140,6 +142,11 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
           EditorActionUtil.indentLine(project, editor, i, indent);
         }
         indented.set(Boolean.TRUE);
+      }
+
+      private boolean isNotApplicable(DocumentImpl initialDocument, int offset) {
+        return caretOffset < initialDocument.getTextLength() && !StringUtil
+          .isEmptyOrSpaces(initialDocument.getText(TextRange.create(offset, caretOffset)));
       }
     });
     //System.out.println("--- after indent ---\n" + document.getText());

@@ -67,7 +67,7 @@ public class ShowUIDefaultsAction extends AnAction {
           public boolean editCellAt(int row, int column, EventObject e) {
             if (isCellEditable(row, column)) {
               final Object color = getValueAt(row, column);
-              final Color newColor = ColorPicker.showDialog(this, "Choose Color", (Color)color, true);
+              final Color newColor = ColorPicker.showDialog(this, "Choose Color", (Color)color, true, null);
               if (newColor != null) {
                 final ColorUIResource colorUIResource = new ColorUIResource(newColor);
                 final Object key = getValueAt(row, 0);

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.win32;
 
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Set;
-
-import static com.intellij.util.BitUtil.isSet;
-import static com.intellij.util.BitUtil.notSet;
 
 /**
  * @author Dmitry Avdeev
@@ -61,45 +59,9 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   }
 
   @Override
-  public boolean exists(@NotNull VirtualFile file) {
-    if (file.getParent() == null) return true;
-    return myFsCache.getInfo(file) != null;
-  }
-
-  @Override
-  public boolean isDirectory(@NotNull VirtualFile file) {
+  public FileAttributes getAttributes(@NotNull VirtualFile file) {
     final FileInfo fileInfo = myFsCache.getInfo(file);
-    return fileInfo != null && isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_DIRECTORY);
-  }
-
-  @Override
-  public boolean isWritable(@NotNull VirtualFile file) {
-    final FileInfo fileInfo = myFsCache.getInfo(file);
-    return fileInfo != null && notSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_READONLY);
-  }
-
-  @Override
-  public boolean isSymLink(@NotNull VirtualFile file) {
-    final FileInfo fileInfo = myFsCache.getInfo(file);
-    return fileInfo != null && isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_REPARSE_POINT);
-  }
-
-  @Override
-  public boolean isSpecialFile(@NotNull VirtualFile file) {
-    final FileInfo fileInfo = myFsCache.getInfo(file);
-    return fileInfo != null && isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_DEVICE);
-  }
-
-  @Override
-  public long getTimeStamp(@NotNull VirtualFile file) {
-    final FileInfo fileInfo = myFsCache.getInfo(file);
-    return fileInfo != null ? fileInfo.getTimestamp() : DEFAULT_TIMESTAMP;
-  }
-
-  @Override
-  public long getLength(@NotNull VirtualFile file) {
-    final FileInfo fileInfo = myFsCache.getInfo(file);
-    return fileInfo != null ? fileInfo.length : DEFAULT_LENGTH;
+    return fileInfo != null ? fileInfo.toFileAttributes() : null;
   }
 
   @NotNull

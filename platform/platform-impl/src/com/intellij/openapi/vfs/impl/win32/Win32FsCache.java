@@ -46,15 +46,16 @@ class Win32FsCache {
 
     ArrayList<String> names = new ArrayList<String>(fileInfo.length);
     for (FileInfo info : fileInfo) {
-      if (info.name.equals(".")) {
+      String name = info.getName();
+      if (name.equals(".")) {
         myCache.put(absolutePath, info);
         continue;
       }
-      if (info.name.equals("..")) {
+      if (name.equals("..")) {
         continue;
       }
-      myCache.put(absolutePath + "/" + info.name, info);
-      names.add(info.name);
+      myCache.put(absolutePath + "/" + name, info);
+      names.add(name);
     }
 
     return ArrayUtil.toStringArray(names);

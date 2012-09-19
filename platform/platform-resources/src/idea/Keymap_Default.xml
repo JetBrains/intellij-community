@@ -916,7 +916,6 @@
   <action id="Console.TableResult.PreviousPage"><keyboard-shortcut first-keystroke="control alt UP"/></action>
   <action id="Console.TableResult.NextPage"><keyboard-shortcut first-keystroke="control alt DOWN"/></action>
   <action id="Console.TableResult.Reload"><keyboard-shortcut first-keystroke="control R"/></action>
-  <action id="Console.TableResult.CopyQuery"><keyboard-shortcut first-keystroke="control alt shift C"/></action>
 
   <action id="Console.History.Next"><keyboard-shortcut first-keystroke="control UP"/></action>
   <action id="Console.History.Previous"><keyboard-shortcut first-keystroke="control DOWN"/></action>

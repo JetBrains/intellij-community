@@ -148,7 +148,7 @@ public class RefreshWorker {
       else {
         final long currentTimestamp = persistence.getTimeStamp(file);
         final long upToDateTimestamp = attributes.lastModified;
-        final long currentLength = persistence.getLengthNoFollow(file);
+        final long currentLength = persistence.getLength(file);
         final long upToDateLength = attributes.length;
 
         if (currentTimestamp != upToDateTimestamp || currentLength != upToDateLength) {

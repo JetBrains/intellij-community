@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util;
+package com.intellij.ui;
 
-/**
- * @param <T> Input value type.
- * @see com.intellij.util.CommonProcessors
- */
-public interface Processor<T> {
-  Processor TRUE = new Processor() {
-    @Override
-    public boolean process(Object o) {
-      return true;
-    }
-  };
+import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
+
+public interface ColorPickerListener {
+
   /**
-   * @param t consequently takes value of each element of the set this processor is passed to for processing.
-   * @return {@code true} to continue processing or {@code false} to stop.
+   * Color was changed by user
+   * @param color
    */
-  boolean process(T t);
+  void colorChanged(Color color);
+
+  /**
+   * Dialog was closed
+   * @param color resulting color or <code>null</code> if dialog was cancelled
+   */
+  void closed(@Nullable Color color);
 }

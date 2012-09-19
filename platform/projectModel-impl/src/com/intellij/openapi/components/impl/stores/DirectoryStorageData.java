@@ -73,7 +73,7 @@ public class DirectoryStorageData {
           pathMacroSubstitutor.addUnknownMacros(componentName, unknownMacros);
         }
 
-        put(componentName, FileSystem.FILE_SYSTEM.createFile(file.getCanonicalPath()), element, true);
+        put(componentName, FileSystem.FILE_SYSTEM.createFile(file.getPath()), element, true);
       }
       catch (IOException e) {
         LOG.info("Unable to load state", e);

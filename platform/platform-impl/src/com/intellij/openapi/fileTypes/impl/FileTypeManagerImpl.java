@@ -349,38 +349,33 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @NotNull
   private static FileType detectFromContent(@NotNull final VirtualFile file) {
     try {
-      final VirtualFile canonicalFile = file.getCanonicalFile();
-      if (canonicalFile == null) {
-        return UnknownFileType.INSTANCE;
-      }
-
-      final long length = canonicalFile.getLength();
+      final long length = file.getLength();
       if (length == 0) {
         return UnknownFileType.INSTANCE;
       }
 
-      final VirtualFileSystem fileSystem = canonicalFile.getFileSystem();
+      final VirtualFileSystem fileSystem = file.getFileSystem();
       if (!(fileSystem instanceof FileSystemInterface)) return UnknownFileType.INSTANCE;
 
-      final InputStream inputStream = ((FileSystemInterface)fileSystem).getInputStream(canonicalFile);
+      final InputStream inputStream = ((FileSystemInterface)fileSystem).getInputStream(file);
       final Ref<FileType> result;
       try {
         result = new Ref<FileType>(UnknownFileType.INSTANCE);
         FileUtil.processFirstBytes(inputStream, DETECT_BUFFER_SIZE, new Processor<ByteSequence>() {
           @Override
           public boolean process(ByteSequence byteSequence) {
-            boolean isText = guessIfText(canonicalFile, byteSequence);
+            boolean isText = guessIfText(file, byteSequence);
             CharSequence text;
             if (isText) {
               byte[] bytes = Arrays.copyOf(byteSequence.getBytes(), byteSequence.getLength());
-              text = LoadTextUtil.getTextByBinaryPresentation(bytes, canonicalFile);
+              text = LoadTextUtil.getTextByBinaryPresentation(bytes, file);
             }
             else {
               text = null;
             }
             FileType detected = null;
             for (FileTypeDetector detector : FileTypeDetectorHolder.FILE_TYPE_DETECTORS) {
-              detected = detector.detect(canonicalFile, byteSequence, text);
+              detected = detector.detect(file, byteSequence, text);
               if (detected != null) break;
             }
 
@@ -398,7 +393,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       FileType fileType = result.get();
 
       if (LOG.isDebugEnabled()) {
-        LOG.debug(canonicalFile + "; type=" + fileType.getDescription() + "; " + DETECTED_COUNT.incrementAndGet());
+        LOG.debug(file + "; type=" + fileType.getDescription() + "; " + DETECTED_COUNT.incrementAndGet());
       }
       return fileType;
     }

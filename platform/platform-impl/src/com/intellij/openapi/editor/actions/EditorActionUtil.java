@@ -44,7 +44,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EditorPopupHandler;
-import gnu.trove.TIntHashSet;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -65,23 +64,16 @@ public class EditorActionUtil {
    * expect the caret to be located at the near future.
    */
   public static final Key<Integer> EXPECTED_CARET_OFFSET = Key.create("expectedEditorOffset");
-
-  protected static final Object EDIT_COMMAND_GROUP   = Key.create("EditGroup");
-  public static final    Object DELETE_COMMAND_GROUP = Key.create("DeleteGroup");
-
-  private static final TIntHashSet SPECIAL_NON_ID_SYMBOLS = new TIntHashSet();
-
-  static {
-    SPECIAL_NON_ID_SYMBOLS.add('\'');
-    SPECIAL_NON_ID_SYMBOLS.add('\"');
-  }
+  
+  protected static final Object EDIT_COMMAND_GROUP = Key.create("EditGroup");
+  public static final Object DELETE_COMMAND_GROUP = Key.create("DeleteGroup");
 
   private EditorActionUtil() {
   }
 
   /**
    * Tries to change given editor's viewport position in vertical dimension by the given number of visual lines.
-   *
+   * 
    * @param editor     target editor which viewport position should be changed
    * @param lineShift  defines viewport position's vertical change length
    * @param columnShift  defines viewport position's horizontal change length
@@ -102,7 +94,7 @@ public class EditorActionUtil {
     if (!moveCaret) {
       return;
     }
-
+    
     Rectangle viewRectangle = editor.getScrollingModel().getVisibleArea();
     int lineNumber = editor.getCaretModel().getVisualPosition().line;
     if (viewRectangle != null) {
@@ -228,26 +220,16 @@ public class EditorActionUtil {
 
     final boolean firstIsIdentifierPart = Character.isJavaIdentifierPart(prev);
     final boolean secondIsIdentifierPart = Character.isJavaIdentifierPart(current);
-    if (!firstIsIdentifierPart && secondIsIdentifierPart && !SPECIAL_NON_ID_SYMBOLS.contains(prev)) {
+    if (!firstIsIdentifierPart && secondIsIdentifierPart) {
       return true;
     }
 
     if (isCamel && firstIsIdentifierPart && secondIsIdentifierPart && isHumpBound(text, offset, true)) {
       return true;
     }
-    
-    if (Character.isWhitespace(current)) {
-      return false;
-    }
-    else if (Character.isWhitespace(prev)) {
-      return true;
-    }
-    else if (SPECIAL_NON_ID_SYMBOLS.contains(current)) {
-      return false;
-    }
-    else {
-      return firstIsIdentifierPart && !secondIsIdentifierPart;
-    }
+
+    return (Character.isWhitespace(prev) || firstIsIdentifierPart) &&
+           !Character.isWhitespace(current) && !secondIsIdentifierPart;
   }
   
   private static boolean isLowerCaseOrDigit(char c) {

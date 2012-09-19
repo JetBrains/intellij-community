@@ -360,16 +360,7 @@ public class FileSystemUtil {
     @Override
     public FileAttributes getAttributes(@NotNull final String path) throws Exception {
       final FileInfo fileInfo = myInstance.getInfo(path);
-      if (fileInfo == null) return null;
-      if (fileInfo.attributes == FileInfo.BROKEN_SYMLINK) return FileAttributes.BROKEN_SYMLINK;
-
-      final boolean isDirectory = isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_DIRECTORY);
-      final boolean isSpecial = isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_DEVICE);
-      final boolean isSymlink = isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_REPARSE_POINT);
-      final boolean isHidden = isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_HIDDEN);
-      final boolean isWritable = !isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_READONLY);
-      final long timestamp = fileInfo.getTimestamp();
-      return new FileAttributes(isDirectory, isSpecial, isSymlink, isHidden, fileInfo.length, timestamp, isWritable);
+      return fileInfo != null ? fileInfo.toFileAttributes() : null;
     }
 
     @Override
