@@ -73,8 +73,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     myProjectPath = FileUtil.toCanonicalPath(params.getProjectId());
     String globalOptionsPath = FileUtil.toCanonicalPath(globals.getGlobalOptionsPath());
     myBuildType = convertCompileType(params.getBuildType());
-    Set<String> modules = new HashSet<String>(params.getModuleNameList());
-    List<String> artifacts = params.getArtifactNameList();
+    List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes = params.getScopeList();
     List<String> filePaths = params.getFilePathList();
     Map<String, String> builderParams = new HashMap<String, String>();
     for (CmdlineRemoteProto.Message.KeyValuePair pair : params.getBuilderParameterList()) {
@@ -82,7 +81,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
     myInitialFSDelta = delta;
     JpsModelLoaderImpl loader = new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, pathVars, null);
-    myBuildRunner = new BuildRunner(loader, modules, artifacts, filePaths, builderParams);
+    myBuildRunner = new BuildRunner(loader, scopes, filePaths, builderParams);
   }
 
   public void run() {

@@ -23,12 +23,11 @@ import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.builders.BuildResult;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.incremental.AllProjectScope;
-import org.jetbrains.jps.incremental.BuildLoggingManager;
-import org.jetbrains.jps.incremental.CompileScope;
-import org.jetbrains.jps.incremental.Utils;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.java.JavaBuilderLoggerImpl;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElementFactory;
@@ -152,8 +151,12 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
     ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(myArtifactBuilderLogger, new JavaBuilderLoggerImpl()));
     try {
       myArtifactBuilderLogger.clear();
-      final CompileScope scope = new AllProjectScope(descriptor.jpsProject,
-                                                     new HashSet<JpsArtifact>(Arrays.asList(artifacts)), force);
+      List<BuildTarget> targets = new ArrayList<BuildTarget>();
+      for (JpsArtifact artifact : artifacts) {
+        targets.add(new ArtifactBuildTarget(artifact));
+      }
+      final CompileScope scope = new CompileScopeImpl(force, JavaModuleBuildTargetType.ALL_TYPES, targets,
+                                                      Collections.<BuildTarget, Set<File>>emptyMap());
       result = doBuild(descriptor, scope, !force, false, false);
     }
     finally {

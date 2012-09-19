@@ -494,13 +494,22 @@ public class IncProjectBuilder {
   }
 
   private void _buildChunk(CompileContext context, CompileScope scope, ModuleChunk chunk) throws ProjectBuildException {
-    if (scope.isAffected(chunk)) {
+    if (isAffected(scope, chunk)) {
       buildChunk(context, chunk);
     }
     else {
       final float fraction = updateFractionBuilderFinished(chunk.getModules().size());
       context.setDone(fraction);
     }
+  }
+
+  private static boolean isAffected(CompileScope scope, ModuleChunk chunk) {
+    for (ModuleBuildTarget target : chunk.getTargets()) {
+      if (scope.isAffected(target)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void buildChunk(CompileContext context, final ModuleChunk chunk) throws ProjectBuildException {
@@ -895,7 +904,7 @@ public class IncProjectBuilder {
         final List<RootDescriptor> roots = pd.rootsIndex.getModuleRoots(context, target.getModule());
         for (RootDescriptor rd : roots) {
           if (target.isTests() == rd.isTestRoot) {
-            marked |= fsState.markAllUpToDate(context.getScope(), rd, timestamps, context.getCompilationStartStamp());
+            marked |= fsState.markAllUpToDate(context.getProjectDescriptor().jpsProject, context.getScope(), rd, timestamps, context.getCompilationStartStamp());
           }
         }
       }

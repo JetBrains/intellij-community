@@ -93,13 +93,19 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.RequestFuture;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.incremental.Utils;
+import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
 
 import javax.swing.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+
+import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 public class CompileDriver {
 
@@ -412,21 +418,9 @@ public class CompileDriver {
   }
 
   @Nullable
-  private RequestFuture compileInExternalProcess(final @NotNull CompileContextImpl compileContext, @NotNull Collection<Module> modules, @NotNull Collection<Artifact> artifacts,
+  private RequestFuture compileInExternalProcess(final @NotNull CompileContextImpl compileContext, @NotNull List<TargetTypeBuildScope> scopes,
                                                  final @NotNull Collection<String> paths, @Nullable final CompileStatusNotification callback)
     throws Exception {
-    Collection<String> moduleNames = Collections.emptyList();
-    if (modules.size() > 0) {
-      moduleNames = new ArrayList<String>(modules.size());
-      for (Module module : modules) {
-        moduleNames.add(module.getName());
-      }
-    }
-    List<String> artifactNames = new ArrayList<String>();
-    for (Artifact artifact : artifacts) {
-      artifactNames.add(artifact.getName());
-    }
-
     final CompileScope scope = compileContext.getCompileScope();
     // need to pass scope's user data to server
     final Map<Key, Object> exported = scope.exportUserData();
@@ -447,7 +441,7 @@ public class CompileDriver {
 
     final BuildManager buildManager = BuildManager.getInstance();
     buildManager.cancelAutoMakeTasks(myProject);
-    return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), moduleNames, artifactNames, paths, builderParams, new DefaultMessageHandler(myProject) {
+    return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
       @Override
       public void sessionTerminated() {
       }
@@ -594,13 +588,37 @@ public class CompileDriver {
             }
 
             final Collection<String> paths = fetchFiles(compileContext);
-            final List<Module> modules = paths.isEmpty() && !isRebuild && !allProjectModulesAffected(compileContext)? Arrays.asList(compileContext.getCompileScope().getAffectedModules()) : Collections.<Module>emptyList();
-            final Set<Artifact> artifacts = new ReadAction<Set<Artifact>>() {
-              protected void run(final Result<Set<Artifact>> result) {
-                result.setResult(ArtifactCompileScope.getArtifactsToBuild(myProject, compileContext.getCompileScope(), true));
+            final List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
+            if (paths.isEmpty()) {
+              if (!isRebuild && !allProjectModulesAffected(compileContext)) {
+                Module[] affectedModules = compileContext.getCompileScope().getAffectedModules();
+                for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
+                  TargetTypeBuildScope.Builder builder = TargetTypeBuildScope.newBuilder().setTypeId(type.getTypeId());
+                  for (Module module : affectedModules) {
+                    builder.addTargetId(module.getName());
+                  }
+                  scopes.add(builder.build());
+                }
               }
-            }.execute().getResultObject();
-            final RequestFuture future = compileInExternalProcess(compileContext, modules, artifacts, paths, callback);
+              else {
+                scopes.addAll(CmdlineProtoUtil.createAllModulesScopes());
+              }
+            }
+            new ReadAction() {
+              protected void run(final Result result) {
+                Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(myProject, compileContext.getCompileScope(), true);
+                if (!artifacts.isEmpty()) {
+                  TargetTypeBuildScope.Builder builder =
+                    TargetTypeBuildScope.newBuilder().setTypeId(ArtifactBuildTargetType.INSTANCE.getTypeId());
+                  for (Artifact artifact : artifacts) {
+                    builder.addTargetId(artifact.getName());
+                  }
+                  scopes.add(builder.build());
+                }
+              }
+            }.execute();
+
+            final RequestFuture future = compileInExternalProcess(compileContext, scopes, paths, callback);
             if (future != null) {
               while (!future.waitFor(200L , TimeUnit.MILLISECONDS)) {
                 if (indicator.isCanceled()) {
@@ -858,18 +876,9 @@ public class CompileDriver {
       else {
         message = CompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", errorCount, warningCount);
       }
-      message = message + " in " + formatDuration(duration);
+      message = message + " in " + Utils.formatDuration(duration);
     }
     return message;
-  }
-
-  public static String formatDuration(long duration) {
-    final long minutes = duration / 60000;
-    final long seconds = (duration % 60000) / 1000;
-    if (minutes > 0L) {
-      return minutes + " min " + seconds + " sec";
-    }
-    return seconds + " sec";
   }
 
   private ExitStatus doCompile(final CompileContextEx context, boolean isRebuild, final boolean forceCompile, final boolean onlyCheckStatus) {

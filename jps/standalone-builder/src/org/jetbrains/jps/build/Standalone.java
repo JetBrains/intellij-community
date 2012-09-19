@@ -6,18 +6,23 @@ import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
 import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.api.CmdlineProtoUtil;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.JpsModelLoader;
 import org.jetbrains.jps.cmdline.JpsModelLoaderImpl;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.Utils;
+import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.model.JpsModel;
 
 import java.io.File;
 import java.util.*;
+
+import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 /**
  * @author nik
@@ -104,6 +109,7 @@ public class Standalone {
       return;
     }
 
+    long start = System.currentTimeMillis();
     try {
       runBuild(loader, dataStorageRoot, buildType, modulesSet, artifactsList, true, new ConsoleMessageHandler());
     }
@@ -111,23 +117,45 @@ public class Standalone {
       System.err.println("Internal error: " + t.getMessage());
       t.printStackTrace();
     }
+    System.out.println("Build finished in " + Utils.formatDuration(System.currentTimeMillis() - start));
   }
 
   public static void runBuild(JpsModelLoader loader, final File dataStorageRoot, BuildType buildType, Set<String> modulesSet,
                               List<String> artifactsList, final boolean includeTests, final MessageHandler messageHandler) throws Exception {
-    final BuildRunner buildRunner = new BuildRunner(loader, modulesSet, artifactsList, Collections.<String>emptyList(), Collections.<String, String>emptyMap());
+    List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
+    if (modulesSet.isEmpty()) {
+      scopes.addAll(CmdlineProtoUtil.createAllModulesScopes());
+    }
+    else {
+      for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
+        if (includeTests || !type.isTests()) {
+          scopes.add(TargetTypeBuildScope.newBuilder().setTypeId(type.getTypeId()).addAllTargetId(modulesSet).build());
+        }
+      }
+    }
+    if (artifactsList.isEmpty()) {
+      scopes.add(TargetTypeBuildScope.newBuilder().setTypeId(ArtifactBuildTargetType.INSTANCE.getTypeId()).addAllTargetId(artifactsList).build());
+    }
+    final BuildRunner buildRunner = new BuildRunner(loader, scopes, Collections.<String>emptyList(), Collections.<String, String>emptyMap());
     ProjectDescriptor descriptor = buildRunner.load(messageHandler, dataStorageRoot, new BuildFSState(true));
-    buildRunner.runBuild(descriptor, CanceledStatus.NULL, null, messageHandler, includeTests, buildType);
+    try {
+      buildRunner.runBuild(descriptor, CanceledStatus.NULL, null, messageHandler, includeTests, buildType);
+    }
+    finally {
+      descriptor.release();
+    }
   }
 
   private static class ConsoleMessageHandler implements MessageHandler {
     @Override
     public void processMessage(BuildMessage msg) {
+      String messageText = msg.getMessageText();
+      if (messageText.isEmpty()) return;
       if (msg.getKind() == BuildMessage.Kind.ERROR) {
-        System.err.println("Error: " + msg.getMessageText());
+        System.err.println("Error: " + messageText);
       }
-      else {
-        System.out.println(msg.getMessageText());
+      else if (msg.getKind() != BuildMessage.Kind.PROGRESS || !messageText.startsWith("Compiled") && !messageText.startsWith("Copying")) {
+        System.out.println(messageText);
       }
     }
   }
