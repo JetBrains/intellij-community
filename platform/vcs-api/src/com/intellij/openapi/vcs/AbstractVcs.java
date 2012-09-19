@@ -122,13 +122,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   @NonNls
   public abstract String getDisplayName();
 
-  /**
-   * Use {@link com.intellij.openapi.options.ConfigurableEP} for this
-   */
-  @Nullable
-  public Configurable getConfigurable() {
-    return null;
-  }
+  public abstract Configurable getConfigurable();
 
   @Nullable
   public TransactionProvider getTransactionProvider() {
