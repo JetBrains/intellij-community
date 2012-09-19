@@ -375,6 +375,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
 
         for (final PsiField field : fields) {
           if (field == element) continue;
+          assert field.isValid();
           final PsiModifierList modifierList = field.getModifierList();
           if (staticContext && (modifierList != null && !modifierList.hasModifierProperty(PsiModifier.STATIC))) continue;
 
