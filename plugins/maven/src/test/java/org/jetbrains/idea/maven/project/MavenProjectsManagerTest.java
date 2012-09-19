@@ -661,7 +661,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
   public void testSavingAndLoadingState() throws Exception {
     MavenProjectsManagerState state = myProjectsManager.getState();
     assertTrue(state.originalFiles.isEmpty());
-    assertTrue(state.activeProfiles.isEmpty());
+    assertTrue(MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().enabledProfiles.isEmpty());
     assertTrue(state.ignoredFiles.isEmpty());
     assertTrue(state.ignoredPathMasks.isEmpty());
 
@@ -692,14 +692,14 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     state = myProjectsManager.getState();
     assertUnorderedElementsAreEqual(state.originalFiles, p1.getPath(), p2.getPath());
-    assertUnorderedElementsAreEqual(state.activeProfiles, "one", "two");
+    assertUnorderedElementsAreEqual(MavenWorkspaceSettingsComponent.getInstance(myProject).getState().enabledProfiles, "one", "two");
     assertUnorderedElementsAreEqual(state.ignoredFiles, p1.getPath());
     assertUnorderedElementsAreEqual(state.ignoredPathMasks, "*.xxx");
 
     MavenProjectsManagerState newState = new MavenProjectsManagerState();
 
     newState.originalFiles = Arrays.asList(p1.getPath(), p3.getPath());
-    newState.activeProfiles = Arrays.asList("three");
+    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().setEnabledProfiles(Arrays.asList("three"));
     newState.ignoredFiles = Collections.singleton(p1.getPath());
     newState.ignoredPathMasks = Arrays.asList("*.zzz");
 

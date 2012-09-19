@@ -88,6 +88,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private final List<Listener> myManagerListeners = ContainerUtil.createEmptyCOWList();
   private ModificationTracker myModificationTracker;
 
+  private MavenWorkspaceSettings myWorkspaceSettings;
+
   public static MavenProjectsManager getInstance(Project p) {
     return p.getComponent(MavenProjectsManager.class);
   }
@@ -126,7 +128,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private MavenWorkspaceSettings getWorkspaceSettings() {
-    return MavenWorkspaceSettingsComponent.getInstance(myProject).getState();
+    if (myWorkspaceSettings == null) {
+      myWorkspaceSettings = MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings();
+    }
+
+    return myWorkspaceSettings;
   }
 
   public File getLocalRepository() {
@@ -152,7 +158,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void initNew(List<VirtualFile> files, List<String> explicitProfiles) {
     myState.originalFiles = MavenUtil.collectPaths(files);
-    myState.activeProfiles = explicitProfiles;
+    getWorkspaceSettings().setEnabledProfiles(explicitProfiles);
     doInit(true);
   }
 
@@ -207,13 +213,12 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void applyTreeToState() {
     myState.originalFiles = myProjectsTree.getManagedFilesPaths();
-    myState.activeProfiles = new ArrayList<String>(myProjectsTree.getExplicitProfiles());
     myState.ignoredFiles = new THashSet<String>(myProjectsTree.getIgnoredFilesPaths());
     myState.ignoredPathMasks = myProjectsTree.getIgnoredFilesPatterns();
   }
 
   private void applyStateToTree() {
-    myProjectsTree.resetManagedFilesPathsAndProfiles(myState.originalFiles, myState.activeProfiles);
+    myProjectsTree.resetManagedFilesPathsAndProfiles(myState.originalFiles, getWorkspaceSettings().enabledProfiles);
     myProjectsTree.setIgnoredFilesPaths(new ArrayList<String>(myState.ignoredFiles));
     myProjectsTree.setIgnoredFilesPatterns(myState.ignoredPathMasks);
   }

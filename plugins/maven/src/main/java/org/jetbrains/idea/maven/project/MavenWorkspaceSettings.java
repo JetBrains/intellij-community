@@ -15,7 +15,19 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 public class MavenWorkspaceSettings {
   public MavenGeneralSettings generalSettings = new MavenGeneralSettings();
   public MavenImportingSettings importingSettings = new MavenImportingSettings();
+
+  public List<String> enabledProfiles = new ArrayList<String>();
+
+  public void setEnabledProfiles(Collection<String> profiles) {
+    enabledProfiles.clear();
+    enabledProfiles.addAll(profiles);
+  }
+
 }
