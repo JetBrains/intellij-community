@@ -16,8 +16,8 @@
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.*;
@@ -26,7 +26,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Denis Zhdanov
@@ -95,8 +97,6 @@ public class ArrangementUtil {
    * <ul>
    *   <li>it's start offset is located at the start of the same line where given range starts;</li>
    *   <li>it's end offset is located at the end of the same line where given range ends;</li>
-   *   <li>all symbols between the resulting range start offset and given range's start offset are white spaces or tabulations;</li>
-   *   <li>all symbols between the given range's end offset and resulting range's end offset are white spaces or tabulations;</li>
    * </ul>
    * </pre>
    * This method is expected to be used in a situation when we want to arrange complete rows.
@@ -127,37 +127,17 @@ public class ArrangementUtil {
    * </pre>
    * 
    * @param initialRange  anchor range
-   * @param text          target text against which the ranges are built
+   * @param document      target document against which the ranges are built
    * @return              expanded range if possible; <code>null</code> otherwise
    */
   @Nullable
-  public static TextRange expandToLine(@NotNull TextRange initialRange, @NotNull CharSequence text) {
-    int startOffsetToUse = initialRange.getStartOffset();
-    for (int i = startOffsetToUse - 1; i >= 0; i--) {
-      char c = text.charAt(i);
-      if (!StringUtil.isWhiteSpace(c)) {
-        return null;
-      }
-      else if (c == '\n') {
-        break;
-      }
-      else {
-        startOffsetToUse = i;
-      }
-    }
-    
-    int endOffsetToUse = initialRange.getEndOffset();
-    for (int i = endOffsetToUse; i < text.length(); i++) {
-      char c = text.charAt(i);
-      if (!StringUtil.isWhiteSpace(c)) {
-        return null;
-      }
-      else if (c == '\n') {
-        endOffsetToUse = i;
-        break;
-      }
-    }
-    
+  public static TextRange expandToLine(@NotNull TextRange initialRange, @NotNull Document document) {
+    int startLine = document.getLineNumber(initialRange.getStartOffset());
+    int startOffsetToUse = document.getLineStartOffset(startLine);
+
+    int endLine = document.getLineNumber(initialRange.getEndOffset());
+    int endOffsetToUse = document.getLineEndOffset(endLine);
+
     return TextRange.create(startOffsetToUse, endOffsetToUse);
   }
   //endregion
