@@ -214,25 +214,27 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
   public String suggestedName() {
     switch (myTestType) {
       case TEST_CLASS:
-        return getTitle() + " in " + myClassName;
+        return getPluralTitle() + " in " + myClassName;
       case TEST_METHOD:
-        return getTitle() + " in " + myClassName + "." + myMethodName;
+        return getTitle() + " " + myClassName + "." + myMethodName;
       case TEST_SCRIPT:
         String name = new File(getScriptName()).getName();
         if (name.endsWith(".py")) {
           name = name.substring(0, name.length() - 3);
         }
-        return getTitle() + " in " + name;
+        return getPluralTitle() + " in " + name;
       case TEST_FOLDER:
-        return getTitle() + " in " + FileUtil.toSystemDependentName(myFolderName);
+        return getPluralTitle() + " in " + FileUtil.toSystemDependentName(myFolderName);
       case TEST_FUNCTION:
-        return getTitle() + " in " + myMethodName;
+        return getTitle() + " " + myMethodName;
       default:
         throw new IllegalStateException("Unknown test type: " + myTestType);
     }
   }
 
   protected abstract String getTitle();
+
+  protected abstract String getPluralTitle();
 
   @Override
   public RefactoringElementListener getRefactoringElementListener(PsiElement element) {

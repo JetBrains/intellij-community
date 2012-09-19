@@ -19,7 +19,8 @@ public class PythonUnitTestRunConfiguration extends
                                             AbstractPythonTestRunConfiguration
                                               implements PythonUnitTestRunConfigurationParams {
   private boolean myIsPureUnittest = true;
-  protected String myTitle = "Unittests";
+  protected String myTitle = "Unittest";
+  protected String myPluralTitle = "Unittests";
 
   public PythonUnitTestRunConfiguration(RunConfigurationModule module,
                                         ConfigurationFactory configurationFactory,
@@ -57,6 +58,11 @@ public class PythonUnitTestRunConfiguration extends
   @Override
   protected String getTitle() {
     return myTitle;
+  }
+
+  @Override
+  protected String getPluralTitle() {
+    return myPluralTitle;
   }
 
   public static void copyParams(PythonUnitTestRunConfigurationParams source, PythonUnitTestRunConfigurationParams target) {

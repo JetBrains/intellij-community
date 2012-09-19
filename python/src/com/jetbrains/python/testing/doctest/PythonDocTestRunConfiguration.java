@@ -16,7 +16,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfiguration
                                           implements PythonDocTestRunConfigurationParams {
-  protected String myTitle = "Doctests";
+  protected String myPluralTitle = "Doctests";
+  protected String myTitle = "Doctest";
   public PythonDocTestRunConfiguration(RunConfigurationModule module,
                                        ConfigurationFactory configurationFactory,
                                        String name) {
@@ -51,6 +52,11 @@ public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfigur
   @Override
   protected String getTitle() {
     return myTitle;
+  }
+
+  @Override
+  protected String getPluralTitle() {
+    return myPluralTitle;
   }
 
   public static void copyParams(PythonDocTestRunConfigurationParams source, PythonDocTestRunConfigurationParams target) {
