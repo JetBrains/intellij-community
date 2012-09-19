@@ -92,9 +92,8 @@ public class ExpectedTypesProvider {
   @NotNull
   private static ExpectedTypeInfoImpl createInfoImpl(@NotNull PsiType type, int kind, PsiType defaultType, @NotNull TailType tailType) {
     int dims = 0;
-    while (type instanceof PsiArrayType) {
+    while (type instanceof PsiArrayType && defaultType instanceof PsiArrayType) {
       type = ((PsiArrayType) type).getComponentType();
-      LOG.assertTrue(defaultType instanceof PsiArrayType);
       defaultType = ((PsiArrayType) defaultType).getComponentType();
       dims++;
     }

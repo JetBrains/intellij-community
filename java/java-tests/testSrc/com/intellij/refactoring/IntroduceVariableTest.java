@@ -283,6 +283,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   public void testFromForInitializer() throws Exception {
     doTest(new MockIntroduceVariableHandler("list", true, true, true, "java.util.List"));
   }
+
+  public void testInvalidPostfixExpr() throws Exception {
+    doTest(new MockIntroduceVariableHandler("a1", true, false, true, "int[]"));
+  }
   
   public void testPolyadic() throws Exception {
     doTest(new MockIntroduceVariableHandler("b1", true, true, true, "boolean"));
