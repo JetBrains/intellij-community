@@ -274,7 +274,7 @@
     <importFilteringRule implementation="org.jetbrains.plugins.groovy.findUsages.GrImportFilteringRule"/>
 
     <readWriteAccessDetector implementation="org.jetbrains.plugins.groovy.findUsages.GroovyReadWriteAccessDetector" order="before java"/>
-    <findUsagesHandlerFactory implementation="org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesHandlerFactory"/>
+    <findUsagesHandlerFactory implementation="org.jetbrains.plugins.groovy.findUsages.GroovyFieldFindUsagesHandlerFactory"/>
     <highlightUsagesHandlerFactory implementation="org.jetbrains.plugins.groovy.findUsages.GrHighlightHandlerFactory"/>
     <lang.braceMatcher language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyBraceMatcher"/>
     <lang.importOptimizer language="Groovy" implementationClass="org.jetbrains.plugins.groovy.editor.GroovyImportOptimizer"/>

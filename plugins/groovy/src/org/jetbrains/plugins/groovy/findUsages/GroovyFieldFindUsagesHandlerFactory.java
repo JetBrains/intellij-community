@@ -42,8 +42,8 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyFindUsagesHandlerFactory extends JavaFindUsagesHandlerFactory {
-  public GroovyFindUsagesHandlerFactory(Project project) {
+public class GroovyFieldFindUsagesHandlerFactory extends JavaFindUsagesHandlerFactory {
+  public GroovyFieldFindUsagesHandlerFactory(Project project) {
     super(project);
   }
 
