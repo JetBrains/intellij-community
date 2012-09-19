@@ -16,7 +16,6 @@
 package com.siyeh.ipp.types;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
@@ -24,21 +23,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.HashMap;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class ReplaceLambdaWithAnonymousIntention extends Intention {
   private static final Logger LOG = Logger.getInstance("#" + ReplaceLambdaWithAnonymousIntention.class.getName());
@@ -111,25 +105,6 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
       LOG.assertTrue(codeBlock != null);
 
       codeBlock = (PsiCodeBlock)codeBlock.replace(blockFromText);
-      final Set<PsiVariable> vars2BeFinal = new HashSet<PsiVariable>();
-      codeBlock.accept(new JavaRecursiveElementWalkingVisitor() {
-        @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-          super.visitReferenceExpression(expression);
-          final PsiElement resolve = expression.resolve();
-          if (resolve instanceof PsiVariable) {
-            final PsiVariable variable = (PsiVariable)resolve;
-            final PsiClass innerClass = HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(variable, expression);
-            if (innerClass != null) {
-              vars2BeFinal.add(variable);
-            }
-          }
-        }
-      });
-      for (PsiVariable var : vars2BeFinal) {
-        PsiUtil.setModifierProperty(var, PsiModifier.FINAL, true);
-      }
-
       GenerateMembersUtil.positionCaret(editor, member, true);
     }
   }
