@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.mock.MockVirtualFile;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -222,7 +223,7 @@ public class VirtualFileVisitorTest {
 
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        String expected = file == myRoot ? myRoot.getPath() : file.getParent().getPath();
+        String expected = Comparing.equal(file, myRoot) ? myRoot.getPath() : file.getParent().getPath();
         assertEquals(expected, get(KEY));
 
         if (file.isDirectory()) {
