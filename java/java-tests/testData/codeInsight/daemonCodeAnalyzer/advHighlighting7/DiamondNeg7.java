@@ -4,5 +4,5 @@ class Neg07 {
        Foo(X x) {}
    }
 
-   SuperFoo<String> sf1 = new Foo<<error descr="Type parameter 'java.lang.String' is not within its bound; should extend 'java.lang.Number'"></error>>("");
+   SuperFoo<String> sf1 = new Foo<><error descr="'Foo(java.lang.String & java.lang.Number)' in 'Neg07.Foo' cannot be applied to '(java.lang.String)'">("")</error>;
 }

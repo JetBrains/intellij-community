@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,34 +21,52 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class DuplicateThrowsInspection extends BaseLocalInspectionTool {
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreSubclassing = false;
+
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.duplicate.throws.display.name");
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "DuplicateThrows";
   }
 
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionsBundle.message("inspection.duplicate.throws.ignore.subclassing.option"), this, "ignoreSubclassing");
+  }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
+
       @Override public void visitMethod(PsiMethod method) {
         PsiReferenceList throwsList = method.getThrowsList();
         PsiJavaCodeReferenceElement[] refs = throwsList.getReferenceElements();
         PsiClassType[] types = throwsList.getReferencedTypes();
-        outer:
         for (int i = 0; i < types.length; i++) {
           PsiClassType type = types[i];
           for (int j = i+1; j < types.length; j++) {
@@ -58,17 +76,18 @@ public class DuplicateThrowsInspection extends BaseLocalInspectionTool {
             if (type.equals(otherType)) {
               problem = InspectionsBundle.message("inspection.duplicate.throws.problem");
             }
-            else if (otherType.isAssignableFrom(type)) {
-              problem = InspectionsBundle.message("inspection.duplicate.throws.more.general.problem", otherType.getCanonicalText());
-            }
-            else if (type.isAssignableFrom(otherType)) {
-              problem = InspectionsBundle.message("inspection.duplicate.throws.more.general.problem", type.getCanonicalText());
-              ref = refs[j];
-              type = otherType;
+            else if (!ignoreSubclassing) {
+              if (otherType.isAssignableFrom(type)) {
+                problem = InspectionsBundle.message("inspection.duplicate.throws.more.general.problem", otherType.getCanonicalText());
+              }
+              else if (type.isAssignableFrom(otherType)) {
+                problem = InspectionsBundle.message("inspection.duplicate.throws.more.general.problem", type.getCanonicalText());
+                ref = refs[j];
+                type = otherType;
+              }
             }
             if (problem != null) {
               holder.registerProblem(ref, problem, ProblemHighlightType.LIKE_UNUSED_SYMBOL, new DeleteThrowsFix(method, type));
-              //break outer;
             }
           }
         }

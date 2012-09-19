@@ -20,19 +20,14 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.InternalTemplateBean;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.text.DateFormatUtil;
@@ -42,10 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.URL;
-import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -60,34 +52,22 @@ import java.util.*;
 public class FileTemplateManagerImpl extends FileTemplateManager implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl");
 
-  private static final String TEMPLATES_DIR = "fileTemplates";
-  private static final String DEFAULT_TEMPLATES_ROOT = TEMPLATES_DIR;
-  private static final String INTERNAL_DIR = "internal";
-  private static final String INCLUDES_DIR = "includes";
-  private static final String CODETEMPLATES_DIR = "code";
-  private static final String J2EE_TEMPLATES_DIR = "j2ee";
-  private static final String ROOT_DIR = ".";
-  
-  public static final String  DESCRIPTION_FILE_EXTENSION = "html";
-  private static final String DESCRIPTION_EXTENSION_SUFFIX = "." + DESCRIPTION_FILE_EXTENSION;
-  private static final String DESCRIPTION_FILE_NAME = "default." + DESCRIPTION_FILE_EXTENSION;
-
   private final RecentTemplatesManager myRecentList = new RecentTemplatesManager();
-  private final FTManager myDefaultTemplatesManager;
-  private final FTManager myInternalTemplatesManager;
-  private final FTManager myPatternsManager;
-  private final FTManager myCodeTemplatesManager;
-  private final FTManager myJ2eeTemplatesManager;
-  
-  private final Map<String, FTManager> myDirToManagerMap = new HashMap<String, FTManager>();
 
   private static final String ELEMENT_DELETED_TEMPLATES = "deleted_templates";
   private static final String ELEMENT_DELETED_INCLUDES = "deleted_includes";
   private static final String ELEMENT_RECENT_TEMPLATES = "recent_templates";
   private static final String ELEMENT_TEMPLATES = "templates";
 
-  private final FTManager[] myAllManagers;
   private final FileTypeManagerEx myTypeManager;
+
+  private final ExportableFileTemplateSettings myTemplateSettings;
+  private final FTManager myInternalTemplatesManager;
+  private final FTManager myDefaultTemplatesManager;
+  private final FTManager myPatternsManager;
+  private final FTManager myCodeTemplatesManager;
+  private final FTManager myJ2eeTemplatesManager;
+  private final FTManager[] myAllManagers;
 
   public static FileTemplateManagerImpl getInstanceImpl() {
     return (FileTemplateManagerImpl)ServiceManager.getService(FileTemplateManager.class);
@@ -95,24 +75,15 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
 
   public FileTemplateManagerImpl(@NotNull FileTypeManagerEx typeManager, ProjectManager pm /*need this to ensure disposal of the service _after_ project manager*/) {
     myTypeManager = typeManager;
-    myDefaultTemplatesManager = new FTManager(DEFAULT_TEMPLATES_CATEGORY, ROOT_DIR);
-    myInternalTemplatesManager = new FTManager(INTERNAL_TEMPLATES_CATEGORY, INTERNAL_DIR);
-    myPatternsManager = new FTManager(INCLUDES_TEMPLATES_CATEGORY, INCLUDES_DIR);
-    myCodeTemplatesManager = new FTManager(CODE_TEMPLATES_CATEGORY, CODETEMPLATES_DIR);
-    myJ2eeTemplatesManager = new FTManager(J2EE_TEMPLATES_CATEGORY, J2EE_TEMPLATES_DIR);
-    
-    myDirToManagerMap.put("", myDefaultTemplatesManager);
-    myDirToManagerMap.put(INTERNAL_DIR + "/", myInternalTemplatesManager);
-    myDirToManagerMap.put(INCLUDES_DIR + "/", myPatternsManager);
-    myDirToManagerMap.put(CODETEMPLATES_DIR + "/", myCodeTemplatesManager);
-    myDirToManagerMap.put(J2EE_TEMPLATES_DIR + "/", myJ2eeTemplatesManager);
+    myTemplateSettings = ExportableFileTemplateSettings.getInstance();
+    assert myTemplateSettings != null : "Can not instantiate " + ExportableFileTemplateSettings.class.getName();
 
-    myAllManagers = new FTManager[]{myDefaultTemplatesManager, myInternalTemplatesManager, myPatternsManager, myCodeTemplatesManager, myJ2eeTemplatesManager};
-
-    loadDefaultTemplates();
-    for (FTManager child : myAllManagers) {
-      loadCustomizedContent(child);
-    }
+    myInternalTemplatesManager = myTemplateSettings.getInternalTemplatesManager();
+    myDefaultTemplatesManager = myTemplateSettings.getDefaultTemplatesManager();
+    myPatternsManager = myTemplateSettings.getPatternsManager();
+    myCodeTemplatesManager = myTemplateSettings.getCodeTemplatesManager();
+    myJ2eeTemplatesManager = myTemplateSettings.getJ2eeTemplatesManager();
+    myAllManagers = myTemplateSettings.getAllManagers();
     
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       for (String tname : Arrays.asList("Class", "AnnotationType", "Enum", "Interface")) {
@@ -127,148 +98,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
       }
     }
     
-  }
-
-  private void loadDefaultTemplates() {
-    final Set<URL> processedUrls = new HashSet<URL>();
-    for (PluginDescriptor plugin : PluginManager.getPlugins()) {
-      if (plugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)plugin).isEnabled()) {
-        final ClassLoader loader = plugin.getPluginClassLoader();
-        if (loader instanceof PluginClassLoader && ((PluginClassLoader)loader).getUrls().isEmpty()) {
-          continue; // development mode, when IDEA_CORE's loader contains all the classpath
-        }
-        try {
-          final Enumeration<URL> systemResources = loader.getResources(DEFAULT_TEMPLATES_ROOT);
-          if (systemResources != null && systemResources.hasMoreElements()) {
-            while (systemResources.hasMoreElements()) {
-              final URL url = systemResources.nextElement();
-              if (processedUrls.contains(url)) {
-                continue;
-              }
-              processedUrls.add(url);
-              loadDefaultsFromRoot(url);
-            }
-          }
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
-    }
-  }
-
-  private void loadDefaultsFromRoot(final URL root) throws IOException {
-    final List<String> children = UrlUtil.getChildrenRelativePaths(root);
-    if (children.isEmpty()) {
-      return;
-    }
-    final Set<String> descriptionPaths = new HashSet<String>();
-    for (String path : children) {
-      if (path.endsWith(DESCRIPTION_EXTENSION_SUFFIX)) {
-        descriptionPaths.add(path);
-      }
-    }
-    for (final String path : children) {
-      for (Map.Entry<String, FTManager> entry : myDirToManagerMap.entrySet()) {
-        final String prefix = entry.getKey();
-        if (matchesPrefix(path, prefix)) {
-          if (path.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX)) {
-            final String filename = path.substring(prefix.length(), path.length() - FTManager.TEMPLATE_EXTENSION_SUFFIX.length());
-            final String extension = myTypeManager.getExtension(filename);
-            final String templateName = filename.substring(0, filename.length() - extension.length() - 1); 
-            final URL templateUrl = new URL(root.toExternalForm() + "/" +path);
-            final String descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths);
-            final URL descriptionUrl = descriptionPath != null? new URL(root.toExternalForm() + "/" + descriptionPath) : null;
-            entry.getValue().addDefaultTemplate(new DefaultTemplate(templateName, extension, templateUrl, descriptionUrl));
-          }
-          break; // FTManagers loop
-        }
-      }
-    }
-  }
-
-  private void loadCustomizedContent(FTManager manager) {
-    final File configRoot = manager.getConfigRoot(false);
-    File[] configFiles = configRoot.listFiles();
-    if (configFiles == null) {
-      return;
-    }
-
-    final List<File> templateWithDefaultExtension = new ArrayList<File>();
-    final Set<String> processedNames = new HashSet<String>();
-
-    for (File file : configFiles) {
-      if (file.isDirectory() || myTypeManager.isFileIgnored(file.getName()) || file.isHidden()) {
-        continue;
-      }
-      final String name = file.getName();
-      if (name.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX)) {
-        templateWithDefaultExtension.add(file);
-      }
-      else {
-        processedNames.add(name);
-        addTemplateFromFile(manager, name, file);
-      }
-
-    }
-
-    for (File file : templateWithDefaultExtension) {
-      String name = file.getName();
-      // cut default template extension
-      name = name.substring(0, name.length() - FTManager.TEMPLATE_EXTENSION_SUFFIX.length());
-      if (!processedNames.contains(name)) {
-        addTemplateFromFile(manager, name, file);
-      }
-      FileUtil.delete(file);
-    }
-  }
-
-  private void addTemplateFromFile(FTManager manager, String templateQName, File file) {
-    final String extension = myTypeManager.getExtension(templateQName);
-    templateQName = templateQName.substring(0, templateQName.length() - extension.length() - 1);
-    if (templateQName.length() == 0) {
-      return;
-    }
-    try {
-      final String text = FileUtil.loadFile(file, FTManager.CONTENT_ENCODING);
-      manager.addTemplate(templateQName, extension).setText(text);
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-  }
-
-  //Example: templateName="NewClass"   templateExtension="java"
-  @Nullable
-  private static String getDescriptionPath(String pathPrefix, String templateName, String templateExtension, Set<String> descriptionPaths) {
-    final Locale locale = Locale.getDefault();
-    
-    String descName = MessageFormat.format("{0}.{1}_{2}_{3}" + DESCRIPTION_EXTENSION_SUFFIX, templateName, templateExtension,
-                                           locale.getLanguage(), locale.getCountry());
-    String descPath = pathPrefix.length() > 0? pathPrefix + descName : descName;
-    if (descriptionPaths.contains(descPath)) {
-      return descPath;
-    }
-
-    descName = MessageFormat.format("{0}.{1}_{2}" + DESCRIPTION_EXTENSION_SUFFIX, templateName, templateExtension, locale.getLanguage());
-    descPath = pathPrefix.length() > 0? pathPrefix + descName : descName;
-    if (descriptionPaths.contains(descPath)) {
-      return descPath;
-    }
-
-    descName = templateName + "." + templateExtension + DESCRIPTION_EXTENSION_SUFFIX;
-    descPath = pathPrefix.length() > 0? pathPrefix + descName : descName;
-    if (descriptionPaths.contains(descPath)) {
-      return descPath;
-    }
-    return null;
-  }
-
-  private static boolean matchesPrefix(String path, String prefix) {
-    if (prefix.length() == 0) {
-      return !path.contains("/");
-    }
-    return FileUtil.startsWith(path, prefix) && !path.substring(prefix.length()).contains("/");
   }
 
   @NotNull
@@ -379,9 +208,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
       }
     }
 
-    ExportableFileTemplateSettings exportableFileTemplateSettings = ServiceManager.getService(ExportableFileTemplateSettings.class);
-    if (!exportableFileTemplateSettings.isLoaded()) {
-      ExportableFileTemplateSettings.doLoad(this, element);
+    if (!myTemplateSettings.isLoaded()) {
+      myTemplateSettings.doLoad(element);
     }
 
     // apply data loaded from older format
@@ -655,14 +483,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
       DefaultJDOMExternalizer.writeExternal(this, element);
     }
 
-  }
-
-  FTManager[] getAllManagers() {
-    return myAllManagers;
-  }
-
-  FTManager getDefaultTemplatesManager() {
-    return myDefaultTemplatesManager;
   }
 
 }

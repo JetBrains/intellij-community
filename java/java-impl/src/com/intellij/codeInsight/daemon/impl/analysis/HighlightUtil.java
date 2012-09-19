@@ -235,6 +235,12 @@ public class HighlightUtil {
       if (modifierList.hasModifierProperty(incompatible)) {
         return incompatible;
       }
+      else if (PsiModifier.ABSTRACT.equals(incompatible)) {
+        final PsiElement owner = modifierList.getParent();
+        if (owner instanceof PsiMethod && PsiUtil.isExtensionMethod((PsiMethod)owner)) {
+          return incompatible;
+        }
+      }
     }
     return null;
   }

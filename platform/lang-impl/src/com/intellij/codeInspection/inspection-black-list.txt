@@ -125,8 +125,6 @@ com.siyeh.ig.errorhandling.BadExceptionThrownInspection
 com.siyeh.ig.errorhandling.EmptyCatchBlockInspection
 com.siyeh.ig.errorhandling.ExceptionFromCatchWhichDoesntWrapInspection
 com.siyeh.ig.errorhandling.ThrowCaughtLocallyInspection
-com.siyeh.ig.errorhandling.TooBroadCatchInspection
-com.siyeh.ig.errorhandling.TooBroadThrowsInspection
 com.siyeh.ig.errorhandling.UnusedCatchParameterInspection
 com.siyeh.ig.finalization.FinalizeCallsSuperFinalizeInspection
 com.siyeh.ig.finalization.FinalizeInspection

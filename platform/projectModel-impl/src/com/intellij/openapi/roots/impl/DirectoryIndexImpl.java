@@ -641,7 +641,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       });
     }
 
-    private void doInitialize(boolean reverseAllSets/* for testing order independence*/) {
+    protected void doInitialize(boolean reverseAllSets/* for testing order independence*/) {
       final ProgressIndicatorProvider progressIndicatorProvider = ProgressIndicatorProvider.getInstance();
       ProgressIndicator progress = progressIndicatorProvider == null ? null : progressIndicatorProvider.getProgressIndicator();
       if (progress == null) progress = new EmptyProgressIndicator();

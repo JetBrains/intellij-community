@@ -56,13 +56,13 @@ public class InspectionEP extends LanguageExtensionPoint {
   @Nullable
   @Nls
   public String getDisplayName() {
-    return getLocalizedString(bundle, key, displayName);
+    return displayName == null ? displayName = getLocalizedString(bundle, key) : displayName;
   }
 
   @Nullable
   @Nls
   public String getGroupDisplayName() {
-    return getLocalizedString(groupBundle, groupKey, groupDisplayName);
+    return groupDisplayName == null ? groupDisplayName = getLocalizedString(groupBundle, groupKey) : groupDisplayName;
   }
 
   @Attribute("key")
@@ -121,15 +121,17 @@ public class InspectionEP extends LanguageExtensionPoint {
     return displayLevel;
   }
 
+  @Attribute("hasStaticDescription")
+  public boolean hasStaticDescription;
+
   @Nullable
-  private String getLocalizedString(String bundleName, String key, String displayName) {
-    if (displayName != null) return displayName;
+  private String getLocalizedString(String bundleName, String key) {
     final String baseName = bundleName != null ? bundleName : bundle == null ? ((IdeaPluginDescriptor)myPluginDescriptor).getResourceBundleBaseName() : bundle;
     if (baseName == null) {
       return null;
     }
-    final ResourceBundle bundle = AbstractBundle.getResourceBundle(baseName, myPluginDescriptor.getPluginClassLoader());
-    return CommonBundle.message(bundle, key);
+    final ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(baseName, myPluginDescriptor.getPluginClassLoader());
+    return CommonBundle.message(resourceBundle, key);
   }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionEP");

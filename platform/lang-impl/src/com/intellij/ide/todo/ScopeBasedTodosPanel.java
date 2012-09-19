@@ -23,7 +23,6 @@ package com.intellij.ide.todo;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.scopeChooser.IgnoringComboBox;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -32,13 +31,14 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ScopeBasedTodosPanel extends TodoPanel {
@@ -114,14 +114,22 @@ public class ScopeBasedTodosPanel extends TodoPanel {
     collectEditableScopes(scopes, NamedScopeManager.getInstance(project), "Custom Local Scopes");
 
     myScopes.setModel(new DefaultComboBoxModel(scopes.toArray(new ScopeWrapper[scopes.size()])));
-    if (scopeName != null) {
-      for (ScopeWrapper scope : scopes) {
-        if (Comparing.strEqual(scopeName, scope.getName())) {
+    setSelection(scopeName, scopes);
+  }
+
+  private void setSelection(@Nullable String scopeName, ArrayList<ScopeWrapper> scopes) {
+    boolean hasNonSeparators = false;
+    for (ScopeWrapper scope : scopes) {
+      if (!scope.isSeparator()) {
+        hasNonSeparators = true;
+        if (scopeName == null || scopeName.equals(scope.getName())) {
           myScopes.setSelectedItem(scope);
-          break;
+          return;
         }
       }
     }
+    assert hasNonSeparators;
+    setSelection(null, scopes);
   }
 
   private static void collectEditableScopes(ArrayList<ScopeWrapper> scopes, NamedScopesHolder manager, String separatorTitle) {

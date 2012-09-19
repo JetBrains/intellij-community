@@ -23,23 +23,20 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author max
@@ -71,54 +68,90 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
     final boolean hasChangedOrUnversionedFiles = SelectedFilesHelper.hasChangedOrUnversionedFiles(project, e);
     if (hasChangedOrUnversionedFiles) return true;
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
-    return changes != null && changes.length > 0;
+    if (changes != null && changes.length > 0) {
+      return true;
+    }
+    final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    return files != null && files.length > 0;
   }
 
   @Nullable
-  private static Change[] getChangesForSelectedFiles(final Project project, Change[] changes, final List<VirtualFile> unversionedFiles,
-                                                     @Nullable final List<VirtualFile> changedFiles, final AnActionEvent e) {
+  private static List<Change> getChangesForSelectedFiles(final Project project, final List<VirtualFile> unversionedFiles,
+                                                         @Nullable final List<VirtualFile> changedFiles, final AnActionEvent e) {
     if (ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().length == 0) {
       return null;
     }
     
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     if (virtualFiles != null) {
       List<Change> changesInFiles = new ArrayList<Change>();
       for(VirtualFile vFile: virtualFiles) {
-        Change change = ChangeListManager.getInstance(project).getChange(vFile);
-        if (change == null) continue;
-        if (change.getFileStatus().equals(FileStatus.UNKNOWN)) {
-          unversionedFiles.add(vFile);
-          if (changedFiles != null) changedFiles.add(vFile);
+        Change change = changeListManager.getChange(vFile);
+        if (change == null) {
+          final FileStatus status = changeListManager.getStatus(vFile);
+          if (FileStatus.UNKNOWN.equals(status)) {
+            unversionedFiles.add(vFile);
+            if (changedFiles != null) changedFiles.add(vFile);
+          } else if (FileStatus.NOT_CHANGED.equals(status) && vFile.isDirectory()) {
+            addAllChangesUnderPath(changedFiles, changeListManager, changesInFiles, new FilePathImpl(vFile));
+          }
+          continue;
         }
-        else {
+        if (change.getAfterRevision() != null && change.getAfterRevision().getFile() != null && change.getAfterRevision().getFile().isDirectory()) {
+          final FilePath file = change.getAfterRevision().getFile();
+          addAllChangesUnderPath(changedFiles, changeListManager, changesInFiles, file);
+        } else {
           changesInFiles.add(change);
-          if (changedFiles != null) changedFiles.add(vFile);
+          if (changedFiles != null) {
+            changedFiles.add(vFile);
+          }
         }
       }
-      if (changesInFiles.size() > 0 || unversionedFiles.size() > 0) {
-        changes = changesInFiles.toArray(new Change[changesInFiles.size()]);
+      return changesInFiles;
+    }
+    return Collections.emptyList();
+  }
+
+  private static void addAllChangesUnderPath(List<VirtualFile> changedFiles,
+                                             ChangeListManager changeListManager,
+                                             List<Change> changesInFiles, FilePath file) {
+    final Collection<Change> in = changeListManager.getChangesIn(file);
+    changesInFiles.addAll(in);
+    if (changedFiles != null) {
+      for (Change innerChange : in) {
+        final FilePath path = ChangesUtil.getAfterPath(innerChange);
+        if (path != null && path.getVirtualFile() != null) {
+          changedFiles.add(path.getVirtualFile());
+        }
       }
     }
-    return changes;
   }
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project == null) return;
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
     List<VirtualFile> unversionedFiles = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
 
     final List<VirtualFile> changedFiles = new ArrayList<VirtualFile>();
     boolean activateChangesView = false;
-    if (project != null && changes == null && unversionedFiles == null) {
-      unversionedFiles = new ArrayList<VirtualFile>();
-      changes = getChangesForSelectedFiles(project, changes, unversionedFiles, changedFiles, e);
-      activateChangesView = true;
+    unversionedFiles = new ArrayList<VirtualFile>();
+    final List<Change> changesList = new ArrayList<Change>();
+    if (changes != null) {
+      changesList.addAll(Arrays.asList(changes));
+    } else {
+      changes = new Change[0];
+    }
+    changesList.addAll(getChangesForSelectedFiles(project, unversionedFiles, changedFiles, e));
+    activateChangesView = true;
+
+    if (changesList.isEmpty() && unversionedFiles.isEmpty()) {
+      VcsBalloonProblemNotifier.showOverChangesView(project, "Nothing is selected that can be moved", MessageType.INFO);
+      return;
     }
 
-    if (changes == null) return;
-
-    if (!askAndMove(project, changes, unversionedFiles)) return;
+    if (!askAndMove(project, changesList, unversionedFiles)) return;
     if (activateChangesView) {
       ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
       if (!window.isVisible()) {
@@ -133,15 +166,17 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
     }
   }
 
-  public static boolean askAndMove(final Project project, final Change[] changes, final List<VirtualFile> unversionedFiles) {
+  public static boolean askAndMove(final Project project, final Collection<Change> changes, final List<VirtualFile> unversionedFiles) {
+    if (changes.isEmpty() && unversionedFiles.isEmpty()) return false;
     final ChangeListManagerImpl listManager = ChangeListManagerImpl.getInstanceImpl(project);
     final List<LocalChangeList> lists = listManager.getChangeLists();
-    ChangeListChooser chooser = new ChangeListChooser(project, getPreferredLists(lists, changes, true), guessPreferredList(lists, changes),
+    final List<LocalChangeList> preferredLists = getPreferredLists(lists, changes, true);
+    ChangeListChooser chooser = new ChangeListChooser(project, preferredLists, guessPreferredList(preferredLists),
                                                       ActionsBundle.message("action.ChangesView.Move.text"), null);
     chooser.show();
     LocalChangeList resultList = chooser.getSelectedList();
     if (resultList != null) {
-      listManager.moveChangesTo(resultList, changes);
+      listManager.moveChangesTo(resultList, changes.toArray(new Change[changes.size()]));
       if ((unversionedFiles != null) && (! unversionedFiles.isEmpty())) {
         listManager.addUnversionedFiles(resultList, unversionedFiles);
       }
@@ -151,9 +186,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   }
 
   @Nullable
-  private static ChangeList guessPreferredList(final List<LocalChangeList> lists, final Change[] changes) {
-    List<LocalChangeList> preferredLists = getPreferredLists(lists, changes, false);
-
+  private static ChangeList guessPreferredList(final List<LocalChangeList> preferredLists) {
     for (ChangeList preferredList : preferredLists) {
       if (preferredList.getChanges().isEmpty()) {
         return preferredList;
@@ -168,10 +201,10 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   }
 
   private static List<LocalChangeList> getPreferredLists(final List<LocalChangeList> lists,
-                                                    final Change[] changes,
+                                                    final Collection<Change> changes,
                                                     final boolean includeDefaultIfEmpty) {
     List<LocalChangeList> preferredLists = new ArrayList<LocalChangeList>(lists);
-    Set<Change> changesAsSet = new THashSet<Change>(Arrays.asList(changes));
+    Set<Change> changesAsSet = new THashSet<Change>(changes);
     for (LocalChangeList list : lists) {
       for (Change change : list.getChanges()) {
         if (changesAsSet.contains(change)) {

@@ -54,7 +54,9 @@ class ModifierPredicate implements PsiElementPredicate {
     } else if (parent instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)parent;
       final PsiClass containingClass = method.getContainingClass();
-      return containingClass != null && !containingClass.isInterface();
+      if (containingClass == null || containingClass.isInterface()) {
+        return false;
+      }
     }
     final PsiModifierListOwner owner = (PsiModifierListOwner)parent;
     final PsiModifierList modifierList = owner.getModifierList();

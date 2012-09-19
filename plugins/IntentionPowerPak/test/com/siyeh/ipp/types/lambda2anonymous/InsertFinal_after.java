@@ -3,7 +3,7 @@ class Test1 {
     {
         Comparable<String> a = new Comparable<String>() {
             @Override
-            public int compareTo(final String o) {
+            public int compareTo(String o) {
                 <selection>new Runnable() {
                     @Override
                     public void run() {

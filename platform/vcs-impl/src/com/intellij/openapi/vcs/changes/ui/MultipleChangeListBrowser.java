@@ -306,7 +306,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      askAndMove(myProject, new Change[]{myChange}, null);
+      askAndMove(myProject, Collections.singletonList(myChange), null);
     }
   }
 

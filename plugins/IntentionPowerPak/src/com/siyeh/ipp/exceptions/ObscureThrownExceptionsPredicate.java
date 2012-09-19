@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,13 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ObscureThrownExceptionsPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiReferenceList)) {
+      return false;
+    }
+    final PsiReferenceList throwsList = (PsiReferenceList)element;
+    if (throwsList.getReferenceElements().length < 2) {
       return false;
     }
     final PsiElement parent = element.getParent();
@@ -31,7 +36,6 @@ class ObscureThrownExceptionsPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiMethod method = (PsiMethod)parent;
-    final PsiReferenceList throwsList = method.getThrowsList();
-    return throwsList.equals(element);
+    return method.getThrowsList().equals(element);
   }
 }
