@@ -269,25 +269,17 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     if (file.isDirectory()) {
       final File nameFile = new File(new File(path, Project.DIRECTORY_STORE_FOLDER), ".name");
       if (nameFile.exists()) {
-        BufferedReader in = null;
         try {
-          in = new BufferedReader(new InputStreamReader(new FileInputStream(nameFile), "UTF-8"));
-          final String name = in.readLine();
-          if (name != null && name.length() > 0) return name.trim();
-        }
-        catch (IOException e) {
-          // ignore
-        }
-        finally {
-          if (in != null) {
-            try {
-              in.close();
-            }
-            catch (IOException e) {
-              // ignore
-            }
+          final BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(nameFile), "UTF-8"));
+          try {
+            final String name = in.readLine();
+            if (name != null && name.length() > 0) return name.trim();
+          }
+          finally {
+            in.close();
           }
         }
+        catch (IOException ignored) { }
       }
       return file.getName();
     }
