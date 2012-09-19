@@ -199,7 +199,8 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     buf.append(StringUtil.join(params, new Function<PsiTypeParameter, String>() {
       @Override
       public String fun(PsiTypeParameter psiTypeParameter) {
-        return psiTypeParameter.getName();
+        final String extendsList = psiTypeParameter.getExtendsList().getText();
+        return psiTypeParameter.getName() + (StringUtil.isEmpty(extendsList) ? "" : " " + extendsList);
       }
     }, ", "));
     buf.append(">");
