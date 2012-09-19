@@ -21,29 +21,33 @@ import java.util.Collections;
 import java.util.Map;
 
 public class EnvironmentUtil {
-  private static final Map<String, String> ourEnviromentProperties = Collections.unmodifiableMap(new ProcessBuilder().environment());
+  private static final Map<String, String> ourEnvironmentProperties = Collections.unmodifiableMap(new ProcessBuilder().environment());
 
   private EnvironmentUtil() {
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
   @NonNls
   public static Map<String, String> getEnviromentProperties() {
-    return ourEnviromentProperties;
+    return getEnvironmentProperties();
   }
 
-  public static String[] getFlattenEnvironmentProperties() {
-    return getEnvironment();
+  @NonNls
+  public static Map<String, String> getEnvironmentProperties() {
+    return ourEnvironmentProperties;
   }
 
   public static String[] getEnvironment() {
-    Map enviroment = getEnviromentProperties();
-    String[] envp = new String[enviroment.size()];
+    return flattenEnvironment(getEnvironmentProperties());
+  }
+
+  public static String[] flattenEnvironment(Map<String, String> environment) {
+    String[] array = new String[environment.size()];
     int i = 0;
-    for (Object o : enviroment.keySet()) {
-      String name = (String)o;
-      String value = (String)enviroment.get(name);
-      envp[i++] = name + "=" + value;
+    for (String name : environment.keySet()) {
+      array[i++] = name + "=" + environment.get(name);
     }
-    return envp;
+    return array;
   }
 }

@@ -18,20 +18,33 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 @State(name = "MavenImportPreferences", storages = {@Storage( file = StoragePathMacros.WORKSPACE_FILE)})
 public class MavenWorkspaceSettingsComponent implements PersistentStateComponent<MavenWorkspaceSettings> {
   private MavenWorkspaceSettings mySettings = new MavenWorkspaceSettings();
 
+  private final Project myProject;
+
+  public MavenWorkspaceSettingsComponent(Project project) {
+    myProject = project;
+  }
+
   public static MavenWorkspaceSettingsComponent getInstance(Project project) {
     return ServiceManager.getService(project, MavenWorkspaceSettingsComponent.class);
   }
 
+  @NotNull
   public MavenWorkspaceSettings getState() {
+    mySettings.setEnabledProfiles(MavenProjectsManager.getInstance(myProject).getExplicitProfiles());
     return mySettings;
   }
 
   public void loadState(MavenWorkspaceSettings state) {
     mySettings = state;
+  }
+
+  public MavenWorkspaceSettings getSettings() {
+    return mySettings;
   }
 }

@@ -61,11 +61,25 @@ public class ConfigurableEP extends AbstractExtensionPointBean {
   @AbstractCollection(surroundWithTag = false)
   public ConfigurableEP[] children;
 
+  public ConfigurableEP[] getChildren() {
+    for (ConfigurableEP child : children) {
+      child.myPicoContainer = myPicoContainer;
+      child.myPluginDescriptor = myPluginDescriptor;
+      child.isForDefaultProject = isForDefaultProject;
+    }
+    return children;
+  }
+
   @Attribute("id")
   public String id;
 
   @Attribute("nonDefaultProject")
   public boolean nonDefaultProject;
+
+  private boolean isForDefaultProject;
+  public boolean isAvailable() {
+    return !(nonDefaultProject && isForDefaultProject);
+  }
 
   /**
    * @deprecated use '{@link #instanceClass instance}' or '{@link #providerClass provider}' attribute instead
@@ -78,7 +92,7 @@ public class ConfigurableEP extends AbstractExtensionPointBean {
   public String providerClass;
 
   private final AtomicNotNullLazyValue<NullableFactory<Configurable>> myFactory;
-  private final PicoContainer myPicoContainer;
+  private PicoContainer myPicoContainer;
 
   @SuppressWarnings("UnusedDeclaration")
   public ConfigurableEP() {
@@ -88,6 +102,7 @@ public class ConfigurableEP extends AbstractExtensionPointBean {
   @SuppressWarnings("UnusedDeclaration")
   public ConfigurableEP(Project project) {
     this(project.getPicoContainer());
+    isForDefaultProject = project.isDefault();
   }
 
   private ConfigurableEP(PicoContainer picoContainer) {

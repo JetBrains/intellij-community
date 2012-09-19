@@ -19,6 +19,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -159,45 +160,51 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
   }
 
   private Configurable createVcsConfigurableWrapper(final VcsDescriptor vcs) {
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    final Configurable delegate = vcsManager.findVcsByName(vcs.getName()).getConfigurable();
+    final NotNullLazyValue<Configurable> delegate = new NotNullLazyValue<Configurable>() {
+      @NotNull
+      @Override
+      protected Configurable compute() {
+        return ProjectLevelVcsManager.getInstance(myProject).findVcsByName(vcs.getName()).getConfigurable();
+      }
+    };
     return new SearchableConfigurable(){
+
       @Nls
       public String getDisplayName() {
         return vcs.getDisplayName();
       }
 
       public String getHelpTopic() {
-        return delegate.getHelpTopic();
+        return delegate.getValue().getHelpTopic();
       }
 
       public JComponent createComponent() {
-        return delegate.createComponent();
+        return delegate.getValue().createComponent();
       }
 
       public boolean isModified() {
-        return delegate.isModified();
+        return delegate.getValue().isModified();
       }
 
       public void apply() throws ConfigurationException {
-        delegate.apply();
+        delegate.getValue().apply();
       }
 
       public void reset() {
-        delegate.reset();
+        delegate.getValue().reset();
       }
 
       public void disposeUIResources() {
-        delegate.disposeUIResources();
+        delegate.getValue().disposeUIResources();
       }
 
       @NotNull
       public String getId() {
-        return delegate instanceof SearchableConfigurable ? ((SearchableConfigurable) delegate).getId() : getDefaultConfigurableIdValue(this);
+        return "vcs." + getDisplayName();
       }
 
       public Runnable enableSearch(String option) {
-        return delegate instanceof SearchableConfigurable ? ((SearchableConfigurable) delegate).enableSearch(option) : null;
+        return null;
       }
     };
   }

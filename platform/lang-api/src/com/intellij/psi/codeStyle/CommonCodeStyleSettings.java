@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.intellij.lang.annotations.MagicConstant;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -160,17 +162,20 @@ public class CommonCodeStyleSettings {
   }
 
   private static boolean copyFields(Field[] fields, Object from, Object to, @Nullable DifferenceFilter diffFilter) {
+    Set<Field> sourceFields = new HashSet<Field>(Arrays.asList(from.getClass().getFields()));
     boolean valuesChanged = false;
     for (Field field : fields) {
-      if (isPublic(field) && !isFinal(field)) {
-        try {
-          if (diffFilter == null || diffFilter.isAccept(field)) {
-            copyFieldValue(from, to, field);
-            valuesChanged = true;
+      if (sourceFields.contains(field)) {
+        if (isPublic(field) && !isFinal(field)) {
+          try {
+            if (diffFilter == null || diffFilter.isAccept(field)) {
+              copyFieldValue(from, to, field);
+              valuesChanged = true;
+            }
           }
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
         }
       }
     }

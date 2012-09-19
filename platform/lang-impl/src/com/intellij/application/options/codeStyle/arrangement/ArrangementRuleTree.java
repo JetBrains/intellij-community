@@ -18,6 +18,7 @@ package com.intellij.application.options.codeStyle.arrangement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.StdArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
@@ -73,23 +74,24 @@ public class ArrangementRuleTree {
   @NotNull private final DefaultTreeModel                     myTreeModel;
   @NotNull private final Tree                                 myTree;
   @NotNull private final ArrangementNodeComponentFactory      myFactory;
-  @NotNull private final List<Set<ArrangementMatchCondition>> myGroupingRules;
+  @NotNull private final List<Set<ArrangementMatchCondition>> myUiGroupingRules;
 
-  private int     myCanvasWidth;
-  private boolean myExplicitSelectionChange;
-  private boolean mySkipSelectionChange;
+  @Nullable private List<ArrangementGroupingRule> myGroupings;
+  private           int                           myCanvasWidth;
+  private           boolean                       myExplicitSelectionChange;
+  private           boolean                       mySkipSelectionChange;
 
   public ArrangementRuleTree(@Nullable StdArrangementSettings settings,
-                             @NotNull List<Set<ArrangementMatchCondition>> groupingRules,
+                             @NotNull List<Set<ArrangementMatchCondition>> uiGroupingRules,
                              @NotNull ArrangementNodeDisplayManager displayManager)
   {
-    myGroupingRules = groupingRules;
+    myUiGroupingRules = uiGroupingRules;
     myFactory = new ArrangementNodeComponentFactory(displayManager, new Runnable() {
       @Override
       public void run() {
         notifySelectionListeners(); 
       }
-    }, groupingRules);
+    }, uiGroupingRules);
     myRoot = new ArrangementTreeNode(null);
     myTreeModel = new DefaultTreeModel(myRoot);
     
@@ -355,7 +357,7 @@ public class ArrangementRuleTree {
 
   private void map(@NotNull List<StdArrangementMatchRule> rules) {
     for (StdArrangementMatchRule rule : rules) {
-      Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> pair = myModelBuilder.build(rule, myTree, myRoot, null, myGroupingRules);
+      Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> pair = myModelBuilder.build(rule, myTree, myRoot, null, myUiGroupingRules);
       if (pair != null) {
         myModels.put(pair.first.getRow(), pair.first);
         pair.first.addListener(myModelChangeListener);
@@ -428,7 +430,13 @@ public class ArrangementRuleTree {
     if (prevGroup != null) {
       rules.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(prevGroup)));
     }
-    return new StdArrangementSettings(rules);
+
+    if (myGroupings == null) {
+      return new StdArrangementSettings(rules);
+    }
+    else {
+      return new StdArrangementSettings(myGroupings, rules);
+    }
   }
 
   public void setSettings(@Nullable StdArrangementSettings settings) {
@@ -439,6 +447,8 @@ public class ArrangementRuleTree {
     if (settings == null) {
       return;
     }
+
+    myGroupings = settings.getGroupings();
 
     List<StdArrangementMatchRule> rules = settings.getRules();
     map(rules);
@@ -622,7 +632,7 @@ public class ArrangementRuleTree {
     final ArrangementTreeNode anchor = activeModels.size() != 1 ? null : activeModels.get(0).getBottomMost();
     doClearSelection();
     Pair<ArrangementRuleEditingModelImpl,TIntIntHashMap> pair = myModelBuilder.build(
-      ArrangementRuleEditingModel.EMPTY_RULE, myTree, myRoot, anchor, myGroupingRules
+      ArrangementRuleEditingModel.EMPTY_RULE, myTree, myRoot, anchor, myUiGroupingRules
     );
     assert pair != null;
     processRowChanges(pair.second);

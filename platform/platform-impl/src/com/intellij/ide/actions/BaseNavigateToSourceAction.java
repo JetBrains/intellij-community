@@ -66,6 +66,11 @@ public abstract class BaseNavigateToSourceAction extends AnAction implements Dum
 
   @Nullable
   private Navigatable getTarget(final DataContext dataContext) {
+    if (!myFocusEditor && PlatformDataKeys.EDITOR.getData(dataContext) != null) {
+      // makes no sense in editor and conflicts with another action there (ctrl+enter)
+      return null;
+    }
+
     Navigatable[] navigatables = getNavigatables(dataContext);
     if (navigatables != null) {
       for (Navigatable navigatable : navigatables) {

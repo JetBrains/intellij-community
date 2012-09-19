@@ -18,6 +18,7 @@ package com.intellij.application.options;
 import com.intellij.application.options.codeStyle.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -49,6 +50,8 @@ import java.util.List;
  */
 
 public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPanel {
+  private static final Logger LOG = Logger.getInstance("#" + TabbedLanguageCodeStylePanel.class.getName());
+
   private CodeStyleAbstractPanel myActiveTab;
   private List<CodeStyleAbstractPanel> myTabs;
   private JPanel myPanel;
@@ -342,7 +345,16 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     CommonCodeStyleSettings sourceSettings = rootSettings.getCommonSettings(lang);
     CommonCodeStyleSettings targetSettings = getSettings().getCommonSettings(getDefaultLanguage());
     if (sourceSettings == null || targetSettings == null) return;
-    CommonCodeStyleSettingsManager.copy(sourceSettings, targetSettings);
+    if (!(targetSettings instanceof CodeStyleSettings)) {
+      CommonCodeStyleSettingsManager.copy(sourceSettings, targetSettings);
+    }
+    else {
+      Language targetLang = getDefaultLanguage();
+      LOG.error((targetLang != null ? targetLang.getDisplayName() : "Unknown") +
+                " language plug-in either uses an outdated API or does not initialize" +
+                " its own code style settings in LanguageCodeStyleSettingsProvider.getDefaultSettings()." +
+                " The operation can not be applied in this case.");
+    }
     reset(getSettings());
     onSomethingChanged();
   }

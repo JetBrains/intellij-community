@@ -8,7 +8,6 @@
  */
 package com.intellij.util;
 
-import com.intellij.util.EnvironmentUtil;
 import com.intellij.openapi.util.SystemInfo;
 import junit.framework.TestCase;
 
@@ -16,7 +15,7 @@ import java.util.Map;
 
 public class EnvironmentUtilTest extends TestCase {
   public void test1() {
-    Map enviromentProperties = EnvironmentUtil.getEnviromentProperties();
+    Map enviromentProperties = EnvironmentUtil.getEnvironmentProperties();
     assertNotNull(enviromentProperties);
     if(SystemInfo.isWindows)
       assertNotNull(enviromentProperties.get("Path"));

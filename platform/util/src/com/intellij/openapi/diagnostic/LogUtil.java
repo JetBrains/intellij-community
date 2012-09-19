@@ -28,7 +28,7 @@ public class LogUtil {
   /**
    * Format string syntax as in {@linkplain String#format(String, Object...)}.
    */
-  public static void debug(@NotNull Logger logger, @NotNull String format, Object... args) {
+  public static void debug(@NotNull Logger logger, @NotNull String format, @Nullable Object... args) {
     if (logger.isDebugEnabled()) {
       logger.debug(String.format(format, args));
     }

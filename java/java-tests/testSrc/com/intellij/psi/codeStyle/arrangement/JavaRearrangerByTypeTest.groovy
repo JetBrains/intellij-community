@@ -18,6 +18,7 @@ package com.intellij.psi.codeStyle.arrangement
 import org.junit.Before
 
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.*
+import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PROTECTED
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PUBLIC
 /**
  * @author Denis Zhdanov
@@ -232,5 +233,23 @@ class Test {
   private int i;
 }''',
       rules: [rule(FIELD, PUBLIC), rule(METHOD), rule(FIELD)])
+  }
+
+  void testMultipleFieldsInOneRow() {
+    doTest(
+      initial: '''\
+class Test {
+  private long l;
+  public int i, j;
+  protected float f;
+}''',
+      rules: [rule(PUBLIC), rule(PROTECTED)],
+      expected: '''\
+class Test {
+  public int i, j;
+  protected float f;
+  private long l;
+}'''
+    )
   }
 }

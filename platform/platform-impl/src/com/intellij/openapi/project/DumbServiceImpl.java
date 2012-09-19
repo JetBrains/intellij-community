@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -283,10 +283,9 @@ public class DumbServiceImpl extends DumbService {
       }
 
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, IdeBundle.message("progress.indexing"), false) {
-
         private final BlockingQueue<Ref<CacheUpdateRunner>> myActionQueue = new LinkedBlockingQueue<Ref<CacheUpdateRunner>>();
 
-        // /*no override for interfaces in jdk 1.5 */ @Override
+        @Override
         public void run(@NotNull final ProgressIndicator indicator) {
           if (indicator instanceof ProgressIndicatorEx) {
             ((ProgressIndicatorEx)indicator).addStateDelegate(new ProgressIndicatorBase() {

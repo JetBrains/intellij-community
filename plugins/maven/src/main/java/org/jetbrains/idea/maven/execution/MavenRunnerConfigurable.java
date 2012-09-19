@@ -59,6 +59,7 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable,
     myRunConfigurationMode = isRunConfiguration;
   }
 
+  @Nullable
   protected abstract MavenRunnerSettings getState();
 
   public JComponent createComponent() {

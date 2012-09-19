@@ -60,7 +60,7 @@ public final class EditExternallyAction extends AnAction {
     }
     else {
       if (files != null) {
-        Map<String, String> env = EnvironmentUtil.getEnviromentProperties();
+        Map<String, String> env = EnvironmentUtil.getEnvironmentProperties();
         Set<String> varNames = env.keySet();
         for (String varName : varNames) {
           if (SystemInfo.isWindows) {
