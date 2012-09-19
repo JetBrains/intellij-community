@@ -259,10 +259,6 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyBroadExceptionInspection.class);
   }
 
-  public void testPyAugmentAssignmentInspection() {
-    doHighlightingTest(PyAugmentAssignmentInspection.class);
-  }
-
   public void testPyDictDuplicateKeysInspection() {
     doHighlightingTest(PyDictDuplicateKeysInspection.class);
   }
