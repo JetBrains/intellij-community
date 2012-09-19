@@ -48,14 +48,10 @@ public class MavenSettings implements SearchableConfigurable.Parent {
     };
 
     myChildren = new ArrayList<Configurable>();
-    myChildren.add(new MavenImportingConfigurable(myProject, MavenProjectsManager.getInstance(myProject).getImportingSettings()));
-    myChildren.add(new MavenIgnoredFilesConfigurable(MavenProjectsManager.getInstance(myProject)));
+    myChildren.add(new MavenImportingConfigurable(myProject));
+    myChildren.add(new MavenIgnoredFilesConfigurable(myProject));
 
-    myChildren.add(new MavenRunnerConfigurable(myProject, false) {
-      protected MavenRunnerSettings getState() {
-        return MavenRunner.getInstance(myProject).getState();
-      }
-    });
+    myChildren.add(new MyMavenRunnerConfigurable(project));
 
     if (!myProject.isDefault()) {
       myChildren.add(new MavenRepositoriesConfigurable(myProject));
@@ -110,5 +106,15 @@ public class MavenSettings implements SearchableConfigurable.Parent {
 
   public String getHelpTopic() {
     return myConfigurable.getHelpTopic();
+  }
+
+  public static class MyMavenRunnerConfigurable extends MavenRunnerConfigurable {
+    public MyMavenRunnerConfigurable(Project project) {
+      super(project, false);
+    }
+
+    protected MavenRunnerSettings getState() {
+      return MavenRunner.getInstance(myProject).getState();
+    }
   }
 }

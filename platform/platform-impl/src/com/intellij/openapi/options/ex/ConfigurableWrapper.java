@@ -16,7 +16,7 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.options.*;
-import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -52,12 +52,13 @@ public class ConfigurableWrapper implements SearchableConfigurable, Configurable
 
   public ConfigurableWrapper(ConfigurableEP ep) {
     myEp = ep;
-    myKids = ep.children == null ? EMPTY_ARRAY : ContainerUtil.map2Array(ep.children, ConfigurableWrapper.class, new Function<ConfigurableEP, ConfigurableWrapper>() {
-      @Override
-      public ConfigurableWrapper fun(ConfigurableEP ep) {
-        return new ConfigurableWrapper(ep);
-      }
-    });
+    myKids = ep.children == null ? EMPTY_ARRAY : ContainerUtil.mapNotNull(ep.getChildren(),
+                                                                          new NullableFunction<ConfigurableEP, ConfigurableWrapper>() {
+                                                                            @Override
+                                                                            public ConfigurableWrapper fun(ConfigurableEP ep) {
+                                                                              return ep.isAvailable() ? new ConfigurableWrapper(ep) : null;
+                                                                            }
+                                                                          }, new ConfigurableWrapper[0]);
   }
 
   private Configurable myConfigurable;
@@ -65,6 +66,9 @@ public class ConfigurableWrapper implements SearchableConfigurable, Configurable
   private Configurable getConfigurable() {
     if (myConfigurable == null) {
       myConfigurable = myEp.createConfigurable();
+      if (myConfigurable == null) {
+        System.out.println("oops");
+      }
     }
     return myConfigurable;
   }
@@ -115,7 +119,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Configurable
   @NotNull
   @Override
   public String getId() {
-    return myEp.id;
+    return myEp.id == null ? myEp.instanceClass : myEp.id;
   }
 
   @Nullable

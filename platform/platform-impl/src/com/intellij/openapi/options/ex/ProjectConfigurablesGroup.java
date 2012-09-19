@@ -46,7 +46,7 @@ public class ProjectConfigurablesGroup extends ConfigurablesGroupBase implements
   }
 
   @Override
-  protected ConfigurableFilter getConfigurableFilter() {
+  public ConfigurableFilter getConfigurableFilter() {
     return new ConfigurableFilter() {
       public boolean isIncluded(final Configurable configurable) {
         return !isDefault() || !ConfigurableWrapper.isNonDefaultProject(configurable);
