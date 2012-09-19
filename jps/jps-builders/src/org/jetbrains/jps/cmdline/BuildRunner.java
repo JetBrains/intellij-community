@@ -6,7 +6,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.CanceledStatus;
-import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
@@ -37,12 +36,12 @@ public class BuildRunner {
   public static final boolean PARALLEL_BUILD_ENABLED = Boolean.parseBoolean(System.getProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "false"));
   private static final boolean STORE_TEMP_CACHES_IN_MEMORY = PARALLEL_BUILD_ENABLED || System.getProperty(GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION) != null;
   private final JpsModelLoader myModelLoader;
-  private final List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> myScopes;
+  private final List<TargetTypeBuildScope> myScopes;
   private final List<String> myFilePaths;
   private final Map<String, String> myBuilderParams;
   private boolean myForceCleanCaches;
 
-  public BuildRunner(JpsModelLoader modelLoader, List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes, List<String> filePaths, Map<String, String> builderParams) {
+  public BuildRunner(JpsModelLoader modelLoader, List<TargetTypeBuildScope> scopes, List<String> filePaths, Map<String, String> builderParams) {
     myModelLoader = modelLoader;
     myScopes = scopes;
     myFilePaths = filePaths;
@@ -88,14 +87,14 @@ public class BuildRunner {
   }
 
   public void runBuild(ProjectDescriptor pd, CanceledStatus cs, @Nullable Callbacks.ConstantAffectionResolver constantSearch,
-                       MessageHandler msgHandler, final boolean includeTests, BuildType buildType) throws Exception {
+                       MessageHandler msgHandler, BuildType buildType) throws Exception {
     for (int attempt = 0; attempt < 2; attempt++) {
       if (myForceCleanCaches && myScopes.isEmpty() && myFilePaths.isEmpty()) {
         // if compilation scope is the whole project and cache rebuild is forced, use PROJECT_REBUILD for faster compilation
         buildType = BuildType.PROJECT_REBUILD;
       }
 
-      final CompileScope compileScope = createCompilationScope(buildType, pd, myScopes, myFilePaths, includeTests);
+      final CompileScope compileScope = createCompilationScope(buildType, pd, myScopes, myFilePaths);
       final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), myBuilderParams, cs, constantSearch);
       builder.addMessageHandler(msgHandler);
       try {
@@ -131,10 +130,8 @@ public class BuildRunner {
     }
   }
 
-  private static CompileScope createCompilationScope(BuildType buildType,
-                                                     ProjectDescriptor pd,
-                                                     List<TargetTypeBuildScope> scopes,
-                                                     Collection<String> paths, boolean includeTests) throws Exception {
+  private static CompileScope createCompilationScope(BuildType buildType, ProjectDescriptor pd, List<TargetTypeBuildScope> scopes,
+                                                     Collection<String> paths) throws Exception {
     Set<BuildTargetType> targetTypes = new HashSet<BuildTargetType>();
     Set<BuildTarget> targets = new HashSet<BuildTarget>();
     Map<BuildTarget, Set<File>> files;
