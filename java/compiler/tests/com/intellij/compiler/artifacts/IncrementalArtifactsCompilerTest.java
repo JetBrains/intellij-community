@@ -8,13 +8,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 
+import static com.intellij.compiler.artifacts.ArtifactsTestCase.commitModel;
+import static com.intellij.compiler.artifacts.ArtifactsTestCase.renameFile;
+
 /**
  * @author nik
  */
 public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
   public static class IncrementalArtifactCompilerJpsModeTest extends ArtifactCompilerTestCase {
     @Override
-    protected boolean useJps() {
+    protected boolean useExternalCompiler() {
       return true;
     }
 
@@ -33,17 +36,17 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
       final VirtualFile file = createFile("src/A.java", "public class A {}");
       final Module module = addModule("a", file.getParent());
       Artifact a = addArtifact(root().module(module));
-      //compile(module);//todo[nik] uncomment and fix
-      compile(a);
+      make(module);
+      make(a);
       assertOutput(a, fs().file("A.class"));
       VirtualFile file2 = createFile("src/B.java", "public class B{}");
-      compile(module);
-      compile(a);
+      make(module);
+      make(a);
       assertOutput(a, fs().file("A.class").file("B.class"));
 
       deleteFile(file2);
-      compile(module);
-      compile(a);
+      make(module);
+      make(a);
       assertOutput(a, fs().file("A.class"));
     }
 
@@ -74,16 +77,16 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
                                     root().dir("dir2").file(file));
 
     compileProject();
-    compile(a1).assertUpToDate();
-    compile(a2).assertUpToDate();
+    make(a1).assertUpToDate();
+    make(a2).assertUpToDate();
     compileProject().assertUpToDate();
 
     changeFile(file);
-    compile(a1).assertRecompiled("file.txt");
-    compile(a1).assertUpToDate();
-    compile(a2).assertRecompiled("file.txt");
-    compile(a2).assertUpToDate();
-    compile(a1).assertUpToDate();
+    make(a1).assertRecompiled("file.txt");
+    make(a1).assertUpToDate();
+    make(a2).assertRecompiled("file.txt");
+    make(a2).assertUpToDate();
+    make(a1).assertUpToDate();
     compileProject().assertUpToDate();
   }
 
@@ -115,12 +118,12 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     CompilerTestUtil.scanSourceRootsToRecompile(getProject());
     VirtualFile file = createFile("a.txt");
     Artifact a = addArtifact(root().file(file).module(module));
-    compile(module);
-    compile(a);
+    make(module);
+    make(a);
 
     renameFile(file, "b.txt");
     rebuild();
-    compile(a);
+    make(a);
     assertOutput(a, fs().file("b.txt").file("A.class"));
   }
   
@@ -158,11 +161,11 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     assertOutput(a2, fs().file("a.txt"));
 
     deleteFile(file);
-    compile(a1).assertDeleted("out/artifacts/a1/a.txt");
+    make(a1).assertDeleted("out/artifacts/a1/a.txt");
     assertEmptyOutput(a1);
     assertOutput(a2, fs().file("a.txt"));
 
-    compile(a2).assertDeleted("out/artifacts/a2/a.txt");
+    make(a2).assertDeleted("out/artifacts/a2/a.txt");
     assertEmptyOutput(a1);
     assertEmptyOutput(a2);
   }
@@ -216,16 +219,16 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     ArtifactsTestUtil.setOutput(myProject, a2.getName(), a1.getOutputPath());
     assertEquals(a1.getOutputPath(), a2.getOutputPath());
 
-    compile(a1);
+    make(a1);
     assertOutput(a1, fs().file("a.txt", "1"));
     assertOutput(a2, fs().file("a.txt", "1"));
-    compile(a1).assertUpToDate();
+    make(a1).assertUpToDate();
 
-    compile(a2);
+    make(a2);
     assertOutput(a2, fs().file("a.txt", "2"));
     changeFile(LocalFileSystem.getInstance().findFileByPath(a2.getOutputPath() + "/a.txt"));
 
-    compile(a1);
+    make(a1);
     assertOutput(a2, fs().file("a.txt", "1"));
   }
 
@@ -233,25 +236,25 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
   public void _testChangeFileInArchive() throws Exception {
     final VirtualFile file = createFile("a.txt", "a");
     final Artifact a = addArtifact("a", root().archive("a.jar").file(file));
-    compile(a);
+    make(a);
 
     final String jarPath = a.getOutputPath() + "/a.jar";
     JarFileSystem.getInstance().setNoCopyJarForPath(jarPath + JarFileSystem.JAR_SEPARATOR);
     final Artifact b = addArtifact("b", root().extractedDir(jarPath, "/"));
-    compile(b);
+    make(b);
     assertOutput(b, fs().file("a.txt", "a"));
 
-    compile(a).assertUpToDate();
-    compile(b).assertUpToDate();
+    make(a).assertUpToDate();
+    make(b).assertUpToDate();
 
     changeFile(file, "b");
-    compile(b).assertUpToDate();
-    compile(a).assertRecompiled("a.txt");
+    make(b).assertUpToDate();
+    make(a).assertRecompiled("a.txt");
     assertOutput(a, fs().archive("a.jar").file("a.txt", "b"));
     changeFileInJar(jarPath, "a.txt");
 
-    compile(b).assertRecompiled("out/artifacts/a/a.jar!/a.txt");
+    make(b).assertRecompiled("out/artifacts/a/a.jar!/a.txt");
     assertOutput(b, fs().file("a.txt", "b"));
-    compile(b).assertUpToDate();
+    make(b).assertUpToDate();
   }
 }

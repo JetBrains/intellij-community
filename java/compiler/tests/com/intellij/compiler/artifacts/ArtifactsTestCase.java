@@ -87,12 +87,12 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     return ArtifactManager.getInstance(myProject).getResolvingContext();
   }
 
-  protected void renameFile(final VirtualFile file, final String newName) {
+  public static void renameFile(final VirtualFile file, final String newName) {
     new WriteAction() {
       @Override
       protected void run(final Result result) {
         try {
-          file.rename(this, newName);
+          file.rename(IdeaTestCase.class, newName);
         }
         catch (IOException e) {
           throw new RuntimeException(e);

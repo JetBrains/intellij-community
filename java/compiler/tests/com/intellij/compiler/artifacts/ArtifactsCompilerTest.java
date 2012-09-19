@@ -19,6 +19,9 @@ import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import static com.intellij.compiler.artifacts.PackagingElementsTestCase.getJDomJar;
+import static com.intellij.compiler.artifacts.PackagingElementsTestCase.getJUnitJarPath;
+
 /**
  * @author nik
  */
@@ -198,8 +201,8 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     CompilerTestUtil.scanSourceRootsToRecompile(getProject());
     final Artifact artifact = addArtifact(root().module(module));
 
-    compile(module);
-    compile(artifact);
+    make(module);
+    make(artifact);
     assertOutput(artifact, fs().file("A.class"));
   }
 
@@ -292,7 +295,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     ArtifactsTestUtil.addArtifactToLayout(myProject, a, a);
     final Artifact b = addArtifact("b", root().artifact(a));
 
-    compile(c);
+    make(c);
     assertCompilationFailed(b);
     assertCompilationFailed(a);
   }
@@ -304,7 +307,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     final VirtualFile lastFile = createFile("src/Z.txt");
     final Artifact a = addArtifact(archive("a.jar").dir("META-INF")
                                        .file(firstFile).file(manifestFile).file(lastFile));
-    compile(a);
+    make(a);
     final String jarPath = a.getOutputFilePath();
     assertNotNull(jarPath);
     JarFile jarFile = new JarFile(new File(FileUtil.toSystemDependentName(jarPath)));

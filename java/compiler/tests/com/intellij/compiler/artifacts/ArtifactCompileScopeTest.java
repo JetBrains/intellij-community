@@ -7,6 +7,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 
+import static com.intellij.compiler.artifacts.ArtifactsTestCase.commitModel;
+
 /**
  * @author nik
  */
@@ -26,15 +28,15 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
 
     final Artifact artifact = addArtifact(root().module(module1));
 
-    compile(module1);
+    make(module1);
     assertNoOutput(artifact);
 
     setBuildOnMake(artifact);
 
-    compile(module2);
+    make(module2);
     assertNoOutput(artifact);
 
-    compile(module1);
+    make(module1);
     assertOutput(artifact, fs().file("A.class"));
   }
 
@@ -55,7 +57,7 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
 
     setBuildOnMake(artifact);
 
-    compile(module1);
+    make(module1);
     assertOutput(artifact, fs().file("A.class").file("B.class"));
   }
 
@@ -69,7 +71,7 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
     final Artifact artifact = addArtifact(root().module(module));
     setBuildOnMake(artifact);
 
-    compile(module);
+    make(module);
     assertOutput(artifact, fs().file("A.class").file("B.class"));
 
     compile(false, file1).assertUpToDate();
@@ -80,7 +82,7 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
     compile(true, file1).assertRecompiledAndDeleted(aPath, aPath);
 
     ensureTimeChanged();
-    compile(module).assertUpToDate();
+    make(module).assertUpToDate();
 
     ensureTimeChanged();
     final String[] bothPaths = {"out/production/module/A.class", "out/production/module/B.class"};
