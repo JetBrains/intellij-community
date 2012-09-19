@@ -195,7 +195,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   }
 
   public ActionToolbar createActionToolbar(final String place, final ActionGroup group, final boolean horizontal) {
-    return new ActionToolbarImpl(place, group, horizontal, myDataManager, this, (KeymapManagerEx)myKeymapManager);
+    return createActionToolbar(place, group, horizontal, false);
+  }
+
+  public ActionToolbar createActionToolbar(final String place, final ActionGroup group, final boolean horizontal, final boolean decorateButtons) {
+    return new ActionToolbarImpl(place, group, horizontal, decorateButtons, myDataManager, this, (KeymapManagerEx)myKeymapManager);
   }
 
 

@@ -16,11 +16,13 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,11 +120,22 @@ public class CommonActionsPanel extends JPanel {
     if (buttonComparator != null) {
       Arrays.sort(myActions, buttonComparator);
     }
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN,
+    final ActionToolbar toolbar = ((ActionManagerEx)ActionManager.getInstance()).createActionToolbar(ActionPlaces.UNKNOWN,
                                                                                   new DefaultActionGroup(myActions),
-                                                                                  isHorizontal);
+                                                                                  isHorizontal, SystemInfo.isMac);
+    toolbar.getComponent().setOpaque(false);
     toolbar.getComponent().setBorder(null);
     add(toolbar.getComponent(), BorderLayout.CENTER);
+  }
+
+  @Override
+  protected void paintComponent(Graphics g2) {
+    final Graphics2D g = (Graphics2D)g2;
+    if (SystemInfo.isMac) {
+      MacUIUtil.drawToolbarDecoratorBackground(g, getWidth(), getHeight());
+    } else {
+      super.paintComponent(g);
+    }
   }
 
   public AnActionButton getAnActionButton(Buttons button) {
