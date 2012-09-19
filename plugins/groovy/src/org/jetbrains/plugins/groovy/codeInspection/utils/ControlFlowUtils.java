@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.codeInspection.utils;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
@@ -483,6 +484,53 @@ public class ControlFlowUtils {
     return builder.toString();
   }
 
+  @Nullable
+  public static ReadWriteVariableInstruction findRWInstruction(final GrReferenceExpression refExpr, final Instruction[] flow) {
+    for (Instruction instruction : flow) {
+      if (instruction instanceof ReadWriteVariableInstruction && instruction.getElement() == refExpr) {
+        return (ReadWriteVariableInstruction)instruction;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Instruction findNearestInstruction(PsiElement place, Instruction[] flow) {
+    List<Instruction> applicable = new ArrayList<Instruction>();
+    for (Instruction instruction : flow) {
+      final PsiElement element = instruction.getElement();
+      if (element == null) continue;
+
+      if (element == place) return instruction;
+
+      if (PsiTreeUtil.isAncestor(element, place, true)) {
+        applicable.add(instruction);
+      }
+    }
+    if (applicable.size() == 0) return null;
+
+    Collections.sort(applicable, new Comparator<Instruction>() {
+      @Override
+      public int compare(Instruction o1, Instruction o2) {
+        PsiElement e1 = o1.getElement();
+        PsiElement e2 = o2.getElement();
+        LOG.assertTrue(e1 != null);
+        LOG.assertTrue(e2 != null);
+        final TextRange t1 = e1.getTextRange();
+        final TextRange t2 = e2.getTextRange();
+        final int s1 = t1.getStartOffset();
+        final int s2 = t2.getStartOffset();
+
+        if (s1 == s2) {
+          return t1.getEndOffset() - t2.getEndOffset();
+        }
+        return s2 - s1;
+      }
+    });
+
+    return applicable.get(0);
+  }
+
   private static class ReturnFinder extends GroovyRecursiveElementVisitor {
     private boolean m_found = false;
 
@@ -724,6 +772,15 @@ public class ControlFlowUtils {
   @Nullable
   public static Instruction findInstruction(final PsiElement place, Instruction[] controlFlow) {
     return ContainerUtil.find(controlFlow, new Condition<Instruction>() {
+      @Override
+      public boolean value(Instruction instruction) {
+        return instruction.getElement() == place;
+      }
+    });
+  }
+
+  public static List<Instruction> findAllInstructions(final PsiElement place, Instruction[] controlFlow) {
+    return ContainerUtil.findAll(controlFlow, new Condition<Instruction>() {
       @Override
       public boolean value(Instruction instruction) {
         return instruction.getElement() == place;

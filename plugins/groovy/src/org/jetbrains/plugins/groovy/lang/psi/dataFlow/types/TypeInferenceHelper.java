@@ -18,8 +18,10 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.*;
+import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.InferenceContext;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author ven
@@ -79,7 +82,7 @@ public class TypeInferenceHelper {
         if (scope == null) return null;
 
         final Instruction[] flow = scope.getControlFlow();
-        ReadWriteVariableInstruction instruction = findInstruction(refExpr, flow);
+        ReadWriteVariableInstruction instruction = ControlFlowUtils.findRWInstruction(refExpr, flow);
         if (instruction == null) return null;
 
         if (instruction.isWrite()) {
@@ -98,7 +101,7 @@ public class TypeInferenceHelper {
     if (scope == null) return null;
 
     final Instruction[] flow = scope.getControlFlow();
-    Instruction instruction = findInstructionAt(place, flow);
+    Instruction instruction = ControlFlowUtils.findNearestInstruction(place, flow);
     if (instruction == null) return null;
 
     final DFAType type = getInferredType(variableName, instruction, flow, scope, new HashSet<MixinTypeInstruction>());
@@ -111,7 +114,7 @@ public class TypeInferenceHelper {
     final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(refExpr);
     if (scope == null) return null;
 
-    return inferVariableTypes(scope).getInferredType(refExpr.getReferenceName(), findInstruction(refExpr, scope.getControlFlow()));
+    return inferVariableTypes(scope).getInferredType(refExpr.getReferenceName(), ControlFlowUtils.findRWInstruction(refExpr, scope.getControlFlow()));
   }
 
   @Nullable
@@ -119,7 +122,7 @@ public class TypeInferenceHelper {
     final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(place);
     if (scope == null) return null;
 
-    return inferVariableTypes(scope).getInferredType(variableName, findInstructionAt(place, scope.getControlFlow()));
+    return inferVariableTypes(scope).getInferredType(variableName, ControlFlowUtils.findNearestInstruction(place, scope.getControlFlow()));
   }
 
   @NotNull
@@ -137,43 +140,6 @@ public class TypeInferenceHelper {
 
   public static boolean isTooComplexTooAnalyze(GrControlFlowOwner scope) {
     return getDefUseMaps(scope) == null;
-  }
-
-  @Nullable
-  private static Instruction findInstructionAt(PsiElement place, Instruction[] flow) {
-    List<Instruction> applicable = new ArrayList<Instruction>();
-    for (Instruction instruction : flow) {
-      final PsiElement element = instruction.getElement();
-      if (element == null) continue;
-
-      if (element == place) return instruction;
-
-      if (PsiTreeUtil.isAncestor(element, place, true)) {
-        applicable.add(instruction);
-      }
-    }
-    if (applicable.size() == 0) return null;
-
-    Collections.sort(applicable, new Comparator<Instruction>() {
-      @Override
-      public int compare(Instruction o1, Instruction o2) {
-        PsiElement e1 = o1.getElement();
-        PsiElement e2 = o2.getElement();
-        LOG.assertTrue(e1 != null);
-        LOG.assertTrue(e2 != null);
-        final TextRange t1 = e1.getTextRange();
-        final TextRange t2 = e2.getTextRange();
-        final int s1 = t1.getStartOffset();
-        final int s2 = t2.getStartOffset();
-
-        if (s1 == s2) {
-          return t1.getEndOffset() - t2.getEndOffset();
-        }
-        return s2 - s1;
-      }
-    });
-
-    return applicable.get(0);
   }
 
   @Nullable
@@ -281,16 +247,6 @@ public class TypeInferenceHelper {
     return original;
   }
 
-
-  @Nullable
-  private static ReadWriteVariableInstruction findInstruction(final GrReferenceExpression refExpr, final Instruction[] flow) {
-    for (Instruction instruction : flow) {
-      if (instruction instanceof ReadWriteVariableInstruction && instruction.getElement() == refExpr) {
-        return (ReadWriteVariableInstruction)instruction;
-      }
-    }
-    return null;
-  }
 
   @Nullable
   public static PsiType getInitializerType(final PsiElement element) {
