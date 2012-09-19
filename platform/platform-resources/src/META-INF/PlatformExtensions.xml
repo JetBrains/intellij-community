@@ -117,8 +117,8 @@
                       serviceImplementation="com.intellij.ide.passwordSafe.config.PasswordSafeSettings"/>
   <applicationService serviceInterface="com.intellij.ide.passwordSafe.PasswordSafe"
                       serviceImplementation="com.intellij.ide.passwordSafe.impl.PasswordSafeImpl"/>
-  <applicationConfigurable instance="com.intellij.ide.passwordSafe.config.PasswordSafeConfigurable"/>
-
+  <applicationConfigurable instance="com.intellij.ide.passwordSafe.config.PasswordSafeConfigurable" id="application.passwordSafe"
+                           displayName="Passwords"/>
   <applicationService serviceInterface="com.intellij.execution.process.ColoredOutputTypeRegistry"
                       serviceImplementation="com.intellij.execution.process.ColoredOutputTypeRegistry"/>
   <applicationService serviceInterface="com.intellij.execution.process.OSProcessManager"
@@ -183,31 +183,36 @@
   <applicationConfigurable instance="com.intellij.ide.GeneralSettingsConfigurable"/>
 
   <!-- Appearance -->
-  <applicationConfigurable instance="com.intellij.ide.ui.AppearanceConfigurable" id="appearance"/>
+  <applicationConfigurable instance="com.intellij.ide.ui.AppearanceConfigurable" id="appearance" key="title.appearance"
+                           bundle="messages.IdeBundle"/>
 
   <!-- Keymap -->
   <applicationConfigurable instance="com.intellij.openapi.keymap.impl.ui.KeymapConfigurable"/>
 
   <!-- Customizations -->
-  <applicationConfigurable instance="com.intellij.ide.ui.customization.CustomizationConfigurable"/>
+  <applicationConfigurable instance="com.intellij.ide.ui.customization.CustomizationConfigurable" id="preferences.customizations"
+                           key="title.customizations" bundle="messages.IdeBundle"/>
 
   <!-- Web Browser -->
-  <applicationConfigurable instance="com.intellij.ide.BrowserSettings"/>
+  <applicationConfigurable instance="com.intellij.ide.BrowserSettings" id="reference.settings.ide.settings.web.browsers"
+                           key="browsers.settings" bundle="messages.IdeBundle"/>
 
   <!-- Notifications -->
   <applicationConfigurable instance="com.intellij.notification.impl.NotificationsConfigurable"/>
 
   <!-- Plugins -->
-  <applicationConfigurable instance="com.intellij.ide.plugins.PluginManagerConfigurable"/>
-  <applicationConfigurable instance="com.intellij.util.net.HTTPProxySettingsPanel"/>
-  <applicationConfigurable instance="com.intellij.openapi.diff.impl.external.DiffOptionsForm"/>
+  <applicationConfigurable instance="com.intellij.ide.plugins.PluginManagerConfigurable" id="preferences.pluginManager"
+                           displayName="Plugins"/>
+  <applicationConfigurable instance="com.intellij.util.net.HTTPProxySettingsPanel" id="http.proxy" displayName="HTTP Proxy" />
+  <applicationConfigurable instance="com.intellij.openapi.diff.impl.external.DiffOptionsForm" id="diff" displayName="External Diff Tools" />
   <!--<applicationConfigurable instance="com.intellij.ui.switcher.QuickAccessConfigurable"/>-->
 
   <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
   <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
                         serviceImplementation="com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl"/>
 
-  <applicationConfigurable instance="com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable"/>
+  <applicationConfigurable instance="com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable" id="preferences.updates"
+                           key="updates.settings.title" bundle="messages.IdeBundle"/>
 
   <applicationService serviceInterface="com.intellij.psi.search.scope.packageSet.PackageSetFactory"
                       serviceImplementation="com.intellij.psi.search.scope.packageSet.PackageSetFactoryImpl"/>
@@ -240,7 +245,8 @@
   <statistics.usagesCollector implementation="com.intellij.internal.statistic.UsageTrigger$MyCollector"/>
   <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeSettingsUsagesCollector"/>
 
-  <applicationConfigurable instance="com.intellij.internal.statistic.configurable.StatisticsConfigurable"/>
+  <applicationConfigurable instance="com.intellij.internal.statistic.configurable.StatisticsConfigurable" id="usage.statistics"
+                           displayName="Usage Statistics"/>
 
   <virtualFileSystem key="dummy" implementationClass="com.intellij.openapi.vfs.ex.dummy.DummyFileSystem"/>
   <virtualFileSystem key="http" implementationClass="com.intellij.openapi.vfs.impl.http.HttpFileSystemImpl"/>

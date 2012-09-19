@@ -354,22 +354,27 @@
   <projectConfigurable instance="com.intellij.application.options.CodeStyleSchemesConfigurable" order="after colors"/>
 
   <!-- File Types -->
-  <applicationConfigurable instance="com.intellij.openapi.fileTypes.impl.FileTypeConfigurable"/>
+  <applicationConfigurable instance="com.intellij.openapi.fileTypes.impl.FileTypeConfigurable" id="preferences.fileTypes"
+                           key="filetype.settings.title" bundle="messages.FileTypesBundle"/>
 
   <applicationConfigurable instance="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable" id="intentions"/>
 
   <!-- Live Templates -->
-  <applicationConfigurable instance="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable"/>
+  <applicationConfigurable instance="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable" id="editing.templates"
+                           key="templates.settings.page.title" bundle="messages.CodeInsightBundle"/>
   <lookup.actionProvider implementation="com.intellij.codeInsight.template.impl.LiveTemplateLookupActionProvider"/>
 
   <!-- File Templates-->
-  <applicationConfigurable instance="com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable"/>
+  <applicationConfigurable instance="com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable" id="fileTemplates"
+                           key="title.file.templates" bundle="messages.IdeBundle"/>
 
   <!-- T.O.D.O -->
-  <applicationConfigurable instance="com.intellij.ide.todo.configurable.TodoConfigurable"/>
+  <applicationConfigurable instance="com.intellij.ide.todo.configurable.TodoConfigurable" id="preferences.toDoOptions" key="title.todo"
+                           bundle="messages.IdeBundle"/>
 
   <!-- External Tools -->
-  <applicationConfigurable instance="com.intellij.tools.ToolConfigurable"/>
+  <applicationConfigurable instance="com.intellij.tools.ToolConfigurable" id="preferences.externalTools" key="tools.settings.title"
+                           bundle="messages.ToolsBundle"/>
   <stepsBeforeRunProvider implementation="com.intellij.tools.ToolBeforeRunTaskProvider"/>
   <checkinHandlerFactory implementation="com.intellij.tools.ExternalToolsCheckinHandlerFactory"/>
   <projectService serviceInterface="com.intellij.tools.ToolsProjectConfig"

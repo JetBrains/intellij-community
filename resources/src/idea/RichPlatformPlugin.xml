@@ -263,9 +263,11 @@
     <!-- Path Variables -->
     <!-- the implementation of this configurable is in platform-impl but it's not registered in platform because
          it's only required in full IDEA -->
-    <applicationConfigurable instance="com.intellij.application.options.pathMacros.PathMacroConfigurable"/>
+    <applicationConfigurable instance="com.intellij.application.options.pathMacros.PathMacroConfigurable" id="preferences.pathVariables"
+                             key="title.path.variables" bundle="messages.ApplicationBundle"/>
 
-    <applicationConfigurable instance="com.intellij.execution.console.ConsoleFoldingConfigurable"/>
+    <applicationConfigurable instance="com.intellij.execution.console.ConsoleFoldingConfigurable" id="Console Folding"
+                             displayName="Console Folding"/>
 
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.SetupSDKNotificationProvider"/>
