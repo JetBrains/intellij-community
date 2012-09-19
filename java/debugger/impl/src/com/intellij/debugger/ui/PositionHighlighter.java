@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.ui;
 
+import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
@@ -123,13 +124,22 @@ public class PositionHighlighter {
         DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
         scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES)
       );
+      adjustCounter(myEditor, 1);
       myHighlighter.setErrorStripeTooltip(DebuggerBundle.message("position.highlighter.stripe.tooltip"));
       myHighlighter.putUserData(HIGHLIGHTER_USERDATA_KEY, Boolean.TRUE);
+    }
+
+    private static void adjustCounter(@NotNull Editor editor, int increment) {
+      JComponent component = editor.getComponent();
+      Object o = component.getClientProperty(DaemonListeners.IGNORE_MOUSE_TRACKING);
+      Integer value = ((o instanceof Integer) ? (Integer)o : 0) + increment;
+      component.putClientProperty(DaemonListeners.IGNORE_MOUSE_TRACKING, value > 0 ? value : null);
     }
 
     public void remove() {
       if(!myIsActive) return;
       myIsActive = false;
+      adjustCounter(myEditor, -1);
       if (myHighlighter != null) {
         myHighlighter.dispose();
         myHighlighter = null;
