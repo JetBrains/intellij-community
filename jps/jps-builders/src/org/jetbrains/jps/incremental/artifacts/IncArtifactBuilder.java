@@ -40,7 +40,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
     JpsBuilderArtifactService artifactService = JpsBuilderArtifactService.getInstance();
     JpsModel model = context.getProjectDescriptor().jpsModel;
     for (JpsArtifact artifact : artifactService.getArtifacts(model, false)) {
-      if (context.getScope().isAffected(artifact)) {
+      if (context.getScope().isAffected(new ArtifactBuildTarget(artifact))) {
         affected.add(artifact);
       }
     }

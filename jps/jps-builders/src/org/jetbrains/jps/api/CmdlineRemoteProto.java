@@ -2449,22 +2449,18 @@ public final class CmdlineRemoteProto {
         boolean hasProjectId();
         String getProjectId();
         
-        // repeated string module_name = 4;
-        java.util.List<String> getModuleNameList();
-        int getModuleNameCount();
-        String getModuleName(int index);
+        // repeated .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope scope = 4;
+        java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> 
+            getScopeList();
+        org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope getScope(int index);
+        int getScopeCount();
         
         // repeated string file_path = 5;
         java.util.List<String> getFilePathList();
         int getFilePathCount();
         String getFilePath(int index);
         
-        // repeated string artifact_name = 6;
-        java.util.List<String> getArtifactNameList();
-        int getArtifactNameCount();
-        String getArtifactName(int index);
-        
-        // repeated .org.jetbrains.jpsservice.Message.KeyValuePair builder_parameter = 7;
+        // repeated .org.jetbrains.jpsservice.Message.KeyValuePair builder_parameter = 6;
         java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair> 
             getBuilderParameterList();
         org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair getBuilderParameter(int index);
@@ -2535,6 +2531,502 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(enum_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type)
         }
         
+        public interface TargetTypeBuildScopeOrBuilder
+            extends com.google.protobuf.MessageLiteOrBuilder {
+          
+          // required string type_id = 1;
+          boolean hasTypeId();
+          String getTypeId();
+          
+          // optional bool all_targets = 2;
+          boolean hasAllTargets();
+          boolean getAllTargets();
+          
+          // repeated string target_id = 3;
+          java.util.List<String> getTargetIdList();
+          int getTargetIdCount();
+          String getTargetId(int index);
+        }
+        public static final class TargetTypeBuildScope extends
+            com.google.protobuf.GeneratedMessageLite
+            implements TargetTypeBuildScopeOrBuilder {
+          // Use TargetTypeBuildScope.newBuilder() to construct.
+          private TargetTypeBuildScope(Builder builder) {
+            super(builder);
+          }
+          private TargetTypeBuildScope(boolean noInit) {}
+          
+          private static final TargetTypeBuildScope defaultInstance;
+          public static TargetTypeBuildScope getDefaultInstance() {
+            return defaultInstance;
+          }
+          
+          public TargetTypeBuildScope getDefaultInstanceForType() {
+            return defaultInstance;
+          }
+          
+          private int bitField0_;
+          // required string type_id = 1;
+          public static final int TYPE_ID_FIELD_NUMBER = 1;
+          private java.lang.Object typeId_;
+          public boolean hasTypeId() {
+            return ((bitField0_ & 0x00000001) == 0x00000001);
+          }
+          public String getTypeId() {
+            java.lang.Object ref = typeId_;
+            if (ref instanceof String) {
+              return (String) ref;
+            } else {
+              com.google.protobuf.ByteString bs = 
+                  (com.google.protobuf.ByteString) ref;
+              String s = bs.toStringUtf8();
+              if (com.google.protobuf.Internal.isValidUtf8(bs)) {
+                typeId_ = s;
+              }
+              return s;
+            }
+          }
+          private com.google.protobuf.ByteString getTypeIdBytes() {
+            java.lang.Object ref = typeId_;
+            if (ref instanceof String) {
+              com.google.protobuf.ByteString b = 
+                  com.google.protobuf.ByteString.copyFromUtf8((String) ref);
+              typeId_ = b;
+              return b;
+            } else {
+              return (com.google.protobuf.ByteString) ref;
+            }
+          }
+          
+          // optional bool all_targets = 2;
+          public static final int ALL_TARGETS_FIELD_NUMBER = 2;
+          private boolean allTargets_;
+          public boolean hasAllTargets() {
+            return ((bitField0_ & 0x00000002) == 0x00000002);
+          }
+          public boolean getAllTargets() {
+            return allTargets_;
+          }
+          
+          // repeated string target_id = 3;
+          public static final int TARGET_ID_FIELD_NUMBER = 3;
+          private com.google.protobuf.LazyStringList targetId_;
+          public java.util.List<String>
+              getTargetIdList() {
+            return targetId_;
+          }
+          public int getTargetIdCount() {
+            return targetId_.size();
+          }
+          public String getTargetId(int index) {
+            return targetId_.get(index);
+          }
+          
+          private void initFields() {
+            typeId_ = "";
+            allTargets_ = false;
+            targetId_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+          }
+          private byte memoizedIsInitialized = -1;
+          public final boolean isInitialized() {
+            byte isInitialized = memoizedIsInitialized;
+            if (isInitialized != -1) return isInitialized == 1;
+            
+            if (!hasTypeId()) {
+              memoizedIsInitialized = 0;
+              return false;
+            }
+            memoizedIsInitialized = 1;
+            return true;
+          }
+          
+          public void writeTo(com.google.protobuf.CodedOutputStream output)
+                              throws java.io.IOException {
+            getSerializedSize();
+            if (((bitField0_ & 0x00000001) == 0x00000001)) {
+              output.writeBytes(1, getTypeIdBytes());
+            }
+            if (((bitField0_ & 0x00000002) == 0x00000002)) {
+              output.writeBool(2, allTargets_);
+            }
+            for (int i = 0; i < targetId_.size(); i++) {
+              output.writeBytes(3, targetId_.getByteString(i));
+            }
+          }
+          
+          private int memoizedSerializedSize = -1;
+          public int getSerializedSize() {
+            int size = memoizedSerializedSize;
+            if (size != -1) return size;
+          
+            size = 0;
+            if (((bitField0_ & 0x00000001) == 0x00000001)) {
+              size += com.google.protobuf.CodedOutputStream
+                .computeBytesSize(1, getTypeIdBytes());
+            }
+            if (((bitField0_ & 0x00000002) == 0x00000002)) {
+              size += com.google.protobuf.CodedOutputStream
+                .computeBoolSize(2, allTargets_);
+            }
+            {
+              int dataSize = 0;
+              for (int i = 0; i < targetId_.size(); i++) {
+                dataSize += com.google.protobuf.CodedOutputStream
+                  .computeBytesSizeNoTag(targetId_.getByteString(i));
+              }
+              size += dataSize;
+              size += 1 * getTargetIdList().size();
+            }
+            memoizedSerializedSize = size;
+            return size;
+          }
+          
+          private static final long serialVersionUID = 0L;
+          @java.lang.Override
+          protected java.lang.Object writeReplace()
+              throws java.io.ObjectStreamException {
+            return super.writeReplace();
+          }
+          
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope parseFrom(
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return newBuilder().mergeFrom(data).buildParsed();
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope parseFrom(
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return newBuilder().mergeFrom(data, extensionRegistry)
+                     .buildParsed();
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope parseFrom(byte[] data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return newBuilder().mergeFrom(data).buildParsed();
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope parseFrom(
+              byte[] data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return newBuilder().mergeFrom(data, extensionRegistry)
+                     .buildParsed();
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope parseFrom(java.io.InputStream input)
+              throws java.io.IOException {
+            return newBuilder().mergeFrom(input).buildParsed();
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope parseFrom(
+              java.io.InputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            return newBuilder().mergeFrom(input, extensionRegistry)
+                     .buildParsed();
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope parseDelimitedFrom(java.io.InputStream input)
+              throws java.io.IOException {
+            Builder builder = newBuilder();
+            if (builder.mergeDelimitedFrom(input)) {
+              return builder.buildParsed();
+            } else {
+              return null;
+            }
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope parseDelimitedFrom(
+              java.io.InputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            Builder builder = newBuilder();
+            if (builder.mergeDelimitedFrom(input, extensionRegistry)) {
+              return builder.buildParsed();
+            } else {
+              return null;
+            }
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope parseFrom(
+              com.google.protobuf.CodedInputStream input)
+              throws java.io.IOException {
+            return newBuilder().mergeFrom(input).buildParsed();
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope parseFrom(
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            return newBuilder().mergeFrom(input, extensionRegistry)
+                     .buildParsed();
+          }
+          
+          public static Builder newBuilder() { return Builder.create(); }
+          public Builder newBuilderForType() { return newBuilder(); }
+          public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope prototype) {
+            return newBuilder().mergeFrom(prototype);
+          }
+          public Builder toBuilder() { return newBuilder(this); }
+          
+          public static final class Builder extends
+              com.google.protobuf.GeneratedMessageLite.Builder<
+                org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope, Builder>
+              implements org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScopeOrBuilder {
+            // Construct using org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope.newBuilder()
+            private Builder() {
+              maybeForceBuilderInitialization();
+            }
+            
+            private void maybeForceBuilderInitialization() {
+            }
+            private static Builder create() {
+              return new Builder();
+            }
+            
+            public Builder clear() {
+              super.clear();
+              typeId_ = "";
+              bitField0_ = (bitField0_ & ~0x00000001);
+              allTargets_ = false;
+              bitField0_ = (bitField0_ & ~0x00000002);
+              targetId_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+              bitField0_ = (bitField0_ & ~0x00000004);
+              return this;
+            }
+            
+            public Builder clone() {
+              return create().mergeFrom(buildPartial());
+            }
+            
+            public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope getDefaultInstanceForType() {
+              return org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope.getDefaultInstance();
+            }
+            
+            public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope build() {
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope result = buildPartial();
+              if (!result.isInitialized()) {
+                throw newUninitializedMessageException(result);
+              }
+              return result;
+            }
+            
+            private org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope buildParsed()
+                throws com.google.protobuf.InvalidProtocolBufferException {
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope result = buildPartial();
+              if (!result.isInitialized()) {
+                throw newUninitializedMessageException(
+                  result).asInvalidProtocolBufferException();
+              }
+              return result;
+            }
+            
+            public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope buildPartial() {
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope result = new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope(this);
+              int from_bitField0_ = bitField0_;
+              int to_bitField0_ = 0;
+              if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+                to_bitField0_ |= 0x00000001;
+              }
+              result.typeId_ = typeId_;
+              if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+                to_bitField0_ |= 0x00000002;
+              }
+              result.allTargets_ = allTargets_;
+              if (((bitField0_ & 0x00000004) == 0x00000004)) {
+                targetId_ = new com.google.protobuf.UnmodifiableLazyStringList(
+                    targetId_);
+                bitField0_ = (bitField0_ & ~0x00000004);
+              }
+              result.targetId_ = targetId_;
+              result.bitField0_ = to_bitField0_;
+              return result;
+            }
+            
+            public Builder mergeFrom(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope other) {
+              if (other == org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope.getDefaultInstance()) return this;
+              if (other.hasTypeId()) {
+                setTypeId(other.getTypeId());
+              }
+              if (other.hasAllTargets()) {
+                setAllTargets(other.getAllTargets());
+              }
+              if (!other.targetId_.isEmpty()) {
+                if (targetId_.isEmpty()) {
+                  targetId_ = other.targetId_;
+                  bitField0_ = (bitField0_ & ~0x00000004);
+                } else {
+                  ensureTargetIdIsMutable();
+                  targetId_.addAll(other.targetId_);
+                }
+                
+              }
+              return this;
+            }
+            
+            public final boolean isInitialized() {
+              if (!hasTypeId()) {
+                
+                return false;
+              }
+              return true;
+            }
+            
+            public Builder mergeFrom(
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws java.io.IOException {
+              while (true) {
+                int tag = input.readTag();
+                switch (tag) {
+                  case 0:
+                    
+                    return this;
+                  default: {
+                    if (!parseUnknownField(input, extensionRegistry, tag)) {
+                      
+                      return this;
+                    }
+                    break;
+                  }
+                  case 10: {
+                    bitField0_ |= 0x00000001;
+                    typeId_ = input.readBytes();
+                    break;
+                  }
+                  case 16: {
+                    bitField0_ |= 0x00000002;
+                    allTargets_ = input.readBool();
+                    break;
+                  }
+                  case 26: {
+                    ensureTargetIdIsMutable();
+                    targetId_.add(input.readBytes());
+                    break;
+                  }
+                }
+              }
+            }
+            
+            private int bitField0_;
+            
+            // required string type_id = 1;
+            private java.lang.Object typeId_ = "";
+            public boolean hasTypeId() {
+              return ((bitField0_ & 0x00000001) == 0x00000001);
+            }
+            public String getTypeId() {
+              java.lang.Object ref = typeId_;
+              if (!(ref instanceof String)) {
+                String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
+                typeId_ = s;
+                return s;
+              } else {
+                return (String) ref;
+              }
+            }
+            public Builder setTypeId(String value) {
+              if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+              typeId_ = value;
+              
+              return this;
+            }
+            public Builder clearTypeId() {
+              bitField0_ = (bitField0_ & ~0x00000001);
+              typeId_ = getDefaultInstance().getTypeId();
+              
+              return this;
+            }
+            void setTypeId(com.google.protobuf.ByteString value) {
+              bitField0_ |= 0x00000001;
+              typeId_ = value;
+              
+            }
+            
+            // optional bool all_targets = 2;
+            private boolean allTargets_ ;
+            public boolean hasAllTargets() {
+              return ((bitField0_ & 0x00000002) == 0x00000002);
+            }
+            public boolean getAllTargets() {
+              return allTargets_;
+            }
+            public Builder setAllTargets(boolean value) {
+              bitField0_ |= 0x00000002;
+              allTargets_ = value;
+              
+              return this;
+            }
+            public Builder clearAllTargets() {
+              bitField0_ = (bitField0_ & ~0x00000002);
+              allTargets_ = false;
+              
+              return this;
+            }
+            
+            // repeated string target_id = 3;
+            private com.google.protobuf.LazyStringList targetId_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+            private void ensureTargetIdIsMutable() {
+              if (!((bitField0_ & 0x00000004) == 0x00000004)) {
+                targetId_ = new com.google.protobuf.LazyStringArrayList(targetId_);
+                bitField0_ |= 0x00000004;
+               }
+            }
+            public java.util.List<String>
+                getTargetIdList() {
+              return java.util.Collections.unmodifiableList(targetId_);
+            }
+            public int getTargetIdCount() {
+              return targetId_.size();
+            }
+            public String getTargetId(int index) {
+              return targetId_.get(index);
+            }
+            public Builder setTargetId(
+                int index, String value) {
+              if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureTargetIdIsMutable();
+              targetId_.set(index, value);
+              
+              return this;
+            }
+            public Builder addTargetId(String value) {
+              if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureTargetIdIsMutable();
+              targetId_.add(value);
+              
+              return this;
+            }
+            public Builder addAllTargetId(
+                java.lang.Iterable<String> values) {
+              ensureTargetIdIsMutable();
+              super.addAll(values, targetId_);
+              
+              return this;
+            }
+            public Builder clearTargetId() {
+              targetId_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+              bitField0_ = (bitField0_ & ~0x00000004);
+              
+              return this;
+            }
+            void addTargetId(com.google.protobuf.ByteString value) {
+              ensureTargetIdIsMutable();
+              targetId_.add(value);
+              
+            }
+            
+            // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope)
+          }
+          
+          static {
+            defaultInstance = new TargetTypeBuildScope(true);
+            defaultInstance.initFields();
+          }
+          
+          // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope)
+        }
+        
         private int bitField0_;
         // required .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;
         public static final int BUILD_TYPE_FIELD_NUMBER = 1;
@@ -2588,18 +3080,25 @@ public final class CmdlineRemoteProto {
           }
         }
         
-        // repeated string module_name = 4;
-        public static final int MODULE_NAME_FIELD_NUMBER = 4;
-        private com.google.protobuf.LazyStringList moduleName_;
-        public java.util.List<String>
-            getModuleNameList() {
-          return moduleName_;
+        // repeated .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope scope = 4;
+        public static final int SCOPE_FIELD_NUMBER = 4;
+        private java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scope_;
+        public java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> getScopeList() {
+          return scope_;
         }
-        public int getModuleNameCount() {
-          return moduleName_.size();
+        public java.util.List<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScopeOrBuilder> 
+            getScopeOrBuilderList() {
+          return scope_;
         }
-        public String getModuleName(int index) {
-          return moduleName_.get(index);
+        public int getScopeCount() {
+          return scope_.size();
+        }
+        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope getScope(int index) {
+          return scope_.get(index);
+        }
+        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScopeOrBuilder getScopeOrBuilder(
+            int index) {
+          return scope_.get(index);
         }
         
         // repeated string file_path = 5;
@@ -2616,22 +3115,8 @@ public final class CmdlineRemoteProto {
           return filePath_.get(index);
         }
         
-        // repeated string artifact_name = 6;
-        public static final int ARTIFACT_NAME_FIELD_NUMBER = 6;
-        private com.google.protobuf.LazyStringList artifactName_;
-        public java.util.List<String>
-            getArtifactNameList() {
-          return artifactName_;
-        }
-        public int getArtifactNameCount() {
-          return artifactName_.size();
-        }
-        public String getArtifactName(int index) {
-          return artifactName_.get(index);
-        }
-        
-        // repeated .org.jetbrains.jpsservice.Message.KeyValuePair builder_parameter = 7;
-        public static final int BUILDER_PARAMETER_FIELD_NUMBER = 7;
+        // repeated .org.jetbrains.jpsservice.Message.KeyValuePair builder_parameter = 6;
+        public static final int BUILDER_PARAMETER_FIELD_NUMBER = 6;
         private java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair> builderParameter_;
         public java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair> getBuilderParameterList() {
           return builderParameter_;
@@ -2655,9 +3140,8 @@ public final class CmdlineRemoteProto {
           buildType_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.REBUILD;
           globalSettings_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.getDefaultInstance();
           projectId_ = "";
-          moduleName_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+          scope_ = java.util.Collections.emptyList();
           filePath_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-          artifactName_ = com.google.protobuf.LazyStringArrayList.EMPTY;
           builderParameter_ = java.util.Collections.emptyList();
         }
         private byte memoizedIsInitialized = -1;
@@ -2671,6 +3155,12 @@ public final class CmdlineRemoteProto {
           }
           if (hasGlobalSettings()) {
             if (!getGlobalSettings().isInitialized()) {
+              memoizedIsInitialized = 0;
+              return false;
+            }
+          }
+          for (int i = 0; i < getScopeCount(); i++) {
+            if (!getScope(i).isInitialized()) {
               memoizedIsInitialized = 0;
               return false;
             }
@@ -2697,17 +3187,14 @@ public final class CmdlineRemoteProto {
           if (((bitField0_ & 0x00000004) == 0x00000004)) {
             output.writeBytes(3, getProjectIdBytes());
           }
-          for (int i = 0; i < moduleName_.size(); i++) {
-            output.writeBytes(4, moduleName_.getByteString(i));
+          for (int i = 0; i < scope_.size(); i++) {
+            output.writeMessage(4, scope_.get(i));
           }
           for (int i = 0; i < filePath_.size(); i++) {
             output.writeBytes(5, filePath_.getByteString(i));
           }
-          for (int i = 0; i < artifactName_.size(); i++) {
-            output.writeBytes(6, artifactName_.getByteString(i));
-          }
           for (int i = 0; i < builderParameter_.size(); i++) {
-            output.writeMessage(7, builderParameter_.get(i));
+            output.writeMessage(6, builderParameter_.get(i));
           }
         }
         
@@ -2729,14 +3216,9 @@ public final class CmdlineRemoteProto {
             size += com.google.protobuf.CodedOutputStream
               .computeBytesSize(3, getProjectIdBytes());
           }
-          {
-            int dataSize = 0;
-            for (int i = 0; i < moduleName_.size(); i++) {
-              dataSize += com.google.protobuf.CodedOutputStream
-                .computeBytesSizeNoTag(moduleName_.getByteString(i));
-            }
-            size += dataSize;
-            size += 1 * getModuleNameList().size();
+          for (int i = 0; i < scope_.size(); i++) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeMessageSize(4, scope_.get(i));
           }
           {
             int dataSize = 0;
@@ -2747,18 +3229,9 @@ public final class CmdlineRemoteProto {
             size += dataSize;
             size += 1 * getFilePathList().size();
           }
-          {
-            int dataSize = 0;
-            for (int i = 0; i < artifactName_.size(); i++) {
-              dataSize += com.google.protobuf.CodedOutputStream
-                .computeBytesSizeNoTag(artifactName_.getByteString(i));
-            }
-            size += dataSize;
-            size += 1 * getArtifactNameList().size();
-          }
           for (int i = 0; i < builderParameter_.size(); i++) {
             size += com.google.protobuf.CodedOutputStream
-              .computeMessageSize(7, builderParameter_.get(i));
+              .computeMessageSize(6, builderParameter_.get(i));
           }
           memoizedSerializedSize = size;
           return size;
@@ -2868,14 +3341,12 @@ public final class CmdlineRemoteProto {
             bitField0_ = (bitField0_ & ~0x00000002);
             projectId_ = "";
             bitField0_ = (bitField0_ & ~0x00000004);
-            moduleName_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+            scope_ = java.util.Collections.emptyList();
             bitField0_ = (bitField0_ & ~0x00000008);
             filePath_ = com.google.protobuf.LazyStringArrayList.EMPTY;
             bitField0_ = (bitField0_ & ~0x00000010);
-            artifactName_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-            bitField0_ = (bitField0_ & ~0x00000020);
             builderParameter_ = java.util.Collections.emptyList();
-            bitField0_ = (bitField0_ & ~0x00000040);
+            bitField0_ = (bitField0_ & ~0x00000020);
             return this;
           }
           
@@ -2922,11 +3393,10 @@ public final class CmdlineRemoteProto {
             }
             result.projectId_ = projectId_;
             if (((bitField0_ & 0x00000008) == 0x00000008)) {
-              moduleName_ = new com.google.protobuf.UnmodifiableLazyStringList(
-                  moduleName_);
+              scope_ = java.util.Collections.unmodifiableList(scope_);
               bitField0_ = (bitField0_ & ~0x00000008);
             }
-            result.moduleName_ = moduleName_;
+            result.scope_ = scope_;
             if (((bitField0_ & 0x00000010) == 0x00000010)) {
               filePath_ = new com.google.protobuf.UnmodifiableLazyStringList(
                   filePath_);
@@ -2934,14 +3404,8 @@ public final class CmdlineRemoteProto {
             }
             result.filePath_ = filePath_;
             if (((bitField0_ & 0x00000020) == 0x00000020)) {
-              artifactName_ = new com.google.protobuf.UnmodifiableLazyStringList(
-                  artifactName_);
-              bitField0_ = (bitField0_ & ~0x00000020);
-            }
-            result.artifactName_ = artifactName_;
-            if (((bitField0_ & 0x00000040) == 0x00000040)) {
               builderParameter_ = java.util.Collections.unmodifiableList(builderParameter_);
-              bitField0_ = (bitField0_ & ~0x00000040);
+              bitField0_ = (bitField0_ & ~0x00000020);
             }
             result.builderParameter_ = builderParameter_;
             result.bitField0_ = to_bitField0_;
@@ -2959,13 +3423,13 @@ public final class CmdlineRemoteProto {
             if (other.hasProjectId()) {
               setProjectId(other.getProjectId());
             }
-            if (!other.moduleName_.isEmpty()) {
-              if (moduleName_.isEmpty()) {
-                moduleName_ = other.moduleName_;
+            if (!other.scope_.isEmpty()) {
+              if (scope_.isEmpty()) {
+                scope_ = other.scope_;
                 bitField0_ = (bitField0_ & ~0x00000008);
               } else {
-                ensureModuleNameIsMutable();
-                moduleName_.addAll(other.moduleName_);
+                ensureScopeIsMutable();
+                scope_.addAll(other.scope_);
               }
               
             }
@@ -2979,20 +3443,10 @@ public final class CmdlineRemoteProto {
               }
               
             }
-            if (!other.artifactName_.isEmpty()) {
-              if (artifactName_.isEmpty()) {
-                artifactName_ = other.artifactName_;
-                bitField0_ = (bitField0_ & ~0x00000020);
-              } else {
-                ensureArtifactNameIsMutable();
-                artifactName_.addAll(other.artifactName_);
-              }
-              
-            }
             if (!other.builderParameter_.isEmpty()) {
               if (builderParameter_.isEmpty()) {
                 builderParameter_ = other.builderParameter_;
-                bitField0_ = (bitField0_ & ~0x00000040);
+                bitField0_ = (bitField0_ & ~0x00000020);
               } else {
                 ensureBuilderParameterIsMutable();
                 builderParameter_.addAll(other.builderParameter_);
@@ -3009,6 +3463,12 @@ public final class CmdlineRemoteProto {
             }
             if (hasGlobalSettings()) {
               if (!getGlobalSettings().isInitialized()) {
+                
+                return false;
+              }
+            }
+            for (int i = 0; i < getScopeCount(); i++) {
+              if (!getScope(i).isInitialized()) {
                 
                 return false;
               }
@@ -3063,8 +3523,9 @@ public final class CmdlineRemoteProto {
                   break;
                 }
                 case 34: {
-                  ensureModuleNameIsMutable();
-                  moduleName_.add(input.readBytes());
+                  org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope.Builder subBuilder = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope.newBuilder();
+                  input.readMessage(subBuilder, extensionRegistry);
+                  addScope(subBuilder.buildPartial());
                   break;
                 }
                 case 42: {
@@ -3073,11 +3534,6 @@ public final class CmdlineRemoteProto {
                   break;
                 }
                 case 50: {
-                  ensureArtifactNameIsMutable();
-                  artifactName_.add(input.readBytes());
-                  break;
-                }
-                case 58: {
                   org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair.Builder subBuilder = org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair.newBuilder();
                   input.readMessage(subBuilder, extensionRegistry);
                   addBuilderParameter(subBuilder.buildPartial());
@@ -3192,60 +3648,93 @@ public final class CmdlineRemoteProto {
             
           }
           
-          // repeated string module_name = 4;
-          private com.google.protobuf.LazyStringList moduleName_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-          private void ensureModuleNameIsMutable() {
+          // repeated .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope scope = 4;
+          private java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scope_ =
+            java.util.Collections.emptyList();
+          private void ensureScopeIsMutable() {
             if (!((bitField0_ & 0x00000008) == 0x00000008)) {
-              moduleName_ = new com.google.protobuf.LazyStringArrayList(moduleName_);
+              scope_ = new java.util.ArrayList<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope>(scope_);
               bitField0_ |= 0x00000008;
              }
           }
-          public java.util.List<String>
-              getModuleNameList() {
-            return java.util.Collections.unmodifiableList(moduleName_);
+          
+          public java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> getScopeList() {
+            return java.util.Collections.unmodifiableList(scope_);
           }
-          public int getModuleNameCount() {
-            return moduleName_.size();
+          public int getScopeCount() {
+            return scope_.size();
           }
-          public String getModuleName(int index) {
-            return moduleName_.get(index);
+          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope getScope(int index) {
+            return scope_.get(index);
           }
-          public Builder setModuleName(
-              int index, String value) {
+          public Builder setScope(
+              int index, org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope value) {
             if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureModuleNameIsMutable();
-            moduleName_.set(index, value);
+              throw new NullPointerException();
+            }
+            ensureScopeIsMutable();
+            scope_.set(index, value);
             
             return this;
           }
-          public Builder addModuleName(String value) {
+          public Builder setScope(
+              int index, org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope.Builder builderForValue) {
+            ensureScopeIsMutable();
+            scope_.set(index, builderForValue.build());
+            
+            return this;
+          }
+          public Builder addScope(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope value) {
             if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureModuleNameIsMutable();
-            moduleName_.add(value);
+              throw new NullPointerException();
+            }
+            ensureScopeIsMutable();
+            scope_.add(value);
             
             return this;
           }
-          public Builder addAllModuleName(
-              java.lang.Iterable<String> values) {
-            ensureModuleNameIsMutable();
-            super.addAll(values, moduleName_);
+          public Builder addScope(
+              int index, org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope value) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            ensureScopeIsMutable();
+            scope_.add(index, value);
             
             return this;
           }
-          public Builder clearModuleName() {
-            moduleName_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+          public Builder addScope(
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope.Builder builderForValue) {
+            ensureScopeIsMutable();
+            scope_.add(builderForValue.build());
+            
+            return this;
+          }
+          public Builder addScope(
+              int index, org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope.Builder builderForValue) {
+            ensureScopeIsMutable();
+            scope_.add(index, builderForValue.build());
+            
+            return this;
+          }
+          public Builder addAllScope(
+              java.lang.Iterable<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> values) {
+            ensureScopeIsMutable();
+            super.addAll(values, scope_);
+            
+            return this;
+          }
+          public Builder clearScope() {
+            scope_ = java.util.Collections.emptyList();
             bitField0_ = (bitField0_ & ~0x00000008);
             
             return this;
           }
-          void addModuleName(com.google.protobuf.ByteString value) {
-            ensureModuleNameIsMutable();
-            moduleName_.add(value);
+          public Builder removeScope(int index) {
+            ensureScopeIsMutable();
+            scope_.remove(index);
             
+            return this;
           }
           
           // repeated string file_path = 5;
@@ -3304,69 +3793,13 @@ public final class CmdlineRemoteProto {
             
           }
           
-          // repeated string artifact_name = 6;
-          private com.google.protobuf.LazyStringList artifactName_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-          private void ensureArtifactNameIsMutable() {
-            if (!((bitField0_ & 0x00000020) == 0x00000020)) {
-              artifactName_ = new com.google.protobuf.LazyStringArrayList(artifactName_);
-              bitField0_ |= 0x00000020;
-             }
-          }
-          public java.util.List<String>
-              getArtifactNameList() {
-            return java.util.Collections.unmodifiableList(artifactName_);
-          }
-          public int getArtifactNameCount() {
-            return artifactName_.size();
-          }
-          public String getArtifactName(int index) {
-            return artifactName_.get(index);
-          }
-          public Builder setArtifactName(
-              int index, String value) {
-            if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureArtifactNameIsMutable();
-            artifactName_.set(index, value);
-            
-            return this;
-          }
-          public Builder addArtifactName(String value) {
-            if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureArtifactNameIsMutable();
-            artifactName_.add(value);
-            
-            return this;
-          }
-          public Builder addAllArtifactName(
-              java.lang.Iterable<String> values) {
-            ensureArtifactNameIsMutable();
-            super.addAll(values, artifactName_);
-            
-            return this;
-          }
-          public Builder clearArtifactName() {
-            artifactName_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-            bitField0_ = (bitField0_ & ~0x00000020);
-            
-            return this;
-          }
-          void addArtifactName(com.google.protobuf.ByteString value) {
-            ensureArtifactNameIsMutable();
-            artifactName_.add(value);
-            
-          }
-          
-          // repeated .org.jetbrains.jpsservice.Message.KeyValuePair builder_parameter = 7;
+          // repeated .org.jetbrains.jpsservice.Message.KeyValuePair builder_parameter = 6;
           private java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair> builderParameter_ =
             java.util.Collections.emptyList();
           private void ensureBuilderParameterIsMutable() {
-            if (!((bitField0_ & 0x00000040) == 0x00000040)) {
+            if (!((bitField0_ & 0x00000020) == 0x00000020)) {
               builderParameter_ = new java.util.ArrayList<org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair>(builderParameter_);
-              bitField0_ |= 0x00000040;
+              bitField0_ |= 0x00000020;
              }
           }
           
@@ -3438,7 +3871,7 @@ public final class CmdlineRemoteProto {
           }
           public Builder clearBuilderParameter() {
             builderParameter_ = java.util.Collections.emptyList();
-            bitField0_ = (bitField0_ & ~0x00000040);
+            bitField0_ = (bitField0_ & ~0x00000020);
             
             return this;
           }

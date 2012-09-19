@@ -96,6 +96,8 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: 9/6/11
@@ -325,7 +327,7 @@ public class BuildManager implements ApplicationComponent{
 
         final List<String> emptyList = Collections.emptyList();
         final RequestFuture future = scheduleBuild(
-          project, false, true, emptyList, emptyList, emptyList, Collections.<String, String>emptyMap(), new AutoMakeMessageHandler(project)
+          project, false, true, CmdlineProtoUtil.createAllModulesScopes(), emptyList, Collections.<String, String>emptyMap(), new AutoMakeMessageHandler(project)
         );
         if (future != null) {
           futures.add(future);
@@ -365,8 +367,7 @@ public class BuildManager implements ApplicationComponent{
   public RequestFuture scheduleBuild(
     final Project project, final boolean isRebuild,
     final boolean isMake,
-    final Collection<String> modules,
-    final Collection<String> artifacts,
+    final List<TargetTypeBuildScope> scopes,
     final Collection<String> paths,
     final Map<String, String> userData, final DefaultMessageHandler handler) {
 
@@ -436,8 +437,8 @@ public class BuildManager implements ApplicationComponent{
           }
           else {
             params = isMake ?
-                     CmdlineProtoUtil.createMakeRequest(projectPath, modules, artifacts, userData, globals, currentFSChanges) :
-                     CmdlineProtoUtil.createForceCompileRequest(projectPath, modules, artifacts, paths, userData, globals, currentFSChanges);
+                     CmdlineProtoUtil.createMakeRequest(projectPath, scopes, userData, globals, currentFSChanges) :
+                     CmdlineProtoUtil.createForceCompileRequest(projectPath, scopes, paths, userData, globals, currentFSChanges);
           }
 
           myMessageDispatcher.registerBuildMessageHandler(sessionId, handler, params);
