@@ -61,7 +61,6 @@ import java.io.IOException;
 import java.util.Set;
 
 public abstract class ParsingTestCase extends PlatformLiteFixture {
-  protected static boolean OVERWRITE_TESTDATA = false;
 
   protected String myFilePrefix = "";
   protected String myFileExt;

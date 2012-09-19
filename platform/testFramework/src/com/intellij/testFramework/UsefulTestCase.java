@@ -66,6 +66,8 @@ import java.util.List;
  * @author peter
  */
 public abstract class UsefulTestCase extends TestCase {
+  protected static boolean OVERWRITE_TESTDATA = false;
+
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static final Random PRNG = new SecureRandom();
   private static final String ORIGINAL_TEMP_DIR = FileUtil.getTempDirectory();
@@ -584,6 +586,10 @@ public abstract class UsefulTestCase extends TestCase {
   protected static void assertSameLinesWithFile(final String filePath, final String actualText) {
     String fileText;
     try {
+      if (OVERWRITE_TESTDATA) {
+        FileUtil.writeToFile(new File(filePath), actualText);
+        System.out.println("File " + filePath + " created.");
+      }
       fileText = FileUtil.loadFile(new File(filePath));
     }
     catch (IOException e) {
