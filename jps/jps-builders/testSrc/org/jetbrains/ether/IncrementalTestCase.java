@@ -21,15 +21,17 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.builders.BuildResult;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.incremental.AllProjectScope;
 import org.jetbrains.jps.incremental.BuildLoggingManager;
+import org.jetbrains.jps.incremental.CompileScope;
+import org.jetbrains.jps.incremental.CompileScopeImpl;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLoggerImpl;
 import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
 import org.jetbrains.jps.model.JpsDummyElement;
-import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaLibraryType;
@@ -40,6 +42,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.*;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author db
@@ -156,8 +159,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     final ProjectDescriptor
       projectDescriptor = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), javaBuilderLogger));
     try {
-      doBuild(projectDescriptor, new AllProjectScope(myJpsProject, Collections.<JpsArtifact>emptySet(), true), false,
-              true, false).assertSuccessful();
+      doBuild(projectDescriptor, createAllModulesScope(true), false, true, false).assertSuccessful();
 
       modify();
       if (Utils.TIMESTAMP_ACCURACY > 1) {
@@ -169,8 +171,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
       }
 
 
-      BuildResult result =
-        doBuild(projectDescriptor, new AllProjectScope(myJpsProject, Collections.<JpsArtifact>emptySet(), false), true, false, false);
+      BuildResult result = doBuild(projectDescriptor, createAllModulesScope(false), true, false, false);
 
       final ByteArrayOutputStream makeDump = new ByteArrayOutputStream();
 
@@ -190,8 +191,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
       assertEquals(expected, actual);
 
       if (result.isSuccessful()) {
-        doBuild(projectDescriptor, new AllProjectScope(myJpsProject, Collections.<JpsArtifact>emptySet(), true), false,
-                true, false).assertSuccessful();
+        doBuild(projectDescriptor, createAllModulesScope(true), false, true, false).assertSuccessful();
 
         final ByteArrayOutputStream rebuildDump = new ByteArrayOutputStream();
 
@@ -209,6 +209,10 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     finally {
       projectDescriptor.release();
     }
+  }
+
+  private static CompileScope createAllModulesScope(final boolean forcedCompilation) {
+    return new CompileScopeImpl(forcedCompilation, JavaModuleBuildTargetType.ALL_TYPES, Collections.<BuildTarget>emptySet(), Collections.<BuildTarget, Set<File>>emptyMap());
   }
 
   private JpsSdk<JpsDummyElement> getOrCreateJdk() {

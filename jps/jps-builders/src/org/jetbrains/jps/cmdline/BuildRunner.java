@@ -2,16 +2,17 @@ package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
-import org.jetbrains.jps.incremental.artifacts.JpsBuilderArtifactService;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -21,12 +22,12 @@ import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.artifact.JpsArtifact;
-import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
+import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 /**
  * @author nik
@@ -36,18 +37,14 @@ public class BuildRunner {
   public static final boolean PARALLEL_BUILD_ENABLED = Boolean.parseBoolean(System.getProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "false"));
   private static final boolean STORE_TEMP_CACHES_IN_MEMORY = PARALLEL_BUILD_ENABLED || System.getProperty(GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION) != null;
   private final JpsModelLoader myModelLoader;
-  private final Set<String> myModules;
-  private final List<String> myArtifacts;
+  private final List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> myScopes;
   private final List<String> myFilePaths;
   private final Map<String, String> myBuilderParams;
   private boolean myForceCleanCaches;
 
-  public BuildRunner(JpsModelLoader modelLoader,
-                     Set<String> modules,
-                     List<String> artifacts, List<String> filePaths, Map<String, String> builderParams) {
+  public BuildRunner(JpsModelLoader modelLoader, List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes, List<String> filePaths, Map<String, String> builderParams) {
     myModelLoader = modelLoader;
-    myModules = modules;
-    myArtifacts = artifacts;
+    myScopes = scopes;
     myFilePaths = filePaths;
     myBuilderParams = builderParams;
   }
@@ -93,12 +90,12 @@ public class BuildRunner {
   public void runBuild(ProjectDescriptor pd, CanceledStatus cs, @Nullable Callbacks.ConstantAffectionResolver constantSearch,
                        MessageHandler msgHandler, final boolean includeTests, BuildType buildType) throws Exception {
     for (int attempt = 0; attempt < 2; attempt++) {
-      if (myForceCleanCaches && myModules.isEmpty() && myFilePaths.isEmpty()) {
+      if (myForceCleanCaches && myScopes.isEmpty() && myFilePaths.isEmpty()) {
         // if compilation scope is the whole project and cache rebuild is forced, use PROJECT_REBUILD for faster compilation
         buildType = BuildType.PROJECT_REBUILD;
       }
 
-      final CompileScope compileScope = createCompilationScope(buildType, pd, myModules, myArtifacts, myFilePaths, includeTests);
+      final CompileScope compileScope = createCompilationScope(buildType, pd, myScopes, myFilePaths, includeTests);
       final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), myBuilderParams, cs, constantSearch);
       builder.addMessageHandler(msgHandler);
       try {
@@ -136,65 +133,57 @@ public class BuildRunner {
 
   private static CompileScope createCompilationScope(BuildType buildType,
                                                      ProjectDescriptor pd,
-                                                     Set<String> modules,
-                                                     Collection<String> artifactNames,
+                                                     List<TargetTypeBuildScope> scopes,
                                                      Collection<String> paths, boolean includeTests) throws Exception {
-    final Timestamps timestamps = pd.timestamps.getStorage();
-    Set<JpsArtifact> artifacts = new HashSet<JpsArtifact>();
-    for (JpsArtifact artifact : JpsBuilderArtifactService.getInstance().getArtifacts(pd.jpsModel, false)) {
-      if (artifactNames.contains(artifact.getName()) && !StringUtil.isEmpty(artifact.getOutputPath())) {
-        artifacts.add(artifact);
+    Set<BuildTargetType> targetTypes = new HashSet<BuildTargetType>();
+    Set<BuildTarget> targets = new HashSet<BuildTarget>();
+    Map<BuildTarget, Set<File>> files;
+
+    for (TargetTypeBuildScope scope : scopes) {
+      BuildTargetType targetType = BuilderRegistry.getInstance().getTargetType(scope.getTypeId());
+      if (targetType == null) {
+        LOG.info("Unknown target type: " + scope.getTypeId());
+        continue;
+      }
+      if (scope.getAllTargets()) {
+        targetTypes.add(targetType);
+      }
+      else {
+        for (String targetId : scope.getTargetIdList()) {
+          BuildTarget target = targetType.createTarget(targetId, pd.rootsIndex, pd.getArtifactRootsIndex());
+          if (target != null) {
+            targets.add(target);
+          }
+          else {
+            LOG.info("Unknown " + targetType + " target id: " + targetId);
+          }
+        }
       }
     }
 
-    final CompileScope compileScope;
-    if (buildType == BuildType.PROJECT_REBUILD || (modules.isEmpty() && paths.isEmpty())) {
-      compileScope = new AllProjectScope(pd.jpsProject, artifacts, buildType != BuildType.MAKE);
+    final Timestamps timestamps = pd.timestamps.getStorage();
+    if (!paths.isEmpty()) {
+      files = new HashMap<BuildTarget, Set<File>>();
+      for (String path : paths) {
+        final File file = new File(path);
+        final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(null, file);
+        if (rd != null) {
+          Set<File> fileSet = files.get(rd.target);
+          if (fileSet == null) {
+            fileSet = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+            files.put(rd.target, fileSet);
+          }
+          fileSet.add(file);
+          if (buildType == BuildType.FORCED_COMPILATION) {
+            pd.fsState.markDirty(null, file, rd, timestamps);
+          }
+        }
+      }
     }
     else {
-      final Set<JpsModule> forcedModules;
-      if (!modules.isEmpty()) {
-        forcedModules = new HashSet<JpsModule>();
-        for (JpsModule m : pd.jpsProject.getModules()) {
-          if (modules.contains(m.getName())) {
-            forcedModules.add(m);
-          }
-        }
-      }
-      else {
-        forcedModules = Collections.emptySet();
-      }
-
-      final Map<BuildTarget, Set<File>> filesToCompile;
-      if (!paths.isEmpty()) {
-        filesToCompile = new HashMap<BuildTarget, Set<File>>();
-        for (String path : paths) {
-          final File file = new File(path);
-          final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(null, file);
-          if (rd != null) {
-            Set<File> files = filesToCompile.get(rd.target);
-            if (files == null) {
-              files = new HashSet<File>();
-              filesToCompile.put(rd.target, files);
-            }
-            files.add(file);
-            if (buildType == BuildType.FORCED_COMPILATION) {
-              pd.fsState.markDirty(null, file, rd, timestamps);
-            }
-          }
-        }
-      }
-      else {
-        filesToCompile = Collections.emptyMap();
-      }
-
-      if (filesToCompile.isEmpty()) {
-        compileScope = new ModulesScope(pd.jpsProject, forcedModules, artifacts, buildType != BuildType.MAKE, includeTests);
-      }
-      else {
-        compileScope = new ModulesAndFilesScope(pd.jpsProject, forcedModules, filesToCompile, artifacts, buildType != BuildType.MAKE, includeTests);
-      }
+      files = Collections.emptyMap();
     }
-    return compileScope;
+
+    return new CompileScopeImpl(buildType != BuildType.MAKE, targetTypes, targets, files);
   }
 }

@@ -138,12 +138,16 @@ public class BuildFSState extends FSState {
   /**
    * @return true if marked something, false otherwise
    */
-  public boolean markAllUpToDate(CompileScope scope, final RootDescriptor rd, final Timestamps stamps, final long compilationStartStamp) throws IOException {
+  public boolean markAllUpToDate(JpsProject project,
+                                 CompileScope scope,
+                                 final RootDescriptor rd,
+                                 final Timestamps stamps,
+                                 final long compilationStartStamp) throws IOException {
     boolean marked = false;
     final FilesDelta delta = getDelta(rd.target);
     final Set<File> files = delta.clearRecompile(rd);
     if (files != null) {
-      final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(scope.getJpsProject()).getCompilerExcludes();
+      final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getCompilerExcludes();
       for (File file : files) {
         if (!excludes.isExcluded(file)) {
           if (scope.isAffected(rd.target, file)) {

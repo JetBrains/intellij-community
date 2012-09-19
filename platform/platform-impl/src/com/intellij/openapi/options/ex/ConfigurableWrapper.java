@@ -72,7 +72,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Configurable
   @Nls
   @Override
   public String getDisplayName() {
-    return myEp.displayName == null ? getConfigurable().getDisplayName() : myEp.displayName;
+    return myEp.getDisplayName();
   }
 
   @Nullable

@@ -241,6 +241,10 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
       }
     }
 
+    if (PsiTreeUtil.getParentOfType(elementToHighlight, PsiImportStatementBase.class) != null) {
+      return;
+    }
+    
     String description = JavaErrorMessages.message("deprecated.symbol",
                                                    HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY));
 

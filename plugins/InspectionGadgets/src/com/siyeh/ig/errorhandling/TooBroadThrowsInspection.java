@@ -44,6 +44,9 @@ public class TooBroadThrowsInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreLibraryOverrides = false;
 
+  @SuppressWarnings("PublicField")
+  public boolean ignoreThrown = false;
+
   @Override
   @NotNull
   public String getID() {
@@ -86,10 +89,9 @@ public class TooBroadThrowsInspection extends BaseInspection {
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message("too.broad.catch.option"), "onlyWarnOnRootExceptions");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.exceptions.declared.in.tests.option"),
-                      "ignoreInTestCode");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.exceptions.declared.on.library.override.option"),
-                      "ignoreLibraryOverrides");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.exceptions.declared.in.tests.option"), "ignoreInTestCode");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.exceptions.declared.on.library.override.option"), "ignoreLibraryOverrides");
+    panel.addCheckbox(InspectionGadgetsBundle.message("overly.broad.throws.clause.ignore.thrown.option"), "ignoreThrown");
     return panel;
   }
 
@@ -111,15 +113,14 @@ public class TooBroadThrowsInspection extends BaseInspection {
       this.originalNeeded = originalNeeded;
     }
 
+    @Override
     @NotNull
     public String getName() {
       if (originalNeeded) {
-        return InspectionGadgetsBundle.message(
-          "overly.broad.throws.clause.quickfix1");
+        return InspectionGadgetsBundle.message("overly.broad.throws.clause.quickfix1");
       }
       else {
-        return InspectionGadgetsBundle.message(
-          "overly.broad.throws.clause.quickfix2");
+        return InspectionGadgetsBundle.message("overly.broad.throws.clause.quickfix2");
       }
     }
 
@@ -196,6 +197,9 @@ public class TooBroadThrowsInspection extends BaseInspection {
         if (!exceptionsMasked.isEmpty()) {
           final PsiJavaCodeReferenceElement throwsReference = throwsReferences[i];
           final boolean originalNeeded = exceptionsThrown.contains(referencedException);
+          if (ignoreThrown && originalNeeded) {
+            continue;
+          }
           registerError(throwsReference, exceptionsMasked, Boolean.valueOf(originalNeeded));
         }
       }

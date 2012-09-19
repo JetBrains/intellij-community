@@ -18,7 +18,10 @@ package com.intellij.ide;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.util.Consumer;
-import org.apache.xmlrpc.*;
+import org.apache.xmlrpc.DefaultHandlerMapping;
+import org.apache.xmlrpc.DefaultXmlRpcContext;
+import org.apache.xmlrpc.XmlRpcContext;
+import org.apache.xmlrpc.XmlRpcWorker;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -29,11 +32,14 @@ import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jetbrains.ide.WebServerManager;
 import org.jetbrains.io.Responses;
 
+import java.lang.reflect.Field;
+import java.util.Hashtable;
+
 @ChannelHandler.Sharable
 public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements XmlRpcServer, Consumer<ChannelPipeline> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.XmlRpcServerImpl");
 
-  private final DefaultHandlerMapping handlerMapping = new DefaultHandlerMapping();
+  private final DefaultHandlerMapping handlerMapping = new LoggingDefaultHandlerMapping();
   // idea doesn't use authentication
   private final XmlRpcContext xmlRpcContext = new DefaultXmlRpcContext(null, null, handlerMapping);
 
@@ -99,5 +105,42 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
     finally {
       e.getChannel().close();
     }
+  }
+
+  private static class LoggingDefaultHandlerMapping extends DefaultHandlerMapping {
+
+    @Override
+    public void addHandler(String handlerName, Object handler) {
+      LOG.debug(String.format("addHandler: handlerName: %s, handler: %s%s", handlerName, handler, getHandlers()));
+      super.addHandler(handlerName, handler);
+    }
+
+    @Override
+    public void removeHandler(String handlerName) {
+      LOG.debug(String.format("removeHandler: handlerName: %s%s", handlerName, getHandlers()));
+      super.removeHandler(handlerName);
+    }
+
+    @Override
+    public Object getHandler(String methodName) throws Exception {
+      LOG.debug(String.format("getHandler: methodName: %s%s", methodName, getHandlers()));
+      return super.getHandler(methodName);
+    }
+
+    private String getHandlers() {
+      try {
+        Field fHandlers = DefaultHandlerMapping.class.getDeclaredField("handlers");
+        fHandlers.setAccessible(true);
+        // this obsolete type is used in the XmlRpc library
+        // noinspection UseOfObsoleteCollectionType
+        Hashtable handlers = (Hashtable)fHandlers.get(this);
+        return String.format("%nhandlers: %s", handlers);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+        return e.toString();
+      }
+    }
+
   }
 }

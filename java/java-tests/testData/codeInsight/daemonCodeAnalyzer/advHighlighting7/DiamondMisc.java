@@ -210,3 +210,16 @@ class Another {
   static <T> T m2() {return null;}
   
 }
+
+class TypeParamsExtendsList {
+
+        {
+               new TypeWithGeneric<>();
+        }
+
+        private static class A {}
+
+        private static class TypeWithGeneric<T extends A> extends ArrayList<T> {
+
+        }
+}

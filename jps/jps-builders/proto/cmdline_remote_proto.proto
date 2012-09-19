@@ -47,6 +47,12 @@ message Message {
     }
 
     message ParametersMessage {
+      message TargetTypeBuildScope {
+        required string type_id = 1;
+        optional bool all_targets = 2;
+        repeated string target_id = 3;
+      }
+
       enum Type {
         REBUILD = 1;
         MAKE = 2;
@@ -57,10 +63,9 @@ message Message {
       required Type build_type = 1;
       optional GlobalSettings global_settings = 2;
       optional string project_id = 3;
-      repeated string module_name = 4;
+      repeated TargetTypeBuildScope scope = 4;
       repeated string file_path = 5;
-      repeated string artifact_name = 6;
-      repeated KeyValuePair builder_parameter = 7;
+      repeated KeyValuePair builder_parameter = 6;
     }
 
     message ConstantSearchResult {

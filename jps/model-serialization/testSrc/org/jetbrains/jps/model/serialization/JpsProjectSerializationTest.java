@@ -1,12 +1,12 @@
 package org.jetbrains.jps.model.serialization;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
 import org.jetbrains.jps.model.JpsEncodingConfigurationService;
 import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
-import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.artifact.JpsArtifactService;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
@@ -122,11 +122,10 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
   }
 
   public void testLoadIdeaProject() {
-    PathManagerEx.getTestDataPath(getClass());
     long start = System.currentTimeMillis();
-    final JpsProject project = myProject;
-    loadProject("");
-    assertTrue(project.getModules().size() > 0);
-    System.out.println("Time: " + (System.currentTimeMillis() - start));
+    loadProjectByAbsolutePath(PathManager.getHomePath());
+    assertTrue(myProject.getModules().size() > 0);
+    System.out.println("JpsProjectSerializationTest: " + myProject.getModules().size() + " modules, " + myProject.getLibraryCollection().getLibraries().size() + " libraries and " +
+                       JpsArtifactService.getInstance().getArtifacts(myProject).size() + " artifacts loaded in " + (System.currentTimeMillis() - start) + "ms");
   }
 }

@@ -103,6 +103,7 @@ public class ShowUIDefaultsAction extends AnAction {
             if (value instanceof Color) {
               final Color c = (Color)value;
               label.setText(String.format("[r=%d,g=%d,b=%d] hex=0x%s", c.getRed(), c.getGreen(), c.getBlue(), ColorUtil.toHex(c)));
+              label.setForeground(ColorUtil.isDark(c) ? Color.white : Color.black);
               panel.setBackground(c);
               return panel;
             } else if (value instanceof Icon) {

@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.options;
 
+import com.intellij.AbstractBundle;
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
@@ -29,6 +31,8 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
+
+import java.util.ResourceBundle;
 
 /**
  * @author nik
@@ -46,6 +50,12 @@ public class ConfigurableEP extends AbstractExtensionPointBean {
 
   @Attribute("bundle")
   public String bundle;
+
+  public String getDisplayName() {
+    if (displayName != null) return displayName;
+    final ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(bundle, myPluginDescriptor.getPluginClassLoader());
+    return displayName = CommonBundle.message(resourceBundle, key);
+  }
 
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false)

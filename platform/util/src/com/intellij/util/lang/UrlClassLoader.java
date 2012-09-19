@@ -17,6 +17,7 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,7 @@ import java.util.*;
 public class UrlClassLoader extends ClassLoader {
   private final ClassPath myClassPath;
   private final List<URL> myURLs;
+  private final Set<String> myNotFound = new THashSet<String>();
   @NonNls static final String CLASS_EXTENSION = ".class";
   protected static final boolean myDebugTime = false;
   protected static final long NS_THRESHOLD = 10000000;
@@ -68,8 +70,12 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   protected Class findClass(final String name) throws ClassNotFoundException {
+    if (myNotFound.contains(name)) {
+      throw new ClassNotFoundException(name);
+    }
     Resource res = myClassPath.getResource(name.replace('.', '/').concat(CLASS_EXTENSION), false);
     if (res == null) {
+      myNotFound.add(name);
       throw new ClassNotFoundException(name);
     }
 

@@ -26,7 +26,6 @@ public class ModuleRootsIndex {
   private final THashMap<File, RootDescriptor> myRootToDescriptorMap = new THashMap<File, RootDescriptor>(FileUtil.FILE_HASHING_STRATEGY);
   private final Map<JpsModule, List<RootDescriptor>> myModuleToRootsMap = new HashMap<JpsModule, List<RootDescriptor>>();
   private final Map<String, JpsModule> myNameToModuleMap = new HashMap<String, JpsModule>();
-  private final int myTotalModuleCount;
   private final Set<File> myExcludedRoots = new HashSet<File>();
   private final Map<JpsModule, List<File>> myModuleToExcludesMap = new HashMap<JpsModule, List<File>>();
   private final IgnoredFilePatterns myIgnoredFilePatterns;
@@ -37,7 +36,6 @@ public class ModuleRootsIndex {
   public ModuleRootsIndex(JpsModel model, File dataStorageRoot) {
     myIgnoredFilePatterns = new IgnoredFilePatterns(model.getGlobal().getFileTypesConfiguration().getIgnoredPatternString());
     final Collection<JpsModule> allModules = model.getProject().getModules();
-    myTotalModuleCount = allModules.size();
     final Iterable<AdditionalRootsProviderService> rootsProviders = JpsServiceManager.getInstance().getExtensions(AdditionalRootsProviderService.class);
     for (final JpsModule module : allModules) {
       final String moduleName = module.getName();
@@ -109,30 +107,24 @@ public class ModuleRootsIndex {
     return myIgnoredFilePatterns;
   }
 
-  public int getTotalModuleCount() {
-    return myTotalModuleCount;
-  }
-
   @Nullable
   public JpsModule getModuleByName(String module) {
     return myNameToModuleMap.get(module);
   }
 
   @NotNull
-  public List<RootDescriptor> getModuleRoots(@Nullable CompileContext context, JpsModule module) {
+  public List<RootDescriptor> getModuleRoots(@NotNull CompileContext context, JpsModule module) {
     List<RootDescriptor> descriptors = myModuleToRootsMap.get(module);
-    if (context != null) {
-      final Map<JpsModule, List<RootDescriptor>> contextMap = MODULE_ROOT_MAP.get(context);
-      if (contextMap != null) {
-        final List<RootDescriptor> tempDescriptors = contextMap.get(module);
-        if (tempDescriptors != null) {
-          if (descriptors != null) {
-            descriptors = new ArrayList<RootDescriptor>(descriptors);
-            descriptors.addAll(tempDescriptors);
-          }
-          else {
-            descriptors = tempDescriptors;
-          }
+    final Map<JpsModule, List<RootDescriptor>> contextMap = MODULE_ROOT_MAP.get(context);
+    if (contextMap != null) {
+      final List<RootDescriptor> tempDescriptors = contextMap.get(module);
+      if (tempDescriptors != null) {
+        if (descriptors != null) {
+          descriptors = new ArrayList<RootDescriptor>(descriptors);
+          descriptors.addAll(tempDescriptors);
+        }
+        else {
+          descriptors = tempDescriptors;
         }
       }
     }

@@ -2,14 +2,15 @@ package org.jetbrains.jps.api;
 
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+
+import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 /**
  * @author Eugene Zhuravlev
@@ -18,66 +19,61 @@ import java.util.UUID;
 public class CmdlineProtoUtil {
 
   public static CmdlineRemoteProto.Message.ControllerMessage createMakeRequest(String project,
-                                                                               Collection<String> modules,
-                                                                               Collection<String> artifacts,
+                                                                               List<TargetTypeBuildScope> scopes,
                                                                                final Map<String, String> userData,
                                                                                final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
                                                                                final CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
-    return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.MAKE, project, modules, artifacts,
+    return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.MAKE, project, scopes,
                                 userData, Collections.<String>emptyList(),
                                 globals, event);
   }
 
   public static CmdlineRemoteProto.Message.ControllerMessage createForceCompileRequest(String project,
-                                                                                       Collection<String> modules,
-                                                                                       Collection<String> artifacts,
+                                                                                       List<TargetTypeBuildScope> scopes,
                                                                                        Collection<String> paths,
                                                                                        final Map<String, String> userData,
                                                                                        final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
                                                                                        final CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
-    return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.FORCED_COMPILATION, project, modules,
-                                        artifacts,
-                                        userData, paths, globals, event);
+    return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.FORCED_COMPILATION, project,
+                                        scopes, userData, paths, globals, event);
   }
 
   public static CmdlineRemoteProto.Message.ControllerMessage createRebuildRequest(String project,
                                                                                   final Map<String, String> userData,
                                                                                   final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals) {
+    List<TargetTypeBuildScope> scopes = createAllModulesScopes();
     return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.REBUILD, project,
-                                        Collections.<String>emptyList(),
-                                        Collections.<String>emptyList(), userData, Collections.<String>emptyList(),
+                                        scopes, userData, Collections.<String>emptyList(),
                                         globals, null);
   }
 
-  public static CmdlineRemoteProto.Message.ControllerMessage createCleanRequest(String project,
-                                                                                Collection<String> modules,
-                                                                                Collection<String> artifacts,
-                                                                                final Map<String, String> userData,
-                                                                                final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals) {
-    return createBuildParametersMessage(
-      CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.CLEAN, project, modules, artifacts, userData, Collections.<String>emptyList(), globals,
-      null);
+  public static List<TargetTypeBuildScope> createAllModulesScopes() {
+    return Arrays.asList(
+      createAllTargetsScope(JavaModuleBuildTargetType.PRODUCTION),
+      createAllTargetsScope(JavaModuleBuildTargetType.TEST)
+    );
   }
 
-  public static CmdlineRemoteProto.Message.ControllerMessage createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type buildType,
+  private static TargetTypeBuildScope createAllTargetsScope(BuildTargetType type) {
+    return TargetTypeBuildScope.newBuilder()
+      .setTypeId(type.getTypeId())
+      .setAllTargets(true)
+      .build();
+  }
+
+  private static CmdlineRemoteProto.Message.ControllerMessage createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type buildType,
                                                                                           String project,
-                                                                                          Collection<String> modules,
-                                                                                          Collection<String> artifacts,
+                                                                                          List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes,
                                                                                           Map<String, String> userData,
                                                                                           Collection<String> paths,
                                                                                           final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
-                                                                                          CmdlineRemoteProto.Message.ControllerMessage.FSEvent initialEvent) {
+                                                                                          @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent initialEvent) {
     final CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Builder
       builder = CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.newBuilder();
     builder.setGlobalSettings(globals);
     builder.setBuildType(buildType);
     builder.setProjectId(project);
-    if (!modules.isEmpty()) {
-      builder.addAllModuleName(modules);
-    }
-    if (!artifacts.isEmpty()) {
-      builder.addAllArtifactName(artifacts);
-    }
+    builder.addAllScope(scopes);
     if (!userData.isEmpty()) {
       for (Map.Entry<String, String> entry : userData.entrySet()) {
         final String key = entry.getKey();

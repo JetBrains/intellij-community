@@ -41,9 +41,7 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
 
   public static final NamedArgumentInsertHandler INSTANCE = new NamedArgumentInsertHandler();
 
-  private NamedArgumentInsertHandler() {
-
-  }
+  private NamedArgumentInsertHandler() {}
 
   public void handleInsert(InsertionContext context, LookupElement item) {
     int tailOffset = context.getTailOffset();
@@ -61,11 +59,11 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
       CommonCodeStyleSettings commonCodeStyleSettings = settings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE);
 
       boolean insertSpace = codeStyleSettings.SPACE_IN_NAMED_ARGUMENT;
-      
+
       if (context.getCompletionChar() == ':' || (insertSpace && context.getCompletionChar() == ' ')) {
         context.setAddCompletionChar(false);
       }
-      
+
       String argumentListText = argumentList.getText();
 
       String s = argumentListText.substring(tailOffset - argumentList.getTextOffset());
@@ -106,14 +104,13 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
             m = Pattern.compile("([ \\t]*)(.*)", Pattern.DOTALL).matcher(s);
             if (!m.matches()) throw new RuntimeException("This pattern must match any non-empty string! (" + s + ")");
 
-            StringBuilder sb = new StringBuilder(4);
+            StringBuilder sb = new StringBuilder(3);
             sb.append(':');
             int shiftCaret = 1;
             if (insertSpace) {
               sb.append(' ');
               shiftCaret++;
             }
-            sb.append(',');
 
             if (!m.group(2).startsWith("\n") && commonCodeStyleSettings.SPACE_AFTER_COMMA) {
               sb.append(' ');
@@ -124,7 +121,7 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
           }
         }
       }
-      
+
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       editor.getSelectionModel().removeSelection();
     }

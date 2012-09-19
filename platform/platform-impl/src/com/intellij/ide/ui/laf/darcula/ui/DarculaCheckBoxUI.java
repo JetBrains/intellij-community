@@ -69,11 +69,11 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
       g.fillRect(0,0, size.width, size.height);
     }
 
-    final int x = iconRect.x + 2;
-    final int y = iconRect.y + 2;
-    final int w = iconRect.width - 4;
-    final int h = iconRect.height - 4;
-    final int u = w / 16;
+    final int x = iconRect.x + 3;
+    final int y = iconRect.y + 3;
+    final int w = iconRect.width - 6;
+    final int h = iconRect.height - 6;
+    final int u = 1;
 
     g.translate(x, y);
     final GradientPaint paint = new GradientPaint(w / 2, 0, b.getBackground().brighter(),
@@ -108,11 +108,11 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
       g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
       g.setStroke(new BasicStroke(u*2.0f, BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
       g.setPaint(Gray._30);
-      g.drawLine(4*u, 8*u, 8*u, 12*u);
-      g.drawLine(8*u, 12*u, w, 2*u);
+      g.drawLine(4*u, 7*u, 7*u, 11*u);
+      g.drawLine(7*u, 11*u, w, 2*u);
       g.setPaint(Gray._200);
-      g.drawLine(4*u, 6*u, 8*u, 10*u);
-      g.drawLine(8*u, 10*u, w, 0);
+      g.drawLine(4*u, 5*u, 7*u, 9*u);
+      g.drawLine(7*u, 9*u, w, 0);
     }
     g.translate(-x, -y);
     config.restore();
