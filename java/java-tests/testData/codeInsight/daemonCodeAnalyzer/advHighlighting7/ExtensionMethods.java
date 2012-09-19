@@ -48,3 +48,8 @@ class C {
 class D {
   <error descr="Extension methods can only be used within an interface">void m()</error> default { }
 }
+
+interface IllegalMods {
+  <error descr="Illegal combination of modifiers: 'static' and 'abstract'">static</error> void sm1();
+  <error descr="Illegal combination of modifiers: 'static' and 'abstract'">static</error> void sm2() default { }
+}
