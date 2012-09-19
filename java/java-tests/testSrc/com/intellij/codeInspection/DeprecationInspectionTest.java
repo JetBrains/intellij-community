@@ -25,6 +25,10 @@ public class DeprecationInspectionTest extends InspectionTestCase {
     doTest();
   }
 
+  public void testDeprecatedInImport() throws Exception{
+    doTest();
+  }
+
   public void testDeprecatedInner() throws Exception {
     doTest();
   }
