@@ -13,13 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.arrangement.order;
+package com.intellij.psi.codeStyle.arrangement;
+
+import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 7/19/12 6:24 PM
+ * @since 9/19/12 6:41 PM
  */
-public enum ArrangementEntryOrderType {
-  
-  KEEP, BY_NAME, DEPTH_FIRST
+public class JavaArrangementMethodDependencyInfo {
+
+  // TODO den add doc
+  public void registerDependency(@NotNull PsiMethod baseMethod,
+                                 @NotNull JavaElementArrangementEntry baseMethodEntry,
+                                 @NotNull PsiMethod dependentMethod)
+  {
+    
+  }
 }
