@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,10 @@ import java.util.Arrays;
 /**
  * A set of element types.
  */
-
 public class TokenSet {
   public static final TokenSet EMPTY = new TokenSet();
-  private final boolean[] mySet = new boolean[IElementType.getAllocatedTypesCount()] ;
 
+  private final boolean[] mySet = new boolean[IElementType.getAllocatedTypesCount()] ;
   private volatile IElementType[] myTypes;
 
   /**
@@ -34,7 +33,6 @@ public class TokenSet {
    *
    * @return the contents of the set.
    */
-
   public IElementType[] getTypes() {
     IElementType[] types = myTypes;
     if (types == null) {
@@ -63,7 +61,6 @@ public class TokenSet {
    * @param types the element types contained in the set.
    * @return the new token set.
    */
-
   public static TokenSet create(IElementType... types) {
     TokenSet set = new TokenSet();
     for (IElementType type : types) {
@@ -82,7 +79,6 @@ public class TokenSet {
    * @param sets the token sets to unite.
    * @return the new token set.
    */
-
   public static TokenSet orSet(TokenSet... sets) {
     TokenSet newSet = new TokenSet();
     for (TokenSet set : sets) {
@@ -101,27 +97,19 @@ public class TokenSet {
    * @param b the second token set to intersect.
    * @return the new token set.
    */
-
   public static TokenSet andSet(TokenSet a, TokenSet b) {
     TokenSet set = new TokenSet();
-    final boolean[] aset = a.mySet;
-    final boolean[] bset = b.mySet;
-    final boolean[] newset = set.mySet;
-    final int alen = aset.length;
-    final int blen = bset.length;
-    final int andSize = Math.max(newset.length, Math.max(alen, blen));
+    final boolean[] aSet = a.mySet;
+    final boolean[] bSet = b.mySet;
+    final boolean[] newSet = set.mySet;
+    final int aLen = aSet.length;
+    final int bLen = bSet.length;
+    final int andSize = Math.max(newSet.length, Math.max(aLen, bLen));
 
     for (int i = 0; i < andSize; i++) {
-      newset[i] = (i < alen && aset[i]) && (i < blen && bset[i]);
+      newSet[i] = (i < aLen && aSet[i]) && (i < bLen && bSet[i]);
     }
     return set;
-  }
-
-  /**
-   * @deprecated use {@link #contains(IElementType)} instead. This appears to be a better naming.
-   */
-  public boolean isInSet(IElementType t) {
-    return contains(t);
   }
 
   /**
