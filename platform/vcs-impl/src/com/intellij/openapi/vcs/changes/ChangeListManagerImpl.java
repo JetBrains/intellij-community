@@ -37,10 +37,7 @@ import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.ui.CommitHelper;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
-import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
-import com.intellij.openapi.vcs.impl.ContentRevisionCache;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vcs.impl.VcsInitObject;
+import com.intellij.openapi.vcs.impl.*;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -1056,11 +1053,24 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   public void addUnversionedFiles(final LocalChangeList list, @NotNull final List<VirtualFile> files) {
     final List<VcsException> exceptions = new ArrayList<VcsException>();
+    final Set<VirtualFile> allProcessedFiles = new HashSet<VirtualFile>();
     ChangesUtil.processVirtualFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
       public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
         final CheckinEnvironment environment = vcs.getCheckinEnvironment();
         if (environment != null) {
-          final List<VcsException> result = environment.scheduleUnversionedFilesForAddition(items);
+          final Set<VirtualFile> descendant = new HashSet<VirtualFile>();
+          for (VirtualFile item : items) {
+            final Processor<VirtualFile> addProcessor = new Processor<VirtualFile>() {
+              @Override
+              public boolean process(VirtualFile file) {
+                descendant.add(file);
+                return true;
+              }
+            };
+            VcsRootIterator.iterateVfUnderVcsRoot(myProject, item, addProcessor);
+          }
+          final List<VcsException> result = environment.scheduleUnversionedFilesForAddition(new ArrayList<VirtualFile>(descendant));
+          allProcessedFiles.addAll(descendant);
           if (result != null) {
             exceptions.addAll(result);
           }
@@ -1076,10 +1086,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       Messages.showErrorDialog(myProject, message.toString(), VcsBundle.message("error.adding.files.title"));
     }
 
-    for (VirtualFile file : files) {
+    for (VirtualFile file : allProcessedFiles) {
       myFileStatusManager.fileStatusChanged(file);
     }
-    VcsDirtyScopeManager.getInstance(myProject).filesDirty(files, null);
+    VcsDirtyScopeManager.getInstance(myProject).filesDirty(allProcessedFiles, null);
 
     if (!list.isDefault()) {
       // find the changes for the added files and move them to the necessary changelist
@@ -1095,7 +1105,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                   final ContentRevision afterRevision = change.getAfterRevision();
                   if (afterRevision != null) {
                     VirtualFile vFile = afterRevision.getFile().getVirtualFile();
-                    if (files.contains(vFile)) {
+                    if (allProcessedFiles.contains(vFile)) {
                       changesToMove.add(change);
                     }
                   }

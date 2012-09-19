@@ -423,7 +423,7 @@ public class CommitHelper {
                     dialog.show();
                     if (dialog.isOK()) {
                       final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
-                      MoveChangesToAnotherListAction.askAndMove(myProject, changes.toArray(new Change[changes.size()]), null);
+                      MoveChangesToAnotherListAction.askAndMove(myProject, changes, null);
                     }
                   }
                 }
