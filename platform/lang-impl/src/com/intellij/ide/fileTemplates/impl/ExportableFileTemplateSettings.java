@@ -18,6 +18,7 @@ package com.intellij.ide.fileTemplates.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,8 @@ import java.util.List;
 import java.util.Locale;
 
 /**
+ * Exportable part of file template settings. User-specific (local) settings are handled by FileTemplateManagerImpl.
+ *
  * @author Rustam Vishnyakov
  */
 @State(
@@ -36,7 +39,7 @@ import java.util.Locale;
       file = StoragePathMacros.APP_CONFIG + "/" + ExportableFileTemplateSettings.EXPORTABLE_SETTINGS_FILE
     )}
 )
-public class ExportableFileTemplateSettings implements PersistentStateComponent<Element>, ExportableComponent {
+public class ExportableFileTemplateSettings extends FileTemplatesLoader implements PersistentStateComponent<Element>, ExportableComponent {
 
   public final static String EXPORTABLE_SETTINGS_FILE = "file.template.settings.xml";
 
@@ -45,20 +48,23 @@ public class ExportableFileTemplateSettings implements PersistentStateComponent<
   static final String ATTRIBUTE_REFORMAT = "reformat";
   static final String ATTRIBUTE_ENABLED = "enabled";
 
-  private FileTemplateManagerImpl myFileTemplateManager;
   private boolean myLoaded = false;
 
-
-  public ExportableFileTemplateSettings() {
-    myFileTemplateManager = FileTemplateManagerImpl.getInstanceImpl();
+  public ExportableFileTemplateSettings(@NotNull FileTypeManagerEx typeManager) {
+    super(typeManager);
   }
+
+  public static ExportableFileTemplateSettings getInstance() {
+    return ServiceManager.getService(ExportableFileTemplateSettings.class);
+  }
+
 
   @NotNull
   @Override
   public File[] getExportFiles() {
     File exportableSettingsFile =
       new File(PathManager.getOptionsPath() + File.separator + EXPORTABLE_SETTINGS_FILE);
-    return new File[] {myFileTemplateManager.getDefaultTemplatesManager().getConfigRoot(false), exportableSettingsFile};
+    return new File[] {getDefaultTemplatesManager().getConfigRoot(false), exportableSettingsFile};
   }
 
   @NotNull
@@ -71,7 +77,7 @@ public class ExportableFileTemplateSettings implements PersistentStateComponent<
   @Override
   public Element getState() {
     Element element = new Element("fileTemplateSettings");
-    for (FTManager manager : myFileTemplateManager.getAllManagers()) {
+    for (FTManager manager : getAllManagers()) {
       final Element templatesGroup = new Element(getXmlElementGroupName(manager));
       element.addContent(templatesGroup);
       for (FileTemplateBase template : manager.getAllTemplates(true)) {
@@ -97,12 +103,12 @@ public class ExportableFileTemplateSettings implements PersistentStateComponent<
 
   @Override
   public void loadState(Element state) {
-    doLoad(myFileTemplateManager, state);
+    doLoad(state);
     myLoaded = true;
   }
 
-  static void doLoad(FileTemplateManagerImpl fileTemplateManager, Element element) {
-    for (final FTManager manager : fileTemplateManager.getAllManagers()) {
+  public void doLoad(Element element) {
+    for (final FTManager manager : getAllManagers()) {
       final Element templatesGroup = element.getChild(getXmlElementGroupName(manager));
       if (templatesGroup == null) {
         continue;
