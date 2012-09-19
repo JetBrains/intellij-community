@@ -339,7 +339,7 @@ public class ParametersList implements Cloneable {
             myMacroMap.put("${" + name + "}", value);
           }
         }
-        final Map<String, String> env = EnvironmentUtil.getEnviromentProperties();
+        final Map<String, String> env = EnvironmentUtil.getEnvironmentProperties();
         for (String name : env.keySet()) {
           final String key = "${" + name + "}";
           if (!myMacroMap.containsKey(key)) {
