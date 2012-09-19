@@ -15,8 +15,10 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
-import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Denis Zhdanov
@@ -24,11 +26,20 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JavaArrangementMethodDependencyInfo {
 
-  // TODO den add doc
-  public void registerDependency(@NotNull PsiMethod baseMethod,
-                                 @NotNull JavaElementArrangementEntry baseMethodEntry,
-                                 @NotNull PsiMethod dependentMethod)
-  {
-    
+  @NotNull private final List<JavaElementArrangementEntry> getDependentMethods = new ArrayList<JavaElementArrangementEntry>();
+  @NotNull private final JavaElementArrangementEntry myAnchorMethod;
+
+  public JavaArrangementMethodDependencyInfo(@NotNull JavaElementArrangementEntry method) {
+    myAnchorMethod = method;
+  }
+
+  @NotNull
+  public List<JavaElementArrangementEntry> getGetDependentMethods() {
+    return getDependentMethods;
+  }
+
+  @NotNull
+  public JavaElementArrangementEntry getAnchorMethod() {
+    return myAnchorMethod;
   }
 }

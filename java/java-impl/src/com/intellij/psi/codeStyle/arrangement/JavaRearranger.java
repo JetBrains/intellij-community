@@ -204,7 +204,21 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
   }
 
   private static void setupUtilityMethods(@NotNull JavaArrangementParseInfo info, @NotNull ArrangementEntryOrderType orderType) {
-    
+    if (orderType == ArrangementEntryOrderType.DEPTH_FIRST) {
+      JavaElementArrangementEntry base = null;
+      for (JavaArrangementMethodDependencyInfo rootInfo : info.getMethodDependencyRoots()) {
+        if (base != null) {
+          rootInfo.getAnchorMethod().addDependency(base);
+        }
+        base = setupDepthFirstDependency(rootInfo.getAnchorMethod());
+      }
+    }
+  }
+
+  @NotNull
+  private static JavaElementArrangementEntry setupDepthFirstDependency(@NotNull JavaElementArrangementEntry base) {
+    // TODO den implement
+    return base;
   }
 
   private static void setupOverriddenMethods(JavaArrangementParseInfo info) {
