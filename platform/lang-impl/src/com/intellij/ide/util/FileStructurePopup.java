@@ -171,7 +171,11 @@ public class FileStructurePopup implements Disposable {
                               @NotNull SimpleTextAttributes attributes,
                               boolean isMainText,
                               boolean selected) {
-        SpeedSearchUtil.appendFragmentsForSpeedSearch(myTree, fragment, attributes, selected, this);
+        if (!isMainText ) {
+          super.doAppend(fragment, attributes, isMainText, selected);
+        } else {
+          SpeedSearchUtil.appendFragmentsForSpeedSearch(myTree, fragment, attributes, selected, this);
+        }
       }
 
       @Override

@@ -19,6 +19,7 @@ import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationWithSeparator;
+import com.intellij.navigation.LocationPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,7 +37,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Default implementation of the {@link ItemPresentation} interface.
  */
 
-public class PresentationData implements ColoredItemPresentation, ComparableObject {
+public class PresentationData implements ColoredItemPresentation, ComparableObject, LocationPresentation {
 
   protected final CopyOnWriteArrayList<PresentableNodeDescriptor.ColoredFragment> myColoredText = ContainerUtil.createEmptyCOWList();
 
@@ -55,6 +56,8 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
   private boolean mySeparatorAbove = false;
 
   private boolean myChanged;
+  private String myLocationPrefix;
+  private String myLocationSuffix;
 
   /**
    * Creates an instance with the specified parameters.
@@ -185,6 +188,10 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
       setAttributesKey(((ColoredItemPresentation) presentation).getTextAttributesKey());
     }
     setSeparatorAbove(presentation instanceof ItemPresentationWithSeparator);
+    if (presentation instanceof LocationPresentation) {
+      myLocationPrefix = ((LocationPresentation)presentation).getLocationPrefix();
+      myLocationSuffix = ((LocationPresentation)presentation).getLocationSuffix();
+    }
   }
   
   public boolean hasSeparatorAbove() {
@@ -253,12 +260,14 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     myTooltip = null;
     myChanged = false;
     mySeparatorAbove = false;
+    myLocationSuffix = null;
+    myLocationPrefix = null;
   }
 
   @NotNull
   public Object[] getEqualityObjects() {
     return new Object[]{myIcon, myColoredText, myAttributesKey, myFont, myForcedTextForeground, myPresentableText,
-      myLocationString, mySeparatorAbove};
+      myLocationString, mySeparatorAbove, myLocationPrefix, myLocationSuffix};
   }
 
   @Override
@@ -285,6 +294,8 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     myPresentableText = from.myPresentableText;
     myTooltip = from.myTooltip;
     mySeparatorAbove = from.mySeparatorAbove;
+    myLocationPrefix = from.myLocationPrefix;
+    myLocationSuffix = from.myLocationSuffix;
   }
 
   public PresentationData clone() {
@@ -307,9 +318,21 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     myPresentableText = getValue(myPresentableText, from.myPresentableText);
     myTooltip = getValue(myTooltip, from.myTooltip);
     mySeparatorAbove = mySeparatorAbove || from.mySeparatorAbove;
+    myLocationPrefix = getValue(myLocationPrefix, from.myLocationPrefix);
+    myLocationSuffix = getValue(myLocationSuffix, from.myLocationSuffix);
   }
 
   private <T> T getValue(T ownValue, T fromValue) {
     return ownValue != null ? ownValue : fromValue;
+  }
+
+  @Override
+  public String getLocationPrefix() {
+    return myLocationPrefix == null ? DEFAULT_LOCATION_PREFIX : myLocationPrefix;
+  }
+
+  @Override
+  public String getLocationSuffix() {
+    return myLocationSuffix == null ? DEFAULT_LOCATION_SUFFIX : myLocationSuffix;
   }
 }
