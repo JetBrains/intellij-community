@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.JpsJavaSdkTypeWrapper;
 import org.jetbrains.jps.model.library.*;
@@ -219,13 +220,9 @@ public class JpsSdkTableSerializer {
     JpsSdkReference<P> reference = JpsElementFactory.getInstance().createSdkReference(sdkName, sdkType);
     table.setSdkReference(sdkType, reference);
     if (sdkType instanceof JpsJavaSdkTypeWrapper) {
-      JpsLibrary jpsLibrary = reference.resolve();
-      if (jpsLibrary != null) {
-        String name = ((JpsJavaSdkTypeWrapper)sdkType).getJavaSdkName(((JpsSdk<?>)jpsLibrary.getProperties()).getSdkProperties());
-        if (name != null) {
-          table.setSdkReference(JpsJavaSdkType.INSTANCE, JpsElementFactory.getInstance().createSdkReference(name, JpsJavaSdkType.INSTANCE));
-        }
-      }
+      JpsSdkReference<P> wrapperRef = JpsElementFactory.getInstance().createSdkReference(sdkName, sdkType);
+      table.setSdkReference(JpsJavaSdkType.INSTANCE, JpsJavaExtensionService.getInstance().createWrappedJavaSdkReference((JpsJavaSdkTypeWrapper)sdkType,
+                                                                                                                         wrapperRef));
     }
   }
 }

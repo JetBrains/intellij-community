@@ -1,7 +1,6 @@
 package org.jetbrains.jps;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -60,10 +59,10 @@ public class ProjectPaths {
         enumerator = enumerator.exportedOnly();
       }
       if (classpathPart == ClasspathPart.BEFORE_JDK) {
-        enumerator = enumerator.satisfying(new BeforeSdkItemFilter(module));
+        enumerator = enumerator.satisfying(new BeforeJavaSdkItemFilter(module));
       }
       else if (classpathPart == ClasspathPart.AFTER_JDK) {
-        enumerator = enumerator.satisfying(Conditions.not(new BeforeSdkItemFilter(module))).withoutSdk();
+        enumerator = enumerator.satisfying(new AfterJavaSdkItemFilter(module));
       }
       JpsJavaDependenciesRootsEnumerator rootsEnumerator = enumerator.classes();
       if (excludeMainModuleOutput) {
@@ -179,20 +178,40 @@ public class ProjectPaths {
 
   private enum ClasspathPart {WHOLE, BEFORE_JDK, AFTER_JDK}
 
-  private static class BeforeSdkItemFilter implements Condition<JpsDependencyElement> {
+  private static class BeforeJavaSdkItemFilter implements Condition<JpsDependencyElement> {
     private JpsModule myModule;
     private boolean mySdkFound;
 
-    private BeforeSdkItemFilter(JpsModule module) {
+    private BeforeJavaSdkItemFilter(JpsModule module) {
       myModule = module;
     }
 
     @Override
     public boolean value(JpsDependencyElement dependency) {
-      if (myModule.equals(dependency.getContainingModule()) && dependency instanceof JpsSdkDependency) {
+      boolean isJavaSdk = dependency instanceof JpsSdkDependency && ((JpsSdkDependency)dependency).getSdkType().equals(JpsJavaSdkType.INSTANCE);
+      if (myModule.equals(dependency.getContainingModule()) && isJavaSdk) {
         mySdkFound = true;
       }
-      return !mySdkFound && !(dependency instanceof JpsSdkDependency);
+      return !mySdkFound && !isJavaSdk;
+    }
+  }
+
+  private static class AfterJavaSdkItemFilter implements Condition<JpsDependencyElement> {
+    private JpsModule myModule;
+    private boolean mySdkFound;
+
+    private AfterJavaSdkItemFilter(JpsModule module) {
+      myModule = module;
+    }
+
+    @Override
+    public boolean value(JpsDependencyElement dependency) {
+      if (myModule.equals(dependency.getContainingModule()) &&
+          dependency instanceof JpsSdkDependency && ((JpsSdkDependency)dependency).getSdkType().equals(JpsJavaSdkType.INSTANCE)) {
+        mySdkFound = true;
+        return false;
+      }
+      return mySdkFound;
     }
   }
 

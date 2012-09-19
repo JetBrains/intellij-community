@@ -24,6 +24,7 @@
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="jps-builders" />
     <orderEntry type="library" name="Netty" level="project" />
+    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
   </component>
   <component name="copyright">
     <Base>
