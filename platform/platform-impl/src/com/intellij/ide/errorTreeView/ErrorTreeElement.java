@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
  *         Date: Nov 12, 2004
  */
 public abstract class ErrorTreeElement {
+  public static final ErrorTreeElement[] EMPTY_ARRAY = new ErrorTreeElement[0];
+  
   private final ErrorTreeElementKind myKind;
 
   protected ErrorTreeElement() {
