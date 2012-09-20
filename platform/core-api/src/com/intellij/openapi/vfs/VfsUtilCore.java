@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Function;
@@ -187,7 +188,7 @@ public class VfsUtilCore {
         return CONTINUE;
       }
     });
-    return result.skipToParent != root;
+    return !Comparing.equal(result.skipToParent, root);
   }
 
   @SuppressWarnings("UnsafeVfsRecursion")
@@ -221,13 +222,13 @@ public class VfsUtilCore {
       if (childrenIterable != null) {
         for (VirtualFile child : childrenIterable) {
           Result result = visitChildrenRecursively(child, visitor);
-          if (result.skipToParent != null && result.skipToParent != child) return result;
+          if (result.skipToParent != null && !Comparing.equal(result.skipToParent, child)) return result;
         }
       }
       else if (children != null) {
         for (VirtualFile child : children) {
           Result result = visitChildrenRecursively(child, visitor);
-          if (result.skipToParent != null && result.skipToParent != child) return result;
+          if (result.skipToParent != null && !Comparing.equal(result.skipToParent, child)) return result;
         }
       }
 

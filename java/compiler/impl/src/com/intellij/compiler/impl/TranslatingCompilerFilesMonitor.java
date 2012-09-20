@@ -1414,13 +1414,13 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               @Override
               public boolean visitFile(@NotNull VirtualFile child) {
                 if (child.isDirectory()) {
-                  if (child != eventFile) {
+                  if (!Comparing.equal(child, eventFile)) {
                     filePath.append("/").append(child.getName());
                   }
                 }
                 else {
                   String childPath = filePath.toString();
-                  if (child != eventFile) {
+                  if (!Comparing.equal(child, eventFile)) {
                     childPath += "/" + child.getName();
                   }
                   toMark.add(new File(childPath));
@@ -1430,7 +1430,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
               @Override
               public void afterChildrenVisited(@NotNull VirtualFile file) {
-                if (file.isDirectory() && file != eventFile) {
+                if (file.isDirectory() && !Comparing.equal(file, eventFile)) {
                   filePath.delete(filePath.length() - file.getName().length() - 1, filePath.length());
                 }
               }
