@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental.artifacts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -17,7 +18,10 @@ import org.jetbrains.jps.incremental.storage.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * @author nik
@@ -61,22 +65,22 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
       configuration.save();
     }
     else if (fsState.markInitialScanPerformed(myTarget)) {
-      final Set<String> currentPaths = new HashSet<String>();
+      final Set<File> currentPaths = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       fsState.clearDeletedPaths(myTarget);
       markDirtyFiles(builder, dataManager, currentPaths, false);
       final SourceToOutputMapping mapping = dataManager.getSourceToOutputMap(myTarget);
       final Iterator<String> iterator = mapping.getKeysIterator();
       while (iterator.hasNext()) {
         String path = iterator.next();
-        File file = new File(path);
-        if (!currentPaths.contains(path)) {
+        File file = new File(FileUtil.toSystemDependentName(path));
+        if (!currentPaths.contains(file)) {
           fsState.registerDeleted(myTarget, file, myProjectDescriptor.timestamps.getStorage());
         }
       }
     }
   }
 
-  private void markDirtyFiles(ArtifactInstructionsBuilder builder, BuildDataManager dataManager, @Nullable Set<String> currentPaths,
+  private void markDirtyFiles(ArtifactInstructionsBuilder builder, BuildDataManager dataManager, @Nullable Set<File> currentPaths,
                               final boolean forceMarkDirty) throws IOException {
     for (Pair<ArtifactRootDescriptor, DestinationInfo> pair : builder.getInstructions()) {
       ArtifactRootDescriptor descriptor = pair.getFirst();
@@ -89,7 +93,7 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
   }
 
   private void processRecursively(File file, ArtifactRootDescriptor descriptor, BuildDataManager dataManager, SourceFileFilter filter,
-                                  @Nullable Set<String> currentPaths, final boolean forceMarkDirty) throws IOException {
+                                  @Nullable Set<File> currentPaths, final boolean forceMarkDirty) throws IOException {
     final String filePath = FileUtil.toSystemIndependentName(FileUtil.toCanonicalPath(file.getPath()));
     if (!filter.accept(filePath, dataManager)) return;
 
@@ -103,7 +107,7 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
     }
     else {
       if (currentPaths != null) {
-        currentPaths.add(filePath);
+        currentPaths.add(file);
       }
       if (forceMarkDirty || myProjectDescriptor.timestamps.getStorage().getStamp(file, myTarget) != FileSystemUtil.lastModified(file)) {
         myProjectDescriptor.fsState.markDirty(null, file, descriptor, myProjectDescriptor.timestamps.getStorage());
