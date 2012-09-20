@@ -61,6 +61,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Alarm;
+import com.intellij.util.Function;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
@@ -111,6 +112,23 @@ public class BuildManager implements ApplicationComponent{
   private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
   private static final int MAKE_TRIGGER_DELAY = 3 * 1000 /*3 seconds*/;
   private final boolean IS_UNIT_TEST_MODE;
+  private static final String IWS_EXTENSION = ".iws";
+  private static final String IPR_EXTENSION = ".ipr";
+  private static final String IDEA_PROJECT_DIR_PATTERN = "/.idea/";
+  private static final Function<String, Boolean> PATH_FILTER = 
+    SystemInfo.isFileSystemCaseSensitive?
+    new Function<String, Boolean>() {
+      @Override
+      public Boolean fun(String s) {
+        return !(s.contains(IDEA_PROJECT_DIR_PATTERN) || s.endsWith(IWS_EXTENSION) || s.endsWith(IPR_EXTENSION));
+      }
+    } :
+    new Function<String, Boolean>() {
+      @Override
+      public Boolean fun(String s) {
+        return !(StringUtil.endsWithIgnoreCase(s, IWS_EXTENSION) || StringUtil.endsWithIgnoreCase(s, IPR_EXTENSION) || StringUtil.containsIgnoreCase(s, IDEA_PROJECT_DIR_PATTERN));
+      }
+    };
 
   private final File mySystemDirectory;
   private final ProjectManager myProjectManager;
@@ -217,35 +235,46 @@ public class BuildManager implements ApplicationComponent{
     return ApplicationManager.getApplication().getComponent(BuildManager.class);
   }
 
-  public void notifyFilesChanged(final Collection<String> paths) {
+  public void notifyFilesChanged(final Collection<File> paths) {
     doNotify(paths, false);
   }
 
-  public void notifyFilesDeleted(Collection<String> paths) {
+  public void notifyFilesDeleted(Collection<File> paths) {
     doNotify(paths, true);
   }
 
-  private void doNotify(final Collection<String> paths, final boolean notifyDeletion) {
+  private void doNotify(final Collection<File> paths, final boolean notifyDeletion) {
     // ensure events processed in the order they arrived
     myRequestsProcessor.submit(new Runnable() {
+
       @Override
       public void run() {
+        final List<String> filtered = new ArrayList<String>(paths.size());
+        for (File file : paths) {
+          final String path = FileUtil.toSystemIndependentName(file.getPath());
+          if (PATH_FILTER.fun(path)) {
+            filtered.add(path);
+          }
+        }
+        if (filtered.isEmpty()) {
+          return;
+        }
         synchronized (myProjectDataMap) {
           if (IS_UNIT_TEST_MODE) {
             if (notifyDeletion) {
-              LOG.info("Registering deleted paths: " + paths);
+              LOG.info("Registering deleted paths: " + filtered);
             }
             else {
-              LOG.info("Registering changed paths: " + paths);
+              LOG.info("Registering changed paths: " + filtered);
             }
           }
           for (Map.Entry<String, ProjectData> entry : myProjectDataMap.entrySet()) {
             final ProjectData data = entry.getValue();
             if (notifyDeletion) {
-              data.addDeleted(paths);
+              data.addDeleted(filtered);
             }
             else {
-              data.addChanged(paths);
+              data.addChanged(filtered);
             }
             final RequestFuture future = myBuildsInProgress.get(entry.getKey());
             if (future != null && !future.isCancelled() && !future.isDone()) {
