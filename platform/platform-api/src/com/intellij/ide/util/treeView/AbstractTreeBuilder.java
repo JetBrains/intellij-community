@@ -447,7 +447,19 @@ public class AbstractTreeBuilder implements Disposable {
 
   protected void runBackgroundLoading(@NotNull final Runnable runnable) {
     if (isDisposed()) return;
-    runnable.run();
+
+    final Application app = ApplicationManager.getApplication();
+    if (app != null) {
+      app.runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          runnable.run();
+        }
+      });
+    }
+    else {
+      runnable.run();
+    }
   }
 
   protected void updateAfterLoadedInBackground(@NotNull Runnable runnable) {
