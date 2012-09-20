@@ -19,8 +19,8 @@ import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 
-public class ProblemsView extends NewErrorTreeViewPanel {
-  public ProblemsView(Project project) {
+public class ProblemsViewPanel extends NewErrorTreeViewPanel {
+  public ProblemsViewPanel(Project project) {
     super(project, null, false, true, null);
   }
 
@@ -40,9 +40,14 @@ public class ProblemsView extends NewErrorTreeViewPanel {
     //}
   }
 
+  @Override
   protected boolean shouldShowFirstErrorInEditor() {
     return false;
   }
 
+  @Override
+  protected boolean canHideWarnings() {
+    return false;
+  }
 
 }

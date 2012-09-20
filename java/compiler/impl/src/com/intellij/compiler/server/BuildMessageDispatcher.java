@@ -116,6 +116,7 @@ class BuildMessageDispatcher extends SimpleChannelHandler {
         if (msgType == CmdlineRemoteProto.Message.BuilderMessage.Type.PARAM_REQUEST) {
           final CmdlineRemoteProto.Message.ControllerMessage params = sessionData.params;
           if (params != null) {
+            handler.buildStarted();
             sessionData.params = null;
             Channels.write(ctx.getChannel(), CmdlineProtoUtil.toMessage(sessionId, params));
           }

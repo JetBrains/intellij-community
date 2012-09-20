@@ -25,6 +25,8 @@ import java.util.UUID;
  *         Date: 4/25/12
  */
 public interface BuilderMessageHandler {
+  void buildStarted();
+  
   void handleBuildMessage(Channel channel, UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage msg);
 
   void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure);

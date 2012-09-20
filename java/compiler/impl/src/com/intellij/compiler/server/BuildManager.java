@@ -36,6 +36,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -46,6 +47,7 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
@@ -107,7 +109,7 @@ public class BuildManager implements ApplicationComponent{
   private static final String SYSTEM_ROOT = "compile-server";
   private static final String LOGGER_CONFIG = "log.xml";
   private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
-  private static final int MAKE_TRIGGER_DELAY = 3 * 1000 + 500/*3.5 seconds*/;
+  private static final int MAKE_TRIGGER_DELAY = 3 * 1000 /*3 seconds*/;
   private final boolean IS_UNIT_TEST_MODE;
 
   private final File mySystemDirectory;
@@ -147,6 +149,7 @@ public class BuildManager implements ApplicationComponent{
     mySystemDirectory = system;
 
     projectManager.addProjectManagerListener(new ProjectWatcher());
+    
     final MessageBusConnection conn = ApplicationManager.getApplication().getMessageBus().connect();
     conn.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
@@ -157,14 +160,48 @@ public class BuildManager implements ApplicationComponent{
       }
 
       private boolean shouldTriggerMake(List<? extends VFileEvent> events) {
-        if (!PowerSaveMode.isEnabled()) {
-          for (VFileEvent event : events) {
-            if (event.isFromRefresh() || event.getRequestor() instanceof SavingRequestor) {
+        if (PowerSaveMode.isEnabled()) {
+          return false;
+        }
+        List<Project> activeProjects = null;
+        for (VFileEvent event : events) {
+          if (!event.isFromRefresh() && !(event.getRequestor() instanceof SavingRequestor)) {
+            continue;
+          }
+          final VirtualFile eventFile = event.getFile();
+          if (eventFile == null || ProjectCoreUtil.isProjectOrWorkspaceFile(eventFile)) {
+            continue;
+          }
+          
+          if (activeProjects == null) {
+            activeProjects = getActiveProjects();
+            if (activeProjects.isEmpty()) {
+              return false;
+            }
+          }
+          
+          for (Project project : activeProjects) {
+            if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(eventFile)) {
               return true;
             }
           }
         }
         return false;
+      }
+
+      private List<Project> getActiveProjects() {
+        final Project[] projects = myProjectManager.getOpenProjects();
+        if (projects.length == 0) {
+          return Collections.emptyList();
+        }
+        final List<Project> projectList = new ArrayList<Project>();
+        for (Project project : projects) {
+          if (project.isDefault() || project.isDisposed()) {
+            continue;
+          }
+          projectList.add(project);
+        }
+        return projectList;
       }
     });
 

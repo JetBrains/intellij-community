@@ -63,6 +63,10 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   }
 
   @Override
+  public void buildStarted() {
+  }
+
+  @Override
   public final void handleBuildMessage(final Channel channel, final UUID sessionId, final CmdlineRemoteProto.Message.BuilderMessage msg) {
     switch (msg.getType()) {
       case BUILD_EVENT:

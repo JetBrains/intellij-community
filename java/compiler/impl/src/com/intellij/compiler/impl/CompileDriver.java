@@ -212,7 +212,7 @@ public class CompileDriver {
     }
     scope = addAdditionalRoots(scope, ALL_EXCEPT_SOURCE_PROCESSING);
 
-    final CompilerTask task = new CompilerTask(myProject, true, "Classes up-to-date check", true);
+    final CompilerTask task = new CompilerTask(myProject, "Classes up-to-date check", true);
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, task, scope, createDependencyCache(), true, false);
 
     checkCachesVersion(compileContext, ((PersistentFS)ManagingFS.getInstance()).getCreationTimestamp());
@@ -443,6 +443,13 @@ public class CompileDriver {
     buildManager.cancelAutoMakeTasks(myProject);
     return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
       @Override
+      public void buildStarted() {
+        final ProblemsView view = ProblemsViewImpl.SERVICE.getInstance(myProject);
+        view.clearMessages(compileContext.getCompileScope());
+        view.clearProgress();
+      }
+
+      @Override
       public void sessionTerminated() {
       }
 
@@ -539,9 +546,7 @@ public class CompileDriver {
 
     final String contentName =
       forceCompile ? CompilerBundle.message("compiler.content.name.compile") : CompilerBundle.message("compiler.content.name.make");
-    final boolean compileInBackground = true;
-    final CompilerTask compileTask =
-      new CompilerTask(myProject, compileInBackground, contentName, ApplicationManager.getApplication().isUnitTestMode());
+    final CompilerTask compileTask = new CompilerTask(myProject, contentName, ApplicationManager.getApplication().isUnitTestMode());
 
     StatusBar.Info.set("", myProject, "Compiler");
     if (useExtProcessBuild && BuildManager.getInstance().rescanRequired(myProject)) {
@@ -2211,7 +2216,7 @@ public class CompileDriver {
 
   public void executeCompileTask(final CompileTask task, final CompileScope scope, final String contentName, final Runnable onTaskFinished) {
     final CompilerTask progressManagerTask =
-      new CompilerTask(myProject, true, contentName, false);
+      new CompilerTask(myProject, contentName, false);
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, progressManagerTask, scope, null, false, false);
 
     FileDocumentManager.getInstance().saveAllDocuments();
