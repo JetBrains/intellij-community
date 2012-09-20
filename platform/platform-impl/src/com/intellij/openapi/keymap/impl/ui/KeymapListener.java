@@ -13,7 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.impl;
+package com.intellij.openapi.keymap.impl.ui;
 
-public interface RunConfigurationWithSuppressedDefaultDebugAction {
+import com.intellij.openapi.actionSystem.ex.QuickList;
+import com.intellij.util.messages.Topic;
+
+/**
+ * @author Dmitry Avdeev
+ *         Date: 9/20/12
+ */
+public interface KeymapListener {
+
+  Topic<KeymapListener> CHANGE_TOPIC = new Topic<KeymapListener>("KEYMAP_CHANGED", KeymapListener.class);
+
+  void quickListRenamed(QuickList oldQuickList, QuickList newQuickList);
+
+  void processCurrentKeymapChanged(QuickList[] ids);
 }

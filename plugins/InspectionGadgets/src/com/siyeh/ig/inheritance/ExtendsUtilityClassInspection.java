@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Bas Leijdekkers
+ * Copyright 2006-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.inheritance;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
@@ -22,30 +23,42 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class ExtendsUtilityClassInspection extends BaseInspection {
 
+  @SuppressWarnings("PublicField")
+  public boolean ignoreUtilityClasses = false;
+
+  @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "class.extends.utility.class.display.name");
+    return InspectionGadgetsBundle.message("class.extends.utility.class.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     final PsiClass superClass = (PsiClass)infos[0];
     final String superClassName = superClass.getName();
-    return InspectionGadgetsBundle.message(
-      "class.extends.utility.class.problem.descriptor", superClassName
-    );
+    return InspectionGadgetsBundle.message("class.extends.utility.class.problem.descriptor", superClassName);
   }
 
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("class.extends.utility.class.ignore.utility.class.option"),
+                                          this, "ignoreUtilityClasses");
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ClassExtendsUtilityClassVisitor();
   }
 
-  private static class ClassExtendsUtilityClassVisitor
-    extends BaseInspectionVisitor {
+  private class ClassExtendsUtilityClassVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(PsiClass aClass) {
@@ -60,6 +73,9 @@ public class ExtendsUtilityClassInspection extends BaseInspection {
         return;
       }
       if (!UtilityClassUtil.isUtilityClass(superClass)) {
+        return;
+      }
+      if (ignoreUtilityClasses && UtilityClassUtil.isUtilityClass(aClass, false)) {
         return;
       }
       registerClassError(aClass, superClass);

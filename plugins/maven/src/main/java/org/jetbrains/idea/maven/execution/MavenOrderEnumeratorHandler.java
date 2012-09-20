@@ -149,18 +149,4 @@ public class MavenOrderEnumeratorHandler extends OrderEnumerationHandler {
     }
   }
 
-  @Override
-  public void addAdditionalRoots(@NotNull Module forModule,
-                                 @NotNull OrderEnumeratorSettings settings,
-                                 @NotNull Collection<String> urls) {
-    if (settings.isProductionOnly()) return;
-
-    MavenProject project = MavenProjectsManager.getInstance(forModule.getProject()).findProject(forModule);
-    if (project == null) return;
-
-    Element config = project.getPluginConfiguration("org.apache.maven.plugins", "maven-surefire-plugin");
-    for (String each : MavenJDOMUtil.findChildrenValuesByPath(config, "additionalClasspathElements", "additionalClasspathElement")) {
-      urls.add(VfsUtil.pathToUrl(each));
-    }
-  }
 }

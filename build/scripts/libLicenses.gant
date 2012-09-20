@@ -238,6 +238,7 @@ libraryLicense(name: "Netty", libraryName: "Netty", version: "3.5.5", license: "
 libraryLicense(name: "Kryo", libraryName: "Kryo", version: "1.04", license: "New BSD License", url: "http://code.google.com/p/kryo/", licenseUrl: "http://www.opensource.org/licenses/bsd-license.php")
 libraryLicense(name: "Snappy-Java", libraryName: "Snappy-Java", version: "1.0.4.1", license: "Apache 2.0", url: "http://code.google.com/p/snappy-java/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "Cucumber-JVM", libraryName: "cucumber-jvm", version: "1.0.11", license: "MIT License", url: "https://github.com/cucumber/cucumber-jvm/", licenseUrl: "http://www.opensource.org/licenses/mit-license.html")
+libraryLicense(name: "Cucumber-Groovy", libraryName: "cucumber-groovy", version: "1.0.14", license: "MIT License", url: "https://github.com/cucumber/cucumber-jvm/", licenseUrl: "http://www.opensource.org/licenses/mit-license.html")
 jetbrainsLibrary("JPS")
 jetbrainsLibrary("Maven Embedder")
 jetbrainsLibrary("tcServiceMessages")

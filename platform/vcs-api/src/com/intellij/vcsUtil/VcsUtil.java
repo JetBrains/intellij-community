@@ -28,6 +28,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -440,7 +441,7 @@ public class VcsUtil {
           if (addDirectories) {
             files.add(file);
           }
-          if (!recursive && file != dir) {
+          if (!recursive && !Comparing.equal(file, dir)) {
             return false;
           }
         }
