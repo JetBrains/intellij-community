@@ -76,7 +76,7 @@ public class GrThrowsClauseImpl extends GroovyPsiElementImpl implements GrThrows
       }
       else {
         PsiElement lastChild = getLastChild();
-        lastChild = PsiUtil.skipWhitespaces(lastChild, false);
+        lastChild = PsiUtil.skipWhitespacesAndComments(lastChild, false);
         if (!lastChild.getNode().getElementType().equals(GroovyTokenTypes.mCOMMA)) {
           getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", null);
         }

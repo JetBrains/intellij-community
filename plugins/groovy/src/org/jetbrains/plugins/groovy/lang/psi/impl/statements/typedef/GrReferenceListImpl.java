@@ -95,7 +95,7 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
       }
       else if (findChildByClass(GrCodeReferenceElement.class) != null) {
         PsiElement lastChild = getLastChild();
-        lastChild = PsiUtil.skipWhitespaces(lastChild, false);
+        lastChild = PsiUtil.skipWhitespacesAndComments(lastChild, false);
         if (!lastChild.getNode().getElementType().equals(GroovyTokenTypes.mCOMMA)) {
           getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", null);
         }

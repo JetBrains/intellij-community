@@ -51,7 +51,7 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
     PsiElement lParenth = getLParenth();
 
     if (lParenth == null) return null;
-    PsiElement afterLParenth = PsiUtil.skipWhitespaces(lParenth.getNextSibling(), true);
+    PsiElement afterLParenth = PsiUtil.skipWhitespacesAndComments(lParenth.getNextSibling(), true);
 
     if (afterLParenth instanceof GrExpression) return (GrExpression)afterLParenth;
 

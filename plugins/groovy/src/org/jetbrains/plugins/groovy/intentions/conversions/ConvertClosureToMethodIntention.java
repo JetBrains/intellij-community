@@ -174,7 +174,7 @@ public class ConvertClosureToMethodIntention extends Intention {
       public void run() {
         block.getParameterList().delete();
         block.getLBrace().delete();
-        final PsiElement psiElement = PsiUtil.skipWhitespaces(block.getFirstChild(), true);
+        final PsiElement psiElement = PsiUtil.skipWhitespacesAndComments(block.getFirstChild(), true);
         if (psiElement != null && "->".equals(psiElement.getText())) {
           psiElement.delete();
         }

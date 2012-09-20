@@ -83,14 +83,14 @@ public class GrDisjunctionTypeElementImpl extends GroovyPsiElementImpl implement
   public void deleteChildInternal(@NotNull ASTNode child) {
     final PsiElement psi = child.getPsi();
     if (psi instanceof GrTypeElement) {
-      PsiElement next = PsiUtil.skipWhitespaces(psi.getNextSibling(), true);
+      PsiElement next = PsiUtil.skipWhitespacesAndComments(psi.getNextSibling(), true);
       if (next != null) {
         if (next.getNode().getElementType() == GroovyTokenTypes.mBOR) {
           super.deleteChildInternal(next.getNode());
         }
       }
       else {
-        PsiElement prev = PsiUtil.skipWhitespaces(psi.getPrevSibling(), false);
+        PsiElement prev = PsiUtil.skipWhitespacesAndComments(psi.getPrevSibling(), false);
         if (prev != null) {
           if (prev.getNode().getElementType() == GroovyTokenTypes.mBOR) {
             super.deleteChildInternal(prev.getNode());

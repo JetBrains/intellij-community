@@ -176,14 +176,14 @@ public class RemoveUnnecessarySemicolonsIntention implements IntentionAction {
 
   @Nullable
   private static GrStatement getPreviousStatement(PsiElement colon) {
-    final PsiElement prev = PsiUtil.skipWhitespaces(colon.getPrevSibling(), false);
+    final PsiElement prev = PsiUtil.skipWhitespacesAndComments(colon.getPrevSibling(), false);
     if (prev instanceof GrStatement) return (GrStatement)prev;
     return null;
   }
 
   @Nullable
   private static GrStatement getNextStatement(PsiElement colon) {
-    final PsiElement next = PsiUtil.skipWhitespaces(colon.getNextSibling(), true);
+    final PsiElement next = PsiUtil.skipWhitespacesAndComments(colon.getNextSibling(), true);
     if (next instanceof GrStatement) return (GrStatement)next;
     return null;
   }

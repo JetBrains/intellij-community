@@ -87,12 +87,12 @@ public class ExtendsImplementsFix implements IntentionAction {
       oldRefList.delete();
     }
     else {
-      final PsiElement prev = PsiUtil.skipWhitespaces(element.getPrevSibling(), false);
+      final PsiElement prev = PsiUtil.skipWhitespacesAndComments(element.getPrevSibling(), false);
       if (prev != null && prev.getNode().getElementType().equals(GroovyTokenTypes.mCOMMA)) {
         prev.delete();
       }
       else {
-        final PsiElement next = PsiUtil.skipWhitespaces(element.getNextSibling(), false);
+        final PsiElement next = PsiUtil.skipWhitespacesAndComments(element.getNextSibling(), false);
         if (next != null && next.getNode().getElementType().equals(GroovyTokenTypes.mCOMMA)) {
           next.delete();
         }

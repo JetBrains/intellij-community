@@ -195,10 +195,10 @@ public class GroovyCompletionData {
     boolean impl = !(elem instanceof GrImplementsClause);
 
     if (elem instanceof GrTypeDefinitionBody) { //inner class
-      elem = PsiUtil.skipWhitespaces(context.getPrevSibling(), false);
+      elem = PsiUtil.skipWhitespacesAndComments(context.getPrevSibling(), false);
     }
     else {
-      elem = PsiUtil.skipWhitespaces(elem.getPrevSibling(), false);
+      elem = PsiUtil.skipWhitespacesAndComments(elem.getPrevSibling(), false);
     }
 
     ext &= elem instanceof GrInterfaceDefinition || elem instanceof GrClassDefinition;
@@ -518,7 +518,7 @@ public class GroovyCompletionData {
         run = run.getParent();
         assert run != null;
       }
-      candidate = PsiUtil.skipWhitespaces(run.getPrevSibling(), false);
+      candidate = PsiUtil.skipWhitespacesAndComments(run.getPrevSibling(), false);
       if (candidate instanceof PsiErrorElement) candidate = candidate.getPrevSibling();
     }
     else if (context.getParent() instanceof PsiErrorElement) {
