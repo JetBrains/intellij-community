@@ -26,9 +26,8 @@ import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -207,11 +206,16 @@ public class GrClassImplUtil {
   }
 
   @NotNull
-  public static PsiMethod[] getAllMethods(GrTypeDefinition grType) {
-    List<PsiMethod> allMethods = new ArrayList<PsiMethod>();
-    getAllMethodsInner(grType, allMethods, new HashSet<PsiClass>());
-
-    return allMethods.toArray(new PsiMethod[allMethods.size()]);
+  public static PsiMethod[] getAllMethods(final GrTypeDefinition grType) {
+    return CachedValuesManager.getManager(grType.getProject()).getCachedValue(grType, new CachedValueProvider<PsiMethod[]>() {
+      @Nullable
+      @Override
+      public Result<PsiMethod[]> compute() {
+        List<PsiMethod> list = ContainerUtil.newArrayList();
+        getAllMethodsInner(grType, list, new HashSet<PsiClass>());
+        return Result.create(list.toArray(new PsiMethod[list.size()]), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, grType);
+      }
+    });
   }
 
   @NotNull
