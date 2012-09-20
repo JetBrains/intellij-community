@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,12 +35,7 @@ import java.util.List;
 public class IElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.tree.IElementType");
 
-  public static final short FIRST_TOKEN_INDEX = 1;
-  private static short ourCounter = FIRST_TOKEN_INDEX;
-
-  private static final short MAX_INDEXED_TYPES = 15000;
-  private static final List<IElementType> ourRegistry = new ArrayList<IElementType>(700);
-  private final short myIndex;
+  public static final IElementType[] EMPTY_ARRAY = new IElementType[0];
 
   /**
    * Default enumeration predicate which matches all token types.
@@ -54,33 +49,15 @@ public class IElementType {
     }
   };
 
-  static int getAllocatedTypesCount() {
-    return ourCounter;
-  }
+  public static final short FIRST_TOKEN_INDEX = 1;
+  public static final short MAX_INDEXED_TYPES = 15000;
 
-  public static final IElementType[] EMPTY_ARRAY = new IElementType[0];
-  private final String myDebugName;
+  private static short ourCounter = FIRST_TOKEN_INDEX;
+  private static final List<IElementType> ourRegistry = new ArrayList<IElementType>(700);
+
+  private final short myIndex;
+  @NotNull private final String myDebugName;
   @NotNull private final Language myLanguage;
-
-  /**
-   * Enumerates all registered token types which match the specified predicate.
-   *
-   * @param p the predicate which should be matched by the element types.
-   * @return the array of matching element types.
-   */
-  public static IElementType[] enumerate(Predicate p) {
-    List<IElementType> matches = new ArrayList<IElementType>();
-    IElementType[] copy;
-    synchronized (ourRegistry) {
-      copy = ourRegistry.toArray(new IElementType[ourRegistry.size()]);
-    }
-    for (IElementType value : copy) {
-      if (p.matches(value)) {
-        matches.add(value);
-      }
-    }
-    return matches.toArray(new IElementType[matches.size()]);
-  }
 
   /**
    * Creates and registers a new element type for the specified language.
@@ -92,7 +69,7 @@ public class IElementType {
     this(debugName, language, true);
   }
 
-  protected IElementType(String debugName, Language language, final boolean register) {
+  protected IElementType(@NotNull @NonNls String debugName, @Nullable Language language, boolean register) {
     myDebugName = debugName;
     myLanguage = language == null ? Language.ANY : language;
     if (register) {
@@ -133,14 +110,40 @@ public class IElementType {
   }
 
   /**
+   * Controls whitespace balancing behavior of PsiBuilder.
+   * <p>By default, empty composite elements (containing no children) are bounded to the right (previous) neighbour, forming following tree:
+   * <pre>
+   *  [previous_element]
+   *  [whitespace]
+   *  [empty_element]
+   *    &lt;empty&gt;
+   *  [next_element]
+   * </pre>
+   * <p>Left-bound elements are bounded to the left (next) neighbour instead:
+   * <pre>
+   *  [previous_element]
+   *  [empty_element]
+   *    &lt;empty&gt;
+   *  [whitespace]
+   *  [next_element]
+   * </pre>
+   * <p>See com.intellij.lang.impl.PsiBuilderImpl.prepareLightTree() for details.
+   * @return true if empty elements of this type should be bound to the left.
+   */
+  public boolean isLeftBound() {
+    return false;
+  }
+
+  /**
    * Returns the element type registered at the specified index.
    *
    * @param idx the index for which the element type should be returned.
    * @return the element type at the specified index.
+   * @throws IndexOutOfBoundsException if the index is out of registered elements' range.
    */
   public static IElementType find(short idx) {
     synchronized (ourRegistry) {
-      if (idx == 0) return ourRegistry.get(0); // We've changed FIRST_TOKEN_INDEX from 0 to 1. This is just for old plugins to avoid crashes.  
+      if (idx == 0) return ourRegistry.get(0); // We've changed FIRST_TOKEN_INDEX from 0 to 1. This is just for old plugins to avoid crashes.
       return ourRegistry.get(idx - FIRST_TOKEN_INDEX);
     }
   }
@@ -154,28 +157,29 @@ public class IElementType {
     boolean matches(IElementType type);
   }
 
+  static short getAllocatedTypesCount() {
+    return ourCounter;
+  }
+
   /**
-   * Controls whitespace balancing behavior of PsiBuilder.
-   * <p>By default, empty composite elements (containing no children) are bounded to the right neighbour, forming following tree:
-   * <pre>
-   *  [previous_element]
-   *  [whitespace]
-   *  [empty_element]
-   *    &lt;empty&gt;
-   *  [next_element]
-   * </pre>
-   * <p>Left-bound elements are bounded to the left neighbour instead:
-   * <pre>
-   *  [previous_element]
-   *  [empty_element]
-   *    &lt;empty&gt;
-   *  [whitespace]
-   *  [next_element]
-   * </pre>
-   * <p>See {@linkplain com.intellij.lang.impl.PsiBuilderImpl#prepareLightTree()} for details.
-   * @return true if empty elements of this type should be bound to the left.
+   * Enumerates all registered token types which match the specified predicate.
+   *
+   * @param p the predicate which should be matched by the element types.
+   * @return the array of matching element types.
    */
-  public boolean isLeftBound() {
-    return false;
+  @NotNull
+  public static IElementType[] enumerate(@NotNull Predicate p) {
+    IElementType[] copy;
+    synchronized (ourRegistry) {
+      copy = ourRegistry.toArray(new IElementType[ourRegistry.size()]);
+    }
+
+    List<IElementType> matches = new ArrayList<IElementType>();
+    for (IElementType value : copy) {
+      if (p.matches(value)) {
+        matches.add(value);
+      }
+    }
+    return matches.toArray(new IElementType[matches.size()]);
   }
 }

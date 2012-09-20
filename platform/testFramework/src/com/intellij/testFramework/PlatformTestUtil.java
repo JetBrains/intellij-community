@@ -98,7 +98,7 @@ public class PlatformTestUtil {
   }
 
   @Nullable
-  protected static String toString(Object node, @Nullable Queryable.PrintInfo printInfo) {
+  protected static String toString(@Nullable Object node, @Nullable Queryable.PrintInfo printInfo) {
     if (node instanceof AbstractTreeNode) {
       if (printInfo != null) {
         return ((AbstractTreeNode)node).toTestString(printInfo);
@@ -492,10 +492,9 @@ public class PlatformTestUtil {
         String logMessage = message;
         if (duration > expectedOnMyMachine) {
           int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
-          logMessage += ". (" + percentage + "% longer).";
+          logMessage += ". (" + percentage + "% longer)";
         }
-        logMessage += " Expected: " + expectedOnMyMachine + "." +
-                      " Actual: " + duration + "." + Timings.getStatistics() ;
+        logMessage += ". Expected: " + expectedOnMyMachine + ". Actual: " + duration + "." + Timings.getStatistics() ;
         if (duration < expectedOnMyMachine) {
           int percentage = (int)(100.0 * (expectedOnMyMachine - duration) / expectedOnMyMachine);
           logMessage = "(" + percentage + "% faster). " + logMessage;

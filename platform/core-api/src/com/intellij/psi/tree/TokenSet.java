@@ -25,7 +25,7 @@ import java.util.Arrays;
 public class TokenSet {
   public static final TokenSet EMPTY = new TokenSet();
 
-  private final boolean[] mySet = new boolean[IElementType.getAllocatedTypesCount()] ;
+  private final boolean[] mySet = new boolean[IElementType.getAllocatedTypesCount()];
   private volatile IElementType[] myTypes;
 
   /**
@@ -48,7 +48,7 @@ public class TokenSet {
           types[count++] = IElementType.find(i);
         }
       }
-      
+
       myTypes = types;
     }
 
@@ -127,7 +127,7 @@ public class TokenSet {
   public TokenSet minus(TokenSet t) {
     TokenSet set = new TokenSet();
     for (int i = 0; i < mySet.length; i++) {
-      set.mySet [i] = mySet [i] && (i >= t.mySet.length || !t.mySet[i]);
+      set.mySet[i] = mySet[i] && (i >= t.mySet.length || !t.mySet[i]);
     }
     return set;
   }
@@ -135,7 +135,7 @@ public class TokenSet {
   public static TokenSet not(TokenSet t) {
     TokenSet set = new TokenSet();
     for (int i = 0; i < t.mySet.length; i++) {
-      set.mySet [i] = (i >= t.mySet.length || !t.mySet[i]);
+      set.mySet[i] = !t.mySet[i];
     }
     return set;
   }
