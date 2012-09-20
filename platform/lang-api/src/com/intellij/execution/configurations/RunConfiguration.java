@@ -24,6 +24,10 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @see com.intellij.execution.RunManager
+ *
+ * If debugger is provided by plugin, RunConfiguration should also implement RunConfigurationWithSuppressedDefaultDebugAction
+ * Otherwise (in case of disabled plugin) debug action may be enabled in UI but with no reaction
+ * @see RunConfigurationWithSuppressedDefaultDebugAction
  */
 public interface RunConfiguration extends RunProfile, JDOMExternalizable, Cloneable {
   ConfigurationFactory getFactory();

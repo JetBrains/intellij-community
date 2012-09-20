@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.impl;
 
+package com.intellij.execution.configurations;
+
+// This interface for RunConfiguration indicates specific debugger (e.g. provided by plugin)
+// and RunConfiguration won't be started with default runner (UI will show disabled button)
 public interface RunConfigurationWithSuppressedDefaultDebugAction {
 }
