@@ -384,6 +384,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     }
 
     private void assertSet(String name, Set<String> actual, String[] expected) {
+      if (useExternalCompiler()) return;
       for (String path : expected) {
         if (!actual.remove(path)) {
           Assert.fail("'" + path + "' is not " + name + ". " + name + ": " + new HashSet<String>(actual));

@@ -32,7 +32,10 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.DefaultMessageHandler;
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
@@ -96,9 +99,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.RequestFuture;
-import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.Utils;
-import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
 
 import javax.swing.*;
 import java.io.*;
@@ -592,36 +593,19 @@ public class CompileDriver {
               return;
             }
 
-            final Collection<String> paths = fetchFiles(compileContext);
-            final List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
+            final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
+            List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
             if (paths.isEmpty()) {
-              if (!isRebuild && !allProjectModulesAffected(compileContext)) {
-                Module[] affectedModules = compileContext.getCompileScope().getAffectedModules();
-                for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
-                  TargetTypeBuildScope.Builder builder = TargetTypeBuildScope.newBuilder().setTypeId(type.getTypeId());
-                  for (Module module : affectedModules) {
-                    builder.addTargetId(module.getName());
-                  }
-                  scopes.add(builder.build());
-                }
+              if (!isRebuild && !CompileScopeUtil.allProjectModulesAffected(compileContext)) {
+                CompileScopeUtil.addScopesForModules(Arrays.asList(compileContext.getCompileScope().getAffectedModules()), scopes);
               }
               else {
                 scopes.addAll(CmdlineProtoUtil.createAllModulesScopes());
               }
-            }
-            new ReadAction() {
-              protected void run(final Result result) {
-                Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(myProject, compileContext.getCompileScope(), true);
-                if (!artifacts.isEmpty()) {
-                  TargetTypeBuildScope.Builder builder =
-                    TargetTypeBuildScope.newBuilder().setTypeId(ArtifactBuildTargetType.INSTANCE.getTypeId());
-                  for (Artifact artifact : artifacts) {
-                    builder.addTargetId(artifact.getName());
-                  }
-                  scopes.add(builder.build());
-                }
+              for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensions()) {
+                scopes = CompileScopeUtil.mergeScopes(scopes, provider.getBuildTargetScopes(scope, myCompilerFilter, myProject));
               }
-            }.execute();
+            }
 
             final RequestFuture future = compileInExternalProcess(compileContext, scopes, paths, callback);
             if (future != null) {
@@ -706,38 +690,6 @@ public class CompileDriver {
         startup(scope, isRebuild, forceCompile, callback, message, checkCachesVersion);
       }
     });
-  }
-
-  private static boolean allProjectModulesAffected(CompileContextImpl compileContext) {
-    final Set<Module> allModules = new HashSet<Module>(Arrays.asList(compileContext.getProjectCompileScope().getAffectedModules()));
-    allModules.removeAll(Arrays.asList(compileContext.getCompileScope().getAffectedModules()));
-    return allModules.isEmpty();
-  }
-
-  private static List<String> fetchFiles(CompileContextImpl context) {
-    if (context.isRebuild()) {
-      return Collections.emptyList();
-    }
-    final CompileScope scope = context.getCompileScope();
-    if (shouldFetchFiles(scope)) {
-      final List<String> paths = new ArrayList<String>();
-      for (VirtualFile file : scope.getFiles(null, true)) {
-        paths.add(file.getPath());
-      }
-      return paths;
-    }
-    return Collections.emptyList();
-  }
-
-  private static boolean shouldFetchFiles(CompileScope scope) {
-    if (scope instanceof CompositeScope) {
-      for (CompileScope compileScope : ((CompositeScope)scope).getScopes()) {
-        if (shouldFetchFiles(compileScope)) {
-          return true;
-        }
-      }
-    }
-    return scope instanceof OneProjectItemCompileScope || scope instanceof FileSetCompileScope;
   }
 
   private void doCompile(final CompileContextImpl compileContext,
