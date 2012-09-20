@@ -7,7 +7,6 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -25,24 +24,7 @@ public class GrCucumberUtil {
   public static boolean isStepDefinition(PsiElement element) {
     return element instanceof GrMethodCall &&
            getCucumberStepRef((GrMethodCall)element) != null &&
-           getCucumberDescription((GrMethodCall)element) != null;
-  }
-
-
-  @Nullable
-  public static String getPatternFromStepDefinition(GrAnnotation stepAnnotation) {
-    String result = null;
-    if (stepAnnotation.getParameterList().getAttributes().length > 0) {
-      final PsiElement annotationValue = stepAnnotation.getParameterList().getAttributes()[0].getValue();
-      if (annotationValue != null) {
-        final PsiElement patternLiteral = annotationValue.getFirstChild();
-        if (patternLiteral != null) {
-          final String patternContainer = patternLiteral.getText();
-          result = patternContainer.substring(1, patternContainer.length() - 1).replace("\\\\", "\\");
-        }
-      }
-    }
-    return result;
+           getStepDefinitionPatternText((GrMethodCall)element) != null;
   }
 
   @Nullable
@@ -62,11 +44,25 @@ public class GrCucumberUtil {
   }
 
   @Nullable
-  public static String getCucumberDescription(final GrMethodCall stepDefinition) {
+  public static String getStepDefinitionPatternText(final GrMethodCall stepDefinition) {
     return ApplicationManager.getApplication().runReadAction(new NullableComputable<String>() {
       @Nullable
       @Override
       public String compute() {
+        GrLiteral pattern = getStepDefinitionPattern(stepDefinition);
+        if (pattern == null) return null;
+        Object value = pattern.getValue();
+        return value instanceof String ? (String)value : null;
+      }
+    });
+  }
+
+  @Nullable
+  public static GrLiteral getStepDefinitionPattern(final GrMethodCall stepDefinition) {
+    return ApplicationManager.getApplication().runReadAction(new NullableComputable<GrLiteral>() {
+      @Nullable
+      @Override
+      public GrLiteral compute() {
         GrArgumentList argumentList = stepDefinition.getArgumentList();
         if (argumentList == null) return null;
 
@@ -80,7 +76,7 @@ public class GrCucumberUtil {
         if (!(operand instanceof GrLiteral)) return null;
 
         Object value = ((GrLiteral)operand).getValue();
-        return value instanceof String ? (String)value : null;
+        return value instanceof String ? ((GrLiteral)operand) : null;
       }
     });
   }

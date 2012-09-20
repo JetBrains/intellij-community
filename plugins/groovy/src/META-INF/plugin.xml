@@ -275,6 +275,7 @@
 
     <readWriteAccessDetector implementation="org.jetbrains.plugins.groovy.findUsages.GroovyReadWriteAccessDetector" order="before java"/>
     <findUsagesHandlerFactory implementation="org.jetbrains.plugins.groovy.findUsages.GroovyFieldFindUsagesHandlerFactory"/>
+    <findUsagesHandlerFactory implementation="org.jetbrains.plugins.groovy.cucumber.steps.search.GrStepFindUsageHandlerFactory"/>
     <highlightUsagesHandlerFactory implementation="org.jetbrains.plugins.groovy.findUsages.GrHighlightHandlerFactory"/>
     <lang.braceMatcher language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyBraceMatcher"/>
     <lang.importOptimizer language="Groovy" implementationClass="org.jetbrains.plugins.groovy.editor.GroovyImportOptimizer"/>
