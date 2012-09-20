@@ -22,6 +22,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SchemesManager;
@@ -56,11 +57,11 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
   private final JPanel myRightPanel = new JPanel(new BorderLayout());
   private int myCurrentIndex = -1;
   private QuickListPanel myQuickListPanel = null;
-  private final KeymapPanel myKeymapPanel;
+  private final KeymapListener myKeymapListener;
 
-  public QuickListsPanel(KeymapPanel panel) {
+  public QuickListsPanel() {
     super(new BorderLayout());
-    myKeymapPanel = panel;
+    myKeymapListener = ApplicationManager.getApplication().getMessageBus().syncPublisher(KeymapListener.CHANGE_TOPIC);
     Splitter splitter = new Splitter(false, 0.3f);
     splitter.setFirstComponent(createQuickListsPanel());
     splitter.setSecondComponent(myRightPanel);
@@ -127,14 +128,14 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
         myQuickListsModel.addElement(quickList);
         myQuickListsList.clearSelection();
         ListScrollingUtil.selectItem(myQuickListsList, quickList);
-        myKeymapPanel.processCurrentKeymapChanged();
+        myKeymapListener.processCurrentKeymapChanged(getCurrentQuickListIds());
       }
     }).setRemoveAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
         ListUtil.removeSelectedItems(myQuickListsList);
         myQuickListsList.repaint();
-        myKeymapPanel.processCurrentKeymapChanged();
+        myKeymapListener.processCurrentKeymapChanged(getCurrentQuickListIds());
       }
     }).disableUpDownActions();
 
@@ -204,9 +205,9 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
     final int index = myQuickListsList.getSelectedIndex();
     if (myQuickListPanel != null && myCurrentIndex > -1 && myCurrentIndex < myQuickListsModel.getSize()) {
       updateList(myCurrentIndex);
-      myKeymapPanel.processCurrentKeymapChanged();
+      myKeymapListener.processCurrentKeymapChanged(getCurrentQuickListIds());
     }
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myKeymapPanel));
+    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
     myQuickListPanel = new QuickListPanel(quickList, getCurrentQuickListIds(), project);
     final DocumentAdapter documentAdapter = new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
@@ -232,7 +233,7 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
     myQuickListsModel.setElementAt(newQuickList, index);
 
     if (oldQuickList != null && !newQuickList.getName().equals(oldQuickList.getName())) {
-      myKeymapPanel.quickListRenamed(oldQuickList, newQuickList);
+      myKeymapListener.quickListRenamed(oldQuickList, newQuickList);
     }
   }
 
