@@ -1019,29 +1019,31 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     ProjectIndexableFilesFilter data = reference != null ? reference.get() : null;
     if (data != null && data.myModificationCount == myFilesModCount) return data;
 
-    myCalcIndexableFilesLock.lock(); // since we calculate project file set to avoid extra vfs related io, it is better to wait a little
-    try {
-      reference = project.getUserData(ourProjectFilesSetKey);
-      data = reference != null ? reference.get() : null;
-      if (data != null && data.myModificationCount == myFilesModCount) {
-        return data;
-      }
-
-      final TIntHashSet filesSet = new TIntHashSet();
-      iterateIndexableFiles(new ContentIterator() {
-        @Override
-        public boolean processFile(@NotNull VirtualFile fileOrDir) {
-          filesSet.add(((VirtualFileWithId)fileOrDir).getId());
-          return true;
+    if(myCalcIndexableFilesLock.tryLock()) { // make best effort for calculating filter
+      try {
+        reference = project.getUserData(ourProjectFilesSetKey);
+        data = reference != null ? reference.get() : null;
+        if (data != null && data.myModificationCount == myFilesModCount) {
+          return data;
         }
-      }, project, ProgressManager.getInstance().getProgressIndicator());
-      ProjectIndexableFilesFilter files = new ProjectIndexableFilesFilter(filesSet, myFilesModCount);
-      project.putUserData(ourProjectFilesSetKey, new SoftReference<ProjectIndexableFilesFilter>(files));
-      return files;
+
+        final TIntHashSet filesSet = new TIntHashSet();
+        iterateIndexableFiles(new ContentIterator() {
+          @Override
+          public boolean processFile(@NotNull VirtualFile fileOrDir) {
+            filesSet.add(((VirtualFileWithId)fileOrDir).getId());
+            return true;
+          }
+        }, project, ProgressManager.getInstance().getProgressIndicator());
+        ProjectIndexableFilesFilter filter = new ProjectIndexableFilesFilter(filesSet, myFilesModCount);
+        project.putUserData(ourProjectFilesSetKey, new SoftReference<ProjectIndexableFilesFilter>(filter));
+        return filter;
+      }
+      finally {
+        myCalcIndexableFilesLock.unlock();
+      }
     }
-    finally {
-      myCalcIndexableFilesLock.unlock();
-    }
+    return null; // ok, no filtering
   }
 
   @Nullable 
