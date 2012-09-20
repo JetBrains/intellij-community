@@ -824,15 +824,15 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     //                        f1.getPath(),
     //                        f2.getPath());
 
-    //assertAllProductionSearchScope("m1",
-    //                               getProjectPath() + "/m1/src/main/java",
-    //                               getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
-    //assertAllTestsSearchScope("m1",
-    //                          getProjectPath() + "/m1/src/main/java",
-    //                          getProjectPath() + "/m1/src/test/java",
-    //                          getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar",
-    //                          f1.getPath(),
-    //                          f2.getPath());
+    assertAllProductionSearchScope("m1",
+                                   getProjectPath() + "/m1/src/main/java",
+                                   getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
+    assertAllTestsSearchScope("m1",
+                              getProjectPath() + "/m1/src/main/java",
+                              getProjectPath() + "/m1/src/test/java",
+                              getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar",
+                              f1.getPath(),
+                              f2.getPath());
 
     assertAllProductionClasspath("m1",
                                  getProjectPath() + "/m1/target/classes",
