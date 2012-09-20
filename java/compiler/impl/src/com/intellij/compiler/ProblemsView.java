@@ -20,6 +20,7 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -30,12 +31,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.UUID;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 9/18/12
  */
 public abstract class ProblemsView {
+
+  private final Project myProject;
 
   public static class SERVICE {
     private SERVICE() {
@@ -46,29 +50,30 @@ public abstract class ProblemsView {
     }
   }
 
+  protected ProblemsView(Project project) {
+    myProject = project;
+  }
+
   public abstract void clearMessages(CompileScope scope);
   
   public abstract void clearMessages();
 
-  public abstract void addMessage(int type, @NotNull String[] text, @Nullable VirtualFile file, int line, int column, @Nullable Object data);
+  public abstract void addMessage(int type, @NotNull String[] text, @Nullable String groupName, @NotNull Navigatable navigatable, @Nullable String exportTextPrefix, @Nullable String rendererTextPrefix, @NotNull UUID sessionId);
 
-  public abstract void addMessage(int type, @NotNull String[] text, @Nullable VirtualFile underFileGroup, @Nullable VirtualFile file, int line, int column, @Nullable Object data);
-
-  public abstract void addMessage(int type, @NotNull String[] text, @Nullable String groupName, @NotNull Navigatable navigatable, @Nullable String exportTextPrefix, @Nullable String rendererTextPrefix, @Nullable Object data);
-
-  public void addMessage(CompilerMessage message) {
-    final Navigatable navigatable = message.getNavigatable();
+  public void addMessage(CompilerMessage message, @NotNull UUID sessionId) {
     final VirtualFile file = message.getVirtualFile();
+    Navigatable navigatable = message.getNavigatable();
+    if (navigatable == null) {
+      if (file == null) {
+        return; // both navigatable and file must not be null
+      }
+      navigatable = new OpenFileDescriptor(myProject, file, -1, -1);    
+    }
     final CompilerMessageCategory category = message.getCategory();
     final int type = CompilerTask.translateCategory(category);
     final String[] text = convertMessage(message);
-    if (navigatable != null) {
-      final String groupName = file != null? file.getPresentableUrl() : category.getPresentableText();
-      addMessage(type, text, groupName, navigatable, message.getExportTextPrefix(), message.getRenderTextPrefix(), message.getVirtualFile());
-    }
-    else {
-      addMessage(type, text, file, -1, -1, message.getVirtualFile());
-    }
+    final String groupName = file != null? file.getPresentableUrl() : category.getPresentableText();
+    addMessage(type, text, groupName, navigatable, message.getExportTextPrefix(), message.getRenderTextPrefix(), sessionId);
   }
 
   public abstract void setProgress(String text, float fraction);

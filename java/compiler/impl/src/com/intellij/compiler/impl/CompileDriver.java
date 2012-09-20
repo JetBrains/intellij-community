@@ -444,14 +444,14 @@ public class CompileDriver {
     buildManager.cancelAutoMakeTasks(myProject);
     return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
       @Override
-      public void buildStarted() {
+      public void buildStarted(UUID sessionId) {
         final ProblemsView view = ProblemsViewImpl.SERVICE.getInstance(myProject);
         view.clearMessages(compileContext.getCompileScope());
         view.clearProgress();
       }
 
       @Override
-      public void sessionTerminated() {
+      public void sessionTerminated(UUID sessionId) {
       }
 
       @Override
@@ -466,7 +466,7 @@ public class CompileDriver {
       }
 
       @Override
-      protected void handleCompileMessage(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message) {
+      protected void handleCompileMessage(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message) {
         final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind kind = message.getKind();
         //System.out.println(compilerMessage.getText());
         if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.PROGRESS) {
@@ -494,7 +494,7 @@ public class CompileDriver {
       }
 
       @Override
-      protected void handleBuildEvent(CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event) {
+      protected void handleBuildEvent(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event) {
         final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type eventType = event.getEventType();
         switch (eventType) {
           case FILES_GENERATED:

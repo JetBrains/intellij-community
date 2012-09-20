@@ -197,7 +197,7 @@ public class BuildManager implements ApplicationComponent{
               return false;
             }
           }
-          
+          // todo: probably we do not need this excessive filtering
           for (Project project : activeProjects) {
             if (!project.isInitialized() || ProjectRootManager.getInstance(project).getFileIndex().isInContent(eventFile)) {
               return true;
@@ -451,7 +451,7 @@ public class BuildManager implements ApplicationComponent{
       }
       catch (Exception e) {
         handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), null));
-        handler.sessionTerminated();
+        handler.sessionTerminated(sessionId);
         return null;
       }
     }
@@ -469,7 +469,7 @@ public class BuildManager implements ApplicationComponent{
         @Override
         public void run() {
           if (future.isCancelled() || project.isDisposed()) {
-            handler.sessionTerminated();
+            handler.sessionTerminated(sessionId);
             future.setDone();
             return;
           }
@@ -516,7 +516,7 @@ public class BuildManager implements ApplicationComponent{
                 try {
                   if (project.isDisposed()) {
                     myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
-                    handler.sessionTerminated();
+                    handler.sessionTerminated(sessionId);
                     return;
                   }
                   myBuildsInProgress.put(projectPath, future);
@@ -533,7 +533,7 @@ public class BuildManager implements ApplicationComponent{
                     public void processTerminated(ProcessEvent event) {
                       final BuilderMessageHandler handler = myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
                       if (handler != null) {
-                        handler.sessionTerminated();
+                        handler.sessionTerminated(sessionId);
                       }
                     }
 
@@ -572,7 +572,7 @@ public class BuildManager implements ApplicationComponent{
                 catch (ExecutionException e) {
                   myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
                   handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), e));
-                  handler.sessionTerminated();
+                  handler.sessionTerminated(sessionId);
                 }
                 finally {
                   myBuildsInProgress.remove(projectPath);
@@ -584,7 +584,7 @@ public class BuildManager implements ApplicationComponent{
           catch (Throwable e) {
             myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
             handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), e));
-            handler.sessionTerminated();
+            handler.sessionTerminated(sessionId);
             future.setDone();
           }
         }
@@ -594,7 +594,7 @@ public class BuildManager implements ApplicationComponent{
     }
     catch (Throwable e) {
       handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), e));
-      handler.sessionTerminated();
+      handler.sessionTerminated(sessionId);
     }
 
     return null;

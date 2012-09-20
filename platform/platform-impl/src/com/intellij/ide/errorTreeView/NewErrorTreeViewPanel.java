@@ -23,6 +23,7 @@ import com.intellij.ide.errorTreeView.impl.ErrorViewTextExporter;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -263,8 +264,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
                          int line,
                          int column,
                          @Nullable Object data) {
-    myErrorViewStructure
-      .addMessage(ErrorTreeElementKind.convertMessageFromCompilerErrorType(type), text, underFileGroup, file, line, column, data);
+    myErrorViewStructure.addMessage(ErrorTreeElementKind.convertMessageFromCompilerErrorType(type), text, underFileGroup, file, line, column, data);
     myBuilder.updateTree();
   }
 
@@ -275,11 +275,15 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
                          @Nullable String exportTextPrefix,
                          @Nullable String rendererTextPrefix,
                          @Nullable Object data) {
-    myErrorViewStructure.addNavigatableMessage(groupName, navigatable, ErrorTreeElementKind.convertMessageFromCompilerErrorType(type), text,
-                                               data,
-                                               exportTextPrefix == null ? "" : exportTextPrefix,
-                                               rendererTextPrefix == null ? "" : rendererTextPrefix,
-                                               data instanceof VirtualFile ? (VirtualFile)data : null);
+
+    VirtualFile file = data instanceof VirtualFile ? (VirtualFile)data : null;
+    if (file == null && navigatable instanceof OpenFileDescriptor) {
+      file = ((OpenFileDescriptor)navigatable).getFile();
+    }
+    final String exportPrefix = exportTextPrefix == null ? "" : exportTextPrefix;
+    final String renderPrefix = rendererTextPrefix == null ? "" : rendererTextPrefix;
+    final ErrorTreeElementKind kind = ErrorTreeElementKind.convertMessageFromCompilerErrorType(type);
+    myErrorViewStructure.addNavigatableMessage(groupName, navigatable, kind, text, data, exportPrefix, renderPrefix, file);
     myBuilder.updateTree();
   }
 

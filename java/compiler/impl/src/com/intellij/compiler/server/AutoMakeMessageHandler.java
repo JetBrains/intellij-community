@@ -53,14 +53,14 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
   }
 
   @Override
-  public void buildStarted() {
+  public void buildStarted(UUID sessionId) {
     final ProblemsView view = ProblemsView.SERVICE.getInstance(myProject);
     view.clearMessages();
     view.clearProgress();
   }
 
   @Override
-  protected void handleBuildEvent(CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event) {
+  protected void handleBuildEvent(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event) {
     if (myProject.isDisposed()) {
       return;
     }
@@ -86,7 +86,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
   }
 
   @Override
-  protected void handleCompileMessage(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message) {
+  protected void handleCompileMessage(final UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message) {
     if (myProject.isDisposed()) {
       return;
     }
@@ -107,7 +107,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
       final VirtualFile vFile = sourceFilePath != null? LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(sourceFilePath)) : null;
       final long line = message.hasLine() ? message.getLine() : -1;
       final long column = message.hasColumn() ? message.getColumn() : -1;
-      ProblemsView.SERVICE.getInstance(myProject).addMessage(new CompilerMessageImpl(myProject, CompilerMessageCategory.ERROR, message.getText(), vFile, (int)line, (int)column, null));
+      ProblemsView.SERVICE.getInstance(myProject).addMessage(new CompilerMessageImpl(myProject, CompilerMessageCategory.ERROR, message.getText(), vFile, (int)line, (int)column, null), sessionId);
     }
   }
 
@@ -117,7 +117,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
   }
 
   @Override
-  public void sessionTerminated() {
+  public void sessionTerminated(UUID sessionId) {
     String statusMessage = null/*"Auto make completed"*/;
     switch (myBuildStatus) {
       case SUCCESS:
