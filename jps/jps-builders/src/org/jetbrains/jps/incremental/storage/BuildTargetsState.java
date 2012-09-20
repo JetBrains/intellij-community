@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -121,7 +122,7 @@ public class BuildTargetsState {
   }
 
   public File getTargetDataRoot(BuildTarget target) {
-    return new File(getTargetTypeDataRoot(target.getTargetType()), target.getId());
+    return new File(getTargetTypeDataRoot(target.getTargetType()), PathUtilRt.suggestFileName(target.getId(), true, true));
   }
 
   public void clean() {
