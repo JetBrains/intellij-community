@@ -306,7 +306,7 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     final CommonActionsPanel.Buttons[] buttons = getButtons();
     final JComponent contextComponent = getComponent();
     myActionsPanel = new CommonActionsPanel(this, contextComponent,
-                             myToolbarPosition == ActionToolbarPosition.TOP || myToolbarPosition == ActionToolbarPosition.BOTTOM,
+                             myToolbarPosition,
                              myExtraActions.toArray(new AnActionButton[myExtraActions.size()]),
                              myButtonComparator,
                              myAddName, myRemoveName, myMoveUpName, myMoveDownName, myEditName,
