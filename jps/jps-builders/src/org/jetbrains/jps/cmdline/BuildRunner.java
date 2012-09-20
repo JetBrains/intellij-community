@@ -183,4 +183,8 @@ public class BuildRunner {
 
     return new CompileScopeImpl(buildType != BuildType.MAKE, targetTypes, targets, files);
   }
+
+  public List<TargetTypeBuildScope> getScopes() {
+    return myScopes;
+  }
 }

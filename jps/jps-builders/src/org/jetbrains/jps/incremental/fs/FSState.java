@@ -142,20 +142,13 @@ public class FSState {
     }
   }
 
-  public boolean hasWorkToDo() {
-    for (Map.Entry<BuildTarget, FilesDelta> entry : myDeltas.entrySet()) {
-      if (!myInitialScanPerformed.contains(entry.getKey()) || entry.getValue().hasChanges()) {
-        return true;
-      }
-    }
-    return false;
+  public boolean hasWorkToDo(BuildTarget target) {
+    if (!myInitialScanPerformed.contains(target)) return true;
+    FilesDelta delta = myDeltas.get(target);
+    return delta != null && delta.hasChanges();
   }
 
   public boolean markInitialScanPerformed(BuildTarget target) {
     return myInitialScanPerformed.add(target);
-  }
-
-  public boolean isInitialScanPerformed(BuildTarget target) {
-    return myInitialScanPerformed.contains(target);
   }
 }

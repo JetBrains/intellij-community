@@ -33,6 +33,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
+
 /**
 * @author Eugene Zhuravlev
 *         Date: 4/17/12
@@ -151,8 +153,8 @@ final class BuildSession implements Runnable, CanceledStatus {
 
     if (fsStateStream != null) {
       // optimization: check whether we can skip the build
-      final boolean hasWorkToDo = fsStateStream.readBoolean();
-      if (myBuildType == BuildType.MAKE && !hasWorkToDo && !containsChanges(myInitialFSDelta)) {
+      final boolean hasWorkToDoWithModules = fsStateStream.readBoolean();
+      if (myBuildType == BuildType.MAKE && !hasWorkToDoWithModules && scopeContainsModulesOnly(myBuildRunner.getScopes()) && !containsChanges(myInitialFSDelta)) {
         updateFsStateOnDisk(dataStorageRoot, fsStateStream, myInitialFSDelta.getOrdinal());
         return;
       }
@@ -189,6 +191,16 @@ final class BuildSession implements Runnable, CanceledStatus {
     finally {
       saveData(fsState, dataStorageRoot);
     }
+  }
+
+  private static boolean scopeContainsModulesOnly(List<TargetTypeBuildScope> scopes) {
+    for (TargetTypeBuildScope scope : scopes) {
+      String typeId = scope.getTypeId();
+      if (!typeId.equals(JavaModuleBuildTargetType.PRODUCTION.getTypeId()) && !typeId.equals(JavaModuleBuildTargetType.TEST.getTypeId())) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private void saveData(final BuildFSState fsState, File dataStorageRoot) {
@@ -333,23 +345,19 @@ final class BuildSession implements Runnable, CanceledStatus {
       try {
         out.writeInt(FSState.VERSION);
         out.writeLong(myLastEventOrdinal);
-        boolean hasWorkToDo = state.hasWorkToDo();
-        if (!hasWorkToDo) {
-          for (JpsModule module : pd.jpsProject.getModules()) {
-            for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
-              ModuleBuildTarget target = new ModuleBuildTarget(module, type);
-              if (!state.isInitialScanPerformed(target)) {
-                hasWorkToDo = true;
-                break;
-              }
-            }
-            if (hasWorkToDo) {
+        boolean hasWorkToDoWithModules = false;
+        for (JpsModule module : pd.jpsProject.getModules()) {
+          for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
+            if (state.hasWorkToDo(new ModuleBuildTarget(module, type))) {
+              hasWorkToDoWithModules = true;
               break;
             }
           }
-          // todo: artifacts?
+          if (hasWorkToDoWithModules) {
+            break;
+          }
         }
-        out.writeBoolean(hasWorkToDo);
+        out.writeBoolean(hasWorkToDoWithModules);
         state.save(out);
       }
       finally {
