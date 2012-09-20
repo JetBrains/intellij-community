@@ -415,7 +415,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
                 return;
               }
               if (myTargetVariable.equals(resolved)) {
-                PsiThisExpression thisExpression = (PsiThisExpression)factory.createExpressionFromText("this", null);
+                PsiThisExpression thisExpression = RefactoringUtil.createThisExpression(manager, PsiTreeUtil.isAncestor(myMethod, PsiTreeUtil.getParentOfType(expression, PsiClass.class), true) ? myTargetClass : null);
                 replaceMap.put(expression, thisExpression);
                 return;
               }
