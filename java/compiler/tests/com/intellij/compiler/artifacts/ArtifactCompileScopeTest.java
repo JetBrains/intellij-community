@@ -13,6 +13,13 @@ import static com.intellij.compiler.artifacts.ArtifactsTestCase.commitModel;
  * @author nik
  */
 public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
+  public static class ExternalModeTest extends ArtifactCompileScopeTest {
+    @Override
+    protected boolean useExternalCompiler() {
+      return true;
+    }
+  }
+
   @Override
   protected void setUpProject() throws Exception {
     super.setUpProject();
@@ -49,7 +56,7 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
   public void testMakeFullArtifactIfIncludedModuleIsCompiled() throws Exception {
     final VirtualFile file1 = createFile("src1/A.java", "public class A{}");
     final Module module1 = addModule("module1", file1.getParent());
-    final VirtualFile file2 = createFile("src2/B.java", "public class B {}");
+    final VirtualFile file2 = createFile("src2/B.java", "public class B{}");
     final Module module2 = addModule("module2", file2.getParent());
     CompilerTestUtil.scanSourceRootsToRecompile(myProject);
 
