@@ -117,7 +117,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     if (myNextCommitIsPushed && exceptions.isEmpty()) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         public void run() {
-          new HgPusher(myProject).showDialogAndPush();
+          //new HgPusher(myProject).showDialogAndPush();
+          new HgPusher2(myProject).showDialogAndPush();
         }
       });
     }

@@ -47,7 +47,8 @@ public class HgPushDialog extends DialogWrapper {
   private JCheckBox branchCheckBox;
   private JComboBox branchComboBox;
 
-  public HgPushDialog(Project project, Collection<VirtualFile> repos, String defaultPushPath, List<HgTagBranch> branches) {
+  public HgPushDialog(Project project, Collection<VirtualFile> repos,
+                      String defaultPushPath, List<HgTagBranch> branches) {
     super(project, false);
     myProject = project;
 

@@ -15,6 +15,7 @@ package org.zmlx.hg4idea.action;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import org.zmlx.hg4idea.HgPusher;
+import org.zmlx.hg4idea.HgPusher2;
 
 public class HgPushAction extends HgAction {
   public HgPushAction() {
@@ -23,7 +24,8 @@ public class HgPushAction extends HgAction {
 
   @Override
   public void execute(final Project project) {
-    new HgPusher(project).showDialogAndPush();
+    //new HgPusher(project).showDialogAndPush();
+    new HgPusher2(project).showDialogAndPush();
   }
 
 }
