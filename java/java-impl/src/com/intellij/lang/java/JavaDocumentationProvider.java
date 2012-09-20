@@ -34,6 +34,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -386,6 +387,17 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       final PsiDocCommentOwner owner = ((PsiDocComment)comment).getOwner();
       if (owner != null) {
         return owner.getDocComment();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Pair<PsiElement, PsiComment> parseContext(@NotNull PsiElement startPoint) {
+    for (PsiElement e = startPoint; e != null; e = e.getParent()) {
+      if (e instanceof PsiDocCommentOwner) {
+        return Pair.<PsiElement, PsiComment>create(e, ((PsiDocCommentOwner)e).getDocComment());
       }
     }
     return null;

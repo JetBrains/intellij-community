@@ -103,7 +103,7 @@ public class DFAEngine<E> {
 
         while (!workList.isEmpty()) {
           count++;
-          if (timeout && count % 50 == 0 && tm.getCurrentThreadUserTime() - startTime > ourTimeLimit) return null;
+          if (timeout && count % 512 == 0 && tm.getCurrentThreadUserTime() - startTime > ourTimeLimit) return null;
 
           ProgressManager.checkCanceled();
           final Instruction curr = workList.remove();

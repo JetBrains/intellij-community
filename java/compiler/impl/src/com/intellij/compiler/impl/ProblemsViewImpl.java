@@ -20,7 +20,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -30,6 +29,8 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.UUID;
 
 /**
  * @author Eugene Zhuravlev
@@ -41,6 +42,7 @@ public class ProblemsViewImpl extends ProblemsView{
   private final ProblemsViewPanel myPanel;
 
   public ProblemsViewImpl(final Project project, final ToolWindowManager wm) {
+    super(project);
     myPanel = new ProblemsViewPanel(project);
     Disposer.register(project, new Disposable() {
       @Override
@@ -87,27 +89,12 @@ public class ProblemsViewImpl extends ProblemsView{
   }
 
   @Override
-  public void addMessage(final int type, @NotNull final String[] text, @Nullable final VirtualFile file, final int line, final int column, @Nullable final Object data) {
-    myPanel.addMessage(type, text, file, line, column, data);
-  }
-  
-  @Override
-  public void addMessage(final int type,
-                         @NotNull final String[] text,
-                         @Nullable final VirtualFile underFileGroup,
-                         @Nullable final VirtualFile file,
-                         final int line,
-                         final int column, @Nullable final Object data) {
-    myPanel.addMessage(type, text, underFileGroup, file, line, column, data);
-  }
-
-  @Override
   public void addMessage(final int type,
                          @NotNull final String[] text,
                          @Nullable final String groupName,
                          @NotNull final Navigatable navigatable,
-                         @Nullable final String exportTextPrefix, @Nullable final String rendererTextPrefix, @Nullable final Object data) {
-    myPanel.addMessage(type, text, groupName, navigatable, exportTextPrefix, rendererTextPrefix, data);
+                         @Nullable final String exportTextPrefix, @Nullable final String rendererTextPrefix, @Nullable final UUID sessionId) {
+    myPanel.addMessage(type, text, groupName, navigatable, exportTextPrefix, rendererTextPrefix, sessionId);
   }
 
   @Override

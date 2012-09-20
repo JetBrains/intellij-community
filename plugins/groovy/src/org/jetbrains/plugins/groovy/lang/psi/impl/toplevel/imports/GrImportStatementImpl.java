@@ -20,7 +20,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -35,6 +39,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
+
+import java.util.List;
 
 /**
  * @author ilyas
@@ -82,54 +88,113 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
     if (ref == null) return true;
 
     if (isStatic()) {
-      GrCodeReferenceElement qualifier = ref.getQualifier();
-      if (qualifier == null) return true;
-      PsiElement resolved = qualifier.resolve();
-      if (!(resolved instanceof PsiClass)) return true;
-      PsiClass clazz = (PsiClass)resolved;
-
-      state = state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
-
-      final String refName = ref.getReferenceName();
-      if (nameHint == null || name.equals(nameHint.getName(state))) {
-        final PsiField field = clazz.findFieldByName(refName, true);
-        if (field != null && field.hasModifierProperty(PsiModifier.STATIC)) {
-          if (!processor.execute(field, state)) return false;
-        }
-
-        for (PsiMethod method : clazz.findMethodsByName(refName, true)) {
-          if (method.hasModifierProperty(PsiModifier.STATIC)) {
-            if (!processor.execute(method, state)) return false;
-          }
-        }
-
-        final PsiClass innerClass = clazz.findInnerClassByName(refName, true);
-        if (innerClass != null && innerClass.hasModifierProperty(PsiModifier.STATIC) && !processor.execute(innerClass, state)) return false;
-      }
-
-      final PsiMethod getter = GroovyPropertyUtils.findPropertyGetter(clazz, refName, true, true);
-      if (getter != null &&
-          (nameHint == null || name.equals(GroovyPropertyUtils.getPropertyNameByGetterName(nameHint.getName(state), true)))) {
-        if (!processor.execute(getter, state)) return false;
-      }
-
-      final PsiMethod setter = GroovyPropertyUtils.findPropertySetter(clazz, refName, true, true);
-      if (setter != null &&
-          (nameHint == null || name.equals(GroovyPropertyUtils.getPropertyNameBySetterName(nameHint.getName(state))))) {
-        if (!processor.execute(setter, state)) return false;
-      }
+      return processSingleStaticImport(processor, state, name, nameHint, ref);
     }
-    else { //class import statement
-      if (nameHint == null || name.equals(nameHint.getName(state))) {
-        final PsiElement resolved = ref.resolve();
-        if (resolved instanceof PsiClass) {
-          if (!isAliasedImport() && isFromSamePackage((PsiClass)resolved)) return true; //don't process classes from the same package because such import statements are ignored by compiler
-          state = state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
-          if (!processor.execute(resolved, state)) return false;
-        }
-      }
+    if (nameHint == null || name.equals(nameHint.getName(state))) {
+      return processSingleClassImport(processor, state, ref);
     }
     return true;
+  }
+
+  @Nullable
+  private PsiClass resolveQualifier() {
+    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<PsiClass>() {
+      @Nullable
+      @Override
+      public Result<PsiClass> compute() {
+        GrCodeReferenceElement reference = getImportReference();
+        GrCodeReferenceElement qualifier = reference == null ? null : reference.getQualifier();
+        PsiElement target = qualifier == null ? null : qualifier.resolve();
+        PsiClass clazz = target instanceof PsiClass ? (PsiClass)target : null;
+        return Result.create(clazz, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, GrImportStatementImpl.this);
+      }
+    });
+  }
+
+  private static List<PsiMember> getAllStaticMembers(final PsiClass clazz) {
+    return CachedValuesManager.getManager(clazz.getProject()).getCachedValue(clazz, new CachedValueProvider<List<PsiMember>>() {
+      @Nullable
+      @Override
+      public Result<List<PsiMember>> compute() {
+        List<PsiMember> result = ContainerUtil.newArrayList();
+        for (PsiMethod method : clazz.getAllMethods()) {
+          if (method.hasModifierProperty(PsiModifier.STATIC)) {
+            result.add(method);
+          }
+        }
+        for (PsiField field : clazz.getAllFields()) {
+          if (field.hasModifierProperty(PsiModifier.STATIC)) {
+            result.add(field);
+          }
+        }
+        for (PsiClass inner : clazz.getAllInnerClasses()) {
+          if (inner.hasModifierProperty(PsiModifier.STATIC)) {
+            result.add(inner);
+          }
+        }
+        return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, clazz);
+      }
+    });
+  }
+
+  private boolean processSingleStaticImport(PsiScopeProcessor processor,
+                                            ResolveState state,
+                                            String importedName,
+                                            NameHint nameHint,
+                                            GrCodeReferenceElement ref) {
+    PsiClass clazz = resolveQualifier();
+    if (clazz == null) return true;
+
+    state = state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
+    String hintName = nameHint == null ? null : nameHint.getName(state);
+
+    final String refName = ref.getReferenceName();
+    if (hintName == null || importedName.equals(hintName)) {
+      final PsiField field = clazz.findFieldByName(refName, true);
+      if (field != null && field.hasModifierProperty(PsiModifier.STATIC)) {
+        if (!processor.execute(field, state)) return false;
+      }
+
+      for (PsiMethod method : clazz.findMethodsByName(refName, true)) {
+        if (method.hasModifierProperty(PsiModifier.STATIC)) {
+          if (!processor.execute(method, state)) return false;
+        }
+      }
+
+      final PsiClass innerClass = clazz.findInnerClassByName(refName, true);
+      if (innerClass != null && innerClass.hasModifierProperty(PsiModifier.STATIC) && !processor.execute(innerClass, state)) return false;
+    }
+
+    String propByGetter = hintName == null ? null : GroovyPropertyUtils.getPropertyNameByGetterName(hintName, true);
+    String propBySetter = hintName == null ? null : GroovyPropertyUtils.getPropertyNameBySetterName(hintName);
+    for (PsiMember member : getAllStaticMembers(clazz)) {
+      if (!(member instanceof PsiMethod)) {
+        continue;
+      }
+
+      PsiMethod method = (PsiMethod)member;
+      if ((propByGetter == null || importedName.equals(propByGetter)) && GroovyPropertyUtils.isSimplePropertyGetter(method, refName) ||
+          (propBySetter == null || importedName.equals(propBySetter)) && GroovyPropertyUtils.isSimplePropertySetter(method, refName)) {
+        if (method.hasModifierProperty(PsiModifier.STATIC) && !processor.execute(method, state)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  private boolean processSingleClassImport(PsiScopeProcessor processor, ResolveState state, GrCodeReferenceElement ref) {
+    final PsiElement resolved = ref.resolve();
+    if (!(resolved instanceof PsiClass)) {
+      return true;
+    }
+
+    if (!isAliasedImport() && isFromSamePackage((PsiClass)resolved)) {
+      return true; //don't process classes from the same package because such import statements are ignored by compiler
+    }
+
+    return processor.execute(resolved, state.put(ResolverProcessor.RESOLVE_CONTEXT, this));
   }
 
   private boolean isFromSamePackage(PsiClass resolved) {
@@ -168,18 +233,9 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
   }
 
   private static boolean processAllMembers(PsiScopeProcessor processor, PsiClass clazz, ResolveState state) {
-    for (PsiField field : clazz.getAllFields()) {
-      if (field.hasModifierProperty(PsiModifier.STATIC) && !ResolveUtil.processElement(processor, field, state)) return false;
+    for (PsiMember member : getAllStaticMembers(clazz)) {
+      if (!ResolveUtil.processElement(processor, (PsiNamedElement)member, state)) return false;
     }
-
-    for (PsiMethod method : clazz.getAllMethods()) {
-      if (method.hasModifierProperty(PsiModifier.STATIC) && !ResolveUtil.processElement(processor, method, state)) return false;
-    }
-
-    for (PsiClass inner : clazz.getAllInnerClasses()) {
-      if (inner.hasModifierProperty(PsiModifier.STATIC) && !ResolveUtil.processElement(processor, inner, state)) return false;
-    }
-
     return true;
   }
 
@@ -228,9 +284,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
       resolved = ref.resolve();
     }
     else {
-      final GrCodeReferenceElement qualifier = ref.getQualifier();
-      if (qualifier == null) return null;
-      resolved = qualifier.resolve();
+      resolved = resolveQualifier();
     }
 
     return resolved instanceof PsiClass ? (PsiClass)resolved : null;

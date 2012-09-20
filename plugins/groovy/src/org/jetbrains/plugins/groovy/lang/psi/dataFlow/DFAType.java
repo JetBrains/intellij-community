@@ -88,6 +88,7 @@ public class DFAType {
 
   @Override
   public boolean equals(Object obj) {
+    if (obj == this) return true;
     if (!(obj instanceof DFAType)) return false;
 
     final DFAType other = (DFAType)obj;
@@ -151,11 +152,13 @@ public class DFAType {
   }
 
   private static boolean eq(PsiType t1, PsiType t2) {
-    return Comparing.equal(TypeConversionUtil.erasure(t1), TypeConversionUtil.erasure(t2));
+    return t1 == t2 || Comparing.equal(TypeConversionUtil.erasure(t1), TypeConversionUtil.erasure(t2));
   }
 
   @Nullable
   public static DFAType create(DFAType t1, DFAType t2, PsiManager manager) {
+    if (t1.equals(t2)) return t1;
+
     final PsiType primary = TypesUtil.getLeastUpperBoundNullable(t1.primary, t2.primary, manager);
     final DFAType type = new DFAType(primary);
 

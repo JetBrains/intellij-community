@@ -114,7 +114,8 @@ public class TypeInferenceHelper {
     final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(refExpr);
     if (scope == null) return null;
 
-    return inferVariableTypes(scope).getInferredType(refExpr.getReferenceName(), ControlFlowUtils.findRWInstruction(refExpr, scope.getControlFlow()));
+    return getInferenceCache(scope).getInferredType(refExpr.getReferenceName(), ControlFlowUtils
+      .findRWInstruction(refExpr, scope.getControlFlow()));
   }
 
   @Nullable
@@ -122,18 +123,16 @@ public class TypeInferenceHelper {
     final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(place);
     if (scope == null) return null;
 
-    return inferVariableTypes(scope).getInferredType(variableName, ControlFlowUtils.findNearestInstruction(place, scope.getControlFlow()));
+    return getInferenceCache(scope).getInferredType(variableName, ControlFlowUtils.findNearestInstruction(place, scope.getControlFlow()));
   }
 
   @NotNull
-  private static InferenceResult inferVariableTypes(final GrControlFlowOwner scope) {
-    return CachedValuesManager.getManager(scope.getProject()).getCachedValue(scope, new CachedValueProvider<InferenceResult>() {
+  private static InferenceCache getInferenceCache(final GrControlFlowOwner scope) {
+    return CachedValuesManager.getManager(scope.getProject()).getCachedValue(scope, new CachedValueProvider<InferenceCache>() {
       @Nullable
       @Override
-      public Result<InferenceResult> compute() {
-        Instruction[] flow = scope.getControlFlow();
-        List<Map<String, PsiType>> list = performTypeDfa(scope, flow);
-        return Result.create(new InferenceResult(flow, list), PsiModificationTracker.MODIFICATION_COUNT);
+      public Result<InferenceCache> compute() {
+        return Result.create(new InferenceCache(scope), PsiModificationTracker.MODIFICATION_COUNT);
       }
     });
   }
@@ -299,27 +298,17 @@ public class TypeInferenceHelper {
     return null;
   }
 
-  @Nullable
-  private static List<Map<String, PsiType>> performTypeDfa(GrControlFlowOwner owner, Instruction[] flow) {
-    final TypeDfaInstance dfaInstance = new TypeDfaInstance(owner, flow);
-    final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
-    List<TypeDfaState> states = new DFAEngine<TypeDfaState>(flow, dfaInstance, semilattice).performDFAWithTimeout();
-    if (states == null) return null;
-
-    List<Map<String, PsiType>> result = ContainerUtil.newArrayList();
-    for (int i = 0; i < states.size(); i++) {
-      result.add(states.get(i).getBindings(flow[i]));
-    }
-    return result;
-  }
-
   static class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     private final GrControlFlowOwner myScope;
     private final Instruction[] myFlow;
+    private final Set<Instruction> myInteresting;
+    private final InferenceCache myCache;
 
-    TypeDfaInstance(GrControlFlowOwner scope, Instruction[] flow) {
+    TypeDfaInstance(GrControlFlowOwner scope, Instruction[] flow, Set<Instruction> interesting, InferenceCache cache) {
       myScope = scope;
       myFlow = flow;
+      myInteresting = interesting;
+      myCache = cache;
     }
 
     public void fun(final TypeDfaState state, final Instruction instruction) {
@@ -335,29 +324,46 @@ public class TypeInferenceHelper {
       final String varName = instruction.getVariableName();
       if (varName == null) return;
 
-      state.putType(varName, doInference(state.getBindings(instruction), new NullableComputable<DFAType>() {
+      updateVariableType(state, instruction, varName, new NullableComputable<DFAType>() {
         @Override
         public DFAType compute() {
           ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(myFlow);
           assert originalInstr != null && !originalInstr.isWrite();
 
-          DFAType original = state.getVariableType(varName).negate(originalInstr);
+          DFAType original = state.getVariableType(varName);
+          if (original == null) {
+            original = DFAType.create(null);
+          }
+          original = original.negate(originalInstr);
           original.addMixin(instruction.inferMixinType(), instruction.getConditionInstruction());
           return original;
         }
-      }));
+      });
     }
 
     private void handleVariableWrite(TypeDfaState state, ReadWriteVariableInstruction instruction) {
       final PsiElement element = instruction.getElement();
       if (element != null && instruction.isWrite()) {
-        state.putType(instruction.getVariableName(), doInference(state.getBindings(instruction), new Computable<DFAType>() {
+        updateVariableType(state, instruction, instruction.getVariableName(), new Computable<DFAType>() {
           @Override
           public DFAType compute() {
             return DFAType.create(TypesUtil.boxPrimitiveType(getInitializerType(element), myScope.getManager(), myScope.getResolveScope()));
           }
-        }));
+        });
       }
+    }
+
+    private void updateVariableType(TypeDfaState state, Instruction instruction, String variableName, Computable<DFAType> computation) {
+      if (!myInteresting.contains(instruction)) {
+        state.removeBinding(variableName);
+        return;
+      }
+
+      DFAType type = myCache.getCachedInferredType(variableName, instruction);
+      if (type == null) {
+        type = doInference(state.getBindings(instruction), computation);
+      }
+      state.putType(variableName, type);
     }
 
     @NotNull
@@ -371,22 +377,135 @@ public class TypeInferenceHelper {
 
   }
 
-  private static class InferenceResult {
+  private static class InferenceCache {
+    final GrControlFlowOwner scope;
     final Instruction[] flow;
-    final List<Map<String, PsiType>> varTypes;
+    final AtomicReference<List<TypeDfaState>> varTypes;
+    final ConcurrentHashSet<Instruction> tooComplex = new ConcurrentHashSet<Instruction>();
 
-    InferenceResult(Instruction[] flow, @Nullable List<Map<String, PsiType>> varTypes) {
-      this.flow = flow;
-      this.varTypes = varTypes;
+    InferenceCache(final GrControlFlowOwner scope) {
+      this.scope = scope;
+      this.flow = scope.getControlFlow();
+      List<TypeDfaState> noTypes = new ArrayList<TypeDfaState>();
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0; i < flow.length; i++) {
+        noTypes.add(new TypeDfaState());
+      }
+      varTypes = new AtomicReference<List<TypeDfaState>>(noTypes);
     }
 
     @Nullable
-    private PsiType getInferredType(String variableName, Instruction instruction) {
-      if (instruction == null || varTypes == null) return null;
+    private PsiType getInferredType(@Nullable String variableName, @Nullable Instruction instruction) {
+      if (instruction == null || variableName == null) return null;
+      if (tooComplex.contains(instruction)) return null;
 
-      return varTypes.get(instruction.num()).get(variableName);
+      TypeDfaState cache = varTypes.get().get(instruction.num());
+      if (!cache.containsVariable(variableName)) {
+        Set<Instruction> interesting = collectRequiredInstructions(instruction, variableName);
+        List<TypeDfaState> dfaResult = performTypeDfa(scope, flow, interesting);
+        if (dfaResult == null) {
+          tooComplex.addAll(interesting);
+        } else {
+          cacheDfaResult(dfaResult);
+        }
+      }
+      DFAType dfaType = getCachedInferredType(variableName, instruction);
+      return dfaType == null ? null : dfaType.getResultType();
     }
 
+    @Nullable
+    private List<TypeDfaState> performTypeDfa(GrControlFlowOwner owner, Instruction[] flow, Set<Instruction> interesting) {
+      final TypeDfaInstance dfaInstance = new TypeDfaInstance(owner, flow, interesting, this);
+      final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
+      return new DFAEngine<TypeDfaState>(flow, dfaInstance, semilattice).performDFAWithTimeout();
+    }
+
+    @Nullable
+    DFAType getCachedInferredType(@NotNull String variableName, @NotNull Instruction instruction) {
+      DFAType dfaType = varTypes.get().get(instruction.num()).getVariableType(variableName);
+      return dfaType == null ? null : dfaType.negate(instruction);
+    }
+
+    private Set<Instruction> collectRequiredInstructions(Instruction instruction, String variableName) {
+      Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> defUse = getDefUseMaps(scope);
+
+      Set<Instruction> interesting = ContainerUtil.newHashSet(instruction);
+      LinkedList<Pair<Instruction,String>> queue = ContainerUtil.newLinkedList();
+      queue.add(Pair.create(instruction, variableName));
+      while (!queue.isEmpty()) {
+        Pair<Instruction, String> pair = queue.removeFirst();
+        for (Pair<Instruction, String> dep : findDependencies(defUse, pair.first, pair.second)) {
+          if (interesting.add(dep.first)) {
+            queue.addLast(dep);
+          }
+        }
+      }
+
+      return interesting;
+    }
+
+    private Set<Pair<Instruction,String>> findDependencies(Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> defUse,
+                                                           Instruction insn,
+                                                           String varName) {
+      int[] definitions = defUse.second.get(insn.num()).getDefinitions(defUse.first.getVarIndex(varName));
+      if (definitions == null) return Collections.emptySet();
+
+      HashSet<Pair<Instruction, String>> pairs = ContainerUtil.newHashSet();
+      for (int defIndex : definitions) {
+        Instruction write = flow[defIndex];
+        pairs.add(Pair.create(write, varName));
+        PsiElement statement = findDependencyScope(write.getElement());
+        pairs.addAll(findAllInstructionsInside(statement));
+      }
+      return pairs;
+    }
+
+    private List<Pair<Instruction, String>> findAllInstructionsInside(PsiElement scope) {
+      final List<Pair<Instruction, String>> result = ContainerUtil.newArrayList();
+      scope.accept(new PsiRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitElement(PsiElement element) {
+          if (element instanceof GrReferenceExpression && !((GrReferenceExpression)element).isQualified()) {
+            String varName = ((GrReferenceExpression)element).getReferenceName();
+            if (varName != null) {
+              for (Instruction dependency : ControlFlowUtils.findAllInstructions(element, flow)) {
+                result.add(Pair.create(dependency, varName));
+              }
+            }
+          }
+          super.visitElement(element);
+        }
+      });
+      return result;
+    }
+
+    @Nullable
+    private static PsiElement findDependencyScope(PsiElement element) {
+      return PsiTreeUtil.findFirstParent(element, new Condition<PsiElement>() {
+        @Override
+        public boolean value(PsiElement element) {
+          return org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isExpressionStatement(element) ||
+                 !(element.getParent() instanceof GrExpression);
+        }
+      });
+    }
+
+    private void cacheDfaResult(List<TypeDfaState> dfaResult) {
+      while (true) {
+        List<TypeDfaState> oldTypes = varTypes.get();
+        if (varTypes.compareAndSet(oldTypes, addDfaResult(dfaResult, oldTypes))) {
+          return;
+        }
+      }
+    }
+
+    private static List<TypeDfaState> addDfaResult(List<TypeDfaState> dfaResult, List<TypeDfaState> oldTypes) {
+      List<TypeDfaState> newTypes = new ArrayList<TypeDfaState>(oldTypes);
+      for (int i = 0; i < dfaResult.size(); i++) {
+        newTypes.set(i, newTypes.get(i).mergeWith(dfaResult.get(i)));
+      }
+      return newTypes;
+    }
   }
 
 }

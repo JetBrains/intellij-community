@@ -207,7 +207,7 @@ class SomeClass {
     measureHighlighting(text, 8000)
   }
 
-  public void "_test infer only the variable types that are needed"() {
+  public void "test infer only the variable types that are needed"() {
     addGdsl '''contribute(currentType(String.name)) {
   println 'sleeping'
   Thread.sleep(1000)

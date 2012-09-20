@@ -81,6 +81,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final ProjectFileIndex myProjectFileIndex; // cached for performance reasons
   private final ProjectCompileScope myProjectCompileScope;
   private final long myStartCompilationStamp;
+  private final UUID mySessionId = UUID.randomUUID();
 
   public CompileContextImpl(final Project project,
                             final CompilerTask compilerSession,
@@ -254,7 +255,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       myTask.addMessage(msg);
     }
     if (myShouldUpdateProblemsView && msg.getCategory() == CompilerMessageCategory.ERROR) {
-      ProblemsViewImpl.SERVICE.getInstance(myProject).addMessage(msg);
+      ProblemsViewImpl.SERVICE.getInstance(myProject).addMessage(msg, mySessionId);
     }
   }
 

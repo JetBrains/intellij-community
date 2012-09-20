@@ -25,6 +25,7 @@ import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
@@ -37,6 +38,7 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
@@ -454,6 +456,17 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       final GrDocCommentOwner owner = GrDocCommentUtil.findDocOwner((GrDocComment)contextElement);
       if (owner != null) {
         return owner.getDocComment();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Pair<PsiElement, PsiComment> parseContext(@NotNull PsiElement startPoint) {
+    for (PsiElement e = startPoint; e != null; e = e.getParent()) {
+      if (e instanceof GrDocCommentOwner) {
+        return Pair.<PsiElement, PsiComment>create(e, ((GrDocCommentOwner)e).getDocComment());
       }
     }
     return null;
