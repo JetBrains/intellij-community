@@ -199,7 +199,7 @@ public class BuildManager implements ApplicationComponent{
           }
           
           for (Project project : activeProjects) {
-            if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(eventFile)) {
+            if (!project.isInitialized() || ProjectRootManager.getInstance(project).getFileIndex().isInContent(eventFile)) {
               return true;
             }
           }
