@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.encapsulation;
 
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -33,6 +33,9 @@ public class ProtectedInnerClassInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreEnums = false;
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreInterfaces = false;
 
   @Override
   @NotNull
@@ -51,9 +54,10 @@ public class ProtectedInnerClassInspection extends BaseInspection {
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "protected.inner.class.ignore.enum.option"),
-                                          this, "ignoreEnums");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("protected.inner.class.ignore.enum.option"), "ignoreEnums");
+    panel.addCheckbox(InspectionGadgetsBundle.message("protected.inner.class.ignore.interface.option"), "ignoreInterfaces");
+    return panel;
   }
 
   @Override
@@ -71,8 +75,7 @@ public class ProtectedInnerClassInspection extends BaseInspection {
     return new ProtectedInnerClassVisitor();
   }
 
-  private class ProtectedInnerClassVisitor
-    extends BaseInspectionVisitor {
+  private class ProtectedInnerClassVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
@@ -83,6 +86,9 @@ public class ProtectedInnerClassInspection extends BaseInspection {
         return;
       }
       if (ignoreEnums && aClass.isEnum()) {
+        return;
+      }
+      if (ignoreInterfaces && aClass.isInterface()) {
         return;
       }
       registerClassError(aClass);

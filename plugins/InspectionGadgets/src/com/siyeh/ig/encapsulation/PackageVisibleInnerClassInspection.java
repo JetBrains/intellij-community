@@ -15,8 +15,10 @@
  */
 package com.siyeh.ig.encapsulation;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.psi.*;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -26,12 +28,15 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class PackageVisibleInnerClassInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreEnums = false;
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreInterfaces = false;
 
   @Override
   @NotNull
@@ -50,9 +55,10 @@ public class PackageVisibleInnerClassInspection extends BaseInspection {
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "package.visible.inner.class.ignore.enum.option"),
-                                          this, "ignoreEnums");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("package.visible.inner.class.ignore.enum.option"), "ignoreEnums");
+    panel.addCheckbox(InspectionGadgetsBundle.message("package.visible.inner.class.ignore.enum.option"), "ignoreInterfaces");
+    return panel;
   }
 
   @Override
@@ -70,8 +76,7 @@ public class PackageVisibleInnerClassInspection extends BaseInspection {
     return new PackageVisibleInnerClassVisitor();
   }
 
-  private class PackageVisibleInnerClassVisitor
-    extends BaseInspectionVisitor {
+  private class PackageVisibleInnerClassVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
@@ -84,6 +89,9 @@ public class PackageVisibleInnerClassInspection extends BaseInspection {
         return;
       }
       if (ignoreEnums && aClass.isEnum()) {
+        return;
+      }
+      if (ignoreInterfaces && aClass.isInterface()) {
         return;
       }
       final PsiElement parent = aClass.getParent();

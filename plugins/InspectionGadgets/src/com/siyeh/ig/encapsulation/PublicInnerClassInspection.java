@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.encapsulation;
 
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
@@ -23,7 +24,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveClassFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +33,9 @@ public class PublicInnerClassInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreEnums = false;
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreInterfaces = false;
 
   @Override
   @NotNull
@@ -51,9 +54,10 @@ public class PublicInnerClassInspection extends BaseInspection {
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "public.inner.class.ignore.enum.option"),
-                                          this, "ignoreEnums");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("public.inner.class.ignore.enum.option"), "ignoreEnums");
+    panel.addCheckbox(InspectionGadgetsBundle.message("public.inner.class.ignore.interface.option"), "ignoreInterfaces");
+    return panel;
   }
 
   @Override
@@ -82,6 +86,9 @@ public class PublicInnerClassInspection extends BaseInspection {
         return;
       }
       if (ignoreEnums && aClass.isEnum()) {
+        return;
+      }
+      if (ignoreInterfaces && aClass.isInterface()) {
         return;
       }
       registerClassError(aClass);

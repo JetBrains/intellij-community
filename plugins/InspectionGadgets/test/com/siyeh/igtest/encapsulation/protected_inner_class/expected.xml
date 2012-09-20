@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>ProtectedInnerClass.java</file>
+    <line>5</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Protected inner class</problem_class>
+    <description>Protected inner class &lt;code&gt;Barangus&lt;/code&gt; #loc</description>
+  </problem>
+</problems>
