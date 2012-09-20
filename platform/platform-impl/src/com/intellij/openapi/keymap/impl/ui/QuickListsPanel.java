@@ -61,7 +61,7 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
   public QuickListsPanel(KeymapPanel panel) {
     super(new BorderLayout());
     myKeymapPanel = panel;
-    Splitter splitter = new Splitter();
+    Splitter splitter = new Splitter(false, 0.3f);
     splitter.setFirstComponent(createQuickListsPanel());
     splitter.setSecondComponent(myRightPanel);
     add(splitter, BorderLayout.CENTER);
