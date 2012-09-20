@@ -18,11 +18,16 @@ package com.intellij.psi.codeStyle.arrangement.match;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.arrangement.ArrangementOperator;
 import com.intellij.psi.codeStyle.arrangement.model.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -31,9 +36,46 @@ import java.util.Set;
  */
 public class DefaultArrangementEntryMatcherSerializer {
 
+  private static final Comparator<ArrangementMatchCondition> CONDITION_COMPARATOR = new Comparator<ArrangementMatchCondition>() {
+
+    private final TObjectIntHashMap<Object> WEIGHTS = new TObjectIntHashMap<Object>();
+
+    {
+      int weight = 0;
+      for (ArrangementEntryType entryType : ArrangementEntryType.values()) {
+        WEIGHTS.put(entryType, weight++);
+      }
+      for (ArrangementModifier modifier : ArrangementModifier.values()) {
+        WEIGHTS.put(modifier, weight++);
+      }
+    }
+
+    @Override
+    public int compare(ArrangementMatchCondition c1, ArrangementMatchCondition c2) {
+      boolean isAtom1 = c1 instanceof ArrangementAtomMatchCondition;
+      boolean isAtom2 = c2 instanceof ArrangementAtomMatchCondition;
+      if (isAtom1 ^ isAtom2) {
+        return isAtom1 ? 1 : -1; // Composite conditions before atom conditions.
+      }
+      else if (!isAtom1 && !isAtom2) {
+        return 0;
+      }
+
+      ArrangementAtomMatchCondition atom1 = (ArrangementAtomMatchCondition)c1;
+      ArrangementAtomMatchCondition atom2 = (ArrangementAtomMatchCondition)c2;
+      if (WEIGHTS.containsKey(atom1.getValue()) && WEIGHTS.containsKey(atom2.getValue())) {
+        return WEIGHTS.get(atom1.getValue()) - WEIGHTS.get(atom2.getValue());
+      }
+      else {
+        return 0;
+      }
+    }
+  };
+
   private static final Logger      LOG                 = Logger.getInstance("#" + DefaultArrangementEntryMatcherSerializer.class.getName());
   private static final Set<String> COMPOSITE_OPERATORS = new HashSet<String>();
   private static final Set<String> ATOM_SETTINGS_TYPES = new HashSet<String>();
+
   static {
     for (ArrangementOperator operator : ArrangementOperator.values()) {
       COMPOSITE_OPERATORS.add(operator.toString());
@@ -141,7 +183,9 @@ public class DefaultArrangementEntryMatcherSerializer {
         parent.addContent(composite);
       }
       parent = composite;
-      for (ArrangementMatchCondition c : condition.getOperands()) {
+      List<ArrangementMatchCondition> operands = new ArrayList<ArrangementMatchCondition>(condition.getOperands());
+      ContainerUtil.sort(operands, CONDITION_COMPARATOR);
+      for (ArrangementMatchCondition c : operands) {
         c.invite(this);
       }
     }

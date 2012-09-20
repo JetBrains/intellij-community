@@ -15,15 +15,25 @@
  */
 package com.intellij.psi.codeStyle.arrangement.match;
 
-import com.intellij.psi.codeStyle.arrangement.ArrangementOperator;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+
+import static com.intellij.psi.codeStyle.arrangement.ArrangementOperator.AND;
+import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.CLASS;
+import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.FIELD;
+import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.METHOD;
+import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.*;
+import static com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType.MODIFIER;
+import static com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType.TYPE;
 import static org.junit.Assert.*;
 
 /**
@@ -36,24 +46,88 @@ public class DefaultArrangementEntryMatcherSerializerTest {
 
   @Test
   public void simpleMatchers() {
-    doTest(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.CLASS));
-    doTest(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE));
+    doTest(new ArrangementAtomMatchCondition(TYPE, CLASS));
+    doTest(new ArrangementAtomMatchCondition(MODIFIER, PRIVATE));
   }
 
   @Test
   public void compositeMatchers() {
-    ArrangementCompositeMatchCondition condition = new ArrangementCompositeMatchCondition(ArrangementOperator.AND);
-    condition.addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD));
-    condition.addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.SYNCHRONIZED));
+    ArrangementCompositeMatchCondition condition = new ArrangementCompositeMatchCondition(AND);
+    condition.addOperand(new ArrangementAtomMatchCondition(TYPE, METHOD));
+    condition.addOperand(new ArrangementAtomMatchCondition(MODIFIER, SYNCHRONIZED));
     doTest(condition);
     
-    condition = new ArrangementCompositeMatchCondition(ArrangementOperator.AND);
-    condition.addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD));
-    condition.addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC));
-    condition.addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.STATIC));
-    condition.addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.FINAL));
+    condition = new ArrangementCompositeMatchCondition(AND);
+    condition.addOperand(new ArrangementAtomMatchCondition(TYPE, FIELD));
+    condition.addOperand(new ArrangementAtomMatchCondition(MODIFIER, PUBLIC));
+    condition.addOperand(new ArrangementAtomMatchCondition(MODIFIER, STATIC));
+    condition.addOperand(new ArrangementAtomMatchCondition(MODIFIER, FINAL));
   }
 
+  @Test
+  public void conditionsOrder() {
+    // Inspired by IDEA-91826.
+    ArrangementCompositeMatchCondition condition = new ArrangementCompositeMatchCondition(AND);
+    ArrangementEntryType typeToPreserve = FIELD;
+    Set<ArrangementModifier> modifiersToPreserve = EnumSet.of(PUBLIC, STATIC, FINAL);
+    condition.addOperand(new ArrangementAtomMatchCondition(TYPE, typeToPreserve));
+    for (ArrangementModifier modifier : modifiersToPreserve) {
+      condition.addOperand(new ArrangementAtomMatchCondition(MODIFIER, modifier));
+    }
+    Element element = mySerializer.serialize(new StdArrangementEntryMatcher(condition));
+    assertNotNull(element);
+    
+    // Change hash-container data distribution at the composite condition.
+    for (ArrangementEntryType type : ArrangementEntryType.values()) {
+      if (type != typeToPreserve) {
+        condition.addOperand(new ArrangementAtomMatchCondition(TYPE, type));
+      }
+    }
+    for (ArrangementModifier modifier : values()) {
+      if (!modifiersToPreserve.contains(modifier)) {
+        condition.addOperand(new ArrangementAtomMatchCondition(MODIFIER, modifier));
+      }
+    }
+    
+    // Revert state to the initial one.
+    for (ArrangementEntryType type : ArrangementEntryType.values()) {
+      if (type != typeToPreserve) {
+        condition.removeOperand(new ArrangementAtomMatchCondition(TYPE, type));
+      }
+    }
+    for (ArrangementModifier modifier : values()) {
+      if (!modifiersToPreserve.contains(modifier)) {
+        condition.removeOperand(new ArrangementAtomMatchCondition(MODIFIER, modifier));
+      }
+    }
+    
+    // Check that the order is the same
+    Element actual = mySerializer.serialize(new StdArrangementEntryMatcher(condition));
+    assertNotNull(actual);
+    checkElements(element, actual);
+  }
+
+  private static void checkElements(@NotNull Element expected, @NotNull Element actual) {
+    assertTrue(
+      String.format("Tag name mismatch - expected: '%s', actual: '%s'", expected.getName(), actual.getName()),
+      Comparing.equal(expected.getName(), actual.getName())
+    );
+    List children1 = expected.getChildren();
+    List children2 = actual.getChildren();
+    assertEquals(children1.size(), children2.size());
+    if (children1.size() == 0) {
+      assertTrue(
+        String.format("Content mismatch - expected: '%s', actual: '%s'", expected.getText(), actual.getText()),
+        Comparing.equal(expected.getText(), actual.getText())
+      );
+    }
+    else {
+      for (int i = 0; i < children1.size(); i++) {
+        checkElements((Element)children1.get(i), (Element)children2.get(i));
+      }
+    }
+  }
+  
   private void doTest(@NotNull ArrangementMatchCondition condition) {
     Element element = mySerializer.serialize(new StdArrangementEntryMatcher(condition));
     assertNotNull(String.format("Can't serialize match condition '%s'", condition), element);
