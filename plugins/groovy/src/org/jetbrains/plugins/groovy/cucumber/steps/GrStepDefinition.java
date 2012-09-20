@@ -20,7 +20,7 @@ public class GrStepDefinition extends AbstractStepDefinition {
   public GrStepDefinition(GrMethodCall stepDefinition) {
     super(stepDefinition);
 
-    myText = GrCucumberUtil.getCucumberDescription(stepDefinition);
+    myText = GrCucumberUtil.getStepDefinitionPatternText(stepDefinition);
   }
 
   @Override
