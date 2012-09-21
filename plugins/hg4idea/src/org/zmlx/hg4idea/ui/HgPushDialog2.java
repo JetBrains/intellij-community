@@ -174,29 +174,24 @@ public class HgPushDialog2 extends DialogWrapper{
         branchCheckBox.setSelected(currentRepository.isBranchSelected());
 
         forcePushCheckBox.setSelected(currentRepository.isForce());
-      }
-
-      pushRepositoryCheckbox.setEnabled(currentRepository != null );
-      if ( currentRepository == null ){
+      } else {
         pushRepositoryCheckbox.setSelected(false);
-      }
-
-      revisionText.setEnabled(revisionCheckBox.isSelected() && currentRepository != null);
-      targetText.setEnabled(currentRepository != null);
-
-      branchComboBox.setEnabled( branchCheckBox.isSelected() && currentRepository != null );
-      if ( currentRepository == null ){
         branchComboBox.removeAllItems();
-      }
-
-      forcePushCheckBox.setEnabled(currentRepository != null);
-      if (currentRepository == null) {
         forcePushCheckBox.setSelected(false);
       }
+      updateEnabledStateUIComponents();
     }
     finally {
       uiListenersActive = listenersActive;
     }
+  }
+
+  private void updateEnabledStateUIComponents(){
+    pushRepositoryCheckbox.setEnabled(currentRepository != null );
+    revisionText.setEnabled(revisionCheckBox.isSelected() && currentRepository != null);
+    targetText.setEnabled(currentRepository != null);
+    branchComboBox.setEnabled( branchCheckBox.isSelected() && currentRepository != null );
+    forcePushCheckBox.setEnabled(currentRepository != null);
   }
 
   private void updateCurrentRepositoryFromUI(){
@@ -216,7 +211,7 @@ public class HgPushDialog2 extends DialogWrapper{
 
         currentRepository.setForce(forcePushCheckBox.isSelected());
       }
-      updateUIForCurrentRepository();//update UI again to make sure the enabled state is changed as well
+      updateEnabledStateUIComponents();//update UI again to make sure the enabled state is changed as well
     } finally {
       settingsListenersActive = listenersActive;
     }
