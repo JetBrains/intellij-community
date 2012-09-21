@@ -1314,15 +1314,18 @@
     </group>
 
 
+    <action id="ConvertGroovyToJava"
+            class="org.jetbrains.plugins.groovy.actions.ConvertToJavaAction"
+            text="Convert to Java"
+            description="Convert Groovy files to Java">
+      <add-to-group group-id="RefactoringMenu"/>
+    </action>
+
     <group id="Internal.Groovy" text="Groovy" popup="true" internal="true">
       <action id="GetPsiTypeAction" class="org.jetbrains.plugins.groovy.actions.GrGetPsiTypeAction"
               text="get PsiType" description=""
               internal="true"/>
-      <action id="ConvertGroovyToJava"
-              class="org.jetbrains.plugins.groovy.actions.ConvertToJavaAction"
-              text="Convert to Java"
-              description="Convert Groovy files to Java"
-              internal="true"/>
+
       <action id="DumpGroovyControlFlowAction"
               class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction"
               text="dump groovy control flow"
