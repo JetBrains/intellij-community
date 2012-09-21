@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
@@ -1466,5 +1467,35 @@ class Inheritor extends Base {
   }
 }
 ''')
+  }
+
+  void testDiamondCompletionInAssignmentCompletion() {
+    doSmartTest('''\
+class Foo<T> {}
+
+Foo<String> var
+var = new <caret>
+''', '''\
+class Foo<T> {}
+
+Foo<String> var
+var = new Foo<>()<caret>
+''')
+  }
+
+  void testDiamondCompletionInAssignmentCompletion2() {
+    myFixture.with {
+      configureByText('_a.groovy', '''\
+class Foo<T> {}
+
+Foo<String> var
+var = new <caret>Foo<String>()
+''')
+      complete(CompletionType.SMART)
+      assertEquals(1, lookupElements.length)
+
+      assertInstanceOf(lookupElements[0], PsiTypeLookupItem)
+      assertTrue((lookupElements[0] as PsiTypeLookupItem).myDiamond)
+    }
   }
 }
