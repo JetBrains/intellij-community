@@ -70,9 +70,7 @@ public class HgPushDialog2 extends DialogWrapper{
 
     updateUIForCurrentRepository();
 
-    //todo selection of checkbox in list must change selected state
     //todo change enabled state of OK button based on valid state of at least one repository
-    //todo add listener to the settings to update the ui when the settings of the current repository change
     setTitle("Push repositories");
     setOKButtonText("Push selected");
     init();
