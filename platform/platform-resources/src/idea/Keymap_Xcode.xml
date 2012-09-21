@@ -167,9 +167,6 @@
       <keyboard-shortcut first-keystroke="shift TAB" />
       <keyboard-shortcut first-keystroke="meta OPEN_BRACKET" />
     </action>
-    <action id="EditorDuplicate">
-      <keyboard-shortcut first-keystroke="meta U"/>
-    </action>
     <action id="ExpandRegion">
       <keyboard-shortcut first-keystroke="meta alt RIGHT"/>
       <keyboard-shortcut first-keystroke="meta ADD" />
@@ -303,14 +300,14 @@
       <keyboard-shortcut first-keystroke="shift F10" />
     </action>
     <action id="Debug">
-      <keyboard-shortcut first-keystroke="meta D" />
+      <keyboard-shortcut first-keystroke="meta U" />
       <keyboard-shortcut first-keystroke="shift F9"/>
     </action>
     <action id="ChooseRunConfiguration">
-      <keyboard-shortcut first-keystroke="shift meta R"/>
+      <keyboard-shortcut first-keystroke="alt meta R"/>
     </action>
     <action id="ChooseDebugConfiguration">
-      <keyboard-shortcut first-keystroke="shift meta D"/>
+      <keyboard-shortcut first-keystroke="alt meta U"/>
     </action>
     <action id="SaveAll">
       <keyboard-shortcut first-keystroke="meta alt S" />
