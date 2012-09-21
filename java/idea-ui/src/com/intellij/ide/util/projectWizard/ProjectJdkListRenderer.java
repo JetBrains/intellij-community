@@ -17,7 +17,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
-import com.intellij.ui.HtmlListCellRenderer;
+import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.SimpleTextAttributes;
 
 import javax.swing.*;
@@ -26,11 +26,7 @@ import javax.swing.*;
  * @author Eugene Zhuravlev
  * @since May 18, 2005
  */
-public class ProjectJdkListRenderer extends HtmlListCellRenderer {
-  public ProjectJdkListRenderer(final ListCellRenderer listCellRenderer) {
-    super();
-  }
-
+public class ProjectJdkListRenderer extends ColoredListCellRendererWrapper {
   @Override
   public void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
     if (value == null || value instanceof Sdk) {

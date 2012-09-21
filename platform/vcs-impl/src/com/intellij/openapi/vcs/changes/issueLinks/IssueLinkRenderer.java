@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.changes.issueLinks;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
-import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
@@ -31,18 +30,10 @@ import java.util.List;
  */
 public class IssueLinkRenderer {
   private final SimpleColoredComponent myColoredComponent;
-  private final HtmlListCellRenderer myHtmlListCellRenderer;
   private final IssueNavigationConfiguration myIssueNavigationConfiguration;
 
   public IssueLinkRenderer(final Project project, final SimpleColoredComponent coloredComponent) {
     myColoredComponent = coloredComponent;
-    myHtmlListCellRenderer = null;
-    myIssueNavigationConfiguration = IssueNavigationConfiguration.getInstance(project);
-  }
-
-  public IssueLinkRenderer(final Project project, final HtmlListCellRenderer htmlListCellRenderer) {
-    myColoredComponent = null;
-    myHtmlListCellRenderer = htmlListCellRenderer;
     myIssueNavigationConfiguration = IssueNavigationConfiguration.getInstance(project);
   }
 
@@ -70,7 +61,6 @@ public class IssueLinkRenderer {
         final String piece = text.substring(pos, textRange.getStartOffset());
         pieces.add(piece);
         consumer.consume(piece);
-        //append(piece, baseStyle);
       }
       final String piece = textRange.substring(text);
       pieces.add(piece);
@@ -81,27 +71,16 @@ public class IssueLinkRenderer {
       final String piece = text.substring(pos);
       pieces.add(piece);
       consumer.consume(piece);
-      //append(piece, baseStyle);
     }
     return pieces;
   }
 
   private void append(final String piece, final SimpleTextAttributes baseStyle) {
-    if (myColoredComponent != null) {
-      myColoredComponent.append(piece, baseStyle);
-    }
-    else {
-      myHtmlListCellRenderer.append(piece, baseStyle);
-    }
+    myColoredComponent.append(piece, baseStyle);
   }
 
   private void append(final String piece, final SimpleTextAttributes baseStyle, final IssueNavigationConfiguration.LinkMatch match) {
-    if (myColoredComponent != null) {
-      myColoredComponent.append(piece, baseStyle, new SimpleColoredComponent.BrowserLauncherTag(match.getTargetUrl()));
-    }
-    else {
-      myHtmlListCellRenderer.appendLink(piece, baseStyle, match.getTargetUrl());
-    }
+    myColoredComponent.append(piece, baseStyle, new SimpleColoredComponent.BrowserLauncherTag(match.getTargetUrl()));
   }
 
   private static SimpleTextAttributes getLinkAttributes(final SimpleTextAttributes baseStyle) {

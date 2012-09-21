@@ -22,7 +22,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.HtmlListCellRenderer;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NonNls;
@@ -87,14 +88,12 @@ public class ExtendedDeviceChooserDialog extends DialogWrapper {
     };
     Disposer.register(myDisposable, myAvdCombo);
 
-
-    myAvdCombo.getComboBox().setRenderer(new HtmlListCellRenderer() {
+    myAvdCombo.getComboBox().setRenderer(new ColoredListCellRenderer() {
       @Override
-      protected void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value == null) {
-          setText(myAvdCombo.getComboBox().isEnabled()
-                  ? "<html><font color='red'>[none]</font></html>"
-                  : "[none]");
+          append("[none]",
+                 myAvdCombo.getComboBox().isEnabled() ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       }
     });

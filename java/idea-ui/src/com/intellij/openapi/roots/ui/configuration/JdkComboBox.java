@@ -63,7 +63,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
     super(new JdkComboBoxModel(jdkModel, filter));
     myFilter = filter;
     myCreationFilter = creationFilter;
-    setRenderer(new ProjectJdkListRenderer(getRenderer()) {
+    setRenderer(new ProjectJdkListRenderer() {
       @Override
       public void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (JdkComboBox.this.isEnabled()) {
