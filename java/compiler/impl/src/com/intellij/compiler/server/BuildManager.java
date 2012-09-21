@@ -47,7 +47,6 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
@@ -181,46 +180,19 @@ public class BuildManager implements ApplicationComponent{
         if (PowerSaveMode.isEnabled()) {
           return false;
         }
-        List<Project> activeProjects = null;
         for (VFileEvent event : events) {
           if (!event.isFromRefresh() && !(event.getRequestor() instanceof SavingRequestor)) {
             continue;
           }
           final VirtualFile eventFile = event.getFile();
-          if (eventFile == null || ProjectCoreUtil.isProjectOrWorkspaceFile(eventFile)) {
+          if (eventFile != null && ProjectCoreUtil.isProjectOrWorkspaceFile(eventFile)) {
             continue;
           }
-          
-          if (activeProjects == null) {
-            activeProjects = getActiveProjects();
-            if (activeProjects.isEmpty()) {
-              return false;
-            }
-          }
-          // todo: probably we do not need this excessive filtering
-          for (Project project : activeProjects) {
-            if (!project.isInitialized() || ProjectRootManager.getInstance(project).getFileIndex().isInContent(eventFile)) {
-              return true;
-            }
-          }
+          return true;
         }
         return false;
       }
 
-      private List<Project> getActiveProjects() {
-        final Project[] projects = myProjectManager.getOpenProjects();
-        if (projects.length == 0) {
-          return Collections.emptyList();
-        }
-        final List<Project> projectList = new ArrayList<Project>();
-        for (Project project : projects) {
-          if (project.isDefault() || project.isDisposed()) {
-            continue;
-          }
-          projectList.add(project);
-        }
-        return projectList;
-      }
     });
 
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
