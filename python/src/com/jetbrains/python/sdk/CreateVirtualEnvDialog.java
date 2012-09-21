@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.LocationNameFieldsBinding;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.PathUtil;
 import com.jetbrains.python.packaging.PyPackageService;
@@ -158,8 +157,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
   }
 
   private void updateSdkList(Sdk sdk, final List<Sdk> allSdks) {
-    final HtmlListCellRenderer<Sdk> sdkListCellRenderer = new PySdkListCellRenderer(mySdkCombo.getRenderer(), null);
-    mySdkCombo.setRenderer(sdkListCellRenderer);
+    mySdkCombo.setRenderer(new PySdkListCellRenderer(null));
     List<Sdk> baseSdks = new ArrayList<Sdk>();
     for (Sdk s : allSdks) {
       if (!PythonSdkType.isInvalid(s) && !PythonSdkType.isVirtualEnv(s) && !PythonRemoteSdkAdditionalData.isRemoteSdk(s.getHomePath())) {

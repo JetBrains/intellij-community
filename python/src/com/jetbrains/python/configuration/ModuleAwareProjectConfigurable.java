@@ -68,7 +68,7 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
     final Splitter splitter = new Splitter(false, 0.25f);
     final JBList moduleList = new JBList(new CollectionListModel<Module>(modules));
     moduleList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    moduleList.setCellRenderer(new PyModuleRenderer(moduleList.getCellRenderer()));
+    moduleList.setCellRenderer(new PyModuleRenderer());
     splitter.setFirstComponent(new JBScrollPane(moduleList));
     final CardLayout layout = new CardLayout();
     final JPanel cardPanel = new JPanel(layout);

@@ -21,7 +21,7 @@ public class PythonSdkComboBox extends ComboboxWithBrowseButton {
   private Project myProject;
 
   public PythonSdkComboBox() {
-    getComboBox().setRenderer(new SdkListCellRenderer("<No Interpreter>", getComboBox().getRenderer()));
+    getComboBox().setRenderer(new SdkListCellRenderer("<No Interpreter>"));
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         Sdk selectedSdk = getSelectedSdk();

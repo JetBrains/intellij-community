@@ -27,7 +27,7 @@ public class PyManagePackagesDialog extends DialogWrapper {
     setTitle("Manage Python Packages");
 
     final JComboBox sdkComboBox = new JComboBox(new CollectionComboBoxModel(PythonSdkType.getAllSdks(), sdk));
-    sdkComboBox.setRenderer(new PySdkListCellRenderer(sdkComboBox.getRenderer(), null));
+    sdkComboBox.setRenderer(new PySdkListCellRenderer(null));
 
     PyPackagesNotificationPanel notificationPanel = new PyPackagesNotificationPanel(project);
     final PyPackagesPanel packagesPanel = new PyPackagesPanel(project, notificationPanel);

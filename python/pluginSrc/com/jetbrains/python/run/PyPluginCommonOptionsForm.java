@@ -43,9 +43,9 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     final List<Module> validModules = data.getValidModules();
     Module selection = validModules.size() > 0 ? validModules.get(0) : null;
     myModuleComboBox.setModel(new CollectionComboBoxModel(validModules, selection));
-    myModuleComboBox.setRenderer(new PyModuleRenderer(PyPluginCommonOptionsForm.this.myModuleComboBox.getRenderer()));
+    myModuleComboBox.setRenderer(new PyModuleRenderer());
 
-    myInterpreterComboBox.setRenderer(new SdkListCellRenderer("<Project Default>", myInterpreterComboBox.getRenderer()));
+    myInterpreterComboBox.setRenderer(new SdkListCellRenderer("<Project Default>"));
     myWorkingDirectoryTextField.addBrowseFolderListener("Select Working Directory", "", data.getProject(),
                                                   FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
