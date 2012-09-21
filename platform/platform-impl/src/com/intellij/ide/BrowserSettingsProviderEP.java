@@ -16,11 +16,11 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.options.AbstractConfigurableEP;
+import com.intellij.openapi.options.ConfigurableEP;
 
 /**
  * @author nik
  */
-public class BrowserSettingsProviderEP extends AbstractConfigurableEP<BrowserSettingsProvider> {
+public class BrowserSettingsProviderEP extends ConfigurableEP<BrowserSettingsProvider> {
   public static ExtensionPointName<BrowserSettingsProviderEP> EP_NAME = ExtensionPointName.create("com.intellij.browserSettingsProvider");
 }

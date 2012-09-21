@@ -28,7 +28,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
 
     change(aFile, "a2");
     buildAll();
-    assertCopied("aaa.txt");
+    assertDeletedAndCopied("out/artifacts/a/x.jar", "aaa.txt");
     assertOutput(a, fs().archive("x.jar").file("aaa.txt", "a2"));
     buildAllAndAssertUpToDate();
 
@@ -55,7 +55,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
 
     change(cFile, "c2");
     buildAll();
-    assertCopied("c.txt");
+    assertDeletedAndCopied("out/artifacts/a/a.jar", "c.txt");
     assertOutput(a, fs().archive("a.jar").archive("b.jar").file("c.txt", "c2"));
     buildAllAndAssertUpToDate();
 
@@ -74,7 +74,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
 
     change(xFile, "2");
     buildAll();
-    assertCopied("x.txt");
+    assertDeletedAndCopied("out/artifacts/a/junit.jar", "x.txt");
     assertOutput(a, fs().archive("junit.jar").file("x.txt", "2"));
     buildAllAndAssertUpToDate();
 
@@ -99,7 +99,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
 
     change(jarFile, "321");
     buildAll();
-    assertCopied("lib/jdom.jar");
+    assertDeletedAndCopied("out/artifacts/a/jdom.jar", "lib/jdom.jar");
     assertOutput(a, fs().file("jdom.jar", "321"));
     buildAllAndAssertUpToDate();
 
@@ -122,7 +122,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
 
     change(firstFile, "first2");
     buildAll();
-    assertCopied("d1/xxx.txt");
+    assertDeletedAndCopied("out/artifacts/a/ddd/xxx.txt", "d1/xxx.txt");
     assertOutput(a, fs().dir("ddd").file("xxx.txt", "first2"));
     buildAllAndAssertUpToDate();
 
@@ -170,7 +170,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
     final String manifestText2 = "Manifest-Version: 1.0\r\nMain-Class: B\r\n\r\n";
     change(manifest, manifestText2);
     buildAll();
-    assertCopied("d/MANIFEST.MF", "a.txt");
+    assertDeletedAndCopied("out/artifacts/a/a.jar", "d/MANIFEST.MF", "a.txt");
     assertOutput(a, fs().archive("a.jar").dir("META-INF").file("MANIFEST.MF", manifestText2).file("a.txt"));
     buildAllAndAssertUpToDate();
 

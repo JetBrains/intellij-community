@@ -16,7 +16,7 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.options.AbstractConfigurableEP;
+import com.intellij.openapi.options.ConfigurableEP;
 
 /**
  * Register implementation of {@link CodeFoldingOptionsProvider} in the plugin.xml to provide additional options in Editor | Code Folding section:
@@ -29,6 +29,6 @@ import com.intellij.openapi.options.AbstractConfigurableEP;
 
  * @author nik
  */
-public class CodeFoldingOptionsProviderEP extends AbstractConfigurableEP<CodeFoldingOptionsProvider> {
+public class CodeFoldingOptionsProviderEP extends ConfigurableEP<CodeFoldingOptionsProvider> {
   public static final ExtensionPointName<CodeFoldingOptionsProviderEP> EP_NAME = ExtensionPointName.create("com.intellij.codeFoldingOptionsProvider");
 }

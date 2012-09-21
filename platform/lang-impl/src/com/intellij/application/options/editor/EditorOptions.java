@@ -17,29 +17,16 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.options.AbstractConfigurableEP;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.List;
 
-public class EditorOptions implements SearchableConfigurable.Parent {
+public class EditorOptions implements SearchableConfigurable {
   @NonNls public static final String ID = "preferences.editor";
   private EditorOptionsPanel myEditorOptionsPanel;
-  private Configurable[] myChildren;
-
-  @Override
-  public Configurable[] getConfigurables() {
-    if (myChildren == null) {
-      final List<EditorOptionsProvider> configurables = AbstractConfigurableEP.createConfigurables(EditorOptionsProviderEP.EP_NAME);
-      myChildren = configurables.toArray(new EditorOptionsProvider[configurables.size()]);
-    }
-    return myChildren;
-  }
 
   @Override
   public String getDisplayName() {
@@ -60,16 +47,6 @@ public class EditorOptions implements SearchableConfigurable.Parent {
   @Override
   public Runnable enableSearch(final String option) {
     return null;
-  }
-
-  @Override
-  public boolean hasOwnContent() {
-    return true;
-  }
-
-  @Override
-  public boolean isVisible() {
-    return true;
   }
 
   @Override
@@ -100,6 +77,5 @@ public class EditorOptions implements SearchableConfigurable.Parent {
   @Override
   public void disposeUIResources() {
     myEditorOptionsPanel = null;
-
   }
 }

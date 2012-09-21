@@ -17,8 +17,8 @@ package com.intellij.ide;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.options.AbstractConfigurableEP;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
@@ -107,7 +107,7 @@ public class BrowserSettingsPanel extends JPanel {
       myUseAlternativeBrowser.setVisible(false);
     }
 
-    mySettingsProviders = AbstractConfigurableEP.createConfigurables(BrowserSettingsProviderEP.EP_NAME);
+    mySettingsProviders = ConfigurableWrapper.createConfigurables(BrowserSettingsProviderEP.EP_NAME);
     for (BrowserSettingsProvider settingsProvider : mySettingsProviders) {
       outerPanel.add(settingsProvider.createComponent());
     }

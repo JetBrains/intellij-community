@@ -821,7 +821,7 @@ public class IncProjectBuilder {
             if (!outputs.isEmpty()) {
               context.processMessage(new FileDeletedEvent(outputs));
             }
-            srcToOut.remove(srcPath);
+            srcToOut.update(srcPath, Collections.<String>emptyList());
           }
           return true;
         }

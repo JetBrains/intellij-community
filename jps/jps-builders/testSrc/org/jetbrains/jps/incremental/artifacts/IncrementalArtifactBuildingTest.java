@@ -37,7 +37,7 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
 
     change(file1, "xxx");
     buildAll();
-    assertCopied("dir/a.txt");
+    assertDeletedAndCopied("out/artifacts/a/a.txt", "dir/a.txt");
     assertOutput(a, fs().file("a.txt", "xxx").file("b.txt", "bbb"));
     buildAllAndAssertUpToDate();
   }
@@ -66,7 +66,7 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
 
     change(file1, "xxx");
     buildAll();
-    assertCopied("dir/a.txt", "dir/b.txt");
+    assertDeletedAndCopied("out/artifacts/a/a.jar", "dir/a.txt", "dir/b.txt");
     assertOutput(a, fs().archive("a.jar").file("a.txt", "xxx").file("b.txt", "bbb"));
     buildAllAndAssertUpToDate();
   }
@@ -96,9 +96,9 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
     buildAllAndAssertUpToDate();
 
     change(file);
-    buildArtifacts(a1); assertCopied("file.txt");
+    buildArtifacts(a1); assertDeletedAndCopied("out/artifacts/a1/dir/file.txt", "file.txt");
     buildArtifacts(a1); assertUpToDate();
-    buildArtifacts(a2); assertCopied("file.txt");
+    buildArtifacts(a2); assertDeletedAndCopied("out/artifacts/a2/dir2/file.txt", "file.txt");
     buildArtifacts(a2); assertUpToDate();
     buildArtifacts(a1); assertUpToDate();
     buildAllAndAssertUpToDate();
@@ -115,7 +115,7 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
     buildAll();
     change(file1);
     buildAll();
-    assertCopied("a/a.txt");
+    assertDeletedAndCopied("out/artifacts/a/x.jar", "a/a.txt");
   }
 
   public void testRenameFile() throws Exception {

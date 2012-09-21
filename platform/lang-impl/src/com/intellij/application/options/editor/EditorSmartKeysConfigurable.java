@@ -25,10 +25,8 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.options.AbstractConfigurableEP;
-import com.intellij.openapi.options.CompositeConfigurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -96,7 +94,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
 
   @Override
   protected List<UnnamedConfigurable> createConfigurables() {
-    return AbstractConfigurableEP.createConfigurables(EP_NAME);
+    return ConfigurableWrapper.createConfigurables(EP_NAME);
   }
 
   @Override

@@ -401,7 +401,8 @@
 
     <attachSourcesProvider implementation="org.jetbrains.plugins.groovy.ivy.IvyAttachSourceProvider"/>
 
-    <compilerSettingsFactory implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerSettingsFactory"/>
+    <projectConfigurable instance="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfigurable" id="Groovy compiler"
+                         displayName="Groovy Compiler" parentId="project.propCompiler"/>
 
     <stubElementTypeHolder class="org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes"/>
     <!--Stubs index-->
@@ -1203,6 +1204,11 @@
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.style.RemoveUnnecessaryReturnIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.style.AddReturnTypeFix</className>
     </intentionAction>
     <intentionAction>
@@ -1309,15 +1315,18 @@
     </group>
 
 
+    <action id="ConvertGroovyToJava"
+            class="org.jetbrains.plugins.groovy.actions.ConvertToJavaAction"
+            text="Convert to Java"
+            description="Convert Groovy files to Java">
+      <add-to-group group-id="RefactoringMenu"/>
+    </action>
+
     <group id="Internal.Groovy" text="Groovy" popup="true" internal="true">
       <action id="GetPsiTypeAction" class="org.jetbrains.plugins.groovy.actions.GrGetPsiTypeAction"
               text="get PsiType" description=""
               internal="true"/>
-      <action id="ConvertGroovyToJava"
-              class="org.jetbrains.plugins.groovy.actions.ConvertToJavaAction"
-              text="Convert to Java"
-              description="Convert Groovy files to Java"
-              internal="true"/>
+
       <action id="DumpGroovyControlFlowAction"
               class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction"
               text="dump groovy control flow"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,22 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 public abstract class JavaPsiFacadeEx extends JavaPsiFacade {
-  public static JavaPsiFacadeEx getInstanceEx(Project project) {
+  @TestOnly
+  public static JavaPsiFacadeEx getInstanceEx(@NotNull Project project) {
     return (JavaPsiFacadeEx)getInstance(project);
+  }
+
+  @TestOnly
+  @Nullable
+  public PsiClass findClass(@NotNull String qualifiedName) {
+    return findClass(qualifiedName, GlobalSearchScope.allScope(getProject()));
   }
 
   @TestOnly

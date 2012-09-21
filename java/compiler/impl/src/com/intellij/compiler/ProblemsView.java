@@ -54,13 +54,11 @@ public abstract class ProblemsView {
     myProject = project;
   }
 
-  public abstract void clearMessages(CompileScope scope);
-  
-  public abstract void clearMessages();
+  public abstract void clearOldMessages(CompileScope scope, UUID currentSessionId);
 
   public abstract void addMessage(int type, @NotNull String[] text, @Nullable String groupName, @NotNull Navigatable navigatable, @Nullable String exportTextPrefix, @Nullable String rendererTextPrefix, @NotNull UUID sessionId);
 
-  public void addMessage(CompilerMessage message, @NotNull UUID sessionId) {
+  public final void addMessage(CompilerMessage message, @NotNull UUID sessionId) {
     final VirtualFile file = message.getVirtualFile();
     Navigatable navigatable = message.getNavigatable();
     if (navigatable == null) {

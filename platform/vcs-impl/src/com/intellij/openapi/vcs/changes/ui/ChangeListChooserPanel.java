@@ -71,7 +71,7 @@ public class ChangeListChooserPanel extends JPanel {
   }
 
   public void init() {
-    myExistingListsCombo.setRenderer(new HtmlListCellRenderer() {
+    myExistingListsCombo.setRenderer(new ColoredListCellRendererWrapper() {
       private final IssueLinkRenderer myLinkRenderer = new IssueLinkRenderer(myProject, this);
 
       @Override
@@ -81,7 +81,8 @@ public class ChangeListChooserPanel extends JPanel {
 
           if (myExistingListsCombo.getWidth() == 0) {
             name = name.length() > 10 ? name.substring(0, 7) + " .." : name;
-          } else {
+          }
+          else {
             final FontMetrics fm = list.getFontMetrics(list.getFont());
             final int width = fm.stringWidth(name);
             final int listWidth = myExistingListsCombo.getWidth();
@@ -92,8 +93,8 @@ public class ChangeListChooserPanel extends JPanel {
               }
             }
           }
-          myLinkRenderer.appendTextWithLinks(name, ((LocalChangeList)value).isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
-                                                                                  : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          myLinkRenderer.appendTextWithLinks(name, ((LocalChangeList)value).isDefault()
+                                                   ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       }
     });

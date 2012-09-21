@@ -16,6 +16,7 @@
 
 package com.intellij.compiler;
 
+import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,4 +59,6 @@ public abstract class CompilerConfiguration {
   public abstract boolean isAddNotNullAssertions();
 
   public abstract void setAddNotNullAssertions(boolean enabled);
+
+  public abstract ExcludedEntriesConfiguration getExcludedEntriesConfiguration();
 }

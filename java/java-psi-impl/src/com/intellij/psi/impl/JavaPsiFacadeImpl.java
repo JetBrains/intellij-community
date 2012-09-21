@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,14 +88,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
     JavaElementType.ANNOTATION.getIndex(); // Initialize stubs.
-  }
-
-  /**
-   * @deprecated
-   */
-  @Override
-  public PsiClass findClass(@NotNull String qualifiedName) {
-    return findClass(qualifiedName, GlobalSearchScope.allScope(myProject));
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,10 +58,9 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
   @Override
   @NotNull
   public PsiJavaCodeReferenceElement getBaseClassReference() {
-    final PsiJavaCodeReferenceElement result =
-      (PsiJavaCodeReferenceElement)getNode().findChildByRoleAsPsiElement(ChildRole.BASE_CLASS_REFERENCE);
-    assert result != null;
-    return result;
+    final PsiElement baseRef = getFirstChild();
+    assert baseRef instanceof PsiJavaCodeReferenceElement : getText();
+    return (PsiJavaCodeReferenceElement)baseRef;
   }
 
   @Override
@@ -90,7 +89,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
         type = factory.createType(ref);
       }
       catch (IncorrectOperationException e) {
-        type = PsiClassType.getJavaLangObject(getManager(), getResolveScope());
+        type = PsiType.getJavaLangObject(getManager(), getResolveScope());
       }
 
       myCachedBaseType = new PatchedSoftReference<PsiClassType>(type);

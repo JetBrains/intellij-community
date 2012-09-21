@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.documentation.DocCommentFixer;
 import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
@@ -104,20 +105,33 @@ public class FixDocCommentAction extends EditorAction {
       return;
     }
     final CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)c;
+    final Runnable task;
+    if (pair.second == null || pair.second.getTextRange().isEmpty()) {
+      task = new Runnable() {
+        @Override
+        public void run() {
+          generateComment(pair.first, editor, docProvider, commenter, project); 
+        }
+      };
+    }
+    else {
+      final DocCommentFixer fixer = DocCommentFixer.EXTENSION.forLanguage(language);
+      if (fixer == null) {
+        return;
+      }
+      else {
+        task = new Runnable() {
+          @Override
+          public void run() {
+            fixer.fixComment(project, editor, pair.second);
+          }
+        };
+      }
+    }
     final Runnable command = new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            if (pair.second == null || pair.second.getTextRange().isEmpty()) {
-              generateComment(pair.first, editor, docProvider, commenter, project);
-            }
-            else {
-              fixCommentIfNecessary(pair.second);
-            }
-          }
-        });
+        ApplicationManager.getApplication().runWriteAction(task);
       }
     };
     CommandProcessor.getInstance().executeCommand(project, command, "Fix documentation", null);
@@ -245,9 +259,5 @@ public class FixDocCommentAction extends EditorAction {
       }
     }
     return result;
-  }
-
-  private static void fixCommentIfNecessary(@NotNull PsiComment docComment) {
-    // TODO den implement
   }
 }

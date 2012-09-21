@@ -17,6 +17,7 @@ package com.intellij.refactoring.typeMigration;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author db
@@ -35,6 +36,7 @@ public class Util {
     return parent;
   }
 
+  @Nullable
   public static PsiElement normalizeElement(final PsiElement element) {
     if (element instanceof PsiMethod) {
       final PsiMethod superMethod = ((PsiMethod)element).findDeepestSuperMethod();
@@ -42,6 +44,18 @@ public class Util {
       return superMethod == null ? element : superMethod;
     }
     else if (element instanceof PsiParameter && element.getParent() instanceof PsiParameterList) {
+      final PsiElement declarationScope = ((PsiParameter)element).getDeclarationScope();
+      if (declarationScope instanceof PsiLambdaExpression) {
+        final PsiType interfaceType = ((PsiLambdaExpression)declarationScope).getFunctionalInterfaceType();
+        if (interfaceType != null) {
+          final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(interfaceType);
+          if (interfaceMethod != null) {
+            final int index = ((PsiParameterList)element.getParent()).getParameterIndex((PsiParameter)element);
+            return interfaceMethod.getParameterList().getParameters()[index];
+          }
+        }
+        return null;
+      }
       final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
 
       if (method != null) {
@@ -64,7 +78,7 @@ public class Util {
 
     final PsiElement element = normalizeElement(e);
 
-    if (!element.getManager().isInProject(element)) {
+    if (element == null || !element.getManager().isInProject(element)) {
       return false;
     }
 

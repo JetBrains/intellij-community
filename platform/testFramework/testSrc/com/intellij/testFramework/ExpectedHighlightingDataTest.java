@@ -30,84 +30,99 @@ public class ExpectedHighlightingDataTest {
   private static Map<String, ExpectedHighlightingData.ExpectedHighlightingSet> TYPES;
 
   @BeforeClass
-  public static void setUp() throws Exception {
+  public static void setUp() {
     TYPES = new HashMap<String, ExpectedHighlightingData.ExpectedHighlightingSet>();
     TYPES.put("err", new ExpectedHighlightingData.ExpectedHighlightingSet(HighlightSeverity.ERROR, false, true));
     TYPES.put("warn", new ExpectedHighlightingData.ExpectedHighlightingSet(HighlightSeverity.WARNING, false, true));
+    TYPES.put("eol_err", new ExpectedHighlightingData.ExpectedHighlightingSet(HighlightSeverity.ERROR, true, true));
   }
 
   @AfterClass
-  public static void tearDown() throws Exception {
+  public static void tearDown() {
     TYPES.clear();
     TYPES = null;
   }
 
   @Test
-  public void empty() throws Exception {
+  public void empty() {
     doTest("text", Collections.<HighlightInfo>emptyList(), "text");
   }
 
   @Test
-  public void sequential() throws Exception {
+  public void sequential() {
     doTest("_my text_",
            Arrays.asList(error(1, 3, "1"), error(4, 8, "2")),
            "_<err descr=\"1\">my</err> <err descr=\"2\">text</err>_");
   }
 
   @Test
-  public void simpleNested() throws Exception {
+  public void simpleNested() {
     doTest("[(nested)]",
            Arrays.asList(error(1, 9, "1"), error(2, 8, "2")),
            "[<err descr=\"1\">(<err descr=\"2\">nested</err>)</err>]");
   }
 
   @Test
-  public void deepNested() throws Exception {
+  public void deepNested() {
     doTest("m1(m2(m3(m4(x))))",
            Arrays.asList(error(3, 16, "m1"), error(6, 15, "m2"), error(9, 14, "m3"), error(12, 13, "m4")),
            "m1(<err descr=\"m1\">m2(<err descr=\"m2\">m3(<err descr=\"m3\">m4(<err descr=\"m4\">x</err>)</err>)</err>)</err>)");
   }
 
   @Test
-  public void sameStart() throws Exception {
+  public void sameStart() {
     doTest("same start",
            Arrays.asList(error(0, 4, "1"), error(0, 10, "2")),
            "<err descr=\"2\"><err descr=\"1\">same</err> start</err>");
   }
 
   @Test
-  public void sameEnd() throws Exception {
+  public void sameEnd() {
     doTest("same end",
            Arrays.asList(error(0, 8, "1"), error(5, 8, "2")),
            "<err descr=\"1\">same <err descr=\"2\">end</err></err>");
   }
 
   @Test
-  public void sameBothBounds() throws Exception {
+  public void sameBothBounds() {
     doTest("same",
            Arrays.asList(error(0, 4, "-"), warning(0, 4, "-")),
            "<err descr=\"-\"><warn descr=\"-\">same</warn></err>");
   }
 
   @Test
-  public void samePriority() throws Exception {
+  public void samePriority() {
     doTest("same",
            Arrays.asList(warning(0, 4, "1"), warning(0, 4, "2")),
            "<warn descr=\"1\"><warn descr=\"2\">same</warn></warn>");
   }
 
   @Test
-  public void twoNests() throws Exception {
+  public void twoNests() {
     doTest("(two nests)",
            Arrays.asList(error(0, 11, "-"), error(1, 4, "1"), error(5, 10, "2")),
            "<err descr=\"-\">(<err descr=\"1\">two</err> <err descr=\"2\">nests</err>)</err>");
   }
 
   @Test
-  public void realistic() throws Exception {
+  public void realistic() {
     doTest("one and (two nests)",
            Arrays.asList(error(4, 7, "-"), error(8, 19, "-"), error(9, 12, "1"), error(13, 18, "2")),
            "one <err descr=\"-\">and</err> <err descr=\"-\">(<err descr=\"1\">two</err> <err descr=\"2\">nests</err>)</err>");
+  }
+
+  @Test
+  public void twoEOLs() {
+    doTest("text\nmore text",
+           Arrays.asList(eolError(4, 4, "1"), eolError(4, 4, "2")),
+           "text<eol_err descr=\"2\"></eol_err><eol_err descr=\"1\"></eol_err>\nmore text");
+  }
+
+  @Test
+  public void eolAfterError() {
+    doTest("some error\nmore text",
+           Arrays.asList(error(5, 10, "1"), eolError(10, 10, "2")),
+           "some <err descr=\"1\">error</err><eol_err descr=\"2\"></eol_err>\nmore text");
   }
 
   private static void doTest(String original, Collection<HighlightInfo> highlighting, String expected) {
@@ -118,8 +133,11 @@ public class ExpectedHighlightingDataTest {
   private static HighlightInfo error(int start, int end, String description) {
     return new HighlightInfo(HighlightInfoType.ERROR, start, end, description, null);
   }
-
   private static HighlightInfo warning(int start, int end, String description) {
     return new HighlightInfo(HighlightInfoType.WARNING, start, end, description, null);
+  }
+
+  private static HighlightInfo eolError(int start, int end, String description) {
+    return new HighlightInfo(null, null, HighlightInfoType.ERROR, start, end, description, null, HighlightSeverity.ERROR, true, null, false);
   }
 }

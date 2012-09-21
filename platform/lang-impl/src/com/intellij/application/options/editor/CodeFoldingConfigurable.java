@@ -23,9 +23,9 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.options.AbstractConfigurableEP;
 import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nls;
@@ -110,7 +110,7 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
 
   @Override
   protected List<CodeFoldingOptionsProvider> createConfigurables() {
-    return AbstractConfigurableEP.createConfigurables(CodeFoldingOptionsProviderEP.EP_NAME);
+    return ConfigurableWrapper.createConfigurables(CodeFoldingOptionsProviderEP.EP_NAME);
   }
 
   @Override

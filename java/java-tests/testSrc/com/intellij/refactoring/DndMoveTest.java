@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
@@ -9,8 +24,8 @@ import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * User: anna
- * Date: Aug 31, 2010
+ * @author anna
+ * @since Aug 31, 2010
  */
 public class DndMoveTest extends CodeInsightTestCase {
   @Override
@@ -23,7 +38,7 @@ public class DndMoveTest extends CodeInsightTestCase {
       @Nullable
       @Override
       public PsiElement compute() {
-        return JavaPsiFacade.getInstance(getProject()).findClass("d.MyClass");
+        return getJavaFacade().findClass("d.MyClass");
       }
     }, true);
   }
@@ -33,11 +48,10 @@ public class DndMoveTest extends CodeInsightTestCase {
       @Nullable
       @Override
       public PsiElement compute() {
-        return JavaPsiFacade.getInstance(getProject()).findClass("d.Second");
+        return getJavaFacade().findClass("d.Second");
       }
     }, false);
   }
-
 
   private void doTest(final String targetDirName, final Computable<PsiElement> source, final boolean expected) throws Exception {
     String testName = getTestName(true);

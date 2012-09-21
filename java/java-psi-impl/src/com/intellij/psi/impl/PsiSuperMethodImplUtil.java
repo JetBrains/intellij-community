@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -303,7 +303,9 @@ public class PsiSuperMethodImplUtil {
                                                        PsiSubstitutor superSubstitutor,
                                                        PsiSubstitutor derivedSubstitutor, boolean inRawContext) {
     if (inRawContext) {
-      superSubstitutor = JavaPsiFacadeEx.getElementFactory(superClass.getProject()).createRawSubstitutor(derivedSubstitutor, superSubstitutor.getSubstitutionMap().keySet().toArray(PsiTypeParameter.EMPTY_ARRAY));
+      Set<PsiTypeParameter> typeParams = superSubstitutor.getSubstitutionMap().keySet();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(superClass.getProject());
+      superSubstitutor = factory.createRawSubstitutor(derivedSubstitutor, typeParams.toArray(new PsiTypeParameter[typeParams.size()]));
     }
     Map<PsiTypeParameter, PsiType> map = null;
     for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(superClass)) {

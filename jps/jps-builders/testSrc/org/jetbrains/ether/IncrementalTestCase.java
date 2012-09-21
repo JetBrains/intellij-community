@@ -97,12 +97,15 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     }
   }
 
-  private void modify() {
+  private void modify(int stage) {
+    final String removedSuffix = stage == 0? ".remove" : ".remove" + stage;
+    final String newSuffix = stage == 0? ".new" : ".new" + stage;
+
     FileUtil.processFilesRecursively(baseDir, new Processor<File>() {
       @Override
       public boolean process(File file) {
-        if (file.getName().endsWith(".remove")) {
-          FileUtil.delete(getTargetFile(file, ".remove"));
+        if (file.getName().endsWith(removedSuffix)) {
+          FileUtil.delete(getTargetFile(file, removedSuffix));
         }
         return true;
       }
@@ -111,8 +114,8 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
       @Override
       public boolean process(File file) {
         try {
-          if (file.getName().endsWith(".new")) {
-            FileUtil.copyContent(file, getTargetFile(file, ".new"));
+          if (file.getName().endsWith(newSuffix)) {
+            FileUtil.copyContent(file, getTargetFile(file, newSuffix));
           }
         }
         catch (IOException e) {
@@ -121,6 +124,13 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
         return true;
       }
     });
+    if (Utils.TIMESTAMP_ACCURACY > 1) {
+      try {
+        Thread.sleep(Utils.TIMESTAMP_ACCURACY);
+      }
+      catch (InterruptedException ignored) {
+      }
+    }
   }
 
   private File getTargetFile(File sourceFile, final String suffix) {
@@ -133,6 +143,12 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   }
 
   public BuildResult doTest() {
+    setupInitialProject();
+
+    return doTestBuild(1);
+  }
+
+  protected void setupInitialProject() {
     if (new File(workDir, ".idea").exists()) {
       getOrCreateJdk();
       loadProject(workDir.getAbsolutePath());
@@ -140,8 +156,6 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     else {
       addModule();
     }
-
-    return doTestBuild();
   }
 
   protected JpsModule addModule() {
@@ -153,30 +167,31 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     return addModule(moduleName, new String[]{srcPath}, null, getOrCreateJdk());
   }
 
-  protected BuildResult doTestBuild() {
-    final TestJavaBuilderLogger
-      javaBuilderLogger = new TestJavaBuilderLogger(FileUtil.toSystemIndependentName(workDir.getAbsolutePath()) + "/");
-    final ProjectDescriptor
-      projectDescriptor = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), javaBuilderLogger));
+  protected BuildResult doTestBuild(int makesCount) {
+    final TestJavaBuilderLogger builderLogger = new TestJavaBuilderLogger(FileUtil.toSystemIndependentName(workDir.getAbsolutePath()) + "/");
+    final ProjectDescriptor pd = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), builderLogger));
     try {
-      doBuild(projectDescriptor, createAllModulesScope(true), false, true, false).assertSuccessful();
+      doBuild(pd, createAllModulesScope(true), false, true, false).assertSuccessful();
 
-      modify();
-      if (Utils.TIMESTAMP_ACCURACY > 1) {
-        try {
-          Thread.sleep(Utils.TIMESTAMP_ACCURACY);
-        }
-        catch (InterruptedException ignored) {
-        }
+      BuildResult result = null;
+
+      for (int idx = 0; idx < makesCount; idx++) {
+        modify(idx);
+        result = doBuild(pd, createAllModulesScope(false), true, false, false);
       }
 
-
-      BuildResult result = doBuild(projectDescriptor, createAllModulesScope(false), true, false, false);
-
+      assertNotNull(result);
+      
       final ByteArrayOutputStream makeDump = new ByteArrayOutputStream();
 
       if (result.isSuccessful()) {
-        projectDescriptor.dataManager.getMappings().toStream(new PrintStream(makeDump));
+        final PrintStream stream = new PrintStream(makeDump);
+        try {
+          pd.dataManager.getMappings().toStream(stream);
+        }
+        finally {
+          stream.close();
+        }
       }
 
       makeDump.close();
@@ -186,19 +201,25 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
         logFile = new File(baseDir, "build.log");
       }
       final String expected = StringUtil.convertLineSeparators(FileUtil.loadFile(logFile));
-      final String actual = javaBuilderLogger.myLog.toString();
+      final String actual = builderLogger.myLog.toString();
 
       assertEquals(expected, actual);
 
       if (result.isSuccessful()) {
-        doBuild(projectDescriptor, createAllModulesScope(true), false, true, false).assertSuccessful();
-
+        doBuild(pd, createAllModulesScope(true), false, true, false).assertSuccessful();
+  
         final ByteArrayOutputStream rebuildDump = new ByteArrayOutputStream();
 
-        projectDescriptor.dataManager.getMappings().toStream(new PrintStream(rebuildDump));
+        final PrintStream stream = new PrintStream(rebuildDump);
+        try {
+          pd.dataManager.getMappings().toStream(stream);
+        }
+        finally {
+          stream.close();
+        }
 
         rebuildDump.close();
-
+  
         assertEquals(rebuildDump.toString(), makeDump.toString());
       }
       return result;
@@ -207,7 +228,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
       throw new RuntimeException(e);
     }
     finally {
-      projectDescriptor.release();
+      pd.release();
     }
   }
 

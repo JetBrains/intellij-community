@@ -28,8 +28,8 @@ import com.intellij.openapi.module.Module;
  *
  * @author nik
  */
-public class ModuleConfigurableEP extends AbstractConfigurableEP<Configurable> {
+public class ModuleConfigurableEP extends ConfigurableEP<Configurable> {
   public ModuleConfigurableEP(Module module) {
-    super(module.getPicoContainer());
+    super(module.getPicoContainer(), null);
   }
 }

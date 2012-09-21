@@ -100,7 +100,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
         }
       }
 
-      Set<String> changedOutputPaths = new THashSet<String>();
+      Set<String> changedOutputPaths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
       for (Map.Entry<BuildRootDescriptor, Set<File>> entry : filesToRecompile.entrySet()) {
         int rootIndex = ((ArtifactRootDescriptor)entry.getKey()).getRootIndex();
         for (File file : entry.getValue()) {
@@ -110,6 +110,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
           if (outputPaths != null) {
             changedOutputPaths.addAll(outputPaths);
             for (String outputPath : outputPaths) {
+              filesToDelete.putValue(outputPath, sourcePath);
               final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
               if (sources != null) {
                 for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
@@ -177,7 +178,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
     }
     Set<String> paths = filesToProcess.get(rootIndex);
     if (paths == null) {
-      paths = new THashSet<String>();
+      paths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
       filesToProcess.put(rootIndex, paths);
     }
     paths.add(path);
@@ -190,8 +191,8 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
 
     context.processMessage(new ProgressMessage("Deleting outdated files..."));
     int notDeletedFilesCount = 0;
-    final THashSet<String> notDeletedPaths = new THashSet<String>();
-    final THashSet<String> deletedPaths = new THashSet<String>();
+    final THashSet<String> notDeletedPaths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+    final THashSet<String> deletedPaths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
 
     for (String filePath : filesToDelete.keySet()) {
       if (notDeletedPaths.contains(filePath)) {

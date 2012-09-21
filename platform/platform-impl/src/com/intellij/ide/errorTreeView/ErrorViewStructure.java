@@ -70,9 +70,11 @@ public class ErrorViewStructure extends AbstractTreeStructure {
       // simple messages
       synchronized (myLock) {
         for (final ErrorTreeElementKind kind : ourMessagesOrder) {
-          if (ErrorTreeElementKind.WARNING.equals(kind) || ErrorTreeElementKind.NOTE.equals(kind)) {
-            if (myCanHideWarnings && ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
-              continue;
+          if (myCanHideWarnings) {
+            if (ErrorTreeElementKind.WARNING.equals(kind) || ErrorTreeElementKind.NOTE.equals(kind)) {
+              if (ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
+                continue;
+              }
             }
           }
           final List<ErrorTreeElement> elems = mySimpleMessages.get(kind);
@@ -274,6 +276,13 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     }
   }
 
+  @Nullable
+  public GroupingElement lookupGroupingElement(String groupName) {
+    synchronized (myLock) {
+      return myGroupNameToElementMap.get(groupName);
+    }
+  }
+  
   public GroupingElement getGroupingElement(String groupName, Object data, VirtualFile file) {
     synchronized (myLock) {
       GroupingElement element = myGroupNameToElementMap.get(groupName);
@@ -348,6 +357,35 @@ public class ErrorViewStructure extends AbstractTreeStructure {
       myGroupNames.remove(name);
       myGroupNameToElementMap.remove(name);
       myGroupNameToMessagesMap.remove(name);
+    }
+  }
+
+  public void removeElement(final ErrorTreeElement element) {
+    if (element == myRoot) {
+      return;
+    }
+    if (element instanceof GroupingElement) {
+      removeGroup(((GroupingElement)element).getName());
+    }
+    else if (element instanceof NavigatableMessageElement){
+      final NavigatableMessageElement navElement = (NavigatableMessageElement)element;
+      final GroupingElement parent = navElement.getParent();
+      if (parent != null) {
+        synchronized (myLock) {
+          final List<NavigatableMessageElement> groupMessages = myGroupNameToMessagesMap.get(parent.getName());
+          if (groupMessages != null) {
+            groupMessages.remove(navElement);
+          }
+        }
+      }
+    }
+    else {
+      synchronized (myLock) {
+        final List<ErrorTreeElement> simples = mySimpleMessages.get(element.getKind());
+        if (simples != null) {
+          simples.remove(element);
+        }
+      }
     }
   }
 

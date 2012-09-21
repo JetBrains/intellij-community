@@ -16,7 +16,7 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.options.AbstractConfigurableEP;
+import com.intellij.openapi.options.ConfigurableEP;
 
 /**
  * Register implementation of {@link AutoImportOptionsProvider} in the plugin.xml to provide additional options in Editor | Auto Import section:
@@ -29,6 +29,6 @@ import com.intellij.openapi.options.AbstractConfigurableEP;
  *
  * @author nik
  */
-public class AutoImportOptionsProviderEP extends AbstractConfigurableEP<AutoImportOptionsProvider> {
+public class AutoImportOptionsProviderEP extends ConfigurableEP<AutoImportOptionsProvider> {
   public static final ExtensionPointName<AutoImportOptionsProviderEP> EP_NAME = ExtensionPointName.create("com.intellij.autoImportOptionsProvider");
 }

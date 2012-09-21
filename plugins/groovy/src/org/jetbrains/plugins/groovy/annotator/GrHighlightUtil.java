@@ -23,8 +23,11 @@ import com.intellij.pom.PomTarget;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CollectConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter;
@@ -43,36 +46,59 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import java.util.Set;
+
 /**
  * @author Max Medvedev
  */
 public class GrHighlightUtil {
   private static final Logger LOG = Logger.getInstance(GrHighlightUtil.class);
 
-  static boolean isReassigned(final GrVariable var) {
-    PsiMethod method = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
-    PsiNamedElement scope = method == null ? var.getContainingFile() : method;
-    if (scope == null) {
-      return false;
-    }
-    return !PsiTreeUtil.processElements(scope, new PsiElementProcessor() {
-      boolean hasAssignment = var.getInitializerGroovy() != null || var instanceof GrParameter;
+  private static Set<String> getReassignedNames(final PsiElement scope) {
+    return CachedValuesManager.getManager(scope.getProject()).getCachedValue(scope, new CachedValueProvider<Set<String>>() {
+      @Nullable
+      @Override
+      public Result<Set<String>> compute() {
+        return Result.create(collectReassignedNames(scope), scope);
+      }
+    });
+  }
+
+  private static Set<String> collectReassignedNames(PsiElement scope) {
+    final Set<String> result = ContainerUtil.newHashSet();
+    PsiTreeUtil.processElements(scope, new PsiElementProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element) {
-        if (element instanceof GrReferenceExpression &&
-            var.getName().equals(((GrReferenceExpression)element).getReferenceName()) &&
-            ((GrReferenceExpression)element).isReferenceTo(var)) {
-          if (PsiUtil.isLValue((GrReferenceExpression)element) ||
-              element.getParent() instanceof GrUnaryExpression && ((GrUnaryExpression)element.getParent()).isPostfix()) {
-            if (hasAssignment) {
-              return false;
+        if (!(element instanceof GrReferenceExpression) || !((GrReferenceExpression)element).isQualified()) {
+          return true;
+        }
+
+        GrReferenceExpression ref = (GrReferenceExpression)element;
+        if (isWriteAccess(ref)) {
+          String varName = ref.getReferenceName();
+          if (!result.contains(varName)) {
+            PsiElement target = ref.resolve();
+            if (target instanceof GrVariable && ((GrVariable)target).getInitializerGroovy() != null ||
+                target instanceof GrParameter) {
+              result.add(varName);
             }
-            hasAssignment = true;
           }
         }
         return true;
       }
     });
+    return result;
+  }
+
+  private static boolean isWriteAccess(GrReferenceExpression element) {
+    return PsiUtil.isLValue(element) ||
+        element.getParent() instanceof GrUnaryExpression && ((GrUnaryExpression)element.getParent()).isPostfix();
+  }
+
+  static boolean isReassigned(final GrVariable var) {
+    PsiMethod method = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
+    PsiNamedElement scope = method == null ? var.getContainingFile() : method;
+    return scope != null && getReassignedNames(scope).contains(var.getName());
   }
 
   @Nullable
