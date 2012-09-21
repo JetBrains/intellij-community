@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,6 +132,12 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       final JBPopup popup = builder
         .setMovable(true)
         .setTitle(handlerItems.first.size() == 1 ? "Confirm process stop" : "Stop process")
+        .setFilteringEnabled(new Function<Object, String>() {
+          @Override
+          public String fun(Object o) {
+            return ((HandlerItem)o).displayName;
+          }
+        })
         .setItemChoosenCallback(new Runnable() {
           public void run() {
             HandlerItem item = (HandlerItem)list.getSelectedValue();
