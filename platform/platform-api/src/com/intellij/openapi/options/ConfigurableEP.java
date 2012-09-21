@@ -53,6 +53,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
 
   public String getDisplayName() {
     if (displayName != null) return displayName;
+    LOG.assertTrue(bundle != null, "Bundle missed for " + this);
     final ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(bundle, myPluginDescriptor.getPluginClassLoader());
     return displayName = CommonBundle.message(resourceBundle, key);
   }
@@ -60,6 +61,12 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false)
   public ConfigurableEP[] children;
+
+  /**
+   * Extension point of ConfigurableEP type to calculate children
+   */
+  @Attribute("childrenEPName")
+  public String childrenEPName;
 
   public ConfigurableEP[] getChildren() {
     for (ConfigurableEP child : children) {
