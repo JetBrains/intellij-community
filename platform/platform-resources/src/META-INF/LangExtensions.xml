@@ -26,7 +26,9 @@
 
   <applicationService serviceInterface="com.intellij.ide.fileTemplates.FileTemplateManager"
                       serviceImplementation="com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl"/>
-  <exportable serviceInterface="com.intellij.ide.fileTemplates.FileTemplateManager"/>
+  <applicationService serviceInterface="com.intellij.ide.fileTemplates.impl.ExportableFileTemplateSettings"
+                      serviceImplementation="com.intellij.ide.fileTemplates.impl.ExportableFileTemplateSettings"/>
+  <exportable serviceInterface="com.intellij.ide.fileTemplates.impl.ExportableFileTemplateSettings"/>
 
   <applicationService serviceInterface="com.intellij.ide.PsiCopyPasteManager"
                       serviceImplementation="com.intellij.ide.PsiCopyPasteManager"/>
@@ -56,6 +58,8 @@
                       serviceImplementation="com.intellij.codeInspection.ex.InspectionToolRegistrar"/>
   <applicationService serviceInterface="com.intellij.codeInsight.template.impl.TemplateSettings"
                       serviceImplementation="com.intellij.codeInsight.template.impl.TemplateSettings"/>
+  <applicationService serviceInterface="com.intellij.codeInsight.template.impl.ExportableTemplateSettings"
+                      serviceImplementation="com.intellij.codeInsight.template.impl.ExportableTemplateSettings"/>
   <applicationService serviceInterface="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"
                       serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"/>
   <exportable serviceInterface="com.intellij.codeInsight.template.impl.TemplateSettings"/>
@@ -110,7 +114,9 @@
   <exportable serviceInterface="com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable"/>
 
   <applicationService serviceInterface="com.intellij.psi.codeStyle.CodeStyleSchemes"
-                      serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl"/>
+                      serviceImplementation="com.intellij.psi.impl.source.codeStyle.PersistableCodeStyleSchemes"/>
+  <applicationService serviceInterface="com.intellij.psi.impl.source.codeStyle.LegacyCodeStyleSchemesSettings"
+                      serviceImplementation="com.intellij.psi.impl.source.codeStyle.LegacyCodeStyleSchemesSettings"/>
   <exportable serviceInterface="com.intellij.psi.codeStyle.CodeStyleSchemes"/>
   <schemeOwner serviceInterface="com.intellij.psi.codeStyle.CodeStyleSchemes"/>
 
