@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ public abstract class BaseSplitter implements Splitter {
   static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.inspections.BaseSplitter");
 
   public static final int MIN_RANGE_LENGTH = 3;
-  public static final int MAX_RANGE_LENGTH = 50;
 
 
   protected static void addWord(@NotNull Consumer<TextRange> consumer, boolean ignore, @Nullable TextRange found) {
@@ -92,7 +91,7 @@ public abstract class BaseSplitter implements Splitter {
 
   protected static boolean badSize(int from, int till) {
     int l = till - from;
-    return l <= MIN_RANGE_LENGTH || l>= MAX_RANGE_LENGTH;
+    return l <= MIN_RANGE_LENGTH;
   }
 
   @NotNull
