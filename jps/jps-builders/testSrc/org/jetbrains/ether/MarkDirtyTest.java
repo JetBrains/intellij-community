@@ -26,7 +26,7 @@ public class MarkDirtyTest extends IncrementalTestCase {
     addTestRoot(module, "testSrc");
     JpsLibrary library = addLibrary("lib/a.jar");
     JpsModuleRootModificationUtil.addDependency(module, library, JpsJavaDependencyScope.TEST, false);
-    doTestBuild().assertSuccessful();
+    doTestBuild(1).assertSuccessful();
   }
 
   public void testTransitiveRecompile() {
@@ -38,6 +38,6 @@ public class MarkDirtyTest extends IncrementalTestCase {
     JpsModule lib = addModule("lib", "lib/src");
     addTestRoot(lib, "lib/testSrc");
     JpsModuleRootModificationUtil.addDependency(util, lib);
-    doTestBuild().assertSuccessful();
+    doTestBuild(1).assertSuccessful();
   }
 }
