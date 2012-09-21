@@ -112,9 +112,12 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   private final SchemesManager<TemplateGroup, TemplateGroup> mySchemesManager;
   private static final String FILE_SPEC = "$ROOT_CONFIG$/templates";
 
-  private static class TemplateKey {
-    final String groupName;
-    final String key;
+  public static class TemplateKey {
+    private String groupName;
+    private String key;
+
+    @SuppressWarnings("UnusedDeclaration")
+    public TemplateKey() {}
 
     private TemplateKey(String groupName, String key) {
       this.groupName = groupName;
@@ -142,6 +145,24 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       result = 31 * result + (key != null ? key.hashCode() : 0);
       return result;
     }
+
+    public String getGroupName() {
+      return groupName;
+    }
+
+    @SuppressWarnings("UnusedDeclaration")
+    public void setGroupName(String groupName) {
+      this.groupName = groupName;
+    }
+
+    public String getKey() {
+      return key;
+    }
+
+    public void setKey(String key) {
+      this.key = key;
+    }
+
   }
 
   private TemplateKey myLastSelectedTemplate;
@@ -213,7 +234,9 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   @NotNull
   public File[] getExportFiles() {
-    return new File[]{getTemplateDirectory(true),PathManager.getDefaultOptionsFile()};
+    File exportableSettingsFile =
+      new File(PathManager.getOptionsPath() + File.separator + ExportableTemplateSettings.EXPORTABLE_SETTINGS_FILE);
+    return new File[]{getTemplateDirectory(true), exportableSettingsFile };
   }
 
   @NotNull
@@ -238,12 +261,20 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       }
     }
 
-    Element deleted = parentNode.getChild(DELETED_TEMPLATES);
-    if (deleted != null) {
-      List children = deleted.getChildren();
-      for (final Object aChildren : children) {
-        Element child = (Element)aChildren;
-        myDeletedTemplates.add(new TemplateKey(child.getAttributeValue(GROUP), child.getAttributeValue(NAME)));
+    ExportableTemplateSettings exportableSettings = ServiceManager.getService(ExportableTemplateSettings.class);
+    assert exportableSettings != null : "Can't find required ExportablTemplateSettings service.";
+    exportableSettings.setParentSettings(this);
+    if (exportableSettings.isLoaded()) {
+      myDeletedTemplates.addAll(exportableSettings.getDeletedKeys());
+    }
+    else {
+      Element deleted = parentNode.getChild(DELETED_TEMPLATES);
+      if (deleted != null) {
+        List children = deleted.getChildren();
+        for (final Object aChildren : children) {
+          Element child = (Element)aChildren;
+          myDeletedTemplates.add(new TemplateKey(child.getAttributeValue(GROUP), child.getAttributeValue(NAME)));
+        }
       }
     }
 
@@ -277,20 +308,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     }
     parentNode.addContent(element);
 
-    if (myDeletedTemplates.size() > 0) {
-      Element deleted = new Element(DELETED_TEMPLATES);
-      for (final TemplateKey deletedTemplate : myDeletedTemplates) {
-        if (deletedTemplate.key != null) {
-          Element template = new Element(TEMPLATE);
-          template.setAttribute(NAME, deletedTemplate.key);
-          if (deletedTemplate.groupName != null) {
-            template.setAttribute(GROUP, deletedTemplate.groupName);
-          }
-          deleted.addContent(template);
-        }
-      }
-      parentNode.addContent(deleted);
-    }
     return parentNode;
   }
 
@@ -712,5 +729,9 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     else {
       return c;
     }
+  }
+
+  public List<TemplateKey> getDeletedTemplates() {
+    return myDeletedTemplates;
   }
 }
