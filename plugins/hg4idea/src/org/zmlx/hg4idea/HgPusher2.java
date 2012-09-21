@@ -66,7 +66,11 @@ public class HgPusher2 {
           }
         });
 
-        pushAll(project, pushCommands.get());
+        List<HgPushCommand> commands = pushCommands.get();
+        //only when commands != null, the OK button has been pressed
+        if (commands != null) {
+          pushAll(project, commands);
+        }
       }
     });
   }
@@ -137,7 +141,7 @@ public class HgPusher2 {
   private static List<HgPushCommand> preparePushCommands(Project project, HgPushDialog2 dialog) {
     List<HgPushDialog2.HgRepositorySettings> repositorySettings = dialog.getRepositorySettings();
 
-    List<HgPushCommand> result = new ArrayList<HgPushCommand>();
+    List<HgPushCommand> result = new ArrayList<HgPushCommand>( repositorySettings.size() );
 
     for (HgPushDialog2.HgRepositorySettings settings : repositorySettings) {
       if (settings.isSelected()) {
