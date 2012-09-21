@@ -66,7 +66,6 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
@@ -963,8 +962,8 @@ public class BuildManager implements ApplicationComponent{
 
   private static class ProjectData {
     final SequentialTaskExecutor taskQueue;
-    private final Set<String> myChanged = new THashSet<String>(PathHashingStrategy.INSTANCE);
-    private final Set<String> myDeleted = new THashSet<String>(PathHashingStrategy.INSTANCE);
+    private final Set<String> myChanged = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+    private final Set<String> myDeleted = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
     private long myNextEventOrdinal = 0L;
     private boolean myNeedRescan = true;
 
@@ -1008,20 +1007,6 @@ public class BuildManager implements ApplicationComponent{
       myNextEventOrdinal = 0L;
       myChanged.clear();
       myDeleted.clear();
-    }
-
-    static class PathHashingStrategy implements TObjectHashingStrategy<String> {
-      static final PathHashingStrategy INSTANCE = new PathHashingStrategy();
-
-      @Override
-      public int computeHashCode(String path) {
-        return FileUtil.pathHashCode(path);
-      }
-
-      @Override
-      public boolean equals(String path1, String path2) {
-        return FileUtil.pathsEqual(path1, path2);
-      }
     }
   }
 

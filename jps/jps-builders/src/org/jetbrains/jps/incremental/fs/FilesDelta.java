@@ -16,13 +16,16 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /** @noinspection SynchronizationOnLocalVariableOrMethodParameter*/
 final class FilesDelta {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.FilesDelta");
 
-  private final Set<String> myDeletedPaths = Collections.synchronizedSet(new HashSet<String>());
+  private final Set<String> myDeletedPaths = Collections.synchronizedSet(new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY));
   private final Map<BuildRootDescriptor, Set<File>> myFilesToRecompile = Collections.synchronizedMap(new HashMap<BuildRootDescriptor, Set<File>>());
 
   public void save(DataOutput out) throws IOException {
@@ -155,7 +158,9 @@ final class FilesDelta {
   public Set<String> getAndClearDeletedPaths() {
     synchronized (myDeletedPaths) {
       try {
-        return new HashSet<String>(myDeletedPaths);
+        final THashSet<String> _paths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+        _paths.addAll(myDeletedPaths);
+        return _paths;
       }
       finally {
         myDeletedPaths.clear();
