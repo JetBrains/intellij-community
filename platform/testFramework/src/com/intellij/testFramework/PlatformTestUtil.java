@@ -593,8 +593,6 @@ public class PlatformTestUtil {
   public static void assertDirectoriesEqual(VirtualFile dirAfter, VirtualFile dirBefore, @Nullable VirtualFileFilter fileFilter) throws IOException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    dirAfter.getChildren();
-    dirAfter.refresh(false, false);
     VirtualFile[] childrenAfter = dirAfter.getChildren();
     if (dirAfter.isInLocalFileSystem()) {
       File[] ioAfter = new File(dirAfter.getPath()).listFiles();
