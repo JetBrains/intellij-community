@@ -445,13 +445,13 @@ public class CompileDriver {
     return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
       @Override
       public void buildStarted(UUID sessionId) {
-        final ProblemsView view = ProblemsViewImpl.SERVICE.getInstance(myProject);
-        view.clearMessages(compileContext.getCompileScope());
-        view.clearProgress();
       }
 
       @Override
       public void sessionTerminated(UUID sessionId) {
+        final ProblemsView view = ProblemsViewImpl.SERVICE.getInstance(myProject);
+        view.clearProgress();
+        view.clearOldMessages(compileContext.getCompileScope(), sessionId);
       }
 
       @Override

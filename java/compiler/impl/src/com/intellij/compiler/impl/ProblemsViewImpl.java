@@ -16,10 +16,14 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.ProblemsView;
+import com.intellij.ide.errorTreeView.ErrorTreeElement;
+import com.intellij.ide.errorTreeView.ErrorViewStructure;
+import com.intellij.ide.errorTreeView.GroupingElement;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -71,21 +75,34 @@ public class ProblemsViewImpl extends ProblemsView{
   }
 
   @Override
-  public void clearMessages(CompileScope scope) {
-    // todo: temporary solution:
-    clearMessages();
-    
-    /*
-    final ErrorViewStructure structure = myPanel.getErrorViewStructure();
-    for (ErrorTreeElement element : structure.getChildElements(structure.getRootElement())) {
-      // todo: add ability to remove selected messages in structure
-    }
-    */
+  public void clearOldMessages(@Nullable CompileScope scope, @NotNull UUID currentSessionId) {
+    cleanupChildrenRecursively(myPanel.getErrorViewStructure().getRootElement(), scope, currentSessionId);
+    myPanel.reload();
   }
 
-  @Override
-  public void clearMessages() {
-    myPanel.clearMessages();
+  private void cleanupChildrenRecursively(@NotNull final Object fromElement, final @Nullable CompileScope scope, @NotNull UUID currentSessionId) {
+    final ErrorViewStructure structure = myPanel.getErrorViewStructure();
+    for (ErrorTreeElement element : structure.getChildElements(fromElement)) {
+      if (element instanceof GroupingElement) {
+        if (scope != null) {
+          final VirtualFile file = ((GroupingElement)element).getFile();
+          if (file != null && !scope.belongs(file.getUrl())) {
+            continue; 
+          }
+        }
+        if (!currentSessionId.equals(element.getData())) {
+          structure.removeElement(element);
+        }
+        else {
+          cleanupChildrenRecursively(element, scope, currentSessionId);
+        }
+      }
+      else {
+        if (!currentSessionId.equals(element.getData())) {
+          structure.removeElement(element);
+        }
+      }
+    }
   }
 
   @Override
@@ -94,6 +111,12 @@ public class ProblemsViewImpl extends ProblemsView{
                          @Nullable final String groupName,
                          @NotNull final Navigatable navigatable,
                          @Nullable final String exportTextPrefix, @Nullable final String rendererTextPrefix, @Nullable final UUID sessionId) {
+
+    final ErrorViewStructure structure = myPanel.getErrorViewStructure();
+    final GroupingElement group = structure.lookupGroupingElement(groupName);
+    if (group != null && !sessionId.equals(group.getData())) {
+      structure.removeElement(group);
+    }
     myPanel.addMessage(type, text, groupName, navigatable, exportTextPrefix, rendererTextPrefix, sessionId);
   }
 
