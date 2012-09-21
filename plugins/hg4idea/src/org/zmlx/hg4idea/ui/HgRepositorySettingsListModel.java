@@ -22,10 +22,10 @@ import java.util.List;
  *
  */
 final class HgRepositorySettingsListModel extends AbstractListModel{
-  private final List<HgPushDialog.HgRepositorySettings> settingsList;
+  private final List<HgPushDialog.HgRepositorySettings> mySettingsList;
 
   HgRepositorySettingsListModel(List<HgPushDialog.HgRepositorySettings> settingsList) {
-    this.settingsList = settingsList;
+    this.mySettingsList = settingsList;
     //fire events when the relevant properties of the list are changed
     final PropertyChangeListener modelUpdater = new PropertyChangeListener() {
       @Override
@@ -33,7 +33,7 @@ final class HgRepositorySettingsListModel extends AbstractListModel{
         String propertyName = propertyChangeEvent.getPropertyName();
         if ( "valid".equals(propertyName) ||
              "selected".equals(propertyName) ){
-          int index = HgRepositorySettingsListModel.this.settingsList.indexOf(propertyChangeEvent.getSource());
+          int index = HgRepositorySettingsListModel.this.mySettingsList.indexOf(propertyChangeEvent.getSource());
           fireContentsChanged(propertyChangeEvent.getSource(), index, index );
         }
       }
@@ -45,11 +45,11 @@ final class HgRepositorySettingsListModel extends AbstractListModel{
 
   @Override
   public int getSize() {
-    return settingsList.size();
+    return mySettingsList.size();
   }
 
   @Override
   public Object getElementAt(int i) {
-    return settingsList.get( i );
+    return mySettingsList.get( i );
   }
 }
