@@ -68,6 +68,7 @@ import java.util.List;
 
 public final class ActionManagerImpl extends ActionManagerEx implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionManagerImpl");
+  private static final int DEACTIVATED_TIMER_DELAY = 5000;
   private static final int TIMER_DELAY = 500;
   private static final int UPDATE_DELAY_AFTER_TYPING = 500;
 
@@ -1193,7 +1194,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
         @Override
         public void applicationDeactivated(IdeFrame ideFrame) {
-          setDelay(30000);
+          setDelay(DEACTIVATED_TIMER_DELAY);
         }
       });
     }

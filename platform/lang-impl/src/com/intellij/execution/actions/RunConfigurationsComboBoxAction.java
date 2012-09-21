@@ -76,6 +76,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         if (DumbService.getInstance(project).isDumb()) {
           presentation.setEnabled(false);
           presentation.setText("");
+          presentation.setIcon(null);
         }
         else {
           updateButton(ExecutionTargetManager.getActiveTarget(project),
