@@ -16,7 +16,7 @@
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.options.AbstractConfigurableEP;
+import com.intellij.openapi.options.ConfigurableEP;
 
 /**
  * Register implementation of {@link ErrorOptionsProvider} in the plugin.xml to provide additional options in Editor | "Error highlighting" section:
@@ -29,6 +29,6 @@ import com.intellij.openapi.options.AbstractConfigurableEP;
  *
  * @author nik
  */
-public class ErrorOptionsProviderEP extends AbstractConfigurableEP<ErrorOptionsProvider> {
+public class ErrorOptionsProviderEP extends ConfigurableEP<ErrorOptionsProvider> {
   public static final ExtensionPointName<ErrorOptionsProviderEP> EP_NAME = ExtensionPointName.create("com.intellij.errorOptionsProvider");
 }

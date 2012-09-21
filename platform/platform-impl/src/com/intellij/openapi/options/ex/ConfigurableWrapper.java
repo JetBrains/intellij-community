@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.options.ex;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -23,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -33,8 +36,17 @@ public class ConfigurableWrapper implements SearchableConfigurable, Configurable
   private static final ConfigurableWrapper[] EMPTY_ARRAY = new ConfigurableWrapper[0];
 
   @Nullable
-  public static Configurable wrapConfigurable(ConfigurableEP ep) {
-    return ep.displayName != null || ep.key != null ? new ConfigurableWrapper(ep) : ep.createConfigurable();
+  public static <T extends UnnamedConfigurable> T wrapConfigurable(ConfigurableEP<T> ep) {
+    return ep.displayName != null || ep.key != null ? (T)new ConfigurableWrapper(ep) : ep.createConfigurable();
+  }
+
+  public static <T extends UnnamedConfigurable> List<T> createConfigurables(ExtensionPointName<? extends ConfigurableEP<T>> name) {
+    return ContainerUtil.mapNotNull(Extensions.getExtensions(name), new NullableFunction<ConfigurableEP<T>, T>() {
+      @Override
+      public T fun(ConfigurableEP<T> ep) {
+        return wrapConfigurable(ep);
+      }
+    });
   }
 
   public static boolean isNoScroll(Configurable configurable) {
@@ -61,9 +73,9 @@ public class ConfigurableWrapper implements SearchableConfigurable, Configurable
                                                                           }, new ConfigurableWrapper[0]);
   }
 
-  private Configurable myConfigurable;
+  private UnnamedConfigurable myConfigurable;
 
-  private Configurable getConfigurable() {
+  private UnnamedConfigurable getConfigurable() {
     if (myConfigurable == null) {
       myConfigurable = myEp.createConfigurable();
       if (myConfigurable == null) {
@@ -82,7 +94,8 @@ public class ConfigurableWrapper implements SearchableConfigurable, Configurable
   @Nullable
   @Override
   public String getHelpTopic() {
-    return getConfigurable().getHelpTopic();
+    UnnamedConfigurable configurable = getConfigurable();
+    return configurable instanceof Configurable ? ((Configurable)configurable).getHelpTopic() : null;
   }
 
   @Nullable
@@ -125,7 +138,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Configurable
   @Nullable
   @Override
   public Runnable enableSearch(String option) {
-    final Configurable configurable = getConfigurable();
+    final UnnamedConfigurable configurable = getConfigurable();
     return configurable instanceof SearchableConfigurable ? ((SearchableConfigurable)configurable).enableSearch(option) : null;
   }
 }

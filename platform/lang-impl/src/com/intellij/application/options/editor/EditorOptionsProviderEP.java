@@ -16,7 +16,7 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.options.AbstractConfigurableEP;
+import com.intellij.openapi.options.ConfigurableEP;
 
 /**
  * Register implementation of {@link EditorOptionsProvider} in the plugin.xml to provide sub-section of Editor section in the Settings dialog:
@@ -29,6 +29,6 @@ import com.intellij.openapi.options.AbstractConfigurableEP;
  *
  * @author nik
  */
-public class EditorOptionsProviderEP extends AbstractConfigurableEP<EditorOptionsProvider> {
+public class EditorOptionsProviderEP extends ConfigurableEP<EditorOptionsProvider> {
   public static final ExtensionPointName<EditorOptionsProviderEP> EP_NAME = ExtensionPointName.create("com.intellij.editorOptionsProvider");
 }

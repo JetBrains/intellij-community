@@ -47,9 +47,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface Configurable extends UnnamedConfigurable {
 
-  ExtensionPointName<ConfigurableEP> APPLICATION_CONFIGURABLE = ExtensionPointName.create("com.intellij.applicationConfigurable");
+  ExtensionPointName<ConfigurableEP<Configurable>> APPLICATION_CONFIGURABLE = ExtensionPointName.create("com.intellij.applicationConfigurable");
 
-  ExtensionPointName<ConfigurableEP> PROJECT_CONFIGURABLE = ExtensionPointName.create("com.intellij.projectConfigurable");
+  ExtensionPointName<ConfigurableEP<Configurable>> PROJECT_CONFIGURABLE = ExtensionPointName.create("com.intellij.projectConfigurable");
 
   /**
    * Returns the user-visible name of the settings component.

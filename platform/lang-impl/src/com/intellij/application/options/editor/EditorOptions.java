@@ -17,10 +17,8 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.options.AbstractConfigurableEP;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +33,7 @@ public class EditorOptions implements SearchableConfigurable.Parent {
   @Override
   public Configurable[] getConfigurables() {
     if (myChildren == null) {
-      final List<EditorOptionsProvider> configurables = AbstractConfigurableEP.createConfigurables(EditorOptionsProviderEP.EP_NAME);
+      final List<EditorOptionsProvider> configurables = ConfigurableWrapper.createConfigurables(EditorOptionsProviderEP.EP_NAME);
       myChildren = configurables.toArray(new EditorOptionsProvider[configurables.size()]);
     }
     return myChildren;

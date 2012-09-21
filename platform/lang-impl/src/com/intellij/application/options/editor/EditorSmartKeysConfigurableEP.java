@@ -15,7 +15,7 @@
  */
 package com.intellij.application.options.editor;
 
-import com.intellij.openapi.options.AbstractConfigurableEP;
+import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.UnnamedConfigurable;
 
 /**
@@ -30,5 +30,5 @@ import com.intellij.openapi.options.UnnamedConfigurable;
  *
  * @author nik
  */
-public class EditorSmartKeysConfigurableEP extends AbstractConfigurableEP<UnnamedConfigurable> {
+public class EditorSmartKeysConfigurableEP extends ConfigurableEP<UnnamedConfigurable> {
 }
