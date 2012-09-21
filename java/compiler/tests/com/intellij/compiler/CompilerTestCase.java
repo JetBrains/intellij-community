@@ -24,6 +24,7 @@ import org.jdom.Document;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -259,7 +260,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   }
 
   private static String buildPathsMessage(final Collection<String> pathsSet) {
-    final StringBuffer message = new StringBuffer();
+    final StringBuilder message = new StringBuilder();
     for (String p : pathsSet) {
       message.append(" | \"").append(p).append("\"");
     }
@@ -397,7 +398,6 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   }
 
   private boolean doCopyFiles(VirtualFile dataDir, VirtualFile destDir, VirtualFileFilter filter) throws Exception {
-    boolean wereStampChanges = false;
     VirtualFile[] children = destDir.getChildren();
     for (VirtualFile child : children) {
       if (shouldDelete(child)) {
@@ -409,6 +409,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     }
 
     children = dataDir.getChildren();
+    boolean wereStampChanges = false;
     for (VirtualFile child : children) {
 
       if (!filter.accept(child)) continue;
@@ -498,9 +499,20 @@ public abstract class CompilerTestCase extends ModuleTestCase {
       //System.out.println("================END "+getName()+"====================");
       //CompileDriver.ourDebugMode = false;
       //TranslatingCompilerFilesMonitor.ourDebugMode = false;
+      clearCompilerZipFileCache();
     }
     if (exceptions[0] != null) {
       throw exceptions[0];
+    }
+  }
+
+  private static void clearCompilerZipFileCache() {
+    try {
+      Field field = Class.forName("com.sun.tools.javac.zip.ZipFileIndex").getField("zipFileIndexCache");
+      field.setAccessible(true);
+      ((Map)field.get(null)).clear();
+    }
+    catch (Exception ignored) {
     }
   }
 }
