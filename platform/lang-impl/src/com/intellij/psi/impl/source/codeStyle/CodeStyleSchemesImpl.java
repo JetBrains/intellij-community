@@ -25,15 +25,12 @@ import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import org.jdom.Document;
-import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,12 +43,12 @@ import java.util.Collection;
  * @author MYakovlev
  *         Date: Jul 16, 2002
  */
-public class CodeStyleSchemesImpl extends CodeStyleSchemes implements ExportableComponent, JDOMExternalizable, NamedComponent {
-  @NonNls private static final String DEFAULT_SCHEME_NAME = "Default";
+public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes implements ExportableComponent {
+  @NonNls public static final String DEFAULT_SCHEME_NAME = "Default";
 
   public String CURRENT_SCHEME_NAME = DEFAULT_SCHEME_NAME;
   private boolean myIsInitialized = false;
-  @NonNls private static final String CODESTYLES_DIRECTORY = "codestyles";
+  @NonNls static final String CODESTYLES_DIRECTORY = "codestyles";
 
   private final SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> mySchemesManager;
   @NonNls private static final String FILE_SPEC = "$ROOT_CONFIG$/" + CODESTYLES_DIRECTORY;
@@ -164,31 +161,10 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
     mySchemesManager.removeScheme(scheme);
   }
 
-  @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    init();
-    DefaultJDOMExternalizer.readExternal(this, element);
-    
-    CodeStyleScheme current = findSchemeByName(CURRENT_SCHEME_NAME);
-    if (current == null) current = getDefaultScheme();
-    setCurrentScheme(current);
-  }
-
-  private void init() {
+  protected void init() {
     if (myIsInitialized) return;
     myIsInitialized = true;
     mySchemesManager.loadSchemes();
-  }
-
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-  }
-
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{getDir(true), PathManager.getDefaultOptionsFile()};
   }
 
   @Override
@@ -197,27 +173,9 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
     return PsiBundle.message("codestyle.export.display.name");
   }
 
-  private static File getDir(boolean create) {
-    String directoryPath = PathManager.getConfigPath() + File.separator + CODESTYLES_DIRECTORY;
-    File directory = new File(directoryPath);
-    if (!directory.exists()) {
-      if (!create) return null;
-      if (!directory.mkdir()) {
-        Messages.showErrorDialog(PsiBundle.message("codestyle.cannot.save.settings.directory.cant.be.created.message", directoryPath),
-                                 PsiBundle.message("codestyle.cannot.save.settings.directory.cant.be.created.title"));
-        return null;
-      }
-    }
-    return directory;
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "CodeStyleSchemes";
-  }
-
   public SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> getSchemesManager() {
     return mySchemesManager;
   }
+
+
 }

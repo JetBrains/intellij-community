@@ -24,7 +24,11 @@ import com.intellij.openapi.components.ServiceManager;
 public abstract class CodeStyleSchemes {
 
   public static CodeStyleSchemes getInstance(){
-    return ServiceManager.getService(CodeStyleSchemes.class);
+    CodeStyleSchemes schemes = ServiceManager.getService(CodeStyleSchemes.class);
+    if (!schemes.isLoaded()) {
+      schemes.loadSettings();
+    }
+    return schemes;
   }
 
   public abstract CodeStyleScheme[] getSchemes();
@@ -42,5 +46,9 @@ public abstract class CodeStyleSchemes {
   public abstract CodeStyleScheme getDefaultScheme();
 
   public abstract void addScheme(CodeStyleScheme currentScheme);
+
+  public abstract boolean isLoaded();
+
+  public abstract void loadSettings();
 }
 
