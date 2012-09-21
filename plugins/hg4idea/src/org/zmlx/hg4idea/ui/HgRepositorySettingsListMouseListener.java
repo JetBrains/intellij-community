@@ -23,13 +23,13 @@ import java.lang.ref.WeakReference;
  * in the list
  */
 final class HgRepositorySettingsListMouseListener extends MouseAdapter{
-  private WeakReference<AbstractButton> button = new WeakReference<AbstractButton>(null);
+  private WeakReference<AbstractButton> myButton = new WeakReference<AbstractButton>(null);
   @Override
   public void mousePressed(MouseEvent e) {
     //remember on which button was mouse was originally pressed
     super.mousePressed(e);
     if ( e.getButton() == MouseEvent.BUTTON1 ){
-      button = new WeakReference<AbstractButton>( getButton(e));
+      myButton = new WeakReference<AbstractButton>( getButton(e));
     }
   }
 
@@ -39,12 +39,12 @@ final class HgRepositorySettingsListMouseListener extends MouseAdapter{
     //where it was pressed
     if ( e.getButton() == MouseEvent.BUTTON1 ){
       AbstractButton currentButton = getButton(e);
-      AbstractButton previousButton = button.get();
+      AbstractButton previousButton = myButton.get();
       if ( currentButton != null && currentButton == previousButton ){
         currentButton.doClick();
       }
     }
-    button = new WeakReference<AbstractButton>(null);
+    myButton = new WeakReference<AbstractButton>(null);
   }
 
   private static AbstractButton getButton(MouseEvent e){
