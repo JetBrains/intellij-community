@@ -22,7 +22,7 @@ final class HgRepositorySettingsListRenderer extends JPanel implements ListCellR
 
   private final JCheckBox checkBox = new JCheckBox();
   private final ListCellRenderer delegate;
-  private HgPushDialog2.HgRepositorySettings lastRenderedSettings;
+  private HgPushDialog.HgRepositorySettings lastRenderedSettings;
 
   HgRepositorySettingsListRenderer( ListCellRenderer delegateRenderer ) {
     delegate = delegateRenderer;
@@ -62,7 +62,7 @@ final class HgRepositorySettingsListRenderer extends JPanel implements ListCellR
     setBackground(label.getBackground());
     setForeground(label.getForeground());
 
-    HgPushDialog2.HgRepositorySettings settings = (HgPushDialog2.HgRepositorySettings)o;
+    HgPushDialog.HgRepositorySettings settings = (HgPushDialog.HgRepositorySettings)o;
     lastRenderedSettings = settings;
 
     checkBox.setSelected( settings.isSelected() );

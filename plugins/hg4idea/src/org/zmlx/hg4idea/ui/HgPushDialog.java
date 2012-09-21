@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgPusher2;
+import org.zmlx.hg4idea.HgPusher;
 import org.zmlx.hg4idea.command.HgTagBranch;
 
 import javax.swing.*;
@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class HgPushDialog2 extends DialogWrapper{
+public class HgPushDialog extends DialogWrapper{
   private static final String DEFAULT_TARGET = "tip";
   private final Project project;
 
@@ -68,7 +68,10 @@ public class HgPushDialog2 extends DialogWrapper{
    *                     @param repositoryBranches List of List of branches. The order in the list must be the same as the order in {@code repositories}
    * @param aDefaultRepository The repository of which the settings are shown when the dialog is opened (only if included in {@code repositories}
    */
-  public HgPushDialog2(Project project, @NotNull List<VirtualFile> repositories, @NotNull List<List<HgTagBranch>> repositoryBranches, VirtualFile aDefaultRepository ) {
+  public HgPushDialog(Project project,
+                      @NotNull List<VirtualFile> repositories,
+                      @NotNull List<List<HgTagBranch>> repositoryBranches,
+                      VirtualFile aDefaultRepository) {
     super(project, false);
     this.project = project;
 
@@ -330,7 +333,7 @@ public class HgPushDialog2 extends DialogWrapper{
     private boolean valid = true;
     private HgRepositorySettings(@NotNull Project project, @NotNull VirtualFile repository, @NotNull List<HgTagBranch> branches) {
       this.repository = repository;
-      target = HgPusher2.getDefaultPushPath( project, repository);
+      target = HgPusher.getDefaultPushPath(project, repository);
       this.branches = Collections.unmodifiableList(branches);
       branch = branches.get(0);
     }

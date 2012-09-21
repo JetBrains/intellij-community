@@ -30,7 +30,7 @@ import org.zmlx.hg4idea.command.HgTagBranch;
 import org.zmlx.hg4idea.command.HgTagBranchCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
-import org.zmlx.hg4idea.ui.HgPushDialog2;
+import org.zmlx.hg4idea.ui.HgPushDialog;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -40,15 +40,15 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class HgPusher2 {
+public class HgPusher {
 
-  private static final Logger LOG = Logger.getInstance(HgPusher2.class);
+  private static final Logger LOG = Logger.getInstance(HgPusher.class);
   private static Pattern PUSH_COMMITS_PATTERN = Pattern.compile(".*added (\\d+) changesets.*");
   private static Pattern PUSH_NO_CHANGES = Pattern.compile(".*no changes found.*");
 
   private final Project project;
 
-  public HgPusher2(Project project) {
+  public HgPusher(Project project) {
     this.project = project;
   }
 
@@ -70,7 +70,7 @@ public class HgPusher2 {
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
           public void run() {
-            final HgPushDialog2 dialog = new HgPushDialog2(project, repositories, branches, firstRepo);
+            final HgPushDialog dialog = new HgPushDialog(project, repositories, branches, firstRepo);
             dialog.show();
             if (dialog.isOK()) {
               pushCommands.set(preparePushCommands(project, dialog));
@@ -150,12 +150,12 @@ public class HgPusher2 {
     return -1;
   }
 
-  private static List<HgPushCommand> preparePushCommands(Project project, HgPushDialog2 dialog) {
-    List<HgPushDialog2.HgRepositorySettings> repositorySettings = dialog.getRepositorySettings();
+  private static List<HgPushCommand> preparePushCommands(Project project, HgPushDialog dialog) {
+    List<HgPushDialog.HgRepositorySettings> repositorySettings = dialog.getRepositorySettings();
 
     List<HgPushCommand> result = new ArrayList<HgPushCommand>( repositorySettings.size() );
 
-    for (HgPushDialog2.HgRepositorySettings settings : repositorySettings) {
+    for (HgPushDialog.HgRepositorySettings settings : repositorySettings) {
       if (settings.isSelected()) {
         HgPushCommand command = new HgPushCommand(project, settings.getRepository(), settings.getTarget());
         command.setRevision(settings.isRevisionSelected() ? settings.getRevision() : null);
