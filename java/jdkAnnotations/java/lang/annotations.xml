@@ -92,4 +92,10 @@
     <annotation name='org.jetbrains.annotations.NotNull'>
     </annotation>
   </item>
+  <item name='java.lang.Class java.lang.Class&lt;?&gt; forName(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.lang.Class java.lang.reflect.Field getField(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
 </root>
