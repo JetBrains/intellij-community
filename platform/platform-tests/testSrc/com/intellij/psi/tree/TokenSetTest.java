@@ -79,6 +79,7 @@ public class TokenSetTest {
     check(TokenSet.andSet(S12, S34));
   }
 
+  @SuppressWarnings("deprecation")
   @Test
   public void andNot() throws Exception {
     final TokenSet S123 = TokenSet.orSet(S12, S3);
@@ -88,6 +89,7 @@ public class TokenSetTest {
     check(TokenSet.andNot(S123, S5), T1, T2, T3);
   }
 
+  @SuppressWarnings("deprecation")
   @Test
   public void not() throws Exception {
     check(TokenSet.not(S12));

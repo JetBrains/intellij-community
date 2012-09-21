@@ -173,11 +173,13 @@ public class TokenSet {
     return newSet;
   }
 
-  @NotNull
-  public TokenSet minus(@NotNull TokenSet t) {
-    return andNot(this, t);
-  }
-
+  /**
+   * Returns a token set containing a result of "set subtraction" of set B from set A.
+   *
+   * @param a the basic token set.
+   * @param b the token set to subtract.
+   * @return the new token set.
+   */
   @NotNull
   public static TokenSet andNot(@NotNull TokenSet a, @NotNull TokenSet b) {
     final TokenSet newSet = new TokenSet((short)Math.min(a.myShift, b.myShift), (short)Math.max(a.myMax, b.myMax));
@@ -188,7 +190,14 @@ public class TokenSet {
     return newSet;
   }
 
-  @NotNull
+  /** @deprecated please use {@linkplain #andNot(TokenSet, TokenSet)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
+  public TokenSet minus(@NotNull TokenSet t) {
+    return andNot(this, t);
+  }
+
+  /** @deprecated please use {@linkplain IElementType#enumerate(com.intellij.psi.tree.IElementType.Predicate)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public static TokenSet not(@NotNull TokenSet set) {
     final TokenSet newSet = new TokenSet((short)0, set.myTop);
     for (int i = 0; i < newSet.myWords.length; i++) {
