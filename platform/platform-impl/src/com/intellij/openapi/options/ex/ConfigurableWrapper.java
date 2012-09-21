@@ -134,6 +134,20 @@ public class ConfigurableWrapper implements SearchableConfigurable {
     return myEp.id == null ? myEp.instanceClass : myEp.id;
   }
 
+
+  public String getParentId() {
+    return myEp.parentId;
+  }
+
+  public ConfigurableWrapper addChild(Configurable configurable) {
+    return new CompositeWrapper(myEp, configurable);
+  }
+
+  @Override
+  public String toString() {
+    return getDisplayName();
+  }
+
   @Nullable
   @Override
   public Runnable enableSearch(String option) {
@@ -143,11 +157,10 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
   private static class CompositeWrapper extends ConfigurableWrapper implements Configurable.Composite {
 
-    private final Configurable[] myKids;
+    private Configurable[] myKids;
 
-    public CompositeWrapper(ConfigurableEP ep) {
+    public CompositeWrapper(ConfigurableEP ep, Configurable... kids) {
       super(ep);
-      Configurable[] kids;
       if (ep.children == null) {
         kids = EMPTY_ARRAY;
       }
@@ -170,6 +183,12 @@ public class ConfigurableWrapper implements SearchableConfigurable {
     @Override
     public Configurable[] getConfigurables() {
       return myKids;
+    }
+
+    @Override
+    public ConfigurableWrapper addChild(Configurable configurable) {
+      myKids = ArrayUtil.append(myKids, configurable);
+      return this;
     }
   }
 }

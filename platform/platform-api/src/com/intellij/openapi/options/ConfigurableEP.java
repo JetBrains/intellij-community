@@ -53,7 +53,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
 
   public String getDisplayName() {
     if (displayName != null) return displayName;
-    LOG.assertTrue(bundle != null, "Bundle missed for " + this);
+    LOG.assertTrue(bundle != null, "Bundle missed for " + instanceClass);
     final ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(bundle, myPluginDescriptor.getPluginClassLoader());
     return displayName = CommonBundle.message(resourceBundle, key);
   }
@@ -67,6 +67,9 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
    */
   @Attribute("childrenEPName")
   public String childrenEPName;
+
+  @Attribute("parentId")
+  public String parentId;
 
   public ConfigurableEP[] getChildren() {
     for (ConfigurableEP child : children) {
@@ -144,6 +147,11 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
       LOG.error(e);
     }
     return null;
+  }
+
+  @Override
+  public String toString() {
+    return getDisplayName();
   }
 
   private class InstanceFromProviderFactory extends AtomicNotNullLazyValue<ConfigurableProvider> implements NullableFactory<T> {
