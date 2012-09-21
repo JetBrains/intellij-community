@@ -46,23 +46,23 @@ public class HgPusher {
   private static Pattern PUSH_COMMITS_PATTERN = Pattern.compile(".*added (\\d+) changesets.*");
   private static Pattern PUSH_NO_CHANGES = Pattern.compile(".*no changes found.*");
 
-  private final Project project;
+  private final Project myProject;
 
   public HgPusher(Project project) {
-    this.project = project;
+    this.myProject = project;
   }
 
   public void showDialogAndPush(){
     HgUtil.executeOnPooledThreadIfNeeded(new Runnable() {
       @Override
       public void run() {
-        final List<VirtualFile> repositories = HgUtil.getHgRepositories(project);
+        final List<VirtualFile> repositories = HgUtil.getHgRepositories(myProject);
         if (repositories.isEmpty()) {
-          VcsBalloonProblemNotifier.showOverChangesView(project, "No Mercurial repositories in the project", MessageType.ERROR);
+          VcsBalloonProblemNotifier.showOverChangesView(myProject, "No Mercurial repositories in the project", MessageType.ERROR);
         }
         final List<List<HgTagBranch>> branches = new ArrayList<List<HgTagBranch>>(repositories.size());
         for (VirtualFile repo : repositories) {
-          branches.add(getBranches(project, repo));
+          branches.add(getBranches(myProject, repo));
         }
         final VirtualFile firstRepo = repositories.get(0);
 
@@ -70,10 +70,10 @@ public class HgPusher {
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
           public void run() {
-            final HgPushDialog dialog = new HgPushDialog(project, repositories, branches, firstRepo);
+            final HgPushDialog dialog = new HgPushDialog(myProject, repositories, branches, firstRepo);
             dialog.show();
             if (dialog.isOK()) {
-              pushCommands.set(preparePushCommands(project, dialog));
+              pushCommands.set(preparePushCommands(myProject, dialog));
             }
           }
         });
@@ -81,7 +81,7 @@ public class HgPusher {
         List<HgPushCommand> commands = pushCommands.get();
         //only when commands != null, the OK button has been pressed
         if (commands != null) {
-          pushAll(project, commands);
+          pushAll(myProject, commands);
         }
       }
     });
