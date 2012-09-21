@@ -20,52 +20,52 @@ import java.awt.event.ActionListener;
 
 final class HgRepositorySettingsListRenderer extends JPanel implements ListCellRenderer{
 
-  private final JCheckBox checkBox = new JCheckBox();
-  private final ListCellRenderer delegate;
-  private HgPushDialog.HgRepositorySettings lastRenderedSettings;
+  private final JCheckBox myCheckBox = new JCheckBox();
+  private final ListCellRenderer myDelegate;
+  private HgPushDialog.HgRepositorySettings myLastRenderedSettings;
 
   HgRepositorySettingsListRenderer( ListCellRenderer delegateRenderer ) {
-    delegate = delegateRenderer;
+    myDelegate = delegateRenderer;
     setLayout( new BorderLayout() );
 
-    add(checkBox, BorderLayout.WEST);
-    add((Component)delegate, BorderLayout.CENTER);
+    add(myCheckBox, BorderLayout.WEST);
+    add((Component)myDelegate, BorderLayout.CENTER);
 
     setOpaque(false);
-    checkBox.setOpaque(false);
+    myCheckBox.setOpaque(false);
 
     setFocusable(false);
-    checkBox.setFocusable(false);
-    checkBox.setMargin(new Insets(1,0,1,2));
+    myCheckBox.setFocusable(false);
+    myCheckBox.setMargin(new Insets(1, 0, 1, 2));
 
-    checkBox.setBorderPaintedFlat(true);
+    myCheckBox.setBorderPaintedFlat(true);
 
     selectingCheckBoxShouldAdjustSelectableState();
   }
 
   private void selectingCheckBoxShouldAdjustSelectableState(){
-    checkBox.addActionListener( new ActionListener() {
+    myCheckBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        if ( lastRenderedSettings == null ){
+        if (myLastRenderedSettings == null) {
           return;
         }
-        lastRenderedSettings.setSelected(checkBox.isSelected());
+        myLastRenderedSettings.setSelected(myCheckBox.isSelected());
       }
     });
   }
 
   @Override
   public Component getListCellRendererComponent(JList jList, Object o, int i, boolean b, boolean b1) {
-    JLabel label = (JLabel)delegate.getListCellRendererComponent(jList, o, i, b, b1);
+    JLabel label = (JLabel)myDelegate.getListCellRendererComponent(jList, o, i, b, b1);
 
     setBackground(label.getBackground());
     setForeground(label.getForeground());
 
     HgPushDialog.HgRepositorySettings settings = (HgPushDialog.HgRepositorySettings)o;
-    lastRenderedSettings = settings;
+    myLastRenderedSettings = settings;
 
-    checkBox.setSelected( settings.isSelected() );
+    myCheckBox.setSelected(settings.isSelected());
     String labelText = settings.getRepository().getPresentableName();
     if (!(settings.isValid())){
       labelText += " (!)";
@@ -73,7 +73,7 @@ final class HgRepositorySettingsListRenderer extends JPanel implements ListCellR
     label.setText(labelText);
     label.setToolTipText(settings.getRepository().getPresentableUrl());
 
-    checkBox.setEnabled(settings.isValid());
+    myCheckBox.setEnabled(settings.isValid());
     label.setEnabled(settings.isValid());
 
     return this;
