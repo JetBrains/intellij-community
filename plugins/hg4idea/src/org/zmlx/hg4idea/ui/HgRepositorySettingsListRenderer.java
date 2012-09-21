@@ -14,7 +14,20 @@ final class HgRepositorySettingsListRenderer extends JPanel implements ListCellR
 
   HgRepositorySettingsListRenderer( ListCellRenderer delegateRenderer ) {
     delegate = delegateRenderer;
-    setLayout(new FlowLayout( FlowLayout.LEFT));
+    setLayout( new BorderLayout() );
+
+    add(checkBox, BorderLayout.WEST);
+    add((Component)delegate, BorderLayout.CENTER);
+
+    setOpaque(false);
+    checkBox.setOpaque(false);
+
+    setFocusable(false);
+    checkBox.setFocusable(false);
+    checkBox.setMargin(new Insets(1,0,1,2));
+
+    checkBox.setBorderPaintedFlat(true);
+
     selectingCheckBoxShouldAdjustSelectableState();
   }
 
@@ -34,6 +47,9 @@ final class HgRepositorySettingsListRenderer extends JPanel implements ListCellR
   public Component getListCellRendererComponent(JList jList, Object o, int i, boolean b, boolean b1) {
     JLabel label = (JLabel)delegate.getListCellRendererComponent(jList, o, i, b, b1);
 
+    setBackground(label.getBackground());
+    setForeground(label.getForeground());
+
     HgPushDialog2.HgRepositorySettings settings = (HgPushDialog2.HgRepositorySettings)o;
     lastRenderedSettings = settings;
 
@@ -44,9 +60,6 @@ final class HgRepositorySettingsListRenderer extends JPanel implements ListCellR
     checkBox.setEnabled(settings.isValid());
     label.setEnabled(settings.isValid());
 
-    removeAll();
-    add(checkBox);
-    add(label);
     return this;
   }
 }
