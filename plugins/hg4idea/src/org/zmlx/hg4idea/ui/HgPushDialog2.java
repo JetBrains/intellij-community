@@ -16,6 +16,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
@@ -40,7 +41,8 @@ public class HgPushDialog2 extends DialogWrapper{
 
   private HgRepositorySettings currentRepository;
 
-  private boolean uiListenersActive = true;
+  private boolean uiListenersActive = true;//UI listeners should only react when we are not updating the UI
+  private boolean settingsListenersActive = true;//settings listener should only react when we are not updating the setting
 
   /**
    * Create a new dialog allowing to push the changes of all/a subset of the Mercurial repositories
@@ -64,6 +66,7 @@ public class HgPushDialog2 extends DialogWrapper{
     currentRepositoryShouldFollowListSelection();
 
     currentRepositorySettingsShouldFollowUIChanges();
+    uiShouldFollowCurrentRepositorySettingsChanges();
 
     updateUIForCurrentRepository();
 
@@ -114,6 +117,20 @@ public class HgPushDialog2 extends DialogWrapper{
     pushRepositoryCheckbox.addItemListener(checkboxListener);
   }
 
+  private void uiShouldFollowCurrentRepositorySettingsChanges(){
+    PropertyChangeListener listener = new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        if (settingsListenersActive) {
+          updateUIForCurrentRepository();
+        }
+      }
+    };
+    for (HgRepositorySettings settings : repositorySettings) {
+      settings.addPropertyChangeListener(listener);
+    }
+  }
+
   public List<HgRepositorySettings> getRepositorySettings() {
     return Collections.unmodifiableList(repositorySettings);
   }
@@ -121,7 +138,7 @@ public class HgPushDialog2 extends DialogWrapper{
   private void updateUIForCurrentRepository(){
     boolean listenersActive = uiListenersActive;
     try {
-      uiListenersActive = false;
+      uiListenersActive = false;//deactivate listeners as we are going to update the UI
       if (currentRepository != null ) {
         pushRepositoryCheckbox.setSelected(currentRepository.isSelected());
 
@@ -162,7 +179,9 @@ public class HgPushDialog2 extends DialogWrapper{
   }
 
   private void updateCurrentRepositoryFromUI(){
-    if ( uiListenersActive ) {
+    boolean listenersActive = settingsListenersActive;
+    try{
+      settingsListenersActive = false;//deactivate listeners as wer are going to adjust the settings
       if ( currentRepository != null ){
         currentRepository.setSelected(pushRepositoryCheckbox.isSelected());
 
@@ -177,6 +196,8 @@ public class HgPushDialog2 extends DialogWrapper{
         currentRepository.setForce(forcePushCheckBox.isSelected());
       }
       updateUIForCurrentRepository();//update UI again to make sure the enabled state is changed as well
+    } finally {
+      settingsListenersActive = listenersActive;
     }
   }
 
@@ -193,24 +214,32 @@ public class HgPushDialog2 extends DialogWrapper{
   private class TextFieldListener implements DocumentListener{
     @Override
     public void insertUpdate(DocumentEvent documentEvent) {
-      updateCurrentRepositoryFromUI();
+      if (uiListenersActive) {
+        updateCurrentRepositoryFromUI();
+      }
     }
 
     @Override
     public void removeUpdate(DocumentEvent documentEvent) {
-      updateCurrentRepositoryFromUI();
+      if (uiListenersActive) {
+        updateCurrentRepositoryFromUI();
+      }
     }
 
     @Override
     public void changedUpdate(DocumentEvent documentEvent) {
-      updateCurrentRepositoryFromUI();
+      if (uiListenersActive) {
+        updateCurrentRepositoryFromUI();
+      }
     }
   }
 
   private class CheckComboBoxListener implements ItemListener{
     @Override
     public void itemStateChanged(ItemEvent itemEvent) {
-      updateCurrentRepositoryFromUI();
+      if (uiListenersActive) {
+        updateCurrentRepositoryFromUI();
+      }
     }
   }
 
