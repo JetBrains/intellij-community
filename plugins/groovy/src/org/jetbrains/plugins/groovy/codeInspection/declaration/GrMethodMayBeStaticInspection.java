@@ -130,6 +130,7 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
 
         GroovyPsiElement resolveContext = result.getCurrentFileResolveContext();
         if (resolveContext != null) return;
+        if (element instanceof PsiClass && ((PsiClass)element).getContainingClass() == null) return;
         if (element instanceof PsiMember && !((PsiMember)element).hasModifierProperty(PsiModifier.STATIC)) {
           myMay = false;
         }
