@@ -30,6 +30,7 @@ import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
+import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
@@ -182,6 +183,36 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     reportNullableAssignments(runner, holder);
     reportUnboxedNullables(runner, holder);
     reportNullableReturns(runner, holder);
+    reportNullableArgumentsPassedToNonAnnotated(runner, holder);
+  }
+
+  private static void reportNullableArgumentsPassedToNonAnnotated(StandardDataFlowRunner runner, ProblemsHolder holder) {
+    Set<PsiExpression> exprs = runner.getNullableArgumentsPassedToNonAnnotatedParam();
+    for (PsiExpression expr : exprs) {
+      final String text = isNullLiteralExpression(expr)
+                          ? "Passing <code>null</code> argument to non annotated parameter"
+                          : "Argument <code>#ref</code> #loc might be null but passed to non annotated parameter";
+      LocalQuickFix[] fixes = createNPEFixes(expr, expr);
+      final PsiElement parent = expr.getParent();
+      if (parent instanceof PsiExpressionList) {
+        final int idx = ArrayUtil.find(((PsiExpressionList)parent).getExpressions(), expr);
+        if (idx > -1) {
+          final PsiElement gParent = parent.getParent();
+          if (gParent instanceof PsiCallExpression) {
+            final PsiMethod psiMethod = ((PsiCallExpression)gParent).resolveMethod();
+            if (psiMethod != null && psiMethod.getManager().isInProject(psiMethod)) {
+              final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+              if (idx < parameters.length) {
+                final AddNullableAnnotationFix addNullableAnnotationFix = new AddNullableAnnotationFix(parameters[idx]);
+                fixes = fixes == null ? new LocalQuickFix[]{addNullableAnnotationFix} : ArrayUtil.append(fixes, addNullableAnnotationFix);
+                holder.registerProblem(expr, text, fixes);
+              }
+            }
+          }
+        }
+      }
+      
+    }
   }
 
   private static void reportCallMayProduceNpe(ProblemsHolder holder, MethodCallInstruction mcInstruction) {
@@ -576,6 +607,11 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
 
     protected void onPassingNullParameter(DataFlowRunner runner, PsiExpression arg) {
       ((StandardDataFlowRunner)runner).onPassingNullParameter(arg); // Parameters on stack are reverted.
+    }
+
+    @Override
+    protected void onPassingNullParameterToNonAnnotated(DataFlowRunner runner, PsiExpression arg) {
+      ((StandardDataFlowRunner)runner).onPassingNullParameterToNonAnnotated(arg);
     }
   }
 }

@@ -46,6 +46,7 @@ public class StandardDataFlowRunner extends AnnotationsAwareDataFlowRunner {
   private final Set<Instruction> myNPEInstructions = new HashSet<Instruction>();
   private final Set<Instruction> myCCEInstructions = new HashSet<Instruction>();
   private final Set<PsiExpression> myNullableArguments = new HashSet<PsiExpression>();
+  private final Set<PsiExpression> myNullableArgumentsPassedToNonAnnotatedParam = new HashSet<PsiExpression>();
   private final Set<PsiExpression> myNullableAssignments = new HashSet<PsiExpression>();
   private final Set<PsiReturnStatement> myNullableReturns = new HashSet<PsiReturnStatement>();
 
@@ -74,6 +75,7 @@ public class StandardDataFlowRunner extends AnnotationsAwareDataFlowRunner {
     myNPEInstructions.clear();
     myCCEInstructions.clear();
     myNullableArguments.clear();
+    myNullableArgumentsPassedToNonAnnotatedParam.clear();
     myNullableAssignments.clear();
     myNullableReturns.clear();
     myUnboxedNullables.clear();
@@ -109,6 +111,10 @@ public class StandardDataFlowRunner extends AnnotationsAwareDataFlowRunner {
     return myNullableArguments;
   }
 
+  public Set<PsiExpression> getNullableArgumentsPassedToNonAnnotatedParam() {
+    return myNullableArgumentsPassedToNonAnnotatedParam;
+  }
+
   @NotNull public Set<PsiExpression> getNullableAssignments() {
     return myNullableAssignments;
   }
@@ -126,6 +132,12 @@ public class StandardDataFlowRunner extends AnnotationsAwareDataFlowRunner {
 
   public void onPassingNullParameter(PsiExpression expr) {
     myNullableArguments.add(expr);
+  }
+
+  public void onPassingNullParameterToNonAnnotated(PsiExpression expr) {
+    if (mySuggestNullableAnnotations) {
+      myNullableArgumentsPassedToNonAnnotatedParam.add(expr);
+    }
   }
 
   public void onAssigningToNotNullableVariable(final PsiExpression expr) {
@@ -147,6 +159,7 @@ public class StandardDataFlowRunner extends AnnotationsAwareDataFlowRunner {
            || !myCCEInstructions.isEmpty()
            || !getRedundantInstanceofs(this, visitor).isEmpty()
            || !myNullableArguments.isEmpty()
+           || !myNullableArgumentsPassedToNonAnnotatedParam.isEmpty()
            || !myNullableAssignments.isEmpty()
            || !myNullableReturns.isEmpty()
            || !myUnboxedNullables.isEmpty();

@@ -56,6 +56,25 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
   };
+  private final FactoryMap<MethodCallInstruction, boolean[]> myParametersNonAnnotated = new FactoryMap<MethodCallInstruction, boolean[]>() {
+    @Override
+    protected boolean[] create(MethodCallInstruction key) {
+      final PsiCallExpression callExpression = key.getCallExpression();
+      final PsiMethod callee = callExpression == null ? null : callExpression.resolveMethod();
+      if (callee != null) {
+        final PsiParameter[] params = callee.getParameterList().getParameters();
+        boolean[] result = new boolean[params.length];
+        final NullableNotNullManager notNullManager = NullableNotNullManager.getInstance(callee.getProject());
+        for (int i = 0; i < params.length; i++) {
+          result[i] = !notNullManager.isNotNull(params[i], false) && !notNullManager.isNullable(params[i], false);
+        }
+        return result;
+      }
+      else {
+        return ArrayUtil.EMPTY_BOOLEAN_ARRAY;
+      }
+    }
+  };
   private final FactoryMap<MethodCallInstruction, Boolean> myCalleeNullability = new FactoryMap<MethodCallInstruction, Boolean>() {
     @Override
     protected Boolean create(MethodCallInstruction key) {
@@ -161,14 +180,22 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     final PsiExpression[] args = instruction.getArgs();
     final boolean[] parametersNotNull = myParametersNotNull.get(instruction);
+    final boolean[] nonAnnotated = myParametersNonAnnotated.get(instruction);
     final DfaNotNullValue.Factory factory = runner.getFactory().getNotNullFactory();
     for (int i = 0; i < args.length; i++) {
       final DfaValue arg = memState.pop();
       final int revIdx = args.length - i - 1;
-      if (args.length <= parametersNotNull.length && revIdx < parametersNotNull.length && parametersNotNull[revIdx] && !memState.applyNotNull(arg)) {
-        onPassingNullParameter(runner, args[revIdx]);
-        if (arg instanceof DfaVariableValue) {
-          memState.setVarValue((DfaVariableValue)arg, factory.create(((DfaVariableValue)arg).getVariableType()));
+      if (args.length <= parametersNotNull.length && revIdx < parametersNotNull.length) {
+        if (parametersNotNull[revIdx]) {
+          if (!memState.applyNotNull(arg)) {
+            onPassingNullParameter(runner, args[revIdx]);
+            if (arg instanceof DfaVariableValue) {
+              memState.setVarValue((DfaVariableValue)arg, factory.create(((DfaVariableValue)arg).getVariableType()));
+            }
+          }
+        }
+        else if (nonAnnotated[revIdx] && !memState.checkNotNullable(arg)) {
+          onPassingNullParameterToNonAnnotated(runner, args[revIdx]);
         }
       }
     }
@@ -248,6 +275,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   protected void onUnboxingNullable(MethodCallInstruction instruction, DataFlowRunner runner) {}
 
   protected void onPassingNullParameter(DataFlowRunner runner, PsiExpression arg) {}
+  protected void onPassingNullParameterToNonAnnotated(DataFlowRunner runner, PsiExpression arg) {}
 
   @Override
   public DfaInstructionState[] visitBinop(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {

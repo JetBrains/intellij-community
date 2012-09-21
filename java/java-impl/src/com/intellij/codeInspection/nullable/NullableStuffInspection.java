@@ -31,7 +31,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -71,42 +70,6 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       @Override public void visitMethod(PsiMethod method) {
         if (!PsiUtil.isLanguageLevel5OrHigher(method)) return;
         checkNullableStuffForMethod(method, holder);
-      }
-
-      @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-        if (!PsiUtil.isLanguageLevel5OrHigher(expression) || !REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD) return;
-        final PsiMethod psiMethod = expression.resolveMethod();
-        if (psiMethod != null && (psiMethod.getManager().isInProject(psiMethod) || CodeStyleSettingsManager.getInstance().getCurrentSettings().USE_EXTERNAL_ANNOTATIONS)) {
-          final NullableNotNullManager nullableNotNullManager = NullableNotNullManager.getInstance(holder.getProject());
-          final PsiClass annotationsClass =
-            JavaPsiFacade.getInstance(holder.getProject()).findClass(nullableNotNullManager.getDefaultNullable(), psiMethod.getResolveScope());
-          if (annotationsClass == null) return;
-          final PsiParameterList parameterList = psiMethod.getParameterList();
-          final PsiParameter[] parameters = parameterList.getParameters();
-          final PsiExpression[] expressions = expression.getArgumentList().getExpressions();
-          for (int i = 0, expressionsLength = expressions.length; i < Math.min(expressionsLength, parameters.length); i++) {
-            PsiExpression psiExpression = expressions[i];
-            boolean nullablePassedAsParameter = false;
-            if (psiExpression instanceof PsiMethodCallExpression) {
-              final PsiMethod method = expression.resolveMethod();
-              nullablePassedAsParameter = nullableNotNullManager.isNullable(method, false);
-            } else if (psiExpression instanceof PsiReferenceExpression) {
-              final PsiElement resolve = ((PsiReferenceExpression)psiExpression).resolve();
-              if (resolve instanceof PsiModifierListOwner) {
-                nullablePassedAsParameter = nullableNotNullManager.isNullable((PsiModifierListOwner)resolve, false);
-              }
-            }
-            final PsiType exprType = psiExpression.getType();
-            if (exprType == PsiType.NULL || nullablePassedAsParameter) {
-              final PsiParameter parameter = parameters[i];
-              if (!NullableNotNullManager.isNullable(parameter) && !NullableNotNullManager.isNotNull(parameter)) {
-                holder.registerProblem(psiExpression, "Nullable value is passed to parameter which is not yet @Nullable", 
-                                       new MyAddNullableAnnotationFix(parameter));
-              }
-            }
-          }
-        }
       }
 
       @Override public void visitField(PsiField field) {
@@ -450,7 +413,6 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
     private JCheckBox myNAMethodOverridesNN;
     private JPanel myPanel;
     private JCheckBox myReportNotAnnotatedGetter;
-    private JCheckBox myReportNullsPassedToNonAnnotatedParameter;
     private JButton myConfigureAnnotationsButton;
 
     private OptionsPanel() {
@@ -465,7 +427,6 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       myNAMethodOverridesNN.addActionListener(actionListener);
       myNNParameterOverridesN.addActionListener(actionListener);
       myReportNotAnnotatedGetter.addActionListener(actionListener);
-      myReportNullsPassedToNonAnnotatedParameter.addActionListener(actionListener);
       myConfigureAnnotationsButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -482,7 +443,6 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       myNNParameterOverridesN.setSelected(REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE);
       myNAMethodOverridesNN.setSelected(REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL);
       myReportNotAnnotatedGetter.setSelected(REPORT_NOT_ANNOTATED_GETTER);
-      myReportNullsPassedToNonAnnotatedParameter.setSelected(REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD);
     }
 
     private void apply() {
@@ -490,7 +450,6 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE = myNNParameterOverridesN.isSelected();
       REPORT_NOT_ANNOTATED_GETTER = myReportNotAnnotatedGetter.isSelected();
       REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL;
-      REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD = myReportNullsPassedToNonAnnotatedParameter.isSelected();
     }
   }
 
