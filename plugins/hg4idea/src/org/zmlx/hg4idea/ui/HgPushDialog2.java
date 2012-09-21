@@ -1,5 +1,6 @@
 package org.zmlx.hg4idea.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,6 +15,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
@@ -36,6 +38,9 @@ public class HgPushDialog2 extends DialogWrapper{
   private JCheckBox forcePushCheckBox;
   private JCheckBox pushRepositoryCheckbox;
   private JList repositoriesList;
+  private JPanel warningMessagePanel;
+  private JTextArea warningTextArea;
+  private JLabel warningLabel;
 
   private final List<HgRepositorySettings> repositorySettings = new ArrayList<HgRepositorySettings>();
 
@@ -75,7 +80,32 @@ public class HgPushDialog2 extends DialogWrapper{
     setOKActionEnabled(containsValidRepositorySettings());
     updateEnabledStateOKButtonWhenRepositoryIsChanged();
 
+    initWarningPanel();
+
     init();
+  }
+
+  private void initWarningPanel(){
+    initWarningMessageArea();
+    warningLabel.setIcon(AllIcons.General.BalloonWarning);
+    warningLabel.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
+
+    updateWarningPanelVisibility();
+  }
+
+  private void updateWarningPanelVisibility() {
+    warningMessagePanel.setVisible(currentRepository != null && !currentRepository.isValid());
+  }
+
+  private void initWarningMessageArea(){
+    warningTextArea.setText("Invalid settings. Repository will not be pushed.");
+    warningTextArea.setLineWrap(true);
+    warningTextArea.setWrapStyleWord(true);
+    warningTextArea.setEditable(false);
+    warningTextArea.setDragEnabled(false);
+    warningTextArea.setOpaque(false);
+    warningTextArea.setMinimumSize(new Dimension(1,1));
+    warningTextArea.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
   }
 
   private boolean containsValidRepositorySettings(){
@@ -92,6 +122,7 @@ public class HgPushDialog2 extends DialogWrapper{
       public void propertyChange(PropertyChangeEvent evt) {
         if ( "valid".equals(evt.getPropertyName()) ){
           setOKActionEnabled(containsValidRepositorySettings());
+          updateWarningPanelVisibility();
         }
       }
     };
@@ -174,11 +205,13 @@ public class HgPushDialog2 extends DialogWrapper{
         branchCheckBox.setSelected(currentRepository.isBranchSelected());
 
         forcePushCheckBox.setSelected(currentRepository.isForce());
+
       } else {
         pushRepositoryCheckbox.setSelected(false);
         branchComboBox.removeAllItems();
         forcePushCheckBox.setSelected(false);
       }
+      updateWarningPanelVisibility();
       updateEnabledStateUIComponents();
     }
     finally {
