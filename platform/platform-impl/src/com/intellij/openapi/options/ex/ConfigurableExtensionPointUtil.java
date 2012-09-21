@@ -15,17 +15,21 @@
  */
 package com.intellij.openapi.options.ex;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableEP;
-import com.intellij.openapi.options.ConfigurableProvider;
-import com.intellij.openapi.options.OptionalConfigurable;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jdom.Element;
+import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.*;
 
 /**
@@ -50,13 +54,14 @@ public class ConfigurableExtensionPointUtil {
       final Configurable configurable = ConfigurableWrapper.wrapConfigurable(ep);
       if (configurable instanceof ConfigurableWrapper) {
         ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
-        idToConfigurable.put(wrapper.getId(), wrapper);
         if (wrapper.getParentId() != null) {
           orphans.add(wrapper);
+        } else {
+          idToConfigurable.put(wrapper.getId(), wrapper);
         }
       }
       else {
-//        dumpConfigurable(configurablesExtensionPoint, ep, configurable);
+        dumpConfigurable(configurablesExtensionPoint, ep, configurable);
         ContainerUtil.addIfNotNull(configurable, result);
       }
     }
@@ -84,7 +89,6 @@ public class ConfigurableExtensionPointUtil {
     return result;
   }
 
-  /*
   private static void dumpConfigurable(ExtensionPointName<ConfigurableEP<Configurable>> configurablesExtensionPoint,
                                        ConfigurableEP<Configurable> ep,
                                        Configurable configurable) {
@@ -135,7 +139,6 @@ public class ConfigurableExtensionPointUtil {
     }
     return element;
   }
-  */
 
   /**
    * @deprecated create a new instance of configurable instead

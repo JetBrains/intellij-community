@@ -30,6 +30,6 @@ import com.intellij.openapi.module.Module;
  */
 public class ModuleConfigurableEP extends ConfigurableEP<Configurable> {
   public ModuleConfigurableEP(Module module) {
-    super(module.getPicoContainer());
+    super(module.getPicoContainer(), null);
   }
 }

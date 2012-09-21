@@ -75,7 +75,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
     for (ConfigurableEP child : children) {
       child.myPicoContainer = myPicoContainer;
       child.myPluginDescriptor = myPluginDescriptor;
-      child.isForDefaultProject = isForDefaultProject;
+      child.myProject = myProject;
     }
     return children;
   }
@@ -86,9 +86,8 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   @Attribute("nonDefaultProject")
   public boolean nonDefaultProject;
 
-  private boolean isForDefaultProject;
   public boolean isAvailable() {
-    return !(nonDefaultProject && isForDefaultProject);
+    return !nonDefaultProject || !(myProject != null  && myProject.isDefault());
   }
 
   /**
@@ -103,19 +102,20 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
 
   private final AtomicNotNullLazyValue<NullableFactory<T>> myFactory;
   private PicoContainer myPicoContainer;
+  private Project myProject;
 
   @SuppressWarnings("UnusedDeclaration")
   public ConfigurableEP() {
-    this(ApplicationManager.getApplication().getPicoContainer());
+    this(ApplicationManager.getApplication().getPicoContainer(), null);
   }
 
   @SuppressWarnings("UnusedDeclaration")
   public ConfigurableEP(Project project) {
-    this(project.getPicoContainer());
-    isForDefaultProject = project.isDefault();
+    this(project.getPicoContainer(), project);
   }
 
-  protected ConfigurableEP(PicoContainer picoContainer) {
+  protected ConfigurableEP(PicoContainer picoContainer, @Nullable Project project) {
+    myProject = project;
     myPicoContainer = picoContainer;
     myFactory = new AtomicNotNullLazyValue<NullableFactory<T>>() {
       @NotNull
@@ -147,6 +147,10 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
       LOG.error(e);
     }
     return null;
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 
   @Override

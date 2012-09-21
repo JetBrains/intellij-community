@@ -15,34 +15,21 @@
  */
 package com.intellij.compiler.options;
 
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerSettingsFactory;
-import com.intellij.compiler.impl.rmiCompiler.RmicConfiguration;
-import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.FileStatusManager;
-import org.jetbrains.annotations.Nls;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 public class CompilerConfigurable implements SearchableConfigurable.Parent, Configurable.NoScroll {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompilerConfigurable");
 
   private final Project myProject;
   private final CompilerUIConfigurable myCompilerUIConfigurable;
@@ -101,100 +88,16 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
 
   public Configurable[] getConfigurables() {
     if (myKids == null) {
-      List<Configurable> kids = new ArrayList<Configurable>();
-
-      CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
-      final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true);
-
-      final ExcludedEntriesConfigurable excludes =
-        new ExcludedEntriesConfigurable(myProject, descriptor, compilerConfiguration.getExcludedEntriesConfiguration()) {
-          public void apply() {
-            super.apply();
-            FileStatusManager.getInstance(myProject).fileStatusesChanged(); // refresh exclude from compile status
-            //ProjectView.getInstance(myProject).refresh();
-          }
-        };
-
-      kids.add(createExcludesWrapper(excludes, myProject));
-
-      ArrayList<Configurable> additional = new ArrayList<Configurable>();
-
       final CompilerSettingsFactory[] factories = Extensions.getExtensions(CompilerSettingsFactory.EP_NAME, myProject);
-      if (factories.length > 0) {
-        for (CompilerSettingsFactory factory : factories) {
-          final Configurable configurable;
-          try {
-            configurable = factory.create(myProject);
-          }
-          catch (Exception e) {
-            LOG.error(e);
-            continue;
-          }
-          additional.add(configurable);
+      myKids = ContainerUtil.mapNotNull(factories, new NullableFunction<CompilerSettingsFactory, Configurable>() {
+        @Nullable
+        @Override
+        public Configurable fun(CompilerSettingsFactory factory) {
+            return factory.create(myProject);
         }
-        Collections.sort(additional, new Comparator<Configurable>() {
-          public int compare(final Configurable o1, final Configurable o2) {
-            return Comparing.compare(o1.getDisplayName(), o2.getDisplayName());
-          }
-        });
-      }
-
-      additional.add(0, new RmicConfigurable(RmicConfiguration.getSettings(myProject)));
-      additional.add(0, new AnnotationProcessorsConfigurable(myProject));
-      additional.add(0, new JavaCompilersTab(myProject, compilerConfiguration.getRegisteredJavaCompilers(),
-                                             compilerConfiguration.getDefaultCompiler()));
-
-      kids.addAll(additional);
-      myKids = kids.toArray(new Configurable[kids.size()]);
+      }, new Configurable[0]);
     }
 
     return myKids;
-  }
-
-  private static Configurable createExcludesWrapper(final ExcludedEntriesConfigurable excludes, final Project project) {
-    return new SearchableConfigurable() {
-      @Nls
-      public String getDisplayName() {
-        return "Excludes";
-      }
-
-      public String getHelpTopic() {
-        return "reference.projectsettings.compiler.excludes";
-      }
-
-      public JComponent createComponent() {
-        return excludes.createComponent();
-      }
-
-      public void apply() {
-        excludes.apply();
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            BuildManager.getInstance().clearState(project);
-          }
-        });
-      }
-
-      public boolean isModified() {
-        return excludes.isModified();
-      }
-
-      public void reset() {
-        excludes.reset();
-      }
-
-      public void disposeUIResources() {
-        excludes.disposeUIResources();
-      }
-
-      @NotNull
-      public String getId() {
-        return getHelpTopic();
-      }
-
-      public Runnable enableSearch(String option) {
-        return null;
-      }
-    };
   }
 }

@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.compiler.options;
 
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -24,6 +25,7 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
@@ -46,6 +48,11 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
   private final FileChooserDescriptor myDescriptor;
   private final ExcludedEntriesConfiguration myConfiguration;
   private ExcludedEntriesPanel myExcludedEntriesPanel;
+
+  public ExcludedEntriesConfigurable(Project project) {
+    this(project, new FileChooserDescriptor(true, true, false, false, false, true),
+         CompilerConfiguration.getInstance(project).getExcludedEntriesConfiguration());
+  }
 
   public ExcludedEntriesConfigurable(Project project, FileChooserDescriptor descriptor, final ExcludedEntriesConfiguration configuration) {
     myDescriptor = descriptor;
@@ -79,6 +86,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
     for (ExcludeEntryDescription description : myExcludeEntryDescriptions) {
       myConfiguration.addExcludeEntryDescription(description.copy(myProject));
     }
+    FileStatusManager.getInstance(myProject).fileStatusesChanged(); // refresh exclude from compile status
   }
 
   public boolean isModified() {

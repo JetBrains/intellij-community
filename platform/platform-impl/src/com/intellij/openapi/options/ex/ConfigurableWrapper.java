@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.options.ex;
 
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
@@ -79,7 +80,7 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
   private UnnamedConfigurable myConfigurable;
 
-  private UnnamedConfigurable getConfigurable() {
+  protected UnnamedConfigurable getConfigurable() {
     if (myConfigurable == null) {
       myConfigurable = myEp.createConfigurable();
       if (myConfigurable == null) {
@@ -174,8 +175,18 @@ public class ConfigurableWrapper implements SearchableConfigurable {
                                         }, EMPTY_ARRAY);
       }
       if (ep.childrenEPName != null) {
-         kids = ArrayUtil.mergeArrays(kids, ContainerUtil.mapNotNull(((ConfigurableEP<Configurable>[])Extensions.getExtensions(ep.childrenEPName)),
-                                       CONFIGURABLE_FUNCTION, new Configurable[0]));
+        ExtensionPoint<Object> childrenEP = Extensions.getArea(ep.getProject()).getExtensionPoint(ep.childrenEPName);
+        Object[] extensions = childrenEP.getExtensions();
+        if (extensions.length > 0) {
+          if (extensions[0] instanceof ConfigurableEP) {
+            Configurable[] children = ContainerUtil.mapNotNull(((ConfigurableEP<Configurable>[])extensions),
+                                                         CONFIGURABLE_FUNCTION, new Configurable[0]);
+            kids = ArrayUtil.mergeArrays(kids, children);
+          }
+          else {
+            kids = ArrayUtil.mergeArrays(kids, ((Composite)getConfigurable()).getConfigurables());
+          }
+        }
       }
       myKids = kids;
     }
