@@ -21,6 +21,7 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.BalloonHandler;
@@ -410,6 +411,11 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
   public void addProgress(ProgressIndicatorEx indicator, TaskInfo info) {
     myInfoAndProgressPanel.addProgress(indicator, info);
+  }
+
+  @Override
+  public List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses() {
+    return myInfoAndProgressPanel.getBackgroundProcesses();
   }
 
   public void setProcessWindowOpen(final boolean open) {

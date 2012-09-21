@@ -17,11 +17,13 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -36,6 +38,8 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -132,6 +136,11 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     }
 
     public void addProgress(ProgressIndicatorEx indicator, TaskInfo info) {
+    }
+
+    @Override
+    public List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses() {
+      return Collections.emptyList();
     }
 
     public void addWidget(@NotNull StatusBarWidget widget, @NotNull Disposable parentDisposable) {
