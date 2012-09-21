@@ -4,7 +4,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgPusher2;
@@ -19,7 +18,9 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class HgPushDialog2 extends DialogWrapper{
   private static final String DEFAULT_TARGET = "tip";
@@ -57,6 +58,7 @@ public class HgPushDialog2 extends DialogWrapper{
     repositoriesList.setModel(new HgRepositorySettingsListModel(repositorySettings));
     repositoriesList.setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
     repositoriesList.setCellRenderer(new HgRepositorySettingsListRenderer(repositoriesList.getCellRenderer()));
+    repositoriesList.addMouseListener(new HgRepositorySettingsListMouseListener());
 
     repositoriesList.setSelectedIndex(repositorySettings.indexOf(currentRepository));
     currentRepositoryShouldFollowListSelection();
