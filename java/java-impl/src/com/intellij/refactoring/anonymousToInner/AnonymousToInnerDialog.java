@@ -91,10 +91,11 @@ class AnonymousToInnerDialog extends DialogWrapper{
           if (psiType instanceof PsiClassType) {
             type = TypeConversionUtil.erasure(psiType);
           }
+          if (type == null || type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return "";
           if (type instanceof PsiArrayType) {
             type = type.getDeepComponentType();
           }
-          return type.getPresentableText();
+          return StringUtil.getShortName(type.getPresentableText());
         }
       }, "") + name, "My" + name};
     } else {
