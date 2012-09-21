@@ -92,15 +92,16 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
   }
 
-  @NonNls public Options TOP_LEVEL_CLASS_OPTIONS = new Options("none", "");
-  @NonNls public Options INNER_CLASS_OPTIONS = new Options("none", "");
-  @NonNls public Options METHOD_OPTIONS = new Options("none", "@return@param@throws or @exception");
-  @NonNls public Options FIELD_OPTIONS = new Options("none", "");
-  public boolean IGNORE_DEPRECATED = false;
-  public boolean IGNORE_JAVADOC_PERIOD = true;
-  public boolean IGNORE_DUPLICATED_THROWS = false;
-  public boolean IGNORE_POINT_TO_ITSELF = false;
-  public String myAdditionalJavadocTags = "";
+  @NonNls public Options TOP_LEVEL_CLASS_OPTIONS   = new Options("none", "");
+  @NonNls public Options INNER_CLASS_OPTIONS       = new Options("none", "");
+  @NonNls public Options METHOD_OPTIONS            = new Options("none", "@return@param@throws or @exception");
+  @NonNls public Options FIELD_OPTIONS             = new Options("none", "");
+  public         boolean IGNORE_DEPRECATED         = false;
+  public         boolean IGNORE_JAVADOC_PERIOD     = true;
+  public         boolean IGNORE_DUPLICATED_THROWS  = false;
+  public         boolean IGNORE_POINT_TO_ITSELF    = false;
+  public         boolean IGNORE_EMPTY_DESCRIPTIONS = false;
+  public         String  myAdditionalJavadocTags   = "";
 
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.javaDoc.JavaDocLocalInspection");
 
@@ -145,8 +146,8 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
     private class MyChangeListener implements ChangeListener {
       private final JCheckBox myCheckBox;
-      private final Options myOptions;
-      private final String myTagName;
+      private final Options   myOptions;
+      private final String    myTagName;
 
       public MyChangeListener(JCheckBox checkBox, Options options, String tagName) {
         myCheckBox = checkBox;
@@ -156,7 +157,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
       public void stateChanged(ChangeEvent e) {
         if (myCheckBox.isSelected()) {
-          if (!isTagRequired(myOptions,myTagName)) {
+          if (!isTagRequired(myOptions, myTagName)) {
             myOptions.REQUIRED_TAGS += myTagName;
           }
         }
@@ -594,27 +595,29 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       }
     }
 
-    for (PsiDocTag tag : tags) {
-      if ("param".equals(tag.getName())) {
-        final PsiElement[] dataElements = tag.getDataElements();
-        final PsiDocTagValue valueElement = tag.getValueElement();
-        boolean hasProblemsWithTag = dataElements.length < 2;
-        if (!hasProblemsWithTag) {
-          final StringBuilder buf = new StringBuilder();
-          for (PsiElement element : dataElements) {
-            if (element != valueElement){
-              buf.append(element.getText());
+    if (!IGNORE_EMPTY_DESCRIPTIONS) {
+      for (PsiDocTag tag : tags) {
+        if ("param".equals(tag.getName())) {
+          final PsiElement[] dataElements = tag.getDataElements();
+          final PsiDocTagValue valueElement = tag.getValueElement();
+          boolean hasProblemsWithTag = dataElements.length < 2;
+          if (!hasProblemsWithTag) {
+            final StringBuilder buf = new StringBuilder();
+            for (PsiElement element : dataElements) {
+              if (element != valueElement){
+                buf.append(element.getText());
+              }
             }
+            hasProblemsWithTag = buf.toString().trim().length() == 0;
           }
-          hasProblemsWithTag = buf.toString().trim().length() == 0;
-        }
-        if (hasProblemsWithTag) {
-          if (valueElement != null) {
-            problems.add(createDescriptor(valueElement,
-                                          InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", "<code>@param " + valueElement.getText() + "</code>"),
-                                          manager, isOnTheFly));
+          if (hasProblemsWithTag) {
+            if (valueElement != null) {
+              problems.add(createDescriptor(valueElement,
+                                            InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", "<code>@param " + valueElement.getText() + "</code>"),
+                                            manager, isOnTheFly));
+            }
+  
           }
-
         }
       }
     }
@@ -661,7 +664,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         }
       }
       else
-        if ("return".equals(tag.getName())) {
+        if ("return".equals(tag.getName()) && !IGNORE_EMPTY_DESCRIPTIONS) {
           if (extractTagDescription(tag).length() == 0) {
             String message = InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", "<code>@return</code>");
             ProblemDescriptor descriptor = manager.createProblemDescriptor(tag.getNameElement(), message, (LocalQuickFix)null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
@@ -694,10 +697,10 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     return false;
   }
 
-  private static void processThrowsTags(final PsiDocTag[] tags,
-                                        final Map<PsiClassType, PsiClass> declaredExceptions,
-                                        final InspectionManager mananger,
-                                        @NotNull final ArrayList<ProblemDescriptor> problems, boolean isOnTheFly) {
+  private void processThrowsTags(final PsiDocTag[] tags,
+                                 final Map<PsiClassType, PsiClass> declaredExceptions,
+                                 final InspectionManager mananger,
+                                 @NotNull final ArrayList<ProblemDescriptor> problems, boolean isOnTheFly) {
     for (PsiDocTag tag : tags) {
       if ("throws".equals(tag.getName()) || "exception".equals(tag.getName())) {
         final PsiDocTagValue value = tag.getValueElement();
@@ -714,7 +717,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
             PsiClassType classType = it.next();
             final PsiClass psiClass = declaredExceptions.get(classType);
             if (InheritanceUtil.isInheritorOrSelf(exceptionClass, psiClass, true)) {
-              if (extractThrowsTagDescription(tag).length() == 0) {
+              if (!IGNORE_EMPTY_DESCRIPTIONS && extractThrowsTagDescription(tag).length() == 0) {
                 problems.add(createDescriptor(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", "<code>" + tag.getName() + "</code>"), mananger,
                                               isOnTheFly));
               }

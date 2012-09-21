@@ -94,10 +94,10 @@ public class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
       return Result.CONTINUE;
     }
 
-    return navigateToLineEnd(editor, project, psiFile);
+    return navigateToLineEnd(editor, psiFile);
   }
   
-  public static Result navigateToLineEnd(@NotNull Editor editor, @NotNull Project project, @NotNull PsiFile psiFile) {
+  public static Result navigateToLineEnd(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     final Document document = editor.getDocument();
     final CaretModel caretModel = editor.getCaretModel();
     final int offset = caretModel.getOffset();
