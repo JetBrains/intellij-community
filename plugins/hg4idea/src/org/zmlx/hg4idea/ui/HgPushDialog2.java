@@ -70,12 +70,35 @@ public class HgPushDialog2 extends DialogWrapper{
 
     updateUIForCurrentRepository();
 
-    //todo change enabled state of OK button based on valid state of at least one repository
     setTitle("Push repositories");
     setOKButtonText("Push selected");
+    setOKActionEnabled(containsValidRepositorySettings());
+    updateEnabledStateOKButtonWhenRepositoryIsChanged();
+
     init();
   }
 
+  private boolean containsValidRepositorySettings(){
+    for (HgRepositorySettings settings : repositorySettings) {
+      if (settings.isValid()) {
+        return true;
+      }
+    }
+    return false;
+  }
+  private void updateEnabledStateOKButtonWhenRepositoryIsChanged(){
+    PropertyChangeListener listener = new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        if ( "valid".equals(evt.getPropertyName()) ){
+          setOKActionEnabled(containsValidRepositorySettings());
+        }
+      }
+    };
+    for (HgRepositorySettings settings : repositorySettings) {
+      settings.addPropertyChangeListener(listener);
+    }
+  }
   private void createRepositorySettings(List<VirtualFile> repositories, List<List<HgTagBranch>> repositoryBranches, VirtualFile aDefaultRepository){
     for (int i = 0, repositoriesSize = repositories.size(); i < repositoriesSize; i++) {
       VirtualFile repo = repositories.get(i);

@@ -54,7 +54,11 @@ final class HgRepositorySettingsListRenderer extends JPanel implements ListCellR
     lastRenderedSettings = settings;
 
     checkBox.setSelected( settings.isSelected() );
-    label.setText( settings.getRepository().getPresentableName());
+    String labelText = settings.getRepository().getPresentableName();
+    if (!(settings.isValid())){
+      labelText += " (!)";
+    }
+    label.setText(labelText);
     label.setToolTipText(settings.getRepository().getPresentableUrl());
 
     checkBox.setEnabled(settings.isValid());
