@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -203,7 +203,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 
-    final JavaPsiFacadeImpl facade = getFacade();
+    final JavaPsiFacade facade = getFacade();
     final Condition<String> prefixMatcher = processor.getHint(JavaCompletionHints.NAME_FILTER);
 
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
@@ -295,8 +295,9 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
         }
       }
 
-      final JavaPsiFacadeImpl facade = getFacade();
-      for (PsiClass aClass : facade.findClasses(getQualifiedName() + ".package-info", allScope())) {
+      final JavaPsiFacade facade = getFacade();
+      final GlobalSearchScope scope = allScope();
+      for (PsiClass aClass : facade.findClasses(getQualifiedName() + ".package-info", scope)) {
         ContainerUtil.addIfNotNull(aClass.getModifierList(), list);
       }
 

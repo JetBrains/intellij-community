@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,17 @@
  */
 package com.intellij.testFramework.fixtures;
 
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.impl.JavaPsiFacadeEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
 
 /**
  * @author yole
  */
 public interface JavaCodeInsightTestFixture extends CodeInsightTestFixture {
-  JavaPsiFacade getJavaFacade();
+  JavaPsiFacadeEx getJavaFacade();
 
   PsiClass addClass(@NotNull @NonNls final String classText);
 

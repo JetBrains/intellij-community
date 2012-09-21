@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -27,6 +23,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author max
+ */
 public abstract class JavaPsiFacade {
   private static final NotNullLazyKey<JavaPsiFacade, Project> INSTANCE_KEY = ServiceManager.createLazyKey(JavaPsiFacade.class);
   
@@ -39,18 +38,6 @@ public abstract class JavaPsiFacade {
   }
 
   /**
-   * Searches the project and all its libraries for a class with the specified full-qualified
-   * name and returns one if it is found.
-   *
-   * @param qualifiedName the full-qualified name of the class to find.
-   * @return the PSI class, or null if no class with such name is found.
-   * @deprecated use {@link #findClass(String, com.intellij.psi.search.GlobalSearchScope)}
-   */
-  @Nullable
-  public abstract PsiClass findClass(@NotNull @NonNls String qualifiedName);
-
-
-  /**
    * Searches the specified scope within the project for a class with the specified full-qualified
    * name and returns one if it is found.
    *
@@ -60,7 +47,6 @@ public abstract class JavaPsiFacade {
    */
   @Nullable
   public abstract PsiClass findClass(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
-
 
   /**
    * Searches the specified scope within the project for classes with the specified full-qualified
@@ -94,8 +80,8 @@ public abstract class JavaPsiFacade {
 
   /**
    * Returns the factory for the project, which can be used to create instances of certain java constructs from their textual
-   * presentation. Elements created shall not be used to later interfer (like insert into) a PSI parsed from the user codebase
-   * since no formatting to the user codestyle will be performed in this case. Please use {@link #getElementFactory()} instead, which
+   * representation. Elements created shall not be used to later intermix (like insert into) a PSI parsed from the user codebase
+   * since no formatting to the user code style will be performed in this case. Please use {@link #getElementFactory()} instead, which
    * provides exactly same methods but ensures created instances will get properly formatted.
    * @return the parser facade.
    */

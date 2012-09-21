@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.psi;
 
 import com.intellij.JavaTestUtil;
@@ -48,8 +63,7 @@ public class LibraryOrderTest extends PsiTestCase {
 
   public void testNavigation() throws Exception {
     setupPaths();
-    final JavaPsiFacade psiManager = getJavaFacade();
-    final PsiClass classA = psiManager.findClass("test.A");
+    final PsiClass classA = getJavaFacade().findClass("test.A");
     final PsiElement navigationElement = classA.getNavigationElement();
     assertNotNull(navigationElement);
     assertTrue(navigationElement != classA);
@@ -57,7 +71,7 @@ public class LibraryOrderTest extends PsiTestCase {
   }
 
   private void checkClassFromLib(String qualifiedName, String index) {
-    final PsiClass classA = (PsiClass)JavaPsiFacade.getInstance(myProject).findClass(qualifiedName).getNavigationElement();
+    final PsiClass classA = (PsiClass)getJavaFacade().findClass(qualifiedName).getNavigationElement();
     assertNotNull(classA);
     final PsiMethod[] methodsA = classA.getMethods();
     assertEquals(1, methodsA.length);

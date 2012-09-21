@@ -48,7 +48,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
@@ -184,7 +183,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     try {
       if (useJps()) {
         //noinspection ConstantConditions
-        touch(JavaPsiFacade.getInstance(getProject()).findClass(className).getContainingFile().getVirtualFile());
+        touch(myFixture.getJavaFacade().findClass(className).getContainingFile().getVirtualFile());
       }
       else {
         //noinspection ConstantConditions
