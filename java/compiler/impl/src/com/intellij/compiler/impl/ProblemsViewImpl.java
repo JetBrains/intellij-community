@@ -20,6 +20,7 @@ import com.intellij.ide.errorTreeView.ErrorTreeElement;
 import com.intellij.ide.errorTreeView.ErrorViewStructure;
 import com.intellij.ide.errorTreeView.GroupingElement;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -30,11 +31,13 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
+import java.util.concurrent.Executor;
 
 /**
  * @author Eugene Zhuravlev
@@ -44,6 +47,12 @@ public class ProblemsViewImpl extends ProblemsView{
   private static final String PROBLEMS_TOOLWINDOW_ID = "Problems";
   
   private final ProblemsViewPanel myPanel;
+  private final SequentialTaskExecutor myViewUpdater = new SequentialTaskExecutor(new Executor() {
+    @Override
+    public void execute(Runnable command) {
+      ApplicationManager.getApplication().executeOnPooledThread(command);
+    }
+  });
 
   public ProblemsViewImpl(final Project project, final ToolWindowManager wm) {
     super(project);
@@ -75,9 +84,14 @@ public class ProblemsViewImpl extends ProblemsView{
   }
 
   @Override
-  public void clearOldMessages(@Nullable CompileScope scope, @NotNull UUID currentSessionId) {
-    cleanupChildrenRecursively(myPanel.getErrorViewStructure().getRootElement(), scope, currentSessionId);
-    myPanel.reload();
+  public void clearOldMessages(@Nullable final CompileScope scope, @NotNull final UUID currentSessionId) {
+    myViewUpdater.execute(new Runnable() {
+      @Override
+      public void run() {
+        cleanupChildrenRecursively(myPanel.getErrorViewStructure().getRootElement(), scope, currentSessionId);
+        myPanel.reload();
+      }
+    });
   }
 
   private void cleanupChildrenRecursively(@NotNull final Object fromElement, final @Nullable CompileScope scope, @NotNull UUID currentSessionId) {
@@ -112,12 +126,17 @@ public class ProblemsViewImpl extends ProblemsView{
                          @NotNull final Navigatable navigatable,
                          @Nullable final String exportTextPrefix, @Nullable final String rendererTextPrefix, @Nullable final UUID sessionId) {
 
-    final ErrorViewStructure structure = myPanel.getErrorViewStructure();
-    final GroupingElement group = structure.lookupGroupingElement(groupName);
-    if (group != null && !sessionId.equals(group.getData())) {
-      structure.removeElement(group);
-    }
-    myPanel.addMessage(type, text, groupName, navigatable, exportTextPrefix, rendererTextPrefix, sessionId);
+    myViewUpdater.execute(new Runnable() {
+      @Override
+      public void run() {
+        final ErrorViewStructure structure = myPanel.getErrorViewStructure();
+        final GroupingElement group = structure.lookupGroupingElement(groupName);
+        if (group != null && !sessionId.equals(group.getData())) {
+          structure.removeElement(group);
+        }
+        myPanel.addMessage(type, text, groupName, navigatable, exportTextPrefix, rendererTextPrefix, sessionId);
+      }
+    });
   }
 
   @Override
