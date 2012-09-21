@@ -44,7 +44,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.HtmlListCellRenderer;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PathUtil;
@@ -190,9 +190,9 @@ public class LibraryOptionsPanel implements Disposable {
         updateState();
       }
     });
-    myExistingLibraryComboBox.setRenderer(new HtmlListCellRenderer() {
+    myExistingLibraryComboBox.setRenderer(new ColoredListCellRenderer() {
       @Override
-      protected void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value == null) {
           append("[No library selected]");
         }

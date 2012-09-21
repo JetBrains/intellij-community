@@ -35,7 +35,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
-import com.intellij.ui.HtmlListCellRenderer;
+import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
@@ -230,7 +230,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     public ChangeListChooser(List<? extends ChangeList> lists) {
       super(new BorderLayout(4, 2));
       myChooser = new JComboBox();
-      myChooser.setRenderer(new HtmlListCellRenderer<LocalChangeList>() {
+      myChooser.setRenderer(new ColoredListCellRendererWrapper<LocalChangeList>() {
         @Override
         protected void doCustomize(JList list, LocalChangeList value, int index, boolean selected, boolean hasFocus) {
           if (value != null) {

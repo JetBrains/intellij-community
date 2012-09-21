@@ -21,7 +21,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.HtmlListCellRenderer;
+import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.util.ui.UIUtil;
@@ -103,7 +103,7 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
         final String defaultChangelist = handleType.getDefaultChangelist();
         myChangelist.setModel(new CollectionComboBoxModel(changelists, defaultChangelist));
 
-        myChangelist.setRenderer(new HtmlListCellRenderer<String>() {
+        myChangelist.setRenderer(new ColoredListCellRendererWrapper<String>() {
           @Override
           protected void doCustomize(JList list, String value, int index, boolean selected, boolean hasFocus) {
             if (value.equals(defaultChangelist)) {
