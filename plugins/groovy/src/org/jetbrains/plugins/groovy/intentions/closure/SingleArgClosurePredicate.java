@@ -16,11 +16,8 @@
 package org.jetbrains.plugins.groovy.intentions.closure;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
 import org.jetbrains.plugins.groovy.intentions.base.ErrorUtil;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 
 class SingleArgClosurePredicate implements PsiElementPredicate {
