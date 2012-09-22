@@ -396,6 +396,7 @@
     <definitionsSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyImplementationSearch"/>
 
     <targetElementEvaluator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.GroovyTargetElementEvaluator"/>
+    <targetElementEvaluator language="JAVA" implementationClass="org.jetbrains.plugins.groovy.codeInsight.JavaClsMethodElementEvaluator"/>
 
     <fileTemplateGroup implementation="org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory"/>
 

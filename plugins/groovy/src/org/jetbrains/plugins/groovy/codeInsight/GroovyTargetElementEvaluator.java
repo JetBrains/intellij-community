@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -83,8 +84,13 @@ public class GroovyTargetElementEvaluator implements TargetElementEvaluator {
 
   @Nullable
   public static PsiElement correctSearchTargets(@Nullable PsiElement target) {
-    if (target != null && !(target instanceof GrAccessorMethod) && !target.isPhysical()
-        && target.getUserData(NAVIGATION_ELEMENT_IS_NOT_TARGET) == null) {
+    if (target instanceof ClsMethodImpl) {
+      PsiElement mirror = ((ClsMethodImpl)target).getSourceMirrorMethod();
+      if (mirror != null) {
+        return mirror.getNavigationElement();
+      }
+    }
+    if (target != null && !(target instanceof GrAccessorMethod) && target.getUserData(NAVIGATION_ELEMENT_IS_NOT_TARGET) == null) {
       return target.getNavigationElement();
     }
     return target;
