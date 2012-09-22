@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.util.net.HTTPProxySettingsPanel">
-  <grid id="111c4" binding="myMainPanel" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="111c4" binding="myMainPanel" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="111" y="44" width="523" height="263"/>
+      <xy x="111" y="44" width="523" height="254"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -11,7 +11,7 @@
       <grid id="fe3b6" layout-manager="GridLayoutManager" row-count="6" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="5" left="20" bottom="10" right="10"/>
         <constraints>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>
@@ -112,20 +112,30 @@
           </hspacer>
         </children>
       </grid>
-      <component id="699d9" class="javax.swing.JCheckBox" binding="myUseProxyCheckBox">
+      <vspacer id="53d33">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </vspacer>
+      <component id="e826f" class="javax.swing.JCheckBox" binding="myUseProxyPacCheckBox">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <margin top="2" left="4" bottom="2" right="2"/>
+          <text resource-bundle="messages/CommonBundle" key="checkbox.use.http.proxy.pac"/>
+          <toolTipText resource-bundle="messages/CommonBundle" key="tooltip.http.proxy.pac"/>
+        </properties>
+      </component>
+      <component id="699d9" class="javax.swing.JCheckBox" binding="myUseProxyCheckBox">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <margin top="2" left="4" bottom="2" right="2"/>
           <text resource-bundle="messages/CommonBundle" key="checkbox.use.http.proxy"/>
         </properties>
       </component>
-      <vspacer id="53d33">
-        <constraints>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-        </constraints>
-      </vspacer>
     </children>
   </grid>
 </form>
