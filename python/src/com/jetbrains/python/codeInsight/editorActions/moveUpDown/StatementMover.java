@@ -495,6 +495,9 @@ public class StatementMover extends LineMover {
       PyStatementList statementList = myStatementPartToRemovePass.getStatementList();
       if (statementList != null) {
         PyPsiUtils.removeRedundantPass(statementList);
+        final PsiElement whitespace = myStatementPartToRemovePass.getNextSibling();
+        if (whitespace instanceof PsiWhiteSpace)
+          whitespace.delete();
       }
     }
   }

@@ -383,7 +383,7 @@ private layoutWin(Map args, String target) {
   }
 
   winScripts(target, "$home/community", "pycharm.bat", args)
-  winVMOptions(target, args.system_selector, "pycharm.exe", "pycharm64.exe")
+  winVMOptions(target, args.system_selector, "pycharm.exe")
 
   ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help", failonerror: false)
 }

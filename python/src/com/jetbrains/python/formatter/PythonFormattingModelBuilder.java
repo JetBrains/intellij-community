@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -20,6 +21,7 @@ import static com.jetbrains.python.PyTokenTypes.*;
 /**
  * @author yole
  */
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, CustomFormattingModelBuilder {
   private static final boolean DUMP_FORMATTING_AST = false;
 
@@ -50,12 +52,12 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
   protected SpacingBuilder createSpacingBuilder(CodeStyleSettings settings) {
     final IFileElementType file = LanguageParserDefinitions.INSTANCE.forLanguage(PythonLanguage.getInstance()).getFileNodeType();
     final PyCodeStyleSettings pySettings = settings.getCustomSettings(PyCodeStyleSettings.class);
-    final TokenSet STATEMENT_OR_DECLARATION = TokenSet.orSet(PythonDialectsTokenSetProvider.INSTANCE.getStatementTokens(),
-                                                             CLASS_OR_FUNCTION);
+    final TokenSet STATEMENT_OR_DECLARATION =
+      TokenSet.orSet(PythonDialectsTokenSetProvider.INSTANCE.getStatementTokens(), CLASS_OR_FUNCTION);
 
     final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
     return new SpacingBuilder(settings)
-      .between(IMPORT_STATEMENTS, STATEMENT_OR_DECLARATION.minus(IMPORT_STATEMENTS)).blankLines(commonSettings.BLANK_LINES_AFTER_IMPORTS)
+      .between(IMPORT_STATEMENTS, TokenSet.andNot(STATEMENT_OR_DECLARATION, IMPORT_STATEMENTS)).blankLines(commonSettings.BLANK_LINES_AFTER_IMPORTS)
       .betweenInside(CLASS_OR_FUNCTION, CLASS_OR_FUNCTION, file).blankLines(pySettings.BLANK_LINES_BETWEEN_TOP_LEVEL_CLASSES_FUNCTIONS)
       .between(CLASS_DECLARATION, STATEMENT_OR_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_CLASS)
       .between(STATEMENT_OR_DECLARATION, CLASS_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_CLASS)
@@ -71,9 +73,9 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       .afterInside(GT, ANNOTATION).spaces(1)
       .betweenInside(MINUS, GT, ANNOTATION).none()
       .beforeInside(ANNOTATION, FUNCTION_DECLARATION).spaces(1)
-      
-      .between(TokenSet.not(TokenSet.create(LAMBDA_KEYWORD)), PARAMETER_LIST).spaceIf(commonSettings.SPACE_BEFORE_METHOD_PARENTHESES)
-      
+
+      .between(allButLambda(), PARAMETER_LIST).spaceIf(commonSettings.SPACE_BEFORE_METHOD_PARENTHESES)
+
       .before(COLON).spaceIf(pySettings.SPACE_BEFORE_PY_COLON)
       .after(COMMA).spaceIf(commonSettings.SPACE_AFTER_COMMA)
       .before(COMMA).spaceIf(commonSettings.SPACE_BEFORE_COMMA)
@@ -101,6 +103,16 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       .around(EQUALITY_OPERATIONS).spaceIf(commonSettings.SPACE_AROUND_EQUALITY_OPERATORS)
       .around(RELATIONAL_OPERATIONS).spaceIf(commonSettings.SPACE_AROUND_RELATIONAL_OPERATORS)
       .around(IN_KEYWORD).spaces(1);
+  }
+
+  private static TokenSet allButLambda() {
+    final PythonLanguage pythonLanguage = PythonLanguage.getInstance();
+    return TokenSet.create(IElementType.enumerate(new IElementType.Predicate() {
+      @Override
+      public boolean matches(IElementType type) {
+        return type != LAMBDA_KEYWORD && type.getLanguage().isKindOf(pythonLanguage);
+      }
+    }));
   }
 
   public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {

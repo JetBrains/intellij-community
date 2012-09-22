@@ -20,7 +20,8 @@ import org.jetbrains.annotations.NotNull;
 public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfiguration
                                           implements PythonNoseTestRunConfigurationParams {
   private String myParams = ""; // parameters for nosetests
-  protected String myTitle = "Nosetests";
+  protected String myTitle = "Nosetest";
+  protected String myPluralTitle = "Nosetests";
   private boolean useParam = false;
 
   public PythonNoseTestRunConfiguration(RunConfigurationModule module,
@@ -56,6 +57,11 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfigu
   @Override
   protected String getTitle() {
     return myTitle;
+  }
+
+  @Override
+  protected String getPluralTitle() {
+    return myPluralTitle;
   }
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
