@@ -51,9 +51,12 @@ class GebProjectDescriptor extends DefaultLightProjectDescriptor {
 
       def gebJarFolder = new File(TestUtils.absoluteTestDataPath + "/mockGeb")
       for (File gebJar : gebJarFolder.listFiles()) {
-        assert gebJar.name.endsWith(".jar")
-
-        modifiableModel.addRoot(fs.findFileByPath("${gebJar.path}!/"), OrderRootType.CLASSES);
+        if (gebJar.name.endsWith('sources.jar')) {
+          modifiableModel.addRoot(fs.findFileByPath("${gebJar.path}!/"), OrderRootType.SOURCES);
+        }
+        else if  (gebJar.name.endsWith(".jar")) {
+          modifiableModel.addRoot(fs.findFileByPath("${gebJar.path}!/"), OrderRootType.CLASSES);
+        }
       }
 
       modifiableModel.commit();
