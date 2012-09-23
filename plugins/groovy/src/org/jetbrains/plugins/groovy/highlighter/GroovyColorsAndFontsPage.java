@@ -83,6 +83,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
       new AttributesDescriptor("Static property reference", DefaultHighlighter.STATIC_PROPERTY_REFERENCE),
       new AttributesDescriptor("Valid string escape", DefaultHighlighter.VALID_STRING_ESCAPE),
       new AttributesDescriptor("Invalid string escape", DefaultHighlighter.INVALID_STRING_ESCAPE),
+      new AttributesDescriptor("Label", DefaultHighlighter.LABEL),
     };
 
   @NotNull
@@ -125,7 +126,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
            "<classref>Demo</classref>.<statmet>foo</statmet>(\"123${456}789\".toInteger()) \n" +
            "'JetBrains'.matches(/Jw+Bw+/) \n" +
            "def <local>x</local>=1 + <unresolved>unresolved</unresolved>\n" +
-           "def <reLocal>f1</reLocal> = []\n" +
+           "<label>label</label>:def <reLocal>f1</reLocal> = []\n" +
            "<reLocal>f1</reLocal> = [2]\n" +
            "<classref>File</classref> f=<literal>[</literal>'path'<literal>]</literal>\n" +
            "print new <classref>Demo</classref>().<prop>property</prop>\n" +
@@ -157,6 +158,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
     map.put("param", DefaultHighlighter.PARAMETER);
     map.put("reParam", DefaultHighlighter.REASSIGNED_PARAMETER);
     map.put("method", DefaultHighlighter.METHOD_DECLARATION);
+    map.put("label", DefaultHighlighter.LABEL);
     return map;
   }
 }
