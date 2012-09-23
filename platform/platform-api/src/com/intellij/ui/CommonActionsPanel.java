@@ -122,7 +122,7 @@ public class CommonActionsPanel extends JPanel {
     if (buttonComparator != null) {
       Arrays.sort(myActions, buttonComparator);
     }
-    myDecorateButtons = SystemInfo.isMac && position == ActionToolbarPosition.BOTTOM;
+    myDecorateButtons = UIUtil.isUnderAquaLookAndFeel() && position == ActionToolbarPosition.BOTTOM;
 
     final ActionManagerEx mgr = (ActionManagerEx)ActionManager.getInstance();
     final ActionToolbar toolbar = mgr.createActionToolbar(ActionPlaces.UNKNOWN,
