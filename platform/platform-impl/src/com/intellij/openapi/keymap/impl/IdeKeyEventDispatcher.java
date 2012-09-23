@@ -251,7 +251,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
     if (window instanceof JDialog) {
       final JDialog dialog = (JDialog)window;
       if (!dialog.isModal()) {
-        return isModalContext(dialog.getOwner());
+        final Window owner = dialog.getOwner();
+        return owner != null && isModalContext(owner);
       }
     }
 
