@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Bas Leijdekkers
+ * Copyright 2006-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +35,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "type.parameter.extends.final.class.display.name");
+    return InspectionGadgetsBundle.message("type.parameter.extends.final.class.display.name");
   }
 
   @Override
@@ -45,14 +45,10 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
     final PsiNamedElement namedElement = (PsiNamedElement)infos[0];
     final String name = namedElement.getName();
     if (problemType.intValue() == 1) {
-      return InspectionGadgetsBundle.message(
-        "type.parameter.extends.final.class.problem.descriptor1",
-        name);
+      return InspectionGadgetsBundle.message("type.parameter.extends.final.class.problem.descriptor1", name);
     }
     else {
-      return InspectionGadgetsBundle.message(
-        "type.parameter.extends.final.class.problem.descriptor2",
-        name);
+      return InspectionGadgetsBundle.message("type.parameter.extends.final.class.problem.descriptor2", name);
     }
   }
 
@@ -62,25 +58,20 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
     return new TypeParameterExtendsFinalClassFix();
   }
 
-  private static class TypeParameterExtendsFinalClassFix
-    extends InspectionGadgetsFix {
+  private static class TypeParameterExtendsFinalClassFix extends InspectionGadgetsFix {
 
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "type.parameter.extends.final.class.quickfix");
+      return InspectionGadgetsBundle.message("type.parameter.extends.final.class.quickfix");
     }
 
     @Override
-    protected void doFix(@NotNull Project project,
-                         ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(@NotNull Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (parent instanceof PsiTypeParameter) {
-        final PsiTypeParameter typeParameter =
-          (PsiTypeParameter)parent;
+        final PsiTypeParameter typeParameter = (PsiTypeParameter)parent;
         replaceTypeParameterAndReferencesWithType(typeParameter);
       }
       else if (parent instanceof PsiTypeElement) {
@@ -93,13 +84,9 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
       }
     }
 
-    private static void replaceTypeParameterAndReferencesWithType(
-      PsiTypeParameter typeParameter)
-      throws IncorrectOperationException {
-      final PsiReferenceList extendsList =
-        typeParameter.getExtendsList();
-      final PsiClassType[] referenceElements =
-        extendsList.getReferencedTypes();
+    private static void replaceTypeParameterAndReferencesWithType(PsiTypeParameter typeParameter) {
+      final PsiReferenceList extendsList = typeParameter.getExtendsList();
+      final PsiClassType[] referenceElements = extendsList.getReferencedTypes();
       if (referenceElements.length < 1) {
         return;
       }
@@ -108,13 +95,9 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
         return;
       }
       final Project project = typeParameter.getProject();
-      final PsiElementFactory factory =
-        JavaPsiFacade.getElementFactory(project);
-      final PsiJavaCodeReferenceElement classReference =
-        factory.createClassReferenceElement(finalClass);
-      final Query<PsiReference> query =
-        ReferencesSearch.search(typeParameter,
-                                typeParameter.getUseScope());
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      final PsiJavaCodeReferenceElement classReference = factory.createClassReferenceElement(finalClass);
+      final Query<PsiReference> query = ReferencesSearch.search(typeParameter, typeParameter.getUseScope());
       for (PsiReference reference : query) {
         final PsiElement referenceElement = reference.getElement();
         referenceElement.replace(classReference);
@@ -128,15 +111,12 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
     return new TypeParameterExtendsFinalClassVisitor();
   }
 
-  private static class TypeParameterExtendsFinalClassVisitor
-    extends BaseInspectionVisitor {
+  private static class TypeParameterExtendsFinalClassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitTypeParameter(
-      PsiTypeParameter classParameter) {
+    public void visitTypeParameter(PsiTypeParameter classParameter) {
       super.visitTypeParameter(classParameter);
-      final PsiClassType[] extendsListTypes =
-        classParameter.getExtendsListTypes();
+      final PsiClassType[] extendsListTypes = classParameter.getExtendsListTypes();
       if (extendsListTypes.length < 1) {
         return;
       }
@@ -148,8 +128,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
       if (!aClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
-      final PsiIdentifier nameIdentifier =
-        classParameter.getNameIdentifier();
+      final PsiIdentifier nameIdentifier = classParameter.getNameIdentifier();
       if (nameIdentifier != null) {
         registerError(nameIdentifier, aClass, Integer.valueOf(1));
       }
@@ -169,21 +148,17 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
       }
       final PsiClassType classType = (PsiClassType)extendsBound;
       final PsiClass aClass = classType.resolve();
-      if (aClass == null ||
-          !aClass.hasModifierProperty(PsiModifier.FINAL)) {
+      if (aClass == null || !aClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
       if (isPartOfOverriddenMethod(typeElement)) {
         return;
       }
-      registerError(typeElement.getFirstChild(),
-                    aClass, Integer.valueOf(2));
+      registerError(typeElement.getFirstChild(), aClass, Integer.valueOf(2));
     }
 
-    private static boolean isPartOfOverriddenMethod(
-      PsiTypeElement typeElement) {
-      final PsiMethod method =
-        PsiTreeUtil.getParentOfType(typeElement, PsiMethod.class);
+    private static boolean isPartOfOverriddenMethod(PsiTypeElement typeElement) {
+      final PsiMethod method = PsiTreeUtil.getParentOfType(typeElement, PsiMethod.class);
       if (method == null) {
         return false;
       }
@@ -191,8 +166,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
       if (PsiTreeUtil.isAncestor(body, typeElement, true)) {
         return false;
       }
-      final PsiMethod[] superMethods = method.findSuperMethods();
-      return superMethods.length > 0;
+      return MethodUtils.hasSuper(method);
     }
   }
 }

@@ -47,7 +47,7 @@ public class NavBarListCellRenderer extends ColoredListCellRenderer {
 
   protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
     setFocusBorderAroundIcon(false);
-    final String name = NavBarPresentation.getPresentableText(value);
+    final String name = myPanel.getPresentation().getPresentableText(value);
 
     Color color = list.getForeground();
     boolean isProblemFile = false;
@@ -92,7 +92,7 @@ public class NavBarListCellRenderer extends ColoredListCellRenderer {
     append(name, nameAttributes);
     // manually set icon opaque to prevent background artifacts
     setIconOpaque(false);
-    setIcon(NavBarPresentation.getIcon(value, false));
+    setIcon(myPanel.getPresentation().getIcon(value, false));
     setPaintFocusBorder(false);
     setBackground(selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
   }

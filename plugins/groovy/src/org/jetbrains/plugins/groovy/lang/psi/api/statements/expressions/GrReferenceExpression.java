@@ -16,8 +16,8 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +51,7 @@ public interface GrReferenceExpression extends GrExpression, GrReferenceElement<
   @NotNull
   GroovyResolveResult[] getSameNameVariants();
 
-  GrReferenceExpression bindToElementViaStaticImport(@NotNull PsiClass qualifierClass);
+  GrReferenceExpression bindToElementViaStaticImport(@NotNull PsiMember member);
 
   GroovyResolveResult[] resolveByShape();
 }

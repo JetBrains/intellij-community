@@ -150,7 +150,7 @@ public class GroovyStaticImportMethodFix implements IntentionAction {
           try {
             GrMethodCall element = myMethodCall.getElement();
             if (element != null) {
-              getMethodExpression(element).bindToElementViaStaticImport(toImport.getContainingClass());
+              getMethodExpression(element).bindToElementViaStaticImport(toImport);
             }
           }
           catch (IncorrectOperationException e) {

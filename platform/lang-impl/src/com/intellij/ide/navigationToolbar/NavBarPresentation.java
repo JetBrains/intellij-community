@@ -61,8 +61,9 @@ public class NavBarPresentation {
     myProject = project;
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   @Nullable
-  public static Icon getIcon(final Object object, final boolean open) {
+  public Icon getIcon(final Object object, final boolean open) {
     if (!NavBarModel.isValid(object)) return null;
     if (object instanceof Project) return AllIcons.Nodes.Project;
     if (object instanceof Module) return ModuleType.get(((Module)object)).getIcon();
@@ -92,8 +93,9 @@ public class NavBarPresentation {
     return null;
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
-  protected static String getPresentableText(final Object object) {
+  protected String getPresentableText(final Object object) {
     if (!NavBarModel.isValid(object)) {
       return IdeBundle.message("node.structureview.invalid");
     }

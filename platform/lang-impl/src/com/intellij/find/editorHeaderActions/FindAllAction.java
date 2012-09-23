@@ -6,6 +6,7 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
@@ -27,8 +28,11 @@ public class FindAllAction extends EditorHeaderAction implements DumbAware {
     getTemplatePresentation().setIcon(AllIcons.Actions.Export);
     getTemplatePresentation().setDescription("Export matches to Find tool window");
     getTemplatePresentation().setText("Find All");
-    registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES).getShortcutSet(),
-                              editorSearchComponent.getSearchField());
+    final AnAction findUsages = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES);
+    if (findUsages != null) {
+      registerCustomShortcutSet(findUsages.getShortcutSet(),
+                                editorSearchComponent.getSearchField());
+    }
   }
 
   @Override

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>TypeParameterExtendsFinalClass.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Type parameter extends final class</problem_class>
+    <description>Type parameter &lt;code&gt;T&lt;/code&gt; extends final class 'String' #loc</description>
+  </problem>
+
+  <problem>
+    <file>TypeParameterExtendsFinalClass.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Type parameter extends final class</problem_class>
+    <description>Wildcard type argument &lt;code&gt;?&lt;/code&gt; extends final class 'Usee' #loc</description>
+  </problem>
+</problems>

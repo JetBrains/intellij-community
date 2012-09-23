@@ -51,8 +51,8 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
     isPopupElement = idx == -1;
     if (object != null) {
       final NavBarPresentation presentation = myPanel.getPresentation();
-      myText = NavBarPresentation.getPresentableText(object);
-      Icon icon = NavBarPresentation.getIcon(object, false);
+      myText = presentation.getPresentableText(object);
+      Icon icon = presentation.getIcon(object, false);
       myIcon = icon != null ? icon : EmptyIcon.create(5);
       myAttributes = presentation.getTextAttributes(object, false);
     } else {

@@ -65,8 +65,8 @@ public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcess
 
 
   protected GrReferenceElement[] findReferencesToRestore(PsiFile file,
-                                                                  RangeMarker bounds,
-                                                                  ReferenceTransferableData.ReferenceData[] referenceData) {
+                                                         RangeMarker bounds,
+                                                         ReferenceTransferableData.ReferenceData[] referenceData) {
     PsiManager manager = file.getManager();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     PsiResolveHelper helper = facade.getResolveHelper();
@@ -124,7 +124,9 @@ public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcess
           }
           else {
             LOG.assertTrue(reference instanceof GrReferenceExpression);
-            ((GrReferenceExpression)reference).bindToElementViaStaticImport(refClass);
+            PsiMethod[] members = refClass.findMethodsByName(refData.staticMemberName, true);
+            if (members.length == 0) return;
+            ((GrReferenceExpression)reference).bindToElementViaStaticImport(members[0]);
           }
         }
       }
