@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ListUtil;
+import com.intellij.ui.speedSearch.ListWithFilter;
 
 import javax.swing.*;
 import java.util.List;
@@ -40,7 +41,8 @@ class DeleteBookmarkAction extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(BookmarksAction.getSelectedBookmarks(myList).size() > 0);
+    final boolean searchActive = ListWithFilter.isSearchActive(myList);
+    e.getPresentation().setEnabled(!searchActive && BookmarksAction.getSelectedBookmarks(myList).size() > 0);
   }
 
   @Override
