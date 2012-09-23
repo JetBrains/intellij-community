@@ -148,14 +148,18 @@ public class Switcher extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
-    if (SWITCHER == null) {
+
       synchronized (Switcher.class) {
+        if (SWITCHER != null && SWITCHER.isPinnedMode()) {
+          SWITCHER.cancel();
+          SWITCHER = null;
+        }
         if (SWITCHER == null) {
           SWITCHER = createAndShowSwitcher(project, SWITCHER_TITLE, false);
           FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
         }
       }
-    }
+
 
     assert SWITCHER != null;
     if (!SWITCHER.isPinnedMode()) {
@@ -172,7 +176,13 @@ public class Switcher extends AnAction implements DumbAware {
   }
 
   public static SwitcherPanel createAndShowSwitcher(Project project, String title, boolean pinned) {
-    return new SwitcherPanel(project, title, pinned);
+    synchronized (Switcher.class) {
+      if (SWITCHER != null) {
+        SWITCHER.cancel();
+      }
+      SWITCHER = new SwitcherPanel(project, title, pinned);
+      return SWITCHER;
+    }
   }
 
   public static class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener {
@@ -499,19 +509,21 @@ public class Switcher extends AnAction implements DumbAware {
 
       final IdeFrameImpl ideFrame = WindowManagerEx.getInstanceEx().getFrame(project);
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, this)
-          .setResizable(pinned)
-          .setModalContext(false)
-          .setFocusable(true)
-          .setRequestFocus(true)
-          .setTitle(title)
-          .setMovable(pinned)
-          .setCancelKeyEnabled(false)
-          .setCancelCallback(new Computable<Boolean>() {
-            public Boolean compute() {
-              SWITCHER = null;
-              return true;
-            }
-          }).createPopup();
+        .setResizable(pinned)
+        .setModalContext(false)
+        .setFocusable(true)
+        .setRequestFocus(true)
+        .setTitle(title)
+        .setCancelOnWindowDeactivation(true)
+        .setCancelOnOtherWindowOpen(true)
+        .setMovable(pinned)
+        .setCancelKeyEnabled(false)
+        .setCancelCallback(new Computable<Boolean>() {
+          public Boolean compute() {
+            SWITCHER = null;
+            return true;
+          }
+        }).createPopup();
 
       if (isPinnedMode()) {
         new AnAction(null ,null ,null) {
