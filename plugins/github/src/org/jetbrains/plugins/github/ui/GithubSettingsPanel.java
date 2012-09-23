@@ -16,13 +16,16 @@
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import org.jetbrains.plugins.github.GithubSettings;
+import org.jetbrains.plugins.github.GithubUtil;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -33,9 +36,14 @@ import java.awt.event.ActionListener;
  * @date 10/20/10
  */
 public class GithubSettingsPanel {
+  private JTextField myLoginTextField;
+  private JPasswordField myPasswordField;
   private JTextPane mySignupTextField;
   private JPanel myPane;
   private JButton myTestButton;
+  private JTextField myHostTextField;
+
+  private boolean myPasswordModified;
 
   public GithubSettingsPanel(final GithubSettings settings) {
     mySignupTextField.addHyperlinkListener(new HyperlinkAdapter() {
@@ -51,13 +59,30 @@ public class GithubSettingsPanel {
     myTestButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        Project project = ProjectManager.getInstance().getDefaultProject();
-        final GithubLoginDialog dialog = new GithubLoginDialog(project);
-        dialog.show();
-        if (dialog.isOK()){
-          // the dialog won't let close after pressing OK if the connection is not successful
+        String password = isPasswordModified() ? getPassword() : settings.getPassword();
+        if (GithubUtil.checkCredentials(ProjectManager.getInstance().getDefaultProject(), getHost(), getLogin(), password)){
           Messages.showInfoMessage(myPane, "Connection successful", "Success");
+        } else {
+          Messages.showErrorDialog(myPane, "Cannot login to the " + getHost() + " using given credentials", "Failure");
         }
+        setPassword(password);
+      }
+    });
+
+    myPasswordField.getDocument().addDocumentListener(new DocumentListener() {
+      @Override
+      public void insertUpdate(DocumentEvent e) {
+        myPasswordModified = true;
+      }
+
+      @Override
+      public void removeUpdate(DocumentEvent e) {
+        myPasswordModified = true;
+      }
+
+      @Override
+      public void changedUpdate(DocumentEvent e) {
+        myPasswordModified = true;
       }
     });
   }
@@ -66,5 +91,37 @@ public class GithubSettingsPanel {
     return myPane;
   }
 
+  public void setLogin(final String login) {
+    myLoginTextField.setText(login);
+  }
+
+  public void setPassword(final String password) {
+    // Show password as blank if password is empty
+    myPasswordField.setText(StringUtil.isEmpty(password) ? null : password);
+  }
+
+  public String getLogin() {
+    return myLoginTextField.getText().trim();
+  }
+
+  public String getPassword() {
+    return String.valueOf(myPasswordField.getPassword());
+  }
+
+  public void setHost(final String host) {
+    myHostTextField.setText(host);
+  }
+
+  public String getHost() {
+    return myHostTextField.getText().trim();
+  }
+
+  public boolean isPasswordModified() {
+    return myPasswordModified;
+  }
+
+  public void resetPasswordModification() {
+    myPasswordModified = false;
+  }
 }
 
