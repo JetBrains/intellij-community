@@ -90,6 +90,8 @@ public class DefaultHighlighter {
   static final String VALID_STRING_ESCAPE_ID = "Valid string escape";
   static final String INVALID_STRING_ESCAPE_ID = "Invalid string escape";
 
+  @NonNls static final String LABEL_ID = "Label";
+
   public static TextAttributesKey LINE_COMMENT = TextAttributesKey.createTextAttributesKey(LINE_COMMENT_ID,
                                                                                            SyntaxHighlighterColors.LINE_COMMENT
                                                                                              .getDefaultAttributes());
@@ -248,6 +250,12 @@ public class DefaultHighlighter {
     TextAttributesKey.createTextAttributesKey(VALID_STRING_ESCAPE_ID, SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes());
   public static final TextAttributesKey INVALID_STRING_ESCAPE = TextAttributesKey
     .createTextAttributesKey(INVALID_STRING_ESCAPE_ID, SyntaxHighlighterColors.INVALID_STRING_ESCAPE.getDefaultAttributes());
+
+
+  public static final TextAttributes LABEL_ATTRIBUTES = HighlighterColors.TEXT.getDefaultAttributes().clone();
+
+  public static final TextAttributesKey LABEL = TextAttributesKey.createTextAttributesKey(LABEL_ID, LABEL_ATTRIBUTES);
+
 
   private DefaultHighlighter() {
   }
