@@ -138,15 +138,6 @@ public class GithubSettings implements PersistentStateComponent<Element> {
       password = "";
     }
 
-    // Store password in memory for easier access in this session
-    if (password != null) {
-      try {
-        passwordSafe.getMemoryProvider().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password);
-      }
-      catch (PasswordSafeException e) {
-        LOG.info("Couldn't store password in memory for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
-      }
-    }
     passwordChanged = false;
     return password != null ? password : "";
   }

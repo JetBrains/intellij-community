@@ -103,9 +103,14 @@ public class PasswordSafeImpl extends PasswordSafe {
   public String getPassword(Project project, Class requester, String key) throws PasswordSafeException {
     if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
       String password = getMemoryProvider().getPassword(project, requester, key);
-      if (password != null) {
-        return password;
+      if (password == null) {
+        password = provider().getPassword(project, requester, key);
+        if (password != null) {
+          // cache the password in memory as well for easier access during the session
+          getMemoryProvider().storePassword(project, requester, key, password);
+        }
       }
+      return password;
     }
     return provider().getPassword(project, requester, key);
   }
