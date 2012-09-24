@@ -91,7 +91,8 @@ public class JavaDocCommentFixer implements DocCommentFixer {
       return;
     }
 
-    PsiDocCommentOwner owner = ((PsiDocComment)comment).getOwner();
+    PsiDocComment docComment = (PsiDocComment)comment;
+    PsiDocCommentOwner owner = docComment.getOwner();
     if (owner == null) {
       return;
     }
@@ -123,7 +124,8 @@ public class JavaDocCommentFixer implements DocCommentFixer {
     }
     
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-    locateCaret((PsiDocComment)comment, editor);
+    ensureContentOrdered(docComment, editor.getDocument());
+    locateCaret(docComment, editor);
   }
 
   @NotNull
@@ -137,7 +139,7 @@ public class JavaDocCommentFixer implements DocCommentFixer {
     localInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = PsiModifier.PRIVATE;
     //endregion
     
-    localInspection.IGNORE_EMPTY_DESCRIPTIONS = true;
+    localInspection.setIgnoreEmptyDescriptions(true);
 
     //region class type arguments
     if (!localInspection.TOP_LEVEL_CLASS_OPTIONS.REQUIRED_TAGS.contains(PARAM_TAG)) {
@@ -225,6 +227,17 @@ public class JavaDocCommentFixer implements DocCommentFixer {
     }
   }
 
+  private static void ensureContentOrdered(@NotNull PsiDocComment comment, @NotNull Document document) {
+    PsiDocCommentOwner owner = comment.getOwner();
+    if ((owner instanceof PsiMethod)) {
+      ensureParametersOrder(comment, (PsiMethod)owner, document);
+    }
+  }
+
+  private static void ensureParametersOrder(@NotNull PsiDocComment comment, @NotNull PsiMethod method, @NotNull Document document) {
+    
+  }
+  
   private static void locateCaret(@NotNull PsiDocComment comment, @NotNull Editor editor) {
     Document document = editor.getDocument();
     int lineToNavigate = -1;
