@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Bas Leijdekkers
+ * Copyright 2006-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,51 +19,76 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class AddClarifyingParenthesesPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(@NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
-    if (element instanceof PsiParenthesizedExpression) {
+    if (mightBeConfusingExpression(parent)) {
       return false;
     }
     if (element instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element;
       final IElementType tokenType = polyadicExpression.getOperationTokenType();
-      if (parent instanceof PsiExpression) {
-        final PsiExpression expression = (PsiExpression)parent;
-        if (needsParentheses(expression, tokenType)) {
-          return true;
-        }
-      }
       final PsiExpression[] operands = polyadicExpression.getOperands();
       for (PsiExpression operand : operands) {
-        if (needsParentheses(operand, tokenType)) {
+        if (operand instanceof PsiInstanceOfExpression) {
+          return true;
+        }
+        if (!(operand instanceof PsiPolyadicExpression)) {
+          continue;
+        }
+        final PsiPolyadicExpression expression = (PsiPolyadicExpression)operand;
+        final IElementType otherTokenType = expression.getOperationTokenType();
+        if (!tokenType.equals(otherTokenType)) {
           return true;
         }
       }
-      return false;
     }
-    if (parent instanceof PsiConditionalExpression) {
-      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)parent;
+    else if (element instanceof PsiConditionalExpression) {
+      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element;
       final PsiExpression condition = conditionalExpression.getCondition();
-      return element == condition;
-    }
-    return element instanceof PsiInstanceOfExpression && parent instanceof PsiPolyadicExpression;
-  }
-
-  private static boolean needsParentheses(PsiExpression expression,
-                                          IElementType tokenType) {
-    if (expression instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)expression;
-      final IElementType expressionTokenType = binaryExpression.getOperationTokenType();
-      if (!tokenType.equals(expressionTokenType)) {
+      if (mightBeConfusingExpression(condition)) {
+        return true;
+      }
+      final PsiExpression thenExpression = conditionalExpression.getThenExpression();
+      if (mightBeConfusingExpression(thenExpression)) {
+        return true;
+      }
+      final PsiExpression elseExpression = conditionalExpression.getElseExpression();
+      if (mightBeConfusingExpression(elseExpression)) {
         return true;
       }
     }
-    else if (expression instanceof PsiInstanceOfExpression) {
+    else if (element instanceof PsiInstanceOfExpression) {
+      final PsiInstanceOfExpression instanceOfExpression = (PsiInstanceOfExpression)element;
+      final PsiExpression operand = instanceOfExpression.getOperand();
+      if (mightBeConfusingExpression(operand)) {
+        return true;
+      }
+    }
+    else if (element instanceof PsiAssignmentExpression) {
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
+      final PsiExpression rhs = assignmentExpression.getRExpression();
+      if (!(mightBeConfusingExpression(rhs))) {
+        return false;
+      }
+      if (rhs instanceof PsiAssignmentExpression) {
+        final PsiAssignmentExpression nestedAssignment = (PsiAssignmentExpression)rhs;
+        final IElementType nestedTokenType = nestedAssignment.getOperationTokenType();
+        final IElementType tokenType = assignmentExpression.getOperationTokenType();
+        if (nestedTokenType.equals(tokenType)) {
+          return false;
+        }
+      }
       return true;
     }
     return false;
+  }
+
+  private static boolean mightBeConfusingExpression(@Nullable PsiElement element) {
+    return element instanceof PsiPolyadicExpression || element instanceof PsiConditionalExpression ||
+           element instanceof PsiInstanceOfExpression || element instanceof PsiAssignmentExpression;
   }
 }
