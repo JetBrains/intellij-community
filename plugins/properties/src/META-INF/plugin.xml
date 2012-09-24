@@ -18,7 +18,8 @@
     <applicationService serviceInterface="com.intellij.lang.properties.refactoring.PropertiesRefactoringSettings"
                         serviceImplementation="com.intellij.lang.properties.refactoring.PropertiesRefactoringSettings"/>
     <annotator language="Properties" implementationClass="com.intellij.lang.properties.PropertiesAnnotator"/>
-    <completion.contributor language="Properties" implementationClass="com.intellij.lang.properties.PropertiesCompletionContributor" order="before javaClassReference"/>
+    <completion.contributor language="Properties" implementationClass="com.intellij.lang.properties.PropertiesCompletionContributor"
+                            id="propertiesCompletion" order="before javaClassReference"/>
     <lang.refactoringSupport language="Properties" implementationClass="com.intellij.lang.properties.refactoring.PropertiesRefactoringSupportProvider"/>
     <lang.documentationProvider language="Properties" implementationClass="com.intellij.lang.properties.PropertiesDocumentationProvider"/>
     <lang.findUsagesProvider language="Properties"
