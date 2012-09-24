@@ -22,7 +22,6 @@ import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
@@ -38,7 +37,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,7 +50,7 @@ import java.util.Set;
 )
 public class ApplicationStatisticsPersistenceComponent extends ApplicationStatisticsPersistence
   implements ApplicationComponent, PersistentStateComponent<Element> {
-  private boolean persistOnClosing = true;
+  private boolean persistOnClosing = !ApplicationManager.getApplication().isUnitTestMode();
 
   private static final String TOKENIZER = ",";
 
@@ -75,6 +73,7 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
     return ApplicationManager.getApplication().getComponent(ApplicationStatisticsPersistenceComponent.class);
   }
 
+  @Override
   public void loadState(final Element element) {
     List groups = element.getChildren(GROUP_TAG);
 
@@ -101,6 +100,7 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
     }
   }
 
+  @Override
   public Element getState() {
     Element element = new Element("state");
 
@@ -128,10 +128,10 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
     return element;
   }
 
-  private UsageDescriptor getUsageDescriptor(String usage) {
+  private static UsageDescriptor getUsageDescriptor(String usage) {
     // for instance, usage can be: "_foo"(equals "_foo=1") or "_foo=2"
     try {
-      final int i = usage.indexOf("=");
+      final int i = usage.indexOf('=');
       if (i > 0 && i < usage.length() - 1) {
         String key = usage.substring(0, i).trim();
         String value = usage.substring(i + 1).trim();
@@ -142,7 +142,7 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
               return new UsageDescriptor(key, count);
             }
           }
-          catch (NumberFormatException e) {
+          catch (NumberFormatException ignored) {
           }
         }
       }
@@ -166,23 +166,14 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
     }, TOKENIZER);
   }
 
-  @NotNull
-  @NonNls
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile("framework.usages")};
-  }
-
-  @NotNull
-  public String getPresentableName() {
-    return "Application Usages Statistics";
-  }
-
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "ApplicationStatisticsPersistenceComponent";
   }
 
+  @Override
   public void initComponent() {
     onAppClosing();
     onProjectClosing();
@@ -259,6 +250,7 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
     });
   }
 
+  @Override
   public void disposeComponent() {
   }
 }
