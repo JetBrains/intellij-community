@@ -71,12 +71,9 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   public Element getState() {
     LOG.assertTrue(!ProgressManager.getInstance().hasProgressIndicator(), "Password should not be accessed under modal progress");
 
-    final Project project = ProjectManager.getInstance().getDefaultProject();
     try {
       if (passwordChanged && !masterPasswordRefused) {
-        PasswordSafe.getInstance().storePassword(project,
-                                                 GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY,
-                                                 getPassword());
+        PasswordSafe.getInstance().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, getPassword());
       }
     }
     catch (MasterPasswordUnavailableException e){
@@ -144,8 +141,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     // Store password in memory for easier access in this session
     if (password != null) {
       try {
-        passwordSafe.getMemoryProvider().storePassword(ProjectManager.getInstance().getDefaultProject(),
-                                                       GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password);
+        passwordSafe.getMemoryProvider().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password);
       }
       catch (PasswordSafeException e) {
         LOG.info("Couldn't store password in memory for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
@@ -179,9 +175,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     passwordChanged = !getPassword().equals(password);
     try {
       final MemoryPasswordSafe memoryProvider = ((PasswordSafeImpl)PasswordSafe.getInstance()).getMemoryProvider();
-      memoryProvider.storePassword(ProjectManager.getInstance().getDefaultProject(),
-                                   GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY,
-                                   password != null ? password : "");
+      memoryProvider.storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password != null ? password : "");
     }
     catch (PasswordSafeException e) {
       LOG.info("Couldn't get password for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
