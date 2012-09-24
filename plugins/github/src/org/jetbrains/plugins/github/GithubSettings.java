@@ -20,7 +20,6 @@ import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafe;
-import com.intellij.ide.passwordSafe.impl.providers.memory.MemoryPasswordSafe;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -165,8 +164,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   public void setPassword(final String password) {
     passwordChanged = !getPassword().equals(password);
     try {
-      final MemoryPasswordSafe memoryProvider = ((PasswordSafeImpl)PasswordSafe.getInstance()).getMemoryProvider();
-      memoryProvider.storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password != null ? password : "");
+      PasswordSafe.getInstance().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password != null ? password : "");
     }
     catch (PasswordSafeException e) {
       LOG.info("Couldn't get password for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
