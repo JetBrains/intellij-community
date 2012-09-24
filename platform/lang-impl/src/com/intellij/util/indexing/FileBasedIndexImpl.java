@@ -68,7 +68,6 @@ import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.*;
 import jsr166e.SequenceLock;
 import org.jetbrains.annotations.NonNls;
@@ -606,44 +605,39 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
 
   private void performShutdown() {
-    ShutDownTracker.invokeAndWait(false, true, new Runnable() {
-      @Override
-      public void run() {
-        if (!myShutdownPerformed.compareAndSet(false, true)) {
-          return; // already shut down
-        }
-        try {
-          if (myFlushingFuture != null) {
-            myFlushingFuture.cancel(false);
-            myFlushingFuture = null;
-          }
-
-          myFileDocumentManager.saveAllDocuments();
-        }
-        finally {
-          LOG.info("START INDEX SHUTDOWN");
-          try {
-            myChangedFilesCollector.forceUpdate(null, null, null, true);
-
-            for (ID<?, ?> indexId : myIndices.keySet()) {
-              final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
-              assert index != null;
-              checkRebuild(indexId, true); // if the index was scheduled for rebuild, only clean it
-              //LOG.info("DISPOSING " + indexId);
-              index.dispose();
-            }
-
-            myVfManager.removeVirtualFileListener(myChangedFilesCollector);
-
-            //FileUtil.delete(getMarkerFile());
-          }
-          catch (Throwable e) {
-            LOG.error("Problems during index shutdown", e);
-          }
-          LOG.info("END INDEX SHUTDOWN");
-        }
+    if (!myShutdownPerformed.compareAndSet(false, true)) {
+      return; // already shut down
+    }
+    try {
+      if (myFlushingFuture != null) {
+        myFlushingFuture.cancel(false);
+        myFlushingFuture = null;
       }
-    });
+
+      myFileDocumentManager.saveAllDocuments();
+    }
+    finally {
+      LOG.info("START INDEX SHUTDOWN");
+      try {
+        myChangedFilesCollector.forceUpdate(null, null, null, true);
+
+        for (ID<?, ?> indexId : myIndices.keySet()) {
+          final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+          assert index != null;
+          checkRebuild(indexId, true); // if the index was scheduled for rebuild, only clean it
+          //LOG.info("DISPOSING " + indexId);
+          index.dispose();
+        }
+
+        myVfManager.removeVirtualFileListener(myChangedFilesCollector);
+
+        //FileUtil.delete(getMarkerFile());
+      }
+      catch (Throwable e) {
+        LOG.error("Problems during index shutdown", e);
+      }
+      LOG.info("END INDEX SHUTDOWN");
+    }
   }
 
   private void flushAllIndices(final long modCount) {
@@ -1041,7 +1035,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         }
 
         long start = System.currentTimeMillis();
-        
+
         final TIntHashSet filesSet = new TIntHashSet();
         iterateIndexableFiles(new ContentIterator() {
           @Override
@@ -1052,10 +1046,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         }, project, ProgressManager.getInstance().getProgressIndicator());
         ProjectIndexableFilesFilter filter = new ProjectIndexableFilesFilter(filesSet, myFilesModCount);
         project.putUserData(ourProjectFilesSetKey, new SoftReference<ProjectIndexableFilesFilter>(filter));
-        
+
         long finish = System.currentTimeMillis();
         LOG.debug(filesSet.size() + " files iterated in " + (finish - start) + " ms");
-        
+
         return filter;
       }
       finally {
