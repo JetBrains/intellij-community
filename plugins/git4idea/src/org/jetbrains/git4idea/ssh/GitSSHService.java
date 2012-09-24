@@ -39,10 +39,6 @@ public abstract class GitSSHService {
    */
   private static final Random RANDOM = new Random();
   /**
-   * If true, the component has been initialized
-   */
-  private boolean myInitialized = false;
-  /**
    * Path to the generated script
    */
   private File myScriptPath;
@@ -82,14 +78,9 @@ public abstract class GitSSHService {
     return null;
   }
 
-  /**
-   * Initialize component
-   */
-  public void initComponent() {
-    if (!myInitialized) {
-      registerInternalHandler(GitSSHHandler.HANDLER_NAME, new InternalRequestHandler());
-      myInitialized = true;
-    }
+  // subclass should call it only once
+  protected void addInternalHandler() {
+    registerInternalHandler(GitSSHHandler.HANDLER_NAME, new InternalRequestHandler());
   }
 
   /**
@@ -107,7 +98,6 @@ public abstract class GitSSHService {
    * @return an identifier to pass to the environment variable
    */
   public synchronized int registerHandler(@NotNull Handler handler) {
-    initComponent();
     while (true) {
       int candidate = RANDOM.nextInt();
       if (candidate == Integer.MIN_VALUE) {

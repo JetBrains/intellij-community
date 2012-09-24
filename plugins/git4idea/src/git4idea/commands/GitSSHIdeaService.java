@@ -35,6 +35,8 @@ public class GitSSHIdeaService extends GitSSHService {
     if (service == null) {
       throw new IllegalStateException("The service " + GitSSHIdeaService.class.getName() + " cannot be located");
     }
+
+    service.addInternalHandler();
     return service;
   }
 
