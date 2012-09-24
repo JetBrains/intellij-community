@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,6 +66,7 @@ public class PsiWildcardType extends PsiType {
 
   public static PsiWildcardType changeBound(@NotNull PsiWildcardType type, @NotNull PsiType newBound) {
     LOG.assertTrue(type.getBound() != null);
+    LOG.assertTrue(newBound.isValid());
     if (type.myIsExtending) {
       if (newBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
         return createUnbounded(type.myManager);
