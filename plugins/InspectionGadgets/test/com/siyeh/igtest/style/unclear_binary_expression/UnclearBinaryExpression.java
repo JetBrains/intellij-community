@@ -46,4 +46,8 @@ public class UnclearBinaryExpression {
     String s = true? false ? "one" : "two" : "three";
     boolean b = true ? o instanceof String : false;
   }
+
+  void more(int i) {
+    i = i += i = 1;
+  }
 }

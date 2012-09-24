@@ -41,4 +41,11 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unclear expression</problem_class>
     <description>Expression could use clarifying parentheses #loc</description>
   </problem>
+
+  <problem>
+    <file>UnclearBinaryExpression.java</file>
+    <line>51</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unclear expression</problem_class>
+    <description>Expression could use clarifying parentheses #loc</description>
+  </problem>
 </problems>
