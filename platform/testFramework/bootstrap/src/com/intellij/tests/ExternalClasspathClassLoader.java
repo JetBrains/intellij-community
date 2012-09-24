@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.tests;
 
 import java.io.BufferedReader;
@@ -29,8 +25,10 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author max
+ */
 public class ExternalClasspathClassLoader extends URLClassLoader {
-
   private ExternalClasspathClassLoader(URL[] urls) {
     super(urls, Thread.currentThread().getContextClassLoader());
   }
@@ -41,7 +39,7 @@ public class ExternalClasspathClassLoader extends URLClassLoader {
     try {
       final BufferedReader reader = new BufferedReader(new FileReader(file));
       try {
-        while(reader.ready()) {
+        while (reader.ready()) {
           roots.add(reader.readLine());
         }
       }
@@ -49,6 +47,7 @@ public class ExternalClasspathClassLoader extends URLClassLoader {
         reader.close();
       }
 
+      //noinspection SSBasedInspection
       return roots.toArray(new String[roots.size()]);
     }
     catch (IOException e) {
@@ -60,13 +59,14 @@ public class ExternalClasspathClassLoader extends URLClassLoader {
     final String classPathFilePath = System.getProperty("classpath.file");
     return classPathFilePath != null ? parseUrls(classPathFilePath) : null;
   }
-  
+
   public static String[] getExcludeRoots() {
     try {
       final String classPathFilePath = System.getProperty("exclude.tests.roots.file");
       return classPathFilePath != null ? parseUrls(classPathFilePath) : null;
     }
     catch (Exception e) {
+      //noinspection SSBasedInspection
       return new String[0];
     }
   }
@@ -74,9 +74,9 @@ public class ExternalClasspathClassLoader extends URLClassLoader {
   public static void install() {
     try {
       URL[] urls = parseUrls();
-      if (urls == null) return;
-
-      Thread.currentThread().setContextClassLoader(new ExternalClasspathClassLoader(urls));
+      if (urls != null) {
+        Thread.currentThread().setContextClassLoader(new ExternalClasspathClassLoader(urls));
+      }
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -90,8 +90,8 @@ public class ExternalClasspathClassLoader extends URLClassLoader {
 
       URL[] urls = new URL[roots.length];
       for (int i = 0; i < urls.length; i++) {
-      urls[i] = new File(roots[i]).toURI().toURL();
-    }
+        urls[i] = new File(roots[i]).toURI().toURL();
+      }
       return urls;
     }
     catch (MalformedURLException e) {
@@ -99,4 +99,3 @@ public class ExternalClasspathClassLoader extends URLClassLoader {
     }
   }
 }
-
