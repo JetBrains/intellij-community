@@ -41,4 +41,9 @@ public class UnclearBinaryExpression {
   static class Operation {
     static Operation equals;
   }
+
+  void more(Object o) {
+    String s = true? false ? "one" : "two" : "three";
+    boolean b = true ? o instanceof String : false;
+  }
 }
