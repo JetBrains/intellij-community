@@ -125,6 +125,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   @Nullable private ScheduledFuture<?> myFlushingFuture;
   private volatile int myLocalModCount;
   private volatile int myFilesModCount;
+  private final AtomicInteger myUpdatingFiles = new AtomicInteger();
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) private volatile boolean myInitialized;  // need this variable for memory barrier
 
   public FileBasedIndexImpl(final VirtualFileManagerEx vfManager,
@@ -1009,11 +1010,17 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
+  void updatingDone() {
+    if(myUpdatingFiles.decrementAndGet() == 0) {
+      ++myFilesModCount;
+    }
+  }
+
   private final Lock myCalcIndexableFilesLock = new SequenceLock();
 
   @Nullable
   public ProjectIndexableFilesFilter projectIndexableFiles(@Nullable Project project) {
-    if (project == null) return null;
+    if (project == null || myUpdatingFiles.get() > 0) return null;
 
     SoftReference<ProjectIndexableFilesFilter> reference = project.getUserData(ourProjectFilesSetKey);
     ProjectIndexableFilesFilter data = reference != null ? reference.get() : null;
@@ -1794,10 +1801,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     private void markDirty(@NotNull final VirtualFileEvent event, final boolean contentChange) {
       final VirtualFile eventFile = event.getFile();
       cleanProcessedFlag(eventFile);
+      if (!contentChange) {
+        myUpdatingFiles.incrementAndGet();
+      }
+
       iterateIndexableFiles(eventFile, new Processor<VirtualFile>() {
         @Override
         public boolean process(@NotNull final VirtualFile file) {
-          if (!contentChange) ++myFilesModCount;
           FileContent fileContent = null;
           // handle 'content-less' indices separately
           for (ID<?, ?> indexId : myNotRequiringContentIndices) {
@@ -1828,6 +1838,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         }
       });
       IndexingStamp.flushCache(null);
+      if (!contentChange) {
+        if(myUpdatingFiles.decrementAndGet() == 0) {
+          ++myFilesModCount;
+        }
+      }
     }
 
     public void scheduleForUpdate(VirtualFile file) {
@@ -2186,7 +2201,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @NotNull
   public CollectingContentIterator createContentIterator() {
-    ++myFilesModCount;
+    myUpdatingFiles.incrementAndGet();
     return new UnindexedFilesFinder();
   }
 
