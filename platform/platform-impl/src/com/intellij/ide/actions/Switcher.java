@@ -122,24 +122,24 @@ public class Switcher extends AnAction implements DumbAware {
     TW_SHORTCUT = new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()]));
 
 
-    IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
-      @Override
-      public boolean dispatch(AWTEvent event) {
-        ToolWindow tw;
-        if (SWITCHER != null && event instanceof KeyEvent) {
-          final KeyEvent keyEvent = (KeyEvent)event;
-          if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
-            SwingUtilities.invokeLater(CHECKER);
+      IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
+        @Override
+        public boolean dispatch(AWTEvent event) {
+          ToolWindow tw;
+          if (SWITCHER != null && event instanceof KeyEvent && !SWITCHER.isPinnedMode()) {
+            final KeyEvent keyEvent = (KeyEvent)event;
+            if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
+              SwingUtilities.invokeLater(CHECKER);
+            }
+            else if (event.getID() == KEY_PRESSED
+                     && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
+              SWITCHER.myPopup.closeOk(null);
+              tw.activate(null, true, true);
+            }
           }
-          else if (event.getID() == KEY_PRESSED
-                   && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
-            SWITCHER.myPopup.closeOk(null);
-            tw.activate(null, true, true);
-          }
+          return false;
         }
-        return false;
-      }
-    }, null);
+      }, null);
 
   }
 
@@ -148,14 +148,18 @@ public class Switcher extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
-    if (SWITCHER == null) {
+
       synchronized (Switcher.class) {
+        if (SWITCHER != null && SWITCHER.isPinnedMode()) {
+          SWITCHER.cancel();
+          SWITCHER = null;
+        }
         if (SWITCHER == null) {
           SWITCHER = createAndShowSwitcher(project, SWITCHER_TITLE, false);
           FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
         }
       }
-    }
+
 
     assert SWITCHER != null;
     if (!SWITCHER.isPinnedMode()) {
@@ -172,7 +176,13 @@ public class Switcher extends AnAction implements DumbAware {
   }
 
   public static SwitcherPanel createAndShowSwitcher(Project project, String title, boolean pinned) {
-    return new SwitcherPanel(project, title, pinned);
+    synchronized (Switcher.class) {
+      if (SWITCHER != null) {
+        SWITCHER.cancel();
+      }
+      SWITCHER = new SwitcherPanel(project, title, pinned);
+      return SWITCHER;
+    }
   }
 
   public static class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener {
@@ -372,7 +382,7 @@ public class Switcher extends AnAction implements DumbAware {
           @Override
           protected void paintComponent(Graphics g) {
             GraphicsConfig config = new GraphicsConfig(g);
-            ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+              ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
             super.paintComponent(g);
             config.restore();
           }
@@ -504,6 +514,8 @@ public class Switcher extends AnAction implements DumbAware {
         .setFocusable(true)
         .setRequestFocus(true)
         .setTitle(title)
+        .setCancelOnWindowDeactivation(true)
+        .setCancelOnOtherWindowOpen(true)
         .setMovable(pinned)
         .setCancelKeyEnabled(false)
         .setCancelCallback(new Computable<Boolean>() {
@@ -693,7 +705,7 @@ public class Switcher extends AnAction implements DumbAware {
     private static void removeElementAt(JList jList, int index) {
       final ListModel model = jList.getModel();
       if (model instanceof DefaultListModel) {
-        ((DefaultListModel)model).removeElementAt(index);
+       ((DefaultListModel)model).removeElementAt(index);
       } else if (model instanceof NameFilteringListModel) {
         ((NameFilteringListModel)model).remove(index);
       } else {
@@ -905,31 +917,31 @@ public class Switcher extends AnAction implements DumbAware {
 
       @Override
       protected int getSelectedIndex() {
-        return isFilesSelected()
-               ? files.getSelectedIndex()
-               : files.getModel().getSize() + toolWindows.getSelectedIndex();
+          return isFilesSelected()
+                 ? files.getSelectedIndex()
+                 : files.getModel().getSize() + toolWindows.getSelectedIndex();
       }
 
       @Override
       protected Object[] getAllElements() {
 
-        final SwitcherPanel switcher = SwitcherPanel.this;
+          final SwitcherPanel switcher = SwitcherPanel.this;
 
-        ListModel filesModel = switcher.files.getModel();
-        final Object[] files = new Object[filesModel.getSize()];
-        for (int i = 0; i < files.length; i++) {
-          files[i] = filesModel.getElementAt(i);
-        }
+          ListModel filesModel = switcher.files.getModel();
+          final Object[] files = new Object[filesModel.getSize()];
+          for (int i = 0; i < files.length; i++) {
+            files[i] = filesModel.getElementAt(i);
+          }
 
-        ListModel twModel = switcher.toolWindows.getModel();
-        final Object[] toolWindows = new Object[twModel.getSize()];
-        for (int i = 0; i < toolWindows.length; i++) {
-          toolWindows[i] = twModel.getElementAt(i);
-        }
+          ListModel twModel = switcher.toolWindows.getModel();
+          final Object[] toolWindows = new Object[twModel.getSize()];
+          for (int i = 0; i < toolWindows.length; i++) {
+            toolWindows[i] = twModel.getElementAt(i);
+          }
 
-        myElements = new Object[files.length + toolWindows.length];
-        System.arraycopy(files, 0, myElements, 0, files.length);
-        System.arraycopy(toolWindows, 0, myElements, files.length, toolWindows.length);
+          myElements = new Object[files.length + toolWindows.length];
+          System.arraycopy(files, 0, myElements, 0, files.length);
+          System.arraycopy(toolWindows, 0, myElements, files.length, toolWindows.length);
 
         return myElements;
       }
