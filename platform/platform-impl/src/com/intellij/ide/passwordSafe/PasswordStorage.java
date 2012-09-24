@@ -32,7 +32,7 @@ public interface PasswordStorage {
    * @throws PasswordSafeException if password safe cannot be accessed
    */
   @Nullable
-  String getPassword(Project project, Class requester, String key) throws PasswordSafeException;
+  String getPassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException;
   /**
    * Remove password stored in a password safe
    *
@@ -42,7 +42,7 @@ public interface PasswordStorage {
    * @return the plugin key
    * @throws PasswordSafeException if password safe cannot be accessed
    */
-  void removePassword(Project project, Class requester, String key) throws PasswordSafeException;
+  void removePassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException;
   /**
    * Store password in password safe
    *
