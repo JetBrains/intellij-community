@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
@@ -34,10 +35,29 @@ public class JavaClassReferenceCompletionContributor extends CompletionContribut
       final PsiReference last = references[references.length - 1];
       context.setReplacementOffset(last.getRangeInElement().getEndOffset() + last.getElement().getTextRange().getStartOffset());
     }
-
   }
 
-  @Nullable 
+  @Override
+  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+    PsiElement position = parameters.getPosition();
+    JavaClassReference reference = findJavaClassReference(position.getContainingFile(), parameters.getOffset());
+    if (reference == null) {
+      return;
+    }
+
+    if (parameters.getCompletionType() == CompletionType.CLASS_NAME || parameters.isExtendedCompletion()) {
+      JavaClassNameCompletionContributor.addAllClasses(parameters, result);
+    }
+    else {
+      CompletionData data = CompletionUtil.getCompletionDataByElement(position, parameters.getOriginalFile());
+      if (data != null) {
+        LegacyCompletionContributor.completeReference(parameters, result, data);
+      }
+    }
+    result.stopHere();
+  }
+
+  @Nullable
   public static JavaClassReference findJavaClassReference(final PsiFile file, final int offset) {
     PsiReference reference = file.findReferenceAt(offset);
     if (reference instanceof PsiMultiReference) {

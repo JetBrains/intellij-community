@@ -54,14 +54,18 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
   public void fillCompletionVariants(CompletionParameters parameters, final CompletionResultSet _result) {
     if (parameters.getCompletionType() == CompletionType.CLASS_NAME ||
       parameters.isExtendedCompletion() && mayContainClassName(parameters)) {
-      CompletionResultSet result = _result.withPrefixMatcher(CompletionUtil.findReferenceOrAlphanumericPrefix(parameters));
-      addAllClasses(parameters, parameters.getInvocationCount() <= 1, result.getPrefixMatcher(), new Consumer<LookupElement>() {
-        @Override
-        public void consume(LookupElement element) {
-          _result.addElement(element);
-        }
-      });
+      addAllClasses(parameters, _result);
     }
+  }
+
+  static void addAllClasses(CompletionParameters parameters, final CompletionResultSet _result) {
+    CompletionResultSet result = _result.withPrefixMatcher(CompletionUtil.findReferenceOrAlphanumericPrefix(parameters));
+    addAllClasses(parameters, parameters.getInvocationCount() <= 1, result.getPrefixMatcher(), new Consumer<LookupElement>() {
+      @Override
+      public void consume(LookupElement element) {
+        _result.addElement(element);
+      }
+    });
   }
 
   private static boolean mayContainClassName(CompletionParameters parameters) {
