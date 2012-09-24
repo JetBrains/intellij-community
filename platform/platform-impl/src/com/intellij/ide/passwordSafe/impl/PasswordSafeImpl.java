@@ -24,6 +24,7 @@ import com.intellij.ide.passwordSafe.impl.providers.memory.MemoryPasswordSafe;
 import com.intellij.ide.passwordSafe.impl.providers.nil.NilProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The implementation of password safe service
@@ -113,7 +114,7 @@ public class PasswordSafeImpl extends PasswordSafe {
   /**
    * {@inheritDoc}
    */
-  public void storePassword(Project project, Class requester, String key, String value) throws PasswordSafeException {
+  public void storePassword(@Nullable Project project, Class requester, String key, String value) throws PasswordSafeException {
     provider().storePassword(project, requester, key, value);
   }
 
