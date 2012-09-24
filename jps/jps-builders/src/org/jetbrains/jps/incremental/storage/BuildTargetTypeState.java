@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetLoader;
 import org.jetbrains.jps.builders.BuildTargetType;
 
 import java.io.*;
@@ -41,11 +42,12 @@ public class BuildTargetTypeState {
       try {
         input.readInt();//reserved for version
         int size = input.readInt();
+        BuildTargetLoader loader = myTargetType.createLoader(myTargetsState.getModel());
         while (size-- > 0) {
           String stringId = IOUtil.readString(input);
           int intId = input.readInt();
           myTargetsState.markUsedId(intId);
-          BuildTarget target = myTargetType.createTarget(stringId, myTargetsState.getRootsIndex(), myTargetsState.getArtifactRootsIndex());
+          BuildTarget target = loader.createTarget(stringId);
           if (target != null) {
             myTargetIds.put(target, intId);
           }

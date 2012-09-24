@@ -1,9 +1,9 @@
 package org.jetbrains.jps.builders;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.incremental.ModuleRootsIndex;
-import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
+import org.jetbrains.jps.model.JpsModel;
+
+import java.util.Collection;
 
 /**
  * @author nik
@@ -19,8 +19,9 @@ public abstract class BuildTargetType {
     return myTypeId;
   }
 
-  @Nullable
-  public abstract BuildTarget createTarget(@NotNull String targetId,
-                                           @NotNull ModuleRootsIndex rootsIndex,
-                                           ArtifactRootsIndex artifactRootsIndex);
+  @NotNull
+  public abstract Collection<BuildTarget<?>> computeAllTargets(@NotNull JpsModel model);
+
+  @NotNull
+  public abstract BuildTargetLoader createLoader(@NotNull JpsModel model);
 }

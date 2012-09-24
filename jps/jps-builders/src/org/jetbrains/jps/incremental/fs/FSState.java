@@ -5,14 +5,11 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.builders.BuildTarget;
-import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ModuleRootsIndex;
-import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
 import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.model.JpsModel;
 
 import java.io.DataInputStream;
 import java.io.DataOutput;
@@ -47,20 +44,21 @@ public class FSState {
     }
   }
 
-  public void load(DataInputStream in, ModuleRootsIndex rootsIndex, ArtifactRootsIndex artifactRootsIndex) throws IOException {
+  public void load(DataInputStream in, JpsModel model, final BuildRootIndex buildRootIndex) throws IOException {
     BuilderRegistry registry = BuilderRegistry.getInstance();
     int typeCount = in.readInt();
     while (typeCount-- > 0) {
       final String typeId = IOUtil.readString(in);
       int targetCount = in.readInt();
+      BuildTargetType type = registry.getTargetType(typeId);
+      BuildTargetLoader loader = type != null ? type.createLoader(model) : null;
       while (targetCount-- > 0) {
         final String id = IOUtil.readString(in);
-        BuildTargetType type = registry.getTargetType(typeId);
         boolean loaded = false;
-        if (type != null) {
-          BuildTarget target = type.createTarget(id, rootsIndex, artifactRootsIndex);
+        if (loader != null) {
+          BuildTarget target = loader.createTarget(id);
           if (target != null) {
-            getDelta(target).load(in, target, rootsIndex, artifactRootsIndex);
+            getDelta(target).load(in, target, buildRootIndex);
             myInitialScanPerformed.add(target);
             loaded = true;
           }

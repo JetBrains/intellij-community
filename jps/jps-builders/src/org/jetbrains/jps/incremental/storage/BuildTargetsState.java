@@ -7,9 +7,9 @@ import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
 import org.jetbrains.jps.incremental.BuilderRegistry;
-import org.jetbrains.jps.incremental.ModuleRootsIndex;
-import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
+import org.jetbrains.jps.model.JpsModel;
 
 import java.io.*;
 import java.util.concurrent.ConcurrentMap;
@@ -21,15 +21,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class BuildTargetsState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildTargetsState");
   private final File myDataStorageRoot;
-  private final ModuleRootsIndex myRootsIndex;
-  private final ArtifactRootsIndex myArtifactRootsIndex;
   private AtomicInteger myMaxTargetId = new AtomicInteger(0);
   private ConcurrentMap<BuildTargetType, BuildTargetTypeState> myTypeStates = new ConcurrentHashMap<BuildTargetType, BuildTargetTypeState>();
+  private JpsModel myModel;
+  private final BuildRootIndexImpl myBuildRootIndex;
 
-  public BuildTargetsState(File dataStorageRoot, ModuleRootsIndex rootsIndex, ArtifactRootsIndex artifactRootsIndex) {
+  public BuildTargetsState(File dataStorageRoot, JpsModel model, BuildRootIndexImpl buildRootIndex) {
     myDataStorageRoot = dataStorageRoot;
-    myRootsIndex = rootsIndex;
-    myArtifactRootsIndex = artifactRootsIndex;
+    myModel = model;
+    myBuildRootIndex = buildRootIndex;
     File targetTypesFile = getTargetTypesFile();
     try {
       DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(targetTypesFile)));
@@ -89,14 +89,6 @@ public class BuildTargetsState {
     return getTypeState(target.getTargetType()).getConfiguration(target);
   }
 
-  public ModuleRootsIndex getRootsIndex() {
-    return myRootsIndex;
-  }
-
-  public ArtifactRootsIndex getArtifactRootsIndex() {
-    return myArtifactRootsIndex;
-  }
-
   private BuildTargetTypeState getTypeState(BuildTargetType type) {
     BuildTargetTypeState state = myTypeStates.get(type);
     if (state == null) {
@@ -127,5 +119,13 @@ public class BuildTargetsState {
 
   public void clean() {
     FileUtil.delete(getTargetsDataRoot());
+  }
+
+  public JpsModel getModel() {
+    return myModel;
+  }
+
+  public BuildRootIndexImpl getBuildRootIndex() {
+    return myBuildRootIndex;
   }
 }

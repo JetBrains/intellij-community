@@ -27,8 +27,8 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
                                         @NotNull String pathInJar,
                                         @NotNull SourceFileFilter filter,
                                         int index,
-                                        ArtifactBuildTarget target) {
-    super(jarFile, filter, index, target);
+                                        ArtifactBuildTarget target, DestinationInfo destinationInfo) {
+    super(jarFile, filter, index, target, destinationInfo);
     myPathInJar = pathInJar;
   }
 

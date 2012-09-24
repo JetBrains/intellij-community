@@ -1,18 +1,28 @@
 package org.jetbrains.jps.builders;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 /**
  * @author nik
  */
-public abstract class AdditionalRootsProviderService {
+public abstract class AdditionalRootsProviderService<R extends BuildRootDescriptor> {
+  private Collection<? extends BuildTargetType> myTargetTypes;
+
+  protected AdditionalRootsProviderService(Collection<? extends BuildTargetType> targetTypes) {
+    myTargetTypes = targetTypes;
+  }
+
+  public Collection<? extends BuildTargetType> getTargetTypes() {
+    return myTargetTypes;
+  }
+
   @NotNull
-  public List<String> getAdditionalSourceRoots(@NotNull JpsModule module, File dataStorageRoot) {
+  public List<R> getAdditionalRoots(@NotNull BuildTarget<R> target, File dataStorageRoot) {
     return Collections.emptyList();
   }
 }

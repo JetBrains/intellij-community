@@ -1,24 +1,31 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.JpsPathUtil;
+import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
-import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
+import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author nik
  */
-public class ModuleBuildTarget extends BuildTarget {
+public class ModuleBuildTarget extends BuildTarget<RootDescriptor> {
   private final JpsModule myModule;
   private final String myModuleName;
   private final JavaModuleBuildTargetType myTargetType;
@@ -67,9 +74,24 @@ public class ModuleBuildTarget extends BuildTarget {
     return dependencies;
   }
 
+  @NotNull
   @Override
-  public RootDescriptor findRootDescriptor(String rootId, ModuleRootsIndex index, ArtifactRootsIndex artifactRootsIndex) {
-    return index.getRootDescriptor(null, new File(rootId));
+  public List<RootDescriptor> computeRootDescriptors(JpsModel model, ModuleRootsIndex index) {
+    List<RootDescriptor> roots = new ArrayList<RootDescriptor>();
+    for (JpsModuleSourceRoot sourceRoot : myModule.getSourceRoots()) {
+      final File root = JpsPathUtil.urlToFile(sourceRoot.getUrl());
+      final boolean testRoot = JavaSourceRootType.TEST_SOURCE.equals(sourceRoot.getRootType());
+      if (testRoot == isTests()) {
+        roots.add(new RootDescriptor(root, this, false, false));
+      }
+    }
+    return roots;
+  }
+
+  @Override
+  public RootDescriptor findRootDescriptor(String rootId, BuildRootIndex rootIndex) {
+    List<RootDescriptor> descriptors = rootIndex.getRootDescriptors(new File(rootId), Collections.<BuildTargetType>singletonList(myTargetType), null);
+    return ContainerUtil.getFirstItem(descriptors);
   }
 
   @Override

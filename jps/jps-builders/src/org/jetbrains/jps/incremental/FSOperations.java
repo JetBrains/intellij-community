@@ -19,8 +19,6 @@ import org.jetbrains.jps.model.module.JpsModuleType;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,7 +28,7 @@ import java.util.Set;
  */
 public class FSOperations {
   public static void markDirty(CompileContext context, final File file) throws IOException {
-    final RootDescriptor rd = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, file);
+    final RootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
       pd.fsState.markDirty(context, file, rd, pd.timestamps.getStorage());
@@ -38,7 +36,7 @@ public class FSOperations {
   }
 
   public static void markDirtyIfNotDeleted(CompileContext context, final File file) throws IOException {
-    final RootDescriptor rd = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, file);
+    final RootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
       pd.fsState.markDirtyIfNotDeleted(context, file, rd, pd.timestamps.getStorage());
@@ -46,7 +44,7 @@ public class FSOperations {
   }
 
   public static void markDeleted(CompileContext context, File file) throws IOException {
-    final RootDescriptor rd = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, file);
+    final RootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
       pd.fsState.registerDeleted(rd.target, file, pd.timestamps.getStorage());
@@ -140,14 +138,7 @@ public class FSOperations {
                              @Nullable THashSet<File> currentFiles) throws IOException {
     final ModuleRootsIndex rootsIndex = context.getProjectDescriptor().rootsIndex;
     final Set<File> excludes = new HashSet<File>(rootsIndex.getModuleExcludes(target.getModule()));
-    final Collection<RootDescriptor> roots = new ArrayList<RootDescriptor>();
-    for (RootDescriptor rd : rootsIndex.getModuleRoots(context, target.getModule())) {
-      roots.add(rd);
-    }
-    for (RootDescriptor rd : roots) {
-      if (target.isTests() != rd.isTestRoot) {
-        continue;
-      }
+    for (RootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
       if (!rd.root.exists()) {
         continue;
       }

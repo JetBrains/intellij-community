@@ -21,7 +21,9 @@ import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
+import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -34,7 +36,6 @@ import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.*;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
-import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.BufferedWriter;
@@ -338,10 +339,12 @@ public class IncProjectBuilder {
       }
     }
 
-    for (JpsModule module : context.getProjectDescriptor().jpsProject.getModules()) {
-      final List<RootDescriptor> moduleRoots = context.getProjectDescriptor().rootsIndex.getModuleRoots(context, module);
-      for (RootDescriptor d : moduleRoots) {
-        allSourceRoots.add(d.root);
+    ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+    for (BuildTargetType type : BuilderRegistry.getInstance().getTargetTypes()) {
+      for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets(type)) {
+        for (BuildRootDescriptor descriptor : projectDescriptor.getBuildRootIndex().getTargetRoots(target, context)) {
+          allSourceRoots.add(descriptor.getRootFile());
+        }
       }
     }
 
@@ -548,11 +551,11 @@ public class IncProjectBuilder {
           throw new ProjectBuildException(e);
         }
         finally {
-          final Collection<RootDescriptor> tempRoots = context.getProjectDescriptor().rootsIndex.clearTempRoots(context);
+          final Collection<? extends BuildRootDescriptor> tempRoots = context.getProjectDescriptor().getBuildRootIndex().clearTempRoots(context);
           if (!tempRoots.isEmpty()) {
             final Set<File> rootFiles = new HashSet<File>();
-            for (RootDescriptor rd : tempRoots) {
-              rootFiles.add(rd.root);
+            for (BuildRootDescriptor rd : tempRoots) {
+              rootFiles.add(rd.getRootFile());
               context.getProjectDescriptor().fsState.clearRecompile(rd);
             }
             myAsyncTasks.add(
@@ -901,11 +904,8 @@ public class IncProjectBuilder {
           fsState.markInitialScanPerformed(target);
         }
         final Timestamps timestamps = pd.timestamps.getStorage();
-        final List<RootDescriptor> roots = pd.rootsIndex.getModuleRoots(context, target.getModule());
-        for (RootDescriptor rd : roots) {
-          if (target.isTests() == rd.isTestRoot) {
-            marked |= fsState.markAllUpToDate(context.getProjectDescriptor().jpsProject, context.getScope(), rd, timestamps, context.getCompilationStartStamp());
-          }
+        for (RootDescriptor rd : pd.getBuildRootIndex().getTargetRoots(target, context)) {
+          marked |= fsState.markAllUpToDate(context.getProjectDescriptor().jpsProject, context.getScope(), rd, timestamps, context.getCompilationStartStamp());
         }
       }
 
