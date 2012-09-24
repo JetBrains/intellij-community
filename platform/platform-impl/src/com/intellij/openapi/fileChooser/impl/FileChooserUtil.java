@@ -17,6 +17,7 @@ package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -53,30 +54,27 @@ public final class FileChooserUtil {
                                             @Nullable final Project project,
                                             @Nullable final VirtualFile toSelect,
                                             @Nullable final VirtualFile lastPath) {
+    boolean chooseDir = descriptor instanceof FileSaverDescriptor;
+    VirtualFile result;
     if (toSelect == null && lastPath == null) {
-      if (project != null) {
-        final VirtualFile baseDir = project.getBaseDir();
-        if (baseDir != null) {
-          return baseDir;
-        }
-      }
+      result = project == null? null : project.getBaseDir();
     }
     else if (toSelect != null && lastPath != null) {
       if (Boolean.TRUE.equals(descriptor.getUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT))) {
-        return lastPath;
+        result = lastPath;
       }
       else {
-        return toSelect;
+        result = toSelect;
       }
     }
     else if (toSelect == null) {
-      return lastPath;
+      result = lastPath;
     }
     else {
-      return toSelect;
+      result = toSelect;
     }
 
-    return null;
+    return chooseDir && result != null && !result.isDirectory() ? result.getParent() : result;
   }
 
   @NotNull

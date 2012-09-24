@@ -107,17 +107,20 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   @Override
   @NotNull
   public VirtualFile[] choose(@Nullable VirtualFile toSelect, Project project) {
+    init();
     if (myProject == null && project != null) {
       myProject = project;
     }
-
-    prepareAndShow(toSelect);
+    restoreSelection(toSelect);
+    show();
     return myChosenFiles;
   }
 
   @Override
   public void choose(@Nullable VirtualFile toSelect, @NotNull Consumer<List<VirtualFile>> callback) {
-    prepareAndShow(toSelect);
+    init();
+    restoreSelection(toSelect);
+    show();
     if (myChosenFiles.length > 0) {
       callback.consume(Arrays.asList(myChosenFiles));
     } else if (callback instanceof FileChooser.FileChooserConsumer){
@@ -125,9 +128,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
   }
 
-  private void prepareAndShow(@Nullable VirtualFile toSelect) {
-    init();
-
+  protected void restoreSelection(@Nullable VirtualFile toSelect) {
     final VirtualFile lastOpenedFile = FileChooserUtil.getLastOpenedFile(myProject);
     final VirtualFile file = FileChooserUtil.getFileToSelect(myChooserDescriptor, myProject, toSelect, lastOpenedFile);
 
@@ -146,8 +147,10 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         }
       });
     }
+  }
 
-    show();
+  protected void storeSelection(@Nullable VirtualFile file) {
+    FileChooserUtil.setLastOpenedFile(myProject, file);
   }
 
   protected DefaultActionGroup createActionGroup() {
@@ -295,7 +298,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
 
     myChosenFiles = files;
-    FileChooserUtil.setLastOpenedFile(myProject, files[files.length - 1]);
+    storeSelection(files[files.length - 1]);
 
     super.doOKAction();
   }
