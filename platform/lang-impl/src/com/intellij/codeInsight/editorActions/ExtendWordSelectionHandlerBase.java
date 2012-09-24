@@ -37,7 +37,6 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
 
   @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-
     final TextRange originalRange = e.getTextRange();
     LOG.assertTrue(originalRange.getEndOffset() <= editorText.length(), getClass() + "; " + e);
 
@@ -51,7 +50,6 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
   }
 
   public static List<TextRange> expandToWholeLine(CharSequence text, @Nullable TextRange range, boolean isSymmetric) {
-    int textLength = text.length();
     List<TextRange> result = new ArrayList<TextRange>();
 
     if (range == null) {
@@ -63,13 +61,24 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
       result.add(range);
     }
 
+    TextRange expanded = getExpandedRange(text, range, isSymmetric);
+    if (expanded != null) {
+      result.add(expanded);
+    } else {
+      result.add(range);
+    }
+    return result;
+  }
 
+  @Nullable
+  private static TextRange getExpandedRange(CharSequence text, TextRange range, boolean isSymmetric) {
     int startOffset = range.getStartOffset();
     int endOffset = range.getEndOffset();
     int index1 = CharArrayUtil.shiftBackward(text, startOffset - 1, " \t");
     if (endOffset > startOffset && text.charAt(endOffset - 1) == '\n') {
       endOffset--;
     }
+    int textLength = text.length();
     int index2 = Math.min(textLength, CharArrayUtil.shiftForward(text, endOffset, " \t"));
 
     if (index1 < 0 || text.charAt(index1) == '\n' || index2 == textLength || text.charAt(index2) == '\n') {
@@ -85,28 +94,21 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
           }
         }
 
-        result.add(new TextRange(startOffset, endOffset));
+        return new TextRange(startOffset, endOffset);
       }
-      else {
-        if ((index1 < 0 || text.charAt(index1) == '\n') &&
-            (index2 == textLength || text.charAt(index2) == '\n')) {
-          startOffset = index1 + 1;
-          endOffset = index2;
-          if (endOffset < textLength) {
-            endOffset++;
-          }
-          result.add(new TextRange(startOffset, endOffset));
+
+      if ((index1 < 0 || text.charAt(index1) == '\n') &&
+          (index2 == textLength || text.charAt(index2) == '\n')) {
+        startOffset = index1 + 1;
+        endOffset = index2;
+        if (endOffset < textLength) {
+          endOffset++;
         }
-        else {
-          result.add(range);
-        }
+        return new TextRange(startOffset, endOffset);
       }
-    }
-    else {
-      result.add(range);
     }
 
-    return result;
+    return null;
   }
 
   public static List<TextRange> expandToWholeLine(CharSequence text, TextRange range) {
