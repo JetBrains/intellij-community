@@ -48,6 +48,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
   private LocalHistoryEventDispatcher myEventDispatcher;
 
   private final AtomicBoolean isInitialized = new AtomicBoolean();
+  private Runnable myShutdownTask;
 
   public static LocalHistoryImpl getInstanceImpl() {
     return (LocalHistoryImpl)getInstance();
@@ -57,11 +58,10 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
   public void initComponent() {
     if (!ApplicationManager.getApplication().isUnitTestMode() && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
 
-    Runnable myShutdownTask = new Runnable() {
+    myShutdownTask = new Runnable() {
       @Override
       public void run() {
         disposeComponent();
-        ShutDownTracker.getInstance().unregisterShutdownTask(this);
       }
     };
     ShutDownTracker.getInstance().registerShutdownTask(myShutdownTask);
@@ -143,6 +143,8 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
 
     myChangeList.close();
     LocalHistoryLog.LOG.info("Local history storage successfully closed.");
+
+    ShutDownTracker.getInstance().unregisterShutdownTask(myShutdownTask);
   }
 
   @TestOnly
