@@ -24,19 +24,22 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.asm4.ClassWriter;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 
 /**
  * @author yole
  */
 public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
-  private final boolean myJava6 = SystemInfo.isJavaVersionAtLeast("1.6");
+  private boolean myJava6;
   private IdeaProjectTestFixture myFixture;
 
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
@@ -51,6 +54,7 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createLightFixtureBuilder();
     myFixture = testFixtureBuilder.getFixture();
     myFixture.setUp();
+    myJava6 = SystemInfo.isJavaVersionAtLeast("1.6");
   }
 
   @Override
@@ -71,6 +75,19 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     Object instance = testClass.newInstance();
     Method method = testClass.getMethod("test", int.class);
     verifyCallThrowsException("@NotNull method MultipleReturns.test must not return null", instance, method, 1);
+  }
+
+  public void testSimpleParam() throws Exception {
+    Class testClass = prepareTest();
+    Object instance = testClass.newInstance();
+    Method method = testClass.getMethod("test", Object.class);
+    verifyCallThrowsException("Argument 0 for @NotNull parameter of SimpleParam.test must not be null", instance, method, (Object)null);
+  }
+
+  public void testConstructorParam() throws Exception {
+    Class testClass = prepareTest();
+    Constructor method = testClass.getConstructor(Object.class);
+    verifyCallThrowsException("Argument 0 for @NotNull parameter of ConstructorParam.<init> must not be null", null, method, (Object)null);
   }
 
   public void testEnumConstructor() throws Exception {
@@ -95,14 +112,19 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     assertNotNull(aClass.newInstance());
   }
 
-  private static void verifyCallThrowsException(final String expectedError, final Object instance, final Method method, final Object... args) throws IllegalAccessException {
+  private static void verifyCallThrowsException(String expectedError, @Nullable Object instance, Member member, @Nullable Object... args) throws Exception {
     String exceptionText = null;
     try {
-      method.invoke(instance, args);
+      if (member instanceof Constructor) {
+        ((Constructor)member).newInstance(args);
+      }
+      else {
+        ((Method)member).invoke(instance, args);
+      }
     }
     catch(InvocationTargetException ex) {
       Throwable cause = ex.getCause();
-      if (cause instanceof IllegalStateException) {
+      if (cause instanceof IllegalStateException || cause instanceof IllegalArgumentException) {
         exceptionText = cause.getMessage();
       }
     }
