@@ -19,8 +19,9 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   public FileBasedArtifactRootDescriptor(@NotNull File file,
                                          @NotNull SourceFileFilter filter,
                                          int index,
-                                         ArtifactBuildTarget target) {
-    super(file, filter, index, target);
+                                         ArtifactBuildTarget target,
+                                         @NotNull DestinationInfo destinationInfo) {
+    super(file, filter, index, target, destinationInfo);
   }
 
   @Override

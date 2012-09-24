@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.model.JpsEncodingConfigurationService;
 import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
@@ -22,10 +23,10 @@ import java.util.*;
 public class CompilerEncodingConfiguration {
   private final Map<String, String> myUrlToCharset;
   private final String myProjectCharset;
-  private final ModuleRootsIndex myRootsIndex;
+  private final BuildRootIndex myRootsIndex;
   private Map<JpsModule, Set<String>> myModuleCharsetMap;
 
-  public CompilerEncodingConfiguration(JpsModel jpsModel, ModuleRootsIndex index) {
+  public CompilerEncodingConfiguration(JpsModel jpsModel, BuildRootIndex index) {
     JpsEncodingProjectConfiguration configuration = JpsEncodingConfigurationService.getInstance().getEncodingConfiguration(jpsModel.getProject());
     myUrlToCharset = configuration != null ? configuration.getUrlToEncoding() : Collections.<String, String>emptyMap();
     myProjectCharset = JpsEncodingConfigurationService.getInstance().getProjectEncoding(jpsModel);

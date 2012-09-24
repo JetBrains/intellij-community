@@ -62,4 +62,8 @@ public class ModuleChunk {
   public JpsModule representativeModule() {
     return myModules.iterator().next();
   }
+
+  public ModuleBuildTarget representativeTarget() {
+    return myTargets.iterator().next();
+  }
 }

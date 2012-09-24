@@ -8,10 +8,12 @@ import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetLoader;
 import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
+import org.jetbrains.jps.builders.impl.BuildTargetIndexImpl;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -50,9 +52,10 @@ public class BuildRunner {
 
   public ProjectDescriptor load(MessageHandler msgHandler, File dataStorageRoot, BuildFSState fsState) throws IOException {
     final JpsModel jpsModel = myModelLoader.loadModel();
-    ModuleRootsIndex index = new ModuleRootsIndex(jpsModel, dataStorageRoot);
-    ArtifactRootsIndex artifactRootsIndex = new ArtifactRootsIndex(jpsModel, index);
-    BuildTargetsState targetsState = new BuildTargetsState(dataStorageRoot, index, artifactRootsIndex);
+    BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(jpsModel);
+    ModuleRootsIndex index = new ModuleRootsIndex(jpsModel);
+    BuildRootIndexImpl buildRootIndex = new BuildRootIndexImpl(targetIndex, jpsModel, index, dataStorageRoot);
+    BuildTargetsState targetsState = new BuildTargetsState(dataStorageRoot, jpsModel, buildRootIndex);
 
     ProjectTimestamps projectTimestamps = null;
     BuildDataManager dataManager = null;
@@ -75,7 +78,7 @@ public class BuildRunner {
       }
       myForceCleanCaches = true;
       FileUtil.delete(dataStorageRoot);
-      targetsState = new BuildTargetsState(dataStorageRoot, index, artifactRootsIndex);
+      targetsState = new BuildTargetsState(dataStorageRoot, jpsModel, buildRootIndex);
       projectTimestamps = new ProjectTimestamps(dataStorageRoot, targetsState);
       dataManager = new BuildDataManager(dataStorageRoot, targetsState, STORE_TEMP_CACHES_IN_MEMORY);
       // second attempt succeded
@@ -83,7 +86,7 @@ public class BuildRunner {
     }
 
     return new ProjectDescriptor(jpsModel, fsState, projectTimestamps, dataManager, BuildLoggingManager.DEFAULT, index, targetsState,
-                                 artifactRootsIndex);
+                                 targetIndex, buildRootIndex);
   }
 
   public void runBuild(ProjectDescriptor pd, CanceledStatus cs, @Nullable Callbacks.ConstantAffectionResolver constantSearch,
@@ -146,8 +149,9 @@ public class BuildRunner {
         targetTypes.add(targetType);
       }
       else {
+        BuildTargetLoader loader = targetType.createLoader(pd.jpsModel);
         for (String targetId : scope.getTargetIdList()) {
-          BuildTarget target = targetType.createTarget(targetId, pd.rootsIndex, pd.getArtifactRootsIndex());
+          BuildTarget target = loader.createTarget(targetId);
           if (target != null) {
             targets.add(target);
           }
@@ -163,7 +167,7 @@ public class BuildRunner {
       files = new HashMap<BuildTarget, Set<File>>();
       for (String path : paths) {
         final File file = new File(path);
-        final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(null, file);
+        final RootDescriptor rd = pd.getBuildRootIndex().getModuleAndRoot(null, file);
         if (rd != null) {
           Set<File> fileSet = files.get(rd.target);
           if (fileSet == null) {

@@ -186,7 +186,7 @@ public abstract class ModuleLevelBuilder extends Builder {
     final List<Pair<File, JpsModule>> result = new ArrayList<Pair<File, JpsModule>>();
     for (File file : affected) {
       if (!moduleBasedFilter.accept(file)) {
-        final RootDescriptor moduleAndRoot = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, file);
+        final RootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, file);
         result.add(Pair.create(file, moduleAndRoot != null ? moduleAndRoot.target.getModule() : null));
       }
     }
@@ -198,7 +198,7 @@ public abstract class ModuleLevelBuilder extends Builder {
     final Set<JpsModule> chunkModules = chunk.getModules();
     if (!chunkModules.isEmpty()) {
       for (File file : affected) {
-        final RootDescriptor moduleAndRoot = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, file);
+        final RootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, file);
         if (moduleAndRoot != null && chunkModules.contains(moduleAndRoot.target.getModule())) {
           return true;
         }
@@ -267,7 +267,7 @@ public abstract class ModuleLevelBuilder extends Builder {
 
     @Override
     public boolean accept(File file) {
-      final RootDescriptor rd = myContext.getProjectDescriptor().rootsIndex.getModuleAndRoot(myContext, file);
+      final RootDescriptor rd = myContext.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(myContext, file);
       if (rd == null) {
         return true;
       }

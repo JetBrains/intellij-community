@@ -45,17 +45,27 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
   public void addDirectoryCopyInstructions(@NotNull File directory, @Nullable SourceFileFilter filter) {
     final boolean copyExcluded = myInstructionsBuilder.getRootsIndex().isExcluded(directory);
     SourceFileFilter fileFilter = new SourceFileFilterImpl(filter, myInstructionsBuilder.getRootsIndex(), myInstructionsBuilder.getIgnoredFilePatterns(), copyExcluded);
-    addDirectoryCopyInstructions(myInstructionsBuilder.createFileBasedRoot(directory, fileFilter));
+    DestinationInfo destination = createDirectoryDestination();
+    if (destination != null) {
+      ArtifactRootDescriptor descriptor = myInstructionsBuilder.createFileBasedRoot(directory, fileFilter, destination);
+      if (myInstructionsBuilder.addDestination(descriptor)) {
+        onAdded(descriptor);
+      }
+    }
   }
 
   @Override
   public void addExtractDirectoryInstruction(@NotNull File jarFile, @NotNull String pathInJar) {
     final SourceFileFilterImpl filter = new SourceFileFilterImpl(null, myInstructionsBuilder.getRootsIndex(),
                                                                  myInstructionsBuilder.getIgnoredFilePatterns(), false);
-    addDirectoryCopyInstructions(myInstructionsBuilder.createJarBasedRoot(jarFile, pathInJar, filter));
+    DestinationInfo destination = createDirectoryDestination();
+    if (destination != null) {
+      ArtifactRootDescriptor descriptor = myInstructionsBuilder.createJarBasedRoot(jarFile, pathInJar, filter, destination);
+      if (myInstructionsBuilder.addDestination(descriptor)) {
+        onAdded(descriptor);
+      }
+    }
   }
-
-  protected abstract void addDirectoryCopyInstructions(ArtifactRootDescriptor descriptor);
 
   @Override
   public abstract ArtifactCompilerInstructionCreatorBase subFolder(@NotNull String directoryName);
@@ -68,6 +78,25 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
     }
     return current;
   }
+
+
+  @Override
+  public void addFileCopyInstruction(@NotNull File file, @NotNull String outputFileName) {
+    DestinationInfo destination = createFileDestination(outputFileName);
+    if (destination != null) {
+      FileBasedArtifactRootDescriptor root = myInstructionsBuilder.createFileBasedRoot(file, SourceFileFilter.ALL, destination);
+      if (myInstructionsBuilder.addDestination(root)) {
+        onAdded(root);
+      }
+    }
+  }
+
+  @Nullable
+  protected abstract DestinationInfo createDirectoryDestination();
+
+  protected abstract DestinationInfo createFileDestination(@NotNull String outputFileName);
+
+  protected abstract void onAdded(ArtifactRootDescriptor descriptor);
 
   private static class SourceFileFilterImpl extends SourceFileFilter {
     private final SourceFileFilter myBaseFilter;

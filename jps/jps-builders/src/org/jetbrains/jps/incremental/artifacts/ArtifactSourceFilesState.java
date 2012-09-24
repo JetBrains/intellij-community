@@ -1,6 +1,5 @@
 package org.jetbrains.jps.incremental.artifacts;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
@@ -8,9 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.IncProjectBuilder;
-import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactInstructionsBuilder;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
-import org.jetbrains.jps.incremental.artifacts.instructions.DestinationInfo;
 import org.jetbrains.jps.incremental.artifacts.instructions.SourceFileFilter;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
@@ -18,10 +15,7 @@ import org.jetbrains.jps.incremental.storage.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author nik
@@ -54,20 +48,19 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
   }
 
   public void ensureFsStateInitialized(final BuildDataManager dataManager, final CompileContext context) throws IOException {
-    ArtifactInstructionsBuilder builder = myProjectDescriptor.getArtifactRootsIndex().getInstructionsBuilder(myTarget.getArtifact());
     BuildFSState fsState = myProjectDescriptor.fsState;
     BuildTargetConfiguration configuration = myProjectDescriptor.getTargetsState().getTargetConfiguration(myTarget);
     if (context.isProjectRebuild() || configuration.isTargetDirty() || context.getScope().isRecompilationForced(myTarget)) {
       IncProjectBuilder.clearOutputFiles(context, myTarget);
       myProjectDescriptor.dataManager.getSourceToOutputMap(myTarget).clean();
       getOrCreateOutSrcMapping().clean();
-      markDirtyFiles(builder, dataManager, null, true);
+      markDirtyFiles(dataManager, null, true, context);
       configuration.save();
     }
     else if (fsState.markInitialScanPerformed(myTarget)) {
       final Set<File> currentPaths = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       fsState.clearDeletedPaths(myTarget);
-      markDirtyFiles(builder, dataManager, currentPaths, false);
+      markDirtyFiles(dataManager, currentPaths, false, context);
       final SourceToOutputMapping mapping = dataManager.getSourceToOutputMap(myTarget);
       final Iterator<String> iterator = mapping.getKeysIterator();
       while (iterator.hasNext()) {
@@ -80,10 +73,9 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
     }
   }
 
-  private void markDirtyFiles(ArtifactInstructionsBuilder builder, BuildDataManager dataManager, @Nullable Set<File> currentPaths,
-                              final boolean forceMarkDirty) throws IOException {
-    for (Pair<ArtifactRootDescriptor, DestinationInfo> pair : builder.getInstructions()) {
-      ArtifactRootDescriptor descriptor = pair.getFirst();
+  private void markDirtyFiles(BuildDataManager dataManager, @Nullable Set<File> currentPaths,
+                              final boolean forceMarkDirty, CompileContext context) throws IOException {
+    for (ArtifactRootDescriptor descriptor : myProjectDescriptor.getBuildRootIndex().getTargetRoots(myTarget, context)) {
       myProjectDescriptor.fsState.clearRecompile(descriptor);
       final File rootFile = descriptor.getRootFile();
       if (rootFile.exists()) {
@@ -120,10 +112,9 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
     if (context.isProjectRebuild()) {
       fsState.markInitialScanPerformed(myTarget);
     }
-    ArtifactInstructionsBuilder builder = myProjectDescriptor.getArtifactRootsIndex().getInstructionsBuilder(myTarget.getArtifact());
+    List<ArtifactRootDescriptor> descriptors = myProjectDescriptor.getBuildRootIndex().getTargetRoots(myTarget, context);
     boolean marked = false;
-    for (Pair<ArtifactRootDescriptor, DestinationInfo> pair : builder.getInstructions()) {
-      ArtifactRootDescriptor descriptor = pair.getFirst();
+    for (ArtifactRootDescriptor descriptor : descriptors) {
       marked |= fsState.markAllUpToDate(descriptor, myProjectDescriptor.timestamps.getStorage(), context.getCompilationStartStamp());
     }
     if (marked) {
