@@ -85,6 +85,7 @@
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebSpockTestMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebPageMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebModuleMemberContributor"/>
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebJUnitTestMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebBrowserMemberContributor"/>
