@@ -146,8 +146,8 @@ class BeforeRunStepsPanel extends DropDownPanel {
     myPanel = myDecorator.createPanel();
 
     JPanel wrapper = new JPanel(new BorderLayout());
-    wrapper.add(myShowSettingsBeforeRunCheckBox, BorderLayout.NORTH);
     wrapper.add(myPanel, BorderLayout.CENTER);
+    wrapper.add(myShowSettingsBeforeRunCheckBox, BorderLayout.SOUTH);
     setContent(wrapper);
     setExpanded(PropertiesComponent.getInstance().getBoolean(EXPAND_PROPERTY_KEY, false));
     addChangeListener(new ChangeListener() {
