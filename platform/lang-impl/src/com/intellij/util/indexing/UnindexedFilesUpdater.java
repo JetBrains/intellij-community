@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Eugene Zhuravlev
@@ -36,6 +37,7 @@ public class UnindexedFilesUpdater implements CacheUpdater {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.UnindexedFilesUpdater");
   private final FileBasedIndexImpl myIndex;
   private final Project myProject;
+  private final AtomicBoolean myFinishedUpdate = new AtomicBoolean();
   private long myStarted;
 
   public UnindexedFilesUpdater(final Project project, FileBasedIndexImpl index) {
@@ -52,10 +54,11 @@ public class UnindexedFilesUpdater implements CacheUpdater {
   public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
     CollectingContentIterator finder = myIndex.createContentIterator();
     long l = System.currentTimeMillis();
-    FileBasedIndex.getInstance().iterateIndexableFiles(finder, myProject, indicator);
+    myIndex.iterateIndexableFiles(finder, myProject, indicator);
     LOG.info("Indexable files iterated in " + (System.currentTimeMillis() - l) + " ms");
     List<VirtualFile> files = finder.getFiles();
     LOG.info("Unindexed files update started: " + files.size() + " files to update");
+    myFinishedUpdate.set(false);
     myStarted = System.currentTimeMillis();
     return VfsUtil.toVirtualFileArray(files);
   }
@@ -68,11 +71,17 @@ public class UnindexedFilesUpdater implements CacheUpdater {
 
   @Override
   public void updatingDone() {
-    LOG.info("Unindexed files update done in " + (System.currentTimeMillis() - myStarted) + " ms");
+    if (myFinishedUpdate.compareAndSet(false, true)) {
+      myIndex.updatingDone();
+      LOG.info("Unindexed files update done in " + (System.currentTimeMillis() - myStarted) + " ms");
+    }
   }
 
   @Override
   public void canceled() {
-    LOG.info("Unindexed files update canceled");
+    if (myFinishedUpdate.compareAndSet(false, true)) {
+      myIndex.updatingDone();
+      LOG.info("Unindexed files update canceled");
+    }
   }
 }

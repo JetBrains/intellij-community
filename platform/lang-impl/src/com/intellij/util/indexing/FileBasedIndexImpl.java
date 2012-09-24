@@ -126,6 +126,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   @Nullable private ScheduledFuture<?> myFlushingFuture;
   private volatile int myLocalModCount;
   private volatile int myFilesModCount;
+  private final AtomicInteger myUpdatingFiles = new AtomicInteger();
   private volatile boolean myInitialized; // need this variable for memory barrier
   @Override
   public void requestReindex(@NotNull final VirtualFile file) {
@@ -1022,39 +1023,47 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
+  void updatingDone() {
+    if(myUpdatingFiles.decrementAndGet() == 0) {
+      ++myFilesModCount;
+    }
+  }
+
   private final Lock myCalcIndexableFilesLock = new SequenceLock();
 
   @Nullable
   public ProjectIndexableFilesFilter projectIndexableFiles(@Nullable Project project) {
-    if (project == null || true) return null; // till fixing update of the set
+    if (project == null || myUpdatingFiles.get() > 0) return null;
 
     SoftReference<ProjectIndexableFilesFilter> reference = project.getUserData(ourProjectFilesSetKey);
     ProjectIndexableFilesFilter data = reference != null ? reference.get() : null;
     if (data != null && data.myModificationCount == myFilesModCount) return data;
 
-    myCalcIndexableFilesLock.lock(); // since we calculate project file set to avoid extra vfs related io, it is better to wait a little
-    try {
-      reference = project.getUserData(ourProjectFilesSetKey);
-      data = reference != null ? reference.get() : null;
-      if (data != null && data.myModificationCount == myFilesModCount) {
-        return data;
-      }
-
-      final TIntHashSet filesSet = new TIntHashSet();
-      iterateIndexableFiles(new ContentIterator() {
-        @Override
-        public boolean processFile(@NotNull VirtualFile fileOrDir) {
-          filesSet.add(((VirtualFileWithId)fileOrDir).getId());
-          return true;
+    if(myCalcIndexableFilesLock.tryLock()) { // make best effort for calculating filter
+      try {
+        reference = project.getUserData(ourProjectFilesSetKey);
+        data = reference != null ? reference.get() : null;
+        if (data != null && data.myModificationCount == myFilesModCount) {
+          return data;
         }
-      }, project, ProgressManager.getInstance().getProgressIndicator());
-      ProjectIndexableFilesFilter files = new ProjectIndexableFilesFilter(filesSet, myFilesModCount);
-      project.putUserData(ourProjectFilesSetKey, new SoftReference<ProjectIndexableFilesFilter>(files));
-      return files;
+
+        final TIntHashSet filesSet = new TIntHashSet();
+        iterateIndexableFiles(new ContentIterator() {
+          @Override
+          public boolean processFile(@NotNull VirtualFile fileOrDir) {
+            filesSet.add(((VirtualFileWithId)fileOrDir).getId());
+            return true;
+          }
+        }, project, ProgressManager.getInstance().getProgressIndicator());
+        ProjectIndexableFilesFilter filter = new ProjectIndexableFilesFilter(filesSet, myFilesModCount);
+        project.putUserData(ourProjectFilesSetKey, new SoftReference<ProjectIndexableFilesFilter>(filter));
+        return filter;
+      }
+      finally {
+        myCalcIndexableFilesLock.unlock();
+      }
     }
-    finally {
-      myCalcIndexableFilesLock.unlock();
-    }
+    return null; // ok, no filtering
   }
 
   @Nullable 
@@ -1802,10 +1811,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     private void markDirty(@NotNull final VirtualFileEvent event, final boolean contentChange) {
       final VirtualFile eventFile = event.getFile();
       cleanProcessedFlag(eventFile);
+      if (!contentChange) {
+        myUpdatingFiles.incrementAndGet();
+      }
+
       iterateIndexableFiles(eventFile, new Processor<VirtualFile>() {
         @Override
         public boolean process(@NotNull final VirtualFile file) {
-          if (!contentChange) ++myFilesModCount;
           FileContent fileContent = null;
           // handle 'content-less' indices separately
           for (ID<?, ?> indexId : myNotRequiringContentIndices) {
@@ -1836,6 +1848,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         }
       });
       IndexingStamp.flushCache(null);
+      if (!contentChange) {
+        if(myUpdatingFiles.decrementAndGet() == 0) {
+          ++myFilesModCount;
+        }
+      }
     }
 
     public void scheduleForUpdate(VirtualFile file) {
@@ -2183,7 +2200,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @NotNull
   public CollectingContentIterator createContentIterator() {
-    ++myFilesModCount;
+    myUpdatingFiles.incrementAndGet();
     return new UnindexedFilesFinder();
   }
 
