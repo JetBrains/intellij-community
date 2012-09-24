@@ -94,12 +94,16 @@ public class GebUtil {
         GrExpression[] arguments = PsiUtil.getAllArguments((GrCall)e);
         if (arguments.length == 0) continue;
 
-        if (!((arguments.length == 1 && arguments[0] instanceof GrClosableBlock)
-              || (arguments.length == 2 && arguments[0] == null && arguments[1] instanceof GrClosableBlock))) {
+        final GrClosableBlock block;
+        if (arguments.length == 1 && arguments[0] instanceof GrClosableBlock) {
+          block = (GrClosableBlock)arguments[0];
+        }
+        else if (arguments.length == 2 && arguments[0] == null && arguments[1] instanceof GrClosableBlock) {
+          block = (GrClosableBlock)arguments[1];
+        }
+        else {
           continue;
         }
-
-        final GrClosableBlock block = (GrClosableBlock)arguments[0];
 
         GrLightField field = new GrLightField(pageClass, ((GrReferenceExpression)invokedExpression).getReferenceName(), objectType, invokedExpression) {
           @Override
