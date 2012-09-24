@@ -92,7 +92,12 @@ public class GebUtil {
         if (((GrReferenceExpression)invokedExpression).isQualified()) continue;
 
         GrExpression[] arguments = PsiUtil.getAllArguments((GrCall)e);
-        if (arguments.length != 1 || !(arguments[0] instanceof GrClosableBlock)) continue;
+        if (arguments.length == 0) continue;
+
+        if (!((arguments.length == 1 && arguments[0] instanceof GrClosableBlock)
+              || (arguments.length == 2 && arguments[0] == null && arguments[1] instanceof GrClosableBlock))) {
+          continue;
+        }
 
         final GrClosableBlock block = (GrClosableBlock)arguments[0];
 
