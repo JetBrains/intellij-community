@@ -82,7 +82,7 @@ public class ModuleBuildTarget extends BuildTarget<RootDescriptor> {
       final File root = JpsPathUtil.urlToFile(sourceRoot.getUrl());
       final boolean testRoot = JavaSourceRootType.TEST_SOURCE.equals(sourceRoot.getRootType());
       if (testRoot == isTests()) {
-        roots.add(new RootDescriptor(root, this, testRoot, false, false));
+        roots.add(new RootDescriptor(root, this, false, false));
       }
     }
     return roots;
