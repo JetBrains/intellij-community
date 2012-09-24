@@ -16,6 +16,7 @@
  */
 package com.intellij.refactoring.inline;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -153,12 +154,22 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       return;
     }
 
+    PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(defToInline, PsiTryStatement.class);
+    if (tryStatement != null) {
+      if (ExceptionUtil.getThrownExceptions(defToInline).isEmpty()) {
+        tryStatement = null;
+      }
+    }
     PsiFile workingFile = local.getContainingFile();
     for (PsiElement ref : refsToInline) {
       final PsiFile otherFile = ref.getContainingFile();
       if (!otherFile.equals(workingFile)) {
         String message = RefactoringBundle.message("variable.is.referenced.in.multiple.files", localName);
         CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
+        return;
+      }
+      if (tryStatement != null && !PsiTreeUtil.isAncestor(tryStatement, ref, false)) {
+        CommonRefactoringUtil.showErrorHint(project, editor, "Unable to inline outside try/catch statement", REFACTORING_NAME, HelpID.INLINE_VARIABLE);
         return;
       }
     }
