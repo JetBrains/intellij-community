@@ -19,12 +19,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithm
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -34,43 +31,28 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
  */
 public class GrAdditiveExpressionImpl extends GrBinaryExpressionImpl {
 
-  private static final Function<GrBinaryExpressionImpl,PsiType> TYPE_CALCULATOR = new Function<GrBinaryExpressionImpl, PsiType>() {
-    @Nullable
-    @Override
-    public PsiType fun(GrBinaryExpressionImpl binary) {
-      final PsiType lType = binary.getLeftOperand().getType();
-      final PsiType numeric = TypesUtil.getNumericResultType(binary);
-      if (numeric != null) return numeric;
-
-      IElementType tokenType = binary.getOperationTokenType();
-      if (tokenType == GroovyTokenTypes.mPLUS) {
-        if (isStringType(lType)) {
-          return binary.getTypeByFQName(CommonClassNames.JAVA_LANG_STRING);
-        }
-        final GrExpression rop = binary.getRightOperand();
-        if (rop != null && isStringType(rop.getType())) {
-          return binary.getTypeByFQName(CommonClassNames.JAVA_LANG_STRING);
-        }
-      }
-
-      return null;
-    }
-  };
-
   public GrAdditiveExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  @Override
-  protected Function<GrBinaryExpressionImpl, PsiType> getTypeCalculator() {
-    return TYPE_CALCULATOR;
-  }
-
-  private static boolean isStringType(PsiType type) {
+  private static boolean isStringType(@Nullable PsiType type) {
     return type != null && (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) || type.equalsToText(GroovyCommonClassNames.GROOVY_LANG_GSTRING));
   }
 
   public String toString() {
     return "Additive expression";
+  }
+
+  protected PsiType calcType() {
+    final PsiType numeric = TypesUtil.getNumericResultType(this);
+    if (numeric != null) return numeric;
+
+    if (getOperationTokenType() == GroovyTokenTypes.mPLUS) {
+      if (isStringType(getLeftOperandType()) || isStringType(getRightOperandType())) {
+        return getTypeByFQName(CommonClassNames.JAVA_LANG_STRING);
+      }
+    }
+
+    return super.calcType();
   }
 }
