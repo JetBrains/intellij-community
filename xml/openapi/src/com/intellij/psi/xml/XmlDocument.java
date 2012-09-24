@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Mike
  */
 public interface XmlDocument extends XmlElement, PsiMetaOwner {
-  XmlProlog getProlog();
+  @Nullable XmlProlog getProlog();
   @Nullable XmlTag getRootTag();
 
   XmlNSDescriptor getRootTagNSDescriptor();
