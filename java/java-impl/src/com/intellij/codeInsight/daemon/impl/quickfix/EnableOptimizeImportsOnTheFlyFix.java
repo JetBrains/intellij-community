@@ -19,13 +19,14 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NotNull;
 
-public class EnableOptimizeImportsOnTheFlyFix implements IntentionAction{
+public class EnableOptimizeImportsOnTheFlyFix implements IntentionAction, LowPriorityAction{
   @Override
   @NotNull
   public String getText() {
