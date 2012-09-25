@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,7 @@ public class DesignForExtensionInspection extends BaseInspection {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "design.for.extension.display.name");
+    return InspectionGadgetsBundle.message("design.for.extension.display.name");
   }
 
   @NotNull
@@ -40,8 +39,7 @@ public class DesignForExtensionInspection extends BaseInspection {
     return new DesignForExtensionVisitor();
   }
 
-  private static class DesignForExtensionVisitor
-    extends BaseInspectionVisitor {
+  private static class DesignForExtensionVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(PsiMethod method) {
@@ -63,11 +61,14 @@ public class DesignForExtensionInspection extends BaseInspection {
       if (containingClass == null) {
         return;
       }
+      if (containingClass.isEnum() || containingClass.isInterface() || containingClass.isAnnotationType()) {
+        return;
+      }
       if (containingClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
-      if (containingClass.getName() == null) {
-        return; //anonymous classes can't be overridden
+      if (containingClass instanceof PsiAnonymousClass) {
+        return;
       }
       final PsiCodeBlock body = method.getBody();
       if (body == null) {
