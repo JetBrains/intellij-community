@@ -254,7 +254,9 @@ public class CreateFromUsageUtils {
         names = new String[]{"p" + i};
       }
 
-      if (argType == null || PsiType.NULL.equals(argType) || argType instanceof PsiLambdaExpressionType) {
+      if (argType == null || PsiType.NULL.equals(argType) || 
+          argType instanceof PsiLambdaExpressionType || 
+          argType instanceof PsiMethodReferenceType) {
         argType = PsiType.getJavaLangObject(psiManager, resolveScope);
       }
       PsiParameter parameter;
