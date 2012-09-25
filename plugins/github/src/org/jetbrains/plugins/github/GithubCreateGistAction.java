@@ -31,6 +31,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.tasks.github.GithubApiUtil;
 import git4idea.GitVcs;
@@ -43,6 +44,9 @@ import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author oleg
@@ -50,6 +54,7 @@ import java.io.IOException;
  */
 public class GithubCreateGistAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(GithubCreateGistAction.class);
+  private static final String FAILED_TO_CREATE_GIST = "Can't create Gist";
 
   protected GithubCreateGistAction() {
     super("Create Gist...", "Create github gist", GithubIcons.Github_icon);
@@ -66,11 +71,15 @@ public class GithubCreateGistAction extends DumbAwareAction {
         return;
       }
       final Editor editor = e.getData(PlatformDataKeys.EDITOR);
-      if (editor == null){
+      final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+      final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+
+      if (editor == null && file == null && files == null) {
         e.getPresentation().setVisible(false);
         e.getPresentation().setEnabled(false);
         return;
       }
+
       e.getPresentation().setVisible(true);
       e.getPresentation().setEnabled(true);
     }
@@ -87,14 +96,14 @@ public class GithubCreateGistAction extends DumbAwareAction {
     if (project == null || project.isDefault()) {
       return;
     }
+
     final Editor editor = e.getData(PlatformDataKeys.EDITOR);
-    if (editor == null){
-      return;
-    }
     final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-    if (file == null) {
+    final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    if (editor == null && file == null && files == null) {
       return;
     }
+
     final boolean useGitHubAccount;
     if (!GithubUtil.checkCredentials(project)) {
       final GithubLoginDialog dialog = new GithubLoginDialog(project);
@@ -118,13 +127,15 @@ public class GithubCreateGistAction extends DumbAwareAction {
     final boolean anonymous = dialog.isAnonymous();
     final boolean openInBrowser = dialog.isOpenInBrowser();
     
-    // Text
-    final String text = editor.getSelectionModel().getSelectedText();
-    
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
-        url.set(createGist(project, settings.getLogin(), password, anonymous, text, isPrivate, file, description));
+        List<NamedContent> contents = collectContents(project, editor, file, files);
+        if (contents == null) {
+          return;
+        }
+        String gistUrl = createGist(project, settings.getLogin(), password, anonymous, contents, isPrivate, description);
+        url.set(gistUrl);
       }
     }, "Communicating With GitHub", false, project);
 
@@ -149,20 +160,41 @@ public class GithubCreateGistAction extends DumbAwareAction {
   }
 
   @Nullable
+  private static List<NamedContent> collectContents(@NotNull Project project, @Nullable Editor editor,
+                                                    @Nullable VirtualFile file, @Nullable VirtualFile[] files) {
+    if (editor != null) {
+      NamedContent content = getContentFromEditor(editor, file, project);
+      return content == null ? null : Collections.singletonList(content);
+    }
+    if (files != null) {
+      List<NamedContent> contents = new ArrayList<NamedContent>();
+      for (VirtualFile vf : files) {
+        NamedContent content = getContentFromFile(vf, project);
+        if (content == null) {
+          return null;
+        }
+        contents.add(content);
+      }
+      return contents;
+    }
+
+    if (file == null) {
+      LOG.error("File, files and editor can't be null all at once!");
+      return null;
+    }
+
+    NamedContent content = getContentFromFile(file, project);
+    return content == null ? null : Collections.singletonList(content);
+  }
+
+  @Nullable
   private static String createGist(@NotNull Project project, @Nullable String login, @Nullable String password, boolean anonymous,
-                                   @Nullable String text, boolean isPrivate, @NotNull VirtualFile file, @NotNull String description) {
+                                   @NotNull List<NamedContent> contents, boolean isPrivate, @NotNull String description) {
     if (anonymous) {
       login = null;
       password = null;
     }
-    if (text == null) {
-      text = readFile(file);
-      if (text == null) {
-        showError(project, "Failed to create gist", "Couldn't read the contents of the file " + file, null, null);
-        return null;
-      }
-    }
-    String requestBody = prepareJsonRequest(description, isPrivate, text, file);
+    String requestBody = prepareJsonRequest(description, isPrivate, contents);
     try {
       JsonElement jsonElement = GithubApiUtil.postRequest("https://api.github.com", login, password, "/gists", requestBody);
       if (jsonElement == null) {
@@ -198,7 +230,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
           return new String(file.contentsToByteArray(), file.getCharset());
         }
         catch (IOException e) {
-          LOG.info("Couldn't read contents of the file " + file);
+          LOG.info("Couldn't read contents of the file " + file, e);
           return null;
         }
       }
@@ -211,16 +243,73 @@ public class GithubCreateGistAction extends DumbAwareAction {
     LOG.info("Couldn't parse response as json data: \n" + content + "\n" + details, e);
   }
 
-  private static String prepareJsonRequest(@NotNull String description, boolean isPrivate, @NotNull String text, @NotNull VirtualFile file) {
+  private static String prepareJsonRequest(@NotNull String description, boolean isPrivate, @NotNull List<NamedContent> contents) {
     JsonObject json = new JsonObject();
     json.addProperty("description", description);
     json.addProperty("public", Boolean.toString(!isPrivate));
-    JsonObject file1 = new JsonObject();
-    file1.addProperty("content", text);
+
     JsonObject files = new JsonObject();
-    files.add(file.getName(), file1);
+    for (NamedContent content : contents) {
+      JsonObject file = new JsonObject();
+      file.addProperty("content", content.getText());
+      files.add(content.getName(), file);
+    }
+
     json.add("files", files);
     return json.toString();
+  }
+
+  @Nullable
+  private static NamedContent getContentFromFile(@NotNull VirtualFile file, @NotNull Project project) {
+    String content = readFile(file);
+    if (content == null) {
+      showError(project, FAILED_TO_CREATE_GIST, "Couldn't read the contents of the file " + file, null, null);
+      LOG.info("Couldn't read the contents of the file " + file);
+      return null;
+    }
+    return new NamedContent(file.getName(), content);
+  }
+
+  @Nullable
+  private static NamedContent getContentFromEditor(@NotNull Editor editor, @Nullable VirtualFile selectedFile, @NotNull Project project) {
+    String text = editor.getSelectionModel().getSelectedText();
+    if (text == null) {
+      text = editor.getDocument().getText();
+    }
+
+    if (StringUtil.isEmpty(text)) {
+      showError(project, FAILED_TO_CREATE_GIST, "No text was selected to Gist", null, null);
+      return null;
+    }
+
+    String name;
+    if (selectedFile == null) {
+      name = "";
+    }
+    else {
+      name = selectedFile.getName();
+    }
+    return new NamedContent(name, text);
+  }
+
+  private static class NamedContent {
+    @NotNull private final String myName;
+    @NotNull private final String myText;
+
+    private NamedContent(@NotNull String name, @NotNull String text) {
+      myName = name;
+      myText = text;
+    }
+
+    @NotNull
+    public String getName() {
+      return myName;
+    }
+
+    @NotNull
+    public String getText() {
+      return myText;
+    }
   }
 
 }
