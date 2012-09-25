@@ -1,5 +1,6 @@
 package org.jetbrains.io;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
@@ -28,10 +29,11 @@ public class WebServer {
   private static final Logger LOG = Logger.getInstance(WebServer.class);
 
   public WebServer() {
+    final Application application = ApplicationManager.getApplication();
     final Executor pooledThreadExecutor = new Executor() {
       @Override
       public void execute(Runnable command) {
-        ApplicationManager.getApplication().executeOnPooledThread(command);
+        application.executeOnPooledThread(command);
       }
     };
     channelFactory = new NioServerSocketChannelFactory(pooledThreadExecutor, pooledThreadExecutor, 2);
