@@ -70,7 +70,7 @@
     </group>
 
     <action id="ChangesView.Revert" class="com.intellij.openapi.vcs.changes.actions.RollbackAction"
-            icon="AllIcons.Actions.Rollback" text="_Revert" description="Revert selected changes"/>
+            icon="AllIcons.Actions.Rollback" text="_Revert..." description="Revert selected changes"/>
 
     <group id="ChangesViewToolbar">
       <action id="ChangesView.Refresh" class="com.intellij.openapi.vcs.changes.actions.RefreshAction"
