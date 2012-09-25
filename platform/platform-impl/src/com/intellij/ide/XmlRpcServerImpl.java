@@ -77,6 +77,11 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
         try {
           result = ChannelBuffers.copiedBuffer(new XmlRpcWorker(xmlRpcContext.getHandlerMapping()).execute(in, xmlRpcContext));
         }
+        catch (Throwable ex) {
+          context.getChannel().close();
+          LOG.error(ex);
+          return;
+        }
         finally {
           in.close();
         }
