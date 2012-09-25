@@ -1729,7 +1729,7 @@ public class HighlightUtil {
         if (element == field.getInitializer()) return field;
         if (field instanceof PsiEnumConstant && element == ((PsiEnumConstant)field).getArgumentList()) return field;
       }
-      if (element instanceof PsiClass || element instanceof PsiMethod) return null;
+      if (element instanceof PsiClass || element instanceof PsiMethod || parent instanceof PsiLambdaExpression) return null;
       element = parent;
     }
     return null;
