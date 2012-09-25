@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,10 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author spleaner
@@ -239,7 +237,8 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
                                final boolean forceOpenNewInstanceOnMac) {
     final WebBrowserSettings settings = getBrowserSettings(family);
     final String path = settings.getPath();
-    if (path != null && path.length() > 0) {
+    String pathCheckResult = checkPath(family, path);
+    if (pathCheckResult == null) {
       url = BrowserUtil.escapeUrl(url);
       try {
         final BrowserSpecificSettings specificSettings = settings.getBrowserSpecificSettings();
@@ -253,9 +252,13 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
       }
     }
     else {
-      Messages.showErrorDialog(XmlBundle.message("browser.path.not.specified", family.getName()),
-                               XmlBundle.message("browser.path.not.specified.title"));
+      Messages.showErrorDialog(pathCheckResult, XmlBundle.message("browser.path.not.specified.title"));
     }
+  }
+
+  @Nullable
+  public static String checkPath(BrowserFamily family, String path) {
+    return StringUtil.isEmpty(path) ? XmlBundle.message("browser.path.not.specified", family.getName()) : null;
   }
 
   /**
@@ -269,10 +272,10 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
   private static void launchBrowser(@NonNls @NotNull String browserPath,
                                     String url, final boolean forceOpenNewInstanceOnMac,
                                     @NonNls String... browserArgs) throws IOException {
-    final String[] command = BrowserUtil.getOpenBrowserCommand(browserPath);
+    final List<String> command = BrowserUtil.getOpenBrowserCommand(browserPath);
     String[] args = ArrayUtil.append(browserArgs, url);
 
-    if (SystemInfo.isMac && ExecUtil.getOpenCommandPath().equals(command[0])) {
+    if (SystemInfo.isMac && ExecUtil.getOpenCommandPath().equals(command.get(0))) {
       if (browserArgs.length > 0) {
         if (BrowserUtil.isOpenCommandSupportArgs()) {
           args = ArrayUtil.mergeArrays(new String[]{url, "--args"}, browserArgs);
@@ -287,11 +290,11 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
       }
     }
 
-    final String[] commandLine = ArrayUtil.mergeArrays(command, args);
+    Collections.addAll(command, args);
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Launching browser: " + Arrays.toString(commandLine));
+      LOG.debug("Launching browser: " + Arrays.toString(command.toArray()));
     }
-    Runtime.getRuntime().exec(commandLine);
+    new ProcessBuilder(command).start();
   }
 
   @Nullable
