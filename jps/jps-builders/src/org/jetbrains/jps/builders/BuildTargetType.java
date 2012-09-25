@@ -8,7 +8,7 @@ import java.util.Collection;
 /**
  * @author nik
  */
-public abstract class BuildTargetType {
+public abstract class BuildTargetType<T extends BuildTarget<?>> {
   private final String myTypeId;
 
   protected BuildTargetType(String typeId) {
@@ -20,8 +20,8 @@ public abstract class BuildTargetType {
   }
 
   @NotNull
-  public abstract Collection<BuildTarget<?>> computeAllTargets(@NotNull JpsModel model);
+  public abstract Collection<T> computeAllTargets(@NotNull JpsModel model);
 
   @NotNull
-  public abstract BuildTargetLoader createLoader(@NotNull JpsModel model);
+  public abstract BuildTargetLoader<T> createLoader(@NotNull JpsModel model);
 }

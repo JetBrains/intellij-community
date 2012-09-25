@@ -47,7 +47,7 @@ public final class RootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  public BuildTarget getTarget() {
+  public BuildTarget<?> getTarget() {
     return target;
   }
 }

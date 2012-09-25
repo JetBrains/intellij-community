@@ -13,19 +13,19 @@ import java.util.List;
  * @author nik
  */
 public abstract class BuildTarget<R extends BuildRootDescriptor> {
-  private final BuildTargetType myTargetType;
+  private final BuildTargetType<?> myTargetType;
 
-  protected BuildTarget(BuildTargetType targetType) {
+  protected BuildTarget(BuildTargetType<?> targetType) {
     myTargetType = targetType;
   }
 
   public abstract String getId();
 
-  public final BuildTargetType getTargetType() {
+  public final BuildTargetType<?> getTargetType() {
     return myTargetType;
   }
 
-  public abstract Collection<? extends BuildTarget> computeDependencies();
+  public abstract Collection<? extends BuildTarget<?>> computeDependencies();
 
   public void writeConfiguration(PrintWriter out, BuildRootIndex buildRootIndex) {
   }

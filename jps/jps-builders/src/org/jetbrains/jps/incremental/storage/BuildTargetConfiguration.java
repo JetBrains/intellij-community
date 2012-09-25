@@ -11,11 +11,11 @@ import java.io.*;
  */
 public class BuildTargetConfiguration {
   private static final Logger LOG = Logger.getInstance(BuildTargetConfiguration.class);
-  private final BuildTarget myTarget;
+  private final BuildTarget<?> myTarget;
   private final BuildTargetsState myTargetsState;
   private String myConfiguration;
 
-  public BuildTargetConfiguration(BuildTarget target, BuildTargetsState targetsState) {
+  public BuildTargetConfiguration(BuildTarget<?> target, BuildTargetsState targetsState) {
     myTarget = target;
     myTargetsState = targetsState;
     myConfiguration = load();

@@ -39,7 +39,7 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
   }
 
   @Override
-  public Collection<? extends BuildTarget> computeDependencies() {
+  public Collection<? extends BuildTarget<?>> computeDependencies() {
     return Collections.emptyList();
   }
 

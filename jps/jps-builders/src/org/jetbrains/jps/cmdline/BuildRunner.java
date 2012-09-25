@@ -135,12 +135,12 @@ public class BuildRunner {
 
   private static CompileScope createCompilationScope(BuildType buildType, ProjectDescriptor pd, List<TargetTypeBuildScope> scopes,
                                                      Collection<String> paths) throws Exception {
-    Set<BuildTargetType> targetTypes = new HashSet<BuildTargetType>();
-    Set<BuildTarget> targets = new HashSet<BuildTarget>();
-    Map<BuildTarget, Set<File>> files;
+    Set<BuildTargetType<?>> targetTypes = new HashSet<BuildTargetType<?>>();
+    Set<BuildTarget<?>> targets = new HashSet<BuildTarget<?>>();
+    Map<BuildTarget<?>, Set<File>> files;
 
     for (TargetTypeBuildScope scope : scopes) {
-      BuildTargetType targetType = BuilderRegistry.getInstance().getTargetType(scope.getTypeId());
+      BuildTargetType<?> targetType = BuilderRegistry.getInstance().getTargetType(scope.getTypeId());
       if (targetType == null) {
         LOG.info("Unknown target type: " + scope.getTypeId());
         continue;
@@ -149,9 +149,9 @@ public class BuildRunner {
         targetTypes.add(targetType);
       }
       else {
-        BuildTargetLoader loader = targetType.createLoader(pd.jpsModel);
+        BuildTargetLoader<?> loader = targetType.createLoader(pd.jpsModel);
         for (String targetId : scope.getTargetIdList()) {
-          BuildTarget target = loader.createTarget(targetId);
+          BuildTarget<?> target = loader.createTarget(targetId);
           if (target != null) {
             targets.add(target);
           }
@@ -164,7 +164,7 @@ public class BuildRunner {
 
     final Timestamps timestamps = pd.timestamps.getStorage();
     if (!paths.isEmpty()) {
-      files = new HashMap<BuildTarget, Set<File>>();
+      files = new HashMap<BuildTarget<?>, Set<File>>();
       for (String path : paths) {
         final File file = new File(path);
         final RootDescriptor rd = pd.getBuildRootIndex().getModuleAndRoot(null, file);

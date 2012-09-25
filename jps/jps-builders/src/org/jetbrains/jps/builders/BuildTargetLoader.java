@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author nik
  */
-public abstract class BuildTargetLoader {
+public abstract class BuildTargetLoader<T extends BuildTarget<?>> {
   @Nullable
-  public abstract BuildTarget createTarget(@NotNull String targetId);
+  public abstract T createTarget(@NotNull String targetId);
 }

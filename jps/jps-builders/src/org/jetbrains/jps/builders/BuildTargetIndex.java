@@ -9,5 +9,6 @@ import java.util.Collection;
  */
 public interface BuildTargetIndex {
   @NotNull
-  Collection<BuildTarget<?>> getAllTargets(@NotNull BuildTargetType type);
+  <T extends BuildTarget<?>>
+  Collection<T> getAllTargets(@NotNull BuildTargetType<T> type);
 }

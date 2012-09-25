@@ -2,7 +2,6 @@ package org.jetbrains.jps.incremental.artifacts;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetLoader;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.model.JpsModel;
@@ -14,7 +13,7 @@ import java.util.*;
 /**
  * @author nik
  */
-public class ArtifactBuildTargetType extends BuildTargetType {
+public class ArtifactBuildTargetType extends BuildTargetType<ArtifactBuildTarget> {
   public static final ArtifactBuildTargetType INSTANCE = new ArtifactBuildTargetType();
 
   public ArtifactBuildTargetType() {
@@ -23,9 +22,9 @@ public class ArtifactBuildTargetType extends BuildTargetType {
 
   @NotNull
   @Override
-  public Collection<BuildTarget<?>> computeAllTargets(@NotNull JpsModel model) {
+  public Collection<ArtifactBuildTarget> computeAllTargets(@NotNull JpsModel model) {
     Collection<JpsArtifact> artifacts = JpsBuilderArtifactService.getInstance().getArtifacts(model, true);
-    List<BuildTarget<?>> targets = new ArrayList<BuildTarget<?>>(artifacts.size());
+    List<ArtifactBuildTarget> targets = new ArrayList<ArtifactBuildTarget>(artifacts.size());
     for (JpsArtifact artifact : artifacts) {
       targets.add(new ArtifactBuildTarget(artifact));
     }
@@ -34,11 +33,11 @@ public class ArtifactBuildTargetType extends BuildTargetType {
 
   @NotNull
   @Override
-  public BuildTargetLoader createLoader(@NotNull JpsModel model) {
+  public Loader createLoader(@NotNull JpsModel model) {
     return new Loader(model); 
   }
 
-  private static class Loader extends BuildTargetLoader {
+  private static class Loader extends BuildTargetLoader<ArtifactBuildTarget> {
     private final Map<String, JpsArtifact> myArtifacts;
 
     public Loader(JpsModel model) {
@@ -50,7 +49,7 @@ public class ArtifactBuildTargetType extends BuildTargetType {
 
     @Nullable
     @Override
-    public BuildTarget createTarget(@NotNull String targetId) {
+    public ArtifactBuildTarget createTarget(@NotNull String targetId) {
       JpsArtifact artifact = myArtifacts.get(targetId);
       return artifact != null ? new ArtifactBuildTarget(artifact) : null;
     }

@@ -24,20 +24,20 @@ import java.util.*;
 public class FSState {
   public static final int VERSION = 3;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.FSState");
-  private final Map<BuildTarget, FilesDelta> myDeltas = Collections.synchronizedMap(new HashMap<BuildTarget, FilesDelta>());
-  protected final Set<BuildTarget> myInitialScanPerformed = Collections.synchronizedSet(new HashSet<BuildTarget>());
+  private final Map<BuildTarget<?>, FilesDelta> myDeltas = Collections.synchronizedMap(new HashMap<BuildTarget<?>, FilesDelta>());
+  protected final Set<BuildTarget<?>> myInitialScanPerformed = Collections.synchronizedSet(new HashSet<BuildTarget<?>>());
 
   public void save(DataOutput out) throws IOException {
-    MultiMap<BuildTargetType, BuildTarget> targetsByType = new MultiMap<BuildTargetType, BuildTarget>();
-    for (BuildTarget target : myInitialScanPerformed) {
+    MultiMap<BuildTargetType<?>, BuildTarget<?>> targetsByType = new MultiMap<BuildTargetType<?>, BuildTarget<?>>();
+    for (BuildTarget<?> target : myInitialScanPerformed) {
       targetsByType.putValue(target.getTargetType(), target);
     }
     out.writeInt(targetsByType.size());
-    for (BuildTargetType type : targetsByType.keySet()) {
+    for (BuildTargetType<?> type : targetsByType.keySet()) {
       IOUtil.writeString(type.getTypeId(), out);
-      Collection<BuildTarget> targets = targetsByType.get(type);
+      Collection<BuildTarget<?>> targets = targetsByType.get(type);
       out.writeInt(targets.size());
-      for (BuildTarget target : targets) {
+      for (BuildTarget<?> target : targets) {
         IOUtil.writeString(target.getId(), out);
         getDelta(target).save(out);
       }
@@ -50,13 +50,13 @@ public class FSState {
     while (typeCount-- > 0) {
       final String typeId = IOUtil.readString(in);
       int targetCount = in.readInt();
-      BuildTargetType type = registry.getTargetType(typeId);
-      BuildTargetLoader loader = type != null ? type.createLoader(model) : null;
+      BuildTargetType<?> type = registry.getTargetType(typeId);
+      BuildTargetLoader<?> loader = type != null ? type.createLoader(model) : null;
       while (targetCount-- > 0) {
         final String id = IOUtil.readString(in);
         boolean loaded = false;
         if (loader != null) {
-          BuildTarget target = loader.createTarget(id);
+          BuildTarget<?> target = loader.createTarget(id);
           if (target != null) {
             getDelta(target).load(in, target, buildRootIndex);
             myInitialScanPerformed.add(target);
@@ -98,29 +98,29 @@ public class FSState {
     return marked;
   }
 
-  public void registerDeleted(BuildTarget target, final File file, @Nullable Timestamps tsStorage) throws IOException {
+  public void registerDeleted(BuildTarget<?> target, final File file, @Nullable Timestamps tsStorage) throws IOException {
     registerDeleted(target, file);
     if (tsStorage != null) {
       tsStorage.removeStamp(file, target);
     }
   }
 
-  public void registerDeleted(BuildTarget target, File file) {
+  public void registerDeleted(BuildTarget<?> target, File file) {
     getDelta(target).addDeleted(file);
   }
 
-  public Map<BuildRootDescriptor, Set<File>> getSourcesToRecompile(@NotNull CompileContext context, BuildTarget target) {
+  public Map<BuildRootDescriptor, Set<File>> getSourcesToRecompile(@NotNull CompileContext context, BuildTarget<?> target) {
     return getDelta(target).getSourcesToRecompile();
   }
 
-  public void clearDeletedPaths(BuildTarget target) {
+  public void clearDeletedPaths(BuildTarget<?> target) {
     final FilesDelta delta = myDeltas.get(target);
     if (delta != null) {
       delta.clearDeletedPaths();
     }
   }
 
-  public Collection<String> getAndClearDeletedPaths(BuildTarget target) {
+  public Collection<String> getAndClearDeletedPaths(BuildTarget<?> target) {
     final FilesDelta delta = myDeltas.get(target);
     if (delta != null) {
       return delta.getAndClearDeletedPaths();
@@ -129,7 +129,7 @@ public class FSState {
   }
 
   @NotNull
-  protected final FilesDelta getDelta(BuildTarget buildTarget) {
+  protected final FilesDelta getDelta(BuildTarget<?> buildTarget) {
     synchronized (myDeltas) {
       FilesDelta delta = myDeltas.get(buildTarget);
       if (delta == null) {
@@ -140,13 +140,13 @@ public class FSState {
     }
   }
 
-  public boolean hasWorkToDo(BuildTarget target) {
+  public boolean hasWorkToDo(BuildTarget<?> target) {
     if (!myInitialScanPerformed.contains(target)) return true;
     FilesDelta delta = myDeltas.get(target);
     return delta != null && delta.hasChanges();
   }
 
-  public boolean markInitialScanPerformed(BuildTarget target) {
+  public boolean markInitialScanPerformed(BuildTarget<?> target) {
     return myInitialScanPerformed.add(target);
   }
 }

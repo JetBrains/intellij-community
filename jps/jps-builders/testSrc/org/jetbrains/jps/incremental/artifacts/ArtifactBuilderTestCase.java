@@ -154,12 +154,12 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
     ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(myArtifactBuilderLogger, new JavaBuilderLoggerImpl()));
     try {
       myArtifactBuilderLogger.clear();
-      List<BuildTarget> targets = new ArrayList<BuildTarget>();
+      List<BuildTarget<?>> targets = new ArrayList<BuildTarget<?>>();
       for (JpsArtifact artifact : artifacts) {
         targets.add(new ArtifactBuildTarget(artifact));
       }
       final CompileScope scope = new CompileScopeImpl(force, JavaModuleBuildTargetType.ALL_TYPES, targets,
-                                                      Collections.<BuildTarget, Set<File>>emptyMap());
+                                                      Collections.<BuildTarget<?>, Set<File>>emptyMap());
       result = doBuild(descriptor, scope, !force, false, false);
     }
     finally {

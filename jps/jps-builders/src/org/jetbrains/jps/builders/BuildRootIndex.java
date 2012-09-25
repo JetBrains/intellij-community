@@ -21,7 +21,7 @@ public interface BuildRootIndex {
   <R extends BuildRootDescriptor> List<R> getTempTargetRoots(@NotNull BuildTarget<R> target, @NotNull CompileContext context);
 
   @NotNull
-  <R extends BuildRootDescriptor> List<R> getRootDescriptors(@NotNull File root, @NotNull Collection<? extends BuildTargetType> types,
+  <R extends BuildRootDescriptor> List<R> getRootDescriptors(@NotNull File root, @NotNull Collection<? extends BuildTargetType<? extends BuildTarget<R>>> types,
                                                              @Nullable CompileContext context);
 
   <R extends BuildRootDescriptor> void associateTempRoot(@NotNull CompileContext context, @NotNull BuildTarget<R> target, @NotNull R root);
@@ -30,12 +30,12 @@ public interface BuildRootIndex {
   Collection<? extends BuildRootDescriptor> clearTempRoots(@NotNull CompileContext context);
 
   @Nullable
-  <R extends BuildRootDescriptor> R findParentDescriptor(@NotNull File file, @NotNull Collection<? extends BuildTargetType> types,
+  <R extends BuildRootDescriptor> R findParentDescriptor(@NotNull File file, @NotNull Collection<? extends BuildTargetType<? extends BuildTarget<R>>> types,
                                                          @Nullable CompileContext context);
 
   @NotNull
   <R extends BuildRootDescriptor> Collection<R> findAllParentDescriptors(@NotNull File file,
-                                                                         @NotNull Collection<? extends BuildTargetType> types,
+                                                                         @NotNull Collection<? extends BuildTargetType<? extends BuildTarget<R>>> types,
                                                                          @Nullable CompileContext context);
 
   @Nullable

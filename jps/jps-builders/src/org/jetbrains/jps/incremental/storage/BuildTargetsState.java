@@ -22,7 +22,7 @@ public class BuildTargetsState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildTargetsState");
   private final File myDataStorageRoot;
   private AtomicInteger myMaxTargetId = new AtomicInteger(0);
-  private ConcurrentMap<BuildTargetType, BuildTargetTypeState> myTypeStates = new ConcurrentHashMap<BuildTargetType, BuildTargetTypeState>();
+  private ConcurrentMap<BuildTargetType<?>, BuildTargetTypeState> myTypeStates = new ConcurrentHashMap<BuildTargetType<?>, BuildTargetTypeState>();
   private JpsModel myModel;
   private final BuildRootIndexImpl myBuildRootIndex;
 
@@ -43,13 +43,13 @@ public class BuildTargetsState {
     catch (IOException e) {
       LOG.debug("Cannot load " + targetTypesFile + ":" + e.getMessage(), e);
       LOG.debug("Loading all target types to calculate max target id");
-      for (BuildTargetType type : BuilderRegistry.getInstance().getTargetTypes()) {
+      for (BuildTargetType<?> type : BuilderRegistry.getInstance().getTargetTypes()) {
         getTypeState(type);
       }
     }
   }
 
-  public File getTargetTypeDataRoot(BuildTargetType targetType) {
+  public File getTargetTypeDataRoot(BuildTargetType<?> targetType) {
     return new File(getTargetsDataRoot(), targetType.getTypeId());
   }
 
@@ -81,15 +81,15 @@ public class BuildTargetsState {
     }
   }
 
-  public int getBuildTargetId(@NotNull BuildTarget target) {
+  public int getBuildTargetId(@NotNull BuildTarget<?> target) {
     return getTypeState(target.getTargetType()).getTargetId(target);
   }
 
-  public BuildTargetConfiguration getTargetConfiguration(@NotNull BuildTarget target) {
+  public BuildTargetConfiguration getTargetConfiguration(@NotNull BuildTarget<?> target) {
     return getTypeState(target.getTargetType()).getConfiguration(target);
   }
 
-  private BuildTargetTypeState getTypeState(BuildTargetType type) {
+  private BuildTargetTypeState getTypeState(BuildTargetType<?> type) {
     BuildTargetTypeState state = myTypeStates.get(type);
     if (state == null) {
       state = new BuildTargetTypeState(type, this);
@@ -113,7 +113,7 @@ public class BuildTargetsState {
     return myMaxTargetId.incrementAndGet();
   }
 
-  public File getTargetDataRoot(BuildTarget target) {
+  public File getTargetDataRoot(BuildTarget<?> target) {
     return new File(getTargetTypeDataRoot(target.getTargetType()), PathUtilRt.suggestFileName(target.getId(), true, true));
   }
 

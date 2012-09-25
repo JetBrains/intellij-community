@@ -31,15 +31,14 @@ public class BuildRootIndexImpl implements BuildRootIndex {
     myRootsByTarget = new HashMap<BuildTarget<?>, List<? extends BuildRootDescriptor>>();
     myRootToDescriptor = new THashMap<File, List<BuildRootDescriptor>>(FileUtil.FILE_HASHING_STRATEGY);
     final Iterable<AdditionalRootsProviderService> rootsProviders = JpsServiceManager.getInstance().getExtensions(AdditionalRootsProviderService.class);
-    for (BuildTargetType targetType : BuilderRegistry.getInstance().getTargetTypes()) {
-      Collection<BuildTarget<?>> targets = targetIndex.getAllTargets(targetType);
-      for (BuildTarget<?> target : targets) {
+    for (BuildTargetType<?> targetType : BuilderRegistry.getInstance().getTargetTypes()) {
+      for (BuildTarget<?> target : targetIndex.getAllTargets(targetType)) {
         addRoots(dataStorageRoot, rootsProviders, targetType, target, model, index);
       }
     }
   }
 
-  private <R extends BuildRootDescriptor> void addRoots(File dataStorageRoot, Iterable<AdditionalRootsProviderService> rootsProviders, BuildTargetType targetType,
+  private <R extends BuildRootDescriptor> void addRoots(File dataStorageRoot, Iterable<AdditionalRootsProviderService> rootsProviders, BuildTargetType<?> targetType,
                                                         BuildTarget<R> target, JpsModel model, ModuleRootsIndex index) {
     List<R> descriptors = target.computeRootDescriptors(model, index);
     for (AdditionalRootsProviderService<?> provider : rootsProviders) {
@@ -67,7 +66,7 @@ public class BuildRootIndexImpl implements BuildRootIndex {
   @NotNull
   @Override
   public <R extends BuildRootDescriptor> List<R> getRootDescriptors(@NotNull File root,
-                                                                    @NotNull Collection<? extends BuildTargetType> types,
+                                                                    @NotNull Collection<? extends BuildTargetType<? extends BuildTarget<R>>> types,
                                                                     @Nullable CompileContext context) {
     List<BuildRootDescriptor> descriptors = myRootToDescriptor.get(root);
     List<R> result = new SmartList<R>();
@@ -153,7 +152,7 @@ public class BuildRootIndexImpl implements BuildRootIndex {
 
   @Override
   @Nullable
-  public <R extends BuildRootDescriptor> R findParentDescriptor(@NotNull File file, @NotNull Collection<? extends BuildTargetType> types,
+  public <R extends BuildRootDescriptor> R findParentDescriptor(@NotNull File file, @NotNull Collection<? extends BuildTargetType<? extends BuildTarget<R>>> types,
                                                                 @Nullable CompileContext context) {
     File current = file;
     while (current != null) {
@@ -169,7 +168,7 @@ public class BuildRootIndexImpl implements BuildRootIndex {
   @Override
   @NotNull
   public <R extends BuildRootDescriptor> Collection<R> findAllParentDescriptors(@NotNull File file,
-                                                                                @NotNull Collection<? extends BuildTargetType> types,
+                                                                                @NotNull Collection<? extends BuildTargetType<? extends BuildTarget<R>>> types,
                                                                                 @Nullable CompileContext context) {
     File current = file;
     Collection<R> result = null;

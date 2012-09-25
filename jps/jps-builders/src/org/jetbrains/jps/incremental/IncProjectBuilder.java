@@ -304,7 +304,7 @@ public class IncProjectBuilder {
     myProjectDescriptor.fsState.clearAll();
   }
 
-  public static void clearOutputFiles(CompileContext context, BuildTarget target) throws IOException {
+  public static void clearOutputFiles(CompileContext context, BuildTarget<?> target) throws IOException {
     final SourceToOutputMapping map = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
     for (String srcPath : map.getKeys()) {
       final Collection<String> outs = map.getState(srcPath);
@@ -341,7 +341,7 @@ public class IncProjectBuilder {
     }
 
     ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
-    for (BuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
+    for (BuildTargetType<?> type : JavaModuleBuildTargetType.ALL_TYPES) {
       for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets(type)) {
         for (BuildRootDescriptor descriptor : projectDescriptor.getBuildRootIndex().getTargetRoots(target, context)) {
           allSourceRoots.add(descriptor.getRootFile());

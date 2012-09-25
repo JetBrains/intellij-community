@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
-import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.model.JpsModel;
@@ -90,7 +89,7 @@ public class ModuleBuildTarget extends BuildTarget<RootDescriptor> {
 
   @Override
   public RootDescriptor findRootDescriptor(String rootId, BuildRootIndex rootIndex) {
-    List<RootDescriptor> descriptors = rootIndex.getRootDescriptors(new File(rootId), Collections.<BuildTargetType>singletonList(myTargetType), null);
+    List<RootDescriptor> descriptors = rootIndex.getRootDescriptors(new File(rootId), Collections.<JavaModuleBuildTargetType>singletonList(myTargetType), null);
     return ContainerUtil.getFirstItem(descriptors);
   }
 

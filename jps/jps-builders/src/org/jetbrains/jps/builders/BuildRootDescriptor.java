@@ -10,5 +10,5 @@ public abstract class BuildRootDescriptor {
 
   public abstract File getRootFile();
 
-  public abstract BuildTarget getTarget();
+  public abstract BuildTarget<?> getTarget();
 }

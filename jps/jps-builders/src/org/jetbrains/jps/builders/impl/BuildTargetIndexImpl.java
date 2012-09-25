@@ -15,18 +15,19 @@ import java.util.Map;
  * @author nik
  */
 public class BuildTargetIndexImpl implements BuildTargetIndex {
-  private Map<BuildTargetType, Collection<BuildTarget<?>>> myTargets;
+  private Map<BuildTargetType<?>, Collection<? extends BuildTarget<?>>> myTargets;
 
   public BuildTargetIndexImpl(@NotNull JpsModel model) {
-    myTargets = new HashMap<BuildTargetType, Collection<BuildTarget<?>>>();
-    for (BuildTargetType type : BuilderRegistry.getInstance().getTargetTypes()) {
+    myTargets = new HashMap<BuildTargetType<?>, Collection<? extends BuildTarget<?>>>();
+    for (BuildTargetType<?> type : BuilderRegistry.getInstance().getTargetTypes()) {
       myTargets.put(type, type.computeAllTargets(model));
     }
   }
 
   @NotNull
   @Override
-  public Collection<BuildTarget<?>> getAllTargets(@NotNull BuildTargetType type) {
-    return myTargets.get(type);
+  public <T extends BuildTarget<?>> Collection<T> getAllTargets(@NotNull BuildTargetType<T> type) {
+    //noinspection unchecked
+    return (Collection<T>)myTargets.get(type);
   }
 }

@@ -43,7 +43,7 @@ final class FilesDelta {
     }
   }
 
-  public void load(DataInput in, @NotNull BuildTarget target, BuildRootIndex buildRootIndex) throws IOException {
+  public void load(DataInput in, @NotNull BuildTarget<?> target, BuildRootIndex buildRootIndex) throws IOException {
     myDeletedPaths.clear();
     int deletedCount = in.readInt();
     while (deletedCount-- > 0) {

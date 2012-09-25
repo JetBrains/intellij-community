@@ -2,7 +2,6 @@ package org.jetbrains.jps.builders.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetLoader;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
@@ -14,7 +13,7 @@ import java.util.*;
 /**
  * @author nik
  */
-public class JavaModuleBuildTargetType extends BuildTargetType {
+public class JavaModuleBuildTargetType extends BuildTargetType<ModuleBuildTarget> {
   public static final JavaModuleBuildTargetType PRODUCTION = new JavaModuleBuildTargetType("java-production", false);
   public static final JavaModuleBuildTargetType TEST = new JavaModuleBuildTargetType("java-test", true);
   public static final List<JavaModuleBuildTargetType> ALL_TYPES = Arrays.asList(PRODUCTION, TEST);
@@ -28,9 +27,9 @@ public class JavaModuleBuildTargetType extends BuildTargetType {
 
   @NotNull
   @Override
-  public Collection<BuildTarget<?>> computeAllTargets(@NotNull JpsModel model) {
+  public Collection<ModuleBuildTarget> computeAllTargets(@NotNull JpsModel model) {
     List<JpsModule> modules = model.getProject().getModules();
-    List<BuildTarget<?>> targets = new ArrayList<BuildTarget<?>>(modules.size());
+    List<ModuleBuildTarget> targets = new ArrayList<ModuleBuildTarget>(modules.size());
     for (JpsModule module : modules) {
       targets.add(new ModuleBuildTarget(module, this));
     }
@@ -39,7 +38,7 @@ public class JavaModuleBuildTargetType extends BuildTargetType {
 
   @NotNull
   @Override
-  public BuildTargetLoader createLoader(@NotNull JpsModel model) {
+  public Loader createLoader(@NotNull JpsModel model) {
     return new Loader(model);
   }
 
@@ -51,7 +50,7 @@ public class JavaModuleBuildTargetType extends BuildTargetType {
     return tests ? TEST : PRODUCTION;
   }
 
-  private class Loader extends BuildTargetLoader {
+  private class Loader extends BuildTargetLoader<ModuleBuildTarget> {
     private final Map<String, JpsModule> myModules;
 
     public Loader(JpsModel model) {
@@ -63,7 +62,7 @@ public class JavaModuleBuildTargetType extends BuildTargetType {
 
     @Nullable
     @Override
-    public BuildTarget createTarget(@NotNull String targetId) {
+    public ModuleBuildTarget createTarget(@NotNull String targetId) {
       JpsModule module = myModules.get(targetId);
       return module != null ? new ModuleBuildTarget(module, JavaModuleBuildTargetType.this) : null;
     }

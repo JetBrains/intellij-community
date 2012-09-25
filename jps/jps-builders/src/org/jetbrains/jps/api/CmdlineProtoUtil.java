@@ -54,7 +54,7 @@ public class CmdlineProtoUtil {
     );
   }
 
-  public static TargetTypeBuildScope createAllTargetsScope(BuildTargetType type) {
+  public static TargetTypeBuildScope createAllTargetsScope(BuildTargetType<?> type) {
     return TargetTypeBuildScope.newBuilder()
       .setTypeId(type.getTypeId())
       .setAllTargets(true)

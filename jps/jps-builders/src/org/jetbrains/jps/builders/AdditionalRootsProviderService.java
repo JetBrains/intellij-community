@@ -11,13 +11,13 @@ import java.util.List;
  * @author nik
  */
 public abstract class AdditionalRootsProviderService<R extends BuildRootDescriptor> {
-  private Collection<? extends BuildTargetType> myTargetTypes;
+  private Collection<? extends BuildTargetType<? extends BuildTarget<R>>> myTargetTypes;
 
-  protected AdditionalRootsProviderService(Collection<? extends BuildTargetType> targetTypes) {
+  protected AdditionalRootsProviderService(Collection<? extends BuildTargetType<? extends BuildTarget<R>>> targetTypes) {
     myTargetTypes = targetTypes;
   }
 
-  public Collection<? extends BuildTargetType> getTargetTypes() {
+  public Collection<? extends BuildTargetType<? extends BuildTarget<R>>> getTargetTypes() {
     return myTargetTypes;
   }
 
