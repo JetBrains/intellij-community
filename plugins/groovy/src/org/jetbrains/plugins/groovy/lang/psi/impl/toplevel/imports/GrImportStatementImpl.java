@@ -173,8 +173,8 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
       }
 
       PsiMethod method = (PsiMethod)member;
-      if ((propByGetter == null || importedName.equals(propByGetter)) && GroovyPropertyUtils.isSimplePropertyGetter(method, refName) ||
-          (propBySetter == null || importedName.equals(propBySetter)) && GroovyPropertyUtils.isSimplePropertySetter(method, refName)) {
+      if ((nameHint == null || importedName.equals(propByGetter)) && GroovyPropertyUtils.isSimplePropertyGetter(method, refName) ||
+          (nameHint == null || importedName.equals(propBySetter)) && GroovyPropertyUtils.isSimplePropertySetter(method, refName)) {
         if (method.hasModifierProperty(PsiModifier.STATIC) && !processor.execute(method, state)) {
           return false;
         }
