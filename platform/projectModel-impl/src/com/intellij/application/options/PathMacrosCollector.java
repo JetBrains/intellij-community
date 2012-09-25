@@ -21,11 +21,13 @@ import com.intellij.openapi.components.CompositePathMacroFilter;
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -39,6 +41,7 @@ public class PathMacrosCollector extends PathMacroMap {
   public static final Pattern MACRO_PATTERN = Pattern.compile("\\$([\\w\\-\\.]+?)\\$");
 
   private final Matcher myMatcher;
+  private final Map<String, String> myMacroMap = ContainerUtilRt.newLinkedHashMap();
 
   private static final String FILE_PROTOCOL = "file:";
   private static final String JAR_PROTOCOL = "jar:";
@@ -98,5 +101,10 @@ public class PathMacrosCollector extends PathMacroMap {
     }
 
     return text;
+  }
+
+  @Override
+  public int hashCode() {
+    return myMacroMap.hashCode();
   }
 }

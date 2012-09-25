@@ -97,7 +97,7 @@ public class BasePathMacroManager extends PathMacroManager {
                                   @NonNls final String pathWithPrefix,
                                   @NonNls final String substitutionWithPrefix,
                                   final boolean check) {
-    if (check && result.get(pathWithPrefix) != null)
+    if (check && result.containsPath(pathWithPrefix))
       return;
 
     if (StringUtil.endsWithChar(pathWithPrefix, '/')) {

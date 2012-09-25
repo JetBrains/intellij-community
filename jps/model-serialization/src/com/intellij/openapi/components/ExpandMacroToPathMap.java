@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.components;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 
 import java.util.Map;
 
@@ -24,23 +27,75 @@ import java.util.Map;
  *         Date: Dec 6, 2004
  */
 public class ExpandMacroToPathMap extends PathMacroMap {
+  private final Map<String, String> myPlainMap = ContainerUtilRt.newLinkedHashMap();
+  private final Map<String, String> myMacroExpands = ContainerUtil.newHashMap();
 
   public void addMacroExpand(String macroName, String path) {
-    String replacement = quotePath(path);
-    String withSlash = StringUtil.trimEnd(replacement, "/") + "/";
-    put("$" + macroName + "$//", withSlash);
-    put("$" + macroName + "$/", withSlash);
-    put("$" + macroName + "$", replacement);
+    myMacroExpands.put(macroName, PathMacroMap.quotePath(path));
+  }
+
+  public void put(String fromText, String toText) {
+    myPlainMap.put(fromText, toText);
+  }
+
+  public void putAll(ExpandMacroToPathMap another) {
+    myPlainMap.putAll(another.myPlainMap);
+    myMacroExpands.putAll(another.myMacroExpands);
   }
 
   public String substitute(String text, boolean caseSensitive) {
-    if (text == null) return null;
-    for (Map.Entry<String, String> entry : myMacroMap.entrySet()) {
+    if (text == null) {
+      //noinspection ConstantConditions
+      return null;
+    }
+
+    for (Map.Entry<String, String> entry : myPlainMap.entrySet()) {
       // when replacing macros with actual paths the replace utility may be used as always 'case-sensitive'
-      // for case-insensitive file systems there will be no unnecesary toLowerCase() transforms. 
+      // for case-insensitive file systems there will be no unnecessary toLowerCase() transforms.
       text = StringUtil.replace(text, entry.getKey(), entry.getValue(), false);
+    }
+
+    for (String macroName : myMacroExpands.keySet()) {
+      text = replaceMacro(text, macroName, myMacroExpands.get(macroName));
+    }
+
+    return text;
+  }
+
+  private static String replaceMacro(String text, String macroName, String replacement) {
+    while (true) {
+      int start = findMacroIndex(text, macroName);
+      if (start < 0) {
+        break;
+      }
+
+      int end = start + macroName.length() + 2;
+      int slashCount = getSlashCount(text, end);
+      String actualReplacement = slashCount > 0 && !replacement.endsWith("/") ? replacement + "/" : replacement;
+      text = StringUtil.replaceSubstring(text, new TextRange(start, end + slashCount), actualReplacement);
     }
     return text;
   }
 
+  private static int getSlashCount(String text, int pos) {
+    return StringUtil.isChar(text, pos, '/') ? StringUtil.isChar(text, pos + 1, '/') ? 2 : 1 : 0;
+  }
+
+  private static int findMacroIndex(String text, String macroName) {
+    int i = -1;
+    while (true) {
+      i = text.indexOf('$', i + 1);
+      if (i < 0) {
+        return -1;
+      }
+      if (StringUtil.startsWith(text, i + 1, macroName) && StringUtil.isChar(text, i + macroName.length() + 1, '$')) {
+        return i;
+      }
+    }
+  }
+
+  @Override
+  public int hashCode() {
+    return myPlainMap.hashCode() + myMacroExpands.hashCode();
+  }
 }
