@@ -30,7 +30,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.tasks.github.GithubApiUtil;
@@ -47,6 +46,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author oleg
@@ -119,14 +119,36 @@ public class GithubCreateGistAction extends DumbAwareAction {
     if (!dialog.isOK()){
       return;
     }
-    final GithubSettings settings = GithubSettings.getInstance();
+
+    GithubSettings settings = GithubSettings.getInstance();
+    final String login = settings.getLogin();
     final String password = settings.getPassword();
-    final Ref<String> url = new Ref<String>();
+
     final String description = dialog.getDescription();
     final boolean isPrivate = dialog.isPrivate();
     final boolean anonymous = dialog.isAnonymous();
     final boolean openInBrowser = dialog.isOpenInBrowser();
-    
+
+    String url = createGistWithProgress(project, editor, file, files, login, password, description, isPrivate, anonymous);
+
+    if (url == null){
+      return;
+    }
+
+    if (openInBrowser) {
+      BrowserUtil.launchBrowser(url);
+    }
+    else {
+      showNotificationWithLink(project, url);
+    }
+  }
+
+  @Nullable
+  private static String createGistWithProgress(@NotNull final Project project, @Nullable final Editor editor,
+                                               @Nullable final VirtualFile file, @Nullable final VirtualFile[] files,
+                                               @NotNull final String login, @NotNull final String password,
+                                               final String description, final boolean aPrivate, final boolean anonymous) {
+    final AtomicReference<String> url = new AtomicReference<String>();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
@@ -134,29 +156,25 @@ public class GithubCreateGistAction extends DumbAwareAction {
         if (contents == null) {
           return;
         }
-        String gistUrl = createGist(project, settings.getLogin(), password, anonymous, contents, isPrivate, description);
+        String gistUrl = createGist(project, login, password, anonymous, contents, aPrivate, description);
         url.set(gistUrl);
       }
     }, "Communicating With GitHub", false, project);
+    return url.get();
+  }
 
-    if (url.isNull()){
-      return;
-    }
-    if (openInBrowser) {
-      BrowserUtil.launchBrowser(url.get());
-    } else {
-      Notificator.getInstance(project).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Gist Created Successfully",
-                                              "Your gist url: <a href='open'>" + url.get() + "</a>", NotificationType.INFORMATION,
-                                              new NotificationListener() {
-                                                @Override
-                                                public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                            @NotNull HyperlinkEvent event) {
-                                                  if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                                                    BrowserUtil.launchBrowser(url.get());
-                                                  }
-                                                }
-                                              });
-    }
+  private static void showNotificationWithLink(@NotNull Project project, @NotNull final String url) {
+    Notificator.getInstance(project).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Gist Created Successfully",
+      "Your gist url: <a href='open'>" + url + "</a>", NotificationType.INFORMATION,
+      new NotificationListener() {
+        @Override
+        public void hyperlinkUpdate(@NotNull Notification notification,
+                                    @NotNull HyperlinkEvent event) {
+          if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            BrowserUtil.launchBrowser(url);
+          }
+        }
+      });
   }
 
   @Nullable
