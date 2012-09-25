@@ -56,7 +56,7 @@ public class TextOccurrencesUtil {
     }, factory);
   }
 
-  public static void processTextOccurences(@NotNull final PsiElement element,
+  public static boolean processTextOccurences(@NotNull final PsiElement element,
                                            @NotNull String stringToSearch,
                                            @NotNull GlobalSearchScope searchScope,
                                            @NotNull final Processor<UsageInfo> processor,
@@ -68,7 +68,7 @@ public class TextOccurrencesUtil {
       }
     });
 
-    helper.processUsagesInNonJavaFiles(element, stringToSearch, new PsiNonJavaFileReferenceProcessor() {
+    return helper.processUsagesInNonJavaFiles(element, stringToSearch, new PsiNonJavaFileReferenceProcessor() {
       public boolean process(PsiFile psiFile, int startOffset, int endOffset) {
         UsageInfo usageInfo = factory.createUsageInfo(psiFile, startOffset, endOffset);
         return usageInfo == null || processor.process(usageInfo);
