@@ -339,6 +339,9 @@ public class HighlightUtil {
     if (operandType == null) return null;
     if (operandType instanceof PsiLambdaExpressionType) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, "Lambda expression is not expected here");
+    } 
+    if (operandType instanceof PsiMethodReferenceType) {
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, "Method reference expression is not expected here");
     }
     if (TypeConversionUtil.isPrimitiveAndNotNull(operandType)
         || TypeConversionUtil.isPrimitiveAndNotNull(checkType)
@@ -2633,11 +2636,7 @@ public class HighlightUtil {
 
   @Nullable
   public static HighlightInfo checkMethodReferencesFeature(final PsiMethodReferenceExpression expression) {
-    final HighlightInfo info = checkFeature(expression, Feature.METHOD_REFERENCES);
-    if (info != null) return info;
-    // todo[r.sh] stub; remove after implementing support in TypeConversionUtil
-    final String message = "Method references type check is not yet implemented";
-    return HighlightInfo.createHighlightInfo(HighlightInfoType.WEAK_WARNING, expression, message);
+    return checkFeature(expression, Feature.METHOD_REFERENCES);
   }
 
   @Nullable

@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.codeInsight.daemon.lambda;
 
-class C {
-  interface Simplest {
-    void m();
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import org.jetbrains.annotations.NonNls;
+
+public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
+  @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/methodRef";
+
+  public void testValidContext() throws Exception {
+    doTest();
   }
-  void simplest() { }
-  void use(Simplest s) { }
 
-  void test() {
-    Simplest simplest = this::simplest;
-    use(this::simplest);
+  private void doTest() throws Exception {
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
   }
 }
