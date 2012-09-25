@@ -243,14 +243,14 @@ public class EnhancerCompilerInstance extends GenericCompilerInstance<Enhancemen
 
     public void collectItems(@NotNull VirtualFile file, final String fullName) throws CacheCorruptedException {
       VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
-        { set(FULL_NAME, fullName); }
+        { setValueForChildren(fullName); }
 
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           try {
-            final String fullName = get(FULL_NAME);
+            final String fullName = getCurrentValue();
             if (file.isDirectory()) {
-              set(FULL_NAME, StringUtil.getQualifiedName(fullName, file.getName()));
+              setValueForChildren(StringUtil.getQualifiedName(fullName, file.getName()));
             }
             else if (StdFileTypes.CLASS.equals(file.getFileType())) {
               final VirtualFile sourceFile = myContext.getSourceFileByOutputFile(file);
