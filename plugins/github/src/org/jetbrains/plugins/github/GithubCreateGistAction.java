@@ -106,32 +106,28 @@ public class GithubCreateGistAction extends DumbAwareAction {
       return;
     }
 
-    final boolean useGitHubAccount;
-    if (!GithubUtil.checkCredentials(project)) {
-      final GithubLoginDialog dialog = new GithubLoginDialog(project);
-      dialog.show();
-      useGitHubAccount = GithubUtil.checkCredentials(project);
-    } else {
-      useGitHubAccount = true;
-    }
-
     // Ask for description and other params
-    final GitHubCreateGistDialog dialog = new GitHubCreateGistDialog(project, useGitHubAccount);
+    final GitHubCreateGistDialog dialog = new GitHubCreateGistDialog(project);
     dialog.show();
     if (!dialog.isOK()){
       return;
     }
 
-    GithubSettings settings = GithubSettings.getInstance();
-    final String login = settings.getLogin();
-    final String password = settings.getPassword();
-
-    final String description = dialog.getDescription();
-    final boolean isPrivate = dialog.isPrivate();
     final boolean anonymous = dialog.isAnonymous();
-    final boolean openInBrowser = dialog.isOpenInBrowser();
+    if (!anonymous) {
+      if (!GithubUtil.checkCredentials(project)) {
+        final GithubLoginDialog loginDialog = new GithubLoginDialog(project);
+        loginDialog.show();
+        if (!loginDialog.isOK()) {
+          showError(project, FAILED_TO_CREATE_GIST, "You have to login to GitHub to create non-anonymous Gists.", null, null);
+          return;
+        }
+      }
+    }
 
-    createGistWithProgress(project, editor, file, files, login, password, description, isPrivate, anonymous,
+    GithubSettings settings = GithubSettings.getInstance();
+    createGistWithProgress(project, editor, file, files, settings.getLogin(), settings.getPassword(), dialog.getDescription(),
+                           dialog.isPrivate(), anonymous,
                            new Consumer<String>() {
 
                              @Override
@@ -140,7 +136,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                  return;
                                }
 
-                               if (openInBrowser) {
+                               if (dialog.isOpenInBrowser()) {
                                  BrowserUtil.launchBrowser(url);
                                }
                                else {
