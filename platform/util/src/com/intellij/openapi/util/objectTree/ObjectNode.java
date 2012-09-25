@@ -19,13 +19,13 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 
 public final class ObjectNode<T> {
   private static final ObjectNode[] EMPTY_ARRAY = new ObjectNode[0];
@@ -37,7 +37,7 @@ public final class ObjectNode<T> {
   private ObjectNode<T> myParent;
   private final T myObject;
 
-  private LinkedHashSet<ObjectNode<T>> myChildren;
+  private SmartList<ObjectNode<T>> myChildren;
   private final Throwable myTrace;
 
   private final long myOwnModification;
@@ -63,7 +63,7 @@ public final class ObjectNode<T> {
   void addChild(@NotNull ObjectNode<T> child) {
     synchronized (myTree.treeLock) {
       if (myChildren == null) {
-        myChildren = new LinkedHashSet<ObjectNode<T>>(1);
+        myChildren = new SmartList<ObjectNode<T>>();
       }
       myChildren.add(child);
       child.myParent = this;
@@ -185,7 +185,7 @@ public final class ObjectNode<T> {
 
   <D extends Disposable> D findChildEqualTo(@NotNull D object) {
     synchronized (myTree.treeLock) {
-      LinkedHashSet<ObjectNode<T>> children = myChildren;
+      SmartList<ObjectNode<T>> children = myChildren;
       if (children != null) {
         for (ObjectNode<T> node : children) {
           T nodeObject = node.getObject();
