@@ -144,7 +144,7 @@ public class BrowserUtil {
   @NonNls
   private static List<String> getDefaultBrowserCommand() {
     if (SystemInfo.isWindows) {
-      return Arrays.asList((SystemInfo.isWindows9x ? "command.com" : "cmd.exe"), "/c", "start", "\"\"");
+      return getOpenBrowserWinCommand(null);
     }
     else if (SystemInfo.isMac) {
       return new SmartList<String>(ExecUtil.getOpenCommandPath());
@@ -215,15 +215,30 @@ public class BrowserUtil {
     launchBrowserByCommand(url, getOpenBrowserCommand(browserPath));
   }
 
+  private static List<String> getOpenBrowserWinCommand(@Nullable String browserPath) {
+    ArrayList<String> command = new ArrayList<String>();
+    command.add(SystemInfo.isWindows9x ? "command.com" : "cmd.exe");
+    command.add("/c");
+    command.add("start");
+    command.add("\"\"");
+    if (browserPath != null) {
+      command.add(browserPath);
+    }
+    return command;
+  }
 
   public static List<String> getOpenBrowserCommand(final @NonNls @NotNull String browserPath) {
     // versions before 10.6 don't allow to pass command line arguments to browser via 'open' command
     // so we use full path to browser executable in such case
     if (SystemInfo.isMac && !new File(browserPath).isFile()) {
-      return Arrays.asList(ExecUtil.getOpenCommandPath(), "-a", browserPath);
+      ArrayList<String> command = new ArrayList<String>();
+      command.add(ExecUtil.getOpenCommandPath());
+      command.add("-a");
+      command.add(browserPath);
+      return command;
     }
     else if (SystemInfo.isWindows && !new File(browserPath).isFile()) {
-      return Arrays.asList((SystemInfo.isWindows9x ? "command.com" : "cmd.exe"), "/c", "start", "\"\"", browserPath);
+      return getOpenBrowserWinCommand(browserPath);
     }
     else {
       return new SmartList<String>(browserPath);
@@ -309,6 +324,7 @@ public class BrowserUtil {
 
         if (!extract.get()) return null;
 
+        @SuppressWarnings("ConstantConditions")
         final ZipFile zipFile = jarFileSystem.getJarFile(file).getZipFile();
         if (zipFile == null) return null;
         ZipEntry entry = zipFile.getEntry(targetFileRelativePath);
