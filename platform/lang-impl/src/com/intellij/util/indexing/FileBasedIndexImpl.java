@@ -25,6 +25,7 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -74,7 +75,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.*;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
@@ -1283,7 +1283,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
       else {
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
             new Task.Modal(null, "Updating index", false) {
@@ -1294,7 +1294,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               }
             }.queue();
           }
-        });
+        }, ModalityState.NON_MODAL);
       }
     }
 
