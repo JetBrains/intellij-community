@@ -25,7 +25,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -215,7 +214,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
   }
 
   public static void launchBrowser(final @NotNull BrowserFamily family,
-                                   @NotNull final String url,
+                                   @Nullable final String url,
                                    final boolean forceOpenNewInstanceOnMac,
                                    String... parameters) {
     UrlOpenerImpl.doLaunchBrowser(family, url, parameters, Conditions.<String>alwaysTrue(), forceOpenNewInstanceOnMac);
@@ -227,11 +226,6 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
                                    final Condition<String> browserSpecificParametersFilter,
                                    String... parameters) {
     UrlOpenerImpl.doLaunchBrowser(family, url, parameters, browserSpecificParametersFilter, forceOpenNewInstanceOnMac);
-  }
-
-  @Nullable
-  public static String checkPath(BrowserFamily family, String path) {
-    return StringUtil.isEmpty(path) ? XmlBundle.message("browser.path.not.specified", family.getName()) : null;
   }
 
   @Nullable

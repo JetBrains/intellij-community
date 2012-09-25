@@ -28,14 +28,10 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class ChromeSettings extends BrowserSpecificSettings {
-  @NonNls public static final String REMOTE_DEBUGGING_PORT_ARG = "--remote-debugging-port=";
   @NonNls public static final String USER_DATA_DIR_ARG = "--user-data-dir=";
-  public static final int DEFAULT_REMOTE_SHELL_PORT = 7930;
   private String myCommandLineOptions = "";
   private String myUserDataDirectoryPath;
   private boolean myUseCustomProfile;
-  private boolean myEnableRemoteDebug;
-  private int myRemoteShellPort = DEFAULT_REMOTE_SHELL_PORT;
 
   public ChromeSettings() {
   }
@@ -51,16 +47,6 @@ public class ChromeSettings extends BrowserSpecificSettings {
     return myUseCustomProfile;
   }
 
-  @Tag("enable-remote-debug")
-  public boolean isEnableRemoteDebug() {
-    return myEnableRemoteDebug;
-  }
-
-  @Tag("remote-shell-port")
-  public int getRemoteShellPort() {
-    return myRemoteShellPort;
-  }
-
   @Tag("command-line-options")
   public String getCommandLineOptions() {
     return myCommandLineOptions;
@@ -68,14 +54,6 @@ public class ChromeSettings extends BrowserSpecificSettings {
 
   public void setCommandLineOptions(String commandLineOptions) {
     myCommandLineOptions = commandLineOptions;
-  }
-
-  public void setEnableRemoteDebug(boolean enableRemoteDebug) {
-    myEnableRemoteDebug = enableRemoteDebug;
-  }
-
-  public void setRemoteShellPort(int remoteShellPort) {
-    myRemoteShellPort = remoteShellPort;
   }
 
   public void setUserDataDirectoryPath(String userDataDirectoryPath) {
@@ -89,23 +67,13 @@ public class ChromeSettings extends BrowserSpecificSettings {
   @NotNull
   @Override
   public String[] getAdditionalParameters() {
-    String[] customProfileArg;
+    String[] cliOptions = ParametersList.parse(myCommandLineOptions);
     if (myUseCustomProfile && myUserDataDirectoryPath != null) {
-      customProfileArg = new String[]{USER_DATA_DIR_ARG + FileUtil.toSystemDependentName(myUserDataDirectoryPath)};
+      return ArrayUtil.mergeArrays(cliOptions, USER_DATA_DIR_ARG + FileUtil.toSystemDependentName(myUserDataDirectoryPath));
     }
     else {
-      customProfileArg = ArrayUtil.EMPTY_STRING_ARRAY;
+      return cliOptions;
     }
-
-    String[] remoteShellArg;
-    if (myEnableRemoteDebug) {
-      remoteShellArg = new String[]{REMOTE_DEBUGGING_PORT_ARG + myRemoteShellPort};
-    }
-    else {
-      remoteShellArg = ArrayUtil.EMPTY_STRING_ARRAY;
-    }
-
-    return ArrayUtil.mergeArrays(ParametersList.parse(myCommandLineOptions), ArrayUtil.mergeArrays(customProfileArg, remoteShellArg));
   }
 
   @Override
