@@ -11,11 +11,11 @@ import java.io.*;
  */
 public class BuildTargetConfiguration {
   private static final Logger LOG = Logger.getInstance(BuildTargetConfiguration.class);
-  private final BuildTarget myTarget;
+  private final BuildTarget<?> myTarget;
   private final BuildTargetsState myTargetsState;
   private String myConfiguration;
 
-  public BuildTargetConfiguration(BuildTarget target, BuildTargetsState targetsState) {
+  public BuildTargetConfiguration(BuildTarget<?> target, BuildTargetsState targetsState) {
     myTarget = target;
     myTargetsState = targetsState;
     myConfiguration = load();
@@ -51,7 +51,7 @@ public class BuildTargetConfiguration {
   private String saveToString() {
     StringWriter out = new StringWriter();
     //noinspection IOResourceOpenedButNotSafelyClosed
-    myTarget.writeConfiguration(new PrintWriter(out), myTargetsState.getRootsIndex(), myTargetsState.getArtifactRootsIndex());
+    myTarget.writeConfiguration(new PrintWriter(out), myTargetsState.getBuildRootIndex());
     return out.toString();
   }
 

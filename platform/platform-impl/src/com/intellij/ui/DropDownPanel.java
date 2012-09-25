@@ -15,16 +15,20 @@
  */
 package com.intellij.ui;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.util.IconUtil;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -33,11 +37,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * User: Vassiliy.Kudryashov
  */
 public class DropDownPanel extends JPanel {
-  private static final Icon[] WRAPPERS = IconUtil.getEqualSizedIcons(AllIcons.General.ComboArrowRight, AllIcons.General.ComboArrow);
-  private static final Icon DOWN = WRAPPERS[0];
-  private static final Icon UP = WRAPPERS[1];
+  private static final Icon[] ICONS = IconUtil.getEqualSizedIcons(AllIcons.General.ComboArrowRight, AllIcons.General.ComboArrow);
 
-  private final ButtonLabel myLabel;
+  private final SeparatorButton myLabel;
   private @Nullable JComponent myContent;
   private boolean myExpanded = true;
   private final List<ChangeListener> myListeners = new CopyOnWriteArrayList<ChangeListener>();
@@ -48,7 +50,7 @@ public class DropDownPanel extends JPanel {
 
   public DropDownPanel(@Nullable String title, @Nullable JComponent content) {
     super(new BorderLayout());
-    myLabel = new ButtonLabel();
+    myLabel = new SeparatorButton();
     add(myLabel, BorderLayout.NORTH);
     setTitle(title);
     setContent(content);
@@ -68,14 +70,14 @@ public class DropDownPanel extends JPanel {
   }
 
   public void setTitle(@Nullable String title) {
-    myLabel.setText(title);
+    myLabel.myButton.setText(title);
   }
 
   public void setExpanded(boolean expanded) {
     if (myExpanded == expanded) {
       return;
     }
-    myLabel.getLabel().setIcon(expanded ? UP : DOWN);
+    myLabel.myButton.setSelected(expanded);
     if (myContent != null) {
       if (expanded) {
         add(myContent, BorderLayout.CENTER);
@@ -108,13 +110,43 @@ public class DropDownPanel extends JPanel {
     }
   }
 
-  private class ButtonLabel extends TitledSeparator implements ActionButtonComponent {
+  private class SeparatorButton extends JPanel implements ActionButtonComponent {
+    private final JToggleButton myButton;
     private boolean myMouseDown;
     private boolean myRollover;
 
-    private ButtonLabel() {
-      setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 0));
-      myLabel.setIconTextGap(2);
+    private SeparatorButton() {
+      myButton = new JToggleButton() {
+        @Override
+        protected void processMouseEvent(MouseEvent e) {
+          SeparatorButton.this.processMouseEvent(e);
+        }
+
+        @Override
+        protected void processMouseMotionEvent(MouseEvent e) {
+          SeparatorButton.this.processMouseMotionEvent(e);
+        }
+
+        @Override
+        public int getDisplayedMnemonicIndex() {
+          return ExecutionBundle.message("before.launch.panel.title").indexOf('\u001B');
+        }
+      };
+      myButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          setExpanded(myButton.isSelected());
+        }
+      });
+      myButton.setIcon(ICONS[0]);
+      myButton.setSelectedIcon(ICONS[1]);
+      myButton.setBorderPainted(false);
+      myButton.setContentAreaFilled(false);
+      myButton.setFocusPainted(true);
+      myButton.setMargin(new Insets(0,0,0,0));
+      setLayout(new MigLayout("fill, ins 0 0 0 5, gap 2, align left"));
+      add(myButton);
+      add(new JSeparator(), "pushx, growx");
       enableEvents(AWTEvent.MOUSE_EVENT_MASK);
     }
 

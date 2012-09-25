@@ -126,7 +126,7 @@ public class Switcher extends AnAction implements DumbAware {
         @Override
         public boolean dispatch(AWTEvent event) {
           ToolWindow tw;
-          if (SWITCHER != null && event instanceof KeyEvent) {
+          if (SWITCHER != null && event instanceof KeyEvent && !SWITCHER.isPinnedMode()) {
             final KeyEvent keyEvent = (KeyEvent)event;
             if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
               SwingUtilities.invokeLater(CHECKER);

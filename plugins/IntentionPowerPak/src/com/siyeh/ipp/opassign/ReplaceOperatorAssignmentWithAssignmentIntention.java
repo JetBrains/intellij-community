@@ -75,10 +75,10 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention
     final boolean parentheses;
     if (rhs instanceof PsiBinaryExpression) {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)rhs;
-      final int precedence1 = ParenthesesUtils.getPrecedenceForBinaryOperator(binaryExpression.getOperationTokenType());
+      final int precedence1 = ParenthesesUtils.getPrecedenceForOperator(binaryExpression.getOperationTokenType());
       final IElementType signTokenType = sign.getTokenType();
       final IElementType newOperatorToken = tokenMap.get(signTokenType);
-      final int precedence2 = ParenthesesUtils.getPrecedenceForBinaryOperator(newOperatorToken);
+      final int precedence2 = ParenthesesUtils.getPrecedenceForOperator(newOperatorToken);
       parentheses = precedence1 >= precedence2 || !ParenthesesUtils.isCommutativeBinaryOperator(newOperatorToken);
     }
     else {

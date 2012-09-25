@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -30,7 +31,8 @@ public class ShowColorPickerAction extends AnAction {
     final Project project = e.getProject();
     final IdeFrame frame = project == null ? WindowManager.getInstance().getAllFrames()[0] : WindowManager.getInstance().getIdeFrame(project);
     if (frame != null) {
-      final ColorPicker.ColorPickerDialog picker = new ColorPicker.ColorPickerDialog(frame.getComponent(), "Color Picker", null, true);
+      final ColorPicker.ColorPickerDialog picker =
+        new ColorPicker.ColorPickerDialog(frame.getComponent(), "Color Picker", null, true, e.getData(LangDataKeys.PSI_ELEMENT));
       picker.setModal(false);
       picker.show();
     }

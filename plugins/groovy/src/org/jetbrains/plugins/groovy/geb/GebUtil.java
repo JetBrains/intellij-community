@@ -62,18 +62,18 @@ public class GebUtil {
     return true;
   }
 
-  public static Map<String, PsiField> getContentElements(@NotNull PsiClass pageClass) {
-    Map<String, PsiField> res = KEY.getCachedValue(pageClass);
+  public static Map<String, PsiField> getContentElements(@NotNull PsiClass pageOrModuleClass) {
+    Map<String, PsiField> res = KEY.getCachedValue(pageOrModuleClass);
     if (res == null) {
-      res = calculateContentElements(pageClass);
-      res = KEY.putCachedValue(pageClass, res);
+      res = calculateContentElements(pageOrModuleClass);
+      res = KEY.putCachedValue(pageOrModuleClass, res);
     }
 
     return res;
   }
 
-  private static Map<String, PsiField> calculateContentElements(@NotNull PsiClass pageClass) {
-    PsiField contentField = pageClass.findFieldByName("content", false);
+  private static Map<String, PsiField> calculateContentElements(@NotNull PsiClass pageOrModuleClass) {
+    PsiField contentField = pageOrModuleClass.findFieldByName("content", false);
 
     if (!(contentField instanceof GrField)) return Collections.emptyMap();
 
@@ -81,7 +81,7 @@ public class GebUtil {
     if (!(initializer instanceof GrClosableBlock)) return Collections.emptyMap();
 
     Map<String, PsiField> res = new HashMap<String, PsiField>();
-    PsiType objectType = PsiType.getJavaLangObject(pageClass.getManager(), pageClass.getResolveScope());
+    PsiType objectType = PsiType.getJavaLangObject(pageOrModuleClass.getManager(), pageOrModuleClass.getResolveScope());
 
     for (PsiElement e = initializer.getFirstChild(); e != null; e = e.getNextSibling()) {
       if (e instanceof GrMethodCall) {
@@ -92,11 +92,20 @@ public class GebUtil {
         if (((GrReferenceExpression)invokedExpression).isQualified()) continue;
 
         GrExpression[] arguments = PsiUtil.getAllArguments((GrCall)e);
-        if (arguments.length != 1 || !(arguments[0] instanceof GrClosableBlock)) continue;
+        if (arguments.length == 0) continue;
 
-        final GrClosableBlock block = (GrClosableBlock)arguments[0];
+        final GrClosableBlock block;
+        if (arguments.length == 1 && arguments[0] instanceof GrClosableBlock) {
+          block = (GrClosableBlock)arguments[0];
+        }
+        else if (arguments.length == 2 && arguments[0] == null && arguments[1] instanceof GrClosableBlock) {
+          block = (GrClosableBlock)arguments[1];
+        }
+        else {
+          continue;
+        }
 
-        GrLightField field = new GrLightField(pageClass, ((GrReferenceExpression)invokedExpression).getReferenceName(), objectType, invokedExpression) {
+        GrLightField field = new GrLightField(pageOrModuleClass, ((GrReferenceExpression)invokedExpression).getReferenceName(), objectType, invokedExpression) {
           @Override
           public PsiType getTypeGroovy() {
             return block.getReturnType();

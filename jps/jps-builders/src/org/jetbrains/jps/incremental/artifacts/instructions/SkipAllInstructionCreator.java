@@ -17,8 +17,6 @@ package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-
 /**
  * @author nik
  */
@@ -27,11 +25,18 @@ public class SkipAllInstructionCreator extends ArtifactCompilerInstructionCreato
     super(builder);
   }
 
-  public void addFileCopyInstruction(@NotNull File file, @NotNull String outputFileName) {
+  @Override
+  protected DestinationInfo createFileDestination(@NotNull String outputFileName) {
+    return null;
   }
 
   @Override
-  protected void addDirectoryCopyInstructions(ArtifactRootDescriptor descriptor) {
+  protected void onAdded(ArtifactRootDescriptor descriptor) {
+  }
+
+  @Override
+  protected DestinationInfo createDirectoryDestination() {
+    return null;
   }
 
   public SkipAllInstructionCreator subFolder(@NotNull String directoryName) {

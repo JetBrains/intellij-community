@@ -33,6 +33,7 @@ import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 
 import java.io.File;
+import java.util.Arrays;
 
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
 
@@ -80,9 +81,7 @@ public class PluginModuleCompilationTest extends BaseCompilerTestCase {
   }
 
   public void testMakeModule() {
-    copyToProject("plugins/devkit/testData/build/simple");
-    Module module = loadModule(getProjectBasePath() + "/pluginProject.iml");
-    readJdomExternalizables((ModuleImpl)module);
+    Module module = setupPluginProject();
     make(module);
     assertOutput(module, fs().dir("xxx").file("MyAction.class"));
 
@@ -94,5 +93,18 @@ public class PluginModuleCompilationTest extends BaseCompilerTestCase {
             .dir("classes")
               .dir("xxx").file("MyAction.class")
     .build().assertDirectoryEqual(sandbox);
+  }
+
+  public void testRebuild() {
+    setupPluginProject();
+    CompilationLog log = rebuild();
+    assertTrue("Rebuild finished with warnings: " + Arrays.toString(log.getWarnings()), log.getWarnings().length == 0);
+  }
+
+  private Module setupPluginProject() {
+    copyToProject("plugins/devkit/testData/build/simple");
+    Module module = loadModule(getProjectBasePath() + "/pluginProject.iml");
+    readJdomExternalizables((ModuleImpl)module);
+    return module;
   }
 }

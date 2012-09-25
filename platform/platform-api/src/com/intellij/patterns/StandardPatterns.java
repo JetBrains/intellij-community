@@ -46,12 +46,14 @@ public class StandardPatterns {
 
   public static <T> ElementPattern save(final Key<T> key) {
     return new ObjectPattern.Capture<T>(new InitialPatternCondition(Object.class) {
+      @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         context.put(key, (T)o);
         return true;
       }
 
-      public void append(@NonNls final StringBuilder builder, final String indent) {
+      @Override
+      public void append(@NotNull @NonNls final StringBuilder builder, final String indent) {
         builder.append("save(").append(key).append(")");
       }
     });
@@ -72,11 +74,13 @@ public class StandardPatterns {
 
   public static ElementPattern get(@NotNull @NonNls final String key) {
     return new ObjectPattern.Capture(new InitialPatternCondition(Object.class) {
+      @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return Comparing.equal(o, context.get(key));
       }
 
-      public void append(@NonNls final StringBuilder builder, final String indent) {
+      @Override
+      public void append(@NotNull @NonNls final StringBuilder builder, final String indent) {
         builder.append("get(").append(key).append(")");
       }
     });
@@ -88,6 +92,7 @@ public class StandardPatterns {
 
   public static <E> ElementPattern<E> or(final ElementPattern<? extends E>... patterns) {
     return new ObjectPattern.Capture<E>(new InitialPatternConditionPlus(Object.class) {
+      @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         for (final ElementPattern pattern : patterns) {
           if (pattern.getCondition().accepts(o, context)) return true;
@@ -95,7 +100,8 @@ public class StandardPatterns {
         return false;
       }
 
-      public void append(@NonNls final StringBuilder builder, final String indent) {
+      @Override
+      public void append(@NotNull @NonNls final StringBuilder builder, final String indent) {
         boolean first = true;
         for (final ElementPattern pattern : patterns) {
           if (!first) {
@@ -115,6 +121,7 @@ public class StandardPatterns {
 
   public static <E> ElementPattern<E> and(final ElementPattern<? extends E>... patterns) {
     return new ObjectPattern.Capture<E>(new InitialPatternConditionPlus(Object.class) {
+      @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         for (final ElementPattern pattern : patterns) {
           if (!pattern.getCondition().accepts(o, context)) return false;
@@ -122,7 +129,8 @@ public class StandardPatterns {
         return true;
       }
 
-      public void append(@NonNls final StringBuilder builder, final String indent) {
+      @Override
+      public void append(@NotNull @NonNls final StringBuilder builder, final String indent) {
         boolean first = true;
         for (final ElementPattern pattern : patterns) {
           if (!first) {
@@ -142,11 +150,13 @@ public class StandardPatterns {
 
   public static <E> ObjectPattern.Capture<E> not(final ElementPattern<E> pattern) {
     return new ObjectPattern.Capture<E>(new InitialPatternConditionPlus(Object.class) {
+      @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return !pattern.getCondition().accepts(o, context);
       }
 
-      public void append(@NonNls final StringBuilder builder, final String indent) {
+      @Override
+      public void append(@NotNull @NonNls final StringBuilder builder, final String indent) {
         pattern.getCondition().append(builder.append("not("), indent + "  ");
         builder.append(")");
       }
@@ -160,6 +170,7 @@ public class StandardPatterns {
 
   public static <T> ObjectPattern.Capture<T> optional(final ElementPattern<T> pattern) {
     return new ObjectPattern.Capture<T>(new InitialPatternCondition(Object.class) {
+      @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         pattern.getCondition().accepts(o, context);
         return true;

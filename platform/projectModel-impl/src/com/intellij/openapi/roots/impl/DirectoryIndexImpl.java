@@ -27,20 +27,13 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectObjectProcedure;
+import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -49,8 +42,6 @@ import java.util.*;
 
 public class DirectoryIndexImpl extends DirectoryIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.DirectoryIndexImpl");
-
-  private static final Key<String> PACKAGE_NAME = Key.create("dir.index.visitor.package.name");
 
   protected final Project myProject;
   protected final DirectoryIndexExcludePolicy[] myExcludePolicies;
@@ -83,7 +74,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     assert myInitialized;
     assert !myDisposed;
 
-    IndexState oldState = myState;
+    final IndexState oldState = myState;
     myState = myState.copy();
 
     myState.doInitialize(reverseAllSets);
@@ -425,8 +416,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                              final String packageName,
                                              final VirtualFile sourceRoot,
                                              @Nullable final ProgressIndicator progress) {
-      VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor() {
-        { set(PACKAGE_NAME, packageName); }
+      VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor<String>() {
+        { setValueForChildren(packageName); }
 
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
@@ -443,10 +434,10 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           info.isInLibrarySource = true;
           info.sourceRoot = sourceRoot;
 
-          final String packageName = get(PACKAGE_NAME);
+          final String packageName = getCurrentValue();
           final String newPackageName = file == dir ? packageName : getPackageNameForSubdir(packageName, file.getName());
           setPackageName(file, newPackageName);
-          set(PACKAGE_NAME, newPackageName);
+          setValueForChildren(newPackageName);
 
           return true;
         }
@@ -471,8 +462,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                              final String packageName,
                                              final VirtualFile classRoot,
                                              @Nullable final ProgressIndicator progress) {
-      VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor() {
-        { set(PACKAGE_NAME, packageName); }
+      VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor<String>() {
+        { setValueForChildren(packageName); }
 
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
@@ -488,17 +479,18 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
           info.libraryClassRoot = classRoot;
 
-          final String packageName = get(PACKAGE_NAME);
-          final String newPackageName = file == dir ? packageName : getPackageNameForSubdir(packageName, file.getName());
+          final String packageName = getCurrentValue();
+          final String newPackageName = Comparing.equal(file, dir) ? packageName : getPackageNameForSubdir(packageName, file.getName());
           if (!info.isInModuleSource && !info.isInLibrarySource) {
             setPackageName(file, newPackageName);
           }
-          set(PACKAGE_NAME, newPackageName);
+          setValueForChildren(newPackageName);
 
           return true;
         }
       });
     }
+
 
     private void initOrderEntries(Module module,
                                   MultiMap<VirtualFile, OrderEntry> depEntries,

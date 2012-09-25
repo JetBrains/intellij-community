@@ -13,6 +13,7 @@ public abstract class IdeaModuleBase extends LayoutFileSet {
   private String name;
 
   protected IdeaModuleBase() {
+    setExcludes("classpath.index");
   }
 
   public IdeaModuleBase(ZipFileSet fileset) {

@@ -17,7 +17,6 @@
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceProvider;
@@ -37,17 +36,18 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class SimpleProviderBinding<Provider> implements ProviderBinding<Provider> {
-  private final List<Trinity<Provider, ElementPattern, Double>> myProviderPairs = ContainerUtil.createEmptyCOWList();
+  private final List<ProviderInfo<Provider, ElementPattern>> myProviderPairs = ContainerUtil.createEmptyCOWList();
 
   public void registerProvider(Provider provider,ElementPattern pattern, double priority){
-    myProviderPairs.add(Trinity.create(provider, pattern, priority));
+    myProviderPairs.add(new ProviderInfo<Provider, ElementPattern>(provider, pattern, priority));
   }
 
   @Override
-  public void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List list,
-                                              PsiReferenceService.Hints hints) {
-    for(Trinity<Provider,ElementPattern,Double> trinity:myProviderPairs) {
-      if (hints != PsiReferenceService.Hints.NO_HINTS && !((PsiReferenceProvider)trinity.first).acceptsHints(position, hints)) {
+  public void addAcceptableReferenceProviders(@NotNull PsiElement position,
+                                              @NotNull List<ProviderInfo<Provider, ProcessingContext>> list,
+                                              @NotNull PsiReferenceService.Hints hints) {
+    for(ProviderInfo<Provider, ElementPattern> trinity:myProviderPairs) {
+      if (hints != PsiReferenceService.Hints.NO_HINTS && !((PsiReferenceProvider)trinity.provider).acceptsHints(position, hints)) {
         continue;
       }
 
@@ -57,20 +57,20 @@ public class SimpleProviderBinding<Provider> implements ProviderBinding<Provider
       }
       boolean suitable = false;
       try {
-        suitable = trinity.second.accepts(position, context);
+        suitable = trinity.processingContext.accepts(position, context);
       }
       catch (IndexNotReadyException ignored) {
       }
       if (suitable) {
-        list.add(Trinity.create(trinity.first, context, trinity.third));
+        list.add(new ProviderInfo<Provider, ProcessingContext>(trinity.provider, context, trinity.priority));
       }
     }
   }
 
   @Override
-  public void unregisterProvider(final Provider provider) {
-    for (final Trinity<Provider, ElementPattern, Double> trinity : new ArrayList<Trinity<Provider, ElementPattern, Double>>(myProviderPairs)) {
-      if (trinity.first.equals(provider)) {
+  public void unregisterProvider(@NotNull final Provider provider) {
+    for (final ProviderInfo<Provider, ElementPattern> trinity : new ArrayList<ProviderInfo<Provider, ElementPattern>>(myProviderPairs)) {
+      if (trinity.provider.equals(provider)) {
         myProviderPairs.remove(trinity);
       }
     }

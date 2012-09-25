@@ -17,12 +17,12 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformUltraLiteTestFixture;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.AfterClass;
@@ -214,20 +214,18 @@ public class VirtualFileVisitorTest {
 
   @Test
   public void parameters() {
-    final Key<String> KEY = Key.create("vfs.visitor.test.parameter");
-
-    VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor<String>() {
       {
-        set(KEY, myRoot.getPath());
+        setValueForChildren(myRoot.getPath());
       }
 
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         String expected = Comparing.equal(file, myRoot) ? myRoot.getPath() : file.getParent().getPath();
-        assertEquals(expected, get(KEY));
+        assertEquals(expected, getCurrentValue());
 
         if (file.isDirectory()) {
-          set(KEY, file.getPath());
+          setValueForChildren(file.getPath());
         }
 
         return true;
@@ -302,8 +300,8 @@ public class VirtualFileVisitorTest {
 
   private static void doTest(@Nullable final Function<VirtualFile, Object> condition,
                              @Nullable final Function<VirtualFile, Iterable<VirtualFile>> iterable,
-                             @NotNull String expected,
-                             VirtualFileVisitor.Option... options) {
+                             @NonNls @NotNull String expected,
+                             @NotNull VirtualFileVisitor.Option... options) {
     final StringBuilder sb = new StringBuilder();
 
     try {
@@ -340,7 +338,7 @@ public class VirtualFileVisitorTest {
     assertEquals(expected, sb.toString());
   }
 
-  private static MockVirtualFile dir(@NotNull String name, MockVirtualFile... children) {
+  private static MockVirtualFile dir(@NonNls @NotNull String name, MockVirtualFile... children) {
     final MockVirtualFile root = new MockVirtualFile(true, name);
     for (MockVirtualFile child : children) {
       root.addChild(child);
@@ -348,7 +346,7 @@ public class VirtualFileVisitorTest {
     return root;
   }
 
-  private static MockVirtualFile file(@NotNull String name) {
+  private static MockVirtualFile file(@NonNls @NotNull String name) {
     return new MockVirtualFile(name);
   }
 }

@@ -52,5 +52,5 @@ public interface PasswordStorage {
    * @param value     the value to store
    * @throws PasswordSafeException if password safe cannot be accessed
    */
-  void storePassword(Project project, Class requester, String key, String value) throws PasswordSafeException;
+  void storePassword(@Nullable Project project, Class requester, String key, String value) throws PasswordSafeException;
 }

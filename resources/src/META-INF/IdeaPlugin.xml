@@ -241,7 +241,7 @@
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaCompletionContributor" id="javaLegacy"
                             order="last, before legacy, before default, before javaClassName"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor"
-                            id="javaClassReference"/>
+                            id="javaClassReference" order="before legacy"/>
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaMethodMergingContributor" id="methodMerger"
                             order="before javaLegacy, before default"/>

@@ -33,7 +33,7 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampStorag
   }
 
   @Override
-  public long getStamp(File file, BuildTarget target) throws IOException {
+  public long getStamp(File file, BuildTarget<?> target) throws IOException {
     final TimestampPerTarget[] state = getState(file);
     if (state != null) {
       int targetId = myTargetsState.getBuildTargetId(target);
@@ -47,7 +47,7 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampStorag
   }
 
   @Override
-  public void saveStamp(File file, BuildTarget buildTarget, long timestamp) throws IOException {
+  public void saveStamp(File file, BuildTarget<?> buildTarget, long timestamp) throws IOException {
     int targetId = myTargetsState.getBuildTargetId(buildTarget);
     update(file, updateTimestamp(getState(file), targetId, timestamp));
   }
@@ -67,7 +67,7 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampStorag
     return ArrayUtil.append(oldState, newItem);
   }
 
-  public void removeStamp(File file, BuildTarget buildTarget) throws IOException {
+  public void removeStamp(File file, BuildTarget<?> buildTarget) throws IOException {
     TimestampPerTarget[] state = getState(file);
     if (state != null) {
       int targetId = myTargetsState.getBuildTargetId(buildTarget);

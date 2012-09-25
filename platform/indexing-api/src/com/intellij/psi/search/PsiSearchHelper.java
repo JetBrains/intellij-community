@@ -77,7 +77,9 @@ public interface PsiSearchHelper {
    * @param processor   the processor which accepts the references.
    * @param searchScope the scope in which occurrences are searched.
    */
-  void processUsagesInNonJavaFiles(@NotNull String qName, @NotNull PsiNonJavaFileReferenceProcessor processor, @NotNull GlobalSearchScope searchScope);
+  boolean processUsagesInNonJavaFiles(@NotNull String qName,
+                                      @NotNull PsiNonJavaFileReferenceProcessor processor,
+                                      @NotNull GlobalSearchScope searchScope);
 
   /**
    * Passes all occurrences of the specified full-qualified class name in plain text context in the
@@ -89,10 +91,10 @@ public interface PsiSearchHelper {
    * @param processor       the processor which accepts the references.
    * @param searchScope     the scope in which occurrences are searched.
    */
-  void processUsagesInNonJavaFiles(@Nullable PsiElement originalElement,
-                                   @NotNull String qName,
-                                   @NotNull PsiNonJavaFileReferenceProcessor processor,
-                                   @NotNull GlobalSearchScope searchScope);
+  boolean processUsagesInNonJavaFiles(@Nullable PsiElement originalElement,
+                                      @NotNull String qName,
+                                      @NotNull PsiNonJavaFileReferenceProcessor processor,
+                                      @NotNull GlobalSearchScope searchScope);
 
   /**
    * Returns the scope in which references to the specified element are searched. This scope includes the result of
@@ -114,7 +116,10 @@ public interface PsiSearchHelper {
    * @param processor the processor which accepts the references.
    * @param caseSensitively if words differing in the case only should not be considered equal
    */
-  void processAllFilesWithWord(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor, final boolean caseSensitively);
+  boolean processAllFilesWithWord(@NotNull String word,
+                                  @NotNull GlobalSearchScope scope,
+                                  @NotNull Processor<PsiFile> processor,
+                                  final boolean caseSensitively);
 
   /**
    * Passes all files containing the specified word in {@link UsageSearchContext#IN_PLAIN_TEXT code}
@@ -125,7 +130,10 @@ public interface PsiSearchHelper {
    * @param processor the processor which accepts the references.
    * @param caseSensitively if words differing in the case only should not be considered equal
    */
-  void processAllFilesWithWordInText(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor, final boolean caseSensitively);
+  boolean processAllFilesWithWordInText(@NotNull String word,
+                                        @NotNull GlobalSearchScope scope,
+                                        @NotNull Processor<PsiFile> processor,
+                                        final boolean caseSensitively);
 
   /**
    * Passes all files containing the specified word in {@link UsageSearchContext#IN_COMMENTS comments}
@@ -135,7 +143,7 @@ public interface PsiSearchHelper {
    * @param scope     the scope in which occurrences are searched.
    * @param processor the processor which accepts the references.
    */
-  void processAllFilesWithWordInComments(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor);
+  boolean processAllFilesWithWordInComments(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor);
 
   /**
    * Passes all files containing the specified word in {@link UsageSearchContext#IN_STRINGS string literal}
@@ -145,7 +153,7 @@ public interface PsiSearchHelper {
    * @param scope     the scope in which occurrences are searched.
    * @param processor the processor which accepts the references.
    */
-  void processAllFilesWithWordInLiterals(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor);
+  boolean processAllFilesWithWordInLiterals(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor);
 
   boolean processRequests(@NotNull SearchRequestCollector request, @NotNull Processor<PsiReference> processor);
 

@@ -88,7 +88,7 @@
 
     <completion.contributor language="any"
                             implementationClass="org.jetbrains.idea.maven.dom.references.MavenPropertyCompletionContributor"
-                            id="Maven"/>
+                            id="Maven" order="after propertiesCompletion, before javaClassReference"/>
     <completion.contributor language="XML"
                             implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenSmartCompletionContributor"/>
 

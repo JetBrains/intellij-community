@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.tests;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
+/**
+ * @author max
+ */
 public class BootstrapTests {
   static {
     ExternalClasspathClassLoader.install();
@@ -36,7 +35,8 @@ public class BootstrapTests {
     for (String s : classes) {
       final Class<?> aClass = Class.forName(s, true, cl);
       if (TestCase.class.isAssignableFrom(aClass)) {
-        suite.addTestSuite((Class<? extends TestCase>)aClass);
+        @SuppressWarnings("unchecked") final Class<? extends TestCase> testClass = (Class<? extends TestCase>)aClass;
+        suite.addTestSuite(testClass);
       }
       else {
         suite.addTest((Test)aClass.getMethod("suite").invoke(null));
@@ -44,5 +44,4 @@ public class BootstrapTests {
     }
     return suite;
   }
-
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -27,8 +28,17 @@ import java.awt.*;
  */
 public class ColorChooser {
   @Nullable
+  public static Color chooseColor(Component parent,
+                                  String caption,
+                                  @Nullable Color preselectedColor,
+                                  boolean enableOpacity,
+                                  @Nullable PsiElement element) {
+    return ColorChooserService.getInstance().showDialog(parent, caption, preselectedColor, enableOpacity, element);
+  }
+
+  @Nullable
   public static Color chooseColor(Component parent, String caption, @Nullable Color preselectedColor, boolean enableOpacity) {
-    return ColorChooserService.getInstance().showDialog(parent, caption, preselectedColor, enableOpacity);
+    return chooseColor(parent, caption, preselectedColor, enableOpacity, null);
   }
 
   @Nullable

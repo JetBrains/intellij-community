@@ -24,6 +24,8 @@ import com.intellij.javadoc.JavadocNavigationDelegate;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -63,27 +65,14 @@ public class JavaDocCommentFixer implements DocCommentFixer {
    */
   @NotNull private static final Set<String> CARET_ANCHOR_TAGS = ContainerUtilRt.newHashSet(PARAM_TAG, "@throws", "@return");
 
-  @NotNull private static final List<String> TAGS_ORDER = new ArrayList<String>();
-  static {
-    String tags = System.getProperty("java.doc.comment.fix.tags.order");
-    if (tags == null) {
-      tags = "@param:@return:@throws";
-    }
-
-    for (String s : tags.split(":")) {
-      String tagName = s.trim();
-      if (!tagName.isEmpty()) {
-        TAGS_ORDER.add("@" + tagName);
-      }
-    }
-  }
-
-  private static final Comparator<PsiElement> COMPARATOR = new Comparator<PsiElement>() {
+  @NotNull private static final Comparator<PsiElement> COMPARATOR = new Comparator<PsiElement>() {
     @Override
     public int compare(PsiElement e1, PsiElement e2) {
       return e2.getTextRange().getEndOffset() - e1.getTextRange().getEndOffset();
     }
   };
+
+  @NotNull private static final String PARAM_TAG_NAME = "param";
 
   @Override
   public void fixComment(@NotNull Project project, @NotNull Editor editor, @NotNull PsiComment comment) {
@@ -91,11 +80,17 @@ public class JavaDocCommentFixer implements DocCommentFixer {
       return;
     }
 
-    PsiDocCommentOwner owner = ((PsiDocComment)comment).getOwner();
+    PsiDocComment docComment = (PsiDocComment)comment;
+    PsiDocCommentOwner owner = docComment.getOwner();
     if (owner == null) {
       return;
     }
-
+    
+    PsiFile file = comment.getContainingFile();
+    if (file == null) {
+      return;
+    }
+    
     JavaDocReferenceInspection referenceInspection = new JavaDocReferenceInspection();
     JavaDocLocalInspection localInspection = getDocLocalInspection();
 
@@ -123,7 +118,8 @@ public class JavaDocCommentFixer implements DocCommentFixer {
     }
     
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-    locateCaret((PsiDocComment)comment, editor);
+    ensureContentOrdered(docComment, editor.getDocument());
+    locateCaret(docComment, editor, file);
   }
 
   @NotNull
@@ -137,7 +133,7 @@ public class JavaDocCommentFixer implements DocCommentFixer {
     localInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = PsiModifier.PRIVATE;
     //endregion
     
-    localInspection.IGNORE_EMPTY_DESCRIPTIONS = true;
+    localInspection.setIgnoreEmptyDescriptions(true);
 
     //region class type arguments
     if (!localInspection.TOP_LEVEL_CLASS_OPTIONS.REQUIRED_TAGS.contains(PARAM_TAG)) {
@@ -161,7 +157,16 @@ public class JavaDocCommentFixer implements DocCommentFixer {
     }
   }
 
-  // TODO den add doc
+  /**
+   * This fixer is based on existing javadoc inspections - there are two of them. One detects invalid references (to unexisted
+   * method parameter or non-declared checked exception). Another one handles all other cases (parameter documentation is missing;
+   * parameter doesn't have a description etc). This method handles result of the second exception
+   * 
+   * @param problems  detected problems
+   * @param comment   target comment to fix
+   * @param document  target document which contains text of the commen being fixed
+   * @param project   current project
+   */
   @SuppressWarnings("unchecked")
   private static void fixCommonProblems(@NotNull ProblemDescriptor[] problems,
                                         @NotNull PsiComment comment,
@@ -198,8 +203,9 @@ public class JavaDocCommentFixer implements DocCommentFixer {
     if (toRemove.size() > 1) {
       Collections.sort(toRemove, COMPARATOR);
     }
-    
-    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+    psiDocumentManager.doPostponedOperationsAndUnblockDocument(document);
     CharSequence text = document.getCharsSequence();
     for (PsiElement element : toRemove) {
       int startOffset = element.getTextRange().getStartOffset();
@@ -223,9 +229,90 @@ public class JavaDocCommentFixer implements DocCommentFixer {
       }
       document.deleteString(startOffset, endOffset);
     }
+    psiDocumentManager.commitDocument(document);
   }
 
-  private static void locateCaret(@NotNull PsiDocComment comment, @NotNull Editor editor) {
+  private static void ensureContentOrdered(@NotNull PsiDocComment comment, @NotNull Document document) {
+    //region Parse existing doc comment parameters.
+    List<String> current = new ArrayList<String>();
+    Map<String, Pair<TextRange, String>> tagInfoByName = new HashMap<String, Pair<TextRange, String>>();
+    for (PsiDocTag tag : comment.getTags()) {
+      if (!PARAM_TAG_NAME.equals(tag.getName())) {
+        continue;
+      }
+      PsiDocTagValue valueElement = tag.getValueElement();
+      if (valueElement == null) {
+        continue;
+      }
+      String paramName = valueElement.getText();
+      if (paramName != null) {
+        current.add(paramName);
+        tagInfoByName.put(paramName, parseTagValue(tag, document));
+      }
+    }
+    //endregion
+
+
+    //region Calculate desired parameters order
+    List<String> ordered = new ArrayList<String>();
+    PsiDocCommentOwner owner = comment.getOwner();
+    if ((owner instanceof PsiMethod)) {
+      PsiParameter[] parameters = ((PsiMethod)owner).getParameterList().getParameters();
+      for (PsiParameter parameter : parameters) {
+        ordered.add(parameter.getName());
+      }
+    }
+    if (owner instanceof PsiTypeParameterListOwner) {
+      PsiTypeParameter[] typeParameters = ((PsiTypeParameterListOwner)owner).getTypeParameters();
+      for (PsiTypeParameter parameter : typeParameters) {
+        ordered.add(String.format("<%s>", parameter.getName()));
+      }
+    }
+    //endregion
+
+    //region Fix order if necessary.
+    if (current.size() != ordered.size()) {
+      // Something is wrong, stop the processing.
+      return;
+    }
+
+    boolean changed = false;
+    for (int i = current.size() - 1; i >= 0; i--) {
+      String newTag = ordered.get(i);
+      String oldTag = current.get(i);
+      if (newTag.equals(oldTag)) {
+        continue;
+      }
+      TextRange range = tagInfoByName.get(oldTag).first;
+      document.replaceString(range.getStartOffset(), range.getEndOffset(), tagInfoByName.get(newTag).second);
+      changed = true;
+    }
+
+    if (changed) {
+      PsiDocumentManager manager = PsiDocumentManager.getInstance(comment.getProject());
+      manager.commitDocument(document);
+    }
+    //endregion
+  }
+
+  @NotNull
+  private static Pair<TextRange, String> parseTagValue(@NotNull PsiDocTag tag, @NotNull Document document) {
+    PsiDocTagValue valueElement = tag.getValueElement();
+    assert valueElement != null;
+    
+    int startOffset = valueElement.getTextRange().getStartOffset();
+    int endOffset = tag.getTextRange().getEndOffset();
+    // Javadoc PSI is rather weird...
+    CharSequence text = document.getCharsSequence();
+    int i = CharArrayUtil.shiftBackward(text, endOffset - 1, " \t*");
+    if (i > 0 && text.charAt(i) == '\n') {
+      endOffset = i;
+    }
+    
+    return Pair.create(TextRange.create(startOffset, endOffset), text.subSequence(startOffset, endOffset).toString());
+  }
+  
+  private static void locateCaret(@NotNull PsiDocComment comment, @NotNull Editor editor, @NotNull PsiFile file) {
     Document document = editor.getDocument();
     int lineToNavigate = -1;
     for (PsiDocTag tag : comment.getTags()) {
@@ -261,7 +348,7 @@ public class JavaDocCommentFixer implements DocCommentFixer {
 
     if (lineToNavigate >= 0) {
       editor.getCaretModel().moveToOffset(document.getLineEndOffset(lineToNavigate));
-      JavadocNavigationDelegate.navigateToLineEnd(editor, comment.getContainingFile());
+      JavadocNavigationDelegate.navigateToLineEnd(editor, file);
     }
   }
 }

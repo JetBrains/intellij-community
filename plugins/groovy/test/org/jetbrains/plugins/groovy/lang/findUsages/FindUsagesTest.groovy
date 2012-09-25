@@ -268,6 +268,15 @@ use(Cat) {
 ''')
   }
 
+  void "test do not report dynamic usages when argument count differs"() {
+    doTest(0, '''\
+class A {
+    static void start<caret>sWith(String s, String s1, boolean b) {}
+    def c = { it.startsWith("aaa") }
+}
+''')
+  }
+
   private void doSuperMethodTest(String... firstParameterTypes) {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     final GroovyFile file = (GroovyFile)myFixture.getFile();

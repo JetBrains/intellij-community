@@ -230,19 +230,36 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
             }
 
             if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, PsiUtilCore.toPsiElementArray(renamer.getElements()))) return;
-            final UsageInfo[] usageInfos = usages.toArray(new UsageInfo[usages.size()]);
-            final MultiMap<PsiElement, UsageInfo> classified = RenameProcessor.classifyUsages(renamer.getElements(), usageInfos);
-            for (final PsiNamedElement element : renamer.getElements()) {
-              new WriteCommandAction(myProject, getCommandName()) {
-                @Override
-                protected void run(Result result) throws Throwable {
+            final Runnable performAutomaticRename = new Runnable() {
+              @Override
+              public void run() {
+                CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
+                final UsageInfo[] usageInfos = usages.toArray(new UsageInfo[usages.size()]);
+                final MultiMap<PsiElement, UsageInfo> classified = RenameProcessor.classifyUsages(renamer.getElements(), usageInfos);
+                for (final PsiNamedElement element : renamer.getElements()) {
                   final String newElementName = renamer.getNewName(element);
                   if (newElementName != null) {
                     final Collection<UsageInfo> infos = classified.get(element);
                     RenameUtil.doRenameGenericNamedElement(element, newElementName, infos.toArray(new UsageInfo[infos.size()]), null);
                   }
                 }
-              }.execute();
+              }
+            };
+            final WriteCommandAction writeCommandAction = new WriteCommandAction(myProject, getCommandName()) {
+              @Override
+              protected void run(Result result) throws Throwable {
+                performAutomaticRename.run();
+              }
+            };
+            if (ApplicationManager.getApplication().isUnitTestMode()) {
+              writeCommandAction.execute();
+            } else {
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  writeCommandAction.execute();
+                }
+              });
             }
           }
         }

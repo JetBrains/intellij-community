@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Fully copied from java.util.WeakHashMap except "get" method optimization.
  */
-public abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements ConcurrentMap<K,V> {
+abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements ConcurrentMap<K,V> {
   protected interface Key<K, V>{
     K get();
     V getValue();

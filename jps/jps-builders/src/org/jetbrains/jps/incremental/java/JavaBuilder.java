@@ -31,6 +31,8 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
+import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -123,7 +125,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         if (srcFile != null && content != null) {
           final String outputPath = FileUtil.toSystemIndependentName(out.getFile().getPath());
           final String sourcePath = FileUtil.toSystemIndependentName(srcFile.getPath());
-          final RootDescriptor rootDescriptor = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, srcFile);
+          final RootDescriptor rootDescriptor = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, srcFile);
           final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
           boolean isTemp = false;
           if (rootDescriptor != null) {
@@ -191,11 +193,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (!context.isProjectRebuild()) {
         for (Iterator<File> formsIterator = formsToCompile.iterator(); formsIterator.hasNext(); ) {
           final File form = formsIterator.next();
-          final RootDescriptor descriptor = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, form);
+          final RootDescriptor descriptor = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, form);
           if (descriptor == null) {
             continue;
           }
-          for (RootDescriptor rd : context.getProjectDescriptor().rootsIndex.getModuleRoots(context, descriptor.target.getModule())) {
+          for (RootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(descriptor.target, context)) {
             final File boundSource = getBoundSource(rd.root, form);
             if (boundSource == null) {
               continue;
@@ -324,12 +326,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (hasSourcesToCompile) {
         exitCode = ExitCode.OK;
         final Set<File> tempRootsSourcePath = new HashSet<File>();
-        final ModuleRootsIndex index = pd.rootsIndex;
-        for (JpsModule module : chunk.getModules()) {
-          for (RootDescriptor rd : index.getModuleRoots(context, module)) {
-            if (rd.isTemp) {
-              tempRootsSourcePath.add(rd.root);
-            }
+        final BuildRootIndex index = pd.getBuildRootIndex();
+        for (ModuleBuildTarget target : chunk.getTargets()) {
+          for (RootDescriptor rd : index.getTempTargetRoots(target, context)) {
+            tempRootsSourcePath.add(rd.root);
           }
         }
 
@@ -417,7 +417,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final Set<File> successfullyCompiled = outputSink.getSuccessfullyCompiled();
       DELTA_MAPPINGS_CALLBACK_KEY.set(context, null);
 
-      if (updateMappings(context, delta, chunk, files, successfullyCompiled)) {
+      if (JavaBuilderUtil.updateMappings(context, delta, chunk, files, successfullyCompiled)) {
         exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
       }
     }
@@ -873,6 +873,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
     JAVAC_VM_OPTIONS.set(context, vmOptions);
   }
 
+  @Override
+  public void cleanupResources(CompileContext context, ModuleChunk chunk) {
+    JavaBuilderUtil.cleanupChunkResources(context);
+  }
+
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
     final Map<File, Set<File>> map = new LinkedHashMap<File, Set<File>>();
     for (ModuleBuildTarget target : chunk.getTargets()) {
@@ -881,10 +886,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
         continue;
       }
       final Set<File> roots = new LinkedHashSet<File>();
-      for (RootDescriptor descriptor : context.getProjectDescriptor().rootsIndex.getModuleRoots(context, target.getModule())) {
-        if (descriptor.isTestRoot == target.isTests()) {
-          roots.add(descriptor.root);
-        }
+      for (RootDescriptor descriptor : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
+        roots.add(descriptor.root);
       }
       map.put(outputDir, roots);
     }

@@ -35,20 +35,24 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
  */
 public class DynamicMethodFix implements IntentionAction, LowPriorityAction {
   private final GrReferenceExpression myReferenceExpression;
-  private final PsiType[] myMethodArgumentsTypes;
+  private final String mySignature;
 
   public DynamicMethodFix(GrReferenceExpression referenceExpression, final PsiType[] argumentTypes) {
     myReferenceExpression = referenceExpression;
-    myMethodArgumentsTypes = argumentTypes;
+    mySignature = calcSignature(argumentTypes);
   }
 
   @NotNull
   public String getText() {
+    return GroovyBundle.message("add.dynamic.method") + mySignature;
+  }
+
+  private String calcSignature(final PsiType[] argTypes) {
     StringBuilder builder = new StringBuilder(" '").append(myReferenceExpression.getName());
     builder.append("(");
 
-    for (int i = 0; i < myMethodArgumentsTypes.length; i++) {
-      PsiType type = myMethodArgumentsTypes[i];
+    for (int i = 0; i < argTypes.length; i++) {
+      PsiType type = argTypes[i];
 
       if (i > 0) {
         builder.append(", ");
@@ -57,8 +61,7 @@ public class DynamicMethodFix implements IntentionAction, LowPriorityAction {
     }
     builder.append(")");
     builder.append("' ");
-
-    return GroovyBundle.message("add.dynamic.method") + builder.toString();
+    return builder.toString();
   }
 
   @NotNull

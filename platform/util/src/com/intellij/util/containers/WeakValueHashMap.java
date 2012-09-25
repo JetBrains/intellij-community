@@ -24,7 +24,7 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 
 public final class WeakValueHashMap<K,V> implements Map<K,V>{
-  private final THashMap<K,MyReference<K,V>> myMap;
+  private final Map<K,MyReference<K,V>> myMap;
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
   private static class MyReference<K,T> extends WeakReference<T> {

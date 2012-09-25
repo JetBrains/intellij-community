@@ -186,8 +186,8 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     });
   }
 
-  protected void rebuild() {
-    compile(false, new ParameterizedRunnable<CompileStatusNotification>() {
+  protected CompilationLog rebuild() {
+    return compile(false, new ParameterizedRunnable<CompileStatusNotification>() {
       @Override
       public void run(CompileStatusNotification compileStatusNotification) {
         getCompilerManager().rebuild(compileStatusNotification);
@@ -196,6 +196,17 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected CompilationLog compile(final boolean errorsExpected, final ParameterizedRunnable<CompileStatusNotification> action) {
+    CompilationLog log = compile(action);
+    if (errorsExpected && log.myErrors.length == 0) {
+      Assert.fail("compilation finished without errors");
+    }
+    else if (!errorsExpected && log.myErrors.length > 0) {
+      Assert.fail("compilation finished with errors: " + Arrays.toString(log.myErrors));
+    }
+    return log;
+  }
+
+  private CompilationLog compile(final ParameterizedRunnable<CompileStatusNotification> action) {
     final Ref<CompilationLog> result = Ref.create(null);
     final Semaphore semaphore = new Semaphore();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
@@ -211,14 +222,9 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
               if (aborted) {
                 Assert.fail("compilation aborted");
               }
-              if (errorsExpected && errors == 0) {
-                Assert.fail("compilation finished without errors");
-              }
-              else if (!errorsExpected && errors > 0) {
-                Assert
-                  .fail("compilation finished with errors: " + Arrays.toString(compileContext.getMessages(CompilerMessageCategory.ERROR)));
-              }
-              result.set(new CompilationLog(CompilerManagerImpl.getPathsToRecompile(), CompilerManagerImpl.getPathsToDelete()));
+              result.set(new CompilationLog(CompilerManagerImpl.getPathsToRecompile(), CompilerManagerImpl.getPathsToDelete(),
+                                            compileContext.getMessages(CompilerMessageCategory.ERROR),
+                                            compileContext.getMessages(CompilerMessageCategory.WARNING)));
             }
             finally {
               semaphore.up();
@@ -349,8 +355,12 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   protected class CompilationLog {
     private final Set<String> myRecompiledPaths;
     private final Set<String> myDeletedPaths;
+    private final CompilerMessage[] myErrors;
+    private final CompilerMessage[] myWarnings;
 
-    public CompilationLog(String[] recompiledPaths, String[] deletedPaths) {
+    public CompilationLog(String[] recompiledPaths, String[] deletedPaths, CompilerMessage[] errors, CompilerMessage[] warnings) {
+      myErrors = errors;
+      myWarnings = warnings;
       myRecompiledPaths = getRelativePaths(recompiledPaths);
       myDeletedPaths = getRelativePaths(deletedPaths);
     }
@@ -381,6 +391,14 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
 
     private void checkDeleted(String... expected) {
       assertSet("deleted", myDeletedPaths, expected);
+    }
+
+    public CompilerMessage[] getErrors() {
+      return myErrors;
+    }
+
+    public CompilerMessage[] getWarnings() {
+      return myWarnings;
     }
 
     private void assertSet(String name, Set<String> actual, String[] expected) {

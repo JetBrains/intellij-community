@@ -25,6 +25,7 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -74,7 +75,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.*;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
@@ -125,13 +125,14 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   @Nullable private ScheduledFuture<?> myFlushingFuture;
   private volatile int myLocalModCount;
   private volatile int myFilesModCount;
+  private final AtomicInteger myUpdatingFiles = new AtomicInteger();
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) private volatile boolean myInitialized;  // need this variable for memory barrier
 
   public FileBasedIndexImpl(final VirtualFileManagerEx vfManager,
                             FileDocumentManager fdm,
                             FileTypeManager fileTypeManager,
                             @NotNull MessageBus bus,
-                            @SuppressWarnings("UnusedParameters") SerializationManager sm /*needed to ensure dependency*/) throws IOException {
+                            @SuppressWarnings("UnusedParameters") SerializationManager sm /*needed to ensure dependency*/) {
     myVfManager = vfManager;
     myFileDocumentManager = fdm;
     myFileTypeManager = fileTypeManager;
@@ -344,7 +345,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   @Nullable
-  private static String calcConfigPath(final String path) {
+  private static String calcConfigPath(@NotNull String path) {
     try {
       final String _path = FileUtil.toSystemIndependentName(new File(path).getCanonicalPath());
       return _path.endsWith("/")? _path : _path + "/" ;
@@ -974,11 +975,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     private final int myMinId;
     private final int myMaxId;
 
-    private ProjectIndexableFilesFilter(@NotNull TIntHashSet set, int modificationCount) {
+    private ProjectIndexableFilesFilter(@NotNull TIntArrayList set, int modificationCount) {
       myModificationCount = modificationCount;
       final int[] minMax = new int[2];
-      if (set.size() > 0) {
-        minMax[0] = minMax[1] = set.iterator().next();
+      if (!set.isEmpty()) {
+        minMax[0] = minMax[1] = set.get(0);
       }
       set.forEach(new TIntProcedure() {
         @Override
@@ -1009,11 +1010,17 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
+  void updatingDone() {
+    if(myUpdatingFiles.decrementAndGet() == 0) {
+      ++myFilesModCount;
+    }
+  }
+
   private final Lock myCalcIndexableFilesLock = new SequenceLock();
 
   @Nullable
   public ProjectIndexableFilesFilter projectIndexableFiles(@Nullable Project project) {
-    if (project == null) return null;
+    if (project == null || myUpdatingFiles.get() > 0) return null;
 
     SoftReference<ProjectIndexableFilesFilter> reference = project.getUserData(ourProjectFilesSetKey);
     ProjectIndexableFilesFilter data = reference != null ? reference.get() : null;
@@ -1027,7 +1034,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           return data;
         }
 
-        final TIntHashSet filesSet = new TIntHashSet();
+        long start = System.currentTimeMillis();
+
+        final TIntArrayList filesSet = new TIntArrayList();
         iterateIndexableFiles(new ContentIterator() {
           @Override
           public boolean processFile(@NotNull VirtualFile fileOrDir) {
@@ -1037,6 +1046,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         }, project, ProgressManager.getInstance().getProgressIndicator());
         ProjectIndexableFilesFilter filter = new ProjectIndexableFilesFilter(filesSet, myFilesModCount);
         project.putUserData(ourProjectFilesSetKey, new SoftReference<ProjectIndexableFilesFilter>(filter));
+
+        long finish = System.currentTimeMillis();
+        LOG.debug(filesSet.size() + " files iterated in " + (finish - start) + " ms");
+
         return filter;
       }
       finally {
@@ -1270,7 +1283,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
       else {
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
             new Task.Modal(null, "Updating index", false) {
@@ -1281,7 +1294,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               }
             }.queue();
           }
-        });
+        }, ModalityState.NON_MODAL);
       }
     }
 
@@ -1613,12 +1626,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   public void indexFileContent(@Nullable Project project, @NotNull com.intellij.ide.caches.FileContent content) {
     myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
     final VirtualFile file = content.getVirtualFile();
-    FileContentImpl fc = null;
-
-    PsiFile psiFile = null;
 
     FileTypeManagerImpl.cacheFileType(file, file.getFileType());
     try {
+      PsiFile psiFile = null;
+      FileContentImpl fc = null;
       for (final ID<?, ?> indexId : myIndices.keySet()) {
         if (shouldIndexFile(file, indexId)) {
           if (fc == null) {
@@ -1794,10 +1806,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     private void markDirty(@NotNull final VirtualFileEvent event, final boolean contentChange) {
       final VirtualFile eventFile = event.getFile();
       cleanProcessedFlag(eventFile);
+      if (!contentChange) {
+        myUpdatingFiles.incrementAndGet();
+      }
+
       iterateIndexableFiles(eventFile, new Processor<VirtualFile>() {
         @Override
         public boolean process(@NotNull final VirtualFile file) {
-          if (!contentChange) ++myFilesModCount;
           FileContent fileContent = null;
           // handle 'content-less' indices separately
           for (ID<?, ?> indexId : myNotRequiringContentIndices) {
@@ -1828,6 +1843,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         }
       });
       IndexingStamp.flushCache(null);
+      if (!contentChange) {
+        if(myUpdatingFiles.decrementAndGet() == 0) {
+          ++myFilesModCount;
+        }
+      }
     }
 
     public void scheduleForUpdate(VirtualFile file) {
@@ -2186,7 +2206,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @NotNull
   public CollectingContentIterator createContentIterator() {
-    ++myFilesModCount;
+    myUpdatingFiles.incrementAndGet();
     return new UnindexedFilesFinder();
   }
 

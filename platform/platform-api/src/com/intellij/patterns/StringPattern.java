@@ -34,12 +34,14 @@ import java.util.regex.Pattern;
  */
 public class StringPattern extends ObjectPattern<String, StringPattern> {
   private static final InitialPatternCondition<String> CONDITION = new InitialPatternCondition<String>(String.class) {
+    @Override
     public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
       return o instanceof String;
     }
 
 
-    public void append(@NonNls final StringBuilder builder, final String indent) {
+    @Override
+    public void append(@NotNull @NonNls final StringBuilder builder, final String indent) {
       builder.append("string()");
     }
   };
@@ -51,6 +53,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
   @NotNull
   public StringPattern startsWith(@NonNls @NotNull final String s) {
     return with(new PatternCondition<String>("startsWith") {
+      @Override
       public boolean accepts(@NotNull final String str, final ProcessingContext context) {
         return str.startsWith(s);
       }
@@ -60,6 +63,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
   @NotNull
   public StringPattern endsWith(@NonNls @NotNull final String s) {
     return with(new PatternCondition<String>("endsWith") {
+      @Override
       public boolean accepts(@NotNull final String str, final ProcessingContext context) {
         return str.endsWith(s);
       }
@@ -69,6 +73,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
   @NotNull
   public StringPattern contains(@NonNls @NotNull final String s) {
     return with(new PatternCondition<String>("contains") {
+      @Override
       public boolean accepts(@NotNull final String str, final ProcessingContext context) {
         return str.contains(s);
       }
@@ -79,6 +84,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
   @NotNull
   public StringPattern containsChars(@NonNls @NotNull final String s) {
     return with(new PatternCondition<String>("containsChars") {
+      @Override
       public boolean accepts(@NotNull final String str, final ProcessingContext context) {
         for (int i=0, len=s.length(); i<len; i++) {
           if (str.indexOf(s.charAt(i))>-1) return true;
@@ -97,6 +103,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
     // may throw PatternSyntaxException here
     final Pattern pattern = Pattern.compile(s);
     return with(new ValuePatternCondition<String>("matches") {
+      @Override
       public boolean accepts(@NotNull final String str, final ProcessingContext context) {
         return pattern.matcher(str).matches();
       }
@@ -136,8 +143,9 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
     final RunAutomaton runAutomaton = new RunAutomaton(automaton, true);
 
     return with(new ValuePatternCondition<String>("matchesBrics") {
+      @Override
       public boolean accepts(@NotNull String str, final ProcessingContext context) {
-        if (str.length() > 0 && (str.charAt(0) == '"' || str.charAt(0) == '\'')) str = str.substring(1);
+        if (!str.isEmpty() && (str.charAt(0) == '"' || str.charAt(0) == '\'')) str = str.substring(1);
         return runAutomaton.run(str);
       }
 
@@ -151,6 +159,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
   @NotNull
   public StringPattern contains(@NonNls @NotNull final ElementPattern<Character> pattern) {
     return with(new PatternCondition<String>("contains") {
+      @Override
       public boolean accepts(@NotNull final String str, final ProcessingContext context) {
         for (int i = 0; i < str.length(); i++) {
           if (pattern.accepts(str.charAt(i))) return true;
@@ -162,6 +171,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
 
   public StringPattern longerThan(final int minLength) {
     return with(new PatternCondition<String>("longerThan") {
+      @Override
       public boolean accepts(@NotNull final String s, final ProcessingContext context) {
         return s.length() > minLength;
       }
@@ -169,6 +179,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
   }
   public StringPattern shorterThan(final int maxLength) {
     return with(new PatternCondition<String>("shorterThan") {
+      @Override
       public boolean accepts(@NotNull final String s, final ProcessingContext context) {
         return s.length() < maxLength;
       }
@@ -176,12 +187,14 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
   }
   public StringPattern withLength(final int length) {
     return with(new PatternCondition<String>("withLength") {
+      @Override
       public boolean accepts(@NotNull final String s, final ProcessingContext context) {
         return s.length() == length;
       }
     });
   }
 
+  @Override
   @NotNull
   public StringPattern oneOf(@NonNls final String... values) {
     return super.oneOf(values);
@@ -192,6 +205,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
     return with(new CaseInsensitiveValuePatternCondition("oneOfIgnoreCase", values));
   }
 
+  @Override
   @NotNull
   public StringPattern oneOf(@NonNls final Collection<String> set) {
     return super.oneOf(set);

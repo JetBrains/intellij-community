@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class ArtifactBuilderService extends BuilderService {
   @Override
-  public List<? extends BuildTargetType> getTargetTypes() {
+  public List<? extends BuildTargetType<?>> getTargetTypes() {
     return Collections.singletonList(ArtifactBuildTargetType.INSTANCE);
   }
 
