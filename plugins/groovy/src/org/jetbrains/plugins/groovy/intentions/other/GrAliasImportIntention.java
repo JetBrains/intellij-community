@@ -63,12 +63,23 @@ import java.util.List;
 public class GrAliasImportIntention extends Intention {
   @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
-    GrReferenceExpression ref = (GrReferenceExpression)element;
+    GrImportStatement context;
+    final PsiMember resolved;
+    if (element instanceof GrReferenceExpression) {
+      GrReferenceExpression ref = (GrReferenceExpression)element;
 
-    GroovyResolveResult result = ref.advancedResolve();
-    GrImportStatement context = (GrImportStatement)result.getCurrentFileResolveContext();
-    assert context != null;
-    final PsiMember resolved = (PsiMember)result.getElement();
+      GroovyResolveResult result = ref.advancedResolve();
+      context = (GrImportStatement)result.getCurrentFileResolveContext();
+      assert context != null;
+      resolved = (PsiMember)result.getElement();
+    }
+    else if (element instanceof GrImportStatement) {
+      context = (GrImportStatement)element;
+      resolved = (PsiMember)context.getImportReference().resolve();
+    }
+    else {
+      return;
+    }
 
     assert resolved != null;
     doRefactoring(project, context, resolved);
@@ -223,17 +234,26 @@ public class GrAliasImportIntention extends Intention {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(PsiElement element) {
-        if (!(element instanceof GrReferenceExpression)) return false;
+        if (element instanceof GrReferenceExpression) {
 
-        GroovyResolveResult result = ((GrReferenceExpression)element).advancedResolve();
+          GroovyResolveResult result = ((GrReferenceExpression)element).advancedResolve();
 
-        GroovyPsiElement context = result.getCurrentFileResolveContext();
-        if (!(context instanceof GrImportStatement)) return false;
+          GroovyPsiElement context = result.getCurrentFileResolveContext();
+          if (!(context instanceof GrImportStatement)) return false;
 
-        GrImportStatement importStatement = (GrImportStatement)context;
-        if (!importStatement.isStatic() || importStatement.isAliasedImport()) return false;
+          GrImportStatement importStatement = (GrImportStatement)context;
+          if (!importStatement.isStatic() || importStatement.isAliasedImport()) return false;
 
-        return true;
+          return true;
+        }
+        else if (element instanceof GrImportStatement) {
+          final GrImportStatement importStatement = (GrImportStatement)element;
+          if (!importStatement.isStatic()) return false;
+          if (importStatement.isOnDemand()) return false;
+          if (importStatement.isAliasedImport()) return false;
+          return true;
+        }
+        return false;
       }
     };
   }

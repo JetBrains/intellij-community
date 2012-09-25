@@ -78,4 +78,21 @@ aliased()
 ''');
   }
 
+  void testSimpleOnImportStatement() {
+    myFixture.addFileToProject('Foo.groovy', '''\
+class Foo {
+  static void foo(){}
+}
+''')
+    doTextTest('''\
+import static Foo.f<caret>oo
+
+foo()
+''', '''\
+import static Foo.foo as aliased
+
+aliased()
+''');
+  }
+
 }
