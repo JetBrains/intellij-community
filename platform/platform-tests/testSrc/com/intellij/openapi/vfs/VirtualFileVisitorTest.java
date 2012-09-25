@@ -305,7 +305,7 @@ public class VirtualFileVisitorTest {
     final StringBuilder sb = new StringBuilder();
 
     try {
-      VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor(options) {
+      VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor<Object>(options) {
         private int level = 0;
 
         @NotNull
