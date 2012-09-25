@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Avdeev
  * @since 31.10.2011
  */
-public abstract class VirtualFileVisitor {
+public abstract class VirtualFileVisitor<T> {
   public static class Option {
     private Option() { }
 
@@ -82,9 +82,9 @@ public abstract class VirtualFileVisitor {
   private int myDepthLimit = -1;
 
   private int myLevel = 0;
-  private Stack<Object> myValueStack;
-  private Object value;
-  private boolean valueSet;
+  private Stack<T> myValueStack;
+  private T myValue;
+  private boolean myValueSet;
 
   protected VirtualFileVisitor(@NotNull Option... options) {
     for (Option option : options) {
@@ -152,14 +152,13 @@ public abstract class VirtualFileVisitor {
    * the current file and all its subtree and returns to the level up, the value is cleared
    * and the {@link #getCurrentValue()} returns the previous value which was stored here before the {@link #setValueForChildren} call.
    */
-  public final <T> void setValueForChildren(@Nullable T value) {
-    this.value = value;
-    valueSet = true;
+  public final void setValueForChildren(@Nullable T value) {
+    myValue = value;
+    myValueSet = true;
   }
 
-  @SuppressWarnings("unchecked")
-  public final <T> T getCurrentValue() {
-    return (T)value;
+  public final T getCurrentValue() {
+    return myValue;
   }
 
 
@@ -177,19 +176,19 @@ public abstract class VirtualFileVisitor {
 
   final void pushFrame() {
     ++myLevel;
-    if (valueSet) {
-      Stack<Object> stack = myValueStack;
-      if (stack == null) myValueStack = stack = new Stack<Object>();
-      stack.push(value);
+    if (myValueSet) {
+      Stack<T> stack = myValueStack;
+      if (stack == null) myValueStack = stack = new Stack<T>();
+      stack.push(myValue);
     }
   }
 
   final void popFrame() {
     --myLevel;
-    if (valueSet) {
-      Stack<Object> stack = myValueStack;
+    if (myValueSet) {
+      Stack<T> stack = myValueStack;
       if (!(stack == null || stack.isEmpty())) stack.pop();
-      value = stack == null || stack.isEmpty() ? null : stack.peek();
+      myValue = stack == null || stack.isEmpty() ? null : stack.peek();
     }
   }
 }

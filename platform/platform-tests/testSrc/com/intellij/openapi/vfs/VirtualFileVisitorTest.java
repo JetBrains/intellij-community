@@ -214,7 +214,7 @@ public class VirtualFileVisitorTest {
 
   @Test
   public void parameters() {
-    VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor<String>() {
       {
         setValueForChildren(myRoot.getPath());
       }

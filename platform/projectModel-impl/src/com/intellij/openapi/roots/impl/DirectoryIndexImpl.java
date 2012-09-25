@@ -416,7 +416,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                              final String packageName,
                                              final VirtualFile sourceRoot,
                                              @Nullable final ProgressIndicator progress) {
-      VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor() {
+      VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor<String>() {
         { setValueForChildren(packageName); }
 
         @Override
@@ -462,7 +462,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                              final String packageName,
                                              final VirtualFile classRoot,
                                              @Nullable final ProgressIndicator progress) {
-      VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor() {
+      VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor<String>() {
         { setValueForChildren(packageName); }
 
         @Override
