@@ -16,15 +16,14 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -71,18 +70,18 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "unnecessary.parentheses.remove.quickfix");
+      return InspectionGadgetsBundle.message("unnecessary.parentheses.remove.quickfix");
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiParameterList) {
-        final PsiLambdaExpression expression = (PsiLambdaExpression)JavaPsiFacade.getElementFactory(element.getProject())
-          .createExpressionFromText(((PsiParameterList)element).getParameters()[0].getName() + "->{}",element);
-            element.replace(expression.getParameterList());
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
+        final PsiParameterList parameterList = (PsiParameterList)element;
+        final String text = parameterList.getParameters()[0].getName() + "->{}";
+        final PsiLambdaExpression expression = (PsiLambdaExpression)factory.createExpressionFromText(text, element);
+        element.replace(expression.getParameterList());
       } else {
         ParenthesesUtils.removeParentheses((PsiExpression)element, ignoreClarifyingParentheses);
       }
