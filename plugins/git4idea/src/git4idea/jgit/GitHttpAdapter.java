@@ -22,6 +22,7 @@ import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.AuthData;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -437,43 +438,34 @@ public final class GitHttpAdapter {
     url = adjustHttpUrl(url);
     String userName = GitRememberedInputs.getInstance().getUserNameForUrl(url);
     if (userName == null) {
-      return null;
+      return trySavedAuthDataFromProviders(url);
     }
     String key = keyForUrlAndLogin(url, userName);
-    final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
+    final PasswordSafe passwordSafe = PasswordSafe.getInstance();
     try {
-      String password = passwordSafe.getMemoryProvider().getPassword(project, GitHttpCredentialsProvider.class, key);
-      if (password == null) {
-        password = passwordSafe.getMasterKeyProvider().getPassword(project, GitHttpCredentialsProvider.class, key);
+      String password = passwordSafe.getPassword(project, GitHttpCredentialsProvider.class, key);
+      if (password != null) {
+        return new AuthData(userName, password);
       }
-      return password != null ? new AuthData(userName, password) : null;
+      return null;
     }
     catch (PasswordSafeException e) {
-      LOG.info("Couldn't store the password for key [" + key + "]", e);
+      LOG.info("Couldn't get the password for key [" + key + "]", e);
       return null;
     }
   }
-  
-  private static class AuthData {
-    private final String myLogin;
-    private final String myPassword;
 
-    private AuthData(@NotNull String login, @NotNull String password) {
-      myPassword = password;
-      myLogin = login;
+  @Nullable
+  private static AuthData trySavedAuthDataFromProviders(@NotNull String url) {
+    GitHttpAuthDataProvider[] extensions = GitHttpAuthDataProvider.EP_NAME.getExtensions();
+    for (GitHttpAuthDataProvider provider : extensions) {
+      AuthData authData = provider.getAuthData(url);
+      if (authData != null) {
+        return authData;
+      }
     }
-
-    @NotNull
-    public String getLogin() {
-      return myLogin;
-    }
-
-    @NotNull
-    public String getPassword() {
-      return myPassword;
-    }
+    return null;
   }
-  
 
   /**
    * If url is HTTPS, store it as HTTP in the password database, not to make user enter and remember same credentials twice. 

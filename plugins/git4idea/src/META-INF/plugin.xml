@@ -158,4 +158,9 @@
     <ComponentRoamingType component="Git.Settings" type="DISABLED"/>
     <fileTypeFactory implementation="git4idea.vfs.GitFileTypeFactory"/>
   </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Git4Idea.GitHttpAuthDataProvider" interface="git4idea.jgit.GitHttpAuthDataProvider"/>
+  </extensionPoints>
+
 </idea-plugin>

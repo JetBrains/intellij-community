@@ -347,7 +347,7 @@ public class GithubUtil {
     return null;
   }
 
-  private static boolean isGithubUrl(@NotNull String url) {
+  public static boolean isGithubUrl(@NotNull String url) {
     return url.contains("github.com");
   }
 
