@@ -17,6 +17,7 @@ package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.Equality;
 import gnu.trove.THashMap;
@@ -66,7 +67,7 @@ public final class ObjectTree<T> {
 
       ObjectNode<T> childNode = getNode(child);
       if (childNode == null) {
-        childNode = createNodeFor(child, parentNode);
+        childNode = createNodeFor(child, parentNode, Disposer.isDebugMode() ? new Throwable() : null);
       }
       else {
         ObjectNode<T> oldParent = childNode.getParent();
@@ -101,12 +102,13 @@ public final class ObjectTree<T> {
 
     if (node != null) return node;
 
-    return createNodeFor(object, defaultParent);
+    return createNodeFor(object, defaultParent, Disposer.isDebugMode() ? new Throwable() : null);
   }
 
   @NotNull
-  private ObjectNode<T> createNodeFor(@NotNull T object, @Nullable ObjectNode<T> parentNode) {
-    final ObjectNode<T> newNode = new ObjectNode<T>(this, parentNode, object, getNextModification());
+  private ObjectNode<T> createNodeFor(@NotNull T object, @Nullable ObjectNode<T> parentNode, @Nullable final Throwable trace) {
+    final ObjectNode<T> newNode = new ObjectNode<T>(this, parentNode, object, getNextModification(),
+                                                    trace);
     if (parentNode == null) {
       myRootObjects.add(object);
     }
@@ -133,6 +135,7 @@ public final class ObjectTree<T> {
     return true;
   }
 
+  @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
   static <T> void executeActionWithRecursiveGuard(@NotNull T object,
                                                   @NotNull List<T> recursiveGuard,
                                                   @NotNull final ObjectTreeAction<T> action) {

@@ -18,10 +18,10 @@ package com.intellij.openapi.util.objectTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
@@ -42,12 +42,12 @@ public final class ObjectNode<T> {
 
   private final long myOwnModification;
 
-  public ObjectNode(@NotNull ObjectTree<T> tree, ObjectNode<T> parentNode, @NotNull T object, long modification) {
+  public ObjectNode(@NotNull ObjectTree<T> tree, @Nullable ObjectNode<T> parentNode, @NotNull T object, long modification, @Nullable final Throwable trace) {
     myTree = tree;
     myParent = parentNode;
     myObject = object;
 
-    myTrace = Disposer.isDebugMode() ? new Throwable() : null;
+    myTrace = trace;
     myOwnModification = modification;
   }
 
