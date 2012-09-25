@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,11 @@ public class LaFUsagesCollector extends UsagesCollector {
   @Override
   public Set<UsageDescriptor> getUsages(@Nullable Project project) throws CollectUsagesException {
     UIManager.LookAndFeelInfo laf = LafManager.getInstance().getCurrentLookAndFeel();
-    return laf != null ? Collections.singleton(new UsageDescriptor(SystemInfo.OS_NAME + " - " + laf.getName(), 1))
+    String key = SystemInfo.OS_NAME + " - ";
+    if (!StringUtil.isEmptyOrSpaces(SystemInfo.SUN_DESKTOP)) {
+      key += SystemInfo.SUN_DESKTOP + " - ";
+    }
+    return laf != null ? Collections.singleton(new UsageDescriptor(key + laf.getName(), 1))
                        : Collections.<UsageDescriptor>emptySet();
   }
 
