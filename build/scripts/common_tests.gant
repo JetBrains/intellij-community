@@ -20,7 +20,7 @@ includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 requireProperty("out", "$home/out/classes")
 
 target(compile: "Compile project") {
-  ant.delete() {
+  ant.delete(failonerror: false) {
     fileset(dir: "$home/reports")
     fileset(dir: "$home/bin", includes: "*.hprof")
   }
