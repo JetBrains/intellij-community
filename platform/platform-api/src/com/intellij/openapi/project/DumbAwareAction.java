@@ -32,7 +32,7 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     super(text);
   }
 
-  protected DumbAwareAction(String text, String description, @Nullable Icon icon) {
+  protected DumbAwareAction(String text, @Nullable String description, @Nullable Icon icon) {
     super(text, description, icon);
   }
 }
