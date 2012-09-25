@@ -37,9 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -234,13 +232,6 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
   @Nullable
   public static String checkPath(BrowserFamily family, String path) {
     return StringUtil.isEmpty(path) ? XmlBundle.message("browser.path.not.specified", family.getName()) : null;
-  }
-
-  /**
-   * @deprecated use {@link #launchBrowser(com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily, String)} instead
-   */
-  public static void launchBrowser(@NonNls @NotNull String browserPath, @NonNls String... parameters) throws IOException {
-    UrlOpenerImpl.launchBrowser(browserPath, parameters[parameters.length - 1], false, Arrays.copyOf(parameters, parameters.length - 1));
   }
 
   @Nullable

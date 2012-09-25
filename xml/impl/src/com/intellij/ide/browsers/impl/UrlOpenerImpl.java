@@ -26,14 +26,14 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlBundle;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -47,21 +47,21 @@ public class UrlOpenerImpl extends UrlOpener {
   }
 
   public static void doLaunchBrowser(final BrowsersConfiguration.BrowserFamily family,
-                               @NotNull String url,
-                               @NotNull String[] additionalParameters,
-                               @NotNull Condition<String> browserSpecificParametersFilter,
-                               final boolean forceOpenNewInstanceOnMac) {
+                                     @NotNull String url,
+                                     @NotNull String[] additionalParameters,
+                                     @NotNull Condition<String> browserSpecificParametersFilter,
+                                     final boolean forceOpenNewInstanceOnMac) {
     final WebBrowserSettings settings = BrowsersConfiguration.getInstance().getBrowserSettings(family);
     final String path = settings.getPath();
     String pathCheckResult = BrowsersConfiguration.checkPath(family, path);
     if (pathCheckResult == null) {
-      url = BrowserUtil.escapeUrl(url);
       try {
-        final BrowserSpecificSettings specificSettings = settings.getBrowserSpecificSettings();
-        final String[] browserParameters = specificSettings != null ? specificSettings.getAdditionalParameters() : ArrayUtil.EMPTY_STRING_ARRAY;
-        String[] parameters = ArrayUtil.mergeArrays(ContainerUtil.findAllAsArray(browserParameters, browserSpecificParametersFilter),
-                                                    additionalParameters);
-        launchBrowser(path, url, forceOpenNewInstanceOnMac, parameters);
+        BrowserSpecificSettings specificSettings = settings.getBrowserSpecificSettings();
+        List<String> parameters = specificSettings == null
+                                  ? (additionalParameters.length == 0 ? Collections.<String>emptyList() : new ArrayList<String>())
+                                  : ContainerUtil.findAll(specificSettings.getAdditionalParameters(), browserSpecificParametersFilter);
+        Collections.addAll(parameters, additionalParameters);
+        launchBrowser(path, BrowserUtil.escapeUrl(url), forceOpenNewInstanceOnMac, parameters);
       }
       catch (IOException e) {
         Messages.showErrorDialog(e.getMessage(), XmlBundle.message("browser.error"));
@@ -72,29 +72,33 @@ public class UrlOpenerImpl extends UrlOpener {
     }
   }
 
-  public static void launchBrowser(@NonNls @NotNull String browserPath,
-                                   String url, final boolean forceOpenNewInstanceOnMac,
-                                   @NonNls String... browserArgs) throws IOException {
+  private static void launchBrowser(String browserPath, String url, boolean forceOpenNewInstanceOnMac, List<String> browserArgs)
+    throws IOException {
     final List<String> command = BrowserUtil.getOpenBrowserCommand(browserPath);
-    String[] args = ArrayUtil.append(browserArgs, url);
     if (SystemInfo.isMac && ExecUtil.getOpenCommandPath().equals(command.get(0))) {
-      if (browserArgs.length > 0) {
+      if (forceOpenNewInstanceOnMac) {
+        command.add("-n");
+      }
+      command.add(url);
+
+      if (!browserArgs.isEmpty()) {
         if (BrowserUtil.isOpenCommandSupportArgs()) {
-          args = ArrayUtil.mergeArrays(new String[]{url, "--args"}, browserArgs);
+          command.add("--args");
+          command.addAll(browserArgs);
         }
         else {
-          args = new String[]{url};
-          LOG.warn("'open' command doesn't allow to pass command line arguments so they will be ignored: " + Arrays.toString(args));
+          LOG.warn(
+            "'open' command doesn't allow to pass command line arguments so they will be ignored: " + StringUtil.join(browserArgs, " "));
         }
       }
-      if (forceOpenNewInstanceOnMac) {
-        args = ArrayUtil.mergeArrays(new String[]{"-n"}, args);
-      }
+    }
+    else {
+      command.add(url);
+      command.addAll(browserArgs);
     }
 
-    Collections.addAll(command, args);
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Launching browser: " + Arrays.toString(command.toArray()));
+      LOG.debug("Launching browser: " + StringUtil.join(browserArgs, " "));
     }
     new ProcessBuilder(command).start();
   }
