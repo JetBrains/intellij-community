@@ -228,8 +228,6 @@ public class BrowserUtil {
   }
 
   public static List<String> getOpenBrowserCommand(final @NonNls @NotNull String browserPath) {
-    // versions before 10.6 don't allow to pass command line arguments to browser via 'open' command
-    // so we use full path to browser executable in such case
     if (SystemInfo.isMac && !new File(browserPath).isFile()) {
       ArrayList<String> command = new ArrayList<String>();
       command.add(ExecUtil.getOpenCommandPath());
