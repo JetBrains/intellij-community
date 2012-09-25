@@ -18,6 +18,7 @@ package com.intellij.ide;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.util.Consumer;
+import gnu.trove.THashMap;
 import org.apache.xmlrpc.*;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
@@ -26,6 +27,7 @@ import org.jboss.netty.channel.*;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.WebServerManager;
 import org.jetbrains.io.Responses;
 
@@ -33,7 +35,7 @@ import org.jetbrains.io.Responses;
 public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements XmlRpcServer, Consumer<ChannelPipeline> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.XmlRpcServerImpl");
 
-  private final DefaultHandlerMapping handlerMapping = new DefaultHandlerMapping();
+  private final XmlRpcHandlerMappingImpl handlerMapping = new LoggingDefaultHandlerMapping();
   // idea doesn't use authentication
   private final XmlRpcContext xmlRpcContext = new DefaultXmlRpcContext(null, null, handlerMapping);
 
@@ -49,6 +51,8 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
       }
       handlerMapping.addHandler(handlerBean.name, handler);
     }
+
+    LOG.info("XmlRpcServerImpl instantianed, handlers " + handlerMapping);
   }
 
   @Override
@@ -103,6 +107,73 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
     }
     finally {
       e.getChannel().close();
+    }
+  }
+
+  private static class XmlRpcHandlerMappingImpl implements XmlRpcHandlerMapping {
+    protected final THashMap<String, Object> handlers = new THashMap<String, Object>();
+
+    public void addHandler(@NotNull String handlerName, @NotNull Object handler) {
+      if (handler instanceof XmlRpcHandler) {
+        handlers.put(handlerName, handler);
+      }
+      else {
+        handlers.put(handlerName, new Invoker(handler));
+      }
+    }
+
+    public void removeHandler(String handlerName) {
+      handlers.remove(handlerName);
+    }
+
+    public Object getHandler(String methodName) throws Exception {
+      Object handler = null;
+      String handlerName = null;
+      int dot = methodName.lastIndexOf('.');
+      if (dot > -1) {
+        handlerName = methodName.substring(0, dot);
+        handler = handlers.get(handlerName);
+      }
+
+      if (handler != null) {
+        return handler;
+      }
+
+      if (dot > -1) {
+        throw new Exception("RPC handler object \"" + handlerName + "\" not found");
+      }
+      else {
+        throw new Exception("RPC handler object not found for \"" + methodName);
+      }
+    }
+  }
+
+  private static class LoggingDefaultHandlerMapping extends XmlRpcHandlerMappingImpl {
+    @Override
+    public void addHandler(@NotNull String handlerName, @NotNull Object handler) {
+      LOG.info(String.format("addHandler: handlerName: %s, handler: %s%s", handlerName, handler, getHandlers()));
+      super.addHandler(handlerName, handler);
+    }
+
+    @Override
+    public void removeHandler(String handlerName) {
+      LOG.debug(String.format("removeHandler: handlerName: %s%s", handlerName, getHandlers()));
+      super.removeHandler(handlerName);
+    }
+
+    @Override
+    public Object getHandler(String methodName) throws Exception {
+      LOG.info(String.format("getHandler: methodName: %s%s", methodName, getHandlers()));
+      return super.getHandler(methodName);
+    }
+
+    private String getHandlers() {
+      return String.format("%nhandlers: %s", handlers);
+    }
+
+    @Override
+    public String toString() {
+      return getHandlers();
     }
   }
 }
