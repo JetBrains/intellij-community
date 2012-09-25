@@ -21,9 +21,7 @@ public class ToggleAutoTestAction extends ToggleAction {
   public boolean isSelected(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     RunContentDescriptor descriptor = e.getData(RunContentManager.RUN_CONTENT_DESCRIPTOR);
-    return project == null || descriptor == null
-           ? false
-           : AutoTestManager.getInstance(project).isAutoTestEnabled(descriptor);
+    return !(project == null || descriptor == null) && AutoTestManager.getInstance(project).isAutoTestEnabled(descriptor);
   }
 
   @Override
