@@ -26,13 +26,15 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.tasks.github.GithubApiUtil;
+import com.intellij.util.Consumer;
 import git4idea.GitVcs;
 import git4idea.Notificator;
 import icons.GithubIcons;
@@ -129,29 +131,34 @@ public class GithubCreateGistAction extends DumbAwareAction {
     final boolean anonymous = dialog.isAnonymous();
     final boolean openInBrowser = dialog.isOpenInBrowser();
 
-    String url = createGistWithProgress(project, editor, file, files, login, password, description, isPrivate, anonymous);
+    createGistWithProgress(project, editor, file, files, login, password, description, isPrivate, anonymous,
+                           new Consumer<String>() {
 
-    if (url == null){
-      return;
-    }
+                             @Override
+                             public void consume(String url) {
+                               if (url == null) {
+                                 return;
+                               }
 
-    if (openInBrowser) {
-      BrowserUtil.launchBrowser(url);
-    }
-    else {
-      showNotificationWithLink(project, url);
-    }
+                               if (openInBrowser) {
+                                 BrowserUtil.launchBrowser(url);
+                               }
+                               else {
+                                 showNotificationWithLink(project, url);
+                               }
+                             }
+                           });
   }
 
-  @Nullable
-  private static String createGistWithProgress(@NotNull final Project project, @Nullable final Editor editor,
+  private static void createGistWithProgress(@NotNull final Project project, @Nullable final Editor editor,
                                                @Nullable final VirtualFile file, @Nullable final VirtualFile[] files,
                                                @NotNull final String login, @NotNull final String password,
-                                               final String description, final boolean aPrivate, final boolean anonymous) {
+                                               @NotNull final String description, final boolean aPrivate,
+                                               final boolean anonymous, @NotNull final Consumer<String> resultHandler) {
     final AtomicReference<String> url = new AtomicReference<String>();
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    new Task.Backgroundable(project, "Creating Gist") {
       @Override
-      public void run() {
+      public void run(@NotNull ProgressIndicator indicator) {
         List<NamedContent> contents = collectContents(project, editor, file, files);
         if (contents == null) {
           return;
@@ -159,8 +166,12 @@ public class GithubCreateGistAction extends DumbAwareAction {
         String gistUrl = createGist(project, login, password, anonymous, contents, aPrivate, description);
         url.set(gistUrl);
       }
-    }, "Communicating With GitHub", false, project);
-    return url.get();
+
+      @Override
+      public void onSuccess() {
+        resultHandler.consume(url.get());
+      }
+    }.queue();
   }
 
   private static void showNotificationWithLink(@NotNull Project project, @NotNull final String url) {
@@ -290,8 +301,15 @@ public class GithubCreateGistAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static NamedContent getContentFromEditor(@NotNull Editor editor, @Nullable VirtualFile selectedFile, @NotNull Project project) {
-    String text = editor.getSelectionModel().getSelectedText();
+  private static NamedContent getContentFromEditor(@NotNull final Editor editor, @Nullable VirtualFile selectedFile, @NotNull Project project) {
+    String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Nullable
+      @Override
+      public String compute() {
+        return editor.getSelectionModel().getSelectedText();
+      }
+    });
+
     if (text == null) {
       text = editor.getDocument().getText();
     }
