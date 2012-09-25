@@ -137,7 +137,12 @@ public class WebServer {
     public ChannelPipeline getPipeline() throws Exception {
       ChannelPipeline pipeline = pipeline(new HttpRequestDecoder(), new HttpChunkAggregator(1048576), new HttpResponseEncoder());
       for (Consumer<ChannelPipeline> consumer : pipelineConsumers.compute()) {
-        consumer.consume(pipeline);
+        try {
+          consumer.consume(pipeline);
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
       pipeline.addLast("defaultHandler", defaultHandler);
       return pipeline;
