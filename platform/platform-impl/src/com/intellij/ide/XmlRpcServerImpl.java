@@ -52,7 +52,7 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
       handlerMapping.addHandler(handlerBean.name, handler);
     }
 
-    LOG.info("XmlRpcServerImpl instantianed, handlers " + handlerMapping);
+    LOG.info("XmlRpcServerImpl instantiated, handlers " + handlerMapping);
   }
 
   @Override
