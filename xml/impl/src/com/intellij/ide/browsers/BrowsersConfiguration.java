@@ -217,7 +217,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
                                    @Nullable final String url,
                                    final boolean forceOpenNewInstanceOnMac,
                                    String... parameters) {
-    DefaultUrlOpener.doLaunchBrowser(family, url, parameters, Conditions.<String>alwaysTrue(), forceOpenNewInstanceOnMac);
+    DefaultUrlOpener.launchBrowser(family, url, parameters, Conditions.<String>alwaysTrue(), forceOpenNewInstanceOnMac);
   }
 
   public static void launchBrowser(final @NotNull BrowserFamily family,
@@ -225,7 +225,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
                                    final boolean forceOpenNewInstanceOnMac,
                                    final Condition<String> browserSpecificParametersFilter,
                                    String... parameters) {
-    DefaultUrlOpener.doLaunchBrowser(family, url, parameters, browserSpecificParametersFilter, forceOpenNewInstanceOnMac);
+    DefaultUrlOpener.launchBrowser(family, url, parameters, browserSpecificParametersFilter, forceOpenNewInstanceOnMac);
   }
 
   @Nullable
