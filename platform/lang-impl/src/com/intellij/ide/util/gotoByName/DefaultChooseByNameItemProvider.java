@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -235,36 +236,34 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return res;
   }
 
-  private static void getNamesByPattern(@NotNull ChooseByNameBase base,
+  private static void getNamesByPattern(@NotNull final ChooseByNameBase base,
                                         @NotNull String[] names,
                                         @Nullable ProgressIndicator indicator,
                                         @NotNull final List<String> list,
                                         @NotNull String pattern,
-                                        NameUtil.MatchingCaseSensitivity caseSensitivity)
-    throws ProcessCanceledException {
+                                        NameUtil.MatchingCaseSensitivity caseSensitivity) throws ProcessCanceledException {
     if (!base.canShowListForEmptyPattern()) {
       LOG.assertTrue(!pattern.isEmpty(), base);
     }
 
-    if (pattern.startsWith("@") && base.getModel() instanceof GotoClassModel2) {
+    if (StringUtil.startsWithChar(pattern, '@') && base.getModel() instanceof GotoClassModel2) {
       pattern = pattern.substring(1);
     }
 
     final MinusculeMatcher matcher = buildPatternMatcher(pattern, caseSensitivity);
 
-    try {
-      for (String name : names) {
-        if (indicator != null && indicator.isCanceled()) {
-          break;
+    final String finalPattern = pattern;
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(names), indicator, false, new Processor<String>() {
+      @Override
+      public boolean process(String name) {
+        if (matches(base, finalPattern, matcher, name)) {
+          synchronized (list) {
+            list.add(name);
+          }
         }
-        if (matches(base, pattern, matcher, name)) {
-          list.add(name);
-        }
+        return true;
       }
-    }
-    catch (Exception e) {
-      // Do nothing. No matches appears valid result for "bad" pattern
-    }
+    });
   }
 
   private static boolean matches(@NotNull ChooseByNameBase base, @NotNull String pattern, @NotNull MinusculeMatcher matcher, @Nullable String name) {
