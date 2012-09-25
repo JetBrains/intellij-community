@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,52 +15,36 @@
  */
 package com.intellij.util.containers;
 
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.NotNull;
-
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
-public final class WeakValueHashMap<K,V> implements Map<K,V>{
-  private final Map<K,MyReference<K,V>> myMap;
+public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
+  private final WeakHashMap<K, MyReference<K,V>> myWeakKeyMap = new WeakHashMap<K, MyReference<K, V>>();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
-  private static class MyReference<K,T> extends WeakReference<T> {
-    private final K key;
+  private static class MyReference<K,V> extends WeakReference<V> {
+    private final WeakHashMap.Key<K> key;
 
-    private MyReference(K key, T referent, ReferenceQueue<? super T> q) {
+    private MyReference(WeakHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q) {
       super(referent, q);
       this.key = key;
     }
   }
 
-  public WeakValueHashMap() {
-    myMap = new THashMap<K, MyReference<K,V>>();
-  }
-
-  public WeakValueHashMap(@NotNull TObjectHashingStrategy<K> strategy) {
-    myMap = new THashMap<K, MyReference<K,V>>(strategy);
-  }
-
   private void processQueue() {
-    while(true){
-      MyReference ref = (MyReference)myQueue.poll();
-      if (ref == null) {
-        return;
-      }
-      @SuppressWarnings("unchecked")
-      K key = (K)ref.key;
-      if (myMap.get(key) == ref){
-        myMap.remove(key);
-      }
+    myWeakKeyMap.processQueue();
+    while(true) {
+      MyReference<K,V> ref = (MyReference<K, V>)myQueue.poll();
+      if (ref == null) break;
+      WeakHashMap.Key<K> weakKey = ref.key;
+      myWeakKeyMap.removeKey(weakKey);
     }
   }
 
   @Override
   public V get(Object key) {
-    MyReference<K,V> ref = myMap.get(key);
+    MyReference<K,V> ref = myWeakKeyMap.get(key);
     if (ref == null) return null;
     return ref.get();
   }
@@ -68,14 +52,16 @@ public final class WeakValueHashMap<K,V> implements Map<K,V>{
   @Override
   public V put(K key, V value) {
     processQueue();
-    MyReference<K,V> oldRef = myMap.put(key, new MyReference<K,V>(key, value, myQueue));
-    return oldRef != null ? oldRef.get() : null;
+    WeakHashMap.Key<K> weakKey = myWeakKeyMap.createKey(key);
+    MyReference<K, V> reference = new MyReference<K, V>(weakKey, value, myQueue);
+    MyReference<K,V> oldRef = myWeakKeyMap.putKey(weakKey, reference);
+    return oldRef == null ? null : oldRef.get();
   }
 
   @Override
   public V remove(Object key) {
     processQueue();
-    MyReference<K,V> ref = myMap.remove(key);
+    MyReference<K,V> ref = myWeakKeyMap.remove(key);
     return ref != null ? ref.get() : null;
   }
 
@@ -86,17 +72,18 @@ public final class WeakValueHashMap<K,V> implements Map<K,V>{
 
   @Override
   public void clear() {
-    myMap.clear();
+    myWeakKeyMap.clear();
+    processQueue();
   }
 
   @Override
   public int size() {
-    return myMap.size(); //?
+    return myWeakKeyMap.size(); //?
   }
 
   @Override
   public boolean isEmpty() {
-    return myMap.isEmpty(); //?
+    return myWeakKeyMap.isEmpty(); //?
   }
 
   @Override
@@ -111,13 +98,13 @@ public final class WeakValueHashMap<K,V> implements Map<K,V>{
 
   @Override
   public Set<K> keySet() {
-    return myMap.keySet();
+    return myWeakKeyMap.keySet();
   }
 
   @Override
   public Collection<V> values() {
     List<V> result = new ArrayList<V>();
-    final Collection<MyReference<K, V>> refs = myMap.values();
+    final Collection<MyReference<K, V>> refs = myWeakKeyMap.values();
     for (MyReference<K, V> ref : refs) {
       final V value = ref.get();
       if (value != null) {
