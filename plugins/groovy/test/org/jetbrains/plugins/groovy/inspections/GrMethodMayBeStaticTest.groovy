@@ -24,7 +24,7 @@ public class GrMethodMayBeStaticTest extends LightGroovyTestCase {
   final String basePath = null
 
   void testSimple() {
-    myFixture.configureByText('_.groovy', '''\
+    doTest('''\
 class A {
   def <warning descr="Method may be static">foo</warning>() {
     print 2
@@ -66,27 +66,66 @@ class A {
   static staticMethod(){}
 }
 ''')
+  }
+
+  private void doTest(final String text) {
+    myFixture.configureByText('_.groovy', text)
 
     myFixture.enableInspections(GrMethodMayBeStaticInspection)
     myFixture.checkHighlighting(true, false, false)
   }
 
   void testOtherClasses() {
-    myFixture.with {
-      addFileToProject('Fooo.groovy', '''\
+    myFixture.addFileToProject('Fooo.groovy', '''\
 class Fooo {
   static def foo() {}
 }
 ''')
-      configureByText('_.groovy', '''\
+    doTest('''\
 class Bar {
-  static def abc()
-  def bar() {
+  static def abc() {}
+  def <warning descr="Method may be static">bar</warning>() {
     abc()
     Fooo.foo()
   }
 }
 ''')
+  }
+
+  void testThis() {
+    doTest('''\
+class Foo {
+  void <warning descr="Method may be static">barx</warning>() {
+    this.abc()
+  }
+
+  void cde() {
+    this.bar()
+  }
+
+  static abc(){}
+  void bar(){}
+}
+''')
+  }
+
+  void testSuper() {
+    doTest('''\
+class Base {
+    void var() {}
+
+    static foo() {}
+}
+
+class Bar extends Base {
+    Bar <warning descr="Method may be static">b</warning>() {
+        super.foo()
     }
+
+    Bar c() {
+        super.var()
+    }
+}
+''')
   }
 }

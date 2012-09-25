@@ -32,7 +32,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -120,21 +122,29 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
 
     @Override
     public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
-      if (referenceExpression.getQualifierExpression() != null) {
-        super.visitReferenceExpression(referenceExpression);
-      }
-      else {
+      GrExpression qualifier = referenceExpression.getQualifierExpression();
+      if (qualifier == null || qualifier instanceof GrThisSuperReferenceExpression) {
         GroovyResolveResult result = referenceExpression.advancedResolve();
         PsiElement element = result.getElement();
         if (isPrintOrPrintln(element)) return; //print & println are resolved in all places
 
         GroovyPsiElement resolveContext = result.getCurrentFileResolveContext();
-        if (resolveContext != null) return;
+        if (qualifier == null && resolveContext != null) return;
         if (element instanceof PsiClass && ((PsiClass)element).getContainingClass() == null) return;
         if (element instanceof PsiMember && !((PsiMember)element).hasModifierProperty(PsiModifier.STATIC)) {
           myMay = false;
         }
       }
+      else {
+        super.visitReferenceExpression(referenceExpression);
+      }
+    }
+
+    @Override
+    public void visitThisSuperReferenceExpression(GrThisSuperReferenceExpression expression) {
+      if (expression.getParent() instanceof GrReferenceExpression) return;
+
+      myMay = false;
     }
 
     @Override
