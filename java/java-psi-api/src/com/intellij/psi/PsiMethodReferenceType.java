@@ -70,4 +70,8 @@ public class PsiMethodReferenceType extends PsiType {
   public PsiType[] getSuperTypes() {
     return PsiType.EMPTY_ARRAY;
   }
+
+  public PsiMethodReferenceExpression getExpression() {
+    return myReference;
+  }
 }
