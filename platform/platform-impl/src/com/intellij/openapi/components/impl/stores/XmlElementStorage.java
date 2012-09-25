@@ -271,7 +271,9 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   @Override
   public void finishSave(final SaveSession saveSession) {
     try {
-      LOG.assertTrue(mySession == saveSession, "mySession=" + mySession + " saveSession=" + saveSession);
+      if (mySession != saveSession) {
+        LOG.error("mySession=" + mySession + " saveSession=" + saveSession);
+      }
     } finally {
       mySession = null;
     }
