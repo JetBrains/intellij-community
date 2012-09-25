@@ -24,6 +24,7 @@ import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -340,7 +341,7 @@ public class IncProjectBuilder {
     }
 
     ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
-    for (BuildTargetType type : BuilderRegistry.getInstance().getTargetTypes()) {
+    for (BuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
       for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets(type)) {
         for (BuildRootDescriptor descriptor : projectDescriptor.getBuildRootIndex().getTargetRoots(target, context)) {
           allSourceRoots.add(descriptor.getRootFile());
