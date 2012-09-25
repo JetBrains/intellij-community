@@ -17,12 +17,20 @@ package com.intellij.ide;
 
 /**
  * @author mike
+ * @deprecated use xmlRpcHandler extension point instead (to remove in IDEA 13)
  */
 public interface XmlRpcServer {
   /**
-   * @deprecated use xmlRpcHandler extension point instead
+   * @deprecated use xmlRpcHandler extension point instead (to remove in IDEA 13)
    */
   void addHandler(String name, Object handler);
+  /**
+   * @deprecated (to remove in IDEA 13)
+   */
   void removeHandler(String name);
+
+  /**
+   * @deprecated use {@link org.jetbrains.ide.WebServerManager#getInstance().getPort()} (to remove in IDEA 13)
+   */
   int getPortNumber();
 }
