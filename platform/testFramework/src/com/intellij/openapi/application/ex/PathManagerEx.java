@@ -28,6 +28,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TestRunnerUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -371,6 +372,12 @@ public class PathManagerEx {
     }
 
     String moduleName = root.getName();
+    String chunkPrefix = "ModuleChunk(";
+    if (moduleName.startsWith(chunkPrefix)) {
+      //todo[nik] this is temporary workaround to fix tests on TeamCity which compiles the whole modules cycle to a single output directory
+      moduleName = StringUtil.trimStart(moduleName, chunkPrefix);
+      moduleName = moduleName.substring(0, moduleName.indexOf(','));
+    }
     return getCommunityModules().contains(moduleName) ? FileSystemLocation.COMMUNITY : FileSystemLocation.ULTIMATE;
   }
 
