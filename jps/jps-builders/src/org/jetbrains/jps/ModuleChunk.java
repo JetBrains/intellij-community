@@ -4,7 +4,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
-import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.LinkedHashSet;
@@ -53,14 +52,6 @@ public class ModuleChunk {
 
   public String toString() {
     return getName();
-  }
-
-  public JpsProject getProject() {
-    return representativeModule().getProject();
-  }
-
-  public JpsModule representativeModule() {
-    return myModules.iterator().next();
   }
 
   public ModuleBuildTarget representativeTarget() {

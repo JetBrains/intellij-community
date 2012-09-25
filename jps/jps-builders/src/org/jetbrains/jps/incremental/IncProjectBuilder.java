@@ -24,6 +24,7 @@ import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.cmdline.BuildRunner;
@@ -267,7 +268,7 @@ public class IncProjectBuilder {
     final CompileContextImpl context = new CompileContextImpl(scope, myProjectDescriptor, isMake, isProjectRebuild, myMessageDispatcher,
       myBuilderParams, myCancelStatus
     );
-    ModuleLevelBuilder.CONSTANT_SEARCH_SERVICE.set(context, myConstantSearch);
+    JavaBuilderUtil.CONSTANT_SEARCH_SERVICE.set(context, myConstantSearch);
     return context;
   }
 

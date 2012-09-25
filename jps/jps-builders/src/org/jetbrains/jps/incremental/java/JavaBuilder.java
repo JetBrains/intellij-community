@@ -32,6 +32,7 @@ import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -416,7 +417,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final Set<File> successfullyCompiled = outputSink.getSuccessfullyCompiled();
       DELTA_MAPPINGS_CALLBACK_KEY.set(context, null);
 
-      if (updateMappings(context, delta, chunk, files, successfullyCompiled)) {
+      if (JavaBuilderUtil.updateMappings(context, delta, chunk, files, successfullyCompiled)) {
         exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
       }
     }
@@ -870,6 +871,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     JAVAC_OPTIONS.set(context, options);
     JAVAC_VM_OPTIONS.set(context, vmOptions);
+  }
+
+  @Override
+  public void cleanupResources(CompileContext context, ModuleChunk chunk) {
+    JavaBuilderUtil.cleanupChunkResources(context);
   }
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {

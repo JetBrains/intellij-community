@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
@@ -167,7 +168,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   @Override
   public void cleanupResources(CompileContext context, ModuleChunk chunk) {
-    super.cleanupResources(context, chunk);
+    JavaBuilderUtil.cleanupChunkResources(context);
     STUB_TO_SRC.set(context, null);
   }
 
@@ -278,7 +279,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     }
 
 
-    return updateMappings(context, delta, chunk, toCompile, successfullyCompiledFiles);
+    return JavaBuilderUtil.updateMappings(context, delta, chunk, toCompile, successfullyCompiledFiles);
   }
 
   private static List<String> generateClasspath(CompileContext context, ModuleChunk chunk) {
