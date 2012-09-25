@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -56,6 +57,7 @@ import java.awt.event.MouseEvent;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.List;
 
 public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget {
   private final ProcessPopup myPopup;
@@ -82,7 +84,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   private String myCurrentRequestor;
   private final boolean myProgressEnabled;
-
+  
   public InfoAndProgressPanel(boolean progressEnabled) {
     myProgressEnabled = progressEnabled;
 
@@ -180,6 +182,19 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     return this;
   }
 
+  public List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses() {
+    synchronized (myOriginals) {
+      if (myOriginals.isEmpty()) return Collections.emptyList();
+
+      List<Pair<TaskInfo, ProgressIndicator>> result = new ArrayList<Pair<TaskInfo, ProgressIndicator>>(myOriginals.size());
+      for (int i = 0; i < myOriginals.size(); i++) {
+        result.add(Pair.<TaskInfo, ProgressIndicator>create(myInfos.get(i), myOriginals.get(i)));
+      }
+
+      return Collections.unmodifiableList(result);
+    }
+  }
+
   public void addProgress(final ProgressIndicatorEx original, TaskInfo info) {
     synchronized (myOriginals) {
       final boolean veryFirst = !hasProgressIndicators();
@@ -216,7 +231,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private void removeProgress(InlineProgressIndicator progress) {
     synchronized (myOriginals) {
       if (!myInline2Original.containsKey(progress)) return;
-
+      
       final boolean last = myOriginals.size() == 1;
       final boolean beforeLast = myOriginals.size() == 2;
 

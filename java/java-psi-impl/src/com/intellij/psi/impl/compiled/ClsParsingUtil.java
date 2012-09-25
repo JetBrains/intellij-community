@@ -94,7 +94,7 @@ public class ClsParsingUtil {
       final PsiAnnotation psiAnnotation = (PsiAnnotation)element;
       final PsiJavaCodeReferenceElement referenceElement = psiAnnotation.getNameReferenceElement();
       assert referenceElement != null : psiAnnotation;
-      final String canonicalText = referenceElement.getCanonicalText();
+      final String canonicalText = referenceElement.getText(); // class file has FQNs
       return new ClsAnnotationValueImpl(parent) {
         @Override
         protected ClsJavaCodeReferenceElementImpl createReference() {

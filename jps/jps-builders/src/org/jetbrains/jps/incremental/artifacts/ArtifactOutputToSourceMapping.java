@@ -2,10 +2,10 @@ package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.util.SmartList;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.jps.incremental.storage.AbstractStateStorage;
+import org.jetbrains.jps.incremental.storage.PathStringDescriptor;
 
 import java.io.*;
 import java.util.List;
@@ -42,7 +42,7 @@ public class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, 
   };
 
   public ArtifactOutputToSourceMapping(@NonNls File storePath) throws IOException {
-    super(storePath, new EnumeratorStringDescriptor(), EXTERNALIZER);
+    super(storePath, new PathStringDescriptor(), EXTERNALIZER);
   }
 
   public static class SourcePathAndRootIndex {

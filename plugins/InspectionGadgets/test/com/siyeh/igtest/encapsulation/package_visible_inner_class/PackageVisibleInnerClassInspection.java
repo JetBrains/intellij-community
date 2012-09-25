@@ -16,6 +16,14 @@ public class PackageVisibleInnerClassInspection<T>
     Object foo() {
         return new Object() {};
     }
+
+    enum E {
+        ONE, TWO
+    }
+
+    interface I {
+        void foo();
+    }
 }
 enum Sample {
     Sample1() {

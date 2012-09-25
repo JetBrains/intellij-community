@@ -39,7 +39,7 @@ import java.util.ResourceBundle;
  * @see Configurable
  */
 @Tag("configurable")
-public class ConfigurableEP extends AbstractExtensionPointBean {
+public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExtensionPointBean {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.ConfigurableEP");
 
   @Attribute("displayName")
@@ -53,6 +53,7 @@ public class ConfigurableEP extends AbstractExtensionPointBean {
 
   public String getDisplayName() {
     if (displayName != null) return displayName;
+    LOG.assertTrue(bundle != null, "Bundle missed for " + instanceClass);
     final ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(bundle, myPluginDescriptor.getPluginClassLoader());
     return displayName = CommonBundle.message(resourceBundle, key);
   }
@@ -61,11 +62,33 @@ public class ConfigurableEP extends AbstractExtensionPointBean {
   @AbstractCollection(surroundWithTag = false)
   public ConfigurableEP[] children;
 
+  /**
+   * Extension point of ConfigurableEP type to calculate children
+   */
+  @Attribute("childrenEPName")
+  public String childrenEPName;
+
+  @Attribute("parentId")
+  public String parentId;
+
+  public ConfigurableEP[] getChildren() {
+    for (ConfigurableEP child : children) {
+      child.myPicoContainer = myPicoContainer;
+      child.myPluginDescriptor = myPluginDescriptor;
+      child.myProject = myProject;
+    }
+    return children;
+  }
+
   @Attribute("id")
   public String id;
 
   @Attribute("nonDefaultProject")
   public boolean nonDefaultProject;
+
+  public boolean isAvailable() {
+    return !nonDefaultProject || !(myProject != null  && myProject.isDefault());
+  }
 
   /**
    * @deprecated use '{@link #instanceClass instance}' or '{@link #providerClass provider}' attribute instead
@@ -77,25 +100,27 @@ public class ConfigurableEP extends AbstractExtensionPointBean {
   @Attribute("provider")
   public String providerClass;
 
-  private final AtomicNotNullLazyValue<NullableFactory<Configurable>> myFactory;
-  private final PicoContainer myPicoContainer;
+  private final AtomicNotNullLazyValue<NullableFactory<T>> myFactory;
+  private PicoContainer myPicoContainer;
+  private Project myProject;
 
   @SuppressWarnings("UnusedDeclaration")
   public ConfigurableEP() {
-    this(ApplicationManager.getApplication().getPicoContainer());
+    this(ApplicationManager.getApplication().getPicoContainer(), null);
   }
 
   @SuppressWarnings("UnusedDeclaration")
   public ConfigurableEP(Project project) {
-    this(project.getPicoContainer());
+    this(project.getPicoContainer(), project);
   }
 
-  private ConfigurableEP(PicoContainer picoContainer) {
+  protected ConfigurableEP(PicoContainer picoContainer, @Nullable Project project) {
+    myProject = project;
     myPicoContainer = picoContainer;
-    myFactory = new AtomicNotNullLazyValue<NullableFactory<Configurable>>() {
+    myFactory = new AtomicNotNullLazyValue<NullableFactory<T>>() {
       @NotNull
       @Override
-      protected NullableFactory<Configurable> compute() {
+      protected NullableFactory<T> compute() {
         if (providerClass != null) {
           return new InstanceFromProviderFactory();
         }
@@ -111,7 +136,7 @@ public class ConfigurableEP extends AbstractExtensionPointBean {
   }
 
   @Nullable
-  public Configurable createConfigurable() {
+  public T createConfigurable() {
     try {
       return myFactory.getValue().create();
     }
@@ -124,9 +149,18 @@ public class ConfigurableEP extends AbstractExtensionPointBean {
     return null;
   }
 
-  private class InstanceFromProviderFactory extends AtomicNotNullLazyValue<ConfigurableProvider> implements NullableFactory<Configurable> {
-    public Configurable create() {
-      return getValue().createConfigurable();
+  public Project getProject() {
+    return myProject;
+  }
+
+  @Override
+  public String toString() {
+    return getDisplayName();
+  }
+
+  private class InstanceFromProviderFactory extends AtomicNotNullLazyValue<ConfigurableProvider> implements NullableFactory<T> {
+    public T create() {
+      return (T)getValue().createConfigurable();
     }
 
     @NotNull
@@ -141,14 +175,14 @@ public class ConfigurableEP extends AbstractExtensionPointBean {
     }
   }
 
-  private class NewInstanceFactory extends NotNullLazyValue<Class<? extends Configurable>> implements NullableFactory<Configurable> {
-    public Configurable create() {
+  private class NewInstanceFactory extends NotNullLazyValue<Class<? extends T>> implements NullableFactory<T> {
+    public T create() {
       return instantiate(getValue(), myPicoContainer, true);
     }
 
     @NotNull
     @Override
-    protected Class<? extends Configurable> compute() {
+    protected Class<? extends T> compute() {
       try {
         return findClass(instanceClass);
       }
@@ -158,17 +192,17 @@ public class ConfigurableEP extends AbstractExtensionPointBean {
     }
   }
 
-  private class ImplementationFactory extends AtomicNotNullLazyValue<Configurable> implements NullableFactory<Configurable> {
+  private class ImplementationFactory extends AtomicNotNullLazyValue<T> implements NullableFactory<T> {
     @Override
-    public Configurable create() {
+    public T create() {
       return compute();
     }
 
     @NotNull
     @Override
-    protected Configurable compute() {
+    protected T compute() {
       try {
-        final Class<Configurable> aClass = findClass(implementationClass);
+        final Class<T> aClass = findClass(implementationClass);
         return instantiate(aClass, myPicoContainer, true);
       }
       catch (ClassNotFoundException e) {

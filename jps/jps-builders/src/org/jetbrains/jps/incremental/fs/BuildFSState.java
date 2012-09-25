@@ -41,12 +41,12 @@ public class BuildFSState extends FSState {
   }
 
   @Override
-  public boolean markInitialScanPerformed(BuildTarget target) {
+  public boolean markInitialScanPerformed(BuildTarget<?> target) {
     return myAlwaysScanFS || super.markInitialScanPerformed(target);
   }
 
   @Override
-  public Map<BuildRootDescriptor, Set<File>> getSourcesToRecompile(@NotNull CompileContext context, BuildTarget target) {
+  public Map<BuildRootDescriptor, Set<File>> getSourcesToRecompile(@NotNull CompileContext context, BuildTarget<?> target) {
     final FilesDelta lastRoundDelta = getRoundDelta(LAST_ROUND_DELTA_KEY, context);
     if (lastRoundDelta != null) {
       return lastRoundDelta.getSourcesToRecompile();

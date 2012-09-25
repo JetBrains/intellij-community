@@ -24,8 +24,8 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.ShiftTabAction;
 import com.intellij.ui.SimpleTextAttributes;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
@@ -55,7 +55,7 @@ public class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
     Arrays.sort(languageIDs);
 
     myLanguage.setModel(new DefaultComboBoxModel(languageIDs));
-    myLanguage.setRenderer(new HtmlListCellRenderer<String>() {
+    myLanguage.setRenderer(new ColoredListCellRendererWrapper<String>() {
       final Set<String> IDs = new HashSet<String>(Arrays.asList(languageIDs));
 
       @Override

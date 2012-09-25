@@ -338,6 +338,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
   }
 
+  @Override
   public ExcludedEntriesConfiguration getExcludedEntriesConfiguration() {
     return myExcludedEntriesConfiguration;
   }

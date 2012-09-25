@@ -44,11 +44,16 @@ public class ArrangementCompositeMatchCondition implements ArrangementMatchCondi
     return myOperands;
   }
 
+  @NotNull
   public ArrangementCompositeMatchCondition addOperand(@NotNull ArrangementMatchCondition condition) {
     myOperands.add(condition);
     return this;
   }
 
+  public void removeOperand(@NotNull ArrangementMatchCondition condition) {
+    myOperands.remove(condition);
+  }
+  
   @NotNull
   public ArrangementOperator getOperator() {
     return myOperator;

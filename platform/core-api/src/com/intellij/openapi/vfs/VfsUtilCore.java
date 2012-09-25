@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Function;
@@ -29,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.util.Collection;
 import java.util.List;
-
-import static com.intellij.openapi.vfs.VirtualFileVisitor.Result;
-import static com.intellij.openapi.vfs.VirtualFileVisitor.VisitorException;
 
 public class VfsUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtilCore");
@@ -178,7 +176,7 @@ public class VfsUtilCore {
   public static boolean iterateChildrenRecursively(@NotNull final VirtualFile root,
                                                    @Nullable final VirtualFileFilter filter,
                                                    @NotNull final ContentIterator iterator) {
-    final Result result = visitChildrenRecursively(root, new VirtualFileVisitor() {
+    final VirtualFileVisitor.Result result = visitChildrenRecursively(root, new VirtualFileVisitor() {
       @NotNull
       @Override
       public Result visitFileEx(@NotNull VirtualFile file) {
@@ -187,68 +185,75 @@ public class VfsUtilCore {
         return CONTINUE;
       }
     });
-    return result.skipToParent != root;
+    return !Comparing.equal(result.skipToParent, root);
   }
 
   @SuppressWarnings("UnsafeVfsRecursion")
   @NotNull
-  public static Result visitChildrenRecursively(@NotNull VirtualFile file, @NotNull VirtualFileVisitor visitor) throws VisitorException {
-    visitor.pushFrame();
+  public static VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file, @NotNull VirtualFileVisitor visitor)
+    throws VirtualFileVisitor.VisitorException {
+    final boolean visited = visitor.allowVisitFile(file);
+    if (visited) {
+      VirtualFileVisitor.Result result = visitor.visitFileEx(file);
+      if (result.skipChildren) return result;
+    }
+
+    Iterable<VirtualFile> childrenIterable = null;
+    VirtualFile[] children = null;
+
     try {
-      final boolean visited = visitor.allowVisitFile(file);
-      if (visited) {
-        Result result = visitor.visitFileEx(file);
-        if (result.skipChildren) return result;
-      }
-
-      Iterable<VirtualFile> childrenIterable = null;
-      VirtualFile[] children = null;
-
-      try {
-        if (!file.isValid() || !visitor.allowVisitChildren(file)) return VirtualFileVisitor.CONTINUE;
-        if (!visitor.depthLimitReached()) {
-          childrenIterable = visitor.getChildrenIterable(file);
-          if (childrenIterable == null) {
-            children = file.getChildren();
-          }
+      if (!file.isValid() || !visitor.allowVisitChildren(file)) return VirtualFileVisitor.CONTINUE;
+      if (!visitor.depthLimitReached()) {
+        childrenIterable = visitor.getChildrenIterable(file);
+        if (childrenIterable == null) {
+          children = file.getChildren();
         }
       }
-      catch (InvalidVirtualFileAccessException e) {
-        LOG.info("Ignoring: " + e.getMessage());
-        return VirtualFileVisitor.CONTINUE;
-      }
-
-      if (childrenIterable != null) {
-        for (VirtualFile child : childrenIterable) {
-          Result result = visitChildrenRecursively(child, visitor);
-          if (result.skipToParent != null && result.skipToParent != child) return result;
-        }
-      }
-      else if (children != null) {
-        for (VirtualFile child : children) {
-          Result result = visitChildrenRecursively(child, visitor);
-          if (result.skipToParent != null && result.skipToParent != child) return result;
-        }
-      }
-
-      if (visited) {
-        visitor.afterChildrenVisited(file);
-      }
-
+    }
+    catch (InvalidVirtualFileAccessException e) {
+      LOG.info("Ignoring: " + e.getMessage());
       return VirtualFileVisitor.CONTINUE;
     }
-    finally {
-      visitor.popFrame();
+
+    if (childrenIterable != null) {
+      visitor.pushFrame();
+      try {
+        for (VirtualFile child : childrenIterable) {
+          VirtualFileVisitor.Result result = visitChildrenRecursively(child, visitor);
+          if (result.skipToParent != null && !Comparing.equal(result.skipToParent, child)) return result;
+        }
+      }
+      finally {
+        visitor.popFrame();
+      }
     }
+    else if (children != null && children.length != 0) {
+      visitor.pushFrame();
+      try {
+        for (VirtualFile child : children) {
+          VirtualFileVisitor.Result result = visitChildrenRecursively(child, visitor);
+          if (result.skipToParent != null && !Comparing.equal(result.skipToParent, child)) return result;
+        }
+      }
+      finally {
+        visitor.popFrame();
+      }
+    }
+
+    if (visited) {
+      visitor.afterChildrenVisited(file);
+    }
+
+    return VirtualFileVisitor.CONTINUE;
   }
 
-  public static <E extends Exception> Result visitChildrenRecursively(@NotNull VirtualFile file,
-                                                                      @NotNull VirtualFileVisitor visitor,
-                                                                      @NotNull Class<E> eClass) throws E {
+  public static <E extends Exception> VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
+                                                                                         @NotNull VirtualFileVisitor visitor,
+                                                                                         @NotNull Class<E> eClass) throws E {
     try {
       return visitChildrenRecursively(file, visitor);
     }
-    catch (VisitorException e) {
+    catch (VirtualFileVisitor.VisitorException e) {
       final Throwable cause = e.getCause();
       if (eClass.isInstance(cause)) {
         throw eClass.cast(cause);
@@ -308,7 +313,7 @@ public class VfsUtilCore {
     return VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, path);
   }
 
-  public static List<File> virtualToIoFiles(Collection<VirtualFile> scope) {
+  public static List<File> virtualToIoFiles(@NotNull Collection<VirtualFile> scope) {
     return ContainerUtil.map2List(scope, new Function<VirtualFile, File>() {
       @Override
       public File fun(VirtualFile file) {

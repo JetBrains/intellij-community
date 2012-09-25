@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -28,6 +29,9 @@ public class JavaArrangementParseInfo {
 
   @NotNull private final List<JavaElementArrangementEntry> myEntries = new ArrayList<JavaElementArrangementEntry>();
 
+  @NotNull private final List<JavaArrangementMethodDependencyInfo> myMethodDependencyRoots
+    = new ArrayList<JavaArrangementMethodDependencyInfo>();
+  
   @NotNull private final Map<Pair<String/* property name */, String/* class name */>, JavaArrangementPropertyInfo> myProperties
     = new HashMap<Pair<String, String>, JavaArrangementPropertyInfo>();
 
@@ -39,27 +43,41 @@ public class JavaArrangementParseInfo {
   public void addEntry(@NotNull JavaElementArrangementEntry entry) {
     myEntries.add(entry);
   }
-  
+
   @NotNull
   public Collection<JavaArrangementPropertyInfo> getProperties() {
     return myProperties.values();
   }
-  
+
+  // TODO den add doc
+  @NotNull
+  public List<JavaArrangementMethodDependencyInfo> getMethodDependencyRoots() {
+    return myMethodDependencyRoots;
+  }
+
   public void registerGetter(@NotNull String propertyName, @NotNull String className, @NotNull JavaElementArrangementEntry entry) {
-    getInfo(propertyName, className).setGetter(entry);
+    getPropertyInfo(propertyName, className).setGetter(entry);
   }
 
   public void registerSetter(@NotNull String propertyName, @NotNull String className, @NotNull JavaElementArrangementEntry entry) {
-    getInfo(propertyName, className).setSetter(entry);
+    getPropertyInfo(propertyName, className).setSetter(entry);
   }
 
   @NotNull
-  private JavaArrangementPropertyInfo getInfo(@NotNull String propertyName, @NotNull String className) {
+  private JavaArrangementPropertyInfo getPropertyInfo(@NotNull String propertyName, @NotNull String className) {
     Pair<String, String> key = Pair.create(propertyName, className);
     JavaArrangementPropertyInfo propertyInfo = myProperties.get(key);
     if (propertyInfo == null) {
       myProperties.put(key, propertyInfo = new JavaArrangementPropertyInfo());
     }
     return propertyInfo;
+  }
+  
+  // TODO den add doc
+  public void registerDependency(@NotNull PsiMethod baseMethod,
+                                 @NotNull JavaElementArrangementEntry baseMethodEntry,
+                                 @NotNull PsiMethod dependentMethod)
+  {
+    // TODO den implement
   }
 }

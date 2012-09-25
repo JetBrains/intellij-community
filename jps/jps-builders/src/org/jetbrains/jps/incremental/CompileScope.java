@@ -10,9 +10,9 @@ import java.io.File;
  *         Date: 1/15/12
  */
 public abstract class CompileScope {
-  public abstract boolean isAffected(BuildTarget target, @NotNull File file);
+  public abstract boolean isAffected(BuildTarget<?> target, @NotNull File file);
 
-  public abstract boolean isAffected(@NotNull BuildTarget target);
+  public abstract boolean isAffected(@NotNull BuildTarget<?> target);
 
-  public abstract boolean isRecompilationForced(@NotNull BuildTarget target);
+  public abstract boolean isRecompilationForced(@NotNull BuildTarget<?> target);
 }

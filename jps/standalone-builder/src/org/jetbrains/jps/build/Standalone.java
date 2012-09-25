@@ -6,7 +6,6 @@ import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
 import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.CanceledStatus;
-import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.JpsModelLoader;
@@ -123,23 +122,25 @@ public class Standalone {
   public static void runBuild(JpsModelLoader loader, final File dataStorageRoot, BuildType buildType, Set<String> modulesSet,
                               List<String> artifactsList, final boolean includeTests, final MessageHandler messageHandler) throws Exception {
     List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
-    if (modulesSet.isEmpty()) {
-      scopes.addAll(CmdlineProtoUtil.createAllModulesScopes());
-    }
-    else {
-      for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
-        if (includeTests || !type.isTests()) {
-          scopes.add(TargetTypeBuildScope.newBuilder().setTypeId(type.getTypeId()).addAllTargetId(modulesSet).build());
+    for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
+      if (includeTests || !type.isTests()) {
+        TargetTypeBuildScope.Builder builder = TargetTypeBuildScope.newBuilder().setTypeId(type.getTypeId());
+        if (modulesSet.isEmpty()) {
+          builder.setAllTargets(true);
         }
+        else {
+          builder.addAllTargetId(modulesSet);
+        }
+        scopes.add(builder.build());
       }
     }
-    if (artifactsList.isEmpty()) {
+    if (!artifactsList.isEmpty()) {
       scopes.add(TargetTypeBuildScope.newBuilder().setTypeId(ArtifactBuildTargetType.INSTANCE.getTypeId()).addAllTargetId(artifactsList).build());
     }
     final BuildRunner buildRunner = new BuildRunner(loader, scopes, Collections.<String>emptyList(), Collections.<String, String>emptyMap());
     ProjectDescriptor descriptor = buildRunner.load(messageHandler, dataStorageRoot, new BuildFSState(true));
     try {
-      buildRunner.runBuild(descriptor, CanceledStatus.NULL, null, messageHandler, includeTests, buildType);
+      buildRunner.runBuild(descriptor, CanceledStatus.NULL, null, messageHandler, buildType);
     }
     finally {
       descriptor.release();

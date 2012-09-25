@@ -1406,37 +1406,38 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         if (parent != null) {
           final String oldName = (String)event.getOldValue();
           final String root = parent.getPath() + "/" + oldName;
-          final Set<String> toMark;
+          final Set<File> toMark = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
           if (eventFile.isDirectory()) {
-            toMark = new HashSet<String>();
             VfsUtilCore.visitChildrenRecursively(eventFile, new VirtualFileVisitor() {
               private StringBuilder filePath = new StringBuilder(root);
 
               @Override
               public boolean visitFile(@NotNull VirtualFile child) {
                 if (child.isDirectory()) {
-                  if (child != eventFile) {
+                  if (!Comparing.equal(child, eventFile)) {
                     filePath.append("/").append(child.getName());
                   }
                 }
                 else {
                   String childPath = filePath.toString();
-                  if (child != eventFile) childPath += "/" + child.getName();
-                  toMark.add(childPath);
+                  if (!Comparing.equal(child, eventFile)) {
+                    childPath += "/" + child.getName();
+                  }
+                  toMark.add(new File(childPath));
                 }
                 return true;
               }
 
               @Override
               public void afterChildrenVisited(@NotNull VirtualFile file) {
-                if (file.isDirectory() && file != eventFile) {
+                if (file.isDirectory() && !Comparing.equal(file, eventFile)) {
                   filePath.delete(filePath.length() - file.getName().length() - 1, filePath.length());
                 }
               }
             });
           }
           else {
-            toMark = Collections.singleton(root);
+            toMark.add(new File(root));
           }
           notifyFilesDeleted(toMark);
         }
@@ -1470,14 +1471,14 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
       }
 
-      final Set<String> pathsToMark = new HashSet<String>();
+      final Set<File> pathsToMark = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
       processRecursively(eventFile, true, new FileProcessor() {
         private final TIntArrayList myAssociatedProjectIds = new TIntArrayList();
         
         public void execute(final VirtualFile file) {
           final String filePath = file.getPath();
-          pathsToMark.add(filePath);
+          pathsToMark.add(new File(filePath));
           myAssociatedProjectIds.clear();
           try {
             final OutputFileInfo outputInfo = loadOutputInfo(file);
@@ -1562,10 +1563,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
 
     private void markDirtyIfSource(final VirtualFile file, final boolean fromMove) {
-      final Set<String> pathsToMark = new HashSet<String>();
+      final Set<File> pathsToMark = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       processRecursively(file, false, new FileProcessor() {
         public void execute(final VirtualFile file) {
-          pathsToMark.add(file.getPath());
+          pathsToMark.add(new File(file.getPath()));
           final SourceFileInfo srcInfo = file.isValid()? loadSourceInfo(file) : null;
           if (srcInfo != null) {
             for (int projectId : srcInfo.getProjectIds().toArray()) {
@@ -1600,7 +1601,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
 
     private void processNewFile(final VirtualFile file, final boolean notifyServer) {
-      final Set<String> pathsToMark = notifyServer ? new HashSet<String>() : Collections.<String>emptySet();
+      final Set<File> pathsToMark = notifyServer ? new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY) : Collections.<File>emptySet();
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         // need read action to ensure that the project was not disposed during the iteration over the project list
         public void run() {
@@ -1616,7 +1617,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               processRecursively(file, false, new FileProcessor() {
                 public void execute(final VirtualFile file) {
                   if (notifyServer) {
-                    pathsToMark.add(file.getPath());
+                    pathsToMark.add(new File(file.getPath()));
                   }
                   if (!projectSuspended && isCompilable(file)) {
                     loadInfoAndAddSourceForRecompilation(projectId, file);
@@ -1651,13 +1652,13 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
-  private static void notifyFilesChanged(Collection<String> paths) {
+  private static void notifyFilesChanged(Collection<File> paths) {
     if (!paths.isEmpty()) {
       BuildManager.getInstance().notifyFilesChanged(paths);
     }
   }
 
-  private static void notifyFilesDeleted(Collection<String> paths) {
+  private static void notifyFilesDeleted(Collection<File> paths) {
     if (!paths.isEmpty()) {
       BuildManager.getInstance().notifyFilesDeleted(paths);
     }

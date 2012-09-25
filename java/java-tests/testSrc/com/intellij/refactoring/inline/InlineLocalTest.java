@@ -147,6 +147,14 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(false, "Cannot perform refactoring.\n" +
                   "Variable 'x' is accessed for writing.");
   }
+
+  public void testInlineFromTryCatch() throws Exception {
+    doTest(true, "Unable to inline outside try/catch statement");
+  }
+  
+  public void testInlineFromTryCatchAvailable() throws Exception {
+    doTest(true);
+  }
   
   public void testConditionExpr() throws Exception {
     doTest(true);

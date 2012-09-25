@@ -16,11 +16,13 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +34,9 @@ import java.util.*;
  * @author Konstantin Bulenkov
  */
 public class CommonActionsPanel extends JPanel {
-  public static enum Buttons {
+  private final boolean myDecorateButtons;
+
+  public enum Buttons {
     ADD, REMOVE, EDIT,  UP, DOWN;
 
     public static Buttons[] ALL = {ADD, REMOVE, EDIT,  UP, DOWN};
@@ -85,7 +89,7 @@ public class CommonActionsPanel extends JPanel {
   private Map<Buttons, MyActionButton> myButtons = new HashMap<Buttons, MyActionButton>();
   private final AnActionButton[] myActions;
 
-  CommonActionsPanel(ListenerFactory factory, @Nullable JComponent contextComponent, boolean isHorizontal,
+  CommonActionsPanel(ListenerFactory factory, @Nullable JComponent contextComponent, ActionToolbarPosition position,
                      @Nullable AnActionButton[] additionalActions, @Nullable Comparator<AnActionButton> buttonComparator,
                      String addName, String removeName, String moveUpName, String moveDownName, String editName,
                      Icon addIcon, Buttons... buttons) {
@@ -118,11 +122,26 @@ public class CommonActionsPanel extends JPanel {
     if (buttonComparator != null) {
       Arrays.sort(myActions, buttonComparator);
     }
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN,
-                                                                                  new DefaultActionGroup(myActions),
-                                                                                  isHorizontal);
+    myDecorateButtons = UIUtil.isUnderAquaLookAndFeel() && position == ActionToolbarPosition.BOTTOM;
+
+    final ActionManagerEx mgr = (ActionManagerEx)ActionManager.getInstance();
+    final ActionToolbar toolbar = mgr.createActionToolbar(ActionPlaces.UNKNOWN,
+                                                          new DefaultActionGroup(myActions),
+                                                          position == ActionToolbarPosition.BOTTOM || position == ActionToolbarPosition.TOP,
+                                                          myDecorateButtons);
+    toolbar.getComponent().setOpaque(false);
     toolbar.getComponent().setBorder(null);
     add(toolbar.getComponent(), BorderLayout.CENTER);
+  }
+
+  @Override
+  protected void paintComponent(Graphics g2) {
+    final Graphics2D g = (Graphics2D)g2;
+    if (myDecorateButtons) {
+      MacUIUtil.drawToolbarDecoratorBackground(g, getWidth(), getHeight());
+    } else {
+      super.paintComponent(g);
+    }
   }
 
   public AnActionButton getAnActionButton(Buttons button) {

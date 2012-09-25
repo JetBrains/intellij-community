@@ -22,10 +22,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.TreeExpander;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -45,6 +47,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.DocumentAdapter;
@@ -71,7 +74,8 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
-public class KeymapPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll {
+public class KeymapPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll, KeymapListener, Disposable {
+
   private JComboBox myKeymapList;
 
   private final DefaultComboBoxModel myKeymapListModel = new DefaultComboBoxModel();
@@ -91,7 +95,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   private boolean myQuickListsModified = false;
   private JButton myExportButton;
-  private QuickListsPanel myQuickListsPanel;
+  private QuickList[] myQuickLists = QuickListsManager.getInstance().getAllQuickLists();
 
   public KeymapPanel() {
     setLayout(new BorderLayout());
@@ -102,18 +106,16 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     addPropertyChangeListener(new PropertyChangeListener(){
       public void propertyChange(final PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals("ancestor") && evt.getNewValue() != null && evt.getOldValue() == null && myQuickListsModified) {
-          processCurrentKeymapChanged();
+          processCurrentKeymapChanged(getCurrentQuickListIds());
           myQuickListsModified = false;
         }
-
       }
     });
+
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(CHANGE_TOPIC, this);
   }
 
-  public void setQuickListsPanel(final QuickListsPanel quickListsPanel) {
-    myQuickListsPanel = quickListsPanel;
-  }
-
+  @Override
   public void quickListRenamed(final QuickList oldQuickList, final QuickList newQuickList){
 
     for (Keymap keymap : getAllKeymaps()) {
@@ -150,7 +152,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     panel.add(createKeymapButtonsPanel(), new GridBagConstraints(2,0,1,1,0,0,GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0));
     myKeymapList.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        if (myKeymapListModel.getSelectedItem() != mySelectedKeymap) processCurrentKeymapChanged();
+        if (myKeymapListModel.getSelectedItem() != mySelectedKeymap) processCurrentKeymapChanged(getCurrentQuickListIds());
       }
     });
     panel.add(createKeymapNamePanel(), new GridBagConstraints(3,0,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.NONE,new Insets(0,10,0,0),0,0));
@@ -165,7 +167,9 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     };
   }
 
-  void processCurrentKeymapChanged() {
+  @Override
+  public void processCurrentKeymapChanged(QuickList[] ids) {
+    myQuickLists = ids;
     myCopyButton.setEnabled(false);
     myDeleteButton.setEnabled(false);
     myResetToDefault.setEnabled(false);
@@ -264,7 +268,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
                 scheme.setCanModify(true);
                 myKeymapListModel.addElement(scheme);
                 myKeymapList.setSelectedItem(scheme);
-                processCurrentKeymapChanged();
+                processCurrentKeymapChanged(getCurrentQuickListIds());
 
               }
 
@@ -598,17 +602,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     repaintLists();
-    processCurrentKeymapChanged();
+    processCurrentKeymapChanged(getCurrentQuickListIds());
   }
 
   private QuickList[] getCurrentQuickListIds() {
-    if (myQuickListsPanel != null) {
-      return myQuickListsPanel.getCurrentQuickListIds();
-    }
-    else {
-      return QuickListsManager.getInstance().getAllQuickLists();
-
-    }
+    return myQuickLists;
   }
 
   private void addMouseShortcut(Shortcut shortcut){
@@ -675,7 +673,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     repaintLists();
-    processCurrentKeymapChanged();
+    processCurrentKeymapChanged(getCurrentQuickListIds());
   }
 
   private void repaintLists() {
@@ -713,7 +711,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     myKeymapList.setSelectedItem(newKeymap);
-    processCurrentKeymapChanged();
+    processCurrentKeymapChanged(getCurrentQuickListIds());
 
     return true;
   }
@@ -734,7 +732,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     repaintLists();
-    processCurrentKeymapChanged();
+    processCurrentKeymapChanged(getCurrentQuickListIds());
   }
 
   private void copyKeymap() {
@@ -758,7 +756,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     myKeymapListModel.addElement(newKeymap);
     myKeymapList.setSelectedItem(newKeymap);
     myKeymapList.getEditor().selectAll();
-    processCurrentKeymapChanged();
+    processCurrentKeymapChanged(getCurrentQuickListIds());
   }
 
   private boolean tryNewKeymapName(String name) {
@@ -783,7 +781,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       return;
     }
     myKeymapListModel.removeElement(myKeymapList.getSelectedItem());
-    processCurrentKeymapChanged();
+    processCurrentKeymapChanged(getCurrentQuickListIds());
   }
 
   private void resetKeymap() {
@@ -792,7 +790,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       return;
     }
     ((KeymapImpl)keymap).clearOwnActionsIds();
-    processCurrentKeymapChanged();
+    processCurrentKeymapChanged(getCurrentQuickListIds());
   }
 
   @NotNull
@@ -941,6 +939,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     if (myFilterComponent != null) {
       myFilterComponent.dispose();
     }
+    Disposer.dispose(this);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private void editSelection(InputEvent e) {

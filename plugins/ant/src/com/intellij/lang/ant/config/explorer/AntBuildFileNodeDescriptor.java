@@ -47,7 +47,7 @@ final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
   }
 
   public boolean update() {
-    CompositeAppearance oldAppearence = myAppearance;
+    CompositeAppearance oldAppearance = myAppearance;
     myAppearance = new CompositeAppearance();
     myAppearance.getEnding().addText(myBuildFile.getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     final AntBuildModelBase buildModel = myBuildFile.getModelIfRegistered();
@@ -56,7 +56,7 @@ final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
     }
     setIcon(AllIcons.Ant.Build);
     myName = myBuildFile.getPresentableName();
-    return !Comparing.equal(myAppearance, oldAppearence);
+    return !Comparing.equal(myAppearance, oldAppearance);
   }
 
   public void customize(@NotNull SimpleColoredComponent component) {

@@ -31,7 +31,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.JavaPsiFacadeImpl;
+import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
@@ -181,7 +181,7 @@ public class UpdateCacheTest extends PsiTestCase{
 
     assertNotNull(myProject);
     myPsiManager = (PsiManagerImpl) PsiManager.getInstance(myProject);
-    myJavaFacade = (JavaPsiFacadeImpl) JavaPsiFacade.getInstance(myProject);
+    myJavaFacade = JavaPsiFacadeEx.getInstanceEx(myProject);
 
     objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));
     assertNotNull(objectClass);

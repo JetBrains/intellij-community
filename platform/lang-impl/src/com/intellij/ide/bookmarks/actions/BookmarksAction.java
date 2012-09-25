@@ -86,6 +86,8 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
 
     editDescriptionAction.setPopup(myPopup);
     myPopup.showCenteredInCurrentWindow(project);
+    //todo[zaec] selection mode shouldn't be set in builder.setList() method
+    list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
   }
 
   @Override

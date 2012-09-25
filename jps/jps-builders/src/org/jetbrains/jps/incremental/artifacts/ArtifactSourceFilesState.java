@@ -1,15 +1,13 @@
 package org.jetbrains.jps.incremental.artifacts;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.IncProjectBuilder;
-import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactInstructionsBuilder;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
-import org.jetbrains.jps.incremental.artifacts.instructions.DestinationInfo;
 import org.jetbrains.jps.incremental.artifacts.instructions.SourceFileFilter;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
@@ -50,36 +48,34 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
   }
 
   public void ensureFsStateInitialized(final BuildDataManager dataManager, final CompileContext context) throws IOException {
-    ArtifactInstructionsBuilder builder = myProjectDescriptor.getArtifactRootsIndex().getInstructionsBuilder(myTarget.getArtifact());
     BuildFSState fsState = myProjectDescriptor.fsState;
     BuildTargetConfiguration configuration = myProjectDescriptor.getTargetsState().getTargetConfiguration(myTarget);
     if (context.isProjectRebuild() || configuration.isTargetDirty() || context.getScope().isRecompilationForced(myTarget)) {
       IncProjectBuilder.clearOutputFiles(context, myTarget);
       myProjectDescriptor.dataManager.getSourceToOutputMap(myTarget).clean();
       getOrCreateOutSrcMapping().clean();
-      markDirtyFiles(builder, dataManager, null, true);
+      markDirtyFiles(dataManager, null, true, context);
       configuration.save();
     }
     else if (fsState.markInitialScanPerformed(myTarget)) {
-      final Set<String> currentPaths = new HashSet<String>();
+      final Set<File> currentPaths = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       fsState.clearDeletedPaths(myTarget);
-      markDirtyFiles(builder, dataManager, currentPaths, false);
+      markDirtyFiles(dataManager, currentPaths, false, context);
       final SourceToOutputMapping mapping = dataManager.getSourceToOutputMap(myTarget);
       final Iterator<String> iterator = mapping.getKeysIterator();
       while (iterator.hasNext()) {
         String path = iterator.next();
-        File file = new File(path);
-        if (!currentPaths.contains(path)) {
+        File file = new File(FileUtil.toSystemDependentName(path));
+        if (!currentPaths.contains(file)) {
           fsState.registerDeleted(myTarget, file, myProjectDescriptor.timestamps.getStorage());
         }
       }
     }
   }
 
-  private void markDirtyFiles(ArtifactInstructionsBuilder builder, BuildDataManager dataManager, @Nullable Set<String> currentPaths,
-                              final boolean forceMarkDirty) throws IOException {
-    for (Pair<ArtifactRootDescriptor, DestinationInfo> pair : builder.getInstructions()) {
-      ArtifactRootDescriptor descriptor = pair.getFirst();
+  private void markDirtyFiles(BuildDataManager dataManager, @Nullable Set<File> currentPaths,
+                              final boolean forceMarkDirty, CompileContext context) throws IOException {
+    for (ArtifactRootDescriptor descriptor : myProjectDescriptor.getBuildRootIndex().getTargetRoots(myTarget, context)) {
       myProjectDescriptor.fsState.clearRecompile(descriptor);
       final File rootFile = descriptor.getRootFile();
       if (rootFile.exists()) {
@@ -89,7 +85,7 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
   }
 
   private void processRecursively(File file, ArtifactRootDescriptor descriptor, BuildDataManager dataManager, SourceFileFilter filter,
-                                  @Nullable Set<String> currentPaths, final boolean forceMarkDirty) throws IOException {
+                                  @Nullable Set<File> currentPaths, final boolean forceMarkDirty) throws IOException {
     final String filePath = FileUtil.toSystemIndependentName(FileUtil.toCanonicalPath(file.getPath()));
     if (!filter.accept(filePath, dataManager)) return;
 
@@ -103,7 +99,7 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
     }
     else {
       if (currentPaths != null) {
-        currentPaths.add(filePath);
+        currentPaths.add(file);
       }
       if (forceMarkDirty || myProjectDescriptor.timestamps.getStorage().getStamp(file, myTarget) != FileSystemUtil.lastModified(file)) {
         myProjectDescriptor.fsState.markDirty(null, file, descriptor, myProjectDescriptor.timestamps.getStorage());
@@ -116,10 +112,9 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
     if (context.isProjectRebuild()) {
       fsState.markInitialScanPerformed(myTarget);
     }
-    ArtifactInstructionsBuilder builder = myProjectDescriptor.getArtifactRootsIndex().getInstructionsBuilder(myTarget.getArtifact());
+    List<ArtifactRootDescriptor> descriptors = myProjectDescriptor.getBuildRootIndex().getTargetRoots(myTarget, context);
     boolean marked = false;
-    for (Pair<ArtifactRootDescriptor, DestinationInfo> pair : builder.getInstructions()) {
-      ArtifactRootDescriptor descriptor = pair.getFirst();
+    for (ArtifactRootDescriptor descriptor : descriptors) {
       marked |= fsState.markAllUpToDate(descriptor, myProjectDescriptor.timestamps.getStorage(), context.getCompilationStartStamp());
     }
     if (marked) {

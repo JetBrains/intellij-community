@@ -18,6 +18,7 @@ package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -58,7 +59,7 @@ public class ChangeMasterKeyDialog extends DialogWrapper {
    * @param passwordEncrypted if the password was encrypted in the database
    * @param error             if not null, show as error
    */
-  protected ChangeMasterKeyDialog(Project project, MasterKeyPasswordSafe safe, boolean passwordEncrypted, String error) {
+  protected ChangeMasterKeyDialog(@Nullable Project project, MasterKeyPasswordSafe safe, boolean passwordEncrypted, String error) {
     super(project, true);
     setTitle("Change Master Password");
     setOKButtonText("Change Password");
@@ -112,7 +113,7 @@ public class ChangeMasterKeyDialog extends DialogWrapper {
    * @param safe    the password safe provider
    * @return true, if the password was changed or reset
    */
-  public static boolean changePassword(Project project, MasterKeyPasswordSafe safe) {
+  public static boolean changePassword(@Nullable Project project, MasterKeyPasswordSafe safe) {
     String error = null;
     boolean encrypt = safe.isPasswordEncrypted();
     while (true) {

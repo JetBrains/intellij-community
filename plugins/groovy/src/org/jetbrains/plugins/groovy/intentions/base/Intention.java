@@ -17,7 +17,9 @@ package org.jetbrains.plugins.groovy.intentions.base;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -28,13 +30,14 @@ import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.utils.BoolUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 
 public abstract class Intention implements IntentionAction {
   private final PsiElementPredicate predicate;
 
   /**
-   * @noinspection AbstractMethodCallInConstructor,OverridableMethodCallInConstructor
+   * @noinspection AbstractMethodCallInConstructor, OverridableMethodCallInConstructor
    */
   protected Intention() {
     super();
@@ -53,17 +56,13 @@ public abstract class Intention implements IntentionAction {
     processIntention(element, project, editor);
   }
 
-  protected abstract void processIntention(@NotNull PsiElement element, Project project, Editor editor)
-      throws IncorrectOperationException;
+  protected abstract void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException;
 
   @NotNull
   protected abstract PsiElementPredicate getElementPredicate();
 
 
-  protected static void replaceExpressionWithNegatedExpressionString(
-      @NotNull String newExpression,
-      @NotNull GrExpression expression)
-      throws IncorrectOperationException {
+  protected static void replaceExpressionWithNegatedExpressionString(@NotNull String newExpression, @NotNull GrExpression expression) throws IncorrectOperationException {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
 
     GrExpression expressionToReplace = expression;
@@ -71,11 +70,12 @@ public abstract class Intention implements IntentionAction {
     if (BoolUtils.isNegated(expression)) {
       expressionToReplace = BoolUtils.findNegation(expression);
       expString = newExpression;
-    } else {
+    }
+    else {
       expString = "!(" + newExpression + ')';
     }
     final GrExpression newCall =
-        factory.createExpressionFromText(expString);
+      factory.createExpressionFromText(expString);
     assert expressionToReplace != null;
     expressionToReplace.replaceWithExpression(newCall, true);
   }
@@ -83,13 +83,32 @@ public abstract class Intention implements IntentionAction {
 
   @Nullable
   PsiElement findMatchingElement(PsiFile file, Editor editor) {
+    SelectionModel selectionModel = editor.getSelectionModel();
+    if (selectionModel.hasSelection()) {
+      TextRange selectionRange = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+      PsiElement element = GroovyRefactoringUtil
+        .findElementInRange(file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), PsiElement.class);
+      while (element != null && element.getTextRange() != null && selectionRange.contains(element.getTextRange())) {
+        if (predicate.satisfiedBy(element)) return element;
+        element = element.getParent();
+      }
+    }
+
     final int position = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(position);
+    while (element != null) {
+      if (predicate.satisfiedBy(element)) return element;
+      if (isStopElement(element)) break;
+      element = element.getParent();
+    }
+
+    element = file.findElementAt(position - 1);
     while (element != null) {
       if (predicate.satisfiedBy(element)) return element;
       if (isStopElement(element)) return null;
       element = element.getParent();
     }
+
     return null;
   }
 
@@ -115,7 +134,8 @@ public abstract class Intention implements IntentionAction {
       if (Character.isUpperCase(c)) {
         buffer.append('.');
         buffer.append(Character.toLowerCase(c));
-      } else {
+      }
+      else {
         buffer.append(c);
       }
     }

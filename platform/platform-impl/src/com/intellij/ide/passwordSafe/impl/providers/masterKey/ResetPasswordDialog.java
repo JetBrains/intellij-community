@@ -18,6 +18,7 @@ package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -53,7 +54,7 @@ public class ResetPasswordDialog extends DialogWrapper {
    * @param safe
    * @param firstTime true, if the password is specified for the first time
    */
-  protected ResetPasswordDialog(Project project, MasterKeyPasswordSafe safe, boolean firstTime) {
+  protected ResetPasswordDialog(@Nullable Project project, MasterKeyPasswordSafe safe, boolean firstTime) {
     super(project, true);
     setTitle(firstTime ? "Master Password" : "Reset Master Password");
     setOKButtonText(firstTime ? "Set Password" : "Reset Password");
@@ -100,7 +101,7 @@ public class ResetPasswordDialog extends DialogWrapper {
    * @param safe    the provider instance to modify
    * @return true if the operation was not cancelled
    */
-  public static boolean newPassword(Project project, MasterKeyPasswordSafe safe) {
+  public static boolean newPassword(@Nullable Project project, MasterKeyPasswordSafe safe) {
     return resetPassword(project, safe, true);
   }
 
@@ -111,7 +112,7 @@ public class ResetPasswordDialog extends DialogWrapper {
    * @param safe    the safe
    * @return true if the operation was not cancelled
    */
-  public static boolean resetPassword(Project project, MasterKeyPasswordSafe safe) {
+  public static boolean resetPassword(@Nullable Project project, MasterKeyPasswordSafe safe) {
     return resetPassword(project, safe, false);
   }
 
@@ -123,7 +124,7 @@ public class ResetPasswordDialog extends DialogWrapper {
    * @param firstTime true, if reset is called for the first time
    * @return true if the operation was not cancelled
    */
-  private static boolean resetPassword(Project project, MasterKeyPasswordSafe safe, final boolean firstTime) {
+  private static boolean resetPassword(@Nullable Project project, MasterKeyPasswordSafe safe, final boolean firstTime) {
     ResetPasswordDialog d = new ResetPasswordDialog(project, safe, firstTime);
     d.show();
     if (d.isOK()) {

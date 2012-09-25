@@ -3,10 +3,12 @@ package org.jetbrains.plugins.groovy.lang
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
+import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
@@ -204,4 +206,36 @@ class SomeClass {
 """
     measureHighlighting(text, 8000)
   }
+
+  public void "test infer only the variable types that are needed"() {
+    addGdsl '''contribute(currentType(String.name)) {
+  println 'sleeping'
+  Thread.sleep(1000)
+  method name:'foo', type:String, params:[:], namedParams:[
+    parameter(name:'param1', type:String),
+  ]
+}'''
+    def text = '''
+  String s = "abc"
+while (true) {
+  s = "str".foo(s)
+  File f = new File('path')
+  f.canoPath<caret>
+}
+'''
+    IdeaTestUtil.startPerformanceTest("slow", 300, configureAndComplete(text)).cpuBound().usesAllCPUCores().assertTiming()
+  }
+
+  ThrowableRunnable configureAndComplete(String text) {
+    return {
+      myFixture.configureByText 'a.groovy', text
+      myFixture.completeBasic()
+    } as ThrowableRunnable
+  }
+
+  private def addGdsl(String text) {
+    final PsiFile file = myFixture.addFileToProject("Enhancer.gdsl", text)
+    GroovyDslFileIndex.activateUntilModification(file.virtualFile)
+  }
+
 }

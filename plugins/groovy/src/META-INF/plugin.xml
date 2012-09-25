@@ -25,6 +25,7 @@
   <depends optional="true" config-file="groovy-copyright.xml">com.intellij.copyright</depends>
   <depends optional="true" config-file="intellilang-groovy-support.xml">org.intellij.intelliLang</depends>
   <depends optional="true">AntSupport</depends>
+  <depends optional="true">cucumber</depends>
 
   <extensionPoints>
     <extensionPoint name="membersContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor"/>
@@ -84,6 +85,7 @@
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebSpockTestMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebPageMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebModuleMemberContributor"/>
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebJUnitTestMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebBrowserMemberContributor"/>
@@ -269,7 +271,7 @@
     <importFilteringRule implementation="org.jetbrains.plugins.groovy.findUsages.GrImportFilteringRule"/>
 
     <readWriteAccessDetector implementation="org.jetbrains.plugins.groovy.findUsages.GroovyReadWriteAccessDetector" order="before java"/>
-    <findUsagesHandlerFactory implementation="org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesHandlerFactory"/>
+    <findUsagesHandlerFactory implementation="org.jetbrains.plugins.groovy.findUsages.GroovyFieldFindUsagesHandlerFactory"/>
     <highlightUsagesHandlerFactory implementation="org.jetbrains.plugins.groovy.findUsages.GrHighlightHandlerFactory"/>
     <lang.braceMatcher language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyBraceMatcher"/>
     <lang.importOptimizer language="Groovy" implementationClass="org.jetbrains.plugins.groovy.editor.GroovyImportOptimizer"/>
@@ -395,12 +397,14 @@
     <definitionsSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyImplementationSearch"/>
 
     <targetElementEvaluator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.GroovyTargetElementEvaluator"/>
+    <targetElementEvaluator language="JAVA" implementationClass="org.jetbrains.plugins.groovy.codeInsight.JavaClsMethodElementEvaluator"/>
 
     <fileTemplateGroup implementation="org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory"/>
 
     <attachSourcesProvider implementation="org.jetbrains.plugins.groovy.ivy.IvyAttachSourceProvider"/>
 
-    <compilerSettingsFactory implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerSettingsFactory"/>
+    <projectConfigurable instance="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfigurable" id="Groovy compiler"
+                         displayName="Groovy Compiler" parentId="project.propCompiler"/>
 
     <stubElementTypeHolder class="org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes"/>
     <!--Stubs index-->
@@ -1202,6 +1206,11 @@
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.style.RemoveUnnecessaryReturnIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.style.AddReturnTypeFix</className>
     </intentionAction>
     <intentionAction>
@@ -1308,15 +1317,18 @@
     </group>
 
 
+    <action id="ConvertGroovyToJava"
+            class="org.jetbrains.plugins.groovy.actions.ConvertToJavaAction"
+            text="Convert to Java"
+            description="Convert Groovy files to Java">
+      <add-to-group group-id="RefactoringMenu"/>
+    </action>
+
     <group id="Internal.Groovy" text="Groovy" popup="true" internal="true">
       <action id="GetPsiTypeAction" class="org.jetbrains.plugins.groovy.actions.GrGetPsiTypeAction"
               text="get PsiType" description=""
               internal="true"/>
-      <action id="ConvertGroovyToJava"
-              class="org.jetbrains.plugins.groovy.actions.ConvertToJavaAction"
-              text="Convert to Java"
-              description="Convert Groovy files to Java"
-              internal="true"/>
+
       <action id="DumpGroovyControlFlowAction"
               class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction"
               text="dump groovy control flow"

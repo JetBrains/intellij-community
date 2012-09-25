@@ -19,6 +19,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
@@ -63,6 +64,15 @@ class TypeDfaState {
     myVarTypes = ContainerUtil.newHashMap(another.myVarTypes);
   }
 
+  TypeDfaState mergeWith(TypeDfaState another) {
+    if (another.myVarTypes.isEmpty()) {
+      return this;
+    }
+    TypeDfaState state = new TypeDfaState(this);
+    state.myVarTypes.putAll(another.myVarTypes);
+    return state;
+  }
+
   void joinState(TypeDfaState another, PsiManager manager) {
     for (Map.Entry<String, DFAType> entry : another.myVarTypes.entrySet()) {
       final String name = entry.getKey();
@@ -83,10 +93,9 @@ class TypeDfaState {
     return myVarTypes.equals(another.myVarTypes);
   }
 
-  @NotNull
+  @Nullable
   DFAType getVariableType(String variableName) {
-    DFAType type = myVarTypes.get(variableName);
-    return type == null ? DFAType.create(null) : type;
+    return myVarTypes.get(variableName);
   }
 
   Map<String, PsiType> getBindings(Instruction instruction) {
@@ -98,12 +107,20 @@ class TypeDfaState {
     return map;
   }
 
-  void putType(String variableName, DFAType type) {
+  void putType(String variableName, @Nullable DFAType type) {
     myVarTypes.put(variableName, type);
   }
 
   @Override
   public String toString() {
     return "TypeDfaState{" + myVarTypes + '}';
+  }
+
+  public boolean containsVariable(@NotNull String variableName) {
+    return myVarTypes.containsKey(variableName);
+  }
+
+  public void removeBinding(String variableName) {
+    myVarTypes.remove(variableName);
   }
 }

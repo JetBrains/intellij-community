@@ -93,7 +93,11 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
 
   @Override
   public PsiType substitute(PsiType type) {
-    if (type == null) return null;
+    if (type == null) {
+      //noinspection ConstantConditions
+      return null;
+    }
+    assert type.isValid();
     PsiType substituted = type.accept(myAddingBoundsSubstitutionVisitor);
     return correctExternalSubstitution(substituted, type);
   }
@@ -148,6 +152,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         if (newBound == null) {
           return null;
         }
+        assert newBound.isValid() : newBound.getClass();
         if (newBound instanceof PsiWildcardType) {
           return handleBoundComposition(wildcardType, (PsiWildcardType)newBound);
         }

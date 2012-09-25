@@ -41,7 +41,7 @@ public class IdeConfigurablesGroup extends ConfigurablesGroupBase implements Con
   }
 
   @Override
-  protected ConfigurableFilter getConfigurableFilter() {
+  public ConfigurableFilter getConfigurableFilter() {
     return null;
   }
 

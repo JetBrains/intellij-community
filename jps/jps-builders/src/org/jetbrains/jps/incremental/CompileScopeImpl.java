@@ -12,12 +12,12 @@ import java.util.*;
  */
 public class CompileScopeImpl extends CompileScope {
   protected final boolean myForcedCompilation;
-  private final Collection<? extends BuildTargetType> myTypes;
-  private final Collection<BuildTarget> myTargets;
-  private final Map<BuildTarget, Set<File>> myFiles;
+  private final Collection<? extends BuildTargetType<?>> myTypes;
+  private final Collection<BuildTarget<?>> myTargets;
+  private final Map<BuildTarget<?>, Set<File>> myFiles;
 
-  public CompileScopeImpl(boolean forcedCompilation, Collection<? extends BuildTargetType> types, Collection<BuildTarget> targets,
-                          Map<BuildTarget, Set<File>> files) {
+  public CompileScopeImpl(boolean forcedCompilation, Collection<? extends BuildTargetType<?>> types, Collection<BuildTarget<?>> targets,
+                          Map<BuildTarget<?>, Set<File>> files) {
     myForcedCompilation = forcedCompilation;
     myTypes = types;
     myTargets = targets;
@@ -25,17 +25,17 @@ public class CompileScopeImpl extends CompileScope {
   }
 
   @Override
-  public boolean isAffected(@NotNull BuildTarget target) {
+  public boolean isAffected(@NotNull BuildTarget<?> target) {
     return myTypes.contains(target.getTargetType()) || myTargets.contains(target) || myFiles.containsKey(target);
   }
 
   @Override
-  public boolean isRecompilationForced(@NotNull BuildTarget target) {
+  public boolean isRecompilationForced(@NotNull BuildTarget<?> target) {
     return myForcedCompilation && (myTypes.contains(target.getTargetType()) || myTargets.contains(target));
   }
 
   @Override
-  public boolean isAffected(BuildTarget target, @NotNull File file) {
+  public boolean isAffected(BuildTarget<?> target, @NotNull File file) {
     if (myFiles.isEmpty()) {//optimization
       return true;
     }

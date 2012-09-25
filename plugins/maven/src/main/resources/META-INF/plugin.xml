@@ -26,7 +26,17 @@
     <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.services.MavenRepositoryServicesManager"/>
 
-    <projectConfigurable instance="org.jetbrains.idea.maven.utils.MavenSettings" order="last"/>
+    <projectConfigurable instance="org.jetbrains.idea.maven.utils.MavenSettings" id="MavenSettings" displayName="Maven" order="last">
+      <configurable instance="org.jetbrains.idea.maven.project.MavenImportingConfigurable" id="reference.settings.project.maven.importing"
+                    key="maven.tab.importing" bundle="ProjectBundle"/>
+      <configurable instance="org.jetbrains.idea.maven.project.MavenIgnoredFilesConfigurable"
+                    id="reference.settings.project.maven.ignored.files" key="maven.tab.ignored.files" bundle="ProjectBundle"/>
+      <configurable instance="org.jetbrains.idea.maven.utils.MavenSettings$MyMavenRunnerConfigurable"
+                    id="reference.settings.project.maven.runner" key="maven.tab.runner" bundle="RunnerBundle"/>
+      <configurable instance="org.jetbrains.idea.maven.indices.MavenRepositoriesConfigurable"
+                    id="reference.settings.project.maven.repository.indices" key="maven.repositories.title" bundle="IndicesBundle"
+                    nonDefaultProject="true"/>
+    </projectConfigurable>
 
     <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.tasks.MavenBeforeRunTasksProvider"/>
     <keymapExtension implementation="org.jetbrains.idea.maven.tasks.MavenKeymapExtension"/>
@@ -78,7 +88,7 @@
 
     <completion.contributor language="any"
                             implementationClass="org.jetbrains.idea.maven.dom.references.MavenPropertyCompletionContributor"
-                            id="Maven"/>
+                            id="Maven" order="after propertiesCompletion, before javaClassReference"/>
     <completion.contributor language="XML"
                             implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenSmartCompletionContributor"/>
 

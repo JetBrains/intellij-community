@@ -2,7 +2,6 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,17 +21,7 @@ import java.util.List;
 public final class SourceToOutputMapping extends AbstractStateStorage<String, Collection<String>> {
 
   public SourceToOutputMapping(File storePath) throws IOException {
-    super(storePath, new EnumeratorStringDescriptor() {
-      @Override
-      public int getHashCode(String value) {
-        return FileUtil.pathHashCode(value);
-      }
-
-      @Override
-      public boolean isEqual(String val1, String val2) {
-        return FileUtil.pathsEqual(val1, val2);
-      }
-    }, new StringCollectionExternalizer());
+    super(storePath, new PathStringDescriptor(), new StringCollectionExternalizer());
   }
 
   @Override

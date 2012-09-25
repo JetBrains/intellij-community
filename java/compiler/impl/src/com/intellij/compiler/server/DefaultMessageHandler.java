@@ -63,13 +63,17 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   }
 
   @Override
+  public void buildStarted(UUID sessionId) {
+  }
+
+  @Override
   public final void handleBuildMessage(final Channel channel, final UUID sessionId, final CmdlineRemoteProto.Message.BuilderMessage msg) {
     switch (msg.getType()) {
       case BUILD_EVENT:
-        handleBuildEvent(msg.getBuildEvent());
+        handleBuildEvent(sessionId, msg.getBuildEvent());
         break;
       case COMPILE_MESSAGE:
-        handleCompileMessage(msg.getCompileMessage());
+        handleCompileMessage(sessionId, msg.getCompileMessage());
         break;
       case CONSTANT_SEARCH_TASK:
         final CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask task = msg.getConstantSearchTask();
@@ -83,9 +87,9 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     }
   }
 
-  protected abstract void handleCompileMessage(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message);
+  protected abstract void handleCompileMessage(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message);
 
-  protected abstract void handleBuildEvent(CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event);
+  protected abstract void handleBuildEvent(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event);
 
   private void handleConstantSearchTask(Channel channel, UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask task) {
     final String ownerClassName = task.getOwnerClassName();

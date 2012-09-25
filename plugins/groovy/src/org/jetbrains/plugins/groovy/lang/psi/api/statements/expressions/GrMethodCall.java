@@ -15,12 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 
 /**
  * @author peter
  */
 public interface GrMethodCall extends GrCallExpression {
+  @Nullable
   GrExpression getInvokedExpression();
 
   boolean isCommandExpression();

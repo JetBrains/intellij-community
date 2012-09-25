@@ -89,6 +89,7 @@ import java.util.Set;
  */
 public class DaemonListeners implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonListeners");
+  public static final Object IGNORE_MOUSE_TRACKING = "ignore_mouse_tracking";
 
   private final Project myProject;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
@@ -144,6 +145,8 @@ public class DaemonListeners implements Disposable {
     myVcsDirtyScopeManager = vcsDirtyScopeManager;
     myFileStatusManager = fileStatusManager;
     myActionManager = actionManagerEx;
+    myTooltipController = tooltipController;
+
     boolean replaced = ((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, null, Boolean.TRUE);
     LOG.assertTrue(replaced, "Daemon listeners already initialized for the project "+myProject);
 
@@ -151,8 +154,8 @@ public class DaemonListeners implements Disposable {
     myDaemonEventPublisher = messageBus.syncPublisher(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC);
     final MessageBusConnection connection = messageBus.connect();
 
+    if (project.isDefault()) return;
     EditorEventMulticaster eventMulticaster = editorFactory.getEventMulticaster();
-
     eventMulticaster.addDocumentListener(new DocumentAdapter() {
       // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
       @Override
@@ -184,7 +187,6 @@ public class DaemonListeners implements Disposable {
     }, this);
 
     eventMulticaster.addEditorMouseMotionListener(new MyEditorMouseMotionListener(), this);
-    myTooltipController = tooltipController;
     eventMulticaster.addEditorMouseListener(new MyEditorMouseListener(myTooltipController), this);
 
     EditorTrackerListener editorTrackerListener = new EditorTrackerListener() {
@@ -545,6 +547,7 @@ public class DaemonListeners implements Disposable {
     public void mouseMoved(EditorMouseEvent e) {
       Editor editor = e.getEditor();
       if (myProject != editor.getProject()) return;
+      if (editor.getComponent().getClientProperty(IGNORE_MOUSE_TRACKING) != null) return;
 
       boolean shown = false;
       try {

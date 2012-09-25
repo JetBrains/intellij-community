@@ -30,6 +30,7 @@ import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.*;
+import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementConditionsGrouper;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.util.Function;
@@ -179,7 +180,15 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     // Following entries are subject to arrangement: class, interface, field, method.
     JavaArrangementParseInfo parseInfo = new JavaArrangementParseInfo();
     root.accept(new JavaArrangementVisitor(parseInfo, document, ranges, getGroupingRules(settings)));
-    setupGettersAndSetters(parseInfo);
+    if (settings != null) {
+      for (ArrangementGroupingRule rule : settings.getGroupings()) {
+        switch (rule.getRule()) {
+          case GETTERS_AND_SETTERS: setupGettersAndSetters(parseInfo); break;
+          case UTILITY_METHODS: setupUtilityMethods(parseInfo, rule.getOrderType()); break;
+          case OVERRIDDEN_METHODS: setupOverriddenMethods(parseInfo);
+        }
+      }
+    }
     return parseInfo.getEntries();
   }
 
@@ -192,6 +201,28 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
         setter.addDependency(getter);
       }
     }
+  }
+
+  private static void setupUtilityMethods(@NotNull JavaArrangementParseInfo info, @NotNull ArrangementEntryOrderType orderType) {
+    if (orderType == ArrangementEntryOrderType.DEPTH_FIRST) {
+      JavaElementArrangementEntry base = null;
+      for (JavaArrangementMethodDependencyInfo rootInfo : info.getMethodDependencyRoots()) {
+        if (base != null) {
+          rootInfo.getAnchorMethod().addDependency(base);
+        }
+        base = setupDepthFirstDependency(rootInfo.getAnchorMethod());
+      }
+    }
+  }
+
+  @NotNull
+  private static JavaElementArrangementEntry setupDepthFirstDependency(@NotNull JavaElementArrangementEntry base) {
+    // TODO den implement
+    return base;
+  }
+
+  private static void setupOverriddenMethods(JavaArrangementParseInfo info) {
+    // TODO den implement
   }
   
   @NotNull

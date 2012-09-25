@@ -72,7 +72,7 @@ public abstract class CvsOperation {
                                                 };
   private final static Map<String, String> ourEnvironmentVariablesMap = new HashMap<String, String>();
   static {
-    final Map<String, String> environmentProperties = EnvironmentUtil.getEnviromentProperties();
+    final Map<String, String> environmentProperties = EnvironmentUtil.getEnvironmentProperties();
     for (String name : ourKnownToCvs) {
       final String value = environmentProperties.get(name);
       if (value != null) {

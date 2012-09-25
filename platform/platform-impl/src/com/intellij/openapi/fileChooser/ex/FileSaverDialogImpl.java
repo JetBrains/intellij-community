@@ -65,8 +65,9 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
   }
 
   @Nullable
-  public VirtualFileWrapper save(@Nullable VirtualFile baseDir, @Nullable String filename) {
+  public VirtualFileWrapper save(@Nullable VirtualFile baseDir, @Nullable final String filename) {
     init();
+    restoreSelection(baseDir);
     myFileSystemTree.addListener(new FileSystemTree.Listener() {
       public void selectionChanged(final List<VirtualFile> selection) {
         updateFileName(selection);
@@ -76,10 +77,6 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
 
     if (filename != null) {
       myFileName.setText(filename);
-    }
-
-    if (baseDir != null && baseDir.isValid() && baseDir.isDirectory()) {
-      myFileSystemTree.select(baseDir, null);
     }
 
     show();
@@ -193,6 +190,7 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
         return;
       }
     }
+    storeSelection(myFileSystemTree.getSelectedFile());
     super.doOKAction();
   }
 }

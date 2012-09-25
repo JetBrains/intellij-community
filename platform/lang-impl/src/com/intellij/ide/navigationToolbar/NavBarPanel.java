@@ -108,7 +108,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   public NavBarPanel(final Project project, boolean docked) {
     super(new FlowLayout(FlowLayout.LEFT, 0 , 0));
     myProject = project;
-    myModel = new NavBarModel(myProject);
+    myModel = createModel();
     myIdeView = new NavBarIdeView(this);
     myPresentation = new NavBarPresentation(myProject);
     myUpdateQueue = new NavBarUpdateQueue(this);
@@ -135,6 +135,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
 
     Disposer.register(project, this);
+  }
+
+  protected NavBarModel createModel() {
+    return new NavBarModel(myProject);
   }
 
   public boolean isNodePopupActive() {
@@ -356,7 +360,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
           return true;
         }
 
-        if (!StringUtil.equals(eachLabel.getText(), NavBarPresentation.getPresentableText(eachElement))) {
+        if (!StringUtil.equals(eachLabel.getText(), getPresentation().getPresentableText(eachElement))) {
           return true;
         }
 

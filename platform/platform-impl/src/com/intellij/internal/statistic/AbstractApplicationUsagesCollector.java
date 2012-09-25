@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Set;
 
 public abstract class AbstractApplicationUsagesCollector extends UsagesCollector {
-
     private static final Logger LOG = Logger.getInstance("#com.intellij.internal.statistic.AbstractApplicationUsagesCollector");
 
     public void persistProjectUsages(@NotNull Project project) {
@@ -78,6 +77,7 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
         });
     }
 
+    @Override
     @NotNull
     public Set<UsageDescriptor> getUsages(@Nullable Project project) throws CollectUsagesException {
         if (project != null) {

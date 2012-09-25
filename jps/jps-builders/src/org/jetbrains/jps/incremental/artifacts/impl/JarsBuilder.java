@@ -60,10 +60,8 @@ public class JarsBuilder {
   private final SourceToOutputMapping mySrcOutMapping;
   private final ArtifactOutputToSourceMapping myOutSrcMapping;
 
-  public JarsBuilder(Set<JarInfo> jarsToBuild,
-                     CompileContext context,
-                     SourceToOutputMapping srcOutMapping,
-                     ArtifactOutputToSourceMapping outSrcMapping, ArtifactInstructionsBuilder instructions) {
+  public JarsBuilder(Set<JarInfo> jarsToBuild, CompileContext context, SourceToOutputMapping srcOutMapping,
+                     ArtifactOutputToSourceMapping outSrcMapping) {
     mySrcOutMapping = srcOutMapping;
     myOutSrcMapping = outSrcMapping;
     DependentJarsEvaluator evaluator = new DependentJarsEvaluator();

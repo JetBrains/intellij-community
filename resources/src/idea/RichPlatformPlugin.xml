@@ -43,6 +43,9 @@
     <extensionPoint name="compiler.additionalCompileScopeProvider"
                     interface="com.intellij.compiler.impl.AdditionalCompileScopeProvider"/>
 
+    <extensionPoint name="compiler.buildTargetScopeProvider"
+                    interface="com.intellij.compiler.impl.BuildTargetScopeProvider"/>
+
     <extensionPoint name="compiler.makeDependencyProcessor"
                     interface="com.intellij.compiler.DependencyProcessor"/>
 
@@ -116,6 +119,7 @@
     <packaging.artifactType implementation="com.intellij.packaging.impl.artifacts.JarArtifactType" order="first"/>
     <packaging.artifactType implementation="com.intellij.packaging.impl.artifacts.PlainArtifactType" order="last"/>
     <compiler.additionalCompileScopeProvider implementation="com.intellij.packaging.impl.compiler.ArtifactAdditionalCompileScopeProvider"/>
+    <compiler.buildTargetScopeProvider implementation="com.intellij.packaging.impl.compiler.ArtifactBuildTargetScopeProvider"/>
     <compiler implementation="com.intellij.packaging.impl.compiler.ArtifactsCompiler" id="artifactsCompiler"/>
     <gotoRelatedProvider implementation="com.intellij.testIntegration.GotoTestRelatedProvider"/>
 
@@ -249,9 +253,18 @@
     <!-- Show full error options configurable only in full IDEA - platform supports only default IDE profile for now -->
     <projectConfigurable provider="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurableProvider"/>
 
-    <!-- Project Structure -->
-    <projectConfigurable instance="com.intellij.compiler.options.CompilerConfigurable" order="after project"/>
     <!-- Compiler -->
+    <projectConfigurable instance="com.intellij.compiler.options.CompilerConfigurable" id="project.propCompiler" order="after project"
+                         key="compiler.configurable.display.name" bundle="messages.CompilerBundle" childrenEPName="com.intellij.compilerSettingsFactory">
+      <configurable instance="com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable" id="reference.projectsettings.compiler.excludes"
+                    displayName="Excludes"/>
+      <configurable instance="com.intellij.compiler.options.JavaCompilersTab" id="reference.projectsettings.compiler.javacompiler"
+                    key="java.compiler.description" bundle="messages.CompilerBundle"/>
+      <configurable instance="com.intellij.compiler.options.AnnotationProcessorsConfigurable"
+                    id="reference.projectsettings.compiler.annotationProcessors" displayName="Annotation Processors"/>
+      <configurable instance="com.intellij.compiler.options.RmicConfigurable" id="reference.projectsettings.compiler.rmicompiler"
+                    key="rmi.compiler.description" bundle="messages.CompilerBundle"/>
+    </projectConfigurable>
 
     <projectConfigurable instance="com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable" id="Template Data Languages" key="template.data.language.configurable" bundle="messages.LangBundle" />
 

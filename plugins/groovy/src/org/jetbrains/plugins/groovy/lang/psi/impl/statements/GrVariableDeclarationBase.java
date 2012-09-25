@@ -128,7 +128,7 @@ public abstract class GrVariableDeclarationBase extends GrStubElementBase<EmptyS
       return getTypeElementGroovy();
     }
 
-    final PsiElement psiElement = PsiUtil.skipWhitespaces(var.getPrevSibling(), false);
+    final PsiElement psiElement = PsiUtil.skipWhitespacesAndComments(var.getPrevSibling(), false);
     if (psiElement instanceof GrTypeElement) {
       return (GrTypeElement)psiElement;
     }

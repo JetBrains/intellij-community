@@ -61,13 +61,17 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
   }
 
   public Collection<AbstractTreeNode> getChildrenImpl() {
-    if (!mySingleFileMode) {
-      return createGeneralList();
-    } else {
-      return createListForSingleFile();
-
+    try {
+      if (!mySingleFileMode) {
+        return createGeneralList();
+      } else {
+        return createListForSingleFile();
+  
+      }
     }
-
+    catch (IndexNotReadyException e) {
+      return Collections.emptyList();
+    }
   }
 
   private Collection<AbstractTreeNode> createListForSingleFile() {

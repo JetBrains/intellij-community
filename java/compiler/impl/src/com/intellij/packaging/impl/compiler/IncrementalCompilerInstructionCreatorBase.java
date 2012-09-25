@@ -59,7 +59,7 @@ public abstract class IncrementalCompilerInstructionCreatorBase implements Incre
                                                      final boolean copyExcluded) {
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     VfsUtilCore.visitChildrenRecursively(directory, new VirtualFileVisitor(VirtualFileVisitor.SKIP_ROOT) {
-      { set(INSTRUCTION_CREATOR, creator); }
+      { setValueForChildren(creator); }
 
       @Override
       public boolean visitFile(@NotNull VirtualFile child) {
@@ -70,7 +70,7 @@ public abstract class IncrementalCompilerInstructionCreatorBase implements Incre
           if (index.isIgnored(child)) return false;
         }
 
-        final IncrementalCompilerInstructionCreatorBase creator = get(INSTRUCTION_CREATOR);
+        final IncrementalCompilerInstructionCreatorBase creator = getCurrentValue();
         if (filter != null && !filter.accept(child, creator.myContext.getCompileContext())) {
           return false;
         }
@@ -79,7 +79,7 @@ public abstract class IncrementalCompilerInstructionCreatorBase implements Incre
           creator.addFileCopyInstruction(child, child.getName());
         }
         else {
-          set(INSTRUCTION_CREATOR, creator.subFolder(child.getName()));
+          setValueForChildren(creator.subFolder(child.getName()));
         }
 
         return true;

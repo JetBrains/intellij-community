@@ -339,7 +339,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     }
   }
 
-  public void cancelAllRequests() {
+  public synchronized void cancelAllRequests() {
     myNodeQueue.clear();
     myUpdateQueue.cancelAllUpdates();
   }
@@ -393,7 +393,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     myUpdateQueue.sendFlush();
   }
 
-  public boolean isEnqueuedToUpdate(DefaultMutableTreeNode node) {
+  public synchronized boolean isEnqueuedToUpdate(DefaultMutableTreeNode node) {
     for (TreeUpdatePass pass : myNodeQueue) {
       if (pass.willUpdate(node)) return true;
     }
@@ -428,8 +428,11 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   }
 
   public void reset() {
-    TreeUpdatePass[] passes = myNodeQueue.toArray(new TreeUpdatePass[myNodeQueue.size()]);
-    myNodeQueue.clear();
+    TreeUpdatePass[] passes;
+    synchronized (this) {
+      passes = myNodeQueue.toArray(new TreeUpdatePass[myNodeQueue.size()]);
+      myNodeQueue.clear();
+    }
     myUpdateQueue.cancelAllUpdates();
 
     for (TreeUpdatePass each : passes) {

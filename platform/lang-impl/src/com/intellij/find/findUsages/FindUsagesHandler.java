@@ -99,9 +99,9 @@ public abstract class FindUsagesHandler {
     return options;
   }
 
-  public void processElementUsages(@NotNull final PsiElement element,
-                                   @NotNull final Processor<UsageInfo> processor,
-                                   @NotNull final FindUsagesOptions options) {
+  public boolean processElementUsages(@NotNull final PsiElement element,
+                                      @NotNull final Processor<UsageInfo> processor,
+                                      @NotNull final FindUsagesOptions options) {
     final ReadActionProcessor<PsiReference> refProcessor = new ReadActionProcessor<PsiReference>() {
       @Override
       public boolean processInReadAction(final PsiReference ref) {
@@ -115,7 +115,9 @@ public abstract class FindUsagesHandler {
     final boolean searchText = options.isSearchForTextOccurrences && scope instanceof GlobalSearchScope;
 
     if (options.isUsages) {
-      ReferencesSearch.search(new ReferencesSearch.SearchParameters(element, scope, false, options.fastTrack)).forEach(refProcessor);
+      boolean success =
+        ReferencesSearch.search(new ReferencesSearch.SearchParameters(element, scope, false, options.fastTrack)).forEach(refProcessor);
+      if (!success) return false;
     }
 
     if (searchText) {
@@ -123,26 +125,27 @@ public abstract class FindUsagesHandler {
         options.fastTrack.searchCustom(new Processor<Processor<PsiReference>>() {
           @Override
           public boolean process(Processor<PsiReference> consumer) {
-            processUsagesInText(element, processor, (GlobalSearchScope)scope);
-            return true;
+            return processUsagesInText(element, processor, (GlobalSearchScope)scope);
           }
         });
-      } else {
-        processUsagesInText(element, processor, (GlobalSearchScope)scope);
+      }
+      else {
+        return processUsagesInText(element, processor, (GlobalSearchScope)scope);
       }
     }
+    return true;
   }
 
-  public void processUsagesInText(@NotNull final PsiElement element,
-                                  @NotNull Processor<UsageInfo> processor,
-                                  @NotNull GlobalSearchScope searchScope) {
+  public boolean processUsagesInText(@NotNull final PsiElement element,
+                                     @NotNull Processor<UsageInfo> processor,
+                                     @NotNull GlobalSearchScope searchScope) {
     Collection<String> stringToSearch = ApplicationManager.getApplication().runReadAction(new NullableComputable<Collection<String>>() {
       @Override
       public Collection<String> compute() {
         return getStringsToSearch(element);
       }
     });
-    if (stringToSearch == null) return;
+    if (stringToSearch == null) return true;
     final TextRange elementTextRange = ApplicationManager.getApplication().runReadAction(new NullableComputable<TextRange>() {
       @Override
       public TextRange compute() {
@@ -176,8 +179,9 @@ public abstract class FindUsagesHandler {
       }
     };
     for (String s : stringToSearch) {
-      TextOccurrencesUtil.processTextOccurences(element, s, searchScope, processor, factory);
+      if (!TextOccurrencesUtil.processTextOccurences(element, s, searchScope, processor, factory)) return false;
     }
+    return true;
   }
 
   @Nullable

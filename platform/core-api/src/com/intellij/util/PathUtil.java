@@ -77,61 +77,26 @@ public class PathUtil {
 
   @NotNull
   public static String getFileName(@NotNull String path) {
-    if (path.length() == 0) {
-      return "";
-    }
-    final char c = path.charAt(path.length() - 1);
-    int end = c == '/' || c == '\\' ? path.length() - 1 : path.length();
-    int start = Math.max(path.lastIndexOf('/', end - 1), path.lastIndexOf('\\', end - 1)) + 1;
-    return path.substring(start, end);
+    return PathUtilRt.getFileName(path);
   }
 
   @NotNull
   public static String getParentPath(@NotNull String path) {
-    if (path.length() == 0) {
-      return "";
-    }
-    int end = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
-    if (end == path.length() - 1) {
-      end = Math.max(path.lastIndexOf('/', end - 1), path.lastIndexOf('\\', end - 1));
-    }
-    return end == -1 ? "" : path.substring(0, end);
+    return PathUtilRt.getParentPath(path);
   }
 
   @NotNull
   public static String suggestFileName(@NotNull String text) {
-    return suggestFileName(text, false, false);
+    return PathUtilRt.suggestFileName(text);
   }
 
   @NotNull
   public static String suggestFileName(@NotNull String text, final boolean allowDots, final boolean allowSpaces) {
-    StringBuilder result = new StringBuilder();
-    for (int i = 0; i < text.length(); i++) {
-      char c = text.charAt(i);
-      if (!isValidFileNameChar(c) || (!allowDots && c == '.') || (!allowSpaces && Character.isWhitespace(c))) {
-        result.append('_');
-      }
-      else {
-        result.append(c);
-      }
-    }
-    return result.toString();
+    return PathUtilRt.suggestFileName(text, allowDots, allowSpaces);
   }
 
   public static boolean isValidFileName(@NotNull String fileName) {
-    if (fileName.length() == 0) {
-      return false;
-    }
-    for (int i = 0; i < fileName.length(); i++) {
-      if (!isValidFileNameChar(fileName.charAt(i))) {
-        return false;
-      }
-    }
-    return true;
+    return PathUtilRt.isValidFileName(fileName);
   }
 
-  private static boolean isValidFileNameChar(char c) {
-    return c != '/' && c != '\\' && c != '\t' && c != '\n' && c != '\r' && c != ':' && c != ';' && c != '*' && c != '?' &&
-           c != '"' && c != '\'' && c != '<' && c != '>';
-  }
 }

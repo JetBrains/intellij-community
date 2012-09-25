@@ -72,7 +72,8 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
 
       final String location = presentation.getLocationString();
       if (location != null && !location.isEmpty()) {
-        doAppend(" (" + location + ")", SimpleTextAttributes.GRAY_ATTRIBUTES, selected);
+        doAppend(presentation.getLocationPrefix() + location + presentation.getLocationSuffix(),
+                 SimpleTextAttributes.GRAY_ATTRIBUTES, false, selected);
       }
 
       setToolTipText(presentation.getTooltip());

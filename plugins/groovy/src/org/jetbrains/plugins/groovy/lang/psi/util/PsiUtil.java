@@ -854,7 +854,7 @@ public class PsiUtil {
 
 
   @Nullable
-  public static PsiElement skipWhitespaces(@Nullable PsiElement elem, boolean forward) {
+  public static PsiElement skipWhitespacesAndComments(@Nullable PsiElement elem, boolean forward) {
     //noinspection ConstantConditions
     while (elem != null &&
            elem.getNode() != null &&
@@ -868,6 +868,23 @@ public class PsiUtil {
     }
     return elem;
   }
+
+  @Nullable
+  public static PsiElement skipWhitespaces(@Nullable PsiElement elem, boolean forward) {
+    //noinspection ConstantConditions
+    while (elem != null &&
+           elem.getNode() != null &&
+           TokenSets.WHITE_SPACES_SET.contains(elem.getNode().getElementType())) {
+      if (forward) {
+        elem = elem.getNextSibling();
+      }
+      else {
+        elem = elem.getPrevSibling();
+      }
+    }
+    return elem;
+  }
+
 
   @Nullable
   public static PsiType getSmartReturnType(PsiMethod method) {

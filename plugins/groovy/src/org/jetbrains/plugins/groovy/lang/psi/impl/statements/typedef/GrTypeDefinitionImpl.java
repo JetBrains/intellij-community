@@ -822,10 +822,10 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
           while (nextSibling instanceof LeafPsiElement && (nextSibling.getText().equals(",") || nextSibling.getText().equals(";"))) {
             nextSibling = nextSibling.getNextSibling();
           }
-          return nextSibling == null && lBrace != null ? PsiUtil.skipWhitespaces(lBrace.getNextSibling(), true) : nextSibling;
+          return nextSibling == null && lBrace != null ? PsiUtil.skipWhitespacesAndComments(lBrace.getNextSibling(), true) : nextSibling;
         }
         else if (lBrace != null) {
-          return PsiUtil.skipWhitespaces(lBrace.getNextSibling(), true);
+          return PsiUtil.skipWhitespacesAndComments(lBrace.getNextSibling(), true);
         }
       }
       lastMember = child;

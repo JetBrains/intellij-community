@@ -87,7 +87,7 @@ public class ImageFileEditorState implements TransferableFileEditorState, Serial
 
     o = options.get(ZOOM_FACTOR_OPTION);
     if (o != null) {
-      zoomFactor = Double.valueOf(o);
+      zoomFactor = Double.parseDouble(o);
     }
   }
 }

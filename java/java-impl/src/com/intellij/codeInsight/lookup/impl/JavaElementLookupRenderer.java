@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
@@ -90,7 +91,11 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
       if (element.isValid()) {
         if (element instanceof PsiVariable){
           PsiVariable variable = (PsiVariable)element;
-          text = variable.getType().getPresentableText();
+          PsiType type = variable.getType();
+          if (item instanceof VariableLookupItem) {
+            type = ((VariableLookupItem)item).getSubstitutor().substitute(type);
+          }
+          text = type.getPresentableText();
         }
         else if (element instanceof PsiExpression){
           PsiExpression expression = (PsiExpression)element;

@@ -15,7 +15,7 @@
  */
 package com.intellij.ide;
 
-import com.intellij.openapi.options.AbstractConfigurableEP;
+import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.SearchableConfigurable;
 
 /**
@@ -29,5 +29,5 @@ import com.intellij.openapi.options.SearchableConfigurable;
  *
  * @author nik
  */
-public class GeneralSettingsConfigurableEP extends AbstractConfigurableEP<SearchableConfigurable> {
+public class GeneralSettingsConfigurableEP extends ConfigurableEP<SearchableConfigurable> {
 }

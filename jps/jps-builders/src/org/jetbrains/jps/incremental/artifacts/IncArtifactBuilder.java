@@ -7,6 +7,7 @@ import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
+import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.artifacts.impl.ArtifactSorter;
@@ -100,7 +101,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
         }
       }
 
-      Set<String> changedOutputPaths = new THashSet<String>();
+      Set<String> changedOutputPaths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
       for (Map.Entry<BuildRootDescriptor, Set<File>> entry : filesToRecompile.entrySet()) {
         int rootIndex = ((ArtifactRootDescriptor)entry.getKey()).getRootIndex();
         for (File file : entry.getValue()) {
@@ -110,6 +111,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
           if (outputPaths != null) {
             changedOutputPaths.addAll(outputPaths);
             for (String outputPath : outputPaths) {
+              filesToDelete.putValue(outputPath, sourcePath);
               final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
               if (sources != null) {
                 for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
@@ -132,32 +134,27 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
       deleteOutdatedFiles(filesToDelete, context, srcOutMapping, outSrcMapping);
       context.checkCanceled();
 
-      final ArtifactInstructionsBuilder instructions = pd.getArtifactRootsIndex().getInstructionsBuilder(target.getArtifact());
       final Set<JarInfo> changedJars = new THashSet<JarInfo>();
-      instructions.processRoots(new ArtifactRootProcessor() {
-        @Override
-        public boolean process(ArtifactRootDescriptor descriptor, DestinationInfo destination) throws IOException {
-          if (context.getCancelStatus().isCanceled()) return false;
+      for (ArtifactRootDescriptor descriptor : pd.getBuildRootIndex().getTargetRoots(target, context)) {
+        context.checkCanceled();
+        final Set<String> sourcePaths = filesToProcess.get(descriptor.getRootIndex());
+        if (sourcePaths == null) continue;
 
-          final Set<String> sourcePaths = filesToProcess.get(descriptor.getRootIndex());
-          if (sourcePaths == null) return true;
-
-          for (String sourcePath : sourcePaths) {
-            if (destination instanceof ExplodedDestinationInfo) {
-              descriptor.copyFromRoot(sourcePath, descriptor.getRootIndex(), destination.getOutputPath(), context,
-                                      srcOutMapping, outSrcMapping);
-            }
-            else if (outSrcMapping.getState(destination.getOutputFilePath()) == null) {
-              outSrcMapping.update(destination.getOutputFilePath(), Collections.<ArtifactOutputToSourceMapping.SourcePathAndRootIndex>emptyList());
-              changedJars.add(((JarDestinationInfo)destination).getJarInfo());
-            }
+        for (String sourcePath : sourcePaths) {
+          DestinationInfo destination = descriptor.getDestinationInfo();
+          if (destination instanceof ExplodedDestinationInfo) {
+            descriptor.copyFromRoot(sourcePath, descriptor.getRootIndex(), destination.getOutputPath(), context,
+                                    srcOutMapping, outSrcMapping);
           }
-          return true;
+          else if (outSrcMapping.getState(destination.getOutputFilePath()) == null) {
+            outSrcMapping.update(destination.getOutputFilePath(), Collections.<ArtifactOutputToSourceMapping.SourcePathAndRootIndex>emptyList());
+            changedJars.add(((JarDestinationInfo)destination).getJarInfo());
+          }
         }
-      });
+      }
       context.checkCanceled();
 
-      JarsBuilder builder = new JarsBuilder(changedJars, context, srcOutMapping, outSrcMapping, instructions);
+      JarsBuilder builder = new JarsBuilder(changedJars, context, srcOutMapping, outSrcMapping);
       final boolean processed = builder.buildJars();
       if (processed && !Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled()) {
         state.markUpToDate(context);
@@ -177,7 +174,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
     }
     Set<String> paths = filesToProcess.get(rootIndex);
     if (paths == null) {
-      paths = new THashSet<String>();
+      paths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
       filesToProcess.put(rootIndex, paths);
     }
     paths.add(path);
@@ -190,8 +187,8 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
 
     context.processMessage(new ProgressMessage("Deleting outdated files..."));
     int notDeletedFilesCount = 0;
-    final THashSet<String> notDeletedPaths = new THashSet<String>();
-    final THashSet<String> deletedPaths = new THashSet<String>();
+    final THashSet<String> notDeletedPaths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+    final THashSet<String> deletedPaths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
 
     for (String filePath : filesToDelete.keySet()) {
       if (notDeletedPaths.contains(filePath)) {
@@ -228,10 +225,11 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
       @Override
       public void filesGenerated(Collection<Pair<String, String>> paths) {
         BuildFSState fsState = context.getProjectDescriptor().fsState;
-        ArtifactRootsIndex rootsIndex = context.getProjectDescriptor().getArtifactRootsIndex();
+        BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
         for (Pair<String, String> pair : paths) {
           File file = new File(pair.getFirst(), pair.getSecond());
-          for (ArtifactRootDescriptor descriptor : rootsIndex.getDescriptors(file)) {
+          Collection<ArtifactRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, Collections.singletonList(ArtifactBuildTargetType.INSTANCE), context);
+          for (ArtifactRootDescriptor descriptor : descriptors) {
             try {
               fsState.markDirty(null, file, descriptor, null);
             }
@@ -244,10 +242,11 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
       @Override
       public void filesDeleted(Collection<String> paths) {
         BuildFSState state = context.getProjectDescriptor().fsState;
-        ArtifactRootsIndex index = context.getProjectDescriptor().getArtifactRootsIndex();
+        BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
         for (String path : paths) {
           File file = new File(FileUtil.toSystemDependentName(path));
-          for (ArtifactRootDescriptor descriptor : index.getDescriptors(file)) {
+          Collection<ArtifactRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, Collections.singletonList(ArtifactBuildTargetType.INSTANCE), context);
+          for (ArtifactRootDescriptor descriptor : descriptors) {
             state.registerDeleted(descriptor.getTarget(), file);
           }
         }

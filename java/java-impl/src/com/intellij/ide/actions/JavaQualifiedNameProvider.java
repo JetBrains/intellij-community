@@ -220,7 +220,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
         catch (IncorrectOperationException e) {
           // failed to bind
         }
-        if (!isReferencedTo(referenceExpression, targetElement)) {
+        if (referenceExpression.isValid() && !isReferencedTo(referenceExpression, targetElement)) {
           toInsert = fqn;
         }
       }

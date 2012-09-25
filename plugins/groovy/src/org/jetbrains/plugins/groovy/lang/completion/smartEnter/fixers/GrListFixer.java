@@ -30,7 +30,7 @@ public class GrListFixer implements GrFixer {
   @Override
   public void apply(Editor editor, GroovySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (psiElement.getParent() instanceof GrListOrMap) {
-      final PsiElement next = PsiUtil.skipWhitespaces(psiElement.getNextSibling(), true);
+      final PsiElement next = PsiUtil.skipWhitespacesAndComments(psiElement.getNextSibling(), true);
       if (next != null && !GroovyTokenTypes.mCOMMA.equals(next.getNode().getElementType())) {
         editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), ",");
       }

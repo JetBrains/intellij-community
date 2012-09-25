@@ -21,7 +21,9 @@ import com.intellij.ide.actions.*;
 import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.ide.errorTreeView.impl.ErrorViewTextExporter;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -35,6 +37,7 @@ import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.MessageView;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.MutableErrorTreeView;
 import com.intellij.util.ui.UIUtil;
@@ -54,11 +57,13 @@ import java.util.List;
 
 public class NewErrorTreeViewPanel extends JPanel implements DataProvider, OccurenceNavigator, MutableErrorTreeView, CopyProvider {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.ide.errorTreeView.NewErrorTreeViewPanel");
-  private String myProgressText = "";
+  private volatile String myProgressText = "";
+  private volatile float myFraction = 0.0f;
   private final boolean myCreateExitAction;
   private ErrorViewStructure myErrorViewStructure;
   private ErrorViewTreeBuilder myBuilder;
-
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  
   public interface ProcessController {
     void stopProcess();
 
@@ -75,8 +80,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   private JPanel myMessagePanel;
   private ProcessController myProcessController;
 
-  private JLabel myProgressTextLabel;
-  private JLabel myProgressStatisticsLabel;
+  private JLabel myProgressLabel;
   private JPanel myProgressPanel;
 
   private AutoScrollToSourceHandler myAutoScrollToSourceHandler;
@@ -162,7 +166,9 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   public void dispose() {
+    myUpdateAlarm.cancelAllRequests();
     Disposer.dispose(myBuilder);
+    Disposer.dispose(myUpdateAlarm);
   }
 
   public void performCopy(@NotNull DataContext dataContext) {
@@ -258,8 +264,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
                          int line,
                          int column,
                          @Nullable Object data) {
-    myErrorViewStructure
-      .addMessage(ErrorTreeElementKind.convertMessageFromCompilerErrorType(type), text, underFileGroup, file, line, column, data);
+    myErrorViewStructure.addMessage(ErrorTreeElementKind.convertMessageFromCompilerErrorType(type), text, underFileGroup, file, line, column, data);
     myBuilder.updateTree();
   }
 
@@ -270,11 +275,15 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
                          @Nullable String exportTextPrefix,
                          @Nullable String rendererTextPrefix,
                          @Nullable Object data) {
-    myErrorViewStructure.addNavigatableMessage(groupName, navigatable, ErrorTreeElementKind.convertMessageFromCompilerErrorType(type), text,
-                                               data,
-                                               exportTextPrefix == null ? "" : exportTextPrefix,
-                                               rendererTextPrefix == null ? "" : rendererTextPrefix,
-                                               data instanceof VirtualFile ? (VirtualFile)data : null);
+
+    VirtualFile file = data instanceof VirtualFile ? (VirtualFile)data : null;
+    if (file == null && navigatable instanceof OpenFileDescriptor) {
+      file = ((OpenFileDescriptor)navigatable).getFile();
+    }
+    final String exportPrefix = exportTextPrefix == null ? "" : exportTextPrefix;
+    final String renderPrefix = rendererTextPrefix == null ? "" : rendererTextPrefix;
+    final ErrorTreeElementKind kind = ErrorTreeElementKind.convertMessageFromCompilerErrorType(type);
+    myErrorViewStructure.addNavigatableMessage(groupName, navigatable, kind, text, data, exportPrefix, renderPrefix, file);
     myBuilder.updateTree();
   }
 
@@ -380,42 +389,60 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       messageView.getContentManager().removeContent(content, true);
     }
   }
-
-  public void setProgressStatistics(final String s) {
+  
+  public void setProgress(final String s, float fraction) {
     initProgressPanel();
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        myProgressStatisticsLabel.setText(s);
-      }
-    });
+    myProgressText = s;
+    myFraction = fraction;
+    updateProgress();
   }
 
   public void setProgressText(final String s) {
     initProgressPanel();
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        myProgressText = s;
-        myProgressTextLabel.setText(myProgressText);
-      }
-    });
+    myProgressText = s;
+    updateProgress();
   }
-
-  public void setFraction(final double fraction) {
+  
+  public void setFraction(final float fraction) {
     initProgressPanel();
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        myProgressTextLabel.setText(myProgressText + " " + (int)(fraction * 100 + 0.5) + "%");
-      }
-    });
+    myFraction = fraction;
+    updateProgress();
   }
 
+  public void clearProgressData() {
+    if (myProgressPanel != null) {
+      myProgressText = "";
+      myFraction = 0.0f;
+      updateProgress();
+    }
+  }
+
+  private void updateProgress() {
+    myUpdateAlarm.cancelAllRequests();
+    myUpdateAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        final float fraction = myFraction;
+        final String text = myProgressText;
+        if (fraction > 0.0f) {
+          myProgressLabel.setText((int)(fraction * 100 + 0.5) + "%  " + text);
+        }
+        else {
+          myProgressLabel.setText(text);
+        }
+      }
+    }, 50, ModalityState.NON_MODAL);
+    
+  }
+
+  
   private void initProgressPanel() {
     if (myProgressPanel == null) {
       myProgressPanel = new JPanel(new GridLayout(1, 2));
-      myProgressStatisticsLabel = new JLabel();
-      myProgressPanel.add(myProgressStatisticsLabel);
-      myProgressTextLabel = new JLabel();
-      myProgressPanel.add(myProgressTextLabel);
+      myProgressLabel = new JLabel();
+      myProgressPanel.add(myProgressLabel);
+      //JLabel secondLabel = new JLabel();
+      //myProgressPanel.add(secondLabel);
       myMessagePanel.add(myProgressPanel, BorderLayout.SOUTH);
       myMessagePanel.validate();
     }
@@ -551,6 +578,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     public void update(AnActionEvent event) {
       Presentation presentation = event.getPresentation();
       presentation.setEnabled(canControlProcess() && !isProcessStopped());
+      presentation.setVisible(canControlProcess());
     }
   }
 

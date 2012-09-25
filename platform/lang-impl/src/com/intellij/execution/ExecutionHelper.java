@@ -46,6 +46,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.MessageView;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
@@ -74,17 +75,29 @@ public class ExecutionHelper {
   private ExecutionHelper() {
   }
 
-  public static void showErrors(@NotNull final Project myProject,
-                                @NotNull final List<Exception> exceptionList,
-                                @NotNull final String tabDisplayName,
-                                @Nullable final VirtualFile file) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && !exceptionList.isEmpty()) {
-      throw new RuntimeException(exceptionList.get(0));
+  public static void showErrors(
+    @NotNull final Project myProject,
+    @NotNull final List<Exception> errors,
+    @NotNull final String tabDisplayName,
+    @Nullable final VirtualFile file)
+  {
+    showExceptions(myProject, errors, Collections.<Exception>emptyList(), tabDisplayName, file);
+  }
+
+  public static void showExceptions(
+    @NotNull final Project myProject,
+    @NotNull final List<Exception> errors,
+    @NotNull final List<Exception> warnings,
+    @NotNull final String tabDisplayName,
+    @Nullable final VirtualFile file)
+  {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !errors.isEmpty()) {
+      throw new RuntimeException(errors.get(0));
     }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myProject.isDisposed()) return;
-        if (exceptionList.isEmpty()) {
+        if (errors.isEmpty() && warnings.isEmpty()) {
           removeContents(null, myProject, tabDisplayName);
           return;
         }
@@ -95,23 +108,42 @@ public class ExecutionHelper {
         }
         catch (NullPointerException e) {
           final StringBuilder builder = new StringBuilder();
-          builder.append("Exceptions occured:");
-          for (final Exception exception : exceptionList) {
+          builder.append("Exceptions occurred:");
+          for (final Exception exception : errors) {
+            builder.append("\n");
+            builder.append(exception.getMessage());
+          }
+          builder.append("Warnings occurred:");
+          for (final Exception exception : warnings) {
             builder.append("\n");
             builder.append(exception.getMessage());
           }
           Messages.showErrorDialog(builder.toString(), "Execution Error");
           return;
         }
-        for (final Exception exception : exceptionList) {
-          String[] messages = StringUtil.splitByLines(exception.getMessage());
-          if (messages.length == 0) messages = new String[]{"Unknown Error"};
-          errorTreeView.addMessage(MessageCategory.ERROR, messages, file, -1, -1, null);
-        }
+
+        addMessages(MessageCategory.ERROR, errors, errorTreeView, file, "Unknown Error");
+        addMessages(MessageCategory.WARNING, warnings, errorTreeView, file, "Unknown Warning");
 
         ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
       }
     });
+  }
+
+  private static void addMessages(
+    final int messageCategory,
+    @NotNull final List<Exception> exceptions,
+    @NotNull ErrorViewPanel errorTreeView,
+    @NotNull final VirtualFile file,
+    @NotNull final String defaultMessage)
+  {
+    for (final Exception exception : exceptions) {
+      String[] messages = StringUtil.splitByLines(exception.getMessage());
+      if (messages.length == 0) {
+        messages = new String[] { defaultMessage };
+      }
+      errorTreeView.addMessage(messageCategory, messages, file, -1, -1, null);
+    }
   }
 
   public static void showOutput(@NotNull final Project myProject,
@@ -171,7 +203,7 @@ public class ExecutionHelper {
             }
             else {
               errorTreeView.addMessage(MessageCategory.SIMPLE, new String[]{stderrTitle}, file, -1, -1, null);
-              errorTreeView.addMessage(MessageCategory.SIMPLE, new String[0], file, -1, -1, null);
+              errorTreeView.addMessage(MessageCategory.SIMPLE, ArrayUtil.EMPTY_STRING_ARRAY, file, -1, -1, null);
               errorTreeView.addMessage(MessageCategory.SIMPLE, stderrLines, file, -1, -1, null);
             }
           }

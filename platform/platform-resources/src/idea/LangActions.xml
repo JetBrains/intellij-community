@@ -158,6 +158,8 @@
 
       <add-to-group group-id="ViewMenu" relative-to-action="QuickActions" anchor="after"/>
     </group>
+    
+    <action id="FixDocComment" class="com.intellij.codeInsight.editorActions.FixDocCommentAction"/>
 
     <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
       <add-to-group group-id="UIToggleActions" relative-to-action="ViewStatusBar" anchor="after"/>

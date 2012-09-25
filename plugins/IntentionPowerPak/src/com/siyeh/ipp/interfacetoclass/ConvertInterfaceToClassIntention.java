@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 Bas Leijdekkers
+ * Copyright 2006-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,21 @@
  */
 package com.siyeh.ipp.interfacetoclass;
 
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.Query;
+import com.intellij.util.containers.MultiMap;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -91,9 +98,56 @@ public class ConvertInterfaceToClassIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     final PsiClass anInterface = (PsiClass)element.getParent();
+    final SearchScope searchScope = anInterface.getUseScope();
+    final Query<PsiClass> query = ClassInheritorsSearch.search(anInterface, searchScope, false);
+    final MultiMap<PsiElement, String> conflicts = new MultiMap();
+    query.forEach(new Processor<PsiClass>() {
+      @Override
+      public boolean process(PsiClass aClass) {
+        final PsiReferenceList extendsList = aClass.getExtendsList();
+        if (extendsList == null) {
+          return true;
+        }
+        final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
+        if (referenceElements.length > 0) {
+          final PsiElement target = referenceElements[0].resolve();
+          if (target != null) {
+            conflicts.putValue(aClass, IntentionPowerPackBundle.message(
+              "0.already.extends.1.and.will.not.compile.after.converting.2.to.a.class",
+              RefactoringUIUtil.getDescription(aClass, true), RefactoringUIUtil.getDescription(target, true),
+              RefactoringUIUtil.getDescription(anInterface, false)));
+          }
+        }
+        return true;
+      }
+    });
+    final boolean conflictsDialogOK;
+    if (conflicts.isEmpty()) {
+      conflictsDialogOK = true;
+    } else {
+      final ConflictsDialog conflictsDialog = new ConflictsDialog(anInterface.getProject(), conflicts, new Runnable() {
+        @Override
+        public void run() {
+          final AccessToken token = WriteAction.start();
+          try {
+            convertInterfaceToClass(anInterface);
+          }
+          finally {
+            token.finish();
+          }
+        }
+      });
+      conflictsDialog.show();
+      conflictsDialogOK = conflictsDialog.isOK();
+    }
+    if (conflictsDialogOK) {
+      convertInterfaceToClass(anInterface);
+    }
+  }
+
+  private static void convertInterfaceToClass(PsiClass anInterface) {
     final boolean success = moveSubClassImplementsToExtends(anInterface);
     if (!success) {
       return;
@@ -108,13 +162,11 @@ public class ConvertInterfaceToClassIntention extends Intention {
     return new ConvertInterfaceToClassPredicate();
   }
 
-  private static void moveExtendsToImplements(PsiClass anInterface)
-    throws IncorrectOperationException {
+  private static void moveExtendsToImplements(PsiClass anInterface) throws IncorrectOperationException {
     final PsiReferenceList extendsList = anInterface.getExtendsList();
     final PsiReferenceList implementsList = anInterface.getImplementsList();
     assert extendsList != null;
-    final PsiJavaCodeReferenceElement[] referenceElements =
-      extendsList.getReferenceElements();
+    final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
     for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
       assert implementsList != null;
       implementsList.add(referenceElement);
@@ -122,47 +174,34 @@ public class ConvertInterfaceToClassIntention extends Intention {
     }
   }
 
-  private static boolean moveSubClassImplementsToExtends(
-    PsiClass oldInterface) throws IncorrectOperationException {
+  private static boolean moveSubClassImplementsToExtends(PsiClass oldInterface) throws IncorrectOperationException {
     final Project project = oldInterface.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory elementFactory = psiFacade.getElementFactory();
-    final PsiJavaCodeReferenceElement oldInterfaceReference =
-      elementFactory.createClassReferenceElement(oldInterface);
+    final PsiJavaCodeReferenceElement oldInterfaceReference = elementFactory.createClassReferenceElement(oldInterface);
     final SearchScope searchScope = oldInterface.getUseScope();
-    final Query<PsiClass> query =
-      ClassInheritorsSearch.search(oldInterface, searchScope, false);
+    final Query<PsiClass> query = ClassInheritorsSearch.search(oldInterface, searchScope, false);
     final Collection<PsiClass> inheritors = query.findAll();
-    final boolean success =
-      CommonRefactoringUtil.checkReadOnlyStatusRecursively(
-        project, inheritors, false);
+    final boolean success = CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, inheritors, false);
     if (!success) {
       return false;
     }
     for (PsiClass inheritor : inheritors) {
-      final PsiReferenceList implementsList =
-        inheritor.getImplementsList();
+      final PsiReferenceList implementsList = inheritor.getImplementsList();
       final PsiReferenceList extendsList = inheritor.getExtendsList();
       if (implementsList != null) {
-        moveReference(implementsList, extendsList,
-                      oldInterfaceReference);
+        moveReference(implementsList, extendsList, oldInterfaceReference);
       }
     }
     return true;
   }
 
-  private static void moveReference(
-    @NotNull PsiReferenceList source,
-    @Nullable PsiReferenceList target,
-    @NotNull PsiJavaCodeReferenceElement reference)
-    throws IncorrectOperationException {
-    final PsiJavaCodeReferenceElement[] implementsReferences =
-      source.getReferenceElements();
+  private static void moveReference(@NotNull PsiReferenceList source, @Nullable PsiReferenceList target,
+                                    @NotNull PsiJavaCodeReferenceElement reference) throws IncorrectOperationException {
+    final PsiJavaCodeReferenceElement[] implementsReferences = source.getReferenceElements();
     final String qualifiedName = reference.getQualifiedName();
-    for (PsiJavaCodeReferenceElement implementsReference :
-      implementsReferences) {
-      final String implementsReferenceQualifiedName =
-        implementsReference.getQualifiedName();
+    for (PsiJavaCodeReferenceElement implementsReference : implementsReferences) {
+      final String implementsReferenceQualifiedName = implementsReference.getQualifiedName();
       if (qualifiedName.equals(implementsReferenceQualifiedName)) {
         if (target != null) {
           target.add(implementsReference);

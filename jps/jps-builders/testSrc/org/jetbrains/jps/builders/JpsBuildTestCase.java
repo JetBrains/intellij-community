@@ -6,10 +6,11 @@ import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
+import org.jetbrains.jps.builders.impl.BuildTargetIndexImpl;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
@@ -69,13 +70,14 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
 
   protected ProjectDescriptor createProjectDescriptor(final BuildLoggingManager buildLoggingManager) {
     try {
-      ModuleRootsIndex index = new ModuleRootsIndex(myModel, myDataStorageRoot);
-      ArtifactRootsIndex artifactRootsIndex = new ArtifactRootsIndex(myModel, index);
-      BuildTargetsState targetsState = new BuildTargetsState(myDataStorageRoot, index, artifactRootsIndex);
+      BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(myModel);
+      ModuleRootsIndex index = new ModuleRootsIndex(myModel);
+      BuildRootIndexImpl buildRootIndex = new BuildRootIndexImpl(targetIndex, myModel, index, myDataStorageRoot);
+      BuildTargetsState targetsState = new BuildTargetsState(myDataStorageRoot, myModel, buildRootIndex);
       ProjectTimestamps timestamps = new ProjectTimestamps(myDataStorageRoot, targetsState);
       BuildDataManager dataManager = new BuildDataManager(myDataStorageRoot, targetsState, true);
       return new ProjectDescriptor(myModel, new BuildFSState(true), timestamps, dataManager, buildLoggingManager, index, targetsState,
-                                   artifactRootsIndex);
+                                   targetIndex, buildRootIndex);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>MethodNamesDifferOnlyByCase.java</file>
+    <line>20</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method names differing only by case</problem_class>
+    <description>Method names &lt;code&gt;hashcode&lt;/code&gt; and 'hashCode' differ only by case #loc</description>
+  </problem>
+
+  <problem>
+    <file>MethodNamesDifferOnlyByCase.java</file>
+    <line>30</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method names differing only by case</problem_class>
+    <description>Method names &lt;code&gt;xX&lt;/code&gt; and 'xx' differ only by case #loc</description>
+  </problem>
+
+  <problem>
+    <file>MethodNamesDifferOnlyByCase.java</file>
+    <line>5</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method names differing only by case</problem_class>
+    <description>Method names &lt;code&gt;fooBar&lt;/code&gt; and 'fooBAr' differ only by case #loc</description>
+  </problem>
+
+  <problem>
+    <file>MethodNamesDifferOnlyByCase.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method names differing only by case</problem_class>
+    <description>Method names &lt;code&gt;fooBAr&lt;/code&gt; and 'fooBar' differ only by case #loc</description>
+  </problem>
+
+  <problem>
+    <file>MethodNamesDifferOnlyByCase.java</file>
+    <line>29</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method names differing only by case</problem_class>
+    <description>Method names &lt;code&gt;xx&lt;/code&gt; and 'xX' differ only by case #loc</description>
+  </problem>
+
+</problems>

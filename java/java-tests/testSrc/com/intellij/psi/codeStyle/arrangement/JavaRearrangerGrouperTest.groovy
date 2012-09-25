@@ -15,8 +15,12 @@
  */
 package com.intellij.psi.codeStyle.arrangement
 
+import org.junit.Test
+
 import static com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType.GETTERS_AND_SETTERS
+import static com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType.UTILITY_METHODS
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PUBLIC
+import static com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType.DEPTH_FIRST
 
 /**
  * @author Denis Zhdanov
@@ -44,6 +48,30 @@ class Test {
 }''',
       groups: [group(GETTERS_AND_SETTERS)],
       rules: [rule(PUBLIC)]
+    )
+  }
+  
+  @Test
+  void _testUtilityMethodsDepthFirst() {
+    commonSettings.BLANK_LINES_AROUND_METHOD = 0
+    doTest(
+      initial: '''\
+class Test {
+  void util1() { util11(); }
+  void service1() { util1(); }
+  void util2() {}
+  void util11() {}
+  void service2() { util2(); }
+}''',
+      groups: [group(UTILITY_METHODS, DEPTH_FIRST)],
+      expected: '''\
+class Test {
+  void service1() { util1(); }
+  void util1() { util11(); }
+  void util11() {}
+  void service2() { util2(); }
+  void util2() {}
+}'''
     )
   }
 }

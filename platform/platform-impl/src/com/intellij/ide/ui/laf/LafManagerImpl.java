@@ -121,27 +121,37 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     myUiSettings = uiSettings;
     myListenerList = new EventListenerList();
 
-    IdeaLookAndFeelInfo ideaLaf = new IdeaLookAndFeelInfo();
-    DarculaLookAndFeelInfo darculaLaf = new DarculaLookAndFeelInfo();
-    UIManager.LookAndFeelInfo[] installedLafs = UIManager.getInstalledLookAndFeels();
-
     final boolean darculaAvailable = Registry.is("dark.laf.available");
-    // Get all installed LAFs
-    myLafs = new UIManager.LookAndFeelInfo[(darculaAvailable ? 2 : 1) + installedLafs.length];
-    myLafs[0] = ideaLaf;
-    if (darculaAvailable) {
-      myLafs[1] = darculaLaf;
-    }
-    System.arraycopy(installedLafs, 0, myLafs, darculaAvailable ? 2 : 1, installedLafs.length);
-    Arrays.sort(myLafs, new Comparator<UIManager.LookAndFeelInfo>() {
-      public int compare(UIManager.LookAndFeelInfo obj1, UIManager.LookAndFeelInfo obj2) {
-        String name1 = obj1.getName();
-        String name2 = obj2.getName();
-        return name1.compareToIgnoreCase(name2);
-      }
-    });
+    DarculaLookAndFeelInfo darculaLaf = new DarculaLookAndFeelInfo();
 
-    // Setup current LAF. Unfortunately it's system depended.
+    if (SystemInfo.isMac) {
+      myLafs = new UIManager.LookAndFeelInfo[darculaAvailable ? 2 : 1];
+      UIManager.LookAndFeelInfo nativeLaf = new UIManager.LookAndFeelInfo("Default", UIManager.getSystemLookAndFeelClassName());
+      
+      myLafs[0] = nativeLaf;
+      if (darculaAvailable) {
+        myLafs[1] = darculaLaf;
+      }
+    }
+    else {
+      IdeaLookAndFeelInfo ideaLaf = new IdeaLookAndFeelInfo();
+      UIManager.LookAndFeelInfo[] installedLafs = UIManager.getInstalledLookAndFeels();
+
+      // Get all installed LAFs
+      myLafs = new UIManager.LookAndFeelInfo[(darculaAvailable ? 2 : 1) + installedLafs.length];
+      myLafs[0] = ideaLaf;
+      if (darculaAvailable) {
+        myLafs[1] = darculaLaf;
+      }
+      System.arraycopy(installedLafs, 0, myLafs, darculaAvailable ? 2 : 1, installedLafs.length);
+      Arrays.sort(myLafs, new Comparator<UIManager.LookAndFeelInfo>() {
+        public int compare(UIManager.LookAndFeelInfo obj1, UIManager.LookAndFeelInfo obj2) {
+          String name1 = obj1.getName();
+          String name2 = obj2.getName();
+          return name1.compareToIgnoreCase(name2);
+        }
+      });
+    }
     myCurrentLaf = getDefaultLaf();
   }
 

@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.service.JpsServiceManager;
 
@@ -18,7 +19,7 @@ public class BuilderRegistry {
   }
   private final Map<BuilderCategory, List<ModuleLevelBuilder>> myModuleLevelBuilders = new HashMap<BuilderCategory, List<ModuleLevelBuilder>>();
   private final List<ProjectLevelBuilder> myProjectLevelBuilders = new ArrayList<ProjectLevelBuilder>();
-  private final Map<String, BuildTargetType> myTargetTypes = new LinkedHashMap<String, BuildTargetType>();
+  private final Map<String, BuildTargetType<?>> myTargetTypes = new LinkedHashMap<String, BuildTargetType<?>>();
 
   public static BuilderRegistry getInstance() {
     return Holder.ourInstance;
@@ -35,9 +36,9 @@ public class BuilderRegistry {
       for (ModuleLevelBuilder builder : moduleLevelBuilders) {
         myModuleLevelBuilders.get(builder.getCategory()).add(builder);
       }
-      for (BuildTargetType type : service.getTargetTypes()) {
+      for (BuildTargetType<?> type : service.getTargetTypes()) {
         String id = type.getTypeId();
-        BuildTargetType old = myTargetTypes.put(id, type);
+        BuildTargetType<?> old = myTargetTypes.put(id, type);
         if (old != null) {
           LOG.error("Two build target types (" + type + ", " + old + ") use same id (" + id + ")");
         }
@@ -45,11 +46,12 @@ public class BuilderRegistry {
     }
   }
 
-  public BuildTargetType getTargetType(String typeId) {
+  @Nullable
+  public BuildTargetType<?> getTargetType(String typeId) {
     return myTargetTypes.get(typeId);
   }
 
-  public Collection<BuildTargetType> getTargetTypes() {
+  public Collection<BuildTargetType<?>> getTargetTypes() {
     return myTargetTypes.values();
   }
 

@@ -25,6 +25,7 @@ import com.maddyhome.idea.copyright.CopyrightManager;
 import org.apache.commons.collections.ExtendedProperties;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.log.SimpleLog4JLogSystem;
 
 import java.io.StringWriter;
@@ -86,12 +87,13 @@ public class VelocityHelper
                 VelocityEngine engine = new VelocityEngine();
                 ExtendedProperties extendedProperties = new ExtendedProperties();
 
-                extendedProperties.addProperty(VelocityEngine.RESOURCE_LOADER, "file");
+                extendedProperties.addProperty(RuntimeConstants.RESOURCE_LOADER, "file");
+                extendedProperties.addProperty(RuntimeConstants.PARSER_POOL_SIZE, "1");
 
                 extendedProperties.addProperty("file.resource.loader.class", "org.apache.velocity.runtime.resource.loader.FileResourceLoader");
                 extendedProperties.addProperty("file.resource.loader.path", PathManager.getPluginsPath() + "/Copyright/resources");
 
-                extendedProperties.addProperty(VelocityEngine.RUNTIME_LOG_LOGSYSTEM_CLASS,
+                extendedProperties.addProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS,
                     SimpleLog4JLogSystem.class.getName());
                 extendedProperties
                     .addProperty("runtime.log.logsystem.log4j.category", CopyrightManager.class.getName());
@@ -101,7 +103,7 @@ public class VelocityHelper
 
                 instance = engine;
             }
-            catch (Exception e)
+            catch (Exception ignored)
             {
             }
         }

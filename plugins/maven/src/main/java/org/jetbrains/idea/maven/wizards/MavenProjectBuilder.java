@@ -95,7 +95,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
                              ModifiableModuleModel model,
                              ModulesProvider modulesProvider,
                              ModifiableArtifactModel artifactModel) {
-    MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getState();
+    MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
 
     settings.generalSettings = getGeneralSettings();
     settings.importingSettings = getImportingSettings();
@@ -252,7 +252,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     Project project = isUpdate() ? getProjectToUpdate() : null;
     if (project == null || project.isDisposed()) project = ProjectManager.getInstance().getDefaultProject();
 
-    return MavenWorkspaceSettingsComponent.getInstance(project).getState();
+    return MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
   }
 
   public void setFiles(List<VirtualFile> files) {

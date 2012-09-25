@@ -41,19 +41,19 @@ import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.AppIconScheme;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.AppIcon;
 import com.intellij.ui.content.*;
-import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.MessageCategory;
@@ -71,35 +71,27 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CompilerTask extends Task.Backgroundable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.progress.CompilerProgressIndicator");
-  private static final boolean IS_UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
-  private static final int UPDATE_INTERVAL = 50; //msec. 20 frames per second.
   private static final Key<Key<?>> CONTENT_ID_KEY = Key.create("CONTENT_ID");
   private static final String APP_ICON_ID = "compiler";
   private Key<Key<?>> myContentIdKey = CONTENT_ID_KEY;
   private final Key<Key<?>> myContentId = Key.create("compile_content");
-  private CompilerProgressDialog myDialog;
   private NewErrorTreeViewPanel myErrorTreeView;
   private final Object myMessageViewLock = new Object();
   private final String myContentName;
   private final boolean myHeadlessMode;
-  private boolean myIsBackgroundMode;
   private int myErrorCount = 0;
   private int myWarningCount = 0;
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private boolean myMessagesAutoActivated = false;
 
   private volatile ProgressIndicator myIndicator = new EmptyProgressIndicator();
   private Runnable myCompileWork;
   private final AtomicBoolean myMessageViewWasPrepared = new AtomicBoolean(false);
   private Runnable myRestartWork;
-  private IdeFrame myIdeFrame;
 
-  public CompilerTask(@NotNull Project project, boolean compileInBackground, String contentName, final boolean headlessMode) {
+  public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode) {
     super(project, contentName);
-    myIsBackgroundMode = compileInBackground;
     myContentName = contentName;
     myHeadlessMode = headlessMode;
-    myIdeFrame = (IdeFrame)WindowManager.getInstance().getFrame(myProject);
   }
 
   public void setContentIdKey(Key<Key<?>> contentIdKey) {
@@ -116,7 +108,7 @@ public class CompilerTask extends Task.Backgroundable {
   }
 
   public boolean shouldStartInBackground() {
-    return myIsBackgroundMode;
+    return true;
   }
 
   public ProgressIndicator getIndicator() {
@@ -357,49 +349,7 @@ public class CompilerTask extends Task.Backgroundable {
     if (isHeadlessMode()) {
       return;
     }
-    if (myAlarm.getActiveRequestCount() == 0) {
-      myAlarm.addRequest(myRepaintRequest, UPDATE_INTERVAL);
-    }
   }
-
-  private final Runnable myRepaintRequest = new Runnable() {
-    public void run() {
-      SwingUtilities.invokeLater(myRepaintRunnable);
-    }
-    private final Runnable myRepaintRunnable = new Runnable() {
-      public void run() {
-        String s = myIndicator.getText();
-        if (myIndicator.getFraction() > 0) {
-          s += " " + (int)(myIndicator.getFraction() * 100 + 0.5) + "%";
-        }
-
-        synchronized (myMessageViewLock) {
-          if (myIsBackgroundMode) {
-            if (myErrorTreeView != null) {
-              //myErrorTreeView.setProgressText(s);
-              myErrorTreeView.setProgressStatistics("");
-            }
-          }
-          else {
-            if (myDialog != null) {
-              myDialog.setStatusText(s);
-              myDialog.setStatisticsText("");
-            }
-          }
-        }
-      }
-    };
-  };
-
-  public void sendToBackground() {
-    myIsBackgroundMode = true;
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        closeProgressDialog();
-      }
-    });
-  }
-
 
   // error tree view initialization must be invoked from event dispatch thread
   private void openMessageView() {
@@ -433,13 +383,12 @@ public class CompilerTask extends Task.Backgroundable {
     }
     
     final MessageView messageView = MessageView.SERVICE.getInstance(myProject);
-    final Content content = PeerFactory.getInstance().getContentFactory().createContent(component, myContentName, true);
+    final Content content = ContentFactory.SERVICE.getInstance().createContent(component, myContentName, true);
     content.putUserData(myContentIdKey, myContentId);
     messageView.getContentManager().addContent(content);
     myCloseListener.setContent(content, messageView.getContentManager());
     removeAllContents(myProject, content);
     messageView.getContentManager().setSelectedContent(content);
-    updateProgressText();
   }
 
   public void showCompilerContent() {
@@ -493,7 +442,6 @@ public class CompilerTask extends Task.Backgroundable {
     final Application application = ApplicationManager.getApplication();
     application.invokeLater(new Runnable() {
       public void run() {
-        closeProgressDialog();
         synchronized (myMessageViewLock) {
           if (myErrorTreeView != null) {
             final boolean shouldRetainView = myErrorCount > 0 || myWarningCount > 0 && !myErrorTreeView.isHideWarnings();
@@ -513,20 +461,7 @@ public class CompilerTask extends Task.Backgroundable {
   }
 
   public Window getWindow(){
-    if (!myIsBackgroundMode && myDialog != null) {
-      final Container pane = myDialog.getContentPane();
-      return pane != null? SwingUtilities.windowForComponent(pane) : null;
-    }
     return null;
-  }
-
-  private void closeProgressDialog() {
-    synchronized (myMessageViewLock) {
-      if (myDialog != null) {
-        myDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-        myDialog = null;
-      }
-    }
   }
 
   public boolean isHeadless() {

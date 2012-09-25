@@ -472,6 +472,8 @@
   <extensionPoint name="documentationProvider"
                   interface="com.intellij.lang.documentation.DocumentationProvider"/>
 
+  <extensionPoint name="lang.documentationFixer" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+
   <extensionPoint name="templateCompletionProcessor"
                   interface="com.intellij.codeInsight.template.macro.TemplateCompletionProcessor"/>
 

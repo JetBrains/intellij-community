@@ -12,11 +12,11 @@ import java.io.IOException;
 public interface Timestamps {
   void force();
 
-  void saveStamp(File file, BuildTarget buildTarget, long timestamp) throws IOException;
+  void saveStamp(File file, BuildTarget<?> buildTarget, long timestamp) throws IOException;
 
-  void removeStamp(File file, BuildTarget buildTarget) throws IOException;
+  void removeStamp(File file, BuildTarget<?> buildTarget) throws IOException;
 
   void clean() throws IOException;
 
-  long getStamp(File file, BuildTarget target) throws IOException;
+  long getStamp(File file, BuildTarget<?> target) throws IOException;
 }

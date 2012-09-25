@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.options.ex;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurableProvider;
@@ -24,27 +26,53 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
  */
 public class ConfigurableExtensionPointUtil {
 
+  private final static Logger LOG = Logger.getInstance(ConfigurableExtensionPointUtil.class);
+
   private ConfigurableExtensionPointUtil() {
   }
 
 
-  public static List<Configurable> buildConfigurablesList(final ConfigurableEP[] extensions, final Configurable[] components, @Nullable ConfigurableFilter filter) {
+  public static List<Configurable> buildConfigurablesList(final ConfigurableEP<Configurable>[] extensions,
+                                                          final Configurable[] components,
+                                                          @Nullable ConfigurableFilter filter,
+                                                          ExtensionPointName<ConfigurableEP<Configurable>> configurablesExtensionPoint) {
     List<Configurable> result = new ArrayList<Configurable>();
-    for (ConfigurableEP extension : extensions) {
-      ContainerUtil.addIfNotNull(ConfigurableWrapper.wrapConfigurable(extension), result);
+    Map<String, ConfigurableWrapper> idToConfigurable = new HashMap<String, ConfigurableWrapper>();
+    List<ConfigurableWrapper> orphans = new ArrayList<ConfigurableWrapper>();
+    for (ConfigurableEP<Configurable> ep : extensions) {
+      final Configurable configurable = ConfigurableWrapper.wrapConfigurable(ep);
+      if (configurable instanceof ConfigurableWrapper) {
+        ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+        if (wrapper.getParentId() != null) {
+          orphans.add(wrapper);
+        } else {
+          idToConfigurable.put(wrapper.getId(), wrapper);
+        }
+      }
+      else {
+//        dumpConfigurable(configurablesExtensionPoint, ep, configurable);
+        ContainerUtil.addIfNotNull(configurable, result);
+      }
     }
     ContainerUtil.addAll(result, components);
 
-    final Iterator<Configurable> iterator = result.iterator();
+    for (ConfigurableWrapper orphan : orphans) {
+      String parentId = orphan.getParentId();
+      ConfigurableWrapper parent = idToConfigurable.get(parentId);
+      LOG.assertTrue(parent != null, "Can't find parent for " + parentId + " (" + orphan + ")");
+      idToConfigurable.put(parentId, parent.addChild(orphan));
+    }
+
+    ContainerUtil.addAll(result, idToConfigurable.values());
+
+    final ListIterator<Configurable> iterator = result.listIterator();
     while (iterator.hasNext()) {
       Configurable each = iterator.next();
       if (each instanceof Configurable.Assistant
@@ -56,6 +84,59 @@ public class ConfigurableExtensionPointUtil {
 
     return result;
   }
+
+  /*
+  private static void dumpConfigurable(ExtensionPointName<ConfigurableEP<Configurable>> configurablesExtensionPoint,
+                                       ConfigurableEP<Configurable> ep,
+                                       Configurable configurable) {
+    if (configurable != null && !(configurable instanceof ConfigurableGroup)) {
+      if (ep.instanceClass != null && (configurable instanceof SearchableConfigurable) && (configurable instanceof Configurable.Composite)) {
+        Element element = dump(ep, configurable, StringUtil.getShortName(configurablesExtensionPoint.getName()));
+        final Configurable[] configurables = ((Configurable.Composite)configurable).getConfigurables();
+        for (Configurable child : configurables) {
+          final Element dump = dump(null, child, "configurable");
+          element.addContent(dump);
+        }
+        final StringWriter out = new StringWriter();
+        try {
+          new XMLOutputter(Format.getPrettyFormat()).output(element, out);
+        }
+        catch (IOException e) {
+        }
+        System.out.println(out);
+      }
+    }
+  }
+
+  private static Element dump(@Nullable ConfigurableEP ep,
+                              Configurable configurable, String name) {
+    Element element = new Element(name);
+    if (ep != null) {
+      element.setAttribute("instance", ep.instanceClass);
+      String id = ep.id == null ? ((SearchableConfigurable)configurable).getId() : ep.id;
+      element.setAttribute("id", id);
+    }
+    else {
+      element.setAttribute("instance", configurable.getClass().getName());
+      if (configurable instanceof SearchableConfigurable) {
+        element.setAttribute("id", ((SearchableConfigurable)configurable).getId());
+      }
+    }
+
+    CommonBundle.lastKey = null;
+    String displayName = configurable.getDisplayName();
+    if (CommonBundle.lastKey != null) {
+      element.setAttribute("key", CommonBundle.lastKey).setAttribute("bundle", CommonBundle.lastBundle);
+    }
+    else {
+      element.setAttribute("displayName", displayName);
+    }
+    if (configurable instanceof NonDefaultProjectConfigurable) {
+      element.setAttribute("nonDefaultProject", "true");
+    }
+    return element;
+  }
+  */
 
   /**
    * @deprecated create a new instance of configurable instead
@@ -71,8 +152,8 @@ public class ConfigurableExtensionPointUtil {
   }
 
   @NotNull
-  private static <T extends Configurable> T findConfigurable(ConfigurableEP[] extensions, Class<T> configurableClass) {
-    for (ConfigurableEP extension : extensions) {
+  private static <T extends Configurable> T findConfigurable(ConfigurableEP<Configurable>[] extensions, Class<T> configurableClass) {
+    for (ConfigurableEP<Configurable> extension : extensions) {
       if (extension.providerClass != null || extension.instanceClass != null || extension.implementationClass != null) {
         final Configurable configurable = extension.createConfigurable();
         if (configurableClass.isInstance(configurable)) {
@@ -94,8 +175,8 @@ public class ConfigurableExtensionPointUtil {
   }
 
   @Nullable
-  private static Configurable createConfigurableForProvider(ConfigurableEP[] extensions, Class<? extends ConfigurableProvider> providerClass) {
-    for (ConfigurableEP extension : extensions) {
+  private static Configurable createConfigurableForProvider(ConfigurableEP<Configurable>[] extensions, Class<? extends ConfigurableProvider> providerClass) {
+    for (ConfigurableEP<Configurable> extension : extensions) {
       if (extension.providerClass != null) {
         final Class<Object> aClass = extension.findClassNoExceptions(extension.providerClass);
         if (aClass != null && providerClass.isAssignableFrom(aClass)) {

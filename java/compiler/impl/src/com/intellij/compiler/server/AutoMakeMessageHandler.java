@@ -15,9 +15,12 @@
  */
 package com.intellij.compiler.server;
 
+import com.intellij.compiler.CompilerMessageImpl;
+import com.intellij.compiler.ProblemsView;
 import com.intellij.notification.Notification;
 import com.intellij.openapi.compiler.CompilationStatusListener;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -50,7 +53,11 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
   }
 
   @Override
-  protected void handleBuildEvent(CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event) {
+  public void buildStarted(UUID sessionId) {
+  }
+
+  @Override
+  protected void handleBuildEvent(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event) {
     if (myProject.isDisposed()) {
       return;
     }
@@ -76,13 +83,28 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
   }
 
   @Override
-  protected void handleCompileMessage(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message) {
+  protected void handleCompileMessage(final UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message) {
     if (myProject.isDisposed()) {
       return;
     }
     final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind kind = message.getKind();
-    if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR) {
+    if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.PROGRESS) {
+      final ProblemsView view = ProblemsView.SERVICE.getInstance(myProject);
+      if (message.hasDone()) {
+        view.setProgress(message.getText(), message.getDone());
+      }
+      else {
+        view.setProgress(message.getText());
+      }
+    }
+    else if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR) {
       informWolf(myProject, message);
+
+      final String sourceFilePath = message.hasSourceFilePath() ? message.getSourceFilePath() : null;
+      final VirtualFile vFile = sourceFilePath != null? LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(sourceFilePath)) : null;
+      final long line = message.hasLine() ? message.getLine() : -1;
+      final long column = message.hasColumn() ? message.getColumn() : -1;
+      ProblemsView.SERVICE.getInstance(myProject).addMessage(new CompilerMessageImpl(myProject, CompilerMessageCategory.ERROR, message.getText(), vFile, (int)line, (int)column, null), sessionId);
     }
   }
 
@@ -92,7 +114,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
   }
 
   @Override
-  public void sessionTerminated() {
+  public void sessionTerminated(UUID sessionId) {
     String statusMessage = null/*"Auto make completed"*/;
     switch (myBuildStatus) {
       case SUCCESS:
@@ -114,13 +136,17 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
         notification.notify(myProject);
       }
       myProject.putUserData(LAST_AUTO_MAKE_NOFITICATION, notification);
-    } else {
+    } 
+    else {
       Notification notification = myProject.getUserData(LAST_AUTO_MAKE_NOFITICATION);
       if (notification != null) {
         notification.expire();
         myProject.putUserData(LAST_AUTO_MAKE_NOFITICATION, null);
       }
     }
+    final ProblemsView view = ProblemsView.SERVICE.getInstance(myProject);
+    view.clearProgress();
+    view.clearOldMessages(null, sessionId);
   }
 
   private void informWolf(Project project, CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message) {

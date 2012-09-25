@@ -341,14 +341,10 @@
                   serviceImplementation="com.intellij.codeInspection.ex.ProjectInspectionProfilesVisibleTreeState"/>
 
   <!-- Editor -->
-  <applicationConfigurable instance="com.intellij.application.options.editor.EditorOptions" id="editor" order="after appearance"/>
+  <applicationConfigurable instance="com.intellij.application.options.editor.EditorOptions" id="editor" key="title.editor"
+                           bundle="messages.ApplicationBundle" order="after appearance" childrenEPName="com.intellij.editorOptionsProvider"/>
 
   <projectService serviceInterface="com.intellij.semantic.SemService" serviceImplementation="com.intellij.semantic.SemServiceImpl"/>
-
-  <!--
-    -->
-  <!-- Code Completion -->
-
 
   <!-- Global Code Style -->
   <projectConfigurable instance="com.intellij.application.options.CodeStyleSchemesConfigurable" order="after colors"/>
@@ -568,18 +564,20 @@
   <codeInsight.linkHandler prefix="#navigation/" handlerClass="com.intellij.codeInsight.hint.NavigationLinkHandler"/>
 
   <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.BaseCodeFoldingOptionsProvider" order="first"/>
-  <editorOptionsProvider instance="com.intellij.application.options.editor.EditorSmartKeysConfigurable"/>
-  <editorOptionsProvider instance="com.intellij.application.options.editor.EditorAppearanceConfigurable"/>
+  <editorOptionsProvider instance="com.intellij.application.options.editor.EditorSmartKeysConfigurable" id="editor.preferences.smartKeys"
+                         displayName="Smart Keys"/>
+  <editorOptionsProvider instance="com.intellij.application.options.editor.EditorAppearanceConfigurable" id="editor.preferences.appearance"
+                         key="tab.editor.settings.appearance" bundle="messages.ApplicationBundle"/>
   <editorCustomization implementation="com.intellij.ui.SoftWrapsEditorCustomization"/>
   <editorCustomization implementation="com.intellij.ui.HorizontalScrollBarEditorCustomization"/>
   <editorCustomization implementation="com.intellij.ui.AdditionalPageAtBottomEditorCustomization"/>
   <editorCustomization implementation="com.intellij.ui.OneLineEditorCustomization"/>
   <!-- Colors & Fonts-->
-  <editorOptionsProvider instance="com.intellij.application.options.colors.ColorAndFontOptions"/>
-  <editorOptionsProvider instance="com.intellij.application.options.editor.EditorTabsConfigurable"/>
-  <editorOptionsProvider instance="com.intellij.application.options.editor.CodeFoldingConfigurable"/>
-  <editorOptionsProvider instance="com.intellij.application.options.CodeCompletionOptions"/>
-  <editorOptionsProvider instance="com.intellij.application.options.editor.AutoImportOptionsConfigurable"/>
+  <editorOptionsProvider instance="com.intellij.application.options.colors.ColorAndFontOptions" id="reference.settingsdialog.IDE.editor.colors"/>
+  <editorOptionsProvider instance="com.intellij.application.options.editor.EditorTabsConfigurable" id="editor.preferences.tabs" displayName="Editor Tabs"/>
+  <editorOptionsProvider instance="com.intellij.application.options.editor.CodeFoldingConfigurable" id="editor.preferences.folding" key="group.code.folding" bundle="messages.ApplicationBundle"/>
+  <editorOptionsProvider instance="com.intellij.application.options.CodeCompletionOptions" id="editor.preferences.completion" key="title.code.completion" bundle="messages.ApplicationBundle"/>
+  <editorOptionsProvider instance="com.intellij.application.options.editor.AutoImportOptionsConfigurable" id="editor.preferences.import" key="auto.import" bundle="messages.ApplicationBundle"/>
 
   <editorTabColorProvider implementation="com.intellij.ui.tabs.EditorTabColorProviderImpl"/>
 
@@ -688,6 +686,8 @@
                   serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewImpl"/>
   <projectService serviceInterface="com.intellij.execution.ui.RunnerLayoutUi$Factory"
                   serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutUiFactoryImpl"/>
+  <projectService serviceInterface="com.intellij.compiler.ProblemsView"
+                  serviceImplementation="com.intellij.compiler.impl.ProblemsViewImpl"/>
 
   <http.fileEditorActionProvider implementation="com.intellij.openapi.fileEditor.impl.http.LangRemoteFileEditorActionProvider"/>
 

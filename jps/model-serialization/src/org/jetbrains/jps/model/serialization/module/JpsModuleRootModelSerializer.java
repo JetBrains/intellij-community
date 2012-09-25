@@ -10,6 +10,7 @@ import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.java.JpsJavaSdkTypeWrapper;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
@@ -82,6 +83,9 @@ public class JpsModuleRootModelSerializer {
         final JpsSdkType<?> sdkType = JpsSdkTableSerializer.getSdkType(sdkTypeId);
         dependenciesList.addSdkDependency(sdkType);
         JpsSdkTableSerializer.setSdkReference(module.getSdkReferencesTable(), sdkName, sdkType);
+        if (sdkType instanceof JpsJavaSdkTypeWrapper) {
+          dependenciesList.addSdkDependency(JpsJavaSdkType.INSTANCE);
+        }
       }
       else if (INHERITED_JDK_TYPE.equals(type)) {
         dependenciesList.addSdkDependency(projectSdkType != null ? projectSdkType : JpsJavaSdkType.INSTANCE);

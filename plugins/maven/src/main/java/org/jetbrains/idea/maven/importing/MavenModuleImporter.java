@@ -20,6 +20,8 @@ import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -46,14 +48,15 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MavenModuleImporter {
 
   public static final String PROFILE_PREFIX = "Annotation profile for ";
 
   public static final String MAVEN_DEFAULT_ANNOTATION_PROFILE = "Maven default annotation processors profile";
+
+  public static final String SUREFIRE_PLUGIN_LIBRARY_NAME = "maven-surefire-plugin urls";
 
   private final Module myModule;
   private final MavenProjectsTree myMavenTree;
@@ -201,6 +204,52 @@ public class MavenModuleImporter {
         myRootModelAdapter.addLibraryDependency(artifact, scope, myModifiableModelsProvider, myMavenProject);
       }
     }
+
+    configSurefirePlugin();
+  }
+
+  private void configSurefirePlugin() {
+    List<String> urls = new ArrayList<String>();
+
+    Element config = myMavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-surefire-plugin");
+    for (String each : MavenJDOMUtil.findChildrenValuesByPath(config, "additionalClasspathElements", "additionalClasspathElement")) {
+      urls.add(VfsUtil.pathToUrl(each));
+    }
+
+    LibraryTable moduleLibraryTable = myRootModelAdapter.getRootModel().getModuleLibraryTable();
+
+    Library library = moduleLibraryTable.getLibraryByName(SUREFIRE_PLUGIN_LIBRARY_NAME);
+    if (library == null) {
+      if (urls.isEmpty()) {
+        return;
+      }
+
+      library = moduleLibraryTable.createLibrary(SUREFIRE_PLUGIN_LIBRARY_NAME);
+      LibraryOrderEntry orderEntry = myRootModelAdapter.getRootModel().findLibraryOrderEntry(library);
+      orderEntry.setScope(DependencyScope.TEST);
+    }
+    else {
+      if (urls.isEmpty()) {
+        moduleLibraryTable.removeLibrary(library);
+        return;
+      }
+    }
+
+    String[] oldUrls = library.getUrls(OrderRootType.CLASSES);
+    if (!urls.equals(Arrays.asList(oldUrls))) {
+      Library.ModifiableModel modifiableModel = library.getModifiableModel();
+
+      for (String url : oldUrls) {
+        modifiableModel.removeRoot(url, OrderRootType.CLASSES);
+      }
+
+      for (String url : urls) {
+        modifiableModel.addRoot(url, OrderRootType.CLASSES);
+      }
+
+      modifiableModel.commit();
+    }
+
   }
 
   private void addAttachArtifactDependency(@NotNull Element buildHelperCfg,

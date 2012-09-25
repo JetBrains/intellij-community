@@ -15,7 +15,12 @@
  */
 package org.jetbrains.jps.devkit.model;
 
+import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsSimpleElement;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.library.JpsTypedLibrary;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsTypedModule;
 import org.jetbrains.jps.model.serialization.JpsSerializationTestCase;
@@ -32,5 +37,13 @@ public class JpsPluginProjectSerializationTest extends JpsSerializationTestCase 
     assertNotNull(pluginModule);
     String url = pluginModule.getProperties().getData().getPluginXmlUrl();
     assertEquals(getUrl("META-INF/plugin.xml"), url);
+
+    JpsTypedLibrary<JpsSdk<JpsDummyElement>> javaSdk = myModel.getGlobal().addSdk("1.6", null, null, JpsJavaSdkType.INSTANCE);
+    JpsSimpleElement<JpsIdeaSdkProperties> properties =
+      JpsElementFactory.getInstance().createSimpleElement(new JpsIdeaSdkProperties(null, "1.6"));
+    JpsTypedLibrary<JpsSdk<JpsSimpleElement<JpsIdeaSdkProperties>>> pluginSdk = myModel.getGlobal()
+      .addSdk("IDEA plugin SDK", null, null, JpsIdeaSdkType.INSTANCE, properties);
+    assertSame(pluginSdk.getProperties(), module.getSdk(JpsIdeaSdkType.INSTANCE));
+    assertSame(javaSdk.getProperties(), module.getSdk(JpsJavaSdkType.INSTANCE));
   }
 }

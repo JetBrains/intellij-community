@@ -26,7 +26,7 @@ public class BuildDataManager implements StorageOwner {
   private static final String MAPPINGS_STORAGE = "mappings";
 
   private final Object mySourceToOutputLock = new Object();
-  private final Map<BuildTarget, SourceToOutputMapping> mySourceToOutputs = new HashMap<BuildTarget, SourceToOutputMapping>();
+  private final Map<BuildTarget<?>, SourceToOutputMapping> mySourceToOutputs = new HashMap<BuildTarget<?>, SourceToOutputMapping>();
 
   private final SourceToFormMapping mySrcToFormMap;
   private final ArtifactsBuildData myArtifactsBuildData;
@@ -50,7 +50,7 @@ public class BuildDataManager implements StorageOwner {
     return new File(myDataStorageRoot, "output-roots");
   }
 
-  public SourceToOutputMapping getSourceToOutputMap(final BuildTarget target) throws IOException {
+  public SourceToOutputMapping getSourceToOutputMap(final BuildTarget<?> target) throws IOException {
     SourceToOutputMapping mapping;
     synchronized (mySourceToOutputLock) {
       mapping = mySourceToOutputs.get(target);

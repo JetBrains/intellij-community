@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties;
 
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 /**
@@ -22,10 +23,9 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
  */
 public class PropertiesFoldingTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  private static final String BASE_PATH = "/plugins/properties/testData/propertiesFile/folding/";
-
-  protected String getBasePath() {
-    return BASE_PATH;
+  @Override
+  protected String getTestDataPath() {
+    return PluginPathManager.getPluginHomePath("properties") + "/testData/propertiesFile/folding/";
   }
 
   private void doTest() {

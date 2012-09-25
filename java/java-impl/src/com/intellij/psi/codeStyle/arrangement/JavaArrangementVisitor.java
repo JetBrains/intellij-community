@@ -93,6 +93,20 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
 
   @Override
   public void visitField(PsiField field) {
+    // There is a possible case that more than one field is declared at the same line like 'int i, j;'. We want to process only
+    // the first one then.
+    for (PsiElement e = field.getPrevSibling(); e != null; e = e.getPrevSibling()) {
+      if (e instanceof PsiWhiteSpace) {
+        continue;
+      }
+      if (e instanceof PsiJavaToken && ((PsiJavaToken)e).getTokenType() == JavaTokenType.COMMA) {
+        return;
+      }
+      else {
+        break;
+      }
+    }
+
     JavaElementArrangementEntry entry = createNewEntry(field, ArrangementEntryType.FIELD, field.getName(), true);
     processEntry(entry, field, field.getInitializer());
   }
@@ -239,7 +253,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     DefaultArrangementEntry current = getCurrent();
     JavaElementArrangementEntry entry;
     if (canArrange) {
-      TextRange expandedRange = myDocument == null ? null : ArrangementUtil.expandToLine(range, myDocument.getCharsSequence());
+      TextRange expandedRange = myDocument == null ? null : ArrangementUtil.expandToLine(range, myDocument);
       TextRange rangeToUse = expandedRange == null ? range : expandedRange;
       entry = new JavaElementArrangementEntry(current, rangeToUse, type, name, myDocument == null || expandedRange != null);
     }

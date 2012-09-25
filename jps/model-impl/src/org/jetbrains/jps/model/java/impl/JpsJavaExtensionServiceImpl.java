@@ -14,6 +14,7 @@ import org.jetbrains.jps.model.java.impl.compiler.JpsJavaCompilerConfigurationIm
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
+import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.*;
 
 import java.io.File;
@@ -159,6 +160,13 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
       configuration = project.getContainer().setChild(JpsJavaCompilerConfigurationImpl.ROLE, new JpsJavaCompilerConfigurationImpl());
     }
     return configuration;
+  }
+
+  @NotNull
+  @Override
+  public JpsSdkReference<JpsDummyElement> createWrappedJavaSdkReference(@NotNull JpsJavaSdkTypeWrapper sdkType,
+                                                                        @NotNull JpsSdkReference<?> wrapperReference) {
+    return new JpsWrappedJavaSdkReferenceImpl(sdkType, wrapperReference);
   }
 
   @Override

@@ -15,10 +15,11 @@
 */
 package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ide.passwordSafe.MasterPasswordUnavailableException;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -57,7 +58,7 @@ public class MasterPasswordDialog extends DialogWrapper {
    * @param project the current project
    * @param safe
    */
-  protected MasterPasswordDialog(Project project, MasterKeyPasswordSafe safe) {
+  protected MasterPasswordDialog(@Nullable Project project, MasterKeyPasswordSafe safe) {
     super(project, false);
     setTitle("Master Password");
     if (!safe.isOsProtectedPasswordSupported()) {
@@ -103,7 +104,7 @@ public class MasterPasswordDialog extends DialogWrapper {
    * @param safe    the password safe
    * @throws PasswordSafeException if the master password is not provided.
    */
-  public static void askPassword(Project project, MasterKeyPasswordSafe safe) throws PasswordSafeException {
+  public static void askPassword(@Nullable Project project, MasterKeyPasswordSafe safe) throws PasswordSafeException {
     // trying empty password: people who have set up empty password, don't want to get disturbed by the prompt.
     if (safe.setMasterPassword("")) {
       return;

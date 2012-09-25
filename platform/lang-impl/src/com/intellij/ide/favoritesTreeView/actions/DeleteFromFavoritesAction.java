@@ -27,8 +27,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.AnActionButton;
+import com.intellij.util.containers.hash.HashMap;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author anna
@@ -51,7 +54,8 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
     FavoritesTreeNodeDescriptor[] roots = FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS_DATA_KEY.getData(dataContext);
     final DnDAwareTree tree = FavoritesTreeViewPanel.FAVORITES_TREE_KEY.getData(dataContext);
 
-    assert roots != null;
+    assert roots != null && tree != null;
+    Map<String, List<Object>> toRemove = new HashMap<String, List<Object>>();
     for (FavoritesTreeNodeDescriptor root : roots) {
       final AbstractTreeNode node = root.getElement();
       if (node instanceof FavoritesListNode) {
@@ -62,14 +66,16 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
         LOG.assertTrue(value != null, node);
         final FavoritesListNode listNode = FavoritesTreeUtil.extractParentList(root);
         LOG.assertTrue(listNode != null);
-
-        //final List<AbstractTreeNode> pathToSelected = FavoritesTreeUtil.getLogicalPathToSelected(tree);
-        //favoritesManager.removeRoot(listNode.getName(), pathToSelected);
-        final List<Integer> pathTo = FavoritesTreeUtil.getLogicalIndexPathTo(tree.getSelectionPath());
-        if (pathTo != null) {
-          favoritesManager.removeRootByIndexes(listNode.getName(), pathTo);
+        final String name = listNode.getName();
+        if (! toRemove.containsKey(name)) {
+          toRemove.put(name, new ArrayList<Object>());
         }
+        toRemove.get(name).add(value);
       }
+    }
+
+    for (String key : toRemove.keySet()) {
+      favoritesManager.removeRootByElements(key, toRemove.get(key));
     }
   }
 

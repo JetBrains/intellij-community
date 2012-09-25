@@ -1628,6 +1628,21 @@ public class ContainerUtil extends ContainerUtilRt {
 
   }
 
+  public static <T> boolean equalsIdentity(List<T> list1, List<T> list2) {
+    int listSize = list1.size();
+    if (list2.size() != listSize) {
+      return false;
+    }
+
+    for (int i = 0; i < listSize; i++) {
+      if (list1.get(i) != list2.get(i)) {
+        return false;
+      }
+    }
+    return true;
+
+  }
+
   public static <T> int indexOf(List<T> list, Condition<T> condition) {
     for (int i = 0, listSize = list.size(); i < listSize; i++) {
       T t = list.get(i);

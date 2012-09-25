@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -43,6 +46,7 @@ import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -56,9 +60,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author mike
@@ -71,27 +73,38 @@ public class StorageUtil {
   }
 
   public static void notifyUnknownMacros(@NotNull final TrackingPathMacroSubstitutor substitutor, @NotNull final Project project, @Nullable final String componentName) {
-    Collection<String> macros = substitutor.getUnknownMacros(componentName);
-    if (!macros.isEmpty()) {
-      final UnknownMacroNotification[] notifications =
-        NotificationsManager.getNotificationsManager().getNotificationsOfType(UnknownMacroNotification.class, project);
-      for (final UnknownMacroNotification notification : notifications) {
-        macros = ContainerUtil.subtract(macros, notification.getMacros());
-      }
-
-      if (!macros.isEmpty()) {
-        Notifications.Bus.notify(new UnknownMacroNotification("Load Error", "Load error: undefined path variables!",
-                                                              String.format("<p><i>%s</i> %s undefined. <a href=\"define\">Fix it</a>.</p>",
-                                                                            StringUtil.join(macros, ", "),
-                                                                            macros.size() == 1 ? "is" : "are"), NotificationType.ERROR,
-                                                              new NotificationListener() {
-                                                                public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                                            @NotNull HyperlinkEvent event) {
-                                                                  ((ProjectEx)project).checkUnknownMacros(true);
-                                                                }
-                                                              }, macros), project);
-      }
+    final LinkedHashSet<String> macros = new LinkedHashSet<String>(substitutor.getUnknownMacros(componentName));
+    if (macros.isEmpty()) {
+      return;
     }
+
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        macros.removeAll(getMacrosFromExistingNotifications(project));
+
+        if (!macros.isEmpty()) {
+          String content = String.format("<p><i>%s</i> %s undefined. <a href=\"define\">Fix it</a>.</p>",
+                                         StringUtil.join(macros, ", "),
+                                         macros.size() == 1 ? "is" : "are");
+          new UnknownMacroNotification("Load Error", "Load error: undefined path variables!",
+                                       content, NotificationType.ERROR,
+                                       new NotificationListener() {
+                                         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+                                           ((ProjectEx)project).checkUnknownMacros(true);
+                                         }
+                                       }, macros).notify(project);
+        }
+      }
+    });
+  }
+
+  private static List<String> getMacrosFromExistingNotifications(Project project) {
+    List<String> notified = ContainerUtil.newArrayList();
+    NotificationsManager manager = NotificationsManager.getNotificationsManager();
+    for (final UnknownMacroNotification notification : manager.getNotificationsOfType(UnknownMacroNotification.class, project)) {
+      notified.addAll(notification.getMacros());
+    }
+    return notified;
   }
 
   static VirtualFile save(final IFile file, final Parent element, final Object requestor) throws StateStorageException {

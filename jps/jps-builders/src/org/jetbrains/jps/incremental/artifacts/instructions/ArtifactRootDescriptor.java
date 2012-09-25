@@ -19,12 +19,18 @@ public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
   private final SourceFileFilter myFilter;
   private final int myRootIndex;
   private final ArtifactBuildTarget myTarget;
+  private final DestinationInfo myDestinationInfo;
 
-  protected ArtifactRootDescriptor(File root, @NotNull SourceFileFilter filter, int index, ArtifactBuildTarget target) {
+  protected ArtifactRootDescriptor(File root,
+                                   @NotNull SourceFileFilter filter,
+                                   int index,
+                                   ArtifactBuildTarget target,
+                                   @NotNull DestinationInfo destinationInfo) {
     myRoot = root;
     myFilter = filter;
     myRootIndex = index;
     myTarget = target;
+    myDestinationInfo = destinationInfo;
   }
 
   public final String getArtifactName() {
@@ -40,6 +46,7 @@ public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
 
   public void writeConfiguration(PrintWriter out) {
     out.println(getFullPath());
+    out.println("->" + myDestinationInfo.getOutputPath());
   }
 
   public ArtifactBuildTarget getTarget() {
@@ -63,6 +70,10 @@ public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
 
   public SourceFileFilter getFilter() {
     return myFilter;
+  }
+
+  public DestinationInfo getDestinationInfo() {
+    return myDestinationInfo;
   }
 
   public int getRootIndex() {

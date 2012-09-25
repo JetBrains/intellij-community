@@ -121,7 +121,7 @@ public class HighlightMethodUtil {
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
       PsiType declaredReturnType = superMethod.getReturnType();
-      PsiType superReturnType = superMethodSignature.getSubstitutor().substitute(declaredReturnType);
+      PsiType superReturnType = declaredReturnType;
       if (superMethodSignature.isRaw()) superReturnType = TypeConversionUtil.erasure(declaredReturnType);
       if (returnType == null || superReturnType == null || method == superMethod) continue;
       PsiClass superClass = superMethod.getContainingClass();
@@ -151,10 +151,10 @@ public class HighlightMethodUtil {
                                                                                                   superMethodSignature);
       substitutedSuperReturnType = unifyingSubstitutor == null
                                    ? superReturnType
-                                   : unifyingSubstitutor.substitute(superMethodSignature.getSubstitutor().substitute(superReturnType));
+                                   : unifyingSubstitutor.substitute(superReturnType);
     }
     else {
-      substitutedSuperReturnType = TypeConversionUtil.erasure(superReturnType);
+      substitutedSuperReturnType = TypeConversionUtil.erasure(superMethodSignature.getSubstitutor().substitute(superReturnType));
     }
 
     if (returnType.equals(substitutedSuperReturnType)) return null;

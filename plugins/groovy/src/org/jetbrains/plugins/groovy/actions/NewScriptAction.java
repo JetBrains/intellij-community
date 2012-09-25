@@ -19,7 +19,7 @@ package org.jetbrains.plugins.groovy.actions;
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
 import com.intellij.ide.actions.JavaCreateTemplateInPackageAction;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFile> implements DumbAware {
   private static final String GROOVY_DSL_SCRIPT_TMPL = "GroovyDslScript.gdsl";
+  public static final String GROOVY_SCRIPT_TMPL = "GroovyScript.groovy";
 
   public NewScriptAction() {
     super(GroovyBundle.message("newscript.menu.action.text"), GroovyBundle.message("newscript.menu.action.description"),
@@ -45,13 +46,13 @@ public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFil
   protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(GroovyBundle.message("newscript.dlg.prompt"))
-      .addKind("Groovy script", JetgroovyIcons.Groovy.Groovy_16x16, "GroovyScript.groovy")
+      .addKind("Groovy script", JetgroovyIcons.Groovy.Groovy_16x16, GROOVY_SCRIPT_TMPL)
       .addKind("GroovyDSL script", JetgroovyIcons.Groovy.Groovy_16x16, GROOVY_DSL_SCRIPT_TMPL);
   }
 
   @Override
   protected boolean isAvailable(DataContext dataContext) {
-    return super.isAvailable(dataContext) && LibrariesUtil.hasGroovySdk(DataKeys.MODULE.getData(dataContext));
+    return super.isAvailable(dataContext) && LibrariesUtil.hasGroovySdk(LangDataKeys.MODULE.getData(dataContext));
   }
 
   @Override
@@ -66,8 +67,8 @@ public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFil
 
   @NotNull
   protected GroovyFile doCreate(PsiDirectory directory, String newName, String templateName) throws IncorrectOperationException {
-    PsiFile file =
-      GroovyTemplatesFactory.createFromTemplate(directory, newName, newName + "." + extractExtension(templateName), templateName);
+    String fileName = newName + "." + extractExtension(templateName);
+    PsiFile file = GroovyTemplatesFactory.createFromTemplate(directory, newName, fileName, templateName);
     if (file instanceof GroovyFile) return (GroovyFile)file;
     final String description = file.getFileType().getDescription();
     throw new IncorrectOperationException(GroovyBundle.message("groovy.file.extension.is.not.mapped.to.groovy.file.type", description));
@@ -79,6 +80,4 @@ public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFil
     }
     return GroovyFileType.DEFAULT_EXTENSION;
   }
-
-
 }

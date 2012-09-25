@@ -65,7 +65,10 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
   public void testSameNames() throws Exception {
     doTest(true, 0);
   }
-  
+  public void testCorrectThisRefs() throws Exception {
+    doTest(true, 0);
+  }
+   
   public void testSameNamesRecursion() throws Exception {
     doTest(true, 0);
   }

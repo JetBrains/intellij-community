@@ -142,7 +142,7 @@ public abstract class ConnectionOnProcess implements IConnection {
 
   protected synchronized void execute(GeneralCommandLine commandLine) throws AuthenticationException {
     try {
-      commandLine.setEnvParams(EnvironmentUtil.getEnviromentProperties());
+      commandLine.setEnvParams(EnvironmentUtil.getEnvironmentProperties());
       myProcess = commandLine.createProcess();
 
       myErrThread = new ReadProcessThread(

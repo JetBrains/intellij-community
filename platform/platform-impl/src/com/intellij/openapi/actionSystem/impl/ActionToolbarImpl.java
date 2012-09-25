@@ -62,7 +62,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionToolbarImpl");
 
   private static List<ActionToolbarImpl> ourToolbars = new LinkedList<ActionToolbarImpl>();
-
   public static void updateAllToolbarsImmediately() {
     for (ActionToolbarImpl toolbar : new ArrayList<ActionToolbarImpl>(ourToolbars)) {
       toolbar.updateActionsImmediately();
@@ -83,6 +82,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private final List<Rectangle> myComponentBounds = new ArrayList<Rectangle>();
 
   private Dimension myMinimumButtonSize = new Dimension(0, 0);
+
   /**
    * @see ActionToolbar#getLayoutPolicy()
    */
@@ -94,6 +94,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private List<AnAction> myNewVisibleActions;
   protected List<AnAction> myVisibleActions;
   private final PresentationFactory myPresentationFactory;
+  private final boolean myDecorateButtons;
   /**
    * @see ActionToolbar#adjustTheSameSize(boolean)
    */
@@ -132,12 +133,22 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
                            DataManager dataManager,
                            ActionManagerEx actionManager,
                            KeymapManagerEx keymapManager) {
-    this(place, actionGroup, horizontal, dataManager, actionManager, keymapManager, false);
+    this(place, actionGroup, horizontal, false, dataManager, actionManager, keymapManager, false);
+  }
+  public ActionToolbarImpl(final String place,
+                           @NotNull final ActionGroup actionGroup,
+                           final boolean horizontal,
+                           final boolean decorateButtons,
+                           DataManager dataManager,
+                           ActionManagerEx actionManager,
+                           KeymapManagerEx keymapManager) {
+    this(place, actionGroup, horizontal, decorateButtons, dataManager, actionManager, keymapManager, false);
   }
 
   public ActionToolbarImpl(final String place,
                            @NotNull final ActionGroup actionGroup,
                            final boolean horizontal,
+                           final boolean decorateButtons,
                            DataManager dataManager,
                            ActionManagerEx actionManager,
                            KeymapManagerEx keymapManager,
@@ -152,6 +163,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     myVisibleActions = new ArrayList<AnAction>();
     myNewVisibleActions = new ArrayList<AnAction>();
     myDataManager = dataManager;
+    myDecorateButtons = decorateButtons;
 
     setLayout(new BorderLayout());
     setOrientation(horizontal ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
@@ -305,7 +317,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   private ActionButton createToolbarButton(final AnAction action) {
-    return createToolbarButton(action, myMinimalMode ? myMinimalButtonLook : myButtonLook, myPlace, myPresentationFactory.getPresentation(action), myMinimumButtonSize);
+    return createToolbarButton(action, myMinimalMode ? myMinimalButtonLook : myDecorateButtons ? new MacToolbarDecoratorButtonLook() : myButtonLook, myPlace, myPresentationFactory.getPresentation(action), myMinimumButtonSize);
   }
 
   public void doLayout() {
@@ -1085,7 +1097,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
                         final ActionManagerEx actionManager,
                         final KeymapManagerEx keymapManager,
                         JComponent parent) {
-      super(place, actionGroup, horizontal, dataManager, actionManager, keymapManager, true);
+      super(place, actionGroup, horizontal, false, dataManager, actionManager, keymapManager, true);
       myActionManager.addAnActionListener(this);
       myParent = parent;
     }
@@ -1212,7 +1224,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
       }
 
-      setMinimumButtonSize(DEFAULT_MINIMUM_BUTTON_SIZE);
+      setMinimumButtonSize(myDecorateButtons ? new Dimension(30, 20) : DEFAULT_MINIMUM_BUTTON_SIZE);
       setOpaque(true);
       setLayoutPolicy(AUTO_LAYOUT_POLICY);
     }

@@ -471,7 +471,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       updateListHeight(listModel);
 
       myList.setSelectedIndex(toSelect);
-      return !oldModel.equals(items);
+      return !ContainerUtil.equalsIdentity(oldModel, items);
     }
 
   }

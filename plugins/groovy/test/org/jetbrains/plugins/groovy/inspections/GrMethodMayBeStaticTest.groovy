@@ -70,4 +70,23 @@ class A {
     myFixture.enableInspections(GrMethodMayBeStaticInspection)
     myFixture.checkHighlighting(true, false, false)
   }
+
+  void testOtherClasses() {
+    myFixture.with {
+      addFileToProject('Fooo.groovy', '''\
+class Fooo {
+  static def foo() {}
+}
+''')
+      configureByText('_.groovy', '''\
+class Bar {
+  static def abc()
+  def bar() {
+    abc()
+    Fooo.foo()
+  }
+}
+''')
+    }
+  }
 }

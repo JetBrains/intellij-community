@@ -19,42 +19,54 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.ui.HtmlListCellRenderer;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
  * @author yole
 */
-public class SdkListCellRenderer extends HtmlListCellRenderer<Sdk> {
-  private String myNullText = "";
-  private boolean myShowHomePath;
+public class SdkListCellRenderer extends ColoredListCellRendererWrapper<Sdk> {
+  private final String myNullText;
+  private final boolean myShowHomePath;
 
-  public SdkListCellRenderer(final ListCellRenderer listCellRenderer) {
-    super();
+  public SdkListCellRenderer(@NotNull String nullText) {
+    this(nullText, false);
   }
 
-  public SdkListCellRenderer(final String nullText, final ListCellRenderer listCellRenderer) {
-    super();
-    myNullText = nullText;
-  }
-
-  public SdkListCellRenderer(final String nullText, final boolean showHomePath, final ListCellRenderer listCellRenderer) {
-    super();
+  public SdkListCellRenderer(@NotNull String nullText, boolean showHomePath) {
     myNullText = nullText;
     myShowHomePath = showHomePath;
+  }
+
+  /** @deprecated use {@linkplain #SdkListCellRenderer(String)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
+  public SdkListCellRenderer(final ListCellRenderer listCellRenderer) {
+    this("");
+  }
+
+  /** @deprecated use {@linkplain #SdkListCellRenderer(String)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
+  public SdkListCellRenderer(final String nullText, final ListCellRenderer listCellRenderer) {
+    this(nullText);
+  }
+
+  /** @deprecated use {@linkplain #SdkListCellRenderer(String, boolean)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
+  public SdkListCellRenderer(final String nullText, final boolean showHomePath, final ListCellRenderer listCellRenderer) {
+    this(nullText, showHomePath);
   }
 
   @Override
   protected void doCustomize(final JList list, final Sdk sdk, final int index, final boolean selected, final boolean hasFocus) {
     if (sdk != null) {
-      // icon
       setIcon(getSdkIcon(sdk));
-      // text
       append(sdk.getName());
       if (myShowHomePath) {
-        append(" (" + FileUtil.toSystemDependentName(sdk.getHomePath()) + ")",
+        append(" (" + FileUtil.toSystemDependentName(StringUtil.notNullize(sdk.getHomePath())) + ")",
                selected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     }

@@ -187,7 +187,10 @@
                            bundle="messages.IdeBundle"/>
 
   <!-- Keymap -->
-  <applicationConfigurable instance="com.intellij.openapi.keymap.impl.ui.KeymapConfigurable"/>
+  <applicationConfigurable instance="com.intellij.openapi.keymap.impl.ui.KeymapPanel" id="preferences.keymap" key="keymap.display.name"
+                           bundle="messages.KeyMapBundle"/>
+  <applicationConfigurable instance="com.intellij.openapi.keymap.impl.ui.QuickListsPanel" id="reference.idesettings.quicklists"
+                           displayName="Quick Lists"/>
 
   <!-- Customizations -->
   <applicationConfigurable instance="com.intellij.ide.ui.customization.CustomizationConfigurable" id="preferences.customizations"
@@ -244,6 +247,7 @@
   <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsUsagesCollector"/>
   <statistics.usagesCollector implementation="com.intellij.internal.statistic.UsageTrigger$MyCollector"/>
   <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeSettingsUsagesCollector"/>
+  <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.LaFUsagesCollector"/>
 
   <applicationConfigurable instance="com.intellij.internal.statistic.configurable.StatisticsConfigurable" id="usage.statistics"
                            displayName="Usage Statistics"/>

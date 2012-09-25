@@ -202,7 +202,10 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     if (anchor != null) {
       getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchor.getNode());
     }
-    return (GrStatement) result;
+    else {
+      getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", result.getNode());
+    }
+    return (GrStatement)result;
   }
 
   public void removeVariable(GrVariable variable) {

@@ -49,11 +49,11 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
     final PsiMethod method = queryParameters.getMethod();
     SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(queryParameters.getScope()).intersectWith(getUseScope(method));
 
-    orderSearching(searchScope, method.getName(), queryParameters.getOptimizer());
+    orderSearching(searchScope, method.getName(), queryParameters.getOptimizer(), method.getParameterList().getParametersCount());
 
     final String propName = PropertyUtil.getPropertyName(method);
     if (propName != null) {
-      orderSearching(searchScope, propName, queryParameters.getOptimizer());
+      orderSearching(searchScope, propName, queryParameters.getOptimizer(), -1);
     }
   }
 
@@ -71,7 +71,7 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
   }
 
 
-  private static void orderSearching(SearchScope searchScope, final String name, @NotNull SearchRequestCollector collector) {
+  private static void orderSearching(SearchScope searchScope, final String name, @NotNull SearchRequestCollector collector, final int paramCount) {
     collector.searchWord(name, searchScope, UsageSearchContext.IN_CODE, true, new RequestResultProcessor("groovy.lateBound") {
       @Override
       public boolean processTextOccurrence(PsiElement element, int offsetInElement, Processor<PsiReference> consumer) {
@@ -83,7 +83,13 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
         if (!name.equals(ref.getReferenceName()) || PsiUtil.isLValue(ref) || ref.resolve() != null) {
           return true;
         }
-        if (!(ref.getParent() instanceof GrMethodCall) && ResolveUtil.isKeyOfMap(ref)) {
+
+        PsiElement parent = ref.getParent();
+        if (parent instanceof GrMethodCall) {
+          if (!argumentsMatch((GrMethodCall)parent, paramCount)) {
+            return true;
+          }
+        } else if (ResolveUtil.isKeyOfMap(ref)) {
           return true;
         }
 
@@ -92,4 +98,11 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
     });
   }
 
+  private static boolean argumentsMatch(GrMethodCall call, int paramCount) {
+    int argCount = call.getExpressionArguments().length;
+    if (call.getNamedArguments().length > 0) {
+      argCount++;
+    }
+    return argCount == paramCount;
+  }
 }

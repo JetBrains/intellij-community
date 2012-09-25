@@ -29,9 +29,9 @@ public interface ArtifactCompilerInstructionCreator {
 
   void addDirectoryCopyInstructions(@NotNull File directory);
 
-  void addExtractDirectoryInstruction(@NotNull File jarFile, @NotNull String pathInJar);
-
   void addDirectoryCopyInstructions(@NotNull File directory, @Nullable SourceFileFilter filter);
+
+  void addExtractDirectoryInstruction(@NotNull File jarFile, @NotNull String pathInJar);
 
   ArtifactCompilerInstructionCreator subFolder(@NotNull String directoryName);
 

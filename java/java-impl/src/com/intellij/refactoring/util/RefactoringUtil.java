@@ -685,7 +685,7 @@ public class RefactoringUtil {
     if (occurrences.length > 1) {
       for (PsiElement occurrence : occurrences) {
         final RangeMarker rangeMarker = occurrence.getUserData(ElementToWorkOn.TEXT_RANGE);
-        if (rangeMarker != null) {
+        if (rangeMarker != null && rangeMarker.isValid()) {
           highlightManager
             .addRangeHighlight(editor, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), attributes, true, highlighters);
         }

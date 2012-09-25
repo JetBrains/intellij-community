@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -314,7 +315,10 @@ public class ReplaceInProjectManager {
 
   public static void reportNumberReplacedOccurences(Project project, int occurrences) {
     if (occurrences != 0) {
-      WindowManager.getInstance().getStatusBar(project).setInfo(FindBundle.message("0.occurrences.replaced", occurrences));
+      final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+      if (statusBar != null) {
+        statusBar.setInfo(FindBundle.message("0.occurrences.replaced", occurrences));
+      }
     }
   }
 

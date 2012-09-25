@@ -17,8 +17,8 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.options.AbstractConfigurableEP;
 import com.intellij.openapi.options.CompositeConfigurable;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +35,7 @@ public class AutoImportOptionsConfigurable extends CompositeConfigurable<AutoImp
 
   @Override
   protected List<AutoImportOptionsProvider> createConfigurables() {
-    return AbstractConfigurableEP.createConfigurables(AutoImportOptionsProviderEP.EP_NAME);
+    return ConfigurableWrapper.createConfigurables(AutoImportOptionsProviderEP.EP_NAME);
   }
 
   @Override

@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.AfterNewClassInsertHandler;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -48,9 +50,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -220,7 +222,12 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     final GrExpression expression = PsiTreeUtil.getParentOfType(place, GrExpression.class);
     if (expression == null) return;
 
-    final Set<PsiType> types = GroovyExpectedTypesProvider.getDefaultExpectedTypes(expression);
+    GrExpression placeToInferType = expression;
+    if (expression.getParent() instanceof GrApplicationStatement && expression.getParent().getParent() instanceof GrAssignmentExpression) {
+      placeToInferType = (GrExpression)expression.getParent();
+    }
+
+    final Set<PsiType> types = GroovyExpectedTypesProvider.getDefaultExpectedTypes(placeToInferType);
     for (PsiType type : types) {
       if (type instanceof PsiArrayType) {
         final LookupItem item = PsiTypeLookupItem.createLookupItem(GenericsUtil.eliminateWildcards(type), place);
@@ -271,9 +278,36 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     if (!(parent instanceof GrNewExpression)) return null;
 
     final PsiElement pparent = parent.getParent();
-    if (!(pparent instanceof GrVariable)) return null;
 
-    return ((GrVariable)pparent).getDeclaredType();
+    if (pparent instanceof GrVariable) {
+      return ((GrVariable)pparent).getDeclaredType();
+    }
+    else if (pparent instanceof GrAssignmentExpression) {
+      GrAssignmentExpression assignment = (GrAssignmentExpression)pparent;
+      IElementType optoken = assignment.getOperationToken();
+
+      GrExpression lvalue = assignment.getLValue();
+      GrExpression rvalue = assignment.getRValue();
+
+      if (parent == rvalue && optoken == GroovyTokenTypes.mASSIGN) {
+        return lvalue.getNominalType();
+      }
+    }
+    else if (pparent instanceof GrApplicationStatement) {
+      PsiElement ppparent = pparent.getParent();
+      if (ppparent instanceof GrAssignmentExpression) {
+        GrAssignmentExpression assignment = (GrAssignmentExpression)ppparent;
+        IElementType optoken = assignment.getOperationToken();
+
+        GrExpression lvalue = assignment.getLValue();
+        GrExpression rvalue = assignment.getRValue();
+
+        if (pparent == rvalue && optoken == GroovyTokenTypes.mASSIGN) {
+          return lvalue.getNominalType();
+        }
+      }
+    }
+    return null;
   }
 
   @Override

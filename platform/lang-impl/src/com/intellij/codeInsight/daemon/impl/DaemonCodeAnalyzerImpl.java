@@ -147,18 +147,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     Disposer.register(project, myFileStatusMap);
     DaemonProgressIndicator.setDebug(LOG.isDebugEnabled());
 
-
     assert !myInitialized : "Double Initializing";
     Disposer.register(myProject, new StatusBarUpdater(myProject));
 
-    //myDaemonListeners = new DaemonListeners(myProject, this, editorTracker, editorFactory,
-    //                                        psiDocumentManager, commandProcessor,
-    //                                        editorColorsManager, application,
-    //                                        inspectionProfileManager, inspectionProjectProfileManager,
-    //                                        todoConfiguration, actionManagerEx,
-    //                                        virtualFileManager, namedScopeManager,
-    //                                        dependencyValidationManager);
-    //Disposer.register(myProject, myDaemonListeners);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -782,7 +773,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   public boolean canChangeFileSilently(@NotNull PsiFileSystemItem file) {
-    return DaemonListeners.getInstance(myProject).canChangeFileSilently(file);
+    DaemonListeners listeners = DaemonListeners.getInstance(myProject);
+    return listeners == null || listeners.canChangeFileSilently(file);
   }
 
   @Override

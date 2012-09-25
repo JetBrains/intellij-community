@@ -213,7 +213,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           final PsiFile file = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
             @Override
             public PsiFile compute() {
-              return myManager.findFile(vfile);
+              return vfile.isValid() ? myManager.findFile(vfile) : null;
             }
           });
           if (file != null && !(file instanceof PsiBinaryFile)) {
@@ -330,17 +330,17 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
 
   @Override
-  public void processUsagesInNonJavaFiles(@NotNull String qName,
-                                          @NotNull PsiNonJavaFileReferenceProcessor processor,
-                                          @NotNull GlobalSearchScope searchScope) {
-    processUsagesInNonJavaFiles(null, qName, processor, searchScope);
+  public boolean processUsagesInNonJavaFiles(@NotNull String qName,
+                                             @NotNull PsiNonJavaFileReferenceProcessor processor,
+                                             @NotNull GlobalSearchScope searchScope) {
+    return processUsagesInNonJavaFiles(null, qName, processor, searchScope);
   }
 
   @Override
-  public void processUsagesInNonJavaFiles(@Nullable final PsiElement originalElement,
-                                          @NotNull String qName,
-                                          @NotNull final PsiNonJavaFileReferenceProcessor processor,
-                                          @NotNull final GlobalSearchScope initialScope) {
+  public boolean processUsagesInNonJavaFiles(@Nullable final PsiElement originalElement,
+                                             @NotNull String qName,
+                                             @NotNull final PsiNonJavaFileReferenceProcessor processor,
+                                             @NotNull final GlobalSearchScope initialScope) {
     if (qName.length() == 0) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
@@ -383,10 +383,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }.execute().getResultObject();
 
     final Ref<Boolean> cancelled = new Ref<Boolean>(Boolean.FALSE);
-    final GlobalSearchScope finalScope = initialScope;
     for (int i = 0; i < files.length; i++) {
       if (progress != null) progress.checkCanceled();
-
       final PsiFile psiFile = files[i];
 
       ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -397,7 +395,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           for (int index = LowLevelSearchUtil.searchWord(text, textArray, 0, text.length(), searcher, progress); index >= 0;) {
             PsiReference referenceAt = psiFile.findReferenceAt(index);
             if (referenceAt == null || useScope == null ||
-                !PsiSearchScopeUtil.isInScope(useScope.intersectWith(finalScope), psiFile)) {
+                !PsiSearchScopeUtil.isInScope(useScope.intersectWith(initialScope), psiFile)) {
               if (!processor.process(psiFile, index, index + searcher.getPattern().length())) {
                 cancelled.set(Boolean.TRUE);
                 return;
@@ -417,27 +415,37 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (progress != null) {
       progress.popState();
     }
+    return !cancelled.get();
   }
 
   @Override
-  public void processAllFilesWithWord(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor, final boolean caseSensitively) {
-    CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_CODE, scope, caseSensitively);
+  public boolean processAllFilesWithWord(@NotNull String word,
+                                         @NotNull GlobalSearchScope scope,
+                                         @NotNull Processor<PsiFile> processor,
+                                         final boolean caseSensitively) {
+    return CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_CODE, scope, caseSensitively);
   }
 
   @Override
-  public void processAllFilesWithWordInText(@NotNull final String word, @NotNull final GlobalSearchScope scope, @NotNull final Processor<PsiFile> processor,
-                                            final boolean caseSensitively) {
-    CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_PLAIN_TEXT, scope, caseSensitively);
+  public boolean processAllFilesWithWordInText(@NotNull final String word,
+                                               @NotNull final GlobalSearchScope scope,
+                                               @NotNull final Processor<PsiFile> processor,
+                                               final boolean caseSensitively) {
+    return CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_PLAIN_TEXT, scope, caseSensitively);
   }
 
   @Override
-  public void processAllFilesWithWordInComments(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor) {
-    CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_COMMENTS, scope, true);
+  public boolean processAllFilesWithWordInComments(@NotNull String word,
+                                                   @NotNull GlobalSearchScope scope,
+                                                   @NotNull Processor<PsiFile> processor) {
+    return CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_COMMENTS, scope, true);
   }
 
   @Override
-  public void processAllFilesWithWordInLiterals(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor) {
-    CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_STRINGS, scope, true);
+  public boolean processAllFilesWithWordInLiterals(@NotNull String word,
+                                                   @NotNull GlobalSearchScope scope,
+                                                   @NotNull Processor<PsiFile> processor) {
+    return CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_STRINGS, scope, true);
   }
 
   private static class RequestWithProcessor {

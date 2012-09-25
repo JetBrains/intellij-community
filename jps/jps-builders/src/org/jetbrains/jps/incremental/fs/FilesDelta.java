@@ -7,22 +7,24 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
+import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
-import org.jetbrains.jps.incremental.ModuleRootsIndex;
 import org.jetbrains.jps.incremental.Utils;
-import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /** @noinspection SynchronizationOnLocalVariableOrMethodParameter*/
 final class FilesDelta {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.FilesDelta");
 
-  private final Set<String> myDeletedPaths = Collections.synchronizedSet(new HashSet<String>());
+  private final Set<String> myDeletedPaths = Collections.synchronizedSet(new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY));
   private final Map<BuildRootDescriptor, Set<File>> myFilesToRecompile = Collections.synchronizedMap(new HashMap<BuildRootDescriptor, Set<File>>());
 
   public void save(DataOutput out) throws IOException {
@@ -41,7 +43,7 @@ final class FilesDelta {
     }
   }
 
-  public void load(DataInput in, @NotNull BuildTarget target, ModuleRootsIndex rootsIndex, ArtifactRootsIndex artifactRootsIndex) throws IOException {
+  public void load(DataInput in, @NotNull BuildTarget<?> target, BuildRootIndex buildRootIndex) throws IOException {
     myDeletedPaths.clear();
     int deletedCount = in.readInt();
     while (deletedCount-- > 0) {
@@ -51,7 +53,7 @@ final class FilesDelta {
     int recompileCount = in.readInt();
     while (recompileCount-- > 0) {
       String rootId = IOUtil.readString(in);
-      BuildRootDescriptor descriptor = target.findRootDescriptor(rootId, rootsIndex, artifactRootsIndex);
+      BuildRootDescriptor descriptor = target.findRootDescriptor(rootId, buildRootIndex);
       Set<File> files;
       if (descriptor != null) {
         files = myFilesToRecompile.get(descriptor);
@@ -155,7 +157,9 @@ final class FilesDelta {
   public Set<String> getAndClearDeletedPaths() {
     synchronized (myDeletedPaths) {
       try {
-        return new HashSet<String>(myDeletedPaths);
+        final THashSet<String> _paths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+        _paths.addAll(myDeletedPaths);
+        return _paths;
       }
       finally {
         myDeletedPaths.clear();

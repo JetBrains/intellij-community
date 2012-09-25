@@ -798,7 +798,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return doPolyResolve(true, true);
   }
 
-  public GrReferenceExpression bindToElementViaStaticImport(@NotNull PsiClass qualifierClass) {
+  public GrReferenceExpression bindToElementViaStaticImport(@NotNull PsiMember member) {
     if (getQualifier() != null) {
       throw new IncorrectOperationException("Reference has qualifier");
     }
@@ -806,10 +806,16 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     if (StringUtil.isEmpty(getReferenceName())) {
       throw new IncorrectOperationException("Reference has empty name");
     }
+
+    PsiClass containingClass = member.getContainingClass();
+    if (containingClass==null) {
+      throw new IncorrectOperationException("Member has no containing class");
+    }
     final PsiFile file = getContainingFile();
     if (file instanceof GroovyFile) {
-      final GrImportStatement statement = GroovyPsiElementFactory.getInstance(getProject())
-        .createImportStatementFromText("import static " + qualifierClass.getQualifiedName() + "." + getReferenceName());
+      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
+      String text = "import static " + containingClass.getQualifiedName() + "." + member.getName();
+      final GrImportStatement statement = factory.createImportStatementFromText(text);
       ((GroovyFile)file).addImport(statement);
     }
     return this;

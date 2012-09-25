@@ -17,8 +17,6 @@ package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-
 /**
  * @author nik
  */
@@ -30,13 +28,17 @@ public class CopyToDirectoryInstructionCreator extends ArtifactCompilerInstructi
     myOutputPath = outputPath;
   }
 
-  public void addFileCopyInstruction(@NotNull File file, @NotNull String outputFileName) {
-    myInstructionsBuilder.addDestination(myInstructionsBuilder.createFileBasedRoot(file, SourceFileFilter.ALL), new ExplodedDestinationInfo(myOutputPath + "/" + outputFileName));
+  protected DestinationInfo createFileDestination(@NotNull String outputFileName) {
+    return new ExplodedDestinationInfo(myOutputPath + "/" + outputFileName);
   }
 
   @Override
-  protected void addDirectoryCopyInstructions(ArtifactRootDescriptor descriptor) {
-    myInstructionsBuilder.addDestination(descriptor, new ExplodedDestinationInfo(myOutputPath));
+  protected ExplodedDestinationInfo createDirectoryDestination() {
+    return new ExplodedDestinationInfo(myOutputPath);
+  }
+
+  @Override
+  protected void onAdded(ArtifactRootDescriptor descriptor) {
   }
 
   public CopyToDirectoryInstructionCreator subFolder(@NotNull String directoryName) {

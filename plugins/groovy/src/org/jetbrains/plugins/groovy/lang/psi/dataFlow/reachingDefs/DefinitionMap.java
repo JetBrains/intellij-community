@@ -28,10 +28,10 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 public class DefinitionMap {
   private final TIntObjectHashMap<TIntHashSet> myMap = new TIntObjectHashMap<TIntHashSet>();
 
-  public void registerDef(Instruction varInsn, int num) {
-    TIntHashSet defs = myMap.get(num);
+  public void registerDef(Instruction varInsn, int varId) {
+    TIntHashSet defs = myMap.get(varId);
     if (defs == null) {
-      myMap.put(num, defs = new TIntHashSet());
+      myMap.put(varId, defs = new TIntHashSet());
     } else {
       defs.clear();
     }
@@ -73,8 +73,8 @@ public class DefinitionMap {
   }
 
   @Nullable
-  public int[] getDefinitions(int atInstruction) {
-    TIntHashSet set = myMap.get(atInstruction);
+  public int[] getDefinitions(int varId) {
+    TIntHashSet set = myMap.get(varId);
     return set == null ? null : set.toArray();
   }
 

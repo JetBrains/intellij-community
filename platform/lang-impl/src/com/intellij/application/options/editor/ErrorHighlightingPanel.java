@@ -17,8 +17,8 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.openapi.options.AbstractConfigurableEP;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.profile.codeInspection.ui.ErrorOptionsProvider;
 import com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP;
 
@@ -35,7 +35,7 @@ public class ErrorHighlightingPanel {
   private final List<ErrorOptionsProvider> myExtensions;
 
   public ErrorHighlightingPanel() {
-    myExtensions = AbstractConfigurableEP.createConfigurables(ErrorOptionsProviderEP.EP_NAME);
+    myExtensions = ConfigurableWrapper.createConfigurables(ErrorOptionsProviderEP.EP_NAME);
     for (ErrorOptionsProvider optionsProvider : myExtensions) {
       myErrorsPanel.add(optionsProvider.createComponent());
     }

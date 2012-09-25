@@ -17,6 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.ui.components.JBRadioButton;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -189,6 +190,6 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
   }
 
   protected List<SearchableConfigurable> createConfigurables() {
-    return AbstractConfigurableEP.createConfigurables(EP_NAME);
+    return ConfigurableWrapper.createConfigurables(EP_NAME);
   }
 }

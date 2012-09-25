@@ -302,7 +302,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   private static boolean isNamedArgWithPriorComma(PsiElement child) {
     if (!(child instanceof GrNamedArgument)) return false;
-    final PsiElement element = PsiUtil.skipWhitespaces(child.getPrevSibling(), false);
+    final PsiElement element = PsiUtil.skipWhitespacesAndComments(child.getPrevSibling(), false);
     return element != null && element.getNode().getElementType() == GroovyTokenTypes.mCOMMA;
   }
 

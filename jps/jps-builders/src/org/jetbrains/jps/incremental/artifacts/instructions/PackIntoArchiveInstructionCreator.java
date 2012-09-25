@@ -15,9 +15,9 @@
  */
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -35,19 +35,19 @@ public class PackIntoArchiveInstructionCreator extends ArtifactCompilerInstructi
     myJarDestination = jarDestination;
   }
 
+  @Nullable
   @Override
-  protected void addDirectoryCopyInstructions(ArtifactRootDescriptor descriptor) {
-    addCopyInstruction(myPathInJar, descriptor);
+  protected DestinationInfo createDirectoryDestination() {
+    return new JarDestinationInfo(myPathInJar, myJarInfo, myJarDestination);
   }
 
-  public void addFileCopyInstruction(@NotNull File file, @NotNull String outputFileName) {
-    addCopyInstruction(childPathInJar(outputFileName), myInstructionsBuilder.createFileBasedRoot(file, SourceFileFilter.ALL));
+  protected JarDestinationInfo createFileDestination(@NotNull String pathInJar) {
+    return new JarDestinationInfo(childPathInJar(pathInJar), myJarInfo, myJarDestination);
   }
 
-  private void addCopyInstruction(String pathInJar, final ArtifactRootDescriptor descriptor) {
-    if (myInstructionsBuilder.addDestination(descriptor, new JarDestinationInfo(pathInJar, myJarInfo, myJarDestination))) {
-      myJarInfo.addContent(pathInJar, descriptor);
-    }
+  @Override
+  protected void onAdded(ArtifactRootDescriptor descriptor) {
+    myJarInfo.addContent(StringUtil.trimStart(((JarDestinationInfo)descriptor.getDestinationInfo()).getPathInJar(), "/"), descriptor);
   }
 
   private String childPathInJar(String fileName) {
@@ -59,7 +59,7 @@ public class PackIntoArchiveInstructionCreator extends ArtifactCompilerInstructi
   }
 
   public ArtifactCompilerInstructionCreator archive(@NotNull String archiveFileName) {
-    final JarDestinationInfo destination = new JarDestinationInfo(childPathInJar(archiveFileName), myJarInfo, myJarDestination);
+    final JarDestinationInfo destination = createFileDestination(archiveFileName);
     final JarInfo jarInfo = new JarInfo(destination);
     final String outputPath = myJarDestination.getOutputPath() + "/" + archiveFileName;
     if (!myInstructionsBuilder.registerJarFile(jarInfo, outputPath)) {

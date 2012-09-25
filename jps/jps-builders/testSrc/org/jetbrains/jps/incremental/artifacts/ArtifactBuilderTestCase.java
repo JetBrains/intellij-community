@@ -27,7 +27,10 @@ import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.BuildLoggingManager;
+import org.jetbrains.jps.incremental.CompileScope;
+import org.jetbrains.jps.incremental.CompileScopeImpl;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.java.JavaBuilderLoggerImpl;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElementFactory;
@@ -151,12 +154,12 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
     ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(myArtifactBuilderLogger, new JavaBuilderLoggerImpl()));
     try {
       myArtifactBuilderLogger.clear();
-      List<BuildTarget> targets = new ArrayList<BuildTarget>();
+      List<BuildTarget<?>> targets = new ArrayList<BuildTarget<?>>();
       for (JpsArtifact artifact : artifacts) {
         targets.add(new ArtifactBuildTarget(artifact));
       }
       final CompileScope scope = new CompileScopeImpl(force, JavaModuleBuildTargetType.ALL_TYPES, targets,
-                                                      Collections.<BuildTarget, Set<File>>emptyMap());
+                                                      Collections.<BuildTarget<?>, Set<File>>emptyMap());
       result = doBuild(descriptor, scope, !force, false, false);
     }
     finally {
@@ -211,7 +214,11 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   }
 
   protected void assertDeletedAndCopied(String deletedPath, String... copiedPaths) {
-    assertSameElements(myArtifactBuilderLogger.myDeletedFilePaths, deletedPath);
+    assertDeletedAndCopied(new String[]{deletedPath}, copiedPaths);
+  }
+
+  protected void assertDeletedAndCopied(String[] deletedPaths, String... copiedPaths) {
+    assertSameElements(myArtifactBuilderLogger.myDeletedFilePaths, deletedPaths);
     assertSameElements(myArtifactBuilderLogger.myCopiedFilePaths, copiedPaths);
   }
 
@@ -248,7 +255,10 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
     try {
       File file = new File(FileUtil.toSystemDependentName(path));
       assertTrue("File " + file.getAbsolutePath() + " doesn't exist", file.exists());
-      FileUtil.rename(file, new File(file.getParentFile(), newName));
+      final File tempFile = new File(file.getParentFile(), "__" + newName);
+      FileUtil.rename(file, tempFile);
+      FileUtil.copyContent(tempFile, new File(file.getParentFile(), newName));
+      FileUtil.delete(tempFile);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,26 +19,26 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class UtilityClassUtil {
-  private UtilityClassUtil() {
-    super();
-  }
+
+  private UtilityClassUtil() {}
 
   public static boolean isUtilityClass(@NotNull PsiClass aClass) {
+    return isUtilityClass(aClass, true);
+  }
+
+  public static boolean isUtilityClass(@NotNull PsiClass aClass, boolean checkExtends) {
     if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
       return false;
     }
-    if (aClass instanceof PsiTypeParameter ||
-        aClass instanceof PsiAnonymousClass) {
+    if (aClass instanceof PsiTypeParameter || aClass instanceof PsiAnonymousClass) {
       return false;
     }
     final PsiReferenceList extendsList = aClass.getExtendsList();
-    if (extendsList != null
-        && extendsList.getReferenceElements().length > 0) {
+    if (checkExtends && extendsList != null && extendsList.getReferenceElements().length > 0) {
       return false;
     }
     final PsiReferenceList implementsList = aClass.getImplementsList();
-    if (implementsList != null
-        && implementsList.getReferenceElements().length > 0) {
+    if (implementsList != null && implementsList.getReferenceElements().length > 0) {
       return false;
     }
     final PsiMethod[] methods = aClass.getMethods();
@@ -63,8 +63,7 @@ public class UtilityClassUtil {
   }
 
   /**
-   * @return -1 if an instance method was found, else the number of static
-   *         methods in the class
+   * @return -1 if an instance method was found, else the number of static methods in the class
    */
   private static int countStaticMethods(PsiMethod[] methods) {
     int staticCount = 0;

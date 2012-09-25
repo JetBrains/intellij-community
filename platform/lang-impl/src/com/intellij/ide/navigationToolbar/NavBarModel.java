@@ -175,7 +175,7 @@ public class NavBarModel {
     }
   }
 
-  private void setModel(List<Object> model) {
+  protected void setModel(List<Object> model) {
     if (!model.equals(myModel)) {
       myModel = model;
       myNotificator.modelChanged();
@@ -334,7 +334,7 @@ public class NavBarModel {
     return child;
   }
 
-  List<Object> getChildren(final Object object) {
+  protected List<Object> getChildren(final Object object) {
     if (!isValid(object)) return new ArrayList<Object>();
     final List<Object> result = new ArrayList<Object>();
     final Object rootElement = size() > 1 ? getElement(1) : null;

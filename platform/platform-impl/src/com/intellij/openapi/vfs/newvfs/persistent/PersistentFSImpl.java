@@ -481,14 +481,27 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   public byte[] contentsToByteArray(@NotNull final VirtualFile file, boolean cacheContent) throws IOException {
     InputStream contentStream = null;
     boolean reloadFromDelegate;
+    boolean outdated;
     synchronized (myInputLock) {
-      reloadFromDelegate = mustReloadContent(file) || (contentStream = readContent(file)) == null;
+      outdated = checkFlag(file, MUST_RELOAD_CONTENT) || FSRecords.getLength(getFileId(file)) == -1L;
+      reloadFromDelegate = outdated || (contentStream = readContent(file)) == null;
     }
 
     if (reloadFromDelegate) {
       final NewVirtualFileSystem delegate = getDelegate(file);
-      final byte[] content = delegate.contentsToByteArray(file);
-      FSRecords.setLength(getFileId(file), content.length);
+
+      final byte[] content;
+      if (outdated) {
+        // in this case, file can have out-of-date length. so, update it first (it's needed for correct contentsToByteArray() work)
+        // see IDEA-90813 for possible bugs
+        FSRecords.setLength(getFileId(file), delegate.getLength(file));
+        content = delegate.contentsToByteArray(file);
+      }
+      else {
+        // a bit of optimization
+        content = delegate.contentsToByteArray(file);
+        FSRecords.setLength(getFileId(file), content.length);
+      }
 
       ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
       // we should cache every local files content

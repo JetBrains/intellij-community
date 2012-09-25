@@ -66,7 +66,7 @@ public class MavenSettingsTest extends MavenTestCase {
 
   public void testImportingSettings() throws Exception {
     assertTrue(new MavenImportingSettings().equals(new MavenImportingSettings()));
-    MavenImportingConfigurable importingConfigurable = new MavenImportingConfigurable(myProject, new MavenImportingSettings());
+    MavenImportingConfigurable importingConfigurable = new MavenImportingConfigurable(myProject);
     importingConfigurable.reset();
     assertFalse(importingConfigurable.isModified());
   }

@@ -40,7 +40,7 @@ public class SaveCommittingDocumentsVetoer implements FileDocumentSynchronizatio
       return false;
     }
     if (beingCommitted instanceof Project) {
-      boolean allowSave = myAdapter.showAllowSaveDialog((Project) beingCommitted, Collections.singletonList(document));
+      boolean allowSave = myAdapter.showAllowSaveDialog(Collections.singletonMap(document, (Project)beingCommitted));
       if (!allowSave) {
         return false;
       }

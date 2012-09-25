@@ -116,6 +116,7 @@ class BuildMessageDispatcher extends SimpleChannelHandler {
         if (msgType == CmdlineRemoteProto.Message.BuilderMessage.Type.PARAM_REQUEST) {
           final CmdlineRemoteProto.Message.ControllerMessage params = sessionData.params;
           if (params != null) {
+            handler.buildStarted(sessionId);
             sessionData.params = null;
             Channels.write(ctx.getChannel(), CmdlineProtoUtil.toMessage(sessionId, params));
           }
@@ -145,7 +146,7 @@ class BuildMessageDispatcher extends SimpleChannelHandler {
         final BuilderMessageHandler handler = unregisterBuildMessageHandler(sessionData.sessionId);
         if (handler != null) {
           // notify the handler only if it has not been notified yet
-          handler.sessionTerminated();
+          handler.sessionTerminated(sessionData.sessionId);
         }
       }
     }

@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.rename.inplace;
 
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
@@ -105,7 +106,9 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       return super.getNameIdentifier();
     }
     if (currentFile != null) {
-      final PsiElement elementAt = currentFile.findElementAt(myEditor.getCaretModel().getOffset());
+      int offset = myEditor.getCaretModel().getOffset();
+      offset = TargetElementUtilBase.adjustOffset(myEditor.getDocument(), offset);
+      final PsiElement elementAt = currentFile.findElementAt(offset);
       if (elementAt != null) {
         final PsiElement referenceExpression = elementAt.getParent();
         if (referenceExpression != null) {

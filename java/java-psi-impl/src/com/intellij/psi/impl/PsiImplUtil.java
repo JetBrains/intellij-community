@@ -327,6 +327,9 @@ public class PsiImplUtil {
   }
 
   public static PsiType normalizeWildcardTypeByPosition(@NotNull PsiType type, @NotNull PsiExpression expression) {
+    LOG.assertTrue(expression.isValid());
+    LOG.assertTrue(type.isValid());
+
     PsiExpression toplevel = expression;
     while (toplevel.getParent() instanceof PsiArrayAccessExpression &&
            ((PsiArrayAccessExpression)toplevel.getParent()).getArrayExpression() == toplevel) {
@@ -334,6 +337,7 @@ public class PsiImplUtil {
     }
 
     final PsiType normalized = doNormalizeWildcardByPosition(type, expression, toplevel);
+    LOG.assertTrue(normalized.isValid(), type);
     if (normalized instanceof PsiClassType && !PsiUtil.isAccessedForWriting(toplevel)) {
       return PsiUtil.captureToplevelWildcards(normalized, expression);
     }

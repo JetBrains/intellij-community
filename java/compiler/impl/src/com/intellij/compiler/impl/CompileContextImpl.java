@@ -23,6 +23,7 @@ package com.intellij.compiler.impl;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerMessageImpl;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.openapi.application.ApplicationManager;
@@ -62,6 +63,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final Project myProject;
   private final CompilerTask myTask;
   private final Map<CompilerMessageCategory, Collection<CompilerMessage>> myMessages = new EnumMap<CompilerMessageCategory, Collection<CompilerMessage>>(CompilerMessageCategory.class);
+  private final boolean myShouldUpdateProblemsView;
   private CompileScope myCompileScope;
   private final DependencyCache myDependencyCache;
   private final boolean myMake;
@@ -79,9 +81,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final ProjectFileIndex myProjectFileIndex; // cached for performance reasons
   private final ProjectCompileScope myProjectCompileScope;
   private final long myStartCompilationStamp;
+  private final UUID mySessionId = UUID.randomUUID();
 
-  public CompileContextImpl(Project project,
-                            CompilerTask compilerSession,
+  public CompileContextImpl(final Project project,
+                            final CompilerTask compilerSession,
                             CompileScope compileScope,
                             DependencyCache dependencyCache, boolean isMake, boolean isRebuild) {
     myProject = project;
@@ -99,6 +102,8 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       compilerSession.setContentIdKey(compileScope.getUserData(CompilerManager.CONTENT_ID_KEY));
     }
     recalculateOutputDirs();
+    final CompilerWorkspaceConfiguration workspaceConfig = CompilerWorkspaceConfiguration.getInstance(myProject);
+    myShouldUpdateProblemsView = workspaceConfig.useOutOfProcessBuild() && workspaceConfig.MAKE_PROJECT_ON_SAVE;
   }
 
   public void recalculateOutputDirs() {
@@ -249,6 +254,9 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     if (messages.add(msg)) {
       myTask.addMessage(msg);
     }
+    if (myShouldUpdateProblemsView && msg.getCategory() == CompilerMessageCategory.ERROR) {
+      ProblemsViewImpl.SERVICE.getInstance(myProject).addMessage(msg, mySessionId);
+    }
   }
 
   public int getMessageCount(CompilerMessageCategory category) {
@@ -290,6 +298,9 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   public ProgressIndicator getProgressIndicator() {
+    //if (myProgressIndicatorProxy != null) {
+    //  return myProgressIndicatorProxy;
+    //}
     return myTask.getIndicator();
   }
 

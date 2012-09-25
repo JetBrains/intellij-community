@@ -29,6 +29,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Function;
 import com.intellij.util.ui.ComponentWithEmptyText;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -49,6 +50,11 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
       return mySpeedSearchPatternField.getText();
     }
     return null;
+  }
+
+  public static boolean isSearchActive(JList list) {
+    final ListWithFilter listWithFilter = UIUtil.getParentOfType(ListWithFilter.class, list);
+    return listWithFilter != null && listWithFilter.mySpeedSearch.searchFieldShown;
   }
 
   public static JComponent wrap(JList list) {
@@ -84,7 +90,20 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
         mySpeedSearch.process(e);
       }
     });
-
+    //new AnAction(){
+    //  @Override
+    //  public void actionPerformed(AnActionEvent e) {
+    //    final InputEvent event = e.getInputEvent();
+    //    if (event instanceof KeyEvent) {
+    //      mySpeedSearch.process((KeyEvent)event);
+    //    }
+    //  }
+    //
+    //  @Override
+    //  public void update(AnActionEvent e) {
+    //    e.getPresentation().setEnabled(mySpeedSearch.searchFieldShown);
+    //  }
+    //}.registerCustomShortcutSet(CustomShortcutSet.fromString("BACK_SPACE", "DELETE"), list);
     final int selectedIndex = myList.getSelectedIndex();
     final int modelSize = myList.getModel().getSize();
     myModel = new NameFilteringListModel<T>(myList, namer, new Condition<String>() {

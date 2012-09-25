@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NonNls;
 import java.io.IOException;
 
 /**
- * User: anna
- * Date: 11/4/11
+ * @author anna
+ * @since 11/4/11
  */
 public class InlineLibraryMethodTest extends RefactoringTestCase {
   @Override
@@ -45,7 +45,7 @@ public class InlineLibraryMethodTest extends RefactoringTestCase {
     @NonNls String fileName = "/refactoring/inlineMethod/" + getTestName(false) + ".java";
     configureByFile(fileName);
 
-    PsiClass fileClass = JavaPsiFacade.getInstance(getProject()).findClass("mycompany.File");
+    PsiClass fileClass = getJavaFacade().findClass("mycompany.File");
     assertNotNull(fileClass);
     final PsiFile file = fileClass.getContainingFile();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

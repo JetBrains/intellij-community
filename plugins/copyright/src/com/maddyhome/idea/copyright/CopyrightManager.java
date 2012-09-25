@@ -17,7 +17,7 @@
 package com.maddyhome.idea.copyright;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,6 +30,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,24 +54,71 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(
-  name = "CopyrightManager",
-  storages = {@Storage(
-    file = StoragePathMacros.PROJECT_FILE), @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/copyright/", scheme = StorageScheme.DIRECTORY_BASED,
-                                       stateSplitter = CopyrightManager.CopyrightStateSplitter.class)})
+@State(name = "CopyrightManager",
+       storages = {@Storage(file = StoragePathMacros.PROJECT_FILE),
+                   @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/copyright/", scheme = StorageScheme.DIRECTORY_BASED,
+                            stateSplitter = CopyrightManager.CopyrightStateSplitter.class)})
 public class CopyrightManager extends AbstractProjectComponent implements JDOMExternalizable, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#" + CopyrightManager.class.getName());
   @Nullable
   private CopyrightProfile myDefaultCopyright = null;
-
   private final LinkedHashMap<String, String> myModule2Copyrights = new LinkedHashMap<String, String>();
-
   private final Map<String, CopyrightProfile> myCopyrights = new HashMap<String, CopyrightProfile>();
-
   private final Options myOptions = new Options();
 
-  public CopyrightManager(Project project) {
+  public CopyrightManager(@NotNull Project project,
+                          @NotNull final EditorFactory editorFactory,
+                          @NotNull final Application application,
+                          @NotNull final FileDocumentManager fileDocumentManager,
+                          @NotNull final FileTypeUtil fileTypeUtil,
+                          @NotNull final ProjectRootManager projectRootManager,
+                          @NotNull final PsiManager psiManager,
+                          @NotNull StartupManager startupManager) {
     super(project);
+    if (!myProject.isDefault()) {
+      startupManager.runWhenProjectIsInitialized(new Runnable() {
+        @Override
+        public void run() {
+          DocumentListener listener = new DocumentAdapter() {
+            @Override
+            public void documentChanged(DocumentEvent e) {
+              final Document document = e.getDocument();
+              final VirtualFile virtualFile = fileDocumentManager.getFile(document);
+              if (virtualFile == null) return;
+              if (!NewFileTracker.getInstance().poll(virtualFile)) return;
+              if (!fileTypeUtil.isSupportedFile(virtualFile)) return;
+              final Module module = projectRootManager.getFileIndex().getModuleForFile(virtualFile);
+              if (module == null) return;
+              final PsiFile file = psiManager.findFile(virtualFile);
+              if (file == null) return;
+              application.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  if (myProject.isDisposed()) return;
+                  if (file.isValid() && file.isWritable()) {
+                    final CopyrightProfile opts = getCopyrightOptions(file);
+                    if (opts != null) {
+                      new UpdateCopyrightProcessor(myProject, module, file).run();
+                    }
+                  }
+                }
+              }, ModalityState.NON_MODAL, myProject.getDisposed());
+            }
+          };
+          editorFactory.getEventMulticaster().addDocumentListener(listener, myProject);
+        }
+      });
+    }
+
+    // make sure there is no huge pile of new files in tests
+    if (application.isUnitTestMode()) {
+      Disposer.register(myProject, new Disposable() {
+        @Override
+        public void dispose() {
+          NewFileTracker.getInstance().clear();
+        }
+      });
+    }
   }
 
   @NonNls
@@ -86,51 +134,6 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
 
   public static CopyrightManager getInstance(Project project) {
     return project.getComponent(CopyrightManager.class);
-  }
-
-
-  @Override
-  public void projectOpened() {
-    DocumentListener listener = new DocumentAdapter() {
-      @Override
-      public void documentChanged(DocumentEvent e) {
-        final Document document = e.getDocument();
-        final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-        if (virtualFile == null) return;
-        if (!NewFileTracker.getInstance().poll(virtualFile)) return;
-        if (!FileTypeUtil.getInstance().isSupportedFile(virtualFile)) return;
-        final Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(virtualFile);
-        if (module == null) return;
-        final PsiFile file = PsiManager.getInstance(myProject).findFile(virtualFile);
-        if (file == null) return;
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myProject.isDisposed()) return;
-            if (file.isValid() && file.isWritable()) {
-              final CopyrightProfile opts = getCopyrightOptions(file);
-              if (opts != null) {
-                new UpdateCopyrightProcessor(myProject, module, file).run();
-              }
-            }
-          }
-        }, ModalityState.NON_MODAL, myProject.getDisposed());
-      }
-    };
-    final EditorFactory factory = EditorFactory.getInstance();
-    if (factory != null) {
-      factory.getEventMulticaster().addDocumentListener(listener, myProject);
-    }
-
-    // make sure there is no huge pile of new files in tests
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      Disposer.register(myProject, new Disposable() {
-        @Override
-        public void dispose() {
-          NewFileTracker.getInstance().clear();
-        }
-      });
-    }
   }
 
   @Override

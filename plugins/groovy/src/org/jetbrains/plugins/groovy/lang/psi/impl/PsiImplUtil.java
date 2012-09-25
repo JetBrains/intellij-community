@@ -115,6 +115,7 @@ public class PsiImplUtil {
     return prev != null && prev.getNode().getElementType() == mIDENT;
   }
 
+  @Nullable
   public static GrExpression replaceExpression(GrExpression oldExpr, GrExpression newExpr, boolean removeUnnecessaryParentheses) {
     PsiElement oldParent = oldExpr.getParent();
     if (oldParent == null) throw new PsiInvalidElementAccessException(oldExpr);
@@ -162,6 +163,7 @@ public class PsiImplUtil {
       final PsiElement replaced = oldExpr.replace(newExpr);
       final GrStringInjection stringInjection = PsiTreeUtil.getParentOfType(replaced, GrStringInjection.class);
       GrStringUtil.wrapInjection(stringInjection);
+      assert stringInjection != null;
       return stringInjection.getClosableBlock();
     }
     
@@ -194,8 +196,9 @@ public class PsiImplUtil {
           final PsiElement parent = commandArgList.getParent();
           LOG.assertTrue(parent instanceof GrApplicationStatement);
 
-          return (GrExpression)parent.replace(factory.createExpressionFromText(
-            ((GrApplicationStatement)parent).getInvokedExpression().getText() + "(" + commandArgList.getText() + ")"));
+          GrExpression invokedExpression = ((GrApplicationStatement)parent).getInvokedExpression();
+          assert invokedExpression != null;
+          return (GrExpression)parent.replace(factory.createExpressionFromText(invokedExpression.getText() + "(" + commandArgList.getText() + ")"));
         }
       }
     }
@@ -203,7 +206,7 @@ public class PsiImplUtil {
   }
 
   /**
-   * @return replaced exprssion or null if expression is not replaced
+   * @return replaced expression or null if expression is not replaced
    */
   @Nullable
   private static GrExpression addParenthesesIfNeeded(GrExpression newExpr, GrExpression oldExpr, GrExpression oldParent) {
@@ -527,6 +530,7 @@ public class PsiImplUtil {
     return AstBufferUtil.getTextSkippingWhitespaceComments(node);
   }
 
+  @Nullable
   public static PsiCodeBlock getOrCreatePsiCodeBlock(GrOpenBlock block) {
     if (block == null) return null;
 
@@ -538,6 +542,7 @@ public class PsiImplUtil {
     return newBody;
   }
 
+  @Nullable
   public static PsiTypeElement getOrCreateTypeElement(@Nullable GrTypeElement typeElement) {
     if (typeElement == null) return null;
 
@@ -549,6 +554,7 @@ public class PsiImplUtil {
     return newTypeElement;
   }
 
+  @Nullable
   public static PsiExpression getOrCreatePisExpression(@Nullable GrExpression expr) {
     if (expr == null) return null;
 
@@ -610,7 +616,9 @@ public class PsiImplUtil {
 
   @Nullable
   public static PsiType inferExpectedTypeForDiamond(GrExpression diamondNew) {
-    PsiElement pparent = PsiUtil.skipParentheses(diamondNew, true).getParent();
+    PsiElement skipped = PsiUtil.skipParentheses(diamondNew, true);
+    assert skipped != null;
+    PsiElement pparent = skipped.getParent();
     if (pparent instanceof GrAssignmentExpression &&
         PsiTreeUtil.isAncestor(((GrAssignmentExpression)pparent).getRValue(), diamondNew, false)) {
       GrExpression lValue = ((GrAssignmentExpression)pparent).getLValue();
@@ -684,6 +692,7 @@ public class PsiImplUtil {
       final PsiType componentType = ((PsiArrayType)type).getComponentType();
       final PsiType normalizedComponentType = doNormalizeWildcardByPosition(componentType, expression, toplevel);
       if (normalizedComponentType != componentType) {
+        assert normalizedComponentType != null;
         return normalizedComponentType.createArrayType();
       }
     }
@@ -691,17 +700,17 @@ public class PsiImplUtil {
     return type;
   }
 
-  public static boolean isWhiteSpace(PsiElement element) {
+  public static boolean isWhiteSpace(@Nullable PsiElement element) {
     return hasElementType(element, TokenSets.WHITE_SPACES_SET);
   }
 
-  public static boolean hasElementType(PsiElement next, final IElementType type) {
+  public static boolean hasElementType(@Nullable PsiElement next, @NotNull final IElementType type) {
     if (next == null) return false;
     final ASTNode astNode = next.getNode();
     return astNode != null && astNode.getElementType() == type;
   }
 
-  public static boolean hasElementType(PsiElement next, final TokenSet set) {
+  public static boolean hasElementType(@Nullable PsiElement next, final TokenSet set) {
     if (next == null) return false;
     final ASTNode astNode = next.getNode();
     return astNode != null && set.contains(astNode.getElementType());
