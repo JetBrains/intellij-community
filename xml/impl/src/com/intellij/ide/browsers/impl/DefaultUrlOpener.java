@@ -38,8 +38,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class UrlOpenerImpl extends UrlOpener {
-  private static final Logger LOG = Logger.getInstance(UrlOpenerImpl.class);
+public class DefaultUrlOpener extends UrlOpener {
+  private static final Logger LOG = Logger.getInstance(DefaultUrlOpener.class);
 
   @Override
   public boolean openUrl(BrowsersConfiguration.BrowserFamily family, String url) {
