@@ -132,7 +132,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                             FileDocumentManager fdm,
                             FileTypeManager fileTypeManager,
                             @NotNull MessageBus bus,
-                            @SuppressWarnings("UnusedParameters") SerializationManager sm /*needed to ensure dependency*/) throws IOException {
+                            @SuppressWarnings("UnusedParameters") SerializationManager sm /*needed to ensure dependency*/) {
     myVfManager = vfManager;
     myFileDocumentManager = fdm;
     myFileTypeManager = fileTypeManager;
@@ -345,7 +345,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   @Nullable
-  private static String calcConfigPath(final String path) {
+  private static String calcConfigPath(@NotNull String path) {
     try {
       final String _path = FileUtil.toSystemIndependentName(new File(path).getCanonicalPath());
       return _path.endsWith("/")? _path : _path + "/" ;
@@ -975,11 +975,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     private final int myMinId;
     private final int myMaxId;
 
-    private ProjectIndexableFilesFilter(@NotNull TIntHashSet set, int modificationCount) {
+    private ProjectIndexableFilesFilter(@NotNull TIntArrayList set, int modificationCount) {
       myModificationCount = modificationCount;
       final int[] minMax = new int[2];
-      if (set.size() > 0) {
-        minMax[0] = minMax[1] = set.iterator().next();
+      if (!set.isEmpty()) {
+        minMax[0] = minMax[1] = set.get(0);
       }
       set.forEach(new TIntProcedure() {
         @Override
@@ -1036,7 +1036,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
         long start = System.currentTimeMillis();
 
-        final TIntHashSet filesSet = new TIntHashSet();
+        final TIntArrayList filesSet = new TIntArrayList();
         iterateIndexableFiles(new ContentIterator() {
           @Override
           public boolean processFile(@NotNull VirtualFile fileOrDir) {
@@ -1626,12 +1626,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   public void indexFileContent(@Nullable Project project, @NotNull com.intellij.ide.caches.FileContent content) {
     myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
     final VirtualFile file = content.getVirtualFile();
-    FileContentImpl fc = null;
-
-    PsiFile psiFile = null;
 
     FileTypeManagerImpl.cacheFileType(file, file.getFileType());
     try {
+      PsiFile psiFile = null;
+      FileContentImpl fc = null;
       for (final ID<?, ?> indexId : myIndices.keySet()) {
         if (shouldIndexFile(file, indexId)) {
           if (fc == null) {
