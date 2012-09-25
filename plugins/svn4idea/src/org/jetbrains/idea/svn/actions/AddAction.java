@@ -21,9 +21,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -72,10 +70,24 @@ public class AddAction extends BasicAction {
           try {
 
             SVNWCClient wcClient = activeVcs.createWCClient();
-
+            final Set<VirtualFile> additionallyDirty = new HashSet<VirtualFile>();
+            final FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
+            for (VirtualFile item : items) {
+              VirtualFile current = item.getParent();
+              while (current != null) {
+                final FileStatus fs = fileStatusManager.getStatus(current);
+                if (FileStatus.UNKNOWN.equals(fs)) {
+                  additionallyDirty.add(current);
+                  current = current.getParent();
+                } else {
+                  break;
+                }
+              }
+            }
             Collection<SVNException> exceptions =
               SvnCheckinEnvironment.scheduleUnversionedFilesForAddition(wcClient, Arrays.asList(items), true);
-            markDirty(project, items);
+            additionallyDirty.addAll(Arrays.asList(items));
+            markDirty(project, additionallyDirty);
             if (!exceptions.isEmpty()) {
               final Collection<String> messages = new ArrayList<String>(exceptions.size());
               for (SVNException exception : exceptions) {
@@ -91,7 +103,7 @@ public class AddAction extends BasicAction {
     ProgressManager.getInstance().run(task);
   }
 
-  private void markDirty(Project project, VirtualFile[] items) {
+  private void markDirty(Project project, Collection<VirtualFile> items) {
     final List<VirtualFile> vDirs = new ArrayList<VirtualFile>();
     final List<VirtualFile> vFiles = new ArrayList<VirtualFile>();
 
