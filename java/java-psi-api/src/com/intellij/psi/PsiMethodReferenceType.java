@@ -57,7 +57,7 @@ public class PsiMethodReferenceType extends PsiType {
 
   @Override
   public <A> A accept(@NotNull final PsiTypeVisitor<A> visitor) {
-    return visitor.visitType(this);
+    return visitor.visitMethodReferenceType(this);
   }
 
   @Override
