@@ -16,6 +16,7 @@
 
 package com.intellij.util.containers;
 
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -228,6 +229,16 @@ public class MultiMap<K, V> implements Serializable {
   @NotNull
   public static <K, V> MultiMap<K, V> create() {
     return new MultiMap<K, V>();
+  }
+
+  @NotNull
+  public static <K, V> MultiMap<K, V> createSmartList() {
+    return new MultiMap<K, V>() {
+      @Override
+      protected Collection<V> createCollection() {
+        return new SmartList<V>();
+      }
+    };
   }
 
   @NotNull
