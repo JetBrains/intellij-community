@@ -224,6 +224,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
   @Nullable
   private static String readFile(@NotNull final VirtualFile file) {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Nullable
       @Override
       public String compute() {
         try {
