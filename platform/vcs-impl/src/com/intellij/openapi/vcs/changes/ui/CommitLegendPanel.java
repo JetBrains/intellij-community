@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -54,11 +52,8 @@ public class CommitLegendPanel {
     myDeletedPanel.setBackground(background);
 
     myModifiedLabel.setForeground(FileStatus.MODIFIED.getColor());
-    myModifiedLabel.putClientProperty("Quaqua.Component.visualMargin", new Insets(0, 0, 0, 0));
     myNewLabel.setForeground(FileStatus.ADDED.getColor());
-    myNewLabel.putClientProperty("Quaqua.Component.visualMargin", new Insets(0, 0, 0, 0));
     myDeletedLabel.setForeground(FileStatus.DELETED.getColor());
-    myDeletedLabel.putClientProperty("Quaqua.Component.visualMargin", new Insets(0, 0, 0, 0));
 
     boldLabel(myModifiedLabel, true);
     boldLabel(myNewLabel, true);

@@ -223,7 +223,6 @@ public class IdeaApplication {
   private static void initLAF() {
     if (SystemInfo.isMac) {
       UIManager.put("Panel.opaque", Boolean.TRUE);
-      UIManager.installLookAndFeel("Quaqua", "ch.randelshofer.quaqua.QuaquaLookAndFeel");
     }
 
     if (SystemInfo.isWindows) {

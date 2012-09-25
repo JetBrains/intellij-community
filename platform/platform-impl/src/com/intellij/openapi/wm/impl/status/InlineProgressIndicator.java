@@ -130,8 +130,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myProgress.setActive(false);
     }
 
-    UIUtil.removeQuaquaVisualMarginsIn(myComponent);
-
     if (!myCompact) {
       myProcessName.recomputeSize();
       myText.recomputeSize();

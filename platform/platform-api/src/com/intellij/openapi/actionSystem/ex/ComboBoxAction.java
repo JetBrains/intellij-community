@@ -127,7 +127,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       );
 
       //noinspection HardCodedStringLiteral
-      putClientProperty("Quaqua.Button.style", "placard");
       addMouseListener(new MouseAdapter() {
         @Override
         public void mouseEntered(MouseEvent e) {

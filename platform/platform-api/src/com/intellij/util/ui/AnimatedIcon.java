@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,8 +57,6 @@ public class AnimatedIcon extends JComponent implements Disposable {
 
     myPrefSize.width = Math.max(passiveIcon.getIconWidth(), myPrefSize.width);
     myPrefSize.height = Math.max(passiveIcon.getIconHeight(), myPrefSize.height);
-
-    UIUtil.removeQuaquaVisualMarginsIn(this);
 
     myAnimator = new Animator(myName, icons.length, cycleLength, true) {
       public void paintNow(final int frame, final int totalFrames, final int cycle) {
