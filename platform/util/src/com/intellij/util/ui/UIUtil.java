@@ -554,9 +554,8 @@ public class UIUtil {
     LookAndFeel.installBorder(contentPane, "PopupMenu.border");
   }
 
-  public static boolean isMotifLookAndFeel() {
-    return "Motif".equals(UIManager.getLookAndFeel().getID());
-  }
+  /** @deprecated Motif is gone (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration") public static boolean isMotifLookAndFeel() { return false; }
 
   public static Color getTreeSelectionBorderColor() {
     return UIManager.getColor("Tree.selectionBorderColor");
@@ -892,10 +891,8 @@ public class UIUtil {
     return UIManager.getLookAndFeel().getName().equals("Windows Classic");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static boolean isUnderMetalLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().equals("Metal");
-  }
+  /** @deprecated Metal is gone (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration") public static boolean isUnderMetalLookAndFeel() { return false; }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderNimbusLookAndFeel() {
@@ -917,10 +914,8 @@ public class UIUtil {
     return SystemInfo.isMac && (isUnderAquaLookAndFeel() || isUnderDarcula());
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static boolean isUnderMotif() {
-    return UIManager.getLookAndFeel().getName().contains("Motif");
-  }
+  /** @deprecated Motif is gone (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration") public static boolean isUnderMotif() { return false; }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderDarcula() {

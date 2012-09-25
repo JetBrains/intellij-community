@@ -270,11 +270,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public void updateUI() {
       super.updateUI();
-      //putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, null);
-      if (UIUtil.isMotifLookAndFeel()) {
-        setBorder(BorderFactory.createEtchedBorder());
-      }
-      else if (!UIUtil.isUnderGTKLookAndFeel()) {
+      if (!UIUtil.isUnderGTKLookAndFeel()) {
         setBorder(UIUtil.getButtonBorder());
       }
     }
