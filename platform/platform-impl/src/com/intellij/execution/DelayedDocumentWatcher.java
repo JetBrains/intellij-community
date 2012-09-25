@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -56,8 +57,7 @@ public class DelayedDocumentWatcher implements Runnable {
                                 Alarm alarm,
                                 int delay,
                                 Consumer<VirtualFile[]> consumer) {
-    //noinspection unchecked
-    this(project, alarm, delay, consumer, Condition.TRUE);
+    this(project, alarm, delay, consumer, Conditions.<VirtualFile>alwaysTrue());
   }
 
   @Override
