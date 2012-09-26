@@ -603,7 +603,7 @@
                      groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.DefaultNotLastCaseInSwitchInspection"/>
     <localInspection language="JAVA" shortName="DoubleNegation" bundle="com.siyeh.InspectionGadgetsBundle" key="double.negation.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.DoubleNegationInspection"/>
     <localInspection language="JAVA" shortName="DuplicateBooleanBranch" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="duplicate.boolean.branch.display.name" groupBundle="messages.InspectionsBundle"
