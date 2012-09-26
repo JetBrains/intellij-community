@@ -15,9 +15,10 @@
  */
 package com.intellij.ide.passwordSafe.impl.providers.nil;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The most secure provider that does not store anything, so it cannot be cracked
@@ -50,7 +51,7 @@ public final class NilProvider extends PasswordSafeProvider {
   /**
    * {@inheritDoc}
    */
-  public String getPassword(Project project, Class requester, String key) throws PasswordSafeException {
+  public String getPassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
     // nothing is stored
     return null;
   }
@@ -58,14 +59,14 @@ public final class NilProvider extends PasswordSafeProvider {
   /**
    * {@inheritDoc}
    */
-  public void removePassword(Project project, Class requester, String key) throws PasswordSafeException {
+  public void removePassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
     // do nothing
   }
 
   /**
    * {@inheritDoc}
    */
-  public void storePassword(Project project, Class requester, String key, String value) throws PasswordSafeException {
+  public void storePassword(@Nullable Project project, Class requester, String key, String value) throws PasswordSafeException {
     // just forget about password
   }
 }

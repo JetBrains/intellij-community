@@ -249,7 +249,6 @@ public class ArrangementEngine {
         if (pair.first.isEmpty()) {
           iterator.remove();
           arranged.add(i + 1, pair.second);
-          i++;
         }
       }
     }

@@ -83,7 +83,7 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
     }
   }
 
-  private MultiMap<PsiElement, String> checkForConflicts(final PsiMember member) {
+  private MultiMap<PsiElement, String> checkForConflicts(@NotNull final PsiMember member) {
     if (member instanceof PsiClass && getModifier().equals(PsiModifier.PUBLIC)) {
       final PsiClass aClass = (PsiClass)member;
       final PsiElement parent = aClass.getParent();
@@ -148,17 +148,21 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
     modifierListCopy.setModifierProperty(getModifier(), true);
     final Query<PsiReference> search = ReferencesSearch.search(member, member.getResolveScope());
     search.forEach(new Processor<PsiReference>() {
+
       @Override
       public boolean process(PsiReference reference) {
         final PsiElement element = reference.getElement();
-        if (!JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, element, null, null)) {
-          final PsiElement context =
-            PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiField.class, PsiClass.class, PsiFile.class);
-          conflicts.putValue(element, RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
-                                                                RefactoringUIUtil.getDescription(member, false),
-                                                                PsiBundle.visibilityPresentation(getModifier()),
-                                                                RefactoringUIUtil.getDescription(context, true)));
+        if (JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, element, null, null)) {
+          return true;
         }
+        final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiField.class, PsiClass.class, PsiFile.class);
+        if (context == null) {
+          return true;
+        }
+        conflicts.putValue(element, RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
+                                                              RefactoringUIUtil.getDescription(member, false),
+                                                              PsiBundle.visibilityPresentation(getModifier()),
+                                                              RefactoringUIUtil.getDescription(context, true)));
         return true;
       }
     });

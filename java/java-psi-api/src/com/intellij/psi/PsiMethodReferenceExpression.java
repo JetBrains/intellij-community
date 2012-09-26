@@ -28,4 +28,7 @@ public interface PsiMethodReferenceExpression extends PsiReferenceExpression {
    */
   @Nullable
   PsiTypeElement getQualifierType();
+  
+  @Nullable
+  PsiType getFunctionalInterfaceType();
 }

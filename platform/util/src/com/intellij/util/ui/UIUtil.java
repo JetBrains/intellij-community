@@ -554,9 +554,8 @@ public class UIUtil {
     LookAndFeel.installBorder(contentPane, "PopupMenu.border");
   }
 
-  public static boolean isMotifLookAndFeel() {
-    return "Motif".equals(UIManager.getLookAndFeel().getID());
-  }
+  /** @deprecated Motif is gone (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration") public static boolean isMotifLookAndFeel() { return false; }
 
   public static Color getTreeSelectionBorderColor() {
     return UIManager.getColor("Tree.selectionBorderColor");
@@ -867,10 +866,8 @@ public class UIUtil {
     return UIManager.getColor("OptionPane.background");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static boolean isUnderQuaquaLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().contains("Quaqua");
-  }
+  /** @deprecated Quaqua is gone (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration") public static boolean isUnderQuaquaLookAndFeel() { return false; }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderAlloyLookAndFeel() {
@@ -892,10 +889,8 @@ public class UIUtil {
     return UIManager.getLookAndFeel().getName().equals("Windows Classic");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static boolean isUnderMetalLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().equals("Metal");
-  }
+  /** @deprecated Metal is gone (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration") public static boolean isUnderMetalLookAndFeel() { return false; }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderNimbusLookAndFeel() {
@@ -917,10 +912,8 @@ public class UIUtil {
     return SystemInfo.isMac && (isUnderAquaLookAndFeel() || isUnderDarcula());
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static boolean isUnderMotif() {
-    return UIManager.getLookAndFeel().getName().contains("Motif");
-  }
+  /** @deprecated Motif is gone (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration") public static boolean isUnderMotif() { return false; }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderDarcula() {
@@ -984,11 +977,11 @@ public class UIUtil {
   }
 
   public static boolean isFullRowSelectionLAF() {
-    return isUnderGTKLookAndFeel() || isUnderQuaquaLookAndFeel();
+    return isUnderGTKLookAndFeel();
   }
 
   public static boolean isUnderNativeMacLookAndFeel() {
-    return isUnderAquaLookAndFeel() || isUnderQuaquaLookAndFeel() || isUnderDarcula();
+    return isUnderAquaLookAndFeel() || isUnderDarcula();
   }
 
   public static int getListCellHPadding() {
@@ -1011,18 +1004,8 @@ public class UIUtil {
     return !isUnderNativeMacLookAndFeel();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static void removeQuaquaVisualMarginsIn(Component component) {
-    if (component instanceof JComponent) {
-      final JComponent jComponent = (JComponent)component;
-      final Component[] children = jComponent.getComponents();
-      for (Component child : children) {
-        removeQuaquaVisualMarginsIn(child);
-      }
-
-      jComponent.putClientProperty("Quaqua.Component.visualMargin", new Insets(0, 0, 0, 0));
-    }
-  }
+  /** @deprecated Quaqua is gone (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration") public static void removeQuaquaVisualMarginsIn(Component component) { }
 
   public static boolean isControlKeyDown(MouseEvent mouseEvent) {
     return SystemInfo.isMac ? mouseEvent.isMetaDown() : mouseEvent.isControlDown();

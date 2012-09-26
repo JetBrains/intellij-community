@@ -100,7 +100,7 @@ public class PasswordSafeImpl extends PasswordSafe {
   /**
    * {@inheritDoc}
    */
-  public String getPassword(Project project, Class requester, String key) throws PasswordSafeException {
+  public String getPassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
     if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
       String password = getMemoryProvider().getPassword(project, requester, key);
       if (password == null) {
@@ -118,7 +118,7 @@ public class PasswordSafeImpl extends PasswordSafe {
   /**
    * {@inheritDoc}
    */
-  public void removePassword(Project project, Class requester, String key) throws PasswordSafeException {
+  public void removePassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
     if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
       getMemoryProvider().removePassword(project, requester, key);
       provider().removePassword(project, requester, key);

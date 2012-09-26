@@ -223,7 +223,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
    * {@inheritDoc}
    */
   @Override
-  public String getPassword(Project project, Class requester, String key) throws PasswordSafeException {
+  public String getPassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
     if (database.isEmpty()) {
       return null;
     }
@@ -234,7 +234,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
    * {@inheritDoc}
    */
   @Override
-  public void removePassword(Project project, Class requester, String key) throws PasswordSafeException {
+  public void removePassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
     if (database.isEmpty()) {
       return;
     }

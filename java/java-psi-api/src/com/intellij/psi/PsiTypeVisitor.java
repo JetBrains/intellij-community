@@ -75,4 +75,11 @@ public class PsiTypeVisitor<A> {
     if (interfaceType != null) return interfaceType.accept(this);
     return visitType(interfaceType);
   }
+  
+  public A visitMethodReferenceType(PsiMethodReferenceType methodReferenceType) {
+    final PsiMethodReferenceExpression expression = methodReferenceType.getExpression();
+    final PsiType interfaceType = expression.getFunctionalInterfaceType();
+    if (interfaceType != null) return interfaceType.accept(this);
+    return visitType(methodReferenceType);
+  }
 }

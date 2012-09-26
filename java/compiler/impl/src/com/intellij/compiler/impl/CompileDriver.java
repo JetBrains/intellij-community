@@ -449,9 +449,11 @@ public class CompileDriver {
 
       @Override
       public void sessionTerminated(UUID sessionId) {
-        final ProblemsView view = ProblemsViewImpl.SERVICE.getInstance(myProject);
-        view.clearProgress();
-        view.clearOldMessages(compileContext.getCompileScope(), sessionId);
+        if (compileContext.shouldUpdateProblemsView()) {
+          final ProblemsView view = ProblemsViewImpl.SERVICE.getInstance(myProject);
+          view.clearProgress();
+          view.clearOldMessages(compileContext.getCompileScope(), sessionId);
+        }
       }
 
       @Override

@@ -39,7 +39,7 @@ public abstract class VirtualFileVisitor<T> {
 
   public static final Option NO_FOLLOW_SYMLINKS = new Option();
   public static final Option SKIP_ROOT = new Option();
-  public static final Option ONE_LEVEL_DEEP = new Option.LimitOption(1);
+  public static final Option ONE_LEVEL_DEEP = limit(1);
 
   public static Option limit(int maxDepth) {
     return new Option.LimitOption(maxDepth);
@@ -82,9 +82,8 @@ public abstract class VirtualFileVisitor<T> {
   private int myDepthLimit = -1;
 
   private int myLevel = 0;
-  private Stack<T> myValueStack;
-  private T myValue;
-  private boolean myValueSet;
+  private Stack<T> myValueStack = null;
+  private T myValue = null;
 
   protected VirtualFileVisitor(@NotNull Option... options) {
     for (Option option : options) {
@@ -154,7 +153,9 @@ public abstract class VirtualFileVisitor<T> {
    */
   public final void setValueForChildren(@Nullable T value) {
     myValue = value;
-    myValueSet = true;
+    if (myValueStack == null) {
+      myValueStack = new Stack<T>();
+    }
   }
 
   public final T getCurrentValue() {
@@ -174,21 +175,23 @@ public abstract class VirtualFileVisitor<T> {
     return myDepthLimit >= 0 && myLevel >= myDepthLimit;
   }
 
-  final void pushFrame() {
+  final void saveValue() {
     ++myLevel;
-    if (myValueSet) {
-      Stack<T> stack = myValueStack;
-      if (stack == null) myValueStack = stack = new Stack<T>();
-      stack.push(myValue);
+    if (myValueStack != null) {
+      myValueStack.push(myValue);
     }
   }
 
-  final void popFrame() {
-    --myLevel;
-    if (myValueSet) {
-      Stack<T> stack = myValueStack;
-      if (!(stack == null || stack.isEmpty())) stack.pop();
-      myValue = stack == null || stack.isEmpty() ? null : stack.peek();
+  final void restoreValue(boolean pushed) {
+    if (pushed) {
+      --myLevel;
+      if (myValueStack != null && !myValueStack.isEmpty()) {
+        myValueStack.pop();
+      }
+    }
+
+    if (myValueStack != null) {
+      myValue = myValueStack.isEmpty() ? null : myValueStack.peek();
     }
   }
 }

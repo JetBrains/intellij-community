@@ -40,7 +40,7 @@ import java.util.Set;
  * @author ven
  */
 public class ChooseTypeExpression extends Expression {
-  protected SmartTypePointer myTypePointer;
+  protected final SmartTypePointer myTypePointer;
   private final LookupElement[] myItems;
   private final PsiManager myManager;
 

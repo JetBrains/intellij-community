@@ -16,7 +16,6 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.mock.MockVirtualFile;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformUltraLiteTestFixture;
@@ -48,9 +47,10 @@ public class VirtualFileVisitorTest {
                   file("f11.1"),
                   file("f11.2")),
               file("f1.1"),
-              dir("d12",
-                  file("f12.1"),
-                  file("f12.2"))),
+              dir("d12"),
+              dir("d13",
+                  file("f13.1"),
+                  file("f13.2"))),
           dir("d2",
               file("f2.1"),
               file("f2.2")));
@@ -66,30 +66,32 @@ public class VirtualFileVisitorTest {
   public void visitAll() {
     doTest(
       null, null,
-      "-> /\n" +
-      "  -> d1\n" +
-      "    -> d11\n" +
-      "      -> f11.1\n" +
-      "      <- f11.1\n" +
-      "      -> f11.2\n" +
-      "      <- f11.2\n" +
-      "    <- d11\n" +
-      "    -> f1.1\n" +
-      "    <- f1.1\n" +
-      "    -> d12\n" +
-      "      -> f12.1\n" +
-      "      <- f12.1\n" +
-      "      -> f12.2\n" +
-      "      <- f12.2\n" +
-      "    <- d12\n" +
-      "  <- d1\n" +
-      "  -> d2\n" +
-      "    -> f2.1\n" +
-      "    <- f2.1\n" +
-      "    -> f2.2\n" +
-      "    <- f2.2\n" +
-      "  <- d2\n" +
-      "<- /\n");
+      "-> / [0]\n" +
+      "  -> d1 [1]\n" +
+      "    -> d11 [2]\n" +
+      "      -> f11.1 [3]\n" +
+      "      <- f11.1 [4]\n" +
+      "      -> f11.2 [3]\n" +
+      "      <- f11.2 [4]\n" +
+      "    <- d11 [3]\n" +
+      "    -> f1.1 [2]\n" +
+      "    <- f1.1 [3]\n" +
+      "    -> d12 [2]\n" +
+      "    <- d12 [3]\n" +
+      "    -> d13 [2]\n" +
+      "      -> f13.1 [3]\n" +
+      "      <- f13.1 [4]\n" +
+      "      -> f13.2 [3]\n" +
+      "      <- f13.2 [4]\n" +
+      "    <- d13 [3]\n" +
+      "  <- d1 [2]\n" +
+      "  -> d2 [1]\n" +
+      "    -> f2.1 [2]\n" +
+      "    <- f2.1 [3]\n" +
+      "    -> f2.2 [2]\n" +
+      "    <- f2.2 [3]\n" +
+      "  <- d2 [2]\n" +
+      "<- / [1]\n");
   }
 
   @Test
@@ -102,25 +104,27 @@ public class VirtualFileVisitorTest {
         }
       },
       null,
-      "-> /\n" +
-      "  -> d1\n" +
-      "    -> d11\n" +
-      "      -> f1.1\n" +
-      "      <- f1.1\n" +
-      "      -> d12\n" +
-      "        -> f12.1\n" +
-      "        <- f12.1\n" +
-      "        -> f12.2\n" +
-      "        <- f12.2\n" +
-      "      <- d12\n" +
-      "    <- d1\n" +
-      "    -> d2\n" +
-      "      -> f2.1\n" +
-      "      <- f2.1\n" +
-      "      -> f2.2\n" +
-      "      <- f2.2\n" +
-      "    <- d2\n" +
-      "  <- /\n");
+      "-> / [0]\n" +
+      "  -> d1 [1]\n" +
+      "    -> d11 [2]\n" +
+      "      -> f1.1 [2]\n" +
+      "      <- f1.1 [3]\n" +
+      "      -> d12 [2]\n" +
+      "      <- d12 [3]\n" +
+      "      -> d13 [2]\n" +
+      "        -> f13.1 [3]\n" +
+      "        <- f13.1 [4]\n" +
+      "        -> f13.2 [3]\n" +
+      "        <- f13.2 [4]\n" +
+      "      <- d13 [3]\n" +
+      "    <- d1 [2]\n" +
+      "    -> d2 [1]\n" +
+      "      -> f2.1 [2]\n" +
+      "      <- f2.1 [3]\n" +
+      "      -> f2.2 [2]\n" +
+      "      <- f2.2 [3]\n" +
+      "    <- d2 [2]\n" +
+      "  <- / [1]\n");
   }
 
   @Test
@@ -133,23 +137,25 @@ public class VirtualFileVisitorTest {
         }
       },
       null,
-      "-> /\n" +
-      "  -> d1\n" +
-      "    -> d11\n" +
-      "      -> f11.1\n" +
-      "        -> f11.2\n" +
-      "        <- d11\n" +
-      "        -> f1.1\n" +
-      "          -> d12\n" +
-      "            -> f12.1\n" +
-      "              -> f12.2\n" +
-      "              <- d12\n" +
-      "            <- d1\n" +
-      "            -> d2\n" +
-      "              -> f2.1\n" +
-      "                -> f2.2\n" +
-      "                <- d2\n" +
-      "              <- /\n");
+      "-> / [0]\n" +
+      "  -> d1 [1]\n" +
+      "    -> d11 [2]\n" +
+      "      -> f11.1 [3]\n" +
+      "        -> f11.2 [3]\n" +
+      "        <- d11 [3]\n" +
+      "        -> f1.1 [2]\n" +
+      "          -> d12 [2]\n" +
+      "          <- d12 [3]\n" +
+      "          -> d13 [2]\n" +
+      "            -> f13.1 [3]\n" +
+      "              -> f13.2 [3]\n" +
+      "              <- d13 [3]\n" +
+      "            <- d1 [2]\n" +
+      "            -> d2 [1]\n" +
+      "              -> f2.1 [2]\n" +
+      "                -> f2.2 [2]\n" +
+      "                <- d2 [2]\n" +
+      "              <- / [1]\n");
   }
 
   @Test
@@ -164,17 +170,17 @@ public class VirtualFileVisitorTest {
         }
       },
       null,
-      "-> /\n" +
-      "  -> d1\n" +
-      "    -> d11\n" +
-      "      -> f11.1\n" +
-      "        -> d2\n" +
-      "          -> f2.1\n" +
-      "          <- f2.1\n" +
-      "          -> f2.2\n" +
-      "          <- f2.2\n" +
-      "        <- d2\n" +
-      "      <- /\n");
+      "-> / [0]\n" +
+      "  -> d1 [1]\n" +
+      "    -> d11 [2]\n" +
+      "      -> f11.1 [3]\n" +
+      "        -> d2 [1]\n" +
+      "          -> f2.1 [2]\n" +
+      "          <- f2.1 [3]\n" +
+      "          -> f2.2 [2]\n" +
+      "          <- f2.2 [3]\n" +
+      "        <- d2 [2]\n" +
+      "      <- / [1]\n");
   }
 
   @Test
@@ -187,10 +193,10 @@ public class VirtualFileVisitorTest {
         }
       },
       null,
-      "-> /\n" +
-      "  -> d1\n" +
-      "    -> d11\n" +
-      "      -> f11.1\n");
+      "-> / [0]\n" +
+      "  -> d1 [1]\n" +
+      "    -> d11 [2]\n" +
+      "      -> f11.1 [3]\n");
   }
 
   @Test
@@ -206,59 +212,38 @@ public class VirtualFileVisitorTest {
         }
       },
       null,
-      "-> /\n" +
-      "  -> d1\n" +
-      "    -> d11\n" +
-      "      -> f11.1\n");
-  }
-
-  @Test
-  public void parameters() {
-    VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor<String>() {
-      {
-        setValueForChildren(myRoot.getPath());
-      }
-
-      @Override
-      public boolean visitFile(@NotNull VirtualFile file) {
-        String expected = Comparing.equal(file, myRoot) ? myRoot.getPath() : file.getParent().getPath();
-        assertEquals(expected, getCurrentValue());
-
-        if (file.isDirectory()) {
-          setValueForChildren(file.getPath());
-        }
-
-        return true;
-      }
-    });
+      "-> / [0]\n" +
+      "  -> d1 [1]\n" +
+      "    -> d11 [2]\n" +
+      "      -> f11.1 [3]\n");
   }
 
   @Test
   public void depthLimit() {
     doTest(
       null, null,
-      "-> /\n" +
-      "<- /\n",
+      "-> / [0]\n" +
+      "<- / [1]\n",
       VirtualFileVisitor.limit(0)
     );
 
     doTest(
       null, null,
-      "-> /\n" +
-      "  -> d1\n" +
-      "  <- d1\n" +
-      "  -> d2\n" +
-      "  <- d2\n" +
-      "<- /\n",
+      "-> / [0]\n" +
+      "  -> d1 [1]\n" +
+      "  <- d1 [2]\n" +
+      "  -> d2 [1]\n" +
+      "  <- d2 [2]\n" +
+      "<- / [1]\n",
       VirtualFileVisitor.ONE_LEVEL_DEEP
     );
 
     doTest(
       null, null,
-      "-> d1\n" +
-      "<- d1\n" +
-      "-> d2\n" +
-      "<- d2\n",
+      "-> d1 [0]\n" +
+      "<- d1 [1]\n" +
+      "-> d2 [0]\n" +
+      "<- d2 [1]\n",
       VirtualFileVisitor.SKIP_ROOT, VirtualFileVisitor.ONE_LEVEL_DEEP);
   }
 
@@ -269,31 +254,33 @@ public class VirtualFileVisitorTest {
       new NullableFunction<VirtualFile, Iterable<VirtualFile>>() {
         @Override
         public Iterable<VirtualFile> fun(VirtualFile file) {
-          return "d12".equals(file.getName()) ? Collections.singletonList(file.getChildren()[1]) : null;
+          return "d13".equals(file.getName()) ? Collections.singletonList(file.getChildren()[1]) : null;
         }
       },
-      "-> /\n" +
-      "  -> d1\n" +
-      "    -> d11\n" +
-      "      -> f11.1\n" +
-      "      <- f11.1\n" +
-      "      -> f11.2\n" +
-      "      <- f11.2\n" +
-      "    <- d11\n" +
-      "    -> f1.1\n" +
-      "    <- f1.1\n" +
-      "    -> d12\n" +
-      "      -> f12.2\n" +
-      "      <- f12.2\n" +
-      "    <- d12\n" +
-      "  <- d1\n" +
-      "  -> d2\n" +
-      "    -> f2.1\n" +
-      "    <- f2.1\n" +
-      "    -> f2.2\n" +
-      "    <- f2.2\n" +
-      "  <- d2\n" +
-      "<- /\n");
+      "-> / [0]\n" +
+      "  -> d1 [1]\n" +
+      "    -> d11 [2]\n" +
+      "      -> f11.1 [3]\n" +
+      "      <- f11.1 [4]\n" +
+      "      -> f11.2 [3]\n" +
+      "      <- f11.2 [4]\n" +
+      "    <- d11 [3]\n" +
+      "    -> f1.1 [2]\n" +
+      "    <- f1.1 [3]\n" +
+      "    -> d12 [2]\n" +
+      "    <- d12 [3]\n" +
+      "    -> d13 [2]\n" +
+      "      -> f13.2 [3]\n" +
+      "      <- f13.2 [4]\n" +
+      "    <- d13 [3]\n" +
+      "  <- d1 [2]\n" +
+      "  -> d2 [1]\n" +
+      "    -> f2.1 [2]\n" +
+      "    <- f2.1 [3]\n" +
+      "    -> f2.2 [2]\n" +
+      "    <- f2.2 [3]\n" +
+      "  <- d2 [2]\n" +
+      "<- / [1]\n");
   }
 
   private static class AbortException extends RuntimeException { }
@@ -305,13 +292,18 @@ public class VirtualFileVisitorTest {
     final StringBuilder sb = new StringBuilder();
 
     try {
-      VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor(options) {
+      VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor<Integer>(options) {
+        { setValueForChildren(0); }
+
         private int level = 0;
 
         @NotNull
         @Override
         public Result visitFileEx(@NotNull VirtualFile file) {
-          sb.append(StringUtil.repeat("  ", level++)).append("-> ").append(file.getName()).append('\n');
+          sb.append(StringUtil.repeat("  ", level++))
+            .append("-> ").append(file.getName()).append(" [").append(getCurrentValue()).append("]\n");
+
+          setValueForChildren(getCurrentValue() + 1);
 
           if (condition != null) {
             Object result = condition.fun(file);
@@ -323,7 +315,8 @@ public class VirtualFileVisitorTest {
 
         @Override
         public void afterChildrenVisited(@NotNull VirtualFile file) {
-          sb.append(StringUtil.repeat("  ", --level)).append("<- ").append(file.getName()).append('\n');
+          sb.append(StringUtil.repeat("  ", --level))
+            .append("<- ").append(file.getName()).append(" [").append(getCurrentValue()).append("]\n");
         }
 
         @Nullable

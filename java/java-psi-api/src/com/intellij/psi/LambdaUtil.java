@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -556,6 +557,37 @@ public class LambdaUtil {
     final PsiElement parent = lambdaExpression.getParent();
     if (parent instanceof PsiExpressionList || parent instanceof PsiExpression) {
       return false;
+    }
+    return true;
+  }
+
+  public static boolean isAcceptable(PsiMethodReferenceExpression methodReferenceExpression, PsiClassType left) {
+    final JavaResolveResult[] results = methodReferenceExpression.multiResolve(false);
+    for (JavaResolveResult result : results) {
+      final PsiElement resolve = result.getElement();
+      if (resolve instanceof PsiMethod) {
+        final PsiClassType.ClassResolveResult resolveResult = left.resolveGenerics();
+        final PsiMethod method = getFunctionalInterfaceMethod(resolveResult);
+        if (method != null) {
+          final MethodSignature signature1 = method.getSignature(resolveResult.getSubstitutor());
+          final MethodSignature signature2 = ((PsiMethod)resolve).getSignature(result.getSubstitutor());
+          if (areAcceptable(signature1, signature2)) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public static boolean areAcceptable(MethodSignature signature1, MethodSignature signature2) {
+    final PsiType[] signatureParameterTypes1 = signature1.getParameterTypes();
+    final PsiType[] signatureParameterTypes2 = signature2.getParameterTypes();
+    if (signatureParameterTypes1.length != signatureParameterTypes2.length) return false;
+    for (int i = 0; i < signatureParameterTypes1.length; i++) {
+      final PsiType type1 = signatureParameterTypes1[i];
+      final PsiType type2 = signatureParameterTypes2[i];
+      if (!Comparing.equal(GenericsUtil.eliminateWildcards(type1), GenericsUtil.eliminateWildcards(type2))) {
+        return false;
+      }
     }
     return true;
   }

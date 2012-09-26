@@ -50,7 +50,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.List;
 
-public class ToolEditorDialog extends DialogWrapper {
+class ToolEditorDialog extends DialogWrapper {
   private final JTextField myNameField = new JTextField();
   private final JTextField myDescriptionField = new JTextField();
   private final ComboBox myGroupCombo = new ComboBox(-1);
@@ -174,7 +174,7 @@ public class ToolEditorDialog extends DialogWrapper {
     HelpManager.getInstance().invokeHelp("preferences.externalToolsEdit");
   }
 
-  public ToolEditorDialog(JComponent parent) {
+  ToolEditorDialog(JComponent parent, String title) {
     super(parent, true);
 
     myOutputFiltersButton = new JButton(ToolsBundle.message("tools.filters.button"));
@@ -182,7 +182,7 @@ public class ToolEditorDialog extends DialogWrapper {
     DataContext dataContext = DataManager.getInstance().getDataContext(parent);
     myProject = PlatformDataKeys.PROJECT.getData(dataContext);
     MacroManager.getInstance().cacheMacrosPreview(dataContext);
-    setTitle(ToolsBundle.message("tools.edit.title"));
+    setTitle(title);
     init();
     addListeners();
     myShowConsoleOnStdOutCheckbox.setVisible(false);

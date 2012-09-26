@@ -105,8 +105,6 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     myNormalMetrics = myLookup.getEditor().getComponent().getFontMetrics(myNormalFont);
     myBoldMetrics = myLookup.getEditor().getComponent().getFontMetrics(myBoldFont);
-
-    UIUtil.removeQuaquaVisualMarginsIn(myPanel);
   }
 
   private boolean myIsSelected = false;

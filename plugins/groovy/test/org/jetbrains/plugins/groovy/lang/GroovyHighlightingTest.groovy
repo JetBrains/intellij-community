@@ -257,6 +257,26 @@ class A {
     doTest(new GroovyAccessibilityInspection());
   }
 
+  public void testStaticImportProperty() {
+    myFixture.addFileToProject('Foo.groovy', '''\
+class Foo {
+  static def foo = 2
+  private static def bar = 3
+
+  private static def baz = 4
+
+  private static def getBaz() {baz}
+}
+''')
+    testHighlighting('''\
+import static Foo.foo
+import static Foo.<warning descr="Access to 'bar' exceeds its access rights">bar</warning>
+import static Foo.<warning descr="Access to 'baz' exceeds its access rights">baz</warning>
+
+print foo+<warning descr="Access to 'bar' exceeds its access rights">bar</warning>+<warning descr="Access to 'baz' exceeds its access rights">baz</warning>
+''', GroovyAccessibilityInspection)
+  }
+
   public void testSignatureIsNotApplicableToList() {
     doTest(new GroovyAssignabilityCheckInspection());
   }

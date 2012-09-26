@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,12 +75,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public short getSelectionAlpha() {
-    if ((UIUtil.isUnderAlloyLookAndFeel() && !UIUtil.isUnderAlloyIDEALookAndFeel())
-        || UIUtil.isUnderMetalLookAndFeel() 
-        || UIUtil.isUnderMetalLookAndFeel()) {
-      return 255;
-    }
-    return 150;
+    return (short)(UIUtil.isUnderAlloyLookAndFeel() && !UIUtil.isUnderAlloyIDEALookAndFeel() ? 255 : 150);
   }
 
   @Override

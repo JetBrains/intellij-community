@@ -52,8 +52,6 @@ public class StatisticsUploadAssistant {
     }
 
     public static boolean isTimeToSend() {
-        if (ApplicationManagerEx.getApplicationEx().isInternal()) return true; // todo remove
-
         return isTimeToSend(UsageStatisticsPersistenceComponent.getInstance());
     }
 
@@ -64,8 +62,6 @@ public class StatisticsUploadAssistant {
     }
 
     public static boolean isSendAllowed() {
-        if (ApplicationManagerEx.getApplicationEx().isInternal()) return true; // todo remove
-
         return isSendAllowed(UsageStatisticsPersistenceComponent.getInstance());
     }
 

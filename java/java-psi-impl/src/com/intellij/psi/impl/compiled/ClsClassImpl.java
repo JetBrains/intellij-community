@@ -425,18 +425,20 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
       }
     }
 
-    if (!isEnum()) { // skip artificial methods for enum, they does not present in the source code : e.g. static values() method
-      List<PsiMethod> methods = getOwnMethods();
-      if (methods.size() > 0) {
-        goNextLine(newIndentLevel, buffer);
-        goNextLine(newIndentLevel, buffer);
-        for (int i = 0; i < methods.size(); i++) {
-          PsiMethod method = methods.get(i);
-          ((ClsElementImpl)method).appendMirrorText(newIndentLevel, buffer);
-          if (i < methods.size() - 1) {
-            goNextLine(newIndentLevel, buffer);
-            goNextLine(newIndentLevel, buffer);
-          }
+
+    List<PsiMethod> methods = getOwnMethods();
+    if (methods.size() > 0) {
+      goNextLine(newIndentLevel, buffer);
+      if (isEnum() && fields.size() == 0) {
+        buffer.append(";"); // avoid parse errors due to no fields in enum
+      }
+      goNextLine(newIndentLevel, buffer);
+      for (int i = 0; i < methods.size(); i++) {
+        PsiMethod method = methods.get(i);
+        ((ClsElementImpl)method).appendMirrorText(newIndentLevel, buffer);
+        if (i < methods.size() - 1) {
+          goNextLine(newIndentLevel, buffer);
+          goNextLine(newIndentLevel, buffer);
         }
       }
     }

@@ -143,16 +143,16 @@ public class GithubRebaseAction extends DumbAwareAction {
 
     final String parent = repositoryInfo.getParentName();
     LOG.assertTrue(parent != null, "Parent repository not found!");
-    final String parentRepoSuffix = parent + ".git";
-    final String parentRepoUrl = "https://github.com/" + parentRepoSuffix;
+    final String parentDotGit = parent + ".git";
+    final String parentRepoUrl = "https://github.com/" + parentDotGit;
 
     // Check that corresponding remote branch is configured for the fork origin repo
     final Ref<String> remoteForForkParentRepo = new Ref<String>();
-    for (GitRemote gitRemote : gitRepository.getRemotes()) {
+    out: for (GitRemote gitRemote : gitRepository.getRemotes()) {
       for (String url : gitRemote.getUrls()) {
-        if (url.endsWith("/" + parent + ".git")) {
+        if (isParentUrl(url, parentDotGit)) {
           remoteForForkParentRepo.set(gitRemote.getName());
-          break;
+          break out;
         }
       }
     }
@@ -202,6 +202,13 @@ public class GithubRebaseAction extends DumbAwareAction {
     final AnActionEvent actionEvent =
       new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(), e.getPresentation(), e.getActionManager(), e.getModifiers());
     action.actionPerformed(actionEvent);
+  }
+
+  private static boolean isParentUrl(@NotNull String url, @NotNull String parentDotGit) {
+    // the separator is checked because we may have a repository which ends with "parentDotGit", but is not a parent,
+    // e.g. "my_other_repository_parent.git"
+    return url.endsWith("/" + parentDotGit)     // http or git
+           || url.endsWith(":" + parentDotGit); // ssh
   }
 
   private static boolean fetchParentOrNotifyError(@NotNull final Project project, @NotNull final GitRepository repository,

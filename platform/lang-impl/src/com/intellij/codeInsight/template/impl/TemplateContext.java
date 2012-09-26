@@ -18,14 +18,13 @@ package com.intellij.codeInsight.template.impl;
 
 
 import com.intellij.codeInsight.template.EverywhereContextType;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.codeInsight.template.TemplateContextType;
+import org.jdom.Attribute;
 import org.jdom.Element;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class TemplateContext {
 
@@ -78,11 +77,14 @@ public class TemplateContext {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
+    List<Element> options = new ArrayList<Element>(myAdditionalContexts.size());
     for (String contextName : myAdditionalContexts.keySet()) {
+      String value = myAdditionalContexts.get(contextName).toString();
+
       Element optionElement = new Element("option");
-      optionElement.setAttribute("name", contextName);
-      optionElement.setAttribute("value", myAdditionalContexts.get(contextName).toString());
-      element.addContent(optionElement);
+      optionElement.setAttributes(Arrays.asList(new Attribute("name", contextName), new Attribute("value", value)));
+      options.add(optionElement);
     }
+    element.setContent(options);
   }
 }

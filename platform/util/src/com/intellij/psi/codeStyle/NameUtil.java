@@ -404,7 +404,7 @@ public class NameUtil {
     return buildMatcher(pattern, options);
   }
 
-  public static MinusculeMatcher buildMatcher(final String pattern, MatchingCaseSensitivity options) {
+  public static MinusculeMatcher buildMatcher(@NotNull String pattern, @NotNull MatchingCaseSensitivity options) {
     return new MinusculeMatcher(pattern, options);
   }
 

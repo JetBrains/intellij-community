@@ -44,8 +44,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.List;
-
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -138,7 +136,7 @@ public class PathMacroManagerTest {
     setUpMocks("/tmp/foo");
 
     final ReplacePathToMacroMap replacePathMap = new ModulePathMacroManager(myPathMacros, myModule).getReplacePathMap();
-    final String s = mapToString(replacePathMap);
+    final String s = replacePathMap.mapToString();
     assertEquals("file:/tmp/foo/module -> file:$MODULE_DIR$\n" +
                  "file://tmp/foo/module -> file:/$MODULE_DIR$\n" +
                  "file:///tmp/foo/module -> file://$MODULE_DIR$\n" +
@@ -181,7 +179,7 @@ public class PathMacroManagerTest {
     setUpMocks("/tmp/foo");
 
     final ReplacePathToMacroMap replacePathMap = new ProjectPathMacroManager(myPathMacros, myProject).getReplacePathMap();
-    final String s = mapToString(replacePathMap);
+    final String s = replacePathMap.mapToString();
     assertEquals("file:/tmp/foo -> file:$PROJECT_DIR$\n" +
                  "file://tmp/foo -> file:/$PROJECT_DIR$\n" +
                  "file:///tmp/foo -> file://$PROJECT_DIR$\n" +
@@ -227,7 +225,7 @@ public class PathMacroManagerTest {
     setUpMocks(USER_HOME + "/IdeaProjects/foo");
 
     final ReplacePathToMacroMap replacePathMap = new ModulePathMacroManager(myPathMacros, myModule).getReplacePathMap();
-    final String s = mapToString(replacePathMap);
+    final String s = replacePathMap.mapToString();
     assertEquals("file:" + USER_HOME + "/IdeaProjects/foo/module -> file:$MODULE_DIR$\n" +
                  "file:/" + USER_HOME + "/IdeaProjects/foo/module -> file:/$MODULE_DIR$\n" +
                  "file://" + USER_HOME + "/IdeaProjects/foo/module -> file://$MODULE_DIR$\n" +
@@ -263,19 +261,5 @@ public class PathMacroManagerTest {
                  "jar:" + USER_HOME + " -> jar:$USER_HOME$\n" +
                  "jar:/" + USER_HOME + " -> jar://$USER_HOME$\n" +
                  "jar://" + USER_HOME + " -> jar://$USER_HOME$", s);
-  }
-
-  private static String mapToString(final ReplacePathToMacroMap replacePathMap) {
-    final StringBuilder buf = new StringBuilder();
-
-    final List<String> pathIndex = replacePathMap.getPathIndex();
-    for (String s : pathIndex) {
-      if (buf.length() > 0) buf.append("\n");
-      buf.append(s);
-      buf.append(" -> ");
-      buf.append(replacePathMap.get(s));
-    }
-
-    return buf.toString();
   }
 }

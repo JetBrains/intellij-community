@@ -236,19 +236,6 @@ public class GrClassImplUtil {
 
     ContainerUtil.addAll(allMethods, clazz.getMethods());
 
-    final PsiField[] fields = clazz.getFields();
-    for (PsiField field : fields) {
-      if (field instanceof GrField) {
-        final GrField groovyField = (GrField)field;
-        if (groovyField.isProperty()) {
-          PsiMethod[] getters = groovyField.getGetters();
-          if (getters.length > 0) ContainerUtil.addAll(allMethods, getters);
-          PsiMethod setter = groovyField.getSetter();
-          if (setter != null) allMethods.add(setter);
-        }
-      }
-    }
-
     final PsiClass[] supers = clazz.getSupers();
     for (PsiClass aSuper : supers) {
       getAllMethodsInner(aSuper, allMethods, visited);
