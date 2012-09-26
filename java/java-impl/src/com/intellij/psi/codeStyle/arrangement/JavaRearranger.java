@@ -204,10 +204,17 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
   }
 
   private static void setupUtilityMethods(@NotNull JavaArrangementParseInfo info, @NotNull ArrangementEntryOrderType orderType) {
-    if (orderType == ArrangementEntryOrderType.DEPTH_FIRST) {
-      for (JavaArrangementMethodDependencyInfo rootInfo : info.getMethodDependencyRoots()) {
-        setupDepthFirstDependency(rootInfo);
-      }
+    switch (orderType) {
+      case DEPTH_FIRST:
+        for (JavaArrangementMethodDependencyInfo rootInfo : info.getMethodDependencyRoots()) {
+          setupDepthFirstDependency(rootInfo);
+        }
+        break;
+      case BREADTH_FIRST:
+        for (JavaArrangementMethodDependencyInfo rootInfo : info.getMethodDependencyRoots()) {
+          setupBreadthFirstDependency(rootInfo);
+        }
+      default: // Unexpected type, do nothing
     }
   }
 
@@ -221,12 +228,35 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     }
   }
 
+  private static void setupBreadthFirstDependency(@NotNull JavaArrangementMethodDependencyInfo info) {
+    Deque<JavaArrangementMethodDependencyInfo> toProcess = new ArrayDeque<JavaArrangementMethodDependencyInfo>();
+    toProcess.add(info);
+    while (!toProcess.isEmpty()) {
+      JavaArrangementMethodDependencyInfo current = toProcess.removeFirst();
+      for (JavaArrangementMethodDependencyInfo dependencyInfo : current.getDependentMethodInfos()) {
+        JavaElementArrangementEntry dependencyMethod = dependencyInfo.getAnchorMethod();
+        if (dependencyMethod.getDependencies() == null) {
+          dependencyMethod.addDependency(current.getAnchorMethod());
+        }
+        toProcess.addLast(dependencyInfo);
+      }
+    }
+  }
+
   private static void setupOverriddenMethods(JavaArrangementParseInfo info) {
-    // TODO den implement
+    for (JavaArrangementOverriddenMethodsInfo methodsInfo : info.getOverriddenMethods()) {
+      JavaElementArrangementEntry previous = null;
+      for (JavaElementArrangementEntry entry : methodsInfo.getMethodEntries()) {
+        if (previous != null && entry.getDependencies() == null) {
+          entry.addDependency(previous);
+        }
+        previous = entry;
+      }
+    }
   }
   
   @NotNull
-  private static Set<ArrangementGroupingType> getGroupingRules(ArrangementSettings settings) {
+  private static Set<ArrangementGroupingType> getGroupingRules(@Nullable ArrangementSettings settings) {
     Set<ArrangementGroupingType> groupingRules = EnumSet.noneOf(ArrangementGroupingType.class);
     if (settings != null) {
       for (ArrangementGroupingRule rule : settings.getGroupings()) {

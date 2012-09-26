@@ -21,6 +21,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
@@ -156,6 +158,10 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     processEntry(entry, method, method.getBody());
     parseProperties(method, entry);
     myInfo.onMethodEntryCreated(method, entry);
+    MethodSignatureBackedByPsiMethod overridden = SuperMethodsSearch.search(method, null, true, false).findFirst();
+    if (overridden != null) {
+      myInfo.onOverriddenMethod(overridden.getMethod(), method);
+    }
     myMethodBodyProcessor.setBaseMethod(method);
     method.accept(myMethodBodyProcessor);
   }

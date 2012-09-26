@@ -16,8 +16,11 @@
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,8 +48,12 @@ public class JavaArrangementParseInfo {
   @NotNull private final Map<PsiMethod, JavaElementArrangementEntry> myMethodEntriesMap =
     new HashMap<PsiMethod, JavaElementArrangementEntry>();
 
-  @NotNull private final Set<PsiMethod> myTmpMethodDependencyRoots = new HashSet<PsiMethod>();
+  @NotNull private final Map<PsiClass, List<Pair<PsiMethod/*overridden*/, PsiMethod/*overriding*/>>> myOverriddenMethods
+    = new LinkedHashMap<PsiClass, List<Pair<PsiMethod, PsiMethod>>>();
+
+  @NotNull private final Set<PsiMethod> myTmpMethodDependencyRoots = new LinkedHashSet<PsiMethod>();
   @NotNull private final Set<PsiMethod> myDependentMethods         = new HashSet<PsiMethod>();
+
 
   private boolean myRebuildMethodDependencies;
 
@@ -144,6 +151,50 @@ public class JavaArrangementParseInfo {
 
   public void onMethodEntryCreated(@NotNull PsiMethod method, @NotNull JavaElementArrangementEntry entry) {
     myMethodEntriesMap.put(method, entry);
+  }
+
+  public void onOverriddenMethod(@NotNull PsiMethod baseMethod, @NotNull PsiMethod overridingMethod) {
+    PsiClass clazz = baseMethod.getContainingClass();
+    if (clazz == null) {
+      return;
+    }
+    List<Pair<PsiMethod, PsiMethod>> methods = myOverriddenMethods.get(clazz);
+    if (methods == null) {
+      myOverriddenMethods.put(clazz, methods = new ArrayList<Pair<PsiMethod, PsiMethod>>());
+    }
+    methods.add(Pair.create(baseMethod, overridingMethod));
+  }
+
+  @NotNull
+  public List<JavaArrangementOverriddenMethodsInfo> getOverriddenMethods() {
+    List<JavaArrangementOverriddenMethodsInfo> result = new ArrayList<JavaArrangementOverriddenMethodsInfo>();
+    final TObjectIntHashMap<PsiMethod> weights = new TObjectIntHashMap<PsiMethod>();
+    Comparator<Pair<PsiMethod, PsiMethod>> comparator = new Comparator<Pair<PsiMethod, PsiMethod>>() {
+      @Override
+      public int compare(Pair<PsiMethod, PsiMethod> o1, Pair<PsiMethod, PsiMethod> o2) {
+        return weights.get(o1.first) - weights.get(o2.first);
+      }
+    };
+    for (Map.Entry<PsiClass, List<Pair<PsiMethod, PsiMethod>>> entry : myOverriddenMethods.entrySet()) {
+      JavaArrangementOverriddenMethodsInfo info = new JavaArrangementOverriddenMethodsInfo(entry.getKey().getName());
+      weights.clear();
+      int i = 0;
+      for (PsiMethod method : entry.getKey().getMethods()) {
+        weights.put(method, i++);
+      }
+      ContainerUtil.sort(entry.getValue(), comparator);
+      for (Pair<PsiMethod, PsiMethod> pair : entry.getValue()) {
+        JavaElementArrangementEntry overridingMethodEntry = myMethodEntriesMap.get(pair.second);
+        if (overridingMethodEntry != null) {
+          info.addMethodEntry(overridingMethodEntry);
+        }
+      }
+      if (!info.getMethodEntries().isEmpty()) {
+        result.add(info);
+      }
+    }
+    
+    return result;
   }
 
   /**
