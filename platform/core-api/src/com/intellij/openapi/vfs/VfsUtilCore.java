@@ -31,6 +31,8 @@ import java.io.*;
 import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.openapi.vfs.VirtualFileVisitor.VisitorException;
+
 public class VfsUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtilCore");
 
@@ -190,61 +192,59 @@ public class VfsUtilCore {
 
   @SuppressWarnings("UnsafeVfsRecursion")
   @NotNull
-  public static VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file, @NotNull VirtualFileVisitor<?> visitor)
-    throws VirtualFileVisitor.VisitorException {
-    final boolean visited = visitor.allowVisitFile(file);
-    if (visited) {
-      VirtualFileVisitor.Result result = visitor.visitFileEx(file);
-      if (result.skipChildren) return result;
-    }
-
-    Iterable<VirtualFile> childrenIterable = null;
-    VirtualFile[] children = null;
-
+  public static VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
+                                                                   @NotNull VirtualFileVisitor<?> visitor) throws VisitorException {
+    boolean pushed = false;
     try {
-      if (!file.isValid() || !visitor.allowVisitChildren(file)) return VirtualFileVisitor.CONTINUE;
-      if (!visitor.depthLimitReached()) {
-        childrenIterable = visitor.getChildrenIterable(file);
-        if (childrenIterable == null) {
-          children = file.getChildren();
+      final boolean visited = visitor.allowVisitFile(file);
+      if (visited) {
+        VirtualFileVisitor.Result result = visitor.visitFileEx(file);
+        if (result.skipChildren) return result;
+      }
+
+      Iterable<VirtualFile> childrenIterable = null;
+      VirtualFile[] children = null;
+
+      try {
+        if (!file.isValid() || !visitor.allowVisitChildren(file)) return VirtualFileVisitor.CONTINUE;
+        if (!visitor.depthLimitReached()) {
+          childrenIterable = visitor.getChildrenIterable(file);
+          if (childrenIterable == null) {
+            children = file.getChildren();
+          }
         }
       }
-    }
-    catch (InvalidVirtualFileAccessException e) {
-      LOG.info("Ignoring: " + e.getMessage());
-      return VirtualFileVisitor.CONTINUE;
-    }
+      catch (InvalidVirtualFileAccessException e) {
+        LOG.info("Ignoring: " + e.getMessage());
+        return VirtualFileVisitor.CONTINUE;
+      }
 
-    if (childrenIterable != null) {
-      visitor.pushFrame();
-      try {
+      if (childrenIterable != null) {
+        visitor.saveValue();
+        pushed = true;
         for (VirtualFile child : childrenIterable) {
           VirtualFileVisitor.Result result = visitChildrenRecursively(child, visitor);
           if (result.skipToParent != null && !Comparing.equal(result.skipToParent, child)) return result;
         }
       }
-      finally {
-        visitor.popFrame();
-      }
-    }
-    else if (children != null && children.length != 0) {
-      visitor.pushFrame();
-      try {
+      else if (children != null && children.length != 0) {
+        visitor.saveValue();
+        pushed = true;
         for (VirtualFile child : children) {
           VirtualFileVisitor.Result result = visitChildrenRecursively(child, visitor);
           if (result.skipToParent != null && !Comparing.equal(result.skipToParent, child)) return result;
         }
       }
-      finally {
-        visitor.popFrame();
+
+      if (visited) {
+        visitor.afterChildrenVisited(file);
       }
-    }
 
-    if (visited) {
-      visitor.afterChildrenVisited(file);
+      return VirtualFileVisitor.CONTINUE;
     }
-
-    return VirtualFileVisitor.CONTINUE;
+    finally {
+      visitor.restoreValue(pushed);
+    }
   }
 
   public static <E extends Exception> VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
@@ -253,7 +253,7 @@ public class VfsUtilCore {
     try {
       return visitChildrenRecursively(file, visitor);
     }
-    catch (VirtualFileVisitor.VisitorException e) {
+    catch (VisitorException e) {
       final Throwable cause = e.getCause();
       if (eClass.isInstance(cause)) {
         throw eClass.cast(cause);
