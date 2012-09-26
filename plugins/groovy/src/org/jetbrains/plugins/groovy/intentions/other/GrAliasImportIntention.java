@@ -20,9 +20,12 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -40,6 +43,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
@@ -98,7 +102,10 @@ public class GrAliasImportIntention extends Intention {
     GrImportStatement templateImport = createTemplateImport(project, importStatement, member, file);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      updateRefs(file, templateImport.getTextRange(), usages, member.getName());
+      if (!importStatement.isOnDemand()) {
+        importStatement.delete();
+      }
+      updateRefs(usages, member.getName(), templateImport);
     }
     else {
       runTemplate(project, importStatement, member, file, usages, templateImport);
@@ -116,15 +123,11 @@ public class GrAliasImportIntention extends Intention {
 
     GrImportStatement template = GroovyPsiElementFactory.getInstance(project)
       .createImportStatementFromText("import static " + qname + "." + name + " as aliased");
-    GrImportStatement templateImport = file.addImport(template);
-    if (!context.isOnDemand()) {
-      context.delete();
-    }
-    return templateImport;
+    return file.addImport(template);
   }
 
   private static void runTemplate(Project project,
-                                  GroovyPsiElement context,
+                                  final GrImportStatement context,
                                   PsiMember resolved,
                                   final GroovyFileBase file,
                                   final List<UsageInfo> usages,
@@ -137,13 +140,16 @@ public class GrAliasImportIntention extends Intention {
 
     final PsiElement aliasNameElement = templateImport.getAliasNameElement();
     assert aliasNameElement != null;
-    templateBuilder.replaceElement(aliasNameElement,
-                                   new MyLookupExpression(resolved.getName(), names, (PsiNamedElement)resolved, true, null));
+    templateBuilder.replaceElement(aliasNameElement, new MyLookupExpression(resolved.getName(), names, (PsiNamedElement)resolved, true, null));
     Template built = templateBuilder.buildTemplate();
 
     final Editor newEditor = QuickfixUtil.positionCursor(project, file, templateImport);
+    final Document document = newEditor.getDocument();
+
+    final RangeMarker contextImportPointer = document.createRangeMarker(context.getTextRange());
+
     final TextRange range = templateImport.getTextRange();
-    newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+    document.deleteString(range.getStartOffset(), range.getEndOffset());
 
     final String name = resolved.getName();
 
@@ -151,60 +157,100 @@ public class GrAliasImportIntention extends Intention {
     manager.startTemplate(newEditor, built, new TemplateEditingAdapter() {
       @Override
       public void templateFinished(Template template, boolean brokenOff) {
-        if (brokenOff) return;
+        final GrImportStatement importStatement = ApplicationManager.getApplication().runReadAction(new Computable<GrImportStatement>() {
+          @Nullable
+          @Override
+          public GrImportStatement compute() {
+            return PsiTreeUtil.findElementOfClassAtOffset(file, range.getStartOffset(), GrImportStatement.class, true);
+          }
+        });
 
-        updateRefs(file, range, usages, name);
+        if (brokenOff) {
+          if (importStatement != null) {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                importStatement.delete();
+              }
+            });
+          }
+          return;
+        }
+
+        updateRefs(usages, name, importStatement);
+
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            final GrImportStatement context = PsiTreeUtil.findElementOfClassAtRange(file, contextImportPointer.getStartOffset(),
+                                                                                    contextImportPointer.getEndOffset(),
+                                                                                    GrImportStatement.class);
+            if (context != null) {
+              context.delete();
+            }
+          }
+        });
       }
     });
   }
 
-  private static void updateRefs(GroovyFileBase file, TextRange range, List<UsageInfo> usages, String memberName) {
-    GrImportStatement updatedImport = PsiTreeUtil.findElementOfClassAtOffset(file, range.getStartOffset(), GrImportStatement.class, true);
+  private static void updateRefs(List<UsageInfo> usages, final String memberName, final GrImportStatement updatedImport) {
 
     if (updatedImport == null) return;
 
-    String name = updatedImport.getImportedName();
+    final String name = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Nullable
+      @Override
+      public String compute() {
+        return updatedImport.getImportedName();
+      }
+    });
 
-    for (UsageInfo usage : usages) {
-      final PsiElement usageElement = usage.getElement();
-      if (usageElement == null) continue;
+    for (final UsageInfo usage : usages) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          final PsiElement usageElement = usage.getElement();
+          if (usageElement == null) return;
 
-      if (usageElement.getParent() instanceof GrImportStatement) continue;
+          if (usageElement.getParent() instanceof GrImportStatement) return;
 
-      if (usageElement instanceof GrReferenceElement) {
-        final GrReferenceElement ref = (GrReferenceElement)usageElement;
-        final PsiElement qualifier = ref.getQualifier();
+          if (usageElement instanceof GrReferenceElement) {
+            final GrReferenceElement ref = (GrReferenceElement)usageElement;
+            final PsiElement qualifier = ref.getQualifier();
 
-        if (qualifier == null) {
-          final String refName = ref.getReferenceName();
-          if (refName == null) continue;
+            if (qualifier == null) {
+              final String refName = ref.getReferenceName();
+              if (refName == null) return;
 
-          if (memberName.equals(refName)) {
-            ref.handleElementRenameSimple(name);
-          }
-          else if (refName.equals(GroovyPropertyUtils.getPropertyNameByAccessorName(memberName))) {
-            final String newPropName = GroovyPropertyUtils.getPropertyNameByAccessorName(name);
-            if (newPropName != null) {
-              ref.handleElementRenameSimple(newPropName);
+              if (memberName.equals(refName)) {
+                ref.handleElementRenameSimple(name);
+              }
+              else if (refName.equals(GroovyPropertyUtils.getPropertyNameByAccessorName(memberName))) {
+                final String newPropName = GroovyPropertyUtils.getPropertyNameByAccessorName(name);
+                if (newPropName != null) {
+                  ref.handleElementRenameSimple(newPropName);
+                }
+                else {
+                  ref.handleElementRenameSimple(name);
+                }
+              }
+              else if (refName.equals(GroovyPropertyUtils.getGetterNameBoolean(memberName))) {
+                final String getterName = GroovyPropertyUtils.getGetterNameBoolean(name);
+                ref.handleElementRenameSimple(getterName);
+              }
+              else if (refName.equals(GroovyPropertyUtils.getGetterNameNonBoolean(memberName))) {
+                final String getterName = GroovyPropertyUtils.getGetterNameNonBoolean(name);
+                ref.handleElementRenameSimple(getterName);
+              }
+              else if (refName.equals(GroovyPropertyUtils.getSetterName(memberName))) {
+                final String getterName = GroovyPropertyUtils.getSetterName(name);
+                ref.handleElementRenameSimple(getterName);
+              }
             }
-            else {
-              ref.handleElementRenameSimple(name);
-            }
-          }
-          else if (refName.equals(GroovyPropertyUtils.getGetterNameBoolean(memberName))) {
-            final String getterName = GroovyPropertyUtils.getGetterNameBoolean(name);
-            ref.handleElementRenameSimple(getterName);
-          }
-          else if (refName.equals(GroovyPropertyUtils.getGetterNameNonBoolean(memberName))) {
-            final String getterName = GroovyPropertyUtils.getGetterNameNonBoolean(name);
-            ref.handleElementRenameSimple(getterName);
-          }
-          else if (refName.equals(GroovyPropertyUtils.getSetterName(memberName))) {
-            final String getterName = GroovyPropertyUtils.getSetterName(name);
-            ref.handleElementRenameSimple(getterName);
           }
         }
-      }
+      });
     }
   }
 
