@@ -45,7 +45,6 @@
       <module fileurl="file://$PROJECT_DIR$/java/compiler/forms-compiler/forms-compiler.iml" filepath="$PROJECT_DIR$/java/compiler/forms-compiler/forms-compiler.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/platform/forms_rt/forms_rt.iml" filepath="$PROJECT_DIR$/platform/forms_rt/forms_rt.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/generate-tostring/generate-tostring.iml" filepath="$PROJECT_DIR$/plugins/generate-tostring/generate-tostring.iml" group="plugins" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/gettext/gettext.iml" filepath="$PROJECT_DIR$/plugins/gettext/gettext.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/git4idea/git4idea.iml" filepath="$PROJECT_DIR$/plugins/git4idea/git4idea.iml" group="plugins/VCS" />
       <module fileurl="file://$PROJECT_DIR$/plugins/git4idea/rt/git4idea-rt.iml" filepath="$PROJECT_DIR$/plugins/git4idea/rt/git4idea-rt.iml" group="plugins/VCS" />
       <module fileurl="file://$PROJECT_DIR$/plugins/github/github.iml" filepath="$PROJECT_DIR$/plugins/github/github.iml" group="plugins" />
