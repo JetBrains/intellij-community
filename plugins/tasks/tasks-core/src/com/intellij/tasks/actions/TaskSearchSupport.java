@@ -34,7 +34,6 @@ import java.util.StringTokenizer;
  * @author Dmitry Avdeev
  */
 public class TaskSearchSupport {
-  protected Matcher myMatcher;
   private final TaskManagerImpl myManager;
 
   public TaskSearchSupport(final Project project) {
@@ -43,21 +42,25 @@ public class TaskSearchSupport {
 
   public List<Task> getLocalAndCachedTasks(String pattern) {
     List<Task> tasks = new ArrayList<Task>();
-      ContainerUtil.addAll(tasks, myManager.getLocalTasks());
-      ContainerUtil.addAll(tasks, ContainerUtil.filter(myManager.getCachedIssues(), new Condition<Task>() {
-        @Override
-        public boolean value(final Task task) {
-          return myManager.findTask(task.getId()) == null;
-        }
-      }));
+    ContainerUtil.addAll(tasks, myManager.getLocalTasks());
+    ContainerUtil.addAll(tasks, ContainerUtil.filter(myManager.getCachedIssues(), new Condition<Task>() {
+      @Override
+      public boolean value(final Task task) {
+        return myManager.findTask(task.getId()) == null;
+      }
+    }));
+    List<Task> filteredTasks = filterTasks(pattern, tasks);
+    ContainerUtil.sort(filteredTasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
+    return filteredTasks;
+  }
+
+  public static List<Task> filterTasks(final String pattern, final List<Task> tasks) {
     final Matcher matcher = getMatcher(pattern);
-    List<Task> filteredTasks = ContainerUtil.mapNotNull(tasks, new NullableFunction<Task, Task>() {
+    return ContainerUtil.mapNotNull(tasks, new NullableFunction<Task, Task>() {
       public Task fun(Task task) {
         return matcher.matches(task.getId()) || matcher.matches(task.getSummary()) ? task : null;
       }
     });
-    ContainerUtil.sort(filteredTasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
-    return filteredTasks;
   }
 
   public List<Task> getRepositoryTasks(String pattern, int max, long since, boolean forceRequest) {
@@ -75,20 +78,18 @@ public class TaskSearchSupport {
     });
   }
 
-  private Matcher getMatcher(String pattern) {
-    if (myMatcher == null) {
-      StringTokenizer tokenizer = new StringTokenizer(pattern, " ");
-      StringBuilder builder = new StringBuilder();
-      while (tokenizer.hasMoreTokens()) {
-        String word = tokenizer.nextToken();
-        builder.append('*');
-        builder.append(word);
-        builder.append("* ");
-      }
 
-      myMatcher = NameUtil.buildMatcher(builder.toString(), 0, true, true, pattern.toLowerCase().equals(pattern));
+  private static Matcher getMatcher(String pattern) {
+    StringTokenizer tokenizer = new StringTokenizer(pattern, " ");
+    StringBuilder builder = new StringBuilder();
+    while (tokenizer.hasMoreTokens()) {
+      String word = tokenizer.nextToken();
+      builder.append('*');
+      builder.append(word);
+      builder.append("* ");
     }
-    return myMatcher;
+
+    return NameUtil.buildMatcher(builder.toString(), 0, true, true, pattern.toLowerCase().equals(pattern));
   }
 
   private List<Task> getTasks(String pattern, boolean cached, boolean autopopup) {

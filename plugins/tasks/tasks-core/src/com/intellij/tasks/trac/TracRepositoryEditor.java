@@ -17,7 +17,10 @@ package com.intellij.tasks.trac;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.config.BaseRepositoryEditor;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.FormBuilder;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -25,24 +28,32 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  */
 public class TracRepositoryEditor extends BaseRepositoryEditor<TracRepository> {
-
-  private final JTextField myDefaultSearch;
+  private JTextField myDefaultSearch;
+  private JBLabel mySearchLabel;
 
   public TracRepositoryEditor(final Project project, final TracRepository repository, Consumer<TracRepository> changeListener) {
     super(project, repository, changeListener);
-
-    myCustomLabel.add(new JLabel("Search:", SwingConstants.RIGHT));
-
-    myDefaultSearch = new JTextField();
     myDefaultSearch.setText(repository.getDefaultSearch());
-    installListener(myDefaultSearch);
-
-    myCustomPanel.add(myDefaultSearch);
   }
 
   @Override
   public void apply() {
     myRepository.setDefaultSearch(myDefaultSearch.getText());
     super.apply();
+  }
+
+  @Nullable
+  @Override
+  protected JComponent createCustomPanel() {
+    mySearchLabel = new JBLabel("Search:", SwingConstants.RIGHT);
+    myDefaultSearch = new JTextField();
+    installListener(myDefaultSearch);
+    return FormBuilder.createFormBuilder().addLabeledComponent(mySearchLabel, myDefaultSearch).getPanel();
+  }
+
+  @Override
+  public void setAnchor(@Nullable final JComponent anchor) {
+    super.setAnchor(anchor);
+    mySearchLabel.setAnchor(anchor);
   }
 }

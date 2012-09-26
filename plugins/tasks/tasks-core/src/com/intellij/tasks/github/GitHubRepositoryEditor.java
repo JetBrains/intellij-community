@@ -3,53 +3,52 @@ package com.intellij.tasks.github;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.config.BaseRepositoryEditor;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.FormBuilder;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author Dennis.Ushakov
  */
 public class GitHubRepositoryEditor extends BaseRepositoryEditor<GitHubRepository> {
-  private final JTextField myRepoName;
-  private final JTextField myRepoAuthor;
+  private JTextField myRepoName;
+  private JTextField myRepoAuthor;
+  private JBLabel myRepositoryAuthorLabel;
+  private JBLabel myRepositoryLabel;
 
   public GitHubRepositoryEditor(final Project project,
                                 final GitHubRepository repository,
                                 Consumer<GitHubRepository> changeListener) {
     super(project, repository, changeListener);
 
+    // project author, by default same as username
+    myRepoAuthor.setText(repository.getRepoAuthor());
+
+    // project id
+    myRepoName.setText(repository.getRepoName());
+
     myUrlLabel.setVisible(false);
     myURLText.setVisible(false);
 
-    // project author, by default same as username
-    myRepoAuthor = new JTextField();
-    myRepoAuthor.setText(repository.getRepoAuthor());
-    installListener(myRepoAuthor);
-    myCustomPanel.add(myRepoAuthor, BorderLayout.NORTH);
-    myCustomLabel.add(new JLabel("Repository author:", SwingConstants.RIGHT) {
-      @Override
-      public Dimension getPreferredSize() {
-        final Dimension oldSize = super.getPreferredSize();
-        final Dimension size = myRepoAuthor.getPreferredSize();
-        return new Dimension(oldSize.width, size.height);
-      }
-    }, BorderLayout.NORTH);
+    setAnchor(myRepositoryAuthorLabel);
+  }
 
-    // project id
+  @Nullable
+  @Override
+  protected JComponent createCustomPanel() {
+    myRepositoryAuthorLabel = new JBLabel("Repository author:", SwingConstants.RIGHT);
+    myRepoAuthor = new JTextField();
+    installListener(myRepoAuthor);
+
+    myRepositoryLabel = new JBLabel("Repository:", SwingConstants.RIGHT);
     myRepoName = new JTextField();
-    myRepoName.setText(repository.getRepoName());
     installListener(myRepoName);
-    myCustomPanel.add(myRepoName, BorderLayout.CENTER);
-    myCustomLabel.add(new JLabel("Repository:", SwingConstants.RIGHT) {
-      @Override
-      public Dimension getPreferredSize() {
-        final Dimension oldSize = super.getPreferredSize();
-        final Dimension size = myRepoName.getPreferredSize();
-        return new Dimension(oldSize.width, size.height);
-      }
-    }, BorderLayout.CENTER);
+
+    return FormBuilder.createFormBuilder().addLabeledComponent(myRepositoryAuthorLabel, myRepoAuthor)
+      .addLabeledComponent(myRepositoryLabel, myRepoName).getPanel();
   }
 
   @Override
@@ -58,5 +57,12 @@ public class GitHubRepositoryEditor extends BaseRepositoryEditor<GitHubRepositor
     myRepository.setRepoAuthor(myRepoAuthor.getText().trim());
     myUseHTTPAuthentication.setSelected(!StringUtil.isEmpty(myUserNameText.getText()));
     super.apply();
+  }
+
+  @Override
+  public void setAnchor(@Nullable final JComponent anchor) {
+    super.setAnchor(anchor);
+    myRepositoryAuthorLabel.setAnchor(anchor);
+    myRepositoryLabel.setAnchor(anchor);
   }
 }

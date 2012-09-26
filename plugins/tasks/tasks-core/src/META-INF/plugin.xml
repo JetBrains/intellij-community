@@ -115,9 +115,9 @@
     <tasks.repositoryType implementation="com.intellij.tasks.redmine.RedmineRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.trac.TracRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.fogbugz.FogBugzRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.mantis.MantisRepositoryType"/>
 
     <checkinHandlerFactory implementation="com.intellij.tasks.impl.TaskCheckinHandlerFactory"/>
-    <!--<tasks.repositoryType implementation="com.intellij.tasks.mantis.MantisRepositoryType"/>-->
   </extensions>
 
 </idea-plugin>

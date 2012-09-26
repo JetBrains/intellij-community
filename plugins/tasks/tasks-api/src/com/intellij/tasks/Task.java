@@ -105,7 +105,7 @@ public abstract class Task {
     return getId().hashCode();
   }
 
-  @Nullable
+  @NotNull
   public String getNumber() {
     int i = getId().lastIndexOf('-');
     return i > 0 ? getId().substring(i + 1) : getId();
