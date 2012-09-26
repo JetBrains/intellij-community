@@ -1,6 +1,6 @@
 class Test {
   {
-      Bar c = Test::length;
+      Bar c = Test :: length;
       bar(c);
   }
 
