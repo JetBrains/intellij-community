@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -561,18 +560,18 @@ public class LambdaUtil {
     return true;
   }
 
-  public static boolean isAcceptable(PsiMethodReferenceExpression methodReferenceExpression, PsiClassType left) {
-    final JavaResolveResult[] results = methodReferenceExpression.multiResolve(false);
-    for (JavaResolveResult result : results) {
-      final PsiElement resolve = result.getElement();
-      if (resolve instanceof PsiMethod) {
-        final PsiClassType.ClassResolveResult resolveResult = left.resolveGenerics();
-        final PsiMethod method = getFunctionalInterfaceMethod(resolveResult);
-        if (method != null) {
-          final MethodSignature signature1 = method.getSignature(resolveResult.getSubstitutor());
-          final MethodSignature signature2 = ((PsiMethod)resolve).getSignature(result.getSubstitutor());
-          if (areAcceptable(signature1, signature2)) return true;
-        }
+  public static boolean isAcceptable(@Nullable PsiMethodReferenceExpression methodReferenceExpression, PsiType left) {
+    if (methodReferenceExpression == null) return false;
+    final JavaResolveResult result = methodReferenceExpression.advancedResolve(false);
+    final PsiElement resolve = result.getElement();
+    if (resolve instanceof PsiMethod) {
+      final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(left);
+      final PsiMethod method = getFunctionalInterfaceMethod(resolveResult);
+      if (method != null) {
+        final MethodSignature signature1 = method.getSignature(resolveResult.getSubstitutor());
+        final MethodSignature signature2 = ((PsiMethod)resolve).getSignature(JavaPsiFacade.getElementFactory(method.getProject()).createRawSubstitutor(
+          (PsiTypeParameterListOwner)resolve));
+        if (areAcceptable(signature1, signature2)) return true;
       }
     }
     return false;
@@ -585,11 +584,22 @@ public class LambdaUtil {
     for (int i = 0; i < signatureParameterTypes1.length; i++) {
       final PsiType type1 = signatureParameterTypes1[i];
       final PsiType type2 = signatureParameterTypes2[i];
-      if (!Comparing.equal(GenericsUtil.eliminateWildcards(type1), GenericsUtil.eliminateWildcards(type2))) {
+      if (!TypeConversionUtil.isAssignable(GenericsUtil.eliminateWildcards(type2), GenericsUtil.eliminateWildcards(type1))) {
         return false;
       }
     }
     return true;
+  }
+
+  public static PsiLocalVariable createMethodReferenceExpressionAccording2Type(PsiMethodReferenceExpression methodReferenceExpression,
+                                                                               PsiType leftType) {
+    final String uniqueVarName =
+      JavaCodeStyleManager.getInstance(methodReferenceExpression.getProject())
+        .suggestUniqueVariableName("l", methodReferenceExpression, true);
+    final PsiStatement assignmentFromText = JavaPsiFacade.getElementFactory(methodReferenceExpression.getProject())
+      .createStatementFromText(leftType.getCanonicalText() + " " + uniqueVarName + " = " + methodReferenceExpression.getText(),
+                               methodReferenceExpression);
+    return (PsiLocalVariable)((PsiDeclarationStatement)assignmentFromText).getDeclaredElements()[0];
   }
 
   private static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {
