@@ -12,17 +12,7 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="extensions" />
     <orderEntry type="module" module-name="annotations" />
-    <orderEntry type="module-library" exported="">
-      <library name="asm-4.0">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/asm-all.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/../../community/lib/src/asm4-src.zip!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="library" exported="" name="asm4" level="project" />
     <orderEntry type="module-library" exported="">
       <library name="Coverage">
         <CLASSES>
@@ -36,15 +26,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/trove4j.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
+    <orderEntry type="library" exported="" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="testRunner" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="lvcs-api" />
