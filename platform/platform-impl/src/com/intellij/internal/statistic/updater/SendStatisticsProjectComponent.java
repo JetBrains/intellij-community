@@ -22,6 +22,8 @@ import com.intellij.internal.statistic.connect.StatisticsHttpClientSender;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -48,6 +50,8 @@ public class SendStatisticsProjectComponent implements ProjectComponent {
 
   @Override
   public void projectOpened() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
       @Override
       public void run() {
