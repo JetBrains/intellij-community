@@ -78,18 +78,7 @@ public abstract class GitSSHService {
     return null;
   }
 
-  // subclass should call it only once
-  protected void addInternalHandler() {
-    registerInternalHandler(GitSSHHandler.HANDLER_NAME, new InternalRequestHandler());
-  }
-
-  /**
-   * Register the internal handler to the service
-   *
-   * @param handlerName the handler name
-   * @param handler     the handler implementation
-   */
-  protected abstract void registerInternalHandler(String handlerName, GitSSHHandler handler);
+  protected abstract void addInternalHandler();
 
   /**
    * Register handler. Note that handlers must be unregistered using {@link #unregisterHandler(int)}.
@@ -98,6 +87,8 @@ public abstract class GitSSHService {
    * @return an identifier to pass to the environment variable
    */
   public synchronized int registerHandler(@NotNull Handler handler) {
+    addInternalHandler();
+
     while (true) {
       int candidate = RANDOM.nextInt();
       if (candidate == Integer.MIN_VALUE) {
