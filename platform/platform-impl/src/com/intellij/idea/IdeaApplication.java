@@ -225,13 +225,18 @@ public class IdeaApplication {
       UIManager.put("Panel.opaque", Boolean.TRUE);
     }
 
-    if (SystemInfo.isWindows) {
-      UIManager.installLookAndFeel("JGoodies Windows L&F", "com.jgoodies.looks.windows.WindowsLookAndFeel");
-    }
+    try {
+      Class.forName("com.jgoodies.looks.plastic.PlasticLookAndFeel");
 
-    UIManager.installLookAndFeel("JGoodies Plastic", "com.jgoodies.looks.plastic.PlasticLookAndFeel");
-    UIManager.installLookAndFeel("JGoodies Plastic 3D", "com.jgoodies.looks.plastic.Plastic3DLookAndFeel");
-    UIManager.installLookAndFeel("JGoodies Plastic XP", "com.jgoodies.looks.plastic.PlasticXPLookAndFeel");
+      if (SystemInfo.isWindows) {
+        UIManager.installLookAndFeel("JGoodies Windows L&F", "com.jgoodies.looks.windows.WindowsLookAndFeel");
+      }
+
+      UIManager.installLookAndFeel("JGoodies Plastic", "com.jgoodies.looks.plastic.PlasticLookAndFeel");
+      UIManager.installLookAndFeel("JGoodies Plastic 3D", "com.jgoodies.looks.plastic.Plastic3DLookAndFeel");
+      UIManager.installLookAndFeel("JGoodies Plastic XP", "com.jgoodies.looks.plastic.PlasticXPLookAndFeel");
+    }
+    catch (ClassNotFoundException ignored) { }
   }
 
   protected class IdeStarter implements ApplicationStarter {
