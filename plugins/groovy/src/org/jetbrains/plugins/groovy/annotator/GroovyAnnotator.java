@@ -57,6 +57,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.CreateParameterFromUsag
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMethodFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertyFix;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
@@ -2021,7 +2022,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         OrderEntryFix.registerFixes(new QuickFixActionRegistrarAdapter(annotation), refElement);
       }
     }
-    else if (!resolveResult.isAccessible()) {
+    else if (!resolveResult.isAccessible() && !GroovyAccessibilityInspection.isStaticallyImportedProperty(resolveResult, refElement)) {
       String message = GroovyBundle.message("cannot.access", refElement.getReferenceName());
       holder.createWarningAnnotation(toHighlight, message);
     }
