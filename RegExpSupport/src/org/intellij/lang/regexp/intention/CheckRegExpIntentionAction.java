@@ -28,9 +28,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
 import org.intellij.lang.regexp.RegExpLanguage;
-import org.intellij.lang.regexp.RegExpRangeProvider;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,21 +38,6 @@ import javax.swing.*;
  * @author Anna Bulenkova
  */
 public class CheckRegExpIntentionAction extends QuickEditAction implements Iconable {
-
-  @Override
-  protected Pair<PsiElement, TextRange> getRangePair(PsiFile file, Editor editor) {
-    Pair<PsiElement, TextRange> pair = super.getRangePair(file, editor);
-
-    if (pair == null) {
-      RegExpRangeProvider[] rangeProviders = RegExpRangeProvider.EP_NAME.getExtensions();
-      PsiElement element = PsiUtilBase.getElementAtCaret(editor);
-      for (RegExpRangeProvider provider : rangeProviders) {
-        pair = provider.getRangePair(element);
-        if (pair != null) break;
-      }
-    }
-    return pair;
-  }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
