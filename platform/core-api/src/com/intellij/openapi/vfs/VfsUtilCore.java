@@ -190,7 +190,7 @@ public class VfsUtilCore {
 
   @SuppressWarnings("UnsafeVfsRecursion")
   @NotNull
-  public static VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file, @NotNull VirtualFileVisitor visitor)
+  public static VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file, @NotNull VirtualFileVisitor<?> visitor)
     throws VirtualFileVisitor.VisitorException {
     final boolean visited = visitor.allowVisitFile(file);
     if (visited) {
