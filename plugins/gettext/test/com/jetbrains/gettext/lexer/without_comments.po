@@ -1,4 +1,0 @@
-msgid "str-to-translate"
-msgstr "translated str"
-msgid "one more"
-msgstr "one more translated str"
