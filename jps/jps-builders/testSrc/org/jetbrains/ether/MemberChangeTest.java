@@ -8,171 +8,176 @@ package org.jetbrains.ether;
  * To change this template use File | Settings | File Templates.
  */
 public class MemberChangeTest extends IncrementalTestCase {
-  public MemberChangeTest() throws Exception {
+  public MemberChangeTest() {
     super("membersChange");
   }
 
-  public void testAddAbstractMethod() throws Exception {
+  public void testAddAbstractMethod() {
     doTest();
   }
 
-  public void testAddConstructorParameter() throws Exception {
+  public void testAddConstructorParameter() {
     doTest();
   }
 
-  public void testAddFieldToBaseClass() throws Exception {
+  public void testAddFieldToBaseClass() {
     doTest();
   }
 
-  public void testAddFieldToDerived() throws Exception {
+  public void testAddFieldToDerived() {
     doTest();
   }
 
-  public void testAddFieldToInterface() throws Exception {
+  public void testAddFieldToInterface() {
     doTest();
   }
 
-  public void testAddFieldToInterface2() throws Exception {
+  public void testAddFieldToInterface2() {
     doTest();
   }
 
-  public void testAddFinalMethodHavingNonFinalMethodInSubclass() throws Exception {
+  public void testAddFinalMethodHavingNonFinalMethodInSubclass() {
     doTest();
   }
 
-  public void testAddHidingField() throws Exception {
+  public void testAddHidingField() {
     doTest();
   }
 
-  public void testAddHidingMethod() throws Exception {
+  public void testAddHidingMethod() {
     doTest();
   }
 
-  public void testAddInterfaceMethod() throws Exception {
+  public void testAddInterfaceMethod() {
     doTest();
   }
 
-  public void testAddInterfaceMethod2() throws Exception {
+  public void testAddInterfaceMethod2() {
     doTest();
   }
 
-  public void testAddLessAccessibleFieldToDerived() throws Exception {
+  public void testAddLessAccessibleFieldToDerived() {
     doTest();
   }
 
-  public void testAddMethodWithIncompatibleReturnType() throws Exception {
+  public void testAddMethodWithIncompatibleReturnType() {
     doTest();
   }
 
-  public void testAddMethodWithCovariantReturnType() throws Exception {
+  public void testAddMethodWithCovariantReturnType() {
     doTest();
   }
 
-  public void testAddMoreAccessibleMethodToBase() throws Exception {
+  public void testAddMoreAccessibleMethodToBase() {
     doTest();
   }
 
-  public void testAddMoreSpecific() throws Exception {
+  public void testAddMoreSpecific() {
     doTest();
   }
 
-  public void testAddMoreSpecific1() throws Exception {
+  public void testAddMoreSpecific1() {
     doTest();
   }
 
-  public void testAddMoreSpecific2() throws Exception {
+  public void testAddMoreSpecific2() {
     doTest();
   }
 
-  public void testAddNonStaticMethodHavingStaticMethodInSubclass() throws Exception {
+  public void testAddNonStaticMethodHavingStaticMethodInSubclass() {
     doTest();
   }
 
-  public void testAddStaticFieldToDerived() throws Exception {
+  public void testAddStaticFieldToDerived() {
     doTest();
   }
 
-  public void testChangeStaticMethodSignature() throws Exception {
+  public void testChangeStaticMethodSignature() {
     doTest();
   }
 
-  public void testChangeMethodGenericReturnType() throws Exception {
+  public void testChangeMethodGenericReturnType() {
     doTest();
   }
 
-  public void testDeleteConstructor() throws Exception {
+  public void testDeleteConstructor() {
     doTest();
   }
 
-  public void testDeleteInner() throws Exception {
+  public void testDeleteInner() {
     doTest();
   }
 
-  public void testDeleteMethod() throws Exception {
+  public void testDeleteMethod() {
     doTest();
   }
 
-  public void testDeleteInterfaceMethod() throws Exception {
+  public void testDeleteInterfaceMethod() {
     doTest();
   }
 
-  public void testDeleteMethodImplementation() throws Exception {
+  public void testDeleteMethodImplementation() {
     doTest();
   }
 
-  public void testDeleteMethodImplementation2() throws Exception {
+  public void testDeleteMethodImplementation2() {
     doTest();
   }
 
-  public void testDeleteMethodImplementation3() throws Exception {
+  public void testDeleteMethodImplementation3() {
     doTest();
   }
 
-  public void testDeleteMethodImplementation4() throws Exception {
+  public void testDeleteMethodImplementation4() {
     doTest();
   }
 
-  public void testDeleteMethodImplementation5() throws Exception {
+  public void testDeleteMethodImplementation5() {
     doTest();
   }
 
-  public void testDeleteMethodImplementation6() throws Exception {
+  public void testDeleteMethodImplementation6() {
     doTest();
   }
 
-  public void testDeleteMethodImplementation7() throws Exception {
+  public void testDeleteMethodImplementation7() {
     doTest();
   }
 
-  public void testHierarchy() throws Exception {
+  public void testHierarchy() {
     doTest();
   }
 
-  public void testHierarchy2() throws Exception {
+  public void testHierarchy2() {
     doTest();
   }
 
-  public void testRemoveBaseImplementation() throws Exception {
+  public void testRemoveBaseImplementation() {
     doTest();
   }
 
-  public void testRemoveHidingField() throws Exception {
+  public void testRemoveHidingField() {
     doTest();
   }
 
-  public void testRemoveHidingMethod() throws Exception {
+  public void testRemoveHidingMethod() {
     doTest();
   }
 
-  public void testRenameMethod() throws Exception {
+  public void testRenameMethod() {
     doTest();
   }
 
-  public void testThrowsListDiffersInBaseAndDerived() throws Exception {
+  //todo[jeka] fix
+  public void _testMoveMethodToSubclass() {
+    doTest().assertSuccessful();
+  }
+  
+  public void testThrowsListDiffersInBaseAndDerived() {
     doTest();
   }
 
-  public void testAddMethod() throws Exception {
-      doTest();
+  public void testAddMethod() {
+    doTest();
   }
 }

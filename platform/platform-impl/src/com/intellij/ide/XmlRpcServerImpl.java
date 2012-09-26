@@ -73,6 +73,9 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
     }
 
     LOG.info("XmlRpcServerImpl instantiated, handlers " + handlerMapping);
+
+    // temp, IDEA-91436
+    XmlRpc.setDebug(true);
   }
 
   @Override
@@ -151,7 +154,7 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
       handlers.remove(handlerName);
     }
 
-    public Object getHandler(String methodName) throws Exception {
+    public Object getHandler(String methodName) {
       Object handler = null;
       String handlerName = null;
       int dot = methodName.lastIndexOf('.');
@@ -164,12 +167,16 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
         return handler;
       }
 
+      IllegalStateException exception;
       if (dot > -1) {
-        throw new Exception("RPC handler object \"" + handlerName + "\" not found");
+        exception = new IllegalStateException("RPC handler object \"" + handlerName + "\" not found");
       }
       else {
-        throw new Exception("RPC handler object not found for \"" + methodName);
+        exception = new IllegalStateException("RPC handler object not found for \"" + methodName);
       }
+
+      LOG.error(exception);
+      throw exception;
     }
   }
 
@@ -187,7 +194,7 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
     }
 
     @Override
-    public Object getHandler(String methodName) throws Exception {
+    public Object getHandler(String methodName) {
       LOG.info(String.format("getHandler: methodName: %s%s", methodName, getHandlers()));
       return super.getHandler(methodName);
     }
