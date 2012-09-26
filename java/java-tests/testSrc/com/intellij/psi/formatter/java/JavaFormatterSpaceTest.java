@@ -313,6 +313,17 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  "()->{}");
   }
 
+  public void testSpacesInsideMethodRef() throws Exception {
+    getSettings().SPACE_AROUND_METHOD_REF_DBL_COLON = true;
+
+    doMethodTest("Runnable r = this::foo",
+                 "Runnable r = this :: foo");
+
+    getSettings().SPACE_AROUND_METHOD_REF_DBL_COLON = false;
+    doMethodTest("Runnable r = this::foo",
+                 "Runnable r = this::foo");
+  }
+
   public void testSpacesBeforeResourceList() throws Exception {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;

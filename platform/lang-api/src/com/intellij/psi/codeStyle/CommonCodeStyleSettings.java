@@ -525,6 +525,7 @@ public class CommonCodeStyleSettings {
   public boolean SPACE_AROUND_UNARY_OPERATOR = false;
 
   public boolean SPACE_AROUND_LAMBDA_ARROW = true;
+  public boolean SPACE_AROUND_METHOD_REF_DBL_COLON = true;
 
   public boolean SPACE_AFTER_COMMA = true;
   public boolean SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = true;

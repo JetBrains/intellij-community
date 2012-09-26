@@ -15,11 +15,13 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.ElementClassFilter;
@@ -29,6 +31,7 @@ import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
@@ -75,6 +78,15 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
   public void processVariants(final PsiScopeProcessor processor) {
     final FilterScopeProcessor proc = new FilterScopeProcessor(ElementClassFilter.METHOD, processor);
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);
+  }
+
+  @Override
+  public int getChildRole(ASTNode child) {
+    final IElementType elType = child.getElementType();
+    if (elType == JavaTokenType.DOUBLE_COLON) {
+      return ChildRole.DOUBLE_COLON;
+    }
+    return ChildRole.EXPRESSION;
   }
 
   @NotNull
