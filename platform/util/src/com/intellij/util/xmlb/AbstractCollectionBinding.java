@@ -28,16 +28,13 @@ abstract class AbstractCollectionBinding implements Binding {
   private Map<Class, Binding> myElementBindings;
 
   private final Class myElementType;
-  private final XmlSerializerImpl myXmlSerializer;
   private final String myTagName;
   @Nullable protected Accessor myAccessor;
   private AbstractCollection myAnnotation = null;
   private boolean myUsingOptionBinding = false;
 
-  public AbstractCollectionBinding(Class elementType, XmlSerializerImpl xmlSerializer, String tagName,
-                                   @Nullable Accessor accessor) {
+  public AbstractCollectionBinding(Class elementType, String tagName, @Nullable Accessor accessor) {
     myElementType = elementType;
-    myXmlSerializer = xmlSerializer;
     myTagName = tagName;
     myAccessor = accessor;
 
@@ -66,7 +63,7 @@ abstract class AbstractCollectionBinding implements Binding {
 
   protected Binding getElementBinding(Class<?> elementClass) {
     final Binding binding = getElementBindings().get(elementClass);
-    return binding == null ? myXmlSerializer.getBinding(elementClass) : binding;
+    return binding == null ? XmlSerializerImpl.getBinding(elementClass) : binding;
   }
 
   private Map<Class, Binding> getElementBindings() {
@@ -95,7 +92,7 @@ abstract class AbstractCollectionBinding implements Binding {
 
   private Binding getBinding(final Class type) {
     Binding binding;
-    binding = myXmlSerializer.getBinding(type);
+    binding = XmlSerializerImpl.getBinding(type);
 
     if (!binding.getBoundNodeType().isAssignableFrom(Element.class)) {
       binding = createElementTagWrapper(binding);

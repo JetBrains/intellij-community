@@ -16,10 +16,12 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
+import java.lang.ref.SoftReference;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -29,7 +31,7 @@ import java.util.*;
  */
 class XmlSerializerImpl {
   private final SerializationFilter filter;
-  private final Map<Pair<Type, Accessor>, Binding> myBindings = new HashMap<Pair<Type, Accessor>, Binding>();
+  private static SoftReference<Map<Pair<Type, Accessor>, Binding>> ourBindings;
 
   public XmlSerializerImpl(SerializationFilter filter) {
     this.filter = filter;
@@ -47,15 +49,15 @@ class XmlSerializerImpl {
     }
   }
 
-  Binding getBinding(Type type) {
+  static Binding getBinding(Type type) {
     return getTypeBinding(type, null);
   }
 
-  Binding getBinding(Accessor accessor) {
+  static Binding getBinding(Accessor accessor) {
     return getTypeBinding(accessor.getGenericType(), accessor);
   }
 
-  Binding getTypeBinding(Type type, @Nullable Accessor accessor) {
+  static Binding getTypeBinding(Type type, @Nullable Accessor accessor) {
     if (type instanceof Class) {
       return _getClassBinding((Class<?>)type, type, accessor);
     }
@@ -69,40 +71,51 @@ class XmlSerializerImpl {
     throw new UnsupportedOperationException("Can't get binding for: " + type);
   }
 
-  private Binding _getClassBinding(Class<?> aClass, Type originalType, final Accessor accessor) {
+  private static Binding _getClassBinding(Class<?> aClass, Type originalType, final Accessor accessor) {
     final Pair<Type, Accessor> p = new Pair<Type, Accessor>(originalType, accessor);
 
-    Binding binding = myBindings.get(p);
+    Map<Pair<Type, Accessor>, Binding> map = getBindingCacheMap();
 
+    Binding binding = map.get(p);
     if (binding == null) {
       binding = _getNonCachedClassBinding(aClass, accessor, originalType);
-      myBindings.put(p, binding);
+      map.put(p, binding);
       binding.init();
     }
 
     return binding;
   }
 
-  private Binding _getNonCachedClassBinding(final Class<?> aClass, final Accessor accessor, final Type originalType) {
+  private static Map<Pair<Type, Accessor>, Binding> getBindingCacheMap() {
+    SoftReference<Map<Pair<Type, Accessor>, Binding>> ref = ourBindings;
+    Map<Pair<Type, Accessor>, Binding> map = ref == null ? null : ref.get();
+    if (map == null) {
+      map = ContainerUtil.newHashMap();
+      ourBindings = new SoftReference<Map<Pair<Type, Accessor>, Binding>>(map);
+    }
+    return map;
+  }
+
+  private static Binding _getNonCachedClassBinding(final Class<?> aClass, final Accessor accessor, final Type originalType) {
     if (aClass.isPrimitive()) return new PrimitiveValueBinding(aClass);
     if (aClass.isArray()) {
       return Element.class.isAssignableFrom(aClass.getComponentType())
-             ? new JDOMElementBinding(accessor) : new ArrayBinding(this, aClass, accessor);
+             ? new JDOMElementBinding(accessor) : new ArrayBinding(aClass, accessor);
     }
     if (Number.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
     if (Boolean.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
     if (String.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
     if (Collection.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
-      return new CollectionBinding((ParameterizedType)originalType, this, accessor);
+      return new CollectionBinding((ParameterizedType)originalType, accessor);
     }
     if (Map.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
-      return new MapBinding((ParameterizedType)originalType, this, accessor);
+      return new MapBinding((ParameterizedType)originalType, accessor);
     }
     if (Element.class.isAssignableFrom(aClass)) return new JDOMElementBinding(accessor);
     if (Date.class.isAssignableFrom(aClass)) return new DateBinding();
     if (aClass.isEnum()) return new PrimitiveValueBinding(aClass);
 
-    return new BeanBinding(aClass, this, accessor);
+    return new BeanBinding(aClass, accessor);
   }
 
   @Nullable

@@ -32,11 +32,11 @@ class TagBinding implements Binding {
   private final String myTagName;
   private final Binding binding;
 
-  public TagBinding(Accessor accessor, Tag tagAnnotation, XmlSerializerImpl xmlSerializer) {
+  public TagBinding(Accessor accessor, Tag tagAnnotation) {
     this.accessor = accessor;
     myTagAnnotation = tagAnnotation;
     myTagName = tagAnnotation.value();
-    binding = xmlSerializer.getBinding(accessor);
+    binding = XmlSerializerImpl.getBinding(accessor);
   }
 
   public Object serialize(Object o, Object context, SerializationFilter filter) {

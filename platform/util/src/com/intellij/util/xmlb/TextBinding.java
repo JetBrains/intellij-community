@@ -22,12 +22,10 @@ import org.jetbrains.annotations.Nullable;
 
 public class TextBinding implements Binding {
   private final Accessor myAccessor;
-  private final XmlSerializerImpl myXmlSerializer;
   private Binding myBinding;
 
-  public TextBinding(final Accessor accessor, final XmlSerializerImpl xmlSerializer) {
+  public TextBinding(final Accessor accessor) {
     myAccessor = accessor;
-    myXmlSerializer = xmlSerializer;
   }
 
   public Object serialize(Object o, Object context, SerializationFilter filter) {
@@ -56,7 +54,7 @@ public class TextBinding implements Binding {
   }
 
   public void init() {
-    myBinding = myXmlSerializer.getBinding(myAccessor);
+    myBinding = XmlSerializerImpl.getBinding(myAccessor);
     if (!Text.class.isAssignableFrom(myBinding.getBoundNodeType())) {
       throw new XmlSerializationException("Can't use attribute binding for non-text content: " + myAccessor);
     }

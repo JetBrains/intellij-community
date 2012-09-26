@@ -50,13 +50,13 @@ class MapBinding implements Binding {
   };
 
 
-  public MapBinding(ParameterizedType type, XmlSerializerImpl serializer, Accessor accessor) {
+  public MapBinding(ParameterizedType type, Accessor accessor) {
     Type[] arguments = type.getActualTypeArguments();
     Type keyType = arguments[0];
     Type valueType = arguments[1];
 
-    myKeyBinding = serializer.getBinding(keyType);
-    myValueBinding = serializer.getBinding(valueType);
+    myKeyBinding = XmlSerializerImpl.getBinding(keyType);
+    myValueBinding = XmlSerializerImpl.getBinding(valueType);
     myMapAnnotation = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), MapAnnotation.class);
   }
 

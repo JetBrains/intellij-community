@@ -48,16 +48,14 @@ class BeanBinding implements Binding {
   private final Map<Binding, Accessor> myPropertyBindings = new HashMap<Binding, Accessor>();
   private final List<Binding> myPropertyBindingsList = new ArrayList<Binding>();
   private final Class<?> myBeanClass;
-  private final XmlSerializerImpl serializer;
   @NonNls private static final String CLASS_PROPERTY = "class";
   private final Accessor myAccessor;
 
-  public BeanBinding(Class<?> beanClass, XmlSerializerImpl serializer, final Accessor accessor) {
+  public BeanBinding(Class<?> beanClass, final Accessor accessor) {
     myAccessor = accessor;
     assert !beanClass.isArray() : "Bean is an array: " + beanClass;
     assert !beanClass.isPrimitive() : "Bean is primitive type: " + beanClass;
     myBeanClass = beanClass;
-    this.serializer = serializer;
     myTagName = getTagName(beanClass);
     assert !StringUtil.isEmptyOrSpaces(myTagName) : "Bean name is empty: " + beanClass;
   }
@@ -68,7 +66,7 @@ class BeanBinding implements Binding {
 
   private void initPropertyBindings(Class<?> beanClass) {
     for (Accessor accessor : getAccessors(beanClass)) {
-      final Binding binding = createBindingByAccessor(serializer, accessor);
+      final Binding binding = createBindingByAccessor(accessor);
       myPropertyBindingsList.add(binding);
       myPropertyBindings.put(binding, accessor);
     }
@@ -274,30 +272,30 @@ class BeanBinding implements Binding {
     return "BeanBinding[" + myBeanClass.getName() + ", tagName=" + myTagName + "]";
   }
 
-  private static Binding createBindingByAccessor(final XmlSerializerImpl xmlSerializer, final Accessor accessor) {
-    final Binding binding = _createBinding(accessor, xmlSerializer);
+  private static Binding createBindingByAccessor(final Accessor accessor) {
+    final Binding binding = _createBinding(accessor);
     binding.init();
     return binding;
   }
 
-  private static Binding _createBinding(final Accessor accessor, final XmlSerializerImpl xmlSerializer) {
+  private static Binding _createBinding(final Accessor accessor) {
     Property property = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Property.class);
     Tag tag = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Tag.class);
     Attribute attribute = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Attribute.class);
     Text text = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Text.class);
 
-    final Binding binding = xmlSerializer.getTypeBinding(accessor.getGenericType(), accessor);
+    final Binding binding = XmlSerializerImpl.getTypeBinding(accessor.getGenericType(), accessor);
 
     if (binding instanceof JDOMElementBinding) return binding;
 
-    if (text != null) return new TextBinding(accessor, xmlSerializer);
+    if (text != null) return new TextBinding(accessor);
 
     if (attribute != null) {
-      return new AttributeBinding(accessor, attribute, xmlSerializer);
+      return new AttributeBinding(accessor, attribute);
     }
 
     if (tag != null) {
-      if (tag.value().length() > 0) return new TagBinding(accessor, tag, xmlSerializer);
+      if (tag.value().length() > 0) return new TagBinding(accessor, tag);
     }
 
     boolean surroundWithTag = true;
@@ -314,6 +312,6 @@ class BeanBinding implements Binding {
     }
 
     OptionTag optionTag = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), OptionTag.class);
-    return new OptionTagBinding(accessor, xmlSerializer, optionTag);
+    return new OptionTagBinding(accessor, optionTag);
   }
 }

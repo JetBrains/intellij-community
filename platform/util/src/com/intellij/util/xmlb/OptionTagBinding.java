@@ -40,9 +40,9 @@ class OptionTagBinding implements Binding {
   private final String myNameAttribute;
   private final String myValueAttribute;
 
-  public OptionTagBinding(Accessor accessor, XmlSerializerImpl xmlSerializer, @Nullable OptionTag optionTag) {
+  public OptionTagBinding(Accessor accessor, @Nullable OptionTag optionTag) {
     this.accessor = accessor;
-    myBinding = xmlSerializer.getBinding(accessor);
+    myBinding = XmlSerializerImpl.getBinding(accessor);
     if (optionTag != null) {
       String name = optionTag.value();
       myName = name.isEmpty() ? accessor.getName() : name;
