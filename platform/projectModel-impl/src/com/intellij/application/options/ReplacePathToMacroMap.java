@@ -51,6 +51,21 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     }
   }
 
+  public void putIfAbsent(@NonNls final String pathWithPrefix,
+                          @NonNls final String substitutionWithPrefix,
+                          final boolean check) {
+    if (check && containsPath(pathWithPrefix))
+      return;
+
+    if (StringUtil.endsWithChar(pathWithPrefix, '/')) {
+      myMacroMap.put(pathWithPrefix, substitutionWithPrefix + "/");
+      myMacroMap.put(pathWithPrefix.substring(0, pathWithPrefix.length() - 1), substitutionWithPrefix);
+    }
+    else {
+      myMacroMap.put(pathWithPrefix, substitutionWithPrefix);
+    }
+  }
+
   public String substitute(String text, boolean caseSensitive) {
     if (text == null) {
       //noinspection ConstantConditions

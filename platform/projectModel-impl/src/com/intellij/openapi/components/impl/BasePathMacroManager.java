@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.containers.FactoryMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -68,14 +67,14 @@ public class BasePathMacroManager extends PathMacroManager {
     path = StringUtil.trimEnd(FileUtil.toSystemIndependentName(path), "/");
     boolean check = false;
     while (StringUtil.isNotEmpty(path) && path.contains("/")) {
-      putIfAbsent(result, "file:" + path, "file:" + macro, check);
-      putIfAbsent(result, "file:/" + path, "file:/" + macro, check);
-      putIfAbsent(result, "file://" + path, "file://" + macro, check);
-      putIfAbsent(result, "jar:" + path, "jar:" + macro, check);
-      putIfAbsent(result, "jar:/" + path, "jar:/" + macro, check);
-      putIfAbsent(result, "jar://" + path, "jar://" + macro, check);
+      result.putIfAbsent("file:" + path, "file:" + macro, check);
+      result.putIfAbsent("file:/" + path, "file:/" + macro, check);
+      result.putIfAbsent("file://" + path, "file://" + macro, check);
+      result.putIfAbsent("jar:" + path, "jar:" + macro, check);
+      result.putIfAbsent("jar:/" + path, "jar:/" + macro, check);
+      result.putIfAbsent("jar://" + path, "jar://" + macro, check);
       if (!path.equalsIgnoreCase("e:/") && !path.equalsIgnoreCase("r:/") && !path.equalsIgnoreCase("p:/")) {
-        putIfAbsent(result, path, macro, check);
+        result.putIfAbsent(path, macro, check);
       }
 
       if (path.equals(stopAt)) {
@@ -91,22 +90,6 @@ public class BasePathMacroManager extends PathMacroManager {
   private static VirtualFileSystem getLocalFileSystem() {
     // Use VFM directly because of mocks in tests.
     return VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL);
-  }
-
-  private static void putIfAbsent(final ReplacePathToMacroMap result,
-                                  @NonNls final String pathWithPrefix,
-                                  @NonNls final String substitutionWithPrefix,
-                                  final boolean check) {
-    if (check && result.containsPath(pathWithPrefix))
-      return;
-
-    if (StringUtil.endsWithChar(pathWithPrefix, '/')) {
-      result.put(pathWithPrefix, substitutionWithPrefix + "/");
-      result.put(pathWithPrefix.substring(0, pathWithPrefix.length()-1), substitutionWithPrefix);
-    }
-    else {
-      result.put(pathWithPrefix, substitutionWithPrefix);
-    }
   }
 
   protected ExpandMacroToPathMap getExpandMacroMap() {
