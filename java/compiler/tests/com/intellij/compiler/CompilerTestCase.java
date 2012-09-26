@@ -507,8 +507,9 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   }
 
   private static void clearCompilerZipFileCache() {
+    // until jdk8
     try {
-      Field field = Class.forName("com.sun.tools.javac.zip.ZipFileIndex").getField("zipFileIndexCache");
+      Field field = Class.forName("com.sun.tools.javac.zip.ZipFileIndex").getDeclaredField("zipFileIndexCache");
       field.setAccessible(true);
       ((Map)field.get(null)).clear();
     }
