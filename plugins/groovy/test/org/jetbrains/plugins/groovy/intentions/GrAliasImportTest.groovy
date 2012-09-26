@@ -95,4 +95,26 @@ aliased()
 ''');
   }
 
+  void testProperty() {
+    myFixture.addFileToProject('Foo.groovy', '''\
+class Foo {
+  static def foo = 2
+}
+''')
+
+    doTextTest('''\
+import static Foo.fo<caret>o
+
+print foo
+print getFoo()
+print setFoo(2)
+''', '''\
+import static Foo.foo as aliased
+
+print aliased
+print getAliased()
+print setAliased(2)
+''')
+  }
+
 }

@@ -38,7 +38,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
@@ -54,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -86,7 +87,11 @@ public class GrAliasImportIntention extends Intention {
   }
 
   private static void doRefactoring(@NotNull Project project, @NotNull GrImportStatement importStatement, @NotNull PsiMember member) {
-    if (member instanceof GrAccessorMethod) member = ((GrAccessorMethod)member).getProperty();
+    if (member instanceof GrAccessorMethod &&
+        !importStatement.isOnDemand() &&
+        !importStatement.getImportedName().equals(member.getName())) {
+      member = ((GrAccessorMethod)member).getProperty();
+    }
 
     final GroovyFileBase file = (GroovyFileBase)importStatement.getContainingFile();
     final List<UsageInfo> usages = findUsages(member, file);
@@ -167,23 +172,36 @@ public class GrAliasImportIntention extends Intention {
       if (usageElement.getParent() instanceof GrImportStatement) continue;
 
       if (usageElement instanceof GrReferenceElement) {
-        final PsiElement qualifier = ((GrReferenceElement)usageElement).getQualifier();
+        final GrReferenceElement ref = (GrReferenceElement)usageElement;
+        final PsiElement qualifier = ref.getQualifier();
 
         if (qualifier == null) {
-          final String refName = ((GrReferenceElement)usageElement).getReferenceName();
+          final String refName = ref.getReferenceName();
           if (refName == null) continue;
 
           if (memberName.equals(refName)) {
-            ((GrReferenceElement)usageElement).handleElementRenameSimple(name);
+            ref.handleElementRenameSimple(name);
           }
           else if (refName.equals(GroovyPropertyUtils.getPropertyNameByAccessorName(memberName))) {
             final String newPropName = GroovyPropertyUtils.getPropertyNameByAccessorName(name);
             if (newPropName != null) {
-              ((GrReferenceElement)usageElement).handleElementRenameSimple(newPropName);
+              ref.handleElementRenameSimple(newPropName);
             }
             else {
-              ((GrReferenceElement)usageElement).handleElementRenameSimple(name);
+              ref.handleElementRenameSimple(name);
             }
+          }
+          else if (refName.equals(GroovyPropertyUtils.getGetterNameBoolean(memberName))) {
+            final String getterName = GroovyPropertyUtils.getGetterNameBoolean(name);
+            ref.handleElementRenameSimple(getterName);
+          }
+          else if (refName.equals(GroovyPropertyUtils.getGetterNameNonBoolean(memberName))) {
+            final String getterName = GroovyPropertyUtils.getGetterNameNonBoolean(name);
+            ref.handleElementRenameSimple(getterName);
+          }
+          else if (refName.equals(GroovyPropertyUtils.getSetterName(memberName))) {
+            final String getterName = GroovyPropertyUtils.getSetterName(name);
+            ref.handleElementRenameSimple(getterName);
           }
         }
       }
@@ -193,22 +211,38 @@ public class GrAliasImportIntention extends Intention {
   private static List<UsageInfo> findUsages(PsiMember member, GroovyFileBase file) {
     LocalSearchScope scope = new LocalSearchScope(file);
 
-    Query<PsiReference> query;
-    if (member instanceof PsiMethod) {
-      query = MethodReferencesSearch.search((PsiMethod)member, scope, false);
-    }
-    else {
-      query = ReferencesSearch.search(member, scope);
-    }
-
     final ArrayList<UsageInfo> infos = new ArrayList<UsageInfo>();
-    query.forEach(new Processor<PsiReference>() {
+    final HashSet<Object> usedRefs = ContainerUtil.newHashSet();
+
+    final Processor<PsiReference> consumer = new Processor<PsiReference>() {
       @Override
       public boolean process(PsiReference reference) {
-        infos.add(new UsageInfo(reference));
+        if (usedRefs.add(reference)) {
+          infos.add(new UsageInfo(reference));
+        }
+
         return true;
       }
-    });
+    };
+
+
+    if (member instanceof PsiMethod) {
+      MethodReferencesSearch.search((PsiMethod)member, scope, false).forEach(consumer);
+    }
+    else {
+      ReferencesSearch.search(member, scope).forEach(consumer);
+      if (member instanceof PsiField) {
+        final PsiMethod getter = GroovyPropertyUtils.findGetterForField((PsiField)member);
+        if (getter != null) {
+          MethodReferencesSearch.search(getter, scope, false).forEach(consumer);
+        }
+        final PsiMethod setter = GroovyPropertyUtils.findSetterForField((PsiField)member);
+        if (setter != null) {
+          MethodReferencesSearch.search(setter, scope, false).forEach(consumer);
+        }
+      }
+    }
+
     return infos;
   }
 
