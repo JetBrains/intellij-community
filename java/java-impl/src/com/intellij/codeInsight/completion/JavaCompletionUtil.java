@@ -809,12 +809,15 @@ public class JavaCompletionUtil {
     PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getDocument());
 
     final CommonCodeStyleSettings styleSettings = context.getCodeStyleSettings();
-    ParenthesesInsertHandler.getInstance(hasParams,
-                                         styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,
-                                         styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && hasParams,
-                                         needRightParenth,
-                                         styleSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE
-    ).handleInsert(context, item);
+    final PsiElement elementAt = file.findElementAt(context.getStartOffset());
+    if (elementAt == null || !(elementAt.getParent() instanceof PsiMethodReferenceExpression)) {
+      ParenthesesInsertHandler.getInstance(hasParams,
+                                           styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,
+                                           styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && hasParams,
+                                           needRightParenth,
+                                           styleSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE
+      ).handleInsert(context, item);
+    }
 
     if (hasParams) {
       // Invoke parameters popup
