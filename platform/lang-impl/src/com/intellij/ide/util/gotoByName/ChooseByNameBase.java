@@ -1507,7 +1507,7 @@ public abstract class ChooseByNameBase {
       }, myModalityState);
     }
 
-    private void addElementsByPattern(String pattern,
+    private void addElementsByPattern(@NotNull String pattern,
                                       @NotNull final Set<Object> elements,
                                       @NotNull final ProgressIndicator cancelled) {
       myProvider.filterElements(
