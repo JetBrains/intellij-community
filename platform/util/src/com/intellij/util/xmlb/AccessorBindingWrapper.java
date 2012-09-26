@@ -28,8 +28,8 @@ class AccessorBindingWrapper implements Binding {
     myBinding = binding;
   }
 
-  public Object serialize(Object o, Object context) {
-    return myBinding.serialize(myAccessor.read(o), context);
+  public Object serialize(Object o, Object context, SerializationFilter filter) {
+    return myBinding.serialize(myAccessor.read(o), context, filter);
   }
 
   @Nullable

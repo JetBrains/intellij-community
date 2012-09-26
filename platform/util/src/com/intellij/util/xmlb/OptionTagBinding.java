@@ -58,7 +58,7 @@ class OptionTagBinding implements Binding {
     }
   }
 
-  public Object serialize(Object o, Object context) {
+  public Object serialize(Object o, Object context, SerializationFilter filter) {
     Element targetElement = new Element(myTagName);
     Object value = accessor.read(o);
 
@@ -66,7 +66,7 @@ class OptionTagBinding implements Binding {
 
     if (value == null) return targetElement;
 
-    Object node = myBinding.serialize(value, targetElement);
+    Object node = myBinding.serialize(value, targetElement, filter);
     if (node instanceof Text) {
       Text text = (Text)node;
       targetElement.setAttribute(myValueAttribute, text.getText());

@@ -33,9 +33,9 @@ public class AttributeBinding implements Binding {
     myXmlSerializer = xmlSerializer;
   }
 
-  public Object serialize(Object o, Object context) {
+  public Object serialize(Object o, Object context, SerializationFilter filter) {
     final Object v = myAccessor.read(o);
-    final Object node = myBinding.serialize(v, context);
+    final Object node = myBinding.serialize(v, context, filter);
 
     return new org.jdom.Attribute(myAttribute.value(), ((Content)node).getValue());
   }

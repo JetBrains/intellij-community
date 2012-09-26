@@ -48,7 +48,6 @@ class BeanBinding implements Binding {
   private final Map<Binding, Accessor> myPropertyBindings = new HashMap<Binding, Accessor>();
   private final List<Binding> myPropertyBindingsList = new ArrayList<Binding>();
   private final Class<?> myBeanClass;
-  private final SerializationFilter filter;
   private final XmlSerializerImpl serializer;
   @NonNls private static final String CLASS_PROPERTY = "class";
   private final Accessor myAccessor;
@@ -58,7 +57,6 @@ class BeanBinding implements Binding {
     assert !beanClass.isArray() : "Bean is an array: " + beanClass;
     assert !beanClass.isPrimitive() : "Bean is primitive type: " + beanClass;
     myBeanClass = beanClass;
-    filter = serializer.getFilter();
     this.serializer = serializer;
     myTagName = getTagName(beanClass);
     assert !StringUtil.isEmptyOrSpaces(myTagName) : "Bean name is empty: " + beanClass;
@@ -76,15 +74,15 @@ class BeanBinding implements Binding {
     }
   }
 
-  public Object serialize(Object o, Object context) {
+  public Object serialize(Object o, Object context, SerializationFilter filter) {
     Element element = new Element(myTagName);
 
-    serializeInto(o, element);
+    serializeInto(o, element, filter);
 
     return element;
   }
 
-  public void serializeInto(final Object o, final Element element) {
+  public void serializeInto(final Object o, final Element element, SerializationFilter filter) {
     for (Binding binding : myPropertyBindingsList) {
       Accessor accessor = myPropertyBindings.get(binding);
       if (!filter.accepts(accessor, o)) continue;
@@ -103,7 +101,7 @@ class BeanBinding implements Binding {
         }
       }
 
-      Object node = binding.serialize(o, element);
+      Object node = binding.serialize(o, element, filter);
       if (node != element) {
         if (node instanceof org.jdom.Attribute) {
           org.jdom.Attribute attr = (org.jdom.Attribute)node;

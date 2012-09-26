@@ -18,7 +18,7 @@ package com.intellij.util.xmlb;
 import org.jetbrains.annotations.Nullable;
 
 interface Binding {
-  Object serialize(Object o, @Nullable Object context);
+  Object serialize(Object o, @Nullable Object context, SerializationFilter filter);
 
   @Nullable
   Object deserialize(Object context, Object... nodes);

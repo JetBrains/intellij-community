@@ -112,12 +112,15 @@ public class XmlSerializer {
   }
 
   public static void serializeInto(final Object bean, final Element element, @Nullable SerializationFilter filter) {
+    if (filter == null) {
+      filter = TRUE_FILTER;
+    }
     try {
-      XmlSerializerImpl serializer = new XmlSerializerImpl(filter != null ? filter : TRUE_FILTER);
+      XmlSerializerImpl serializer = new XmlSerializerImpl(filter);
       final Binding binding = serializer.getBinding(bean.getClass());
       assert binding instanceof BeanBinding;
 
-      ((BeanBinding)binding).serializeInto(bean, element);
+      ((BeanBinding)binding).serializeInto(bean, element, filter);
     }
     catch (XmlSerializationException e) {
       throw e;

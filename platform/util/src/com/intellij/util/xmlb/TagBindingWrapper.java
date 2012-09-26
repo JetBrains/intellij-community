@@ -35,9 +35,9 @@ class TagBindingWrapper implements Binding {
     myAttributeName = attributeName;
   }
 
-  public Object serialize(Object o, Object context) {
+  public Object serialize(Object o, Object context, SerializationFilter filter) {
     Element e = new Element(myTagName);
-    Object n = binding.serialize(o, e);
+    Object n = binding.serialize(o, e, filter);
 
     final String value = ((Content)n).getValue();
 

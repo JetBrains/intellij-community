@@ -33,7 +33,7 @@ class JDOMElementBinding implements Binding {
     myTagName = tag.value();
   }
 
-  public Object serialize(Object o, Object context) {
+  public Object serialize(Object o, Object context, SerializationFilter filter) {
     Object value = myAccessor.read(o);
     if (value == null) {
       return context;

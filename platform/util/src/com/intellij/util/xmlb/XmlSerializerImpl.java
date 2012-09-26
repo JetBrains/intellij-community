@@ -37,7 +37,7 @@ class XmlSerializerImpl {
 
   Element serialize(Object object) throws XmlSerializationException {
     try {
-      return (Element)getBinding(object.getClass()).serialize(object, null);
+      return (Element)getBinding(object.getClass()).serialize(object, null, filter);
     }
     catch (XmlSerializationException e) {
       throw e;
@@ -138,10 +138,6 @@ class XmlSerializerImpl {
     }
 
     throw new XmlSerializationException("Can't covert " + value.getClass() + " into " + type);
-  }
-
-  public SerializationFilter getFilter() {
-    return filter;
   }
 
   public static boolean isIgnoredNode(final Object child) {
