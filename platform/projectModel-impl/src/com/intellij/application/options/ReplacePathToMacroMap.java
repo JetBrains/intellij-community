@@ -23,7 +23,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -236,22 +235,5 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   public void put(String path, String replacement) {
     myMacroMap.put(path, replacement);
   }
-
-  @TestOnly
-  public String mapToString() {
-    final StringBuilder buf = new StringBuilder();
-
-    final List<String> pathIndex = getPathIndex();
-    for (String s : pathIndex) {
-      if (buf.length() > 0) buf.append("\n");
-      buf.append(s);
-      buf.append(" -> ");
-      buf.append(myMacroMap.get(s));
-    }
-
-    return buf.toString();
-  }
-
-
 
 }
