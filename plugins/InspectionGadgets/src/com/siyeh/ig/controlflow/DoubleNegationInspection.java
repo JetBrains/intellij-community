@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Bas Leijdekkers
+ * Copyright 2006-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,11 @@ public class DoubleNegationInspection extends BaseInspection {
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("double.negation.problem.descriptor");
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
   }
 
   @Nullable
@@ -117,7 +122,7 @@ public class DoubleNegationInspection extends BaseInspection {
       registerError(expression);
     }
 
-    private static boolean isNegation(PsiExpression expression) {
+    private static boolean isNegation(@Nullable PsiExpression expression) {
       expression = ParenthesesUtils.stripParentheses(expression);
       if (expression instanceof PsiPrefixExpression) return isNegation((PsiPrefixExpression)expression);
       if (expression instanceof PsiPolyadicExpression) return isNegation((PsiPolyadicExpression)expression);

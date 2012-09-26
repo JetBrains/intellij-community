@@ -49,6 +49,8 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private JCheckBox myCbAutoShowFirstError;
   private JCheckBox myCbUseExternalBuild;
   private JCheckBox myCbEnableAutomake;
+  private JTextField myTextField1;
+  private JTextField myTextField2;
 
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
