@@ -18,10 +18,7 @@ package com.intellij.util;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
+import java.lang.reflect.*;
 
 /**
  * @author peter
@@ -48,9 +45,34 @@ public class ReflectionCache {
     @NotNull
     protected Method[] create(final Class key) {
       Method[] methods = key.getMethods();
+      intern(methods);
       return methods.length == 0 ? EMPTY_METHODS : methods;
     }
   };
+
+  private static void intern(@NotNull Method[] methods) {
+    for (Method method : methods) {
+      intern(method);
+    }
+  }
+
+  private static void intern(@NotNull Method method) {
+    try {
+      if (method.getParameterTypes().length == 0) {
+        Field parameterTypes = Method.class.getDeclaredField("parameterTypes");
+        parameterTypes.setAccessible(true);
+        parameterTypes.set(method, ArrayUtil.EMPTY_CLASS_ARRAY);
+      }
+      if (method.getExceptionTypes().length == 0) {
+        Field parameterTypes = Method.class.getDeclaredField("exceptionTypes");
+        parameterTypes.setAccessible(true);
+        parameterTypes.set(method, ArrayUtil.EMPTY_CLASS_ARRAY);
+      }
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   private static final ConcurrentFactoryMap<Class,Boolean> ourIsInterfaces = new ConcurrentFactoryMap<Class, Boolean>() {
     @Override
