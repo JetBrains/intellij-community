@@ -42,10 +42,7 @@ public class TemplateContext {
   }
 
   public boolean isEnabled(TemplateContextType contextType) {
-    Boolean storedValue;
-    synchronized (myAdditionalContexts) {
-      storedValue = myAdditionalContexts.get(contextType.getContextId());
-    }
+    Boolean storedValue = isEnabledBare(contextType);
     if (storedValue == null) {
       TemplateContextType baseContextType = contextType.getBaseContextType();
       if (baseContextType != null && !(baseContextType instanceof EverywhereContextType)) {
@@ -54,6 +51,12 @@ public class TemplateContext {
       return false;
     }
     return storedValue.booleanValue();
+  }
+
+  public Boolean isEnabledBare(TemplateContextType contextType) {
+    synchronized (myAdditionalContexts) {
+      return myAdditionalContexts.get(contextType.getContextId());
+    }
   }
 
   public void setEnabled(TemplateContextType contextType, boolean value) {

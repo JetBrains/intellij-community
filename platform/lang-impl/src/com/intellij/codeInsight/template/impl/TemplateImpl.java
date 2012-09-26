@@ -21,6 +21,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SchemeElement;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
@@ -447,7 +448,7 @@ public class TemplateImpl extends Template implements SchemeElement {
 
   public boolean contextsEqual(TemplateImpl t){
     for (TemplateContextType contextType : TemplateManagerImpl.getAllContextTypes()) {
-      if (getTemplateContext().isEnabled(contextType) != t.getTemplateContext().isEnabled(contextType)) {
+      if (!Comparing.equal(getTemplateContext().isEnabledBare(contextType), t.getTemplateContext().isEnabled(contextType))) {
         return false;
       }
     }
