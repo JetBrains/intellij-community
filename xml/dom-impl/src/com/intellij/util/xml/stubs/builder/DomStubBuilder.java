@@ -19,6 +19,7 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -39,7 +40,7 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
 
   @Override
   public boolean acceptsFile(VirtualFile file) {
-    return file.getFileType() == XmlFileType.INSTANCE;
+    return file.getFileType() == XmlFileType.INSTANCE && !ProjectCoreUtil.isProjectOrWorkspaceFile(file);
   }
 
   @Override
@@ -71,7 +72,7 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
 
   @Override
   public int getStubVersion() {
-    int version = 8;
+    int version = 9;
     DomFileDescription[] descriptions = Extensions.getExtensions(DomFileDescription.EP_NAME);
     for (DomFileDescription description : descriptions) {
       version += description.getStubVersion();

@@ -25,14 +25,18 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -46,12 +50,15 @@ import javax.swing.*;
 public class GrMethodMayBeStaticInspection extends BaseInspection {
   public boolean myOnlyPrivateOrFinal = false;
   public boolean myIgnoreEmptyMethods = true;
+  public boolean myIgnoreInstanceRefsInClosure = true;
 
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(GroovyInspectionBundle.message("method.may.be.static.only.private.or.final.option"), "myOnlyPrivateOrFinal");
     optionsPanel.addCheckbox(GroovyInspectionBundle.message("method.may.be.static.ignore.empty.method.option"), "myIgnoreEmptyMethods");
+    optionsPanel.addCheckbox(GroovyInspectionBundle.message("method.may.be.static.ignore.instance.refs.in.closure.option"),
+                             "myIgnoreInstanceRefsInClosure");
     return optionsPanel;
   }
 
@@ -61,47 +68,88 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
     return new BaseInspectionVisitor() {
       @Override
       public void visitMethod(GrMethod method) {
-        if (checkMethod(method)) {
-          LocalQuickFix[] fixes = {new GrModifierLocalFix(method, PsiModifier.STATIC, false, true)};
-          registerError(method.getNameIdentifierGroovy(), GroovyInspectionBundle.message("method.may.be.static"), fixes,
-                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        Result result = checkMethod(method);
+        LocalQuickFix[] fixes;
+        switch (result) {
+          case mayBeStatic:
+            fixes = new LocalQuickFix[]{new GrModifierLocalFix(method, PsiModifier.STATIC, false, true)};
+            registerError(method.getNameIdentifierGroovy(), GroovyInspectionBundle.message("method.may.be.static"), fixes,
+                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            break;
+          case mayBeStaticButHaveInstanceRefsInClosure:
+            if (myIgnoreInstanceRefsInClosure) {
+              fixes = new LocalQuickFix[]{new GrModifierLocalFix(method, PsiModifier.STATIC, false, true) {
+                @NotNull
+                @Override
+                public String getName() {
+                  return super.getName() + " " + GroovyInspectionBundle.message("have.instance.refs.in.closure");
+                }
+              }};
+              registerError(method.getNameIdentifierGroovy(), GroovyInspectionBundle.message("method.may.be.static") + " " +
+                                                              GroovyInspectionBundle.message("have.instance.refs.in.closure"), fixes,
+                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            }
+            break;
+          case mayNotBeStatic:
+            break;
         }
       }
     };
   }
 
-  private boolean checkMethod(final GrMethod method) {
-    if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
-    if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) return false;
-    if (method.isConstructor()) return false;
-    if (method.getContainingClass() instanceof GroovyScriptClass) return false;
-    if (SuperMethodsSearch.search(method, null, true, false).findFirst() != null) return false;
-    if (OverridingMethodsSearch.search(method).findFirst() != null) return false;
+  enum Result {
+    mayBeStatic,
+    mayBeStaticButHaveInstanceRefsInClosure,
+    mayNotBeStatic
+
+  }
+
+  private Result checkMethod(final GrMethod method) {
+    if (method.hasModifierProperty(PsiModifier.STATIC)) return Result.mayNotBeStatic;
+    if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) return Result.mayNotBeStatic;
+    if (method.isConstructor()) return Result.mayNotBeStatic;
+    if (method.getContainingClass() instanceof GroovyScriptClass) return Result.mayNotBeStatic;
+    if (SuperMethodsSearch.search(method, null, true, false).findFirst() != null) return Result.mayNotBeStatic;
+    if (OverridingMethodsSearch.search(method).findFirst() != null) return Result.mayNotBeStatic;
     if (myOnlyPrivateOrFinal) {
-      if (!(method.hasModifierProperty(PsiModifier.FINAL) || method.hasModifierProperty(PsiModifier.PRIVATE))) return false;
+      if (!(method.hasModifierProperty(PsiModifier.FINAL) || method.hasModifierProperty(PsiModifier.PRIVATE))) return Result.mayNotBeStatic;
     }
 
     GrOpenBlock block = method.getBlock();
-    if (block == null) return false;
-    if (myIgnoreEmptyMethods && block.getStatements().length == 0) return false;
+    if (block == null) return Result.mayNotBeStatic;
+    if (myIgnoreEmptyMethods && block.getStatements().length == 0) return Result.mayNotBeStatic;
 
     PsiClass containingClass = method.getContainingClass();
-    if (containingClass == null) return false;
-    if (containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) return false;
+    if (containingClass == null) return Result.mayNotBeStatic;
+    if (containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+      return Result.mayNotBeStatic;
+    }
 
     final ExtensionsArea rootArea = Extensions.getRootArea();
     final ExtensionPoint<Condition<PsiElement>> extensionPoint = rootArea.getExtensionPoint("com.intellij.cantBeStatic");
     final Condition<PsiElement>[] addins = extensionPoint.getExtensions();
     for (Condition<PsiElement> addin : addins) {
       if (addin.value(method)) {
-        return false;
+        return Result.mayNotBeStatic;
       }
     }
 
 
     MethodMayBeStaticVisitor visitor = new MethodMayBeStaticVisitor();
     method.accept(visitor);
-    return visitor.mayBeStatic();
+
+    boolean haveInstanceRefsInClosure = visitor.haveInstanceRefsInClosure();
+    boolean haveInstanceRefs = visitor.haveInstanceRefsOutsideClosures();
+
+    if (!haveInstanceRefsInClosure && !haveInstanceRefs) {
+      return Result.mayBeStatic;
+    }
+    else if (haveInstanceRefsInClosure && !haveInstanceRefs) {
+      return Result.mayBeStaticButHaveInstanceRefsInClosure;
+    }
+    else {
+      return Result.mayNotBeStatic;
+    }
   }
 
   private static boolean isPrintOrPrintln(PsiElement element) {
@@ -110,38 +158,65 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
   }
 
   private static class MethodMayBeStaticVisitor extends GroovyRecursiveElementVisitor {
-    private boolean myMay = true;
+    private boolean myHaveNoInstanceRefs = true;
+    private boolean myHaveNoInstanceRefsInClosure = true;
+
+    private int myIsInClosure = 0;
 
     @Override
     public void visitElement(GroovyPsiElement element) {
-      if (!myMay) return;
+      if (!myHaveNoInstanceRefs) return;
       super.visitElement(element);
     }
 
     @Override
     public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
-      if (referenceExpression.getQualifierExpression() != null) {
-        super.visitReferenceExpression(referenceExpression);
-      }
-      else {
+      GrExpression qualifier = referenceExpression.getQualifierExpression();
+      if (qualifier == null || qualifier instanceof GrThisSuperReferenceExpression) {
         GroovyResolveResult result = referenceExpression.advancedResolve();
         PsiElement element = result.getElement();
         if (isPrintOrPrintln(element)) return; //print & println are resolved in all places
 
         GroovyPsiElement resolveContext = result.getCurrentFileResolveContext();
-        if (resolveContext != null) return;
+        if (qualifier == null && resolveContext != null) return;
         if (element instanceof PsiClass && ((PsiClass)element).getContainingClass() == null) return;
         if (element instanceof PsiMember && !((PsiMember)element).hasModifierProperty(PsiModifier.STATIC)) {
-          myMay = false;
+          registerInstanceRefs();
         }
       }
+      else {
+        super.visitReferenceExpression(referenceExpression);
+      }
+    }
+
+    @Override
+    public void visitThisSuperReferenceExpression(GrThisSuperReferenceExpression expression) {
+      if (expression.getParent() instanceof GrReferenceExpression) return;
+
+      registerInstanceRefs();
+    }
+
+    private void registerInstanceRefs() {
+      if (myIsInClosure > 0) {
+        myHaveNoInstanceRefsInClosure = false;
+      }
+      else {
+        myHaveNoInstanceRefs = false;
+      }
+    }
+
+    @Override
+    public void visitClosure(GrClosableBlock closure) {
+      myIsInClosure++;
+      super.visitClosure(closure);
+      myIsInClosure--;
     }
 
     @Override
     public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
       super.visitCodeReferenceElement(refElement);
 
-      if (!myMay) return;
+      if (!myHaveNoInstanceRefs) return;
 
       final PsiElement resolvedElement = refElement.resolve();
       if (!(resolvedElement instanceof PsiClass)) return;
@@ -151,12 +226,16 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
 
       if (!(scope instanceof PsiClass)) return;
       if (!aClass.hasModifierProperty(PsiModifier.STATIC)) {
-        myMay = false;
+        registerInstanceRefs();
       }
     }
 
-    public boolean mayBeStatic() {
-      return myMay;
+    public boolean haveInstanceRefsOutsideClosures() {
+      return !myHaveNoInstanceRefs;
+    }
+
+    public boolean haveInstanceRefsInClosure() {
+      return !myHaveNoInstanceRefsInClosure;
     }
   }
 }

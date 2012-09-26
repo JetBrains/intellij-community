@@ -4,6 +4,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
@@ -15,6 +16,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.PathUtil;
@@ -77,8 +81,7 @@ public class TestDataGuessByExistingFilesUtil {
 
   @Nullable
   static List<String> collectTestDataByExistingFiles(@NotNull PsiFile psiFile, @NotNull String testName) {
-    GotoFileModel model = new GotoFileModel(psiFile.getProject());
-    TestDataDescriptor descriptor = buildDescriptorFromExistingTestData(psiFile, model);
+    TestDataDescriptor descriptor = buildDescriptorFromExistingTestData(psiFile);
     if (descriptor == null || !descriptor.isComplete()) {
       return null;
     }
@@ -132,7 +135,7 @@ public class TestDataGuessByExistingFilesUtil {
   }
 
   @Nullable
-  private static TestDataDescriptor buildDescriptorFromExistingTestData(@NotNull PsiFile file, @NotNull GotoFileModel gotoModel) {
+  private static TestDataDescriptor buildDescriptorFromExistingTestData(@NotNull PsiFile file) {
     final PsiClass psiClass = PsiTreeUtil.getChildOfType(file, PsiClass.class);
     if (psiClass == null) {
       return null;
@@ -178,7 +181,7 @@ public class TestDataGuessByExistingFilesUtil {
     }
     
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex();
-    final TestDataDescriptor descriptor = buildDescriptor(gotoModel, fileIndex, testNames, psiClass);
+    final TestDataDescriptor descriptor = buildDescriptor(fileIndex, testNames, psiClass);
     if (isClassWithoutTestData(descriptor, testNames, psiClass)) {
       CLASSES_WITHOUT_TEST_DATA.add(qualifiedName);
       return null;
@@ -265,11 +268,11 @@ public class TestDataGuessByExistingFilesUtil {
   //}
 
   @NotNull
-  private static TestDataDescriptor buildDescriptor(@NotNull GotoFileModel gotoModel,
-                                                    @NotNull ProjectFileIndex fileIndex,
+  private static TestDataDescriptor buildDescriptor(@NotNull ProjectFileIndex fileIndex,
                                                     @NotNull Collection<String> testNames,
                                                     @NotNull PsiClass psiClass)
   {
+    GotoFileModel gotoModel = new GotoFileModel(psiClass.getProject());
     List<Trinity<Matcher, String, String>> input = new ArrayList<Trinity<Matcher, String, String>>();
     Set<String> testNamesLowerCase = new HashSet<String>();
     for (String testName : testNames) {
@@ -280,7 +283,7 @@ public class TestDataGuessByExistingFilesUtil {
       testNamesLowerCase.add(testName.toLowerCase());
     }
     Set<TestLocationDescriptor> descriptors = new HashSet<TestLocationDescriptor>();
-    for (String name : gotoModel.getNames(false)) {
+    for (String name : getAllFileNames(psiClass.getProject())) {
       ProgressManager.checkCanceled();
       boolean currentNameProcessed = false;
       for (Trinity<Matcher, String, String> trinity : input) {
@@ -365,6 +368,16 @@ public class TestDataGuessByExistingFilesUtil {
       }
     }
     return new TestDataDescriptor(descriptors);
+  }
+
+  private static synchronized String[] getAllFileNames(final Project project) {
+    return CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<String[]>() {
+      @Nullable
+      @Override
+      public Result<String[]> compute() {
+        return Result.create(new GotoFileModel(project).getNames(false), PsiModificationTracker.MODIFICATION_COUNT);
+      }
+    });
   }
 
   @Nullable

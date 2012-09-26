@@ -44,7 +44,7 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
     SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(profileManager, PROFILE, model);
     panel.setVisible(true);
     panel.reset();
-    assertEquals(0, InspectionProfileTest.countInitializedTools(model));
+    assertEquals(InspectionProfileTest.getInitializedTools(model).toString(), 0, InspectionProfileTest.countInitializedTools(model));
 
     LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)model.getInspectionTool(myInspection.getShortName());
     assert wrapper != null;

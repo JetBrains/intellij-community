@@ -168,6 +168,10 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
+  public void testMethodRefAsRefQualifier() throws Exception {
+    doTest(true);
+  }
+
   public void testLocalVarInsideLambdaBody() throws Exception {
     doTest(true);
   }

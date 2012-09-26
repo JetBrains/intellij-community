@@ -20,7 +20,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
@@ -102,11 +101,6 @@ public class RestartAction extends AnAction implements DumbAware, AnAction.Trans
   public void update(final AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     String name = myEnvironment.getRunProfile().getName();
-    if (name.startsWith(ActionsBundle.message("action.RerunFailedTests.text"))) {
-      RunnerAndConfigurationSettings settings = myEnvironment.getRunnerAndConfigurationSettings();
-      if (settings != null)
-        name = settings.getName();
-    }
     final boolean isRunning = myProcessHandler != null && !myProcessHandler.isProcessTerminated();
     boolean isTerminating = myProcessHandler != null && myProcessHandler.isProcessTerminating();
     boolean isStarting = ExecutorRegistry.getInstance().isStarting(myEnvironment.getProject(), myExecutor.getId(), myRunner.getRunnerId());

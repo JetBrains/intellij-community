@@ -118,8 +118,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
 
   public final void update(AnActionEvent e) {
     AbstractRerunFailedTestsAction action = findActualAction();
-    TestFrameworkRunningModel model = action.getModel();
-    e.getPresentation().setEnabled(action.isActive(e) && model != null && !model.isRunning());
+    e.getPresentation().setEnabled(action.isActive(e));
   }
 
   private boolean isActive(AnActionEvent e) {
@@ -163,7 +162,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
                                                         myEnvironment.getRunnerSettings(),
                                                         myEnvironment.getConfigurationSettings(),
                                                         myEnvironment.getContentToReuse(),
-                                                        myEnvironment.getRunnerAndConfigurationSettings()));
+                                                        null));
     }
     catch (ExecutionException e1) {
       LOG.error(e1);

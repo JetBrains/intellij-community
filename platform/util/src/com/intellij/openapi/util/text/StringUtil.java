@@ -1429,6 +1429,10 @@ public class StringUtil extends StringUtilRt {
     return !text.isEmpty() && Character.isWhitespace(text.charAt(0));
   }
 
+  public static boolean isChar(CharSequence seq, int index, char c) {
+    return index >= 0 && index < seq.length() && seq.charAt(index) == c;
+  }
+
   public static boolean startsWith(@NotNull CharSequence text, @NotNull CharSequence prefix) {
     int l1 = text.length();
     int l2 = prefix.length();

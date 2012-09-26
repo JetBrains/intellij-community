@@ -13,10 +13,9 @@
     <checkoutProvider implementation="org.jetbrains.plugins.github.GithubCheckoutProvider"/>
     <applicationService serviceInterface="org.jetbrains.plugins.github.GithubSettings"
                         serviceImplementation="org.jetbrains.plugins.github.GithubSettings"/>
-    <applicationConfigurable instance="org.jetbrains.plugins.github.ui.GitHubSettingsConfigurable" id="settings.github"
-                             displayName="GitHub"/>
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.ui.GithubAnnotationGutterActionProvider" />
     <checkoutCompletedListener implementation="org.jetbrains.plugins.github.GithubCheckoutListener" order="after PlatformProjectCheckoutListener"/>
+    <vcsConfigurableProvider implementation="org.jetbrains.plugins.github.ui.GitHubSettingsConfigurable"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">

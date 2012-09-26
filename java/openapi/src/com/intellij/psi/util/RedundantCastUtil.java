@@ -389,7 +389,7 @@ public class RedundantCastUtil {
           }
         } else if (parent instanceof PsiSynchronizedStatement && (expr instanceof PsiExpression && ((PsiExpression)expr).getType() instanceof PsiPrimitiveType)) {
           return;
-        } else if (expr instanceof PsiLambdaExpression) {
+        } else if (expr instanceof PsiLambdaExpression || expr instanceof PsiMethodReferenceExpression) {
           if (parent instanceof PsiParenthesizedExpression && parent.getParent() instanceof PsiReferenceExpression) {
             return;
           }

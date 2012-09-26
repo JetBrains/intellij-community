@@ -173,8 +173,8 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
       }
 
       PsiMethod method = (PsiMethod)member;
-      if ((propByGetter == null || importedName.equals(propByGetter)) && GroovyPropertyUtils.isSimplePropertyGetter(method, refName) ||
-          (propBySetter == null || importedName.equals(propBySetter)) && GroovyPropertyUtils.isSimplePropertySetter(method, refName)) {
+      if ((nameHint == null || importedName.equals(propByGetter)) && GroovyPropertyUtils.isSimplePropertyGetter(method, refName) ||
+          (nameHint == null || importedName.equals(propBySetter)) && GroovyPropertyUtils.isSimplePropertySetter(method, refName)) {
         if (method.hasModifierProperty(PsiModifier.STATIC) && !processor.execute(method, state)) {
           return false;
         }
@@ -205,7 +205,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
   }
 
   private boolean processDeclarationsForMultipleElements(PsiScopeProcessor processor,
-                                                         PsiElement lastParent,
+                                                         @Nullable PsiElement lastParent,
                                                          PsiElement place,
                                                          ResolveState state) {
     GrCodeReferenceElement ref = getImportReference();
@@ -247,10 +247,9 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
   public String getImportedName() {
     if (isOnDemand()) return null;
 
-    PsiElement identifier = findChildByType(GroovyTokenTypes.mIDENT);
-    //this was aliased import
-    if (identifier != null) {
-      return identifier.getText();
+    PsiElement aliasNameElement = getAliasNameElement();
+    if (aliasNameElement != null) {
+      return aliasNameElement.getText();
     }
 
     GrCodeReferenceElement ref = getImportReference();
@@ -262,7 +261,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
   }
 
   public boolean isAliasedImport() {
-    return findChildByType(GroovyTokenTypes.mIDENT) != null;
+    return getAliasNameElement() != null;
   }
 
   public boolean isOnDemand() {
@@ -288,5 +287,11 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
     }
 
     return resolved instanceof PsiClass ? (PsiClass)resolved : null;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getAliasNameElement() {
+    return findChildByType(GroovyTokenTypes.mIDENT);
   }
 }

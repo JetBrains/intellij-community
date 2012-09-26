@@ -197,7 +197,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     for (JavaArrangementPropertyInfo propertyInfo : properties) {
       JavaElementArrangementEntry getter = propertyInfo.getGetter();
       JavaElementArrangementEntry setter = propertyInfo.getSetter();
-      if (getter != null && setter != null) {
+      if (getter != null && setter != null && setter.getDependencies() == null) {
         setter.addDependency(getter);
       }
     }
@@ -205,20 +205,20 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
 
   private static void setupUtilityMethods(@NotNull JavaArrangementParseInfo info, @NotNull ArrangementEntryOrderType orderType) {
     if (orderType == ArrangementEntryOrderType.DEPTH_FIRST) {
-      JavaElementArrangementEntry base = null;
       for (JavaArrangementMethodDependencyInfo rootInfo : info.getMethodDependencyRoots()) {
-        if (base != null) {
-          rootInfo.getAnchorMethod().addDependency(base);
-        }
-        base = setupDepthFirstDependency(rootInfo.getAnchorMethod());
+        setupDepthFirstDependency(rootInfo);
       }
     }
   }
 
-  @NotNull
-  private static JavaElementArrangementEntry setupDepthFirstDependency(@NotNull JavaElementArrangementEntry base) {
-    // TODO den implement
-    return base;
+  private static void setupDepthFirstDependency(@NotNull JavaArrangementMethodDependencyInfo info) {
+    for (JavaArrangementMethodDependencyInfo dependencyInfo : info.getDependentMethodInfos()) {
+      setupDepthFirstDependency(dependencyInfo);
+      JavaElementArrangementEntry dependentEntry = dependencyInfo.getAnchorMethod();
+      if (dependentEntry.getDependencies() == null) {
+        dependentEntry.addDependency(info.getAnchorMethod());
+      }
+    }
   }
 
   private static void setupOverriddenMethods(JavaArrangementParseInfo info) {

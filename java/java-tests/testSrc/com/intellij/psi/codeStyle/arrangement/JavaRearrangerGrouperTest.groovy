@@ -52,7 +52,7 @@ class Test {
   }
   
   @Test
-  void _testUtilityMethodsDepthFirst() {
+  void testUtilityMethodsDepthFirst() {
     commonSettings.BLANK_LINES_AROUND_METHOD = 0
     doTest(
       initial: '''\
