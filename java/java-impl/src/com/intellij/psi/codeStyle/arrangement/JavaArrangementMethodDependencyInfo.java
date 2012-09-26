@@ -26,20 +26,31 @@ import java.util.List;
  */
 public class JavaArrangementMethodDependencyInfo {
 
-  @NotNull private final List<JavaElementArrangementEntry> getDependentMethods = new ArrayList<JavaElementArrangementEntry>();
+  @NotNull private final List<JavaArrangementMethodDependencyInfo> myDependentMethods
+    = new ArrayList<JavaArrangementMethodDependencyInfo>();
+  
   @NotNull private final JavaElementArrangementEntry myAnchorMethod;
 
   public JavaArrangementMethodDependencyInfo(@NotNull JavaElementArrangementEntry method) {
     myAnchorMethod = method;
   }
 
+  public void addDependentMethodInfo(@NotNull JavaArrangementMethodDependencyInfo info) {
+    myDependentMethods.add(info);
+  }
+  
   @NotNull
-  public List<JavaElementArrangementEntry> getGetDependentMethods() {
-    return getDependentMethods;
+  public List<JavaArrangementMethodDependencyInfo> getDependentMethodInfos() {
+    return myDependentMethods;
   }
 
   @NotNull
   public JavaElementArrangementEntry getAnchorMethod() {
     return myAnchorMethod;
+  }
+
+  @Override
+  public String toString() {
+    return myAnchorMethod.toString();
   }
 }
