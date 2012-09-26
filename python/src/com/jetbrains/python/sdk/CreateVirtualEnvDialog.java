@@ -12,8 +12,8 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.PathUtil;
+import com.jetbrains.plugins.remotesdk.RemoteSdkDataHolder;
 import com.jetbrains.python.packaging.PyPackageService;
-import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
 import com.jetbrains.python.ui.IdeaDialog;
 
 import javax.swing.*;
@@ -160,7 +160,8 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     mySdkCombo.setRenderer(new PySdkListCellRenderer(null));
     List<Sdk> baseSdks = new ArrayList<Sdk>();
     for (Sdk s : allSdks) {
-      if (!PythonSdkType.isInvalid(s) && !PythonSdkType.isVirtualEnv(s) && !PythonRemoteSdkAdditionalData.isRemoteSdk(s.getHomePath())) {
+      if (!PythonSdkType.isInvalid(s) && !PythonSdkType.isVirtualEnv(s) && !RemoteSdkDataHolder
+        .isRemoteSdk(s.getHomePath())) {
         baseSdks.add(s);
       }
       else if (s.equals(sdk)){

@@ -36,6 +36,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.jetbrains.plugins.remotesdk.RemoteSdkDataHolder;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
@@ -44,7 +45,7 @@ import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
-import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
 import icons.PythonIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -359,8 +360,8 @@ public class PythonSdkType extends SdkType {
 
   @Override
   public SdkAdditionalData loadAdditionalData(final Sdk currentSdk, final Element additional) {
-    if (PythonRemoteSdkAdditionalData.isRemoteSdk(currentSdk.getHomePath())) {
-      return PythonRemoteSdkAdditionalData.loadRemote(currentSdk, additional);
+    if (RemoteSdkDataHolder.isRemoteSdk(currentSdk.getHomePath())) {
+      return PyRemoteSdkAdditionalData.loadRemote(currentSdk, additional);
     }
     else {
       return PythonSdkAdditionalData.load(currentSdk, additional);
