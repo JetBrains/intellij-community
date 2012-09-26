@@ -6,3 +6,9 @@ Compiling files:
 src/Base.java
 src/Impl.java
 End of files
+Cleaning output files:
+out/production/MoveMethodToSubclass/Main.class
+End of files
+Compiling files:
+src/Main.java
+End of files

@@ -1,6 +1,6 @@
 import java.util.List;
 
 public class Impl extends Base {
-  public void method(List a) {
+  public void method(Impl a) {
   }
 }

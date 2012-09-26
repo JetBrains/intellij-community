@@ -168,8 +168,7 @@ public class MemberChangeTest extends IncrementalTestCase {
     doTest();
   }
 
-  //todo[jeka] fix
-  public void _testMoveMethodToSubclass() {
+  public void testMoveMethodToSubclass() {
     doTest().assertSuccessful();
   }
   
