@@ -259,9 +259,22 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
 
     if (pluginFileOrDir.isDirectory()) {
       classpath.add(new File(pluginFileOrDir.getParent(), "maven-server-api"));
-      classpath.add(new File(pluginFileOrDir.getParent(), "maven2-server-impl"));
-      File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
-      libDir = new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven2-server-impl/lib");
+
+      if (Boolean.getBoolean("idea.use.maven3")) {
+        classpath.add(new File(pluginFileOrDir.getParent(), "maven3-server-impl"));
+        File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
+
+        File maven3ServerRoot = new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven3-server-impl/lib/maven3");
+
+        libDir = new File(maven3ServerRoot, "lib");
+
+        classpath.add(new File(maven3ServerRoot, "boot/plexus-classworlds-2.4.jar"));
+      }
+      else {
+        classpath.add(new File(pluginFileOrDir.getParent(), "maven2-server-impl"));
+        File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
+        libDir = new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven2-server-impl/lib");
+      }
     }
     else {
       libDir = pluginFileOrDir.getParentFile();
