@@ -14,14 +14,7 @@ public class ReplacePathToMacroMapTest {
   @Before
   public final void setupMap() {
     myMap = new ReplacePathToMacroMap();
-
-    myMap.put("file:///tmp/foo", "file://$MODULE_DIR$");
-    myMap.put("file://tmp/foo", "file:/$MODULE_DIR$");
-    myMap.put("file:/tmp/foo", "file:$MODULE_DIR$");
-    myMap.put("jar:///tmp/foo", "jar://$MODULE_DIR$");
-    myMap.put("jar://tmp/foo", "jar:/$MODULE_DIR$");
-    myMap.put("jar:/tmp/foo", "jar:$MODULE_DIR$");
-    myMap.put("/tmp/foo", "$MODULE_DIR$");
+    myMap.addMacroReplacement("/tmp/foo", "MODULE_DIR");
   }
 
   @Test

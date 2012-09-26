@@ -23,7 +23,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
@@ -48,15 +47,20 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     myMacroMap.put(p, m);
     for (String protocol : PROTOCOLS) {
       myMacroMap.put(protocol + ":" + p, protocol + ":" + m);
-      myMacroMap.put(protocol + ":/" + p, protocol + "://" + m);
+      myMacroMap.put(protocol + ":/" + p, protocol + ":/" + m);
       myMacroMap.put(protocol + "://" + p, protocol + "://" + m);
     }
   }
 
-  @Nullable
   public String substitute(String text, boolean caseSensitive) {
-    if (myMacroMap.isEmpty()) return text;
-    if (text == null) return null;
+    if (text == null) {
+      //noinspection ConstantConditions
+      return null;
+    }
+    if (myMacroMap.isEmpty()) {
+      return text;
+    }
+
     for (final String path : getPathIndex()) {
       final String macro = myMacroMap.get(path);
       text = replacePathMacro(text, path, macro, caseSensitive);

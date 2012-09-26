@@ -146,17 +146,17 @@ public class PathMacroManagerTest {
                  "/tmp/foo/module -> $MODULE_DIR$\n" +
                  APP_HOME + " -> $APPLICATION_HOME_DIR$\n" +
                  "file:" + APP_HOME + " -> file:$APPLICATION_HOME_DIR$\n" +
-                 "file:/" + APP_HOME + " -> file://$APPLICATION_HOME_DIR$\n" +
+                 "file:/" + APP_HOME + " -> file:/$APPLICATION_HOME_DIR$\n" +
                  "file://" + APP_HOME + " -> file://$APPLICATION_HOME_DIR$\n" +
                  "jar:" + APP_HOME + " -> jar:$APPLICATION_HOME_DIR$\n" +
-                 "jar:/" + APP_HOME + " -> jar://$APPLICATION_HOME_DIR$\n" +
+                 "jar:/" + APP_HOME + " -> jar:/$APPLICATION_HOME_DIR$\n" +
                  "jar://" + APP_HOME + " -> jar://$APPLICATION_HOME_DIR$\n" +
                  USER_HOME + " -> $USER_HOME$\n" +
                  "file:" + USER_HOME + " -> file:$USER_HOME$\n" +
-                 "file:/" + USER_HOME + " -> file://$USER_HOME$\n" +
+                 "file:/" + USER_HOME + " -> file:/$USER_HOME$\n" +
                  "file://" + USER_HOME + " -> file://$USER_HOME$\n" +
                  "jar:" + USER_HOME + " -> jar:$USER_HOME$\n" +
-                 "jar:/" + USER_HOME + " -> jar://$USER_HOME$\n" +
+                 "jar:/" + USER_HOME + " -> jar:/$USER_HOME$\n" +
                  "jar://" + USER_HOME + " -> jar://$USER_HOME$\n" +
                  "file:/tmp/foo -> file:$MODULE_DIR$/..\n" +
                  "file://tmp/foo -> file:/$MODULE_DIR$/..\n" +
@@ -189,17 +189,17 @@ public class PathMacroManagerTest {
                  "/tmp/foo -> $PROJECT_DIR$\n" +
                  APP_HOME + " -> $APPLICATION_HOME_DIR$\n" +
                  "file:" + APP_HOME + " -> file:$APPLICATION_HOME_DIR$\n" +
-                 "file:/" + APP_HOME + " -> file://$APPLICATION_HOME_DIR$\n" +
+                 "file:/" + APP_HOME + " -> file:/$APPLICATION_HOME_DIR$\n" +
                  "file://" + APP_HOME + " -> file://$APPLICATION_HOME_DIR$\n" +
                  "jar:" + APP_HOME + " -> jar:$APPLICATION_HOME_DIR$\n" +
-                 "jar:/" + APP_HOME + " -> jar://$APPLICATION_HOME_DIR$\n" +
+                 "jar:/" + APP_HOME + " -> jar:/$APPLICATION_HOME_DIR$\n" +
                  "jar://" + APP_HOME + " -> jar://$APPLICATION_HOME_DIR$\n" +
                  USER_HOME + " -> $USER_HOME$\n" +
                  "file:" + USER_HOME + " -> file:$USER_HOME$\n" +
-                 "file:/" + USER_HOME + " -> file://$USER_HOME$\n" +
+                 "file:/" + USER_HOME + " -> file:/$USER_HOME$\n" +
                  "file://" + USER_HOME + " -> file://$USER_HOME$\n" +
                  "jar:" + USER_HOME + " -> jar:$USER_HOME$\n" +
-                 "jar:/" + USER_HOME + " -> jar://$USER_HOME$\n" +
+                 "jar:/" + USER_HOME + " -> jar:/$USER_HOME$\n" +
                  "jar://" + USER_HOME + " -> jar://$USER_HOME$\n" +
                  "file:/tmp -> file:$PROJECT_DIR$/..\n" +
                  "file://tmp -> file:/$PROJECT_DIR$/..\n" +
@@ -235,10 +235,10 @@ public class PathMacroManagerTest {
                  USER_HOME + "/IdeaProjects/foo/module -> $MODULE_DIR$\n" +
                  APP_HOME + " -> $APPLICATION_HOME_DIR$\n" +
                  "file:" + APP_HOME + " -> file:$APPLICATION_HOME_DIR$\n" +
-                 "file:/" + APP_HOME + " -> file://$APPLICATION_HOME_DIR$\n" +
+                 "file:/" + APP_HOME + " -> file:/$APPLICATION_HOME_DIR$\n" +
                  "file://" + APP_HOME + " -> file://$APPLICATION_HOME_DIR$\n" +
                  "jar:" + APP_HOME + " -> jar:$APPLICATION_HOME_DIR$\n" +
-                 "jar:/" + APP_HOME + " -> jar://$APPLICATION_HOME_DIR$\n" +
+                 "jar:/" + APP_HOME + " -> jar:/$APPLICATION_HOME_DIR$\n" +
                  "jar://" + APP_HOME + " -> jar://$APPLICATION_HOME_DIR$\n" +
                  "file:" + USER_HOME + "/IdeaProjects/foo -> file:$MODULE_DIR$/..\n" +
                  "file:/" + USER_HOME + "/IdeaProjects/foo -> file:/$MODULE_DIR$/..\n" +
@@ -256,10 +256,10 @@ public class PathMacroManagerTest {
                  USER_HOME + "/IdeaProjects -> $MODULE_DIR$/../..\n" +
                  USER_HOME + " -> $USER_HOME$\n" +
                  "file:" + USER_HOME + " -> file:$USER_HOME$\n" +
-                 "file:/" + USER_HOME + " -> file://$USER_HOME$\n" +
+                 "file:/" + USER_HOME + " -> file:/$USER_HOME$\n" +
                  "file://" + USER_HOME + " -> file://$USER_HOME$\n" +
                  "jar:" + USER_HOME + " -> jar:$USER_HOME$\n" +
-                 "jar:/" + USER_HOME + " -> jar://$USER_HOME$\n" +
+                 "jar:/" + USER_HOME + " -> jar:/$USER_HOME$\n" +
                  "jar://" + USER_HOME + " -> jar://$USER_HOME$", s);
   }
 }
