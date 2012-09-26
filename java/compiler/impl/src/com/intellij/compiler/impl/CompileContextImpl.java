@@ -106,6 +106,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myShouldUpdateProblemsView = workspaceConfig.useOutOfProcessBuild() && workspaceConfig.MAKE_PROJECT_ON_SAVE;
   }
 
+  public boolean shouldUpdateProblemsView() {
+    return myShouldUpdateProblemsView;
+  }
+
   public void recalculateOutputDirs() {
     final Module[] allModules = ModuleManager.getInstance(myProject).getModules();
 
