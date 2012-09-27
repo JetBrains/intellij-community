@@ -80,6 +80,9 @@ target(name: "compile", description: "Compile module python") {
     dirset(dir: "${pluginHome}/../ultimate/ultimate-verifier") {
       include(name: "src")
     }
+    dirset(dir: "${pluginHome}/../plugins/remote-sdk-api") {
+      include(name: "src")
+    }
   }
   //The task requires the following libraries from IntelliJ IDEA distribution:
   //javac2.jar; jdom.jar; asm.jar; asm-commons.jar

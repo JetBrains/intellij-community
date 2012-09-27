@@ -17,7 +17,7 @@ setProperty("ch", "$home/community")
 setProperty("dryRun", false)
 setProperty("jdk16", guessJdk())
 
-setProperty("pluginFilter", [
+setProperty("pluginFilter", [   //modules to compile
             "htmltools",
             "JavaScriptLanguage",
             "JavaScriptDebugger", "FirefoxConnector", "ChromeConnector", "python-javascript-debugger",
@@ -38,7 +38,7 @@ setProperty("pluginFilter", [
             "database-impl", "DatabaseSupport",
             "sql",
             "coffeescript",
-            "remote-sdk-impl",
+            "remote-sdk-api", "remote-sdk-impl",
             "python-remote-interpreter",
             "diagram-api", "uml",
             "python-uml", "localization",
@@ -53,8 +53,8 @@ private List<String> pycharmPlatformApiModules() {
 }
 
 
-private List pycharmImplementationModules() {
-  return ["yaml", "graph", "coverage-common", "python", "python-ide", "python-openapi", "python-psi-api", "remote-sdk-api"]
+private List pycharmImplementationModules() {   //modules to put into pycharm.jar
+  return ["yaml", "graph", "coverage-common", "python", "python-ide", "python-openapi", "python-psi-api"]
 }
 
 class Paths {
@@ -179,6 +179,7 @@ private layoutPlugins() {
   dir("plugins") {
     layouts.layoutPlugin("django-db-config")
     layouts.layoutPlugin("python-javascript-debugger")
+    layouts.layoutPlugin("remote-sdk-impl")
     layouts.layoutPlugin("python-remote-interpreter")
     layouts.layoutPlugin("python-uml")
     layouts.layoutPlugin("localization")
