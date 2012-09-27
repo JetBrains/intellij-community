@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement;
+package com.intellij.application.options.codeStyle.arrangement.node.match;
 
+import com.intellij.application.options.codeStyle.arrangement.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
@@ -30,14 +31,14 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 /**
- * {@link ArrangementNodeComponent} for {@link ArrangementAtomMatchCondition} representation.
+ * {@link ArrangementMatchNodeComponent} for {@link ArrangementAtomMatchCondition} representation.
  * <p/>
  * Not thread-safe.
  * 
  * @author Denis Zhdanov
  * @since 8/8/12 10:06 AM
  */
-public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
+public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeComponent {
 
   public static final int VERTICAL_PADDING   = 2;
   public static final int HORIZONTAL_PADDING = 8;
@@ -86,14 +87,14 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
 
   @Nullable private Dimension myLabelSize;
   @Nullable private Rectangle myScreenBounds;
-  
+
   private boolean myEnabled = true;
   private boolean myInverted;
   private boolean myCloseButtonHovered;
 
-  public ArrangementAtomNodeComponent(@NotNull ArrangementNodeDisplayManager manager,
-                                      @NotNull ArrangementAtomMatchCondition condition,
-                                      @Nullable Runnable closeCallback)
+  public ArrangementAtomMatchNodeComponent(@NotNull ArrangementNodeDisplayManager manager,
+                                           @NotNull ArrangementAtomMatchCondition condition,
+                                           @Nullable Runnable closeCallback)
   {
     myCondition = condition;
     myCloseCallback = closeCallback;
@@ -175,7 +176,7 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
   }
 
   @Override
-  public ArrangementNodeComponent getNodeComponentAt(@NotNull RelativePoint point) {
+  public ArrangementMatchNodeComponent getNodeComponentAt(@NotNull RelativePoint point) {
     return (myScreenBounds != null && myScreenBounds.contains(point.getScreenPoint())) ? this : null;
   }
 

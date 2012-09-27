@@ -99,7 +99,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     toolbarControl.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.TOP | SideBorder.RIGHT));
     myContent.add(toolbarControl, new GridBag().weightx(1).fillCellHorizontally().coverLine());
 
-    myRuleTree = new ArrangementRuleTree(getSettings(settings), groupingRules, displayManager);
+    myRuleTree = new ArrangementRuleTree(getSettings(settings), groupingRules, displayManager, mySettingsAware);
     final Tree treeComponent = myRuleTree.getTreeComponent();
     actionToolbar.setTargetComponent(treeComponent);
     JBScrollPane scrollPane = new JBScrollPane(treeComponent);

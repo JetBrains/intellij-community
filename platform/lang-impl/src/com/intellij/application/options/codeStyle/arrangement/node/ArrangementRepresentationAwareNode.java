@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.arrangement.group;
+package com.intellij.application.options.codeStyle.arrangement.node;
+
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import javax.swing.tree.TreeNode;
 
 /**
- * Enumerates available grouping types.
- * 
  * @author Denis Zhdanov
- * @since 9/17/12 11:47 AM
+ * @since 9/27/12 2:48 PM
  */
-public enum ArrangementGroupingType {
+public interface ArrangementRepresentationAwareNode extends TreeNode {
   
-  GETTERS_AND_SETTERS,
-  
-  OVERRIDDEN_METHODS,
-
-  DEPENDENT_METHODS
+  @NotNull
+  JComponent getRenderer();
 }

@@ -19,7 +19,7 @@ import org.junit.Test
 
 import static com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType.GETTERS_AND_SETTERS
 import static com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType.OVERRIDDEN_METHODS
-import static com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType.UTILITY_METHODS
+import static com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType.DEPENDENT_METHODS
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PUBLIC
 import static com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType.BREADTH_FIRST
 import static com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType.DEPTH_FIRST
@@ -65,7 +65,7 @@ class Test {
   void util11() {}
   void service2() { util2(); }
 }''',
-      groups: [group(UTILITY_METHODS, DEPTH_FIRST)],
+      groups: [group(DEPENDENT_METHODS, DEPTH_FIRST)],
       expected: '''\
 class Test {
   void service1() { util1(); }
@@ -87,7 +87,7 @@ class Test {
   void service2() { util2(); util1(); }
   void util3() {}
 }''',
-      groups: [group(UTILITY_METHODS, BREADTH_FIRST)],
+      groups: [group(DEPENDENT_METHODS, BREADTH_FIRST)],
       expected: '''\
 class Test {
   void service1() { util1(); util2(); }
@@ -143,7 +143,7 @@ class Base {
   void test4() {}
   void test1() { test2(); }</range>
 }''',
-      groups: [group(UTILITY_METHODS, DEPTH_FIRST), group(OVERRIDDEN_METHODS)],
+      groups: [group(DEPENDENT_METHODS, DEPTH_FIRST), group(OVERRIDDEN_METHODS)],
       expected: '''\
 class Base {
   void base1() {}

@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement;
+package com.intellij.application.options.codeStyle.arrangement.node.match;
 
+import com.intellij.application.options.codeStyle.arrangement.ArrangementColorsService;
+import com.intellij.application.options.codeStyle.arrangement.ArrangementConfigUtil;
+import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
@@ -33,10 +36,10 @@ import java.awt.event.MouseEvent;
  * @author Denis Zhdanov
  * @since 9/12/12 5:39 PM
  */
-public class ArrangementGroupingNodeComponent extends JPanel implements ArrangementNodeComponent {
-  
+public class ArrangementGroupingMatchNodeComponent extends JPanel implements ArrangementMatchNodeComponent {
+
   private static final int TOP_INSET = 3;
-  
+
   @NotNull private final ArrangementColorsService myColorsService = ServiceManager.getService(ArrangementColorsService.class);
   @NotNull private final ArrangementAtomMatchCondition myCondition;
 
@@ -44,8 +47,8 @@ public class ArrangementGroupingNodeComponent extends JPanel implements Arrangem
   @NotNull private  Dimension myPreferredSize;
   private           boolean   mySelected;
 
-  public ArrangementGroupingNodeComponent(@NotNull ArrangementNodeDisplayManager manager,
-                                          @NotNull ArrangementAtomMatchCondition condition)
+  public ArrangementGroupingMatchNodeComponent(@NotNull ArrangementNodeDisplayManager manager,
+                                               @NotNull ArrangementAtomMatchCondition condition)
   {
     myCondition = condition;
     String text = StringUtil.capitalize(StringUtil.pluralize(manager.getDisplayValue(myCondition.getValue())));
@@ -69,7 +72,7 @@ public class ArrangementGroupingNodeComponent extends JPanel implements Arrangem
 
   @Nullable
   @Override
-  public ArrangementNodeComponent getNodeComponentAt(@NotNull RelativePoint point) {
+  public ArrangementMatchNodeComponent getNodeComponentAt(@NotNull RelativePoint point) {
     return (myScreenBounds != null && myScreenBounds.contains(point.getScreenPoint())) ? this : null;
   }
 
@@ -81,7 +84,7 @@ public class ArrangementGroupingNodeComponent extends JPanel implements Arrangem
 
   @Override
   public void setScreenBounds(@Nullable Rectangle bounds) {
-    myScreenBounds = bounds; 
+    myScreenBounds = bounds;
   }
 
   @Override

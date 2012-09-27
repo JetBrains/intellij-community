@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement;
+package com.intellij.application.options.codeStyle.arrangement.node.match;
 
+import com.intellij.application.options.codeStyle.arrangement.ArrangementConfigUtil;
+import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
+import com.intellij.application.options.codeStyle.arrangement.ArrangementRuleEditingModel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
@@ -33,26 +36,26 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * {@link ArrangementNodeComponent Component} for showing {@link ArrangementCompositeMatchCondition composite nodes}.
+ * {@link ArrangementMatchNodeComponent Component} for showing {@link ArrangementCompositeMatchCondition composite nodes}.
  * <p/>
  * Not thread-safe.
  * 
  * @author Denis Zhdanov
  * @since 8/8/12 10:51 AM
  */
-public class ArrangementAndNodeComponent extends JPanel implements ArrangementNodeComponent {
+public class ArrangementAndMatchNodeComponent extends JPanel implements ArrangementMatchNodeComponent {
 
   private static final int BUBBLE_CONNECTOR_LENGTH = 10;
 
-  @NotNull private final List<ArrangementNodeComponent> myComponents = new ArrayList<ArrangementNodeComponent>();
+  @NotNull private final List<ArrangementMatchNodeComponent> myComponents = new ArrayList<ArrangementMatchNodeComponent>();
 
-  @NotNull private final  ArrangementCompositeMatchCondition mySetting;
-  @Nullable private       Rectangle                          myScreenBounds;
+  @NotNull private final ArrangementCompositeMatchCondition mySetting;
+  @Nullable private      Rectangle                          myScreenBounds;
 
-  public ArrangementAndNodeComponent(@NotNull ArrangementCompositeMatchCondition setting,
-                                     @NotNull ArrangementNodeComponentFactory factory,
-                                     @NotNull ArrangementNodeDisplayManager manager,
-                                     @Nullable ArrangementRuleEditingModel model)
+  public ArrangementAndMatchNodeComponent(@NotNull ArrangementCompositeMatchCondition setting,
+                                          @NotNull ArrangementMatchNodeComponentFactory factory,
+                                          @NotNull ArrangementNodeDisplayManager manager,
+                                          @Nullable ArrangementRuleEditingModel model)
   {
     mySetting = setting;
     setLayout(null);
@@ -77,7 +80,7 @@ public class ArrangementAndNodeComponent extends JPanel implements ArrangementNo
     for (Object key : ordered) {
       ArrangementMatchCondition operand = operands.get(key);
       assert operand != null;
-      ArrangementNodeComponent component = factory.getComponent(operand, model);
+      ArrangementMatchNodeComponent component = factory.getComponent(operand, model);
       myComponents.add(component);
       JComponent uiComponent = component.getUiComponent();
       Dimension size = uiComponent.getPreferredSize();
@@ -117,13 +120,13 @@ public class ArrangementAndNodeComponent extends JPanel implements ArrangementNo
 
   @Override
   public void setSelected(boolean selected) {
-    for (ArrangementNodeComponent component : myComponents) {
+    for (ArrangementMatchNodeComponent component : myComponents) {
       component.setSelected(selected);
     }
   }
 
   @Override
-  public ArrangementNodeComponent getNodeComponentAt(@NotNull RelativePoint point) {
+  public ArrangementMatchNodeComponent getNodeComponentAt(@NotNull RelativePoint point) {
     if (myScreenBounds == null) {
       return null;
     }
@@ -132,7 +135,7 @@ public class ArrangementAndNodeComponent extends JPanel implements ArrangementNo
       return null;
     }
 
-    for (ArrangementNodeComponent component : myComponents) {
+    for (ArrangementMatchNodeComponent component : myComponents) {
       Rectangle screenBounds = component.getScreenBounds();
       if (screenBounds != null && screenBounds.contains(screenPoint)) {
         return component;
@@ -204,7 +207,7 @@ public class ArrangementAndNodeComponent extends JPanel implements ArrangementNo
   @Override
   public Rectangle handleMouseMove(@NotNull MouseEvent event) {
     Point location = event.getLocationOnScreen();
-    for (ArrangementNodeComponent component : myComponents) {
+    for (ArrangementMatchNodeComponent component : myComponents) {
       Rectangle bounds = component.getScreenBounds();
       if (bounds != null && bounds.contains(location)) {
         return component.handleMouseMove(event);
@@ -216,7 +219,7 @@ public class ArrangementAndNodeComponent extends JPanel implements ArrangementNo
   @Override
   public void handleMouseClick(@NotNull MouseEvent event) {
     Point location = event.getLocationOnScreen();
-    for (ArrangementNodeComponent component : myComponents) {
+    for (ArrangementMatchNodeComponent component : myComponents) {
       Rectangle bounds = component.getScreenBounds();
       if (bounds != null && bounds.contains(location)) {
         component.handleMouseClick(event);

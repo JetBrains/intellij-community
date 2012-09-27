@@ -15,8 +15,12 @@
  */
 package com.intellij.psi.codeStyle.arrangement.settings;
 
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,7 +64,8 @@ public class DefaultArrangementSettingsRepresentationManager implements Arrangem
     }
   }
 
-  @NotNull private static final Comparator<Object> COMPARATOR = new Comparator<Object>() {
+  @NotNull
+  private static final Comparator<Object> COMPARATOR = new Comparator<Object>() {
     @Override
     public int compare(Object o1, Object o2) {
       if (WEIGHTS.containsKey(o1) && WEIGHTS.containsKey(o2)) {
@@ -78,6 +83,26 @@ public class DefaultArrangementSettingsRepresentationManager implements Arrangem
     }
   };
 
+  private static final Map<ArrangementGroupingType, String> GROUPING_TYPES = ContainerUtil.newHashMap();
+  static {
+    GROUPING_TYPES.put(ArrangementGroupingType.GETTERS_AND_SETTERS,
+                       ApplicationBundle.message("arrangement.settings.groups.getters.and.setters.together"));
+    GROUPING_TYPES.put(ArrangementGroupingType.OVERRIDDEN_METHODS,
+                       ApplicationBundle.message("arrangement.settings.groups.overridden.methods"));
+    GROUPING_TYPES.put(ArrangementGroupingType.DEPENDENT_METHODS,
+                       ApplicationBundle.message("arrangement.settings.groups.dependent.methods"));
+    assert GROUPING_TYPES.size() == ArrangementGroupingType.values().length;
+  }
+
+  private static final Map<ArrangementEntryOrderType, String> ORDER_TYPES = ContainerUtil.newHashMap();
+  static {
+    ORDER_TYPES.put(ArrangementEntryOrderType.KEEP, ApplicationBundle.message("arrangement.settings.order.type.keep"));
+    ORDER_TYPES.put(ArrangementEntryOrderType.BY_NAME, ApplicationBundle.message("arrangement.settings.order.type.by.name"));
+    ORDER_TYPES.put(ArrangementEntryOrderType.DEPTH_FIRST, ApplicationBundle.message("arrangement.settings.order.type.depth.first"));
+    ORDER_TYPES.put(ArrangementEntryOrderType.BREADTH_FIRST, ApplicationBundle.message("arrangement.settings.order.type.breadth.first"));
+    assert ORDER_TYPES.size() == ArrangementEntryOrderType.values().length;
+  }
+
   @NotNull
   @Override
   public String getDisplayValue(@NotNull ArrangementEntryType type) {
@@ -93,6 +118,18 @@ public class DefaultArrangementSettingsRepresentationManager implements Arrangem
   @NotNull
   private static String getDisplayValue(@NotNull String s) {
     return s.toLowerCase().replace("_", " ");
+  }
+
+  @NotNull
+  @Override
+  public String getDisplayValue(@NotNull ArrangementGroupingType groupingType) {
+    return GROUPING_TYPES.get(groupingType);
+  }
+
+  @NotNull
+  @Override
+  public String getDisplayValue(@NotNull ArrangementEntryOrderType orderType) {
+    return ORDER_TYPES.get(orderType);
   }
 
   @NotNull

@@ -96,7 +96,7 @@ public class ArrangementRuleEditingModelBuilder {
     
     Pair<ArrangementTreeNode, Integer> pair = ArrangementConfigUtil.map(null, grouped, null);
     ArrangementTreeNode topMostNode = ArrangementConfigUtil.getRoot(pair.first);
-    ArrangementConfigUtil.markRows(root, tree.isRootVisible());
+    ArrangementConfigUtil.markRows(root, true);
     ArrangementTreeNode bottomHierarchy = null;
     if (anchor != null) {
       bottomHierarchy = ArrangementConfigUtil.cutSubHierarchy(root, treeModel, anchor);
@@ -106,7 +106,7 @@ public class ArrangementRuleEditingModelBuilder {
       ArrangementConfigUtil.insert(root, root.getChildCount(), bottomHierarchy, treeModel);
     }
     
-    TIntIntHashMap rowChanges = ArrangementConfigUtil.collectRowChangesAndUnmark(root, tree.isRootVisible());
+    TIntIntHashMap rowChanges = ArrangementConfigUtil.collectRowChangesAndUnmark(root, true);
     topMostNode = ArrangementConfigUtil.getLastBefore(pair.first, root);
     int row = ArrangementConfigUtil.getRow(pair.first, tree.isRootVisible());
     ArrangementRuleEditingModelImpl model = new ArrangementRuleEditingModelImpl(

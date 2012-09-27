@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement;
+package com.intellij.application.options.codeStyle.arrangement.node.match;
 
+import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
+import com.intellij.application.options.codeStyle.arrangement.ArrangementRuleEditingModel;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
@@ -31,15 +33,15 @@ import java.util.Set;
  * @author Denis Zhdanov
  * @since 8/10/12 2:53 PM
  */
-public class ArrangementNodeComponentFactory {
+public class ArrangementMatchNodeComponentFactory {
 
   @NotNull private final Set<ArrangementMatchCondition> myGroupingConditions = ContainerUtilRt.newHashSet();
   @NotNull private final ArrangementNodeDisplayManager myDisplayManager;
   @NotNull private final Runnable                      myRemoveConditionCallback;
 
-  public ArrangementNodeComponentFactory(@NotNull ArrangementNodeDisplayManager manager,
-                                         @NotNull Runnable removeConditionCallback,
-                                         @NotNull List<Set<ArrangementMatchCondition>> groupingRules)
+  public ArrangementMatchNodeComponentFactory(@NotNull ArrangementNodeDisplayManager manager,
+                                              @NotNull Runnable removeConditionCallback,
+                                              @NotNull List<Set<ArrangementMatchCondition>> groupingRules)
   {
     myDisplayManager = manager;
     myRemoveConditionCallback = removeConditionCallback;
@@ -49,19 +51,19 @@ public class ArrangementNodeComponentFactory {
   }
 
   @NotNull
-  public ArrangementNodeComponent getComponent(@NotNull final ArrangementMatchCondition node,
-                                               @Nullable final ArrangementRuleEditingModel model)
+  public ArrangementMatchNodeComponent getComponent(@NotNull final ArrangementMatchCondition node,
+                                                    @Nullable final ArrangementRuleEditingModel model)
   {
-    final Ref<ArrangementNodeComponent> ref = new Ref<ArrangementNodeComponent>();
+    final Ref<ArrangementMatchNodeComponent> ref = new Ref<ArrangementMatchNodeComponent>();
     node.invite(new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {
-        ArrangementNodeComponent component;
+        ArrangementMatchNodeComponent component;
         if (myGroupingConditions.contains(condition)) {
-          component = new ArrangementGroupingNodeComponent(myDisplayManager, condition);
+          component = new ArrangementGroupingMatchNodeComponent(myDisplayManager, condition);
         }
         else {
-          component = new ArrangementAtomNodeComponent(myDisplayManager, condition, prepareRemoveCallback(condition, model));
+          component = new ArrangementAtomMatchNodeComponent(myDisplayManager, condition, prepareRemoveCallback(condition, model));
         }
         ref.set(component);
       }
@@ -70,7 +72,7 @@ public class ArrangementNodeComponentFactory {
       public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
         switch (condition.getOperator()) {
           case AND:
-            ref.set(new ArrangementAndNodeComponent(condition, ArrangementNodeComponentFactory.this, myDisplayManager, model));
+            ref.set(new ArrangementAndMatchNodeComponent(condition, ArrangementMatchNodeComponentFactory.this, myDisplayManager, model));
             break;
           case OR: // TODO den implement
         }

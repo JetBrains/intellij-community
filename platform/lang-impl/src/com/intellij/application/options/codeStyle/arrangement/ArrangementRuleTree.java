@@ -15,15 +15,20 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.application.options.codeStyle.arrangement.node.ArrangementRepresentationAwareNode;
+import com.intellij.application.options.codeStyle.arrangement.node.ArrangementSectionNode;
+import com.intellij.application.options.codeStyle.arrangement.node.match.ArrangementMatchNodeComponent;
+import com.intellij.application.options.codeStyle.arrangement.node.match.ArrangementMatchNodeComponentFactory;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
-import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.StdArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -57,44 +62,53 @@ public class ArrangementRuleTree {
 
   private static final int EMPTY_RULE_REMOVE_DELAY_MILLIS = 300;
 
-  @NotNull private final List<ArrangementRuleSelectionListener> myListeners           = new ArrayList<ArrangementRuleSelectionListener>();
-  @NotNull private final TreeSelectionModel                     mySelectionModel      = new MySelectionModel();
-  @NotNull private final MyModelChangeListener                  myModelChangeListener = new MyModelChangeListener();
-  @NotNull private final MyModelNodesRefresher                  myModelNodesRefresher = new MyModelNodesRefresher();
-  @NotNull private final ArrangementRuleEditingModelBuilder     myModelBuilder        = new ArrangementRuleEditingModelBuilder();
-  @NotNull private final Alarm                                  myAlarm               = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  @NotNull private final RemoveInactiveNewModelRequest          myRequest             = new RemoveInactiveNewModelRequest();
+  @NotNull private final List<ArrangementRuleSelectionListener> myListeners            = new ArrayList<ArrangementRuleSelectionListener>();
+  @NotNull private final TreeSelectionModel                     mySelectionModel       = new MySelectionModel();
+  @NotNull private final MyModelChangeListener                  myModelChangeListener  = new MyModelChangeListener();
+  @NotNull private final MyModelNodesRefresher                  myModelNodesRefresher  = new MyModelNodesRefresher();
+  @NotNull private final ArrangementRuleEditingModelBuilder     myModelBuilder         = new ArrangementRuleEditingModelBuilder();
+  @NotNull private final Alarm                                  myAlarm                = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  @NotNull private final RemoveInactiveNewModelRequest          myRequest              = new RemoveInactiveNewModelRequest();
+  @NotNull private final ArrangementGroupingRulesManager        myGroupingRulesManager = ArrangementGroupingRulesManager.INSTANCE;
 
-  @NotNull private final TIntObjectHashMap<ArrangementNodeComponent>        myRenderers =
-    new TIntObjectHashMap<ArrangementNodeComponent>();
+  @NotNull private final TIntObjectHashMap<ArrangementMatchNodeComponent>   myRenderers =
+    new TIntObjectHashMap<ArrangementMatchNodeComponent>();
   @NotNull private final TIntObjectHashMap<ArrangementRuleEditingModelImpl> myModels    =
     new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();
 
-  @NotNull private final ArrangementTreeNode                  myRoot;
+  @NotNull private final ArrangementTreeNode                  myMatchRulesRoot;
   @NotNull private final DefaultTreeModel                     myTreeModel;
   @NotNull private final Tree                                 myTree;
-  @NotNull private final ArrangementNodeComponentFactory      myFactory;
+  @NotNull private final ArrangementMatchNodeComponentFactory myFactory;
   @NotNull private final List<Set<ArrangementMatchCondition>> myUiGroupingRules;
 
-  @Nullable private List<ArrangementGroupingRule> myGroupings;
-  private           int                           myCanvasWidth;
-  private           boolean                       myExplicitSelectionChange;
-  private           boolean                       mySkipSelectionChange;
+  @Nullable private final MutableTreeNode myGroupingsRoot;
+
+  private int     myCanvasWidth;
+  private boolean myExplicitSelectionChange;
+  private boolean mySkipSelectionChange;
 
   public ArrangementRuleTree(@Nullable StdArrangementSettings settings,
                              @NotNull List<Set<ArrangementMatchCondition>> uiGroupingRules,
-                             @NotNull ArrangementNodeDisplayManager displayManager)
+                             @NotNull ArrangementNodeDisplayManager displayManager,
+                             @NotNull ArrangementStandardSettingsAware settingsFilter)
   {
     myUiGroupingRules = uiGroupingRules;
-    myFactory = new ArrangementNodeComponentFactory(displayManager, new Runnable() {
+    myFactory = new ArrangementMatchNodeComponentFactory(displayManager, new Runnable() {
       @Override
       public void run() {
         notifySelectionListeners(); 
       }
     }, uiGroupingRules);
-    myRoot = new ArrangementTreeNode(null);
-    myTreeModel = new DefaultTreeModel(myRoot);
-    
+    myGroupingsRoot = myGroupingRulesManager.buildAvailableRules(settingsFilter, displayManager);
+    ArrangementTreeNode root = new ArrangementTreeNode(null);
+    if (myGroupingsRoot != null) {
+      root.add(myGroupingsRoot);
+    }
+    myMatchRulesRoot = new ArrangementSectionNode(ApplicationBundle.message("arrangement.settings.section.match"));
+    root.add(myMatchRulesRoot);
+    myTreeModel = new DefaultTreeModel(root);
+
     final Condition<Integer> wideSelectionCondition = new Condition<Integer>() {
       @Override
       public boolean value(Integer row) {
@@ -218,7 +232,7 @@ public class ArrangementRuleTree {
     if (myCanvasWidth <= 0) {
       return;
     }
-    ArrangementNodeComponent component = myRenderers.get(row);
+    ArrangementMatchNodeComponent component = myRenderers.get(row);
     if (component == null) {
       return;
     }
@@ -259,8 +273,8 @@ public class ArrangementRuleTree {
   private void selectNextRule() {
     ArrangementTreeNode currentSelectionBottom = getCurrentSelectionBottom();
     if (currentSelectionBottom == null) {
-      if (myRoot.getChildCount() > 0) {
-        mySelectionModel.setSelectionPath(new TreePath(myRoot.getFirstChild().getPath()));
+      if (myMatchRulesRoot.getChildCount() > 0) {
+        mySelectionModel.setSelectionPath(new TreePath(myMatchRulesRoot.getFirstChild().getPath()));
       }
       return;
     }
@@ -301,9 +315,9 @@ public class ArrangementRuleTree {
 
   private void doClearSelection() {
     mySelectionModel.clearSelection();
-    myRenderers.forEachValue(new TObjectProcedure<ArrangementNodeComponent>() {
+    myRenderers.forEachValue(new TObjectProcedure<ArrangementMatchNodeComponent>() {
       @Override
-      public boolean execute(ArrangementNodeComponent node) {
+      public boolean execute(ArrangementMatchNodeComponent node) {
         node.setSelected(false);
         return true;
       }
@@ -312,7 +326,7 @@ public class ArrangementRuleTree {
   }
 
   /**
-   * Updates renderer {@link ArrangementNodeComponent#setSelected(boolean) 'selected'} state on tree node selection change.
+   * Updates renderer {@link ArrangementMatchNodeComponent#setSelected(boolean) 'selected'} state on tree node selection change.
    * 
    * @param path      changed selection path
    * @param selected  <code>true</code> if given path is selected now; <code>false</code> if given path was selected anymore
@@ -331,7 +345,7 @@ public class ArrangementRuleTree {
       if (row < 0) {
         return;
       }
-      ArrangementNodeComponent component = myRenderers.get(row);
+      ArrangementMatchNodeComponent component = myRenderers.get(row);
       if (component != null) {
         component.setSelected(selected);
         myTreeModel.nodeChanged(node);
@@ -357,7 +371,8 @@ public class ArrangementRuleTree {
 
   private void map(@NotNull List<StdArrangementMatchRule> rules) {
     for (StdArrangementMatchRule rule : rules) {
-      Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> pair = myModelBuilder.build(rule, myTree, myRoot, null, myUiGroupingRules);
+      Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> pair
+        = myModelBuilder.build(rule, myTree, myMatchRulesRoot, null, myUiGroupingRules);
       if (pair != null) {
         myModels.put(pair.first.getRow(), pair.first);
         pair.first.addListener(myModelChangeListener);
@@ -421,7 +436,7 @@ public class ArrangementRuleTree {
         implicitGroupConditions.add(prevGroup);
         prevGroup = null;
       }
-      if (!myRoot.equals(topMost) && !topMost.equals(model.getBottomMost()) && !implicitGroupConditions.contains(currentGroup)) {
+      if (!myMatchRulesRoot.equals(topMost) && !topMost.equals(model.getBottomMost()) && !implicitGroupConditions.contains(currentGroup)) {
         prevGroup = currentGroup;
       }
       rules.add(model.getRule());
@@ -431,28 +446,30 @@ public class ArrangementRuleTree {
       rules.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(prevGroup)));
     }
 
-    if (myGroupings == null) {
+    if (myGroupingsRoot == null) {
       return new StdArrangementSettings(rules);
     }
     else {
-      return new StdArrangementSettings(myGroupings, rules);
+      return new StdArrangementSettings(myGroupingRulesManager.buildRules(myGroupingsRoot), rules);
     }
   }
 
   public void setSettings(@Nullable StdArrangementSettings settings) {
     myRenderers.clear();
     myModels.clear();
-    while (myRoot.getChildCount() > 0)
-    myTreeModel.removeNodeFromParent(myRoot.getFirstChild());
+    while (myMatchRulesRoot.getChildCount() > 0)
+    myTreeModel.removeNodeFromParent(myMatchRulesRoot.getFirstChild());
     if (settings == null) {
       return;
     }
 
-    myGroupings = settings.getGroupings();
+    if (myGroupingsRoot != null) {
+      myGroupingRulesManager.applyRules(settings.getGroupings(), myGroupingsRoot);
+    }
 
     List<StdArrangementMatchRule> rules = settings.getRules();
     map(rules);
-    expandAll(myTree, new TreePath(myRoot));
+    expandAll(myTree, new TreePath(myTreeModel.getRoot()));
 
     if (ArrangementConstants.LOG_RULE_MODIFICATION) {
       LOG.info("Arrangement tree is refreshed. Given rules:");
@@ -469,13 +486,13 @@ public class ArrangementRuleTree {
       });
     }
   }
-  
+
   @NotNull
-  private ArrangementNodeComponent getNodeComponentAt(int row,
+  private ArrangementMatchNodeComponent getNodeComponentAt(int row,
                                                       @NotNull ArrangementMatchCondition condition,
                                                       @Nullable ArrangementRuleEditingModelImpl model)
   {
-    ArrangementNodeComponent result = myRenderers.get(row);
+    ArrangementMatchNodeComponent result = myRenderers.get(row);
     if (result == null || !result.getMatchCondition().equals(condition)) {
       myRenderers.put(row, result = myFactory.getComponent(condition, model));
       doUpdateCanvasWidth(row);
@@ -484,7 +501,7 @@ public class ArrangementRuleTree {
   }
 
   private void onMouseMoved(@NotNull MouseEvent e) {
-    ArrangementNodeComponent component = getNodeComponentAt(e.getX(), e.getY());
+    ArrangementMatchNodeComponent component = getNodeComponentAt(e.getX(), e.getY());
     if (component == null) {
       return;
     }
@@ -495,7 +512,7 @@ public class ArrangementRuleTree {
   }
   
   private void onMouseClicked(@NotNull MouseEvent e) {
-    ArrangementNodeComponent component = getNodeComponentAt(e.getX(), e.getY());
+    ArrangementMatchNodeComponent component = getNodeComponentAt(e.getX(), e.getY());
     if (component != null) {
       component.handleMouseClick(e);
       return;
@@ -511,12 +528,12 @@ public class ArrangementRuleTree {
   }
   
   @Nullable
-  private ArrangementNodeComponent getNodeComponentAt(int x, int y) {
+  private ArrangementMatchNodeComponent getNodeComponentAt(int x, int y) {
     int row = myTree.getRowForLocation(x, y);
     return myRenderers.get(row);
   }
 
-  private void repaintComponent(@NotNull ArrangementNodeComponent component) {
+  private void repaintComponent(@NotNull ArrangementMatchNodeComponent component) {
     Rectangle bounds = component.getScreenBounds();
     if (bounds != null) {
       repaintScreenBounds(bounds);
@@ -632,7 +649,7 @@ public class ArrangementRuleTree {
     final ArrangementTreeNode anchor = activeModels.size() != 1 ? null : activeModels.get(0).getBottomMost();
     doClearSelection();
     Pair<ArrangementRuleEditingModelImpl,TIntIntHashMap> pair = myModelBuilder.build(
-      ArrangementRuleEditingModel.EMPTY_RULE, myTree, myRoot, anchor, myUiGroupingRules
+      ArrangementRuleEditingModel.EMPTY_RULE, myTree, myMatchRulesRoot, anchor, myUiGroupingRules
     );
     assert pair != null;
     processRowChanges(pair.second);
@@ -661,8 +678,11 @@ public class ArrangementRuleTree {
                                                   boolean expanded,
                                                   boolean leaf,
                                                   int row,
-                                                  boolean hasFocus)
-    {
+                                                  boolean hasFocus) {
+      if (value instanceof ArrangementRepresentationAwareNode) {
+        return ((ArrangementRepresentationAwareNode)value).getRenderer();
+      }
+
       ArrangementMatchCondition node = ((ArrangementTreeNode)value).getBackingCondition();
       if (node == null) {
         return EMPTY_RENDERER;
@@ -670,13 +690,13 @@ public class ArrangementRuleTree {
       if (isEmptyCondition(node)) {
         return NEW_CONDITION_RENDERER;
       }
-      
+
       if (row < 0) {
-        ArrangementNodeComponent component = myFactory.getComponent(node, null);
+        ArrangementMatchNodeComponent component = myFactory.getComponent(node, null);
         doUpdateCanvasWidth(row);
         return component.getUiComponent();
       }
-      ArrangementNodeComponent component = getNodeComponentAt(row, node, myModels.get(row));
+      ArrangementMatchNodeComponent component = getNodeComponentAt(row, node, myModels.get(row));
       component.setSelected(selected);
       return component.getUiComponent();
     }
@@ -752,7 +772,7 @@ public class ArrangementRuleTree {
       }
       TreePath path = myTree.getPathForRow(mySelectedRowToRestore);
       if (path == null) {
-        ArrangementTreeNode lastLeaf = myRoot.getLastLeaf();
+        ArrangementTreeNode lastLeaf = myMatchRulesRoot.getLastLeaf();
         if (lastLeaf == null) {
           return;
         }

@@ -95,12 +95,22 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     ));
   }
 
+  private static final Map<ArrangementGroupingType, Set<ArrangementEntryOrderType>> GROUPING_RULES = ContainerUtilRt.newHashMap();
+  static {
+    GROUPING_RULES.put(ArrangementGroupingType.GETTERS_AND_SETTERS, EnumSet.noneOf(ArrangementEntryOrderType.class));
+    GROUPING_RULES.put(ArrangementGroupingType.OVERRIDDEN_METHODS,
+                       EnumSet.of(ArrangementEntryOrderType.BY_NAME, ArrangementEntryOrderType.KEEP));
+    GROUPING_RULES.put(ArrangementGroupingType.DEPENDENT_METHODS,
+                       EnumSet.of(ArrangementEntryOrderType.BREADTH_FIRST, ArrangementEntryOrderType.DEPTH_FIRST));
+  }
+
   private static final List<ArrangementGroupingRule> DEFAULT_GROUPING_RULES = new ArrayList<ArrangementGroupingRule>();
   static {
     DEFAULT_GROUPING_RULES.add(new ArrangementGroupingRule(ArrangementGroupingType.GETTERS_AND_SETTERS));
   }
 
   private static final List<StdArrangementMatchRule> DEFAULT_MATCH_RULES = new ArrayList<StdArrangementMatchRule>();
+
   static {
     ArrangementModifier[] visibility = {PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE};
     for (ArrangementModifier modifier : visibility) {
@@ -169,7 +179,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     }
     return Pair.create(newEntryInfo.getEntries().get(0), existingEntriesInfo.getEntries());
   }
-  
+
   @NotNull
   @Override
   public List<JavaElementArrangementEntry> parse(@NotNull PsiElement root,
@@ -183,9 +193,14 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     if (settings != null) {
       for (ArrangementGroupingRule rule : settings.getGroupings()) {
         switch (rule.getRule()) {
-          case GETTERS_AND_SETTERS: setupGettersAndSetters(parseInfo); break;
-          case UTILITY_METHODS: setupUtilityMethods(parseInfo, rule.getOrderType()); break;
-          case OVERRIDDEN_METHODS: setupOverriddenMethods(parseInfo);
+          case GETTERS_AND_SETTERS:
+            setupGettersAndSetters(parseInfo);
+            break;
+          case DEPENDENT_METHODS:
+            setupUtilityMethods(parseInfo, rule.getOrderType());
+            break;
+          case OVERRIDDEN_METHODS:
+            setupOverriddenMethods(parseInfo);
         }
       }
     }
@@ -341,12 +356,22 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
   @NotNull
   @Override
   public List<Set<ArrangementMatchCondition>> getGroupingConditions() {
-    return UI_GROUPING_RULES;
+    return Collections.emptyList();
+    //return UI_GROUPING_RULES;
   }
-
+  
   @Nullable
   @Override
   public StdArrangementSettings getDefaultSettings() {
     return DEFAULT_SETTINGS;
+  }
+
+  @Override
+  public boolean isEnabled(@NotNull ArrangementGroupingType groupingType, @Nullable ArrangementEntryOrderType orderType) {
+    Set<ArrangementEntryOrderType> orderTypes = GROUPING_RULES.get(groupingType);
+    if (orderTypes == null) {
+      return false;
+    }
+    return orderType == null || orderTypes.contains(orderType);
   }
 }

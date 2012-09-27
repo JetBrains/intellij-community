@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement;
+package com.intellij.application.options.codeStyle.arrangement.node.match;
 
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.ui.awt.RelativePoint;
@@ -30,7 +30,7 @@ import java.awt.event.MouseEvent;
  * @author Denis Zhdanov
  * @since 8/10/12 11:22 AM
  */
-public interface ArrangementNodeComponent {
+public interface ArrangementMatchNodeComponent {
   
   @NotNull
   ArrangementMatchCondition getMatchCondition();
@@ -41,7 +41,7 @@ public interface ArrangementNodeComponent {
 
   // TODO den add doc
   @Nullable
-  ArrangementNodeComponent getNodeComponentAt(@NotNull RelativePoint point);
+  ArrangementMatchNodeComponent getNodeComponentAt(@NotNull RelativePoint point);
   
   // TODO den add doc
   @Nullable
