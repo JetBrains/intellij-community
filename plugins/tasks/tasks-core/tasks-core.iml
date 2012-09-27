@@ -37,7 +37,7 @@
     </orderEntry>
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module-library">
-      <library>
+      <library name="mantis">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/mantis-axis-soap-client-1.2.9.jar!/" />
         </CLASSES>
