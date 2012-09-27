@@ -363,7 +363,11 @@ public class IncProjectBuilder {
         }
       }
       if (okToDelete) {
-        filesToDelete.add(outputRoot);
+        // do not delete output root itself to avoid lots of unnecessary "roots_changed" events in IDEA
+        final File[] children = outputRoot.listFiles();
+        if (children != null) {
+          filesToDelete.addAll(Arrays.asList(children));
+        }
       }
       else {
         context.processMessage(new CompilerMessage(BUILD_NAME, BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. The output cannot be cleaned."));
@@ -375,7 +379,11 @@ public class IncProjectBuilder {
     }
 
     for (File annotationOutput : annotationOutputs) {
-      filesToDelete.add(annotationOutput);
+      // do not delete output root itself to avoid lots of unnecessary "roots_changed" events in IDEA
+      final File[] children = annotationOutput.listFiles();
+      if (children != null) {
+        filesToDelete.addAll(Arrays.asList(children));
+      }
     }
 
     context.processMessage(new ProgressMessage("Cleaning output directories..."));
