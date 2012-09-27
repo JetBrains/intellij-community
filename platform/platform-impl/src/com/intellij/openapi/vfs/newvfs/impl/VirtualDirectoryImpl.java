@@ -483,7 +483,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private Map<String, VirtualFileSystemEntry> asMap() {
     Object children = myChildren;
     if (children instanceof Map) {
-      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+      @SuppressWarnings({"unchecked"})
       final Map<String, VirtualFileSystemEntry> map = (Map<String, VirtualFileSystemEntry>)children;
       return map;
     }
@@ -498,7 +498,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       myChildren = map;
     }
     else {
-      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+      @SuppressWarnings({"unchecked"})
       final Map<String, VirtualFileSystemEntry> aMap = (Map<String, VirtualFileSystemEntry>)myChildren;
       map = aMap;
     }

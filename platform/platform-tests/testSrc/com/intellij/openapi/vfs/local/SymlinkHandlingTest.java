@@ -36,6 +36,7 @@ import java.util.Set;
 import static com.intellij.openapi.util.io.FileUtil.createTempDirectory;
 import static com.intellij.openapi.util.io.FileUtil.createTempFile;
 import static com.intellij.openapi.util.io.IoTestUtil.createTempLink;
+import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 
 public class SymlinkHandlingTest extends SymlinkTestCase {
   public void testMissingLink() throws Exception {
@@ -63,7 +64,7 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     assertNotNull(dotLinkVFile);
     assertTrue(dotLinkVFile.isSymLink());
     assertTrue(dotLinkVFile.isDirectory());
-    assertEquals(myTempDir.getPath(), dotLinkVFile.getCanonicalPath());
+    assertPathsEqual(myTempDir.getPath(), dotLinkVFile.getCanonicalPath());
     assertVisitedPaths(dotLinkVFile.getPath());
   }
 
@@ -74,7 +75,7 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     assertNotNull(upLinkVFile);
     assertTrue(upLinkVFile.isSymLink());
     assertTrue(upLinkVFile.isDirectory());
-    assertEquals(upDir.getPath(), upLinkVFile.getCanonicalPath());
+    assertPathsEqual(upDir.getPath(), upLinkVFile.getCanonicalPath());
     assertVisitedPaths(upDir.getPath(), upLinkVFile.getPath());
 
     final File repeatedLinksFile = new File(upDir.getPath() + StringUtil.repeat(File.separator + upLinkFile.getName(), 4));
@@ -83,7 +84,7 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     assertNotNull(repeatedLinksFile.getPath(), repeatedLinksVFile);
     assertTrue(repeatedLinksVFile.isSymLink());
     assertTrue(repeatedLinksVFile.isDirectory());
-    assertEquals(upDir.getPath(), repeatedLinksVFile.getCanonicalPath());
+    assertPathsEqual(upDir.getPath(), repeatedLinksVFile.getCanonicalPath());
     assertEquals(upLinkVFile.getCanonicalFile(), repeatedLinksVFile.getCanonicalFile());
   }
 
@@ -285,8 +286,8 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
 
     fileContent = "new content";
     vFile.setBinaryContent(fileContent.getBytes());
-    assertEquals(fileContent.length(), vLink.getLength());
     assertEquals(fileContent.length(), vFile.getLength());
+    assertEquals(fileContent.length(), vLink.getLength());
     linkContent = VfsUtilCore.loadText(vLink);
     assertEquals(fileContent, linkContent);
 

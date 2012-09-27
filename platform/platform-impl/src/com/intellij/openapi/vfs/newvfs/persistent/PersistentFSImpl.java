@@ -620,7 +620,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
         NewVirtualFileSystem delegate = getDelegate(file);
         OutputStream ioFileStream = delegate.getOutputStream(file, requestor, modStamp, timeStamp);
-        // com.intellij.openapi.vfs.newvfs.persistent.FSRecords.ContentOutputStream already buffered, no need to wrap in BufferedStream
+        // FSRecords.ContentOutputStream already buffered, no need to wrap in BufferedStream
         OutputStream persistenceStream = writeContent(file, delegate.isReadOnly());
 
         try {
@@ -1015,17 +1015,15 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       clearIdCache();
 
       final int id = getFileId(file);
+      FSRecords.deleteRecordRecursively(id);
 
       final VirtualFile parent = file.getParent();
       final int parentId = parent != null ? getFileId(parent) : 0;
 
-      FSRecords.deleteRecordRecursively(id);
-
       if (parentId != 0) {
         removeIdFromParentList(parentId, id, parent, file);
         VirtualDirectoryImpl directory = (VirtualDirectoryImpl)file.getParent();
-        assert directory != null;
-
+        assert directory != null : file;
         directory.removeChild(file);
       }
       else {
