@@ -29,6 +29,7 @@ public class XValueChildrenList {
   public static final XValueChildrenList EMPTY = new XValueChildrenList(Collections.<String>emptyList(), Collections.<XValue>emptyList());
   private List<String> myNames;
   private List<XValue> myValues;
+  private boolean myAlreadySorted;
 
   public XValueChildrenList(int initialCapacity) {
     myNames = new ArrayList<String>(initialCapacity);
@@ -64,5 +65,13 @@ public class XValueChildrenList {
 
   public XValue getValue(int i) {
     return myValues.get(i);
+  }
+
+  public boolean isAlreadySorted() {
+    return myAlreadySorted;
+  }
+
+  public void setAlreadySorted(boolean alreadySorted) {
+    myAlreadySorted = alreadySorted;
   }
 }
