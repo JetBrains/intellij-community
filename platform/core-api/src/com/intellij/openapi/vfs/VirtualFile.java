@@ -224,7 +224,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * Resolves all symbolic links containing in a path to this file and returns a path to a link target.
+   * Resolves all symbolic links containing in a path to this file and returns a path to a link target (in platform-independent format).
    * <p/>
    * <b>Note</b>: please use this method judiciously. In most cases VFS clients don't need to resolve links in paths and should
    * work with those provided by a user.

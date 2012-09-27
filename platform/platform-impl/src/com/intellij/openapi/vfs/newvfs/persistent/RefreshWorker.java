@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -223,7 +224,8 @@ public class RefreshWorker {
     if (childAttributes.isSymLink()) {
       final String currentTarget = child.getCanonicalPath();
       final String upToDateTarget = fs.resolveSymLink(child);
-      if (!Comparing.equal(currentTarget, upToDateTarget)) {
+      final String upToDateVfsTarget = upToDateTarget != null ? FileUtil.toSystemIndependentName(upToDateTarget) : null;
+      if (!Comparing.equal(currentTarget, upToDateVfsTarget)) {
         scheduleDeletion(child);
         scheduleReCreation(parent, child.getName(), childAttributes.isDirectory());
         return true;
