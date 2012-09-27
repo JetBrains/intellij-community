@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
@@ -571,20 +572,33 @@ public class LambdaUtil {
         final MethodSignature signature1 = method.getSignature(resolveResult.getSubstitutor());
         final MethodSignature signature2 = ((PsiMethod)resolve).getSignature(JavaPsiFacade.getElementFactory(method.getProject()).createRawSubstitutor(
           (PsiTypeParameterListOwner)resolve));
-        if (areAcceptable(signature1, signature2)) return true;
+        final Ref<PsiClass> classRef = new Ref<PsiClass>();
+        methodReferenceExpression.process(classRef, new Ref<PsiSubstitutor>());
+        if (areAcceptable(signature1, signature2, classRef.get())) return true;
       }
     }
     return false;
   }
 
-  public static boolean areAcceptable(MethodSignature signature1, MethodSignature signature2) {
+  public static boolean areAcceptable(MethodSignature signature1, MethodSignature signature2, PsiClass psiClass) {
+    int offset = 0;
     final PsiType[] signatureParameterTypes1 = signature1.getParameterTypes();
     final PsiType[] signatureParameterTypes2 = signature2.getParameterTypes();
-    if (signatureParameterTypes1.length != signatureParameterTypes2.length) return false;
-    for (int i = 0; i < signatureParameterTypes1.length; i++) {
-      final PsiType type1 = signatureParameterTypes1[i];
+    if (signatureParameterTypes1.length != signatureParameterTypes2.length) {
+      if (signatureParameterTypes1.length == signatureParameterTypes2.length + 1 &&
+          //todo correct check needed
+          PsiUtil.resolveClassInType(TypeConversionUtil.erasure(signatureParameterTypes1[0], signature1.getSubstitutor())) == psiClass) {
+        offset++;
+      }
+      else {
+        return false;
+      }
+    }
+
+    for (int i = 0; i < signatureParameterTypes2.length; i++) {
+      final PsiType type1 = signatureParameterTypes1[offset + i];
       final PsiType type2 = signatureParameterTypes2[i];
-      if (!TypeConversionUtil.isAssignable(GenericsUtil.eliminateWildcards(type2), GenericsUtil.eliminateWildcards(type1))) {
+      if (!GenericsUtil.eliminateWildcards(type1).equals(GenericsUtil.eliminateWildcards(type2))) {
         return false;
       }
     }

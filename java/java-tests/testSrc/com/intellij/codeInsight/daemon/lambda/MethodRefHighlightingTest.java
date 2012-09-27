@@ -33,6 +33,14 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testMethodReferenceReceiver() throws Exception {
+    doTest();
+  }
+  
+  public void testMethodRefMisc() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
   }

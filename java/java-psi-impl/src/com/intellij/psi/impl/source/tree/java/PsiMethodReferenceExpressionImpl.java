@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -24,19 +25,21 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Iterator;
+import java.util.List;
 
 public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase implements PsiMethodReferenceExpression {
   private static Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl");
@@ -164,56 +167,58 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     return "PsiMethodReferenceExpression:" + getText();
   }
 
-  private class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiJavaReference> {
-    @NotNull
-    @Override
-    public ResolveResult[] resolve(@NotNull PsiJavaReference reference, boolean incompleteCode) {
-      PsiClass containingClass = null;
-      final PsiExpression expression = getQualifierExpression();
-      PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-      if (expression != null) {
-        PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(expression.getType());
+  @Override
+  public void process(Ref<PsiClass> psiClassRef, Ref<PsiSubstitutor> substRef) {
+    PsiClass containingClass = null;
+    final PsiExpression expression = getQualifierExpression();
+    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    if (expression != null) {
+      PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(expression.getType());
+      containingClass = result.getElement();
+      if (containingClass != null) {
+        substitutor = result.getSubstitutor();
+      }
+      if (containingClass == null && expression instanceof PsiReferenceExpression) {
+        final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
+        if (resolve instanceof PsiClass) {
+          containingClass = (PsiClass)resolve;
+        }
+      }
+    }
+    else {
+      final PsiTypeElement typeElement = getQualifierType();
+      if (typeElement != null) {
+        PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(typeElement.getType());
         containingClass = result.getElement();
         if (containingClass != null) {
           substitutor = result.getSubstitutor();
         }
-        if (containingClass == null && expression instanceof PsiReferenceExpression) {
-          final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
-          if (resolve instanceof PsiClass) {
-            containingClass = (PsiClass)resolve;
-          }
-        }
       }
-      else {
-        final PsiTypeElement typeElement = getQualifierType();
-        if (typeElement != null) {
-          PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(typeElement.getType());
-          containingClass = result.getElement();
-          if (containingClass != null) {
-            substitutor = result.getSubstitutor();
-          }
-        }
-      }
-
+    }
+    psiClassRef.set(containingClass);
+    substRef.set(substitutor);
+  }
+  
+  private class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiJavaReference> {
+    @NotNull
+    @Override
+    public ResolveResult[] resolve(@NotNull PsiJavaReference reference, boolean incompleteCode) {
+      final Ref<PsiClass> classRef = new Ref<PsiClass>();
+      final Ref<PsiSubstitutor> substRef = new Ref<PsiSubstitutor>();
+      process(classRef, substRef);
+      
+      final PsiClass containingClass = classRef.get();
+      final PsiSubstitutor substitutor = substRef.get();
+      
       if (containingClass != null) {
         final PsiElement element = getReferenceNameElement();
         if (element instanceof PsiIdentifier) {
           final PsiType functionalInterfaceType = getFunctionalInterfaceType();
           final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
-          PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
-          final MethodSignature interfaceMethodSignature = interfaceMethod != null ? interfaceMethod.getSignature(resolveResult.getSubstitutor()) : null;
-          MethodCandidatesProcessor processor = new MethodCandidatesProcessor(PsiMethodReferenceExpressionImpl.this, 
-                                                                              new PsiConflictResolver[]{DuplicateConflictResolver.INSTANCE}, new SmartList<CandidateInfo>()) {
-            @Override
-            protected boolean isAccepted(PsiMethod candidate) {
-              if (super.isAccepted(candidate)) {
-                if (interfaceMethodSignature == null) return true;
-                return LambdaUtil.areAcceptable(interfaceMethodSignature, 
-                                                candidate.getSignature(JavaPsiFacade.getElementFactory(getProject()).createRawSubstitutor(candidate)));
-              }
-              return false;
-            }
-          };
+          final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
+          final MethodReferenceConflictResolver conflictResolver = new MethodReferenceConflictResolver(containingClass, interfaceMethod, resolveResult.getSubstitutor());
+          final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(PsiMethodReferenceExpressionImpl.this, 
+                                                                                    new PsiConflictResolver[]{conflictResolver}, new SmartList<CandidateInfo>());
           processor.setIsConstructor(false);
           processor.setName(element.getText());
           
@@ -225,6 +230,37 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         }
       }
       return JavaResolveResult.EMPTY_ARRAY;
+    }
+
+    private class MethodReferenceConflictResolver implements PsiConflictResolver {
+      private final PsiClass myContainingClass;
+      private PsiMethod myFunctionalInterface;
+      private final PsiSubstitutor mySubstitutor;
+
+      private MethodReferenceConflictResolver(PsiClass containingClass, @Nullable PsiMethod psiMethod, PsiSubstitutor substitutor) {
+        myContainingClass = containingClass;
+        myFunctionalInterface = psiMethod;
+        mySubstitutor = substitutor;
+      }
+
+      @Nullable
+      @Override
+      public CandidateInfo resolveConflict(List<CandidateInfo> conflicts) {
+        if (myFunctionalInterface == null) return null;
+
+        for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
+          CandidateInfo conflict = iterator.next();
+          if (!(conflict instanceof MethodCandidateInfo)) continue;
+          final PsiMethod psiMethod = ((MethodCandidateInfo)conflict).getElement();
+          if (psiMethod == null) continue;
+          if (!LambdaUtil.areAcceptable(myFunctionalInterface.getSignature(mySubstitutor),
+                                        psiMethod.getSignature(conflict.getSubstitutor()), myContainingClass)) {
+            iterator.remove();
+          }
+        }
+        if (conflicts.size() == 1) return conflicts.get(0);
+        return null;
+      }
     }
   }
 }

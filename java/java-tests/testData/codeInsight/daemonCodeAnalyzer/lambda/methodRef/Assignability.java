@@ -32,4 +32,11 @@ class Test1 {
     interface Bar {
       Integer _(String s);
     }
-} 
+}
+
+class Test2 {
+
+    void foo(Integer i) {}
+
+    <error descr="Incompatible types. Found: '<method reference>', required: 'java.lang.Object'">Object o = Test2::foo;</error>
+}

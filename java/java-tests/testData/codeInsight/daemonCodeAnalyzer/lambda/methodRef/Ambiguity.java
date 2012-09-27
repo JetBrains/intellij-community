@@ -154,3 +154,32 @@ class MyTest5 {
     }
 }
 
+public class MyTest6 {
+    interface I {
+       void _(Integer i);
+    }
+
+    static void foo(Number i) {}
+    static void foo(Integer i, String s) {}
+    static void foo(Integer d) {}
+
+    public static void main(String[] args) {
+        I s = MyTest6::foo;
+        s._(1);
+    }
+}
+
+public class MyTest7 {
+    interface I {
+       void _(Number i);
+    }
+
+    static void foo(Number i) {}
+    static void foo(Integer i, String s) {}
+    static void foo(Integer d) {}
+
+    public static void main(String[] args) {
+        I s = MyTest7::foo;
+        s._(1);
+    }
+}
