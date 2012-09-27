@@ -125,7 +125,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
             }
             else {
               document.insertString(offset, "{}");
-              afterBrace = offset + 2;
+              afterBrace = offset + 1;
             }
           }
           caretModel.moveToOffset(afterBrace);
