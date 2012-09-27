@@ -33,6 +33,7 @@ import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -216,7 +217,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           final PsiType functionalInterfaceType = getFunctionalInterfaceType();
           final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
           final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
-          final MethodReferenceConflictResolver conflictResolver = new MethodReferenceConflictResolver(containingClass, interfaceMethod, resolveResult.getSubstitutor());
+          final MethodReferenceConflictResolver conflictResolver = new MethodReferenceConflictResolver(containingClass, substitutor, interfaceMethod != null ? interfaceMethod.getSignature(resolveResult.getSubstitutor()) : null);
           final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(PsiMethodReferenceExpressionImpl.this, 
                                                                                     new PsiConflictResolver[]{conflictResolver}, new SmartList<CandidateInfo>());
           processor.setIsConstructor(false);
@@ -234,27 +235,29 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
     private class MethodReferenceConflictResolver implements PsiConflictResolver {
       private final PsiClass myContainingClass;
-      private PsiMethod myFunctionalInterface;
       private final PsiSubstitutor mySubstitutor;
-
-      private MethodReferenceConflictResolver(PsiClass containingClass, @Nullable PsiMethod psiMethod, PsiSubstitutor substitutor) {
+      private final MethodSignature mySignature;
+      
+      private MethodReferenceConflictResolver(PsiClass containingClass,
+                                              PsiSubstitutor psiSubstitutor,
+                                              @Nullable MethodSignature signature) {
         myContainingClass = containingClass;
-        myFunctionalInterface = psiMethod;
-        mySubstitutor = substitutor;
+        mySubstitutor = psiSubstitutor;
+        mySignature = signature;
       }
 
       @Nullable
       @Override
       public CandidateInfo resolveConflict(List<CandidateInfo> conflicts) {
-        if (myFunctionalInterface == null) return null;
+        if (mySignature == null) return null;
 
         for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
           CandidateInfo conflict = iterator.next();
           if (!(conflict instanceof MethodCandidateInfo)) continue;
           final PsiMethod psiMethod = ((MethodCandidateInfo)conflict).getElement();
           if (psiMethod == null) continue;
-          if (!LambdaUtil.areAcceptable(myFunctionalInterface.getSignature(mySubstitutor),
-                                        psiMethod.getSignature(conflict.getSubstitutor()), myContainingClass)) {
+          if (!LambdaUtil.areAcceptable(mySignature,
+                                        psiMethod.getSignature(conflict.getSubstitutor()), myContainingClass, mySubstitutor)) {
             iterator.remove();
           }
         }

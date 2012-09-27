@@ -569,26 +569,34 @@ public class LambdaUtil {
       final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(left);
       final PsiMethod method = getFunctionalInterfaceMethod(resolveResult);
       if (method != null) {
-        final MethodSignature signature1 = method.getSignature(resolveResult.getSubstitutor());
-        final MethodSignature signature2 = ((PsiMethod)resolve).getSignature(JavaPsiFacade.getElementFactory(method.getProject()).createRawSubstitutor(
-          (PsiTypeParameterListOwner)resolve));
         final Ref<PsiClass> classRef = new Ref<PsiClass>();
-        methodReferenceExpression.process(classRef, new Ref<PsiSubstitutor>());
-        if (areAcceptable(signature1, signature2, classRef.get())) return true;
+        final Ref<PsiSubstitutor> substRef = new Ref<PsiSubstitutor>();
+        methodReferenceExpression.process(classRef, substRef);
+
+        final MethodSignature signature1 = method.getSignature(resolveResult.getSubstitutor());
+        final MethodSignature signature2 = ((PsiMethod)resolve).getSignature(substRef.get());
+        if (areAcceptable(signature1, signature2, classRef.get(), substRef.get())) return true;
       }
     }
     return false;
   }
 
-  public static boolean areAcceptable(MethodSignature signature1, MethodSignature signature2, PsiClass psiClass) {
+  public static boolean areAcceptable(MethodSignature signature1,
+                                      MethodSignature signature2,
+                                      PsiClass psiClass,
+                                      PsiSubstitutor psiSubstitutor) {
     int offset = 0;
     final PsiType[] signatureParameterTypes1 = signature1.getParameterTypes();
     final PsiType[] signatureParameterTypes2 = signature2.getParameterTypes();
     if (signatureParameterTypes1.length != signatureParameterTypes2.length) {
-      if (signatureParameterTypes1.length == signatureParameterTypes2.length + 1 &&
-          //todo correct check needed
-          PsiUtil.resolveClassInType(TypeConversionUtil.erasure(signatureParameterTypes1[0], signature1.getSubstitutor())) == psiClass) {
-        offset++;
+      if (signatureParameterTypes1.length == signatureParameterTypes2.length + 1) {
+        final PsiClassType classType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, psiSubstitutor);
+        if (signatureParameterTypes1[0].equals(classType)) {
+          offset++;
+        }
+        else {
+          return false;
+        }
       }
       else {
         return false;
