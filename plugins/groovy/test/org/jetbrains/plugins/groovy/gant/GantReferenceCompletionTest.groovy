@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.gant;
+package org.jetbrains.plugins.groovy.gant
 
-
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -25,27 +25,17 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
-
 /**
  * @author ilyas
  */
 public class GantReferenceCompletionTest extends LightCodeInsightFixtureTestCase {
   static def descriptor = new GantProjectDescriptor()
 
-  @NotNull
-  @Override protected LightProjectDescriptor getProjectDescriptor() {
-    return descriptor;
-  }
-
-  @Override
-  protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "gant/completion";
-  }
+  final LightProjectDescriptor projectDescriptor = descriptor
+  final String basePath = TestUtils.testDataPath + "gant/completion"
 
   void complete(String text) {
     myFixture.configureByText "a.gant", text
@@ -57,8 +47,8 @@ public class GantReferenceCompletionTest extends LightCodeInsightFixtureTestCase
     assertSameElements myFixture.lookupElementStrings, items
   }
 
-  public void testDep() throws Throwable {
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
+  public void testDep() {
+    CamelHumpMatcher.forceStartMatching(testRootDisposable);
     checkVariants """
 target(aaa: "") {
     dep<caret>
@@ -66,26 +56,26 @@ target(aaa: "") {
 """, "depends", "dependset"
   }
 
-  public void testAntBuilderJavac() throws Throwable {
+  public void testAntBuilderJavac() {
     checkVariants """
 target(aaa: "") {
     ant.jav<caret>
 }""", "java", "javac", "javadoc", "javadoc2", "javaresource"
   }
 
-  public void testAntJavacTarget() throws Throwable {
+  public void testAntJavacTarget() {
     checkVariants """
 target(aaa: "") {
     jav<caret>
 }""", "java", "javac", "javadoc", "javadoc2", "javaresource"
   }
 
-  public void testInclude() throws Throwable {
+  public void testInclude() {
     CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
-    checkVariants "inc<caret>", "includeTool", "includeTargets"
+    checkVariants "inc<caret>", "include", "includeTool", "includeTargets"
   }
 
-  public void testMutual() throws Throwable {
+  public void testMutual() {
     checkVariants """
 target(genga: "") { }
 target(aaa: "") {
@@ -93,18 +83,18 @@ target(aaa: "") {
 }""", 'genga'
   }
 
-  public void testUnknownQualifier() throws Throwable {
+  public void testUnknownQualifier() {
     complete """
 target(aaa: "") {
     foo.jav<caret>
 }"""
   }
 
-  public void testTopLevelNoAnt() throws Throwable {
+  public void testTopLevelNoAnt() {
     complete "jav<caret>"
   }
 
-  public void testInMethodNoAnt() throws Throwable {
+  public void testInMethodNoAnt() {
     complete """
 target(aaa: "") {
   foo()

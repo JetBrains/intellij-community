@@ -55,9 +55,6 @@ public class GantMemberContributor extends NonCodeMembersContributor {
     }
 
     GrClosableBlock closure = PsiTreeUtil.getContextOfType(place, GrClosableBlock.class, true);
-    if (closure == null) {
-      return;
-    }
 
     boolean antTasksProcessed = false;
     while (closure != null) {
