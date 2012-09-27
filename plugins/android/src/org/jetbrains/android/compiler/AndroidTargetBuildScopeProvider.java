@@ -23,10 +23,11 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 import java.util.Collections;
 import java.util.List;
+
+import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 /**
  * @author nik
@@ -36,8 +37,7 @@ public class AndroidTargetBuildScopeProvider extends BuildTargetScopeProvider {
   @Override
   public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope, @NotNull CompilerFilter filter, @NotNull Project project) {
     if (AndroidCompileUtil.isFullBuild(baseScope) && ProjectFacetManager.getInstance(project).hasFacets(AndroidFacet.ID)) {
-      return Collections
-        .singletonList(TargetTypeBuildScope.newBuilder().setTypeId(AndroidCommonUtils.PROJECT_BUILD_TARGET_TYPE_ID).setAllTargets(true).build());
+      return Collections.singletonList(TargetTypeBuildScope.newBuilder().setTypeId(AndroidCommonUtils.PROJECT_BUILD_TARGET_TYPE_ID).setAllTargets(true).build());
     }
     return Collections.emptyList();
   }
