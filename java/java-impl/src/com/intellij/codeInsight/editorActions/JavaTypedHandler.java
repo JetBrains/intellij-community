@@ -120,10 +120,10 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       }
 
       HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset - 1);
-      while (iterator.getTokenType() == TokenType.WHITE_SPACE) {
+      while (!iterator.atEnd() && iterator.getTokenType() == TokenType.WHITE_SPACE) {
         iterator.retreat();
       }
-      if (iterator.getTokenType() == JavaTokenType.RBRACKET || iterator.getTokenType() == JavaTokenType.EQ) {
+      if (iterator.atEnd() || iterator.getTokenType() == JavaTokenType.RBRACKET || iterator.getTokenType() == JavaTokenType.EQ) {
         return Result.CONTINUE;
       }
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
