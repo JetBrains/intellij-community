@@ -98,7 +98,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     if (!success) return;
     // Checking for Groovy files only
     final boolean isClosure = owner instanceof GrClosableBlock;
-    if (!checkOwnerOccurences(project, occurrences, isClosure)) return;
+    if (!checkOwnerOccurrences(project, occurrences, isClosure)) return;
 
     // To add or not to add new parameter for map entries
     final GrParameter firstParam = getFirstParameter(owner);
@@ -133,9 +133,10 @@ public class ConvertParameterToMapEntryIntention extends Intention {
                 protected void doOKAction() {
                   String name = getEnteredName();
                   MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+                  assert name != null;
                   GroovyValidationUtil.validateNewParameterName(firstParam, conflicts, name);
                   if (isClosure) {
-                    findClosureConflictUsages((GrClosableBlock)owner, conflicts, occurrences);
+                    findClosureConflictUsages(conflicts, occurrences);
                   }
                   if (reportConflicts(conflicts, project)) {
                     performRefactoring(element, owner, occurrences, createNewFirst(), name, specifyTypeExplicitly());
@@ -157,9 +158,8 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     }
   }
 
-  private static void findClosureConflictUsages(GrClosableBlock owner,
-                                         MultiMap<PsiElement, String> conflicts,
-                                         Collection<PsiElement> occurrences) {
+  private static void findClosureConflictUsages(MultiMap<PsiElement, String> conflicts,
+                                                Collection<PsiElement> occurrences) {
     for (PsiElement occurrence : occurrences) {
       PsiElement origin = occurrence;
       while (occurrence instanceof GrReferenceExpression) {
@@ -183,7 +183,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
                                          final GrParametersOwner owner,
                                          final Collection<PsiElement> occurrences,
                                          final boolean createNewFirstParam,
-                                         final String mapParamName,
+                                         @Nullable final String mapParamName,
                                          final boolean specifyMapType) {
     final GrParameter param = getAppropriateParameter(element);
     assert param != null;
@@ -404,7 +404,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     return params[0];
   }
 
-  protected static enum FIRST_PARAMETER_KIND {
+  protected enum FIRST_PARAMETER_KIND {
     IS_NOT_MAP, MUST_BE_MAP, ERROR
   }
 
@@ -418,9 +418,9 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     return null;
   }
 
-  private static boolean checkOwnerOccurences(final Project project, final Collection<PsiElement> occurrences, final boolean isClosure) {
+  private static boolean checkOwnerOccurrences(final Project project, final Collection<PsiElement> occurrences, final boolean isClosure) {
     boolean result = true;
-    final StringBuffer msg = new StringBuffer();
+    final StringBuilder msg = new StringBuilder();
     msg.append(GroovyIntentionsBundle.message("conversion.not.allowed.in.non.groovy.files", isClosure ? CLOSURE_CAPTION : METHOD_CAPTION));
     for (PsiElement element : occurrences) {
       final PsiFile file = element.getContainingFile();
