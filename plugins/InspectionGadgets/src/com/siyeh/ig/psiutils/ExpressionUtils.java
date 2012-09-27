@@ -87,28 +87,27 @@ public class ExpressionUtils {
            field.hasModifierProperty(PsiModifier.FINAL);
   }
 
-  public static boolean isEvaluatedAtCompileTime(
-    @Nullable PsiExpression expression) {
+  public static boolean isEvaluatedAtCompileTime(@Nullable PsiExpression expression) {
     if (expression instanceof PsiLiteralExpression) {
       return true;
     }
-    if (expression instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)expression;
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      final PsiExpression rhs = binaryExpression.getROperand();
-      return isEvaluatedAtCompileTime(lhs) &&
-             isEvaluatedAtCompileTime(rhs);
+    if (expression instanceof PsiPolyadicExpression) {
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      final PsiExpression[] operands = polyadicExpression.getOperands();
+      for (PsiExpression operand : operands) {
+        if (!isEvaluatedAtCompileTime(operand)) {
+          return false;
+        }
+      }
+      return true;
     }
     if (expression instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression prefixExpression =
-        (PsiPrefixExpression)expression;
+      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
       final PsiExpression operand = prefixExpression.getOperand();
       return isEvaluatedAtCompileTime(operand);
     }
     if (expression instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)expression;
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       final PsiElement qualifier = referenceExpression.getQualifier();
       if (qualifier instanceof PsiThisExpression) {
         return false;
@@ -117,8 +116,7 @@ public class ExpressionUtils {
       if (element instanceof PsiField) {
         final PsiField field = (PsiField)element;
         final PsiExpression initializer = field.getInitializer();
-        return field.hasModifierProperty(PsiModifier.FINAL) &&
-               isEvaluatedAtCompileTime(initializer);
+        return field.hasModifierProperty(PsiModifier.FINAL) && isEvaluatedAtCompileTime(initializer);
       }
       if (element instanceof PsiVariable) {
         final PsiVariable variable = (PsiVariable)element;
@@ -126,32 +124,25 @@ public class ExpressionUtils {
           return false;
         }
         final PsiExpression initializer = variable.getInitializer();
-        return variable.hasModifierProperty(PsiModifier.FINAL) &&
-               isEvaluatedAtCompileTime(initializer);
+        return variable.hasModifierProperty(PsiModifier.FINAL) && isEvaluatedAtCompileTime(initializer);
       }
     }
     if (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression =
-        (PsiParenthesizedExpression)expression;
-      final PsiExpression deparenthesizedExpression =
-        parenthesizedExpression.getExpression();
+      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+      final PsiExpression deparenthesizedExpression = parenthesizedExpression.getExpression();
       return isEvaluatedAtCompileTime(deparenthesizedExpression);
     }
     if (expression instanceof PsiConditionalExpression) {
-      final PsiConditionalExpression conditionalExpression =
-        (PsiConditionalExpression)expression;
+      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
       final PsiExpression condition = conditionalExpression.getCondition();
-      final PsiExpression thenExpression =
-        conditionalExpression.getThenExpression();
-      final PsiExpression elseExpression =
-        conditionalExpression.getElseExpression();
+      final PsiExpression thenExpression = conditionalExpression.getThenExpression();
+      final PsiExpression elseExpression = conditionalExpression.getElseExpression();
       return isEvaluatedAtCompileTime(condition) &&
              isEvaluatedAtCompileTime(thenExpression) &&
              isEvaluatedAtCompileTime(elseExpression);
     }
     if (expression instanceof PsiTypeCastExpression) {
-      final PsiTypeCastExpression typeCastExpression =
-        (PsiTypeCastExpression)expression;
+      final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
       final PsiTypeElement castType = typeCastExpression.getCastType();
       if (castType == null) {
         return false;

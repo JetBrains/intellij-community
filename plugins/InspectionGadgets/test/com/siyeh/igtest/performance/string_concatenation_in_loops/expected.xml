@@ -24,9 +24,22 @@
 
   <problem>
     <file>StringConcatenationInLoop.java</file>
+    <line>16</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">String concatenation in loop</problem_class>
+    <description>String concatenation &lt;code&gt;+&lt;/code&gt; in loop #loc</description>
+  </problem>
+
+  <problem>
+    <file>StringConcatenationInLoop.java</file>
     <line>46</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">String concatenation in loop</problem_class>
     <description>String concatenation &lt;code&gt;+=&lt;/code&gt; in loop #loc</description>
   </problem>
 
+  <problem>
+    <file>StringConcatenationInLoop.java</file>
+    <line>45</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">String concatenation in loop</problem_class>
+    <description>String concatenation &lt;code&gt;+=&lt;/code&gt; in loop #loc</description>
+  </problem>
 </problems>
