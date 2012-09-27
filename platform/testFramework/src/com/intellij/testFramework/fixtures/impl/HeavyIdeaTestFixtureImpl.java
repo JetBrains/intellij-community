@@ -20,7 +20,6 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaTestApplication;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -101,18 +100,18 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     EncodingManager.getInstance(); // adds listeners
     myEditorListenerTracker = new EditorListenerTracker();
     myThreadTracker = new ThreadTracker();
-    ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).pushInjectors();
+    InjectedLanguageManagerImpl.pushInjectors(getProject());
   }
 
   @Override
   public void tearDown() throws Exception {
-    LightPlatformTestCase.doTearDown(getProject(), myApplication, false);
+    Project project = getProject();
+    LightPlatformTestCase.doTearDown(project, myApplication, false);
 
     for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
       moduleFixtureBuilder.getFixture().tearDown();
     }
 
-    InjectedLanguageManagerImpl injectedLanguageManager = (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject());
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -136,7 +135,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     myEditorListenerTracker.checkListenersLeak();
     myThreadTracker.checkLeak();
     LightPlatformTestCase.checkEditorsReleased();
-    injectedLanguageManager.checkInjectorsAreDisposed();
+    InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
   }
 
 

@@ -42,7 +42,7 @@ public abstract class InjectedLanguageManager {
   @Deprecated
   public static final ExtensionPointName<MultiHostInjector> MULTIHOST_INJECTOR_EP_NAME = MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME;
 
-  private static final NotNullLazyKey<InjectedLanguageManager, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(InjectedLanguageManager.class);
+  protected static final NotNullLazyKey<InjectedLanguageManager, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(InjectedLanguageManager.class);
 
   public static InjectedLanguageManager getInstance(Project project) {
     return INSTANCE_CACHE.getValue(project);
