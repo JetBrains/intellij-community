@@ -39,7 +39,7 @@ public class TaskUtil {
 
   public static String formatTask(@NotNull Task task, String format) {
     return format.replace("{id}", task.getId()).replace("{number}", task.getNumber())
-      .replace("{project}", task.getProject()).replace("{summary}", task.getSummary());
+      .replace("{project}", task.getProject() == null ? "" : task.getProject()).replace("{summary}", task.getSummary());
   }
 
   @Nullable

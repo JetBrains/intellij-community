@@ -27,6 +27,6 @@ public class MantisTask extends LocalTaskImpl {
   @Nullable
   @Override
   public String getProject() {
-    return myProject.getName();
+    return !MantisProject.ALL_PROJECTS.equals(myProject) ? myProject.getName() : null;
   }
 }

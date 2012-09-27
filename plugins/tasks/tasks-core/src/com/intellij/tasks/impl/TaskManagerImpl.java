@@ -711,7 +711,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
   }
 
-  private void doUpdate(Runnable onComplete) {
+  private void doUpdate(@Nullable Runnable onComplete) {
     try {
       List<Task> issues = getIssuesFromRepositories(null, myConfig.updateIssuesCount, 0, false);
       if (issues == null) return;
