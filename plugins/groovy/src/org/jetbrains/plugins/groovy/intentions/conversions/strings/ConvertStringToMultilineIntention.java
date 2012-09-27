@@ -25,7 +25,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.editor.actions.GroovyEditorActionUtil;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -134,10 +133,10 @@ public class ConvertStringToMultilineIntention extends Intention {
           final ASTNode node = element.getFirstChild().getNode();
           final IElementType type = node.getElementType();
           if (type == GroovyTokenTypes.mSTRING_LITERAL) {
-            return GroovyEditorActionUtil.isPlainStringLiteral(node);
+            return GrStringUtil.isPlainStringLiteral(node);
           }
           if (type == GroovyTokenTypes.mGSTRING_LITERAL) {
-            return GroovyEditorActionUtil.isPlainGString(node);
+            return GrStringUtil.isPlainGString(node);
           }
         }
         else {

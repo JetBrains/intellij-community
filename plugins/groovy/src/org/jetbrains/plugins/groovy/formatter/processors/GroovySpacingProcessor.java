@@ -30,7 +30,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
-import org.jetbrains.plugins.groovy.editor.actions.GroovyEditorActionUtil;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -56,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_LANGUAGE;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.*;
@@ -267,8 +267,8 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     if (myType1 == mLCURLY && myType2 == mRCURLY && block.getParent() instanceof GrBlockStatement) {
       myResult = Spacing.createSpacing(1, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
-    else if (myType1 == mLCURLY && !GroovyEditorActionUtil.isMultilineStringElement(myChild2) ||
-             myType2 == mRCURLY && !GroovyEditorActionUtil.isMultilineStringElement(myChild1)) {
+    else if (myType1 == mLCURLY && !GrStringUtil.isMultilineStringElement(myChild2) ||
+             myType2 == mRCURLY && !GrStringUtil.isMultilineStringElement(myChild1)) {
       myResult = Spacing
         .createDependentLFSpacing(mySettings.SPACE_WITHIN_BRACES ? 1 : 0, 1, block.getTextRange(), mySettings.KEEP_LINE_BREAKS,
                                   mySettings.KEEP_BLANK_LINES_IN_CODE);

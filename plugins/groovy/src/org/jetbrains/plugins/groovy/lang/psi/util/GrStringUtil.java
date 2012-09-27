@@ -877,4 +877,44 @@ public class GrStringUtil {
       builder.replace(i + 2, i + 3, "\\\"");
     }
   }
+
+  public static boolean isPlainStringLiteral(ASTNode node) {
+    String text = node.getText();
+    return text.length() < 3 && text.equals("''") || text.length() >= 3 && !text.startsWith("'''");
+  }
+
+  public static boolean isPlainGString(ASTNode node) {
+    String text = node.getText();
+    return text.length() < 3 && text.equals("\"\"") || text.length() >= 3 && !text.startsWith("\"\"\"");
+  }
+
+  public static boolean isMultilineStringElement(ASTNode node) {
+    PsiElement element = node.getPsi();
+    if (element instanceof GrLiteral) {
+      if (element instanceof GrString) return !((GrString) element).isPlainString();
+      return isSimpleStringLiteral(((GrLiteral) element)) && !isPlainStringLiteral(node) ||
+          isSimpleGStringLiteral(((GrLiteral) element)) && !isPlainGString(node);
+    }
+    return false;
+  }
+
+  public static boolean isSimpleStringLiteral(GrLiteral literal) {
+    PsiElement child = literal.getFirstChild();
+    if (child != null && child.getNode() != null) {
+      ASTNode node = child.getNode();
+      assert node != null;
+      return node.getElementType() == mSTRING_LITERAL;
+    }
+    return false;
+  }
+
+  public static boolean isSimpleGStringLiteral(GrLiteral literal) {
+    PsiElement child = literal.getFirstChild();
+    if (child != null && child.getNode() != null) {
+      ASTNode node = child.getNode();
+      assert node != null;
+      return node.getElementType() == mGSTRING_LITERAL;
+    }
+    return false;
+  }
 }
