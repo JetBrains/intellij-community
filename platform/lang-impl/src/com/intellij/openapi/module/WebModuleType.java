@@ -4,8 +4,6 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WebModuleGenerationStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,16 +27,6 @@ public class WebModuleType extends WebModuleTypeBase<ModuleBuilder> {
   }
 
   public ModuleBuilder createModuleBuilder() {
-    return new ModuleBuilder() {
-      @Override
-      public void setupRootModel(ModifiableRootModel modifiableRootModel) throws ConfigurationException {
-        doAddContentEntry(modifiableRootModel);
-      }
-
-      @Override
-      public ModuleType getModuleType() {
-        return getInstance();
-      }
-    };
+    return new WebModuleBuilder();
   }
 }
