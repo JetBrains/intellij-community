@@ -1766,6 +1766,10 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       holder.createErrorAnnotation(publicModifier, GroovyBundle.message("public.modifier.is.not.allowed.in.interfaces"))
         .registerFix(new GrModifierFix(member, modifierList, PUBLIC, false, false));
     }
+    else if (member instanceof PsiClass && member.getContainingClass() == null) {
+      checkModifierIsNotAllowed(modifierList, PRIVATE, GroovyBundle.message("top.level.class.maynot.have.private.modifier"), holder);
+      checkModifierIsNotAllowed(modifierList, PROTECTED, GroovyBundle.message("top.level.class.maynot.have.protected.modifier"), holder);
+    }
   }
 
   private static void checkDuplicateMethod(PsiMethod[] methods, AnnotationHolder holder) {
