@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.application.options.codeStyle.arrangement.node.ArrangementEditableNode;
 import com.intellij.application.options.codeStyle.arrangement.node.ArrangementRepresentationAwareNode;
 import com.intellij.application.options.codeStyle.arrangement.node.ArrangementSectionNode;
 import com.intellij.application.options.codeStyle.arrangement.node.match.ArrangementMatchNodeComponent;
@@ -205,16 +206,22 @@ public class ArrangementRuleTree {
     setSettings(settings);
     
     myTree.setShowsRootHandles(false);
-    myTree.setCellRenderer(new MyCellRenderer());
-    TreeUI ui = myTree.getUI();
-    if (!(ui instanceof WideSelectionTreeUI)) {
-      // IJ wide selection tree ui is not applied for some LAFs (e.g. GTK) and default wide selection tree ui doesn't allow
-      // to customize selection background appliance algorithm (don't draw background for rule components; do draw for
-      // 'new rule' node).
-      // That's why we forcibly apply UI with custom selection strategy here.
-      // P.S. 'wide selection tree ui' appliance decision is taken at the com.intellij.ui.treeStructure.Tree.setUI().
-      myTree.setUI(new WideSelectionTreeUI(true, wideSelectionCondition));
-    }
+    MyCellRenderer renderer = new MyCellRenderer();
+    myTree.setCellRenderer(renderer);
+    myTree.setEditable(true);
+    myTree.setCellEditor(new MyCellEditor(myTree, renderer));
+    
+    // IJ wide selection tree ui is not applied for some LAFs (e.g. GTK) and default wide selection tree ui doesn't allow
+    // to customize selection background appliance algorithm (don't draw background for rule components; do draw for
+    // 'new rule' node).
+    // That's why we forcibly apply UI with custom selection strategy here.
+    // P.S. 'wide selection tree ui' appliance decision is taken at the com.intellij.ui.treeStructure.Tree.setUI().
+    myTree.setUI(new WideSelectionTreeUI(true, wideSelectionCondition) {
+      @Override
+      protected boolean shouldPaintExpandControl(TreePath path, int row, boolean isExpanded, boolean hasBeenExpanded, boolean isLeaf) {
+        return false;
+      }
+    });
   }
 
   public void updateCanvasWidth(final int width) {
@@ -464,7 +471,7 @@ public class ArrangementRuleTree {
     }
 
     if (myGroupingsRoot != null) {
-      myGroupingRulesManager.applyRules(settings.getGroupings(), myGroupingsRoot);
+      myGroupingRulesManager.applyRules(settings.getGroupings(), myGroupingsRoot, myTreeModel);
     }
 
     List<StdArrangementMatchRule> rules = settings.getRules();
@@ -670,7 +677,7 @@ public class ArrangementRuleTree {
     if (parent != null) parent.remove(EMPTY_RENDERER);
   }
 
-  private class MyCellRenderer implements TreeCellRenderer {
+  private class MyCellRenderer extends DefaultTreeCellRenderer {
     @Override
     public Component getTreeCellRendererComponent(JTree tree,
                                                   Object value,
@@ -699,6 +706,35 @@ public class ArrangementRuleTree {
       ArrangementMatchNodeComponent component = getNodeComponentAt(row, node, myModels.get(row));
       component.setSelected(selected);
       return component.getUiComponent();
+    }
+  }
+  
+  private static class MyCellEditor extends DefaultTreeCellEditor {
+    MyCellEditor(JTree tree, DefaultTreeCellRenderer renderer) {
+      super(tree, renderer);
+    }
+
+    @Override
+    public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
+      if (value instanceof ArrangementEditableNode) {
+        return ((ArrangementEditableNode)value).getEditor();
+      }
+      else {
+        return super.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row);
+      }
+    }
+
+    @Override
+    public boolean isCellEditable(EventObject event) {
+      if (event instanceof MouseEvent) {
+        MouseEvent mouseEvent = (MouseEvent)event;
+        TreePath path = tree.getPathForLocation(mouseEvent.getX(), mouseEvent.getY());
+        if (path == null) {
+          return false;
+        }
+        return path.getLastPathComponent() instanceof ArrangementEditableNode;
+      }
+      return false;
     }
   }
   
