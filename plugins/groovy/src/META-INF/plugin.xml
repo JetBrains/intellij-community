@@ -1246,6 +1246,21 @@
       <categoryKey>intention.category.groovy/intention.category.groovy.declaration</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.declaration.GrSetStrongTypeIntention</className>
     </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.declaration</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.declaration.GrMakeMemberPublicIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.declaration</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.declaration.GrMakeMemberProtectedIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.declaration</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.declaration.GrMakeMemberPrivateIntention</className>
+    </intentionAction>
 
     <!--other-->
     <intentionAction>
