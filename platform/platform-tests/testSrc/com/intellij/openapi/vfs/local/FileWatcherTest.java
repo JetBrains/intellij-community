@@ -47,8 +47,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
   private static final int INTER_RESPONSE_DELAY = 500;  // time to wait for a next event in a sequence
   private static final int NATIVE_PROCESS_DELAY = 60000;  // time to wait for a native watcher response
 
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private static Logger LOG =
-    Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcher");
+  private static Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcher");
 
   private FileWatcher myWatcher;
   private LocalFileSystem myFileSystem;
@@ -454,6 +453,26 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
   }
 
+  public void testDirectoryRecreation() throws Exception {
+    final File topDir = IoTestUtil.createTestDir("top");
+    final File file1 = IoTestUtil.createTestFile(topDir, "file1.txt");
+    final File file2 = IoTestUtil.createTestFile(topDir, "file2.txt");
+    refresh(topDir);
+
+    final LocalFileSystem.WatchRequest request = watch(topDir);
+    try {
+      myAccept = true;
+      assertTrue(FileUtil.delete(topDir));
+      assertTrue(topDir.mkdir());
+      assertTrue(file1.createNewFile());
+      assertTrue(file2.createNewFile());
+      assertEvent(VFileContentChangeEvent.class, file1.getPath(), file2.getPath());
+    }
+    finally {
+      unwatch(request);
+      delete(topDir);
+    }
+  }
 
   @NotNull
   private LocalFileSystem.WatchRequest watch(final File watchFile) {
@@ -541,14 +560,14 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
 
     int timeout = myTimeout;
-    synchronized (myWaiter) {
-      try {
+    try {
+      synchronized (myWaiter) {
         //noinspection WaitNotInLoop
         myWaiter.wait(timeout);
       }
-      catch (InterruptedException e) {
-        LOG.warn(e);
-      }
+    }
+    catch (InterruptedException e) {
+      LOG.warn(e);
     }
 
     myFileSystem.refresh(false);
