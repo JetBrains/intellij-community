@@ -233,9 +233,14 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   }
 
   private boolean differsFromDefault(TemplateImpl t) {
-    TemplateImpl def = myDefaultTemplates.get(TemplateKey.keyOf(t));
+    TemplateImpl def = getDefaultTemplate(t);
     if (def == null) return true;
     return !t.equals(def) || !t.contextsEqual(def);
+  }
+
+  @Nullable
+  private TemplateImpl getDefaultTemplate(TemplateImpl t) {
+    return myDefaultTemplates.get(TemplateKey.keyOf(t));
   }
 
   @Override
@@ -550,12 +555,16 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       Element element = (Element)o1;
 
       TemplateImpl template = readTemplateFromElement(isDefault, groupName, element, classLoader);
+      TemplateImpl existing = getTemplate(template.getKey(), template.getGroupName());
       boolean defaultTemplateModified = isDefault && (myDeletedTemplates.contains(TemplateKey.keyOf(template)) ||
                                                       myTemplatesById.containsKey(template.getId()) ||
-                                                      getTemplate(template.getKey(), template.getGroupName()) != null);
+                                                      existing != null);
 
       if(!defaultTemplateModified) {
         created.put(template.getKey(), template);
+      }
+      if (isDefault && existing != null) {
+        existing.getTemplateContext().setDefaultContext(template.getTemplateContext());
       }
     }
 
@@ -630,13 +639,13 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
     Element context = element.getChild(CONTEXT);
     if (context != null) {
-      template.getTemplateContext().readExternal(context);
+      template.getTemplateContext().readTemplateContext(context);
     }
 
     return template;
   }
 
-  private static void saveTemplate(TemplateImpl template, Element templateSetElement) {
+  private void saveTemplate(TemplateImpl template, Element templateSetElement) {
     Element element = new Element(TEMPLATE);
     final String id = template.getId();
     if (id != null) {
@@ -676,7 +685,8 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
     try {
       Element contextElement = new Element(CONTEXT);
-      template.getTemplateContext().writeExternal(contextElement);
+      TemplateImpl def = getDefaultTemplate(template);
+      template.getTemplateContext().writeTemplateContext(contextElement, def == null ? null : def.getTemplateContext());
       element.addContent(contextElement);
     } catch (WriteExternalException ignore) {
     }

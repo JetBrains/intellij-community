@@ -21,24 +21,47 @@ import com.intellij.codeInsight.template.EverywhereContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Attribute;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TemplateContext {
-
-  private final Map<String, Boolean> myAdditionalContexts;
-
-  public TemplateContext() {
-    myAdditionalContexts = new LinkedHashMap<String, Boolean>();
-
-  }
+  private final Map<String, Boolean> myAdditionalContexts = ContainerUtil.newLinkedHashMap();
 
   public TemplateContext createCopy()  {
     TemplateContext cloneResult = new TemplateContext();
     cloneResult.myAdditionalContexts.putAll(myAdditionalContexts);
     return cloneResult;
+  }
+
+  Map<TemplateContextType, Boolean> getDifference(@Nullable TemplateContext defaultContext) {
+    Map<TemplateContextType, Boolean> result = ContainerUtil.newHashMap();
+    synchronized (myAdditionalContexts) {
+      //noinspection NestedSynchronizedStatement
+      synchronized (defaultContext == null ? myAdditionalContexts : defaultContext.myAdditionalContexts) {
+        for (TemplateContextType contextType : TemplateManagerImpl.getAllContextTypes()) {
+          String id = contextType.getContextId();
+          Boolean mine = myAdditionalContexts.get(id);
+          if (mine != null && differsFromDefault(defaultContext, id, mine)) {
+            result.put(contextType, mine);
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  private static boolean differsFromDefault(@Nullable TemplateContext defaultContext, String id, boolean mine) {
+    Boolean defValue = defaultContext == null ? null : defaultContext.myAdditionalContexts.get(id);
+    if (defValue == null) {
+      return mine;
+    }
+    return mine != defValue;
   }
 
   public boolean isEnabled(TemplateContextType contextType) {
@@ -53,7 +76,7 @@ public class TemplateContext {
     return storedValue.booleanValue();
   }
 
-  public Boolean isEnabledBare(TemplateContextType contextType) {
+  private Boolean isEnabledBare(TemplateContextType contextType) {
     synchronized (myAdditionalContexts) {
       return myAdditionalContexts.get(contextType.getContextId());
     }
@@ -65,7 +88,14 @@ public class TemplateContext {
     }
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  void setDefaultContext(@NotNull TemplateContext defContext) {
+    HashMap<String, Boolean> copy = new HashMap<String, Boolean>(myAdditionalContexts);
+    myAdditionalContexts.clear();
+    myAdditionalContexts.putAll(defContext.myAdditionalContexts);
+    myAdditionalContexts.putAll(copy);
+  }
+
+  void readTemplateContext(Element element) throws InvalidDataException {
     List options = element.getChildren("option");
     for (Object e : options) {
       if (e instanceof Element) {
@@ -79,15 +109,13 @@ public class TemplateContext {
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    List<Element> options = new ArrayList<Element>(myAdditionalContexts.size());
-    for (String contextName : myAdditionalContexts.keySet()) {
-      String value = myAdditionalContexts.get(contextName).toString();
-
+  void writeTemplateContext(Element element, @Nullable TemplateContext defaultContext) throws WriteExternalException {
+    Map<TemplateContextType, Boolean> diff = getDifference(defaultContext);
+    for (TemplateContextType type : diff.keySet()) {
       Element optionElement = new Element("option");
-      optionElement.setAttributes(Arrays.asList(new Attribute("name", contextName), new Attribute("value", value)));
-      options.add(optionElement);
+      optionElement.setAttribute("name", type.getContextId());
+      optionElement.setAttribute("value", diff.get(type).toString());
+      element.addContent(optionElement);
     }
-    element.setContent(options);
   }
 }
