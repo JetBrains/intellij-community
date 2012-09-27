@@ -38,6 +38,7 @@ setProperty("pluginFilter", [
             "database-impl", "DatabaseSupport",
             "sql",
             "coffeescript",
+            "remote-sdk-impl",
             "python-remote-interpreter",
             "diagram-api", "uml",
             "python-uml", "localization",
