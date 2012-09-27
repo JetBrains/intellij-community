@@ -61,8 +61,6 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     config.setWorkingDirectory(getWorkingFolder());
     config.setScriptParameters(getScriptParameters());
 
-    config.setMultiprocessMode(isMultiprocessDebug());
-
     new WriteAction() {
       @Override
       protected void run(Result result) throws Throwable {
@@ -80,6 +78,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
 
     final PythonCommandLineState pyState = (PythonCommandLineState)config.getState(executor, env);
+
     assert pyState != null;
     pyState.setMultiprocessDebug(isMultiprocessDebug());
 
