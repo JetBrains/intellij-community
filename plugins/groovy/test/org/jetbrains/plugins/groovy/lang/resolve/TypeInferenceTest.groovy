@@ -34,12 +34,9 @@ import static com.intellij.psi.CommonClassNames.*
  * @author ven
  */
 public class TypeInferenceTest extends GroovyResolveTestCase {
-  @Override
-  protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "resolve/inference/";
-  }
+  final String basePath = TestUtils.testDataPath + "resolve/inference/"
 
-  public void testTryFinallyFlow() throws Exception {
+  public void testTryFinallyFlow() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow/A.groovy").getElement();
     final PsiType type = ref.getType();
     assertTrue(type instanceof PsiIntersectionType);
@@ -47,77 +44,77 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
     assertEquals(conjuncts.length, 2);
   }
 
-  public void testTryFinallyFlow1() throws Exception {
+  public void testTryFinallyFlow1() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow1/A.groovy").getElement();
     final PsiType type = ref.getType();
     assertNotNull(type);
     assertTrue(type.equalsToText("java.lang.Integer"));
   }
 
-  public void testTryFinallyFlow2() throws Exception {
+  public void testTryFinallyFlow2() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow2/A.groovy").getElement();
     final PsiType type = ref.getType();
     assertNotNull(type);
     assertTrue(type.equalsToText("java.lang.Integer"));
   }
 
-  public void testThrowVariable() throws Exception {
+  public void testThrowVariable() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("throwVariable/A.groovy").getElement();
     final PsiType type = ref.getType();
     assertNotNull(type);
     assertEquals("java.lang.Exception", type.getCanonicalText());
   }
 
-  public void testGrvy852() throws Exception {
+  public void testGrvy852() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("grvy852/A.groovy").getElement();
     final PsiType type = ref.getType();
     assertNotNull(type);
     assertEquals("java.lang.Object", type.getCanonicalText());
   }
 
-  public void testGenericMethod() throws Exception {
+  public void testGenericMethod() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("genericMethod/A.groovy").getElement();
     final PsiType type = ref.getType();
     assertNotNull(type);
     assertEquals("java.util.List<java.lang.String>", type.getCanonicalText());
   }
 
-  public void testCircular() throws Exception {
+  public void testCircular() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("circular/A.groovy").getElement();
     assertNull(ref.getType());
   }
 
-  public void testCircular1() throws Exception {
+  public void testCircular1() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("circular1/A.groovy").getElement();
     assertNull(ref.getType());
   }
 
-  public void testClosure() throws Exception {
+  public void testClosure() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure/A.groovy").getElement();
     assertNotNull(ref.getType());
   }
 
-  public void testClosure1() throws Exception {
+  public void testClosure1() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure1/A.groovy").getElement();
     assertTrue(ref.getType().equalsToText("java.lang.Integer"));
   }
 
-  public void testClosure2() throws Exception {
+  public void testClosure2() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure2/A.groovy").getElement();
     assertTrue(ref.getType().equalsToText("java.lang.Integer"));
   }
 
-  public void testGrvy1209() throws Exception {
+  public void testGrvy1209() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("grvy1209/A.groovy").getElement();
     assertTrue(ref.getType().equalsToText("java.lang.String"));
   }
 
-  public void testLeastUpperBoundClosureType() throws Exception {
+  public void testLeastUpperBoundClosureType() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("leastUpperBoundClosureType/A.groovy").getElement();
     assertInstanceOf(ref.getType(), GrClosureType.class);
   }
 
-  public void testJavaLangClassType() throws Exception {
+  public void testJavaLangClassType() {
     final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("javaLangClassType/A.groovy").getElement();
     assertEquals("java.lang.String", ref.getType().getCanonicalText());
   }
@@ -543,6 +540,20 @@ def foo(ii) {
   if (ii in String)
     print i<caret>i
 }''', 'java.lang.String'
+  }
+
+  void testIndexProperty() {
+    doTest('''\
+private void getCommonAncestor() {
+    def c1 = [new File('a')]
+    for (int i = 0; i < 2; i++) {
+        if (c1[i] != null) break
+        def cur = c1[i]
+        print cu<caret>r
+    }
+}
+''', 'java.io.File')
+
   }
 
   private void doTest(String text, String type) {
