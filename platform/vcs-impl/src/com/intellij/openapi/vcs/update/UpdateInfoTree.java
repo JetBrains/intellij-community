@@ -93,7 +93,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
                         UpdatedFiles updatedFiles,
                         String rootName,
                         ActionInfo actionInfo) {
-    super(contentManager, "reference.toolWindows.versionControl");
+    super(contentManager, "reference.versionControl.toolwindow.update");
     myActionInfo = actionInfo;
 
     myFileStatusListener = new FileStatusListener() {
