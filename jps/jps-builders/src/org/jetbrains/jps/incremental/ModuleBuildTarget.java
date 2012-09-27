@@ -55,12 +55,12 @@ public class ModuleBuildTarget extends BuildTarget<RootDescriptor> {
   }
 
   @Override
-  public Collection<ModuleBuildTarget> computeDependencies() {
+  public Collection<BuildTarget<?>> computeDependencies() {
     JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(myModule).compileOnly();
     if (!isTests()) {
       enumerator.productionOnly();
     }
-    final List<ModuleBuildTarget> dependencies = new ArrayList<ModuleBuildTarget>();
+    final List<BuildTarget<?>> dependencies = new ArrayList<BuildTarget<?>>();
     enumerator.processModules(new Consumer<JpsModule>() {
       @Override
       public void consume(JpsModule module) {
@@ -91,6 +91,12 @@ public class ModuleBuildTarget extends BuildTarget<RootDescriptor> {
   public RootDescriptor findRootDescriptor(String rootId, BuildRootIndex rootIndex) {
     List<RootDescriptor> descriptors = rootIndex.getRootDescriptors(new File(rootId), Collections.<JavaModuleBuildTargetType>singletonList(myTargetType), null);
     return ContainerUtil.getFirstItem(descriptors);
+  }
+
+  @NotNull
+  @Override
+  public String getPresentableName() {
+    return "Module '" + myModuleName + "' " + (myTargetType.isTests() ? "production" : "tests");
   }
 
   @Override

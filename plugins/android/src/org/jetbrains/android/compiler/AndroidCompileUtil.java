@@ -603,7 +603,11 @@ public class AndroidCompileUtil {
   }
 
   public static boolean isFullBuild(@NotNull CompileContext context) {
-    final RunConfiguration c = CompileStepBeforeRun.getRunConfiguration(context);
+    return isFullBuild(context.getCompileScope());
+  }
+
+  public static boolean isFullBuild(@NotNull CompileScope scope) {
+    final RunConfiguration c = CompileStepBeforeRun.getRunConfiguration(scope);
     return c == null || !AndroidCommonUtils.isTestConfiguration(c.getType().getId());
   }
 

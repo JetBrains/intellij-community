@@ -18,7 +18,7 @@ public class BuilderRegistry {
     static final BuilderRegistry ourInstance = new BuilderRegistry();
   }
   private final Map<BuilderCategory, List<ModuleLevelBuilder>> myModuleLevelBuilders = new HashMap<BuilderCategory, List<ModuleLevelBuilder>>();
-  private final List<ProjectLevelBuilder> myProjectLevelBuilders = new ArrayList<ProjectLevelBuilder>();
+  private final List<TargetBuilder<?>> myTargetBuilders = new ArrayList<TargetBuilder<?>>();
   private final Map<String, BuildTargetType<?>> myTargetTypes = new LinkedHashMap<String, BuildTargetType<?>>();
 
   public static BuilderRegistry getInstance() {
@@ -31,7 +31,7 @@ public class BuilderRegistry {
     }
 
     for (BuilderService service : JpsServiceManager.getInstance().getExtensions(BuilderService.class)) {
-      myProjectLevelBuilders.addAll(service.createProjectLevelBuilders());
+      myTargetBuilders.addAll(service.createBuilders());
       final List<? extends ModuleLevelBuilder> moduleLevelBuilders = service.createModuleLevelBuilders();
       for (ModuleLevelBuilder builder : moduleLevelBuilders) {
         myModuleLevelBuilders.get(builder.getCategory()).add(builder);
@@ -79,7 +79,7 @@ public class BuilderRegistry {
     return ContainerUtil.concat(myModuleLevelBuilders.values());
   }
 
-  public List<ProjectLevelBuilder> getProjectLevelBuilders() {
-    return myProjectLevelBuilders;
+  public List<TargetBuilder<?>> getTargetBuilders() {
+    return myTargetBuilders;
   }
 }

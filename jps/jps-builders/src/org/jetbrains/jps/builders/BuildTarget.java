@@ -25,7 +25,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
     return myTargetType;
   }
 
-  public abstract Collection<? extends BuildTarget<?>> computeDependencies();
+  public abstract Collection<BuildTarget<?>> computeDependencies();
 
   public void writeConfiguration(PrintWriter out, BuildRootIndex buildRootIndex) {
   }
@@ -36,8 +36,11 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
   @Nullable
   public abstract BuildRootDescriptor findRootDescriptor(String rootId, BuildRootIndex rootIndex);
 
+  @NotNull
+  public abstract String getPresentableName();
+
   @Override
   public String toString() {
-    return myTargetType.getTypeId() + " '" + getId() + "'";
+    return getPresentableName();
   }
 }

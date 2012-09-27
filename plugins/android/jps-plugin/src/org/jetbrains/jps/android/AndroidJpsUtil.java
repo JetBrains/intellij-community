@@ -47,7 +47,7 @@ import java.util.regex.Matcher;
 /**
  * @author Eugene.Kudelevsky
  */
-class AndroidJpsUtil {
+public class AndroidJpsUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidJpsUtil");
 
   @NonNls public static final String ANDROID_STORAGE_DIR = "android";

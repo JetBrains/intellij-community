@@ -339,7 +339,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final int filesCount = files.size();
         boolean compiledOk = true;
         if (filesCount > 0) {
-          LOG.info("Compiling " + filesCount + " java files; module: " + chunkName + (chunk.isTests() ? " (tests)" : ""));
+          LOG.info("Compiling " + filesCount + " java files; module: " + chunkName + (chunk.containsTests() ? " (tests)" : ""));
           if (LOG.isDebugEnabled()) {
             LOG.debug(" classpath for " + chunkName + ":");
             for (File file : classpath) {
@@ -365,7 +365,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                 context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
                 instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputSink);
                 JpsUiDesignerConfiguration configuration = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(pd.jpsProject);
-                if (configuration != null && configuration.isCopyFormsRuntimeToOutput() && !chunk.isTests()) {
+                if (configuration != null && configuration.isCopyFormsRuntimeToOutput() && !chunk.containsTests()) {
                   for (JpsModule module : chunk.getModules()) {
                     final File outputDir = paths.getModuleOutputDir(module, false);
                     if (outputDir != null) {
@@ -760,7 +760,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
 
       final File srcOutput = context.getProjectPaths()
-        .getAnnotationProcessorGeneratedSourcesOutputDir(chunk.getModules().iterator().next(), chunk.isTests(),
+        .getAnnotationProcessorGeneratedSourcesOutputDir(chunk.getModules().iterator().next(), chunk.containsTests(),
                                                          profile.getGeneratedSourcesDirectoryName());
       if (srcOutput != null) {
         srcOutput.mkdirs();
@@ -874,7 +874,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   @Override
-  public void cleanupResources(CompileContext context, ModuleChunk chunk) {
+  public void cleanupChunkResources(CompileContext context) {
     JavaBuilderUtil.cleanupChunkResources(context);
   }
 

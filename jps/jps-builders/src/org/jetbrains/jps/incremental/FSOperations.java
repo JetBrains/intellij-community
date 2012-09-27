@@ -7,7 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.ProjectChunks;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
@@ -65,21 +66,26 @@ public class FSOperations {
     final Set<ModuleBuildTarget> dirtyTargets = new HashSet<ModuleBuildTarget>(targets);
 
     // now mark all modules that depend on dirty modules
-    final JpsJavaClasspathKind classpathKind = JpsJavaClasspathKind.compile(chunk.isTests());
-    final ProjectChunks chunks = context.getChunks();
+    final JpsJavaClasspathKind classpathKind = JpsJavaClasspathKind.compile(chunk.containsTests());
     boolean found = false;
-    for (ModuleChunk moduleChunk : chunks.getChunkList()) {
+    for (BuildTargetChunk targetChunk : context.getProjectDescriptor().getBuildTargetIndex().getSortedTargetChunks()) {
       if (!found) {
-        if (moduleChunk.equals(chunk)) {
+        if (targetChunk.getTargets().equals(chunk.getTargets())) {
           found = true;
         }
       }
       else {
-        for (final JpsModule module : moduleChunk.getModules()) {
-          final Set<JpsModule> deps = getDependentModulesRecursively(module, classpathKind);
-          if (Utils.intersects(deps, modules)) {
-            dirtyTargets.addAll(moduleChunk.getTargets());
-            break;
+        for (final BuildTarget<?> target : targetChunk.getTargets()) {
+          if (target instanceof ModuleBuildTarget) {
+            final Set<JpsModule> deps = getDependentModulesRecursively(((ModuleBuildTarget)target).getModule(), classpathKind);
+            if (Utils.intersects(deps, modules)) {
+              for (BuildTarget<?> buildTarget : targetChunk.getTargets()) {
+                if (buildTarget instanceof ModuleBuildTarget) {
+                  dirtyTargets.add((ModuleBuildTarget)buildTarget);
+                }
+              }
+              break;
+            }
           }
         }
       }

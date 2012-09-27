@@ -3,10 +3,9 @@ package org.jetbrains.jps.incremental.storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
-import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactsBuildData;
 
 import java.io.*;
@@ -170,10 +169,10 @@ public class BuildDataManager implements StorageOwner {
     }
   }
 
-  public void closeSourceToOutputStorages(Collection<ModuleChunk> chunks) throws IOException {
+  public void closeSourceToOutputStorages(Collection<BuildTargetChunk> chunks) throws IOException {
     synchronized (mySourceToOutputLock) {
-      for (ModuleChunk chunk : chunks) {
-        for (ModuleBuildTarget target : chunk.getTargets()) {
+      for (BuildTargetChunk chunk : chunks) {
+        for (BuildTarget<?> target : chunk.getTargets()) {
           final SourceToOutputMapping mapping = mySourceToOutputs.remove(target);
           if (mapping != null) {
             mapping.close();

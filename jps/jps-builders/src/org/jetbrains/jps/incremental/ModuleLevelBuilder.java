@@ -31,6 +31,6 @@ public abstract class ModuleLevelBuilder extends Builder {
     return myCategory;
   }
 
-  public void cleanupResources(CompileContext context, ModuleChunk chunk) {
+  public void cleanupChunkResources(CompileContext context) {
   }
 }

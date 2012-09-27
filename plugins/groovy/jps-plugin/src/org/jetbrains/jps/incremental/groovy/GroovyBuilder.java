@@ -167,7 +167,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   @Override
-  public void cleanupResources(CompileContext context, ModuleChunk chunk) {
+  public void cleanupChunkResources(CompileContext context) {
     JavaBuilderUtil.cleanupChunkResources(context);
     STUB_TO_SRC.set(context, null);
   }
@@ -288,7 +288,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     // IMPORTANT! must be the first in classpath
     cp.add(getGroovyRtRoot().getPath());
 
-    for (File file : context.getProjectPaths().getCompilationClasspathFiles(chunk, chunk.isTests(), false, false)) {
+    for (File file : context.getProjectPaths().getCompilationClasspathFiles(chunk, chunk.containsTests(), false, false)) {
       cp.add(FileUtil.toCanonicalPath(file.getPath()));
     }
     return new ArrayList<String>(cp);

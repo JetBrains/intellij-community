@@ -170,7 +170,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
 
   @Nullable
   public static RunConfiguration getRunConfiguration(final CompileContext context) {
-    return context.getCompileScope().getUserData(RUN_CONFIGURATION);
+    return getRunConfiguration(context.getCompileScope());
   }
 
   @Nullable

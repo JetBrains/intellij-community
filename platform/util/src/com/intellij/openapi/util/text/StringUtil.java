@@ -887,7 +887,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
-  public static String notNullize(final String s) {
+  public static String notNullize(final @Nullable String s) {
     return notNullize(s, "");
   }
 

@@ -4,7 +4,6 @@ import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.ProjectChunks;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -46,8 +45,6 @@ public interface CompileContext extends UserDataHolder, MessageHandler {
   BuildLoggingManager getLoggingManager();
 
   void setDone(float done);
-
-  ProjectChunks getChunks();
 
   long getCompilationStartStamp();
 

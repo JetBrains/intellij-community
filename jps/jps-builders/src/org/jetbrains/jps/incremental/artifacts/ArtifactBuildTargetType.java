@@ -1,12 +1,12 @@
 package org.jetbrains.jps.incremental.artifacts;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTargetLoader;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
-import org.jetbrains.jps.model.artifact.JpsArtifactService;
 
 import java.util.*;
 
@@ -22,11 +22,13 @@ public class ArtifactBuildTargetType extends BuildTargetType<ArtifactBuildTarget
 
   @NotNull
   @Override
-  public Collection<ArtifactBuildTarget> computeAllTargets(@NotNull JpsModel model) {
+  public List<ArtifactBuildTarget> computeAllTargets(@NotNull JpsModel model) {
     Collection<JpsArtifact> artifacts = JpsBuilderArtifactService.getInstance().getArtifacts(model, true);
     List<ArtifactBuildTarget> targets = new ArrayList<ArtifactBuildTarget>(artifacts.size());
     for (JpsArtifact artifact : artifacts) {
-      targets.add(new ArtifactBuildTarget(artifact));
+      if (!StringUtil.isEmpty(artifact.getOutputPath())) {
+        targets.add(new ArtifactBuildTarget(artifact));
+      }
     }
     return targets;
   }
@@ -42,7 +44,7 @@ public class ArtifactBuildTargetType extends BuildTargetType<ArtifactBuildTarget
 
     public Loader(JpsModel model) {
       myArtifacts = new HashMap<String, JpsArtifact>();
-      for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(model.getProject())) {
+      for (JpsArtifact artifact : JpsBuilderArtifactService.getInstance().getArtifacts(model, true)) {
         myArtifacts.put(artifact.getName(), artifact);
       }
     }
