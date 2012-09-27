@@ -826,7 +826,14 @@ public class GrStringUtil {
   public static boolean isWellEndedString(PsiElement element) {
     final String text = element.getText();
 
-    if (!text.endsWith("'''") && !text.endsWith("\"\"\"") && !text.endsWith("/") && !text.endsWith("/$")) return false;
+    if (!(text.endsWith("'") ||
+          text.endsWith("\"") ||
+          text.endsWith("'''") ||
+          text.endsWith("\"\"\"") ||
+          text.endsWith("/") ||
+          text.endsWith("/$"))) {
+      return false;
+    }
 
 
     final IElementType type = element.getNode().getElementType();
