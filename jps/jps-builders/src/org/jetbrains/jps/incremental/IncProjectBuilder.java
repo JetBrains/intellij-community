@@ -202,12 +202,6 @@ public class IncProjectBuilder {
     }
   }
 
-  private float updateFractionBuilderFinished(final float delta) {
-    myTargetsProcessed += delta;
-    float processed = myTargetsProcessed;
-    return processed / myTotalTargetsWork;
-  }
-
   private void runBuild(CompileContextImpl context, boolean forceCleanCaches) throws ProjectBuildException {
     context.setDone(0.0f);
 
@@ -495,8 +489,7 @@ public class IncProjectBuilder {
       buildTargetsChunk(context, chunk);
     }
     else {
-      final float fraction = updateFractionBuilderFinished(chunk.getTargets().size());
-      context.setDone(fraction);
+      updateDoneFraction(context, chunk.getTargets().size());
     }
   }
 
@@ -523,7 +516,9 @@ public class IncProjectBuilder {
         }
       }
       buildModuleChunk(context, new ModuleChunk(moduleTargets));
+      return;
     }
+
     BuildTarget<?> target = targets.iterator().next();
     if (target instanceof ModuleBuildTarget) {
       ModuleBuildTarget moduleBuildTarget = (ModuleBuildTarget)target;
@@ -534,10 +529,18 @@ public class IncProjectBuilder {
     }
   }
 
-  private static void buildTarget(BuildTarget<?> target, CompileContext context) throws ProjectBuildException {
-    for (TargetBuilder<?> builder : BuilderRegistry.getInstance().getTargetBuilders()) {
+  private void buildTarget(BuildTarget<?> target, CompileContext context) throws ProjectBuildException {
+    List<TargetBuilder<?>> builders = BuilderRegistry.getInstance().getTargetBuilders();
+    for (TargetBuilder<?> builder : builders) {
       buildTarget(target, context, builder);
+      updateDoneFraction(context, 1.0f / builders.size());
     }
+  }
+
+  private void updateDoneFraction(CompileContext context, final float delta) {
+    myTargetsProcessed += delta;
+    float processed = myTargetsProcessed;
+    context.setDone(processed / myTotalTargetsWork);
   }
 
   private static <B extends BuildTarget<?>> void buildTarget(B target, CompileContext context, TargetBuilder<?> builder) throws ProjectBuildException {
@@ -812,8 +815,7 @@ public class IncProjectBuilder {
           }
 
           buildersPassed++;
-          final float fraction = updateFractionBuilderFinished(modulesInChunk / (stageCount));
-          context.setDone(fraction);
+          updateDoneFraction(context, modulesInChunk / (stageCount));
         }
       }
     }
