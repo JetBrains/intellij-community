@@ -122,10 +122,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
     List<UIManager.LookAndFeelInfo> lafList = ContainerUtil.newArrayList();
 
-    if (Registry.is("dark.laf.available")) {
-      lafList.add(new DarculaLookAndFeelInfo());
-    }
-
     if (SystemInfo.isMac) {
       lafList.add(new UIManager.LookAndFeelInfo("Default", UIManager.getSystemLookAndFeelClassName()));
     }
@@ -139,14 +135,24 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       }
     }
 
+    if (Registry.is("dark.laf.available")) {
+      lafList.add(new DarculaLookAndFeelInfo());
+    }
+
     myLaFs = lafList.toArray(new UIManager.LookAndFeelInfo[lafList.size()]);
-    Arrays.sort(myLaFs, new Comparator<UIManager.LookAndFeelInfo>() {
-      public int compare(UIManager.LookAndFeelInfo obj1, UIManager.LookAndFeelInfo obj2) {
-        String name1 = obj1.getName();
-        String name2 = obj2.getName();
-        return name1.compareToIgnoreCase(name2);
-      }
-    });
+
+    if (!SystemInfo.isMac) {
+      // do not sort LaFs on mac - the order is determined as Default, Darcula.
+      // when we leave only system LaFs on other OSes, the order also should be determined as Default, Darcula
+      
+      Arrays.sort(myLaFs, new Comparator<UIManager.LookAndFeelInfo>() {
+        public int compare(UIManager.LookAndFeelInfo obj1, UIManager.LookAndFeelInfo obj2) {
+          String name1 = obj1.getName();
+          String name2 = obj2.getName();
+          return name1.compareToIgnoreCase(name2);
+        }
+      });
+    }
 
     myCurrentLaf = getDefaultLaf();
   }
