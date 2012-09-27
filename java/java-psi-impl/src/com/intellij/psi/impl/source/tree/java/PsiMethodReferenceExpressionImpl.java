@@ -256,8 +256,10 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           if (!(conflict instanceof MethodCandidateInfo)) continue;
           final PsiMethod psiMethod = ((MethodCandidateInfo)conflict).getElement();
           if (psiMethod == null) continue;
+          PsiSubstitutor subst = PsiSubstitutor.EMPTY;
+          subst = subst.putAll(mySubstitutor);
           if (!LambdaUtil.areAcceptable(mySignature,
-                                        psiMethod.getSignature(conflict.getSubstitutor()), myContainingClass, mySubstitutor)) {
+                                        psiMethod.getSignature(subst.putAll(conflict.getSubstitutor())), myContainingClass, mySubstitutor)) {
             iterator.remove();
           }
         }

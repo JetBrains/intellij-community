@@ -19,3 +19,18 @@ class MyTest {
         new B().m(10);
     }
 }
+
+class MyTest1 {
+
+    interface I {
+        void m();
+    }
+
+    void call(I s) {}
+
+    I i = <error descr="Cannot resolve symbol 'NonExistentType'">NonExistentType</error>::m;
+
+    {
+        call(<error descr="Cannot resolve symbol 'NonExistentType'">NonExistentType</error>::m);
+    }
+}

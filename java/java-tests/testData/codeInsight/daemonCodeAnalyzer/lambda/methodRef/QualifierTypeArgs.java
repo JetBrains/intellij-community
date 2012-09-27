@@ -1,3 +1,5 @@
+import java.util.*;
+
 class MyTest {
   interface I {
     String m(Foo<String> f);
@@ -27,4 +29,10 @@ class MyTest1 {
           I i = Foo::foo;
        }
     }
+}
+
+class MyTest2 {
+  public static void main(String[] args) {
+    Arrays.sort(new String[0], String.CASE_INSENSITIVE_ORDER::compare);
+  }
 }
