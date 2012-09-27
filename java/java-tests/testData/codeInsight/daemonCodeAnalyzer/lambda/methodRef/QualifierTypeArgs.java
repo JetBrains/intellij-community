@@ -14,3 +14,17 @@ class MyTest {
     }
   }
 }
+
+class MyTest1 {
+    interface I {
+       String m(Foo f);
+    }
+
+    static class Foo<X> {
+       String foo() { return null; }
+
+       static void test() {
+          I i = Foo::foo;
+       }
+    }
+}

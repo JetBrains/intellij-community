@@ -591,7 +591,9 @@ public class LambdaUtil {
     if (signatureParameterTypes1.length != signatureParameterTypes2.length) {
       if (signatureParameterTypes1.length == signatureParameterTypes2.length + 1) {
         final PsiClassType classType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, psiSubstitutor);
-        if (signatureParameterTypes1[0].equals(classType)) {
+        final PsiType receiverType = signatureParameterTypes1[0];
+        if (receiverType.equals(classType) || 
+            (receiverType instanceof PsiClassType && ((PsiClassType)receiverType).isRaw() && receiverType.equals(TypeConversionUtil.erasure(classType)))) {
           offset++;
         }
         else {
