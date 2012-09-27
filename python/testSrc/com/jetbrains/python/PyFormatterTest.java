@@ -207,6 +207,12 @@ public class PyFormatterTest extends PyTestCase {
     assertEquals(expected, reformatted.getText());
   }
 
+  public void testWrapDefinitionWithLongLine() { // IDEA-92081
+    settings().RIGHT_MARGIN = 30;
+    settings().WRAP_LONG_LINES = true;
+    doTest();
+  }
+  
   private void doTest() {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
