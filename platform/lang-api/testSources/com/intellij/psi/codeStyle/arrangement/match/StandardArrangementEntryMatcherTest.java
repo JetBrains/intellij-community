@@ -118,7 +118,4 @@ public class StandardArrangementEntryMatcherTest {
     assertTrue(matcher.isMatched(publicFieldEntry));
     assertTrue(matcher.isMatched(publicStaticFieldEntry));
   }
-  
-  private interface TypeAndModifierAware extends TypeAwareArrangementEntry, ModifierAwareArrangementEntry {
-  }
 }
