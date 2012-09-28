@@ -47,34 +47,48 @@ public class QueueProcessor<T> {
 
   private final PairConsumer<T, Runnable> myProcessor;
   private final LinkedList<T> myQueue = new LinkedList<T>();
-  private final Runnable myContinuationContext;
+  private final Runnable myContinuationContext = new Runnable() {
+    @Override
+    public void run() {
+      synchronized (myQueue) {
+        isProcessing = false;
+        if (myQueue.isEmpty()) {
+          myQueue.notifyAll();
+        }
+        else {
+          startProcessing();
+        }
+      }
+    }
+  };
 
   private boolean isProcessing;
   private boolean myStarted;
 
   private final ThreadToUse myThreadToUse;
   private final Condition<?> myDeathCondition;
-  private final Map<MyOverrideEquals, ModalityState> myModalityState;
+  private final Map<MyOverrideEquals, ModalityState> myModalityState = new HashMap<MyOverrideEquals, ModalityState>();
 
   /**
    * Constructs a QueueProcessor, which will autostart as soon as the first element is added to it.
    */
-  public QueueProcessor(Consumer<T> processor) {
+  public QueueProcessor(@NotNull Consumer<T> processor) {
     this(processor, Condition.FALSE);
   }
 
   /**
    * Constructs a QueueProcessor, which will autostart as soon as the first element is added to it.
    */
-  public QueueProcessor(Consumer<T> processor, @NotNull Condition<?> deathCondition) {
+  public QueueProcessor(@NotNull Consumer<T> processor, @NotNull Condition<?> deathCondition) {
     this(processor, deathCondition, true);
   }
 
-  public QueueProcessor(final Consumer<T> processor, final Condition<?> deathCondition, boolean autostart) {
+  public QueueProcessor(@NotNull Consumer<T> processor, @NotNull Condition<?> deathCondition, boolean autostart) {
     this(wrappingProcessor(processor), autostart, ThreadToUse.POOLED, deathCondition);
   }
 
-  private static <T> PairConsumer<T, Runnable> wrappingProcessor(final Consumer<T> processor) {
+  @NotNull
+  private static <T> PairConsumer<T, Runnable> wrappingProcessor(@NotNull final Consumer<T> processor) {
     return new PairConsumer<T, Runnable>() {
       @Override
       public void consume(final T item, Runnable runnable) {
@@ -99,28 +113,14 @@ public class QueueProcessor<T> {
    *                  After QueueProcessor has started once, autostart setting doesn't matter anymore: all other elements will be processed immediately.
    */
 
-  public QueueProcessor(final PairConsumer<T, Runnable> processor, boolean autostart, final ThreadToUse threadToUse,
-                        final Condition<?> deathCondition) {
+  public QueueProcessor(@NotNull PairConsumer<T, Runnable> processor,
+                        boolean autostart,
+                        @NotNull ThreadToUse threadToUse,
+                        @NotNull Condition<?> deathCondition) {
     myProcessor = processor;
     myStarted = autostart;
     myThreadToUse = threadToUse;
     myDeathCondition = deathCondition;
-    myModalityState = new HashMap<MyOverrideEquals, ModalityState>();
-
-    myContinuationContext = new Runnable() {
-      @Override
-      public void run() {
-        synchronized (myQueue) {
-          isProcessing = false;
-          if (myQueue.isEmpty()) {
-            myQueue.notifyAll();
-          }
-          else {
-            startProcessing();
-          }
-        }
-      }
-    };
   }
 
   /**
@@ -139,7 +139,7 @@ public class QueueProcessor<T> {
     }
   }
 
-  public void add(T t, ModalityState state) {
+  public void add(@NotNull T t, @NotNull ModalityState state) {
     synchronized (myQueue) {
       myModalityState.put(new MyOverrideEquals(t), state);
     }
@@ -206,7 +206,7 @@ public class QueueProcessor<T> {
       }
     };
     final Application application = ApplicationManager.getApplication();
-    if (ThreadToUse.AWT.equals(myThreadToUse)) {
+    if (myThreadToUse == ThreadToUse.AWT) {
       final ModalityState state = myModalityState.remove(new MyOverrideEquals(item));
       if (state != null) {
         application.invokeLater(runnable, state);
@@ -221,7 +221,7 @@ public class QueueProcessor<T> {
     return true;
   }
 
-  public static void runSafely(Runnable run) {
+  public static void runSafely(@NotNull Runnable run) {
     try {
       run.run();
     }
@@ -230,6 +230,7 @@ public class QueueProcessor<T> {
         LOG.error(e);
       }
       catch (Throwable e2) {
+        //noinspection CallToPrintStackTrace
         e2.printStackTrace();
       }
     }
@@ -237,14 +238,14 @@ public class QueueProcessor<T> {
 
   public boolean isEmpty() {
     synchronized (myQueue) {
-      return myQueue.isEmpty() && (!isProcessing);
+      return myQueue.isEmpty() && !isProcessing;
     }
   }
 
   private static class MyOverrideEquals {
     private final Object myDelegate;
 
-    private MyOverrideEquals(Object delegate) {
+    private MyOverrideEquals(@NotNull Object delegate) {
       myDelegate = delegate;
     }
 
