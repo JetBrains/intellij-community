@@ -16,7 +16,6 @@ import java.util.List;
  * @author nik
  */
 public class JpsFacetSerializer {
-  private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
   @NonNls public static final String FACET_TAG = "facet";
   @NonNls public static final String TYPE_ATTRIBUTE = "type";
   @NonNls public static final String CONFIGURATION_TAG = "configuration";
@@ -39,7 +38,7 @@ public class JpsFacetSerializer {
         }
       }
     }
-    XmlSerializer.serializeInto(managerState, facetManagerElement, SERIALIZATION_FILTERS);
+    XmlSerializer.serializeInto(managerState, facetManagerElement, new SkipDefaultValuesSerializationFilters());
   }
 
   private static void addFacets(JpsModule module, List<FacetState> facets, @Nullable final JpsElement parentFacet,
