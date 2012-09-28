@@ -137,7 +137,7 @@ public class FileAttributesReadingTest {
     FileUtil.writeToFile(file, myTestData);
     assertTrue(file.setLastModified(file.lastModified() - 5000));
     assertTrue(file.setWritable(false, false));
-    final File link = IoTestUtil.createTempLink(file.getPath(), new File(myTempDirectory, "link").getPath());
+    final File link = IoTestUtil.createSymLink(file.getPath(), new File(myTempDirectory, "link").getPath());
 
     final FileAttributes attributes = getAttributes(link);
     assertEquals(FileAttributes.Type.FILE, attributes.type);
@@ -158,8 +158,8 @@ public class FileAttributesReadingTest {
     FileUtil.writeToFile(file, myTestData);
     assertTrue(file.setLastModified(file.lastModified() - 5000));
     assertTrue(file.setWritable(false, false));
-    final File link1 = IoTestUtil.createTempLink(file.getPath(), new File(myTempDirectory, "link1").getPath());
-    final File link2 = IoTestUtil.createTempLink(link1.getPath(), new File(myTempDirectory, "link2").getPath());
+    final File link1 = IoTestUtil.createSymLink(file.getPath(), new File(myTempDirectory, "link1").getPath());
+    final File link2 = IoTestUtil.createSymLink(link1.getPath(), new File(myTempDirectory, "link2").getPath());
 
     final FileAttributes attributes = getAttributes(link2);
     assertEquals(FileAttributes.Type.FILE, attributes.type);
@@ -179,7 +179,7 @@ public class FileAttributesReadingTest {
     final File file = FileUtil.createTempDirectory(myTempDirectory, "test.", ".tmp");
     if (SystemInfo.isUnix) assertTrue(file.setWritable(false, false));
     assertTrue(file.setLastModified(file.lastModified() - 5000));
-    final File link = IoTestUtil.createTempLink(file.getPath(), new File(myTempDirectory, "link").getPath());
+    final File link = IoTestUtil.createSymLink(file.getPath(), new File(myTempDirectory, "link").getPath());
 
     final FileAttributes attributes = getAttributes(link);
     assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
@@ -197,7 +197,7 @@ public class FileAttributesReadingTest {
     assumeTrue(SystemInfo.areSymLinksSupported);
 
     final File file = FileUtil.createTempFile(myTempDirectory, "test.", ".txt", false);
-    final File link = IoTestUtil.createTempLink(file.getPath(), new File(myTempDirectory, "link").getPath());
+    final File link = IoTestUtil.createSymLink(file.getPath(), new File(myTempDirectory, "link").getPath(), false);
 
     final FileAttributes attributes = getAttributes(link);
     assertNull(attributes.type);
@@ -213,7 +213,7 @@ public class FileAttributesReadingTest {
     assumeTrue(SystemInfo.areSymLinksSupported);
 
     final File dir = FileUtil.createTempDirectory(myTempDirectory, "test.", ".dir");
-    final File link = IoTestUtil.createTempLink(dir.getPath(), new File(dir, "link").getPath());
+    final File link = IoTestUtil.createSymLink(dir.getPath(), new File(dir, "link").getPath());
 
     final FileAttributes attributes = getAttributes(link);
     assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);

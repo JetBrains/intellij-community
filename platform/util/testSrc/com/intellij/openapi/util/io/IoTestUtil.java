@@ -32,8 +32,11 @@ import static org.junit.Assert.*;
 public class IoTestUtil {
   private IoTestUtil() { }
 
-  // todo[r.sh] use NIO2 API after migration to JDK 7
-  public static File createTempLink(@NotNull final String target, @NotNull final String link) throws InterruptedException, IOException {
+  public static File createSymLink(@NotNull String target, @NotNull String link) throws InterruptedException, IOException {
+    return createSymLink(target, link, true);
+  }
+
+  public static File createSymLink(@NotNull String target, @NotNull String link, boolean shouldExist) throws InterruptedException, IOException {
     assertTrue(SystemInfo.isWindows || SystemInfo.isUnix);
 
     final File targetFile = new File(FileUtil.toSystemDependentName(target));
@@ -51,7 +54,6 @@ public class IoTestUtil {
     final int res = runCommand(command);
     assertEquals(command.command().toString(), 0, res);
 
-    final boolean shouldExist = targetFile.exists() || SystemInfo.isWindows && SystemInfo.JAVA_VERSION.startsWith("1.6");
     assertEquals("target=" + target + ", link=" + linkFile, shouldExist, linkFile.exists());
     return linkFile;
   }
@@ -220,10 +222,6 @@ public class IoTestUtil {
     final File dir = new File(parent, name);
     assertTrue(dir.getPath(), dir.mkdirs());
     return dir;
-  }
-
-  public static File createTestFile(final String name) throws IOException {
-    return createTestFile(new File(FileUtil.getTempDirectory()), name);
   }
 
   public static File createTestFile(final File parent, final String name) throws IOException {
