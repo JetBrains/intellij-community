@@ -442,21 +442,37 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   @Nullable
   @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
-    final DirDiffElementImpl element = myElements.get(rowIndex);
-    if (element.isSeparator()) {
-      return columnIndex == 0 ? element.getName() : null;
-    }
+    try {
+      final DirDiffElementImpl element = myElements.get(rowIndex);
+      if (element.isSeparator()) {
+        return columnIndex == 0 ? element.getName() : null;
+      }
 
-    final String name = getColumnName(columnIndex);
-    boolean isSrc = columnIndex < getColumnCount() / 2;
-    if (name.equals(COLUMN_NAME)) {
-      return isSrc ? element.getSourceName() : element.getTargetName();
-    } else if (name.equals(COLUMN_SIZE)) {
-      return isSrc ? element.getSourceSize() : element.getTargetSize();
-    } else  if (name.equals(COLUMN_DATE)) {
-      return isSrc ? element.getSourceModificationDate() : element.getTargetModificationDate();
+      final String name = getColumnName(columnIndex);
+      boolean isSrc = columnIndex < getColumnCount() / 2;
+      if (name.equals(COLUMN_NAME)) {
+        return isSrc ? element.getSourceName() : element.getTargetName();
+      } else if (name.equals(COLUMN_SIZE)) {
+        return isSrc ? element.getSourceSize() : element.getTargetSize();
+      } else  if (name.equals(COLUMN_DATE)) {
+        return isSrc ? element.getSourceModificationDate() : element.getTargetModificationDate();
+      }
+      return "";
     }
-    return "";
+    catch (Exception e) {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          myElements.clear();
+          fireTableDataChanged();
+          myTable.getEmptyText().setText("Data has been changed externally. Reloading data...");
+          reloadModel(true);
+          myTable.repaint();
+        }
+      });
+      return "";
+    }
   }
 
   public List<DirDiffElementImpl> getSelectedElements() {
