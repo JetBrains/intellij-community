@@ -464,9 +464,9 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         final String localizedMessage = XmlErrorMessages.message("attribute.is.not.allowed.here", name);
         final HighlightInfo highlightInfo = reportAttributeProblem(tag, name, attribute, localizedMessage);
         if (highlightInfo != null) {
-          final XmlFile xmlFile = (XmlFile)tag.getContainingFile();
-          if (xmlFile != null) {
-            XmlExtension.getExtension(xmlFile).createAddAttributeFix(attribute, highlightInfo);
+          PsiFile file = tag.getContainingFile();
+          if (file != null) {
+            XmlExtension.getExtension(file).createAddAttributeFix(attribute, highlightInfo);
           }
         }
       }
