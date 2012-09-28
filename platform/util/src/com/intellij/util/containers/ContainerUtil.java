@@ -693,7 +693,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   public static <T> List<T> findAll(@NotNull Collection<? extends T> collection, @NotNull Condition<? super T> condition) {
-    final ArrayList<T> result = new ArrayList<T>();
+    final List<T> result = new SmartList<T>();
     for (final T t : collection) {
       if (condition.value(t)) {
         result.add(t);
@@ -732,7 +732,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   public static <T, V> List<V> findAll(@NotNull Collection<? extends T> collection, @NotNull Class<V> instanceOf) {
-    final ArrayList<V> result = new ArrayList<V>();
+    final List<V> result = new SmartList<V>();
     for (final T t : collection) {
       if (instanceOf.isInstance(t)) {
         result.add((V)t);
