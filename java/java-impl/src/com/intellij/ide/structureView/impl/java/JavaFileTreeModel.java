@@ -47,6 +47,7 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
                         new PublicElementsFilter()};
   }
 
+  @NotNull
   @Override
   public Collection<NodeProvider> getNodeProviders() {
     return NODE_PROVIDERS;

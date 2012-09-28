@@ -16,11 +16,12 @@
 package com.intellij.ide.structureView;
 
 import com.intellij.ide.util.treeView.smartTree.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
@@ -43,7 +44,7 @@ import java.util.List;
 public abstract class TextEditorBasedStructureViewModel implements StructureViewModel, ProvidingTreeModel {
   private final Editor myEditor;
   private final PsiFile myPsiFile;
-  private final CaretListener myCaretListener;
+  private final Disposable myDisposable = Disposer.newDisposable();
   private final List<FileEditorPositionListener> myListeners = ContainerUtil.createEmptyCOWList();
 
   /**
@@ -68,39 +69,42 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   private TextEditorBasedStructureViewModel(Editor editor, PsiFile file) {
     myEditor = editor;
     myPsiFile = file;
-    myCaretListener = new CaretListener() {
-      public void caretPositionChanged(CaretEvent e) {
-        if (Comparing.equal(e.getEditor(), myEditor)) {
-          fireCaretPositionChanged();
-        }
-      }
 
-      private void fireCaretPositionChanged() {
-        for (FileEditorPositionListener listener : myListeners) {
-          listener.onCurrentElementChanged();
+    if (editor != null) {
+      EditorFactory.getInstance().getEventMulticaster().addCaretListener(new CaretListener() {
+        @Override
+        public void caretPositionChanged(CaretEvent e) {
+          if (e.getEditor().equals(myEditor)) {
+            for (FileEditorPositionListener listener : myListeners) {
+              listener.onCurrentElementChanged();
+            }
+          }
         }
-      }
-    };
-
-    EditorFactory.getInstance().getEventMulticaster().addCaretListener(myCaretListener);
+      },myDisposable);
+    }
   }
 
+  @Override
   public final void addEditorPositionListener(FileEditorPositionListener listener) {
     myListeners.add(listener);
   }
 
+  @Override
   public final void removeEditorPositionListener(FileEditorPositionListener listener) {
     myListeners.remove(listener);
   }
 
+  @Override
   public void dispose() {
-    EditorFactory.getInstance().getEventMulticaster().removeCaretListener(myCaretListener);
+    Disposer.dispose(myDisposable);
   }
 
+  @Override
   public boolean shouldEnterElement(final Object element) {
     return false;
   }
 
+  @Override
   public Object getCurrentEditorElement() {
     if (myEditor == null) return null;
     final int offset = myEditor.getCaretModel().getOffset();
@@ -131,10 +135,12 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     return false;
   }
 
+  @Override
   public void addModelListener(ModelListener modelListener) {
 
   }
 
+  @Override
   public void removeModelListener(ModelListener modelListener) {
 
   }
@@ -154,28 +160,32 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     return myEditor;
   }
 
+  @Override
   @NotNull
   public Grouper[] getGroupers() {
     return Grouper.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public Sorter[] getSorters() {
     return Sorter.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public Filter[] getFilters() {
     return Filter.EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
   public Collection<NodeProvider> getNodeProviders() {
     return Collections.emptyList();
   }
 
   @Override
-  public boolean isEnabled(NodeProvider provider) {
+  public boolean isEnabled(@NotNull NodeProvider provider) {
     return false;
   }
 }
