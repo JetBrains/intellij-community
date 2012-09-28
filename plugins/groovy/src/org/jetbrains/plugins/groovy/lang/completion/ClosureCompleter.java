@@ -13,22 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.completion.closureParameters;
+package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureParameterInfo;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -43,12 +46,57 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class ClosureTemplateBuilder {
+public abstract class ClosureCompleter {
+  private static ExtensionPointName<ClosureCompleter> EP_NAME = ExtensionPointName.create("org.intellij.groovy.closureCompleter");
+
+  @Nullable
+  protected abstract List<ClosureParameterInfo> getParameterInfos(InsertionContext context,
+                                                                  PsiMethod method,
+                                                                  PsiSubstitutor substitutor,
+                                                                  Document document,
+                                                                  int offset,
+                                                                  PsiElement parent);
+
+  public static boolean runClosureCompletion(InsertionContext context,
+                                             PsiMethod method,
+                                             PsiSubstitutor substitutor,
+                                             Document document,
+                                             int offset,
+                                             PsiElement parent) {
+    for (ClosureCompleter completer : EP_NAME.getExtensions()) {
+      final List<ClosureParameterInfo> parameterInfos = completer.getParameterInfos(context, method, substitutor, document, offset, parent);
+      if (parameterInfos != null) {
+        runClosureTemplate(context, document, offset, substitutor, method, parameterInfos);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static boolean runClosureTemplate(InsertionContext context,
+                                            Document document,
+                                            int offset,
+                                            PsiSubstitutor substitutor,
+                                            PsiMethod method,
+                                            final List<ClosureParameterInfo> parameters) {
+    document.insertString(offset, "{\n}");
+    PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
+    final GrClosableBlock closure =
+      PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), offset + 1, GrClosableBlock.class, false);
+    if (closure == null) return false;
+
+    runTemplate(parameters, closure, substitutor, method, context.getProject(), context.getEditor());
+    return true;
+  }
+
   public static void runTemplate(List<ClosureParameterInfo> parameters,
                                  GrClosableBlock block,
                                  PsiSubstitutor substitutor,
                                  PsiMethod method, final Project project,
                                  final Editor editor) {
+    if (method instanceof ClsMethodImpl) method = ((ClsMethodImpl)method).getSourceMirrorMethod();
+
     assert block.getArrow() == null;
     if (parameters.isEmpty()) return;
 
@@ -60,9 +108,8 @@ public class ClosureTemplateBuilder {
       final String type = parameter.getType();
       final String name = parameter.getName();
       if (type != null) {
-        if (method instanceof ClsMethodImpl) method = ((ClsMethodImpl)method).getSourceMirrorMethod();
         final PsiType fromText = JavaPsiFacade.getElementFactory(project).createTypeFromText(type, method);
-        final PsiType substituted = TypeConversionUtil.erasure(substitutor.substitute(fromText));
+        final PsiType substituted = substitutor.substitute(fromText);
         paramTypes.add(substituted);
         buffer.append(substituted.getCanonicalText()).append(" ");
       }
@@ -73,7 +120,6 @@ public class ClosureTemplateBuilder {
       buffer.append(", ");
     }
     buffer.replace(buffer.length() - 2, buffer.length(), " ->}");
-
 
     final Document document = editor.getDocument();
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
@@ -136,4 +182,5 @@ public class ClosureTemplateBuilder {
     TemplateManager manager = TemplateManager.getInstance(project);
     manager.startTemplate(editor, template, templateListener);
   }
+
 }

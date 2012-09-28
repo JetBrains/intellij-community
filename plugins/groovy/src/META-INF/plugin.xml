@@ -69,6 +69,8 @@
     <extensionPoint name="groovySourceFolderDetector" interface="org.jetbrains.plugins.groovy.actions.GroovySourceFolderDetector"/>
 
     <extensionPoint name="mvc.framework" interface="org.jetbrains.plugins.groovy.mvc.MvcFramework"/>
+
+    <extensionPoint name="closureCompleter" interface="org.jetbrains.plugins.groovy.lang.completion.ClosureCompleter"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
@@ -147,6 +149,9 @@
     <defaultImportContributor implementation="org.jetbrains.plugins.groovy.griffon.GriffonDefaultImportContributor"/>
 
     <groovyShellRunner implementation="org.jetbrains.plugins.groovy.console.DefaultGroovyShellRunner" order="last"/>
+
+    <closureCompleter implementation="org.jetbrains.plugins.groovy.lang.completion.GdslClosureCompleter"/>
+    <closureCompleter implementation="org.jetbrains.plugins.groovy.lang.completion.EachWithIndexClosureCompleter"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">

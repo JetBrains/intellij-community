@@ -1,5 +1,4 @@
 contributor(ctype: 'org.codehaus.groovy.runtime.DefaultGroovyMethods') {
-  //closureInMethod(method: [name: 'eachWithIndex', params: ['T', 'groovy.lang.Closure']], params: [entry: null, i: 'int'])
   closureInMethod(method: [name: 'inject', params: ['java.util.Collection<T>', 'groovy.lang.Closure']], params: [acc: null, val: 'T'])
 
   closureInMethod(method: [name: 'min', params: ['java.util.Collection<T>', 'groovy.lang.Closure']], params: [a: 'T', b: "T"])
