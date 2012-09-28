@@ -142,7 +142,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
   public static IndexedRelevantResource<String, XsdNamespaceBuilder> guessSchema(String namespace,
                                                                                  @Nullable final String tagName,
                                                                                  @Nullable final String version,
-                                                                                 Module module) {
+                                                                                 @Nullable Module module) {
 
     if (module == null) return null;
 
@@ -175,7 +175,12 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     IndexedRelevantResource<String,XsdNamespaceBuilder> resource =
       guessSchema(namespace, tagName, version, ModuleUtilCore.findModuleForPsiElement(file));
     if (resource == null) return null;
-    PsiFile psiFile = file.getManager().findFile(resource.getFile());
+    return findSchemaFile(resource.getFile(), file);
+  }
+
+  @Nullable
+  private static XmlFile findSchemaFile(VirtualFile resourceFile, PsiFile baseFile) {
+    PsiFile psiFile = baseFile.getManager().findFile(resourceFile);
     return psiFile instanceof XmlFile ? (XmlFile)psiFile : null;
   }
 
@@ -189,6 +194,6 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     String dtdFileName = new File(dtdUri).getName();
     List<IndexedRelevantResource<String, XsdNamespaceBuilder>>
       list = getResourcesByNamespace(dtdFileName, baseFile.getProject(), ModuleUtilCore.findModuleForPsiElement(baseFile));
-    return list.isEmpty() ? null : (XmlFile)baseFile.getManager().findFile(list.get(0).getFile());
+    return list.isEmpty() ? null : findSchemaFile(list.get(0).getFile(), baseFile);
   }
 }
