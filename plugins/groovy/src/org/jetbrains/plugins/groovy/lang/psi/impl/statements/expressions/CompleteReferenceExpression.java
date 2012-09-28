@@ -58,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.SubstitutorComputer;
 
 import java.util.*;
 
@@ -288,7 +289,7 @@ public class CompleteReferenceExpression {
 
   private static void addVariantsWithSameQualifier(PrefixMatcher matcher, PsiElement element,
                                                    GrReferenceExpression patternExpression,
-                                                   GrExpression patternQualifier,
+                                                   @Nullable GrExpression patternQualifier,
                                                    Set<String> result) {
     if (element instanceof GrReferenceExpression && element != patternExpression && !PsiUtil.isLValue((GroovyPsiElement)element)) {
       final GrReferenceExpression refExpr = (GrReferenceExpression)element;
@@ -377,6 +378,7 @@ public class CompleteReferenceExpression {
     private final boolean myMethodPointerOperator;
     private final boolean myIsMap;
     private Set<String> myNonDeclaredVars = new com.intellij.util.containers.HashSet<String>();
+    private final SubstitutorComputer mySubstitutorComputer;
 
     protected CompleteReferenceProcessor(GrReferenceExpression place, Consumer<LookupElement> consumer, @NotNull PrefixMatcher matcher, CompletionParameters parameters) {
       super(null, EnumSet.allOf(ResolveKind.class), place, PsiType.EMPTY_ARRAY);
@@ -391,6 +393,8 @@ public class CompleteReferenceExpression {
       myFieldPointerOperator = place.hasAt();
       myMethodPointerOperator = place.getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER;
       myIsMap = isMap(place);
+      final PsiType thisType = GrReferenceResolveUtil.getThisType(place);
+      mySubstitutorComputer = new SubstitutorComputer(thisType, PsiType.EMPTY_ARRAY, PsiType.EMPTY_ARRAY, true, place, place.getParent());
     }
 
     private static boolean shouldSkipPackages(GrReferenceExpression place) {
@@ -416,6 +420,9 @@ public class CompleteReferenceExpression {
 
         PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
         if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
+        if (element instanceof PsiMethod) {
+          substitutor = mySubstitutorComputer.obtainSubstitutor(substitutor, (PsiMethod)element, state);
+        }
 
         consume(new GroovyResolveResultImpl(namedElement, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK));
       }

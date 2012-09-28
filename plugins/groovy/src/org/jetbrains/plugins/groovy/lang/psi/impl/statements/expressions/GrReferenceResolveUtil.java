@@ -255,4 +255,15 @@ public class GrReferenceResolveUtil {
     }
     return null;
   }
+
+  public static PsiType getThisType(GrReferenceExpression ref) {
+    GrExpression qualifier = ref.getQualifierExpression();
+    if (qualifier != null) {
+      PsiType qType = qualifier.getType();
+      if (qType != null) return qType;
+    }
+
+    return TypesUtil.getJavaLangObject(ref);
+  }
+
 }

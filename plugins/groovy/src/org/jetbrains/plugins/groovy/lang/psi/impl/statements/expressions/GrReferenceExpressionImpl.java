@@ -189,7 +189,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     List<GroovyResolveResult> accessorResults = new ArrayList<GroovyResolveResult>();
     for (String accessorName : accessorNames) {
       AccessorResolverProcessor accessorResolver =
-        new AccessorResolverProcessor(accessorName, name, this, !isLValue, false, getThisType(), getTypeArguments());
+        new AccessorResolverProcessor(accessorName, name, this, !isLValue, false, GrReferenceResolveUtil.getThisType(this), getTypeArguments());
       GrReferenceResolveUtil.resolveImpl(accessorResolver, this);
       final GroovyResolveResult[] candidates = accessorResolver.getCandidates();
 
@@ -300,7 +300,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     //search for getters
     for (String getterName : GroovyPropertyUtils.suggestGettersName(name)) {
       AccessorResolverProcessor getterResolver =
-        new AccessorResolverProcessor(getterName, name, this, true, genericsMatter, getThisType(), getTypeArguments());
+        new AccessorResolverProcessor(getterName, name, this, true, genericsMatter, GrReferenceResolveUtil.getThisType(this), getTypeArguments());
       GrReferenceResolveUtil.resolveImpl(getterResolver, this);
       final GroovyResolveResult[] candidates = getterResolver.getCandidates(); //can be only one candidate
       if (!allVariants && candidates.length == 1) {
@@ -358,7 +358,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         argTypes[i] = TypeConversionUtil.erasure(argTypes[i]);
       }
     }
-    return new MethodResolverProcessor(name, this, false, getThisType(), argTypes, getTypeArguments(), allVariants, byShape);
+    return new MethodResolverProcessor(name, this, false, GrReferenceResolveUtil.getThisType(this), argTypes, getTypeArguments(), allVariants, byShape);
   }
 
   public void accept(GroovyElementVisitor visitor) {
@@ -674,16 +674,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       default:
         return GroovyResolveResult.EMPTY_ARRAY;
     }
-  }
-
-  private PsiType getThisType() {
-    GrExpression qualifier = getQualifierExpression();
-    if (qualifier != null) {
-      PsiType qType = qualifier.getType();
-      if (qType != null) return qType;
-    }
-
-    return TypesUtil.getJavaLangObject(this);
   }
 
   enum Kind {

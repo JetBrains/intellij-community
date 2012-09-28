@@ -25,8 +25,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -52,12 +54,16 @@ public class ClosureTemplateBuilder {
 
     StringBuilder buffer = new StringBuilder();
     buffer.append("{");
+
+    List<PsiType> paramTypes = ContainerUtil.newArrayList();
     for (ClosureParameterInfo parameter : parameters) {
       final String type = parameter.getType();
       final String name = parameter.getName();
       if (type != null) {
+        if (method instanceof ClsMethodImpl) method = ((ClsMethodImpl)method).getSourceMirrorMethod();
         final PsiType fromText = JavaPsiFacade.getElementFactory(project).createTypeFromText(type, method);
         final PsiType substituted = TypeConversionUtil.erasure(substitutor.substitute(fromText));
+        paramTypes.add(substituted);
         buffer.append(substituted.getCanonicalText()).append(" ");
       }
       else {
@@ -78,12 +84,13 @@ public class ClosureTemplateBuilder {
 
     final TemplateBuilderImpl builder = new TemplateBuilderImpl(templateClosure);
 
+    int i = 0;
     for (GrParameter p : templateClosure.getParameters()) {
       final GrTypeElement typeElement = p.getTypeElementGroovy();
       final PsiElement nameIdentifier = p.getNameIdentifierGroovy();
 
       if (typeElement != null) {
-        final TypeConstraint[] typeConstraints = {SupertypeConstraint.create(typeElement.getType())};
+        final TypeConstraint[] typeConstraints = {SupertypeConstraint.create(paramTypes.get(i++))};
         final ChooseTypeExpression expression = new ChooseTypeExpression(typeConstraints, PsiManager.getInstance(project), nameIdentifier.getResolveScope());
         builder.replaceElement(typeElement, expression);
       }
