@@ -1,6 +1,6 @@
 # encoding: utf-8
 """
-This thing tries to restore public interface of objects that don't have a python
+Script that restores public interface of objects that don't have a Python
 source: C extensions and built-in objects. It does not reimplement the
 'inspect' module, but complements it.
 
@@ -2385,10 +2385,12 @@ def list_sources(paths):
                 for name in files:
                     if name.endswith('.py'):
                         filePath = join(root, name)
+                        # some files show up but are actually non-existent symlinks
+                        if not os.path.exists(filePath): continue
                         say("%s\t%s\t%d", os.path.normpath(filePath), path, getsize(filePath))
         say('END')
         sys.stdout.flush()
-    except e:
+    except:
         import traceback
         traceback.print_exc()
         sys.exit(1)
@@ -2414,13 +2416,23 @@ def zip_sources(zip_path):
                     break
 
                 if line:
-                    (path, arcpath) = line.split()
+                    # This line will break the split:
+                    # /.../dist-packages/setuptools/script template (dev).py setuptools/script template (dev).py
+                    split_items = line.split()
+                    if len(split_items) > 2:
+                        match_two_files = re.match(r'^(.+\.py)\s+(.+\.py)$', line)
+                        if not match_two_files:
+                            report("Error(zip_sources): invalid line '%s'" % line)
+                            continue
+                        split_items = match_two_files.group(1, 2)
+                    (path, arcpath) = split_items
                     zip.write(path, arcpath)
                 else:
-                    time.sleep(0.05)
+                    # busy waiting for input from PyCharm...
+                    time.sleep(0.10)
             say('OK: ' + zip_filename)
             sys.stdout.flush()
-        except :
+        except:
             import traceback
             traceback.print_exc()
             say('Error creating archive.')
@@ -2629,7 +2641,6 @@ if __name__ == "__main__":
             sys.exit(1)
         zip_sources(args[0])
         sys.exit(0)
-
 
     # build skeleton(s)
     subdir = opts.get('-d', '')
