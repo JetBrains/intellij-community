@@ -1010,7 +1010,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
-  void updatingDone() {
+  void filesUpdateFinished() {
     if(myUpdatingFiles.decrementAndGet() == 0) {
       ++myFilesModCount;
     }
@@ -1844,9 +1844,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       });
       IndexingStamp.flushCache(null);
       if (!contentChange) {
-        if(myUpdatingFiles.decrementAndGet() == 0) {
-          ++myFilesModCount;
-        }
+        filesUpdateFinished();
       }
     }
 
