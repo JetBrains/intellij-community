@@ -41,7 +41,7 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
+import java.util.ArrayList;
 import java.util.List;
 
 public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase implements PsiMethodReferenceExpression {
@@ -273,25 +273,6 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       public CandidateInfo resolveConflict(List<CandidateInfo> conflicts) {
         if (mySignature == null) return null;
 
-        processStaticAccessConflicts(conflicts);
-        for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
-          CandidateInfo conflict = iterator.next();
-          if (!(conflict instanceof MethodCandidateInfo)) continue;
-          final PsiMethod psiMethod = ((MethodCandidateInfo)conflict).getElement();
-          if (psiMethod == null) continue;
-          PsiSubstitutor subst = PsiSubstitutor.EMPTY;
-          subst = subst.putAll(mySubstitutor);
-          if (!LambdaUtil.areAcceptable(mySignature,
-                                        psiMethod.getSignature(subst.putAll(conflict.getSubstitutor())), myContainingClass, mySubstitutor, psiMethod.isVarArgs())) {
-            iterator.remove();
-          }
-        }
-        if (conflicts.size() == 1) return conflicts.get(0);
-        return null;
-      }
-
-      private void processStaticAccessConflicts(List<CandidateInfo> conflicts) {
-        LOG.assertTrue(mySignature != null);
         boolean hasReceiver = false;
         final PsiType[] parameterTypes = mySignature.getParameterTypes();
         if (parameterTypes.length > 0) {
@@ -301,69 +282,49 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           }
         }
 
-        final int length = mySignature.getParameterTypes().length;
-        if (!hasReceiver) {
-          final int conflictsCount = conflicts.size();
-          final CandidateInfo[] newConflictsArray = conflicts.toArray(new CandidateInfo[conflictsCount]);
-          for (int i = 1; i < conflictsCount; i++) {
-            final CandidateInfo method = newConflictsArray[i];
-            final boolean staticsScopeCorrect = method.isStaticsScopeCorrect();
-            final PsiMethod method1 = (PsiMethod)method.getElement();
-            for (int j = 0; j < i; j++) {
-              final CandidateInfo conflict = newConflictsArray[j];
-              assert conflict != method;
-              final boolean staticsScopeCorrect2 = conflict.isStaticsScopeCorrect();
-              if (method1.getParameterList().getParametersCount() == length) {
-                if (staticsScopeCorrect && staticsScopeCorrect2) continue;
-                if (staticsScopeCorrect) {
-                  conflicts.remove(conflict);
-                }
-                else {
-                  conflicts.remove(method);
-                  break;
-                }
-              }
-              else {
-                if (!staticsScopeCorrect2) {
-                  conflicts.remove(conflict);
-                }
-                else {
-                  conflicts.remove(method);
-                  break;
-                }
-              }
+        final List<CandidateInfo> firstCandidates = new ArrayList<CandidateInfo>();
+        final List<CandidateInfo> secondCandidates = new ArrayList<CandidateInfo>();
+        for (CandidateInfo conflict : conflicts) {
+          if (!(conflict instanceof MethodCandidateInfo)) continue;
+          final PsiMethod psiMethod = ((MethodCandidateInfo)conflict).getElement();
+          if (psiMethod == null) continue;
+          PsiSubstitutor subst = PsiSubstitutor.EMPTY;
+          subst = subst.putAll(mySubstitutor);
+          final PsiType[] signatureParameterTypes2 = psiMethod.getSignature(subst).getParameterTypes();
+
+          final boolean varArgs = psiMethod.isVarArgs();
+          final boolean isStatic = psiMethod.hasModifierProperty(PsiModifier.STATIC);
+          
+          if ((parameterTypes.length == signatureParameterTypes2.length || varArgs && parameterTypes.length >= signatureParameterTypes2.length) && 
+              (isStatic || psiMethod.isConstructor())) {
+            boolean correct = true;
+            for (int i = 0; i < parameterTypes.length; i++) {
+              final PsiType type1 = parameterTypes[i];
+              final PsiType type2 = varArgs && i >= signatureParameterTypes2.length - 1 ?
+                                    ((PsiArrayType)signatureParameterTypes2[signatureParameterTypes2.length -1]).getComponentType() :
+                                    signatureParameterTypes2[i];
+              correct &= GenericsUtil.eliminateWildcards(subst.substitute(type1)).equals(GenericsUtil.eliminateWildcards(type2));
+            }
+            if (correct) {
+              firstCandidates.add(conflict);
+            }
+          }
+
+          if (hasReceiver && parameterTypes.length == signatureParameterTypes2.length + 1 && !isStatic) {
+            boolean correct = true;
+            for (int i = 0; i < signatureParameterTypes2.length; i++) {
+              final PsiType type1 = parameterTypes[i + 1];
+              final PsiType type2 = signatureParameterTypes2[i];
+              correct &= GenericsUtil.eliminateWildcards(subst.substitute(type1)).equals(GenericsUtil.eliminateWildcards(type2));
+            }
+            if (correct) {
+              secondCandidates.add(conflict);
             }
           }
         }
-        else {
-          final int conflictsCount = conflicts.size();
-          final CandidateInfo[] newConflictsArray = conflicts.toArray(new CandidateInfo[conflictsCount]);
-          for (int i = 1; i < conflictsCount; i++) {
-            final CandidateInfo method = newConflictsArray[i];
-            final boolean staticsScopeCorrect = method.isStaticsScopeCorrect();
-            final PsiMethod method1 = (PsiMethod)method.getElement();
-            final int count1 = method1.getParameterList().getParametersCount();
-            boolean hasStatic = false;
-            for (int j = 0; j < i; j++) {
-              final CandidateInfo conflict = newConflictsArray[j];
-              assert conflict != method;
-              final boolean staticsScopeCorrect2 = conflict.isStaticsScopeCorrect();
-              hasStatic |= staticsScopeCorrect2;
-              if (count1 == length) {
-                conflicts.remove(conflict);
-              }
-              else {
-                if (staticsScopeCorrect2 && staticsScopeCorrect || !staticsScopeCorrect && !staticsScopeCorrect2) {
-                  conflicts.remove(method);
-                  break;
-                }
-              }
-            }
-            if (count1 == length && (!staticsScopeCorrect && hasStatic || staticsScopeCorrect && !hasStatic)) {
-              conflicts.remove(method);
-            }
-          }
-        }
+
+        if (secondCandidates.size() + firstCandidates.size() != 1) return null;
+        return !firstCandidates.isEmpty() ? firstCandidates.get(0) : secondCandidates.get(0);
       }
     }
   }
