@@ -17,8 +17,8 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.util.Condition;
-import com.intellij.platform.DirectoryProjectGenerator;
-import com.intellij.platform.WebProjectGenerator;
+import com.intellij.platform.ProjectTemplate;
+import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.CollectionListModel;
@@ -27,14 +27,14 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -47,33 +47,34 @@ public class SelectTemplateStep extends ModuleWizardStep {
   private JBList myTemplatesList;
   private JPanel mySettingsPanel;
   private SearchTextField mySearchField;
-  private FactoryMap<WebProjectGenerator, WebProjectGenerator.GeneratorPeer> myPeers = new FactoryMap<WebProjectGenerator, WebProjectGenerator.GeneratorPeer>() {
-    @Nullable
-    @Override
-    protected WebProjectGenerator.GeneratorPeer create(WebProjectGenerator key) {
-      return key.createPeer();
-    }
-  };
 
   public SelectTemplateStep() {
-    final DirectoryProjectGenerator[] extensions = DirectoryProjectGenerator.EP_NAME.getExtensions();
-    myTemplatesList.setModel(new CollectionListModel<DirectoryProjectGenerator>(extensions));
+
+    final List<ProjectTemplate> templates = new ArrayList<ProjectTemplate>();
+    ProjectTemplatesFactory[] factories = ProjectTemplatesFactory.EP_NAME.getExtensions();
+    for (ProjectTemplatesFactory factory : factories) {
+      templates.addAll(Arrays.asList(factory.createTemplates()));
+    }
+
+    myTemplatesList.setModel(new CollectionListModel<ProjectTemplate>(templates));
     myTemplatesList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        append(((DirectoryProjectGenerator)value).getName());
+        ProjectTemplate template = (ProjectTemplate)value;
+        append(template.getName());
+        setIcon(template.getModuleType().getBigIcon());
       }
     });
+
     myTemplatesList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
         if (mySettingsPanel.getComponentCount() > 0) {
           mySettingsPanel.remove(0);
         }
-        DirectoryProjectGenerator generator = getSelectedGenerator();
-        if (generator instanceof WebProjectGenerator) {
-          WebProjectGenerator.GeneratorPeer peer = myPeers.get(generator);
-          mySettingsPanel.add(peer.getComponent(), BorderLayout.NORTH);
+        ProjectTemplate template = getSelectedTemplate();
+        if (template != null) {
+          mySettingsPanel.add(template.getSettingsPanel(), BorderLayout.NORTH);
         }
         mySettingsPanel.revalidate();
       }
@@ -85,11 +86,11 @@ public class SelectTemplateStep extends ModuleWizardStep {
       @Override
       protected void textChanged(DocumentEvent e) {
         final MinusculeMatcher matcher = NameUtil.buildMatcher(mySearchField.getText(), NameUtil.MatchingCaseSensitivity.NONE);
-        DirectoryProjectGenerator generator = getSelectedGenerator();
-        List<DirectoryProjectGenerator> list = ContainerUtil.filter(extensions, new Condition<DirectoryProjectGenerator>() {
+        ProjectTemplate selectedTemplate = getSelectedTemplate();
+        List<ProjectTemplate> list = ContainerUtil.filter(templates, new Condition<ProjectTemplate>() {
           @Override
-          public boolean value(DirectoryProjectGenerator generator) {
-            String name = generator.getName();
+          public boolean value(ProjectTemplate template) {
+            String name = template.getName();
             String[] words = NameUtil.nameToWords(name);
             for (String word : words) {
               if (matcher.matches(word)) return true;
@@ -97,10 +98,10 @@ public class SelectTemplateStep extends ModuleWizardStep {
             return false;
           }
         });
-        myTemplatesList.setModel(new CollectionListModel<DirectoryProjectGenerator>(list));
+        myTemplatesList.setModel(new CollectionListModel<ProjectTemplate>(list));
         if (!list.isEmpty()) {
-          if (list.contains(generator)) {
-            myTemplatesList.setSelectedValue(generator, true);
+          if (list.contains(selectedTemplate)) {
+            myTemplatesList.setSelectedValue(selectedTemplate, true);
           }
           else {
             myTemplatesList.setSelectedIndex(0);
@@ -110,12 +111,8 @@ public class SelectTemplateStep extends ModuleWizardStep {
     });
   }
 
-  public DirectoryProjectGenerator getSelectedGenerator() {
-    return (DirectoryProjectGenerator)myTemplatesList.getSelectedValue();
-  }
-
-  public WebProjectGenerator.GeneratorPeer getPeer(DirectoryProjectGenerator generator) {
-    return myPeers.get(generator);
+  public ProjectTemplate getSelectedTemplate() {
+    return (ProjectTemplate)myTemplatesList.getSelectedValue();
   }
 
   @Override

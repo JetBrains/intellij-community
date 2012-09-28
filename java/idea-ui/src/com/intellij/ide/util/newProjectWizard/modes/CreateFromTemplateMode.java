@@ -18,16 +18,15 @@ package com.intellij.ide.util.newProjectWizard.modes;
 import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateStep;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.WebModuleBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.platform.DirectoryProjectGenerator;
-import com.intellij.platform.WebProjectGenerator;
+import com.intellij.platform.ProjectTemplate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,16 +66,19 @@ public class CreateFromTemplateMode extends WizardMode {
   @Nullable
   @Override
   public ProjectBuilder getModuleBuilder() {
-    return new WebModuleBuilder() {
+    final ProjectTemplate template = mySelectTemplateStep.getSelectedTemplate();
+    if (template == null) {
+      return null;
+    }
+    final ModuleBuilder builder = template.getModuleType().createModuleBuilder();
+
+    return new ProjectBuilder() {
       @Nullable
       @Override
       public List<Module> commit(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
-        List<Module> modules = super.commit(project, model, modulesProvider);
-        if (modules != null && modules.size() == 1) {
-          Module module = modules.get(0);
-          DirectoryProjectGenerator generator = mySelectTemplateStep.getSelectedGenerator();
-          WebProjectGenerator.GeneratorPeer peer = mySelectTemplateStep.getPeer(generator);
-          generator.generateProject(project, project.getBaseDir(), peer.getSettings(), module);
+        List<Module> modules = builder.commit(project, model, modulesProvider);
+        if (modules != null && !modules.isEmpty()) {
+          template.generateProject(modules.get(0));
         }
         return modules;
       }

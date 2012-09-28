@@ -26,7 +26,9 @@
             <children>
               <component id="9dad" class="com.intellij.ui.components.JBList" binding="myTemplatesList">
                 <constraints/>
-                <properties/>
+                <properties>
+                  <fixedCellWidth value="30"/>
+                </properties>
               </component>
             </children>
           </scrollpane>

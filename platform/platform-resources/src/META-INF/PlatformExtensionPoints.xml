@@ -73,6 +73,9 @@
   <extensionPoint name="directoryProjectGenerator"
                   interface="com.intellij.platform.DirectoryProjectGenerator"/>
 
+  <extensionPoint name="projectTemplatesFactory"
+                  interface="com.intellij.platform.ProjectTemplatesFactory"/>
+
   <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener"/>
   <extensionPoint name="ComponentRoamingType" beanClass="com.intellij.openapi.components.impl.stores.RoamingTypeExtensionPointBean"/>
 
