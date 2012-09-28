@@ -282,7 +282,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           PsiSubstitutor subst = PsiSubstitutor.EMPTY;
           subst = subst.putAll(mySubstitutor);
           if (!LambdaUtil.areAcceptable(mySignature,
-                                        psiMethod.getSignature(subst.putAll(conflict.getSubstitutor())), myContainingClass, mySubstitutor)) {
+                                        psiMethod.getSignature(subst.putAll(conflict.getSubstitutor())), myContainingClass, mySubstitutor, psiMethod.isVarArgs())) {
             iterator.remove();
           }
         }

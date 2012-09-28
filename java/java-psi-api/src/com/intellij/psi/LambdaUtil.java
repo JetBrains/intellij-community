@@ -575,7 +575,7 @@ public class LambdaUtil {
 
         final MethodSignature signature1 = method.getSignature(resolveResult.getSubstitutor());
         final MethodSignature signature2 = ((PsiMethod)resolve).getSignature(substRef.get());
-        if (areAcceptable(signature1, signature2, classRef.get(), substRef.get())) return true;
+        if (areAcceptable(signature1, signature2, classRef.get(), substRef.get(), ((PsiMethod)resolve).isVarArgs())) return true;
       }
     }
     return false;
@@ -584,7 +584,8 @@ public class LambdaUtil {
   public static boolean areAcceptable(MethodSignature signature1,
                                       MethodSignature signature2,
                                       PsiClass psiClass,
-                                      PsiSubstitutor psiSubstitutor) {
+                                      PsiSubstitutor psiSubstitutor, 
+                                      boolean isVarargs) {
     int offset = 0;
     final PsiType[] signatureParameterTypes1 = signature1.getParameterTypes();
     final PsiType[] signatureParameterTypes2 = signature2.getParameterTypes();
@@ -596,7 +597,7 @@ public class LambdaUtil {
             (receiverType instanceof PsiClassType && ((PsiClassType)receiverType).isRaw() && receiverType.equals(TypeConversionUtil.erasure(classType)))) {
           offset++;
         }
-        else {
+        else if (!isVarargs){
           return false;
         }
       }
@@ -605,9 +606,10 @@ public class LambdaUtil {
       }
     }
 
-    for (int i = 0; i < signatureParameterTypes2.length; i++) {
+    final int min = Math.min(signatureParameterTypes2.length, signatureParameterTypes1.length);
+    for (int i = 0; i < min; i++) {
       final PsiType type1 = signatureParameterTypes1[offset + i];
-      final PsiType type2 = signatureParameterTypes2[i];
+      final PsiType type2 = isVarargs && i == min - 1 ? ((PsiArrayType)signatureParameterTypes2[i]).getComponentType() : signatureParameterTypes2[i];
       if (!GenericsUtil.eliminateWildcards(psiSubstitutor.substitute(type1)).equals(GenericsUtil.eliminateWildcards(type2))) {
         return false;
       }
