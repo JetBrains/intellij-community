@@ -301,7 +301,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
         final String refText = PsiUtil.getQualifiedReferenceText(this);
         LOG.assertTrue(refText != null, this.getText());
 
-        final int lastDot = refText.lastIndexOf(".");
         String parentPackageFQName = StringUtil.getPackageName(refText);
         final PsiPackage parentPackage = JavaPsiFacade.getInstance(getProject()).findPackage(parentPackageFQName);
         if (parentPackage != null) {

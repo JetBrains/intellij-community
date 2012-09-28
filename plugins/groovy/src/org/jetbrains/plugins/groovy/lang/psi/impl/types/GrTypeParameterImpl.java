@@ -289,6 +289,7 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
     return PsiUtil.getJavaNameIdentifier(this);
   }
 
+  @Nullable
   public PsiElement getScope() {
     return null;
   }

@@ -74,7 +74,7 @@ public class GrStubUtils {
   }
 
   @Nullable
-  public static String getTypeText(GrTypeElement typeElement) {
+  public static String getTypeText(@Nullable GrTypeElement typeElement) {
     return typeElement == null ? null : typeElement.getText();
   }
 
