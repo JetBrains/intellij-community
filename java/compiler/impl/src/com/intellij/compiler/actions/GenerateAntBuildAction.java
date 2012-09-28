@@ -19,12 +19,16 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.ant.*;
 import com.intellij.compiler.impl.CompilerUtil;
+import com.intellij.lang.ant.AntBundle;
+import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.AntNoFileException;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -185,6 +189,29 @@ public class GenerateAntBuildAction extends CompileActionBase {
 
     if (filesToRefresh.size() > 0) {
       CompilerUtil.refreshIOFiles(filesToRefresh);
+
+      //Add the build files to the ant tool window
+      final LocalFileSystem lfs = LocalFileSystem.getInstance();
+      AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
+
+      for (final File file : _generated) {
+        final VirtualFile vFile = lfs.findFileByIoFile(file);
+        try {
+          if (vFile != null) {
+            FileType fileType = vFile.getFileType();
+            if (fileType.getName().equals("XML")) {
+              antConfiguration.addBuildFile(vFile);
+            }
+          }
+        }
+        catch (AntNoFileException e) {
+          String message = e.getMessage();
+          if (message == null || message.length() == 0) {
+            message = AntBundle.message("cannot.add.build.files.from.excluded.directories.error.message", e.getFile().getPresentableUrl());
+          }
+          Messages.showWarningDialog(project, message, AntBundle.message("cannot.add.build.file.dialog.title"));
+        }
+      }
     }
   }
 
