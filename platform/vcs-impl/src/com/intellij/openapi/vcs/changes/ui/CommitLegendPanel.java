@@ -94,7 +94,10 @@ public class CommitLegendPanel {
   }
 
   private static void boldLabel(final JLabel label, final boolean bold) {
-    label.setFont(label.getFont().deriveFont(bold ? Font.BOLD : Font.PLAIN));
+    int style = bold ? Font.BOLD : Font.PLAIN;
+    if (label.getFont().getStyle() == style)
+      return;
+    label.setFont(label.getFont().deriveFont(style));
   }
 
   public interface InfoCalculator {
