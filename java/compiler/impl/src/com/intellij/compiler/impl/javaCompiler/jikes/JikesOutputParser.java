@@ -15,19 +15,20 @@
  */
 package com.intellij.compiler.impl.javaCompiler.jikes;
 
+import com.intellij.compiler.OutputParser;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.compiler.OutputParser;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.jps.model.java.compiler.JikesCompilerOptions;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 public class JikesOutputParser extends OutputParser {
-  private final JikesSettings myJikesSettings;
+  private final JikesCompilerOptions myJikesSettings;
   @NonNls private static final String JAVA_FILE_MSG_TAIL = ".java:";
   @NonNls private static final String CAUTION = "Caution";
   @NonNls private static final String WARNING = "Warning";
@@ -37,7 +38,7 @@ public class JikesOutputParser extends OutputParser {
   @NonNls private static final String ENTER_TO_CONTINUE_REGEXP = ".*Enter\\s+to\\s+continue.*";
 
   public JikesOutputParser(Project project) {
-    myJikesSettings = JikesConfiguration.getSettings(project);
+    myJikesSettings = JikesConfiguration.getOptions(project);
     myParserActions.add(new ParserActionJikes());
   }
 
@@ -109,7 +110,7 @@ public class JikesOutputParser extends OutputParser {
         messages.add(message);
 
         if (colNum > 0 && messages.size() > 0) {
-          StringBuffer buf = new StringBuffer();
+          StringBuilder buf = new StringBuilder();
           for (String m : messages) {
             if (buf.length() > 0) {
               buf.append("\n");

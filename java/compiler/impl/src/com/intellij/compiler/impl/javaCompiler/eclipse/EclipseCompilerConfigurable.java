@@ -15,7 +15,6 @@
  */
 package com.intellij.compiler.impl.javaCompiler.eclipse;
 
-import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.compiler.options.ComparingUtils;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
@@ -23,6 +22,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.compiler.EclipseCompilerOptions;
 
 import javax.swing.*;
 
@@ -36,10 +36,11 @@ public class EclipseCompilerConfigurable implements Configurable {
   private JCheckBox myCbGenerateNoWarnings;
   private RawCommandLineEditor myAdditionalOptionsField;
   private JTextField myJavacMaximumHeapField;
-  private final JavacSettings myCompilerSettings;
+  private JCheckBox myCbProceedOnErrors;
+  private final EclipseCompilerOptions myCompilerSettings;
 
-  public EclipseCompilerConfigurable(JavacSettings compilerSettings) {
-    myCompilerSettings = compilerSettings;
+  public EclipseCompilerConfigurable(EclipseCompilerOptions options) {
+    myCompilerSettings = options;
     myAdditionalOptionsField.setDialogCaption(CompilerBundle.message("java.compiler.option.additional.command.line.parameters"));
   }
 
@@ -63,6 +64,7 @@ public class EclipseCompilerConfigurable implements Configurable {
     isModified |= ComparingUtils.isModified(myCbDeprecation, myCompilerSettings.DEPRECATION);
     isModified |= ComparingUtils.isModified(myCbDebuggingInfo, myCompilerSettings.DEBUGGING_INFO);
     isModified |= ComparingUtils.isModified(myCbGenerateNoWarnings, myCompilerSettings.GENERATE_NO_WARNINGS);
+    isModified |= ComparingUtils.isModified(myCbProceedOnErrors, myCompilerSettings.PROCEED_ON_ERROR);
     isModified |= ComparingUtils.isModified(myAdditionalOptionsField, myCompilerSettings.ADDITIONAL_OPTIONS_STRING);
     return isModified;
   }
@@ -82,6 +84,7 @@ public class EclipseCompilerConfigurable implements Configurable {
     myCompilerSettings.DEPRECATION =  myCbDeprecation.isSelected();
     myCompilerSettings.DEBUGGING_INFO = myCbDebuggingInfo.isSelected();
     myCompilerSettings.GENERATE_NO_WARNINGS = myCbGenerateNoWarnings.isSelected();
+    myCompilerSettings.PROCEED_ON_ERROR = myCbProceedOnErrors.isSelected();
     myCompilerSettings.ADDITIONAL_OPTIONS_STRING = myAdditionalOptionsField.getText();
   }
 
@@ -90,6 +93,7 @@ public class EclipseCompilerConfigurable implements Configurable {
     myCbDeprecation.setSelected(myCompilerSettings.DEPRECATION);
     myCbDebuggingInfo.setSelected(myCompilerSettings.DEBUGGING_INFO);
     myCbGenerateNoWarnings.setSelected(myCompilerSettings.GENERATE_NO_WARNINGS);
+    myCbProceedOnErrors.setSelected(myCompilerSettings.PROCEED_ON_ERROR);
     myAdditionalOptionsField.setText(myCompilerSettings.ADDITIONAL_OPTIONS_STRING);
   }
 

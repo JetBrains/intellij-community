@@ -49,10 +49,7 @@ import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.LanguageLevel;
-import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
-import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
-import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
-import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
+import org.jetbrains.jps.model.java.compiler.*;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerConfiguration;
@@ -80,10 +77,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
   public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
   private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = Key.create("_java_compiler_version_");
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
-    "-target", "-proc:none", "-proc:only"
+    "-target"
   ));
   private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.<String>asList(
-    "-g", "-deprecation", "-nowarn", "-verbose"
+    "-g", "-deprecation", "-nowarn", "-verbose", "-proc:none", "-proc:only", "-proceedOnError"
   ));
 
   private static final FileFilter JAVA_SOURCES_FILTER =
@@ -628,7 +625,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
     final JpsJavaCompilerOptions options = config.getCurrentCompilerOptions();
     return options.MAXIMUM_HEAP_SIZE;
-    //return 512;//todo[jeka] default value was 128 in IDEA, do we really need to set it to 512 for javac server?
   }
 
   private static InstrumentationClassFinder createInstrumentationClassFinder(Collection<File> platformCp,
@@ -836,7 +832,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
     if (compilerOptions.GENERATE_NO_WARNINGS) {
       options.add("-nowarn");
     }
-
+    if (compilerOptions instanceof EclipseCompilerOptions) {
+      final EclipseCompilerOptions eclipseOptions = (EclipseCompilerOptions)compilerOptions;
+      if (eclipseOptions.PROCEED_ON_ERROR) {
+        options.add("-proceedOnError");
+      }
+    }
     final String customArgs = compilerOptions.ADDITIONAL_OPTIONS_STRING;
     if (customArgs != null) {
       final StringTokenizer customOptsTokenizer = new StringTokenizer(customArgs, " \t\r\n");

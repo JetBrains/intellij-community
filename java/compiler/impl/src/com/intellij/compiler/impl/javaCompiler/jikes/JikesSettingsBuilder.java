@@ -15,30 +15,27 @@
  */
 package com.intellij.compiler.impl.javaCompiler.jikes;
 
-import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.components.StorageScheme;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacSettingsBuilder;
 import com.intellij.openapi.module.Module;
 import com.intellij.util.Chunk;
+import org.jetbrains.jps.model.java.compiler.JikesCompilerOptions;
 
 import java.util.Collection;
 
-@State(
-  name = "JikesSettings",
-  storages = {
-    @Storage( file = StoragePathMacros.PROJECT_FILE)
-   ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
-)
-public class JikesSettings extends JavacSettings {
-  public String JIKES_PATH = "";
-  public boolean IS_EMACS_ERRORS_MODE = true;
+public class JikesSettingsBuilder extends JavacSettingsBuilder {
+
+  public JikesSettingsBuilder(JikesCompilerOptions options) {
+    super(options);
+  }
+
+  @Override
+  public JikesCompilerOptions getOptions() {
+    return (JikesCompilerOptions)super.getOptions();
+  }
 
   public Collection<String> getOptions(Chunk<Module> chunk) {
     final Collection<String> options = super.getOptions(chunk);
-    if(IS_EMACS_ERRORS_MODE) {
+    if(getOptions().IS_EMACS_ERRORS_MODE) {
       options.add("+E");
     }
     return options;

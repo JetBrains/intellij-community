@@ -19,7 +19,6 @@ import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.ExternalCompiler;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
-import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.CompileContext;
@@ -39,6 +38,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.compiler.EclipseCompilerOptions;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -113,7 +113,7 @@ public class EclipseCompiler extends ExternalCompiler {
 
   @NotNull
   public Configurable createConfigurable() {
-    return new EclipseCompilerConfigurable(EclipseCompilerConfiguration.getSettings(myProject, EclipseCompilerConfiguration.class));
+    return new EclipseCompilerConfigurable(EclipseCompilerConfiguration.getOptions(myProject, EclipseCompilerConfiguration.class));
   }
 
   public OutputParser createErrorParser(@NotNull final String outputDir, Process process) {
@@ -151,12 +151,12 @@ public class EclipseCompiler extends ExternalCompiler {
                                     @NonNls final ArrayList<String> commandLine,
                                     final String outputPath,
                                     final boolean useTempFile) throws IOException {
-    JavacSettings compilerSettings = EclipseCompilerConfiguration.getSettings(myProject, EclipseCompilerConfiguration.class);
+    final EclipseCompilerOptions options = EclipseCompilerConfiguration.getOptions(myProject, EclipseCompilerConfiguration.class);
 
     final Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     final String vmExePath = ((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk);
     commandLine.add(vmExePath);
-    commandLine.add("-Xmx" + compilerSettings.MAXIMUM_HEAP_SIZE + "m");
+    commandLine.add("-Xmx" + options.MAXIMUM_HEAP_SIZE + "m");
 
     CompilerUtil.addLocaleOptions(commandLine, false);
 
@@ -164,13 +164,13 @@ public class EclipseCompiler extends ExternalCompiler {
     commandLine.add(PATH_TO_COMPILER_JAR);
     commandLine.add(getCompilerClass());
 
-    addCommandLineOptions(commandLine, chunk, outputPath, compilerSettings, useTempFile, true);
+    addCommandLineOptions(commandLine, chunk, outputPath, options, useTempFile, true);
   }
 
   public void addCommandLineOptions(@NotNull @NonNls final List<String> commandLine,
                                     @NotNull final ModuleChunk chunk,
                                     @NotNull final String outputPath,
-                                    @NotNull final JavacSettings compilerSettings,
+                                    @NotNull final EclipseCompilerOptions options,
                                     final boolean useTempFile,
                                     boolean quoteBootClasspath) throws IOException {
     final Sdk jdk = chunk.getJdk();
@@ -196,7 +196,7 @@ public class EclipseCompiler extends ExternalCompiler {
     commandLine.add(outputPath.replace('/', File.separatorChar));
 
     commandLine.add("-verbose");
-    StringTokenizer tokenizer = new StringTokenizer(compilerSettings.getOptionsString(chunk), " ");
+    StringTokenizer tokenizer = new StringTokenizer(new EclipseSettingsBuilder(options).getOptionsString(chunk), " ");
     while (tokenizer.hasMoreTokens()) {
       commandLine.add(tokenizer.nextToken());
     }

@@ -15,7 +15,7 @@ import com.android.io.IAbstractResource;
 import com.android.io.StreamException;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
-import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,6 +48,7 @@ import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.xmlpull.v1.XmlPullParserException;
 
 import javax.imageio.ImageIO;
@@ -279,7 +280,7 @@ public class RenderUtil {
       quickFixes.add(new Pair<String, Runnable>("Rebuild project with '-target 1.6'", new Runnable() {
         @Override
         public void run() {
-          final JavacSettings settings = JavacSettings.getInstance(project);
+          final JpsJavaCompilerOptions settings = JavacConfiguration.getOptions(project, JavacConfiguration.class);
           if (settings.ADDITIONAL_OPTIONS_STRING.length() > 0) {
             settings.ADDITIONAL_OPTIONS_STRING += ' ';
           }

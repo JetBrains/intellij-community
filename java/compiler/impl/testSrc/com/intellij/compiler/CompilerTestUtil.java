@@ -1,7 +1,7 @@
 package com.intellij.compiler;
 
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
-import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
@@ -37,7 +38,7 @@ public class CompilerTestUtil {
     compilerConfiguration.projectOpened();
     compilerConfiguration.setDefaultCompiler(compilerConfiguration.getJavacCompiler());
 
-    JavacSettings javacSettings = JavacSettings.getInstance(project);
+    JpsJavaCompilerOptions javacSettings = JavacConfiguration.getOptions(project, JavacConfiguration.class);
     javacSettings.setTestsUseExternalCompiler(true);
   }
 

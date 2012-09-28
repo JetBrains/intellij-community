@@ -72,7 +72,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
 
   @NotNull
   public ProcessingItem[] getProcessingItems(final CompileContext context) {
-    if (!RmicConfiguration.getSettings(context.getProject()).IS_EANABLED) {
+    if (!RmicConfiguration.getOptions(context.getProject()).IS_EANABLED) {
       return ProcessingItem.EMPTY_ARRAY;
     }
     final Project project = context.getProject();
@@ -145,7 +145,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
 
   public ProcessingItem[] process(CompileContext context, ProcessingItem[] items) {
     final Project project = context.getProject();
-    if (!RmicConfiguration.getSettings(project).IS_EANABLED) {
+    if (!RmicConfiguration.getOptions(project).IS_EANABLED) {
       return ProcessingItem.EMPTY_ARRAY;
     }
     final ProgressIndicator progressIndicator = context.getProgressIndicator();
@@ -296,7 +296,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     commandLine.add("-verbose");
 
     final Project project = module.getProject();
-    ContainerUtil.addAll(commandLine, RmicConfiguration.getSettings(project).getOptions(new Chunk<Module>(module)));
+    ContainerUtil.addAll(commandLine, new RmicSettingsBuilder(RmicConfiguration.getOptions(project)).getOptions(new Chunk<Module>(module)));
 
     commandLine.add("-classpath");
 

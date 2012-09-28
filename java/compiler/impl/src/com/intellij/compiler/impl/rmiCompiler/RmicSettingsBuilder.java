@@ -15,34 +15,28 @@
  */
 package com.intellij.compiler.impl.rmiCompiler;
 
-import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.components.StorageScheme;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacSettingsBuilder;
 import com.intellij.openapi.module.Module;
 import com.intellij.util.Chunk;
+import org.jetbrains.jps.model.java.compiler.RmicCompilerOptions;
 
 import java.util.Collection;
 
-@State(
-  name = "RmicSettings",
-  storages = {
-    @Storage( file = StoragePathMacros.PROJECT_FILE)
-   ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
-)
-public class RmicSettings extends JavacSettings {
-  public boolean IS_EANABLED = false;
-  public boolean GENERATE_IIOP_STUBS = false;
+public class RmicSettingsBuilder extends JavacSettingsBuilder {
 
-  public RmicSettings() {
-    DEPRECATION = false; // in this configuration deprecation is false by default
+  public RmicSettingsBuilder(final RmicCompilerOptions options) {
+    super(options);
+    getOptions().DEPRECATION = false; // in this configuration deprecation is false by default
+  }
+
+  @Override
+  public RmicCompilerOptions getOptions() {
+    return (RmicCompilerOptions)super.getOptions();
   }
 
   public Collection<String> getOptions(Chunk<Module> chunk) {
     final Collection<String> options = super.getOptions(chunk);
-    if(GENERATE_IIOP_STUBS) {
+    if(getOptions().GENERATE_IIOP_STUBS) {
       options.add("-iiop");
     }
     return options;

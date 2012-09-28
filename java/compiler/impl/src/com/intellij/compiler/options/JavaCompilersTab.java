@@ -87,9 +87,10 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
     });
     myCompiler.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        BackendCompiler compiler = (BackendCompiler)myCompiler.getSelectedItem();
-        if (compiler == null) return;
-        selectCompiler(compiler);
+        final BackendCompiler compiler = (BackendCompiler)myCompiler.getSelectedItem();
+        if (compiler != null) {
+          selectCompiler(compiler);
+        }
       }
     });
   }

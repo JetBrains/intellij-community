@@ -17,11 +17,8 @@ package com.intellij.compiler.impl.javaCompiler.javac;
 
 import com.intellij.compiler.CompilerEncodingService;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.Chunk;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import java.nio.charset.Charset;
@@ -30,22 +27,30 @@ import java.util.Collection;
 import java.util.List;
 import java.util.StringTokenizer;
 
-public class JavacSettings extends JpsJavaCompilerOptions {
-  private boolean myTestsUseExternalCompiler = false;
+public class JavacSettingsBuilder {
+  private final JpsJavaCompilerOptions myOptions;
+
+  public JavacSettingsBuilder(JpsJavaCompilerOptions options) {
+    myOptions = options;
+  }
+
+  protected JpsJavaCompilerOptions getOptions() {
+    return myOptions;
+  }
 
   public Collection<String> getOptions(Chunk<Module> chunk) {
     List<String> options = new ArrayList<String>();
-    if (DEBUGGING_INFO) {
+    if (getOptions().DEBUGGING_INFO) {
       options.add("-g");
     }
-    if (DEPRECATION) {
+    if (getOptions().DEPRECATION) {
       options.add("-deprecation");
     }
-    if (GENERATE_NO_WARNINGS) {
+    if (getOptions().GENERATE_NO_WARNINGS) {
       options.add("-nowarn");
     }
     boolean isEncodingSet = false;
-    final StringTokenizer tokenizer = new StringTokenizer(ADDITIONAL_OPTIONS_STRING, " \t\r\n");
+    final StringTokenizer tokenizer = new StringTokenizer(getOptions().ADDITIONAL_OPTIONS_STRING, " \t\r\n");
     while(tokenizer.hasMoreTokens()) {
       final String token = tokenizer.nextToken();
       if(!acceptUserOption(token)) {
@@ -83,20 +88,5 @@ public class JavacSettings extends JpsJavaCompilerOptions {
       options.append(option);
     }
    return options.toString();
-  }
-
-  public static JavacSettings getInstance(Project project) {
-    return ServiceManager.getService(project, JavacConfiguration.class).getSettings();
-  }
-
-
-  @TestOnly
-  public boolean isTestsUseExternalCompiler() {
-    return myTestsUseExternalCompiler;
-  }
-
-  @TestOnly
-  public void setTestsUseExternalCompiler(boolean testsUseExternalCompiler) {
-    myTestsUseExternalCompiler = testsUseExternalCompiler;
   }
 }

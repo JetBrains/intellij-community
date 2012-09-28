@@ -18,6 +18,8 @@ package com.intellij.compiler.impl.javaCompiler.javac;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 @State(
   name = "JavacSettings",
@@ -26,22 +28,19 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
    ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class JavacConfiguration implements PersistentStateComponent<JavacSettings> {
-  private final JavacSettings mySettings = new JavacSettings();
+public class JavacConfiguration implements PersistentStateComponent<JpsJavaCompilerOptions> {
+  private final JpsJavaCompilerOptions mySettings = new JpsJavaCompilerOptions();
 
-  public JavacSettings getState() {
+  @NotNull
+  public JpsJavaCompilerOptions getState() {
     return mySettings;
   }
 
-  public void loadState(JavacSettings state) {
+  public void loadState(JpsJavaCompilerOptions state) {
     XmlSerializerUtil.copyBean(state, mySettings);
   }
 
-  public JavacSettings getSettings() {
-    return mySettings;
-  }
-
-  public static JavacSettings getSettings(Project project, Class<? extends JavacConfiguration> aClass) {
-    return ServiceManager.getService(project, aClass).getSettings();
+  public static JpsJavaCompilerOptions getOptions(Project project, Class<? extends JavacConfiguration> aClass) {
+    return ServiceManager.getService(project, aClass).getState();
   }
 }
