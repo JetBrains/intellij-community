@@ -40,6 +40,10 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testMethodRefMisc() throws Exception {
     doTest();
   }
+  
+  public void testMethodRefMisc1() throws Exception {
+    doTest();
+  }
 
   public void testQualifierTypeArgs() throws Exception {
     doTest();
