@@ -614,7 +614,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         myFlushingFuture = null;
       }
 
-      myFileDocumentManager.saveAllDocuments();
+      //myFileDocumentManager.saveAllDocuments(); // rev=Eugene Juravlev
     }
     finally {
       LOG.info("START INDEX SHUTDOWN");
