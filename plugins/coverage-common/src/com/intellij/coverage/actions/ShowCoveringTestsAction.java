@@ -99,7 +99,7 @@ public class ShowCoveringTestsAction extends AnAction {
       final ComponentPopupBuilder popupBuilder;
       if (!elements.isEmpty()) {
         component = new ImplementationViewComponent(PsiUtilCore.toPsiElementArray(elements), 0);
-        popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPrefferedFocusableComponent())
+        popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPreferredFocusableComponent())
           .setDimensionServiceKey(project, "ShowTestsPopup", false);
       } else {
         component = null;
