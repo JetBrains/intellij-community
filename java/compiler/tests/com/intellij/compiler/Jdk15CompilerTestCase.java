@@ -1,6 +1,7 @@
 package com.intellij.compiler;
 
-import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import java.io.File;
 
@@ -28,7 +29,7 @@ public abstract class Jdk15CompilerTestCase extends CompilerTestCase{
 
     super.setUp();
 
-    final JavacSettings javacSettings = JavacSettings.getInstance(myProject);
+    final JpsJavaCompilerOptions javacSettings = JavacConfiguration.getOptions(myProject, JavacConfiguration.class);
     myUseExternalCompiler = javacSettings.isTestsUseExternalCompiler();
     myAdditionalOptions = javacSettings.ADDITIONAL_OPTIONS_STRING;
 
@@ -38,7 +39,7 @@ public abstract class Jdk15CompilerTestCase extends CompilerTestCase{
 
   @Override
   protected void tearDown() throws Exception {
-    final JavacSettings javacSettings = JavacSettings.getInstance(myProject);
+    final JpsJavaCompilerOptions javacSettings = JavacConfiguration.getOptions(myProject, JavacConfiguration.class);
     javacSettings.setTestsUseExternalCompiler(myUseExternalCompiler);
     javacSettings.ADDITIONAL_OPTIONS_STRING = myAdditionalOptions;
     super.tearDown();
