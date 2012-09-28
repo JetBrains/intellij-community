@@ -96,13 +96,14 @@ public class PsiTypeLookupItem extends LookupItem {
       if (context.getCompletionChar() == '[') {
         context.setAddCompletionChar(false);
       }
-    } else {
+    }
+    else {
       editor.getCaretModel().moveToOffset(tail);
     }
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
     InsertHandler handler = getInsertHandler();
-     if (handler != null && !(handler instanceof DefaultInsertHandler)) {
+    if (handler != null && !(handler instanceof DefaultInsertHandler)) {
       //noinspection unchecked
       handler.handleInsert(context, this);
     }
@@ -247,6 +248,8 @@ public class PsiTypeLookupItem extends LookupItem {
   public static void addImportForItem(InsertionContext context, PsiClass aClass) {
     if (aClass.getQualifiedName() == null) return;
     PsiFile file = context.getFile();
+    if (!(file instanceof PsiJavaFile)) return;
+
     int newTail = JavaCompletionUtil.insertClassReference(aClass, file, context.getStartOffset(), context.getTailOffset());
     if (newTail > context.getDocument().getTextLength() || newTail < 0) {
       LOG.error(LogMessageEx.createEvent("Invalid offset after insertion ",

@@ -435,7 +435,7 @@ public class GroovyCompletionUtil {
 
     int newStartOffset = startOffset;
 
-    final PsiReference reference = file.findReferenceAt(startOffset);
+    final PsiReference reference = file.findReferenceAt(endOffset - 1);
     if (reference != null) {
       final PsiElement resolved = reference.resolve();
       if (resolved instanceof PsiClass) {
@@ -453,7 +453,7 @@ public class GroovyCompletionUtil {
     PsiDocumentManager.getInstance(manager.getProject()).commitAllDocuments();
 
     final PsiReference ref = file.findReferenceAt(startOffset);
-    if (ref instanceof GrCodeReferenceElement && aClass.isValid()) {
+    if (ref instanceof GrReferenceElement && aClass.isValid()) {
       PsiElement newElement = ref.bindToElement(aClass);
       RangeMarker marker = document.createRangeMarker(newElement.getTextRange());
       CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newElement);
