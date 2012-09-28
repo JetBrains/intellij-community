@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.tasks.github;
+package org.jetbrains.plugins.github;
 
 import com.intellij.tasks.impl.SimpleComment;
 import com.intellij.util.text.DateFormatUtil;
 import com.petebevin.markdown.MarkdownProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.tasks.GitHubRepository;
 
 import java.util.Date;
 

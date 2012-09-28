@@ -7,14 +7,14 @@ import com.intellij.openapi.vcs.checkout.CheckoutListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
-import com.intellij.tasks.github.GitHubRepository;
-import com.intellij.tasks.github.GitHubRepositoryType;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import git4idea.GitUtil;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.tasks.GitHubRepository;
+import org.jetbrains.plugins.github.tasks.GitHubRepositoryType;
 
 import java.io.File;
 import java.util.ArrayList;

@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.github.GithubApiUtil;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
@@ -55,7 +54,7 @@ public class GithubUtil {
   static final String GITHUB_NOTIFICATION_GROUP = "github";
 
   /**
-   * @deprecated The host may be defined in different formats. Use {@link com.intellij.tasks.github.GithubApiUtil#getApiUrl(String)} instead.
+   * @deprecated The host may be defined in different formats. Use {@link GithubApiUtil#getApiUrl(String)} instead.
    */
   @Deprecated
   public static String getHttpsUrl() {

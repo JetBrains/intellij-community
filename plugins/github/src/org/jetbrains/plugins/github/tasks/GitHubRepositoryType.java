@@ -1,4 +1,4 @@
-package com.intellij.tasks.github;
+package org.jetbrains.plugins.github.tasks;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.TaskRepository;

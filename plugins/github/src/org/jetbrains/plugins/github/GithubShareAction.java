@@ -39,7 +39,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.tasks.github.GithubApiUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.HashSet;
 import git4idea.GitDeprecatedRemote;

@@ -33,7 +33,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.tasks.github.GithubApiUtil;
 import com.intellij.util.Consumer;
 import git4idea.GitVcs;
 import git4idea.Notificator;

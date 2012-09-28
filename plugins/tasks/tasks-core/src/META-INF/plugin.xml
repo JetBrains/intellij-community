@@ -111,7 +111,6 @@
     <tasks.repositoryType implementation="com.intellij.tasks.youtrack.YouTrackRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.lighthouse.LighthouseRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.pivotal.PivotalTrackerRepositoryType"/>
-    <tasks.repositoryType implementation="com.intellij.tasks.github.GitHubRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.redmine.RedmineRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.trac.TracRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.fogbugz.FogBugzRepositoryType"/>

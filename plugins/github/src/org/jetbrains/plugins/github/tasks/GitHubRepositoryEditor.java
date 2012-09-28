@@ -1,10 +1,13 @@
-package com.intellij.tasks.github;
+package org.jetbrains.plugins.github.tasks;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.FormBuilder;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.tasks.GitHubRepository;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.Nullable;
 
