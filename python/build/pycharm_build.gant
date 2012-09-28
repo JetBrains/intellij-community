@@ -38,7 +38,7 @@ setProperty("pluginFilter", [   //modules to compile
             "database-impl", "DatabaseSupport",
             "sql",
             "coffeescript",
-            "remote-sdk-api", "remote-sdk-impl",
+            "remote-sdk-impl",
             "python-remote-interpreter",
             "diagram-api", "uml",
             "python-uml", "localization",
@@ -54,7 +54,7 @@ private List<String> pycharmPlatformApiModules() {
 
 
 private List pycharmImplementationModules() {   //modules to put into pycharm.jar
-  return ["yaml", "graph", "coverage-common", "python", "python-ide", "python-openapi", "python-psi-api"]
+  return ["yaml", "graph", "coverage-common", "python", "python-ide", "python-openapi", "python-psi-api", "remote-sdk-api"]
 }
 
 class Paths {
