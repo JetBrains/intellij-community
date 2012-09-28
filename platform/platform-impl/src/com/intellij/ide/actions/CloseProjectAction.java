@@ -22,8 +22,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.projectImport.ProjectAttachProcessor;
 
 public class CloseProjectAction extends AnAction implements DumbAware {
@@ -40,10 +40,10 @@ public class CloseProjectAction extends AnAction implements DumbAware {
     Project project = event.getData(PlatformDataKeys.PROJECT);
     presentation.setEnabled(project != null);
     if (ProjectAttachProcessor.canAttachToProject() && project != null && ModuleManager.getInstance(project).getModules().length > 1) {
-      presentation.setText("Close Projects in Current Window");
+      presentation.setText("Close Proj_ects in Current Window");
     }
     else {
-      presentation.setText(getTemplatePresentation().getText());
+      presentation.setText("Close Pro_ject");
     }
   }
 }
