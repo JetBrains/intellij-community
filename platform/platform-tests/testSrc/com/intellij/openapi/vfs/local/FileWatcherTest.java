@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -465,6 +466,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
       myAccept = true;
       assertTrue(FileUtil.delete(topDir));
       assertTrue(topDir.mkdir());
+      TimeoutUtil.sleep(100);
       assertTrue(file1.createNewFile());
       assertTrue(file2.createNewFile());
       assertEvent(VFileContentChangeEvent.class, file1.getPath(), file2.getPath());
@@ -478,7 +480,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
   public void testWatchRootRecreation() throws Exception {
     if (SystemInfo.isLinux) {
       // todo[r.sh]: fix Linux watcher
-      System.err.println("Ignored: Windows required");
+      System.err.println("Ignored: to be fixed on Linux");
       return;
     }
 
