@@ -22,7 +22,6 @@ import com.intellij.internal.statistic.connect.StatisticsHttpClientSender;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.DumbService;
@@ -31,15 +30,18 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class SendStatisticsProjectComponent implements ProjectComponent {
   private static final int DELAY_IN_MIN = 10;
 
   private Project myProject;
   private Alarm myAlarm;
+  private final AtomicBoolean isSending = new AtomicBoolean();
 
   public SendStatisticsProjectComponent(Project project) {
     myProject = project;
-    myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, myProject);
+    myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
     NotificationsConfigurationImpl.remove("SendUsagesStatistics");
     NotificationsConfiguration.getNotificationsConfiguration().register(
@@ -83,7 +85,15 @@ public class SendStatisticsProjectComponent implements ProjectComponent {
           runWithDelay(statisticsService);
         }
         else {
-          statisticsService.send();
+          if (!isSending.getAndSet(true)) {
+            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+              @Override
+              public void run() {
+                statisticsService.send();
+                isSending.set(false);
+              }
+            });
+          }
         }
       }
     }, DELAY_IN_MIN * 60 * 1000);
