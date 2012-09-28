@@ -1332,6 +1332,24 @@ def bar() {
 ''', UnassignedVariableAccessInspection)
   }
 
+  void testUnassignedAccessInCheck() {
+    def inspection = new UnassignedVariableAccessInspection()
+    inspection.myIgnoreBooleanExpressions = true
+
+    myFixture.configureByText('_.groovy', '''\
+def foo
+if (foo) print 'fooo!!!'
+
+def bar
+if (bar!=null) print 'foo!!!'
+
+def baz
+if (<warning descr="Variable 'baz' might not be assigned">baz</warning> + 2) print "fooooo!"
+''')
+    myFixture.enableInspections(inspection)
+    myFixture.testHighlighting(true, false, true)
+  }
+
   void testDelegateWithDeprecated() {
     testHighlighting('''\
 interface Foo {

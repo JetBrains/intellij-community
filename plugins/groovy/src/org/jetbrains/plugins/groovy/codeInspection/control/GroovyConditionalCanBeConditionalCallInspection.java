@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.codeInspection.control;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
@@ -34,6 +33,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+
+import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.*;
 
 public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspection {
 
@@ -135,19 +136,5 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
       }
       return EquivalenceChecker.expressionsAreEquivalent(expression, referenceExpression.getQualifierExpression());
     }
-  }
-
-  private static boolean isEquality(GrBinaryExpression binaryCondition) {
-    final IElementType tokenType = binaryCondition.getOperationTokenType();
-    return GroovyTokenTypes.mEQUAL == tokenType;
-  }
-
-  private static boolean isInequality(GrBinaryExpression binaryCondition) {
-    final IElementType tokenType = binaryCondition.getOperationTokenType();
-    return GroovyTokenTypes.mNOT_EQUAL == tokenType;
-  }
-
-  private static boolean isNull(GrExpression expression) {
-    return "null".equals(expression.getText());
   }
 }
