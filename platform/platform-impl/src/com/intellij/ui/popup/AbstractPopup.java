@@ -926,6 +926,10 @@ public class AbstractPopup implements JBPopup {
     }
   }
 
+  public void focusPreferredComponent() {
+    _requestFocus();
+  }
+
   private void installProjectDisposer() {
     final Component c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (c != null) {

@@ -352,8 +352,8 @@ public class ImplementationViewComponent extends JPanel {
     return psiFile.getNavigationElement().getIcon(0);
   }
 
-  public JComponent getPrefferedFocusableComponent() {
-    return myFileChooser != null ? myFileChooser : myViewingPanel;
+  public JComponent getPreferredFocusableComponent() {
+    return myElements.length > 1 ? myFileChooser : myEditor.getContentComponent();
   }
 
   private void updateControls() {
