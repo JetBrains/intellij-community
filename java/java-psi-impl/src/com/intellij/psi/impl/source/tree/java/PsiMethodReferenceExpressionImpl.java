@@ -27,6 +27,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.ElementClassFilter;
+import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
@@ -34,6 +35,7 @@ import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +107,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       LOG.error("invalid!");
       return JavaResolveResult.EMPTY_ARRAY;
     }
-    ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, new MethodReferenceResolver(), true, incompleteCode);
+    ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, new MethodReferenceResolver(), true,
+                                                                                        incompleteCode);
     return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
   }
 
@@ -169,62 +172,81 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
   }
 
   @Override
-  public void process(Ref<PsiClass> psiClassRef, Ref<PsiSubstitutor> substRef) {
+  public boolean process(Ref<PsiClass> psiClassRef, Ref<PsiSubstitutor> substRef) {
     PsiClass containingClass = null;
-    final PsiExpression expression = getQualifierExpression();
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-    if (expression != null) {
-      PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(expression.getType());
-      containingClass = result.getElement();
-      if (containingClass != null) {
-        substitutor = result.getSubstitutor();
-      }
-      if (containingClass == null && expression instanceof PsiReferenceExpression) {
-        final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
-        if (resolve instanceof PsiClass) {
-          containingClass = (PsiClass)resolve;
-        }
-      }
-    }
-    else {
-      final PsiTypeElement typeElement = getQualifierType();
-      if (typeElement != null) {
-        PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(typeElement.getType());
+    try {
+      final PsiExpression expression = getQualifierExpression();
+      if (expression != null) {
+        PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(expression.getType());
         containingClass = result.getElement();
         if (containingClass != null) {
           substitutor = result.getSubstitutor();
         }
+        if (containingClass == null && expression instanceof PsiReferenceExpression) {
+          final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
+          if (resolve instanceof PsiClass) {
+            containingClass = (PsiClass)resolve;
+            return true;
+          }
+        }
       }
+      else {
+        final PsiTypeElement typeElement = getQualifierType();
+        if (typeElement != null) {
+          PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(typeElement.getType());
+          containingClass = result.getElement();
+          if (containingClass != null) {
+            substitutor = result.getSubstitutor();
+          }
+        }
+      }
+      return false;
     }
-    psiClassRef.set(containingClass);
-    substRef.set(substitutor);
+    finally {
+      psiClassRef.set(containingClass);
+      substRef.set(substitutor);
+    }
   }
-  
+
   private class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiJavaReference> {
     @NotNull
     @Override
     public ResolveResult[] resolve(@NotNull PsiJavaReference reference, boolean incompleteCode) {
       final Ref<PsiClass> classRef = new Ref<PsiClass>();
       final Ref<PsiSubstitutor> substRef = new Ref<PsiSubstitutor>();
-      process(classRef, substRef);
-      
+      boolean checkStatic = process(classRef, substRef);
+
       final PsiClass containingClass = classRef.get();
       final PsiSubstitutor substitutor = substRef.get();
-      
+
       if (containingClass != null) {
         final PsiElement element = getReferenceNameElement();
-        if (element instanceof PsiIdentifier) {
+        final boolean isConstructor = element instanceof PsiKeyword && PsiKeyword.NEW.equals(element.getText());
+        if (element instanceof PsiIdentifier || isConstructor) {
           final PsiType functionalInterfaceType = getFunctionalInterfaceType();
           final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
           final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
-          final MethodReferenceConflictResolver conflictResolver = new MethodReferenceConflictResolver(containingClass, substitutor, interfaceMethod != null ? interfaceMethod.getSignature(resolveResult.getSubstitutor()) : null);
-          final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(PsiMethodReferenceExpressionImpl.this, 
-                                                                                    new PsiConflictResolver[]{conflictResolver}, new SmartList<CandidateInfo>());
-          processor.setIsConstructor(false);
-          processor.setName(element.getText());
-          
+          final MethodSignature signature = interfaceMethod != null ? interfaceMethod.getSignature(resolveResult.getSubstitutor()) : null;
+          final MethodReferenceConflictResolver conflictResolver = new MethodReferenceConflictResolver(containingClass, substitutor,
+                                                                                                       signature);
+          final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(PsiMethodReferenceExpressionImpl.this,
+                                                                                    new PsiConflictResolver[]{conflictResolver},
+                                                                                    new SmartList<CandidateInfo>());
+          processor.setIsConstructor(isConstructor);
+          processor.setName(isConstructor ? containingClass.getName() : element.getText());
+
+          if (checkStatic) {
+            PsiClass aClass = null;
+            if (PsiTreeUtil.isAncestor(containingClass, PsiMethodReferenceExpressionImpl.this, false)) {
+              aClass = containingClass;
+            }
+            if (PsiUtil.getEnclosingStaticElement(PsiMethodReferenceExpressionImpl.this, aClass) != null) {
+              processor.handleEvent(JavaScopeProcessorEvent.START_STATIC, null);
+            }
+          }
           ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
-          containingClass.processDeclarations(processor, state, 
+          containingClass.processDeclarations(processor, state,
                                               PsiMethodReferenceExpressionImpl.this,
                                               PsiMethodReferenceExpressionImpl.this);
           return processor.getResult();
@@ -237,7 +259,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       private final PsiClass myContainingClass;
       private final PsiSubstitutor mySubstitutor;
       private final MethodSignature mySignature;
-      
+
       private MethodReferenceConflictResolver(PsiClass containingClass,
                                               PsiSubstitutor psiSubstitutor,
                                               @Nullable MethodSignature signature) {
@@ -251,6 +273,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       public CandidateInfo resolveConflict(List<CandidateInfo> conflicts) {
         if (mySignature == null) return null;
 
+        processStaticAccessConflicts(conflicts);
         for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
           CandidateInfo conflict = iterator.next();
           if (!(conflict instanceof MethodCandidateInfo)) continue;
@@ -265,6 +288,82 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         }
         if (conflicts.size() == 1) return conflicts.get(0);
         return null;
+      }
+
+      private void processStaticAccessConflicts(List<CandidateInfo> conflicts) {
+        LOG.assertTrue(mySignature != null);
+        boolean hasReceiver = false;
+        final PsiType[] parameterTypes = mySignature.getParameterTypes();
+        if (parameterTypes.length > 0) {
+          final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(parameterTypes[0]);
+          if (classResolveResult.getElement() == myContainingClass && classResolveResult.getSubstitutor().equals(mySubstitutor)) {
+            hasReceiver = true;
+          }
+        }
+
+        final int length = mySignature.getParameterTypes().length;
+        if (!hasReceiver) {
+          final int conflictsCount = conflicts.size();
+          final CandidateInfo[] newConflictsArray = conflicts.toArray(new CandidateInfo[conflictsCount]);
+          for (int i = 1; i < conflictsCount; i++) {
+            final CandidateInfo method = newConflictsArray[i];
+            final boolean staticsScopeCorrect = method.isStaticsScopeCorrect();
+            final PsiMethod method1 = (PsiMethod)method.getElement();
+            for (int j = 0; j < i; j++) {
+              final CandidateInfo conflict = newConflictsArray[j];
+              assert conflict != method;
+              final boolean staticsScopeCorrect2 = conflict.isStaticsScopeCorrect();
+              if (method1.getParameterList().getParametersCount() == length) {
+                if (staticsScopeCorrect && staticsScopeCorrect2) continue;
+                if (staticsScopeCorrect) {
+                  conflicts.remove(conflict);
+                }
+                else {
+                  conflicts.remove(method);
+                  break;
+                }
+              }
+              else {
+                if (!staticsScopeCorrect2) {
+                  conflicts.remove(conflict);
+                }
+                else {
+                  conflicts.remove(method);
+                  break;
+                }
+              }
+            }
+          }
+        }
+        else {
+          final int conflictsCount = conflicts.size();
+          final CandidateInfo[] newConflictsArray = conflicts.toArray(new CandidateInfo[conflictsCount]);
+          for (int i = 1; i < conflictsCount; i++) {
+            final CandidateInfo method = newConflictsArray[i];
+            final boolean staticsScopeCorrect = method.isStaticsScopeCorrect();
+            final PsiMethod method1 = (PsiMethod)method.getElement();
+            final int count1 = method1.getParameterList().getParametersCount();
+            boolean hasStatic = false;
+            for (int j = 0; j < i; j++) {
+              final CandidateInfo conflict = newConflictsArray[j];
+              assert conflict != method;
+              final boolean staticsScopeCorrect2 = conflict.isStaticsScopeCorrect();
+              hasStatic |= staticsScopeCorrect2;
+              if (count1 == length) {
+                conflicts.remove(conflict);
+              }
+              else {
+                if (staticsScopeCorrect2 && staticsScopeCorrect || !staticsScopeCorrect && !staticsScopeCorrect2) {
+                  conflicts.remove(method);
+                  break;
+                }
+              }
+            }
+            if (count1 == length && (!staticsScopeCorrect && hasStatic || staticsScopeCorrect && !hasStatic)) {
+              conflicts.remove(method);
+            }
+          }
+        }
       }
     }
   }

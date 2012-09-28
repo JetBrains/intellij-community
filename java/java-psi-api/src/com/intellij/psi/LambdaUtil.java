@@ -608,7 +608,7 @@ public class LambdaUtil {
     for (int i = 0; i < signatureParameterTypes2.length; i++) {
       final PsiType type1 = signatureParameterTypes1[offset + i];
       final PsiType type2 = signatureParameterTypes2[i];
-      if (!GenericsUtil.eliminateWildcards(type1).equals(GenericsUtil.eliminateWildcards(type2))) {
+      if (!GenericsUtil.eliminateWildcards(psiSubstitutor.substitute(type1)).equals(GenericsUtil.eliminateWildcards(type2))) {
         return false;
       }
     }

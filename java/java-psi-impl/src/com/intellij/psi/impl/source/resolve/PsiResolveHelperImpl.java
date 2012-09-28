@@ -290,12 +290,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   private static void sortLambdaExpressionsLast(PsiType[] paramTypes, PsiType[] argTypes) {
     for (int i = 0; i < argTypes.length; i++) {
       PsiType argType = argTypes[i];
-      if (argType instanceof PsiLambdaExpressionType && i < argTypes.length - 1) {
+      if ((argType instanceof PsiLambdaExpressionType || argType instanceof PsiMethodReferenceType) && i < argTypes.length - 1) {
         int k = i + 1;
-        while(argTypes[k] instanceof PsiLambdaExpressionType && k < argTypes.length - 1) {
+        while((argTypes[k] instanceof PsiLambdaExpressionType || argTypes[k]  instanceof PsiMethodReferenceType) && k < argTypes.length - 1) {
           k++;
         }
-        if (!(argTypes[k] instanceof PsiLambdaExpressionType)) {
+        if (!(argTypes[k] instanceof PsiLambdaExpressionType || argTypes[k] instanceof PsiMethodReferenceType)) {
           ArrayUtil.swap(paramTypes, i, k);
           ArrayUtil.swap(argTypes, i, k);
           i = k;

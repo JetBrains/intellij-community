@@ -15,3 +15,101 @@ class MyTest {
        }
     }
 }
+class MyTest1 {
+    void m1(MyTest1 rec, String x) { }
+    void m1(String x) { }
+
+    static void m2(String x) { }
+    static void m2(MyTest1 rec, String x) {}
+
+    void m3(MyTest1 rec, String x) { }
+    static void m3(String x) { }
+
+    void m4(String x) { }
+    static void m4(MyTest1 rec, String x) { }
+
+    interface I1 {
+        void m(String x);
+    }
+
+    interface I2 {
+        void m(MyTest1 rec, String x);
+    }
+
+    static void call1(I1 s) {   }
+
+    static void call2(I2 s) {   }
+
+    static void test1() {
+        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I1'">I1 s1 = MyTest1 ::m1;</error>
+        call1<error descr="'call1(MyTest1.I1)' in 'MyTest1' cannot be applied to '(<method reference>)'">(MyTest1::m1)</error>;
+        I1 s2 = MyTest1  :: m2;
+        call1(MyTest1::m2);
+        I1 s3 = MyTest1::m3;
+        call1(MyTest1::m3);
+        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I1'">I1 s4 = MyTest1::m4;</error>
+        call1<error descr="'call1(MyTest1.I1)' in 'MyTest1' cannot be applied to '(<method reference>)'">(MyTest1::m4)</error>;
+    }
+
+    static void test2() {
+        I2 s1 = MyTest1 :: m1;
+        call2(MyTest1::m1);
+        I2 s2 = MyTest1 :: m2;
+        call2(MyTest1::m2);
+
+        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I2'">I2 s3 = MyTest1 :: m3;</error>
+        call2<error descr="'call2(MyTest1.I2)' in 'MyTest1' cannot be applied to '(<method reference>)'">(MyTest1::m3)</error>;
+        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I2'">I2 s4 = MyTest1 ::m4;</error>
+        call2<error descr="'call2(MyTest1.I2)' in 'MyTest1' cannot be applied to '(<method reference>)'">(MyTest1::m4)</error>;
+    }
+}
+
+class MyTest2 {
+    void m1(String x) { }
+    void m1(MyTest2 rec, String x) { }
+
+    static void m2(MyTest2 rec, String x) {}
+    static void m2(String x) { }
+
+    static void m3(String x) { }
+    void m3(MyTest2 rec, String x) { }
+
+    static void m4(MyTest2 rec, String x) { }
+    void m4(String x) { }
+
+    interface I1 {
+        void m(String x);
+    }
+
+    interface I2 {
+        void m(MyTest2 rec, String x);
+    }
+
+    static void call1(I1 s) {   }
+
+    static void call2(I2 s) {   }
+
+    static void test1() {
+        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest2.I1'">I1 s1 = MyTest2 ::m1;</error>
+        call1<error descr="'call1(MyTest2.I1)' in 'MyTest2' cannot be applied to '(<method reference>)'">(MyTest2::m1)</error>;
+        I1 s2 = MyTest2  :: m2;
+        call1(MyTest2::m2);
+        I1 s3 = MyTest2::m3;
+        call1(MyTest2::m3);
+        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest2.I1'">I1 s4 = MyTest2::m4;</error>
+        call1<error descr="'call1(MyTest2.I1)' in 'MyTest2' cannot be applied to '(<method reference>)'">(MyTest2::m4)</error>;
+    }
+
+    static void test2() {
+        I2 s1 = MyTest2 :: m1;
+        call2(MyTest2::m1);
+        I2 s2 = MyTest2 :: m2;
+        call2(MyTest2::m2);
+
+        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest2.I2'">I2 s3 = MyTest2 :: m3;</error>
+        call2<error descr="'call2(MyTest2.I2)' in 'MyTest2' cannot be applied to '(<method reference>)'">(MyTest2::m3)</error>;
+        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest2.I2'">I2 s4 = MyTest2 ::m4;</error>
+        call2<error descr="'call2(MyTest2.I2)' in 'MyTest2' cannot be applied to '(<method reference>)'">(MyTest2::m4)</error>;
+    }
+}
+

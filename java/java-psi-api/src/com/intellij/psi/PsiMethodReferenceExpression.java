@@ -33,5 +33,5 @@ public interface PsiMethodReferenceExpression extends PsiReferenceExpression {
   @Nullable
   PsiType getFunctionalInterfaceType();
 
-  void process(Ref<PsiClass> psiClassRef, Ref<PsiSubstitutor> substRef);
+  boolean process(Ref<PsiClass> psiClassRef, Ref<PsiSubstitutor> substRef);
 }
