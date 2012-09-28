@@ -26,9 +26,10 @@ package com.intellij.refactoring.ui;
 
 import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.util.VisibilityUtil;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -108,6 +109,7 @@ public class JavaVisibilityPanel extends VisibilityPanelBase<String> {
   }
 
 
+  @Nullable
   public String getVisibility() {
     if (myRbPublic.isSelected()) {
       return PsiModifier.PUBLIC;
@@ -128,7 +130,7 @@ public class JavaVisibilityPanel extends VisibilityPanelBase<String> {
     return null;
   }
 
-  public void setVisibility(String visibility) {
+  public void setVisibility(@Nullable String visibility) {
     if (PsiModifier.PUBLIC.equals(visibility)) {
       myRbPublic.setSelected(true);
     }

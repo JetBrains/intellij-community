@@ -30,6 +30,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.classMembers.ANDCombinedMemberInfoModel;
 import com.intellij.refactoring.classMembers.DelegatingMemberInfoModel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class UsesAndInterfacesDependencyMemberInfoModel extends DelegatingMemberInfoModel<PsiMember, MemberInfo> {
   public static final InterfaceContainmentVerifier DEFAULT_CONTAINMENT_VERIFIER = new InterfaceContainmentVerifier() {
@@ -38,7 +39,7 @@ public class UsesAndInterfacesDependencyMemberInfoModel extends DelegatingMember
                       }
                     };
 
-  public UsesAndInterfacesDependencyMemberInfoModel(PsiClass aClass, PsiClass superClass, boolean recursive,
+  public UsesAndInterfacesDependencyMemberInfoModel(PsiClass aClass, @Nullable PsiClass superClass, boolean recursive,
                                                     @NotNull final InterfaceContainmentVerifier interfaceContainmentVerifier) {
     super(new ANDCombinedMemberInfoModel<PsiMember, MemberInfo>(
             new UsesDependencyMemberInfoModel<PsiMember, PsiClass, MemberInfo>(aClass, superClass, recursive) {

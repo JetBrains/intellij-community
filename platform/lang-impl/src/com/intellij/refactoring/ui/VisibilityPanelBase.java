@@ -16,6 +16,7 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
@@ -24,6 +25,7 @@ public abstract class VisibilityPanelBase<V> extends JPanel {
 
   protected final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
 
+  @Nullable
   public abstract V getVisibility();
 
   public abstract void setVisibility(V visibility);
