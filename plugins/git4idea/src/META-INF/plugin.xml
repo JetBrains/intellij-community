@@ -31,7 +31,7 @@
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference id="Vcs.ShowHistoryForBlock"/>
       <separator/>
-      <action id="Git.Revert" class="git4idea.actions.GitRevert" text="Revert File" icon="AllIcons.Actions.Rollback"/>
+      <action id="Git.Revert" class="git4idea.actions.GitRevert" icon="AllIcons.Actions.Rollback"/>
       <action id="Git.ResolveConflicts" class="git4idea.actions.GitResolveConflictsAction" text="Resolve Conflicts..."/>
     </group>
 
