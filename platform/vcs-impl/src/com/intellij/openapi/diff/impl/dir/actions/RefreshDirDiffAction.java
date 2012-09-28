@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.PlatformIcons;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class RefreshDirDiffAction extends DirDiffAction {
+  public static final CustomShortcutSet REFRESH_SHORTCUT = CustomShortcutSet.fromString(SystemInfo.isMac ? "meta R" : "F5");
+
   public RefreshDirDiffAction(DirDiffTableModel model) {
     super(model, "Refresh", PlatformIcons.SYNCHRONIZE_ICON);
   }
@@ -41,7 +44,7 @@ public class RefreshDirDiffAction extends DirDiffAction {
 
   @Override
   public ShortcutSet getShortcut() {
-    return CustomShortcutSet.fromString("F5");
+    return REFRESH_SHORTCUT;
   }
 
   @Override
