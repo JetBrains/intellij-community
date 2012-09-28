@@ -60,7 +60,7 @@ public class PropertyUtil {
           && (methodNameLength == "get".length() + 1 || Character.isLowerCase(methodName.charAt("get".length() + 1)))) {
         return false;
       }
-      PsiType returnType = method.getReturnTypeNoResolve();
+      PsiType returnType = method.getReturnType();
       if (returnType != null && PsiType.VOID.equals(returnType)) return false;
     }
     else if (methodName.startsWith("is") && methodNameLength > "is".length()) {
@@ -68,7 +68,7 @@ public class PropertyUtil {
           && (methodNameLength == "is".length() + 1 || Character.isLowerCase(methodName.charAt("is".length() + 1)))) {
         return false;
       }
-      PsiType returnType = method.getReturnTypeNoResolve();
+      PsiType returnType = method.getReturnType();
       return isBoolean(returnType);
     }
     else {
@@ -93,7 +93,7 @@ public class PropertyUtil {
       return false;
     }
 
-    final PsiType returnType = method.getReturnTypeNoResolve();
+    final PsiType returnType = method.getReturnType();
 
     if (returnType == null || PsiType.VOID.equals(returnType)) {
       return true;
