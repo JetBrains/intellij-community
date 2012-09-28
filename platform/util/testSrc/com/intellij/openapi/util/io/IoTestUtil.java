@@ -54,6 +54,7 @@ public class IoTestUtil {
     final int res = runCommand(command);
     assertEquals(command.command().toString(), 0, res);
 
+    shouldExist |= SystemInfo.isWindows && SystemInfo.isJavaVersionAtLeast("1.6");
     assertEquals("target=" + target + ", link=" + linkFile, shouldExist, linkFile.exists());
     return linkFile;
   }
