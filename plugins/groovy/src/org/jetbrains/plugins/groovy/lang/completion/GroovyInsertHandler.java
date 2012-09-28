@@ -207,7 +207,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
     }, ResolveState.initial());
 
     for (ClosureDescriptor descriptor : descriptors) {
-      if (descriptor.isMethodApplicable(method, substitutor, (GrReferenceExpression)parent)) {
+      if (descriptor.isMethodApplicable(method, (GrReferenceExpression)parent)) {
         if (runClosureTemplate(context, document, offset, descriptor, substitutor, method)) {
           return true;
         }
