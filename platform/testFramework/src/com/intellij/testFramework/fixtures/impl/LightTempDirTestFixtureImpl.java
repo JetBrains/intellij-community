@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,14 @@ import java.util.List;
 /**
  * @author yole
  */
+@SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "JUnitTestClassNamingConvention", "JUnitTestCaseWithNoTests"})
 public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirTestFixture {
-  @NotNull private final VirtualFile mySourceRoot;
+  private final VirtualFile mySourceRoot;
   private final boolean myUsePlatformSourceRoot;
 
   public LightTempDirTestFixtureImpl() {
     final VirtualFile fsRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
+    assertNotNull(fsRoot);
     mySourceRoot = new WriteAction<VirtualFile>() {
       @Override
       protected void run(final Result<VirtualFile> result) throws Throwable {
@@ -51,6 +53,23 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
   public LightTempDirTestFixtureImpl(boolean usePlatformSourceRoot) {
     myUsePlatformSourceRoot = usePlatformSourceRoot;
     mySourceRoot = null;
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    try {
+      if (mySourceRoot != null) {
+        new WriteAction() {
+          @Override
+          protected void run(Result result) throws Throwable {
+            mySourceRoot.delete(this);
+          }
+        }.execute();
+      }
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override
