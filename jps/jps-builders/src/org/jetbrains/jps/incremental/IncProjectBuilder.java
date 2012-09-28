@@ -45,10 +45,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -1091,7 +1088,16 @@ public class IncProjectBuilder {
             Utils.ERRORS_DETECTED_KEY.set(localDataHolder, Boolean.TRUE);
           }
         }
-        return method.invoke(delegate, args);
+        try {
+          return method.invoke(delegate, args);
+        }
+        catch (InvocationTargetException e) {
+          final Throwable targetEx = e.getTargetException();
+          if (targetEx instanceof ProjectBuildException) {
+            throw targetEx;
+          }
+          throw e;
+        }
       }
     });
   }
