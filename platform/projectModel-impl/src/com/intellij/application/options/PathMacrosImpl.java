@@ -338,7 +338,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   public void addMacroReplacements(ReplacePathToMacroMap result) {
     for (final String name : getUserMacroNames()) {
       final String value = getValue(name);
-      if (value != null && value.trim().length() > 0) result.addMacroReplacement(value, name);
+      if (value != null && value.trim().length() > 0) result.addMacroReplacement(value, name, false);
     }
   }
 

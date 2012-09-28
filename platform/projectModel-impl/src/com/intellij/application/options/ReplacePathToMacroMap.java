@@ -39,30 +39,23 @@ public class ReplacePathToMacroMap extends PathMacroMap {
 
   @NonNls private static final String[] PROTOCOLS = new String[]{"file", "jar"};
 
-  public void addMacroReplacement(String path, String macroName) {
-    final String p = quotePath(path);
-    final String m = "$" + macroName + "$";
+  public void addMacroReplacement(String path, String macroName, boolean overwrite) {
+    addReplacement(quotePath(path), "$" + macroName + "$", overwrite);
+  }
 
-    myMacroMap.put(p, m);
+  public void addReplacement(String path, String macroExpr, boolean overwrite) {
+    path = StringUtil.trimEnd(path, "/");
+    putIfAbsent(path, macroExpr, overwrite);
     for (String protocol : PROTOCOLS) {
-      myMacroMap.put(protocol + ":" + p, protocol + ":" + m);
-      myMacroMap.put(protocol + ":/" + p, protocol + ":/" + m);
-      myMacroMap.put(protocol + "://" + p, protocol + "://" + m);
+      putIfAbsent(protocol + ":" + path, protocol + ":" + macroExpr, overwrite);
+      putIfAbsent(protocol + ":/" + path, protocol + ":/" + macroExpr, overwrite);
+      putIfAbsent(protocol + "://" + path, protocol + "://" + macroExpr, overwrite);
     }
   }
 
-  public void putIfAbsent(@NonNls final String pathWithPrefix,
-                          @NonNls final String substitutionWithPrefix,
-                          final boolean check) {
-    if (check && containsPath(pathWithPrefix))
-      return;
-
-    if (StringUtil.endsWithChar(pathWithPrefix, '/')) {
-      myMacroMap.put(pathWithPrefix, substitutionWithPrefix + "/");
-      myMacroMap.put(pathWithPrefix.substring(0, pathWithPrefix.length() - 1), substitutionWithPrefix);
-    }
-    else {
-      myMacroMap.put(pathWithPrefix, substitutionWithPrefix);
+  private void putIfAbsent(final String path, final String substitution, final boolean overwrite) {
+    if (overwrite || !myMacroMap.containsKey(path)) {
+      myMacroMap.put(path, substitution);
     }
   }
 
@@ -241,10 +234,6 @@ public class ReplacePathToMacroMap extends PathMacroMap {
 
   public int hashCode() {
     return myMacroMap.hashCode();
-  }
-
-  public boolean containsPath(String path) {
-    return myMacroMap.get(path) != null;
   }
 
   public void put(String path, String replacement) {

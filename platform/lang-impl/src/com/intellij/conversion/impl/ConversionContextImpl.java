@@ -191,7 +191,7 @@ public class ConversionContextImpl implements ConversionContext {
 
   private static ReplacePathToMacroMap createCollapseMacroMap(final String macroName, final File dir) {
     ReplacePathToMacroMap map = new ReplacePathToMacroMap();
-    map.addMacroReplacement(FileUtil.toSystemIndependentName(dir.getAbsolutePath()), macroName);
+    map.addMacroReplacement(FileUtil.toSystemIndependentName(dir.getAbsolutePath()), macroName, true);
     PathMacrosImpl.getInstanceEx().addMacroReplacements(map);
     return map;
   }

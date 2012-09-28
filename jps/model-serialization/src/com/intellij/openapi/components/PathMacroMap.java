@@ -85,7 +85,7 @@ public abstract class PathMacroMap {
     return substitute(text, caseSensitive);
   }
 
-  public static String quotePath(String path) {
+  protected static String quotePath(String path) {
     return FileUtil.toSystemIndependentName(path);
   }
 

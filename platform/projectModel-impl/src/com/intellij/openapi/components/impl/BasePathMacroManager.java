@@ -49,15 +49,7 @@ public class BasePathMacroManager extends PathMacroManager {
   private static void addFileHierarchyReplacements(ExpandMacroToPathMap result, @Nullable VirtualFile f, String macro) {
     if (f == null) return;
     addFileHierarchyReplacements(result, f.getParent(), macro + "/..");
-
-    final String path = f.getPath();
-    if (StringUtil.endsWithChar(path, '/')) {
-      result.put(macro + "/", path);
-      result.put(macro, path.substring(0, path.length()-1));
-    }
-    else {
-      result.put(macro, path);
-    }
+    result.put(macro, StringUtil.trimEnd(f.getPath(), "/"));
   }
 
   protected static void addFileHierarchyReplacements(ReplacePathToMacroMap result, String macroName, @Nullable String path, @Nullable String stopAt) {
@@ -65,24 +57,16 @@ public class BasePathMacroManager extends PathMacroManager {
 
     String macro = "$" + macroName + "$";
     path = StringUtil.trimEnd(FileUtil.toSystemIndependentName(path), "/");
-    boolean check = false;
+    boolean overwrite = true;
     while (StringUtil.isNotEmpty(path) && path.contains("/")) {
-      result.putIfAbsent("file:" + path, "file:" + macro, check);
-      result.putIfAbsent("file:/" + path, "file:/" + macro, check);
-      result.putIfAbsent("file://" + path, "file://" + macro, check);
-      result.putIfAbsent("jar:" + path, "jar:" + macro, check);
-      result.putIfAbsent("jar:/" + path, "jar:/" + macro, check);
-      result.putIfAbsent("jar://" + path, "jar://" + macro, check);
-      if (!path.equalsIgnoreCase("e:/") && !path.equalsIgnoreCase("r:/") && !path.equalsIgnoreCase("p:/")) {
-        result.putIfAbsent(path, macro, check);
-      }
+      result.addReplacement(path, macro, overwrite);
 
       if (path.equals(stopAt)) {
         break;
       }
 
       macro += "/..";
-      check = true;
+      overwrite = false;
       path = StringUtil.getPackageName(path, '/');
     }
   }
@@ -104,7 +88,7 @@ public class BasePathMacroManager extends PathMacroManager {
   protected ReplacePathToMacroMap getReplacePathMap() {
     ReplacePathToMacroMap result = new ReplacePathToMacroMap();
     for (Map.Entry<String, String> entry : PathMacrosImpl.getGlobalSystemMacros().entrySet()) {
-      result.addMacroReplacement(entry.getValue(), entry.getKey());
+      result.addMacroReplacement(entry.getValue(), entry.getKey(), true);
     }
     getPathMacros().addMacroReplacements(result);
     return result;
