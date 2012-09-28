@@ -18,7 +18,7 @@ print(putAt0(map, "1", "6"));
 print(putAt0(map, 2, "7"));
 org.codehaus.groovy.runtime.DefaultGroovyMethods.putAt(map, "6", 1);
 print(map.get("1"));
-print(org.codehaus.groovy.runtime.DefaultGroovyMethods.getAt(map, 2));
+print(map.get(2));
 Foo foo = new Foo();
 foo.putAt("a", 2, 4);
 print(putAt1(foo, "a", 2, 4));
