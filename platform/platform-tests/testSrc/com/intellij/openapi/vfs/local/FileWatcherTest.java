@@ -454,12 +454,13 @@ public class FileWatcherTest extends PlatformLangTestCase {
   }
 
   public void testDirectoryRecreation() throws Exception {
-    final File topDir = IoTestUtil.createTestDir("top");
+    final File rootDir = IoTestUtil.createTestDir("root");
+    final File topDir = IoTestUtil.createTestDir(rootDir, "top");
     final File file1 = IoTestUtil.createTestFile(topDir, "file1.txt");
     final File file2 = IoTestUtil.createTestFile(topDir, "file2.txt");
     refresh(topDir);
 
-    final LocalFileSystem.WatchRequest request = watch(topDir);
+    final LocalFileSystem.WatchRequest request = watch(rootDir);
     try {
       myAccept = true;
       assertTrue(FileUtil.delete(topDir));
@@ -473,6 +474,34 @@ public class FileWatcherTest extends PlatformLangTestCase {
       delete(topDir);
     }
   }
+
+  public void testWatchRootRecreation() throws Exception {
+    if (SystemInfo.isLinux) {
+      // todo[r.sh]: fix Linux watcher
+      System.err.println("Ignored: Windows required");
+      return;
+    }
+
+    final File rootDir = IoTestUtil.createTestDir("root");
+    final File file1 = IoTestUtil.createTestFile(rootDir, "file1.txt");
+    final File file2 = IoTestUtil.createTestFile(rootDir, "file2.txt");
+    refresh(rootDir);
+
+    final LocalFileSystem.WatchRequest request = watch(rootDir);
+    try {
+      myAccept = true;
+      assertTrue(FileUtil.delete(rootDir));
+      assertTrue(rootDir.mkdir());
+      assertTrue(file1.createNewFile());
+      assertTrue(file2.createNewFile());
+      assertEvent(VFileContentChangeEvent.class, file1.getPath(), file2.getPath());
+    }
+    finally {
+      unwatch(request);
+      delete(rootDir);
+    }
+  }
+
 
   @NotNull
   private LocalFileSystem.WatchRequest watch(final File watchFile) {
