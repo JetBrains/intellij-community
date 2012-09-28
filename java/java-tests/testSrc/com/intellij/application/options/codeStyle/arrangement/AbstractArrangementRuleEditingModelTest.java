@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchConditio
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +59,10 @@ public abstract class AbstractArrangementRuleEditingModelTest {
     myTree = new Tree(myRoot);
     myTree.expandPath(new TreePath(myRoot));
     myRowMappings = new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();
-    myGroupingRules = new JavaRearranger().getGroupingConditions();
+    myGroupingRules = ContainerUtilRt.newArrayList();
+    myGroupingRules.add(ContainerUtilRt.<ArrangementMatchCondition>newHashSet(
+      atom(ArrangementEntryType.FIELD), atom(ArrangementEntryType.METHOD)
+    ));
   }
 
   protected void configure(@NotNull ArrangementMatchCondition matchCondition) {
