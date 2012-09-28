@@ -39,8 +39,8 @@ public class ReplacePathToMacroMap extends PathMacroMap {
 
   @NonNls private static final String[] PROTOCOLS = new String[]{"file", "jar"};
 
-  public void addMacroReplacement(String path, String macroName, boolean overwrite) {
-    addReplacement(quotePath(path), "$" + macroName + "$", overwrite);
+  public void addMacroReplacement(String path, String macroName) {
+    addReplacement(quotePath(path), "$" + macroName + "$", true);
   }
 
   public void addReplacement(String path, String macroExpr, boolean overwrite) {

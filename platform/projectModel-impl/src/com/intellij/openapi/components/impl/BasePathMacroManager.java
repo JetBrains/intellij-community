@@ -88,7 +88,7 @@ public class BasePathMacroManager extends PathMacroManager {
   protected ReplacePathToMacroMap getReplacePathMap() {
     ReplacePathToMacroMap result = new ReplacePathToMacroMap();
     for (Map.Entry<String, String> entry : PathMacrosImpl.getGlobalSystemMacros().entrySet()) {
-      result.addMacroReplacement(entry.getValue(), entry.getKey(), true);
+      result.addMacroReplacement(entry.getValue(), entry.getKey());
     }
     getPathMacros().addMacroReplacements(result);
     return result;

@@ -14,7 +14,7 @@ public class ReplacePathToMacroMapTest {
   @Before
   public final void setupMap() {
     myMap = new ReplacePathToMacroMap();
-    myMap.addMacroReplacement("/tmp/foo", "MODULE_DIR", true);
+    myMap.addMacroReplacement("/tmp/foo", "MODULE_DIR");
   }
 
   @Test
