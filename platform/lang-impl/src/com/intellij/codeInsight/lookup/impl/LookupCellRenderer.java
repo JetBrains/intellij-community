@@ -193,21 +193,17 @@ public class LookupCellRenderer implements ListCellRenderer {
   }
 
   private void setTailTextLabel(boolean isSelected, LookupElementPresentation presentation, Color foreground, int allowedWidth) {
-    final Color fg = getTailTextColor(isSelected, presentation, foreground);
+    int style = getStyle(false, presentation.isStrikeout(), false);
 
-    final String tailText = StringUtil.notNullize(presentation.getTailText());
+    for (LookupElementPresentation.TextFragment fragment : presentation.getTailFragments()) {
+      if (allowedWidth < 0) {
+        return;
+      }
 
-    int style = SimpleTextAttributes.STYLE_PLAIN;
-    if (presentation.isStrikeout()) {
-      style |= SimpleTextAttributes.STYLE_STRIKEOUT;
+      String trimmed = trimLabelText(fragment.text, allowedWidth, myNormalMetrics);
+      myTailComponent.append(trimmed, new SimpleTextAttributes(style, getTailTextColor(isSelected, fragment, foreground)));
+      allowedWidth -= RealLookupElementPresentation.getStringWidth(trimmed, myNormalMetrics);
     }
-
-    SimpleTextAttributes attributes = new SimpleTextAttributes(style, fg);
-    if (allowedWidth < 0) {
-      return;
-    }
-
-    myTailComponent.append(trimLabelText(tailText, allowedWidth, myNormalMetrics), attributes);
   }
 
   private String trimLabelText(@Nullable String text, int maxWidth, FontMetrics metrics) {
@@ -240,13 +236,13 @@ public class LookupCellRenderer implements ListCellRenderer {
     return text.substring(0, i) + ELLIPSIS;
   }
 
-  public static Color getTailTextColor(boolean isSelected, LookupElementPresentation presentation, Color defaultForeground) {
-    if (presentation.isTailGrayed()) {
+  public static Color getTailTextColor(boolean isSelected, LookupElementPresentation.TextFragment fragment, Color defaultForeground) {
+    if (fragment.isGrayed()) {
       return getGrayedForeground(isSelected);
     }
 
     if (!isSelected) {
-      final Color tailForeground = presentation.getTailForeground();
+      final Color tailForeground = fragment.getForegroundColor();
       if (tailForeground != null) {
         return tailForeground;
       }
@@ -264,13 +260,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     myNameComponent.setFont(bold ? myBoldFont : myNormalFont);
 
-    int style = bold ? SimpleTextAttributes.STYLE_BOLD : SimpleTextAttributes.STYLE_PLAIN;
-    if (presentation.isStrikeout()) {
-      style |= SimpleTextAttributes.STYLE_STRIKEOUT;
-    }
-    if (presentation.isItemTextUnderlined()) {
-      style |= SimpleTextAttributes.STYLE_UNDERLINE;
-    }
+    int style = getStyle(bold, presentation.isStrikeout(), presentation.isItemTextUnderlined());
 
     final FontMetrics metrics = bold ? myBoldMetrics : myNormalMetrics;
     final String name = trimLabelText(presentation.getItemText(), allowedWidth, metrics);
@@ -278,6 +268,18 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     renderItemName(item, foreground, selected, style, name, myNameComponent);
     return used;
+  }
+
+  @SimpleTextAttributes.StyleAttributeConstant
+  private static int getStyle(boolean bold, boolean strikeout, boolean underlined) {
+    int style = bold ? SimpleTextAttributes.STYLE_BOLD : SimpleTextAttributes.STYLE_PLAIN;
+    if (strikeout) {
+      style |= SimpleTextAttributes.STYLE_STRIKEOUT;
+    }
+    if (underlined) {
+      style |= SimpleTextAttributes.STYLE_UNDERLINE;
+    }
+    return style;
   }
 
   private void renderItemName(LookupElement item,
@@ -321,7 +323,9 @@ public class LookupCellRenderer implements ListCellRenderer {
     Color sampleBackground = background;
 
     Object o = item.getObject();
+    //noinspection deprecation
     if (o instanceof LookupValueWithUIHint && StringUtil.isEmpty(labelText)) {
+      //noinspection deprecation
       Color proposedBackground = ((LookupValueWithUIHint)o).getColorHint();
       if (proposedBackground != null) {
         sampleBackground = proposedBackground;
