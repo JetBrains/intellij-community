@@ -73,6 +73,7 @@ public abstract class AbstractVcsTestCase {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     vcsManager.setDirectoryMappings(mappings);
     vcsManager.updateActiveVcss();
+    ChangeListManagerImpl.getInstanceImpl(myProject).waitUntilRefreshed();
   }
 
   protected static void refreshVfs() {
