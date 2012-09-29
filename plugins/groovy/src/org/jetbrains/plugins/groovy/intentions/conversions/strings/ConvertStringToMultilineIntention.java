@@ -62,7 +62,7 @@ public class ConvertStringToMultilineIntention extends Intention {
       final GrStringImpl gstring = PsiTreeUtil.getParentOfType(element, GrStringImpl.class);
       for (ASTNode child = gstring.getNode().getFirstChildNode(); child != null; child = child.getTreeNext()) {
         if (child.getElementType() == GroovyTokenTypes.mGSTRING_CONTENT) {
-          appendGStringContent(child, buffer);
+          appendSimpleStringValue(child.getPsi(), buffer, "\"\"\"");
         }
         else if (child.getElementType() == GroovyElementTypes.GSTRING_INJECTION) {
           buffer.append(child.getText());
@@ -96,17 +96,6 @@ public class ConvertStringToMultilineIntention extends Intention {
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
-    }
-  }
-
-  private static void appendGStringContent(ASTNode child, StringBuilder buffer) {
-    final String text = child.getText();
-    final StringBuilder parsed = new StringBuilder();
-    if (GrStringUtil.parseStringCharacters(text, parsed, null)) {
-      buffer.append(parsed);
-    }
-    else {
-      buffer.append(text);
     }
   }
 

@@ -50,6 +50,14 @@ public class ConvertStringToMultilineTest extends LightGroovyTestCase {
     doTest('print """a<caret>bc"""', null)
   }
 
+  void testGString4() {
+    doTest('''\
+print "ab<caret>c\\$ $x"
+''', '''\
+print """abc\\$ $x"""
+''')
+  }
+
   private doTest(String before, @Nullable String after) {
     myFixture.with {
       configureByText('_.groovy', before)
