@@ -224,6 +224,7 @@ public class FileStructurePopup implements Disposable {
     myInitialPsiElement = getCurrentElement(getPsiFile(myProject));
     //myAbstractTreeBuilder.setCanYieldUpdate(true);
     Disposer.register(this, myAbstractTreeBuilder);
+    TreeUtil.installActions(myTree);
   }
 
   public void show() {
