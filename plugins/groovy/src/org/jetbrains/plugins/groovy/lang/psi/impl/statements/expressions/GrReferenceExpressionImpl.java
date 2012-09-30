@@ -572,7 +572,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       //map access
       GrExpression qualifier = getQualifierExpression();
       if (qualifier != null) {
-        PsiType qType = qualifier.getType();
+        PsiType qType = qualifier.getNominalType();
         if (qType instanceof PsiClassType) {
           PsiClassType.ClassResolveResult qResult = ((PsiClassType)qType).resolveGenerics();
           PsiClass clazz = qResult.getElement();
@@ -598,11 +598,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       PsiType result = GrReassignedLocalVarsChecker.checkReassignedVar(refExpr, true);
       if (result!=null) return result;
 
-
       final PsiElement resolved = refExpr.resolve();
-      final PsiType inferred = refExpr.getQualifier() == null && !(resolved instanceof PsiClass) ?
-                               TypeInferenceHelper.getCurrentContext().getVariableType(refExpr) :
-                               null;
+      final PsiType inferred = getInferredTypes(refExpr, resolved);
       final PsiType nominal = refExpr.getNominalType();
       if (inferred == null || PsiType.NULL.equals(inferred)) {
         if (nominal == null) {
@@ -617,13 +614,40 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       }
 
       if (nominal == null) return inferred;
-      if (!TypeConversionUtil.isAssignable(nominal, inferred, false)) {
+      if (!TypeConversionUtil.isAssignable(TypeConversionUtil.erasure(nominal), inferred, false)) {
         if (resolved instanceof GrVariable && ((GrVariable)resolved).getTypeElementGroovy() != null) {
           return nominal;
         }
       }
       return inferred;
     }
+  }
+
+  @Nullable
+  private static PsiType getInferredTypes(GrReferenceExpressionImpl refExpr, PsiElement resolved) {
+    final GrExpression qualifier = refExpr.getQualifier();
+    if (qualifier == null && !(resolved instanceof PsiClass)) {
+      return TypeInferenceHelper.getCurrentContext().getVariableType(refExpr);
+    }
+    else if (qualifier != null) {
+      //map access
+      PsiType qType = qualifier.getType();
+      if (qType instanceof PsiClassType) {
+        PsiClassType.ClassResolveResult qResult = ((PsiClassType)qType).resolveGenerics();
+        PsiClass clazz = qResult.getElement();
+        if (clazz != null) {
+          PsiClass mapClass =
+            JavaPsiFacade.getInstance(refExpr.getProject()).findClass(CommonClassNames.JAVA_UTIL_MAP, refExpr.getResolveScope());
+          if (mapClass != null && mapClass.getTypeParameters().length == 2) {
+            PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(mapClass, clazz, qResult.getSubstitutor());
+            if (substitutor != null) {
+              return TypeConversionUtil.erasure(substitutor.substitute(mapClass.getTypeParameters()[1]));
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 
   public PsiType getType() {

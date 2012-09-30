@@ -241,7 +241,7 @@ class A {
   public void testMethodDuplicates() {doTest();}
 
   public void testPutValueToEmptyMap() {doTest(new GroovyAssignabilityCheckInspection());}
-  public void testPutIncorrectValueToMap() {doTest(new GroovyAssignabilityCheckInspection());}
+  public void _testPutIncorrectValueToMap() {doTest(new GroovyAssignabilityCheckInspection());} //incorrect test
 
   public void testAmbiguousCodeBlock() {doTest();}
   public void testAmbiguousCodeBlockInMethodCall() {doTest();}
