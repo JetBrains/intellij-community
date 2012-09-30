@@ -1410,6 +1410,13 @@
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
 
+    <action id="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGeneratePropertyMissingAction"
+            class="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGeneratePropertyMissingAction"
+            text="propertyMissing()" description="Action generates propertyMissing()">
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </action>
+
+
     <action id="Groovy.Doc.Generating"
             class="org.jetbrains.plugins.groovy.doc.actions.GenerateGroovyDocAction"
             text="Generate GroovyDoc" description="Generating Groovy Documentation"
