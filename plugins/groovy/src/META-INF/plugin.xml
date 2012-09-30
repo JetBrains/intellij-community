@@ -1386,6 +1386,19 @@
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
 
+
+    <action id="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGeneratePropertyMissingAction"
+            class="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGeneratePropertyMissingAction"
+            text="propertyMissing()" description="Action generates propertyMissing()">
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </action>
+
+    <action id="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGenerateMethodMissingAction"
+            class="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGenerateMethodMissingAction"
+            text="methodMissing()" description="Action generates propertyMissing()">
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </action>
+
     <action id="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterSetterAction"
             class="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterSetterAction"
             text="Getter and Setter" description="Generates getter">
@@ -1407,12 +1420,6 @@
     <action id="org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorAction"
             class="org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorAction"
             text="Constructor" description="Generates constructor">
-      <add-to-group group-id="GenerateGroup" anchor="first"/>
-    </action>
-
-    <action id="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGeneratePropertyMissingAction"
-            class="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGeneratePropertyMissingAction"
-            text="propertyMissing()" description="Action generates propertyMissing()">
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
 
