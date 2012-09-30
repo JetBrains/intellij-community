@@ -73,9 +73,6 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
     }
 
     LOG.info("XmlRpcServerImpl instantiated, handlers " + handlerMapping);
-
-    // temp, IDEA-91436
-    XmlRpc.setDebug(true);
   }
 
   @Override

@@ -382,7 +382,12 @@ public class GrStringUtil {
         builder.append('\\');
       }
 
-      builder.append(ch);
+      if (ch == '\n' && toEscape.indexOf('n') >= 0) {
+        builder.append("\\n");
+      }
+      else {
+        builder.append(ch);
+      }
     }
     return builder.toString();
   }

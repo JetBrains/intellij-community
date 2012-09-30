@@ -209,7 +209,7 @@ public class GrReferenceResolveUtil {
       }
     }
     else if (qualifierType instanceof PsiArrayType) {
-      final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(place.getProject()).getArrayClass();
+      final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(place.getProject()).getArrayClass(((PsiArrayType)qualifierType).getComponentType());
       if (!arrayClass.processDeclarations(processor, state, null, place)) return false;
     }
 

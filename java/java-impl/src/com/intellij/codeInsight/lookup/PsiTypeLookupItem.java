@@ -39,16 +39,27 @@ import java.util.Set;
  * @author peter
  */
 public class PsiTypeLookupItem extends LookupItem {
+  private static final InsertHandler<PsiTypeLookupItem> DEFAULT_IMPORT_FIXER = new InsertHandler<PsiTypeLookupItem>() {
+    @Override
+    public void handleInsert(InsertionContext context, PsiTypeLookupItem item) {
+      if (item.getObject() instanceof PsiClass) {
+        addImportForItem(context, (PsiClass)item.getObject());
+      }
+    }
+  };
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.PsiTypeLookupItem");
   public static final ClassConditionKey<PsiTypeLookupItem> CLASS_CONDITION_KEY = ClassConditionKey.create(PsiTypeLookupItem.class);
   private final boolean myDiamond;
   private final int myBracketsCount;
   private boolean myIndicateAnonymous;
+  private final InsertHandler<PsiTypeLookupItem> myImportFixer;
 
-  private PsiTypeLookupItem(Object o, @NotNull @NonNls String lookupString, boolean diamond, int bracketsCount) {
+  private PsiTypeLookupItem(Object o, @NotNull @NonNls String lookupString, boolean diamond, int bracketsCount, InsertHandler<PsiTypeLookupItem> fixer) {
     super(o, lookupString);
     myDiamond = diamond;
     myBracketsCount = bracketsCount;
+    myImportFixer = fixer;
   }
 
   @NotNull
@@ -77,9 +88,7 @@ public class PsiTypeLookupItem extends LookupItem {
 
   @Override
   public void handleInsert(InsertionContext context) {
-    if (getObject() instanceof PsiClass) {
-      addImportForItem(context, (PsiClass)getObject());
-    }
+    myImportFixer.handleInsert(context, this);
 
     PsiElement position = context.getFile().findElementAt(context.getStartOffset());
     assert position != null;
@@ -160,6 +169,11 @@ public class PsiTypeLookupItem extends LookupItem {
   }
 
   public static PsiTypeLookupItem createLookupItem(@NotNull PsiType type, @Nullable PsiElement context, boolean isDiamond) {
+    return createLookupItem(type, context, isDiamond, DEFAULT_IMPORT_FIXER);
+  }
+
+
+    public static PsiTypeLookupItem createLookupItem(@NotNull PsiType type, @Nullable PsiElement context, boolean isDiamond, InsertHandler<PsiTypeLookupItem> importFixer) {
     final PsiType original = type;
     int dim = 0;
     while (type instanceof PsiArrayType) {
@@ -167,13 +181,17 @@ public class PsiTypeLookupItem extends LookupItem {
       dim++;
     }
 
-    PsiTypeLookupItem item = doCreateItem(type, context, dim, isDiamond);
+    PsiTypeLookupItem item = doCreateItem(type, context, dim, isDiamond, importFixer);
 
     item.setAttribute(TYPE, original);
     return item;
   }
 
-  private static PsiTypeLookupItem doCreateItem(final PsiType type, PsiElement context, int bracketsCount, boolean diamond) {
+  private static PsiTypeLookupItem doCreateItem(final PsiType type,
+                                                PsiElement context,
+                                                int bracketsCount,
+                                                boolean diamond,
+                                                InsertHandler<PsiTypeLookupItem> importFixer) {
     if (type instanceof PsiClassType) {
       PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass psiClass = classResolveResult.getElement();
@@ -196,17 +214,17 @@ public class PsiTypeLookupItem extends LookupItem {
           }
         }
 
-        PsiTypeLookupItem item = new PsiTypeLookupItem(psiClass, lookupString, diamond, bracketsCount);
+        PsiTypeLookupItem item = new PsiTypeLookupItem(psiClass, lookupString, diamond, bracketsCount, importFixer);
         item.addLookupStrings(allStrings.toArray(new String[allStrings.size()]));
         item.setAttribute(SUBSTITUTOR, substitutor);
         return item;
       }
 
     }
-    return new PsiTypeLookupItem(type, type.getPresentableText(), false, bracketsCount);
+    return new PsiTypeLookupItem(type, type.getPresentableText(), false, bracketsCount, importFixer);
   }
 
-  private static boolean isDiamond(PsiType type) {
+  public static boolean isDiamond(PsiType type) {
     boolean diamond = false;
     if (type instanceof PsiClassReferenceType) {
       final PsiReferenceParameterList parameterList = ((PsiClassReferenceType)type).getReference().getParameterList();
@@ -248,7 +266,6 @@ public class PsiTypeLookupItem extends LookupItem {
   public static void addImportForItem(InsertionContext context, PsiClass aClass) {
     if (aClass.getQualifiedName() == null) return;
     PsiFile file = context.getFile();
-    if (!(file instanceof PsiJavaFile)) return;
 
     int newTail = JavaCompletionUtil.insertClassReference(aClass, file, context.getStartOffset(), context.getTailOffset());
     if (newTail > context.getDocument().getTextLength() || newTail < 0) {

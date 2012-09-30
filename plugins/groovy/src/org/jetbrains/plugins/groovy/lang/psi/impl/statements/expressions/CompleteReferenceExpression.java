@@ -329,7 +329,7 @@ public class CompleteReferenceExpression {
       }
     }
     else if (qualifierType instanceof PsiArrayType) {
-      final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(project).getArrayClass();
+      final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(project).getArrayClass(((PsiArrayType)qualifierType).getComponentType());
       if (!arrayClass.processDeclarations(processor, state, null, refExpr)) return;
     }
     else if (qualifierType instanceof PsiIntersectionType) {

@@ -22,17 +22,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
@@ -40,14 +38,14 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 /**
  * @author Max Medvedev
  */
-public class ConvertStringToMultilineIntention extends Intention {
-  private static final Logger LOG = Logger.getInstance(ConvertStringToMultilineIntention.class);
+public class ConvertMultilineStringToSingleLineIntention extends Intention {
+  private static final Logger LOG = Logger.getInstance(ConvertMultilineStringToSingleLineIntention.class);
 
-  public static final String hint = "Convert to Multiline";
+  public static final String hint = "Convert to single-line string";
 
   @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
-    String quote = element.getText().startsWith("'") ? "'''" : "\"\"\"";
+    String quote = element.getText().substring(0, 1);
 
     StringBuilder buffer = new StringBuilder();
     buffer.append(quote);
@@ -59,10 +57,10 @@ public class ConvertStringToMultilineIntention extends Intention {
       old = (GrExpression)element;
     }
     else {
-      final GrStringImpl gstring = PsiTreeUtil.getParentOfType(element, GrStringImpl.class);
+      final GrStringImpl gstring = (GrStringImpl)element;
       for (ASTNode child = gstring.getNode().getFirstChildNode(); child != null; child = child.getTreeNext()) {
         if (child.getElementType() == GroovyTokenTypes.mGSTRING_CONTENT) {
-          appendSimpleStringValue(child.getPsi(), buffer, "\"\"\"");
+          appendSimpleStringValue(child.getPsi(), buffer, "\"");
         }
         else if (child.getElementType() == GroovyElementTypes.GSTRING_INJECTION) {
           buffer.append(child.getText());
@@ -80,18 +78,24 @@ public class ConvertStringToMultilineIntention extends Intention {
       if (range.getStartOffset() == offset) {
         shift = 0;
       }
+      else if (range.getStartOffset() == offset - 1) {
+        shift = -1;
+      }
+      else if (range.getEndOffset() == offset) {
+        shift = -4;
+      }
       else if (range.getEndOffset() == offset + 1) {
-        shift = -2;
+        shift = -3;
       }
       else {
-        shift = 2;
+        shift = -2;
       }
 
       final GrExpression newLiteral = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(buffer.toString());
       old.replaceWithExpression(newLiteral, true);
 
       if (shift != 0) {
-        editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + shift);
+        editor.getCaretModel().moveToOffset(offset + shift);
       }
     }
     catch (IncorrectOperationException e) {
@@ -101,14 +105,11 @@ public class ConvertStringToMultilineIntention extends Intention {
 
   private static void appendSimpleStringValue(PsiElement element, StringBuilder buffer, String quote) {
     final String text = GrStringUtil.removeQuotes(element.getText());
-    final int position = buffer.length();
-    if ("'''".equals(quote)) {
-      GrStringUtil.escapeAndUnescapeSymbols(text, "", "'n", buffer);
-      GrStringUtil.fixAllTripleQuotes(buffer, position);
+    if ("'".equals(quote)) {
+      GrStringUtil.escapeAndUnescapeSymbols(text, "n'", "", buffer);
     }
     else {
-      GrStringUtil.escapeAndUnescapeSymbols(text, "", "\"n", buffer);
-      GrStringUtil.fixAllTripleDoubleQuotes(buffer, position);
+      GrStringUtil.escapeAndUnescapeSymbols(text, "\"n", "", buffer);
     }
   }
 
@@ -122,16 +123,19 @@ public class ConvertStringToMultilineIntention extends Intention {
           final ASTNode node = element.getFirstChild().getNode();
           final IElementType type = node.getElementType();
           if (type == GroovyTokenTypes.mSTRING_LITERAL) {
-            return GrStringUtil.isPlainStringLiteral(node);
+            return GrStringUtil.isMultilineStringElement(element.getNode());
           }
           if (type == GroovyTokenTypes.mGSTRING_LITERAL) {
-            return GrStringUtil.isPlainGString(node);
+            return GrStringUtil.isMultilineStringElement(element.getNode());
           }
         }
-        else {
-          final GrStringImpl gstring = PsiTreeUtil.getParentOfType(element, GrStringImpl.class, false, GrMember.class, GroovyFile.class);
-          if (gstring == null) return false;
-          return gstring.isPlainString();
+        else if (element instanceof GrStringImpl) {
+          final GrStringImpl gstring = (GrStringImpl)element;
+          final GrStringInjection[] injections = gstring.getInjections();
+          for (GrStringInjection injection : injections) {
+            if (injection.getText().indexOf('\n') >= 0) return false;
+          }
+          return !gstring.isPlainString();
         }
         return false;
       }
