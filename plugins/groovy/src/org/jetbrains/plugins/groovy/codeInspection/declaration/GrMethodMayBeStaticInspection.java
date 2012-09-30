@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -111,6 +112,8 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
     if (method.getContainingClass() instanceof GroovyScriptClass) return Result.mayNotBeStatic;
     if (SuperMethodsSearch.search(method, null, true, false).findFirst() != null) return Result.mayNotBeStatic;
     if (OverridingMethodsSearch.search(method).findFirst() != null) return Result.mayNotBeStatic;
+    if (ignoreMethod(method))return Result.mayNotBeStatic;
+
     if (myOnlyPrivateOrFinal) {
       if (!(method.hasModifierProperty(PsiModifier.FINAL) || method.hasModifierProperty(PsiModifier.PRIVATE))) return Result.mayNotBeStatic;
     }
@@ -150,6 +153,14 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
     else {
       return Result.mayNotBeStatic;
     }
+  }
+
+  private static boolean ignoreMethod(GrMethod method) {
+    final GrParameter[] parameters = method.getParameters();
+    if (method.getName().equals("propertyMissing") && (parameters.length == 2 || parameters.length == 1)) return true;
+    if (method.getName().equals("methodMissing") && (parameters.length == 2 || parameters.length == 1)) return true;
+
+    return false;
   }
 
   private static boolean isPrintOrPrintln(PsiElement element) {

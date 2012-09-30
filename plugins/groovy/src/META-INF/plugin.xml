@@ -936,6 +936,7 @@
                      implementationClass="org.jetbrains.plugins.groovy.annotator.inspections.GroovySingletonAnnotationInspection"/>
 
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.gpp.GppImplicitUsageProvider"/>
+    <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.findUsages.GrImplicitUsageProvider"/>
 
     <!-- control flow -->
     <intentionAction>

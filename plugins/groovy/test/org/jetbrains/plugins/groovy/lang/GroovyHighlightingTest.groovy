@@ -151,6 +151,7 @@ public class GroovyHighlightingTest extends LightGroovyTestCase {
   public void testDefinitionUsedInClosure() { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
   public void testDefinitionUsedInClosure2() { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
   public void testDefinitionUsedInSwitchCase() { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
+  public void testUnusedDefinitionForMethodMissing() {doTest(new GroovyUnusedDeclarationInspection())}
   public void testDuplicateInnerClass() {doTest();}
 
   public void testThisInStaticContext() {doTest();}
