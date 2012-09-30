@@ -23,7 +23,9 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureParameterInfo;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.Arrays;
@@ -61,7 +63,10 @@ public class EachWithIndexClosureCompleter extends ClosureCompleter {
 
     final PsiType iterable = PsiUtil.extractIterableTypeParameter(collection, true);
     if (iterable != null) {
-      return Arrays.asList(new ClosureParameterInfo(iterable.getCanonicalText(), "entry"), new ClosureParameterInfo("int", "i"));
+      return Arrays.asList(
+        new ClosureParameterInfo(PsiImplUtil.normalizeWildcardTypeByPosition(iterable, (GrExpression)parent).getCanonicalText(), "entry"),
+        new ClosureParameterInfo("int", "i")
+      );
     }
 
     if (InheritanceUtil.isInheritor(collection, CommonClassNames.JAVA_UTIL_MAP)) {

@@ -556,6 +556,18 @@ private void getCommonAncestor() {
 
   }
 
+  void testWildcardClosureParam() {
+    doTest('''\
+class Tx {
+    def methodOfT() {}
+}
+
+def method(List<? extends Tx> t) {
+    t.collect { print i<caret>t }
+}
+''', 'Tx')
+  }
+
   private void doTest(String text, String type) {
     def file = myFixture.configureByText('_.groovy', text)
     def ref = file.findReferenceAt(myFixture.editor.caretModel.offset) as GrReferenceExpression
