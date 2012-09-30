@@ -26,12 +26,14 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import git4idea.GitVcs;
@@ -193,11 +195,11 @@ public class GithubCreateGistAction extends DumbAwareAction {
     if (files != null) {
       List<NamedContent> contents = new ArrayList<NamedContent>();
       for (VirtualFile vf : files) {
-        NamedContent content = getContentFromFile(vf, project);
+        List<NamedContent> content = getContentFromFile(vf, project, null);
         if (content == null) {
           return null;
         }
-        contents.add(content);
+        contents.addAll(content);
       }
       return contents;
     }
@@ -207,8 +209,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
       return null;
     }
 
-    NamedContent content = getContentFromFile(file, project);
-    return content == null ? null : Collections.singletonList(content);
+    return getContentFromFile(file, project, null);
   }
 
   @Nullable
@@ -285,14 +286,47 @@ public class GithubCreateGistAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static NamedContent getContentFromFile(@NotNull VirtualFile file, @NotNull Project project) {
+  private static List<NamedContent> getContentFromFile(@NotNull VirtualFile file, @NotNull Project project, @Nullable String prefix) {
+    if (file.isDirectory()) {
+      return getContentFromDirectory(file, project, prefix);
+    }
     String content = readFile(file);
     if (content == null) {
       showError(project, FAILED_TO_CREATE_GIST, "Couldn't read the contents of the file " + file, null, null);
       LOG.info("Couldn't read the contents of the file " + file);
       return null;
     }
-    return new NamedContent(file.getName(), content);
+    return Collections.singletonList(new NamedContent(addPrefix(file.getName(), prefix, false), content));
+  }
+
+  @Nullable
+  private static List<NamedContent> getContentFromDirectory(@NotNull VirtualFile dir, @NotNull Project project, @Nullable String prefix) {
+    List<NamedContent> contents = new ArrayList<NamedContent>();
+    for (VirtualFile file : dir.getChildren()) {
+      if (!isFileIgnored(file, project)) {
+        String pref = addPrefix(dir.getName(), prefix, true);
+        List<NamedContent> c = getContentFromFile(file, project, pref);
+        if (c == null) {
+          return null;
+        }
+        contents.addAll(c);
+      }
+    }
+    return contents;
+  }
+
+  private static String addPrefix(@NotNull String name, @Nullable String prefix, boolean addTrailingSlash) {
+    String pref = prefix == null ? "" : prefix;
+    pref += name;
+    if (addTrailingSlash) {
+      pref += "_";
+    }
+    return pref;
+  }
+
+  private static boolean isFileIgnored(@NotNull VirtualFile file, @NotNull Project project) {
+    ChangeListManager manager = ChangeListManager.getInstance(project);
+    return manager.isIgnoredFile(file) || FileTypeManager.getInstance().isFileIgnored(file);
   }
 
   @Nullable
@@ -341,6 +375,31 @@ public class GithubCreateGistAction extends DumbAwareAction {
     @NotNull
     public String getText() {
       return myText;
+    }
+
+    @Override
+    public String toString() {
+      return myName;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      NamedContent content = (NamedContent)o;
+
+      if (!myName.equals(content.myName)) return false;
+      if (!myText.equals(content.myText)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myName.hashCode();
+      result = 31 * result + myText.hashCode();
+      return result;
     }
   }
 
