@@ -11,4 +11,6 @@ if (true)
   doo()
 }
 else
-{bar()}
+{
+  bar()
+}

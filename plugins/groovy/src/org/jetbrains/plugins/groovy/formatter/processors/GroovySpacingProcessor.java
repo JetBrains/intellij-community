@@ -264,14 +264,16 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   public void visitOpenBlock(GrOpenBlock block) {
-    if (myType1 == mLCURLY && myType2 == mRCURLY && block.getParent() instanceof GrBlockStatement) {
-      myResult = Spacing.createSpacing(1, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+    if (block.getParent() instanceof GrBlockStatement) {
+      if (myType1 == mLCURLY || myType2 == mRCURLY) {
+        myResult = Spacing.createSpacing(1, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      }
     }
     else if (myType1 == mLCURLY && !GrStringUtil.isMultilineStringElement(myChild2) ||
              myType2 == mRCURLY && !GrStringUtil.isMultilineStringElement(myChild1)) {
-      myResult = Spacing
-        .createDependentLFSpacing(mySettings.SPACE_WITHIN_BRACES ? 1 : 0, 1, block.getTextRange(), mySettings.KEEP_LINE_BREAKS,
-                                  mySettings.KEEP_BLANK_LINES_IN_CODE);
+      final int spaceWithinBraces = mySettings.SPACE_WITHIN_BRACES ? 1 : 0;
+      final TextRange range = block.getTextRange();
+      myResult = Spacing.createDependentLFSpacing(spaceWithinBraces, 1, range, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
   }
 
