@@ -171,33 +171,18 @@ public class ControlFlowBuilderUtil {
       GrExpression left = binary.getLeftOperand();
       GrExpression right = binary.getRightOperand();
       if (left instanceof GrReferenceExpression && ((GrReferenceExpression)left).getQualifier() == null &&
-          right instanceof GrReferenceExpression && isClassHeuristic((GrReferenceExpression)right)) {
+          right instanceof GrReferenceExpression && findClassByText((GrReferenceExpression)right)) {
         return true;
       }
     }
     return false;
   }
 
-  private static boolean isClassHeuristic(GrReferenceExpression ref) {
-    if (findClassByText(ref)) {
-      return true;
-    }
-
-    GrExpression qualifier = ref.getQualifier();
-    while (qualifier != null) {
-      if (!(qualifier instanceof GrReferenceExpression)) return false;
-      qualifier = ((GrReferenceExpression)qualifier).getQualifier();
-    }
-
-    final String name = ref.getName();
-    if (name == null || Character.isLowerCase(name.charAt(0))) return false;
-
-    return true;
-  }
-
   private static boolean findClassByText(GrReferenceExpression ref) {
     final String text = ref.getText();
-    final PsiClass aClass = JavaPsiFacade.getInstance(ref.getProject()).findClass(text, ref.getResolveScope());
+    final int i = text.indexOf('<');
+    String className = i == -1 ? text : text.substring(0, i);
+    final PsiClass aClass = JavaPsiFacade.getInstance(ref.getProject()).findClass(className, ref.getResolveScope());
     return aClass != null;
   }
 }
