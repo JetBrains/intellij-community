@@ -1,27 +1,21 @@
-package org.jetbrains.plugins.groovy.lang.controlFlow;
+package org.jetbrains.plugins.groovy.lang.controlFlow
 
-import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
-import org.jetbrains.plugins.groovy.util.TestUtils;
-
-import java.util.List;
-
+import com.intellij.openapi.editor.SelectionModel
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder
+import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ven
  */
 public class ControlFlowTest extends LightCodeInsightFixtureTestCase {
-  @Override
-  protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "groovy/controlFlow/";
-  }
+  final String basePath = TestUtils.testDataPath + "groovy/controlFlow/"
 
   public void testAssignment() throws Throwable { doTest(); }
   public void testClosure1() throws Throwable { doTest(); }
@@ -61,18 +55,19 @@ public class ControlFlowTest extends LightCodeInsightFixtureTestCase {
   public void testSomeCatches() {doTest();}
   public void testOrInReturn() {doTest();}
   public void testVarInString() {doTest();}
+  public void testMayBeStaticWithCondition() {doTest()}
 
   public void doTest() {
-    final List<String> input = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
+    final List<String> input = TestUtils.readInput(testDataPath + getTestName(true) + ".test");
 
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, input.get(0));
 
-    final GroovyFile file = (GroovyFile)myFixture.getFile();
-    final SelectionModel model = myFixture.getEditor().getSelectionModel();
-    final PsiElement start = file.findElementAt(model.hasSelection() ? model.getSelectionStart() : 0);
-    final PsiElement end = file.findElementAt(model.hasSelection() ? model.getSelectionEnd() - 1 : file.getTextLength() - 1);
-    final GrControlFlowOwner owner = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(start, end), GrControlFlowOwner.class, false);
-    final Instruction[] instructions = new ControlFlowBuilder(getProject()).buildControlFlow(owner);
+    final GroovyFile file = (GroovyFile)myFixture.file;
+    final SelectionModel model = myFixture.editor.selectionModel;
+    final PsiElement start = file.findElementAt(model.hasSelection() ? model.selectionStart : 0);
+    final PsiElement end = file.findElementAt(model.hasSelection() ? model.selectionEnd - 1 : file.textLength - 1);
+    final GrControlFlowOwner owner = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(start, end), GrControlFlowOwner, false);
+    final Instruction[] instructions = new ControlFlowBuilder(project).buildControlFlow(owner);
     final String cf = ControlFlowUtils.dumpControlFlow(instructions);
     assertEquals(input.get(1).trim(), cf.trim());
   }
