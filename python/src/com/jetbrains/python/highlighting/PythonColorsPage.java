@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
@@ -81,7 +82,7 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
 
   @NotNull
   public SyntaxHighlighter getHighlighter() {
-    final SyntaxHighlighter highlighter = SyntaxHighlighter.PROVIDER.create(PythonFileType.INSTANCE, null, null);
+    final SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(PythonFileType.INSTANCE, null, null);
     assert highlighter != null;
     return highlighter;
   }
