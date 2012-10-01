@@ -38,7 +38,7 @@ class SimpleLogger extends LayoutLog implements ISdkLog, ILogger {
     myLog.debug(s);
 
     if (myProject != null) {
-      myMessages.add(new ExceptionIssueMessage(myProject, s, throwable));
+      myMessages.add(FixableIssueMessage.createExceptionIssue(myProject, s, throwable));
     }
   }
 
@@ -56,7 +56,7 @@ class SimpleLogger extends LayoutLog implements ISdkLog, ILogger {
     myLog.debug(s);
 
     if (myProject != null) {
-      myMessages.add(new ExceptionIssueMessage(myProject, s, throwable));
+      myMessages.add(FixableIssueMessage.createExceptionIssue(myProject, s, throwable));
     }
   }
 
@@ -74,7 +74,7 @@ class SimpleLogger extends LayoutLog implements ISdkLog, ILogger {
     myLog.debug(s);
 
     if (myProject != null) {
-      myMessages.add(new ExceptionIssueMessage(myProject, s, t));
+      myMessages.add(FixableIssueMessage.createExceptionIssue(myProject, s, t));
     }
   }
 
