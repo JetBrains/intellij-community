@@ -309,8 +309,8 @@ public class ArrayUtil extends ArrayUtilRt {
   public static <T> T[] prepend(T element, @NotNull T[] array, @NotNull Class<T> type) {
     int length = array.length;
     T[] result = (T[])Array.newInstance(type, length + 1);
-    System.arraycopy(array, 0, result, 0, length);
-    result[length] = element;
+    System.arraycopy(array, 0, result, 1, length);
+    result[0] = element;
     return result;
   }
 
