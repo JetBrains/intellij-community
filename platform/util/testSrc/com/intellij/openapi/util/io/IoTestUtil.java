@@ -19,6 +19,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.URL;
@@ -32,10 +33,12 @@ import static org.junit.Assert.*;
 public class IoTestUtil {
   private IoTestUtil() { }
 
+  @NotNull
   public static File createSymLink(@NotNull String target, @NotNull String link) throws InterruptedException, IOException {
     return createSymLink(target, link, true);
   }
 
+  @NotNull
   public static File createSymLink(@NotNull String target, @NotNull String link, boolean shouldExist) throws InterruptedException, IOException {
     assertTrue(SystemInfo.isWindows || SystemInfo.isUnix);
 
@@ -59,7 +62,8 @@ public class IoTestUtil {
     return linkFile;
   }
 
-  public static File createHardLink(@NotNull final String target, @NotNull final String link) throws InterruptedException, IOException {
+  @NotNull
+  public static File createHardLink(@NotNull String target, @NotNull String link) throws InterruptedException, IOException {
     assertTrue(SystemInfo.isWindows || SystemInfo.isUnix);
 
     final File targetFile = new File(FileUtil.toSystemDependentName(target));
@@ -79,7 +83,8 @@ public class IoTestUtil {
     return linkFile;
   }
 
-  public static File createJunction(@NotNull final String target, @NotNull final String junction) throws InterruptedException, IOException {
+  @NotNull
+  public static File createJunction(@NotNull String target, @NotNull String junction) throws InterruptedException, IOException {
     assertTrue(SystemInfo.isWindows);
 
     final File targetFile = new File(FileUtil.toSystemDependentName(target));
@@ -97,7 +102,8 @@ public class IoTestUtil {
     return junctionFile;
   }
 
-  public static File createSubst(@NotNull final String target) throws InterruptedException, IOException {
+  @NotNull
+  public static File createSubst(@NotNull String target) throws InterruptedException, IOException {
     assertTrue(SystemInfo.isWindows);
 
     final File targetFile = new File(FileUtil.toSystemDependentName(target));
@@ -114,7 +120,7 @@ public class IoTestUtil {
     return rootFile;
   }
 
-  public static void deleteSubst(@NotNull final String substRoot) throws InterruptedException, IOException {
+  public static void deleteSubst(@NotNull String substRoot) throws InterruptedException, IOException {
     runCommand(new ProcessBuilder("subst", substRoot, "/d"));
   }
 
@@ -138,7 +144,7 @@ public class IoTestUtil {
     return drive;
   }
 
-  private static File getFullLinkPath(final String link) {
+  private static File getFullLinkPath(String link) {
     File linkFile = new File(FileUtil.toSystemDependentName(link));
     if (!linkFile.isAbsolute()) {
       linkFile = new File(FileUtil.getTempDirectory(), link);
@@ -201,6 +207,7 @@ public class IoTestUtil {
                roundedExpected != roundedActual);
   }
 
+  @NotNull
   public static File createTestJar() throws IOException {
     final File jarFile = FileUtil.createTempFile("test.", ".jar");
     final JarOutputStream stream = new JarOutputStream(new FileOutputStream(jarFile));
@@ -215,19 +222,30 @@ public class IoTestUtil {
     return jarFile;
   }
 
-  public static File createTestDir(final String name) {
+  @NotNull
+  public static File createTestDir(@NotNull String name) {
     return createTestDir(new File(FileUtil.getTempDirectory()), name);
   }
 
-  public static File createTestDir(final File parent, final String name) {
+  @NotNull
+  public static File createTestDir(@NotNull File parent, @NotNull String name) {
     final File dir = new File(parent, name);
     assertTrue(dir.getPath(), dir.mkdirs());
     return dir;
   }
 
-  public static File createTestFile(final File parent, final String name) throws IOException {
+  @NotNull
+  public static File createTestFile(@NotNull File parent, @NotNull String name) throws IOException {
+    return createTestFile(parent, name, null);
+  }
+
+  @NotNull
+  public static File createTestFile(@NotNull File parent, @NotNull String name, @Nullable String content) throws IOException {
     final File file = new File(parent, name);
     assertTrue(file.getPath(), file.createNewFile());
+    if (content != null) {
+      FileUtil.writeToFile(file, content);
+    }
     return file;
   }
 

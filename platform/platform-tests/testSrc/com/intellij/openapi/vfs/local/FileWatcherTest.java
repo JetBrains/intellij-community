@@ -457,8 +457,8 @@ public class FileWatcherTest extends PlatformLangTestCase {
   public void testDirectoryRecreation() throws Exception {
     final File rootDir = IoTestUtil.createTestDir("root");
     final File topDir = IoTestUtil.createTestDir(rootDir, "top");
-    final File file1 = IoTestUtil.createTestFile(topDir, "file1.txt");
-    final File file2 = IoTestUtil.createTestFile(topDir, "file2.txt");
+    final File file1 = IoTestUtil.createTestFile(topDir, "file1.txt", "abc");
+    final File file2 = IoTestUtil.createTestFile(topDir, "file2.txt", "123");
     refresh(topDir);
 
     final LocalFileSystem.WatchRequest request = watch(rootDir);
@@ -485,8 +485,8 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
 
     final File rootDir = IoTestUtil.createTestDir("root");
-    final File file1 = IoTestUtil.createTestFile(rootDir, "file1.txt");
-    final File file2 = IoTestUtil.createTestFile(rootDir, "file2.txt");
+    final File file1 = IoTestUtil.createTestFile(rootDir, "file1.txt", "abc");
+    final File file2 = IoTestUtil.createTestFile(rootDir, "file2.txt", "123");
     refresh(rootDir);
 
     final LocalFileSystem.WatchRequest request = watch(rootDir);
