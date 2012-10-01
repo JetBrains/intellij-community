@@ -55,12 +55,12 @@ class StaticInner {
 
 class StaticInner1 {
     static class Inner {
-      Inner(StaticInner outer) {}
+      Inner(StaticInner1 outer) {}
       Inner() {}
     }
 
     interface I1 {
-      Inner _(StaticInner rec);
+      Inner _(StaticInner1 rec);
     }
 
     interface I2 {
@@ -71,6 +71,6 @@ class StaticInner1 {
     static void call3(I2 s) {}
 
     static {
-      call3<error descr="Cannot resolve method 'call3(<method reference>)'">(StaticInner.Inner :: new)</error>;
+      call3<error descr="Ambiguous method call: both 'StaticInner1.call3(I1)' and 'StaticInner1.call3(I2)' match">(StaticInner1.Inner :: new)</error>;
     }
 }

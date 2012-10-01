@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase implements PsiMethodReferenceExpression {
   private static Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl");
@@ -107,7 +108,11 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       LOG.error("invalid!");
       return JavaResolveResult.EMPTY_ARRAY;
     }
-    ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, new MethodReferenceResolver(), true,
+    final MethodReferenceResolver resolver = new MethodReferenceResolver();
+    if (getFunctionalInterfaceType() == null) {
+      return (JavaResolveResult[])resolver.resolve(this, incompleteCode);
+    }
+    ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, resolver, true,
                                                                                         incompleteCode);
     return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
   }
@@ -224,7 +229,16 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         final PsiElement element = getReferenceNameElement();
         final boolean isConstructor = element instanceof PsiKeyword && PsiKeyword.NEW.equals(element.getText());
         if (element instanceof PsiIdentifier || isConstructor) {
-          final PsiType functionalInterfaceType = getFunctionalInterfaceType();
+          PsiType functionalInterfaceType = getFunctionalInterfaceType();
+          if (functionalInterfaceType == null) {
+            final Map<PsiMethodReferenceExpression,PsiType> map = LambdaUtil.ourRefs.get();
+            if (map != null) {
+              functionalInterfaceType = map.get(PsiMethodReferenceExpressionImpl.this);
+            }
+            else {
+              functionalInterfaceType = null;
+            }
+          }
           final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
           final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
           final MethodSignature signature = interfaceMethod != null ? interfaceMethod.getSignature(resolveResult.getSubstitutor()) : null;

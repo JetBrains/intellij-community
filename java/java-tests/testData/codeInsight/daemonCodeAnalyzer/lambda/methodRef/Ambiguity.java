@@ -29,7 +29,7 @@ class MyTest {
 
     {
         Bar1 b1 = MyTest :: foo;
-        bar<error descr="Cannot resolve method 'bar(<method reference>)'">(MyTest :: foo)</error>;
+        bar<error descr="Ambiguous method call: both 'MyTest.bar(Bar1)' and 'MyTest.bar(Bar2)' match">(MyTest :: foo)</error>;
     }
 }
 

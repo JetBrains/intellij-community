@@ -32,6 +32,7 @@ import java.util.*;
  */
 public class LambdaUtil {
   private static final Logger LOG = Logger.getInstance("#" + LambdaUtil.class.getName());
+  public static ThreadLocal<Map<PsiMethodReferenceExpression, PsiType>> ourRefs = new ThreadLocal<Map<PsiMethodReferenceExpression, PsiType>>();
   public static ThreadLocal<Set<PsiParameterList>> ourParams = new ThreadLocal<Set<PsiParameterList>>();
 
   @Nullable
@@ -561,9 +562,23 @@ public class LambdaUtil {
     return true;
   }
 
-  public static boolean isAcceptable(@Nullable PsiMethodReferenceExpression methodReferenceExpression, PsiType left) {
+  public static boolean isAcceptable(@Nullable final PsiMethodReferenceExpression methodReferenceExpression, PsiType left) {
     if (methodReferenceExpression == null) return false;
-    final JavaResolveResult result = methodReferenceExpression.advancedResolve(false);
+    Map<PsiMethodReferenceExpression, PsiType> map = ourRefs.get();
+    if (map == null) {
+      map = new HashMap<PsiMethodReferenceExpression, PsiType>();
+      ourRefs.set(map);
+    }
+
+    final JavaResolveResult result;
+    try {
+      if (map.put(methodReferenceExpression, left) != null) return false;
+      result = methodReferenceExpression.advancedResolve(false);
+    }
+    finally {
+      map.remove(methodReferenceExpression);
+    }
+
     final PsiElement resolve = result.getElement();
     if (resolve instanceof PsiMethod) {
       final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(left);
