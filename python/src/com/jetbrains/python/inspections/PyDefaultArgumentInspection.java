@@ -4,7 +4,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.actions.PyDefaultArgumentQuickFix;
+import com.jetbrains.python.inspections.quickfix.PyDefaultArgumentQuickFix;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;

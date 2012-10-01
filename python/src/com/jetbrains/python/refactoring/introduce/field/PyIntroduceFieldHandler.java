@@ -21,7 +21,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.actions.AddFieldQuickFix;
+import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
