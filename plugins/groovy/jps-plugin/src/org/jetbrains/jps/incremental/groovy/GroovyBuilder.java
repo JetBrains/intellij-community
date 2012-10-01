@@ -14,6 +14,7 @@ import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
@@ -23,7 +24,6 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
-import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.javac.OutputFileObject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
@@ -267,7 +267,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         final RootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, new File(sourcePath));
         if (moduleAndRoot != null) {
           final ModuleBuildTarget target = moduleAndRoot.target;
-          context.getProjectDescriptor().dataManager.getSourceToOutputMap(target).appendData(sourcePath, outputPath);
+          context.getProjectDescriptor().dataManager.getSourceToOutputMap(target).appendOutput(sourcePath, outputPath);
           String moduleOutputPath = generationOutputs.get(target);
           generatedEvent.add(moduleOutputPath, FileUtil.getRelativePath(moduleOutputPath, outputPath, '/'));
         }
@@ -312,10 +312,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     for (ModuleBuildTarget target : chunk.getTargets()) {
       String moduleOutputPath = finalOutputs.get(target);
       final SourceToOutputMapping srcToOut = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
-      for (String src : srcToOut.getKeys()) {
+      for (String src : srcToOut.getSources()) {
         if (!toCompilePaths.contains(src) && isGroovyFile(src) &&
             !configuration.getCompilerExcludes().isExcluded(new File(src))) {
-          final Collection<String> outs = srcToOut.getState(src);
+          final Collection<String> outs = srcToOut.getOutputs(src);
           if (outs != null) {
             for (String out : outs) {
               if (out.endsWith(".class") && out.startsWith(moduleOutputPath)) {

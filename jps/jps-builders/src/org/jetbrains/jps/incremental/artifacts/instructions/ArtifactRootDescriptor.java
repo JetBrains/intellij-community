@@ -2,10 +2,10 @@ package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
-import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 
 import java.io.File;
 import java.io.IOException;

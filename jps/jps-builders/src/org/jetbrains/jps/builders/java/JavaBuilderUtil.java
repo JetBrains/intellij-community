@@ -9,10 +9,13 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.FSOperations;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
-import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;

@@ -5,11 +5,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
 import org.jetbrains.jps.incremental.artifacts.JarPathUtil;
-import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 
 import java.io.*;
 import java.util.Collections;
@@ -89,7 +89,7 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
               from.close();
               to.close();
             }
-            srcOutMapping.appendData(filePath, Collections.singletonList(fullOutputPath));
+            srcOutMapping.appendOutput(filePath, fullOutputPath);
           }
           outSrcMapping.appendData(fullOutputPath, Collections.singletonList(new ArtifactOutputToSourceMapping.SourcePathAndRootIndex(fullSourcePath, rootIndex)));
         }

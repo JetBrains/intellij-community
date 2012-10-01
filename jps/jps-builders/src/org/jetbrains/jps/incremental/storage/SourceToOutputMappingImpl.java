@@ -5,6 +5,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -18,26 +19,29 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: 10/7/11
  */
-public final class SourceToOutputMapping extends AbstractStateStorage<String, Collection<String>> {
+public final class SourceToOutputMappingImpl extends AbstractStateStorage<String, Collection<String>> implements SourceToOutputMapping {
 
-  public SourceToOutputMapping(File storePath) throws IOException {
+  public SourceToOutputMappingImpl(File storePath) throws IOException {
     super(storePath, new PathStringDescriptor(), new StringCollectionExternalizer());
   }
 
   @Override
-  public void update(@NotNull String srcPath, @NotNull Collection<String> outputs) throws IOException {
+  public void setOutputs(@NotNull String srcPath, @NotNull Collection<String> outputs) throws IOException {
     super.update(FileUtil.toSystemIndependentName(srcPath), normalizePaths(outputs));
   }
 
-  public void update(@NotNull String srcPath, @NotNull String outputPath) throws IOException {
+  @Override
+  public void setOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException {
     super.update(FileUtil.toSystemIndependentName(srcPath), Collections.singleton(FileUtil.toSystemIndependentName(outputPath)));
   }
 
-  public void appendData(String srcPath, String outputPath) throws IOException {
+  @Override
+  public void appendOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException {
     super.appendData(FileUtil.toSystemIndependentName(srcPath), Collections.singleton(FileUtil.toSystemIndependentName(outputPath)));
   }
 
-  public void appendData(String srcPath, Collection<String> data) throws IOException {
+  @Override
+  public void appendData(@NotNull String srcPath, @NotNull Collection<String> data) throws IOException {
     super.appendData(FileUtil.toSystemIndependentName(srcPath), normalizePaths(data));
   }
 
@@ -48,8 +52,14 @@ public final class SourceToOutputMapping extends AbstractStateStorage<String, Co
 
   @Nullable
   @Override
-  public Collection<String> getState(@NotNull String srcPath) throws IOException {
+  public Collection<String> getOutputs(@NotNull String srcPath) throws IOException {
     return super.getState(FileUtil.toSystemIndependentName(srcPath));
+  }
+
+  @NotNull
+  @Override
+  public Collection<String> getSources() throws IOException {
+    return getKeys();
   }
 
   private static Collection<String> normalizePaths(Collection<String> outputs) {
@@ -60,15 +70,16 @@ public final class SourceToOutputMapping extends AbstractStateStorage<String, Co
     return normalized;
   }
 
-  public void removeValue(String sourcePath, String outputPath) throws IOException {
-    final Collection<String> outputPaths = getState(FileUtil.toSystemIndependentName(sourcePath));
+  @Override
+  public void removeOutput(@NotNull String sourcePath, @NotNull String outputPath) throws IOException {
+    final Collection<String> outputPaths = getOutputs(FileUtil.toSystemIndependentName(sourcePath));
     if (outputPaths != null) {
       outputPaths.remove(FileUtil.toSystemIndependentName(outputPath));
       if (outputPaths.isEmpty()) {
         remove(sourcePath);
       }
       else {
-        update(sourcePath, outputPaths);
+        setOutputs(sourcePath, outputPaths);
       }
     }
   }

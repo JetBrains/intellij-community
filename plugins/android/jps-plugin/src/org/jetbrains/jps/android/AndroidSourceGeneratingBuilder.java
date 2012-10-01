@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.java.FormsParsing;
@@ -28,7 +29,6 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
-import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
@@ -422,7 +422,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         }
         else {
           final SourceToOutputMapping sourceToOutputMap = context.getProjectDescriptor().dataManager.getSourceToOutputMap(buildTarget);
-          sourceToOutputMap.update(filePath, outputFilePath);
+          sourceToOutputMap.setOutput(filePath, outputFilePath);
           FSOperations.markDirty(context, outputFile);
         }
       }
@@ -505,7 +505,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           final List<String> newFilePaths = Arrays.asList(AndroidJpsUtil.toPaths(newFiles.toArray(new File[newFiles.size()])));
 
           final SourceToOutputMapping sourceToOutputMap = dataManager.getSourceToOutputMap(buildTarget);
-          sourceToOutputMap.update(filePath, newFilePaths);
+          sourceToOutputMap.setOutputs(filePath, newFilePaths);
 
           for (File newFile : newFiles) {
             FSOperations.markDirty(context, newFile);

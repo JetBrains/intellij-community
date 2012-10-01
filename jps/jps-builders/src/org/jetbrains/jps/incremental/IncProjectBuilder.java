@@ -28,6 +28,7 @@ import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
@@ -296,8 +297,8 @@ public class IncProjectBuilder {
 
   public static void clearOutputFiles(CompileContext context, BuildTarget<?> target) throws IOException {
     final SourceToOutputMapping map = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
-    for (String srcPath : map.getKeys()) {
-      final Collection<String> outs = map.getState(srcPath);
+    for (String srcPath : map.getSources()) {
+      final Collection<String> outs = map.getOutputs(srcPath);
       if (outs != null && !outs.isEmpty()) {
         for (String out : outs) {
           new File(out).delete();
@@ -693,7 +694,7 @@ public class IncProjectBuilder {
         // actually delete outputs associated with removed paths
         for (String deletedSource : deletedPaths) {
           // deleting outputs corresponding to non-existing source
-          final Collection<String> outputs = sourceToOutputStorage.getState(deletedSource);
+          final Collection<String> outputs = sourceToOutputStorage.getOutputs(deletedSource);
 
           if (outputs != null && !outputs.isEmpty()) {
             final JavaBuilderLogger logger = context.getLoggingManager().getJavaBuilderLogger();
@@ -845,7 +846,7 @@ public class IncProjectBuilder {
             storageMap.put(target, srcToOut);
           }
           final String srcPath = FileUtil.toSystemIndependentName(file.getPath());
-          final Collection<String> outputs = srcToOut.getState(srcPath);
+          final Collection<String> outputs = srcToOut.getOutputs(srcPath);
 
           if (outputs != null) {
             final JavaBuilderLogger logger = context.getLoggingManager().getJavaBuilderLogger();
@@ -858,7 +859,7 @@ public class IncProjectBuilder {
             if (!outputs.isEmpty()) {
               context.processMessage(new FileDeletedEvent(outputs));
             }
-            srcToOut.update(srcPath, Collections.<String>emptyList());
+            srcToOut.setOutputs(srcPath, Collections.<String>emptyList());
           }
           return true;
         }
@@ -996,7 +997,7 @@ public class IncProjectBuilder {
     // handle deleted paths
     final BuildFSState fsState = pd.fsState;
     fsState.clearDeletedPaths(target);
-    final SourceToOutputMapping sourceToOutputMap = pd.dataManager.getSourceToOutputMap(target);
+    final SourceToOutputMappingImpl sourceToOutputMap = pd.dataManager.getSourceToOutputMap(target);
     for (final Iterator<String> it = sourceToOutputMap.getKeysIterator(); it.hasNext();) {
       final String path = it.next();
       // can check if the file exists

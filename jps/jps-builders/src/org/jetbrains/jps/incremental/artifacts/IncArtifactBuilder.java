@@ -9,6 +9,7 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.artifacts.impl.ArtifactSorter;
@@ -18,7 +19,6 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
-import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 
 import java.io.File;
@@ -70,7 +70,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactBuildTarget> {
       final TIntObjectHashMap<Set<String>> filesToProcess = new TIntObjectHashMap<Set<String>>();
       MultiMap<String, String> filesToDelete = new MultiMap<String, String>();
       for (String sourcePath : deletedFiles) {
-        final Collection<String> outputPaths = srcOutMapping.getState(sourcePath);
+        final Collection<String> outputPaths = srcOutMapping.getOutputs(sourcePath);
         if (outputPaths != null) {
           for (String outputPath : outputPaths) {
             filesToDelete.putValue(outputPath, sourcePath);
@@ -90,7 +90,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactBuildTarget> {
         for (File file : entry.getValue()) {
           String sourcePath = FileUtil.toSystemIndependentName(file.getPath());
           addFileToProcess(filesToProcess, rootIndex, sourcePath, deletedFiles);
-          final Collection<String> outputPaths = srcOutMapping.getState(sourcePath);
+          final Collection<String> outputPaths = srcOutMapping.getOutputs(sourcePath);
           if (outputPaths != null) {
             changedOutputPaths.addAll(outputPaths);
             for (String outputPath : outputPaths) {
@@ -189,7 +189,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactBuildTarget> {
         outSrcMapping.remove(filePath);
         deletedPaths.add(filePath);
         for (String sourcePath : filesToDelete.get(filePath)) {
-          srcOutMapping.removeValue(sourcePath, filePath);
+          srcOutMapping.removeOutput(sourcePath, filePath);
         }
       }
       else {

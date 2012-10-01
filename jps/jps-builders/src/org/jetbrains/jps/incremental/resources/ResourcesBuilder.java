@@ -6,11 +6,11 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
-import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.service.JpsServiceManager;
@@ -113,7 +113,7 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
     final String outputPath = targetPath.toString();
     FileUtil.copyContent(file, new File(outputPath));
     try {
-      outputToSourceMapping.update(file.getPath(), outputPath);
+      outputToSourceMapping.setOutput(file.getPath(), outputPath);
     }
     catch (Exception e) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, e));
