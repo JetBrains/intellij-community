@@ -381,7 +381,7 @@ class GitMergeOperation extends GitBranchOperation {
     public void hyperlinkUpdate(@NotNull Notification notification,
                                 @NotNull HyperlinkEvent event) {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equalsIgnoreCase("delete")) {
-        new GitBranchOperationsProcessor(myProject, new ArrayList<GitRepository>(getRepositories()), myCurrentRepository).
+        new GitBrancherImpl(myProject, new ArrayList<GitRepository>(getRepositories()), myCurrentRepository).
           deleteBranch(myBranchToMerge);
       }
     }

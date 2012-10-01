@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import git4idea.branch.GitBranchOperationsProcessor;
+import git4idea.branch.GitBrancherImpl;
 import git4idea.repo.GitRepository;
 
 /**
@@ -55,7 +55,7 @@ public class GitCreateNewTag {
       }
     });
     if (name != null) {
-      new GitBranchOperationsProcessor(myRepository, myCallInAwtAfterExecution).createNewTag(name, myReference);
+      new GitBrancherImpl(myRepository, myCallInAwtAfterExecution).createNewTag(name, myReference);
     }
   }
 }

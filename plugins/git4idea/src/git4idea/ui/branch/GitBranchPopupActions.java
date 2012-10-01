@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.IconUtil;
 import git4idea.GitBranch;
-import git4idea.branch.GitBranchOperationsProcessor;
+import git4idea.branch.GitBrancherImpl;
 import git4idea.repo.GitRepository;
 import git4idea.validators.GitNewBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +95,7 @@ class GitBranchPopupActions {
     public void actionPerformed(AnActionEvent e) {
       final String name = GitBranchUiUtil.getNewBranchNameFromUser(myProject, myRepositories, "Create New Branch");
       if (name != null) {
-        new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).checkoutNewBranch(name);
+        new GitBrancherImpl(myProject, myRepositories, mySelectedRepository).checkoutNewBranch(name);
       }
     }
 
@@ -136,7 +136,7 @@ class GitBranchPopupActions {
       String reference = Messages
         .showInputDialog(myProject, "Enter reference (branch, tag) name or commit hash", "Checkout", Messages.getQuestionIcon());
       if (reference != null) {
-        new GitBranchOperationsProcessor(myRepository).checkout(reference);
+        new GitBrancherImpl(myRepository).checkout(reference);
       }
     }
 
@@ -219,7 +219,7 @@ class GitBranchPopupActions {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).checkout(myBranchName);
+        new GitBrancherImpl(myProject, myRepositories, mySelectedRepository).checkout(myBranchName);
       }
 
     }
@@ -245,7 +245,7 @@ class GitBranchPopupActions {
           .showInputDialog(myProject, "Enter name of new branch", "Checkout New Branch From " + myBranchName,
                            Messages.getQuestionIcon(), "", GitNewBranchNameValidator.newInstance(myRepositories));
         if (name != null) {
-          new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).checkoutNewBranchStartingFrom(name, myBranchName);
+          new GitBrancherImpl(myProject, myRepositories, mySelectedRepository).checkoutNewBranchStartingFrom(name, myBranchName);
         }
       }
 
@@ -267,7 +267,7 @@ class GitBranchPopupActions {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).deleteBranch(myBranchName);
+        new GitBrancherImpl(myProject, myRepositories, mySelectedRepository).deleteBranch(myBranchName);
       }
     }
   }
@@ -323,7 +323,7 @@ class GitBranchPopupActions {
         final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout Remote Branch", Messages.getQuestionIcon(),
                                                guessBranchName(), GitNewBranchNameValidator.newInstance(myRepositories));
         if (name != null) {
-          new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).checkoutNewBranchStartingFrom(name, myRemoteBranchName);
+          new GitBrancherImpl(myProject, myRepositories, mySelectedRepository).checkoutNewBranchStartingFrom(name, myRemoteBranchName);
         }
       }
 
@@ -352,7 +352,7 @@ class GitBranchPopupActions {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).deleteRemoteBranch(myBranchName);
+        new GitBrancherImpl(myProject, myRepositories, mySelectedRepository).deleteRemoteBranch(myBranchName);
       }
     }
 
@@ -376,7 +376,7 @@ class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).compare(myBranchName);
+      new GitBrancherImpl(myProject, myRepositories, mySelectedRepository).compare(myBranchName);
     }
 
   }
@@ -401,7 +401,7 @@ class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).merge(myBranchName, myLocalBranch);
+      new GitBrancherImpl(myProject, myRepositories, mySelectedRepository).merge(myBranchName, myLocalBranch);
     }
 
   }

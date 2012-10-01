@@ -53,13 +53,11 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Executor of Git branching operations.
- *
  * @author Kirill Likhodedov
  */
-public final class GitBranchOperationsProcessor {
+public final class GitBrancherImpl implements GitBrancher {
 
-  private static final Logger LOG = Logger.getInstance(GitBranchOperationsProcessor.class);
+  private static final Logger LOG = Logger.getInstance(GitBrancherImpl.class);
 
   private final Project myProject;
   private final List<GitRepository> myRepositories;
@@ -67,23 +65,23 @@ public final class GitBranchOperationsProcessor {
   private final GitRepository mySelectedRepository;
   private final Git myGit;
 
-  public GitBranchOperationsProcessor(@NotNull GitRepository repository) {
+  public GitBrancherImpl(@NotNull GitRepository repository) {
     this(repository, null);
   }
   
-  public GitBranchOperationsProcessor(@NotNull GitRepository repository, @Nullable Runnable callInAwtAfterExecution) {
+  public GitBrancherImpl(@NotNull GitRepository repository, @Nullable Runnable callInAwtAfterExecution) {
     this(repository.getProject(), Collections.singletonList(repository), repository, callInAwtAfterExecution);
   }
 
-  public GitBranchOperationsProcessor(@NotNull Project project, @NotNull List<GitRepository> repositories,
-                                      @NotNull GitRepository selectedRepository) {
+  public GitBrancherImpl(@NotNull Project project, @NotNull List<GitRepository> repositories,
+                         @NotNull GitRepository selectedRepository) {
     this(project, repositories, selectedRepository, null);
   }
 
-  public GitBranchOperationsProcessor(@NotNull Project project,
-                                      @NotNull List<GitRepository> repositories,
-                                      @NotNull GitRepository selectedRepository,
-                                      @Nullable Runnable callInAwtAfterExecution) {
+  public GitBrancherImpl(@NotNull Project project,
+                         @NotNull List<GitRepository> repositories,
+                         @NotNull GitRepository selectedRepository,
+                         @Nullable Runnable callInAwtAfterExecution) {
     myProject = project;
     myRepositories = repositories;
     mySelectedRepository = selectedRepository;
@@ -106,13 +104,7 @@ public final class GitBranchOperationsProcessor {
     }
   }
 
-  /**
-   * Checks out a new branch in background.
-   * If there are unmerged files, proposes to resolve the conflicts and tries to check out again.
-   * Doesn't check the name of new branch for validity - do this before calling this method, otherwise a standard error dialog will be shown.
-   *
-   * @param name Name of the new branch to check out.
-   */
+  @Override
   public void checkoutNewBranch(@NotNull final String name) {
     new CommonBackgroundTask(myProject, "Checking out new branch " + name, myCallInAwtAfterExecution) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
@@ -121,7 +113,8 @@ public final class GitBranchOperationsProcessor {
     }.runInBackground();
   }
 
-  public void createNewTag(@NotNull final String name, final String reference) {
+  @Override
+  public void createNewTag(@NotNull final String name, @NotNull final String reference) {
     new CommonBackgroundTask(myProject, "Checking out new branch " + name, myCallInAwtAfterExecution) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
         for (GitRepository repository : myRepositories) {
@@ -135,31 +128,12 @@ public final class GitBranchOperationsProcessor {
     new GitCheckoutNewBranchOperation(myProject, myGit, myRepositories, name, getCurrentBranchOrRev(), indicator).execute();
   }
 
-  /**
-   * Creates and checks out a new local branch starting from the given reference:
-   * {@code git checkout -b <branchname> <start-point>}. <br/>
-   * If the reference is a remote branch, and the tracking is wanted, pass {@code true} in the "track" parameter.
-   * Provides the "smart checkout" procedure the same as in {@link #checkout(String)}.
-   *
-   * @param newBranchName     Name of new local branch.
-   * @param startPoint        Reference to checkout.
-   */
+  @Override
   public void checkoutNewBranchStartingFrom(@NotNull String newBranchName, @NotNull String startPoint) {
     commonCheckout(startPoint, newBranchName);
   }
 
-  /**
-   * <p>
-   *   Checks out the given reference (a branch, or a reference name, or a commit hash).
-   *   If local changes prevent the checkout, shows the list of them and proposes to make a "smart checkout":
-   *   stash-checkout-unstash.
-   * </p>
-   * <p>
-   *   Doesn't check the reference for validity.
-   * </p>
-   *
-   * @param reference reference to be checked out.
-   */
+  @Override
   public void checkout(@NotNull final String reference) {
     commonCheckout(reference, null);
   }
@@ -176,6 +150,7 @@ public final class GitBranchOperationsProcessor {
     new GitCheckoutOperation(myProject, myGit, myRepositories, reference, newBranch, getCurrentBranchOrRev(), indicator).execute();
   }
 
+  @Override
   public void deleteBranch(final String branchName) {
     new CommonBackgroundTask(myProject, "Deleting " + branchName, myCallInAwtAfterExecution) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
@@ -188,6 +163,7 @@ public final class GitBranchOperationsProcessor {
     new GitDeleteBranchOperation(myProject, myGit, myRepositories, branchName, getCurrentBranchOrRev(), indicator).execute();
   }
 
+  @Override
   public void deleteRemoteBranch(@NotNull final String branchName) {
     final Collection<String> trackingBranches = findTrackingBranches(branchName);
     String currentBranch = getCurrentBranchOrRev();
@@ -368,10 +344,7 @@ public final class GitBranchOperationsProcessor {
     }
   }
 
-  /**
-   * Compares the HEAD with the specified branch - shows a dialog with the differences.
-   * @param branchName name of the branch to compare with.
-   */
+  @Override
   public void compare(@NotNull final String branchName) {
     new CommonBackgroundTask(myProject, "Comparing with " + branchName, myCallInAwtAfterExecution) {
   
@@ -438,6 +411,7 @@ public final class GitBranchOperationsProcessor {
     }
   }
 
+  @Override
   public void merge(@NotNull final String branchName, final boolean localBranch) {
     new CommonBackgroundTask(myProject, "Merging " + branchName, myCallInAwtAfterExecution) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
