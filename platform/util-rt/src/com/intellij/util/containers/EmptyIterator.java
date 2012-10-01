@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,20 @@ import java.util.NoSuchElementException;
 public class EmptyIterator<T> implements Iterator<T> {
   private static final EmptyIterator INSTANCE = new EmptyIterator();
   public static <T> EmptyIterator<T> getInstance() {
+    //noinspection unchecked
     return INSTANCE;
   }
+  @Override
   public boolean hasNext() {
     return false;
   }
 
+  @Override
   public T next() {
     throw new NoSuchElementException();
   }
 
+  @Override
   public void remove() {
     throw new IllegalStateException();
   }
