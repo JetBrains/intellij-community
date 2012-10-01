@@ -22,7 +22,7 @@ import java.util.zip.ZipFile;
 /**
  * @author Sergey Simonchik
  */
-public class ZipUtil {
+class ZipUtil {
 
   private static final Logger LOG = Logger.getInstance(ZipUtil.class);
 

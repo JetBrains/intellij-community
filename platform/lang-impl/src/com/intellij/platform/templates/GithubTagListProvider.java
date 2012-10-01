@@ -21,7 +21,7 @@ import java.io.IOException;
 /**
  * @author Sergey Simonchik
  */
-public class GithubTagListProvider {
+class GithubTagListProvider {
 
   private static final Logger LOG = Logger.getInstance(GithubTagListProvider.class);
 
