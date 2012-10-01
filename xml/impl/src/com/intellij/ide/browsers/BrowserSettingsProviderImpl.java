@@ -35,6 +35,12 @@ public class BrowserSettingsProviderImpl extends BrowserSettingsProvider {
     myConfiguration = configuration;
   }
 
+  @Override
+  public void applySettingsFromWindowsRegistry() {
+    if (mySettingsPanel != null)
+      mySettingsPanel.applySettingsFromWindowsRegistry();
+  }
+
   public JComponent createComponent() {
     if (mySettingsPanel == null) {
       mySettingsPanel = new WebBrowsersPanel(myConfiguration);

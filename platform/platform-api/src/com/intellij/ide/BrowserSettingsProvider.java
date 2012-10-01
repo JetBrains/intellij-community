@@ -23,4 +23,6 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 public abstract class BrowserSettingsProvider implements UnnamedConfigurable {
   public void disposeUIResources() {
   }
+
+  public void applySettingsFromWindowsRegistry() {}
 }

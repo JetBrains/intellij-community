@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.WindowsRegistryUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -37,13 +38,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * @author spleaner
  */
-@State(name = "WebBrowsersConfiguration", storages = {@Storage( file = StoragePathMacros.APP_CONFIG + "/browsers.xml")})
+@State(name = "WebBrowsersConfiguration", storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/browsers.xml")})
 public class BrowsersConfiguration implements PersistentStateComponent<Element> {
   public enum BrowserFamily {
     EXPLORER(XmlBundle.message("browsers.explorer"), "iexplore", null, null, AllIcons.Xml.Browsers.Explorer16),
@@ -68,7 +70,11 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
     private final String myMacPath;
     private final Icon myIcon;
 
-    BrowserFamily(final String name, @NonNls final String windowsPath, @NonNls final String linuxPath, @NonNls final String macPath, final Icon icon) {
+    BrowserFamily(final String name,
+                  @NonNls final String windowsPath,
+                  @NonNls final String linuxPath,
+                  @NonNls final String macPath,
+                  final Icon icon) {
       myName = name;
       myWindowsPath = windowsPath;
       myLinuxPath = linuxPath;
@@ -234,6 +240,52 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
       if (family.getName().equals(name)) {
         return family;
       }
+    }
+    return null;
+  }
+
+  /**
+   * Gets data from Windows registry, may take some time to run (up to ~300ms)
+   *
+   * @return Map[BrowserFamily -> "path to .exe"]
+   */
+  @NotNull
+  public static EnumMap<BrowserFamily, String> getWindowsBrowsersEXE() {
+    EnumMap<BrowserFamily, String> map = new EnumMap<BrowserFamily, String>(BrowserFamily.class);
+    if (SystemInfo.isWindows) {
+      List<String> sections = WindowsRegistryUtil.readRegistryBranch("HKEY_LOCAL_MACHINE\\SOFTWARE\\Clients\\StartMenuInternet");
+      for (String section : sections) {
+        BrowserFamily family = getFamily(section);
+        if (family == null) {
+          continue; //We ignore "unknown" browsers like Maxthon, RockMelt, SeaMonkey, Deepnet Explorer, Avant Browser etc.
+        }
+        String pathToExe = WindowsRegistryUtil.readRegistryDefault(
+          "HKLM\\SOFTWARE\\Clients\\StartMenuInternet\\" + section + "\\shell\\open\\command");
+        if (pathToExe != null) {
+          map.put(family, pathToExe);
+        }
+      }
+    }
+    return map;
+  }
+
+  @Nullable
+  private static BrowserFamily getFamily(String registryName) {
+    registryName = registryName.toLowerCase();
+    if (registryName.contains("firefox")) {
+      return BrowserFamily.FIREFOX;
+    }
+    if (registryName.contains("iexplore")) {
+      return BrowserFamily.EXPLORER;
+    }
+    if (registryName.contains("opera")) {
+      return BrowserFamily.OPERA;
+    }
+    if (registryName.contains("safari")) {
+      return BrowserFamily.SAFARI;
+    }
+    if (registryName.contains("google")) {
+      return BrowserFamily.CHROME;
     }
     return null;
   }

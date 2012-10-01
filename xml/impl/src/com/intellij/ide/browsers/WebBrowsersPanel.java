@@ -16,6 +16,7 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -31,14 +32,17 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.EnumMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author spleaner
  */
 public class WebBrowsersPanel extends JPanel {
   private final JPanel mySettingsPanel;
-  private Map<BrowsersConfiguration.BrowserFamily, Pair<JCheckBox, TextFieldWithBrowseButton>> myBrowserSettingsMap = new HashMap<BrowsersConfiguration.BrowserFamily, Pair<JCheckBox, TextFieldWithBrowseButton>>();
+  private Map<BrowsersConfiguration.BrowserFamily, Pair<JCheckBox, TextFieldWithBrowseButton>> myBrowserSettingsMap =
+    new HashMap<BrowsersConfiguration.BrowserFamily, Pair<JCheckBox, TextFieldWithBrowseButton>>();
   private final BrowsersConfiguration myConfiguration;
 
   public WebBrowsersPanel(final BrowsersConfiguration configuration) {
@@ -126,6 +130,48 @@ public class WebBrowsersPanel extends JPanel {
       myConfiguration.updateBrowserSpecificSettings(family, settings);
     }
   }
+
+  public void applySettingsFromWindowsRegistry() {
+    if (!SystemInfo.isWindows) {
+      return;
+    }
+    ApplicationManager.getApplication()
+      .executeOnPooledThread(new SwingWorker<EnumMap<BrowsersConfiguration.BrowserFamily, String>, Void>() {
+        @Override
+        protected EnumMap<BrowsersConfiguration.BrowserFamily, String> doInBackground() throws Exception {
+          return BrowsersConfiguration.getWindowsBrowsersEXE();
+        }
+
+        @Override
+        protected void done() {
+          EnumMap<BrowsersConfiguration.BrowserFamily, String> map = null;
+          try {
+            map = get();
+          }
+          catch (InterruptedException ignored) {
+          }
+          catch (ExecutionException ignored) {
+          }
+          if (myBrowserSettingsMap == null) {
+            return;//we are disposed
+          }
+          if (map != null && !map.isEmpty()) {
+            for (BrowsersConfiguration.BrowserFamily family : BrowsersConfiguration.BrowserFamily.values()) {
+              Pair<JCheckBox, TextFieldWithBrowseButton> pair = myBrowserSettingsMap.get(family);
+              String pathToExe = map.get(family);
+              if (pathToExe != null) {
+                pair.first.setSelected(true);
+                pair.second.setText(pathToExe);
+              }
+              else {
+                pair.first.setSelected(false);
+              }
+            }
+          }
+        }
+      });
+  }
+
 
   public void dispose() {
     myBrowserSettingsMap = null;

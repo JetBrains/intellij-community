@@ -339,13 +339,18 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
   }
 
+  private Dimension getChildPreferredSize(int index) {
+    Component component = getComponent(index);
+    return component.isVisible() ? component.getPreferredSize() : new Dimension();
+  }
+
   /**
    * @return maximum button width
    */
   private int getMaxButtonWidth() {
     int width = 0;
     for (int i = 0; i < getComponentCount(); i++) {
-      final Dimension dimension = getComponent(i).getPreferredSize();
+      final Dimension dimension = getChildPreferredSize(i);
       width = Math.max(width, dimension.width);
     }
     return width;
@@ -357,7 +362,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   public int getMaxButtonHeight() {
     int height = 0;
     for (int i = 0; i < getComponentCount(); i++) {
-      final Dimension dimension = getComponent(i).getPreferredSize();
+      final Dimension dimension = getChildPreferredSize(i);
       height = Math.max(height, dimension.height);
     }
     return height;
@@ -400,8 +405,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         int xOffset = insets.left;
         final int yOffset = insets.top;
         for (int i = 0; i < componentCount; i++) {
-          final Component component = getComponent(i);
-          final Dimension d = component.getPreferredSize();
+          final Dimension d = getChildPreferredSize(i);
           final Rectangle r = bounds.get(i);
           r.setBounds(xOffset, yOffset + (maxHeight - d.height) / 2, d.width, d.height);
           xOffset += d.width;
@@ -412,8 +416,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         final int xOffset = insets.left;
         int yOffset = insets.top;
         for (int i = 0; i < componentCount; i++) {
-          final Component component = getComponent(i);
-          final Dimension d = component.getPreferredSize();
+          final Dimension d = getChildPreferredSize(i);
           final Rectangle r = bounds.get(i);
           r.setBounds(xOffset + (maxWidth - d.width) / 2, yOffset, d.width, d.height);
           yOffset += d.height;
@@ -445,7 +448,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         final Component eachComp = getComponent(i);
         final boolean isLast = i == componentCount - 1;
 
-        final Rectangle eachBound = new Rectangle(eachComp.getPreferredSize());
+        final Rectangle eachBound = new Rectangle(getChildPreferredSize(i));
         maxHeight = Math.max(eachBound.height, maxHeight);
 
         if (!full) {
@@ -500,7 +503,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       int eachX = insets.left;
       int eachY = insets.top;
       for (int i = 0; i < componentCount; i++) {
-        final Rectangle eachBound = new Rectangle(getComponent(i).getPreferredSize());
+        final Rectangle eachBound = new Rectangle(getChildPreferredSize(i));
         if (!full) {
           boolean outside;
           if (i < componentCount - 1) {
@@ -604,7 +607,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         int rowHeight = 0;
         final Dimension[] dims = new Dimension[componentCount]; // we will use this dimesions later
         for (int i = 0; i < componentCount; i++) {
-          dims[i] = getComponent(i).getPreferredSize();
+          dims[i] = getChildPreferredSize(i);
           final int height = dims[i].height;
           rowHeight = Math.max(rowHeight, height);
         }
@@ -632,7 +635,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         int rowWidth = 0;
         final Dimension[] dims = new Dimension[componentCount]; // we will use this dimesions later
         for (int i = 0; i < componentCount; i++) {
-          dims[i] = getComponent(i).getPreferredSize();
+          dims[i] = getChildPreferredSize(i);
           final int width = dims[i].width;
           rowWidth = Math.max(rowWidth, width);
         }

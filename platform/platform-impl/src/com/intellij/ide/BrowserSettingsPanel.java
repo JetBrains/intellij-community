@@ -111,6 +111,21 @@ public class BrowserSettingsPanel extends JPanel {
     for (BrowserSettingsProvider settingsProvider : mySettingsProviders) {
       outerPanel.add(settingsProvider.createComponent());
     }
+    if (SystemInfo.isWindows) {
+      JPanel wrapperPanel = new JPanel(new BorderLayout());
+      JButton registryButton = new JButton("Retrieve settings from Windows registry");
+      registryButton.setMnemonic('W');
+      registryButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          for (BrowserSettingsProvider settingsProvider : mySettingsProviders) {
+            settingsProvider.applySettingsFromWindowsRegistry();
+          }
+        }
+      });
+      wrapperPanel.add(registryButton, BorderLayout.EAST);
+      outerPanel.add(wrapperPanel);
+    }
 
     add(outerPanel, BorderLayout.NORTH);
   }
