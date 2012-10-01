@@ -62,7 +62,6 @@ public final class GitBrancherImpl implements GitBrancher {
   private final Project myProject;
   private final List<GitRepository> myRepositories;
   private final @Nullable Runnable myCallInAwtAfterExecution;
-  private final GitRepository mySelectedRepository;
   private final Git myGit;
 
   public GitBrancherImpl(@NotNull GitRepository repository) {
@@ -70,21 +69,16 @@ public final class GitBrancherImpl implements GitBrancher {
   }
   
   public GitBrancherImpl(@NotNull GitRepository repository, @Nullable Runnable callInAwtAfterExecution) {
-    this(repository.getProject(), Collections.singletonList(repository), repository, callInAwtAfterExecution);
+    this(repository.getProject(), Collections.singletonList(repository), callInAwtAfterExecution);
   }
 
-  public GitBrancherImpl(@NotNull Project project, @NotNull List<GitRepository> repositories,
-                         @NotNull GitRepository selectedRepository) {
-    this(project, repositories, selectedRepository, null);
+  public GitBrancherImpl(@NotNull Project project, @NotNull List<GitRepository> repositories) {
+    this(project, repositories, null);
   }
 
-  public GitBrancherImpl(@NotNull Project project,
-                         @NotNull List<GitRepository> repositories,
-                         @NotNull GitRepository selectedRepository,
-                         @Nullable Runnable callInAwtAfterExecution) {
+  public GitBrancherImpl(@NotNull Project project, @NotNull List<GitRepository> repositories, @Nullable Runnable callInAwtAfterExecution) {
     myProject = project;
     myRepositories = repositories;
-    mySelectedRepository = selectedRepository;
     myCallInAwtAfterExecution = callInAwtAfterExecution;
     myGit = ServiceManager.getService(Git.class);
   }
@@ -345,7 +339,7 @@ public final class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void compare(@NotNull final String branchName) {
+  public void compare(@NotNull final String branchName, @NotNull final GitRepository selectedRepository) {
     new CommonBackgroundTask(myProject, "Comparing with " + branchName, myCallInAwtAfterExecution) {
   
       private GitCommitCompareInfo myCompareInfo;
@@ -361,7 +355,7 @@ public final class GitBrancherImpl implements GitBrancher {
           LOG.error("The task to get compare info didn't finish. Repositories: \n" + myRepositories + "\nbranch name: " + branchName);
           return;
         }
-        displayCompareDialog(branchName, getCurrentBranchOrRev(), myCompareInfo);
+        displayCompareDialog(branchName, getCurrentBranchOrRev(), myCompareInfo, selectedRepository);
       }
     }.runInBackground();
   }
@@ -401,13 +395,14 @@ public final class GitBrancherImpl implements GitBrancher {
     return Pair.create(headToBranch, branchToHead);
   }
   
-  private void displayCompareDialog(@NotNull String branchName, @NotNull String currentBranch, @NotNull GitCommitCompareInfo compareInfo) {
+  private void displayCompareDialog(@NotNull String branchName, @NotNull String currentBranch, @NotNull GitCommitCompareInfo compareInfo,
+                                    @NotNull GitRepository selectedRepository) {
     if (compareInfo.isEmpty()) {
       Messages.showInfoMessage(myProject, String.format("<html>There are no changes between <code>%s</code> and <code>%s</code></html>",
                                                         currentBranch, branchName), "No Changes Detected");
     }
     else {
-      new GitCompareBranchesDialog(myProject, branchName, currentBranch, compareInfo, mySelectedRepository).show();
+      new GitCompareBranchesDialog(myProject, branchName, currentBranch, compareInfo, selectedRepository).show();
     }
   }
 
@@ -426,7 +421,7 @@ public final class GitBrancherImpl implements GitBrancher {
       revisions.put(repository, repository.getCurrentRevision());
     }
     new GitMergeOperation(myProject, myGit, myRepositories, branchName, localBranch, getCurrentBranchOrRev(),
-                          mySelectedRepository, revisions, indicator).execute();
+                          revisions, indicator).execute();
   }
 
   /**

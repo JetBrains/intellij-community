@@ -15,6 +15,7 @@
  */
 package git4idea.branch;
 
+import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -85,9 +86,12 @@ public interface GitBrancher {
   /**
    * Compares the HEAD with the specified branch - shows a dialog with the differences.
    *
-   * @param branchName name of the branch to compare with.
+   * @param branchName         name of the branch to compare with.
+   * @param selectedRepository current or selected repository.
+   *                           The list of commits is displayed for the repository selected from the combobox.
+   *                           This parameter tells which repository should be pre-selected in the combobox.
    */
-  void compare(@NotNull String branchName);
+  void compare(@NotNull String branchName, @NotNull GitRepository selectedRepository);
 
   /**
    * <p>Merges the given branch to the HEAD.</p>

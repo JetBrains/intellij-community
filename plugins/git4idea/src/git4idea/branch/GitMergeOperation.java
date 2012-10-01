@@ -56,7 +56,6 @@ class GitMergeOperation extends GitBranchOperation {
   @NotNull private final String myBranchToMerge;
   private final boolean myLocalBranch;
   @NotNull private final String myCurrentBranch;
-  @NotNull private final GitRepository myCurrentRepository;
   @NotNull private final Map<GitRepository, String> myCurrentRevisionsBeforeMerge;
 
   // true in value, if we've stashed local changes before merge and will need to unstash after resolving conflicts.
@@ -65,13 +64,11 @@ class GitMergeOperation extends GitBranchOperation {
 
   GitMergeOperation(@NotNull Project project, @NotNull Git git, @NotNull Collection<GitRepository> repositories,
                     @NotNull String branchToMerge, boolean localBranch, @NotNull String currentBranch,
-                    @NotNull GitRepository currentRepository, @NotNull Map<GitRepository, String> currentRevisionsBeforeMerge,
-                    @NotNull ProgressIndicator indicator) {
+                    @NotNull Map<GitRepository, String> currentRevisionsBeforeMerge, @NotNull ProgressIndicator indicator) {
     super(project, git, repositories, currentBranch, indicator);
     myBranchToMerge = branchToMerge;
     myLocalBranch = localBranch;
     myCurrentBranch = currentBranch;
-    myCurrentRepository = currentRepository;
     myCurrentRevisionsBeforeMerge = currentRevisionsBeforeMerge;
     myChangeListManager = ChangeListManager.getInstance(myProject);
   }
@@ -381,8 +378,7 @@ class GitMergeOperation extends GitBranchOperation {
     public void hyperlinkUpdate(@NotNull Notification notification,
                                 @NotNull HyperlinkEvent event) {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equalsIgnoreCase("delete")) {
-        new GitBrancherImpl(myProject, new ArrayList<GitRepository>(getRepositories()), myCurrentRepository).
-          deleteBranch(myBranchToMerge);
+        new GitBrancherImpl(myProject, new ArrayList<GitRepository>(getRepositories())).deleteBranch(myBranchToMerge);
       }
     }
   }
