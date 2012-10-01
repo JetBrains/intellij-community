@@ -18,7 +18,7 @@ package com.intellij.lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.Nullable;
@@ -104,13 +104,13 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     Lexer newLexer = null;
     if (hasSeenStyle()) {
       if (styleLexer==null) {
-        styleLexer = (ourStyleFileType!=null)? SyntaxHighlighter.PROVIDER.create(ourStyleFileType, null, null).getHighlightingLexer():null;
+        styleLexer = (ourStyleFileType!=null)? SyntaxHighlighterFactory.getSyntaxHighlighter(ourStyleFileType, null, null).getHighlightingLexer():null;
       }
 
       newLexer = styleLexer;
     } else if (hasSeenScript()) {
       if (scriptLexer==null) {
-        scriptLexer = (ourScriptFileType!=null)? SyntaxHighlighter.PROVIDER.create(ourScriptFileType, null, null).getHighlightingLexer():null;
+        scriptLexer = (ourScriptFileType!=null)? SyntaxHighlighterFactory.getSyntaxHighlighter(ourScriptFileType, null, null).getHighlightingLexer():null;
       }
       newLexer = scriptLexer;
     } else newLexer = createELLexer(newLexer);

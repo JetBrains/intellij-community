@@ -27,8 +27,6 @@ import org.jetbrains.annotations.NotNull;
  * @see com.intellij.openapi.fileTypes.SyntaxHighlighterFactory#getSyntaxHighlighter(com.intellij.lang.Language, com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
  */
 public interface SyntaxHighlighter {
-  SyntaxHighlighterProvider PROVIDER = new FileTypeExtensionFactory<SyntaxHighlighterProvider>(SyntaxHighlighterProvider.class, "com.intellij.syntaxHighlighter").get();
-
   /**
    * Returns the lexer used for highlighting the file. The lexer is invoked incrementally when the file is changed, so it must be
    * capable of saving/restoring state and resuming lexing from the middle of the file.

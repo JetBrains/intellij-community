@@ -382,7 +382,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
       if (fileType == null) {
         fileType = FileTypes.PLAIN_TEXT;
       }
-      SyntaxHighlighter originalHighlighter = SyntaxHighlighter.PROVIDER.create(fileType, null, null);
+      SyntaxHighlighter originalHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, null, null);
       if (originalHighlighter == null) originalHighlighter = new PlainSyntaxHighlighter();
       return new LexerEditorHighlighter(new TemplateHighlighter(originalHighlighter), EditorColorsManager.getInstance().getGlobalScheme());
     }

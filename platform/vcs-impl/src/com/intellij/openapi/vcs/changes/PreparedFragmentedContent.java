@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.highlighter.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
@@ -324,7 +325,7 @@ public class PreparedFragmentedContent {
   private void setHighlighters(final Document oldDocument, final Document document,
                                List<BeforeAfter<TextRange>> ranges) {
     EditorHighlighterFactory editorHighlighterFactory = EditorHighlighterFactory.getInstance();
-    final SyntaxHighlighter syntaxHighlighter = SyntaxHighlighter.PROVIDER.create(myFileType, myProject, null);
+    final SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(myFileType, myProject, null);
     final EditorHighlighter highlighter =
       editorHighlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme());
 

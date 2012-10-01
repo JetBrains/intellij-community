@@ -112,7 +112,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
     if (file instanceof PsiPlainTextFile) {
       FileType fType = file.getFileType();
       if (fType instanceof CustomSyntaxTableFileType) {
-        Lexer lexer = SyntaxHighlighter.PROVIDER.create(fType, file.getProject(), file.getVirtualFile()).getHighlightingLexer();
+        Lexer lexer = SyntaxHighlighterFactory.getSyntaxHighlighter(fType, file.getProject(), file.getVirtualFile()).getHighlightingLexer();
         findComments(lexer, chars, range, COMMENT_TOKENS, commentStarts, commentEnds, null);
       }
       else {
