@@ -2311,7 +2311,7 @@ def is_mac_skipped_module(path, f):
     return 0
 
 def is_skipped_module(path, f):
-    return is_mac_skipped_module(path, f) or is_posix_skipped_module(path, f[:f.rindex('.')]) or 'pynestkernel' in path
+    return is_mac_skipped_module(path, f) or is_posix_skipped_module(path, f[:f.rindex('.')]) or 'pynestkernel' in f
 
 
 def is_module(d, root):
