@@ -139,7 +139,7 @@ public class QueueProcessor<T> {
     }
   }
 
-  public void add(@NotNull T t, @NotNull ModalityState state) {
+  public void add(@NotNull T t, ModalityState state) {
     synchronized (myQueue) {
       myModalityState.put(new MyOverrideEquals(t), state);
     }
