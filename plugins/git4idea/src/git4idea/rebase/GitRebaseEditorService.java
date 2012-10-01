@@ -56,10 +56,6 @@ public class GitRebaseEditorService {
    */
   private static final Random oursRandom = new Random();
   /**
-   * If true, the component has been initialized
-   */
-  private boolean myInitialized = false;
-  /**
    * The prefix for rebase editors
    */
   @NonNls private static final String GIT_REBASE_EDITOR_PREFIX = "git-rebase-editor-";
@@ -76,13 +72,10 @@ public class GitRebaseEditorService {
     return service;
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  private void initComponent() {
-    if (!myInitialized) {
-      ServiceManager.getService(XmlRpcServer.class).addHandler(GitRebaseEditorMain.HANDLER_NAME, new InternalHandler());
-      myInitialized = true;
+  private void addInternalHandler() {
+    XmlRpcServer xmlRpcServer = XmlRpcServer.SERVICE.getInstance();
+    if (!xmlRpcServer.hasHandler(GitRebaseEditorMain.HANDLER_NAME)) {
+      xmlRpcServer.addHandler(GitRebaseEditorMain.HANDLER_NAME, new InternalHandler());
     }
   }
 
@@ -111,7 +104,7 @@ public class GitRebaseEditorService {
    * @return the handler identifier
    */
   public int registerHandler(GitRebaseEditorHandler handler) {
-    initComponent();
+    addInternalHandler();
     Integer rc = null;
     synchronized (myHandlersLock) {
       for (int i = Integer.MAX_VALUE; i > 0; i--) {
@@ -139,7 +132,7 @@ public class GitRebaseEditorService {
   public void unregisterHandler(final int handlerNo) {
     synchronized (myHandlersLock) {
       if (myHandlers.remove(handlerNo) == null) {
-        throw new IllegalStateException("The handler " + handlerNo + " has been already remoted");
+        throw new IllegalStateException("The handler " + handlerNo + " has been already removed");
       }
     }
   }

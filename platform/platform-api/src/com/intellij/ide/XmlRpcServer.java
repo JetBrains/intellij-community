@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,27 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.components.ServiceManager;
+
 /**
  * @author mike
- * @deprecated use xmlRpcHandler extension point instead (to remove in IDEA 13)
  */
 public interface XmlRpcServer {
-  /**
-   * @deprecated use xmlRpcHandler extension point instead (to remove in IDEA 13)
-   */
   void addHandler(String name, Object handler);
-  /**
-   * @deprecated (to remove in IDEA 13)
-   */
+  boolean hasHandler(String name);
   void removeHandler(String name);
 
   /**
    * @deprecated use {@link org.jetbrains.ide.WebServerManager#getInstance().getPort()} (to remove in IDEA 13)
    */
   int getPortNumber();
+
+  final class SERVICE {
+    private SERVICE() {
+    }
+
+    public static XmlRpcServer getInstance() {
+      return ServiceManager.getService(XmlRpcServer.class);
+    }
+  }
 }
