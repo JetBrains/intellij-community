@@ -2,8 +2,8 @@ package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.incremental.IgnoredFilePatterns;
-import org.jetbrains.jps.incremental.ModuleRootsIndex;
+import org.jetbrains.jps.indices.IgnoredFileIndex;
+import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 
 import java.io.File;
@@ -18,19 +18,21 @@ import java.util.Map;
 public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuilder {
   private final Map<String, JarInfo> myJarByPath;
   private final List<ArtifactRootDescriptor> myDescriptors;
-  private final ModuleRootsIndex myRootsIndex;
+  private final ModuleExcludeIndex myRootsIndex;
   private int myRootIndex;
+  private final IgnoredFileIndex myIgnoredFileIndex;
   private ArtifactBuildTarget myBuildTarget;
 
-  public ArtifactInstructionsBuilderImpl(ModuleRootsIndex rootsIndex, ArtifactBuildTarget target) {
+  public ArtifactInstructionsBuilderImpl(ModuleExcludeIndex rootsIndex, IgnoredFileIndex ignoredFileIndex, ArtifactBuildTarget target) {
     myRootsIndex = rootsIndex;
+    myIgnoredFileIndex = ignoredFileIndex;
     myBuildTarget = target;
     myJarByPath = new HashMap<String, JarInfo>();
     myDescriptors = new ArrayList<ArtifactRootDescriptor>();
   }
 
-  public IgnoredFilePatterns getIgnoredFilePatterns() {
-    return myRootsIndex.getIgnoredFilePatterns();
+  public IgnoredFileIndex getIgnoredFileIndex() {
+    return myIgnoredFileIndex;
   }
 
   public boolean addDestination(@NotNull ArtifactRootDescriptor descriptor) {
@@ -44,7 +46,7 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
     return true;
   }
 
-  public ModuleRootsIndex getRootsIndex() {
+  public ModuleExcludeIndex getRootsIndex() {
     return myRootsIndex;
   }
 

@@ -24,6 +24,7 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
+import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
@@ -526,14 +527,14 @@ public class AndroidPackagingBuilder extends TargetBuilder<AndroidProjectBuildTa
                                 ? outputFilePath + RELEASE_SUFFIX
                                 : outputFilePath;
 
-      final IgnoredFilePatterns ignoredFilePatterns = context.getProjectDescriptor().rootsIndex.getIgnoredFilePatterns();
+      final IgnoredFileIndex ignoredFileIndex = context.getProjectDescriptor().getIgnoredFileIndex();
 
       final Map<AndroidCompilerMessageKind, List<String>> messages = AndroidApt
         .packageResources(target, -1, manifestFile.getPath(), resourceDirPaths, assetsDirPaths, outputPath, null,
                           !releasePackage, 0, new FileFilter() {
           @Override
           public boolean accept(File pathname) {
-            return !ignoredFilePatterns.isIgnored(JpsPathUtil.getFileName(pathname.getPath()));
+            return !ignoredFileIndex.isIgnored(JpsPathUtil.getFileName(pathname.getPath()));
           }
         });
 

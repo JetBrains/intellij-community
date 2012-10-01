@@ -10,7 +10,8 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ModuleRootsIndex;
+import org.jetbrains.jps.indices.IgnoredFileIndex;
+import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.service.JpsServiceManager;
@@ -27,20 +28,26 @@ public class BuildRootIndexImpl implements BuildRootIndex {
   private HashMap<BuildTarget<?>, List<? extends BuildRootDescriptor>> myRootsByTarget;
   private THashMap<File,List<BuildRootDescriptor>> myRootToDescriptor;
   
-  public BuildRootIndexImpl(BuildTargetIndex targetIndex, JpsModel model, ModuleRootsIndex index, File dataStorageRoot) {
+  public BuildRootIndexImpl(BuildTargetIndex targetIndex,
+                            JpsModel model,
+                            ModuleExcludeIndex index,
+                            File dataStorageRoot, final IgnoredFileIndex ignoredFileIndex) {
     myRootsByTarget = new HashMap<BuildTarget<?>, List<? extends BuildRootDescriptor>>();
     myRootToDescriptor = new THashMap<File, List<BuildRootDescriptor>>(FileUtil.FILE_HASHING_STRATEGY);
     final Iterable<AdditionalRootsProviderService> rootsProviders = JpsServiceManager.getInstance().getExtensions(AdditionalRootsProviderService.class);
     for (BuildTargetType<?> targetType : BuilderRegistry.getInstance().getTargetTypes()) {
       for (BuildTarget<?> target : targetIndex.getAllTargets(targetType)) {
-        addRoots(dataStorageRoot, rootsProviders, targetType, target, model, index);
+        addRoots(dataStorageRoot, rootsProviders, targetType, target, model, index, ignoredFileIndex);
       }
     }
   }
 
-  private <R extends BuildRootDescriptor> void addRoots(File dataStorageRoot, Iterable<AdditionalRootsProviderService> rootsProviders, BuildTargetType<?> targetType,
-                                                        BuildTarget<R> target, JpsModel model, ModuleRootsIndex index) {
-    List<R> descriptors = target.computeRootDescriptors(model, index);
+  private <R extends BuildRootDescriptor> void addRoots(File dataStorageRoot, Iterable<AdditionalRootsProviderService> rootsProviders,
+                                                        BuildTargetType<?> targetType, BuildTarget<R> target,
+                                                        JpsModel model,
+                                                        ModuleExcludeIndex index,
+                                                        IgnoredFileIndex ignoredFileIndex) {
+    List<R> descriptors = target.computeRootDescriptors(model, index, ignoredFileIndex);
     for (AdditionalRootsProviderService<?> provider : rootsProviders) {
       if (provider.getTargetTypes().contains(targetType)) {
         //noinspection unchecked

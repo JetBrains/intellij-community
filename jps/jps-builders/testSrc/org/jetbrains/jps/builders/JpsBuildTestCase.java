@@ -8,6 +8,9 @@ import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetIndexImpl;
+import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
+import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
+import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
@@ -74,13 +77,14 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   protected ProjectDescriptor createProjectDescriptor(final BuildLoggingManager buildLoggingManager) {
     try {
       BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(myModel);
-      ModuleRootsIndex index = new ModuleRootsIndex(myModel);
-      BuildRootIndexImpl buildRootIndex = new BuildRootIndexImpl(targetIndex, myModel, index, myDataStorageRoot);
+      ModuleExcludeIndex index = new ModuleExcludeIndexImpl(myModel);
+      IgnoredFileIndexImpl ignoredFileIndex = new IgnoredFileIndexImpl(myModel);
+      BuildRootIndexImpl buildRootIndex = new BuildRootIndexImpl(targetIndex, myModel, index, myDataStorageRoot, ignoredFileIndex);
       BuildTargetsState targetsState = new BuildTargetsState(myDataStorageRoot, myModel, buildRootIndex);
       ProjectTimestamps timestamps = new ProjectTimestamps(myDataStorageRoot, targetsState);
       BuildDataManager dataManager = new BuildDataManager(myDataStorageRoot, targetsState, true);
       return new ProjectDescriptor(myModel, new BuildFSState(true), timestamps, dataManager, buildLoggingManager, index, targetsState,
-                                   targetIndex, buildRootIndex);
+                                   targetIndex, buildRootIndex, ignoredFileIndex);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

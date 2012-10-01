@@ -6,6 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.indices.IgnoredFileIndex;
+import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.model.JpsModel;
@@ -75,7 +77,7 @@ public class ModuleBuildTarget extends BuildTarget<RootDescriptor> {
 
   @NotNull
   @Override
-  public List<RootDescriptor> computeRootDescriptors(JpsModel model, ModuleRootsIndex index) {
+  public List<RootDescriptor> computeRootDescriptors(JpsModel model, ModuleExcludeIndex index, IgnoredFileIndex ignoredFileIndex) {
     List<RootDescriptor> roots = new ArrayList<RootDescriptor>();
     for (JpsModuleSourceRoot sourceRoot : myModule.getSourceRoots()) {
       final File root = JpsPathUtil.urlToFile(sourceRoot.getUrl());

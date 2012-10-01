@@ -2,7 +2,8 @@ package org.jetbrains.jps.builders;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.incremental.ModuleRootsIndex;
+import org.jetbrains.jps.indices.IgnoredFileIndex;
+import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
 
 import java.io.PrintWriter;
@@ -31,7 +32,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
   }
 
   @NotNull
-  public abstract List<R> computeRootDescriptors(JpsModel model, ModuleRootsIndex index);
+  public abstract List<R> computeRootDescriptors(JpsModel model, ModuleExcludeIndex index, IgnoredFileIndex ignoredFileIndex);
 
   @Nullable
   public abstract BuildRootDescriptor findRootDescriptor(String rootId, BuildRootIndex rootIndex);

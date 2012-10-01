@@ -9,7 +9,8 @@ import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
-import org.jetbrains.jps.incremental.ModuleRootsIndex;
+import org.jetbrains.jps.indices.IgnoredFileIndex;
+import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.incremental.artifacts.builders.LayoutElementBuildersRegistry;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil;
 import org.jetbrains.jps.incremental.artifacts.instructions.*;
@@ -102,8 +103,8 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
 
   @NotNull
   @Override
-  public List<ArtifactRootDescriptor> computeRootDescriptors(JpsModel model, ModuleRootsIndex index) {
-    ArtifactInstructionsBuilderImpl builder = new ArtifactInstructionsBuilderImpl(index, this);
+  public List<ArtifactRootDescriptor> computeRootDescriptors(JpsModel model, ModuleExcludeIndex index, IgnoredFileIndex ignoredFileIndex) {
+    ArtifactInstructionsBuilderImpl builder = new ArtifactInstructionsBuilderImpl(index, ignoredFileIndex, this);
     ArtifactInstructionsBuilderContext context = new ArtifactInstructionsBuilderContextImpl(model, new ProjectPaths(model.getProject()));
     String outputPath = StringUtil.notNullize(myArtifact.getOutputPath());
     final CopyToDirectoryInstructionCreator instructionCreator = new CopyToDirectoryInstructionCreator(builder, outputPath);

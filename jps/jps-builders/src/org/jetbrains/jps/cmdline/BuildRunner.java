@@ -12,6 +12,9 @@ import org.jetbrains.jps.builders.BuildTargetLoader;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetIndexImpl;
+import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
+import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
+import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
@@ -53,8 +56,9 @@ public class BuildRunner {
   public ProjectDescriptor load(MessageHandler msgHandler, File dataStorageRoot, BuildFSState fsState) throws IOException {
     final JpsModel jpsModel = myModelLoader.loadModel();
     BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(jpsModel);
-    ModuleRootsIndex index = new ModuleRootsIndex(jpsModel);
-    BuildRootIndexImpl buildRootIndex = new BuildRootIndexImpl(targetIndex, jpsModel, index, dataStorageRoot);
+    ModuleExcludeIndex index = new ModuleExcludeIndexImpl(jpsModel);
+    IgnoredFileIndexImpl ignoredFileIndex = new IgnoredFileIndexImpl(jpsModel);
+    BuildRootIndexImpl buildRootIndex = new BuildRootIndexImpl(targetIndex, jpsModel, index, dataStorageRoot, ignoredFileIndex);
     BuildTargetsState targetsState = new BuildTargetsState(dataStorageRoot, jpsModel, buildRootIndex);
 
     ProjectTimestamps projectTimestamps = null;
@@ -86,7 +90,7 @@ public class BuildRunner {
     }
 
     return new ProjectDescriptor(jpsModel, fsState, projectTimestamps, dataManager, BuildLoggingManager.DEFAULT, index, targetsState,
-                                 targetIndex, buildRootIndex);
+                                 targetIndex, buildRootIndex, ignoredFileIndex);
   }
 
   public void runBuild(ProjectDescriptor pd, CanceledStatus cs, @Nullable Callbacks.ConstantAffectionResolver constantSearch,

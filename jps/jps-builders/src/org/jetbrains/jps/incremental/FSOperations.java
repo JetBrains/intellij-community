@@ -9,6 +9,7 @@ import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
+import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
@@ -142,7 +143,7 @@ public class FSOperations {
                              ModuleBuildTarget target,
                              Timestamps timestamps, boolean forceMarkDirty,
                              @Nullable THashSet<File> currentFiles) throws IOException {
-    final ModuleRootsIndex rootsIndex = context.getProjectDescriptor().rootsIndex;
+    final ModuleExcludeIndex rootsIndex = context.getProjectDescriptor().moduleExcludeIndex;
     final Set<File> excludes = new HashSet<File>(rootsIndex.getModuleExcludes(target.getModule()));
     for (RootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
       if (!rd.root.exists()) {

@@ -1,6 +1,7 @@
-package org.jetbrains.jps.incremental;
+package org.jetbrains.jps.indices.impl;
 
 import org.jetbrains.jps.JpsPathUtil;
+import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -11,13 +12,11 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: 1/11/12
  */
-public class ModuleRootsIndex {
+public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
   private final Set<File> myExcludedRoots = new HashSet<File>();
   private final Map<JpsModule, List<File>> myModuleToExcludesMap = new HashMap<JpsModule, List<File>>();
-  private final IgnoredFilePatterns myIgnoredFilePatterns;
 
-  public ModuleRootsIndex(JpsModel model) {
-    myIgnoredFilePatterns = new IgnoredFilePatterns(model.getGlobal().getFileTypesConfiguration().getIgnoredPatternString());
+  public ModuleExcludeIndexImpl(JpsModel model) {
     final Collection<JpsModule> allModules = model.getProject().getModules();
     for (final JpsModule module : allModules) {
       final List<File> moduleExcludes = new ArrayList<File>();
@@ -61,14 +60,12 @@ public class ModuleRootsIndex {
     }
   }
 
-  public IgnoredFilePatterns getIgnoredFilePatterns() {
-    return myIgnoredFilePatterns;
-  }
-
+  @Override
   public boolean isExcluded(File file) {
     return JpsPathUtil.isUnder(myExcludedRoots, file);
   }
 
+  @Override
   public Collection<File> getModuleExcludes(JpsModule module) {
     return myModuleToExcludesMap.get(module);
   }
