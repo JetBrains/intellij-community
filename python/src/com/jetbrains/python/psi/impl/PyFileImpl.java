@@ -162,7 +162,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         final List<PsiElement> localAmbiguous = new ArrayList<PsiElement>(myLocalAmbiguousDeclarations.get(name));
         for (int i = localAmbiguous.size()-1; i >= 0; i--) {
           PsiElement ambiguous = localAmbiguous.get(i);
-          final PsiElement result = resolveDeclaration(name, ambiguous);
+          final PsiElement result = resolveDeclaration(name, ambiguous, true);
           if (result != null) {
             return result;
           }
@@ -171,17 +171,19 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       else {
         final PsiElement result = declarations.get(name);
         if (result != null) {
-          return resolveDeclaration(name, result);
+          final boolean resolveImportElement = result instanceof PyImportElement &&
+                                               ((PyImportElement)result).getContainingImportStatement() instanceof PyFromImportStatement;
+          return resolveDeclaration(name, result, resolveImportElement);
         }
       }
       return null;
     }
 
     @Nullable
-    private PsiElement resolveDeclaration(String name, PsiElement result) {
+    private PsiElement resolveDeclaration(String name, PsiElement result, boolean resolveImportElement) {
       if (result instanceof PyImportElement) {
         final PyImportElement importElement = (PyImportElement)result;
-        return findNameInImportElement(name, importElement, importElement.getContainingImportStatement() instanceof PyFromImportStatement);
+        return findNameInImportElement(name, importElement, resolveImportElement);
       }
       else if (result instanceof PyFromImportStatement) {
         return ((PyFromImportStatement) result).resolveImportSource();
