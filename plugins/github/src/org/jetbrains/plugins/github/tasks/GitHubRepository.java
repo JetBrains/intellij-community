@@ -18,7 +18,6 @@ import com.intellij.util.xmlb.annotations.Tag;
 import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.GitHubComment;
 import org.jetbrains.plugins.github.GithubApiUtil;
 
 import javax.swing.*;
