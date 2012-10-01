@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Alarm;
@@ -55,8 +54,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Konstantin Bulenkov
  */
 public class ColorPicker extends JPanel implements ColorListener, DocumentListener {
-  public static final Icon PICK = AllIcons.Ide.Pipette;
-  public static final Icon PICK_ROLLOVER = AllIcons.Ide.Pipette_rollover;
   private static final String COLOR_CHOOSER_COLORS_KEY = "ColorChooser.RecentColors";
   private static final String HSB_PROPERTY = "color.picker.is.hsb";
 
@@ -157,7 +154,8 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
   private JTextField createColorField(boolean hex) {
     final NumberDocument doc = new NumberDocument(hex);
-    final JTextField field = new JTextField(doc, "", hex ? 5:2);
+    final int lafFix = UIUtil.isUnderWindowsClassicLookAndFeel() || UIUtil.isUnderWindowsLookAndFeel() ? 1 : 0;
+    final JTextField field = new JTextField(doc, "", (hex ? 5:2) + lafFix);
     field.setSize(50, -1);
     doc.setSource(field);
     field.getDocument().addDocumentListener(this);
@@ -337,9 +335,9 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       final JButton pipette = new JButton();
       pipette.setUI(new BasicButtonUI());
       pipette.setRolloverEnabled(true);
-      pipette.setIcon(PICK);
+      pipette.setIcon(AllIcons.Ide.Pipette);
       pipette.setBorder(IdeBorderFactory.createEmptyBorder(0));
-      pipette.setRolloverIcon(PICK_ROLLOVER);
+      pipette.setRolloverIcon(AllIcons.Ide.Pipette_rollover);
       pipette.setFocusable(false);
       pipette.addActionListener(new ActionListener() {
         @Override
@@ -688,7 +686,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
           Toolkit.getDefaultToolkit().beep();
         }
       }
-      final String toInsert = StringUtilRt.toUpperCase(new String(result, 0, j));
+      final String toInsert = StringUtil.toUpperCase(new String(result, 0, j));
       final String res = new StringBuilder(mySrc.getText()).insert(offs, toInsert).toString();
       try {
         if (!myHex) {
@@ -866,7 +864,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
   }
 
-  private static class ColorPickerDialog extends DialogWrapper {
+  static class ColorPickerDialog extends DialogWrapper {
 
     private final Color myPreselectedColor;
     @Nullable private final PsiElement myElement;
@@ -876,7 +874,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
     public ColorPickerDialog(Component parent,
                              String caption,
-                             Color preselectedColor,
+                             @Nullable Color preselectedColor,
                              boolean enableOpacity,
                              @Nullable PsiElement element) {
       super(parent, true);
@@ -1151,7 +1149,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
         //
         //graphics.drawLine(16, 2, 16, 12);
         //graphics.drawLine(16, 20, 16, 30);
-        PICK.paintIcon(null, graphics, 14, 0);
+        AllIcons.Ide.Pipette.paintIcon(null, graphics, 14, 0);
 
         graphics.dispose();
 
@@ -1194,10 +1192,10 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
 
     public void pickDone() {
-      cancelPipette();
       PointerInfo pointerInfo = MouseInfo.getPointerInfo();
       Point location = pointerInfo.getLocation();
       Color pixelColor = myRobot.getPixelColor(location.x + myPickOffset.x, location.y + myPickOffset.y);
+      cancelPipette();
       if (myColorListener != null) {
         myColorListener.colorChanged(pixelColor, this);
         myOldColor = pixelColor;
