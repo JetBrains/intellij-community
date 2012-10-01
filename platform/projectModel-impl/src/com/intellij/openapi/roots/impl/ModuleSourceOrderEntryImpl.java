@@ -69,6 +69,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
     return policy.visitModuleSourceOrderEntry(this, initialValue);
   }
 
+  @NotNull
   public String getPresentableName() {
     return ProjectBundle.message("project.root.module.source");
   }

@@ -121,6 +121,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     return policy.visitModuleOrderEntry(this, initialValue);
   }
 
+  @NotNull
   public String getPresentableName() {
     return getModuleName();
   }

@@ -50,6 +50,7 @@ public class JpsModuleOrderEntry extends JpsExportableOrderEntry<JpsModuleDepend
     return myDependencyElement.getModuleReference().getModuleName();
   }
 
+  @NotNull
   @Override
   public String getPresentableName() {
     return getModuleName();

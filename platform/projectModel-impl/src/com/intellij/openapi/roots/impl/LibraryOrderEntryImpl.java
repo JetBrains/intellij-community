@@ -151,8 +151,8 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     return false;
   }
 
+  @NotNull
   @Override
-  @Nullable
   public String getPresentableName() {
     return getLibraryName();
   }

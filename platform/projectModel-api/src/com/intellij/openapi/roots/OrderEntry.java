@@ -64,6 +64,7 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
    *
    * @return name of this OrderEntry to be shown to user.
    */
+  @NotNull
   String getPresentableName();
 
   /**
