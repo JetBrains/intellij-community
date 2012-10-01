@@ -16,7 +16,6 @@
 package git4idea.branch;
 
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -27,10 +26,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import git4idea.GitBranch;
-import git4idea.GitExecutionException;
-import git4idea.GitVcs;
-import git4idea.Notificator;
+import git4idea.*;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -55,16 +51,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author Kirill Likhodedov
  */
-public final class GitBrancherImpl implements GitBrancher {
+final class GitBrancherImpl implements GitBrancher {
 
   private static final Logger LOG = Logger.getInstance(GitBrancherImpl.class);
 
   @NotNull private final Project myProject;
+  @NotNull private final PlatformFacade myFacade;
   @NotNull private final Git myGit;
 
-  public GitBrancherImpl(@NotNull Project project) {
+  GitBrancherImpl(@NotNull Project project, @NotNull PlatformFacade platformFacade, @NotNull Git git) {
     myProject = project;
-    myGit = ServiceManager.getService(Git.class);
+    myFacade = platformFacade;
+    myGit = git;
   }
   
   @NotNull

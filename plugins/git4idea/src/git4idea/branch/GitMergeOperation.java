@@ -18,6 +18,7 @@ package git4idea.branch;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -378,7 +379,8 @@ class GitMergeOperation extends GitBranchOperation {
     public void hyperlinkUpdate(@NotNull Notification notification,
                                 @NotNull HyperlinkEvent event) {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equalsIgnoreCase("delete")) {
-        new GitBrancherImpl(myProject).deleteBranch(myBranchToMerge, new ArrayList<GitRepository>(getRepositories()));
+        GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+        brancher.deleteBranch(myBranchToMerge, new ArrayList<GitRepository>(getRepositories()));
       }
     }
   }

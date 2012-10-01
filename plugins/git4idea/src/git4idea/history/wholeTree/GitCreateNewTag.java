@@ -15,11 +15,12 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import git4idea.branch.GitBrancherImpl;
+import git4idea.branch.GitBrancher;
 import git4idea.repo.GitRepository;
 
 import java.util.Collections;
@@ -57,7 +58,8 @@ public class GitCreateNewTag {
       }
     });
     if (name != null) {
-      new GitBrancherImpl(myProject).createNewTag(name, myReference, Collections.singletonList(myRepository), myCallInAwtAfterExecution);
+      GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+      brancher.createNewTag(name, myReference, Collections.singletonList(myRepository), myCallInAwtAfterExecution);
     }
   }
 }
