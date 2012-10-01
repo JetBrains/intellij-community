@@ -1602,11 +1602,11 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
-  public static String escapeQuotes(@NotNull final String str) {
+  private static String escapeChar(@NotNull final String str, final char character) {
     final StringBuilder buf = StringBuilderSpinAllocator.alloc();
     try {
       buf.append(str);
-      escapeQuotes(buf);
+      escapeChar(buf, character);
       return buf.toString();
     }
     finally {
@@ -1614,33 +1614,35 @@ public class StringUtil extends StringUtilRt {
     }
   }
 
-  public static void escapeQuotes(@NotNull final StringBuilder buf) {
+  private static void escapeChar(@NotNull final StringBuilder buf, final char character) {
     int idx = 0;
-    while ((idx = indexOf(buf, '\"', idx)) >= 0) {
-      buf.insert(idx, '\\');
+    while ((idx = indexOf(buf, character, idx)) >= 0) {
+      buf.insert(idx, "\\");
       idx += 2;
     }
   }
 
   @NotNull
+  public static String escapeQuotes(@NotNull final String str) {
+    return escapeChar(str, '"');
+  }
+
+  public static void escapeQuotes(@NotNull final StringBuilder buf) {
+    escapeChar(buf, '"');
+  }
+
+  @NotNull
   public static String escapeSlashes(@NotNull final String str) {
-    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      buf.append(str);
-      escapeSlashes(buf);
-      return buf.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
-    }
+    return escapeChar(str, '/');
+  }
+
+  @NotNull
+  public static String escapeBackSlashes(@NotNull final String str) {
+    return escapeChar(str, '\\');
   }
 
   public static void escapeSlashes(@NotNull final StringBuilder buf) {
-    int idx = 0;
-    while ((idx = indexOf(buf, '/', idx)) >= 0) {
-      buf.insert(idx, "\\");
-      idx += 2;
-    }
+    escapeChar(buf, '/');
   }
 
   public static String unescapeSlashes(@NotNull final String str) {
