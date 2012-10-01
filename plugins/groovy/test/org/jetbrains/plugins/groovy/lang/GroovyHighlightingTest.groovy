@@ -1470,4 +1470,20 @@ foo<warning descr="'foo' in '_' cannot be applied to '(java.lang.Integer)'">(5)<
 ''', GroovyAssignabilityCheckInspection)
   }
 
+  void testIncorrectReturnValue() {
+    testHighlighting('''\
+private int getObjects() {
+    try {
+        def t = "test";
+        t.substring(0);
+    }
+    finally {
+        //...
+    }
+
+    return <warning descr="Cannot assign 'String' to 'int'">''</warning>;
+}
+''', GroovyAssignabilityCheckInspection)
+  }
+
 }

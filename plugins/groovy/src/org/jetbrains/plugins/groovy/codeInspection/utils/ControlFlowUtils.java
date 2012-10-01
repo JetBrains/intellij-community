@@ -52,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstru
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.IfEndInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ThrowingInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
@@ -657,6 +658,10 @@ public class ControlFlowUtils {
         if (!visitAllExitPointsInner(instruction, first, visited, visitor)) return false;
       }
       return true;
+    }
+    else if (last instanceof ThrowingInstruction) {
+      PsiElement element = last.getElement();
+      if (!(element instanceof GrThrowStatement)) return true;
     }
 
     PsiElement element = last.getElement();
