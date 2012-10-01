@@ -264,7 +264,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   protected String getConnectionTitle() {
-    return "Connecting to debugger";
+    return "Connecting To Debugger";
   }
 
   private void handshake() throws PyDebuggerException {
