@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -163,7 +164,7 @@ public class IdeaGateway {
                                            @NotNull String path,
                                            @NotNull Collection<VirtualFile> children) {
     for (VirtualFile child : children) {
-      String name = child.getName();
+      String name = StringUtil.trimStart(child.getName(), "/"); // on Mac FS root name is "/"
       if (!path.startsWith(name)) continue;
       String rest = path.substring(name.length());
       if (!rest.isEmpty() && rest.charAt(0) != '/') continue;
