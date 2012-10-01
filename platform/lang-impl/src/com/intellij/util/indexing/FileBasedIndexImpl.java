@@ -1872,7 +1872,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
         @Override
         public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
-          return file instanceof NewVirtualFile ? ((NewVirtualFile)file).iterInDbChildren() : Arrays.asList(file.getChildren());
+          return file instanceof NewVirtualFile ? ((NewVirtualFile)file).iterInDbChildren() : null;
         }
       });
     }
