@@ -441,7 +441,18 @@ public class AndroidJpsUtil {
                                                            boolean withCacheDirs,
                                                            @NotNull CompileContext context) throws IOException {
     final List<String> result = new ArrayList<String>();
+    addCompilableResourceDirsForModule(extension, withCacheDirs, context, result);
 
+    for (JpsAndroidModuleExtension depExtension : getAllAndroidDependencies(extension.getModule(), true)) {
+      addCompilableResourceDirsForModule(depExtension, withCacheDirs, context, result);
+    }
+    return ArrayUtil.toStringArray(result);
+  }
+
+  private static void addCompilableResourceDirsForModule(JpsAndroidModuleExtension extension,
+                                                         boolean withCacheDirs,
+                                                         CompileContext context,
+                                                         List<String> result) throws IOException {
     if (withCacheDirs) {
       final File resourcesCacheDir = getResourcesCacheDir(context, extension.getModule());
       if (resourcesCacheDir.exists()) {
@@ -458,14 +469,6 @@ public class AndroidJpsUtil {
     if (generatedResourcesStorage.exists()) {
       result.add(generatedResourcesStorage.getPath());
     }
-
-    for (JpsAndroidModuleExtension depExtension : getAllAndroidDependencies(extension.getModule(), true)) {
-      final File depResDir = getResourceDirForCompilationPath(depExtension);
-      if (depResDir != null) {
-        result.add(depResDir.getPath());
-      }
-    }
-    return ArrayUtil.toStringArray(result);
   }
 
   @Nullable
