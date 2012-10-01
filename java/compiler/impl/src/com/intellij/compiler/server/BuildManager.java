@@ -498,7 +498,7 @@ public class BuildManager implements ApplicationComponent{
 
           final CmdlineRemoteProto.Message.ControllerMessage params;
           if (isRebuild) {
-            params = CmdlineProtoUtil.createRebuildRequest(projectPath, userData, globals);
+            params = CmdlineProtoUtil.createRebuildRequest(projectPath, scopes, userData, globals);
           }
           else {
             params = isMake ?

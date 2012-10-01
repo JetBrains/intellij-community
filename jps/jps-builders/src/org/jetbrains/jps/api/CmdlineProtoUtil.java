@@ -39,9 +39,9 @@ public class CmdlineProtoUtil {
   }
 
   public static CmdlineRemoteProto.Message.ControllerMessage createRebuildRequest(String project,
+                                                                                  List<TargetTypeBuildScope> scopes,
                                                                                   final Map<String, String> userData,
                                                                                   final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals) {
-    List<TargetTypeBuildScope> scopes = createAllModulesScopes();
     return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.REBUILD, project,
                                         scopes, userData, Collections.<String>emptyList(),
                                         globals, null);
