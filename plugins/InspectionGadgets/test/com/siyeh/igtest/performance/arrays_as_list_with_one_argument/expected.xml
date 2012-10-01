@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>ArraysAsListWithZeroOrOneArgument.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Call to 'Arrays.asList()' with too few arguments</problem_class>
+    <description>Call to &lt;code&gt;asList&lt;/code&gt; with zero arguments</description>
+  </problem>
+
+  <problem>
+    <file>ArraysAsListWithZeroOrOneArgument.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Call to 'Arrays.asList()' with too few arguments</problem_class>
+    <description>Call to &lt;code&gt;asList&lt;/code&gt; with only one argument</description>
+  </problem>
+</problems>
