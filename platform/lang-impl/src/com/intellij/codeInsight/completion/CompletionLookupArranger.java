@@ -95,7 +95,12 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   private MultiMap<CompletionSorterImpl, LookupElement> groupItemsBySorter(List<LookupElement> source) {
-    MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = new MultiMap<CompletionSorterImpl, LookupElement>();
+    MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = new MultiMap<CompletionSorterImpl, LookupElement>() {
+      @Override
+      protected Map<CompletionSorterImpl, Collection<LookupElement>> createMap() {
+        return ContainerUtil.newLinkedHashMap();
+      }
+    };
     for (LookupElement element : source) {
       inputBySorter.putValue(obtainSorter(element), element);
     }
