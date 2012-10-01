@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,141 +15,44 @@
  */
 
 #include <CoreServices/CoreServices.h>
+#include <pthread.h>
 #include <sys/mount.h>
 
-static int ReportMountedFileSystems()
-    // If fsBuf is too small to account for all volumes, getfsstat will 
-    // silently truncate the returned information.  Worse yet, it returns 
-    // the number of volumes it passed back, not the number of volumes present, 
-    // so you can't tell if the list was truncated. 
-    //
-    // So, in order to get an accurate snapshot of the volume list, I call 
-    // getfsstat with a NULL fsBuf to get a count (fsCountOrig), then allocate a 
-    // buffer that holds (fsCountOrig + 1) items, then call getfsstat again with 
-    // that buffer.  If the list was silently truncated, the second count (fsCount)
-    // will be (fsCountOrig + 1), and we loop to try again.
-{
-    int                 err;
-    int                 fsCountOrig;
-    int                 fsCount;
-    struct statfs *     fsBuf;
-    bool                done;
-
-
-    fsBuf = NULL;
-    fsCount = 0;
-    
-    done = false;
-    do {
-        // Get the initial count.
-        err = 0;
-        fsCountOrig = getfsstat(NULL, 0, MNT_WAIT);
-        if (fsCountOrig < 0) {
-            err = errno;
-        }
-        
-        // Allocate a buffer for fsCountOrig + 1 items.
-        if (err == 0) {
-            if (fsBuf != NULL) {
-                free(fsBuf);
-            }
-            fsBuf = malloc((fsCountOrig + 1) * sizeof(*fsBuf));
-            if (fsBuf == NULL) {
-                err = ENOMEM;
-            }
-        }
-        
-        // Get the list.  
-        if (err == 0) {
-            fsCount = getfsstat(fsBuf, (int) ((fsCountOrig + 1) * sizeof(*fsBuf)), MNT_WAIT);
-            if (fsCount < 0) {
-                err = errno;
-            }
-        }
-        
-        // We got the full list if the number of items returned by the kernel 
-        // is strictly less than the buffer that we allocated (fsCountOrig + 1).
-        if (err == 0) {
-            if (fsCount <= fsCountOrig) {
-                done = true;
-            }
-        }
-    } while ( (err == 0) && ! done );
-
-    int i;
-    int mountCounts = 0;
-    for (i = 0; i < fsCount; i++) {
-        if ((fsBuf[i].f_flags & MNT_LOCAL) == 0 || (fsBuf[i].f_flags & MNT_JOURNALED) == 0) {
-            if (mountCounts == 0) {
-              printf("UNWATCHEABLE\n");
-            }
-            printf("%s\n", fsBuf[i].f_mntonname);
-            mountCounts++;
-        }
-    }
-
-    if (mountCounts > 0) {
-      printf("#\n");
-      fflush(stdout);
-    }
-
-    free(fsBuf);
-    fsBuf = NULL;
-    
-    return err;
-}
-
-void callback(ConstFSEventStreamRef streamRef,
-              void *clientCallBackInfo,
-              size_t numEvents,
-              void *eventPaths,
-              const FSEventStreamEventFlags eventFlags[],
-              const FSEventStreamEventId eventIds[]) {
+static void callback(ConstFSEventStreamRef streamRef,
+                     void *clientCallBackInfo,
+                     size_t numEvents,
+                     void *eventPaths,
+                     const FSEventStreamEventFlags eventFlags[],
+                     const FSEventStreamEventId eventIds[]) {
     char **paths = eventPaths;
- 
-    int i;
-    for (i=0; i<numEvents; i++) {
-      // TODO Lion has much more detailed flags we need accurately process. For now just reduce to SL events range
-      FSEventStreamEventFlags flags = eventFlags[i] & 0xFF; 
-      if (flags == kFSEventStreamEventFlagMount || flags == kFSEventStreamEventFlagUnmount) {
-        ReportMountedFileSystems();
-      }
-      else if ((flags & kFSEventStreamEventFlagMustScanSubDirs) != 0) {
-        printf("RECDIRTY\n");
-        printf("%s\n", paths[i]);
-      }
-      else if (flags != kFSEventStreamEventFlagNone) {
-        printf("RESET\n");
-      }
-      else {
-        printf("DIRTY\n");
-        printf("%s\n", paths[i]);
-      }
+
+    for (int i = 0; i < numEvents; i++) {
+        // TODO[max] Lion has much more detailed flags we need accurately process. For now just reduce to SL events range.
+        FSEventStreamEventFlags flags = eventFlags[i] & 0xFF;
+        if ((flags & kFSEventStreamEventFlagMustScanSubDirs) != 0) {
+            printf("RECDIRTY\n");
+            printf("%s\n", paths[i]);
+        }
+        else if (flags != kFSEventStreamEventFlagNone) {
+            printf("RESET\n");
+        }
+        else {
+            printf("DIRTY\n");
+            printf("%s\n", paths[i]);
+        }
     }
 
     fflush(stdout);
 }
 
-// Static buffer for fscanf. All of the are being performed from a single thread, so it's thread safe.
-static char command[2048];
-
-static void parseRoots() {
-    while (TRUE) {
-     fscanf(stdin, "%s", command);
-     if (strcmp(command, "#") == 0 || feof(stdin)) break;
-    }
-}
-
-void *event_processing_thread(void *data) {
-    CFStringRef mypath = CFSTR("/");
-    CFArrayRef pathsToWatch = CFArrayCreate(NULL, (const void **)&mypath, 1, NULL);
+static void * EventProcessingThread(void *data) {
+    CFStringRef path = CFSTR("/");
+    CFArrayRef pathsToWatch = CFArrayCreate(NULL, (const void **)&path, 1, NULL);
     void *callbackInfo = NULL;
+    CFAbsoluteTime latency = 0.3;  // Latency in seconds
 
-    FSEventStreamRef stream;
-    CFAbsoluteTime latency = 0.3; /* Latency in seconds */
- 
-    // Create the stream, passing in a callback,
-    stream = FSEventStreamCreate(NULL,
+    FSEventStreamRef stream = FSEventStreamCreate(
+        NULL,
         &callback,
         callbackInfo,
         pathsToWatch,
@@ -165,29 +68,88 @@ void *event_processing_thread(void *data) {
     return NULL;
 }
 
-int main (int argc, const char * argv[]) {
-    // Checking if necessary API is available (need MacOS X 10.5 or later).
-    if (FSEventStreamCreate == NULL) {
-      printf("GIVEUP\n");
-      return 1;
+// Static buffer for fscanf. All of the are being performed from a single thread, so it's thread safe.
+static char command[2048];
+
+#define FS_FLAGS (MNT_LOCAL|MNT_JOURNALED)
+
+static void PrintMountedFileSystems(CFArrayRef roots) {
+    int fsCount = getfsstat(NULL, 0, MNT_WAIT);
+    if (fsCount == -1) return;
+
+    struct statfs fs[fsCount];
+    fsCount = getfsstat(fs, sizeof(struct statfs) * fsCount, MNT_NOWAIT);
+    if (fsCount == -1) return;
+
+    printf("UNWATCHEABLE\n");
+
+    for (int i = 0; i < fsCount; i++) {
+        if ((fs[i].f_flags & FS_FLAGS) != FS_FLAGS) {
+            char *mount = fs[i].f_mntonname;
+            int mountLen = strlen(mount);
+
+            for (int j = 0; j < CFArrayGetCount(roots); j++) {
+                char *root = (char *)CFArrayGetValueAtIndex(roots, j);
+                int rootLen = strlen(root);
+
+                if (rootLen >= mountLen && strncmp(root, mount, mountLen) == 0) {
+                    // root under mount point
+                    if (rootLen == mountLen || root[mountLen] == '/' || strcmp(mount, "/") == 0) {
+                        printf("%s\n", root);
+                    }
+                }
+                else if (strncmp(root, mount, rootLen) == 0) {
+                    // root over mount point
+                    if (strcmp(root, "/") == 0 || mount[rootLen] == '/') {
+                        printf("%s\n", mount);
+                    }
+                }
+            }
+        }
     }
 
-    ReportMountedFileSystems();
+    printf("#\n");
+    fflush(stdout);
+}
 
-    pthread_t thread_id;
-    int rc = pthread_create(&thread_id, NULL, event_processing_thread, NULL);
+static void ParseRoots() {
+    CFMutableArrayRef roots = CFArrayCreateMutable(NULL, 0, NULL);
 
-    if (rc != 0) {
-      // Give up if cannot create a thread.
-      printf("GIVEUP\n");
-      exit(1);
+    while (TRUE) {
+        fscanf(stdin, "%s", command);
+        if (strcmp(command, "#") == 0 || feof(stdin)) break;
+        char* path = command[0] == '|' ? command + 1 : command;
+        CFArrayAppendValue(roots, strdup(path));
+    }
+
+    PrintMountedFileSystems(roots);
+
+    for (int i = 0; i < CFArrayGetCount(roots); i++) {
+        void *value = (char *)CFArrayGetValueAtIndex(roots, i);
+        free(value);
+    }
+    CFRelease(roots);
+}
+
+int main(const int argc, const char* argv[]) {
+    // Checking if necessary API is available (need MacOS X 10.5 or later).
+    if (FSEventStreamCreate == NULL) {
+        printf("GIVEUP\n");
+        return 1;
+    }
+
+    pthread_t threadId;
+    if (pthread_create(&threadId, NULL, EventProcessingThread, NULL) != 0) {
+        // Give up if cannot create a thread.
+        printf("GIVEUP\n");
+        return 2;
     }
 
     while (TRUE) {
-      fscanf(stdin, "%s", command); 
-      if (strcmp(command, "EXIT") == 0 || feof(stdin)) exit(0);
-      if (strcmp(command, "ROOTS") == 0) parseRoots();
+        fscanf(stdin, "%s", command);
+        if (strcmp(command, "EXIT") == 0 || feof(stdin)) break;
+        if (strcmp(command, "ROOTS") == 0) ParseRoots();
     }
- 
+
     return 0;
 }
