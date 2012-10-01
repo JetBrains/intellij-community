@@ -22,11 +22,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * Extend this class to contribute web project generator to IDEA (available via File -> 'Add Module...' -> 'Web Module')
@@ -39,6 +41,8 @@ public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerato
   @Nls
   @Override
   public abstract String getName();
+
+  public abstract String getDescription();
 
   @Override
   @NotNull
@@ -93,11 +97,16 @@ public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerato
 
     private final GeneratorPeer myPeer;
     private final JComponent myCenterComponent;
+    private final JPanel myDescriptionPanel;
 
     protected MyDialogWrapper(@NotNull GeneratorPeer<T> peer) {
       super(true);
       myPeer = peer;
       myCenterComponent = peer.getComponent();
+      myDescriptionPanel = new JPanel(new BorderLayout());
+      myDescriptionPanel.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 0));
+      myDescriptionPanel.add(new JLabel(getDescription()), BorderLayout.WEST);
+
       getOKAction().setEnabled(peer.validate() == null);
       peer.addSettingsStateListener(new SettingsStateListener() {
         @Override
@@ -110,8 +119,19 @@ public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerato
     }
 
     @Override
+    protected boolean postponeValidation() {
+      return false;
+    }
+
+    @Override
     protected ValidationInfo doValidate() {
       return myPeer.validate();
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createNorthPanel() {
+      return myDescriptionPanel;
     }
 
     @Override
