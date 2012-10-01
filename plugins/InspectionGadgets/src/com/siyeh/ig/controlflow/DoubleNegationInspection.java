@@ -66,15 +66,32 @@ public class DoubleNegationInspection extends BaseInspection {
       } else if (expression instanceof PsiPolyadicExpression) {
         final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
         final PsiExpression[] operands = polyadicExpression.getOperands();
-        final StringBuilder newExpressionText = new StringBuilder();
-        for (int i = 0, length = operands.length; i < length; i++) {
-          final PsiExpression operand = operands[i];
-          if (i > 0) {
-            newExpressionText.append("==");
+        final int length = operands.length;
+        if (length == 2) {
+          final PsiExpression firstOperand = operands[0];
+          final PsiExpression secondOperand = operands[1];
+          if (isNegation(firstOperand)) {
+            replaceExpression(polyadicExpression, BoolUtils.getNegatedExpressionText(firstOperand) + "==" + secondOperand.getText());
           }
-          newExpressionText.append(BoolUtils.getNegatedExpressionText(operand));
+          else {
+            replaceExpression(polyadicExpression, firstOperand.getText() + "==" + BoolUtils.getNegatedExpressionText(secondOperand));
+          }
         }
-        replaceExpression(polyadicExpression, newExpressionText.toString());
+        else {
+          final StringBuilder newExpressionText = new StringBuilder();
+          for (int i = 0; i < length; i++) {
+            if (i > 0) {
+              if (length % 2 != 1 && i == length - 1) {
+                newExpressionText.append("!=");
+              }
+              else {
+                newExpressionText.append("==");
+              }
+            }
+            newExpressionText.append(operands[i].getText());
+          }
+          replaceExpression(polyadicExpression, newExpressionText.toString());
+        }
       }
     }
   }
@@ -116,25 +133,22 @@ public class DoubleNegationInspection extends BaseInspection {
           return;
         }
       }
-      if (operands.length > 3) {
-        return;
-      }
       registerError(expression);
     }
+  }
 
-    private static boolean isNegation(@Nullable PsiExpression expression) {
-      expression = ParenthesesUtils.stripParentheses(expression);
-      if (expression instanceof PsiPrefixExpression) return isNegation((PsiPrefixExpression)expression);
-      if (expression instanceof PsiPolyadicExpression) return isNegation((PsiPolyadicExpression)expression);
-      return false;
-    }
+  static boolean isNegation(@Nullable PsiExpression expression) {
+    expression = ParenthesesUtils.stripParentheses(expression);
+    if (expression instanceof PsiPrefixExpression) return isNegation((PsiPrefixExpression)expression);
+    if (expression instanceof PsiPolyadicExpression) return isNegation((PsiPolyadicExpression)expression);
+    return false;
+  }
 
-    private static boolean isNegation(PsiPolyadicExpression expression) {
-      return JavaTokenType.NE.equals(expression.getOperationTokenType());
-    }
+  static boolean isNegation(PsiPrefixExpression expression) {
+    return JavaTokenType.EXCL.equals(expression.getOperationTokenType());
+  }
 
-    private static boolean isNegation(PsiPrefixExpression expression) {
-      return JavaTokenType.EXCL.equals(expression.getOperationTokenType());
-    }
+  static boolean isNegation(PsiPolyadicExpression expression) {
+    return JavaTokenType.NE.equals(expression.getOperationTokenType());
   }
 }
