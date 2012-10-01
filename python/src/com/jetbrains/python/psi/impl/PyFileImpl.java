@@ -4,6 +4,7 @@ import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -11,6 +12,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.IndexingDataKeys;
@@ -698,6 +700,13 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     synchronized (myENCLock) {
       myExportedNameCache.clear();
     }
+  }
+
+  @Override
+  public void delete() throws IncorrectOperationException {
+    String path = getVirtualFile().getPath();
+    super.delete();
+    PyUtil.deletePycFiles(path);
   }
 
   private static class ArrayListThreadLocal extends ThreadLocal<List<String>> {

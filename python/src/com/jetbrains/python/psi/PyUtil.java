@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -570,6 +572,34 @@ public class PyUtil {
       }
     }
     return ScopeUtil.getScopeOwner(element) instanceof PsiFile;
+  }
+
+  public static void deletePycFiles(String pyFilePath) {
+    if (pyFilePath.endsWith(".py")) {
+      List<File> filesToDelete = new ArrayList<File>();
+      File pyc = new File(pyFilePath + "c");
+      if (pyc.exists()) {
+        filesToDelete.add(pyc);
+      }
+      File pyo = new File(pyFilePath + "o");
+      if (pyo.exists()) {
+        filesToDelete.add(pyo);
+      }
+      final File file = new File(pyFilePath);
+      File pycache = new File(file.getParentFile(), PyNames.PYCACHE);
+      if (pycache.isDirectory()) {
+        final String shortName = FileUtil.getNameWithoutExtension(file);
+        Collections.addAll(filesToDelete, pycache.listFiles(new FileFilter() {
+          @Override
+          public boolean accept(File pathname) {
+            if (!FileUtil.getExtension(pathname.getName()).equals("pyc")) return false;
+            String nameWithMagic = FileUtil.getNameWithoutExtension(pathname);
+            return FileUtil.getNameWithoutExtension(nameWithMagic).equals(shortName);
+          }
+        }));
+      }
+      FileUtil.asyncDelete(filesToDelete);
+    }
   }
 
   public static class KnownDecoratorProviderHolder {

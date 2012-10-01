@@ -122,6 +122,8 @@ public class PyNames {
   public static final String PY_TEST = "pytest";
   public static final String AT_TEST = "attest";
 
+  public static final String PYCACHE =  "__pycache__";
+
 
   /**
    * Contains all known predefined names of "__foo__" form.
