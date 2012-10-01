@@ -21,13 +21,20 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class SyntaxHighlighterFactory {
   public static final SyntaxHighlighterLanguageFactory LANGUAGE_FACTORY = new SyntaxHighlighterLanguageFactory();
-  private static final SyntaxHighlighterProvider PROVIDER = new FileTypeExtensionFactory<SyntaxHighlighterProvider>(SyntaxHighlighterProvider.class, "com.intellij.syntaxHighlighter").get();
+  private static final NotNullLazyValue<SyntaxHighlighterProvider> PROVIDER = new NotNullLazyValue<SyntaxHighlighterProvider>() {
+    @NotNull
+    @Override
+    protected SyntaxHighlighterProvider compute() {
+      return new FileTypeExtensionFactory<SyntaxHighlighterProvider>(SyntaxHighlighterProvider.class, "com.intellij.syntaxHighlighter").get();
+    }
+  };
 
   public static SyntaxHighlighter getSyntaxHighlighter(Language lang, Project project, VirtualFile virtualFile) {
     return LANGUAGE_FACTORY.forLanguage(lang).getSyntaxHighlighter(project, virtualFile);
@@ -35,7 +42,7 @@ public abstract class SyntaxHighlighterFactory {
 
   @Nullable
   public static SyntaxHighlighter getSyntaxHighlighter(final FileType fileType, final @Nullable Project project, final @Nullable VirtualFile virtualFile) {
-    return PROVIDER.create(fileType, project, virtualFile);
+    return PROVIDER.getValue().create(fileType, project, virtualFile);
   }
 
   /**
