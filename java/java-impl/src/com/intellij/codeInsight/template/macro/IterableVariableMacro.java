@@ -53,7 +53,6 @@ public class IterableVariableMacro extends VariableTypeMacroBase {
 
     Project project = context.getProject();
     final int offset = context.getStartOffset();
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
     assert file != null;
     PsiElement place = file.findElementAt(offset);

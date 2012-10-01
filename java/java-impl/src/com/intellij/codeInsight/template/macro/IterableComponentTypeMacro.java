@@ -45,7 +45,6 @@ public class IterableComponentTypeMacro extends Macro {
     if (result == null) return null;
 
     Project project = context.getProject();
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     PsiExpression expr = MacroUtil.resultToPsiExpression(result, context);
     if (expr == null) return null;

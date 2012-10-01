@@ -42,8 +42,6 @@ public class SuggestIndexNameMacro extends Macro {
     final Project project = context.getProject();
     final int offset = context.getStartOffset();
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
     PsiElement place = file.findElementAt(offset);
     PsiVariable[] vars = MacroUtil.getVariablesVisibleAt(place, "");
