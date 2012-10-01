@@ -28,6 +28,6 @@ public class GithubBasedTemplatesFactory implements ProjectTemplatesFactory {
   @NotNull
   @Override
   public ProjectTemplate[] createTemplates() {
-    return new ProjectTemplate[]{new GithubBasedProjectTemplate("Web Application", null, "JetBrains/idea-templates", null, null)};
+    return new ProjectTemplate[]{new GithubBasedProjectTemplate("Web Application", null, "JetBrains/idea-templates", null, null, "JAVA_MODULE")};
   }
 }

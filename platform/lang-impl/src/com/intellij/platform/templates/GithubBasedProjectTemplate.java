@@ -15,6 +15,8 @@
  */
 package com.intellij.platform.templates;
 
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,17 +29,20 @@ public class GithubBasedProjectTemplate extends AbstractGithubTagDownloadedProje
   private String myGithubRepositoryName;
   private String myHomepageUrl;
   private String myDescription;
+  private final String myModuleType;
 
   public GithubBasedProjectTemplate(String displayName,
                                     String githubUserName,
                                     String githubRepositoryName,
                                     String homepageUrl,
-                                    String description) {
+                                    String description,
+                                    String moduleType) {
     myDisplayName = displayName;
     myGithubUserName = githubUserName;
     myGithubRepositoryName = githubRepositoryName;
     myHomepageUrl = homepageUrl;
     myDescription = description;
+    myModuleType = moduleType;
   }
 
   @NotNull
@@ -65,5 +70,10 @@ public class GithubBasedProjectTemplate extends AbstractGithubTagDownloadedProje
   @Override
   public String getDescription() {
     return myDescription;
+  }
+
+  @Override
+  public ModuleType getModuleType() {
+    return ModuleTypeManager.getInstance().findByID("JAVA_MODULE");
   }
 }

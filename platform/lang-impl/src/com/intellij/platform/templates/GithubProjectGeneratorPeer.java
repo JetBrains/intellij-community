@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.platform.WebProjectGenerator;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -34,6 +35,8 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   private HyperlinkLabel myHyperlink;
   private JLabel myErrorMessage;
   private JButton myReloadButton;
+  private JBLabel myHomepageLabel;
+  private JBLabel myDescriptionLabel;
 
   public GithubProjectGeneratorPeer(@NotNull AbstractGithubTagDownloadedProjectGenerator generator) {
     String ghUserName = generator.getGithubUserName();
@@ -42,9 +45,19 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
       "master",
       String.format("https://github.com/%s/%s/zipball/master", ghUserName, ghRepoName)
     );
-    myHyperlink.setHyperlinkText(generator.getHomepageUrl());
-    myHyperlink.setHyperlinkTarget(generator.getHomepageUrl());
-    myHyperlink.revalidate();
+    String url = generator.getHomepageUrl();
+    if (url != null) {
+      myHomepageLabel.setVisible(true);
+      myHyperlink.setVisible(true);
+      myHyperlink.setHyperlinkText(url);
+      myHyperlink.setHyperlinkTarget(url);
+      myHyperlink.revalidate();
+    }
+    else {
+      myHomepageLabel.setVisible(false);
+      myHyperlink.setVisible(false);
+    }
+    myDescriptionLabel.setText(generator.getDescription());
 
     myComboBox.setRenderer(new ListCellRendererWrapper<GithubTagInfo>() {
       @Override
