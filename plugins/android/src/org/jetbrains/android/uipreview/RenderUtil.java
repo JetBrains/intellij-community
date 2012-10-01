@@ -142,14 +142,18 @@ public class RenderUtil {
 
     String appLabel = getAppLabelToShow(facet);
 
+    final List<FixableIssueMessage> warnMessages = new ArrayList<FixableIssueMessage>();
+
     RenderSession session;
     try {
       while (true) {
+        final SimpleLogger logger = new SimpleLogger(project, LOG);
         session = renderService
-          .createRenderSession(layoutXmlText, appLabel, timeout);
+          .createRenderSession(layoutXmlText, appLabel, timeout, logger);
         if (checkTimeout && session.getResult().getStatus() == Result.Status.ERROR_TIMEOUT) {
           continue;
         }
+        warnMessages.addAll(logger.getMessages());
         break;
       }
     }
@@ -159,8 +163,6 @@ public class RenderUtil {
     if (session == null) {
       return null;
     }
-
-    final List<FixableIssueMessage> warnMessages = new ArrayList<FixableIssueMessage>();
 
     if (callback.hasUnsupportedClassVersionProblem() || (incorrectRClassFormat && callback.hasLoadedClasses())) {
       reportIncorrectClassFormatWarning(callback, rClassName, incorrectRClassFormat, warnMessages);

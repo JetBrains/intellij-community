@@ -151,7 +151,7 @@ public class RenderServiceFactory {
         AndroidBundle.message("android.file.not.exist.error", FileUtil.toSystemDependentName(buildProp.getPath())));
     }
 
-    final SimpleLogger logger = new SimpleLogger(LOG);
+    final SimpleLogger logger = new SimpleLogger(null, LOG);
 
     myLibrary = LayoutLibrary.load(layoutLibJar.getPath(), logger, ApplicationNamesInfo.getInstance().getFullProductName());
     if (myLibrary.getStatus() != LoadStatus.LOADED) {

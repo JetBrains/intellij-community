@@ -69,7 +69,10 @@ class RenderService {
 
   @Nullable
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  public RenderSession createRenderSession(@NotNull String layoutXmlText, @NotNull String appLabel, long timeout)
+  public RenderSession createRenderSession(@NotNull String layoutXmlText,
+                                           @NotNull String appLabel,
+                                           long timeout,
+                                           @NotNull LayoutLog log)
     throws FileNotFoundException, XmlPullParserException {
 
     final ILayoutPullParser parser = new XmlParser();
@@ -98,7 +101,7 @@ class RenderService {
 
     final SessionParams params =
       new SessionParams(parser, RenderingMode.NORMAL, this, dimension.width, dimension.height, density, xdpi, ydpi, resolver,
-                        myProjectCallback, minSdkVersion, targetSdkVersion, new SimpleLogger(LOG));
+                        myProjectCallback, minSdkVersion, targetSdkVersion, log);
 
     params.setExtendedViewInfoMode(false);
     params.setAppLabel(appLabel);
