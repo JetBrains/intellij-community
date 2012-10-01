@@ -237,12 +237,14 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           processor.setName(isConstructor ? containingClass.getName() : element.getText());
 
           if (checkStatic) {
-            PsiClass aClass = null;
-            if (PsiTreeUtil.isAncestor(containingClass, PsiMethodReferenceExpressionImpl.this, false)) {
-              aClass = containingClass;
-            }
-            if (PsiUtil.getEnclosingStaticElement(PsiMethodReferenceExpressionImpl.this, aClass) != null) {
-              processor.handleEvent(JavaScopeProcessorEvent.START_STATIC, null);
+            if (containingClass.getContainingClass() == null || !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+              PsiClass aClass = null;
+              if (PsiTreeUtil.isAncestor(containingClass, PsiMethodReferenceExpressionImpl.this, false)) {
+                aClass = containingClass;
+              }
+              if (PsiUtil.getEnclosingStaticElement(PsiMethodReferenceExpressionImpl.this, aClass) != null) {
+                processor.handleEvent(JavaScopeProcessorEvent.START_STATIC, null);
+              }
             }
           }
           ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
@@ -277,7 +279,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         final PsiType[] parameterTypes = mySignature.getParameterTypes();
         if (parameterTypes.length > 0) {
           final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(parameterTypes[0]);
-          if (classResolveResult.getElement() == myContainingClass && classResolveResult.getSubstitutor().equals(mySubstitutor)) {
+          if (PsiTreeUtil.isAncestor(classResolveResult.getElement(), myContainingClass, false) && classResolveResult.getSubstitutor().equals(mySubstitutor)) {
             hasReceiver = true;
           }
         }
@@ -296,7 +298,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           final boolean isStatic = psiMethod.hasModifierProperty(PsiModifier.STATIC);
           
           if ((parameterTypes.length == signatureParameterTypes2.length || varArgs && parameterTypes.length >= signatureParameterTypes2.length) && 
-              (isStatic || psiMethod.isConstructor())) {
+              (isStatic || (psiMethod.isConstructor() && (conflict.isStaticsScopeCorrect() || myContainingClass.getContainingClass() == null) && !hasReceiver))) {
             boolean correct = true;
             for (int i = 0; i < parameterTypes.length; i++) {
               final PsiType type1 = parameterTypes[i];
@@ -310,7 +312,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             }
           }
 
-          if (hasReceiver && parameterTypes.length == signatureParameterTypes2.length + 1 && !isStatic) {
+          if (hasReceiver && parameterTypes.length == signatureParameterTypes2.length + 1 && !isStatic && (!psiMethod.isConstructor() || myContainingClass.getContainingClass() != null)) {
             boolean correct = true;
             for (int i = 0; i < signatureParameterTypes2.length; i++) {
               final PsiType type1 = parameterTypes[i + 1];

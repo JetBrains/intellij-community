@@ -593,7 +593,8 @@ public class LambdaUtil {
       if (signatureParameterTypes1.length == signatureParameterTypes2.length + 1) {
         final PsiClassType classType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, psiSubstitutor);
         final PsiType receiverType = signatureParameterTypes1[0];
-        if (receiverType.equals(classType) || 
+        final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(receiverType);
+        if (PsiTreeUtil.isAncestor(resolveResult.getElement(), psiClass, false) && resolveResult.getSubstitutor().equals(psiSubstitutor) || 
             (receiverType instanceof PsiClassType && ((PsiClassType)receiverType).isRaw() && receiverType.equals(TypeConversionUtil.erasure(classType)))) {
           offset++;
         }
