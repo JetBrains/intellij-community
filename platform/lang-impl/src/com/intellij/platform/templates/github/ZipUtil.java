@@ -1,4 +1,4 @@
-package com.intellij.platform.templates;
+package com.intellij.platform.templates.github;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -112,7 +112,7 @@ class ZipUtil {
       relativeParentDir = relativeExtractPath.substring(0, ind);
       name = relativeExtractPath.substring(ind + 1);
     } else {
-      relativeParentDir = ".";
+      relativeParentDir = "";
       name = relativeExtractPath;
     }
     if (zipEntry.isDirectory()) {

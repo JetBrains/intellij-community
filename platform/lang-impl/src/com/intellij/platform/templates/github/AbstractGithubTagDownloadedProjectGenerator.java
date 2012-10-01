@@ -1,4 +1,4 @@
-package com.intellij.platform.templates;
+package com.intellij.platform.templates.github;
 
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
 import com.intellij.openapi.application.ApplicationManager;

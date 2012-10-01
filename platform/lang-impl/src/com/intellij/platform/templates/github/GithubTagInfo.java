@@ -1,4 +1,4 @@
-package com.intellij.platform.templates;
+package com.intellij.platform.templates.github;
 
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TIntArrayList;

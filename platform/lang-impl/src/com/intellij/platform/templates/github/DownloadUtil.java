@@ -1,4 +1,4 @@
-package com.intellij.platform.templates;
+package com.intellij.platform.templates.github;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -121,7 +121,7 @@ public class DownloadUtil {
       }, new Producer<Boolean>() {
       @Override
       public Boolean produce() {
-        return IOExceptionDialog.showErrorDialog("Download Error", "Can not download " + url + ".");
+        return IOExceptionDialog.showErrorDialog("Download Error", "Can not download " + url + "");
       }
     }
     );

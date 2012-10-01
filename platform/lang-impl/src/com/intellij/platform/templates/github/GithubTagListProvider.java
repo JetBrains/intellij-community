@@ -1,4 +1,4 @@
-package com.intellij.platform.templates;
+package com.intellij.platform.templates.github;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSet;
