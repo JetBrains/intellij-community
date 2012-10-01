@@ -4,6 +4,7 @@ import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.compiler.tools.AndroidApkBuilder;
@@ -14,7 +15,6 @@ import org.jetbrains.android.util.AndroidNativeLibData;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.android.builder.AndroidProjectBuildTarget;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
@@ -534,7 +534,7 @@ public class AndroidPackagingBuilder extends TargetBuilder<AndroidProjectBuildTa
                           !releasePackage, 0, new FileFilter() {
           @Override
           public boolean accept(File pathname) {
-            return !ignoredFileIndex.isIgnored(JpsPathUtil.getFileName(pathname.getPath()));
+            return !ignoredFileIndex.isIgnored(PathUtilRt.getFileName(pathname.getPath()));
           }
         });
 

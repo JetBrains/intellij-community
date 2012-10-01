@@ -16,9 +16,9 @@
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.incremental.artifacts.JarPathUtil;
@@ -118,7 +118,7 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
     public boolean accept(@NotNull String fullFilePath, BuildDataManager dataManager) throws IOException {
       if (myBaseFilter != null && !myBaseFilter.accept(fullFilePath, dataManager)) return false;
 
-      if (myIgnoredFileIndex.isIgnored(JpsPathUtil.getFileName(fullFilePath))) {
+      if (myIgnoredFileIndex.isIgnored(PathUtilRt.getFileName(fullFilePath))) {
         return false;
       }
 
