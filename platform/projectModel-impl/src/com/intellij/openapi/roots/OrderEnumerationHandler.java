@@ -40,7 +40,7 @@ public abstract class OrderEnumerationHandler {
   }
 
 
-  public static enum AddDependencyType {ADD, DO_NOT_ADD, DEFAULT}
+  public enum AddDependencyType {ADD, DO_NOT_ADD, DEFAULT}
 
   @NotNull
   public AddDependencyType shouldAddDependency(@NotNull OrderEntry orderEntry,
@@ -48,26 +48,21 @@ public abstract class OrderEnumerationHandler {
     return AddDependencyType.DEFAULT;
   }
 
-  public boolean shouldProcessRecursively(@NotNull ModuleOrderEntry dependency) {
+  public boolean shouldAddRuntimeDependenciesToTestCompilationClasspath() {
+    return false;
+  }
+
+  public boolean shouldIncludeTestsFromDependentModulesToTestClasspath() {
     return true;
   }
 
-  public boolean addCustomOutput(@NotNull Module forModule,
-                                 @NotNull ModuleRootModel orderEntryRootModel,
-                                 @NotNull OrderRootType type,
-                                 @NotNull OrderEnumeratorSettings settings,
-                                 @NotNull Collection<String> urls) {
-    return false;
+  public boolean shouldProcessDependenciesRecursively() {
+    return true;
   }
 
   public boolean addCustomRootsForLibrary(@NotNull OrderEntry forOrderEntry,
                                           @NotNull OrderRootType type,
                                           @NotNull Collection<String> urls) {
     return false;
-  }
-
-  public void addAdditionalRoots(@NotNull Module forModule,
-                                 @NotNull OrderEnumeratorSettings settings,
-                                 @NotNull Collection<String> urls) {
   }
 }

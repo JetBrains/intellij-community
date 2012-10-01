@@ -11,7 +11,9 @@ import org.jetbrains.jps.builders.impl.BuildTargetIndexImpl;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLoggerImpl;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
+import org.jetbrains.jps.incremental.java.JavaBuilderLoggerImpl;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
@@ -30,6 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author nik
@@ -131,6 +134,17 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       }
     }
     return module;
+  }
+
+  protected void doRebuild() {
+    ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), new JavaBuilderLoggerImpl()));
+    try {
+      CompileScope scope = new CompileScopeImpl(true, BuilderRegistry.getInstance().getTargetTypes(), Collections.<BuildTarget<?>>emptySet(), Collections.<BuildTarget<?>,Set<File>>emptyMap());
+      doBuild(descriptor, scope, false, true, false).assertSuccessful();
+    }
+    finally {
+      descriptor.release();
+    }
   }
 
   protected BuildResult doBuild(final ProjectDescriptor descriptor, CompileScope scope,

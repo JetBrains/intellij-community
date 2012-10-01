@@ -5,9 +5,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaDependenciesRootsEnumerator;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
-import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+import org.jetbrains.jps.model.module.*;
 import org.jetbrains.jps.model.module.impl.JpsDependenciesRootsEnumeratorBase;
 
 /**
@@ -26,12 +24,23 @@ public class JpsJavaDependenciesRootsEnumeratorImpl extends JpsDependenciesRoots
     return this;
   }
 
-  protected boolean processModuleRootUrls(JpsModule module, Consumer<String> urlConsumer) {
-    boolean productionOnly = myDependenciesEnumerator.isProductionOnly();
+  protected boolean processModuleRootUrls(JpsModule module, JpsDependencyElement dependencyElement, Consumer<String> urlConsumer) {
+    boolean includeProduction, includeTests;
+    if (dependencyElement instanceof JpsModuleDependency) {
+      boolean productionOnTests = myDependenciesEnumerator.isProductionOnTests(dependencyElement);
+      includeProduction = !productionOnTests;
+      includeTests = !myDependenciesEnumerator.isProductionOnly() && myDependenciesEnumerator.shouldIncludeTestsFromDependentModulesToTestClasspath()
+                     || productionOnTests;
+    }
+    else {
+      includeProduction = true;
+      includeTests = !myDependenciesEnumerator.isProductionOnly();
+    }
+
     if (myRootType == JpsOrderRootType.SOURCES) {
       for (JpsModuleSourceRoot root : module.getSourceRoots()) {
         JpsModuleSourceRootType<?> type = root.getRootType();
-        if (type.equals(JavaSourceRootType.SOURCE) || !productionOnly && type.equals(JavaSourceRootType.TEST_SOURCE)) {
+        if (type.equals(JavaSourceRootType.SOURCE) && includeProduction || type.equals(JavaSourceRootType.TEST_SOURCE) && includeTests) {
           urlConsumer.consume(root.getUrl());
         }
       }
@@ -39,7 +48,7 @@ public class JpsJavaDependenciesRootsEnumeratorImpl extends JpsDependenciesRoots
     else if (myRootType == JpsOrderRootType.COMPILED) {
       JpsJavaExtensionService extensionService = JpsJavaExtensionService.getInstance();
       if (myWithoutSelfModuleOutput && myDependenciesEnumerator.isEnumerationRootModule(module)) {
-        if (!productionOnly) {
+        if (includeProduction && includeTests) {
           String url = extensionService.getOutputUrl(module, false);
           if (url != null) {
             urlConsumer.consume(url);
@@ -48,13 +57,13 @@ public class JpsJavaDependenciesRootsEnumeratorImpl extends JpsDependenciesRoots
       }
       else {
         String outputUrl = extensionService.getOutputUrl(module, false);
-        if (!productionOnly) {
+        if (includeTests) {
           String testsOutputUrl = extensionService.getOutputUrl(module, true);
           if (testsOutputUrl != null && !testsOutputUrl.equals(outputUrl)) {
             urlConsumer.consume(testsOutputUrl);
           }
         }
-        if (outputUrl != null) {
+        if (includeProduction && outputUrl != null) {
           urlConsumer.consume(outputUrl);
         }
       }

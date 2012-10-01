@@ -46,6 +46,7 @@
     <orderEnumerationHandlerFactory implementation="org.jetbrains.idea.maven.execution.MavenOrderEnumeratorHandler$FactoryImpl"/>
 
     <compiler implementation="org.jetbrains.idea.maven.compiler.MavenResourceCompiler" order="last"/>
+    <compileServer.plugin classpath="jps/maven-jps-plugin.jar"/>
 
     <languageInjector implementation="org.jetbrains.idea.maven.plugins.sql.MavenSqlInjector"/>
 
