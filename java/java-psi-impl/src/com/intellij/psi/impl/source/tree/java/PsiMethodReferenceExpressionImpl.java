@@ -279,7 +279,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         final PsiType[] parameterTypes = mySignature.getParameterTypes();
         if (parameterTypes.length > 0) {
           final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(parameterTypes[0]);
-          if (PsiTreeUtil.isAncestor(classResolveResult.getElement(), myContainingClass, false) && classResolveResult.getSubstitutor().equals(mySubstitutor)) {
+          if (LambdaUtil.isReceiverType(parameterTypes[0], myContainingClass) && classResolveResult.getSubstitutor().equals(mySubstitutor)) {
             hasReceiver = true;
           }
         }

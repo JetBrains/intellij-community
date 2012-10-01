@@ -581,6 +581,16 @@ public class LambdaUtil {
     return false;
   }
 
+  public static boolean isReceiverType(PsiType receiverType, PsiClass containingClass) {
+    PsiClass aClass = PsiUtil.resolveClassInType(receiverType);
+    while (containingClass != null) {
+      if (InheritanceUtil.isInheritorOrSelf(aClass, containingClass, true)) return true;
+      containingClass = containingClass.getContainingClass();
+    }
+    return false;
+  }
+  
+  
   public static boolean areAcceptable(MethodSignature signature1,
                                       MethodSignature signature2,
                                       PsiClass psiClass,
@@ -594,7 +604,7 @@ public class LambdaUtil {
         final PsiClassType classType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, psiSubstitutor);
         final PsiType receiverType = signatureParameterTypes1[0];
         final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(receiverType);
-        if (PsiTreeUtil.isAncestor(resolveResult.getElement(), psiClass, false) && resolveResult.getSubstitutor().equals(psiSubstitutor) || 
+        if (isReceiverType(receiverType, psiClass) && resolveResult.getSubstitutor().equals(psiSubstitutor) || 
             (receiverType instanceof PsiClassType && ((PsiClassType)receiverType).isRaw() && receiverType.equals(TypeConversionUtil.erasure(classType)))) {
           offset++;
         }
