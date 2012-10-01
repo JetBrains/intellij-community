@@ -28,7 +28,7 @@ class GithubTagListProvider {
   private final String myUserName;
   private final String myRepositoryName;
 
-  public GithubTagListProvider(@NotNull String userName, @NotNull String repositoryName) {
+  public GithubTagListProvider(@Nullable String userName, @NotNull String repositoryName) {
     myUserName = userName;
     myRepositoryName = repositoryName;
   }
@@ -157,6 +157,10 @@ class GithubTagListProvider {
 
   @NotNull
   private String formatTagListDownloadUrl() {
-    return "https://api.github.com/repos/" + myUserName + "/" + myRepositoryName + "/tags";
+    StringBuilder builder = new StringBuilder("https://api.github.com/repos/");
+    if (myUserName != null) {
+      builder.append(myUserName).append("/");
+    }
+    return builder.append(myRepositoryName).append("/tags").toString();
   }
 }

@@ -32,7 +32,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
   @NotNull
   protected abstract String getDisplayName();
 
-  @NotNull
+  @Nullable
   protected abstract String getGithubUserName();
 
   @NotNull
@@ -114,9 +114,9 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
     Messages.showErrorDialog(project, fullMessage, title);
   }
 
-  @NotNull
+  @Nullable
   public abstract String getHomepageUrl();
 
-  @NotNull
+  @Nullable
   public abstract String getDescription();
 }

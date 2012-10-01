@@ -31,11 +31,15 @@ public class DownloadUtil {
   private static final Logger LOG = Logger.getInstance(DownloadUtil.class);
 
   @NotNull
-  private static String formatGithubRepositoryName(@NotNull String userName, @NotNull String repositoryName) {
-    return "github-" + userName + "-" + repositoryName;
+  private static String formatGithubRepositoryName(@Nullable String userName, @NotNull String repositoryName) {
+    StringBuilder builder = new StringBuilder("github-");
+    if (userName != null) {
+      builder.append(userName).append("-");
+    }
+    return builder.append(repositoryName).toString();
   }
 
-  private static File getCacheDir(@NotNull String userName, @NotNull String repositoryName) {
+  private static File getCacheDir(@Nullable String userName, @NotNull String repositoryName) {
     File generatorsDir = new File(PathManager.getSystemPath(), "projectGenerators");
     String dirName = formatGithubRepositoryName(userName, repositoryName);
     File dir = new File(generatorsDir, dirName);
@@ -46,7 +50,7 @@ public class DownloadUtil {
     }
   }
 
-  public static File findCacheFile(@NotNull String userName, @NotNull String repositoryName, @NotNull String cacheFileName) {
+  public static File findCacheFile(@Nullable String userName, @NotNull String repositoryName, @NotNull String cacheFileName) {
     File dir = getCacheDir(userName, repositoryName);
     return new File(dir, cacheFileName);
   }
@@ -62,10 +66,11 @@ public class DownloadUtil {
   public static void downloadAtomically(@Nullable ProgressIndicator indicator,
                                         @NotNull String url,
                                         @NotNull File outputFile,
-                                        @NotNull String userName,
+                                        @Nullable String userName,
                                         @NotNull String repositoryName) throws IOException
   {
-    String tempFileName = String.format("github-%s-%s-%s", userName, repositoryName, outputFile.getName());
+    String fileName = new File(repositoryName).getName();
+    String tempFileName = String.format("github-%s-%s-%s", userName, fileName, outputFile.getName());
     File tempFile = FileUtil.createTempFile(tempFileName + "-", ".tmp");
     downloadAtomically(indicator, url, outputFile, tempFile);
   }
@@ -99,7 +104,7 @@ public class DownloadUtil {
     @NotNull final String url,
     @NotNull String progressTitle,
     @NotNull final File outputFile,
-    @NotNull final String userName,
+    @Nullable final String userName,
     @NotNull final String repositoryName) throws GeneratorException
   {
     Outcome<File> outcome = provideDataWithProgressSynchronously(

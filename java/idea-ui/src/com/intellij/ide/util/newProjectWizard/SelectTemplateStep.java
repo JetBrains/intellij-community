@@ -74,7 +74,9 @@ public class SelectTemplateStep extends ModuleWizardStep {
         }
         ProjectTemplate template = getSelectedTemplate();
         if (template != null) {
-          mySettingsPanel.add(template.getSettingsPanel(), BorderLayout.NORTH);
+          JComponent settingsPanel = template.getSettingsPanel();
+          mySettingsPanel.add(settingsPanel, BorderLayout.NORTH);
+          mySettingsPanel.repaint();
         }
         mySettingsPanel.revalidate();
       }

@@ -796,4 +796,6 @@
 
   <pathMacroFilter implementation="com.intellij.execution.configuration.RunConfigurationPathMacroFilter"/>
   <pathMacroFilter implementation="com.intellij.openapi.application.StructuralSearchPathMacroFilter"/>
+
+  <projectTemplatesFactory implementation="com.intellij.platform.templates.GithubBasedTemplatesFactory"/>
 </extensions>

@@ -9,11 +9,11 @@ import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collections;
@@ -26,17 +26,10 @@ import java.util.Set;
  */
 public class GithubProjectGeneratorPeer implements WebProjectGenerator.GeneratorPeer<GithubTagInfo> {
 
-  private enum CardType {
-    LOADING_VERSIONS,
-    FAILED_LOADING_VERSIONS,
-    VERSION_SELECTION
-  }
-
   private final List<WebProjectGenerator.SettingsStateListener> myListeners = ContainerUtil.newArrayList();
   private final GithubTagInfo myMasterTag;
   private JComboBox myComboBox;
   private final GithubTagListProvider myProvider;
-  private CardType myCurrentCard;
   private JComponent myComponent;
   private HyperlinkLabel myHyperlink;
   private JLabel myErrorMessage;
@@ -65,10 +58,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
     myProvider = new GithubTagListProvider(ghUserName, ghRepoName);
     ImmutableSet<GithubTagInfo> cachedTags = myProvider.getCachedTags();
     if (cachedTags != null) {
-      myCurrentCard = CardType.VERSION_SELECTION;
       updateTagList(cachedTags);
-    } else {
-      myCurrentCard = CardType.LOADING_VERSIONS;
     }
 
     myErrorMessage.setText(null);
@@ -113,10 +103,15 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
     myComboBox.updateUI();
   }
 
-  void setErrorMessage(@Nullable String message) {
-    myErrorMessage.setText(message);
-    myErrorMessage.setForeground(Color.RED);
-    myErrorMessage.revalidate();
+  void setErrorMessage(@Nullable final String message) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        if (false) {
+          myErrorMessage.setText(message);
+        }
+      }
+    });
   }
 
   private boolean shouldUpdate(@NotNull ImmutableSet<GithubTagInfo> newTags) {
@@ -158,9 +153,6 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   @NotNull
   @Override
   public GithubTagInfo getSettings() {
-    if (!CardType.VERSION_SELECTION.equals(myCurrentCard)) {
-      throw new RuntimeException("Version list isn't ready");
-    }
     Object obj = myComboBox.getSelectedItem();
     if (obj instanceof GithubTagInfo) {
       return (GithubTagInfo) obj;
