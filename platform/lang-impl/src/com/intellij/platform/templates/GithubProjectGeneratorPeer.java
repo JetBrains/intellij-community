@@ -7,7 +7,6 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.platform.WebProjectGenerator;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +39,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   private CardType myCurrentCard;
   private JComponent myComponent;
   private HyperlinkLabel myHyperlink;
-  private JBLabel myErrorMessage;
+  private JLabel myErrorMessage;
   private JButton myReloadButton;
 
   public GithubProjectGeneratorPeer(@NotNull AbstractGithubTagDownloadedProjectGenerator generator) {
