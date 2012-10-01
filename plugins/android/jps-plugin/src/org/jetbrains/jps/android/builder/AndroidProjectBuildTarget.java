@@ -55,12 +55,28 @@ public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> 
   @Override
   public Collection<BuildTarget<?>> computeDependencies() {
     List<BuildTarget<?>> result = new ArrayList<BuildTarget<?>>();
+    if (myKind == AndroidBuilderKind.PACKAGING) {
+      result.add(new AndroidProjectBuildTarget(AndroidBuilderKind.DEX, myModel));
+    }
     for (JpsModule module : myModel.getProject().getModules()) {
       if (AndroidJpsUtil.getExtension(module) != null) {
         result.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION));
       }
     }
     return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    return myKind == ((AndroidProjectBuildTarget)o).myKind;
+  }
+
+  @Override
+  public int hashCode() {
+    return myKind.hashCode();
   }
 
   @NotNull
