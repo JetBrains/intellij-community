@@ -24,7 +24,7 @@ import java.util.List;
 
 /**
  * <p>Executes various operations on Git branches: checkout, create new branch, merge, delete, compare.</p>
- * <p>All operations can be called from the EDT: the GitBrancher will take care of starting a background task.</p>
+ * <p>All operations are asynchronous and can be called from the EDT: the GitBrancher will start a background task.</p>
  * <p>It also takes care of analyzing results and notifying the user.</p>
  * <p>All operations can be called for multiple repositories at once.</p>
  *
