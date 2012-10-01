@@ -19,6 +19,8 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * <p>Executes various operations on Git branches: checkout, create new branch, merge, delete, compare.</p>
  * <p>All operations can be called from the EDT: the GitBrancher will take care of starting a background task.</p>
@@ -36,19 +38,22 @@ public interface GitBrancher {
    *    do this before calling this method, otherwise a standard error dialog will be shown.</p>
    * <p>Equivalent to {@code git checkout <name>}</p>
    *
-   * @param name Name of the new branch to check out.
+   * @param name         name of the new branch to check out.
+   * @param repositories repositories to operate on.
    */
-  void checkoutNewBranch(@NotNull String name);
+  void checkoutNewBranch(@NotNull String name, @NotNull List<GitRepository> repositories);
 
   /**
    * <p>Creates new tag on the selected reference.</p>
    *
    * @param name           the name of new tag.
    * @param reference      the reference which tag will point to.
+   * @param repositories   repositories to operate on.
    * @param callInAwtLater the Runnable that should be called after execution of the method (both successful and unsuccessful).
    *                       If given, it will be called in the EDT {@link javax.swing.SwingUtilities#invokeLater(Runnable) later}.
    */
-  void createNewTag(@NotNull String name, @NotNull String reference, @Nullable Runnable callInAwtLater);
+  void createNewTag(@NotNull String name, @NotNull String reference, @NotNull List<GitRepository> repositories,
+                    @Nullable Runnable callInAwtLater);
 
   /**
    * <p>Checks out the given reference (a branch, or a reference name, or a commit hash).
@@ -56,23 +61,26 @@ public interface GitBrancher {
    *    stash-checkout-unstash.</p>
    * <p>Doesn't check the reference for validity.</p>
    *
-   * @param reference reference to be checked out.
+   * @param reference      reference to be checked out.
+   * @param repositories   repositories to operate on.
    * @param callInAwtLater the Runnable that should be called after execution of the method (both successful and unsuccessful).
    *                       If given, it will be called in the EDT {@link javax.swing.SwingUtilities#invokeLater(Runnable) later}.
    */
-  void checkout(@NotNull String reference, @Nullable Runnable callInAwtLater);
+  void checkout(@NotNull String reference, @NotNull List<GitRepository> repositories, @Nullable Runnable callInAwtLater);
 
   /**
    * Creates and checks out a new local branch starting from the given reference:
    * {@code git checkout -b <branchname> <start-point>}. <br/>
    * Provides the "smart checkout" procedure the same as in {@link #checkout(String, Runnable)}.
    *
-   * @param newBranchName     the name of the new local branch.
-   * @param startPoint        the reference to checkout.
+   * @param newBranchName  the name of the new local branch.
+   * @param startPoint     the reference to checkout.
+   * @param repositories   repositories to operate on.
    * @param callInAwtLater the Runnable that should be called after execution of the method (both successful and unsuccessful).
    *                       If given, it will be called in the EDT {@link javax.swing.SwingUtilities#invokeLater(Runnable) later}.
    */
-  void checkoutNewBranchStartingFrom(@NotNull String newBranchName, @NotNull String startPoint, @Nullable Runnable callInAwtLater);
+  void checkoutNewBranchStartingFrom(@NotNull String newBranchName, @NotNull String startPoint, @NotNull List<GitRepository> repositories,
+                                     @Nullable Runnable callInAwtLater);
 
   /**
    * <p>Deletes the branch with the specified name.</p>
@@ -81,26 +89,30 @@ public interface GitBrancher {
    *    displays a dialog showing commits that are not merged and proposing to execute force deletion:</p>
    * <p>{@code git branch -D <name>}</p>
    *
-   * @param branchName the name of the branch to be deleted.
+   * @param branchName   the name of the branch to be deleted.
+   * @param repositories repositories to operate on.
    */
-  void deleteBranch(String branchName);
+  void deleteBranch(@NotNull String branchName, @NotNull List<GitRepository> repositories);
 
   /**
    * <p>Deletes the remote branch:</p>
    * <p>{@code git push <remote> :<name>}</p>
-   * @param branchName name of the remote branch to delete.
+   *
+   * @param branchName   name of the remote branch to delete.
+   * @param repositories Repositories to operate on.
    */
-  void deleteRemoteBranch(@NotNull String branchName);
+  void deleteRemoteBranch(@NotNull String branchName, @NotNull List<GitRepository> repositories);
 
   /**
    * Compares the HEAD with the specified branch - shows a dialog with the differences.
    *
    * @param branchName         name of the branch to compare with.
+   * @param repositories       repositories to operate on.
    * @param selectedRepository current or selected repository.
    *                           The list of commits is displayed for the repository selected from the combobox.
    *                           This parameter tells which repository should be pre-selected in the combobox.
    */
-  void compare(@NotNull String branchName, @NotNull GitRepository selectedRepository);
+  void compare(@NotNull String branchName, @NotNull List<GitRepository> repositories, @NotNull GitRepository selectedRepository);
 
   /**
    * <p>Merges the given branch to the HEAD.</p>
@@ -108,11 +120,12 @@ public interface GitBrancher {
    * <p>If local changes prevent merging, proposes the "Smart merge" procedure (stash-merge-unstash).</p>
    * <p>If untracked files prevent merging, shows them in an error dialog.</p>
    *
-   * @param branchName  the branch to be merged into HEAD.
-   * @param localBranch true indicates that the merged branch is a local branch, false - that it is a remote branch.
-   *                    After a local branch is merged, the IDE proposes to delete it at once (common feature branches workflow),
-   *                    but it is not done for remote branches and for master.
+   * @param branchName   the branch to be merged into HEAD.
+   * @param localBranch  true indicates that the merged branch is a local branch, false - that it is a remote branch.
+   *                     After a local branch is merged, the IDE proposes to delete it at once (common feature branches workflow),
+   *                     but it is not done for remote branches and for master.
+   * @param repositories repositories to operate on.
    */
-  void merge(@NotNull String branchName, boolean localBranch);
+  void merge(@NotNull String branchName, boolean localBranch, @NotNull List<GitRepository> repositories);
 
 }

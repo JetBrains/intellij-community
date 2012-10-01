@@ -22,6 +22,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import git4idea.branch.GitBrancherImpl;
 import git4idea.repo.GitRepository;
 
+import java.util.Collections;
+
 /**
  * Created by IntelliJ IDEA.
  * User: Irina.Chernushina
@@ -55,7 +57,7 @@ public class GitCreateNewTag {
       }
     });
     if (name != null) {
-      new GitBrancherImpl(myRepository).createNewTag(name, myReference, myCallInAwtAfterExecution);
+      new GitBrancherImpl(myProject).createNewTag(name, myReference, Collections.singletonList(myRepository), myCallInAwtAfterExecution);
     }
   }
 }

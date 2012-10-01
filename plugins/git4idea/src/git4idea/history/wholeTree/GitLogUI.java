@@ -2439,7 +2439,8 @@ public class GitLogUI implements Disposable {
       final GitRepository repository =
         GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(commitAt.selectRepository(myRootsUnderVcs));
       if (repository == null) return;
-      new GitBrancherImpl(repository).checkout(commitAt.getHash().getString(), myRefresh);
+      new GitBrancherImpl(repository.getProject()).checkout(commitAt.getHash().getString(),
+                                                            Collections.singletonList(repository), myRefresh);
     }
 
     @Override
@@ -2467,7 +2468,8 @@ public class GitLogUI implements Disposable {
       String reference = commitAt.getHash().getString();
       final String name = GitBranchUiUtil.getNewBranchNameFromUser(myProject, Collections.singleton(repository), "Checkout New Branch From " + reference);
       if (name != null) {
-        new GitBrancherImpl(repository).checkoutNewBranchStartingFrom(name, reference, myRefresh);
+        new GitBrancherImpl(repository.getProject()).checkoutNewBranchStartingFrom(name, reference,
+                                                                                   Collections.singletonList(repository), myRefresh);
       }
     }
 
