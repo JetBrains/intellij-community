@@ -134,7 +134,7 @@ class GitBranchPopupActions {
       String reference = Messages
         .showInputDialog(myProject, "Enter reference (branch, tag) name or commit hash", "Checkout", Messages.getQuestionIcon());
       if (reference != null) {
-        new GitBrancherImpl(myRepository).checkout(reference);
+        new GitBrancherImpl(myRepository).checkout(reference, null);
       }
     }
 
@@ -214,7 +214,7 @@ class GitBranchPopupActions {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        new GitBrancherImpl(myProject, myRepositories).checkout(myBranchName);
+        new GitBrancherImpl(myProject, myRepositories).checkout(myBranchName, null);
       }
 
     }
@@ -237,7 +237,7 @@ class GitBranchPopupActions {
           .showInputDialog(myProject, "Enter name of new branch", "Checkout New Branch From " + myBranchName,
                            Messages.getQuestionIcon(), "", GitNewBranchNameValidator.newInstance(myRepositories));
         if (name != null) {
-          new GitBrancherImpl(myProject, myRepositories).checkoutNewBranchStartingFrom(name, myBranchName);
+          new GitBrancherImpl(myProject, myRepositories).checkoutNewBranchStartingFrom(name, myBranchName, null);
         }
       }
 
@@ -311,7 +311,7 @@ class GitBranchPopupActions {
         final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout Remote Branch", Messages.getQuestionIcon(),
                                                guessBranchName(), GitNewBranchNameValidator.newInstance(myRepositories));
         if (name != null) {
-          new GitBrancherImpl(myProject, myRepositories).checkoutNewBranchStartingFrom(name, myRemoteBranchName);
+          new GitBrancherImpl(myProject, myRepositories).checkoutNewBranchStartingFrom(name, myRemoteBranchName, null);
         }
       }
 

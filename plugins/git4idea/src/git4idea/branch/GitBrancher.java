@@ -17,11 +17,13 @@ package git4idea.branch;
 
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Executes various operations on Git branches: checkout, create new branch, merge, delete, compare.
- * All operations can be called from the EDT: the GitBrancher will take care of starting a background task.
- * It also takes care of analyzing results and notifying the user.
+ * <p>Executes various operations on Git branches: checkout, create new branch, merge, delete, compare.</p>
+ * <p>All operations can be called from the EDT: the GitBrancher will take care of starting a background task.</p>
+ * <p>It also takes care of analyzing results and notifying the user.</p>
+ * <p>All operations can be called for multiple repositories at once.</p>
  *
  * @author Kirill Likhodedov
  */
@@ -39,11 +41,14 @@ public interface GitBrancher {
   void checkoutNewBranch(@NotNull String name);
 
   /**
+   * <p>Creates new tag on the selected reference.</p>
    *
-   * @param name
-   * @param reference
+   * @param name           the name of new tag.
+   * @param reference      the reference which tag will point to.
+   * @param callInAwtLater the Runnable that should be called after execution of the method (both successful and unsuccessful).
+   *                       If given, it will be called in the EDT {@link javax.swing.SwingUtilities#invokeLater(Runnable) later}.
    */
-  void createNewTag(@NotNull String name, @NotNull String reference);
+  void createNewTag(@NotNull String name, @NotNull String reference, @Nullable Runnable callInAwtLater);
 
   /**
    * <p>Checks out the given reference (a branch, or a reference name, or a commit hash).
@@ -52,18 +57,22 @@ public interface GitBrancher {
    * <p>Doesn't check the reference for validity.</p>
    *
    * @param reference reference to be checked out.
+   * @param callInAwtLater the Runnable that should be called after execution of the method (both successful and unsuccessful).
+   *                       If given, it will be called in the EDT {@link javax.swing.SwingUtilities#invokeLater(Runnable) later}.
    */
-  void checkout(@NotNull String reference);
+  void checkout(@NotNull String reference, @Nullable Runnable callInAwtLater);
 
   /**
    * Creates and checks out a new local branch starting from the given reference:
    * {@code git checkout -b <branchname> <start-point>}. <br/>
-   * Provides the "smart checkout" procedure the same as in {@link #checkout(String)}.
+   * Provides the "smart checkout" procedure the same as in {@link #checkout(String, Runnable)}.
    *
    * @param newBranchName     the name of the new local branch.
    * @param startPoint        the reference to checkout.
+   * @param callInAwtLater the Runnable that should be called after execution of the method (both successful and unsuccessful).
+   *                       If given, it will be called in the EDT {@link javax.swing.SwingUtilities#invokeLater(Runnable) later}.
    */
-  void checkoutNewBranchStartingFrom(@NotNull String newBranchName, @NotNull String startPoint);
+  void checkoutNewBranchStartingFrom(@NotNull String newBranchName, @NotNull String startPoint, @Nullable Runnable callInAwtLater);
 
   /**
    * <p>Deletes the branch with the specified name.</p>

@@ -61,25 +61,15 @@ public final class GitBrancherImpl implements GitBrancher {
 
   private final Project myProject;
   private final List<GitRepository> myRepositories;
-  private final @Nullable Runnable myCallInAwtAfterExecution;
   private final Git myGit;
 
   public GitBrancherImpl(@NotNull GitRepository repository) {
-    this(repository, null);
-  }
-  
-  public GitBrancherImpl(@NotNull GitRepository repository, @Nullable Runnable callInAwtAfterExecution) {
-    this(repository.getProject(), Collections.singletonList(repository), callInAwtAfterExecution);
+    this(repository.getProject(), Collections.singletonList(repository));
   }
 
   public GitBrancherImpl(@NotNull Project project, @NotNull List<GitRepository> repositories) {
-    this(project, repositories, null);
-  }
-
-  public GitBrancherImpl(@NotNull Project project, @NotNull List<GitRepository> repositories, @Nullable Runnable callInAwtAfterExecution) {
     myProject = project;
     myRepositories = repositories;
-    myCallInAwtAfterExecution = callInAwtAfterExecution;
     myGit = ServiceManager.getService(Git.class);
   }
   
@@ -100,7 +90,7 @@ public final class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void checkoutNewBranch(@NotNull final String name) {
-    new CommonBackgroundTask(myProject, "Checking out new branch " + name, myCallInAwtAfterExecution) {
+    new CommonBackgroundTask(myProject, "Checking out new branch " + name, null) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
         doCheckoutNewBranch(name, indicator);
       }
@@ -108,8 +98,8 @@ public final class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void createNewTag(@NotNull final String name, @NotNull final String reference) {
-    new CommonBackgroundTask(myProject, "Checking out new branch " + name, myCallInAwtAfterExecution) {
+  public void createNewTag(@NotNull final String name, @NotNull final String reference, @Nullable Runnable callInAwtLater) {
+    new CommonBackgroundTask(myProject, "Checking out new branch " + name, callInAwtLater) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
         for (GitRepository repository : myRepositories) {
           myGit.createNewTag(repository, name, null, reference);
@@ -123,17 +113,17 @@ public final class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void checkoutNewBranchStartingFrom(@NotNull String newBranchName, @NotNull String startPoint) {
-    commonCheckout(startPoint, newBranchName);
+  public void checkoutNewBranchStartingFrom(@NotNull String newBranchName, @NotNull String startPoint, @Nullable Runnable callInAwtLater) {
+    commonCheckout(startPoint, newBranchName, callInAwtLater);
   }
 
   @Override
-  public void checkout(@NotNull final String reference) {
-    commonCheckout(reference, null);
+  public void checkout(@NotNull final String reference, @Nullable Runnable callInAwtLater) {
+    commonCheckout(reference, null, callInAwtLater);
   }
 
-  private void commonCheckout(@NotNull final String reference, @Nullable final String newBranch) {
-    new CommonBackgroundTask(myProject, "Checking out " + reference, myCallInAwtAfterExecution) {
+  private void commonCheckout(@NotNull final String reference, @Nullable final String newBranch, @Nullable Runnable callInAwtLater) {
+    new CommonBackgroundTask(myProject, "Checking out " + reference, callInAwtLater) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
         doCheckout(indicator, reference, newBranch);
       }
@@ -146,7 +136,7 @@ public final class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void deleteBranch(final String branchName) {
-    new CommonBackgroundTask(myProject, "Deleting " + branchName, myCallInAwtAfterExecution) {
+    new CommonBackgroundTask(myProject, "Deleting " + branchName, null) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
         doDelete(branchName, indicator);
       }
@@ -170,7 +160,7 @@ public final class GitBrancherImpl implements GitBrancher {
     final DeleteRemoteBranchDecision decision = confirmBranchDeletion(branchName, trackingBranches, currentBranchTracksBranchToDelete);
 
     if (decision.delete()) {
-      new CommonBackgroundTask(myProject, "Deleting " + branchName, myCallInAwtAfterExecution) {
+      new CommonBackgroundTask(myProject, "Deleting " + branchName, null) {
         @Override public void execute(@NotNull ProgressIndicator indicator) {
           boolean deletedSuccessfully = doDeleteRemote(branchName);
           if (deletedSuccessfully) {
@@ -340,7 +330,7 @@ public final class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void compare(@NotNull final String branchName, @NotNull final GitRepository selectedRepository) {
-    new CommonBackgroundTask(myProject, "Comparing with " + branchName, myCallInAwtAfterExecution) {
+    new CommonBackgroundTask(myProject, "Comparing with " + branchName, null) {
   
       private GitCommitCompareInfo myCompareInfo;
   
@@ -408,7 +398,7 @@ public final class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void merge(@NotNull final String branchName, final boolean localBranch) {
-    new CommonBackgroundTask(myProject, "Merging " + branchName, myCallInAwtAfterExecution) {
+    new CommonBackgroundTask(myProject, "Merging " + branchName, null) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
         doMerge(branchName, localBranch, indicator);
       }

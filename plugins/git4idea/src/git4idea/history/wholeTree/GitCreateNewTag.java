@@ -55,7 +55,7 @@ public class GitCreateNewTag {
       }
     });
     if (name != null) {
-      new GitBrancherImpl(myRepository, myCallInAwtAfterExecution).createNewTag(name, myReference);
+      new GitBrancherImpl(myRepository).createNewTag(name, myReference, myCallInAwtAfterExecution);
     }
   }
 }
