@@ -96,7 +96,7 @@ public class ModuleBuildTarget extends BuildTarget<RootDescriptor> {
   @NotNull
   @Override
   public String getPresentableName() {
-    return "Module '" + myModuleName + "' " + (myTargetType.isTests() ? "production" : "tests");
+    return "Module '" + myModuleName + "' " + (myTargetType.isTests() ? "tests" : "production");
   }
 
   @Override
