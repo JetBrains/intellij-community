@@ -4,7 +4,6 @@ import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -707,6 +706,14 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     String path = getVirtualFile().getPath();
     super.delete();
     PyUtil.deletePycFiles(path);
+  }
+
+  @Override
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+    String path = getVirtualFile().getPath();
+    final PsiElement newElement = super.setName(name);
+    PyUtil.deletePycFiles(path);
+    return newElement;
   }
 
   private static class ArrayListThreadLocal extends ThreadLocal<List<String>> {
