@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.util.Consumer;
 import git4idea.*;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
@@ -81,10 +82,11 @@ final class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void checkoutNewBranch(@NotNull final String name, @NotNull final List<GitRepository> repositories) {
+  public void checkoutNewBranch(@NotNull final String name, @NotNull final List<GitRepository> repositories,
+                                @Nullable final Consumer<Boolean> resultHandler) {
     new CommonBackgroundTask(myProject, "Checking out new branch " + name, null) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
-        doCheckoutNewBranch(name, repositories, indicator);
+        doCheckoutNewBranch(name, repositories, resultHandler, indicator);
       }
     }.runInBackground();
   }
@@ -102,8 +104,9 @@ final class GitBrancherImpl implements GitBrancher {
   }
 
   private void doCheckoutNewBranch(@NotNull final String name, @NotNull List<GitRepository> repositories,
-                                   @NotNull ProgressIndicator indicator) {
-    new GitCheckoutNewBranchOperation(myProject, myGit, repositories, name, getCurrentBranchOrRev(repositories), indicator).execute();
+                                   @Nullable Consumer<Boolean> resultHandler, @NotNull ProgressIndicator indicator) {
+    new GitCheckoutNewBranchOperation(myProject, myGit, repositories, name, getCurrentBranchOrRev(repositories), resultHandler, indicator)
+      .execute();
   }
 
   @Override
@@ -399,22 +402,23 @@ final class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void merge(@NotNull final String branchName, final boolean localBranch, @NotNull final List<GitRepository> repositories) {
+  public void merge(@NotNull final String branchName, @NotNull final DeleteOnMergeOption deleteOnMerge,
+                    @NotNull final List<GitRepository> repositories, @Nullable final Consumer<Boolean> resultHandler) {
     new CommonBackgroundTask(myProject, "Merging " + branchName, null) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
-        doMerge(branchName, localBranch, repositories, indicator);
+        doMerge(branchName, deleteOnMerge, repositories, resultHandler, indicator);
       }
     }.runInBackground();
   }
 
-  private void doMerge(@NotNull String branchName, boolean localBranch, @NotNull List<GitRepository> repositories,
-                       @NotNull ProgressIndicator indicator) {
+  private void doMerge(@NotNull String branchName, DeleteOnMergeOption deleteOnMerge, @NotNull List<GitRepository> repositories,
+                       @Nullable Consumer<Boolean> resultHandler, @NotNull ProgressIndicator indicator) {
     Map<GitRepository, String> revisions = new HashMap<GitRepository, String>();
     for (GitRepository repository : repositories) {
       revisions.put(repository, repository.getCurrentRevision());
     }
-    new GitMergeOperation(myProject, myGit, repositories, branchName, localBranch, getCurrentBranchOrRev(repositories),
-                          revisions, indicator).execute();
+    new GitMergeOperation(myProject, myGit, repositories, branchName, deleteOnMerge, getCurrentBranchOrRev(repositories),
+                          revisions, resultHandler, indicator).execute();
   }
 
   /**

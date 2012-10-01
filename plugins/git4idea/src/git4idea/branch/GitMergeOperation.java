@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.Notificator;
@@ -37,6 +38,7 @@ import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.*;
@@ -55,22 +57,25 @@ class GitMergeOperation extends GitBranchOperation {
 
   @NotNull private final ChangeListManager myChangeListManager;
   @NotNull private final String myBranchToMerge;
-  private final boolean myLocalBranch;
+  private final GitBrancher.DeleteOnMergeOption myDeleteOnMerge;
   @NotNull private final String myCurrentBranch;
   @NotNull private final Map<GitRepository, String> myCurrentRevisionsBeforeMerge;
+  @Nullable private final Consumer<Boolean> myResultHandler;
 
   // true in value, if we've stashed local changes before merge and will need to unstash after resolving conflicts.
   @NotNull private final Map<GitRepository, Boolean> myConflictedRepositories = new HashMap<GitRepository, Boolean>();
   private GitPreservingProcess myPreservingProcess;
 
   GitMergeOperation(@NotNull Project project, @NotNull Git git, @NotNull Collection<GitRepository> repositories,
-                    @NotNull String branchToMerge, boolean localBranch, @NotNull String currentBranch,
-                    @NotNull Map<GitRepository, String> currentRevisionsBeforeMerge, @NotNull ProgressIndicator indicator) {
+                    @NotNull String branchToMerge, GitBrancher.DeleteOnMergeOption deleteOnMerge, @NotNull String currentBranch,
+                    @NotNull Map<GitRepository, String> currentRevisionsBeforeMerge,
+                    @Nullable Consumer<Boolean> resultHandler, @NotNull ProgressIndicator indicator) {
     super(project, git, repositories, currentBranch, indicator);
     myBranchToMerge = branchToMerge;
-    myLocalBranch = localBranch;
+    myDeleteOnMerge = deleteOnMerge;
     myCurrentBranch = currentBranch;
     myCurrentRevisionsBeforeMerge = currentRevisionsBeforeMerge;
+    myResultHandler = resultHandler;
     myChangeListManager = ChangeListManager.getInstance(myProject);
   }
 
@@ -134,6 +139,7 @@ class GitMergeOperation extends GitBranchOperation {
 
     if (fatalErrorHappened) {
       notifyAboutRemainingConflicts();
+      handleResult(false);
     }
     else {
       boolean allConflictsResolved = resolveConflicts();
@@ -144,10 +150,20 @@ class GitMergeOperation extends GitBranchOperation {
         else {
           notifySuccess("Already up-to-date");
         }
+        handleResult(true);
+      }
+      else {
+        handleResult(false);
       }
     }
 
     restoreLocalChanges();
+  }
+
+  private void handleResult(boolean success) {
+    if (myResultHandler != null) {
+      myResultHandler.consume(success);
+    }
   }
 
   private void notifyAboutRemainingConflicts() {
@@ -158,22 +174,25 @@ class GitMergeOperation extends GitBranchOperation {
 
   @Override
   protected void notifySuccess(@NotNull String message) {
-    if (isRemoteBranch() || isMasterBranch()) {
-      super.notifySuccess(message);
-    }
-    else {
-      String description = message + "<br/><a href='delete'>Delete " + myBranchToMerge + "</a>";
-      Notificator.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "", description, NotificationType.INFORMATION,
-                                                        new DeleteMergedLocalBranchNotificationListener());
+    switch (myDeleteOnMerge) {
+      case DELETE:
+        super.notifySuccess(message);
+        GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+        brancher.deleteBranch(myBranchToMerge, new ArrayList<GitRepository>(getRepositories()));
+        break;
+      case PROPOSE:
+        String description = message + "<br/><a href='delete'>Delete " + myBranchToMerge + "</a>";
+        Notificator.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "", description, NotificationType.INFORMATION,
+                                                  new DeleteMergedLocalBranchNotificationListener());
+        break;
+      case NOTHING:
+        super.notifySuccess(message);
+        break;
     }
   }
 
   private boolean isMasterBranch() {
     return myBranchToMerge.equals("master");
-  }
-
-  private boolean isRemoteBranch() {
-    return !myLocalBranch;
   }
 
   private boolean resolveConflicts() {

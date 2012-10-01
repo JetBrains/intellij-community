@@ -15,6 +15,7 @@
  */
 package git4idea.branch;
 
+import com.intellij.util.Consumer;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,10 +39,13 @@ public interface GitBrancher {
    *    do this before calling this method, otherwise a standard error dialog will be shown.</p>
    * <p>Equivalent to {@code git checkout <name>}</p>
    *
-   * @param name         name of the new branch to check out.
-   * @param repositories repositories to operate on.
+   * @param name          name of the new branch to check out.
+   * @param repositories  repositories to operate on.
+   * @param resultHandler This is called after the operation is executed.
+   *                      The boolean parameter passed to the consumer indicates whether checkout was successful
+   *                      or failed with an error (or user cancelled it). The consumer is called from the background thread.
    */
-  void checkoutNewBranch(@NotNull String name, @NotNull List<GitRepository> repositories);
+  void checkoutNewBranch(@NotNull String name, @NotNull List<GitRepository> repositories, @Nullable Consumer<Boolean> resultHandler);
 
   /**
    * <p>Creates new tag on the selected reference.</p>
@@ -120,12 +124,32 @@ public interface GitBrancher {
    * <p>If local changes prevent merging, proposes the "Smart merge" procedure (stash-merge-unstash).</p>
    * <p>If untracked files prevent merging, shows them in an error dialog.</p>
    *
-   * @param branchName   the branch to be merged into HEAD.
-   * @param localBranch  true indicates that the merged branch is a local branch, false - that it is a remote branch.
-   *                     After a local branch is merged, the IDE proposes to delete it at once (common feature branches workflow),
-   *                     but it is not done for remote branches and for master.
-   * @param repositories repositories to operate on.
+   * @param branchName    the branch to be merged into HEAD.
+   * @param deleteOnMerge specify whether the branch should be automatically deleted or proposed to be deleted after merge.
+   * @param repositories  repositories to operate on.
+   * @param resultHandler This is called after the operation is executed.
+   *                      The boolean parameter passed to the consumer indicates whether checkout was successful
+   *                      or failed with an error (or user cancelled it). The consumer is called from the background thread.
    */
-  void merge(@NotNull String branchName, boolean localBranch, @NotNull List<GitRepository> repositories);
+  void merge(@NotNull String branchName, @NotNull DeleteOnMergeOption deleteOnMerge, @NotNull List<GitRepository> repositories,
+             @Nullable Consumer<Boolean> resultHandler);
+
+  /**
+   * What should be done after successful merging a branch: delete the merged branch, propose to delete or do nothing.
+   */
+  enum DeleteOnMergeOption {
+    /**
+     * Delete the merged branch automatically.
+     */
+    DELETE,
+    /**
+     * Propose to delete the merged branch.
+     */
+    PROPOSE,
+    /**
+     * Do nothing, for example, when a remote branch has been merged, or when the {@code master} has been merged.
+     */
+    NOTHING
+  }
 
 }

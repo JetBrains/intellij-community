@@ -19,6 +19,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Consumer;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -27,6 +28,7 @@ import git4idea.commands.GitSimpleEventDetector;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -42,13 +44,16 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
   @NotNull private final Project myProject;
   @NotNull private final String myNewBranchName;
   @NotNull private final String myPreviousBranch;
+  @Nullable private final Consumer<Boolean> myResultHandler;
 
   GitCheckoutNewBranchOperation(@NotNull Project project, @NotNull Git git, @NotNull Collection<GitRepository> repositories,
-                                @NotNull String newBranchName, @NotNull String previousBranch, @NotNull ProgressIndicator indicator) {
+                                @NotNull String newBranchName, @NotNull String previousBranch,
+                                @Nullable Consumer<Boolean> resultHandler, @NotNull ProgressIndicator indicator) {
     super(project, git, repositories, previousBranch, indicator);
     myNewBranchName = newBranchName;
     myProject = project;
     myPreviousBranch = previousBranch;
+    myResultHandler = resultHandler;
   }
 
   @Override
@@ -77,6 +82,16 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
     if (!fatalErrorHappened) {
       notifySuccess();
       updateRecentBranch();
+      handleResult(true);
+    }
+    else {
+      handleResult(false);
+    }
+  }
+
+  private void handleResult(boolean success) {
+    if (myResultHandler != null) {
+      myResultHandler.consume(success);
     }
   }
 
