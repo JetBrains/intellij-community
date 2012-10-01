@@ -367,6 +367,16 @@ final public class Emitter {
     return "zzBufferL[" + idx + "]";
   }
 
+  private String zzBufferLLength() {
+    if (Options.sliceAndCharAt) {
+      return "zzBufferArrayL != null ? zzBufferArrayL.length:zzBufferL.length()";
+    }
+    if (Options.char_at) {
+      return "zzBufferL.length()";
+    }
+    return "zzBufferL.length";
+  }
+
   private void emitNoMatch() {
     println("            zzScanError(ZZ_NO_MATCH);");
   }
@@ -1206,11 +1216,11 @@ final public class Emitter {
         println("          // general lookahead, find correct zzMarkedPos");
         println("          { int zzFState = "+dfa.entryState[action.getEntryState()]+";");
         println("            int zzFPos = zzStartRead;");
-        println("            if (zzFin.length <= zzBufferL.length) { zzFin = new boolean[zzBufferL.length+1]; }");
+        println("            if (zzFin.length <= " + zzBufferLLength() + ") { zzFin = new boolean[" + zzBufferLLength() + "+1]; }");
         println("            boolean zzFinL[] = zzFin;");
         println("            while (zzFState != -1 && zzFPos < zzMarkedPos) {");
         println("              if ((zzAttrL[zzFState] & 1) == 1) { zzFinL[zzFPos] = true; } ");
-        println("              zzInput = zzBufferL[zzFPos++];");
+        println("              zzInput = " + zzBufferLAccess("zzFPos++") + ";");
         println("              zzFState = zzTransL[ zzRowMapL[zzFState] + zzCMapL[zzInput] ];");
         println("            }");
         println("            if (zzFState != -1 && (zzAttrL[zzFState] & 1) == 1) { zzFinL[zzFPos] = true; } ");
@@ -1218,7 +1228,7 @@ final public class Emitter {
         println("            zzFState = "+dfa.entryState[action.getEntryState()+1]+";");
         println("            zzFPos = zzMarkedPos;");
         println("            while (!zzFinL[zzFPos] || (zzAttrL[zzFState] & 1) != 1) {");
-        println("              zzInput = zzBufferL[--zzFPos];");
+        println("              zzInput = " + zzBufferLAccess("--zzFPos") + ";");
         println("              zzFState = zzTransL[ zzRowMapL[zzFState] + zzCMapL[zzInput] ];");
         println("            };");
         println("            zzMarkedPos = zzFPos;");
