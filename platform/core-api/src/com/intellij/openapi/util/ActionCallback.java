@@ -17,6 +17,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
@@ -79,62 +80,48 @@ public class ActionCallback implements Disposable {
     Disposer.dispose(this);
   }
 
+  @NotNull
   public final ActionCallback doWhenDone(@NotNull final Runnable runnable) {
     myDone.doWhenExecuted(runnable);
     return this;
   }
 
+  @NotNull
   public final ActionCallback doWhenRejected(@NotNull final Runnable runnable) {
     myRejected.doWhenExecuted(runnable);
     return this;
   }
 
+  @NotNull
   public final ActionCallback doWhenProcessed(@NotNull final Runnable runnable) {
     doWhenDone(runnable);
     doWhenRejected(runnable);
     return this;
   }
 
-  public final ActionCallback notifyWhenDone(final ActionCallback child) {
-    return doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        child.setDone();
+  @NotNull
+  public final ActionCallback notifyWhenDone(@NotNull final ActionCallback child) {
+    return doWhenDone(child.createSetDoneRunnable());
       }
-    });
-  }
 
-  public final ActionCallback notifyWhenRejected(final ActionCallback child) {
-    return doWhenRejected(new Runnable() {
-      @Override
-      public void run() {
-        child.setRejected();
+  @NotNull
+  public final ActionCallback notifyWhenRejected(@NotNull final ActionCallback child) {
+    return doWhenRejected(child.createSetRejectedRunnable());
       }
-    });
-  }
 
-  public final ActionCallback notify(final ActionCallback child) {
-    return doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        child.setDone();
+  @NotNull
+  public final ActionCallback notify(@NotNull final ActionCallback child) {
+    return doWhenDone(child.createSetDoneRunnable()).doWhenRejected(child.createSetRejectedRunnable());
       }
-    }).doWhenRejected(new Runnable() {
-      @Override
-      public void run() {
-        child.setRejected();
-      }
-    });
-  }
 
-  public final ActionCallback processOnDone(Runnable runnable, boolean requiresDone) {
+  @NotNull
+  public final ActionCallback processOnDone(@NotNull Runnable runnable, boolean requiresDone) {
     if (requiresDone) {
       return doWhenDone(runnable);
-    } else {
+    }
       runnable.run();
       return this;
     }
-  }
 
   public static class Done extends ActionCallback {
     public Done() {
@@ -148,6 +135,7 @@ public class ActionCallback implements Disposable {
     }
   }
 
+  @NonNls
   @Override
   public String toString() {
     final String name = myName != null ? myName : super.toString();
@@ -155,29 +143,41 @@ public class ActionCallback implements Disposable {
   }
 
   public static class Chunk {
+    private final Set<ActionCallback> myCallbacks = new LinkedHashSet<ActionCallback>();
 
-    Set<ActionCallback> myCallbacks = new LinkedHashSet<ActionCallback>();
-
-    public void add(ActionCallback callback) {
+    public void add(@NotNull ActionCallback callback) {
       myCallbacks.add(callback);
     }
 
     public ActionCallback getWhenProcessed() {
       final ActionCallback result = new ActionCallback(myCallbacks.size());
       for (ActionCallback each : myCallbacks) {
-        each.doWhenProcessed(new Runnable() {
-          @Override
-          public void run() {
-            result.setDone();
+        each.doWhenProcessed(result.createSetDoneRunnable());
           }
-        });
-      }
       return result;
     }
   }
 
-
   @Override
   public void dispose() {
+  }
+
+  @NotNull
+  public Runnable createSetDoneRunnable() {
+    return new Runnable() {
+      @Override
+      public void run() {
+        setDone();
+      }
+    };
+  }
+  @NotNull
+  public Runnable createSetRejectedRunnable() {
+    return new Runnable() {
+      @Override
+      public void run() {
+        setRejected();
+      }
+    };
   }
 }
