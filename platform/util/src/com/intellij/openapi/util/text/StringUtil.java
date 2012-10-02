@@ -1331,7 +1331,12 @@ public class StringUtil extends StringUtilRt {
   }
 
   public static boolean containsAnyChar(@NotNull final String value, @NotNull final String chars) {
-    return containsAnyChar(value, chars, 0, value.length());
+    if (chars.length() > value.length()) {
+      return containsAnyChar(value, chars, 0, value.length());
+    }
+    else {
+      return containsAnyChar(chars, value, 0, chars.length());
+    }
   }
 
   public static boolean containsAnyChar(@NotNull final String value,

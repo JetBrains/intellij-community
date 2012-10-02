@@ -16,11 +16,9 @@
 package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.text.UniqueNameGenerator;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -30,9 +28,7 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BuildLoggingManager;
 import org.jetbrains.jps.incremental.CompileScope;
 import org.jetbrains.jps.incremental.CompileScopeImpl;
-import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.java.JavaBuilderLoggerImpl;
-import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.artifact.DirectoryArtifactType;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
@@ -40,8 +36,6 @@ import org.jetbrains.jps.model.artifact.JpsArtifactService;
 import org.jetbrains.jps.model.java.JpsJavaLibraryType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
-import org.jetbrains.jps.model.library.sdk.JpsSdk;
-import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,9 +47,7 @@ import static com.intellij.util.io.TestFileSystemItem.fs;
  * @author nik
  */
 public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
-  private File myProjectDir;
   private TestArtifactBuilderLogger myArtifactBuilderLogger;
-  private JpsSdk<JpsDummyElement> myJdk;
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -64,31 +56,15 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(myJpsProject)) {
+    for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(myProject)) {
       String outputPath = artifact.getOutputPath();
       if (outputPath != null) {
         FileUtil.delete(new File(FileUtil.toSystemDependentName(outputPath)));
       }
     }
-    myProjectDir = null;
     super.tearDown();
   }
 
-  protected String createFile(String relativePath) {
-    return createFile(relativePath, "");
-  }
-
-  protected String createFile(String relativePath, final String text) {
-    try {
-      File file = new File(getOrCreateProjectDir(), relativePath);
-      FileUtil.writeToFile(file, text);
-      return FileUtil.toSystemIndependentName(file.getAbsolutePath());
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-  
   protected JpsArtifact addArtifact(LayoutElementTestUtil.LayoutElementCreator root) {
     Set<String> usedNames = getArtifactNames();
     final String name = UniqueNameGenerator.generateUniqueName("a", usedNames);
@@ -97,51 +73,28 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
 
   private Set<String> getArtifactNames() {
     Set<String> usedNames = new HashSet<String>();
-    for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(myJpsProject)) {
+    for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(myProject)) {
       usedNames.add(artifact.getName());
     }
     return usedNames;
   }
 
-  private File getOrCreateProjectDir() {
-    if (myProjectDir == null) {
-      try {
-        myProjectDir = FileUtil.createTempDirectory("prj", null);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    return myProjectDir;
-  }
-  
   protected JpsArtifact addArtifact(String name, LayoutElementTestUtil.LayoutElementCreator root) {
     assertFalse("JpsArtifact " + name + " already exists", getArtifactNames().contains(name));
-    JpsArtifact artifact = JpsArtifactService.getInstance().addArtifact(myJpsProject, name, root.buildElement(), DirectoryArtifactType.INSTANCE,
+    JpsArtifact artifact = JpsArtifactService.getInstance().addArtifact(myProject, name, root.buildElement(), DirectoryArtifactType.INSTANCE,
                                                                         JpsElementFactory.getInstance().createDummyElement());
     artifact.setOutputPath(getAbsolutePath("out/artifacts/" + name));
     return artifact;
   }
 
-  private String getAbsolutePath(final String pathRelativeToProjectRoot) {
-    return FileUtil.toSystemIndependentName(new File(getOrCreateProjectDir(), pathRelativeToProjectRoot).getAbsolutePath());
-  }
-
-  protected JpsModule addModule(String moduleName, String... srcPaths) {
-    if (myJdk == null) {
-      myJdk = addJdk("1.6");
-    }
-    return addModule(moduleName, srcPaths, getAbsolutePath("out/production/" + moduleName), myJdk);
-  }
-
   protected JpsLibrary addProjectLibrary(String name, String jarPath) {
-    final JpsLibrary library = myJpsProject.getLibraryCollection().addLibrary(name, JpsJavaLibraryType.INSTANCE);
+    final JpsLibrary library = myProject.getLibraryCollection().addLibrary(name, JpsJavaLibraryType.INSTANCE);
     library.addRoot(JpsPathUtil.pathToUrl(jarPath), JpsOrderRootType.COMPILED);
     return library;
   }
 
   protected void buildAll() {
-    Collection<JpsArtifact> artifacts = JpsArtifactService.getInstance().getArtifacts(myJpsProject);
+    Collection<JpsArtifact> artifacts = JpsArtifactService.getInstance().getArtifacts(myProject);
     buildArtifacts(artifacts.toArray(new JpsArtifact[artifacts.size()]));
   }
 
@@ -182,32 +135,6 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
     doBuild(false, a).assertFailed();
   }
 
-  protected static void change(String filePath) {
-    change(filePath, null);
-  }
-
-  protected static void change(String filePath, final @Nullable String newContent) {
-    try {
-      File file = new File(FileUtil.toSystemDependentName(filePath));
-      assertTrue("File " + file.getAbsolutePath() + " doesn't exist", file.exists());
-      if (newContent != null) {
-        FileUtil.writeToFile(file, newContent);
-      }
-      boolean updated = file.setLastModified(FileSystemUtil.lastModified(file) + Utils.TIMESTAMP_ACCURACY);
-      assertTrue("Cannot modify timestamp for " + file.getAbsolutePath(), updated);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  protected static void delete(String filePath) {
-    File file = new File(FileUtil.toSystemDependentName(filePath));
-    assertTrue("File " + file.getAbsolutePath() + " doesn't exist", file.exists());
-    final boolean deleted = FileUtil.delete(file);
-    assertTrue("Cannot delete file " + file.getAbsolutePath(), deleted);
-  }
-
   protected void assertCopied(String... filePaths) {
     assertSameElements(myArtifactBuilderLogger.myCopiedFilePaths, filePaths);
     assertEmpty(myArtifactBuilderLogger.myDeletedFilePaths);
@@ -226,10 +153,6 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
     assertOutput(a.getOutputPath(), expected);
   }
 
-  protected static void assertOutput(final String outputPath, TestFileSystemBuilder expected) {
-    expected.build().assertDirectoryEqual(new File(FileUtil.toSystemDependentName(outputPath)));
-  }
-
   protected void assertDeleted(String... filePaths) {
     assertSameElements(myArtifactBuilderLogger.myDeletedFilePaths, filePaths);
     assertEmpty(myArtifactBuilderLogger.myCopiedFilePaths);
@@ -243,12 +166,6 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   protected void assertUpToDate() {
     assertEmpty(myArtifactBuilderLogger.myDeletedFilePaths);
     assertEmpty(myArtifactBuilderLogger.myCopiedFilePaths);
-  }
-
-  private String getProjectRelativePath(String path) {
-    assertNotNull(myProjectDir);
-    final String projectDir = FileUtil.toSystemIndependentName(myProjectDir.getAbsolutePath());
-    return FileUtil.getRelativePath(projectDir, path, '/');
   }
 
   protected static void rename(String path, String newName) {

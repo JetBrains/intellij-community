@@ -35,11 +35,11 @@ import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
+import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -124,7 +124,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         if (srcFile != null && content != null) {
           final String outputPath = FileUtil.toSystemIndependentName(out.getFile().getPath());
           final String sourcePath = FileUtil.toSystemIndependentName(srcFile.getPath());
-          final RootDescriptor rootDescriptor = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, srcFile);
+          final JavaSourceRootDescriptor rootDescriptor = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, srcFile);
           final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
           boolean isTemp = false;
           if (rootDescriptor != null) {
@@ -172,13 +172,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   public ExitCode build(final CompileContext context,
                         final ModuleChunk chunk,
-                        DirtyFilesHolder<RootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
+                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
     try {
       final Set<File> filesToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       final Set<File> formsToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
-      dirtyFilesHolder.processDirtyFiles(new FileProcessor<RootDescriptor, ModuleBuildTarget>() {
-        public boolean apply(ModuleBuildTarget target, File file, RootDescriptor sourceRoot) throws IOException {
+      dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
+        public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor sourceRoot) throws IOException {
           if (JAVA_SOURCES_FILTER.accept(file)) {
             filesToCompile.add(file);
           }
@@ -190,15 +190,16 @@ public class JavaBuilder extends ModuleLevelBuilder {
       });
 
       // force compilation of bound source file if the form is dirty
-      final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(context.getProjectDescriptor().jpsProject).getCompilerExcludes();
+      final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
+        context.getProjectDescriptor().getProject()).getCompilerExcludes();
       if (!context.isProjectRebuild()) {
         for (Iterator<File> formsIterator = formsToCompile.iterator(); formsIterator.hasNext(); ) {
           final File form = formsIterator.next();
-          final RootDescriptor descriptor = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, form);
+          final JavaSourceRootDescriptor descriptor = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, form);
           if (descriptor == null) {
             continue;
           }
-          for (RootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(descriptor.target, context)) {
+          for (JavaSourceRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(descriptor.target, context)) {
             final File boundSource = getBoundSource(rd.root, form);
             if (boundSource == null) {
               continue;
@@ -311,7 +312,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final ProjectPaths paths = context.getProjectPaths();
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final boolean addNotNullAssertions = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
-      pd.jpsProject).isAddNotNullAssertions();
+      pd.getProject()).isAddNotNullAssertions();
 
     final Collection<File> classpath =
       paths.getCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
@@ -329,7 +330,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final Set<File> tempRootsSourcePath = new HashSet<File>();
         final BuildRootIndex index = pd.getBuildRootIndex();
         for (ModuleBuildTarget target : chunk.getTargets()) {
-          for (RootDescriptor rd : index.getTempTargetRoots(target, context)) {
+          for (JavaSourceRootDescriptor rd : index.getTempTargetRoots(target, context)) {
             tempRootsSourcePath.add(rd.root);
           }
         }
@@ -365,7 +366,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
               try {
                 context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
                 instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputSink);
-                JpsUiDesignerConfiguration configuration = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(pd.jpsProject);
+                JpsUiDesignerConfiguration configuration = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(
+                  pd.getProject());
                 if (configuration != null && configuration.isCopyFormsRuntimeToOutput() && !chunk.containsTests()) {
                   for (JpsModule module : chunk.getModules()) {
                     final File outputDir = paths.getModuleOutputDir(module, false);
@@ -505,7 +507,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static boolean useEclipseCompiler(CompileContext context) {
-    JpsProject project = context.getProjectDescriptor().jpsProject;
+    JpsProject project = context.getProjectDescriptor().getProject();
     return USE_EMBEDDED_JAVAC && "Eclipse".equalsIgnoreCase(JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getJavaCompilerId());
   }
 
@@ -625,7 +627,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static int getJavacServerHeapSize(CompileContext context) {
-    final JpsProject project = context.getProjectDescriptor().jpsProject;
+    final JpsProject project = context.getProjectDescriptor().getProject();
     final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
     final JpsJavaCompilerOptions options = config.getCurrentCompilerOptions();
     return options.MAXIMUM_HEAP_SIZE;
@@ -705,7 +707,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     JpsJavaCompilerConfiguration compilerConfiguration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
-      context.getProjectDescriptor().jpsProject);
+      context.getProjectDescriptor().getProject());
     String bytecodeTarget = null;
     int chunkSdkVersion = -1;
     for (JpsModule module : chunk.getModules()) {
@@ -823,7 +825,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final List<String> options = new ArrayList<String>();
     final List<String> vmOptions = new ArrayList<String>();
 
-    final JpsProject project = context.getProjectDescriptor().jpsProject;
+    final JpsProject project = context.getProjectDescriptor().getProject();
     final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
     final boolean useEclipseCompiler = useEclipseCompiler(context);
     final JpsJavaCompilerOptions compilerOptions = compilerConfig.getCurrentCompilerOptions();
@@ -891,7 +893,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         continue;
       }
       final Set<File> roots = new LinkedHashSet<File>();
-      for (RootDescriptor descriptor : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
+      for (JavaSourceRootDescriptor descriptor : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
         roots.add(descriptor.root);
       }
       map.put(outputDir, roots);

@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.vcs.ui;
 
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -23,11 +26,14 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.util.concurrent.TimeUnit;
 
@@ -43,32 +49,37 @@ public class VcsBalloonProblemNotifier implements Runnable {
   private final String myMessage;
   private final MessageType myMessageType;
   private final boolean myShowOverChangesView;
+  @Nullable private final NamedRunnable[] myNotificationListener;
 
   public VcsBalloonProblemNotifier(@NotNull final Project project, @NotNull final String message, final MessageType messageType) {
-    this(project, message, messageType, true);
+    this(project, message, messageType, true, null);
   }
 
-  public VcsBalloonProblemNotifier(@NotNull final Project project, @NotNull final String message, final MessageType messageType, boolean showOverChangesView) {
+  public VcsBalloonProblemNotifier(@NotNull final Project project, @NotNull final String message, final MessageType messageType, boolean showOverChangesView,
+                                   @Nullable final NamedRunnable[] notificationListener) {
     myProject = project;
     myMessage = message;
     myMessageType = messageType;
     myShowOverChangesView = showOverChangesView;
+    myNotificationListener = notificationListener;
   }
 
-  public static void showOverChangesView(@NotNull final Project project, @NotNull final String message, final MessageType type) {
-    show(project, message, type, true);
+  public static void showOverChangesView(@NotNull final Project project, @NotNull final String message, final MessageType type,
+                                         final NamedRunnable... notificationListener) {
+    show(project, message, type, true, notificationListener);
   }
 
   public static void showOverVersionControlView(@NotNull final Project project, @NotNull final String message, final MessageType type) {
-    show(project, message, type, false);
+    show(project, message, type, false, null);
   }
 
-  private static void show(final Project project, final String message, final MessageType type, final boolean showOverChangesView) {
+  private static void show(final Project project, final String message, final MessageType type, final boolean showOverChangesView,
+                           @Nullable final NamedRunnable[] notificationListener) {
     final Application application = ApplicationManager.getApplication();
     if (application.isHeadlessEnvironment()) return;
     final Runnable showErrorAction = new Runnable() {
       public void run() {
-        new VcsBalloonProblemNotifier(project, message, type, showOverChangesView).run();
+        new VcsBalloonProblemNotifier(project, message, type, showOverChangesView, notificationListener).run();
       }
     };
     if (application.isDispatchThread()) {
@@ -80,7 +91,40 @@ public class VcsBalloonProblemNotifier implements Runnable {
   }
 
   public void run() {
-    NOTIFICATION_GROUP.createNotification(myMessage, myMessageType).notify(myProject.isDefault() ? null : myProject);
+    final Notification notification;
+    if (myNotificationListener != null && myNotificationListener.length > 0) {
+      final NotificationType type = myMessageType.toNotificationType();
+      final StringBuilder sb = new StringBuilder(myMessage);
+      for (NamedRunnable runnable : myNotificationListener) {
+        final String name = runnable.toString();
+        sb.append("<br/><a href=\"").append(name).append("\">").append(name).append("</a>");
+      }
+      notification = NOTIFICATION_GROUP.createNotification(type.name(), sb.toString(), myMessageType.toNotificationType(),
+        new NotificationListener() {
+        @Override
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          if (HyperlinkEvent.EventType.ACTIVATED.equals(event.getEventType())) {
+            if (myNotificationListener.length == 1) {
+              myNotificationListener[0].run();
+            } else {
+              final String description = event.getDescription();
+              if (description != null) {
+                for (NamedRunnable runnable : myNotificationListener) {
+                  if (description.equals(runnable.toString())) {
+                    runnable.run();
+                    break;
+                  }
+                }
+              }
+            }
+            notification.expire();
+          }
+        }
+      });
+    } else {
+      notification = NOTIFICATION_GROUP.createNotification(myMessage, myMessageType);
+    }
+    notification.notify(myProject.isDefault() ? null : myProject);
   }
 
   public static void showBalloonForComponent(@NotNull JComponent component, @NotNull final String message, final MessageType type,

@@ -2,8 +2,8 @@ package org.jetbrains.jps.builders;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.fs.RootDescriptor;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -43,7 +43,7 @@ public interface BuildRootIndex {
   <R extends BuildRootDescriptor> Collection<R> findAllParentDescriptors(@NotNull File file, @Nullable CompileContext context);
 
   @Nullable
-  RootDescriptor getModuleAndRoot(@Nullable CompileContext context, File file);
+  JavaSourceRootDescriptor getModuleAndRoot(@Nullable CompileContext context, File file);
 
   @NotNull
   FileFilter getRootFilter(@NotNull BuildRootDescriptor descriptor);

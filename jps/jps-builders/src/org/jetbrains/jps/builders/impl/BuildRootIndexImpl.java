@@ -9,11 +9,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
-import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.service.JpsServiceManager;
 
@@ -213,7 +213,7 @@ public class BuildRootIndexImpl implements BuildRootIndex {
   public Collection<? extends BuildRootDescriptor> clearTempRoots(@NotNull CompileContext context) {
     try {
       final Map<File, BuildRootDescriptor> map = ROOT_DESCRIPTOR_MAP.get(context);
-      return map != null? map.values() : Collections.<RootDescriptor>emptyList();
+      return map != null? map.values() : Collections.<BuildRootDescriptor>emptyList();
     }
     finally {
       TEMP_TARGET_ROOTS_MAP.set(context, null);
@@ -223,7 +223,7 @@ public class BuildRootIndexImpl implements BuildRootIndex {
 
   @Override
   @Nullable
-  public RootDescriptor getModuleAndRoot(@Nullable CompileContext context, File file) {
+  public JavaSourceRootDescriptor getModuleAndRoot(@Nullable CompileContext context, File file) {
     return findParentDescriptor(file, JavaModuleBuildTargetType.ALL_TYPES, context);
   }
 

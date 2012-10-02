@@ -123,7 +123,7 @@ HEX_CHAR=[0-9a-fA-F]
 
 /* octal escapes */
 {ESCAPE} "0" [0-7]{1,3}      { return RegExpTT.OCT_CHAR; }
-{ESCAPE} "0"                 { return RegExpTT.BAD_OCT_VALUE; }
+{ESCAPE} "0"                 { return (allowOctalNoLeadingZero ? RegExpTT.OCT_CHAR : RegExpTT.BAD_OCT_VALUE); }
 
 /* single character after "\c" */
 {ESCAPE} "c" {ANY}           { if (xmlSchemaMode) { yypushback(1); return RegExpTT.CHAR_CLASS; } else return RegExpTT.CTRL; }

@@ -24,12 +24,12 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
-import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.java.ExternalJavacDescriptor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
@@ -262,7 +262,7 @@ public class IncProjectBuilder {
   private void cleanOutputRoots(CompileContext context) throws ProjectBuildException {
     // whole project is affected
     final boolean shouldClear = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
-      context.getProjectDescriptor().jpsProject).isClearOutputDirectoryOnRebuild();
+      context.getProjectDescriptor().getProject()).isClearOutputDirectoryOnRebuild();
     try {
       if (shouldClear) {
         clearOutputs(context);
@@ -598,9 +598,7 @@ public class IncProjectBuilder {
               rootFiles.add(rd.getRootFile());
               context.getProjectDescriptor().fsState.clearRecompile(rd);
             }
-            myAsyncTasks.add(
-              FileUtil.asyncDelete(rootFiles)
-            );
+            myAsyncTasks.add(FileUtil.asyncDelete(rootFiles));
           }
 
           try {
@@ -760,9 +758,9 @@ public class IncProjectBuilder {
       nextPassRequired = false;
       myProjectDescriptor.fsState.beforeNextRoundStart(context, chunk);
 
-      DirtyFilesHolder<RootDescriptor, ModuleBuildTarget> dirtyFilesHolder = new DirtyFilesHolder<RootDescriptor, ModuleBuildTarget>() {
+      DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder = new DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget>() {
         @Override
-        public void processDirtyFiles(@NotNull FileProcessor<RootDescriptor, ModuleBuildTarget> processor) throws IOException {
+        public void processDirtyFiles(@NotNull FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget> processor) throws IOException {
           FSOperations.processFilesToRecompile(context, chunk, processor);
         }
       };
@@ -834,16 +832,16 @@ public class IncProjectBuilder {
   }
 
   private static void syncOutputFiles(final CompileContext context,
-                                      DirtyFilesHolder<RootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
+                                      DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
     final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     try {
       final Collection<String> allOutputs = new LinkedList<String>();
 
-      dirtyFilesHolder.processDirtyFiles(new FileProcessor<RootDescriptor, ModuleBuildTarget>() {
+      dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
         private final Map<ModuleBuildTarget, SourceToOutputMapping> storageMap = new HashMap<ModuleBuildTarget, SourceToOutputMapping>();
 
         @Override
-        public boolean apply(ModuleBuildTarget target, File file, RootDescriptor sourceRoot) throws IOException {
+        public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor sourceRoot) throws IOException {
           SourceToOutputMapping srcToOut = storageMap.get(target);
           if (srcToOut == null) {
             srcToOut = dataManager.getSourceToOutputMap(target);
@@ -943,7 +941,7 @@ public class IncProjectBuilder {
           fsState.markInitialScanPerformed(target);
         }
         final Timestamps timestamps = pd.timestamps.getStorage();
-        for (RootDescriptor rd : pd.getBuildRootIndex().getTargetRoots(target, context)) {
+        for (JavaSourceRootDescriptor rd : pd.getBuildRootIndex().getTargetRoots(target, context)) {
           marked |= fsState.markAllUpToDate(context, rd, timestamps);
         }
       }

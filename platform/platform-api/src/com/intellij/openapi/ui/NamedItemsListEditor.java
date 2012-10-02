@@ -49,6 +49,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     private final Equality<T> myComparer;
     private List<T> myResultItems;
     private final List<T> myOriginalItems;
+    private boolean myShowIcons;
 
     protected NamedItemsListEditor(Namer<T> namer,
                                    Factory<T> factory,
@@ -160,6 +161,10 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
       myNamer.setName(item, name);
     }
 
+    public void setShowIcons(boolean showIcons) {
+      myShowIcons = showIcons;
+    }
+
     @Nullable
     protected UnnamedConfigurable getItemConfigurable(final T item) {
       final Ref<UnnamedConfigurable> result = new Ref<UnnamedConfigurable>();
@@ -211,6 +216,14 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
         public String getDisplayName() {
             return myNamer.getName(myItem);
+        }
+
+        @Override
+        public Icon getIcon(boolean expanded) {
+            if (myShowIcons && myConfigurable instanceof Iconable) {
+              return ((Iconable)myConfigurable).getIcon(0);
+            }
+            return null;
         }
 
     public String getHelpTopic() {

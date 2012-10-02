@@ -76,7 +76,12 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     });
 
     String outputPath = getAbsolutePath("out");
-    JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myJpsProject).setOutputUrl(JpsPathUtil.pathToUrl(outputPath));
+    JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myProject).setOutputUrl(JpsPathUtil.pathToUrl(outputPath));
+  }
+
+  @Override
+  protected File doGetProjectDir() throws IOException {
+    return workDir;
   }
 
   protected String getUrl(String pathRelativeToProjectRoot) {
@@ -244,7 +249,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   }
 
   protected JpsLibrary addLibrary(final String jarPath) {
-    JpsLibrary library = myJpsProject.addLibrary("l", JpsJavaLibraryType.INSTANCE);
+    JpsLibrary library = myProject.addLibrary("l", JpsJavaLibraryType.INSTANCE);
     library.addRoot(new File(getAbsolutePath(jarPath)), JpsOrderRootType.COMPILED);
     return library;
   }

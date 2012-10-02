@@ -24,13 +24,13 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Avdeev
  *         Date: 10/1/12
  */
-public class GithubBasedTemplatesFactory implements ProjectTemplatesFactory {
+public class ArchivedTemplatesFactory implements ProjectTemplatesFactory {
 
   @NotNull
   @Override
   public ProjectTemplate[] createTemplates(WizardContext context) {
     return new ProjectTemplate[]{
-      new GithubBasedProjectTemplate("Web Application", "JetBrains/idea-templates/web/empty-java", null, null, context)
+      new ArchivedProjectTemplate("Web Application", null, "foo", ClassLoader.getSystemClassLoader(), context)
     };
   }
 }

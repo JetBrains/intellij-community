@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
@@ -35,6 +36,7 @@ import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
@@ -124,10 +126,14 @@ public class SvnFormatWorker extends Task.Backgroundable {
     wcClient.setEventHandler(new ISVNEventHandler() {
       @Override
       public void handleEvent(SVNEvent event, double progress) throws SVNException {
+        if (SVNEventAction.UPGRADED_PATH.equals(event.getAction()) && event.getFile() != null) {
+          indicator.setText2("Upgraded path " + VcsUtil.getPathForProgressPresentation(event.getFile()));
+        }
       }
+
       @Override
       public void checkCancelled() throws SVNCancelException {
-        if (indicator.isCanceled()) throw new SVNCancelException();
+        indicator.checkCanceled();
       }
     });
     try {

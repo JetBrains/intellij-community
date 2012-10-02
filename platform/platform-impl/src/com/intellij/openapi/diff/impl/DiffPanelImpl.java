@@ -100,6 +100,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     public void customize(DiffToolbar toolbar) {
       ActionManager actionManager = ActionManager.getInstance();
       toolbar.addAction(actionManager.getAction("DiffPanel.Toolbar"));
+      toolbar.addAction(actionManager.getAction("ContextHelp"));
     }
   };
   private boolean myDisposed = false;
@@ -829,6 +830,9 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
         if (currentSide != null) {
           return new DiffNavigatable(currentSide);
         }
+      }
+      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+        return "reference.dialogs.diff.file";
       }
 
       return super.getData(dataId);

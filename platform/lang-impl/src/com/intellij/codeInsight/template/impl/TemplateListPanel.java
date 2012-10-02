@@ -892,6 +892,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
         }
         createTemplateEditor(newTemplate, (String)myExpandByCombo.getSelectedItem(), getTemplateOptions(newTemplate),
                              getTemplateContext(newTemplate));
+        myCurrentTemplateEditor.resetUi();
         if (focusKey) {
           myCurrentTemplateEditor.focusKey();
         }

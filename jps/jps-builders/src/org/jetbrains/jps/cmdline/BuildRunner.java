@@ -153,7 +153,7 @@ public class BuildRunner {
         targetTypes.add(targetType);
       }
       else {
-        BuildTargetLoader<?> loader = targetType.createLoader(pd.jpsModel);
+        BuildTargetLoader<?> loader = targetType.createLoader(pd.getModel());
         for (String targetId : scope.getTargetIdList()) {
           BuildTarget<?> target = loader.createTarget(targetId);
           if (target != null) {

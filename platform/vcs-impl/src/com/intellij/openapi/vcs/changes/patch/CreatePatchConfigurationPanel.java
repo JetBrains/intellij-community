@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,16 +150,16 @@ public class CreatePatchConfigurationPanel {
 
   private void initMainPanel() {
     myFileNameField = new TextFieldWithBrowseButton();
-    myReversePatchCheckbox = new JCheckBox(VcsBundle.message("create.patch.reverse.patch.checkbox"));
+    myReversePatchCheckbox = new JCheckBox(VcsBundle.message("create.patch.reverse.checkbox"));
     myEncoding = new JComboBox();
-    myIncludeBaseRevisionTextCheckBox = new JCheckBox("Include base revision text(s) into patch file");
+    myIncludeBaseRevisionTextCheckBox = new JCheckBox(VcsBundle.message("create.patch.base.revision"));
     myErrorLabel = new JLabel();
 
     myMainPanel = FormBuilder.createFormBuilder()
       .addLabeledComponent(VcsBundle.message("create.patch.file.path"), myFileNameField)
       .addComponent(myReversePatchCheckbox)
-      .addLabeledComponent("Encoding:", myEncoding)
       .addComponent(myIncludeBaseRevisionTextCheckBox)
+      .addLabeledComponent(VcsBundle.message("create.patch.encoding"), myEncoding)
       .addComponent(myErrorLabel)
       .getPanel();
   }

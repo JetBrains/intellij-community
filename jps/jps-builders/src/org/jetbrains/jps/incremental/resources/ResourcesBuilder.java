@@ -8,9 +8,9 @@ import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
+import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -43,13 +43,13 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
     // init patterns
     ResourcePatterns patterns = ResourcePatterns.KEY.get(context);
     if (patterns == null) {
-      ResourcePatterns.KEY.set(context, new ResourcePatterns(context.getProjectDescriptor().jpsProject));
+      ResourcePatterns.KEY.set(context, new ResourcePatterns(context.getProjectDescriptor().getProject()));
     }
   }
 
   public ExitCode build(final CompileContext context,
                         final ModuleChunk chunk,
-                        DirtyFilesHolder<RootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
+                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
     final ResourcePatterns patterns = ResourcePatterns.KEY.get(context);
     assert patterns != null;
     try {
@@ -66,8 +66,8 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
         }
       };
 
-      FSOperations.processFilesToRecompile(context, chunk, moduleFilter, new FileProcessor<RootDescriptor, ModuleBuildTarget>() {
-        public boolean apply(final ModuleBuildTarget target, final File file, final RootDescriptor sourceRoot) throws IOException {
+      FSOperations.processFilesToRecompile(context, chunk, moduleFilter, new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
+        public boolean apply(final ModuleBuildTarget target, final File file, final JavaSourceRootDescriptor sourceRoot) throws IOException {
           if (patterns.isResourceFile(file, sourceRoot.root)) {
             try {
               context.processMessage(new ProgressMessage("Copying " + file.getPath()));
@@ -99,7 +99,7 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
   private static void copyResource(CompileContext context,
                                    JpsModule module,
                                    File file,
-                                   RootDescriptor sourceRoot,
+                                   JavaSourceRootDescriptor sourceRoot,
                                    final SourceToOutputMapping outputToSourceMapping, final boolean tests) throws IOException {
     final String outputRootUrl = JpsJavaExtensionService.getInstance().getOutputUrl(module, tests);
     if (outputRootUrl == null) {
@@ -107,11 +107,11 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
     }
     String rootPath = FileUtil.toSystemIndependentName(sourceRoot.root.getAbsolutePath());
     final String relativePath = FileUtil.getRelativePath(rootPath, FileUtil.toSystemIndependentName(file.getPath()), '/');
-    final String prefix = JpsJavaExtensionService.getInstance().getSourcePrefix(module, JpsPathUtil.pathToUrl(rootPath));
+    final String prefix = sourceRoot.getPackagePrefix();
 
     final StringBuilder targetPath = new StringBuilder();
     targetPath.append(JpsPathUtil.urlToPath(outputRootUrl));
-    if (prefix != null && prefix.length() > 0) {
+    if (prefix.length() > 0) {
       targetPath.append('/').append(prefix.replace('.', '/'));
     }
     targetPath.append('/').append(relativePath);

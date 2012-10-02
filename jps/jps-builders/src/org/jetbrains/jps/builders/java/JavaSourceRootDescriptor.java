@@ -1,4 +1,4 @@
-package org.jetbrains.jps.incremental.fs;
+package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
@@ -15,19 +15,21 @@ import java.io.FileFilter;
 * @author Eugene Zhuravlev
 *         Date: 1/3/12
 */
-public final class RootDescriptor extends BuildRootDescriptor {
+public final class JavaSourceRootDescriptor extends BuildRootDescriptor {
   @NotNull
   public final File root;
   @NotNull
   public final ModuleBuildTarget target;
   public final boolean isGeneratedSources;
   public final boolean isTemp;
+  private final String myPackagePrefix;
 
-  public RootDescriptor(@NotNull File root, @NotNull ModuleBuildTarget target, boolean isGenerated, boolean isTemp) {
+  public JavaSourceRootDescriptor(@NotNull File root, @NotNull ModuleBuildTarget target, boolean isGenerated, boolean isTemp, @NotNull String packagePrefix) {
     this.root = root;
     this.target = target;
     this.isGeneratedSources = isGenerated;
     this.isTemp = isTemp;
+    myPackagePrefix = packagePrefix;
   }
 
   @Override
@@ -37,6 +39,11 @@ public final class RootDescriptor extends BuildRootDescriptor {
            ", root=" + root +
            ", generated=" + isGeneratedSources +
            '}';
+  }
+
+  @NotNull
+  public String getPackagePrefix() {
+    return myPackagePrefix;
   }
 
   @Override

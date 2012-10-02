@@ -49,8 +49,8 @@ public class BufferedListConsumer<T> implements Consumer<List<T>> {
     if ((mySize <= myBuffer.size()) || (myInterval > 0) && ((ts - myInterval) > myTs)) {
       myConsumer.consume(new ArrayList<T>(myBuffer));
       myBuffer.clear();
+      myTs = ts;
     }
-    myTs = ts;
   }
 
   public void flushPart() {

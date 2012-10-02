@@ -10,9 +10,9 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
+import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
-import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
@@ -30,7 +30,7 @@ import java.util.Set;
  */
 public class FSOperations {
   public static void markDirty(CompileContext context, final File file) throws IOException {
-    final RootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, file);
+    final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
       pd.fsState.markDirty(context, file, rd, pd.timestamps.getStorage());
@@ -38,7 +38,7 @@ public class FSOperations {
   }
 
   public static void markDirtyIfNotDeleted(CompileContext context, final File file) throws IOException {
-    final RootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, file);
+    final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
       pd.fsState.markDirtyIfNotDeleted(context, file, rd, pd.timestamps.getStorage());
@@ -46,7 +46,7 @@ public class FSOperations {
   }
 
   public static void markDeleted(CompileContext context, File file) throws IOException {
-    final RootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, file);
+    final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
       pd.fsState.registerDeleted(rd.target, file, pd.timestamps.getStorage());
@@ -130,9 +130,9 @@ public class FSOperations {
                              ModuleBuildTarget target,
                              Timestamps timestamps, boolean forceMarkDirty,
                              @Nullable THashSet<File> currentFiles) throws IOException {
-    final ModuleExcludeIndex rootsIndex = context.getProjectDescriptor().moduleExcludeIndex;
+    final ModuleExcludeIndex rootsIndex = context.getProjectDescriptor().getModuleExcludeIndex();
     final Set<File> excludes = new HashSet<File>(rootsIndex.getModuleExcludes(target.getModule()));
-    for (RootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
+    for (JavaSourceRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
       if (!rd.root.exists()) {
         continue;
       }
@@ -141,7 +141,7 @@ public class FSOperations {
     }
   }
 
-  private static void traverseRecursively(CompileContext context, final RootDescriptor rd, final File file, Set<File> excludes, @NotNull final Timestamps tsStorage, final boolean forceDirty, @Nullable Set<File> currentFiles) throws IOException {
+  private static void traverseRecursively(CompileContext context, final JavaSourceRootDescriptor rd, final File file, Set<File> excludes, @NotNull final Timestamps tsStorage, final boolean forceDirty, @Nullable Set<File> currentFiles) throws IOException {
     final File[] children = file.listFiles();
     if (children != null) { // is directory
       if (children.length > 0 && !JpsPathUtil.isUnder(excludes, file)) {

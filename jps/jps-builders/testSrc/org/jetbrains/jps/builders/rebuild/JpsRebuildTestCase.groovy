@@ -38,7 +38,7 @@ abstract class JpsRebuildTestCase extends JpsBuildTestCase {
   }
 
   protected void rebuild() {
-    JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myJpsProject).outputUrl = JpsPathUtil.pathToUrl(FileUtil.toSystemIndependentName(getOrCreateOutputDirectory().getAbsolutePath()))
+    JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myProject).outputUrl = JpsPathUtil.pathToUrl(FileUtil.toSystemIndependentName(getOrCreateOutputDirectory().getAbsolutePath()))
     doRebuild()
   }
 

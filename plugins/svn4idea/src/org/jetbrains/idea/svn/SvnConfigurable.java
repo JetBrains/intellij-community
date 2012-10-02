@@ -32,8 +32,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.MultiLineTooltipUI;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.config.ConfigureProxiesListener;
 
 import javax.swing.*;
@@ -93,37 +96,21 @@ public class SvnConfigurable implements Configurable {
 
     myClearAuthButton.addActionListener(new ActionListener(){
       public void actionPerformed(final ActionEvent e) {
-        String path = myConfigurationDirectoryText.getText();
-        if (path != null) {
-          int result = Messages.showYesNoDialog(myComponent, SvnBundle.message("confirmation.text.delete.stored.authentication.information"),
-                                                SvnBundle.message("confirmation.title.clear.authentication.cache"),
-                                                             Messages.getWarningIcon());
-          if (result == 0) {
-            SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
-            SvnConfiguration.getInstance(myProject).clearAuthenticationDirectory(myProject);
-          }
-        }
-
+        clearAuthenticationCache(myProject, myComponent, myConfigurationDirectoryText.getText());
       }
     });
 
 
-    final FileChooserDescriptor descriptor = createFileDescriptor();
 
     myConfigurationDirectoryText.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         @NonNls String path = myConfigurationDirectoryText.getText().trim();
-        path = "file://" + path.replace(File.separatorChar, '/');
-        VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(path);
-
-        String oldValue = PropertiesComponent.getInstance().getValue("FileChooser.showHiddens");
-        PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", Boolean.TRUE.toString());
-        VirtualFile file = FileChooser.chooseFile(descriptor, myComponent, myProject, root);
-        PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", oldValue);
-        if (file == null) {
-          return;
-        }
-        myConfigurationDirectoryText.setText(file.getPath().replace('/', File.separatorChar));
+        selectConfigirationDirectory(path, new Consumer<String>() {
+          @Override
+          public void consume(String s) {
+            myConfigurationDirectoryText.setText(s);
+          }
+        }, myProject, myComponent);
       }
     });
     myConfigurationDirectoryText.setEditable(false);
@@ -148,6 +135,42 @@ public class SvnConfigurable implements Configurable {
     myJavaHLAcceleration.setEnabled(internal);
     myJavaHLAcceleration.setVisible(internal);
     myJavaHLInfo.setVisible(internal);
+  }
+
+  public static void selectConfigirationDirectory(@NotNull String path, @NotNull final Consumer<String> dirConsumer,
+                                                   final Project project, @Nullable final Component component) {
+    final FileChooserDescriptor descriptor = createFileDescriptor();
+    path = "file://" + path.replace(File.separatorChar, '/');
+    VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(path);
+
+    String oldValue = PropertiesComponent.getInstance().getValue("FileChooser.showHiddens");
+    PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", Boolean.TRUE.toString());
+    VirtualFile file = FileChooser.chooseFile(descriptor, component, project, root);
+    PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", oldValue);
+    if (file == null) {
+      return;
+    }
+    final String resultPath = file.getPath().replace('/', File.separatorChar);
+    dirConsumer.consume(resultPath);
+  }
+
+  public static void clearAuthenticationCache(@NotNull final Project project, final Component component, final String configDirPath) {
+    if (configDirPath != null) {
+      int result;
+      if (component == null) {
+        result = Messages.showYesNoDialog(project, SvnBundle.message("confirmation.text.delete.stored.authentication.information"),
+                                          SvnBundle.message("confirmation.title.clear.authentication.cache"),
+                                          Messages.getWarningIcon());
+      } else {
+        result = Messages.showYesNoDialog(component, SvnBundle.message("confirmation.text.delete.stored.authentication.information"),
+                                          SvnBundle.message("confirmation.title.clear.authentication.cache"),
+                                          Messages.getWarningIcon());
+      }
+      if (result == 0) {
+        SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
+        SvnConfiguration.getInstance(project).clearAuthenticationDirectory(project);
+      }
+    }
   }
 
   private static FileChooserDescriptor createFileDescriptor() {

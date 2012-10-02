@@ -16,65 +16,51 @@
 package com.intellij.platform.templates;
 
 import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
-import com.intellij.ide.util.projectWizard.ExistingModuleLoader;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.templates.github.AbstractGithubTagDownloadedProjectGenerator;
+import com.intellij.platform.ProjectTemplate;
+import com.intellij.platform.templates.github.ZipUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.zip.ZipInputStream;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 10/1/12
  */
-public class GithubBasedProjectTemplate extends AbstractGithubTagDownloadedProjectGenerator {
-  private String myDisplayName;
-  private String myGithubUserName;
-  private String myGithubRepositoryName;
-  private String myHomepageUrl;
-  private String myDescription;
+public class ArchivedProjectTemplate implements ProjectTemplate {
+  private final String myDisplayName;
+  private final String myDescription;
+  private final String myArchivePath;
+  private final ClassLoader myResourceLoader;
   private final WizardContext myContext;
 
-  public GithubBasedProjectTemplate(String displayName,
-                                    String githubRepositoryName,
-                                    String homepageUrl,
-                                    String description,
-                                    WizardContext context) {
+  public ArchivedProjectTemplate(String displayName,
+                                 String description,
+                                 String archivePath,
+                                 ClassLoader resourceLoader,
+                                 WizardContext context) {
+
     myDisplayName = displayName;
-    myGithubRepositoryName = githubRepositoryName;
-    myHomepageUrl = homepageUrl;
     myDescription = description;
+    myArchivePath = archivePath;
+    myResourceLoader = resourceLoader;
     myContext = context;
   }
 
-  @NotNull
   @Override
-  protected String getDisplayName() {
+  public String getName() {
     return myDisplayName;
-  }
-
-  @Override
-  protected String getGithubUserName() {
-    return myGithubUserName;
-  }
-
-  @NotNull
-  @Override
-  protected String getGithubRepositoryName() {
-    return myGithubRepositoryName;
-  }
-
-  @Override
-  public String getHomepageUrl() {
-    return myHomepageUrl;
   }
 
   @Override
@@ -82,18 +68,31 @@ public class GithubBasedProjectTemplate extends AbstractGithubTagDownloadedProje
     return myDescription;
   }
 
+  @NotNull
   @Override
   public ProjectBuilder createModuleBuilder() {
-    final String path = myContext.getProjectFileDirectory() + "/empty-java.iml";
-    final ExistingModuleLoader loader = ImportImlMode.setUpLoader(path);
     return new ProjectBuilder() {
       @Nullable
       @Override
       public List<Module> commit(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
-        VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(myContext.getProjectFileDirectory());
-        doGenerate(project, file, myPeer.getValue().getSettings());
-        return loader.commit(project, model, modulesProvider);
+        InputStream stream = myResourceLoader.getResourceAsStream(myArchivePath);
+        if (stream == null) {
+          throw new RuntimeException("Can't open " + myArchivePath);
+        }
+        final String path = myContext.getProjectFileDirectory();
+        try {
+          ZipUtil.unzip(null, new File(path), new ZipInputStream(stream));
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        return ImportImlMode.setUpLoader(path).commit(project, model, modulesProvider);
       }
     };
+  }
+
+  @Override
+  public JComponent getSettingsPanel() {
+    return null;
   }
 }

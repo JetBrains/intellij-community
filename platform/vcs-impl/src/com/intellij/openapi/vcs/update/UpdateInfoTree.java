@@ -43,6 +43,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -92,7 +93,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
                         UpdatedFiles updatedFiles,
                         String rootName,
                         ActionInfo actionInfo) {
-    super(contentManager, "reference.toolWindows.versionControl");
+    super(contentManager, "reference.versionControl.toolwindow.update");
     myActionInfo = actionInfo;
 
     myFileStatusListener = new FileStatusListener() {
@@ -334,8 +335,9 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
         myCommittedChangeLists = receivedChanges;
         myTreeBrowser.setItems(myCommittedChangeLists, CommittedChangesBrowserUseCase.UPDATE);
         if (hasEmptyCaches) {
-          myTreeBrowser.getEmptyText()
-            .appendText("Click ")
+          final StatusText statusText = myTreeBrowser.getEmptyText();
+          statusText.clear();
+          statusText.appendText("Click ")
             .appendText("Refresh", SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
               public void actionPerformed(final ActionEvent e) {
                 RefreshIncomingChangesAction.doRefresh(myProject);

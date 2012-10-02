@@ -2,7 +2,7 @@ package org.jetbrains.jps.incremental;
 
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
-import org.jetbrains.jps.incremental.fs.RootDescriptor;
+import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 
 import java.io.File;
 
@@ -25,7 +25,7 @@ public abstract class ModuleLevelBuilder extends Builder {
 
   public abstract ExitCode build(CompileContext context,
                                  ModuleChunk chunk,
-                                 DirtyFilesHolder<RootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException;
+                                 DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException;
 
   public boolean shouldHonorFileEncodingForCompilation(File file) {
     return false;

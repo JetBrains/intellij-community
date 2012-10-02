@@ -166,7 +166,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       if (fsStateStream != null) {
         try {
           try {
-            fsState.load(fsStateStream, pd.jpsModel, pd.getBuildRootIndex());
+            fsState.load(fsStateStream, pd.getModel(), pd.getBuildRootIndex());
             applyFSEvent(pd, myInitialFSDelta);
           }
           finally {
@@ -330,7 +330,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         out.writeInt(FSState.VERSION);
         out.writeLong(myLastEventOrdinal);
         boolean hasWorkToDoWithModules = false;
-        for (JpsModule module : pd.jpsProject.getModules()) {
+        for (JpsModule module : pd.getProject().getModules()) {
           for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
             if (state.hasWorkToDo(new ModuleBuildTarget(module, type))) {
               hasWorkToDoWithModules = true;

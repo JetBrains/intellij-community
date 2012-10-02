@@ -37,7 +37,10 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
 import org.jetbrains.annotations.NotNull;
@@ -590,5 +593,9 @@ public class VcsUtil {
       return idx2 > 0;
     }
     return idx > 0;
+  }
+
+  public static String getPathForProgressPresentation(@NotNull final File file) {
+    return file.getName() + " (" + file.getParent() + ")";
   }
 }

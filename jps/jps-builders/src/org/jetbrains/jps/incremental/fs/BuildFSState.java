@@ -10,9 +10,9 @@ import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.FileProcessor;
+import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompileScope;
-import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
 import org.jetbrains.jps.incremental.storage.Timestamps;
@@ -30,7 +30,7 @@ import java.util.Set;
  */
 public class BuildFSState extends FSState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.BuildFSState");
-  private static final Key<Set<ModuleBuildTarget>> CONTEXT_TARGETS_KEY = Key.create("_fssfate_context_modules_");
+  private static final Key<Set<? extends BuildTarget<?>>> CONTEXT_TARGETS_KEY = Key.create("_fssfate_context_targets_");
   private static final Key<FilesDelta> CURRENT_ROUND_DELTA_KEY = Key.create("_current_round_delta_");
   private static final Key<FilesDelta> LAST_ROUND_DELTA_KEY = Key.create("_last_round_delta_");
 
@@ -69,12 +69,12 @@ public class BuildFSState extends FSState {
     if (context == null) {
       return false;
     }
-    Set<ModuleBuildTarget> targets = CONTEXT_TARGETS_KEY.get(context, Collections.<ModuleBuildTarget>emptySet());
+    Set<? extends BuildTarget<?>> targets = CONTEXT_TARGETS_KEY.get(context, Collections.<BuildTarget<?>>emptySet());
     return targets.contains(rd.getTarget());
   }
 
   @Override
-  public boolean markDirtyIfNotDeleted(@Nullable CompileContext context, File file, final RootDescriptor rd, @Nullable Timestamps tsStorage) throws IOException {
+  public boolean markDirtyIfNotDeleted(@Nullable CompileContext context, File file, final BuildRootDescriptor rd, @Nullable Timestamps tsStorage) throws IOException {
     final boolean marked = super.markDirtyIfNotDeleted(context, file, rd, tsStorage);
     if (marked) {
       final FilesDelta roundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
@@ -112,7 +112,7 @@ public class BuildFSState extends FSState {
     setRoundDelta(CURRENT_ROUND_DELTA_KEY, context, new FilesDelta());
   }
 
-  public <R extends RootDescriptor, T extends BuildTarget<R>> boolean processFilesToRecompile(CompileContext context, final T target, final FileProcessor<R, T> processor) throws IOException {
+  public <R extends BuildRootDescriptor, T extends BuildTarget<R>> boolean processFilesToRecompile(CompileContext context, final T target, final FileProcessor<R, T> processor) throws IOException {
     final Map<BuildRootDescriptor, Set<File>> data = getSourcesToRecompile(context, target);
     BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
     final CompileScope scope = context.getScope();
@@ -137,7 +137,7 @@ public class BuildFSState extends FSState {
   /**
    * @return true if marked something, false otherwise
    */
-  public boolean markAllUpToDate(CompileContext context, final RootDescriptor rd, final Timestamps stamps) throws IOException {
+  public boolean markAllUpToDate(CompileContext context, final JavaSourceRootDescriptor rd, final Timestamps stamps) throws IOException {
     boolean marked = false;
     final FilesDelta delta = getDelta(rd.target);
     final Set<File> files = delta.clearRecompile(rd);
@@ -192,7 +192,7 @@ public class BuildFSState extends FSState {
     return marked;
   }
 
-  private static void setContextTargets(@Nullable CompileContext context, @Nullable Set<ModuleBuildTarget> targets) {
+  private static void setContextTargets(@Nullable CompileContext context, @Nullable Set<? extends BuildTarget<?>> targets) {
     if (context != null) {
       CONTEXT_TARGETS_KEY.set(context, targets);
     }

@@ -34,6 +34,10 @@ public class LiveTemplateCharFilter extends CharFilter {
       }
       return Result.HIDE_LOOKUP;
     }
+    if (item instanceof TemplateExpressionLookupElement) {
+      if (Character.isJavaIdentifierPart(c)) return Result.ADD_TO_PREFIX;
+      return Result.HIDE_LOOKUP;
+    }
 
     return null;
   }

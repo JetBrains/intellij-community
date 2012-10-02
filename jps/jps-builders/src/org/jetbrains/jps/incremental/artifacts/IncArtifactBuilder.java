@@ -43,7 +43,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactBuildTarget> {
       return;
     }
     final ProjectDescriptor pd = context.getProjectDescriptor();
-    final ArtifactSorter sorter = new ArtifactSorter(pd.jpsModel);
+    final ArtifactSorter sorter = new ArtifactSorter(pd.getModel());
     final Map<JpsArtifact, JpsArtifact> selfIncludingNameMap = sorter.getArtifactToSelfIncludingNameMap();
     final JpsArtifact selfIncluding = selfIncludingNameMap.get(artifact);
     if (selfIncluding != null) {

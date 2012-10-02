@@ -110,7 +110,7 @@ public class AndroidDexBuilder extends TargetBuilder<AndroidProjectBuildTarget> 
                                     @NotNull AndroidFileSetStorage proguardStateStorage) throws IOException {
     boolean success = true;
 
-    for (JpsModule module : context.getProjectDescriptor().jpsProject.getModules()) {
+    for (JpsModule module : context.getProjectDescriptor().getProject().getModules()) {
       final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
       if (extension == null || extension.isLibrary()) {
         continue;
@@ -344,7 +344,7 @@ public class AndroidDexBuilder extends TargetBuilder<AndroidProjectBuildTarget> 
 
     final JpsSdk<JpsSimpleElement<JpsAndroidSdkProperties>> sdk = platform.getSdk();
     final String jdkName = sdk.getSdkProperties().getData().getJdkName();
-    final JpsLibrary javaSdk = context.getProjectDescriptor().jpsModel.getGlobal().getLibraryCollection().findLibrary(jdkName);
+    final JpsLibrary javaSdk = context.getProjectDescriptor().getModel().getGlobal().getLibraryCollection().findLibrary(jdkName);
     if (javaSdk == null || !javaSdk.getType().equals(JpsJavaSdkType.INSTANCE)) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle.message("android.jps.errors.java.sdk.not.specified", jdkName)));
       return false;

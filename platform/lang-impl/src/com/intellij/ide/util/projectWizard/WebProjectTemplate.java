@@ -44,15 +44,11 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
   };
 
   @Override
-  public void generateProject(Module module) {
-    generateProject(module.getProject(), module.getProject().getBaseDir(), myPeer.getValue().getSettings(), module);
-  }
-
-  @Override
   public JComponent getSettingsPanel() {
     return myPeer.getValue().getComponent();
   }
 
+  @NotNull
   @Override
   public ProjectBuilder createModuleBuilder() {
     final ModuleBuilder builder = WebModuleType.getInstance().createModuleBuilder();
@@ -62,7 +58,8 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
       public List<Module> commit(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
         List<Module> modules = builder.commit(project, model, modulesProvider);
         if (modules != null && !modules.isEmpty()) {
-          generateProject(modules.get(0));
+          Module module = modules.get(0);
+          generateProject(module.getProject(), module.getProject().getBaseDir(), myPeer.getValue().getSettings(), module);
         }
         return modules;
       }

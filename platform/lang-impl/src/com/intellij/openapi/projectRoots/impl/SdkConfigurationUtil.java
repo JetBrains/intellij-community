@@ -17,7 +17,6 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
@@ -33,11 +32,6 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.ListPopupStep;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -48,7 +42,6 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
 /**
@@ -166,7 +159,7 @@ public class SdkConfigurationUtil {
                                  e.getMessage() +
                                  ".\nPlease make sure that " +
                                  FileUtil.toSystemDependentName(homeDir.getPath()) +
-                                 " is a valid home path for this SDK type.", "Error configuring SDK");
+                                 " is a valid home path for this SDK type.", "Error Configuring SDK");
       }
       return null;
     }
@@ -296,65 +289,6 @@ public class SdkConfigurationUtil {
     final String homepath = sdkType.suggestHomePath();
     if (homepath == null) return null;
     return LocalFileSystem.getInstance().findFileByPath(homepath);
-  }
-
-  public static void suggestAndAddSdk(@Nullable final Project project,
-                                      final Sdk[] existingSdks,
-                                      JComponent popupOwner,
-                                      final Consumer<Sdk> callback,
-                                      final SdkType... sdkTypes) {
-    assert sdkTypes.length > 0;
-    final Map<String, SdkType> suggestedSdkHomes = new LinkedHashMap<String, SdkType>();
-    for (SdkType sdkType : sdkTypes) {
-      final Collection<String> sdkHomes = sdkType.suggestHomePaths();
-      for (String sdkHome : filterExistingPaths(sdkType, sdkHomes, existingSdks)) {
-        suggestedSdkHomes.put(sdkHome, sdkType);
-      }
-    }
-    if (suggestedSdkHomes.size() > 0) {
-      suggestedSdkHomes.put(null, sdkTypes[0]);
-      showSuggestedHomesPopup(project, existingSdks, suggestedSdkHomes, sdkTypes, popupOwner, callback);
-    }
-    else {
-      createSdk(project, existingSdks, callback, sdkTypes);
-    }
-  }
-
-  private static void showSuggestedHomesPopup(@Nullable final Project project,
-                                              final Sdk[] existingSdks,
-                                              final Map<String, SdkType> suggestedSdkHomes,
-                                              final SdkType[] sdkTypes,
-                                              final JComponent popupOwner,
-                                              final Consumer<Sdk> callback) {
-    final List<String> list = new ArrayList<String>(suggestedSdkHomes.keySet());
-    ListPopupStep sdkHomesStep = new BaseListPopupStep<String>("Select Interpreter Path", list) {
-      @NotNull
-      @Override
-      public String getTextFor(String value) {
-        return value == null ? "Specify Other..." : FileUtil.toSystemDependentName(value);
-      }
-
-      @Override
-      public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
-        final SdkType sdkType = suggestedSdkHomes.get(selectedValue);
-        if (selectedValue == null) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              createSdk(project, existingSdks, callback, sdkTypes);
-            }
-          }, ModalityState.current());
-        }
-        else {
-          Sdk sdk = setupSdk(existingSdks, LocalFileSystem.getInstance().findFileByPath(selectedValue),
-                             sdkType, false, null, null);
-          callback.consume(sdk);
-        }
-        return FINAL_CHOICE;
-      }
-    };
-    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
-    popup.showUnderneathOf(popupOwner);
   }
 
   public static List<String> filterExistingPaths(SdkType sdkType, Collection<String> sdkHomes, final Sdk[] sdks) {

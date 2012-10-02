@@ -11,18 +11,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.concurrent.Callable;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 /**
  * @author Sergey Simonchik
  */
-class ZipUtil {
+public class ZipUtil {
 
   private static final Logger LOG = Logger.getInstance(ZipUtil.class);
 
@@ -38,7 +38,8 @@ class ZipUtil {
         @Override
         public Boolean call() throws IOException {
           ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-          unzip(progress, zipArchive, extractToDir);
+          ZipInputStream stream = new ZipInputStream(new FileInputStream(zipArchive));
+          unzip(progress, extractToDir, stream);
           return true;
         }
       },
@@ -60,21 +61,17 @@ class ZipUtil {
     }
   }
 
-  private static void unzip(@Nullable ProgressIndicator progress,
-                            @NotNull File zipArchiveFile,
-                            @NotNull File extractToDir) throws IOException {
+  public static void unzip(@Nullable ProgressIndicator progress, File extractToDir, ZipInputStream stream) throws IOException {
     if (progress != null) {
       progress.setText("Extracting...");
     }
-    ZipFile zipFile = new ZipFile(zipArchiveFile);
     try {
-      boolean singleTopLevelDir = isSingleTopLevelDir(zipFile.entries());
-      for (Enumeration<? extends ZipEntry> e = zipFile.entries(); e.hasMoreElements();) {
-        ZipEntry zipEntry = e.nextElement();
-        unzipEntryToDir(progress, zipFile, zipEntry, extractToDir, singleTopLevelDir);
+      ZipEntry entry;
+      while ((entry = stream.getNextEntry()) != null) {
+        unzipEntryToDir(progress, entry, extractToDir, stream);
       }
     } finally {
-      zipFile.close();
+      stream.close();
     }
   }
 
@@ -99,12 +96,11 @@ class ZipUtil {
   }
 
   private static void unzipEntryToDir(@Nullable ProgressIndicator progress,
-                                      @NotNull final ZipFile zipFile,
                                       @NotNull final ZipEntry zipEntry,
                                       @NotNull final File extractToDir,
-                                      boolean singleTopLevelDir) throws IOException {
+                                      ZipInputStream stream) throws IOException {
     final char pathDelimiterChar = '/';
-    String relativeExtractPath = createRelativeExtractPath(zipEntry, pathDelimiterChar, singleTopLevelDir);
+    String relativeExtractPath = createRelativeExtractPath(zipEntry, pathDelimiterChar, true);
     int ind = relativeExtractPath.lastIndexOf(pathDelimiterChar);
     final String relativeParentDir;
     final String name;
@@ -129,13 +125,11 @@ class ZipUtil {
       }
     }
     File child = new File(parentDir, name);
-    InputStream stream = zipFile.getInputStream(zipEntry);
     FileOutputStream fileOutputStream = new FileOutputStream(child);
     try {
       FileUtil.copy(stream, fileOutputStream);
     } finally {
       fileOutputStream.close();
-      stream.close();
     }
     LOG.info("Extract: " + relativeExtractPath);
   }
