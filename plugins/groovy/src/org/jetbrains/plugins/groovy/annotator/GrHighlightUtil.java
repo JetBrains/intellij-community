@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -145,10 +146,7 @@ public class GrHighlightUtil {
   }
 
   public static boolean isDeclarationAssignment(GrReferenceExpression refExpr) {
-    if (isAssignmentLhs(refExpr)) {
-      return isExpandoQualified(refExpr);
-    }
-    return false;
+      return isAssignmentLhs(refExpr) && isExpandoQualified(refExpr);
   }
 
   private static boolean isAssignmentLhs(GrReferenceExpression refExpr) {
@@ -184,10 +182,20 @@ public class GrHighlightUtil {
       if (TokenSets.STRING_LITERAL_SET.contains(type)) return false;
     }
 
+    if (isDeclarationAssignment(referenceExpression)) return false;
+
+    GrExpression qualifier = referenceExpression.getQualifier();
+    if (qualifier != null && qualifier.getType() == null) return false;
+
+    if (qualifier != null &&
+        referenceExpression.getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER &&
+        referenceExpression.multiResolve(false).length > 0) {
+      return false;
+    }
+
     if (!GroovyUnresolvedHighlightFilter.shouldHighlight(referenceExpression)) return false;
 
     CollectConsumer<PomTarget> consumer = new CollectConsumer<PomTarget>();
-
     for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
       searcher.findDeclarationsAt(referenceExpression, 0, consumer);
       if (consumer.getResult().size() > 0) return false;

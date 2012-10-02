@@ -70,6 +70,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil.isCall;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getContextClass;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType;
 
@@ -567,6 +568,7 @@ public class ResolveUtil {
   }
 
   public static boolean isKeyOfMap(GrReferenceExpression ref) {
+    if (isCall(ref)) return false;
     if (ref.multiResolve(false).length > 0) return false;
     return mayBeKeyOfMap(ref);
   }
@@ -698,7 +700,7 @@ public class ResolveUtil {
     return GroovyResolveResult.EMPTY_ARRAY;
   }
 
-  private static boolean isApplicableClosureType(PsiType type, PsiType[] argTypes, GroovyPsiElement place) {
+  private static boolean isApplicableClosureType(@Nullable PsiType type, @NotNull PsiType[] argTypes, @NotNull GroovyPsiElement place) {
     if (!(type instanceof GrClosureType)) return false;
 
     final GrSignature signature = ((GrClosureType)type).getSignature();

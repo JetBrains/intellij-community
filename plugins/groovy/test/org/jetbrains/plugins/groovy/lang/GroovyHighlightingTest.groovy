@@ -1486,4 +1486,34 @@ private int getObjects() {
 ''', GroovyAssignabilityCheckInspection)
   }
 
+  void testPackageDefinition() {
+    myFixture.addFileToProject('abc/foo.groovy', '''\
+<warning descr="Package name 'cde' does not corresponding to the file path 'abc'">package cde</warning>
+
+print 2
+''')
+    myFixture.addFileToProject('cde/bar.groovy', '//empty file')
+
+    myFixture.testHighlighting(true, false, false, 'abc/foo.groovy')
+  }
+
+  void testPackageDefinition2() {
+    myFixture.addFileToProject('abc/foo.groovy', '''\
+<warning descr="Package name 'cde' does not corresponding to the file path 'abc'">package cde</warning>
+
+print 2
+''')
+
+    myFixture.testHighlighting(true, false, false, 'abc/foo.groovy')
+  }
+
+  void testStaticOk() {
+    testHighlighting('''\
+class A {
+  class B {}
+}
+
+A.B foo = new <error descr="Cannot reference nonstatic symbol 'A.B' from static context">A.B</error>()
+''')
+  }
 }

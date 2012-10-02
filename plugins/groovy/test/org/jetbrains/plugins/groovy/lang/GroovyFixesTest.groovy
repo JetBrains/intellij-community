@@ -46,7 +46,7 @@ if (true) {
     myFixture.enableInspections new GroovyUnresolvedAccessInspection()
     myFixture.configureByText "a.groovy", """class FooBarGoo {
   @SuppressWarnings(["GroovyParameterNamingConvention"])
-  def test(def abc) {
+  def test(Object abc) {
     abc.d<caret>ef()
   }
 }
@@ -54,7 +54,7 @@ if (true) {
     myFixture.launchAction(myFixture.findSingleIntention("Suppress for method"))
     myFixture.checkResult """class FooBarGoo {
   @SuppressWarnings(["GroovyParameterNamingConvention", "GroovyUnresolvedAccess"])
-  def test(def abc) {
+  def test(Object abc) {
     abc.def()
   }
 }
@@ -65,7 +65,7 @@ if (true) {
     myFixture.enableInspections new GroovyUnresolvedAccessInspection()
     myFixture.configureByText "a.groovy", """class FooBarGoo {
   @SuppressWarnings("GroovyParameterNamingConvention")
-  def test(def abc) {
+  def test(Object abc) {
     abc.d<caret>ef()
   }
 }
@@ -73,7 +73,7 @@ if (true) {
     myFixture.launchAction(myFixture.findSingleIntention("Suppress for method"))
     myFixture.checkResult """class FooBarGoo {
   @SuppressWarnings(["GroovyParameterNamingConvention", "GroovyUnresolvedAccess"])
-  def test(def abc) {
+  def test(Object abc) {
     abc.def()
   }
 }
@@ -81,7 +81,7 @@ if (true) {
   }
 
   public void testFixPackageName() {
-    def file = myFixture.configureByText('Foo.groovy', '''\
+    myFixture.configureByText('Foo.groovy', '''\
 #!/usr/bin/groovy
 
 class Foo {}

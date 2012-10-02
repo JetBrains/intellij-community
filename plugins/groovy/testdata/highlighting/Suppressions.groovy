@@ -11,6 +11,6 @@ class FooBarGoo {
   }
 
   def test3(def abc) {
-    <warning descr="Cannot determine type of 'abc'">abc</warning>.<warning descr="Can not resolve symbol 'def'">def</warning>()
+    <warning descr="Cannot determine type of 'abc'">abc</warning>.def()
   }
 }
