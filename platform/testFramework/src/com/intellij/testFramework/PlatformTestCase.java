@@ -417,10 +417,15 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           result.add(e);
         }
       }
-      for (final File fileToDelete : myFilesToDelete) {
-        delete(fileToDelete);
+      try {
+        for (final File fileToDelete : myFilesToDelete) {
+          delete(fileToDelete);
+        }
+        LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
       }
-      LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
+      catch (Throwable e) {
+        result.add(e);
+      }
 
       if (!myAssertionsInTestDetected) {
         if (IdeaLogger.ourErrorsOccurred != null) {
