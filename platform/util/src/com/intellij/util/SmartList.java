@@ -20,6 +20,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+/**
+ * The List which is optimised for the sizes of 0 and 1.
+ * In which cases it would not allocate array at all.
+ */
 @SuppressWarnings({"unchecked"})
 public class SmartList<E> extends AbstractList<E> {
   private int mySize = 0;
@@ -36,6 +40,7 @@ public class SmartList<E> extends AbstractList<E> {
     addAll(c);
   }
 
+  @Override
   public E get(int index) {
     if (index < 0 || index >= mySize) {
       throw new IndexOutOfBoundsException("index= " + index + ". Must be index >= 0 && index < " + mySize);
@@ -46,6 +51,7 @@ public class SmartList<E> extends AbstractList<E> {
     return (E)((Object[])myElem)[index];
   }
 
+  @Override
   public boolean add(E e) {
     if (mySize == 0) {
       myElem = e;
@@ -111,16 +117,19 @@ public class SmartList<E> extends AbstractList<E> {
     modCount++;
   }
 
+  @Override
   public int size() {
     return mySize;
   }
 
+  @Override
   public void clear() {
     myElem = null;
     mySize = 0;
     modCount++;
   }
 
+  @Override
   public E set(final int index, final E element) {
     if (index < 0 || index >= mySize) {
       throw new IndexOutOfBoundsException("index= " + index + ". Must be index > 0 && index < " + mySize);
@@ -138,6 +147,7 @@ public class SmartList<E> extends AbstractList<E> {
     return oldValue;
   }
 
+  @Override
   public E remove(final int index) {
     if (index < 0 || index >= mySize) {
       throw new IndexOutOfBoundsException("index= " + index + ". Must be index >= 0 && index < " + mySize);
@@ -167,6 +177,7 @@ public class SmartList<E> extends AbstractList<E> {
     return oldValue;
   }
 
+  @Override
   public Iterator<E> iterator() {
     if (mySize == 0) {
       return EmptyIterator.getInstance();
@@ -185,10 +196,12 @@ public class SmartList<E> extends AbstractList<E> {
       myInitialModCount = modCount;
     }
 
+    @Override
     public boolean hasNext() {
       return !myVisited;
     }
 
+    @Override
     public E next() {
       if (myVisited) throw new NoSuchElementException();
       myVisited = true;
@@ -198,6 +211,7 @@ public class SmartList<E> extends AbstractList<E> {
       return (E)myElem;
     }
 
+    @Override
     public void remove() {
       if (modCount != myInitialModCount) {
         throw new ConcurrentModificationException("ModCount: " + modCount + "; expected: " + myInitialModCount);
