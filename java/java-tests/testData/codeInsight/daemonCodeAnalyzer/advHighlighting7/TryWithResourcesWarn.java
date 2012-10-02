@@ -1,5 +1,3 @@
-import java.lang.Exception;
-
 class C {
   static class MyResource implements AutoCloseable {
     @Override public void close() { }
@@ -22,6 +20,23 @@ class C {
 
     MyResource <warning descr="Variable 'r3' is never assigned">r3</warning>;
     try (MyResource r = <error descr="Variable 'r3' might not have been initialized">r3</error>) {
+      System.out.println(r);
+    }
+  }
+
+  interface MyResourceProvider {
+    MyResource getResource();
+  }
+
+  void m3() throws Exception {
+    MyResourceProvider provider = null;
+    try (MyResource r = <warning descr="Method invocation 'provider.getResource()' may produce 'java.lang.NullPointerException'">provider.getResource()</warning>) {
+      System.out.println(r);
+    }
+  }
+
+  void m4() {
+    try (MyResource r = null) {
       System.out.println(r);
     }
   }

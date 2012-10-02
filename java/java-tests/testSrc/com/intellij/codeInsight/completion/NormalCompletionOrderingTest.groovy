@@ -453,4 +453,14 @@ import java.lang.annotation.Target;
     assert lookup.items[1].object instanceof PsiMethod
   }
 
+  public void testPreselectLastChosen() {
+    checkPreferredItems(0, 'add', 'addAll')
+    for (i in 0..10) {
+      incUseCount(lookup, 1)
+    }
+    assertPreferredItems 1, 'add', 'addAll'
+    incUseCount(lookup, 0)
+    assertPreferredItems 0, 'add', 'addAll'
+  }
+
 }

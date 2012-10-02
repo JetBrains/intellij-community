@@ -51,15 +51,17 @@ public class StatisticsWeigher extends CompletionWeigher {
 
     @Override
     public Integer weigh(@NotNull LookupElement item) {
-      final StatisticsInfo info = getBaseStatisticsInfo(item, myLocation);
-      if (info == StatisticsInfo.EMPTY) {
+      final StatisticsInfo baseInfo = getBaseStatisticsInfo(item, myLocation);
+      if (baseInfo == StatisticsInfo.EMPTY) {
         return 0;
       }
-      int max = 0;
-      for (StatisticsInfo statisticsInfo : composeStatsWithPrefix(info, myLocation.getCompletionParameters().getLookup().itemPattern(item))) {
-        max = Math.max(max, ourStatManager.getUseCount(statisticsInfo));
+      int maxUseCount = 0;
+      int minRecency = Integer.MAX_VALUE;
+      for (StatisticsInfo eachInfo : composeStatsWithPrefix(baseInfo, myLocation.getCompletionParameters().getLookup().itemPattern(item))) {
+        maxUseCount = Math.max(maxUseCount, ourStatManager.getUseCount(eachInfo));
+        minRecency = Math.min(minRecency, ourStatManager.getLastUseRecency(eachInfo));
       }
-      return max;
+      return minRecency == Integer.MAX_VALUE ? maxUseCount : 100 - minRecency;
     }
 
   }

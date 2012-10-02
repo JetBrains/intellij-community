@@ -54,7 +54,7 @@ class MyTest2 {
     static void call(Integer i, I s) {   }
 
     static void test() {
-        call<error descr="Cannot resolve method 'call(int, <method reference>)'">(1, MyTest2::m)</error>; //ambiguous
+        call<error descr="Ambiguous method call: both 'MyTest2.call(int, I)' and 'MyTest2.call(Integer, I)' match">(1, MyTest2::m)</error>; //ambiguous
     }
 }
 

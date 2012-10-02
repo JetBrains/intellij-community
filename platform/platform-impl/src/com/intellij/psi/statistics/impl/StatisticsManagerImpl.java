@@ -58,6 +58,18 @@ public class StatisticsManagerImpl extends StatisticsManager {
     }
   }
 
+  @Override
+  public int getLastUseRecency(@NotNull StatisticsInfo info) {
+    if (info == StatisticsInfo.EMPTY) return 0;
+
+    String key1 = info.getContext();
+    int unitNumber = getUnitNumber(key1);
+    synchronized (LOCK) {
+      StatisticsUnit unit = getUnit(unitNumber);
+      return unit.getRecency(key1, info.getValue());
+    }
+  }
+
   public void incUseCount(@NotNull final StatisticsInfo info) {
     if (info == StatisticsInfo.EMPTY) return;
     if (ApplicationManager.getApplication().isUnitTestMode() && !myTestingStatistics) {

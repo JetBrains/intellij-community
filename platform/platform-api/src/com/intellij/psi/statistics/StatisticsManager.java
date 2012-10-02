@@ -46,6 +46,7 @@ public abstract class StatisticsManager implements SettingsSavingComponent {
   }
 
   public abstract int getUseCount(@NotNull StatisticsInfo info);
+  public abstract int getLastUseRecency(@NotNull StatisticsInfo info);
   public abstract void incUseCount(@NotNull StatisticsInfo info);
 
   public <T,Loc> int getUseCount(final Key<? extends Statistician<T, Loc>> key, final T element, final Loc location) {

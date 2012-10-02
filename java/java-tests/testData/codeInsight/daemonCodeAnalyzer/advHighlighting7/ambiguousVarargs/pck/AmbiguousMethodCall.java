@@ -22,3 +22,11 @@ abstract class A {
         foo<error descr="Ambiguous method call: both 'A.foo(Object...)' and 'A.foo(int...)' match">(1)</error>;
     }
 }
+abstract class A1 {
+    abstract void foo(double ... x);
+    abstract void foo(int... x);
+
+    {
+        foo(1);
+    }
+}

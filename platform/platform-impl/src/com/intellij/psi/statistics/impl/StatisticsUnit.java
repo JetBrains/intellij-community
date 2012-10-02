@@ -33,6 +33,14 @@ class StatisticsUnit {
     myNumber = number;
   }
 
+  public int getRecency(String key1, String key2) {
+    final List<String> list = myDataMap.get(key1);
+    if (list == null) return Integer.MAX_VALUE;
+
+    int i = list.indexOf(key2);
+    return i >= 0 ? i : Integer.MAX_VALUE;
+  }
+
   public int getData(String key1, String key2) {
     final List<String> list = myDataMap.get(key1);
     if (list == null) return 0;

@@ -128,7 +128,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
   }
 
-  private void checkSpecifics(List<CandidateInfo> conflicts, @MethodCandidateInfo.ApplicabilityLevelConstant int applicabilityLevel) {
+  public void checkSpecifics(List<CandidateInfo> conflicts, @MethodCandidateInfo.ApplicabilityLevelConstant int applicabilityLevel) {
     final boolean applicable = applicabilityLevel > MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
 
     int conflictsCount = conflicts.size();
@@ -450,7 +450,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       PsiType type1 = params1[Math.min(i, params1.length - 1)].getType();
       PsiType type2 = params2[Math.min(i, params2.length - 1)].getType();
       if (applicabilityLevel == MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
-        if (type1 instanceof PsiEllipsisType && type2 instanceof PsiEllipsisType) {
+        if (type1 instanceof PsiEllipsisType && type2 instanceof PsiEllipsisType && 
+            (((PsiArrayType)type1).getComponentType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || ((PsiArrayType)type2).getComponentType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT))) {
           type1 = ((PsiEllipsisType)type1).toArrayType();
           type2 = ((PsiEllipsisType)type2).toArrayType();
         }

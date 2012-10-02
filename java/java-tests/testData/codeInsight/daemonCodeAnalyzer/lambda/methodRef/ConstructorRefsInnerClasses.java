@@ -74,3 +74,45 @@ class StaticInner1 {
       call3<error descr="Ambiguous method call: both 'StaticInner1.call3(I1)' and 'StaticInner1.call3(I2)' match">(StaticInner1.Inner :: new)</error>;
     }
 }
+
+class StaticInner2 {
+
+  static class Inner {
+    Inner() {}
+  }
+
+
+  interface I1 {
+    Inner m(StaticInner2 rec);
+  }
+
+
+  static {
+     <error descr="Incompatible types. Found: '<method reference>', required: 'StaticInner2.I1'">I1 i1 = StaticInner2.Inner :: new;</error>
+  }
+
+  {
+     <error descr="Incompatible types. Found: '<method reference>', required: 'StaticInner2.I1'">I1 i1 = StaticInner2.Inner :: new;</error>
+  }
+}
+
+class NonStaticInner2 {
+
+  class Inner {
+    Inner() {}
+  }
+
+
+  interface I1 {
+    Inner m(NonStaticInner2 rec);
+  }
+
+
+  static {
+     I1 i1 = NonStaticInner2.Inner :: new;
+  }
+
+  {
+     I1 i1 = NonStaticInner2.Inner :: new;
+  }
+}
