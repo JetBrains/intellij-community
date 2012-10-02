@@ -220,7 +220,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     public ResolveResult[] resolve(@NotNull PsiJavaReference reference, boolean incompleteCode) {
       final Ref<PsiClass> classRef = new Ref<PsiClass>();
       final Ref<PsiSubstitutor> substRef = new Ref<PsiSubstitutor>();
-      boolean checkStatic = process(classRef, substRef);
+      final boolean beginsWithReferenceType = process(classRef, substRef);
 
       final PsiClass containingClass = classRef.get();
       final PsiSubstitutor substitutor = substRef.get();
@@ -242,15 +242,14 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
           final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
           final MethodSignature signature = interfaceMethod != null ? interfaceMethod.getSignature(resolveResult.getSubstitutor()) : null;
-          final MethodReferenceConflictResolver conflictResolver = new MethodReferenceConflictResolver(containingClass, substitutor,
-                                                                                                       signature);
+          final MethodReferenceConflictResolver conflictResolver = new MethodReferenceConflictResolver(containingClass, substitutor, signature, beginsWithReferenceType);
           final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(PsiMethodReferenceExpressionImpl.this,
                                                                                     new PsiConflictResolver[]{conflictResolver},
                                                                                     new SmartList<CandidateInfo>());
           processor.setIsConstructor(isConstructor);
           processor.setName(isConstructor ? containingClass.getName() : element.getText());
 
-          if (checkStatic) {
+          if (beginsWithReferenceType) {
             if (containingClass.getContainingClass() == null || !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
               PsiClass aClass = null;
               if (PsiTreeUtil.isAncestor(containingClass, PsiMethodReferenceExpressionImpl.this, false)) {
@@ -275,13 +274,15 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       private final PsiClass myContainingClass;
       private final PsiSubstitutor mySubstitutor;
       private final MethodSignature mySignature;
+      private final boolean myBeginsWithReferenceType;
 
       private MethodReferenceConflictResolver(PsiClass containingClass,
                                               PsiSubstitutor psiSubstitutor,
-                                              @Nullable MethodSignature signature) {
+                                              @Nullable MethodSignature signature, boolean beginsWithReferenceType) {
         myContainingClass = containingClass;
         mySubstitutor = psiSubstitutor;
         mySignature = signature;
+        myBeginsWithReferenceType = beginsWithReferenceType;
       }
 
       @Nullable
@@ -293,7 +294,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         final PsiType[] parameterTypes = mySignature.getParameterTypes();
         if (parameterTypes.length > 0) {
           final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(parameterTypes[0]);
-          if (LambdaUtil.isReceiverType(parameterTypes[0], myContainingClass) && classResolveResult.getSubstitutor().equals(mySubstitutor)) {
+          if (LambdaUtil.isReceiverType(parameterTypes[0], myContainingClass) && 
+              ((parameterTypes[0] instanceof PsiClassType && ((PsiClassType)parameterTypes[0]).isRaw()) || classResolveResult.getSubstitutor().equals(mySubstitutor))) {
             hasReceiver = true;
           }
         }
@@ -305,6 +307,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           final PsiMethod psiMethod = ((MethodCandidateInfo)conflict).getElement();
           if (psiMethod == null) continue;
           PsiSubstitutor subst = PsiSubstitutor.EMPTY;
+          subst = subst.putAll(conflict.getSubstitutor());
           subst = subst.putAll(mySubstitutor);
           final PsiType[] signatureParameterTypes2 = psiMethod.getSignature(subst).getParameterTypes();
 
@@ -312,7 +315,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           final boolean isStatic = psiMethod.hasModifierProperty(PsiModifier.STATIC);
           
           if ((parameterTypes.length == signatureParameterTypes2.length || varArgs && parameterTypes.length >= signatureParameterTypes2.length) && 
-              (isStatic || (psiMethod.isConstructor() && (conflict.isStaticsScopeCorrect() || myContainingClass.getContainingClass() == null) && !hasReceiver))) {
+              (!myBeginsWithReferenceType || isStatic || (psiMethod.isConstructor() && (conflict.isStaticsScopeCorrect() || myContainingClass.getContainingClass() == null)))) {
             boolean correct = true;
             for (int i = 0; i < parameterTypes.length; i++) {
               final PsiType type1 = parameterTypes[i];
@@ -326,7 +329,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             }
           }
 
-          if (hasReceiver && parameterTypes.length == signatureParameterTypes2.length + 1 && !isStatic && (!psiMethod.isConstructor() || myContainingClass.getContainingClass() != null)) {
+          if (hasReceiver && parameterTypes.length == signatureParameterTypes2.length + 1 && !isStatic && 
+              (!psiMethod.isConstructor() || (myContainingClass.getContainingClass() != null) && !myContainingClass.hasModifierProperty(PsiModifier.STATIC))) {
             boolean correct = true;
             for (int i = 0; i < signatureParameterTypes2.length; i++) {
               final PsiType type1 = parameterTypes[i + 1];
@@ -339,7 +343,13 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           }
         }
 
-        if (secondCandidates.size() + firstCandidates.size() != 1) return null;
+        final int acceptedCount = secondCandidates.size() + firstCandidates.size();
+        if (acceptedCount != 1) {
+          if (acceptedCount == 0) {
+            conflicts.clear();
+          }
+          return null;
+        }
         return !firstCandidates.isEmpty() ? firstCandidates.get(0) : secondCandidates.get(0);
       }
     }
