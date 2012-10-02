@@ -185,12 +185,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   static {
-    SVNJNAUtil.setJNAEnabled(true);
-    SvnHttpAuthMethodsDefaultChecker.check();
-
     //noinspection UseOfArchaicSystemPropertyAccessors
     final JavaSVNDebugLogger logger = new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), LOG);
     SVNDebugLog.setDefaultLog(logger);
+
+    SVNJNAUtil.setJNAEnabled(true);
+    SvnHttpAuthMethodsDefaultChecker.check();
+
     SVNAdminAreaFactory.setSelector(new SvnFormatSelector());
 
     DAVRepositoryFactory.setup();
