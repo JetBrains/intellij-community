@@ -21,4 +21,8 @@ public class PyFoldingTest extends PyTestCase {
   public void testCustomFolding() {
     doTest();
   }
+
+  public void testImportBlock() {
+    doTest();
+  }
 }

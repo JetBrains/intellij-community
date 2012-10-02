@@ -3,6 +3,7 @@ package com.jetbrains.python.formatter;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -37,6 +38,8 @@ public class PyBlock implements ASTBlock {
   private List<PyBlock> _subBlocks = null;
   private Alignment myChildAlignment;
   private static final boolean DUMP_FORMATTING_BLOCKS = false;
+
+  public static final Key<Boolean> IMPORT_GROUP_BEGIN = Key.create("com.jetbrains.python.formatter.importGroupBegin");
 
   private static final TokenSet ourListElementTypes = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION,
                                                                       PyElementTypes.LIST_COMP_EXPRESSION,
@@ -330,6 +333,14 @@ public class PyBlock implements ASTBlock {
 
   @Nullable
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
+    if (child1 instanceof ASTBlock && child2 instanceof ASTBlock) {
+      final PsiElement psi1 = ((ASTBlock)child1).getNode().getPsi();
+      final PsiElement psi2 = ((ASTBlock)child2).getNode().getPsi();
+      if (psi1 instanceof PyImportStatementBase && psi2 instanceof PyImportStatementBase &&
+          psi2.getCopyableUserData(IMPORT_GROUP_BEGIN) != null) {
+        return Spacing.createSpacing(0, 0, 2, true, 1);
+      }
+    }
     return myContext.getSpacingBuilder().getSpacing(this, child1, child2);
   }
 

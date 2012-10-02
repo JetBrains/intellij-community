@@ -56,9 +56,9 @@ public abstract class PyElementGenerator {
   @NotNull
   public abstract PyCallExpression createCallExpression(final LanguageLevel langLevel, String functionName);
 
-  public abstract PyImportStatement createImportStatementFromText(String text);
+  public abstract PyImportStatement createImportStatementFromText(final LanguageLevel languageLevel, String text);
 
-  public abstract PyImportElement createImportElement(String name);
+  public abstract PyImportElement createImportElement(final LanguageLevel languageLevel, String name);
 
   @NotNull
   public abstract <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text);
