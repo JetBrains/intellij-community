@@ -2,6 +2,7 @@ package com.intellij.compiler;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PsiTestUtil;
 
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
 
@@ -36,5 +37,18 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
     make(m2);
     assertOutput(m2, fs().file("B.class"));
     assertModulesUpToDate();
+  }
+
+  public void testChangeExcludedFile() {
+    VirtualFile a = createFile("src/a/A.java", "package a; class A{}");
+    createFile("src/b/B.java", "package b; class B{}");
+    Module m = addModule("m", a.getParent().getParent());
+    PsiTestUtil.addExcludedRoot(m, a.getParent());
+    make(m);
+    assertOutput(m, fs().dir("b").file("B.class"));
+
+    changeFile(a);
+    make(m);
+    assertOutput(m, fs().dir("b").file("B.class"));
   }
 }
