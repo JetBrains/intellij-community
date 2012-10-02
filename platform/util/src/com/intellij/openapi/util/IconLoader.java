@@ -244,13 +244,9 @@ public final class IconLoader {
   }
 
   private static Image createDisabled(BufferedImage image) {
-    if (UIUtil.isUnderDarcula()) {
-      GrayFilter filter = new GrayFilter(true, 30);
-      ImageProducer prod = new FilteredImageSource(image.getSource(), filter);
-      return Toolkit.getDefaultToolkit().createImage(prod);
-    } else {
-      return GrayFilter.createDisabledImage(image);
-    }
+    final GrayFilter filter = new GrayFilter(true, UIUtil.isUnderDarcula() ? 30 : 65);
+    final ImageProducer prod = new FilteredImageSource(image.getSource(), filter);
+    return Toolkit.getDefaultToolkit().createImage(prod);
   }
 
   public static Icon getTransparentIcon(final Icon icon) {
