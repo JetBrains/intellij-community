@@ -91,6 +91,17 @@ public final class InjectedLanguage {
     }
   }
 
+  @NotNull
+  public static Language[] getAvailableLanguages() {
+    synchronized (InjectedLanguage.class) {
+      if (ourLanguageCache == null || ourLanguageCount != Language.getRegisteredLanguages().size()) {
+        initLanguageCache();
+      }
+      final Collection<Language> keys = ourLanguageCache.values();
+      return keys.toArray(new Language[keys.size()]);
+    }
+  }
+
   private static void initLanguageCache() {
     ourLanguageCache = new HashMap<String, Language>();
 
