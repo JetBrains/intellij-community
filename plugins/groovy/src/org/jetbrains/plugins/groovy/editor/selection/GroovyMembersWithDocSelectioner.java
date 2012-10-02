@@ -23,7 +23,6 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 
 import java.util.Collections;
 import java.util.List;
@@ -34,7 +33,7 @@ import java.util.List;
 public class GroovyMembersWithDocSelectioner implements ExtendWordSelectionHandler {
   @Override
   public boolean canSelect(PsiElement e) {
-    return e instanceof GrDocComment || e instanceof GrMember;
+    return e instanceof GrDocComment || e instanceof GrDocCommentOwner;
   }
 
   @Override
