@@ -439,6 +439,8 @@
 
     <qualifiedNameProvider implementation="com.jetbrains.python.actions.PyQualifiedNameProvider"/>
 
+    <externalAnnotator language="Python" implementationClass="com.jetbrains.python.validation.Pep8ExternalAnnotator"/>
+
     <!-- Cython -->
     <lang.parserDefinition language="Cython" implementationClass="com.jetbrains.cython.parser.CythonParserDefinition"/>
     <lang.syntaxHighlighterFactory key="Cython" implementationClass="com.jetbrains.cython.CythonSyntaxHighlighterFactory"/>
