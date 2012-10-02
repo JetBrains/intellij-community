@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.platform.templates.github;
+package com.intellij.platform.templates;
 
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,9 @@ public class GithubBasedTemplatesFactory implements ProjectTemplatesFactory {
 
   @NotNull
   @Override
-  public ProjectTemplate[] createTemplates() {
-    return new ProjectTemplate[]{new GithubBasedProjectTemplate("Web Application", null, "JetBrains/idea-templates", null, null, "JAVA_MODULE")};
+  public ProjectTemplate[] createTemplates(WizardContext context) {
+    return new ProjectTemplate[]{
+      new GithubBasedProjectTemplate("Web Application", "JetBrains/idea-templates/web/empty-java", null, null, context)
+    };
   }
 }

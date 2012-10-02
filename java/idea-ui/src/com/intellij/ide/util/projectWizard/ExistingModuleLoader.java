@@ -73,8 +73,9 @@ public class ExistingModuleLoader extends ModuleBuilder {
 
   public boolean validate(final Project current, final Project dest) {
     if (getName() == null) return false;
-    if (getModuleFilePath() == null) return false;
-    final File file = new File(getModuleFilePath());
+    String moduleFilePath = getModuleFilePath();
+    if (moduleFilePath == null) return false;
+    final File file = new File(moduleFilePath);
     if (file.exists()) {
       try {
         final ConversionResult result = ConversionService.getInstance().convertModule(dest, file);
@@ -104,7 +105,8 @@ public class ExistingModuleLoader extends ModuleBuilder {
         return false;
       }
     } else {
-      Messages.showErrorDialog(current, IdeBundle.message("title.module.file.does.not.exist"), CommonBundle.message("title.error"));
+      Messages.showErrorDialog(current, IdeBundle.message("title.module.file.does.not.exist", moduleFilePath),
+                               CommonBundle.message("title.error"));
       return false;
     }
     return true;

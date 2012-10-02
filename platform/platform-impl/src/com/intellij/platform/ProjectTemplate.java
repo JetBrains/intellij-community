@@ -15,8 +15,8 @@
  */
 package com.intellij.platform;
 
+import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 
 import javax.swing.*;
 
@@ -30,7 +30,7 @@ public interface ProjectTemplate {
 
   String getDescription();
 
-  ModuleType getModuleType();
+  ProjectBuilder createModuleBuilder();
 
   JComponent getSettingsPanel();
 

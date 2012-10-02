@@ -13,11 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.platform.templates.github;
+package com.intellij.platform.templates;
 
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleTypeManager;
+import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
+import com.intellij.ide.util.projectWizard.ExistingModuleLoader;
+import com.intellij.ide.util.projectWizard.ProjectBuilder;
+import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.templates.github.AbstractGithubTagDownloadedProjectGenerator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -29,20 +41,18 @@ public class GithubBasedProjectTemplate extends AbstractGithubTagDownloadedProje
   private String myGithubRepositoryName;
   private String myHomepageUrl;
   private String myDescription;
-  private final String myModuleType;
+  private final WizardContext myContext;
 
   public GithubBasedProjectTemplate(String displayName,
-                                    String githubUserName,
                                     String githubRepositoryName,
                                     String homepageUrl,
                                     String description,
-                                    String moduleType) {
+                                    WizardContext context) {
     myDisplayName = displayName;
-    myGithubUserName = githubUserName;
     myGithubRepositoryName = githubRepositoryName;
     myHomepageUrl = homepageUrl;
     myDescription = description;
-    myModuleType = moduleType;
+    myContext = context;
   }
 
   @NotNull
@@ -73,7 +83,17 @@ public class GithubBasedProjectTemplate extends AbstractGithubTagDownloadedProje
   }
 
   @Override
-  public ModuleType getModuleType() {
-    return ModuleTypeManager.getInstance().findByID("JAVA_MODULE");
+  public ProjectBuilder createModuleBuilder() {
+    final String path = myContext.getProjectFileDirectory() + "/empty-java.iml";
+    final ExistingModuleLoader loader = ImportImlMode.setUpLoader(path);
+    return new ProjectBuilder() {
+      @Nullable
+      @Override
+      public List<Module> commit(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
+        VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(myContext.getProjectFileDirectory());
+        doGenerate(project, file, myPeer.getValue().getSettings());
+        return loader.commit(project, model, modulesProvider);
+      }
+    };
   }
 }

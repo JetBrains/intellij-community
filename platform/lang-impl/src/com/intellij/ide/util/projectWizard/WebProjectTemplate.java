@@ -15,15 +15,19 @@
  */
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.WebModuleType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.WebProjectGenerator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -31,7 +35,7 @@ import javax.swing.*;
  */
 public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> implements ProjectTemplate {
 
-  private final NotNullLazyValue<GeneratorPeer<T>> myPeer = new NotNullLazyValue<GeneratorPeer<T>>() {
+  protected final NotNullLazyValue<GeneratorPeer<T>> myPeer = new NotNullLazyValue<GeneratorPeer<T>>() {
     @NotNull
     @Override
     protected GeneratorPeer<T> compute() {
@@ -50,7 +54,18 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
   }
 
   @Override
-  public ModuleType getModuleType() {
-    return WebModuleType.getInstance();
+  public ProjectBuilder createModuleBuilder() {
+    final ModuleBuilder builder = WebModuleType.getInstance().createModuleBuilder();
+    return new ProjectBuilder() {
+      @Nullable
+      @Override
+      public List<Module> commit(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
+        List<Module> modules = builder.commit(project, model, modulesProvider);
+        if (modules != null && !modules.isEmpty()) {
+          generateProject(modules.get(0));
+        }
+        return modules;
+      }
+    };
   }
 }

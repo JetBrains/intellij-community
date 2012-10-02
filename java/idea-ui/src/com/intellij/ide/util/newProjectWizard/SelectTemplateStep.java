@@ -16,6 +16,7 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.util.Condition;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
@@ -48,12 +49,12 @@ public class SelectTemplateStep extends ModuleWizardStep {
   private JPanel mySettingsPanel;
   private SearchTextField mySearchField;
 
-  public SelectTemplateStep() {
+  public SelectTemplateStep(WizardContext context) {
 
     final List<ProjectTemplate> templates = new ArrayList<ProjectTemplate>();
     ProjectTemplatesFactory[] factories = ProjectTemplatesFactory.EP_NAME.getExtensions();
     for (ProjectTemplatesFactory factory : factories) {
-      templates.addAll(Arrays.asList(factory.createTemplates()));
+      templates.addAll(Arrays.asList(factory.createTemplates(context)));
     }
 
     myTemplatesList.setModel(new CollectionListModel<ProjectTemplate>(templates));
@@ -62,7 +63,6 @@ public class SelectTemplateStep extends ModuleWizardStep {
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         ProjectTemplate template = (ProjectTemplate)value;
         append(template.getName());
-        setIcon(template.getModuleType().getBigIcon());
       }
     });
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.platform;
 
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,5 +28,5 @@ public interface ProjectTemplatesFactory {
   ExtensionPointName<ProjectTemplatesFactory> EP_NAME = ExtensionPointName.create("com.intellij.projectTemplatesFactory");
 
   @NotNull
-  ProjectTemplate[] createTemplates();
+  ProjectTemplate[] createTemplates(WizardContext context);
 }
