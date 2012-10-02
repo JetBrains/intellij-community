@@ -81,6 +81,7 @@
             description="Attach debugger to Android process"
             icon="AndroidIcons.AttachDebugger">
       <add-to-group group-id="ToolbarRunGroup" anchor="after" relative-to-action="RunnerActions"/>
+      <add-to-group group-id="RunMenu"/>
     </action>
     <action id="AndroidExtractStyleAction" class="org.jetbrains.android.refactoring.AndroidExtractStyleAction" text="St_yle..."
             description="Pull out style-related attributes from layout and extract them as a new style">
