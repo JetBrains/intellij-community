@@ -56,10 +56,13 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
     if (callExpression != null && callExpression.resolveCalleeFunction(PyResolveContext.defaultContext()) != null) {
       PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
       if (assignmentStatement != null) {
-        PyType type = assignmentStatement.getAssignedValue().getType(TypeEvalContext.slow());
-        if (type == null || type instanceof PyReturnTypeReference) {
-          myText = PyBundle.message("INTN.specify.return.type");
-          return true;
+        final PyExpression assignedValue = assignmentStatement.getAssignedValue();
+        if (assignedValue != null) {
+          PyType type = assignedValue.getType(TypeEvalContext.slow());
+          if (type == null || type instanceof PyReturnTypeReference) {
+            myText = PyBundle.message("INTN.specify.return.type");
+            return true;
+          }
         }
       }
     }
