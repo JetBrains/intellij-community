@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -42,8 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.codeInsight.daemon.impl.HighlightInfoType.INFORMATION;
-import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.KEYWORD;
-import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.LABEL_ATTRIBUTES;
+import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.*;
 
 /**
  * @author Max Medvedev
@@ -67,21 +67,28 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
         IElementType tokenType = element.getNode().getElementType();
         if (TokenSets.KEYWORDS.contains(tokenType)) {
           if (highlightKeyword(element, tokenType)) {
-            result.add(HighlightInfo.createHighlightInfo(INFORMATION, element, null, KEYWORD));
+            addInfo(element, KEYWORD);
           }
         }
         else if (!(element instanceof GroovyPsiElement || element instanceof PsiErrorElement)) {
           final TextAttributesKey attribute = getDeclarationAttribute(element);
           if (attribute != null) {
-            result.add(HighlightInfo.createHighlightInfo(INFORMATION, element, null, attribute));
+            addInfo(element, attribute);
           }
         }
         else {
           if (element instanceof GrLabel) {
-            result.add(HighlightInfo.createHighlightInfo(INFORMATION, element, null, LABEL_ATTRIBUTES));
+            addInfo(element, LABEL);
+          }
+          else if (element instanceof GrAnnotation) {
+            addInfo(element, ANNOTATION);
           }
           super.visitElement(element);
         }
+      }
+
+      private void addInfo(PsiElement element, final TextAttributesKey attribute) {
+        result.add(HighlightInfo.createHighlightInfo(INFORMATION, element, null, attribute));
       }
     });
     toHighlight = result;
