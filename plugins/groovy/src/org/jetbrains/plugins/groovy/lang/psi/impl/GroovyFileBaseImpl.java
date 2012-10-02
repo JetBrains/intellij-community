@@ -244,6 +244,11 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   }
 
   @Override
+  public boolean isTopControlFlowOwner() {
+    return false;
+  }
+
+  @Override
   public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
     if (last instanceof GrTopStatement) {
       PsiImplUtil.deleteStatementTail(this, last);

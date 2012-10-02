@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
@@ -40,6 +41,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
 import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
@@ -50,6 +52,7 @@ import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -762,19 +765,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
     final AnAction diffGroup = ActionManager.getInstance().getAction(VCS_HISTORY_ACTIONS_GROUP);
     if (diffGroup != null) result.add(diffGroup);    
-
-    result.add(new CreatePatchFromChangesAction() {
-      public void update(final AnActionEvent e) {
-        e.getPresentation().setVisible(true);
-        if (myFilePath.isNonLocal()) {
-          e.getPresentation().setEnabled(false);
-          return;
-        }
-        // in order to do not load changes only for action update
-        final int selectionSize = getSelection().size();
-        e.getPresentation().setEnabled((selectionSize > 0) && (selectionSize < 3));
-      }
-    });
+    result.add(new MyCreatePatch());
     result.add(new MyGetVersionAction());
     result.add(new MyAnnotateAction());
     AnAction[] additionalActions = myProvider.getAdditionalActions(new Runnable() {
@@ -874,7 +865,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public void update(final AnActionEvent e) {
       super.update(e);
       final int selectionSize = getSelection().size();
-      e.getPresentation().setEnabled(selectionSize > 0);
+      e.getPresentation().setEnabled(selectionSize > 0 && isEnabled());
     }
 
     public boolean isEnabled() {
@@ -1128,8 +1119,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public void update(AnActionEvent e) {
       VirtualFile revVFile = e.getData( VcsDataKeys.VCS_VIRTUAL_FILE );
       VcsFileRevision revision = e.getData( VcsDataKeys.VCS_FILE_REVISION );
+      final Boolean nonLocal = e.getData(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION);
+
       FileType fileType = revVFile == null ? null : revVFile.getFileType();
-      boolean enabled = revision != null && revVFile != null && !fileType.isBinary();
+      boolean enabled = revision != null && revVFile != null && !fileType.isBinary() && ! Boolean.TRUE.equals(nonLocal);
 
       if (enabled) {
         final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myVcs.getProject());
@@ -1147,7 +1140,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public void actionPerformed(AnActionEvent e) {
       final VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
       final VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
-      if ((revision == null) || (revisionVirtualFile == null)) return;
+      final Boolean nonLocal = e.getData(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION);
+
+      if ((revision == null) || (revisionVirtualFile == null) || Boolean.TRUE.equals(nonLocal)) return;
 
       final BackgroundableActionEnabledHandler handler = ((ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myVcs.getProject())).
         getBackgroundableActionHandler(VcsBackgroundableActions.ANNOTATE);
@@ -1157,7 +1152,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       final Ref<VcsException> exceptionRef = new Ref<VcsException>();
 
       ProgressManager.getInstance().run(new Task.Backgroundable(myVcs.getProject(), VcsBundle.message("retrieving.annotations"), true,
-          BackgroundFromStartOption.getInstance()) {
+                                                                BackgroundFromStartOption.getInstance()) {
         public void run(@NotNull ProgressIndicator indicator) {
           try {
             fileAnnotationRef.set(myAnnotationProvider.annotate(revisionVirtualFile, revision));
@@ -1176,7 +1171,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         public void onSuccess() {
           handler.completed(key(revisionVirtualFile));
 
-          if (! exceptionRef.isNull()) {
+          if (!exceptionRef.isNull()) {
             AbstractVcsHelper.getInstance(myProject).showError(exceptionRef.get(), VcsBundle.message("operation.name.annotate"));
           }
           if (fileAnnotationRef.isNull()) return;
@@ -1208,6 +1203,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
     else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
       return firstSelectedRevision;
+    } else if (VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION.is(dataId) && myHistorySession != null) {
+      return ! myHistorySession.hasLocalSource();
     } else if (VcsDataKeys.VCS.is(dataId)) {
       return myVcs.getKeyInstanceMethod();
     }
@@ -1337,6 +1334,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       for (final TreeItem<VcsFileRevision> root : roots) {
         add(new TreeNodeOnVcsRevision(root.getData(), root.getChildren()));
       }
+    }
+
+    @Override
+    public RepositoryLocation getChangedRepositoryPath() {
+      return myRevision.getChangedRepositoryPath();
     }
 
     public VcsFileRevision getRevision() {
@@ -1650,6 +1652,89 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     for (VcsFileRevision revision : list) {
       myRevisionsOrder.put(revision.getRevisionNumber(), cnt);
       ++ cnt;
+    }
+  }
+
+  private static class FolderPatchCreationTask extends Task.Backgroundable {
+    @Nullable private final AbstractVcs myVcs;
+    private final TreeNodeOnVcsRevision myRevision;
+    private CommittedChangeList myList;
+    private VcsException myException;
+
+    private FolderPatchCreationTask(@Nullable AbstractVcs vcs, final TreeNodeOnVcsRevision revision) {
+      super(vcs.getProject(), VcsBundle.message("create.patch.loading.content.progress"), true);
+      myVcs = vcs;
+      myRevision = revision;
+    }
+
+    @Override
+    public void run(@NotNull ProgressIndicator indicator) {
+      final CommittedChangesProvider provider = myVcs.getCommittedChangesProvider();
+      if (provider == null) return;
+      final RepositoryLocation changedRepositoryPath = myRevision.getChangedRepositoryPath();
+      if (changedRepositoryPath == null) return;
+      final VcsVirtualFile vf =
+        new VcsVirtualFile(changedRepositoryPath.toPresentableString(), myRevision.getRevision(), VcsFileSystem.getInstance());
+      try {
+        myList = ShowAllAffectedGenericAction.getRemoteList(myVcs, myRevision.getRevisionNumber(), vf);
+        //myList = provider.getOneList(vf, myRevision.getRevisionNumber());
+      }
+      catch (VcsException e1) {
+        myException = e1;
+      }
+    }
+
+    @Override
+    public void onSuccess() {
+      final AbstractVcsHelper helper = AbstractVcsHelper.getInstance(myProject);
+      if (myException != null) {
+        helper.showError(myException, VcsBundle.message("create.patch.error.title", myException.getMessage()));
+      } else {
+        if (myList == null) {
+          helper.showError(myException, "Can not load changelist contents");
+          return;
+        }
+        CreatePatchFromChangesAction.createPatch(myProject, myList.getComment(), new ArrayList<Change>(myList.getChanges()));
+      }
+    }
+  }
+
+  public class MyCreatePatch extends DumbAwareAction {
+    private final CreatePatchFromChangesAction myUsualDelegate;
+
+    public MyCreatePatch() {
+      super(VcsBundle.message("action.name.create.patch.for.selected.revisions"),
+                VcsBundle.message("action.description.create.patch.for.selected.revisions"), IconLoader.getIcon("/actions/createPatch.png"));
+      myUsualDelegate = new CreatePatchFromChangesAction();
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      if (myFilePath.isDirectory()) {
+        final List<TreeNodeOnVcsRevision> selection = getSelection();
+        if (selection.size() != 1) return;
+        ProgressManager.getInstance().run(new FolderPatchCreationTask(myVcs, selection.get(0)));
+      } else {
+        myUsualDelegate.actionPerformed(e);
+      }
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setVisible(true);
+      if (myFilePath.isNonLocal()) {
+        e.getPresentation().setEnabled(false);
+        return;
+      }
+      boolean enabled = (! myFilePath.isDirectory()) || myProvider.supportsHistoryForDirectories();
+      final int selectionSize = getSelection().size();
+      if (enabled && (! myFilePath.isDirectory())) {
+        // in order to do not load changes only for action update
+        enabled = (selectionSize > 0) && (selectionSize < 3);
+      } else if (enabled) {
+        enabled = selectionSize == 1 && getSelection().get(0).getChangedRepositoryPath() != null;
+      }
+      e.getPresentation().setEnabled(enabled);
     }
   }
 }

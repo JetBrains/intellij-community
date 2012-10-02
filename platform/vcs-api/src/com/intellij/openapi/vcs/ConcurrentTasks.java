@@ -53,7 +53,7 @@ public class ConcurrentTasks<T> {
     final List<Future<?>> futures = new LinkedList<Future<?>>();
     for (final Consumer<Consumer<T>> task : myTasks) {
       if (myResultKnown) {
-        myCntAlive.decrementAndGet();
+        final int decremented = myCntAlive.decrementAndGet();
         continue;
       }
       final Runnable computableProxy = new Runnable() {

@@ -6,6 +6,11 @@
     This plugin enables smart editing of properties files.
   </description>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+
+  <extensionPoints>
+    <extensionPoint name="implicitPropertyUsageProvider" interface="com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <applicationService serviceInterface="com.intellij.lang.properties.LastSelectedPropertiesFileStore"
@@ -49,7 +54,7 @@
 
     <localInspection language="Properties" shortName="UnusedProperty" bundle="messages.PropertiesBundle" key="unused.property.inspection.display.name"
                      groupKey="properties.files.inspection.group.display.name" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.lang.properties.UnusedPropertyInspection"/>
+                     implementationClass="com.intellij.codeInspection.unused.UnusedPropertyInspection"/>
     <globalInspection shortName="DuplicatePropertyInspection" bundle="messages.InspectionsBundle" key="duplicate.property.display.name"
                       groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
                       implementationClass="com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection"/>

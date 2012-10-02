@@ -47,7 +47,7 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
   @Override
   protected void actionPerformed(VcsContext vcsContext) {
     final AbstractVcs vcs = AbstractShowDiffAction.isEnabled(vcsContext, null);
-
+    if (vcs == null) return;
     final VirtualFile[] selectedFilePaths = vcsContext.getSelectedFiles();
     if (selectedFilePaths == null || selectedFilePaths.length != 1) return;
     final VirtualFile selectedFile = selectedFilePaths[0];

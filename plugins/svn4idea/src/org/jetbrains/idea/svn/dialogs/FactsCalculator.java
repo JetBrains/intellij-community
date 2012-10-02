@@ -17,19 +17,20 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CalledInAwt;
+import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.util.Consumer;
+import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.ValueHolder;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.continuation.TaskDescriptor;
 
 // cache. persistent. by request
-public class FactsCalculator<In, Out> {
+public class FactsCalculator<In, Out, E extends Exception> {
   private final Project myProject;
   private final String myTaskTitle;
   private final ValueHolder<Out, In> myCache;
-  private final Convertor<In, Out> myLive;
+  private final ThrowableConvertor<In, Out, E> myLive;
 
-  public FactsCalculator(Project project, String taskTitle, ValueHolder<Out, In> cache, Convertor<In, Out> live) {
+  public FactsCalculator(Project project, String taskTitle, ValueHolder<Out, In> cache, ThrowableConvertor<In, Out, E> live) {
     myProject = project;
     myTaskTitle = taskTitle;
     myCache = cache;
@@ -37,33 +38,35 @@ public class FactsCalculator<In, Out> {
   }
 
   @CalledInAwt
-  public void get(final In in, final Consumer<Out> resultConsumer) {
-    createRunOrContinuation(in, resultConsumer).execute();
+  public void get(final In in, final Consumer<TransparentlyFailedValueI<Out, E>> resultConsumer, final Class<E> clazzE) {
+    createRunOrContinuation(in, resultConsumer, clazzE).execute();
   }
 
-  private RunOrContinuation<Out> createRunOrContinuation(final In in, final Consumer<Out> resultConsumer) {
-    return new RunOrContinuation<Out>(myProject, myTaskTitle) {
+  private RunOrContinuation<Out,E> createRunOrContinuation(final In in, final Consumer<TransparentlyFailedValueI<Out, E>> resultConsumer,
+                                                           final Class<E> clazzE) {
+    return new RunOrContinuation<Out,E>(myProject, myTaskTitle, clazzE) {
       @Override
       protected Out calculate() {
         return myCache.getValue(in);
       }
       @Override
-      protected Out calculateLong() {
+      protected Out calculateLong() throws E {
         final Out result = myLive.convert(in);
         if (result != null) {
           myCache.setValue(result, in);
         }
         return result;
       }
+
       @Override
-      protected void processResult(Out out) {
-        resultConsumer.consume(out);
+      protected void processResult(TransparentlyFailedValueI<Out, E> t) {
+        resultConsumer.consume(t);
       }
     };
   }
 
   @CalledInAwt
-  public TaskDescriptor getTask(final In in, final Consumer<Out> resultConsumer) {
-    return createRunOrContinuation(in, resultConsumer).getTask();
+  public TaskDescriptor getTask(final In in, final Consumer<TransparentlyFailedValueI<Out, E>> resultConsumer, final Class<E> clazzE) {
+    return createRunOrContinuation(in, resultConsumer, clazzE).getTask();
   }
 }

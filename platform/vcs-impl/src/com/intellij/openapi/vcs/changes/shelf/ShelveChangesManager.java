@@ -666,7 +666,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     char[] text = FileUtil.loadFileText(new File(patchPath));
     PatchReader reader = new PatchReader(new CharArrayCharSequence(text));
     final List<TextFilePatch> textFilePatches = reader.readAllPatches();
-    final TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo = reader.getAdditionalInfo(
+    final TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo = reader.getAdditionalInfo(
       null);
     ApplyPatchDefaultExecutor.applyAdditionalInfoBefore(project, additionalInfo, commitContext);
     return textFilePatches;

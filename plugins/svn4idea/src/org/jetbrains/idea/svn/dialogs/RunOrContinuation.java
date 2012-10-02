@@ -15,64 +15,89 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.CalledInBackground;
+import com.intellij.openapi.vcs.changes.ThreadSafeTransparentlyFailedValue;
+import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.util.continuation.Continuation;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class RunOrContinuation<T> {
+public abstract class RunOrContinuation<T, E extends Exception> {
+  private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.dialogs.RunOrContinuation");
   protected final Project myProject;
   private final String myTaskTitle;
-  private boolean myWasCanceled;
+  private final Class<E> myClazzE;
+  private volatile boolean myWasCanceled;
+  private TransparentlyFailedValueI<T,E> myTransparentlyFailedValue;
 
-  protected RunOrContinuation(final Project project, final String taskTitle) {
+  protected RunOrContinuation(final Project project, final String taskTitle, final Class<E> clazzE) {
     myProject = project;
     myTaskTitle = taskTitle;
+    myClazzE = clazzE;
+    myTransparentlyFailedValue = new ThreadSafeTransparentlyFailedValue<T, E>();
   }
 
   @Nullable
   @CalledInAwt
-  protected abstract T calculate();
+  protected abstract T calculate() throws E;
   @Nullable
   @CalledInBackground
-  protected abstract T calculateLong();
+  protected abstract T calculateLong() throws E;
   @CalledInAwt
-  protected abstract void processResult(final T t);
+  protected abstract void processResult(final TransparentlyFailedValueI<T, E> t);
 
   protected void cancel() {
     myWasCanceled = true;
   }
 
+  private void setException(Exception e) {
+    if (myClazzE.isAssignableFrom(e.getClass())) {
+      myTransparentlyFailedValue.fail((E)e);
+    } else {
+      LOG.info(e);
+      myTransparentlyFailedValue.failRuntime((e instanceof RuntimeException ? (RuntimeException)e : new RuntimeException(e)));
+    }
+  }
+
   @CalledInAwt
   public TaskDescriptor getTask() {
-    final Ref<T> refT = new Ref<T>();
-
     final TaskDescriptor pooled = new TaskDescriptor(myTaskTitle, Where.POOLED) {
       @Override
       public void run(ContinuationContext context) {
-        refT.set(calculateLong());
+        try {
+          myTransparentlyFailedValue.set(calculateLong());
+        }
+        catch (Exception e) {
+          setException(e);
+        }
         if (! myWasCanceled) {
           context.next(new TaskDescriptor("final part", Where.AWT) {
             @Override
             public void run(ContinuationContext context) {
-              processResult(refT.get());
+              processResult(myTransparentlyFailedValue);
             }
           });
         }
       }
+
     };
 
     return new TaskDescriptor("short part", Where.AWT) {
       @Override
       public void run(ContinuationContext context) {
-        refT.set(calculate());
-        if ((! myWasCanceled) && (! refT.isNull())) {
-          processResult(refT.get());
+        try {
+          myTransparentlyFailedValue.set(calculate());
+        }
+        catch (Exception e) {
+          setException(e);
+        }
+        if ((! myWasCanceled) && (myTransparentlyFailedValue.haveSomething())) {
+          processResult(myTransparentlyFailedValue);
           return;
         }
         context.next(pooled);
@@ -84,25 +109,4 @@ public abstract class RunOrContinuation<T> {
   public void execute() {
     Continuation.createFragmented(myProject, true).run(getTask());
   }
-
-  /*@CalledInAwt
-  public void execute() {
-    final Ref<T> refT = new Ref<T>();
-    refT.set(calculate());
-    if ((! myWasCanceled) && (! refT.isNull())) {
-      processResult(refT.get());
-      return;
-    }
-    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, myTaskTitle, true, BackgroundFromStartOption.getInstance()) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        refT.set(calculateLong());
-      }
-      @Override
-      public void onSuccess() {
-        if (! myWasCanceled) {
-          processResult(refT.get());
-        }
-      }
-    });
-  } */
 }

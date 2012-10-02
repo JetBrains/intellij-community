@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValue;
+import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -144,7 +145,7 @@ public class PatchReader {
     myPatches = myPatchContentParser.getResult();
   }
 
-  public TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> getAdditionalInfo(final Set<String> filterByPaths) {
+  public TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> getAdditionalInfo(final Set<String> filterByPaths) {
     final TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException>
       value = new TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException>();
 

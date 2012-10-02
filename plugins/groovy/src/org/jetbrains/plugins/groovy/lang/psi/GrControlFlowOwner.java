@@ -24,4 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
  */
 public interface GrControlFlowOwner extends GrStatementOwner {
   Instruction[] getControlFlow();
+
+  boolean isTopControlFlowOwner();
 }

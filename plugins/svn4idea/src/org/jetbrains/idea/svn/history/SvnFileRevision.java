@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Throwable2Computable;
+import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -27,7 +28,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
-import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
@@ -115,6 +115,11 @@ public class SvnFileRevision implements VcsFileRevision {
     return null;
   }
 
+  @Override
+  public RepositoryLocation getChangedRepositoryPath() {
+    return new SvnRepositoryLocation(myURL);
+  }
+
   public Date getRevisionDate() {
     return myDate;
   }
@@ -163,7 +168,8 @@ public class SvnFileRevision implements VcsFileRevision {
                                                    @Override
                                                    public byte[] compute() throws VcsException, IOException {
                                                      byte[] bytes = loadContent();
-                                                     return SvnUtil.decode(myCharset, bytes);
+                                                     return bytes;
+                                                     //return SvnUtil.decode(myCharset, bytes);
                                                    }
                                                  });
   }

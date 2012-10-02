@@ -32,12 +32,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.*;
@@ -52,6 +49,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.Processor;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.SoftHashMap;
@@ -67,15 +65,17 @@ import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.commandLine.SvnExecutableChecker;
 import org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator;
-import org.jetbrains.idea.svn.dialogs.SvnFormatWorker;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.history.LoadedRevisionsCache;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
+import org.jetbrains.idea.svn.lowLevel.SvnIdeaRepositoryPoolManager;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
+import org.tmatesoft.sqljet.core.SqlJetErrorCode;
+import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
@@ -93,7 +93,6 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 import org.tmatesoft.svn.util.SVNLogType;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
@@ -117,7 +116,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public static final Topic<Runnable> WC_CONVERTED = new Topic<Runnable>("WC_CONVERTED", Runnable.class);
   private final Map<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>> myPropertyCache = new SoftHashMap<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>>();
 
-  private DefaultSVNRepositoryPool myPool;
+  private SvnIdeaRepositoryPoolManager myPool;
   private final SvnConfiguration myConfiguration;
   private final SvnEntriesFileListener myEntriesFileListener;
 
@@ -159,6 +158,24 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   public static final String SVNKIT_HTTP_SSL_PROTOCOLS = "svnkit.http.sslProtocols";
   private final SvnExecutableChecker myChecker;
+
+  public static final Processor<Exception> ourBusyExceptionProcessor = new Processor<Exception>() {
+    @Override
+    public boolean process(Exception e) {
+      if (e instanceof SVNException) {
+        final SVNErrorCode errorCode = ((SVNException)e).getErrorMessage().getErrorCode();
+        if (SVNErrorCode.WC_LOCKED.equals(errorCode)) {
+          return true;
+        } else if (SVNErrorCode.SQLITE_ERROR.equals(errorCode)) {
+          Throwable cause = ((SVNException)e).getErrorMessage().getCause();
+          if (cause instanceof SqlJetException) {
+            return SqlJetErrorCode.BUSY.equals(((SqlJetException)cause).getErrorCode());
+          }
+        }
+      }
+      return false;
+    }
+  };
 
   public void checkCommandLineVersion() {
     myChecker.checkExecutableAndNotifyIfNeeded();
@@ -591,17 +608,25 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   private void createPool() {
-    final String property = System.getProperty(KEEP_CONNECTIONS_KEY);
+    if (myPool != null) return;
+/*    final String property = System.getProperty(KEEP_CONNECTIONS_KEY);
     final boolean keep;
-    if (StringUtil.isEmptyOrSpaces(property)) {
-      keep = ! ApplicationManager.getApplication().isUnitTestMode();  // default
+    boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    if (StringUtil.isEmptyOrSpaces(property) || unitTestMode) {
+      keep = ! unitTestMode;  // default
     } else {
       keep = Boolean.getBoolean(KEEP_CONNECTIONS_KEY);
-    }
-    myPool = new DefaultSVNRepositoryPool(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject), 60*1000, keep);
+    }*/
+    myPool = new SvnIdeaRepositoryPoolManager(false, myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
   }
 
   private ISVNRepositoryPool getPool() {
+    if (myProject.isDisposed()) {
+      throw new ProcessCanceledException();
+    }
+    if (myPool == null) {
+      createPool();
+    }
     return myPool;
   }
 

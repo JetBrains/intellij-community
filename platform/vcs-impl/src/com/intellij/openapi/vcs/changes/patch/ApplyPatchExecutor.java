@@ -17,7 +17,7 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.TransparentlyFailedValue;
+import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 
@@ -33,5 +33,5 @@ public interface ApplyPatchExecutor {
   void apply(final MultiMap<VirtualFile, FilePatchInProgress> patchGroups,
              final LocalChangeList localList,
              String fileName,
-             TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo);
+             TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo);
 }

@@ -18,21 +18,21 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.changes.TransparentlyFailedValue;
+import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.persistent.SmallMapSerializer;
 import com.intellij.util.Consumer;
+import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.ValueHolder;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.continuation.TaskDescriptor;
-import com.intellij.util.continuation.Where;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.CopyData;
 import org.jetbrains.idea.svn.history.FirstInBranch;
+import org.tmatesoft.svn.core.SVNException;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -42,7 +42,7 @@ import java.util.*;
 
 public class SvnBranchPointsCalculator {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator");
-  private FactsCalculator<KeyData, WrapperInvertor<BranchCopyData>> myCalculator;
+  private FactsCalculator<KeyData, WrapperInvertor<BranchCopyData>, SVNException> myCalculator;
   private PersistentHolder myPersistentHolder;
   private File myFile;
   private final Project myProject;
@@ -77,7 +77,8 @@ public class SvnBranchPointsCalculator {
       }
     };
 
-    myCalculator = new FactsCalculator<KeyData, WrapperInvertor<BranchCopyData>>(myProject, "Looking for branch origin", cache, new Loader(myProject));
+    myCalculator = new FactsCalculator<KeyData, WrapperInvertor<BranchCopyData>, SVNException>(
+      myProject, "Looking for branch origin", cache, new Loader(myProject));
   }
 
   public void deactivate() {
@@ -238,38 +239,39 @@ public class SvnBranchPointsCalculator {
     }
   }
 
-  private static class Loader implements Convertor<KeyData, WrapperInvertor<BranchCopyData>> {
+  private static class Loader implements ThrowableConvertor<KeyData, WrapperInvertor<BranchCopyData>, SVNException> {
     private SvnVcs myVcs;
 
     private Loader(final Project project) {
       myVcs = SvnVcs.getInstance(project);
     }
 
-    public WrapperInvertor<BranchCopyData> convert(final KeyData keyData) {
-      final Ref<WrapperInvertor<BranchCopyData>> result = new Ref<WrapperInvertor<BranchCopyData>>();
+    @Override
+    public WrapperInvertor<BranchCopyData> convert(final KeyData keyData) throws SVNException {
+      final TransparentlyFailedValue<CopyData, SVNException> consumer = new TransparentlyFailedValue<CopyData, SVNException>();
+      new FirstInBranch(myVcs, keyData.getRepoUrl(), keyData.getTargetUrl(), keyData.getSourceUrl(), consumer).run();
 
-      new FirstInBranch(myVcs, keyData.getRepoUrl(), keyData.getTargetUrl(), keyData.getSourceUrl(), new Consumer<CopyData>() {
-        public void consume(CopyData copyData) {
-          if (copyData != null) {
-            final boolean correct = copyData.isTrunkSupposedCorrect();
-            final BranchCopyData branchCopyData;
-            if (correct) {
-              branchCopyData = new BranchCopyData(keyData.getSourceUrl(), copyData.getCopySourceRevision(), keyData.getTargetUrl(),
-                                                  copyData.getCopyTargetRevision());
-            } else {
-              branchCopyData = new BranchCopyData(keyData.getTargetUrl(), copyData.getCopySourceRevision(), keyData.getSourceUrl(),
-                                                  copyData.getCopyTargetRevision());
-            }
-            result.set(new WrapperInvertor<BranchCopyData>(! correct, branchCopyData));
-          }
+      final CopyData copyData = consumer.get();
+      if (copyData != null) {
+        final boolean correct = copyData.isTrunkSupposedCorrect();
+        final BranchCopyData branchCopyData;
+        if (correct) {
+          branchCopyData = new BranchCopyData(keyData.getSourceUrl(), copyData.getCopySourceRevision(), keyData.getTargetUrl(),
+                                              copyData.getCopyTargetRevision());
+        } else {
+          branchCopyData = new BranchCopyData(keyData.getTargetUrl(), copyData.getCopySourceRevision(), keyData.getSourceUrl(),
+                                              copyData.getCopyTargetRevision());
         }
-      }).run();
-
-      final WrapperInvertor<BranchCopyData> invertor = result.get();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Loader17 returned: for key: " + keyData.toString() + " result: " + (invertor == null ? null : invertor.toString()));
+        WrapperInvertor<BranchCopyData> invertor = new WrapperInvertor<BranchCopyData>(! correct, branchCopyData);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Loader17 returned: for key: " + keyData.toString() + " result: " + (invertor.toString()));
+        }
+        return invertor;
       }
-      return invertor;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Loader17 returned: for key: " + keyData.toString() + " result: null");
+      }
+      return null;
     }
   }
 
@@ -345,18 +347,8 @@ public class SvnBranchPointsCalculator {
     T invertSelf();
   }
 
-  public void getFirstCopyPoint(final String repoUID, final String sourceUrl, final String targetUrl, Consumer<WrapperInvertor<BranchCopyData>> consumer) {
-    myCalculator.get(new KeyData(repoUID, sourceUrl, targetUrl), consumer);
-  }
-
   public TaskDescriptor getFirstCopyPointTask(final String repoUID, final String sourceUrl, final String targetUrl,
-                                          final Consumer<WrapperInvertor<BranchCopyData>> consumer) {
-    return myCalculator.getTask(new KeyData(repoUID, sourceUrl, targetUrl), consumer);
-  }
-
-  public static abstract class CopyPointAcceptorTask extends TaskDescriptor implements Consumer<WrapperInvertor<BranchCopyData>> {
-    protected CopyPointAcceptorTask(String name, @NotNull Where where) {
-      super(name, where);
-    }
+                                          final Consumer<TransparentlyFailedValueI<WrapperInvertor<BranchCopyData>, SVNException>> consumer) {
+    return myCalculator.getTask(new KeyData(repoUID, sourceUrl, targetUrl), consumer, SVNException.class);
   }
 }

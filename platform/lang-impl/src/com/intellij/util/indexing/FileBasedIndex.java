@@ -1014,7 +1014,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
   @Nullable
   public ProjectIndexableFilesFilter projectIndexableFiles(@Nullable Project project) {
-    if (project == null) return null;
+    if (project == null || true) return null; // till fixing update of the set
 
     SoftReference<ProjectIndexableFilesFilter> reference = project.getUserData(ourProjectFilesSetKey);
     ProjectIndexableFilesFilter data = reference != null ? reference.get() : null;

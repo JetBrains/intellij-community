@@ -103,4 +103,9 @@ public abstract class VcsAbstractHistorySession implements VcsHistorySession {
     }
     return map;
   }
+
+  @Override
+  public boolean hasLocalSource() {
+    return false;
+  }
 }

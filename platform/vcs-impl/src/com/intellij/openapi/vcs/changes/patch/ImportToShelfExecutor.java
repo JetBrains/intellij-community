@@ -28,7 +28,7 @@ import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.TransparentlyFailedValue;
+import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
@@ -65,7 +65,7 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor {
   public void apply(final MultiMap<VirtualFile, FilePatchInProgress> patchGroups,
                     LocalChangeList localList,
                     final String fileName,
-                    final TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+                    final TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
     final VcsCatchingRunnable vcsCatchingRunnable = new VcsCatchingRunnable() {
       @Override
       public void runImpl() throws VcsException {

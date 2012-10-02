@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -560,6 +561,12 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     return new Pair<SvnChangeList, FilePath>(result[0], new FilePathImpl(file));
   }
 
+  @Override
+  public RepositoryLocation getForNonLocal(VirtualFile file) {
+    final String url = file.getPresentableUrl();
+    return new SvnRepositoryLocation(FileUtil.toSystemIndependentName(url));
+  }
+
   private static class RenameContext {
     @NotNull
     private String myCurrentPath;
@@ -582,6 +589,12 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
           if (myCurrentPath.equals(entryPath.getPath())) {
             myHadChanged = true;
             myCurrentPath = entryPath.getCopyPath();
+            return;
+          } else if (SVNPathUtil.isAncestor(entryPath.getPath(), myCurrentPath)) {
+            final String relativePath = SVNPathUtil.getRelativePath(entryPath.getPath(), myCurrentPath);
+            myCurrentPath = SVNPathUtil.append(entryPath.getCopyPath(), relativePath);
+            myHadChanged = true;
+            return;
           }
         }
       }

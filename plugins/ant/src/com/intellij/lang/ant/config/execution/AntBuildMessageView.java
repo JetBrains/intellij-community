@@ -781,10 +781,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     return myWarningCount;
   }
 
-  void buildFinished(boolean isProgressAborted,
-                     long buildTimeInMilliseconds,
-                     @NotNull final AntBuildListener antBuildListener,
-                     OutputPacketProcessor dispatcher) {
+  void buildFinished(boolean isProgressAborted, long buildTimeInMilliseconds, @NotNull final AntBuildListener antBuildListener, OutputPacketProcessor dispatcher) {
     final boolean aborted = isProgressAborted || myIsAborted;
     final String message = getFinishStatusText(aborted, buildTimeInMilliseconds);
 
@@ -800,12 +797,12 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
         }
       }
     });
-    if (!myIsOutputPaused) {
-      new OutputFlusher().doFlush();
-      myTreeView.scrollToLastMessage();
-    }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        if (!myIsOutputPaused) {
+          new OutputFlusher().doFlush();
+        }
         final AntBuildFileBase buildFile = myBuildFile;
         if (buildFile != null) {
           if (getErrorCount() == 0 && buildFile.isViewClosedWhenNoErrors()) {
@@ -818,7 +815,9 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
             myTreeView.scrollToStatus();
           }
         }
-
+        else {
+          myTreeView.scrollToLastMessage();
+        }
         VirtualFileManager.getInstance().refresh(true, new Runnable() {
           public void run() {
             antBuildListener.buildFinished(aborted ? AntBuildListener.ABORTED : AntBuildListener.FINISHED_SUCCESSFULLY, getErrorCount());

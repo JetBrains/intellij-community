@@ -19,6 +19,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.*;
@@ -26,9 +32,12 @@ import com.intellij.openapi.vcs.history.VcsAbstractHistorySession;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
@@ -70,8 +79,9 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     Runnable command = new Runnable() {
       public void run() {
         final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+        final File ioFile = new File(file.getPath()).getAbsoluteFile();
+        SVNInfo info = null;
         try {
-          final File ioFile = new File(file.getPath()).getAbsoluteFile();
 
           final String contents;
           if (loadExternally) {
@@ -86,7 +96,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
           final SvnFileAnnotation result = new SvnFileAnnotation(myVcs, file, contents, revision.getRevisionNumber());
 
           SVNWCClient wcClient = myVcs.createWCClient();
-          SVNInfo info = wcClient.doInfo(ioFile, SVNRevision.UNDEFINED);
+          info = wcClient.doInfo(ioFile, SVNRevision.UNDEFINED);
           if (info == null) {
               exception[0] = new VcsException(new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "File ''{0}'' is not under version control", ioFile)));
               return;
@@ -124,6 +134,25 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
           annotation[0] = result;
         }
         catch (SVNException e) {
+          if (SVNErrorCode.FS_NOT_FOUND.equals(e.getErrorMessage().getErrorCode())) {
+            final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> provider = myVcs.getCommittedChangesProvider();
+            try {
+              final Pair<SvnChangeList, FilePath> pair = provider.getOneList(file, revision.getRevisionNumber());
+              if (pair != null && info != null && pair.getSecond() != null && ! Comparing.equal(pair.getSecond().getIOFile(), ioFile)) {
+                annotation[0] = annotateNonExisting(pair, revision, info, file.getCharset(), file);
+                return;
+              }
+            }
+            catch (VcsException e1) {
+              exception[0] = e1;
+            }
+            catch (SVNException e1) {
+              exception[0] = new VcsException(e);
+            }
+            catch (IOException e1) {
+              exception[0] = new VcsException(e);
+            }
+          }
           exception[0] = new VcsException(e);
         } catch (IOException e) {
           exception[0] = new VcsException(e);
@@ -144,7 +173,72 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     return annotation[0];
   }
 
-  private ISVNAnnotateHandler createAnnotationHandler(final ProgressIndicator progress, final SvnFileAnnotation result) {
+  public static File getCommonAncestor(final File file1, final File file2) throws IOException {
+    if (FileUtil.filesEqual(file1, file2)) return file1;
+    final File can1 = file1.getCanonicalFile();
+    final File can2 = file2.getCanonicalFile();
+    final List<String> parts1 = StringUtil.split(can1.getPath(), File.separator, true);
+    final List<String> parts2 = StringUtil.split(can2.getPath(), File.separator, true);
+    int cnt = 0;
+    while (parts1.size() > cnt && parts2.size() > cnt) {
+      if (! parts1.get(cnt).equals(parts2.get(cnt))) {
+        if (cnt > 0) {
+          return new File(StringUtil.join(parts1.subList(0, cnt), File.separator));
+        } else {
+          return null;
+        }
+      }
+      ++ cnt;
+    }
+    //shorter one
+    if (parts1.size() > parts2.size()) {
+      return file2;
+    } else {
+      return file1;
+    }
+  }
+
+  private SvnRemoteFileAnnotation annotateNonExisting(Pair<SvnChangeList, FilePath> pair,
+                                                      VcsFileRevision revision,
+                                                      SVNInfo info,
+                                                      Charset charset, final VirtualFile current) throws VcsException, SVNException, IOException {
+    final File wasFile = pair.getSecond().getIOFile();
+    final File root = getCommonAncestor(wasFile, info.getFile());
+
+    if (root == null) throw new VcsException("Can not find relative path for " + wasFile.getPath() + "@" + revision.getRevisionNumber().asString());
+
+    final String relativePath = FileUtil.getRelativePath(root.getPath(), wasFile.getPath(), File.separatorChar);
+    if (relativePath == null) throw new VcsException("Can not find relative path for " + wasFile.getPath() + "@" + revision.getRevisionNumber().asString());
+
+    SVNWCClient wcClient = myVcs.createWCClient();
+    SVNInfo wcRootInfo = wcClient.doInfo(root, SVNRevision.UNDEFINED);
+    if (wcRootInfo == null || wcRootInfo.getURL() == null) {
+        throw new VcsException("Can not find relative path for " + wasFile.getPath() + "@" + revision.getRevisionNumber().asString());
+    }
+    SVNURL wasUrl = wcRootInfo.getURL();
+    final String[] strings = relativePath.replace('\\','/').split("/");
+    for (String string : strings) {
+      wasUrl = wasUrl.appendPath(string, true);
+    }
+
+    final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    final SVNRevision svnRevision = ((SvnRevisionNumber)revision.getRevisionNumber()).getRevision();
+    myVcs.createWCClient().doGetFileContents(wasUrl, svnRevision, svnRevision, true, buffer);
+    final String contents = LoadTextUtil.getTextByBinaryPresentation(buffer.toByteArray(),
+                                                                     charset == null ? CharsetToolkit.UTF8_CHARSET : charset).toString();
+    SVNLogClient client = myVcs.createLogClient();
+    setLogClientOptions(client);
+    final SvnRemoteFileAnnotation result = new SvnRemoteFileAnnotation(myVcs, contents, revision.getRevisionNumber(), pair.getFirst(), pair.getSecond().getPath(), current);
+    final ISVNAnnotateHandler annotateHandler = createAnnotationHandler(ProgressManager.getInstance().getProgressIndicator(), result);
+
+    final boolean calculateMergeinfo = SvnConfiguration.getInstance(myVcs.getProject()).SHOW_MERGE_SOURCES_IN_ANNOTATE &&
+                                       SvnUtil.checkRepositoryVersion15(myVcs, wasUrl.toString());
+    client.doAnnotate(wasUrl, svnRevision, SVNRevision.create(1), svnRevision, true, calculateMergeinfo, annotateHandler, null);
+
+    return result;
+  }
+
+  private ISVNAnnotateHandler createAnnotationHandler(final ProgressIndicator progress, final BaseSvnFileAnnotation result) {
     return new ISVNAnnotateHandler() {
       public void handleLine(Date date, long revision, String author, String line) {
         if (progress != null) {
@@ -189,7 +283,8 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
 
   @Override
   public VcsAnnotation createCacheable(FileAnnotation fileAnnotation) {
-    final SvnFileAnnotation svnFileAnnotation = (SvnFileAnnotation)fileAnnotation;
+    if (! (fileAnnotation instanceof SvnFileAnnotation)) return null;
+    final SvnFileAnnotation svnFileAnnotation = (SvnFileAnnotation) fileAnnotation;
     final AnnotationSourceSwitcher annotationSourceSwitcher = svnFileAnnotation.getAnnotationSourceSwitcher();
     if (annotationSourceSwitcher != null) {
       annotationSourceSwitcher.switchTo(AnnotationSource.LOCAL);

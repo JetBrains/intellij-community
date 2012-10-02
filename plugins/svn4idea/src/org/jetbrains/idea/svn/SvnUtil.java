@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
@@ -30,11 +31,13 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
@@ -46,6 +49,7 @@ import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -681,7 +685,9 @@ public class SvnUtil {
 
   public static byte[] decode(final Charset charset, final byte[] buffer) {
     if (charset != null && ! CharsetToolkit.UTF8_CHARSET.equals(charset)) {
-      return CharsetToolkit.UTF8_CHARSET.encode(charset.decode(ByteBuffer.wrap(buffer))).array();
+      final CharBuffer decoded = charset.decode(ByteBuffer.wrap(buffer));
+      final ByteBuffer byteBuffer = CharsetToolkit.UTF8_CHARSET.encode(decoded);
+      return ArrayUtil.realloc(byteBuffer.array(), byteBuffer.remaining());
     }
     return buffer;
   }
@@ -711,5 +717,25 @@ public class SvnUtil {
     catch (SVNException e) {
       return false;
     }
+  }
+
+  public static String appendMultiParts(@NotNull final String base, @NotNull final String subPath) throws SVNException {
+    if (StringUtil.isEmpty(subPath)) return base;
+    final List<String> parts = StringUtil.split(subPath.replace('\\', '/'), "/", true);
+    String result = base;
+    for (String part : parts) {
+      result = SVNPathUtil.append(result, part);
+    }
+    return result;
+  }
+
+  public static SVNURL appendMultiParts(@NotNull final SVNURL base, @NotNull final String subPath) throws SVNException {
+    if (StringUtil.isEmpty(subPath)) return base;
+    final List<String> parts = StringUtil.split(subPath.replace('\\', '/'), "/", true);
+    SVNURL result = base;
+    for (String part : parts) {
+      result = result.appendPath(part, false);
+    }
+    return result;
   }
 }

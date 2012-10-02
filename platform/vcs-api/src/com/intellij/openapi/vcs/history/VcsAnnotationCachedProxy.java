@@ -104,6 +104,7 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
 
     final FileAnnotation fileAnnotation = delegate.compute();
     vcsAnnotation = cacheableAnnotationProvider.createCacheable(fileAnnotation);
+    if (vcsAnnotation == null) return fileAnnotation;
 
     if (revisionNumber != null) {
       myCache.put(filePath, myVcs.getKeyInstanceMethod(), revisionNumber, vcsAnnotation);
