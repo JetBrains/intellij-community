@@ -14,12 +14,12 @@ import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
+import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.java.ClassPostProcessor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -67,7 +67,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   public ModuleLevelBuilder.ExitCode build(final CompileContext context,
                                            ModuleChunk chunk,
-                                           DirtyFilesHolder<RootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
+                                           DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
     try {
       final List<File> toCompile = collectChangedFiles(context, dirtyFilesHolder);
       if (toCompile.isEmpty()) {
@@ -136,7 +136,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         final BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
         for (ModuleBuildTarget target : generationOutputs.keySet()) {
           File root = new File(generationOutputs.get(target));
-          rootsIndex.associateTempRoot(context, target, new RootDescriptor(root, target, true, true));
+          rootsIndex.associateTempRoot(context, target, new JavaSourceRootDescriptor(root, target, true, true));
         }
       }
 
@@ -206,7 +206,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
                                                                         GroovycOSProcessHandler.OutputItem item, Map<ModuleBuildTarget, String> generationOutputs, String compilerOutput) throws IOException {
     if (chunk.getModules().size() > 1) {
       final BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
-      RootDescriptor descriptor = rootsIndex.getModuleAndRoot(context, new File(item.sourcePath));
+      JavaSourceRootDescriptor descriptor = rootsIndex.getModuleAndRoot(context, new File(item.sourcePath));
       if (descriptor != null) {
         ModuleBuildTarget srcTarget = descriptor.target;
         if (!srcTarget.equals(chunk.representativeTarget())) {
@@ -238,12 +238,12 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   private static List<File> collectChangedFiles(CompileContext context,
-                                                DirtyFilesHolder<RootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws IOException {
+                                                DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws IOException {
     final ResourcePatterns patterns = ResourcePatterns.KEY.get(context);
     assert patterns != null;
     final List<File> toCompile = new ArrayList<File>();
-    dirtyFilesHolder.processDirtyFiles(new FileProcessor<RootDescriptor, ModuleBuildTarget>() {
-      public boolean apply(ModuleBuildTarget target, File file, RootDescriptor sourceRoot) throws IOException {
+    dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
+      public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor sourceRoot) throws IOException {
         final String path = file.getPath();
         if (isGroovyFile(path) && !patterns.isResourceFile(file, sourceRoot.root)) { //todo file type check
           toCompile.add(file);
@@ -269,7 +269,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       for (GroovycOSProcessHandler.OutputItem item : successfullyCompiled) {
         final String sourcePath = FileUtil.toSystemIndependentName(item.sourcePath);
         final String outputPath = FileUtil.toSystemIndependentName(item.outputPath);
-        final RootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, new File(sourcePath));
+        final JavaSourceRootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, new File(sourcePath));
         if (moduleAndRoot != null) {
           final ModuleBuildTarget target = moduleAndRoot.target;
           context.getProjectDescriptor().dataManager.getSourceToOutputMap(target).appendOutput(sourcePath, outputPath);

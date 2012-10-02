@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildRootIndex;
-import org.jetbrains.jps.incremental.fs.RootDescriptor;
+import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.model.JpsEncodingConfigurationService;
 import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
 import org.jetbrains.jps.model.JpsModel;
@@ -49,7 +49,7 @@ public class CompilerEncodingConfiguration {
       File file = JpsPathUtil.urlToFile(fileUrl);
       if (charset == null || (!file.isDirectory() && !shouldHonorEncodingForCompilation(builders, file))) continue;
 
-      final RootDescriptor rootDescriptor = myRootsIndex.getModuleAndRoot(null, file);
+      final JavaSourceRootDescriptor rootDescriptor = myRootsIndex.getModuleAndRoot(null, file);
       if (rootDescriptor == null) continue;
 
       final JpsModule module = rootDescriptor.target.getModule();

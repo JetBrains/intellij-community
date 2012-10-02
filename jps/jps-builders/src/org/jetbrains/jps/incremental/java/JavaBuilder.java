@@ -35,11 +35,11 @@ import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
+import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -124,7 +124,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         if (srcFile != null && content != null) {
           final String outputPath = FileUtil.toSystemIndependentName(out.getFile().getPath());
           final String sourcePath = FileUtil.toSystemIndependentName(srcFile.getPath());
-          final RootDescriptor rootDescriptor = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, srcFile);
+          final JavaSourceRootDescriptor rootDescriptor = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, srcFile);
           final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
           boolean isTemp = false;
           if (rootDescriptor != null) {
@@ -172,13 +172,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   public ExitCode build(final CompileContext context,
                         final ModuleChunk chunk,
-                        DirtyFilesHolder<RootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
+                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
     try {
       final Set<File> filesToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       final Set<File> formsToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
-      dirtyFilesHolder.processDirtyFiles(new FileProcessor<RootDescriptor, ModuleBuildTarget>() {
-        public boolean apply(ModuleBuildTarget target, File file, RootDescriptor sourceRoot) throws IOException {
+      dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
+        public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor sourceRoot) throws IOException {
           if (JAVA_SOURCES_FILTER.accept(file)) {
             filesToCompile.add(file);
           }
@@ -195,11 +195,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (!context.isProjectRebuild()) {
         for (Iterator<File> formsIterator = formsToCompile.iterator(); formsIterator.hasNext(); ) {
           final File form = formsIterator.next();
-          final RootDescriptor descriptor = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, form);
+          final JavaSourceRootDescriptor descriptor = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, form);
           if (descriptor == null) {
             continue;
           }
-          for (RootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(descriptor.target, context)) {
+          for (JavaSourceRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(descriptor.target, context)) {
             final File boundSource = getBoundSource(rd.root, form);
             if (boundSource == null) {
               continue;
@@ -330,7 +330,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final Set<File> tempRootsSourcePath = new HashSet<File>();
         final BuildRootIndex index = pd.getBuildRootIndex();
         for (ModuleBuildTarget target : chunk.getTargets()) {
-          for (RootDescriptor rd : index.getTempTargetRoots(target, context)) {
+          for (JavaSourceRootDescriptor rd : index.getTempTargetRoots(target, context)) {
             tempRootsSourcePath.add(rd.root);
           }
         }
@@ -893,7 +893,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         continue;
       }
       final Set<File> roots = new LinkedHashSet<File>();
-      for (RootDescriptor descriptor : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
+      for (JavaSourceRootDescriptor descriptor : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
         roots.add(descriptor.root);
       }
       map.put(outputDir, roots);
