@@ -97,4 +97,9 @@ public class UnnecessaryParenthesesInspection
       }
     }
 
+  void foo(Object a, boolean b) {
+    final boolean c = b == (a != null);
+    String s = "asdf" + (1 + 2 + "asdf");
+    boolean d = c == (1 < 3);
+  }
 }
