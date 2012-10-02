@@ -12,6 +12,8 @@ public class UnnecessaryParenthesesIntentionTest extends IPPTestCase {
   public void testCommutative() { doTest(); }
   public void testWrapping() { doTest(); }
   public void testNotCommutative() { assertIntentionNotAvailable(); }
+  public void testStringParentheses() { assertIntentionNotAvailable(); }
+  public void testComparisonParentheses() { assertIntentionNotAvailable(); }
   public void testNotCommutative2() { doTest(); }
 
   @Override

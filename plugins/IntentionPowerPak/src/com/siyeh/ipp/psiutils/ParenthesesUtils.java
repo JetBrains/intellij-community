@@ -405,28 +405,48 @@ public class ParenthesesUtils {
     if (parentExpression instanceof PsiParenthesizedExpression) {
       return false;
     }
-    else if (parentExpression instanceof PsiPolyadicExpression && expression instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression parentBinaryExpression = (PsiPolyadicExpression)parentExpression;
-      final PsiType parentType = parentBinaryExpression.getType();
+    final int parentPrecedence = getPrecedence(parentExpression);
+    final int childPrecedence = getPrecedence(expression);
+    if (parentPrecedence > childPrecedence) {
+      return false;
+    }
+    if (parentExpression instanceof PsiPolyadicExpression && expression instanceof PsiPolyadicExpression) {
+      final PsiPolyadicExpression parentPolyadicExpression = (PsiPolyadicExpression)parentExpression;
+      final PsiType parentType = parentPolyadicExpression.getType();
       if (parentType == null) {
         return true;
       }
-      final PsiPolyadicExpression childBinaryExpression = (PsiPolyadicExpression)expression;
-      final PsiType childType = childBinaryExpression.getType();
+      final PsiPolyadicExpression childPolyadicExpression = (PsiPolyadicExpression)expression;
+      final PsiType childType = childPolyadicExpression.getType();
       if (!parentType.equals(childType)) {
         return true;
       }
-      final PsiExpression[] parentOperands = parentBinaryExpression.getOperands();
+      if (childType.equalsToText(CommonClassNames.JAVA_LANG_STRING) &&
+          !PsiTreeUtil.isAncestor(parentPolyadicExpression.getOperands()[0], childPolyadicExpression, true)) {
+        final PsiExpression[] operands = childPolyadicExpression.getOperands();
+        for (PsiExpression operand : operands) {
+          if (!childType.equals(operand.getType())) {
+            return true;
+          }
+        }
+      }
+      else if (childType.equals(PsiType.BOOLEAN)) {
+        final PsiExpression[] operands = childPolyadicExpression.getOperands();
+        for (PsiExpression operand : operands) {
+          if (!PsiType.BOOLEAN.equals(operand.getType())) {
+            return true;
+          }
+        }
+      }
+      final PsiExpression[] parentOperands = parentPolyadicExpression.getOperands();
       if (!PsiTreeUtil.isAncestor(parentOperands[0], expression, false)) {
-        final IElementType parentOperator = parentBinaryExpression.getOperationTokenType();
+        final IElementType parentOperator = parentPolyadicExpression.getOperationTokenType();
         if (!isCommutativeBinaryOperator(parentOperator)) {
           return true;
         }
       }
       return false;
     }
-    final int parentPrecedence = getPrecedence(parentExpression);
-    final int childPrecedence = getPrecedence(expression);
-    return parentPrecedence < childPrecedence;
+    return parentPrecedence != childPrecedence;
   }
 }

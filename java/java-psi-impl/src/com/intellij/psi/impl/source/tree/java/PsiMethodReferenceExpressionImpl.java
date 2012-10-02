@@ -192,9 +192,11 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           substitutor = result.getSubstitutor();
         }
         if (containingClass == null && expression instanceof PsiReferenceExpression) {
-          final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
+          final JavaResolveResult resolveResult = ((PsiReferenceExpression)expression).advancedResolve(false);
+          final PsiElement resolve = resolveResult.getElement();
           if (resolve instanceof PsiClass) {
             containingClass = (PsiClass)resolve;
+            substitutor = resolveResult.getSubstitutor();
             return true;
           }
         }
@@ -286,7 +288,11 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                     if (signature == null) return PsiSubstitutor.EMPTY;
                     final PsiType[] types = method.getSignature(PsiSubstitutor.EMPTY).getParameterTypes();
                     final PsiType[] rightTypes = signature.getParameterTypes();
-                    if (types.length != rightTypes.length) return PsiSubstitutor.EMPTY;
+                    if (types.length < rightTypes.length) {
+                      return PsiUtil.resolveGenericsClassInType(rightTypes[0]).getSubstitutor();
+                    } else if (types.length > rightTypes.length) {
+                      return PsiUtil.resolveGenericsClassInType(types[0]).getSubstitutor();
+                    }
                     return JavaPsiFacade.getInstance(getProject()).getResolveHelper()
                       .inferTypeArguments(method.getTypeParameters(), types, rightTypes,
                                           PsiUtil.getLanguageLevel(PsiMethodReferenceExpressionImpl.this));
@@ -342,8 +348,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         final PsiType[] parameterTypes = mySignature.getParameterTypes();
         if (parameterTypes.length > 0) {
           final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(parameterTypes[0]);
-          if (LambdaUtil.isReceiverType(parameterTypes[0], myContainingClass) && 
-              ((parameterTypes[0] instanceof PsiClassType && ((PsiClassType)parameterTypes[0]).isRaw()) || classResolveResult.getSubstitutor().equals(mySubstitutor))) {
+          if (LambdaUtil.isReceiverType(parameterTypes[0], myContainingClass, mySubstitutor)) {
             hasReceiver = true;
           }
         }
@@ -355,8 +360,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           final PsiMethod psiMethod = ((MethodCandidateInfo)conflict).getElement();
           if (psiMethod == null) continue;
           PsiSubstitutor subst = PsiSubstitutor.EMPTY;
-          subst = subst.putAll(conflict.getSubstitutor());
           subst = subst.putAll(mySubstitutor);
+          subst = subst.putAll(conflict.getSubstitutor());
           final PsiType[] signatureParameterTypes2 = psiMethod.getSignature(subst).getParameterTypes();
 
           final boolean varArgs = psiMethod.isVarArgs();

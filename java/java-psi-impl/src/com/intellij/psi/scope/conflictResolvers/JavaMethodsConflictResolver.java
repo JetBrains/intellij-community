@@ -125,6 +125,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           }
         }
       }
+      else if (parameterType instanceof PsiMethodReferenceType) {
+        LambdaUtil.processMethodReferenceReturnType(conflicts, i);
+      }
     }
   }
 
@@ -451,7 +454,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       PsiType type2 = params2[Math.min(i, params2.length - 1)].getType();
       if (applicabilityLevel == MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
         if (type1 instanceof PsiEllipsisType && type2 instanceof PsiEllipsisType && 
-            (((PsiArrayType)type1).getComponentType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || ((PsiArrayType)type2).getComponentType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT))) {
+            (!JavaVersionService.getInstance().isAtLeast(class1, JavaSdkVersion.JDK_1_8) || ((PsiArrayType)type1).getComponentType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || ((PsiArrayType)type2).getComponentType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT))) {
           type1 = ((PsiEllipsisType)type1).toArrayType();
           type2 = ((PsiEllipsisType)type2).toArrayType();
         }

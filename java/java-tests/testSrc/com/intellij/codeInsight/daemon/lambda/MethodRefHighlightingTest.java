@@ -16,11 +16,23 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.projectRoots.JavaVersionServiceImpl;
 import org.jetbrains.annotations.NonNls;
 
 public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/methodRef";
 
+  @Override
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    return new LocalInspectionTool[]{
+      new UnusedSymbolLocalInspection(),
+    };
+  }
+  
   public void testValidContext() throws Exception {
     doTest();
   }
@@ -73,7 +85,30 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testReferenceParameters() throws Exception {
+    doTest();
+  }
+
+  public void testRawQualifier() throws Exception {
+    doTest();
+  }
+
+  public void testReturnTypeSpecific() throws Exception {
+    doTest(true);
+  }
+
   private void doTest() throws Exception {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
+    doTest(false);
+  }
+
+  private void doTest(final boolean warnings) throws Exception {
+    final JavaVersionServiceImpl versionService = (JavaVersionServiceImpl)JavaVersionService.getInstance();
+    try {
+      versionService.setTestVersion(JavaSdkVersion.JDK_1_8);
+      doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
+    }
+    finally {
+      versionService.setTestVersion(null);
+    }
   }
 }
