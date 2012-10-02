@@ -15,6 +15,8 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.Nullable;
+
 public interface Consumer<T> {
   Consumer EMPTY_CONSUMER = new Consumer() {
     public void consume(final Object t) {
@@ -24,7 +26,7 @@ public interface Consumer<T> {
   /**
    * @param t consequently takes value of each element of the set this processor is passed to for processing.
    */
-  void consume(T t);
+  void consume(@Nullable T t);
 
 
 }
