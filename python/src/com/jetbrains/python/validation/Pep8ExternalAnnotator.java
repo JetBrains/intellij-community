@@ -1,5 +1,8 @@
 package com.jetbrains.python.validation;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -7,6 +10,7 @@ import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -44,11 +48,13 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   public static class State {
     private final String interpreterPath;
     private final String fileText;
+    private final HighlightDisplayLevel level;
     public final List<Problem> problems = new ArrayList<Problem>();
 
-    public State(String interpreterPath, String fileText) {
+    public State(String interpreterPath, String fileText, HighlightDisplayLevel level) {
       this.interpreterPath = interpreterPath;
       this.fileText = fileText;
+      this.level = level;
     }
   }
 
@@ -59,7 +65,12 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     if (sdk == null) return null;
     final String homePath = sdk.getHomePath();
     if (homePath == null) return null;
-    return new State(homePath, file.getText());
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile();
+    final HighlightDisplayKey key = HighlightDisplayKey.find("PyPep8Inspection");
+    if (!profile.isToolEnabled(key)) {
+      return null;
+    }
+    return new State(homePath, file.getText(), profile.getErrorLevel(key, file));
   }
 
   @Nullable
@@ -101,7 +112,17 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         }
       }
       if (problemElement != null) {
-        final Annotation annotation = holder.createWeakWarningAnnotation(problemElement, "PEP8: " + problem.myDescription);
+        final Annotation annotation;
+        final String message = "PEP8: " + problem.myDescription;
+        if (annotationResult.level == HighlightDisplayLevel.ERROR) {
+          annotation = holder.createErrorAnnotation(problemElement, message);
+        }
+        else if (annotationResult.level == HighlightDisplayLevel.WARNING) {
+          annotation = holder.createWarningAnnotation(problemElement, message);
+        }
+        else {
+          annotation = holder.createWeakWarningAnnotation(problemElement, message);
+        }
         annotation.registerUniversalFix(new ReformatFix(), null, null);
       }
     }
