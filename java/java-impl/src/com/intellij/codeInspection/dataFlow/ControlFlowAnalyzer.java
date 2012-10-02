@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -754,8 +754,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override public void visitTryStatement(PsiTryStatement statement) {
     startElement(statement);
-    PsiCodeBlock finallyBlock = statement.getFinallyBlock();
 
+    PsiResourceList resourceList = statement.getResourceList();
+    if (resourceList != null) {
+      resourceList.accept(this);
+    }
+
+    PsiCodeBlock finallyBlock = statement.getFinallyBlock();
     if (finallyBlock != null) {
       myCatchStack.push(new CatchDescriptor(finallyBlock));
     }
@@ -815,6 +820,21 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitCatchSection(PsiCatchSection section) {
     PsiCodeBlock catchBlock = section.getCatchBlock();
     if (catchBlock != null) catchBlock.accept(this);
+  }
+
+  @Override
+  public void visitResourceList(PsiResourceList resourceList) {
+    startElement(resourceList);
+
+    List<PsiResourceVariable> variables = resourceList.getResourceVariables();
+    for (PsiResourceVariable variable : variables) {
+      PsiExpression initializer = variable.getInitializer();
+      if (initializer != null) {
+        initializeVariable(variable, initializer);
+      }
+    }
+
+    finishElement(resourceList);
   }
 
   @Override public void visitWhileStatement(PsiWhileStatement statement) {
