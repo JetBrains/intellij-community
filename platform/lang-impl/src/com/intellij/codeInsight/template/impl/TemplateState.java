@@ -16,12 +16,11 @@
 
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.CompletionInitializationContext;
-import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.completion.OffsetMap;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupAdapter;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupEvent;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
 import com.intellij.lang.LanguageLiteralEscapers;
@@ -31,7 +30,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
@@ -44,7 +42,6 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -57,6 +54,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -313,7 +311,7 @@ public class TemplateState implements Disposable {
       myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset + template.getTemplateText().length());
     }
     else {
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
+      PsiFile file = getPsiFile();
       preprocessTemplate(file, myEditor.getCaretModel().getOffset(), myTemplate.getTemplateText());
       int caretOffset = myEditor.getCaretModel().getOffset();
       myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset);
@@ -402,7 +400,7 @@ public class TemplateState implements Disposable {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
+        final PsiFile file = getPsiFile();
         if (file != null) {
           IntArrayList indices = initEmptyVariables();
           mySegments.setSegmentsGreedy(false);
@@ -486,26 +484,23 @@ public class TemplateState implements Disposable {
       myEditor.getSelectionModel().setSelection(start, end);
     }
     
-    Expression expressionNode = myTemplate.getExpressionAt(myCurrentVariableNumber);
-    final ExpressionContext context = createExpressionContext(start);
-    final LookupElement[] lookupItems = expressionNode.calculateLookupItems(context);
-    final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-    if (lookupItems != null && lookupItems.length > 0) {
+    Expression expressionNode = getCurrentExpression();
+    final List<TemplateExpressionLookupElement> lookupItems = getCurrentExpressionLookupItems();
+    final PsiFile psiFile = getPsiFile();
+    if (!lookupItems.isEmpty()) {
       if (((TemplateManagerImpl)TemplateManager.getInstance(myProject)).shouldSkipInTests()) {
-        final String s = lookupItems[0].getLookupString();
-        EditorModificationUtil.insertStringAtCaret(myEditor, s);
-        itemSelected(lookupItems[0], psiFile, currentSegmentNumber, ' ', lookupItems);
+        insertSingleItem(lookupItems);
       }
       else {
         for (LookupElement lookupItem : lookupItems) {
           assert lookupItem != null : expressionNode;
         }
 
-        runLookup(currentSegmentNumber, lookupItems, expressionNode.getAdvertisingText(), psiFile);
+        runLookup(lookupItems, expressionNode.getAdvertisingText());
       }
     }
     else {
-      Result result = expressionNode.calculateResult(context);
+      Result result = expressionNode.calculateResult(getCurrentExpressionContext());
       if (result != null) {
         result.handleFocused(psiFile, myDocument, mySegments.getSegmentStart(currentSegmentNumber),
                              mySegments.getSegmentEnd(currentSegmentNumber));
@@ -514,12 +509,42 @@ public class TemplateState implements Disposable {
     focusCurrentHighlighter(true);
   }
 
-  private void runLookup(final int currentSegmentNumber, final LookupElement[] lookupItems, String advertisingText, final PsiFile psiFile) {
+  PsiFile getPsiFile() {
+    return PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
+  }
+
+  private void insertSingleItem(List<TemplateExpressionLookupElement> lookupItems) {
+    TemplateExpressionLookupElement first = lookupItems.get(0);
+    EditorModificationUtil.insertStringAtCaret(myEditor, first.getLookupString());
+    first.handleTemplateInsert(lookupItems);
+  }
+
+  @NotNull
+  List<TemplateExpressionLookupElement> getCurrentExpressionLookupItems() {
+    LookupElement[] elements = getCurrentExpression().calculateLookupItems(getCurrentExpressionContext());
+    if (elements == null) return Collections.emptyList();
+
+    List<TemplateExpressionLookupElement> result = ContainerUtil.newArrayList();
+    for (int i = 0; i < elements.length; i++) {
+      result.add(new TemplateExpressionLookupElement(this, elements[i], i));
+    }
+    return result;
+  }
+
+  ExpressionContext getCurrentExpressionContext() {
+    return createExpressionContext(mySegments.getSegmentStart(getCurrentSegmentNumber()));
+  }
+
+  Expression getCurrentExpression() {
+    return myTemplate.getExpressionAt(myCurrentVariableNumber);
+  }
+
+  private void runLookup(final List<TemplateExpressionLookupElement> lookupItems, String advertisingText) {
     if (myEditor == null) return;
 
     final LookupManager lookupManager = LookupManager.getInstance(myProject);
 
-    final LookupImpl lookup = (LookupImpl)lookupManager.showLookup(myEditor, lookupItems);
+    final LookupImpl lookup = (LookupImpl)lookupManager.showLookup(myEditor, lookupItems.toArray(new LookupElement[lookupItems.size()]));
     if (lookup == null) return;
 
     if (CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP && myEditor.getUserData(InplaceRefactoring.INPLACE_RENAMER) == null) {
@@ -542,59 +567,12 @@ public class TemplateState implements Disposable {
         if (isFinished()) return;
         ourLookupShown = false;
 
-        TemplateState.this.itemSelected(event.getItem(), psiFile, currentSegmentNumber, event.getCompletionChar(), lookupItems);
+        LookupElement item = event.getItem();
+        if (item instanceof TemplateExpressionLookupElement) {
+          ((TemplateExpressionLookupElement)item).handleTemplateInsert(lookupItems);
+        }
       }
     });
-  }
-
-  private void itemSelected(final LookupElement item,
-                            final PsiFile psiFile,
-                            final int currentSegmentNumber,
-                            final char completionChar,
-                            LookupElement[] elements) {
-    if (item != null) {
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-      final OffsetMap offsetMap = new OffsetMap(myDocument);
-      final InsertionContext context = new InsertionContext(offsetMap, (char)0, elements, psiFile, myEditor, false);
-      context.setTailOffset(myEditor.getCaretModel().getOffset());
-      offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, context.getTailOffset() - item.getLookupString().length());
-      offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, context.getTailOffset());
-      offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, context.getTailOffset());
-
-      final TemplateLookupSelectionHandler handler =
-        item instanceof LookupItem ? ((LookupItem<?>)item).getAttribute(TemplateLookupSelectionHandler.KEY_IN_LOOKUP_ITEM) : null;
-      if (handler != null) {
-        handler.itemSelected(item, psiFile, myDocument, mySegments.getSegmentStart(currentSegmentNumber),
-                             mySegments.getSegmentEnd(currentSegmentNumber));
-      }
-      else {
-        new WriteCommandAction(myProject) {
-          @Override
-          protected void run(com.intellij.openapi.application.Result result) throws Throwable {
-            item.handleInsert(context);
-          }
-        }.execute();
-      }
-      Disposer.dispose(offsetMap);
-
-      if (completionChar == '.') {
-        EditorModificationUtil.insertStringAtCaret(myEditor, ".");
-        AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor, null);
-        return;
-      }
-
-      if (!isFinished()) {
-        calcResults(true);
-      }
-    }
-
-    new WriteCommandAction(myProject) {
-      @Override
-      protected void run(com.intellij.openapi.application.Result result) throws Throwable {
-        nextTab();
-      }
-    }.execute();
   }
 
   private void unblockDocument() {
@@ -603,7 +581,7 @@ public class TemplateState implements Disposable {
   }
 
   // Hours spent fixing code : 1
-  private void calcResults(final boolean isQuick) {
+  void calcResults(final boolean isQuick) {
     if (myProcessor != null && myCurrentVariableNumber >= 0) {
       final String variableName = myTemplate.getVariableNameAt(myCurrentVariableNumber);
       final TextResult value = getVariableValue(variableName);
@@ -672,7 +650,7 @@ public class TemplateState implements Disposable {
     int end = mySegments.getSegmentEnd(segmentNumber);
 
     PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
+    PsiFile psiFile = getPsiFile();
     PsiElement element = psiFile.findElementAt(start);
 
     ExpressionContext context = createExpressionContext(start);
@@ -1012,7 +990,7 @@ public class TemplateState implements Disposable {
   }
 
   private void reformat(RangeMarker rangeMarkerToReformat) {
-    final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
+    final PsiFile file = getPsiFile();
     if (file != null) {
       CodeStyleManager style = CodeStyleManager.getInstance(myProject);
       for (TemplateOptionalProcessor optionalProcessor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
