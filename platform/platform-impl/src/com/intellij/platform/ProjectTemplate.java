@@ -16,7 +16,8 @@
 package com.intellij.platform;
 
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
-import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -30,9 +31,9 @@ public interface ProjectTemplate {
 
   String getDescription();
 
-  ProjectBuilder createModuleBuilder();
-
+  @Nullable
   JComponent getSettingsPanel();
 
-  void generateProject(Module module);
+  @NotNull
+  ProjectBuilder createModuleBuilder();
 }

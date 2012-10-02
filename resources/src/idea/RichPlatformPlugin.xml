@@ -297,7 +297,7 @@
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.ImportImlMode" id="ImportImlMode"/>
 
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode" id="CreateFromTemplateMode" order="last"/>
-    <projectTemplatesFactory implementation="com.intellij.platform.templates.GithubBasedTemplatesFactory"/>
+    <projectTemplatesFactory implementation="com.intellij.platform.templates.ArchivedTemplatesFactory"/>
 
     <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.ProjectBaseDirNavigationContributor"/>
 
