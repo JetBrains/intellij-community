@@ -3,11 +3,11 @@ package org.jetbrains.jps.incremental.artifacts.impl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.jps.incremental.artifacts.JpsBuilderArtifactService;
 import org.jetbrains.jps.incremental.artifacts.JpsSyntheticArtifactProvider;
+import org.jetbrains.jps.model.JpsElementCollection;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.JpsArtifactService;
 import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
-import org.jetbrains.jps.model.impl.JpsElementCollectionImpl;
 import org.jetbrains.jps.model.impl.JpsElementCollectionRole;
 import org.jetbrains.jps.service.JpsServiceManager;
 
@@ -31,7 +31,7 @@ public class JpsBuilderArtifactServiceImpl extends JpsBuilderArtifactService {
   }
 
   public List<JpsArtifact> getSyntheticArtifacts(final JpsModel model) {
-    JpsElementCollectionImpl<JpsArtifact> artifactsCollection = model.getProject().getContainer().getChild(SYNTHETIC_ARTIFACTS);
+    JpsElementCollection<JpsArtifact> artifactsCollection = model.getProject().getContainer().getChild(SYNTHETIC_ARTIFACTS);
     if (artifactsCollection == null) {
       List<JpsArtifact> artifactList = computeSyntheticArtifacts(model);
       artifactsCollection = model.getProject().getContainer().setChild(SYNTHETIC_ARTIFACTS);

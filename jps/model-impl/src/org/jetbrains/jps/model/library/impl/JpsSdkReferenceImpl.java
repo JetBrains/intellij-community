@@ -4,8 +4,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsCompositeElement;
 import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementCollection;
 import org.jetbrains.jps.model.JpsElementReference;
-import org.jetbrains.jps.model.impl.JpsElementCollectionImpl;
 import org.jetbrains.jps.model.impl.JpsNamedElementReferenceBase;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
@@ -47,7 +47,7 @@ public class JpsSdkReferenceImpl<P extends JpsElement> extends JpsNamedElementRe
   }
 
   @Nullable
-  protected JpsElementCollectionImpl<? extends JpsLibrary> getCollection(@NotNull JpsCompositeElement parent) {
+  protected JpsElementCollection<? extends JpsLibrary> getCollection(@NotNull JpsCompositeElement parent) {
     return parent.getContainer().getChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE);
   }
 }

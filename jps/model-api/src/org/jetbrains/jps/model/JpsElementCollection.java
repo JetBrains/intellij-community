@@ -16,4 +16,9 @@ public interface JpsElementCollection<E extends JpsElement> extends JpsElement {
   <X extends E> X addChild(X element);
 
   void removeChild(@NotNull E element);
+
+  void removeAllChildren();
+
+  <X extends JpsTypedElement<P>, P extends JpsElement>
+  Iterable<X> getElementsOfType(@NotNull JpsElementType<P> type);
 }

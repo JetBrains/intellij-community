@@ -2,8 +2,8 @@ package org.jetbrains.jps.model.library.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementCollection;
 import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
-import org.jetbrains.jps.model.impl.JpsElementCollectionImpl;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryCollection;
 import org.jetbrains.jps.model.library.JpsLibraryType;
@@ -15,9 +15,9 @@ import java.util.List;
  * @author nik
  */
 public class JpsLibraryCollectionImpl implements JpsLibraryCollection {
-  private final JpsElementCollectionImpl<JpsLibrary> myCollection;
+  private final JpsElementCollection<JpsLibrary> myCollection;
 
-  public JpsLibraryCollectionImpl(JpsElementCollectionImpl<JpsLibrary> collection) {
+  public JpsLibraryCollectionImpl(JpsElementCollection<JpsLibrary> collection) {
     myCollection = collection;
   }
 

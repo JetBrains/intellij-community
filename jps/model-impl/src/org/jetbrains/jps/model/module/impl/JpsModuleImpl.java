@@ -113,7 +113,7 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
 
   @Override
   public void removeSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType rootType) {
-    final JpsElementCollectionImpl<JpsModuleSourceRoot> roots = myContainer.getChild(JpsModuleSourceRootRole.ROOT_COLLECTION_ROLE);
+    final JpsElementCollection<JpsModuleSourceRoot> roots = myContainer.getChild(JpsModuleSourceRootRole.ROOT_COLLECTION_ROLE);
     for (JpsModuleSourceRoot root : roots.getElements()) {
       if (root.getRootType().equals(rootType) && root.getUrl().equals(url)) {
         roots.removeChild(root);

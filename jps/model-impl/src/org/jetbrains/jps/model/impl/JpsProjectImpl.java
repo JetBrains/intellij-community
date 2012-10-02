@@ -47,7 +47,7 @@ public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implement
   public
   <P extends JpsElement, ModuleType extends JpsModuleType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsModule addModule(@NotNull final String name, @NotNull ModuleType moduleType) {
-    final JpsElementCollectionImpl<JpsModule> collection = myContainer.getChild(JpsModuleRole.MODULE_COLLECTION_ROLE);
+    final JpsElementCollection<JpsModule> collection = myContainer.getChild(JpsModuleRole.MODULE_COLLECTION_ROLE);
     return collection.addChild(new JpsModuleImpl<P>(moduleType, name, moduleType.createDefaultProperties()));
   }
 

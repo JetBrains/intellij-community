@@ -29,7 +29,7 @@ public abstract class JpsNamedElementReferenceBase<S extends JpsNamedElement, T 
     final JpsCompositeElement parent = getParentReference().resolve();
     if (parent == null) return null;
 
-    JpsElementCollectionImpl<? extends S> collection = getCollection(parent);
+    JpsElementCollection<? extends S> collection = getCollection(parent);
     if (collection == null) return null;
 
     final List<? extends S> elements = collection.getElements();
@@ -45,7 +45,7 @@ public abstract class JpsNamedElementReferenceBase<S extends JpsNamedElement, T 
   }
 
   @Nullable
-  protected abstract JpsElementCollectionImpl<? extends S> getCollection(@NotNull JpsCompositeElement parent);
+  protected abstract JpsElementCollection<? extends S> getCollection(@NotNull JpsCompositeElement parent);
 
   @Nullable
   protected abstract T resolve(S element);

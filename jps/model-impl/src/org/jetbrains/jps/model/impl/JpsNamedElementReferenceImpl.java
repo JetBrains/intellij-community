@@ -3,6 +3,7 @@ package org.jetbrains.jps.model.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsCompositeElement;
+import org.jetbrains.jps.model.JpsElementCollection;
 import org.jetbrains.jps.model.JpsElementReference;
 import org.jetbrains.jps.model.JpsNamedElement;
 
@@ -29,7 +30,7 @@ public abstract class JpsNamedElementReferenceImpl<T extends JpsNamedElement, Se
   }
 
   @Nullable
-  protected JpsElementCollectionImpl<? extends T> getCollection(@NotNull JpsCompositeElement parent) {
+  protected JpsElementCollection<? extends T> getCollection(@NotNull JpsCompositeElement parent) {
     return parent.getContainer().getChild(myCollectionRole);
   }
 }

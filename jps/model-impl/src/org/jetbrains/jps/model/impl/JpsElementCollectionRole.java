@@ -6,8 +6,8 @@ import org.jetbrains.jps.model.*;
 /**
  * @author nik
  */
-public class JpsElementCollectionRole<E extends JpsElement> extends JpsElementChildRoleBase<JpsElementCollectionImpl<E>>
-                                                            implements JpsElementCreator<JpsElementCollectionImpl<E>> {
+public class JpsElementCollectionRole<E extends JpsElement> extends JpsElementChildRoleBase<JpsElementCollection<E>>
+                                                            implements JpsElementCreator<JpsElementCollection<E>> {
   private final JpsElementChildRole<E> myChildRole;
 
   private JpsElementCollectionRole(@NotNull JpsElementChildRole<E> role) {
@@ -17,7 +17,7 @@ public class JpsElementCollectionRole<E extends JpsElement> extends JpsElementCh
 
   @NotNull
   @Override
-  public JpsElementCollectionImpl<E> create() {
+  public JpsElementCollection<E> create() {
     return new JpsElementCollectionImpl<E>(myChildRole);
   }
 

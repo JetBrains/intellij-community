@@ -22,7 +22,7 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
     myCopyToOriginal = null;
   }
 
-  public JpsElementCollectionImpl(JpsElementCollectionImpl<E> original) {
+  private JpsElementCollectionImpl(JpsElementCollectionImpl<E> original) {
     myChildRole = original.myChildRole;
     myElements = new SmartList<E>();
     myCopyToOriginal = new HashMap<E, E>();
@@ -40,8 +40,9 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
     return myElements;
   }
 
-  public <X extends E, P extends JpsElement> Iterable<X> getElementsOfType(@NotNull final JpsElementType<P> type) {
-    return new JpsElementIterable<X>(type);
+  @Override
+  public <X extends JpsTypedElement<P>, P extends JpsElement> Iterable<X> getElementsOfType(@NotNull final JpsElementType<P> type) {
+    return new JpsElementIterable<X, P>(type);
   }
 
   @NotNull
@@ -73,6 +74,7 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
     }
   }
 
+  @Override
   public void removeAllChildren() {
     List<E> elements = new ArrayList<E>(myElements);
     for (E element : elements) {
@@ -111,19 +113,21 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
     }
   }
 
-  private class JpsElementIterable<X extends E> implements Iterable<X> {
+  private class JpsElementIterable<X extends JpsTypedElement<P>, P extends JpsElement> implements Iterable<X> {
     private final JpsElementType<? extends JpsElement> myType;
 
-    public JpsElementIterable(JpsElementType<? extends JpsElement> type) {
+    public JpsElementIterable(JpsElementType<P> type) {
       myType = type;
     }
 
     @Override
     public Iterator<X> iterator() {
-      return new FilteringIterator<E, X>(myElements.iterator(), new Condition<E>() {
+      //noinspection unchecked
+      Iterator<JpsTypedElement<?>> iterator = (Iterator<JpsTypedElement<?>>)myElements.iterator();
+      return new FilteringIterator<JpsTypedElement<?>, X>(iterator, new Condition<JpsTypedElement<?>>() {
         @Override
-        public boolean value(E e) {
-          return e instanceof JpsTypedElement && ((JpsTypedElement<?>)e).getType().equals(myType);
+        public boolean value(JpsTypedElement<?> e) {
+          return e.getType().equals(myType);
         }
       });
     }

@@ -1,12 +1,22 @@
 package org.jetbrains.jps.model;
 
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.jps.model.java.JpsJavaLibraryType;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.*;
 
 /**
  * @author nik
  */
 public class JpsLibraryTest extends JpsModelTestCase {
+  public void testAddLibrary() {
+    JpsLibrary a = myProject.addLibrary("a", JpsJavaLibraryType.INSTANCE);
+    JpsLibraryCollection collection = myProject.getLibraryCollection();
+    assertSameElements(collection.getLibraries(), a);
+    assertSameElements(ContainerUtilRt.newArrayList(collection.getLibraries(JpsJavaLibraryType.INSTANCE)), a);
+    assertEmpty(ContainerUtilRt.newArrayList(collection.getLibraries(JpsJavaSdkType.INSTANCE)));
+  }
+
   public void testAddRoot() {
     final JpsLibrary library = myProject.addLibrary("a", JpsJavaLibraryType.INSTANCE);
     library.addRoot("file://my-url", JpsOrderRootType.COMPILED);
