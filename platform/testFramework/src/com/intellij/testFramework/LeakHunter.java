@@ -30,6 +30,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -44,25 +45,25 @@ import java.util.Set;
  * User: cdr
  */
 public class LeakHunter {
-  private static final Map<Class, List<Field>> allFields = new THashMap<Class, List<Field>>();
-  private static List<Field> getAllFields(Class aClass) {
-    List<Field> cached = allFields.get(aClass);
+  private static final Map<Class, Field[]> allFields = new THashMap<Class, Field[]>();
+  private static Field[] getAllFields(@NotNull Class aClass) {
+    Field[] cached = allFields.get(aClass);
     if (cached == null) {
       Field[] declaredFields = aClass.getDeclaredFields();
-      cached =new ArrayList<Field>(declaredFields.length + 5);
+      List<Field> fields = new ArrayList<Field>(declaredFields.length + 5);
       for (Field declaredField : declaredFields) {
         declaredField.setAccessible(true);
-        cached.add(declaredField);
+        fields.add(declaredField);
       }
       Class superclass = aClass.getSuperclass();
       if (superclass != null) {
         for (Field sup : getAllFields(superclass)) {
-          if (!cached.contains(sup)) {
-            cached.add(sup);
+          if (!fields.contains(sup)) {
+            fields.add(sup);
           }
         }
       }
-      ((ArrayList)cached).trimToSize();
+      cached = fields.toArray(new Field[fields.size()]);
       allFields.put(aClass, cached);
     }
     return cached;
@@ -75,7 +76,7 @@ public class LeakHunter {
     private final Field field;
     private final BackLink backLink;
 
-    private BackLink(Class aClass, Object value, Field field, BackLink backLink) {
+    private BackLink(@NotNull Class aClass, @NotNull Object value, Field field, BackLink backLink) {
       this.aClass = aClass;
       this.value = value;
       this.field = field;
@@ -84,15 +85,14 @@ public class LeakHunter {
   }
 
   private static final Stack<BackLink> toVisit = new Stack<BackLink>();
-  private static void walkObjects(Processor<BackLink> leakProcessor, Class lookFor) {
+  private static void walkObjects(@NotNull Class lookFor, @NotNull Processor<BackLink> leakProcessor) {
     while (true) {
       if (toVisit.isEmpty()) return;
       BackLink backLink = toVisit.pop();
       Object root = backLink.value;
       if (!visited.add(root)) continue;
       Class rootClass = backLink.aClass;
-      List<Field> fields = getAllFields(rootClass);
-      for (Field field : fields) {
+      for (Field field : getAllFields(rootClass)) {
         String fieldName = field.getName();
         if (root instanceof Reference && "referent".equals(fieldName)) continue; // do not follow weak/soft refs
         Object value;
@@ -138,7 +138,7 @@ public class LeakHunter {
   }
 
   private static final Key<Boolean> IS_NOT_A_LEAK = Key.create("IS_NOT_A_LEAK");
-  public static void markAsNotALeak(UserDataHolder object) {
+  public static void markAsNotALeak(@NotNull UserDataHolder object) {
     object.putUserData(IS_NOT_A_LEAK, Boolean.TRUE);
   }
   private static boolean isReallyLeak(Field field, String fieldName, Object value, Class valueClass) {
@@ -167,7 +167,7 @@ public class LeakHunter {
 
   private static final Key<Boolean> REPORTED_LEAKED = Key.create("REPORTED_LEAKED");
   @TestOnly
-  public static void checkProjectLeak(Object root) throws Exception {
+  public static void checkProjectLeak(@NotNull Object root) throws Exception {
     checkLeak(root, ProjectImpl.class);
   }
   @TestOnly
@@ -175,7 +175,7 @@ public class LeakHunter {
     checkLeak(root, suspectClass, null);
   }
   @TestOnly
-  public static <T> void checkLeak(@NotNull Object root, @NotNull Class<T> suspectClass, final Processor<T> isReallyLeak) throws AssertionError {
+  public static <T> void checkLeak(@NotNull Object root, @NotNull Class<T> suspectClass, @Nullable final Processor<T> isReallyLeak) throws AssertionError {
     if (SwingUtilities.isEventDispatchThread()) {
       UIUtil.dispatchAllInvocationEvents();
     }
@@ -187,7 +187,7 @@ public class LeakHunter {
     visited.clear();
     toVisit.push(new BackLink(root.getClass(), root, null,null));
     try {
-      walkObjects(new Processor<BackLink>() {
+      walkObjects(suspectClass, new Processor<BackLink>() {
         @Override
         public boolean process(BackLink backLink) {
           UserDataHolder leaked = (UserDataHolder)backLink.value;
@@ -212,7 +212,7 @@ public class LeakHunter {
           }
           return true;
         }
-      }, suspectClass);
+      });
     }
     finally {
       visited.clear();
