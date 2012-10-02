@@ -624,6 +624,8 @@
     <fileBasedIndex implementation="com.jetbrains.django.lang.template.DjangoBlockInheritanceIndex"/>
     <definitionsSearch implementation="com.jetbrains.django.lang.template.DjangoBlockInheritorsSearchExecutor"/>
 
+    <annotator language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.highlighting.DjangoTemplateAnnotator"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
     <framework.detector implementation="com.jetbrains.appengine.facet.AppEngineFrameworkDetector"/>
