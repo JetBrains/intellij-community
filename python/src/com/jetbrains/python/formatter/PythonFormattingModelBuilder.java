@@ -105,8 +105,11 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       .around(BITWISE_OPERATIONS).spaceIf(commonSettings.SPACE_AROUND_BITWISE_OPERATORS)
       .around(EQUALITY_OPERATIONS).spaceIf(commonSettings.SPACE_AROUND_EQUALITY_OPERATORS)
       .around(RELATIONAL_OPERATIONS).spaceIf(commonSettings.SPACE_AROUND_RELATIONAL_OPERATORS)
-      .around(IN_KEYWORD).spaces(1);
+      .around(SINGLE_SPACE_KEYWORDS).spaces(1);
   }
+
+  // should be all keywords?
+  private static final TokenSet SINGLE_SPACE_KEYWORDS = TokenSet.create(IN_KEYWORD, AND_KEYWORD, OR_KEYWORD, IS_KEYWORD);
 
   private static TokenSet allButLambda() {
     final PythonLanguage pythonLanguage = PythonLanguage.getInstance();
