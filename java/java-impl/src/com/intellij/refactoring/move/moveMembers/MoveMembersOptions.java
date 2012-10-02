@@ -16,6 +16,7 @@
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.psi.PsiMember;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author dyoma
@@ -25,6 +26,7 @@ public interface MoveMembersOptions {
 
   String getTargetClassName();
 
+  @Nullable
   String getMemberVisibility();
 
   boolean makeEnumConstant();

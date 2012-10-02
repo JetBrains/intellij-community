@@ -224,7 +224,8 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
         ExportableOrderEntry exportableEntry = (ExportableOrderEntry)entry;
         if (shouldAdd == OrderEnumerationHandler.AddDependencyType.DEFAULT) {
           final DependencyScope scope = exportableEntry.getScope();
-          if (myCompileOnly && !scope.isForProductionCompile() && !scope.isForTestCompile()) continue;
+          boolean forTestCompile = scope.isForTestCompile() || scope == DependencyScope.RUNTIME && shouldAddRuntimeDependenciesToTestCompilationClasspath();
+          if (myCompileOnly && !scope.isForProductionCompile() && !forTestCompile) continue;
           if (myRuntimeOnly && !scope.isForProductionRuntime() && !scope.isForTestRuntime()) continue;
           if (myProductionOnly) {
             if (!scope.isForProductionCompile() && !scope.isForProductionRuntime()
@@ -244,7 +245,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
       if (myRecursively && entry instanceof ModuleOrderEntry) {
         ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
         final Module module = moduleOrderEntry.getModule();
-        if (module != null && shouldProcessRecursively(moduleOrderEntry)) {
+        if (module != null && shouldProcessRecursively()) {
           processEntries(getRootModel(module), processor, processed, false);
           continue;
         }
@@ -257,15 +258,22 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     }
   }
 
-  private boolean shouldProcessRecursively(ModuleOrderEntry moduleOrderEntry) {
-    boolean processRecursively = true;
+  private boolean shouldAddRuntimeDependenciesToTestCompilationClasspath() {
     for (OrderEnumerationHandler handler : myCustomHandlers) {
-      if (!handler.shouldProcessRecursively(moduleOrderEntry)) {
-        processRecursively = false;
-        break;
+      if (handler.shouldAddRuntimeDependenciesToTestCompilationClasspath()) {
+        return true;
       }
     }
-    return processRecursively;
+    return false;
+  }
+
+  private boolean shouldProcessRecursively() {
+    for (OrderEnumerationHandler handler : myCustomHandlers) {
+      if (!handler.shouldProcessDependenciesRecursively()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
@@ -293,7 +301,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
           final Module module = ((ModuleSourceOrderEntry)orderEntry).getRootModel().getModule();
           return processor.process(module);
         }
-        else if (orderEntry instanceof ModuleOrderEntry && (!myRecursively || !shouldProcessRecursively((ModuleOrderEntry)orderEntry))) {
+        else if (orderEntry instanceof ModuleOrderEntry && (!myRecursively || !shouldProcessRecursively())) {
           final Module module = ((ModuleOrderEntry)orderEntry).getModule();
           if (module != null) {
             return processor.process(module);
@@ -311,19 +319,13 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     return processor.myValue;
   }
 
-  boolean addCustomOutput(Module forModule, ModuleRootModel orderEntryRootModel, OrderRootType type, Collection<VirtualFile> result) {
+  boolean shouldIncludeTestsFromDependentModulesToTestClasspath() {
     for (OrderEnumerationHandler handler : myCustomHandlers) {
-      final List<String> urls = new ArrayList<String>();
-      final boolean added =
-        handler.addCustomOutput(forModule, orderEntryRootModel, type, this, urls);
-      for (String url : urls) {
-        ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), result);
-      }
-      if (added) {
-        return true;
+      if (!handler.shouldIncludeTestsFromDependentModulesToTestClasspath()) {
+        return false;
       }
     }
-    return false;
+    return true;
   }
 
   boolean addCustomRootsForLibrary(OrderEntry forOrderEntry, OrderRootType type, Collection<VirtualFile> result) {
@@ -352,31 +354,6 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
       }
     }
     return false;
-  }
-
-  boolean addCustomOutputUrls(Module forModule, ModuleRootModel orderEntryRootModel, OrderRootType type, Collection<String> result) {
-    for (OrderEnumerationHandler handler : myCustomHandlers) {
-      if (handler.addCustomOutput(forModule, orderEntryRootModel, type, this, result)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  void addAdditionalRoots(Module forModule, Collection<VirtualFile> result) {
-    final List<String> urls = new ArrayList<String>();
-    for (OrderEnumerationHandler handler : myCustomHandlers) {
-      handler.addAdditionalRoots(forModule, this, urls);
-    }
-    for (String url : urls) {
-      ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), result);
-    }
-  }
-
-  void addAdditionalRootsUrls(Module forModule, Collection<String> result) {
-    for (OrderEnumerationHandler handler : myCustomHandlers) {
-      handler.addAdditionalRoots(forModule, this, result);
-    }
   }
 
   @Override

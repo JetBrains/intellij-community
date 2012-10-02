@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>DesignForExtension.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Design for extension</problem_class>
+    <description>Method &lt;code&gt;equals()&lt;/code&gt; may be overridden and its functionality ignored #loc</description>
+  </problem>
+</problems>

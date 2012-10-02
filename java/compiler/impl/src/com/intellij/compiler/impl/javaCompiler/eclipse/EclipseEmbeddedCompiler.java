@@ -18,7 +18,6 @@ package com.intellij.compiler.impl.javaCompiler.eclipse;
 import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
-import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
@@ -33,6 +32,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.compiler.EclipseCompilerOptions;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,7 +75,7 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
 
   @NotNull
   public Configurable createConfigurable() {
-    return new EclipseCompilerConfigurable(EclipseEmbeddedCompilerConfiguration.getSettings(myProject, EclipseEmbeddedCompilerConfiguration.class));
+    return new EclipseCompilerConfigurable(EclipseEmbeddedCompilerConfiguration.getOptions(myProject, EclipseEmbeddedCompilerConfiguration.class));
   }
 
   @NotNull
@@ -108,8 +108,8 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         try {
-          JavacSettings settings = EclipseEmbeddedCompilerConfiguration.getSettings(myProject, EclipseEmbeddedCompilerConfiguration.class);
-          myEclipseExternalCompiler.addCommandLineOptions(commandLine, chunk, outputDir, settings, false, false);
+          final EclipseCompilerOptions options = EclipseCompilerConfiguration.getOptions(myProject, EclipseEmbeddedCompilerConfiguration.class);
+          myEclipseExternalCompiler.addCommandLineOptions(commandLine, chunk, outputDir, options, false, false);
         }
         catch (IOException e) {
           ex[0] = e;

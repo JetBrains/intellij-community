@@ -967,6 +967,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
     myHolder.add(HighlightUtil.checkMethodReferencesFeature(expression));
+    JavaResolveResult result;
+    try {
+      result = expression.advancedResolve(true);
+    }
+    catch (IndexNotReadyException e) {
+      return;
+    }
+    if (myRefCountHolder != null) {
+      myRefCountHolder.registerReference(expression, result);
+    }
   }
 
   @Override

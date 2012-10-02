@@ -28,7 +28,7 @@ class PrimitiveValueBinding implements Binding {
     this.myType = myType;
   }
 
-  public Object serialize(Object o, Object context) {
+  public Object serialize(Object o, Object context, SerializationFilter filter) {
     return new Text(String.valueOf(o));
   }
 

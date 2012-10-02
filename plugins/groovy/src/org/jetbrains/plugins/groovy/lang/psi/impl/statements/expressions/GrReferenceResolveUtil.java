@@ -209,7 +209,7 @@ public class GrReferenceResolveUtil {
       }
     }
     else if (qualifierType instanceof PsiArrayType) {
-      final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(place.getProject()).getArrayClass();
+      final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(place.getProject()).getArrayClass(((PsiArrayType)qualifierType).getComponentType());
       if (!arrayClass.processDeclarations(processor, state, null, place)) return false;
     }
 
@@ -255,4 +255,15 @@ public class GrReferenceResolveUtil {
     }
     return null;
   }
+
+  public static PsiType getThisType(GrReferenceExpression ref) {
+    GrExpression qualifier = ref.getQualifierExpression();
+    if (qualifier != null) {
+      PsiType qType = qualifier.getType();
+      if (qType != null) return qType;
+    }
+
+    return TypesUtil.getJavaLangObject(ref);
+  }
+
 }

@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.OpenTHashSet;
@@ -38,14 +40,14 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   private LocalChangeListImpl(Project project, final String name) {
     myProject = project;
-    myName = name;
     myId = UUID.randomUUID().toString();
+    setNameImpl(name);
   }
 
   private LocalChangeListImpl(LocalChangeListImpl origin) {
     myId = origin.getId();
-    myName = origin.myName;
     myProject = origin.myProject;
+    setNameImpl(origin.myName);
   }
 
   public Collection<Change> getChanges() {
@@ -72,7 +74,7 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   public void setName(@NotNull final String name) {
     if (! myName.equals(name)) {
-      myName = name;
+      setNameImpl(name);
     }
   }
 
@@ -88,6 +90,9 @@ public class LocalChangeListImpl extends LocalChangeList {
   }
 
   void setNameImpl(@NotNull final String name) {
+    if (StringUtil.isEmptyOrSpaces(name) && Registry.is("vcs.log.empty.change.list.creation")) {
+      LOG.info("Creating a changelist with empty name");
+    }
     myName = name;
   }
 

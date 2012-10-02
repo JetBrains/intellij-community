@@ -39,6 +39,7 @@ public class JpsModuleSourceOrderEntry extends JpsOrderEntry<JpsModuleSourceDepe
     return policy.visitModuleSourceOrderEntry(this, initialValue);
   }
 
+  @NotNull
   @Override
   public String getPresentableName() {
     return ProjectBundle.message("project.root.module.source");

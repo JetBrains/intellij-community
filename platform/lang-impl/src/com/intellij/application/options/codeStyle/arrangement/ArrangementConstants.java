@@ -16,6 +16,9 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -35,6 +38,10 @@ public class ArrangementConstants {
 
   public static final DataKey<Runnable> NEW_RULE_FUNCTION_KEY    = DataKey.create("Arrangement.Rule.Function.New");
   public static final DataKey<Runnable> REMOVE_RULE_FUNCTION_KEY = DataKey.create("Arrangement.Rule.Function.Remove");
+
+  public static final DataKey<NotNullFunction<Boolean/* move up? */, Boolean/* is enabled */>> UPDATE_MOVE_RULE_FUNCTION_KEY
+    = DataKey.create("Arrangement.Rule.Function.Update.Move");
+  public static final DataKey<Consumer<Boolean/* move up? */>> MOVE_RULE_FUNCTION_KEY = DataKey.create("Arrangement.Rule.Function.Move");
   
   private ArrangementConstants() {
   }

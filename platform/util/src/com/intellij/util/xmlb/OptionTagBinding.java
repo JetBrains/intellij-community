@@ -40,9 +40,9 @@ class OptionTagBinding implements Binding {
   private final String myNameAttribute;
   private final String myValueAttribute;
 
-  public OptionTagBinding(Accessor accessor, XmlSerializerImpl xmlSerializer, @Nullable OptionTag optionTag) {
+  public OptionTagBinding(Accessor accessor, @Nullable OptionTag optionTag) {
     this.accessor = accessor;
-    myBinding = xmlSerializer.getBinding(accessor);
+    myBinding = XmlSerializerImpl.getBinding(accessor);
     if (optionTag != null) {
       String name = optionTag.value();
       myName = name.isEmpty() ? accessor.getName() : name;
@@ -58,7 +58,7 @@ class OptionTagBinding implements Binding {
     }
   }
 
-  public Object serialize(Object o, Object context) {
+  public Object serialize(Object o, Object context, SerializationFilter filter) {
     Element targetElement = new Element(myTagName);
     Object value = accessor.read(o);
 
@@ -66,7 +66,7 @@ class OptionTagBinding implements Binding {
 
     if (value == null) return targetElement;
 
-    Object node = myBinding.serialize(value, targetElement);
+    Object node = myBinding.serialize(value, targetElement, filter);
     if (node instanceof Text) {
       Text text = (Text)node;
       targetElement.setAttribute(myValueAttribute, text.getText());

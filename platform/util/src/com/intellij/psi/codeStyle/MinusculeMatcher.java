@@ -21,6 +21,7 @@ import com.intellij.util.containers.FList;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.Matcher;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
@@ -35,7 +36,7 @@ public class MinusculeMatcher implements Matcher {
   private final NameUtil.MatchingCaseSensitivity myOptions;
   private final boolean myHasHumps;
 
-  public MinusculeMatcher(String pattern, NameUtil.MatchingCaseSensitivity options) {
+  public MinusculeMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options) {
     myOptions = options;
     myPattern = StringUtil.trimEnd(pattern, "* ").toCharArray();
     int i = 0;
@@ -162,25 +163,30 @@ public class MinusculeMatcher implements Matcher {
       return FList.emptyList();
     }
 
-    {
-      FList<TextRange> ranges = matchFragment(name, patternIndex, nameIndex);
-      if (ranges != null) {
-        return ranges;
-      }
+    FList<TextRange> ranges = matchFragment(name, patternIndex, nameIndex);
+    if (ranges != null) {
+      return ranges;
     }
 
+    return matchSkippingWords(name, patternIndex, nameIndex, true);
+  }
+
+  @Nullable
+  private FList<TextRange> matchSkippingWords(String name, int patternIndex, int nameIndex, boolean allowSpecialChars) {
+    boolean star = isPatternChar(patternIndex - 1, '*');
     char p = myPattern[patternIndex];
     while (true) {
-      nameIndex = space ? indexOfWordStart(name, patternIndex, nameIndex) : StringUtil.indexOfIgnoreCase(name, p, nameIndex + 1);
-      if (nameIndex < 0) {
+      int nextOccurrence = star ? StringUtil.indexOfIgnoreCase(name, p, nameIndex + 1) : indexOfWordStart(name, patternIndex, nameIndex);
+      if (nextOccurrence < 0 || !allowSpecialChars && !myHasHumps && StringUtil.containsAnyChar(name, " ()", nameIndex, nextOccurrence)) {
         return null;
       }
-      if (!Character.isUpperCase(p) || NameUtil.isWordStart(name, nameIndex)) {
-        FList<TextRange> ranges = matchFragment(name, patternIndex, nameIndex);
+      if (!Character.isUpperCase(p) || NameUtil.isWordStart(name, nextOccurrence)) {
+        FList<TextRange> ranges = matchFragment(name, patternIndex, nextOccurrence);
         if (ranges != null) {
           return ranges;
         }
       }
+      nameIndex = nextOccurrence;
     }
   }
 
@@ -214,17 +220,9 @@ public class MinusculeMatcher implements Matcher {
       return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
     }
     while (i >= minFragment) {
-      int nextWordStart;
-      if (isWildcard(patternIndex + i)) {
-        nextWordStart = nameIndex + i;
-      }
-      else {
-        nextWordStart = indexOfWordStart(name, patternIndex + i, nameIndex + i);
-        if (!myHasHumps && StringUtil.containsAnyChar(name, " ()", nameIndex + i, nextWordStart)) {
-          nextWordStart = -1;
-        }
-      }
-      FList<TextRange> ranges = matchWildcards(name, patternIndex + i, nextWordStart);
+      FList<TextRange> ranges = isWildcard(patternIndex + i) ?
+                                matchWildcards(name, patternIndex + i, nameIndex + i) :
+                                matchSkippingWords(name, patternIndex + i, nameIndex + i, false);
       if (ranges != null) {
         return prependRange(ranges, nameIndex, i);
       }

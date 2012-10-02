@@ -69,9 +69,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -258,7 +258,10 @@ public class GroovyCompletionUtil {
 
       final String importedName = ((GrImportStatement)context).getImportedName();
       if (importedName != null) {
-        if (!matcher.prefixMatches(importedName)) {
+        if (!(matcher.prefixMatches(importedName) ||
+              element instanceof PsiMethod && getterMatches(matcher, (PsiMethod)element, importedName) ||
+              element instanceof PsiMethod && setterMatches(matcher, (PsiMethod)element, importedName))
+          ) {
           return Collections.emptyList();
         }
 
@@ -292,6 +295,16 @@ public class GroovyCompletionUtil {
 
     LookupElementBuilder builder = LookupElementBuilder.create(element instanceof PsiPackage ? element : candidate, name);
     return Arrays.asList(setupLookupBuilder(element, candidate.getSubstitutor(), builder, position));
+  }
+
+  private static boolean setterMatches(PrefixMatcher matcher, PsiMethod element, String importedName) {
+    return isSimplePropertySetter(element) && matcher.prefixMatches(getSetterName(importedName));
+  }
+
+  private static boolean getterMatches(PrefixMatcher matcher, PsiMethod element, String importedName) {
+    return isSimplePropertyGetter(element) &&
+    (matcher.prefixMatches(getGetterNameNonBoolean(importedName)) ||
+     element.getReturnType() == PsiType.BOOLEAN && matcher.prefixMatches(getGetterNameBoolean(importedName)));
   }
 
   public static LookupElement createClassLookupItem(PsiClass psiClass) {
@@ -422,7 +435,7 @@ public class GroovyCompletionUtil {
 
     int newStartOffset = startOffset;
 
-    final PsiReference reference = file.findReferenceAt(startOffset);
+    final PsiReference reference = file.findReferenceAt(endOffset - 1);
     if (reference != null) {
       final PsiElement resolved = reference.resolve();
       if (resolved instanceof PsiClass) {
@@ -440,7 +453,7 @@ public class GroovyCompletionUtil {
     PsiDocumentManager.getInstance(manager.getProject()).commitAllDocuments();
 
     final PsiReference ref = file.findReferenceAt(startOffset);
-    if (ref instanceof GrCodeReferenceElement && aClass.isValid()) {
+    if (ref instanceof GrReferenceElement && aClass.isValid()) {
       PsiElement newElement = ref.bindToElement(aClass);
       RangeMarker marker = document.createRangeMarker(newElement.getTextRange());
       CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newElement);

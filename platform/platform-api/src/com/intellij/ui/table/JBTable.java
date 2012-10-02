@@ -465,8 +465,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     return UIUtil.isUnderAlloyLookAndFeel()
            || UIUtil.isUnderNativeMacLookAndFeel()
            || UIUtil.isUnderDarcula()
-           || UIUtil.isUnderQuaquaLookAndFeel()
-           || UIUtil.isUnderMetalLookAndFeel()
            || UIUtil.isUnderNimbusLookAndFeel()
            || UIUtil.isUnderWindowsLookAndFeel();
   }

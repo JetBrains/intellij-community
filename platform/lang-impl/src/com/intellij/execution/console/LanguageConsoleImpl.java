@@ -206,16 +206,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     }
   }
 
-  private void setConsoleFilePinned(FileEditorManagerEx fileManager, Editor editor) {
-    EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
-    if (editorWindow == null) {
-      editorWindow = fileManager.getCurrentWindow();
-    }
-    if (editorWindow != null) {
-      editorWindow.setFilePinned(myVirtualFile, true);
-    }
-  }
-
   public void setShowSeparatorLine(boolean showSeparatorLine) {
     myShowSeparatorLine = showSeparatorLine;
   }
@@ -590,9 +580,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         Editor selectedTextEditor = source.getSelectedTextEditor();
         for (FileEditor fileEditor : source.getAllEditors(file)) {
           if (!(fileEditor instanceof TextEditor)) continue;
-          final Editor editor = ((TextEditor)fileEditor).getEditor();
-          setConsoleFilePinned((FileEditorManagerEx)source, editor);
-          ((EditorEx)editor).addFocusListener(myFocusListener);
+          final EditorEx editor = (EditorEx)((TextEditor)fileEditor).getEditor();
+          editor.addFocusListener(myFocusListener);
           if (selectedTextEditor == editor) { // already focused
             myCurrentEditor = editor;
           }

@@ -18,6 +18,8 @@ package com.intellij.compiler.impl.javaCompiler.jikes;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.compiler.JikesCompilerOptions;
 
 @State(
   name = "JikesSettings",
@@ -26,22 +28,19 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
    ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class JikesConfiguration implements PersistentStateComponent<JikesSettings> {
-  private final JikesSettings mySettings = new JikesSettings();
+public class JikesConfiguration implements PersistentStateComponent<JikesCompilerOptions> {
+  private final JikesCompilerOptions mySettings = new JikesCompilerOptions();
 
-  public JikesSettings getState() {
+  @NotNull
+  public JikesCompilerOptions getState() {
     return mySettings;
   }
 
-  public void loadState(JikesSettings state) {
+  public void loadState(JikesCompilerOptions state) {
     XmlSerializerUtil.copyBean(state, mySettings);
   }
 
-  public JikesSettings getSettings() {
-    return mySettings;
-  }
-
-  public static JikesSettings getSettings(Project project) {
-    return ServiceManager.getService(project, JikesConfiguration.class).getSettings();
+  public static JikesCompilerOptions getOptions(Project project) {
+    return ServiceManager.getService(project, JikesConfiguration.class).getState();
   }
 }

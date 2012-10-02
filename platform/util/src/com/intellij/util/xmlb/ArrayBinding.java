@@ -22,11 +22,9 @@ import java.util.Collection;
 
 class ArrayBinding extends AbstractCollectionBinding  {
 
-  public ArrayBinding(XmlSerializerImpl xmlSerializer, final Class<?> valueClass, final Accessor accessor) {
-    super(valueClass.getComponentType(), xmlSerializer, Constants.ARRAY, accessor);
+  public ArrayBinding(final Class<?> valueClass, final Accessor accessor) {
+    super(valueClass.getComponentType(), Constants.ARRAY, accessor);
   }
-
-
 
   @SuppressWarnings({"unchecked"})
   Object processResult(Collection result, Object target) {

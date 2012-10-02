@@ -24,13 +24,11 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  * @author Maxim.Medvedev
  */
 class FileGenerationTest extends LightGroovyTestCase {
-  @Override
-  protected String getBasePath() {
-    return "${TestUtils.testDataPath}refactoring/convertGroovyToJava/file";
-  }
+  final String basePath = TestUtils.testDataPath + 'refactoring/convertGroovyToJava/file'
 
   private void doTest() {
-    myFixture.addClass("""package java.util;
+    myFixture.addClass("""\
+package java.util;
 
 public class LinkedHashMap<K,V> extends HashMap<K,V> implements Map<K,V> {
     public LinkedHashMap(int initialCapacity, float loadFactor) {}

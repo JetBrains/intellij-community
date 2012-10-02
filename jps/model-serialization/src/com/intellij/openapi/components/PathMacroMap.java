@@ -24,10 +24,7 @@ import org.jdom.Element;
 import org.jdom.Text;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -36,19 +33,6 @@ import java.util.Set;
 public abstract class PathMacroMap {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.PathMacroMap");
 
-  protected final Map<String, String> myMacroMap;
-
-  protected PathMacroMap() {
-    myMacroMap = new LinkedHashMap<String,String>();
-  }
-
-  public void putAll(PathMacroMap pathMacroMap) {
-    myMacroMap.putAll(pathMacroMap.myMacroMap);
-  }
-
-  public void put(String fromText, String toText) {
-    myMacroMap.put(fromText, toText);
-  }
 
   public abstract String substitute(String text, boolean caseSensitive);
 
@@ -101,23 +85,9 @@ public abstract class PathMacroMap {
     return substitute(text, caseSensitive);
   }
 
-  public int size() {
-    return myMacroMap.size();
-  }
-
-  protected Set<String> keySet() {
-    return myMacroMap.keySet();
-  }
-
-  public String get(String key) {
-    return myMacroMap.get(key);
-  }
-
-  public static String quotePath(String path) {
+  protected static String quotePath(String path) {
     return FileUtil.toSystemIndependentName(path);
   }
 
-  public int hashCode() {
-    return myMacroMap.hashCode();
-  }
+  public abstract int hashCode();
 }

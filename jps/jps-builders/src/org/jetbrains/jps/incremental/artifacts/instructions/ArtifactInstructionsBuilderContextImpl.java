@@ -1,37 +1,27 @@
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.ProjectPaths;
-import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author nik
  */
 public class ArtifactInstructionsBuilderContextImpl implements ArtifactInstructionsBuilderContext {
-  private final JpsProject myJpsProject;
-  private final ProjectPaths myProjectPaths;
-  private JpsModel myModel;
+  private final Set<JpsArtifact> myParentArtifacts;
 
-  public ArtifactInstructionsBuilderContextImpl(JpsModel jpsModel, ProjectPaths projectPaths) {
-    myJpsProject = jpsModel.getProject();
-    myModel = jpsModel;
-    myProjectPaths = projectPaths;
+  public ArtifactInstructionsBuilderContextImpl() {
+    myParentArtifacts = new HashSet<JpsArtifact>();
   }
 
   @Override
-  public JpsProject getJpsProject() {
-    return myJpsProject;
+  public boolean enterArtifact(JpsArtifact artifact) {
+    return myParentArtifacts.add(artifact);
   }
 
   @Override
-  public JpsModel getJpsModel() {
-    return myModel;
-  }
-
-  @NotNull
-  @Override
-  public ProjectPaths getProjectPaths() {
-    return myProjectPaths;
+  public void leaveArtifact(JpsArtifact artifact) {
+    myParentArtifacts.remove(artifact);
   }
 }

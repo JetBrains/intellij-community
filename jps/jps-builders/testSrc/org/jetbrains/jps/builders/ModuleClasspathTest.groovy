@@ -50,18 +50,18 @@ public class ModuleClasspathTest extends JpsRebuildTestCase {
   }
 
   private ProjectPaths getProjectPaths() {
-    return new ProjectPaths(myJpsProject)
+    return new ProjectPaths(myProject)
   }
 
   private def assertClasspath(String moduleName, boolean includeTests, List<String> expected) {
     ModuleChunk chunk = createChunk(moduleName)
-    final List<String> classpath = getPathsList(new ProjectPaths(myJpsProject).getCompilationClasspathFiles(chunk, includeTests, true, true))
+    final List<String> classpath = getPathsList(new ProjectPaths(myProject).getCompilationClasspathFiles(chunk, includeTests, true, true))
     assertClasspath(expected, toSystemIndependentPaths(classpath))
   }
 
   private ModuleChunk createChunk(String moduleName) {
-    def module = myJpsProject.modules.find {it.name == moduleName}
-    return new ModuleChunk([new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION)] as Set, false)
+    def module = myProject.modules.find {it.name == moduleName}
+    return new ModuleChunk([new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION)] as Set)
   }
 
   private def assertClasspath(List<String> expected, List<String> classpath) {

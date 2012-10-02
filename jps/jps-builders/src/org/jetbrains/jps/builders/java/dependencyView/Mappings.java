@@ -203,6 +203,10 @@ public class Mappings {
   private static final ClassRepr MOCK_CLASS = null;
   private static final MethodRepr MOCK_METHOD = null;
 
+  private interface MemberComparator {
+    boolean isSame(ProtoMember member);
+  }
+
   private class Util {
     @Nullable
     private final Mappings myMappings;
@@ -223,16 +227,14 @@ public class Mappings {
       }
     }
 
-    void propagateMemberAccessRec(final TIntHashSet acc, final boolean isField, final boolean root, final int name, final int reflcass) {
+    void propagateMemberAccessRec(final TIntHashSet acc, final boolean isField, final boolean root, final MemberComparator comparator, final int reflcass) {
       final ClassRepr repr = reprByName(reflcass);
       if (repr != null) {
         if (!root) {
-          final Collection members = isField ? repr.getFields() : repr.getMethods();
+          final Set<? extends ProtoMember> members = isField ? repr.getFields() : repr.getMethods();
 
-          for (Object o : members) {
-            final ProtoMember m = (ProtoMember)o;
-
-            if (m.name == name) {
+          for (ProtoMember m : members) {
+            if (comparator.isSame(m)) {
               return;
             }
           }
@@ -246,7 +248,7 @@ public class Mappings {
           subclasses.forEach(new TIntProcedure() {
             @Override
             public boolean execute(int subclass) {
-              propagateMemberAccessRec(acc, isField, false, name, subclass);
+              propagateMemberAccessRec(acc, isField, false, comparator, subclass);
               return true;
             }
           });
@@ -254,18 +256,32 @@ public class Mappings {
       }
     }
 
-    TIntHashSet propagateMemberAccess(final boolean isField, final int name, final int className) {
+    TIntHashSet propagateMemberAccess(final boolean isField, final MemberComparator comparator, final int className) {
       final TIntHashSet acc = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
-      propagateMemberAccessRec(acc, isField, true, name, className);
+      propagateMemberAccessRec(acc, isField, true, comparator, className);
       return acc;
     }
 
     TIntHashSet propagateFieldAccess(final int name, final int className) {
-      return propagateMemberAccess(true, name, className);
+      return propagateMemberAccess(true, new MemberComparator() {
+        @Override
+        public boolean isSame(ProtoMember member) {
+          return member.name == name;
+        }
+      }, className);
     }
 
-    TIntHashSet propagateMethodAccess(final int name, final int className) {
-      return propagateMemberAccess(false, name, className);
+    TIntHashSet propagateMethodAccess(final MethodRepr m, final int className) {
+      return propagateMemberAccess(false, new MemberComparator() {
+        @Override
+        public boolean isSame(ProtoMember member) {
+          if (member instanceof MethodRepr) {
+            final MethodRepr memberMethod = (MethodRepr)member;
+            return memberMethod.name == m.name && Arrays.equals(memberMethod.myArgumentTypes, m.myArgumentTypes);
+          }
+          return member.name == m.name;
+        }
+      }, className);
     }
 
     MethodRepr.Predicate lessSpecific(final MethodRepr than) {
@@ -970,7 +986,7 @@ public class Mappings {
           }
           else {
             if (m.myArgumentTypes.length > 0) {
-              propagated = myFuture.propagateMethodAccess(m.name, it.name);
+              propagated = myFuture.propagateMethodAccess(m, it.name);
               debug("Conservative case on overriding methods, affecting method usages");
               myFuture.affectMethodUsages(m, propagated, m.createMetaUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
             }
@@ -982,7 +998,7 @@ public class Mappings {
           final MethodRepr.Predicate overrides = MethodRepr.equalByJavaRules(m);
 
           if (propagated == null) {
-            propagated = myFuture.propagateMethodAccess(m.name, it.name);
+            propagated = myFuture.propagateMethodAccess(m, it.name);
           }
 
           final Collection<MethodRepr> lessSpecific = it.findMethods(myFuture.lessSpecific(m));
@@ -1021,7 +1037,7 @@ public class Mappings {
             else {
               debug("Current method does not override that found");
 
-              final TIntHashSet yetPropagated = myPresent.propagateMethodAccess(method.name, it.name);
+              final TIntHashSet yetPropagated = myPresent.propagateMethodAccess(method, it.name);
 
               if (isInheritor) {
                 final TIntHashSet deps = myClassToClassDependency.get(methodClass.name);
@@ -1076,7 +1092,7 @@ public class Mappings {
         debug("Method ", m.name);
 
         final Collection<Pair<MethodRepr, ClassRepr>> overridenMethods = myFuture.findOverriddenMethods(m, it);
-        final TIntHashSet propagated = myFuture.propagateMethodAccess(m.name, it.name);
+        final TIntHashSet propagated = myFuture.propagateMethodAccess(m, it.name);
 
         if (overridenMethods.size() == 0) {
           debug("No overridden methods found, affecting method usages");
@@ -1189,7 +1205,7 @@ public class Mappings {
           }
         }
         else if (d.base() != Difference.NONE || throwsChanged) {
-          final TIntHashSet propagated = myFuture.propagateMethodAccess(m.name, it.name);
+          final TIntHashSet propagated = myFuture.propagateMethodAccess(m, it.name);
 
           boolean affected = false;
           boolean constrained = false;

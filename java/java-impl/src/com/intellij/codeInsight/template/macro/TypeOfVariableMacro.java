@@ -41,7 +41,6 @@ public class TypeOfVariableMacro extends Macro {
     if (params.length == 0) return null;
 
     final Project project = context.getProject();
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
     Result result = params[0].calculateQuickResult(context);
     if (result instanceof PsiElementResult) {
       final PsiElement element = ((PsiElementResult)result).getElement();

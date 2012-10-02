@@ -16,7 +16,6 @@
 package com.intellij.compiler.options;
 
 import com.intellij.compiler.impl.rmiCompiler.RmicConfiguration;
-import com.intellij.compiler.impl.rmiCompiler.RmicSettings;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -24,6 +23,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.compiler.RmicCompilerOptions;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
@@ -40,11 +40,11 @@ public class RmicConfigurable implements SearchableConfigurable, Configurable.No
   private JCheckBox myCbDebuggingInfo;
   private JCheckBox myCbGenerateNoWarnings;
   private RawCommandLineEditor myAdditionalOptionsField;
-  private final RmicSettings myRmicSettings;
+  private final RmicCompilerOptions myRmicSettings;
   private JLabel myFieldLabel;
 
   public RmicConfigurable(final Project project) {
-    myRmicSettings = RmicConfiguration.getSettings(project);
+    myRmicSettings = RmicConfiguration.getOptions(project);
     myCbEnabled.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
         setOptionsEnabled(e.getStateChange() == ItemEvent.SELECTED);

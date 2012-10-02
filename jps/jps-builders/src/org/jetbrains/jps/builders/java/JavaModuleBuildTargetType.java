@@ -27,7 +27,7 @@ public class JavaModuleBuildTargetType extends BuildTargetType<ModuleBuildTarget
 
   @NotNull
   @Override
-  public Collection<ModuleBuildTarget> computeAllTargets(@NotNull JpsModel model) {
+  public List<ModuleBuildTarget> computeAllTargets(@NotNull JpsModel model) {
     List<JpsModule> modules = model.getProject().getModules();
     List<ModuleBuildTarget> targets = new ArrayList<ModuleBuildTarget>(modules.size());
     for (JpsModule module : modules) {

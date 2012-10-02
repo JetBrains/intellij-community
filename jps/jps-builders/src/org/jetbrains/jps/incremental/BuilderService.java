@@ -20,7 +20,7 @@ public abstract class BuilderService {
   }
 
   @NotNull
-  public List<? extends ProjectLevelBuilder> createProjectLevelBuilders() {
+  public List<? extends TargetBuilder<?>> createBuilders() {
     return Collections.emptyList();
   }
 }

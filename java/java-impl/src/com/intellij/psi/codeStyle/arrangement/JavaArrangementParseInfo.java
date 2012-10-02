@@ -16,10 +16,17 @@
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Stack;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * @author Denis Zhdanov
@@ -29,11 +36,26 @@ public class JavaArrangementParseInfo {
 
   @NotNull private final List<JavaElementArrangementEntry> myEntries = new ArrayList<JavaElementArrangementEntry>();
 
-  @NotNull private final List<JavaArrangementMethodDependencyInfo> myMethodDependencyRoots
-    = new ArrayList<JavaArrangementMethodDependencyInfo>();
-  
   @NotNull private final Map<Pair<String/* property name */, String/* class name */>, JavaArrangementPropertyInfo> myProperties
     = new HashMap<Pair<String, String>, JavaArrangementPropertyInfo>();
+
+  @NotNull private final List<JavaArrangementMethodDependencyInfo> myMethodDependencyRoots
+    = new ArrayList<JavaArrangementMethodDependencyInfo>();
+
+  @NotNull private final Map<PsiMethod /* anchor */, Set<PsiMethod /* dependencies */>> myMethodDependencies
+    = new HashMap<PsiMethod, Set<PsiMethod>>();
+
+  @NotNull private final Map<PsiMethod, JavaElementArrangementEntry> myMethodEntriesMap =
+    new HashMap<PsiMethod, JavaElementArrangementEntry>();
+
+  @NotNull private final Map<PsiClass, List<Pair<PsiMethod/*overridden*/, PsiMethod/*overriding*/>>> myOverriddenMethods
+    = new LinkedHashMap<PsiClass, List<Pair<PsiMethod, PsiMethod>>>();
+
+  @NotNull private final Set<PsiMethod> myTmpMethodDependencyRoots = new LinkedHashSet<PsiMethod>();
+  @NotNull private final Set<PsiMethod> myDependentMethods         = new HashSet<PsiMethod>();
+
+
+  private boolean myRebuildMethodDependencies;
 
   @NotNull
   public List<JavaElementArrangementEntry> getEntries() {
@@ -49,10 +71,64 @@ public class JavaArrangementParseInfo {
     return myProperties.values();
   }
 
-  // TODO den add doc
+  /**
+   * @return    list of method dependency roots, i.e. there is a possible case that particular method
+   *            {@link JavaArrangementMethodDependencyInfo#getDependentMethodInfos() calls another method}, it calls other methods
+   *            and so forth
+   */
   @NotNull
   public List<JavaArrangementMethodDependencyInfo> getMethodDependencyRoots() {
+    if (myRebuildMethodDependencies) {
+      myMethodDependencyRoots.clear();
+      Map<PsiMethod, JavaArrangementMethodDependencyInfo> cache = new HashMap<PsiMethod, JavaArrangementMethodDependencyInfo>();
+      for (PsiMethod method : myTmpMethodDependencyRoots) {
+        JavaArrangementMethodDependencyInfo info = buildMethodDependencyInfo(method, cache);
+        if (info != null) {
+          myMethodDependencyRoots.add(info);
+        }
+      }
+      myRebuildMethodDependencies = false;
+    }
     return myMethodDependencyRoots;
+  }
+
+  @Nullable
+  private JavaArrangementMethodDependencyInfo buildMethodDependencyInfo(@NotNull final PsiMethod method,
+                                                                        @NotNull Map<PsiMethod, JavaArrangementMethodDependencyInfo> cache)
+  {
+    JavaElementArrangementEntry entry = myMethodEntriesMap.get(method);
+    if (entry == null) {
+      return null;
+    }
+    JavaArrangementMethodDependencyInfo result = new JavaArrangementMethodDependencyInfo(entry);
+    Stack<Pair<PsiMethod, JavaArrangementMethodDependencyInfo>> toProcess
+      = new Stack<Pair<PsiMethod, JavaArrangementMethodDependencyInfo>>();
+    toProcess.push(Pair.create(method, result));
+    while (!toProcess.isEmpty()) {
+      Pair<PsiMethod, JavaArrangementMethodDependencyInfo> pair = toProcess.pop();
+      Set<PsiMethod> dependentMethods = myMethodDependencies.get(pair.first);
+      if (dependentMethods == null) {
+        continue;
+      }
+      for (PsiMethod dependentMethod : dependentMethods) {
+        if (dependentMethod == method) {
+          // Prevent cyclic dependencies.
+          return null;
+        }
+        JavaElementArrangementEntry dependentEntry = myMethodEntriesMap.get(dependentMethod);
+        if (dependentEntry == null) {
+          continue;
+        }
+        JavaArrangementMethodDependencyInfo dependentMethodInfo = cache.get(dependentMethod);
+        if (dependentMethodInfo == null) {
+          cache.put(dependentMethod, dependentMethodInfo = new JavaArrangementMethodDependencyInfo(dependentEntry));
+        }
+        Pair<PsiMethod, JavaArrangementMethodDependencyInfo> dependentPair = Pair.create(dependentMethod, dependentMethodInfo);
+        pair.second.addDependentMethodInfo(dependentPair.second);
+        toProcess.push(dependentPair);
+      }
+    }
+    return result;
   }
 
   public void registerGetter(@NotNull String propertyName, @NotNull String className, @NotNull JavaElementArrangementEntry entry) {
@@ -72,12 +148,75 @@ public class JavaArrangementParseInfo {
     }
     return propertyInfo;
   }
-  
-  // TODO den add doc
-  public void registerDependency(@NotNull PsiMethod baseMethod,
-                                 @NotNull JavaElementArrangementEntry baseMethodEntry,
-                                 @NotNull PsiMethod dependentMethod)
-  {
-    // TODO den implement
+
+  public void onMethodEntryCreated(@NotNull PsiMethod method, @NotNull JavaElementArrangementEntry entry) {
+    myMethodEntriesMap.put(method, entry);
+  }
+
+  public void onOverriddenMethod(@NotNull PsiMethod baseMethod, @NotNull PsiMethod overridingMethod) {
+    PsiClass clazz = baseMethod.getContainingClass();
+    if (clazz == null) {
+      return;
+    }
+    List<Pair<PsiMethod, PsiMethod>> methods = myOverriddenMethods.get(clazz);
+    if (methods == null) {
+      myOverriddenMethods.put(clazz, methods = new ArrayList<Pair<PsiMethod, PsiMethod>>());
+    }
+    methods.add(Pair.create(baseMethod, overridingMethod));
+  }
+
+  @NotNull
+  public List<JavaArrangementOverriddenMethodsInfo> getOverriddenMethods() {
+    List<JavaArrangementOverriddenMethodsInfo> result = new ArrayList<JavaArrangementOverriddenMethodsInfo>();
+    final TObjectIntHashMap<PsiMethod> weights = new TObjectIntHashMap<PsiMethod>();
+    Comparator<Pair<PsiMethod, PsiMethod>> comparator = new Comparator<Pair<PsiMethod, PsiMethod>>() {
+      @Override
+      public int compare(Pair<PsiMethod, PsiMethod> o1, Pair<PsiMethod, PsiMethod> o2) {
+        return weights.get(o1.first) - weights.get(o2.first);
+      }
+    };
+    for (Map.Entry<PsiClass, List<Pair<PsiMethod, PsiMethod>>> entry : myOverriddenMethods.entrySet()) {
+      JavaArrangementOverriddenMethodsInfo info = new JavaArrangementOverriddenMethodsInfo(entry.getKey().getName());
+      weights.clear();
+      int i = 0;
+      for (PsiMethod method : entry.getKey().getMethods()) {
+        weights.put(method, i++);
+      }
+      ContainerUtil.sort(entry.getValue(), comparator);
+      for (Pair<PsiMethod, PsiMethod> pair : entry.getValue()) {
+        JavaElementArrangementEntry overridingMethodEntry = myMethodEntriesMap.get(pair.second);
+        if (overridingMethodEntry != null) {
+          info.addMethodEntry(overridingMethodEntry);
+        }
+      }
+      if (!info.getMethodEntries().isEmpty()) {
+        result.add(info);
+      }
+    }
+    
+    return result;
+  }
+
+  /**
+   * Is expected to be called when new method dependency is detected. Here given <code>'base method'</code> calls
+   * <code>'dependent method'</code>.
+   * 
+   * @param baseMethod       method which calls another method
+   * @param dependentMethod  method being called
+   */
+  public void registerDependency(@NotNull PsiMethod baseMethod, @NotNull PsiMethod dependentMethod) {
+    myTmpMethodDependencyRoots.remove(dependentMethod);
+    if (!myDependentMethods.contains(baseMethod)) {
+      myTmpMethodDependencyRoots.add(baseMethod);
+    }
+    myDependentMethods.add(dependentMethod);
+    Set<PsiMethod> methods = myMethodDependencies.get(baseMethod);
+    if (methods == null) {
+      myMethodDependencies.put(baseMethod, methods = new LinkedHashSet<PsiMethod>());
+    }
+    if (!methods.contains(dependentMethod)) {
+      methods.add(dependentMethod);
+    }
+    myRebuildMethodDependencies = true;
   }
 }

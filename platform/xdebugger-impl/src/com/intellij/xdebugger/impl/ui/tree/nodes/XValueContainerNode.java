@@ -69,7 +69,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     DebuggerUIUtil.invokeLater(new Runnable() {
       public void run() {
         if (myValueChildren == null) {
-          if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
+          if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues() && !children.isAlreadySorted()) {
             myValueChildren = new SortedList<XValueNodeImpl>(XValueNodeImpl.COMPARATOR);
           }
           else {

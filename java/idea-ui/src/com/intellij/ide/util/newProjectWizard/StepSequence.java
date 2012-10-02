@@ -36,6 +36,10 @@ public class StepSequence {
   @NonNls private List<String> myTypes = new ArrayList<String>();
   private List<ModuleWizardStep> mySelectedSteps;
 
+  public StepSequence(ModuleWizardStep... commonSteps) {
+    myCommonSteps.addAll(Arrays.asList(commonSteps));
+  }
+
   public void addCommonStep(@NotNull ModuleWizardStep step){
     myCommonSteps.add(step);
   }

@@ -1184,6 +1184,14 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
+  @Override
+  public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    if ((myRole1 == ChildRole.DOUBLE_COLON && myRole2 == ChildRole.EXPRESSION) ||
+        (myRole1 == ChildRole.EXPRESSION && myRole2 == ChildRole.DOUBLE_COLON)) {
+      createSpaceInCode(mySettings.SPACE_AROUND_METHOD_REF_DBL_COLON);
+    }
+  }
+
   @Override public void visitForStatement(PsiForStatement statement) {
     if (myRole2 == ChildRole.LPARENTH) {
       createSpaceInCode(mySettings.SPACE_BEFORE_FOR_PARENTHESES);

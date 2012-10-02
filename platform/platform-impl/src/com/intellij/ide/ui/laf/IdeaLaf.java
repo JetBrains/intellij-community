@@ -59,6 +59,7 @@ public final class IdeaLaf extends MetalLookAndFeel {
     defaults.put("ScrollPane.border", BegBorders.getScrollPaneBorder());
 
     defaults.put("ButtonUI", BegButtonUI.class.getName());
+    defaults.put("ToggleButtonUI", BegToggleButtonUI.class.getName());
     defaults.put("ComboBoxUI", BegComboBoxUI.class.getName());
     defaults.put("RadioButtonUI", BegRadioButtonUI.class.getName());
     defaults.put("CheckBoxUI", BegCheckBoxUI.class.getName());

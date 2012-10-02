@@ -72,8 +72,6 @@ public class VariableOfTypeMacro extends Macro {
     Project project = context.getProject();
     final int offset = context.getStartOffset();
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
     final ArrayList<PsiElement> array = new ArrayList<PsiElement>();
     PsiType type = MacroUtil.resultToPsiType(result, context);
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());

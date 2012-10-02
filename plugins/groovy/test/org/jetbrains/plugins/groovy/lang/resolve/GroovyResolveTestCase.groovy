@@ -35,7 +35,7 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
   @NonNls protected static final String MARKER = "<ref>";
 
   @Override
-  protected void setUp() throws Exception {
+  protected void setUp() {
     super.setUp();
     if (new File("$myFixture.testDataPath/${getTestName(true)}").exists()) {
       myFixture.copyDirectoryToProject(getTestName(true), "");

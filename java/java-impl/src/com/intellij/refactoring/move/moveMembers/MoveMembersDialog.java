@@ -21,6 +21,8 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -47,6 +49,7 @@ import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -126,6 +129,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     init();
   }
 
+  @Nullable
   public String getMemberVisibility() {
     return myVisibilityPanel.getVisibility();
   }
@@ -162,8 +166,8 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     _panel.add(myIntroduceEnumConstants, BorderLayout.SOUTH);
     box.add(_panel);
 
-    myTfTargetClassName.getChildComponent().getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+    myTfTargetClassName.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter() {
+      public void documentChanged(DocumentEvent e) {
         myMemberInfoModel.updateTargetClass();
         validateButtons();
       }
@@ -251,10 +255,11 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     //if (getTargetClassName().length() == 0) throw new ConfigurationException("Destination class name not found");
   }
 
+  @Nullable
   private String validateInputData() {
     final PsiManager manager = PsiManager.getInstance(myProject);
     final String fqName = getTargetClassName();
-    if ("".equals(fqName)) {
+    if (fqName != null && fqName.isEmpty()) {
       return RefactoringBundle.message("no.destination.class.specified");
     }
     else {
@@ -298,7 +303,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
           }
 
           if (!targetClass[0].isWritable()) {
-            if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, targetClass[0])) return "";
+            CommonRefactoringUtil.checkReadOnlyStatus(myProject, targetClass[0]);
             return "";
           }
 
@@ -308,6 +313,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     }
   }
 
+  @Nullable
   private PsiClass findOrCreateTargetClass(final PsiManager manager, final String fqName) throws IncorrectOperationException {
     final String className;
     final String packageName;
@@ -395,6 +401,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
       super(mySourceClass, null, false, DEFAULT_CONTAINMENT_VERIFIER);
     }
 
+    @Nullable
     public Boolean isFixedAbstract(MemberInfo member) {
       return null;
     }

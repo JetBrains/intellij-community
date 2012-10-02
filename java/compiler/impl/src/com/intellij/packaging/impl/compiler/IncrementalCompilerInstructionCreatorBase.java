@@ -18,7 +18,6 @@ package com.intellij.packaging.impl.compiler;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,15 +49,13 @@ public abstract class IncrementalCompilerInstructionCreatorBase implements Incre
     collectInstructionsRecursively(directory, this, filter, index, copyExcluded);
   }
 
-  private static final Key<IncrementalCompilerInstructionCreatorBase> INSTRUCTION_CREATOR = Key.create("pkg.compiler.instruction.creator");
-
   private static void collectInstructionsRecursively(VirtualFile directory,
                                                      final IncrementalCompilerInstructionCreatorBase creator,
-                                                     final PackagingFileFilter filter,
+                                                     @Nullable final PackagingFileFilter filter,
                                                      final ProjectFileIndex index,
                                                      final boolean copyExcluded) {
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    VfsUtilCore.visitChildrenRecursively(directory, new VirtualFileVisitor(VirtualFileVisitor.SKIP_ROOT) {
+    VfsUtilCore.visitChildrenRecursively(directory, new VirtualFileVisitor<IncrementalCompilerInstructionCreatorBase>(VirtualFileVisitor.SKIP_ROOT) {
       { setValueForChildren(creator); }
 
       @Override

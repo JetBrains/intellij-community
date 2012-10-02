@@ -61,7 +61,7 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
       final Set<File> currentPaths = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       fsState.clearDeletedPaths(myTarget);
       markDirtyFiles(dataManager, currentPaths, false, context);
-      final SourceToOutputMapping mapping = dataManager.getSourceToOutputMap(myTarget);
+      final SourceToOutputMappingImpl mapping = dataManager.getSourceToOutputMap(myTarget);
       final Iterator<String> iterator = mapping.getKeysIterator();
       while (iterator.hasNext()) {
         String path = iterator.next();

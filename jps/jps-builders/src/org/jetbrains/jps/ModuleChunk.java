@@ -21,16 +21,18 @@ public class ModuleChunk {
     }
   };
   private Set<JpsModule> myModules;
-  private final boolean myTests;
+  private final boolean myContainsTests;
   private Set<ModuleBuildTarget> myTargets;
 
-  public ModuleChunk(Set<ModuleBuildTarget> targets, boolean tests) {
-    myTests = tests;
+  public ModuleChunk(Set<ModuleBuildTarget> targets) {
+    boolean containsTests = false;
     myTargets = targets;
     myModules = new LinkedHashSet<JpsModule>();
     for (ModuleBuildTarget target : targets) {
       myModules.add(target.getModule());
+      containsTests |= target.isTests();
     }
+    myContainsTests = containsTests;
   }
 
   public String getName() {
@@ -42,8 +44,8 @@ public class ModuleChunk {
     return myModules;
   }
 
-  public boolean isTests() {
-    return myTests;
+  public boolean containsTests() {
+    return myContainsTests;
   }
 
   public Set<ModuleBuildTarget> getTargets() {

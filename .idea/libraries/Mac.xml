@@ -1,7 +1,6 @@
 <component name="libraryTable">
   <library name="Mac">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/build/conf/mac/lib/quaqua.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/eawtstub.jar!/" />
     </CLASSES>
     <JAVADOC />

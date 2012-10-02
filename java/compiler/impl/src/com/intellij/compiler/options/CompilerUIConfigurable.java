@@ -22,6 +22,7 @@ import com.intellij.compiler.MalformedPatternException;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -39,6 +40,7 @@ import java.util.Locale;
 import java.util.StringTokenizer;
 
 public class CompilerUIConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompilerUIConfigurable");
   private JPanel myPanel;
   private final Project myProject;
 
@@ -49,6 +51,11 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private JCheckBox myCbAutoShowFirstError;
   private JCheckBox myCbUseExternalBuild;
   private JCheckBox myCbEnableAutomake;
+  private JCheckBox myCbParallelCompilation;
+  private JTextField myHeapSizeField;
+  private JTextField myVMOptionsField;
+  private JLabel myHeapSizeLabel;
+  private JLabel myVMOptionsLabel;
 
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
@@ -62,7 +69,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myCbUseExternalBuild.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
-        myCbEnableAutomake.setEnabled(myCbUseExternalBuild.isSelected());
+        updateExternalMakeOptionControls(myCbUseExternalBuild.isSelected());
       }
     });
   }
@@ -76,7 +83,11 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myCbAssertNotNull.setSelected(configuration.isAddNotNullAssertions());
     myCbUseExternalBuild.setSelected(workspaceConfiguration.USE_COMPILE_SERVER);
     myCbEnableAutomake.setSelected(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
-    myCbEnableAutomake.setEnabled(myCbUseExternalBuild.isSelected());
+    myCbParallelCompilation.setSelected(workspaceConfiguration.PARALLEL_COMPILATION);
+    myHeapSizeField.setText(String.valueOf(workspaceConfiguration.COMPILER_PROCESS_HEAP_SIZE));
+    final String options = workspaceConfiguration.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
+    myVMOptionsField.setText(options == null? "" : options.trim());
+    updateExternalMakeOptionControls(myCbUseExternalBuild.isSelected());
 
     configuration.convertPatterns();
 
@@ -103,6 +114,14 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     boolean wasUsingExternalMake = workspaceConfiguration.USE_COMPILE_SERVER;
     workspaceConfiguration.USE_COMPILE_SERVER = myCbUseExternalBuild.isSelected();
     workspaceConfiguration.MAKE_PROJECT_ON_SAVE = myCbEnableAutomake.isSelected();
+    workspaceConfiguration.PARALLEL_COMPILATION = myCbParallelCompilation.isSelected();
+    try {
+      workspaceConfiguration.COMPILER_PROCESS_HEAP_SIZE = Integer.parseInt(myHeapSizeField.getText().trim());
+    }
+    catch (NumberFormatException ignored) {
+      LOG.info(ignored);
+    }
+    workspaceConfiguration.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = myVMOptionsField.getText().trim();
 
     configuration.setAddNotNullAssertions(myCbAssertNotNull.isSelected());
     configuration.removeResourceFilePatterns();
@@ -178,6 +197,9 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     isModified |= ComparingUtils.isModified(myCbAutoShowFirstError, workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
     isModified |= ComparingUtils.isModified(myCbUseExternalBuild, workspaceConfiguration.USE_COMPILE_SERVER);
     isModified |= ComparingUtils.isModified(myCbEnableAutomake, workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
+    isModified |= ComparingUtils.isModified(myCbParallelCompilation, workspaceConfiguration.PARALLEL_COMPILATION);
+    isModified |= ComparingUtils.isModified(myHeapSizeField, workspaceConfiguration.COMPILER_PROCESS_HEAP_SIZE);
+    isModified |= ComparingUtils.isModified(myVMOptionsField, workspaceConfiguration.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS);
 
     final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     isModified |= ComparingUtils.isModified(myCbAssertNotNull, compilerConfiguration.isAddNotNullAssertions());
@@ -210,4 +232,14 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
 
   public void disposeUIResources() {
   }
+
+  private void updateExternalMakeOptionControls(boolean enabled) {
+    myCbEnableAutomake.setEnabled(enabled);
+    myCbParallelCompilation.setEnabled(enabled);
+    myHeapSizeField.setEnabled(enabled);
+    myVMOptionsField.setEnabled(enabled);
+    myHeapSizeLabel.setEnabled(enabled);
+    myVMOptionsLabel.setEnabled(enabled);
+  }
+
 }

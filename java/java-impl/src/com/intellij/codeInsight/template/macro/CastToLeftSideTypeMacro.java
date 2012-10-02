@@ -43,7 +43,6 @@ public class CastToLeftSideTypeMacro extends Macro {
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     int offset = context.getStartOffset();
     Project project = context.getProject();
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
     PsiElement element = file.findElementAt(offset);
     element = PsiTreeUtil.getParentOfType(element, PsiAssignmentExpression.class, PsiVariable.class);

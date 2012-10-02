@@ -185,6 +185,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "\n" +
     "  public void foo(int x, int y) {" +
     "    Runnable r = () -> {};\n" +
+    "    Runnable r1 = this :: bar;\n" + 
     "    for (int i = 0; i < x; i++) {\n" +
     "      y += (y ^ 0x123) << 2;\n" +
     "    }\n" +

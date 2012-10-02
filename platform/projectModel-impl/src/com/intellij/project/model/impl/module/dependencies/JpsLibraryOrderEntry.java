@@ -55,6 +55,7 @@ public class JpsLibraryOrderEntry extends JpsExportableOrderEntry<JpsLibraryDepe
     return myDependencyElement.getLibraryReference().getLibraryName();
   }
 
+  @NotNull
   @Override
   public String getPresentableName() {
     return getLibraryName();

@@ -58,6 +58,8 @@ public class NameUtilTest extends UsefulTestCase {
 
   public void testSkipWords() {
     assertMatches("nt", "NameUtilTest");
+    assertMatches("repl map", "ReplacePathToMacroMap");
+    assertMatches("replmap", "ReplacePathToMacroMap");
     assertDoesntMatch("ABCD", "AbstractButton.DISABLED_ICON_CHANGED_PROPERTY");
   }
   
@@ -135,7 +137,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertTrue(caseInsensitiveMatcher(" us").matches("getMyUsage"));
   }
 
-  private static Matcher caseInsensitiveMatcher(String pattern) {
+  private static MinusculeMatcher caseInsensitiveMatcher(String pattern) {
     return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
   }
 
@@ -209,11 +211,11 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testLowerCaseWords() throws Exception {
-    assertTrue(matches("uct", "unit_controller_test"));
-    assertTrue(matches("unictest", "unit_controller_test"));
-    assertTrue(matches("uc", "unit_controller_test"));
-    assertFalse(matches("nc", "unit_controller_test"));
-    assertFalse(matches("utc", "unit_controller_test"));
+    assertMatches("uct", "unit_controller_test");
+    assertMatches("unictest", "unit_controller_test");
+    assertMatches("uc", "unit_controller_test");
+    assertDoesntMatch("nc", "unit_controller_test");
+    assertDoesntMatch("utc", "unit_controller_test");
   }
 
   public void testObjectiveCCases() throws Exception {
@@ -308,18 +310,15 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testLong() throws Exception {
-    assertTrue(matches("Product.findByDateAndNameGreaterThanEqualsAndQualityGreaterThanEqual", "Product.findByDateAndNameGreaterThanEqualsAndQualityGreaterThanEqualsIntellijIdeaRulezzz"));
+    assertMatches("Product.findByDateAndNameGreaterThanEqualsAndQualityGreaterThanEqual",
+                  "Product.findByDateAndNameGreaterThanEqualsAndQualityGreaterThanEqualsIntellijIdeaRulezzz");
   }
 
   private static void assertMatches(@NonNls String pattern, @NonNls String name) {
-    assertTrue(matches(pattern, name));
+    assertTrue(pattern + " doesn't match " + name + "!!!", caseInsensitiveMatcher(pattern).matches(name));
   }
   private static void assertDoesntMatch(@NonNls String pattern, @NonNls String name) {
-    assertFalse(matches(pattern, name));
-  }
-
-  private static boolean matches(@NonNls final String pattern, @NonNls final String name) {
-    return caseInsensitiveMatcher(pattern).matches(name);
+    assertFalse(pattern + " matches " + name + "!!!", caseInsensitiveMatcher(pattern).matches(name));
   }
 
   public void testLowerCaseHumps() {

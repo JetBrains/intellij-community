@@ -21,6 +21,7 @@ import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceHashingStrategy;
+import com.intellij.util.text.CharSequenceSubSequence;
 
 /**
  * @author max
@@ -58,8 +59,8 @@ public class CharTableImpl implements CharTable {
 
   @Override
   public CharSequence intern(final CharSequence baseText, final int startOffset, final int endOffset) {
-    if (endOffset - startOffset == baseText.length()) return baseText.toString();
-    return intern(baseText.subSequence(startOffset, endOffset));
+    if (endOffset - startOffset == baseText.length()) return baseText;
+    return intern(new CharSequenceSubSequence(baseText, startOffset, endOffset));
   }
 
   private static CharSequence createSequence(final CharSequence text) {

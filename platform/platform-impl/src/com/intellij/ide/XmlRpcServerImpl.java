@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,16 +28,36 @@ import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.WebServerManager;
 import org.jetbrains.io.Responses;
 
+import java.util.Arrays;
+
 @ChannelHandler.Sharable
 public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements XmlRpcServer, Consumer<ChannelPipeline> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.XmlRpcServerImpl");
+  private static final Logger LOG = Logger.getInstance(XmlRpcServerImpl.class);
 
   private final XmlRpcHandlerMappingImpl handlerMapping = new LoggingDefaultHandlerMapping();
   // idea doesn't use authentication
-  private final XmlRpcContext xmlRpcContext = new DefaultXmlRpcContext(null, null, handlerMapping);
+  private final XmlRpcContext xmlRpcContext = new XmlRpcContext() {
+    @Nullable
+    @Override
+    public String getUserName() {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public String getPassword() {
+      return null;
+    }
+
+    @Override
+    public XmlRpcHandlerMapping getHandlerMapping() {
+      return handlerMapping;
+    }
+  };
 
   public XmlRpcServerImpl() {
     for (XmlRpcHandlerBean handlerBean : Extensions.getExtensions(XmlRpcHandlerBean.EP_NAME)) {
@@ -52,7 +72,7 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
       handlerMapping.addHandler(handlerBean.name, handler);
     }
 
-    LOG.info("XmlRpcServerImpl instantianed, handlers " + handlerMapping);
+    LOG.info("XmlRpcServerImpl instantiated, handlers " + handlerMapping);
   }
 
   @Override
@@ -62,6 +82,11 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
 
   public int getPortNumber() {
     return WebServerManager.getInstance().getPort();
+  }
+
+  @Override
+  public boolean hasHandler(String name) {
+    return handlerMapping.handlers.containsKey(name);
   }
 
   public void addHandler(String name, Object handler) {
@@ -79,7 +104,7 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
         ChannelBuffer result;
         ChannelBufferInputStream in = new ChannelBufferInputStream(request.getContent());
         try {
-          result = ChannelBuffers.copiedBuffer(new XmlRpcWorker(xmlRpcContext.getHandlerMapping()).execute(in, xmlRpcContext));
+          result = ChannelBuffers.copiedBuffer(new XmlRpcWorker(handlerMapping).execute(in, xmlRpcContext));
         }
         catch (Throwable ex) {
           context.getChannel().close();
@@ -126,7 +151,7 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
       handlers.remove(handlerName);
     }
 
-    public Object getHandler(String methodName) throws Exception {
+    public Object getHandler(String methodName) {
       Object handler = null;
       String handlerName = null;
       int dot = methodName.lastIndexOf('.');
@@ -139,12 +164,16 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
         return handler;
       }
 
+      IllegalStateException exception;
       if (dot > -1) {
-        throw new Exception("RPC handler object \"" + handlerName + "\" not found");
+        exception = new IllegalStateException("RPC handler object \"" + handlerName + "\" not found");
       }
       else {
-        throw new Exception("RPC handler object not found for \"" + methodName);
+        exception = new IllegalStateException("RPC handler object not found for \"" + methodName);
       }
+
+      LOG.error(exception);
+      throw exception;
     }
   }
 
@@ -162,13 +191,13 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
     }
 
     @Override
-    public Object getHandler(String methodName) throws Exception {
+    public Object getHandler(String methodName) {
       LOG.info(String.format("getHandler: methodName: %s%s", methodName, getHandlers()));
       return super.getHandler(methodName);
     }
 
     private String getHandlers() {
-      return String.format("%nhandlers: %s", handlers);
+      return String.format("%nhandlers: %s %s", Arrays.toString(handlers.keySet().toArray()), Arrays.toString(handlers.values().toArray()));
     }
 
     @Override

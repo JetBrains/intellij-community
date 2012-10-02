@@ -25,6 +25,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.RawCommandLineEditor;
+import org.jetbrains.jps.model.java.compiler.JikesCompilerOptions;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -42,9 +43,9 @@ public class JikesConfigurable implements Configurable {
   private JCheckBox myCbGenerateNoWarnings;
   private RawCommandLineEditor myAdditionalOptionsField;
   private TextFieldWithBrowseButton myPathField;
-  private final JikesSettings myJikesSettings;
+  private final JikesCompilerOptions myJikesSettings;
 
-  public JikesConfigurable(JikesSettings jikesSettings) {
+  public JikesConfigurable(JikesCompilerOptions jikesSettings) {
     myJikesSettings = jikesSettings;
     myPathField.getButton().addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {

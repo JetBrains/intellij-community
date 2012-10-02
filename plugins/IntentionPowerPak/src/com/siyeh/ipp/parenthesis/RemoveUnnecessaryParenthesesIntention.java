@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,24 +31,19 @@ public class RemoveUnnecessaryParenthesesIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     if (element instanceof PsiParameterList) {
       stripLambdaParameterParentheses((PsiParameterList)element);
       return;
     }
     PsiExpression expression = (PsiExpression)element;
-    while (expression.getParent() instanceof PsiExpression) {
-      expression = (PsiExpression)expression.getParent();
-      assert expression != null;
-    }
     ParenthesesUtils.removeParentheses(expression, false);
   }
 
   public static void stripLambdaParameterParentheses(PsiParameterList element) {
-    final PsiLambdaExpression expression =
-      (PsiLambdaExpression)JavaPsiFacade
-        .getElementFactory(element.getProject()).createExpressionFromText(element.getParameters()[0].getName() + "->{}",element);
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
+    final String text = element.getParameters()[0].getName() + "->{}";
+    final PsiLambdaExpression expression = (PsiLambdaExpression)factory.createExpressionFromText(text, element);
     element.replace(expression.getParameterList());
   }
 }

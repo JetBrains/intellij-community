@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ipp.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,8 +26,7 @@ import java.util.Map;
 
 public class ParenthesesUtils {
 
-  private ParenthesesUtils() {
-  }
+  private ParenthesesUtils() {}
 
   public static final int PARENTHESIZED_PRECEDENCE = 0;
   public static final int LITERAL_PRECEDENCE = 0;
@@ -50,8 +48,7 @@ public class ParenthesesUtils {
   public static final int ASSIGNMENT_PRECEDENCE = 16;
   public static final int NUM_PRECEDENCES = 17;
 
-  private static final Map<IElementType, Integer> s_binaryOperatorPrecedence =
-    new HashMap<IElementType, Integer>(NUM_PRECEDENCES);
+  private static final Map<IElementType, Integer> s_binaryOperatorPrecedence = new HashMap<IElementType, Integer>(NUM_PRECEDENCES);
 
   static {
     s_binaryOperatorPrecedence.put(JavaTokenType.PLUS, ADDITIVE_PRECEDENCE);
@@ -76,18 +73,15 @@ public class ParenthesesUtils {
   }
 
   @Nullable
-  public static PsiExpression stripParentheses(
-    @Nullable PsiExpression expression) {
+  public static PsiExpression stripParentheses(@Nullable PsiExpression expression) {
     while (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression =
-        (PsiParenthesizedExpression)expression;
+      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
       expression = parenthesizedExpression.getExpression();
     }
     return expression;
   }
 
-  public static boolean isCommutativeBinaryOperator(
-    @NotNull IElementType token) {
+  public static boolean isCommutativeBinaryOperator(@NotNull IElementType token) {
     return !(token.equals(JavaTokenType.MINUS) ||
              token.equals(JavaTokenType.DIV) ||
              token.equals(JavaTokenType.PERC) ||
@@ -106,8 +100,7 @@ public class ParenthesesUtils {
       return LITERAL_PRECEDENCE;
     }
     if (expression instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)expression;
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       if (referenceExpression.getQualifier() != null) {
         return METHOD_CALL_PRECEDENCE;
       }
@@ -115,8 +108,7 @@ public class ParenthesesUtils {
         return LITERAL_PRECEDENCE;
       }
     }
-    if (expression instanceof PsiMethodCallExpression ||
-        expression instanceof PsiNewExpression) {
+    if (expression instanceof PsiMethodCallExpression || expression instanceof PsiNewExpression) {
       return METHOD_CALL_PRECEDENCE;
     }
     if (expression instanceof PsiTypeCastExpression) {
@@ -129,9 +121,8 @@ public class ParenthesesUtils {
       return POSTFIX_PRECEDENCE;
     }
     if (expression instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression binaryExpression =
-        (PsiPolyadicExpression)expression;
-      return getPrecedenceForBinaryOperator(binaryExpression.getOperationTokenType());
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      return getPrecedenceForOperator(polyadicExpression.getOperationTokenType());
     }
     if (expression instanceof PsiInstanceOfExpression) {
       return RELATIONAL_PRECEDENCE;
@@ -148,118 +139,87 @@ public class ParenthesesUtils {
     return -1;
   }
 
-  public static int getPrecedenceForBinaryOperator(IElementType operator) {
+  public static int getPrecedenceForOperator(@NotNull IElementType operator) {
     final Integer precedence = s_binaryOperatorPrecedence.get(operator);
+    if (precedence == null) {
+      throw new IllegalArgumentException("unknown operator: " + operator);
+    }
     return precedence.intValue();
   }
 
-  public static void removeParentheses(@NotNull PsiExpression expression,
-                                       boolean ignoreClarifyingParentheses)
-    throws IncorrectOperationException {
+  public static void removeParentheses(@NotNull PsiExpression expression, boolean ignoreClarifyingParentheses) {
     if (expression instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCall =
-        (PsiMethodCallExpression)expression;
-      removeParensFromMethodCallExpression(methodCall,
-                                           ignoreClarifyingParentheses);
+      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
+      removeParensFromMethodCallExpression(methodCall, ignoreClarifyingParentheses);
     }
     if (expression instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)expression;
-      removeParensFromReferenceExpression(referenceExpression,
-                                          ignoreClarifyingParentheses);
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+      removeParensFromReferenceExpression(referenceExpression, ignoreClarifyingParentheses);
     }
     if (expression instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)expression;
-      removeParensFromNewExpression(newExpression,
-                                    ignoreClarifyingParentheses);
+      removeParensFromNewExpression(newExpression, ignoreClarifyingParentheses);
     }
     if (expression instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression =
-        (PsiAssignmentExpression)expression;
-      removeParensFromAssignmentExpression(assignmentExpression,
-                                           ignoreClarifyingParentheses);
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+      removeParensFromAssignmentExpression(assignmentExpression, ignoreClarifyingParentheses);
     }
     if (expression instanceof PsiArrayInitializerExpression) {
-      final PsiArrayInitializerExpression arrayInitializerExpression =
-        (PsiArrayInitializerExpression)expression;
-      removeParensFromArrayInitializerExpression(
-        arrayInitializerExpression, ignoreClarifyingParentheses);
+      final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)expression;
+      removeParensFromArrayInitializerExpression(arrayInitializerExpression, ignoreClarifyingParentheses);
     }
     if (expression instanceof PsiTypeCastExpression) {
-      final PsiTypeCastExpression typeCastExpression =
-        (PsiTypeCastExpression)expression;
-      removeParensFromTypeCastExpression(typeCastExpression,
-                                         ignoreClarifyingParentheses);
+      final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
+      removeParensFromTypeCastExpression(typeCastExpression, ignoreClarifyingParentheses);
     }
     if (expression instanceof PsiArrayAccessExpression) {
-      final PsiArrayAccessExpression arrayAccessExpression =
-        (PsiArrayAccessExpression)expression;
-      removeParensFromArrayAccessExpression(arrayAccessExpression,
-                                            ignoreClarifyingParentheses);
+      final PsiArrayAccessExpression arrayAccessExpression = (PsiArrayAccessExpression)expression;
+      removeParensFromArrayAccessExpression(arrayAccessExpression, ignoreClarifyingParentheses);
     }
     if (expression instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression prefixExpression =
-        (PsiPrefixExpression)expression;
-      removeParensFromPrefixExpression(prefixExpression,
-                                       ignoreClarifyingParentheses);
+      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
+      removeParensFromPrefixExpression(prefixExpression, ignoreClarifyingParentheses);
     }
     if (expression instanceof PsiPostfixExpression) {
-      final PsiPostfixExpression postfixExpression =
-        (PsiPostfixExpression)expression;
-      removeParensFromPostfixExpression(postfixExpression,
-                                        ignoreClarifyingParentheses);
+      final PsiPostfixExpression postfixExpression = (PsiPostfixExpression)expression;
+      removeParensFromPostfixExpression(postfixExpression, ignoreClarifyingParentheses);
     }
-    if (expression instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)expression;
-      removeParensFromBinaryExpression(binaryExpression,
-                                       ignoreClarifyingParentheses);
+    if (expression instanceof PsiPolyadicExpression) {
+      final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)expression;
+      removeParensFromPolyadicExpression(binaryExpression, ignoreClarifyingParentheses);
     }
     if (expression instanceof PsiInstanceOfExpression) {
-      final PsiInstanceOfExpression instanceofExpression =
-        (PsiInstanceOfExpression)expression;
-      removeParensFromInstanceOfExpression(instanceofExpression,
-                                           ignoreClarifyingParentheses);
+      final PsiInstanceOfExpression instanceofExpression = (PsiInstanceOfExpression)expression;
+      removeParensFromInstanceOfExpression(instanceofExpression, ignoreClarifyingParentheses);
     }
     if (expression instanceof PsiConditionalExpression) {
-      final PsiConditionalExpression conditionalExpression =
-        (PsiConditionalExpression)expression;
-      removeParensFromConditionalExpression(conditionalExpression,
-                                            ignoreClarifyingParentheses);
+      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
+      removeParensFromConditionalExpression(conditionalExpression, ignoreClarifyingParentheses);
     }
     if (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression =
-        (PsiParenthesizedExpression)expression;
-      removeParensFromParenthesizedExpression(
-        parenthesizedExpression, ignoreClarifyingParentheses);
+      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+      removeParensFromParenthesizedExpression(parenthesizedExpression, ignoreClarifyingParentheses);
     }
   }
 
-  private static void removeParensFromReferenceExpression(
-    @NotNull PsiReferenceExpression referenceExpression,
-    boolean ignoreClarifyingParentheses)
-    throws IncorrectOperationException {
-    final PsiExpression qualifier =
-      referenceExpression.getQualifierExpression();
+  private static void removeParensFromReferenceExpression(@NotNull PsiReferenceExpression referenceExpression,
+                                                          boolean ignoreClarifyingParentheses) {
+    final PsiExpression qualifier = referenceExpression.getQualifierExpression();
     if (qualifier != null) {
       removeParentheses(qualifier, ignoreClarifyingParentheses);
     }
   }
 
-  private static void removeParensFromParenthesizedExpression(
-    @NotNull PsiParenthesizedExpression parenthesizedExpression,
-    boolean ignoreClarifyingParentheses)
-    throws IncorrectOperationException {
+  private static void removeParensFromParenthesizedExpression(@NotNull PsiParenthesizedExpression parenthesizedExpression,
+                                                              boolean ignoreClarifyingParentheses) {
     final PsiExpression body = parenthesizedExpression.getExpression();
     if (body == null) {
       parenthesizedExpression.delete();
       return;
     }
     final PsiElement parent = parenthesizedExpression.getParent();
-    if (!(parent instanceof PsiExpression) ||
-        parent instanceof PsiParenthesizedExpression) {
-      final PsiExpression newExpression =
-        (PsiExpression)parenthesizedExpression.replace(body);
+    if (!(parent instanceof PsiExpression) || parent instanceof PsiParenthesizedExpression) {
+      final PsiExpression newExpression = (PsiExpression)parenthesizedExpression.replace(body);
       removeParentheses(newExpression, ignoreClarifyingParentheses);
       return;
     }
@@ -268,41 +228,28 @@ public class ParenthesesUtils {
     final int childPrecedence = getPrecedence(body);
     if (parentPrecedence < childPrecedence) {
       final PsiElement bodyParent = body.getParent();
-      final PsiParenthesizedExpression newParenthesizedExpression =
-        (PsiParenthesizedExpression)
-          parenthesizedExpression.replace(bodyParent);
-      final PsiExpression expression =
-        newParenthesizedExpression.getExpression();
+      final PsiParenthesizedExpression newParenthesizedExpression = (PsiParenthesizedExpression)parenthesizedExpression.replace(bodyParent);
+      final PsiExpression expression = newParenthesizedExpression.getExpression();
       if (expression != null) {
         removeParentheses(expression, ignoreClarifyingParentheses);
       }
     }
     else if (parentPrecedence == childPrecedence) {
-      if (parentExpression instanceof PsiBinaryExpression &&
-          body instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression parentBinaryExpression =
-          (PsiBinaryExpression)parentExpression;
-        final IElementType parentOperator =
-          parentBinaryExpression.getOperationTokenType();
-        final PsiBinaryExpression bodyBinaryExpression =
-          (PsiBinaryExpression)body;
-        final IElementType bodyOperator =
-          bodyBinaryExpression.getOperationTokenType();
+      if (parentExpression instanceof PsiPolyadicExpression && body instanceof PsiPolyadicExpression) {
+        final PsiPolyadicExpression parentBinaryExpression = (PsiPolyadicExpression)parentExpression;
+        final IElementType parentOperator = parentBinaryExpression.getOperationTokenType();
+        final PsiPolyadicExpression bodyBinaryExpression = (PsiPolyadicExpression)body;
+        final IElementType bodyOperator = bodyBinaryExpression.getOperationTokenType();
         final PsiType parentType = parentBinaryExpression.getType();
         final PsiType bodyType = body.getType();
-        if (parentType != null && parentType.equals(bodyType) &&
-            parentOperator.equals(bodyOperator)) {
-          final PsiExpression rhs =
-            parentBinaryExpression.getROperand();
-          if (!PsiTreeUtil.isAncestor(rhs, body, true) ||
-              isCommutativeBinaryOperator(bodyOperator)) {
+        if (parentType != null && parentType.equals(bodyType) && parentOperator.equals(bodyOperator)) {
+          final PsiExpression[] parentOperands = parentBinaryExpression.getOperands();
+          if (PsiTreeUtil.isAncestor(parentOperands[0], body, true) || isCommutativeBinaryOperator(bodyOperator)) {
             // use addAfter() + delete() instead of replace() to
             // workaround automatic insertion of parentheses by psi
-            final PsiExpression newExpression = (PsiExpression)
-              parent.addAfter(body, parenthesizedExpression);
+            final PsiExpression newExpression = (PsiExpression)parent.addAfter(body, parenthesizedExpression);
             parenthesizedExpression.delete();
-            removeParentheses(newExpression,
-                              ignoreClarifyingParentheses);
+            removeParentheses(newExpression, ignoreClarifyingParentheses);
             return;
           }
         }
@@ -312,128 +259,95 @@ public class ParenthesesUtils {
           }
         }
         else {
-          final PsiExpression newExpression = (PsiExpression)
-            parenthesizedExpression.replace(body);
-          removeParentheses(newExpression,
-                            ignoreClarifyingParentheses);
+          final PsiExpression newExpression = (PsiExpression)parenthesizedExpression.replace(body);
+          removeParentheses(newExpression, ignoreClarifyingParentheses);
         }
       }
       else {
-        final PsiExpression newExpression =
-          (PsiExpression)parenthesizedExpression.replace(body);
+        final PsiExpression newExpression = (PsiExpression)parenthesizedExpression.replace(body);
         removeParentheses(newExpression, ignoreClarifyingParentheses);
       }
     }
     else {
-      if (ignoreClarifyingParentheses &&
-          parent instanceof PsiBinaryExpression &&
-          (body instanceof PsiBinaryExpression ||
-           body instanceof PsiInstanceOfExpression)) {
+      if (ignoreClarifyingParentheses && parent instanceof PsiPolyadicExpression &&
+          (body instanceof PsiPolyadicExpression || body instanceof PsiInstanceOfExpression)) {
         removeParentheses(body, ignoreClarifyingParentheses);
       }
       else {
-        final PsiExpression newExpression =
-          (PsiExpression)parenthesizedExpression.replace(body);
+        final PsiExpression newExpression = (PsiExpression)parenthesizedExpression.replace(body);
         removeParentheses(newExpression, ignoreClarifyingParentheses);
       }
     }
   }
 
-  private static void removeParensFromConditionalExpression(
-    @NotNull PsiConditionalExpression conditionalExpression,
-    boolean ignoreClarifyingParentheses)
-    throws IncorrectOperationException {
+  private static void removeParensFromConditionalExpression(@NotNull PsiConditionalExpression conditionalExpression,
+                                                            boolean ignoreClarifyingParentheses) {
     final PsiExpression condition = conditionalExpression.getCondition();
     removeParentheses(condition, ignoreClarifyingParentheses);
-    final PsiExpression thenBranch =
-      conditionalExpression.getThenExpression();
+    final PsiExpression thenBranch = conditionalExpression.getThenExpression();
     if (thenBranch != null) {
       removeParentheses(thenBranch, ignoreClarifyingParentheses);
     }
-    final PsiExpression elseBranch =
-      conditionalExpression.getElseExpression();
+    final PsiExpression elseBranch = conditionalExpression.getElseExpression();
     if (elseBranch != null) {
       removeParentheses(elseBranch, ignoreClarifyingParentheses);
     }
   }
 
-  private static void removeParensFromInstanceOfExpression(
-    @NotNull PsiInstanceOfExpression instanceofExpression,
-    boolean ignoreClarifyingParentheses)
-    throws IncorrectOperationException {
+  private static void removeParensFromInstanceOfExpression(@NotNull PsiInstanceOfExpression instanceofExpression,
+                                                           boolean ignoreClarifyingParentheses) {
     final PsiExpression operand = instanceofExpression.getOperand();
     removeParentheses(operand, ignoreClarifyingParentheses);
   }
 
-  private static void removeParensFromBinaryExpression(
-    @NotNull PsiBinaryExpression binaryExpression,
-    boolean ignoreClarifyingParentheses)
-    throws IncorrectOperationException {
-    final PsiExpression lhs = binaryExpression.getLOperand();
-    removeParentheses(lhs, ignoreClarifyingParentheses);
-    final PsiExpression rhs = binaryExpression.getROperand();
-    if (rhs != null) {
-      removeParentheses(rhs, ignoreClarifyingParentheses);
+  private static void removeParensFromPolyadicExpression(@NotNull PsiPolyadicExpression polyadicExpression,
+                                                         boolean ignoreClarifyingParentheses) {
+    for (PsiExpression operand : polyadicExpression.getOperands()) {
+      removeParentheses(operand, ignoreClarifyingParentheses);
     }
   }
 
-  private static void removeParensFromPostfixExpression(
-    @NotNull PsiPostfixExpression postfixExpression,
-    boolean ignoreClarifyingParentheses)
-    throws IncorrectOperationException {
+  private static void removeParensFromPostfixExpression(@NotNull PsiPostfixExpression postfixExpression,
+                                                        boolean ignoreClarifyingParentheses) {
     final PsiExpression operand = postfixExpression.getOperand();
     removeParentheses(operand, ignoreClarifyingParentheses);
   }
 
-  private static void removeParensFromPrefixExpression(
-    @NotNull PsiPrefixExpression prefixExpression,
-    boolean ignoreClarifyingParentheses)
-    throws IncorrectOperationException {
+  private static void removeParensFromPrefixExpression(@NotNull PsiPrefixExpression prefixExpression, boolean ignoreClarifyingParentheses) {
     final PsiExpression operand = prefixExpression.getOperand();
     if (operand != null) {
       removeParentheses(operand, ignoreClarifyingParentheses);
     }
   }
 
-  private static void removeParensFromArrayAccessExpression(
-    @NotNull PsiArrayAccessExpression arrayAccessExpression,
-    boolean ignoreClarifyingParentheses)
-    throws IncorrectOperationException {
-    final PsiExpression arrayExpression =
-      arrayAccessExpression.getArrayExpression();
+  private static void removeParensFromArrayAccessExpression(@NotNull PsiArrayAccessExpression arrayAccessExpression,
+                                                            boolean ignoreClarifyingParentheses) {
+    final PsiExpression arrayExpression = arrayAccessExpression.getArrayExpression();
     removeParentheses(arrayExpression, ignoreClarifyingParentheses);
-    final PsiExpression indexExpression =
-      arrayAccessExpression.getIndexExpression();
+    final PsiExpression indexExpression = arrayAccessExpression.getIndexExpression();
     if (indexExpression != null) {
       removeParentheses(indexExpression, ignoreClarifyingParentheses);
     }
   }
 
-  private static void removeParensFromTypeCastExpression(
-    @NotNull PsiTypeCastExpression typeCastExpression,
-    boolean ignoreClarifyingParentheses)
-    throws IncorrectOperationException {
+  private static void removeParensFromTypeCastExpression(@NotNull PsiTypeCastExpression typeCastExpression,
+                                                         boolean ignoreClarifyingParentheses) {
     final PsiExpression operand = typeCastExpression.getOperand();
     if (operand != null) {
       removeParentheses(operand, ignoreClarifyingParentheses);
     }
   }
 
-  private static void removeParensFromArrayInitializerExpression(
-    @NotNull PsiArrayInitializerExpression arrayInitializerExpression,
-    boolean ignoreClarifyingParentheses)
-    throws IncorrectOperationException {
-    final PsiExpression[] initializers =
-      arrayInitializerExpression.getInitializers();
+  private static void removeParensFromArrayInitializerExpression(@NotNull PsiArrayInitializerExpression arrayInitializerExpression,
+                                                                 boolean ignoreClarifyingParentheses) {
+    final PsiExpression[] initializers = arrayInitializerExpression.getInitializers();
     for (final PsiExpression initializer : initializers) {
       removeParentheses(initializer, ignoreClarifyingParentheses);
     }
   }
 
-  private static void removeParensFromAssignmentExpression(
-    @NotNull PsiAssignmentExpression assignment,
-    boolean ignoreClarifyingParentheses)
-    throws IncorrectOperationException {
+  private static void removeParensFromAssignmentExpression(@NotNull PsiAssignmentExpression assignment,
+                                                           boolean ignoreClarifyingParentheses) {
     final PsiExpression lhs = assignment.getLExpression();
     final PsiExpression rhs = assignment.getRExpression();
     removeParentheses(lhs, ignoreClarifyingParentheses);
@@ -442,10 +356,7 @@ public class ParenthesesUtils {
     }
   }
 
-  private static void removeParensFromNewExpression(
-    @NotNull PsiNewExpression newExpression,
-    boolean ignoreClarifyingParentheses)
-    throws IncorrectOperationException {
+  private static void removeParensFromNewExpression(@NotNull PsiNewExpression newExpression, boolean ignoreClarifyingParentheses) {
     final PsiExpression[] dimensions = newExpression.getArrayDimensions();
     for (PsiExpression dimension : dimensions) {
       removeParentheses(dimension, ignoreClarifyingParentheses);
@@ -454,8 +365,7 @@ public class ParenthesesUtils {
     if (qualifier != null) {
       removeParentheses(qualifier, ignoreClarifyingParentheses);
     }
-    final PsiExpression arrayInitializer =
-      newExpression.getArrayInitializer();
+    final PsiExpression arrayInitializer = newExpression.getArrayInitializer();
     if (arrayInitializer != null) {
       removeParentheses(arrayInitializer, ignoreClarifyingParentheses);
     }
@@ -468,14 +378,10 @@ public class ParenthesesUtils {
     }
   }
 
-  private static void removeParensFromMethodCallExpression(
-    @NotNull PsiMethodCallExpression methodCallExpression,
-    boolean ignoreClarifyingParentheses)
-    throws IncorrectOperationException {
-    final PsiReferenceExpression target =
-      methodCallExpression.getMethodExpression();
-    final PsiExpressionList argumentList =
-      methodCallExpression.getArgumentList();
+  private static void removeParensFromMethodCallExpression(@NotNull PsiMethodCallExpression methodCallExpression,
+                                                           boolean ignoreClarifyingParentheses) {
+    final PsiReferenceExpression target = methodCallExpression.getMethodExpression();
+    final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
     removeParentheses(target, ignoreClarifyingParentheses);
     for (final PsiExpression argument : arguments) {
@@ -483,60 +389,44 @@ public class ParenthesesUtils {
     }
   }
 
-  public static boolean areParenthesesNeeded(
-    PsiParenthesizedExpression expression,
-    boolean ignoreClarifyingParentheses) {
+  public static boolean areParenthesesNeeded(PsiParenthesizedExpression expression) {
     final PsiElement parent = expression.getParent();
+    if (!(parent instanceof PsiExpression)) {
+      return false;
+    }
     final PsiExpression child = expression.getExpression();
-    return areParenthesesNeeded(child, parent,
-                                ignoreClarifyingParentheses);
+    if (child == null) {
+      return true;
+    }
+    return areParenthesesNeeded(child, (PsiExpression)parent);
   }
 
-  public static boolean areParenthesesNeeded(
-    PsiExpression expression, PsiElement parentExpression,
-    boolean ignoreClarifyingParentheses) {
-    if (parentExpression instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression parentBinaryExpression =
-        (PsiBinaryExpression)parentExpression;
-      if (expression instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression childBinaryExpression =
-          (PsiBinaryExpression)expression;
-        final IElementType childOperator =
-          childBinaryExpression.getOperationTokenType();
-        final IElementType parentOperator =
-          parentBinaryExpression.getOperationTokenType();
-        if (ignoreClarifyingParentheses &&
-            !childOperator.equals(parentOperator)) {
-          return true;
-        }
-        final PsiType parentType = parentBinaryExpression.getType();
-        if (parentType == null) {
-          return true;
-        }
-        final PsiType childType = childBinaryExpression.getType();
-        if (!parentType.equals(childType)) {
-          return true;
-        }
-        if (PsiTreeUtil.isAncestor(parentBinaryExpression.getROperand(),
-                                   expression, false)) {
-          if (!isCommutativeBinaryOperator(parentOperator)) {
-            return true;
-          }
-        }
-        return false;
-      }
-      else if (expression instanceof PsiConditionalExpression) {
-        if (PsiTreeUtil.isAncestor(parentBinaryExpression.getROperand(),
-                                   expression, false)) {
-          return true;
-        }
-      }
+  public static boolean areParenthesesNeeded(PsiExpression expression, PsiExpression parentExpression) {
+    if (parentExpression instanceof PsiParenthesizedExpression) {
+      return false;
     }
-    else if (parentExpression instanceof PsiPrefixExpression) {
-      if (expression instanceof PsiBinaryExpression) {
+    else if (parentExpression instanceof PsiPolyadicExpression && expression instanceof PsiPolyadicExpression) {
+      final PsiPolyadicExpression parentBinaryExpression = (PsiPolyadicExpression)parentExpression;
+      final PsiType parentType = parentBinaryExpression.getType();
+      if (parentType == null) {
         return true;
       }
+      final PsiPolyadicExpression childBinaryExpression = (PsiPolyadicExpression)expression;
+      final PsiType childType = childBinaryExpression.getType();
+      if (!parentType.equals(childType)) {
+        return true;
+      }
+      final PsiExpression[] parentOperands = parentBinaryExpression.getOperands();
+      if (!PsiTreeUtil.isAncestor(parentOperands[0], expression, false)) {
+        final IElementType parentOperator = parentBinaryExpression.getOperationTokenType();
+        if (!isCommutativeBinaryOperator(parentOperator)) {
+          return true;
+        }
+      }
+      return false;
     }
-    return false;
+    final int parentPrecedence = getPrecedence(parentExpression);
+    final int childPrecedence = getPrecedence(expression);
+    return parentPrecedence < childPrecedence;
   }
 }

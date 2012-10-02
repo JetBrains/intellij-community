@@ -30,6 +30,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,10 +41,10 @@ import java.awt.im.InputMethodRequests;
 import java.util.Map;
 
 public class EditorComponentImpl extends JComponent implements Scrollable, DataProvider, Queryable, TypingTarget {
-
   private final EditorImpl myEditor;
+  private final ApplicationImpl myApplication;
 
-  public EditorComponentImpl(EditorImpl editor) {
+  public EditorComponentImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
     enableEvents(AWTEvent.KEY_EVENT_MASK | AWTEvent.INPUT_METHOD_EVENT_MASK);
     enableInputMethods(true);
@@ -54,20 +55,20 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
       @Override
       public Point magnify(double scale, Point at) {
         VisualPosition magnificationPosition = myEditor.xyToVisualPosition(at);
-
         double currentSize = myEditor.getColorsScheme().getEditorFontSize();
         int defaultFontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
-        myEditor.setFontSize((int)(double)(int)(Math.max(currentSize * scale, defaultFontSize)));
+        myEditor.setFontSize(Math.max((int)(currentSize * scale), defaultFontSize));
 
         return myEditor.visualPositionToXY(magnificationPosition);
       }
     });
+    myApplication = (ApplicationImpl)ApplicationManager.getApplication();
   }
 
+  @NotNull
   public EditorImpl getEditor() {
     return myEditor;
   }
-
 
   @Override
   public Object getData(String dataId) {
@@ -116,6 +117,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
           myEditor.replaceInputMethodText(e);
           // No breaks over here.
 
+          //noinspection fallthrough
         case InputMethodEvent.CARET_POSITION_CHANGED:
           myEditor.inputMethodCaretPositionChanged(e);
           break;
@@ -143,7 +145,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
 
   @Override
   public void paintComponent(Graphics g) {
-    ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
+    myApplication.editorPaintStart();
 
     try {
       UIUtil.paintWithRetina(getSize(), g, myEditor.paintBlockCaret(), new Consumer<Graphics2D>() {
@@ -157,7 +159,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
       });
     }
     finally {
-      ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();
+      myApplication.editorPaintFinish();
     }
   }
 
@@ -180,9 +182,8 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     if (orientation == SwingConstants.VERTICAL) {
       return myEditor.getLineHeight();
     }
-    else { // if orientation == SwingConstants.HORIZONTAL
-      return EditorUtil.getSpaceWidth(Font.PLAIN, myEditor);
-    }
+    // if orientation == SwingConstants.HORIZONTAL
+    return EditorUtil.getSpaceWidth(Font.PLAIN, myEditor);
   }
 
   @Override
@@ -198,9 +199,8 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
         return visibleRect.y - lineHeight * lineNumber;
       }
     }
-    else { // if orientation == SwingConstants.HORIZONTAL
-      return visibleRect.width;
-    }
+    // if orientation == SwingConstants.HORIZONTAL
+    return visibleRect.width;
   }
 
   @Override
@@ -218,6 +218,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     myEditor.putInfo(info);
   }
 
+  @NonNls
   @Override
   public String toString() {
     return "EditorComponent file=" + myEditor.getVirtualFile();

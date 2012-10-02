@@ -15,7 +15,6 @@
  */
 package com.intellij.compiler.impl.javaCompiler.eclipse;
 
-import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -28,5 +27,5 @@ import com.intellij.openapi.components.StorageScheme;
    ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class EclipseEmbeddedCompilerConfiguration extends JavacConfiguration {
+public class EclipseEmbeddedCompilerConfiguration extends EclipseCompilerConfiguration {
 }

@@ -21,14 +21,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
+import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.FileProcessor;
+import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.java.FormsParsing;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
-import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
@@ -71,20 +73,24 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   @Override
-  public ModuleLevelBuilder.ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
-    if (chunk.isTests() || !AndroidJpsUtil.containsAndroidFacet(chunk)) {
+  public ModuleLevelBuilder.ExitCode build(CompileContext context,
+                                           ModuleChunk chunk,
+                                           DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
+    if (chunk.containsTests() || !AndroidJpsUtil.containsAndroidFacet(chunk)) {
       return ExitCode.NOTHING_DONE;
     }
 
     try {
-      return doBuild(context, chunk);
+      return doBuild(context, chunk, dirtyFilesHolder);
     }
     catch (Exception e) {
       return AndroidJpsUtil.handleException(context, e, BUILDER_NAME);
     }
   }
 
-  private static ModuleLevelBuilder.ExitCode doBuild(CompileContext context, ModuleChunk chunk) throws IOException {
+  private static ModuleLevelBuilder.ExitCode doBuild(CompileContext context,
+                                                     ModuleChunk chunk,
+                                                     DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws IOException {
     final Map<JpsModule, MyModuleData> moduleDataMap = computeModuleDatas(chunk.getModules(), context);
     if (moduleDataMap == null || moduleDataMap.size() == 0) {
       return ExitCode.ABORT;
@@ -104,9 +110,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     final Map<File, ModuleBuildTarget> idlFilesToCompile = new HashMap<File, ModuleBuildTarget>();
     final Map<File, ModuleBuildTarget> rsFilesToCompile = new HashMap<File, ModuleBuildTarget>();
 
-    FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
+    dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
       @Override
-      public boolean apply(ModuleBuildTarget target, File file, String sourceRoot) throws IOException {
+      public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor sourceRoot) throws IOException {
         final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(target.getModule());
 
         if (extension == null) {
@@ -422,7 +428,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         }
         else {
           final SourceToOutputMapping sourceToOutputMap = context.getProjectDescriptor().dataManager.getSourceToOutputMap(buildTarget);
-          sourceToOutputMap.update(filePath, outputFilePath);
+          sourceToOutputMap.setOutput(filePath, outputFilePath);
           FSOperations.markDirty(context, outputFile);
         }
       }
@@ -505,7 +511,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           final List<String> newFilePaths = Arrays.asList(AndroidJpsUtil.toPaths(newFiles.toArray(new File[newFiles.size()])));
 
           final SourceToOutputMapping sourceToOutputMap = dataManager.getSourceToOutputMap(buildTarget);
-          sourceToOutputMap.update(filePath, newFilePaths);
+          sourceToOutputMap.setOutputs(filePath, newFilePaths);
 
           for (File newFile : newFiles) {
             FSOperations.markDirty(context, newFile);
@@ -899,7 +905,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
   @Nullable
   private static String getDependencyFolder(@NotNull CompileContext context, @NotNull File sourceFile, @NotNull File genFolder) {
-    final RootDescriptor descriptor = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, sourceFile);
+    final JavaSourceRootDescriptor descriptor = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, sourceFile);
     if (descriptor == null) {
       return null;
     }
@@ -969,7 +975,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
   @Nullable
   private static String computePackageForFile(@NotNull CompileContext context, @NotNull File file) throws IOException {
-    final RootDescriptor descriptor = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, file);
+    final JavaSourceRootDescriptor descriptor = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, file);
     if (descriptor == null) {
       return null;
     }

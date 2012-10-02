@@ -59,10 +59,15 @@ public class ExecutionUtil {
     if (e instanceof RunCanceledByUserException) return;
 
     LOG.debug(e);
-
+    
     String description = e.getMessage();
     HyperlinkListener listener = null;
-
+    
+    if (description == null) {
+      LOG.warn("Execution error without description", e);
+      description = "Unknown error";
+    }
+    
     if ((description.contains("87") || description.contains("111") || description.contains("206")) &&
         e instanceof ProcessNotCreatedException &&
         !PropertiesComponent.getInstance(project).isTrueValue("dynamic.classpath")) {

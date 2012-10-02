@@ -142,8 +142,8 @@ public class DropDownPanel extends JPanel {
       myButton.setSelectedIcon(ICONS[1]);
       myButton.setBorderPainted(false);
       myButton.setContentAreaFilled(false);
-      myButton.setFocusPainted(true);
-      myButton.setMargin(new Insets(0,0,0,0));
+      myButton.setFocusPainted(false);
+      myButton.setMargin(new Insets(0, 0, 0, 0));
       setLayout(new MigLayout("fill, ins 0 0 0 5, gap 2, align left"));
       add(myButton);
       add(new JSeparator(), "pushx, growx");

@@ -69,6 +69,8 @@
     <extensionPoint name="groovySourceFolderDetector" interface="org.jetbrains.plugins.groovy.actions.GroovySourceFolderDetector"/>
 
     <extensionPoint name="mvc.framework" interface="org.jetbrains.plugins.groovy.mvc.MvcFramework"/>
+
+    <extensionPoint name="closureCompleter" interface="org.jetbrains.plugins.groovy.lang.completion.ClosureCompleter"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
@@ -147,6 +149,9 @@
     <defaultImportContributor implementation="org.jetbrains.plugins.groovy.griffon.GriffonDefaultImportContributor"/>
 
     <groovyShellRunner implementation="org.jetbrains.plugins.groovy.console.DefaultGroovyShellRunner" order="last"/>
+
+    <closureCompleter implementation="org.jetbrains.plugins.groovy.lang.completion.GdslClosureCompleter"/>
+    <closureCompleter implementation="org.jetbrains.plugins.groovy.lang.completion.EachWithIndexClosureCompleter"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">
@@ -200,7 +205,6 @@
     <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorsAndFontsPage"/>
     <framework.type implementation="org.jetbrains.plugins.groovy.config.GroovyFrameworkType"/>
     <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.PropertyRenameHandler"/>
-    <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.GrMethodRenameHandler"/>
     <renamePsiElementProcessor id="groovyFieldRenameProcessor"
                                implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameGrFieldProcessor"
                                order="first"/>
@@ -931,6 +935,7 @@
                      implementationClass="org.jetbrains.plugins.groovy.annotator.inspections.GroovySingletonAnnotationInspection"/>
 
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.gpp.GppImplicitUsageProvider"/>
+    <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.findUsages.GrImplicitUsageProvider"/>
 
     <!-- control flow -->
     <intentionAction>
@@ -1094,6 +1099,11 @@
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertMultilineStringToSingleLineIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.conversions.strings.GrConvertStringToCharIntention</className>
     </intentionAction>
     <intentionAction>
@@ -1160,6 +1170,11 @@
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertSimpleGetterToPropertyIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.GrConvertTypeCastToSafeCastIntention</className>
     </intentionAction>
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
@@ -1246,12 +1261,37 @@
       <categoryKey>intention.category.groovy/intention.category.groovy.declaration</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.declaration.GrSetStrongTypeIntention</className>
     </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.declaration</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.declaration.GrMakeMemberPublicIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.declaration</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.declaration.GrMakeMemberProtectedIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.declaration</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.declaration.GrMakeMemberPrivateIntention</className>
+    </intentionAction>
 
     <!--other-->
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.groovy.other</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.other.GrCreateMissingSwitchBranchesIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.other</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.other.GrAliasImportIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.other</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.other.GrCopyStringConcatenationContentIntention</className>
     </intentionAction>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"
@@ -1351,6 +1391,19 @@
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
 
+
+    <action id="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGeneratePropertyMissingAction"
+            class="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGeneratePropertyMissingAction"
+            text="propertyMissing()" description="Action generates propertyMissing()">
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </action>
+
+    <action id="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGenerateMethodMissingAction"
+            class="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGenerateMethodMissingAction"
+            text="methodMissing()" description="Action generates propertyMissing()">
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </action>
+
     <action id="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterSetterAction"
             class="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterSetterAction"
             text="Getter and Setter" description="Generates getter">
@@ -1374,6 +1427,7 @@
             text="Constructor" description="Generates constructor">
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
+
 
     <action id="Groovy.Doc.Generating"
             class="org.jetbrains.plugins.groovy.doc.actions.GenerateGroovyDocAction"

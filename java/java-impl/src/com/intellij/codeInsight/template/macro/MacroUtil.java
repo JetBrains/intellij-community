@@ -44,7 +44,6 @@ public class MacroUtil {
     String text = result.toString();
     if (text == null) return null;
     PsiManager manager = PsiManager.getInstance(project);
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
     //-1: Hack to deal with stupid resolve
     PsiElement place = file != null ? file.findElementAt(context.getStartOffset()) : null;
@@ -72,7 +71,6 @@ public class MacroUtil {
     String text = result.toString();
     if (text == null) return null;
     PsiManager manager = PsiManager.getInstance(project);
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
     //-1: Hack to deal with resolve algorithm
     PsiElement place = file != null ? file.findElementAt(context.getStartOffset()) : null;

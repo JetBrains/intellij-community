@@ -1498,4 +1498,72 @@ var = new <caret>Foo<String>()
       assertTrue((lookupElements[0] as PsiTypeLookupItem).myDiamond)
     }
   }
+
+  void testStaticallyImportedProperty1() {
+    myFixture.addFileToProject('Foo.groovy', '''\
+class Foo {
+  static def foo
+}
+''')
+    doBasicTest('''\
+import static Foo.foo
+
+print getFo<caret>
+''', '''\
+import static Foo.foo
+
+print getFoo()
+''')
+  }
+
+  void testStaticallyImportedProperty2() {
+    myFixture.addFileToProject('Foo.groovy', '''\
+class Foo {
+  static def foo
+}
+''')
+    doBasicTest('''\
+import static Foo.foo
+
+setFo<caret>
+''', '''\
+import static Foo.foo
+
+setFoo(<caret>)
+''')
+  }
+
+  void testStaticallyImportedProperty3() {
+    myFixture.addFileToProject('Foo.groovy', '''\
+class Foo {
+  static def foo
+}
+''')
+    doBasicTest('''\
+import static Foo.foo as barrr
+
+print getBarr<caret>
+''', '''\
+import static Foo.foo as barrr
+
+print getBarrr()
+''')
+  }
+
+  void testStaticallyImportedProperty4() {
+    myFixture.addFileToProject('Foo.groovy', '''\
+class Foo {
+  static def foo
+}
+''')
+    doBasicTest('''\
+import static Foo.foo as barrr
+
+setBarr<caret>
+''', '''\
+import static Foo.foo as barrr
+
+setBarrr(<caret>)
+''')
+  }
 }

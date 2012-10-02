@@ -52,6 +52,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
@@ -215,7 +216,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     int totalSize = 0;
     for (Document document : documents) {
       totalSize += document.getTextLength();
-      if (totalSize > 10 * FileUtil.MEGABYTE) return true;
+      if (totalSize > 10 * FileUtilRt.MEGABYTE) return true;
     }
     return false;
   }

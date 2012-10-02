@@ -360,7 +360,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   public String getChangelistName(Task task) {
     TaskRepository repository = task.getRepository();
-    if (repository != null) {
+    if (repository != null && myConfig.changelistNameFormat != null) {
       return TaskUtil.formatTask(task, myConfig.changelistNameFormat);
     }
     return task.getSummary();
@@ -377,7 +377,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     createChangeList(task, name, comment);
   }
 
-  public void createChangeList(LocalTask task, String name, String comment) {
+  public void createChangeList(LocalTask task, String name, @Nullable String comment) {
     LocalChangeList changeList = myChangeListManager.findChangeList(name);
     if (changeList == null) {
       myChangeListManager.removeChangeListListener(myChangeListListener);

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -83,6 +84,8 @@ import java.util.Map;
  * @author ilyas
  */
 public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> implements GrMethod, StubBasedPsiElement<GrMethodStub> {
+
+  private static final Logger LOG = Logger.getInstance(GrMethodBaseImpl.class);
 
   protected GrMethodBaseImpl(final GrMethodStub stub, IStubElementType nodeType) {
     super(stub, nodeType);
@@ -195,11 +198,11 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
       }
 
       if (!GppTypeConverter.hasTypedContext(method)) {
-        assert method.isValid() : "invalid method";
+        LOG.assertTrue(method.isValid(), "invalid method");
 
         final GrOpenBlock block = method.getBlock();
         if (block != null) {
-          assert block.isValid() : "invalid code block";
+          LOG.assertTrue(block.isValid(), "invalid code block");
           PsiType inferred = GroovyPsiManager.inferType(method, new MethodTypeInferencer(block));
           if (inferred != null) {
             if (nominal == null || nominal.isAssignableFrom(inferred)) {
@@ -294,7 +297,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @NotNull
   public GrParameterList getParameterList() {
     final GrParameterList parameterList = getStubOrPsiChild(GroovyElementTypes.PARAMETERS_LIST);
-    assert parameterList != null;
+    LOG.assertTrue(parameterList != null);
     return parameterList;
   }
 
@@ -519,7 +522,25 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   }
 
   public PsiType getReturnTypeNoResolve() {
-    throw new UnsupportedOperationException();
+    if (isConstructor()) return null;
+
+    final GrMethodStub stub = getStub();
+    if (stub != null) {
+      final String typeText = stub.getTypeText();
+      if (typeText == null) return null;
+
+      try {
+        return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(typeText, this);
+      }
+      catch(IncorrectOperationException e){
+        LOG.error(e);
+        return null;
+      }
+    }
+
+    GrTypeElement typeElement = getReturnTypeElementGroovy();
+    if (typeElement == null) return null;
+    return typeElement.getTypeNoResolve(this);
   }
 
   @Override

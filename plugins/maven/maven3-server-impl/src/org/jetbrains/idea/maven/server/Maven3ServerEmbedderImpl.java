@@ -16,7 +16,19 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.util.SystemProperties;
+import gnu.trove.THashSet;
 import org.apache.maven.cli.MavenCli;
+import org.apache.maven.model.Activation;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.Profile;
+import org.apache.maven.model.profile.DefaultProfileInjector;
+import org.apache.maven.profiles.activation.*;
+import org.apache.maven.project.DefaultProjectBuilderConfiguration;
+import org.apache.maven.project.ProjectBuilderConfiguration;
+import org.apache.maven.project.interpolation.AbstractStringBasedModelInterpolator;
+import org.apache.maven.project.interpolation.ModelInterpolationException;
+import org.apache.maven.project.path.DefaultPathTranslator;
+import org.apache.maven.project.path.PathTranslator;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
 import org.apache.maven.settings.building.SettingsBuilder;
@@ -25,11 +37,15 @@ import org.apache.maven.settings.building.SettingsBuildingRequest;
 import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.classworlds.ClassWorld;
+import org.codehaus.plexus.context.ContextException;
+import org.codehaus.plexus.context.DefaultContext;
 import org.codehaus.plexus.logging.BaseLoggerManager;
 import org.codehaus.plexus.logging.Logger;
+import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator;
 import org.jetbrains.idea.maven.server.embedder.FieldAccessor;
 
 import java.io.File;
@@ -65,34 +81,27 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
       }
     };
 
-    List<String> methods = Arrays.asList("initialize",
-                                         "cli",
-                                         "properties",
-                                         "container");
-
     Class cliRequestClass = null;
-    Class[] classes = MavenCli.class.getDeclaredClasses();
-    for (Class<?> each : classes) {
-      if (each.getSimpleName().equals("CliRequest")) {
-        cliRequestClass = each;
-        break;
-      }
+    try {
+      cliRequestClass = MavenCli.class.getClassLoader().loadClass("org.apache.maven.cli.MavenCli$CliRequest");
     }
-    if (cliRequestClass == null) throw new RuntimeException("'CliRequest' class not found among '" + Arrays.toString(classes) + "'");
+    catch (ClassNotFoundException e) {
+      throw new RuntimeException("Class \"org.apache.maven.cli.MavenCli$CliRequest\" not found");
+    }
 
     Object cliRequest;
     try {
-      List<String> commandLineOptions = new ArrayList<String>(settings.getUserProperties().size());
+      String[] commandLineOptions = new String[settings.getUserProperties().size()];
+      int idx = 0;
       for (Map.Entry<Object, Object> each : settings.getUserProperties().entrySet()) {
-        commandLineOptions.add("-D" + each.getKey() + "=" + each.getValue());
+        commandLineOptions[idx++] = "-D" + each.getKey() + "=" + each.getValue();
       }
-      String[] commandLineOptionsArray = commandLineOptions.toArray(new String[commandLineOptions.size()]);
 
       Constructor constructor = cliRequestClass.getDeclaredConstructor(String[].class, ClassWorld.class);
       constructor.setAccessible(true);
-      cliRequest = constructor.newInstance(commandLineOptionsArray, classWorld);
+      cliRequest = constructor.newInstance(commandLineOptions, classWorld);
 
-      for (String each : methods) {
+      for (String each : new String[]{"initialize", "cli", "properties", "container"}) {
         Method m = MavenCli.class.getDeclaredMethod(each, cliRequestClass);
         m.setAccessible(true);
         m.invoke(cli, cliRequest);
@@ -112,7 +121,7 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     }
 
     // reset threshold
-    myContainer = FieldAccessor.<DefaultPlexusContainer>get(MavenCli.class, cli, "container");
+    myContainer = FieldAccessor.get(MavenCli.class, cli, "container");
     myContainer.getLoggerManager().setThreshold(settings.getLoggingLevel());
 
     myMavenSettings = buildSettings(FieldAccessor.<SettingsBuilder>get(MavenCli.class, cli, "settingsBuilder"),
@@ -169,6 +178,13 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
   @Override
   public MavenArtifact resolve(@NotNull MavenArtifactInfo info, @NotNull List<MavenRemoteRepository> remoteRepositories)
     throws RemoteException, MavenServerProcessCanceledException {
+    //DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
+    //
+    //MavenExecutionResult result = myImpl.resolveProject(file,
+    //                                                    new ArrayList<String>(activeProfiles),
+    //                                                    Arrays.<ResolutionListener>asList(listener));
+    //return createExecutionResult(file, result, listener.getRootNode());
+
     throw new UnsupportedOperationException();
   }
 
@@ -204,18 +220,22 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     myContainer.dispose();
   }
 
-  @Override
   public void clearCaches() throws RemoteException {
-    throw new UnsupportedOperationException();
+    // do nothing
   }
 
-  @Override
-  public void clearCachesFor(MavenId projectId) throws RemoteException {
-    throw new UnsupportedOperationException();
+  public void clearCachesFor(final MavenId projectId) throws RemoteException {
+    // do nothing
   }
 
-  public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir) {
-    throw new UnsupportedOperationException();
+  public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir) throws RemoteException {
+    Model result = MavenModelConverter.toNativeModel(model);
+    result = doInterpolate(result, basedir);
+
+    PathTranslator pathTranslator = new DefaultPathTranslator();
+    pathTranslator.alignToBaseDirectory(result, basedir);
+
+    return MavenModelConverter.convertModel(result, null);
   }
 
   public static MavenModel assembleInheritance(MavenModel model, MavenModel parentModel) {
@@ -225,8 +245,111 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
   public static ProfileApplicationResult applyProfiles(MavenModel model,
                                                        File basedir,
                                                        Collection<String> explicitProfiles,
-                                                       Collection<String> alwaysOnProfiles) {
-    throw new UnsupportedOperationException();
+                                                       Collection<String> alwaysOnProfiles) throws RemoteException {
+    Model nativeModel = MavenModelConverter.toNativeModel(model);
+
+    List<Profile> activatedPom = new ArrayList<Profile>();
+    List<Profile> activatedExternal = new ArrayList<Profile>();
+    List<Profile> activeByDefault = new ArrayList<Profile>();
+
+    List<Profile> rawProfiles = nativeModel.getProfiles();
+    List<Profile> expandedProfilesCache = null;
+
+    for (int i = 0; i < rawProfiles.size(); i++) {
+      Profile eachRawProfile = rawProfiles.get(i);
+
+      boolean shouldAdd = explicitProfiles.contains(eachRawProfile.getId()) || alwaysOnProfiles.contains(eachRawProfile.getId());
+
+      Activation activation = eachRawProfile.getActivation();
+      if (activation != null) {
+        if (activation.isActiveByDefault()) {
+          activeByDefault.add(eachRawProfile);
+        }
+
+        // expand only if necessary
+        if (expandedProfilesCache == null) expandedProfilesCache = doInterpolate(nativeModel, basedir).getProfiles();
+        Profile eachExpandedProfile = expandedProfilesCache.get(i);
+
+        for (ProfileActivator eachActivator : getProfileActivators(basedir)) {
+          try {
+            if (eachActivator.canDetermineActivation(eachExpandedProfile) && eachActivator.isActive(eachExpandedProfile)) {
+              shouldAdd = true;
+              break;
+            }
+          }
+          catch (ProfileActivationException e) {
+            Maven3ServerGlobals.getLogger().warn(e);
+          }
+        }
+      }
+
+      if (shouldAdd) {
+        if (MavenConstants.PROFILE_FROM_POM.equals(eachRawProfile.getSource())) {
+          activatedPom.add(eachRawProfile);
+        }
+        else {
+          activatedExternal.add(eachRawProfile);
+        }
+      }
+    }
+
+    List<Profile> activatedProfiles = new ArrayList<Profile>(activatedPom.isEmpty() ? activeByDefault : activatedPom);
+    activatedProfiles.addAll(activatedExternal);
+
+    for (Profile each : activatedProfiles) {
+      new DefaultProfileInjector().injectProfile(nativeModel, each, null, null);
+    }
+
+    return new ProfileApplicationResult(MavenModelConverter.convertModel(nativeModel, null),
+                                        collectProfilesIds(activatedProfiles));
   }
+
+  private static Model doInterpolate(Model result, File basedir) throws RemoteException {
+    try {
+      AbstractStringBasedModelInterpolator interpolator = new CustomMaven3ModelInterpolator(new DefaultPathTranslator());
+      interpolator.initialize();
+
+      Properties props = MavenServerUtil.collectSystemProperties();
+      ProjectBuilderConfiguration config = new DefaultProjectBuilderConfiguration().setExecutionProperties(props);
+      result = interpolator.interpolate(result, basedir, config, false);
+    }
+    catch (ModelInterpolationException e) {
+      Maven3ServerGlobals.getLogger().warn(e);
+    }
+    catch (InitializationException e) {
+      Maven3ServerGlobals.getLogger().error(e);
+    }
+    return result;
+  }
+
+  private static Collection<String> collectProfilesIds(List<Profile> profiles) {
+    Collection<String> result = new THashSet<String>();
+    for (Profile each : profiles) {
+      if (each.getId() != null) {
+        result.add(each.getId());
+      }
+    }
+    return result;
+  }
+
+  private static ProfileActivator[] getProfileActivators(File basedir) throws RemoteException {
+    SystemPropertyProfileActivator sysPropertyActivator = new SystemPropertyProfileActivator();
+    DefaultContext context = new DefaultContext();
+    context.put("SystemProperties", MavenServerUtil.collectSystemProperties());
+    try {
+      sysPropertyActivator.contextualize(context);
+    }
+    catch (ContextException e) {
+      Maven3ServerGlobals.getLogger().error(e);
+      return new ProfileActivator[0];
+    }
+
+    return new ProfileActivator[]{new MyFileProfileActivator(basedir),
+      sysPropertyActivator,
+      new JdkPrefixProfileActivator(),
+      new OperatingSystemProfileActivator()};
+  }
+
+
 }
 

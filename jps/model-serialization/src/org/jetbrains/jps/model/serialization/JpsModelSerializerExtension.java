@@ -34,6 +34,12 @@ public abstract class JpsModelSerializerExtension {
   public void saveRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {
   }
 
+  public void loadModuleOptions(@NotNull JpsModule module, @NotNull Element rootElement) {
+  }
+
+  public void saveModuleOptions(@NotNull JpsModule module, @NotNull Element rootElement) {
+  }
+
   public List<JpsLibraryRootTypeSerializer> getLibraryRootTypeSerializers() {
     return Collections.emptyList();
   }

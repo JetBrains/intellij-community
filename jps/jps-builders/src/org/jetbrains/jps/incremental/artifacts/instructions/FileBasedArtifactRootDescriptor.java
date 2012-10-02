@@ -3,10 +3,10 @@ package org.jetbrains.jps.incremental.artifacts.instructions;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.JpsPathUtil;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
-import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,7 +48,7 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
       context.getLoggingManager().getArtifactBuilderLogger().fileCopied(filePath);
       final File targetFile = new File(FileUtil.toSystemDependentName(targetPath));
       FileUtil.copyContent(file, targetFile);
-      srcOutMapping.appendData(filePath, Collections.singletonList(targetPath));
+      srcOutMapping.appendOutput(filePath, targetPath);
     }
     outSrcMapping.appendData(targetPath, Collections.singletonList(new ArtifactOutputToSourceMapping.SourcePathAndRootIndex(filePath, rootIndex)));
   }

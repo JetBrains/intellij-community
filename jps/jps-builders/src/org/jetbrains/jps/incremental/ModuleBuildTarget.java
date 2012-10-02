@@ -6,8 +6,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
+import org.jetbrains.jps.indices.IgnoredFileIndex;
+import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
-import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
@@ -24,7 +26,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class ModuleBuildTarget extends BuildTarget<RootDescriptor> {
+public class ModuleBuildTarget extends BuildTarget<JavaSourceRootDescriptor> {
   private final JpsModule myModule;
   private final String myModuleName;
   private final JavaModuleBuildTargetType myTargetType;
@@ -55,12 +57,12 @@ public class ModuleBuildTarget extends BuildTarget<RootDescriptor> {
   }
 
   @Override
-  public Collection<ModuleBuildTarget> computeDependencies() {
+  public Collection<BuildTarget<?>> computeDependencies() {
     JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(myModule).compileOnly();
     if (!isTests()) {
       enumerator.productionOnly();
     }
-    final List<ModuleBuildTarget> dependencies = new ArrayList<ModuleBuildTarget>();
+    final List<BuildTarget<?>> dependencies = new ArrayList<BuildTarget<?>>();
     enumerator.processModules(new Consumer<JpsModule>() {
       @Override
       public void consume(JpsModule module) {
@@ -75,22 +77,28 @@ public class ModuleBuildTarget extends BuildTarget<RootDescriptor> {
 
   @NotNull
   @Override
-  public List<RootDescriptor> computeRootDescriptors(JpsModel model, ModuleRootsIndex index) {
-    List<RootDescriptor> roots = new ArrayList<RootDescriptor>();
+  public List<JavaSourceRootDescriptor> computeRootDescriptors(JpsModel model, ModuleExcludeIndex index, IgnoredFileIndex ignoredFileIndex) {
+    List<JavaSourceRootDescriptor> roots = new ArrayList<JavaSourceRootDescriptor>();
     for (JpsModuleSourceRoot sourceRoot : myModule.getSourceRoots()) {
       final File root = JpsPathUtil.urlToFile(sourceRoot.getUrl());
       final boolean testRoot = JavaSourceRootType.TEST_SOURCE.equals(sourceRoot.getRootType());
       if (testRoot == isTests()) {
-        roots.add(new RootDescriptor(root, this, false, false));
+        roots.add(new JavaSourceRootDescriptor(root, this, false, false));
       }
     }
     return roots;
   }
 
   @Override
-  public RootDescriptor findRootDescriptor(String rootId, BuildRootIndex rootIndex) {
-    List<RootDescriptor> descriptors = rootIndex.getRootDescriptors(new File(rootId), Collections.<JavaModuleBuildTargetType>singletonList(myTargetType), null);
+  public JavaSourceRootDescriptor findRootDescriptor(String rootId, BuildRootIndex rootIndex) {
+    List<JavaSourceRootDescriptor> descriptors = rootIndex.getRootDescriptors(new File(rootId), Collections.<JavaModuleBuildTargetType>singletonList(myTargetType), null);
     return ContainerUtil.getFirstItem(descriptors);
+  }
+
+  @NotNull
+  @Override
+  public String getPresentableName() {
+    return "Module '" + myModuleName + "' " + (myTargetType.isTests() ? "tests" : "production");
   }
 
   @Override

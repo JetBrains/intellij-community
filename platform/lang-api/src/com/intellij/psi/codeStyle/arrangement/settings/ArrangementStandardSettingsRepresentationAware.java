@@ -16,8 +16,10 @@
 package com.intellij.psi.codeStyle.arrangement.settings;
 
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
+import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -48,6 +50,20 @@ public interface ArrangementStandardSettingsRepresentationAware {
   @NotNull
   String getDisplayValue(@NotNull ArrangementModifier modifier);
 
+  /**
+   * @param groupingType  target grouping type
+   * @return              text to show end-user for the given grouping type
+   */
+  @NotNull
+  String getDisplayValue(@NotNull ArrangementGroupingType groupingType);
+
+  /**
+   * @param orderType  target order type
+   * @return           text to show end-user for the given order type
+   */
+  @NotNull
+  String getDisplayValue(@NotNull ArrangementEntryOrderType orderType);
+  
   /**
    * Allows to sort given arrangement condition ids ('field', 'class', 'method', 'public', 'static', 'final' etc) before showing
    * them to an end-user.

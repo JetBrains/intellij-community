@@ -14,3 +14,8 @@ July 8, 2005:
 December 21, 2009
  * Applied jflex-1.4.3-unicode-character-category.patch
  
+
+October 1, 2012:
+ * Merged pull request :
+   Fix JFlex's Action.GENERAL_LOOK lookahead option to work with --charAt and --sliceandcharat.
+   https://github.com/gshakhn/intellij-community/commit/e537a27e2bfc8e12500f00fa33e8e51ccaf47243

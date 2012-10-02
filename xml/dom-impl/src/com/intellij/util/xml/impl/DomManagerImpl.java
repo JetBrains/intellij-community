@@ -24,6 +24,7 @@ import com.intellij.pom.event.PomModelListener;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
@@ -137,7 +138,7 @@ public final class DomManagerImpl extends DomManager {
             }
 
             if (file.isValid() && StdFileTypes.XML.equals(file.getFileType())) {
-              final PsiFile psiFile = psiManager.findFile(file);
+              final PsiFile psiFile = getCachedPsiFile(file);
               if (psiFile instanceof XmlFile) {
                 Collections.addAll(myDeletionEvents, recomputeFileElement((XmlFile)psiFile));
               }
@@ -190,7 +191,11 @@ public final class DomManagerImpl extends DomManager {
 
   private void processFileChange(final VirtualFile file) {
     if (StdFileTypes.XML != file.getFileType()) return;
-    processFileChange(PsiManager.getInstance(myProject).findFile(file));
+    processFileChange(getCachedPsiFile(file));
+  }
+
+  private PsiFile getCachedPsiFile(VirtualFile file) {
+    return ((PsiManagerEx)PsiManager.getInstance(myProject)).getFileManager().getCachedPsiFile(file);
   }
 
   private void processFileChange(final PsiFile file) {

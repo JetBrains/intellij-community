@@ -26,7 +26,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.tasks.github.GithubApiUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +47,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   private static final String ANONIMOUS_GIST = "Anonymous";
   private static final String OPEN_IN_BROWSER_GIST = "OpenInBrowser";
   private static final String PRIVATE_GIST = "Private";
-  private static final String GITHUB_SETTINGS_PASSWORD_KEY = "GITHUB_SETTINGS_PASSWORD_KEY";
+  public static final String GITHUB_SETTINGS_PASSWORD_KEY = "GITHUB_SETTINGS_PASSWORD_KEY";
 
   private String myLogin;
   private String myHost;
@@ -107,6 +106,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     }
   }
 
+  // TODO return null if no login instead of empty string
   @NotNull
   public String getLogin() {
     return myLogin != null ? myLogin : "";

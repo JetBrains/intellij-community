@@ -24,39 +24,43 @@ import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.net.HttpConfigurable;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 /**
  * @author Dmitry Avdeev
  */
-public class BaseRepositoryEditor<T extends BaseRepository> extends TaskRepositoryEditor {
+public class BaseRepositoryEditor<T extends BaseRepository> extends TaskRepositoryEditor implements PanelWithAnchor {
 
-  protected JLabel myUrlLabel;
+  protected JBLabel myUrlLabel;
   protected JTextField myURLText;
   protected JTextField myUserNameText;
-  protected JLabel myUsernameLabel;  
+  protected JBLabel myUsernameLabel;
   protected JCheckBox myShareURL;
   protected JPasswordField myPasswordText;
-  protected JLabel myPasswordLabel;
+  protected JBLabel myPasswordLabel;
 
-  private JButton myTestButton;
+  protected JButton myTestButton;
   private JPanel myPanel;
-  private JCheckBox myUseProxy;
+  private JBCheckBox myUseProxy;
   private JButton myProxySettingsButton;
   protected JCheckBox myUseHTTPAuthentication;
 
-  protected JPanel myCustomPanel;
-  protected JPanel myCustomLabel;
+  private JPanel myCustomPanel;
   private JBCheckBox myAddCommitMessage;
   private JLabel myComment;
   private JPanel myEditorPanel;
@@ -66,6 +70,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   private final Consumer<T> myChangeListener;
   private final Document myDocument;
   private final Editor myEditor;
+  private JComponent myAnchor;
 
   public BaseRepositoryEditor(final Project project, final T repository, Consumer<T> changeListener) {
     myRepository = repository;
@@ -73,7 +78,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
 
     myTestButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        TaskManager.getManager(project).testConnection(repository);
+        afterTestConnection(TaskManager.getManager(project).testConnection(repository));
       }
     });
 
@@ -116,6 +121,21 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     installListener(myUseHTTPAuthentication);
 
     enableButtons();
+
+    JComponent customPanel = createCustomPanel();
+    if (customPanel != null) {
+      myCustomPanel.add(customPanel, BorderLayout.CENTER);
+    }
+
+    setAnchor(myUseProxy);
+  }
+
+  @Nullable
+  protected JComponent createCustomPanel() {
+    return null;
+  }
+
+  protected void afterTestConnection(final boolean b) {
   }
 
   protected void enableButtons() {
@@ -146,7 +166,16 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     });
   }
 
-  private void doApply() {
+  protected void installListener(JComboBox comboBox) {
+    comboBox.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(final ItemEvent e) {
+        doApply();
+      }
+    });
+  }
+
+  protected void doApply() {
     if (!myApplying) {
       try {
         myApplying = true;
@@ -186,5 +215,19 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myRepository.setCommitMessageFormat(myDocument.getText());
 
     myChangeListener.consume(myRepository);
+  }
+
+  @Override
+  public JComponent getAnchor() {
+    return myAnchor;
+  }
+
+  @Override
+  public void setAnchor(@Nullable final JComponent anchor) {
+    myAnchor = anchor;
+    myUrlLabel.setAnchor(anchor);
+    myUsernameLabel.setAnchor(anchor);
+    myPasswordLabel.setAnchor(anchor);
+    myUseProxy.setAnchor(anchor);
   }
 }

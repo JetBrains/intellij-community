@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -244,7 +245,9 @@ public class MavenRootModelAdapter {
     return new Path(path);
   }
 
-  public void addModuleDependency(@NotNull String moduleName, @NotNull DependencyScope scope) {
+  public void addModuleDependency(@NotNull String moduleName,
+                                  @NotNull DependencyScope scope,
+                                  boolean testJar) {
     Module m = findModuleByName(moduleName);
 
     ModuleOrderEntry e;
@@ -262,6 +265,9 @@ public class MavenRootModelAdapter {
     }
 
     e.setScope(scope);
+    if (testJar) {
+      ((ModuleOrderEntryImpl)e).setProductionOnTestDependency(true);
+    }
   }
 
   @Nullable

@@ -17,10 +17,10 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SpeedSearchComparator;
+import com.intellij.ui.TreeTableSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModel;
@@ -245,6 +245,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
         return editor == null ? super.getCellEditor(row, column) : editor;
       }
     };
+    new TreeTableSpeedSearch(treeTable).setComparator(new SpeedSearchComparator(false));
 
     treeTable.setRootVisible(false);
 
@@ -563,6 +564,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
       myKey = key;
       myText = text;
       myValue = key.getValue(settings);
+      setUserObject(myText);
     }
 
     public Option getKey() {

@@ -99,7 +99,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   }
 
-  public static void showSettingsDialog(final Project project, final String id2Select, final String filter) {
+  public static void showSettingsDialog(@Nullable Project project, final String id2Select, final String filter) {
     ConfigurableGroup[] group;
     if (project == null) {
       group = new ConfigurableGroup[]{new IdeConfigurablesGroup()};

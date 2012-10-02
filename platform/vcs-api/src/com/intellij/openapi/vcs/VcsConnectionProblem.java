@@ -23,6 +23,10 @@ public class VcsConnectionProblem extends VcsException {
     super(message);
   }
 
+  public VcsConnectionProblem(VcsConnectionProblem cause) {
+    super(cause.getMessage(), cause);
+  }
+
   public boolean attemptQuickFix(boolean mayDisplayDialogs) {
     return false;
   }

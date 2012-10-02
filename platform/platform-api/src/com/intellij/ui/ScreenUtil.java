@@ -56,70 +56,70 @@ public class ScreenUtil {
   }
 
   public static Rectangle getScreenRectangle(Point p) {
-    final GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-    final GraphicsDevice[] devices = env.getScreenDevices();
     double distance = -1;
-    GraphicsConfiguration targetGC = null;
-    GraphicsConfiguration bestConfig = null;
+    Rectangle answer = null;
 
-    for (GraphicsDevice device : devices) {
-      final GraphicsConfiguration config = device.getDefaultConfiguration();
-      final Rectangle rect = config.getBounds();
-
-      final Insets insets = getScreenInsets(config);
-      if (insets != null) {
-        rect.x += insets.left;
-        rect.width -= (insets.left + insets.right);
-        rect.y += insets.top;
-        rect.height -= (insets.top + insets.bottom);
-      }
-
+    for (GraphicsDevice device : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
+      GraphicsConfiguration config = device.getDefaultConfiguration();
+      final Rectangle rect = applyInsets(config.getBounds(), getScreenInsets(config));
       if (rect.contains(p)) {
-        targetGC = config;
-        break;
+        return rect;
       }
-      else {
-        final double d = findNearestPointOnBorder(rect, p).distance(p.x, p.y);
-        if (bestConfig == null || distance > d) {
-          distance = d;
-          bestConfig = config;
-        }
+
+      final double d = findNearestPointOnBorder(rect, p).distance(p.x, p.y);
+      if (answer == null || distance > d) {
+        distance = d;
+        answer = rect;
       }
     }
 
-    if (targetGC == null && devices.length > 0 && bestConfig != null) {
-      targetGC = bestConfig;
-      //targetGC = env.getDefaultScreenDevice().getDefaultConfiguration();
-    }
-    if (targetGC == null) {
+    if (answer == null) {
       throw new IllegalStateException("It's impossible to determine target graphics environment for point (" + p.x + "," + p.y + ")");
     }
 
-    // determine real client area of target graphics configuration
-    final Insets insets = getScreenInsets(targetGC);
-    final Rectangle targetRect = targetGC.getBounds();
-    targetRect.x += insets.left;
-    targetRect.y += insets.top;
-    targetRect.width -= insets.left + insets.right;
-    targetRect.height -= insets.top + insets.bottom;
+    return answer;
+  }
 
-    return targetRect;
+  private static Rectangle applyInsets(Rectangle rect, Insets i) {
+    if (i == null) {
+      return rect;
+    }
+
+    return new Rectangle(rect.x + i.left, rect.y + i.top, rect.width - (i.left + i.right), rect.height - (i.top + i.bottom));
+  }
+
+  private static Insets fixGlobalInsets(Rectangle rect, Insets i) {
+    if (i == null) {
+      //noinspection ConstantConditions
+      return i;
+    }
+    int top = i.top > rect.y ? i.top - rect.y : i.top;
+    int left = i.left > rect.x ? i.left - rect.x : i.left;
+    return new Insets(top, left, i.bottom, i.right);
   }
 
   public static Insets getScreenInsets(final GraphicsConfiguration gc) {
     if (ourInsetsCache == null) {
-      return Toolkit.getDefaultToolkit().getScreenInsets(gc);
+      return calcInsets(gc);
     }
 
     synchronized (ourInsetsCache) {
       Pair<Insets, Long> data = ourInsetsCache.get(gc);
       final long now = System.currentTimeMillis();
-      if (data == null || now > data.second + 17 * 1000) {  // keep for 17s
-        data = Pair.create(Toolkit.getDefaultToolkit().getScreenInsets(gc), now);
+      if (data == null || now > data.second + /*17 * */1000) {  // keep for 17s
+        data = Pair.create(calcInsets(gc), now);
         ourInsetsCache.put(gc, data);
       }
       return data.first;
     }
+  }
+
+  private static Insets calcInsets(GraphicsConfiguration gc) {
+    Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(gc);
+    if (SystemInfo.isLinux && GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length > 1) {
+      return fixGlobalInsets(gc.getBounds(), insets);
+    }
+    return insets;
   }
 
   public static Rectangle getScreenRectangle(int x, int y) {

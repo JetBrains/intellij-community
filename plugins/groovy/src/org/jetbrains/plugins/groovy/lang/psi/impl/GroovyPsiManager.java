@@ -38,6 +38,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +70,7 @@ public class GroovyPsiManager {
                                                                                 JAVA_LANG_STRING);
   private final Project myProject;
 
-  private volatile GrTypeDefinition myArrayClass;
+  private volatile Map<String, GrTypeDefinition> myArrayClass = new HashMap<String, GrTypeDefinition>();
 
   private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
   private final ConcurrentMap<String, SoftReference<Map<GlobalSearchScope, PsiClass>>> myClassCache = new ConcurrentHashMap<String, SoftReference<Map<GlobalSearchScope, PsiClass>>>();
@@ -214,17 +215,21 @@ public class GroovyPsiManager {
     return PsiType.NULL.equals(type) ? null : type;
   }
 
-  public GrTypeDefinition getArrayClass() {
-    if (myArrayClass == null) {
+  public GrTypeDefinition getArrayClass(PsiType type) {
+    final String typeText = type.getCanonicalText();
+    GrTypeDefinition definition = myArrayClass.get(typeText);
+    if (definition == null) {
       try {
-        myArrayClass = GroovyPsiElementFactory.getInstance(myProject).createTypeDefinition("class __ARRAY__ { public int length }");
+        definition = GroovyPsiElementFactory.getInstance(myProject).createTypeDefinition("class __ARRAY__ { public int length; public " + typeText + "[] clone(){} }");
+        myArrayClass.put(typeText, definition);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
+        return null;
       }
     }
 
-    return myArrayClass;
+    return definition;
   }
 
   @Nullable

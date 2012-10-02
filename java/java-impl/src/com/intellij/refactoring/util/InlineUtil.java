@@ -137,17 +137,9 @@ public class InlineUtil {
         }
       }
     } else if (exprType instanceof PsiLambdaExpressionType) {
-      final PsiLambdaExpression expression = ((PsiLambdaExpressionType)exprType).getExpression();
-      if (expression.getParent() instanceof PsiReferenceExpression) {
-        PsiTypeCastExpression cast = (PsiTypeCastExpression)JavaPsiFacade.getElementFactory(expr.getProject()).createExpressionFromText("(t)a", null);
-        PsiTypeElement castTypeElement = cast.getCastType();
-        assert castTypeElement != null;
-        castTypeElement.replace(variable.getTypeElement());
-        final PsiExpression operand = cast.getOperand();
-        assert operand != null;
-        operand.replace(expr);
-        expr = (PsiTypeCastExpression)expr.replace(cast);
-      }
+      expr = surroundWithCast(variable, expr, ((PsiLambdaExpressionType)exprType).getExpression());
+    } else if (exprType instanceof PsiMethodReferenceType) {
+      expr = surroundWithCast(variable, expr, ((PsiMethodReferenceType)exprType).getExpression());
     }
 
     ChangeContextUtil.clearContextInfo(initializer);
@@ -155,6 +147,20 @@ public class InlineUtil {
     PsiThisExpression thisAccessExpr = createThisExpression(manager, thisClass, refParent);
 
     return (PsiExpression)ChangeContextUtil.decodeContextInfo(expr, thisClass, thisAccessExpr);
+  }
+
+  private static PsiExpression surroundWithCast(PsiVariable variable, PsiExpression expr, PsiExpression expression) {
+    if (expression.getParent() instanceof PsiReferenceExpression) {
+      PsiTypeCastExpression cast = (PsiTypeCastExpression)JavaPsiFacade.getElementFactory(expr.getProject()).createExpressionFromText("(t)a", null);
+      PsiTypeElement castTypeElement = cast.getCastType();
+      assert castTypeElement != null;
+      castTypeElement.replace(variable.getTypeElement());
+      final PsiExpression operand = cast.getOperand();
+      assert operand != null;
+      operand.replace(expr);
+      expr = (PsiTypeCastExpression)expr.replace(cast);
+    }
+    return expr;
   }
 
   private static PsiThisExpression createThisExpression(PsiManager manager, PsiClass thisClass, PsiClass refParent) {

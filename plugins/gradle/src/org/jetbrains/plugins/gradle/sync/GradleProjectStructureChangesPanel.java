@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -28,9 +29,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -41,7 +40,7 @@ import java.util.List;
  */
 public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
 
-  private static final int    COLLAPSE_STATE_PROCESSING_DELAY_MILLIS = 200;
+  private static final int COLLAPSE_STATE_PROCESSING_DELAY_MILLIS = 200;
 
   private static final Comparator<TreePath> PATH_COMPARATOR = new Comparator<TreePath>() {
     @Override
@@ -50,14 +49,14 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
     }
   };
 
-  private final Alarm            myCollapseStateAlarm     = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final List<JComponent> myToolbarControls        = new ArrayList<JComponent>();
-  
+  private final Alarm            myCollapseStateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final List<JComponent> myToolbarControls    = new ArrayList<JComponent>();
+
   /** Holds list of paths which 'expand/collapse' state should be restored. */
-  private final List<TreePath> myPathsToProcessCollapseState = new ArrayList<TreePath>();
-  
+  private final Set<TreePath> myPathsToProcessCollapseState = ContainerUtilRt.newHashSet();
+
   private final GradleLocalSettings mySettings;
-  
+
   private Tree                            myTree;
   private GradleProjectStructureTreeModel myTreeModel;
   private GradleProjectStructureContext   myContext;
@@ -187,19 +186,20 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
    */
   private void scheduleCollapseStateAppliance(@NotNull TreePath path) {
     myPathsToProcessCollapseState.add(path);
+    myCollapseStateAlarm.cancelAllRequests();
     myCollapseStateAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        myCollapseStateAlarm.cancelAllRequests();
         // We assume that the paths collection is modified only from the EDT, so, ConcurrentModificationException doesn't have
         // a chance.
         // Another thing is that we sort the paths in order to process the longest first. That is related to the JTree specifics
         // that it automatically expands parent paths on child path expansion.
-        Collections.sort(myPathsToProcessCollapseState, PATH_COMPARATOR);
-        for (TreePath treePath : myPathsToProcessCollapseState) {
+        List<TreePath> paths = new ArrayList<TreePath>(myPathsToProcessCollapseState);
+        myPathsToProcessCollapseState.clear();
+        Collections.sort(paths, PATH_COMPARATOR);
+        for (TreePath treePath : paths) {
           applyCollapseState(treePath);
         }
-        myPathsToProcessCollapseState.clear();
         final TreePath rootPath = new TreePath(myTreeModel.getRoot());
         if (myTree.isCollapsed(rootPath)) {
           myTree.expandPath(rootPath);

@@ -64,7 +64,7 @@ class UrlUtil {
 
   private static List<String> getChildPathsFromFile(URL root) {
     final List<String> paths = new ArrayList<String>();
-    final File rootFile = new File(root.getPath());
+    final File rootFile = new File(FileUtil.unquote(root.getPath()));
     new Object() {
       void collectFiles(File fromFile, String prefix) {
         final File[] list = fromFile.listFiles();

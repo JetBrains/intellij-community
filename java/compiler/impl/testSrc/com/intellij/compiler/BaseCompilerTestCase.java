@@ -261,7 +261,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     return set;
   }
 
-  protected void changeFile(VirtualFile file) throws Exception {
+  protected void changeFile(VirtualFile file) {
     changeFile(file, null);
   }
 

@@ -42,6 +42,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.editor.HandlerUtils;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
@@ -52,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCLOSABLE_BLOCK_OP;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR;
@@ -109,6 +111,11 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
                                                                        mREGEX_CONTENT, mREGEX_END, mDOLLAR_SLASH_REGEX_BEGIN,
                                                                        mDOLLAR_SLASH_REGEX_CONTENT, mDOLLAR_SLASH_REGEX_END,
                                                                        GSTRING_INJECTION);
+
+  public static void insertSpacesByGroovyContinuationIndent(Editor editor, Project project) {
+    int indentSize = CodeStyleSettingsManager.getSettings(project).getContinuationIndentSize(GroovyFileType.GROOVY_FILE_TYPE);
+    EditorModificationUtil.insertStringAtCaret(editor, StringUtil.repeatSymbol(' ', indentSize));
+  }
 
 
   public Result preprocessEnter(@NotNull PsiFile file,
@@ -256,7 +263,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
           originalHandler.execute(editor, context);
           originalHandler.execute(editor, context);
           editor.getCaretModel().moveCaretRelatively(0, -1, false, false, true);
-          GroovyEditorActionUtil.insertSpacesByGroovyContinuationIndent(editor, project);
+          insertSpacesByGroovyContinuationIndent(editor, project);
           return true;
         }
       }
@@ -298,7 +305,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     // For simple String literals like 'abcdef'
     CaretModel caretModel = editor.getCaretModel();
     if (mSTRING_LITERAL == node.getElementType()) {
-      if (GroovyEditorActionUtil.isPlainStringLiteral(node)) {
+      if (GrStringUtil.isPlainStringLiteral(node)) {
 
         //the case of print '\<caret>'
         if (isSlashBeforeCaret(caretOffset, fileText)) {
@@ -337,7 +344,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
         }
       }
       if (parent == null) return false;
-      if (GroovyEditorActionUtil.isPlainGString(parent.getNode())) {
+      if (GrStringUtil.isPlainGString(parent.getNode())) {
         PsiElement exprSibling = stringElement.getNextSibling();
         boolean rightFromDollar = exprSibling instanceof GrExpression && exprSibling.getTextRange().getStartOffset() == caretOffset;
         if (rightFromDollar) caretOffset--;

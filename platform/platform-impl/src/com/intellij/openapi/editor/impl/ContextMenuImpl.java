@@ -40,7 +40,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
 
 /**
  * @author spleaner
@@ -56,9 +55,9 @@ public class ContextMenuImpl extends JPanel implements Disposable {
   private int myCurrentOpacity;
   private Timer myTimer;
   private EditorImpl myEditor;
-  private ContextMenuPanel myContextMenuPanel;
   private boolean myDisposed;
   private final JLayeredPane myLayeredPane;
+  private ActionToolbar myActionToolbar;
 
   public ContextMenuImpl(JLayeredPane layeredPane, @NotNull final JScrollPane container, @NotNull final EditorImpl editor) {
     setLayout(new BorderLayout(0, 0));
@@ -118,6 +117,9 @@ public class ContextMenuImpl extends JPanel implements Disposable {
 
     if (myShow != show) {
       myShow = show;
+      if (myShow && myActionToolbar != null) {
+        myActionToolbar.updateActionsImmediately();
+      }
       restartTimer();
     }
   }
@@ -134,7 +136,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
 
         if (myTimer != null && myTimer.isRunning()) myTimer.stop();
 
-        myTimer = UIUtil.createNamedTimer("Restart context menu now",50, new ActionListener() {
+        myTimer = UIUtil.createNamedTimer("Restart context menu now", 50, new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
             if (myShow) {
@@ -151,7 +153,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
               }
 
               myCurrentOpacity += 20;
-              if (myCurrentOpacity > 100) {
+              if (myCurrentOpacity >= 100) {
                 myCurrentOpacity = 100;
                 myVisible = true;
                 myTimer.stop();
@@ -160,18 +162,19 @@ public class ContextMenuImpl extends JPanel implements Disposable {
               }
 
               repaint();
-            } else {
+            }
+            else {
               if (!myVisible) {
                 if (myTimer != null && myTimer.isRunning()) myTimer.stop();
                 return;
               }
 
               myCurrentOpacity -= 20;
-              if (myCurrentOpacity < 0) {
+              if (myCurrentOpacity <= 0) {
                 myCurrentOpacity = 0;
                 myVisible = false;
                 myLayeredPane.remove(ContextMenuImpl.this);
-                myLayeredPane.revalidate();
+                myLayeredPane.repaint();
               }
 
               repaint();
@@ -197,7 +200,6 @@ public class ContextMenuImpl extends JPanel implements Disposable {
       myTimer.stop();
       myTimer = null;
     }
-
   }
 
   public static boolean mayShowToolbar(@Nullable final Document document) {
@@ -214,7 +216,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
       myTimer.stop();
     }
 
-    myTimer = UIUtil.createNamedTimer("Hide context menu",1500, new ActionListener() {
+    myTimer = UIUtil.createNamedTimer("Hide context menu", 1500, new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
         if (myDisposed) return;
@@ -226,7 +228,8 @@ public class ContextMenuImpl extends JPanel implements Disposable {
             SwingUtilities.convertPointFromScreen(location, myComponent);
             if (!myComponent.getBounds().contains(location)) {
               toggleContextToolbar(false);
-            } else {
+            }
+            else {
               scheduleHide();
             }
           }
@@ -244,25 +247,6 @@ public class ContextMenuImpl extends JPanel implements Disposable {
                             KeymapManagerEx.getInstanceEx()) {
 
         @Override
-        public void paint(final Graphics g) {
-          if (myContextMenuPanel.isPaintChildren()) {
-            paintChildren(g);
-          }
-        }
-
-        @Override
-        protected void paintChildren(final Graphics g) {
-          if (myContextMenuPanel.isPaintChildren()) {
-            super.paintChildren(g);
-          }
-        }
-
-        @Override
-        public boolean isOpaque() {
-          return myContextMenuPanel.isPaintChildren();
-        }
-
-        @Override
         public ActionButton createToolbarButton(final AnAction action,
                                                 final ActionButtonLook look,
                                                 final String place,
@@ -271,27 +255,9 @@ public class ContextMenuImpl extends JPanel implements Disposable {
           final ActionButton result = new ActionButton(action, presentation, place, minimumSize) {
             @Override
             public void paintComponent(final Graphics g) {
-              if (myContextMenuPanel.isPaintChildren()) {
-                final ActionButtonLook look = getButtonLook();
-                look.paintIcon(g, this, getIcon());
-              }
-
-              if (myContextMenuPanel.isShown() && getPopState() == ActionButton.POPPED) {
-                final ActionButtonLook look = getButtonLook();
-                look.paintBackground(g, this);
-                look.paintIcon(g, this, getIcon());
-              }
-            }
-
-            @Override
-            public boolean isOpaque() {
-              return myContextMenuPanel.isPaintChildren() || getPopState() == ActionButton.POPPED;
-            }
-
-            @Override
-            public void paint(final Graphics g) {
-              final Graphics2D g2 = (Graphics2D)g;
-              paintComponent(g2);
+              final ActionButtonLook look = getButtonLook();
+              look.paintBackground(g, this);
+              look.paintIcon(g, this, getIcon());
             }
           };
 
@@ -301,26 +267,25 @@ public class ContextMenuImpl extends JPanel implements Disposable {
       };
 
     actionToolbar.setTargetComponent(myEditor.getContentComponent());
-
     return actionToolbar;
   }
 
   private JComponent createComponent() {
-    final ActionToolbar toolbar = createToolbar(myActionGroup);
-    toolbar.setMinimumButtonSize(new Dimension(20, 20));
-    toolbar.setReservePlaceAutoPopupIcon(false);
+    myActionToolbar = createToolbar(myActionGroup);
+    myActionToolbar.setMinimumButtonSize(new Dimension(20, 20));
+    myActionToolbar.setReservePlaceAutoPopupIcon(false);
 
-    myContextMenuPanel = new ContextMenuPanel(this);
-    myContextMenuPanel.setLayout(new BorderLayout(0, 0));
-    myContextMenuPanel.add(toolbar.getComponent());
+    ContextMenuPanel contextMenuPanel = new ContextMenuPanel(this);
+    contextMenuPanel.setLayout(new BorderLayout(0, 0));
+    JComponent toolbarComponent = myActionToolbar.getComponent();
+    toolbarComponent.setOpaque(false);
+    contextMenuPanel.add(toolbarComponent);
 
-    return myContextMenuPanel;
+    return contextMenuPanel;
   }
 
   private static class ContextMenuPanel extends JPanel {
     private final ContextMenuImpl myContextMenu;
-    private BufferedImage myBufferedImage;
-    private boolean myPaintChildren = false;
 
     private ContextMenuPanel(final ContextMenuImpl contextMenu) {
       myContextMenu = contextMenu;
@@ -329,63 +294,36 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     }
 
     @Override
-    public void invalidate() {
-      super.invalidate();
-
-      myBufferedImage = null;
-    }
-
-    @Override
-    public void revalidate() {
-      super.revalidate();
-
-      myBufferedImage = null;
-    }
-
-    @Override
     protected void paintChildren(final Graphics g) {
-      if (myPaintChildren) {
-        super.paintChildren(g);
+      Graphics2D graphics = (Graphics2D)g.create();
+      try {
+        graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, myContextMenu.myCurrentOpacity / 100.0f));
+        super.paintChildren(graphics);
       }
-    }
-
-    public boolean isPaintChildren() {
-      return myPaintChildren;
+      finally {
+        graphics.dispose();
+      }
     }
 
     @Override
-    public void paint(final Graphics g) {
-      final Rectangle r = getBounds();
-      if (myBufferedImage == null) {
-        myBufferedImage = new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB);
-
-        final Graphics graphics = myBufferedImage.getGraphics();
-        final Graphics2D g2d2 = (Graphics2D)graphics;
-        final Composite old = g2d2.getComposite();
-
-        g2d2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.2f));
-
-        g2d2.setColor(Color.GRAY);
-        g2d2.fillRoundRect(0, 0, r.width - 1, r.height - 1, 6, 6);
-
-        g2d2.setComposite(old);
-
-        myPaintChildren = true;
-        paintChildren(g2d2);
-        myPaintChildren = false;
-      }
-
-      final Graphics2D g2 = (Graphics2D)g;
-      final Composite old = g2.getComposite();
-
-      g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, myContextMenu.myCurrentOpacity / 100.0f));
-      g2.drawImage(myBufferedImage, 0, 0, myBufferedImage.getWidth(null), myBufferedImage.getHeight(null), null);
-
-      g2.setComposite(old);
+    public void paint(Graphics g) {
+      paintComponent(g);
+      super.paint(g);
     }
 
-    public boolean isShown() {
-      return myContextMenu.myCurrentOpacity == 100;
+    @Override
+    public void paintComponent(final Graphics g) {
+      Rectangle r = getBounds();
+      Graphics2D graphics = (Graphics2D)g.create();
+      try {
+        graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myContextMenu.myCurrentOpacity / 500.0f));
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        graphics.setColor(Color.GRAY);
+        graphics.fillRoundRect(0, 0, r.width - 1, r.height - 1, 6, 6);
+      }
+      finally {
+        graphics.dispose();
+      }
     }
   }
 }

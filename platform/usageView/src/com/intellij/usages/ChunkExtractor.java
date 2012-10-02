@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
@@ -109,7 +110,7 @@ public class ChunkExtractor {
     myDocument = PsiDocumentManager.getInstance(project).getDocument(file);
     LOG.assertTrue(myDocument != null);
     final FileType fileType = file.getFileType();
-    final SyntaxHighlighter highlighter = SyntaxHighlighter.PROVIDER.create(fileType, project, file.getVirtualFile());
+    final SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, project, file.getVirtualFile());
     myHighlighter = highlighter == null ? new PlainSyntaxHighlighter() : highlighter;
     myLexer = myHighlighter.getHighlightingLexer();
     myLexer.start(myDocument.getCharsSequence());

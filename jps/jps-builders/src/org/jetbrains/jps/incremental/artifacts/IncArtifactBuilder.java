@@ -6,8 +6,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.artifacts.impl.ArtifactSorter;
@@ -17,8 +19,6 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
-import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
-import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 
 import java.io.File;
@@ -28,48 +28,31 @@ import java.util.*;
 /**
  * @author nik
  */
-public class IncArtifactBuilder extends ProjectLevelBuilder {
+public class IncArtifactBuilder extends TargetBuilder<ArtifactBuildTarget> {
   public static final String BUILDER_NAME = "artifacts";
 
   public IncArtifactBuilder() {
-    super();
+    super(Collections.singletonList(ArtifactBuildTargetType.INSTANCE));
   }
 
   @Override
-  public void build(CompileContext context) throws ProjectBuildException {
-    Set<JpsArtifact> affected = new HashSet<JpsArtifact>();
-    JpsBuilderArtifactService artifactService = JpsBuilderArtifactService.getInstance();
-    JpsModel model = context.getProjectDescriptor().jpsModel;
-    for (JpsArtifact artifact : artifactService.getArtifacts(model, false)) {
-      if (context.getScope().isAffected(new ArtifactBuildTarget(artifact))) {
-        affected.add(artifact);
-      }
+  public void build(@NotNull ArtifactBuildTarget target, @NotNull CompileContext context) throws ProjectBuildException {
+    JpsArtifact artifact = target.getArtifact();
+    if (StringUtil.isEmpty(artifact.getOutputPath())) {
+      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot build '" + artifact.getName() + "' artifact: output path is not specified"));
+      return;
     }
-    affected.addAll(artifactService.getSyntheticArtifacts(model));
-    final Set<JpsArtifact> toBuild = ArtifactSorter.addIncludedArtifacts(affected);
-
-    final ArtifactSorter sorter = new ArtifactSorter(model);
-    final Map<JpsArtifact, JpsArtifact> selfIncludingNameMap = sorter.getArtifactToSelfIncludingNameMap();
-    for (JpsArtifact artifact : sorter.getArtifactsSortedByInclusion()) {
-      context.checkCanceled();
-      if (toBuild.contains(artifact)) {
-        final JpsArtifact selfIncluding = selfIncludingNameMap.get(artifact);
-        if (selfIncluding != null) {
-          String name = selfIncluding.equals(artifact) ? "it" : "'" + selfIncluding.getName() + "' artifact";
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot build '" + artifact.getName() + "' artifact: " + name + " includes itself in the output layout"));
-          break;
-        }
-        if (StringUtil.isEmpty(artifact.getOutputPath())) {
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot build '" + artifact.getName() + "' artifact: output path is not specified"));
-          break;
-        }
-        buildArtifact(new ArtifactBuildTarget(artifact), context);
-      }
-    }
-  }
-
-  private static void buildArtifact(ArtifactBuildTarget target, final CompileContext context) throws ProjectBuildException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
+    final ArtifactSorter sorter = new ArtifactSorter(pd.getModel());
+    final Map<JpsArtifact, JpsArtifact> selfIncludingNameMap = sorter.getArtifactToSelfIncludingNameMap();
+    final JpsArtifact selfIncluding = selfIncludingNameMap.get(artifact);
+    if (selfIncluding != null) {
+      String name = selfIncluding.equals(artifact) ? "it" : "'" + selfIncluding.getName() + "' artifact";
+      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot build '" + artifact.getName() + "' artifact: " + name + " includes itself in the output layout"));
+      return;
+    }
+
+
     try {
       final ArtifactSourceFilesState state = pd.dataManager.getArtifactsBuildData().getOrCreateState(target, pd);
       state.ensureFsStateInitialized(pd.dataManager, context);
@@ -80,14 +63,14 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
         return;
       }
 
-      context.processMessage(new ProgressMessage("Building artifact '" + target.getArtifact().getName() + "'..."));
+      context.processMessage(new ProgressMessage("Building artifact '" + artifact.getName() + "'..."));
       final SourceToOutputMapping srcOutMapping = pd.dataManager.getSourceToOutputMap(target);
       final ArtifactOutputToSourceMapping outSrcMapping = state.getOrCreateOutSrcMapping();
 
       final TIntObjectHashMap<Set<String>> filesToProcess = new TIntObjectHashMap<Set<String>>();
       MultiMap<String, String> filesToDelete = new MultiMap<String, String>();
       for (String sourcePath : deletedFiles) {
-        final Collection<String> outputPaths = srcOutMapping.getState(sourcePath);
+        final Collection<String> outputPaths = srcOutMapping.getOutputs(sourcePath);
         if (outputPaths != null) {
           for (String outputPath : outputPaths) {
             filesToDelete.putValue(outputPath, sourcePath);
@@ -107,7 +90,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
         for (File file : entry.getValue()) {
           String sourcePath = FileUtil.toSystemIndependentName(file.getPath());
           addFileToProcess(filesToProcess, rootIndex, sourcePath, deletedFiles);
-          final Collection<String> outputPaths = srcOutMapping.getState(sourcePath);
+          final Collection<String> outputPaths = srcOutMapping.getOutputs(sourcePath);
           if (outputPaths != null) {
             changedOutputPaths.addAll(outputPaths);
             for (String outputPath : outputPaths) {
@@ -147,7 +130,8 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
                                     srcOutMapping, outSrcMapping);
           }
           else if (outSrcMapping.getState(destination.getOutputFilePath()) == null) {
-            outSrcMapping.update(destination.getOutputFilePath(), Collections.<ArtifactOutputToSourceMapping.SourcePathAndRootIndex>emptyList());
+            outSrcMapping
+              .update(destination.getOutputFilePath(), Collections.<ArtifactOutputToSourceMapping.SourcePathAndRootIndex>emptyList());
             changedJars.add(((JarDestinationInfo)destination).getJarInfo());
           }
         }
@@ -205,7 +189,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
         outSrcMapping.remove(filePath);
         deletedPaths.add(filePath);
         for (String sourcePath : filesToDelete.get(filePath)) {
-          srcOutMapping.removeValue(sourcePath, filePath);
+          srcOutMapping.removeOutput(sourcePath, filePath);
         }
       }
       else {

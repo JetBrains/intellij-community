@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EdtRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SearchTextField;
@@ -57,7 +58,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
@@ -158,16 +158,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     getContext().addColleague(myTree);
     Disposer.register(this, myTree);
-    mySearch.addDocumentListener(new DocumentListener() {
-      public void insertUpdate(final DocumentEvent e) {
-        myFilter.update(e.getType(), true, false);
-      }
-
-      public void removeUpdate(final DocumentEvent e) {
-        myFilter.update(e.getType(), true, false);
-      }
-
-      public void changedUpdate(final DocumentEvent e) {
+    mySearch.addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
         myFilter.update(e.getType(), true, false);
       }
     });

@@ -124,13 +124,6 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
     result.add(myGeneralPanel);
     result.add(new VcsBackgroundOperationsConfigurationPanel(myProject));
 
-    for (VcsConfigurableProvider provider : VcsConfigurableProvider.EP_NAME.getExtensions()) {
-      final Configurable configurable = provider.getConfigurable(myProject);
-      if (configurable != null) {
-        result.add(configurable);
-      }
-    }
-
     if (!myProject.isDefault()) {
       result.add(new IgnoredSettingsPanel(myProject));
     }
@@ -141,14 +134,20 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
     if (!myProject.isDefault()) {
       result.add(new ChangelistConflictConfigurable(ChangeListManagerImpl.getInstanceImpl(myProject)));
     }
-    VcsDescriptor[] vcses = ProjectLevelVcsManager.getInstance(myProject).getAllVcss();
 
+    for (VcsConfigurableProvider provider : VcsConfigurableProvider.EP_NAME.getExtensions()) {
+      final Configurable configurable = provider.getConfigurable(myProject);
+      if (configurable != null) {
+        result.add(configurable);
+      }
+    }
+
+    VcsDescriptor[] vcses = ProjectLevelVcsManager.getInstance(myProject).getAllVcss();
     for (VcsDescriptor vcs : vcses) {
       result.add(createVcsConfigurableWrapper(vcs));
     }
 
     return result.toArray(new Configurable[result.size()]);
-
   }
 
   private void addListenerToGeneralPanel() {

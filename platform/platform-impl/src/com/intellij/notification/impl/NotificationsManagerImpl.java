@@ -20,6 +20,7 @@ import com.intellij.notification.*;
 import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -94,7 +95,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
 
     if (NotificationsConfigurationImpl.getNotificationsConfigurationImpl().SHOW_BALLOONS) {
-      final Runnable runnable = new Runnable() {
+      final Runnable runnable = new DumbAwareRunnable() {
         @Override
         public void run() {
           showNotification(notification, project);

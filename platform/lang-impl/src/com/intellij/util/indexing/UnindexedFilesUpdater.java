@@ -72,7 +72,7 @@ public class UnindexedFilesUpdater implements CacheUpdater {
   @Override
   public void updatingDone() {
     if (myFinishedUpdate.compareAndSet(false, true)) {
-      myIndex.updatingDone();
+      myIndex.filesUpdateFinished();
       LOG.info("Unindexed files update done in " + (System.currentTimeMillis() - myStarted) + " ms");
     }
   }
@@ -80,7 +80,7 @@ public class UnindexedFilesUpdater implements CacheUpdater {
   @Override
   public void canceled() {
     if (myFinishedUpdate.compareAndSet(false, true)) {
-      myIndex.updatingDone();
+      myIndex.filesUpdateFinished();
       LOG.info("Unindexed files update canceled");
     }
   }

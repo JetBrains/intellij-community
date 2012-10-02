@@ -18,6 +18,8 @@ package com.intellij.compiler.impl.rmiCompiler;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.compiler.RmicCompilerOptions;
 
 @State(
   name = "RmicSettings",
@@ -26,22 +28,19 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
    ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class RmicConfiguration implements PersistentStateComponent<RmicSettings> {
-  private final RmicSettings mySettings = new RmicSettings();
+public class RmicConfiguration implements PersistentStateComponent<RmicCompilerOptions> {
+  private final RmicCompilerOptions mySettings = new RmicCompilerOptions();
 
-  public RmicSettings getState() {
+  @NotNull
+  public RmicCompilerOptions getState() {
     return mySettings;
   }
 
-  public void loadState(RmicSettings state) {
+  public void loadState(RmicCompilerOptions state) {
     XmlSerializerUtil.copyBean(state, mySettings);
   }
 
-  public RmicSettings getSettings() {
-    return mySettings;
-  }
-
-  public static RmicSettings getSettings(Project project) {
-    return ServiceManager.getService(project, RmicConfiguration.class).getSettings();
+  public static RmicCompilerOptions getOptions(Project project) {
+    return ServiceManager.getService(project, RmicConfiguration.class).getState();
   }
 }

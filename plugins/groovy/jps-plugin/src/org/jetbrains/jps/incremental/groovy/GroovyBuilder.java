@@ -11,19 +11,21 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
+import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.java.ClassPostProcessor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
-import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.javac.OutputFileObject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
@@ -63,9 +65,11 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return myBuilderName;
   }
 
-  public ModuleLevelBuilder.ExitCode build(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+  public ModuleLevelBuilder.ExitCode build(final CompileContext context,
+                                           ModuleChunk chunk,
+                                           DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
     try {
-      final List<File> toCompile = collectChangedFiles(context, chunk);
+      final List<File> toCompile = collectChangedFiles(context, dirtyFilesHolder);
       if (toCompile.isEmpty()) {
         return ExitCode.NOTHING_DONE;
       }
@@ -132,7 +136,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         final BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
         for (ModuleBuildTarget target : generationOutputs.keySet()) {
           File root = new File(generationOutputs.get(target));
-          rootsIndex.associateTempRoot(context, target, new RootDescriptor(root, target, true, true));
+          rootsIndex.associateTempRoot(context, target, new JavaSourceRootDescriptor(root, target, true, true));
         }
       }
 
@@ -167,7 +171,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   @Override
-  public void cleanupResources(CompileContext context, ModuleChunk chunk) {
+  public void cleanupChunkResources(CompileContext context) {
     JavaBuilderUtil.cleanupChunkResources(context);
     STUB_TO_SRC.set(context, null);
   }
@@ -202,7 +206,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
                                                                         GroovycOSProcessHandler.OutputItem item, Map<ModuleBuildTarget, String> generationOutputs, String compilerOutput) throws IOException {
     if (chunk.getModules().size() > 1) {
       final BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
-      RootDescriptor descriptor = rootsIndex.getModuleAndRoot(context, new File(item.sourcePath));
+      JavaSourceRootDescriptor descriptor = rootsIndex.getModuleAndRoot(context, new File(item.sourcePath));
       if (descriptor != null) {
         ModuleBuildTarget srcTarget = descriptor.target;
         if (!srcTarget.equals(chunk.representativeTarget())) {
@@ -233,14 +237,15 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return isGroovyFile(file.getAbsolutePath());
   }
 
-  private static List<File> collectChangedFiles(CompileContext context, ModuleChunk chunk) throws IOException {
+  private static List<File> collectChangedFiles(CompileContext context,
+                                                DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws IOException {
     final ResourcePatterns patterns = ResourcePatterns.KEY.get(context);
     assert patterns != null;
     final List<File> toCompile = new ArrayList<File>();
-    FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
-      public boolean apply(ModuleBuildTarget target, File file, String sourceRoot) throws IOException {
+    dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
+      public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor sourceRoot) throws IOException {
         final String path = file.getPath();
-        if (isGroovyFile(path) && !patterns.isResourceFile(file, sourceRoot)) { //todo file type check
+        if (isGroovyFile(path) && !patterns.isResourceFile(file, sourceRoot.root)) { //todo file type check
           toCompile.add(file);
         }
         return true;
@@ -264,10 +269,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       for (GroovycOSProcessHandler.OutputItem item : successfullyCompiled) {
         final String sourcePath = FileUtil.toSystemIndependentName(item.sourcePath);
         final String outputPath = FileUtil.toSystemIndependentName(item.outputPath);
-        final RootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, new File(sourcePath));
+        final JavaSourceRootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, new File(sourcePath));
         if (moduleAndRoot != null) {
           final ModuleBuildTarget target = moduleAndRoot.target;
-          context.getProjectDescriptor().dataManager.getSourceToOutputMap(target).appendData(sourcePath, outputPath);
+          context.getProjectDescriptor().dataManager.getSourceToOutputMap(target).appendOutput(sourcePath, outputPath);
           String moduleOutputPath = generationOutputs.get(target);
           generatedEvent.add(moduleOutputPath, FileUtil.getRelativePath(moduleOutputPath, outputPath, '/'));
         }
@@ -288,7 +293,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     // IMPORTANT! must be the first in classpath
     cp.add(getGroovyRtRoot().getPath());
 
-    for (File file : context.getProjectPaths().getCompilationClasspathFiles(chunk, chunk.isTests(), false, false)) {
+    for (File file : context.getProjectPaths().getCompilationClasspathFiles(chunk, chunk.containsTests(), false, false)) {
       cp.add(FileUtil.toCanonicalPath(file.getPath()));
     }
     return new ArrayList<String>(cp);
@@ -308,14 +313,15 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   private static Map<String, String> buildClassToSourceMap(ModuleChunk chunk, CompileContext context, Set<String> toCompilePaths, Map<ModuleBuildTarget, String> finalOutputs) throws IOException {
     final Map<String, String> class2Src = new HashMap<String, String>();
-    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(context.getProjectDescriptor().jpsProject);
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
+      context.getProjectDescriptor().getProject());
     for (ModuleBuildTarget target : chunk.getTargets()) {
       String moduleOutputPath = finalOutputs.get(target);
       final SourceToOutputMapping srcToOut = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
-      for (String src : srcToOut.getKeys()) {
+      for (String src : srcToOut.getSources()) {
         if (!toCompilePaths.contains(src) && isGroovyFile(src) &&
             !configuration.getCompilerExcludes().isExcluded(new File(src))) {
-          final Collection<String> outs = srcToOut.getState(src);
+          final Collection<String> outs = srcToOut.getOutputs(src);
           if (outs != null) {
             for (String out : outs) {
               if (out.endsWith(".class") && out.startsWith(moduleOutputPath)) {

@@ -390,7 +390,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       if (fatal) {
         LOG.error(ex);
         @NonNls final String errorMessage = "Fatal error initializing class " + componentClassName + ":\n" +
-                                            ex.toString() +
+                                            StringUtil.trimLog(ex.toString(), 239) +
                                             "\nComplete error stacktrace was written to " + PathManager.getLogPath() + "/idea.log";
         if (!myHeadlessMode) {
           JOptionPane.showMessageDialog(null, errorMessage);

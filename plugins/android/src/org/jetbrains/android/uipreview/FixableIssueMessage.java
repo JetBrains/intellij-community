@@ -1,6 +1,8 @@
 package org.jetbrains.android.uipreview;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,9 +20,9 @@ public class FixableIssueMessage {
   public final List<Pair<String, Runnable>> myAdditionalFixes;
 
   public FixableIssueMessage(@NotNull String beforeLinkText,
-                      @NotNull String linkText,
-                      @NotNull String afterLinkText,
-                      @Nullable Runnable quickFix) {
+                             @NotNull String linkText,
+                             @NotNull String afterLinkText,
+                             @Nullable Runnable quickFix) {
     myBeforeLinkText = beforeLinkText;
     myLinkText = linkText;
     myAfterLinkText = afterLinkText;
@@ -38,5 +40,16 @@ public class FixableIssueMessage {
     myAfterLinkText = "";
     myQuickFix = null;
     myAdditionalFixes = quickFixes;
+  }
+
+  public static FixableIssueMessage createExceptionIssue(@NotNull final Project project,
+                                                         @NotNull String message,
+                                                         @NotNull final Throwable throwable) {
+    return new FixableIssueMessage(message + ' ', "Details", "", new Runnable() {
+      @Override
+      public void run() {
+        AndroidUtils.showStackStace(project, new Throwable[]{throwable});
+      }
+    });
   }
 }

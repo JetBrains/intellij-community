@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.refactoring.extract.method;
+package org.jetbrains.plugins.groovy.refactoring.extract.method
 
-
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
-
 /**
  * @author ilyas
  */
@@ -48,9 +49,22 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   private void doTest() {
     final List<String> data = readInput();
     GroovyExtractMethodHandler handler = configureFromText(data.get(0));
-    handler.invoke(project, myFixture.editor, myFixture.file, null);
-    PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
-    myFixture.checkResult(StringUtil.trimEnd(data.get(1), "\n"));
+
+    def expected = StringUtil.trimEnd(data.get(1), '\n')
+
+    try {
+      handler.invoke(project, myFixture.editor, myFixture.file, null);
+      PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
+      myFixture.checkResult(expected);
+    }
+    catch (ConflictsInTestsException e) {
+      ApplicationManager.application.runWriteAction({
+         myFixture.getDocument(myFixture.file).setText(e.message)
+         PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
+      } as Runnable)
+
+      myFixture.checkResult(expected)
+    }
   }
 
   private GroovyExtractMethodHandler configureFromText(String fileText) {
@@ -116,4 +130,7 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   public void testArgsUsedOnlyInAnonymousClass() {doTest()}
 
   public void testTwoVars() {doTest()}
+
+  public void testContextConflicts() {doTest()}
+  public void testNoContextConflicts() {doTest()}
 }

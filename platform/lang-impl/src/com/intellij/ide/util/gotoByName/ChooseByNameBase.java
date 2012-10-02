@@ -1420,7 +1420,7 @@ public abstract class ChooseByNameBase {
     final JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
     panel.add(separator, BorderLayout.CENTER);
     if (!UIUtil.isUnderAquaBasedLookAndFeel()) {
-      separator.setBorder(new EmptyBorder(3, 0, 2, 0));
+      panel.setBorder(new EmptyBorder(3, 0, 2, 0));
     }
     panel.setBackground(backgroundColor);
     return panel;
@@ -1507,7 +1507,7 @@ public abstract class ChooseByNameBase {
       }, myModalityState);
     }
 
-    private void addElementsByPattern(String pattern,
+    private void addElementsByPattern(@NotNull String pattern,
                                       @NotNull final Set<Object> elements,
                                       @NotNull final ProgressIndicator cancelled) {
       myProvider.filterElements(

@@ -44,7 +44,6 @@ import java.util.List;
 public class VirtualFilePointerContainerImpl extends TraceableDisposable implements VirtualFilePointerContainer, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer");
   @NotNull private final List<VirtualFilePointer> myList = ContainerUtil.createEmptyCOWList();
-  private final List<VirtualFilePointer> myReadOnlyList = Collections.unmodifiableList(myList);
   @NotNull private final VirtualFilePointerManager myVirtualFilePointerManager;
   @NotNull private final Disposable myParent;
   private final VirtualFilePointerListener myListener;
@@ -57,6 +56,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   private static final boolean TRACE_CREATION = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode();
 
   public VirtualFilePointerContainerImpl(@NotNull VirtualFilePointerManager manager, @NotNull Disposable parentDisposable, @Nullable VirtualFilePointerListener listener) {
+    //noinspection HardCodedStringLiteral
     super(TRACE_CREATION ? new Throwable("parent = '" + parentDisposable + "' (" + parentDisposable.getClass() + "); listener="+listener) : null);
     myVirtualFilePointerManager = manager;
     myParent = parentDisposable;
@@ -76,8 +76,8 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
 
   @Override
   public void writeExternal(@NotNull final Element element, @NotNull final String childElementName) {
-    for (int i = 0; i < getList().size(); i++) {
-      String url = getList().get(i).getUrl();
+    for (VirtualFilePointer pointer : myList) {
+      String url = pointer.getUrl();
       final Element rootPathElement = new Element(childElementName);
       rootPathElement.setAttribute(URL_ATTR, url);
       element.addContent(rootPathElement);
@@ -144,7 +144,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   @NotNull
   public List<VirtualFilePointer> getList() {
     assert !myDisposed;
-    return myReadOnlyList;
+    return Collections.unmodifiableList(myList);
   }
 
   @Override

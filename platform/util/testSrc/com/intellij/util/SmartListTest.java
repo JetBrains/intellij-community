@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,7 @@ package com.intellij.util;
 import com.intellij.util.containers.EmptyIterator;
 import junit.framework.TestCase;
 
-import java.util.ConcurrentModificationException;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author max
@@ -133,4 +131,80 @@ public class SmartListTest extends TestCase {
     }
     assertTrue("ConcurrentModificationException must be thrown", thrown);
   }
+
+  public void testAddIndexedNegativeIndex() {
+    SmartList<Integer> l = new SmartList<Integer>();
+    try {
+      l.add(-1, new Integer(1));
+    }
+    catch (Exception e) {
+      return;
+    }
+    fail("IndexOutOfBoundsException must be thrown");
+  }
+
+  public void testAddIndexedWrongIndex() {
+    SmartList<Integer> l = new SmartList<Integer>(new Integer(1));
+    try {
+      l.add(3, new Integer(1));
+    }
+    catch (Exception e) {
+      return;
+    }
+    fail("IndexOutOfBoundsException must be thrown");
+  }
+
+  public void testAddIndexedEmptyWrongIndex() {
+    SmartList<Integer> l = new SmartList<Integer>();
+    try {
+      l.add(1, new Integer(1));
+    }
+    catch (Exception e) {
+      return;
+    }
+    fail("IndexOutOfBoundsException must be thrown");
+  }
+
+  public void testAddIndexedEmpty() {
+    SmartList<Integer> l = new SmartList<Integer>();
+    int modCount = 0;
+    l.add(0, new Integer(1)); assertEquals(++modCount, l.getModificationCount());
+    assertEquals(1, l.size());
+    assertEquals(1, l.get(0).intValue());
+  }
+
+  public void testAddIndexedOneElement() {
+    SmartList<Integer> l = new SmartList<Integer>(new Integer(0));
+    assertEquals(1, l.size());
+
+    int modCount = l.getModificationCount();
+    l.add(0, new Integer(42)); assertEquals(++modCount, l.getModificationCount());
+    assertEquals(2, l.size());
+    assertEquals(42, l.get(0).intValue());
+    assertEquals(0, l.get(1).intValue());
+  }
+
+  public void testAddIndexedOverOneElement() {
+    SmartList<Integer> l = new SmartList<Integer>(new Integer(0));
+    assertEquals(1, l.size());
+
+    int modCount = l.getModificationCount();
+    l.add(1, new Integer(42)); assertEquals(++modCount, l.getModificationCount());
+    assertEquals(2, l.size());
+    assertEquals(0, l.get(0).intValue());
+    assertEquals(42, l.get(1).intValue());
+  }
+
+  public void testAddIndexedOverTwoElements() {
+    SmartList<Integer> l = new SmartList<Integer>(Arrays.asList(new Integer[]{new Integer(0), new Integer(1)}));
+    assertEquals(2, l.size());
+
+    int modCount = l.getModificationCount();
+    l.add(1, new Integer(42)); assertEquals(++modCount, l.getModificationCount());
+    assertEquals(3, l.size());
+    assertEquals(0, l.get(0).intValue());
+    assertEquals(42, l.get(1).intValue());
+    assertEquals(1, l.get(2).intValue());
+  }
+
 }

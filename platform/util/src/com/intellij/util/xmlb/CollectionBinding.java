@@ -20,8 +20,8 @@ import java.lang.reflect.ParameterizedType;
 import java.util.*;
 
 class CollectionBinding extends AbstractCollectionBinding  {
-  public CollectionBinding(ParameterizedType type, XmlSerializerImpl xmlSerializer, final Accessor accessor) {
-    super((Class)type.getActualTypeArguments()[0], xmlSerializer, Constants.COLLECTION, accessor);
+  public CollectionBinding(ParameterizedType type, final Accessor accessor) {
+    super((Class)type.getActualTypeArguments()[0], Constants.COLLECTION, accessor);
   }
 
 

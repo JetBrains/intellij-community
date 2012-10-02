@@ -20,7 +20,6 @@ import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfigurable;
-import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
@@ -74,7 +73,7 @@ public class CompilerAPICompiler implements BackendCompiler {
 
   @NotNull
   public Configurable createConfigurable() {
-    return new JavacConfigurable(CompilerAPIConfiguration.getSettings(myProject, CompilerAPIConfiguration.class));
+    return new JavacConfigurable(CompilerAPIConfiguration.getOptions(myProject, CompilerAPIConfiguration.class));
   }
 
   @NotNull
@@ -107,9 +106,8 @@ public class CompilerAPICompiler implements BackendCompiler {
       public List<String> compute() {
         try {
           List<String> commandLine = new ArrayList<String>();
-          JavacSettings javacSettings = CompilerAPIConfiguration.getSettings(myProject, CompilerAPIConfiguration.class);
           final List<String> additionalOptions =
-            JavacCompiler.addAdditionalSettings(commandLine, javacSettings, false, JavaSdkVersion.JDK_1_6, chunk, compileContext.isAnnotationProcessorsEnabled());
+            JavacCompiler.addAdditionalSettings(commandLine, CompilerAPIConfiguration.getOptions(myProject, CompilerAPIConfiguration.class), false, JavaSdkVersion.JDK_1_6, chunk, compileContext.isAnnotationProcessorsEnabled());
 
           JavacCompiler.addCommandLineOptions(chunk, commandLine, outputDir, chunk.getJdk(), false,false, null, false, false, false);
           commandLine.addAll(additionalOptions);

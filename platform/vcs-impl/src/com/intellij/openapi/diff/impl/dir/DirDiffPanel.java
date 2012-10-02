@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
+import com.intellij.openapi.diff.impl.dir.actions.RefreshDirDiffAction;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -301,8 +303,12 @@ public class DirDiffPanel implements Disposable, DataProvider {
             if (chooser == null) return;
             final DiffElement newElement = chooser.call();
             if (newElement != null) {
-              myModel.setSourceDir(newElement);
-              mySourceDirField.setText(newElement.getPath());
+              if (!StringUtil.equals(mySourceDirField.getText(), newElement.getPath())) {
+                myModel.setSourceDir(newElement);
+                mySourceDirField.setText(newElement.getPath());
+                myModel.clearWithMessage("Source or Target has been changed. Please run Refresh (" + KeymapUtil.getShortcutsText(
+                  RefreshDirDiffAction.REFRESH_SHORTCUT.getShortcuts()) + ")");
+              }
             }
           } catch (Exception e1) {//
           }

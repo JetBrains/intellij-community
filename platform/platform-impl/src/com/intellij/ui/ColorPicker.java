@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -64,6 +65,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   private final JTextField myBlue;
   private final JTextField myHex;
   private final Alarm myUpdateQueue;
+  private final ColorPickerListener[] myExternalListeners;
 
   private RecentColorsComponent myRecentColorsComponent;
   private final ColorPipette myPicker;
@@ -76,10 +78,14 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   private final JComboBox myFormat = new JComboBox(new String[]{"RGB", "HSB"});
 
   public ColorPicker(@NotNull Disposable parent, @Nullable Color color, boolean enableOpacity) {
-    this(parent, color, true, enableOpacity);
+    this(parent, color, true, enableOpacity, null);
   }
 
-  private ColorPicker(Disposable parent, @Nullable Color color, boolean restoreColors, boolean enableOpacity) {
+  private ColorPicker(Disposable parent,
+                      @Nullable Color color,
+                      boolean restoreColors,
+                      boolean enableOpacity,
+                      @Nullable PsiElement element) {
     myUpdateQueue = new Alarm(Alarm.ThreadToUse.SWING_THREAD, parent);
     myRed = createColorField(false);
     myGreen = createColorField(false);
@@ -90,7 +96,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
     myColorWheelPanel = new ColorWheelPanel(this, enableOpacity);
 
-
+    myExternalListeners = ColorPickerListenerFactory.createListenersFor(element);
     myFormat.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -236,6 +242,8 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       } else {
         applyColorToHEX(color);
       }
+
+      fireColorChanged(color);
     }
   }
 
@@ -250,6 +258,19 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
         applyColorToHEX(color);
       }
       myPreviewComponent.setColor(color);
+      fireColorChanged(color);
+    }
+  }
+
+  private void fireColorChanged(Color color) {
+    for (ColorPickerListener listener : myExternalListeners) {
+      listener.colorChanged(color);
+    }
+  }
+
+  private void fireClosed(@Nullable Color color) {
+    for (ColorPickerListener listener : myExternalListeners) {
+      listener.closed(color);
     }
   }
 
@@ -261,7 +282,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       final int b = Integer.parseInt(myBlue.getText());
 
       return isRGBMode() ? new Color(r, g, b) : new Color(Color.HSBtoRGB(((float)r) / 360f, ((float)g) / 100f, ((float)b) / 100f));
-    } catch (Exception ignore) {      
+    } catch (Exception ignore) {
     }
     return null;
   }
@@ -292,8 +313,12 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   @Nullable
-  public static Color showDialog(Component parent, String caption, Color preselectedColor, boolean enableOpacity) {
-    final ColorPickerDialog dialog = new ColorPickerDialog(parent, caption, preselectedColor, enableOpacity);
+  public static Color showDialog(Component parent,
+                                 String caption,
+                                 Color preselectedColor,
+                                 boolean enableOpacity,
+                                 @Nullable PsiElement element) {
+    final ColorPickerDialog dialog = new ColorPickerDialog(parent, caption, preselectedColor, enableOpacity, element);
     dialog.show();
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
       return dialog.getColor();
@@ -842,15 +867,21 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   static class ColorPickerDialog extends DialogWrapper {
 
     private final Color myPreselectedColor;
+    @Nullable private final PsiElement myElement;
     private ColorPicker myColorPicker;
     private final boolean myEnableOpacity;
     private ColorPipette myPicker;
 
-    public ColorPickerDialog(Component parent, String caption, Color preselectedColor, boolean enableOpacity) {
+    public ColorPickerDialog(Component parent,
+                             String caption,
+                             @Nullable Color preselectedColor,
+                             boolean enableOpacity,
+                             @Nullable PsiElement element) {
       super(parent, true);
       setTitle(caption);
       myPreselectedColor = preselectedColor;
       myEnableOpacity = enableOpacity;
+      myElement = element;
       setResizable(false);
       setOKButtonText("Choose");
       init();
@@ -871,7 +902,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     @Override
     protected JComponent createCenterPanel() {
       if (myColorPicker == null) {
-        myColorPicker = new ColorPicker(myDisposable, myPreselectedColor, myEnableOpacity);
+        myColorPicker = new ColorPicker(myDisposable, myPreselectedColor, true, myEnableOpacity, myElement);
       }
 
       return myColorPicker;
@@ -892,6 +923,12 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       myColorPicker.saveRecentColors();
 
       super.doOKAction();
+    }
+
+    @Override
+    public void show() {
+      super.show();
+      myColorPicker.fireClosed(getExitCode() == DialogWrapper.OK_EXIT_CODE ? getColor() : null);
     }
   }
 
@@ -1240,7 +1277,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-    ColorPicker.showDialog(null, "", null, true);
+        ColorPicker.showDialog(null, "", null, true, null);
       }
     });
   }

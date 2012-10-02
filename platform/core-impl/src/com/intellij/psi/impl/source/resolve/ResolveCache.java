@@ -182,10 +182,10 @@ public class ResolveCache {
       //noinspection unchecked
       cached = (Getter<TResult>)NULL_RESULT;
     }
-    else if (isPoly && ((Object[])result).length == 0 && result.getClass() == ResolveResult[].class) {
+    else if (isPoly && ((Object[])result).length == 0) {
       // no use in creating SoftReference to empty array
       //noinspection unchecked
-      cached = (Getter<TResult>)EMPTY_POLY_RESULT;
+      cached = result.getClass() == ResolveResult[].class ? (Getter<TResult>)EMPTY_POLY_RESULT : new StaticGetter<TResult>(result);
     }
     else {
       cached = new SoftGetter<TResult>(result);

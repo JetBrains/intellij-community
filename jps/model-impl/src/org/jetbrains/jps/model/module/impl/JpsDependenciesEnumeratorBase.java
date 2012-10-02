@@ -81,7 +81,7 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
         if (myRecursively && dependencyElement instanceof JpsModuleSourceDependency) {
           consumer.consume(dependencyElement.getContainingModule());
         }
-        else if (!myRecursively && dependencyElement instanceof JpsModuleDependency) {
+        else if ((!myRecursively || !shouldProcessDependenciesRecursively())&& dependencyElement instanceof JpsModuleDependency) {
           JpsModule module = ((JpsModuleDependency)dependencyElement).getModule();
           if (module != null) {
             consumer.consume(module);
@@ -90,6 +90,10 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
         return true;
       }
     });
+  }
+
+  protected boolean shouldProcessDependenciesRecursively() {
+    return true;
   }
 
   public boolean processDependencies(Processor<JpsDependencyElement> processor) {
@@ -122,7 +126,7 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
       }
 
       if (element instanceof JpsModuleDependency) {
-        if (myRecursively) {
+        if (myRecursively && shouldProcessDependenciesRecursively()) {
           JpsModule depModule = ((JpsModuleDependency)element).getModule();
           if (depModule != null) {
             doProcessDependencies(depModule, processor, processed);

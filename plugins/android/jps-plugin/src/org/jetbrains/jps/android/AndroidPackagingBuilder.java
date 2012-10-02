@@ -4,6 +4,7 @@ import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.compiler.tools.AndroidApkBuilder;
@@ -14,8 +15,8 @@ import org.jetbrains.android.util.AndroidNativeLibData;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.android.builder.AndroidProjectBuildTarget;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.*;
@@ -23,6 +24,7 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
+import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
@@ -36,10 +38,14 @@ import java.util.*;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidPackagingBuilder extends ProjectLevelBuilder {
+public class AndroidPackagingBuilder extends TargetBuilder<AndroidProjectBuildTarget> {
   @NonNls private static final String BUILDER_NAME = "android-packager";
   @NonNls private static final String RELEASE_SUFFIX = ".release";
   @NonNls private static final String UNSIGNED_SUFFIX = ".unsigned";
+
+  public AndroidPackagingBuilder() {
+    super(Collections.singletonList(AndroidProjectBuildTarget.TargetType.INSTANCE));
+  }
 
   @Override
   public String getName() {
@@ -52,11 +58,11 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
   }
 
   @Override
-  public void build(CompileContext context) throws ProjectBuildException {
-    if (!AndroidJpsUtil.containsAndroidFacet(context.getProjectDescriptor().jpsProject) || AndroidJpsUtil.isLightBuild(context)) {
+  public void build(@NotNull AndroidProjectBuildTarget target, @NotNull CompileContext context) throws ProjectBuildException {
+    if (target.getKind() != AndroidProjectBuildTarget.AndroidBuilderKind.PACKAGING || AndroidJpsUtil.isLightBuild(context)) {
       return;
     }
-    final Collection<JpsModule> modules = context.getProjectDescriptor().jpsProject.getModules();
+    final Collection<JpsModule> modules = context.getProjectDescriptor().getProject().getModules();
     final Map<JpsModule, AndroidFileSetState> resourcesStates = new HashMap<JpsModule, AndroidFileSetState>();
     final Map<JpsModule, AndroidFileSetState> assetsStates = new HashMap<JpsModule, AndroidFileSetState>();
     final Map<JpsModule, File> manifestFiles = new HashMap<JpsModule, File>();
@@ -378,7 +384,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     final List<AndroidNativeLibData> additionalNativeLibs = extension.getAdditionalNativeLibs();
 
     final AndroidFileSetState currentFileSetState =
-      buildCurrentApkBuilderState(context.getProjectDescriptor().jpsProject, resPackagePath, classesDexFilePath, nativeLibDirs, sourceRoots,
+      buildCurrentApkBuilderState(context.getProjectDescriptor().getProject(), resPackagePath, classesDexFilePath, nativeLibDirs, sourceRoots,
                                   externalJars, release);
 
     final AndroidApkBuilderConfigState currentApkBuilderConfigState =
@@ -398,7 +404,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
 
     final Map<AndroidCompilerMessageKind, List<String>> messages = AndroidApkBuilder
       .execute(resPackagePath, classesDexFilePath, sourceRoots, externalJars, nativeLibDirs, additionalNativeLibs,
-               outputApkPath, release, sdkPath, customKeyStorePath, new MyExcludedSourcesFilter(context.getProjectDescriptor().jpsProject));
+               outputApkPath, release, sdkPath, customKeyStorePath, new MyExcludedSourcesFilter(context.getProjectDescriptor().getProject()));
 
     AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME, module.getName());
     final boolean success = messages.get(AndroidCompilerMessageKind.ERROR).isEmpty();
@@ -521,14 +527,14 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
                                 ? outputFilePath + RELEASE_SUFFIX
                                 : outputFilePath;
 
-      final IgnoredFilePatterns ignoredFilePatterns = context.getProjectDescriptor().rootsIndex.getIgnoredFilePatterns();
+      final IgnoredFileIndex ignoredFileIndex = context.getProjectDescriptor().getIgnoredFileIndex();
 
       final Map<AndroidCompilerMessageKind, List<String>> messages = AndroidApt
         .packageResources(target, -1, manifestFile.getPath(), resourceDirPaths, assetsDirPaths, outputPath, null,
                           !releasePackage, 0, new FileFilter() {
           @Override
           public boolean accept(File pathname) {
-            return !ignoredFilePatterns.isIgnored(JpsPathUtil.getFileName(pathname.getPath()));
+            return !ignoredFileIndex.isIgnored(PathUtilRt.getFileName(pathname.getPath()));
           }
         });
 

@@ -106,7 +106,7 @@ public class JikesCompiler extends ExternalCompiler {
   }
 
   private String getCompilerPath() {
-    return JikesConfiguration.getSettings(myProject).JIKES_PATH.replace('/', File.separatorChar);
+    return JikesConfiguration.getOptions(myProject).JIKES_PATH.replace('/', File.separatorChar);
   }
 
   @NotNull
@@ -123,7 +123,7 @@ public class JikesCompiler extends ExternalCompiler {
 
   @NotNull
   public Configurable createConfigurable() {
-    return new JikesConfigurable(JikesConfiguration.getSettings(myProject));
+    return new JikesConfigurable(JikesConfiguration.getOptions(myProject));
   }
 
   public OutputParser createErrorParser(@NotNull final String outputDir, Process process) {
@@ -201,7 +201,7 @@ public class JikesCompiler extends ExternalCompiler {
     commandLine.add("-d");
     commandLine.add(outputPath.replace('/', File.separatorChar));
 
-    JikesSettings jikesSettings = JikesConfiguration.getSettings(myProject);
+    JikesSettingsBuilder jikesSettings = new JikesSettingsBuilder(JikesConfiguration.getOptions(myProject));
     StringTokenizer tokenizer = new StringTokenizer(jikesSettings.getOptionsString(chunk), " ");
     while (tokenizer.hasMoreTokens()) {
       commandLine.add(tokenizer.nextToken());

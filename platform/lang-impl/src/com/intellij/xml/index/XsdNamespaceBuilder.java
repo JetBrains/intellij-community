@@ -19,6 +19,7 @@ package com.intellij.xml.index;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -97,7 +98,7 @@ public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter implemen
     return Comparing.compare(myNamespace, o.myNamespace);
   }
 
-  public int getRating(String tagName, String version) {
+  public int getRating(@Nullable String tagName, @Nullable String version) {
     int rate = 0;
     if (tagName != null && myTags.contains(tagName)) {
       rate |= 0x02;

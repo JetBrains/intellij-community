@@ -813,7 +813,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     window.getOwner().setCurrentWindow(window, focusEditor);
     window.getOwner().afterFileOpen(file);
 
-    newSelectedComposite.getSelectedEditor().selectNotify();
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        newSelectedComposite.getSelectedEditor().selectNotify();
+      }
+    });
 
     final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
     if (newEditorCreated) {

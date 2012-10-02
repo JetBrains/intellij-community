@@ -45,7 +45,6 @@
       <module fileurl="file://$PROJECT_DIR$/java/compiler/forms-compiler/forms-compiler.iml" filepath="$PROJECT_DIR$/java/compiler/forms-compiler/forms-compiler.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/platform/forms_rt/forms_rt.iml" filepath="$PROJECT_DIR$/platform/forms_rt/forms_rt.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/generate-tostring/generate-tostring.iml" filepath="$PROJECT_DIR$/plugins/generate-tostring/generate-tostring.iml" group="plugins" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/gettext/gettext.iml" filepath="$PROJECT_DIR$/plugins/gettext/gettext.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/git4idea/git4idea.iml" filepath="$PROJECT_DIR$/plugins/git4idea/git4idea.iml" group="plugins/VCS" />
       <module fileurl="file://$PROJECT_DIR$/plugins/git4idea/rt/git4idea-rt.iml" filepath="$PROJECT_DIR$/plugins/git4idea/rt/git4idea-rt.iml" group="plugins/VCS" />
       <module fileurl="file://$PROJECT_DIR$/plugins/github/github.iml" filepath="$PROJECT_DIR$/plugins/github/github.iml" group="plugins" />
@@ -89,6 +88,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" filepath="$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-impl/lvcs-impl.iml" filepath="$PROJECT_DIR$/platform/lvcs-impl/lvcs-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven.iml" filepath="$PROJECT_DIR$/plugins/maven/maven.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/maven/jps-plugin/maven-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/maven/jps-plugin/maven-jps-plugin.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven-server-api/maven-server-api.iml" filepath="$PROJECT_DIR$/plugins/maven/maven-server-api/maven-server-api.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven2-server-impl/maven2-server-impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven2-server-impl/maven2-server-impl.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven3-server-impl/maven3-server-impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven3-server-impl/maven3-server-impl.iml" group="plugins" />

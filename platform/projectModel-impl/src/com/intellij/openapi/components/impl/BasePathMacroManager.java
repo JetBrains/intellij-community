@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.containers.FactoryMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -50,15 +49,7 @@ public class BasePathMacroManager extends PathMacroManager {
   private static void addFileHierarchyReplacements(ExpandMacroToPathMap result, @Nullable VirtualFile f, String macro) {
     if (f == null) return;
     addFileHierarchyReplacements(result, f.getParent(), macro + "/..");
-
-    final String path = f.getPath();
-    if (StringUtil.endsWithChar(path, '/')) {
-      result.put(macro + "/", path);
-      result.put(macro, path.substring(0, path.length()-1));
-    }
-    else {
-      result.put(macro, path);
-    }
+    result.put(macro, StringUtil.trimEnd(f.getPath(), "/"));
   }
 
   protected static void addFileHierarchyReplacements(ReplacePathToMacroMap result, String macroName, @Nullable String path, @Nullable String stopAt) {
@@ -66,24 +57,16 @@ public class BasePathMacroManager extends PathMacroManager {
 
     String macro = "$" + macroName + "$";
     path = StringUtil.trimEnd(FileUtil.toSystemIndependentName(path), "/");
-    boolean check = false;
+    boolean overwrite = true;
     while (StringUtil.isNotEmpty(path) && path.contains("/")) {
-      putIfAbsent(result, "file:" + path, "file:" + macro, check);
-      putIfAbsent(result, "file:/" + path, "file:/" + macro, check);
-      putIfAbsent(result, "file://" + path, "file://" + macro, check);
-      putIfAbsent(result, "jar:" + path, "jar:" + macro, check);
-      putIfAbsent(result, "jar:/" + path, "jar:/" + macro, check);
-      putIfAbsent(result, "jar://" + path, "jar://" + macro, check);
-      if (!path.equalsIgnoreCase("e:/") && !path.equalsIgnoreCase("r:/") && !path.equalsIgnoreCase("p:/")) {
-        putIfAbsent(result, path, macro, check);
-      }
+      result.addReplacement(path, macro, overwrite);
 
       if (path.equals(stopAt)) {
         break;
       }
 
       macro += "/..";
-      check = true;
+      overwrite = false;
       path = StringUtil.getPackageName(path, '/');
     }
   }
@@ -91,22 +74,6 @@ public class BasePathMacroManager extends PathMacroManager {
   private static VirtualFileSystem getLocalFileSystem() {
     // Use VFM directly because of mocks in tests.
     return VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL);
-  }
-
-  private static void putIfAbsent(final ReplacePathToMacroMap result,
-                                  @NonNls final String pathWithPrefix,
-                                  @NonNls final String substitutionWithPrefix,
-                                  final boolean check) {
-    if (check && result.get(pathWithPrefix) != null)
-      return;
-
-    if (StringUtil.endsWithChar(pathWithPrefix, '/')) {
-      result.put(pathWithPrefix, substitutionWithPrefix + "/");
-      result.put(pathWithPrefix.substring(0, pathWithPrefix.length()-1), substitutionWithPrefix);
-    }
-    else {
-      result.put(pathWithPrefix, substitutionWithPrefix);
-    }
   }
 
   protected ExpandMacroToPathMap getExpandMacroMap() {

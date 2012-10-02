@@ -21,6 +21,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.SpeedSearchComparator;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.MultiMap;
@@ -195,6 +197,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     DefaultTreeModel model = new DefaultTreeModel(rootNode);
 
     final Tree optionsTree = new Tree(model);
+    new TreeSpeedSearch(optionsTree).setComparator(new SpeedSearchComparator(false));
     TreeUtil.installActions(optionsTree);
     optionsTree.setRootVisible(false);
     UIUtil.setLineStyleAngled(optionsTree);

@@ -16,9 +16,11 @@
 package com.intellij.psi.codeStyle.arrangement.settings;
 
 import com.intellij.psi.codeStyle.arrangement.StdArrangementSettings;
+import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,6 +63,19 @@ public interface ArrangementStandardSettingsAware {
    */
   boolean isEnabled(@NotNull ArrangementModifier modifier, @Nullable ArrangementMatchCondition current);
 
+
+  /**
+   * Allows to answer if given grouping type (optionally with the given order type) can be used.
+   * 
+   * @param groupingType  target grouping type to check
+   * @param orderType     target order type to check whether it can be used with the given grouping type;
+   *                      <code>null</code> to indicate that we want to know if given grouping type can be used in general
+   *                      for the languages-specific realisation of this interface
+   * @return              <code>true</code> if given arguments are eligible for the languages-specific realisation of this interface;
+   *                      <code>false</code> otherwise
+   */
+  boolean isEnabled(@NotNull ArrangementGroupingType groupingType, @Nullable ArrangementEntryOrderType orderType);
+  
   /**
    * @return    collections of mutual exclusion settings. E.g. not more than one visibility modifier can be used for a single
    *            java language rule

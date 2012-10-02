@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
@@ -117,5 +119,10 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
     GrExpression expression = getInvokedExpression();
     if (!(expression instanceof GrReferenceExpression)) return GroovyResolveResult.EMPTY_ARRAY;
     return ((GrReferenceExpression)expression).multiResolve(incompleteCode);
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    return ItemPresentationProviders.getItemPresentation(this);
   }
 }

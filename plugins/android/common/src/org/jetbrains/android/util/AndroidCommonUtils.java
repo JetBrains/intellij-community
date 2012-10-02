@@ -98,6 +98,8 @@ public class AndroidCommonUtils {
   @NonNls public static final String ANDROID_MANIFEST_MERGER_PROPERTY = "manifestmerger.enabled";
   @NonNls public static final String PROGUARD_CFG_OUTPUT_FILE_NAME = "proguard.txt";
 
+  @NonNls public static final String PROJECT_BUILD_TARGET_TYPE_ID = "android-project";
+
   private AndroidCommonUtils() {
   }
 

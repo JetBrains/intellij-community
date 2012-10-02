@@ -60,7 +60,7 @@ public class GotoResourceAction extends AnAction {
             if (file != null) {
               AndroidFacet facet = AndroidFacet.getInstance(file);
               if (facet != null) {
-                int offset = TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
+                int offset = TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
                 PsiElement element = file.findElementAt(offset);
                 boolean enabled = false;
                 if (element != null) {
@@ -129,7 +129,7 @@ public class GotoResourceAction extends AnAction {
     if (editor != null) {
       file = PsiUtilBase.getPsiFileInEditor(editor, project);
       assert file != null;
-      int offset = TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
+      int offset = TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
       PsiElement element = file.findElementAt(offset);
       XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
       if (tag != null) {

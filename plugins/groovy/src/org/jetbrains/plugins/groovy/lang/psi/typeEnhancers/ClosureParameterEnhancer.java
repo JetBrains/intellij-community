@@ -16,6 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmet
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -257,7 +258,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
 
     PsiType res = PsiUtil.extractIterableTypeParameter(iterType, true);
     if (res != null) {
-      return res;
+      return PsiImplUtil.normalizeWildcardTypeByPosition(res, qualifier);
     }
 
     if (TypesUtil.isClassType(iterType, CommonClassNames.JAVA_LANG_STRING) || TypesUtil.isClassType(iterType, JAVA_IO_FILE)) {

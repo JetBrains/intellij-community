@@ -75,17 +75,17 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
       public void documentCreated(@NotNull final Document document, PsiFile psiFile) {
         final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
         if (file == null) return;
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (myProject.isDisposed()) return;
-            for (Bookmark bookmark : myBookmarks) {
-              if (Comparing.equal(bookmark.getFile(), file)) {
+        for (final Bookmark bookmark : myBookmarks) {
+          if (Comparing.equal(bookmark.getFile(), file)) {
+            UIUtil.invokeLaterIfNeeded(new Runnable() {
+              @Override
+              public void run() {
+                if (myProject.isDisposed()) return;
                 bookmark.createHighlighter((MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true));
               }
-            }
+            });
           }
-        });
+        }
       }
 
       @Override

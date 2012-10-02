@@ -18,8 +18,10 @@ package com.intellij.psi.codeStyle.arrangement
 import org.junit.Test
 
 import static com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType.GETTERS_AND_SETTERS
-import static com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType.UTILITY_METHODS
+import static com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType.OVERRIDDEN_METHODS
+import static com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType.DEPENDENT_METHODS
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PUBLIC
+import static com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType.BREADTH_FIRST
 import static com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType.DEPTH_FIRST
 
 /**
@@ -52,7 +54,7 @@ class Test {
   }
   
   @Test
-  void _testUtilityMethodsDepthFirst() {
+  void testUtilityMethodsDepthFirst() {
     commonSettings.BLANK_LINES_AROUND_METHOD = 0
     doTest(
       initial: '''\
@@ -63,7 +65,7 @@ class Test {
   void util11() {}
   void service2() { util2(); }
 }''',
-      groups: [group(UTILITY_METHODS, DEPTH_FIRST)],
+      groups: [group(DEPENDENT_METHODS, DEPTH_FIRST)],
       expected: '''\
 class Test {
   void service1() { util1(); }
@@ -71,7 +73,90 @@ class Test {
   void util11() {}
   void service2() { util2(); }
   void util2() {}
-}'''
-    )
+}''')
+  }
+
+  @Test
+  void testUtilityMethodsBreadthFirst() {
+    commonSettings.BLANK_LINES_AROUND_METHOD = 0
+    doTest(
+      initial: '''\
+class Test {
+  void util2() { util3(); }
+  void service1() { util1(); util2(); }
+  void service2() { util2(); util1(); }
+  void util3() {}
+}''',
+      groups: [group(DEPENDENT_METHODS, BREADTH_FIRST)],
+      expected: '''\
+class Test {
+  void service1() { util1(); util2(); }
+  void util2() { util3(); }
+  void util3() {}
+  void service2() { util2(); util1(); }
+}''')
+  }
+
+  void testOverriddenMethods() {
+    commonSettings.BLANK_LINES_AROUND_METHOD = 0
+    doTest(
+      initial: '''\
+class Base {
+  void base1() {}
+  void base2() {}
+}
+
+<range>class Sub extends Base {
+  void base2() {}
+  void test1() {}
+  void base1() {}</range>
+  void test2() {}
+}''',
+      groups: [group(OVERRIDDEN_METHODS)],
+      expected: '''\
+class Base {
+  void base1() {}
+  void base2() {}
+}
+
+class Sub extends Base {
+  void test1() {}
+  void base1() {}
+  void base2() {}
+  void test2() {}
+}''')
+  }
+  void testOverriddenAndUtilityMethods() {
+    commonSettings.BLANK_LINES_AROUND_METHOD = 0
+    doTest(
+      initial: '''\
+class Base {
+  void base1() {}
+  void base2() {}
+}
+
+<range>class Sub extends Base {
+  void test3() { test4(); }
+  void base2() { test3(); }
+  void test2() {}
+  void base1() { test1(); }
+  void test4() {}
+  void test1() { test2(); }</range>
+}''',
+      groups: [group(DEPENDENT_METHODS, DEPTH_FIRST), group(OVERRIDDEN_METHODS)],
+      expected: '''\
+class Base {
+  void base1() {}
+  void base2() {}
+}
+
+class Sub extends Base {
+  void base1() { test1(); }
+  void test1() { test2(); }
+  void test2() {}
+  void base2() { test3(); }
+  void test3() { test4(); }
+  void test4() {}
+}''')
   }
 }

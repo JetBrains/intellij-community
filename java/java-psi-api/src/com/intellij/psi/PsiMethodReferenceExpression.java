@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,4 +29,9 @@ public interface PsiMethodReferenceExpression extends PsiReferenceExpression {
    */
   @Nullable
   PsiTypeElement getQualifierType();
+  
+  @Nullable
+  PsiType getFunctionalInterfaceType();
+
+  boolean process(Ref<PsiClass> psiClassRef, Ref<PsiSubstitutor> substRef);
 }

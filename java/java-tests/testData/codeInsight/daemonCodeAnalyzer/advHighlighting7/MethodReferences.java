@@ -22,7 +22,7 @@ class C {
   void use(Simplest s) { }
 
   void test() {
-    Simplest simplest = <weak_warning descr="Method references type check is not yet implemented">this::simplest</weak_warning>;
-    use(<weak_warning descr="Method references type check is not yet implemented">this::simplest</weak_warning>);
+    Simplest simplest = this::simplest;
+    use(this::simplest);
   }
 }

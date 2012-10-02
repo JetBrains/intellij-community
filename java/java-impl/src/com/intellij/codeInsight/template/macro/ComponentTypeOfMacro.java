@@ -61,7 +61,6 @@ public class ComponentTypeOfMacro extends Macro {
     final Result result = params[0].calculateResult(context);
     if (result == null) return null;
 
-    PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
     if (result instanceof PsiTypeResult) {
       PsiType type = ((PsiTypeResult) result).getType();
       if (type instanceof PsiArrayType) {

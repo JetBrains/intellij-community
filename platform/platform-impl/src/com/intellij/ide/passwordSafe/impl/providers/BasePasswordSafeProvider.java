@@ -37,7 +37,7 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
    * {@inheritDoc}
    */
   @Nullable
-  public String getPassword(Project project, Class requester, String key) throws PasswordSafeException {
+  public String getPassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
     byte[] k = dbKey(project, requester, key);
     byte[] ct = getEncryptedPassword(k);
     return ct == null ? null : EncryptionUtil.decryptText(key(project), ct);
@@ -66,7 +66,7 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
   /**
    * {@inheritDoc}
    */
-  public void removePassword(Project project, Class requester, String key) throws PasswordSafeException {
+  public void removePassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
     byte[] k = dbKey(project, requester, key);
     removeEncryptedPassword(k);
   }

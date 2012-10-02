@@ -16,11 +16,11 @@
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.incremental.IgnoredFilePatterns;
-import org.jetbrains.jps.JpsPathUtil;
-import org.jetbrains.jps.incremental.ModuleRootsIndex;
+import org.jetbrains.jps.indices.IgnoredFileIndex;
+import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.incremental.artifacts.JarPathUtil;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 
@@ -44,7 +44,7 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
 
   public void addDirectoryCopyInstructions(@NotNull File directory, @Nullable SourceFileFilter filter) {
     final boolean copyExcluded = myInstructionsBuilder.getRootsIndex().isExcluded(directory);
-    SourceFileFilter fileFilter = new SourceFileFilterImpl(filter, myInstructionsBuilder.getRootsIndex(), myInstructionsBuilder.getIgnoredFilePatterns(), copyExcluded);
+    SourceFileFilter fileFilter = new SourceFileFilterImpl(filter, myInstructionsBuilder.getRootsIndex(), myInstructionsBuilder.getIgnoredFileIndex(), copyExcluded);
     DestinationInfo destination = createDirectoryDestination();
     if (destination != null) {
       ArtifactRootDescriptor descriptor = myInstructionsBuilder.createFileBasedRoot(directory, fileFilter, destination);
@@ -57,7 +57,7 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
   @Override
   public void addExtractDirectoryInstruction(@NotNull File jarFile, @NotNull String pathInJar) {
     final SourceFileFilterImpl filter = new SourceFileFilterImpl(null, myInstructionsBuilder.getRootsIndex(),
-                                                                 myInstructionsBuilder.getIgnoredFilePatterns(), false);
+                                                                 myInstructionsBuilder.getIgnoredFileIndex(), false);
     DestinationInfo destination = createDirectoryDestination();
     if (destination != null) {
       ArtifactRootDescriptor descriptor = myInstructionsBuilder.createJarBasedRoot(jarFile, pathInJar, filter, destination);
@@ -100,17 +100,17 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
 
   private static class SourceFileFilterImpl extends SourceFileFilter {
     private final SourceFileFilter myBaseFilter;
-    private final ModuleRootsIndex myRootsIndex;
-    private final IgnoredFilePatterns myIgnoredFilePatterns;
+    private final ModuleExcludeIndex myRootsIndex;
+    private final IgnoredFileIndex myIgnoredFileIndex;
     private final boolean myIncludeExcluded;
 
     private SourceFileFilterImpl(@Nullable SourceFileFilter baseFilter,
-                                 @NotNull ModuleRootsIndex rootsIndex,
-                                 IgnoredFilePatterns patterns,
+                                 @NotNull ModuleExcludeIndex rootsIndex,
+                                 IgnoredFileIndex patterns,
                                  boolean includeExcluded) {
       myBaseFilter = baseFilter;
       myRootsIndex = rootsIndex;
-      myIgnoredFilePatterns = patterns;
+      myIgnoredFileIndex = patterns;
       myIncludeExcluded = includeExcluded;
     }
 
@@ -118,7 +118,7 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
     public boolean accept(@NotNull String fullFilePath, BuildDataManager dataManager) throws IOException {
       if (myBaseFilter != null && !myBaseFilter.accept(fullFilePath, dataManager)) return false;
 
-      if (myIgnoredFilePatterns.isIgnored(JpsPathUtil.getFileName(fullFilePath))) {
+      if (myIgnoredFileIndex.isIgnored(PathUtilRt.getFileName(fullFilePath))) {
         return false;
       }
 

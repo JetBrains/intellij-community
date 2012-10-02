@@ -34,6 +34,8 @@ import java.util.UUID;
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class FileUtilRt {
+  public static final int MEGABYTE = 1024 * 1024;
+  public static final int LARGE_FOR_CONTENT_LOADING = 20 * MEGABYTE;
   private static final LoggerRt LOG = LoggerRt.getInstance("#com.intellij.openapi.util.io.FileUtilLight");
 
   protected static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
@@ -359,8 +361,16 @@ public class FileUtilRt {
     return buffer.toByteArray();
   }
 
+  public static boolean isTooLarge(long len) {
+    return len > LARGE_FOR_CONTENT_LOADING;
+  }
+
   @NotNull
   public static byte[] loadBytes(@NotNull InputStream stream, int length) throws IOException {
+    if (isTooLarge(length)) {
+      throw new FileTooBigException("Too large file, size is " + length + " bytes.");
+    }
+
     byte[] bytes = new byte[length];
     int count = 0;
     while (count < length) {

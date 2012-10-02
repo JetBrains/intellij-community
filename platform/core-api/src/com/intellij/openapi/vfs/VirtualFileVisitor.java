@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Avdeev
  * @since 31.10.2011
  */
-public abstract class VirtualFileVisitor {
+public abstract class VirtualFileVisitor<T> {
   public static class Option {
     private Option() { }
 
@@ -39,7 +39,7 @@ public abstract class VirtualFileVisitor {
 
   public static final Option NO_FOLLOW_SYMLINKS = new Option();
   public static final Option SKIP_ROOT = new Option();
-  public static final Option ONE_LEVEL_DEEP = new Option.LimitOption(1);
+  public static final Option ONE_LEVEL_DEEP = limit(1);
 
   public static Option limit(int maxDepth) {
     return new Option.LimitOption(maxDepth);
@@ -82,9 +82,8 @@ public abstract class VirtualFileVisitor {
   private int myDepthLimit = -1;
 
   private int myLevel = 0;
-  private Stack<Object> myValueStack;
-  private Object value;
-  private boolean valueSet;
+  private Stack<T> myValueStack = null;
+  private T myValue = null;
 
   protected VirtualFileVisitor(@NotNull Option... options) {
     for (Option option : options) {
@@ -152,14 +151,15 @@ public abstract class VirtualFileVisitor {
    * the current file and all its subtree and returns to the level up, the value is cleared
    * and the {@link #getCurrentValue()} returns the previous value which was stored here before the {@link #setValueForChildren} call.
    */
-  public final <T> void setValueForChildren(@Nullable T value) {
-    this.value = value;
-    valueSet = true;
+  public final void setValueForChildren(@Nullable T value) {
+    myValue = value;
+    if (myValueStack == null) {
+      myValueStack = new Stack<T>();
+    }
   }
 
-  @SuppressWarnings("unchecked")
-  public final <T> T getCurrentValue() {
-    return (T)value;
+  public final T getCurrentValue() {
+    return myValue;
   }
 
 
@@ -175,21 +175,23 @@ public abstract class VirtualFileVisitor {
     return myDepthLimit >= 0 && myLevel >= myDepthLimit;
   }
 
-  final void pushFrame() {
+  final void saveValue() {
     ++myLevel;
-    if (valueSet) {
-      Stack<Object> stack = myValueStack;
-      if (stack == null) myValueStack = stack = new Stack<Object>();
-      stack.push(value);
+    if (myValueStack != null) {
+      myValueStack.push(myValue);
     }
   }
 
-  final void popFrame() {
-    --myLevel;
-    if (valueSet) {
-      Stack<Object> stack = myValueStack;
-      if (!(stack == null || stack.isEmpty())) stack.pop();
-      value = stack == null || stack.isEmpty() ? null : stack.peek();
+  final void restoreValue(boolean pushed) {
+    if (pushed) {
+      --myLevel;
+      if (myValueStack != null && !myValueStack.isEmpty()) {
+        myValueStack.pop();
+      }
+    }
+
+    if (myValueStack != null) {
+      myValue = myValueStack.isEmpty() ? null : myValueStack.peek();
     }
   }
 }

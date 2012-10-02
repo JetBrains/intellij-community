@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,10 +66,14 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    performForContext(e.getDataContext());
+    performForContext(e.getDataContext(), true);
   }
 
   public void performForContext(DataContext dataContext) {
+    performForContext(dataContext, true);
+  }
+
+  public void performForContext(DataContext dataContext, boolean invokedByShortcut) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
@@ -142,7 +146,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
     
 
-    showImplementations(impls, project, text, editor, file, element, isInvokedFromEditor);
+    showImplementations(impls, project, text, editor, file, element, isInvokedFromEditor, invokedByShortcut);
   }
 
   private static ImplementationSearcher createImplementationsSearcher() {
@@ -174,12 +178,12 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       text = SymbolPresentationUtil.getSymbolPresentableText(element);
     }
 
-    showImplementations(impls, project, text, editor, file, element, false);
+    showImplementations(impls, project, text, editor, file, element, false, false);
   }
 
   protected void showImplementations(final PsiElement[] impls, final Project project, final String text, final Editor editor, final PsiFile file,
                                      final PsiElement element,
-                                     boolean invokedFromEditor) {
+                                     boolean invokedFromEditor, boolean invokedByShortcut) {
     if (impls == null || impls.length == 0) return;
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKDEFINITION_FEATURE);
@@ -207,6 +211,9 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         ((AbstractPopup)popup).setCaption(title);
         component.update(impls, index);
         updateInBackground(editor, element, component, title, (AbstractPopup)popup);
+        if (invokedByShortcut) {
+          ((AbstractPopup)popup).focusPreferredComponent();
+        }
         return;
       }
     }
@@ -221,7 +228,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         }
       };
 
-      final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPrefferedFocusableComponent())
+      final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPreferredFocusableComponent())
         .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
         .setProject(project)
         .addListener(updateProcessor)

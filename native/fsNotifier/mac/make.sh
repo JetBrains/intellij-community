@@ -1,2 +1,3 @@
 #!/bin/sh
-gcc -arch i386 -mmacosx-version-min=10.5 -framework CoreServices -o fsnotifier fsnotifier.c
+# Clang can be downloaded from from http://llvm.org/releases/download.html or found in XCode 4+
+clang -arch i386 -mmacosx-version-min=10.5 -framework CoreServices -o fsnotifier fsnotifier.c

@@ -17,11 +17,13 @@ package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
+import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
+import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsRepresentationAware;
 import gnu.trove.TObjectIntHashMap;
@@ -93,6 +95,12 @@ public class ArrangementNodeDisplayManager {
     }
     else if (value instanceof ArrangementModifier) {
       return myRepresentationManager.getDisplayValue((ArrangementModifier)value);
+    }
+    else if (value instanceof ArrangementGroupingType) {
+      return myRepresentationManager.getDisplayValue((ArrangementGroupingType)value);
+    }
+    else if (value instanceof ArrangementEntryOrderType) {
+      return myRepresentationManager.getDisplayValue((ArrangementEntryOrderType)value);
     }
     else {
       return value.toString();

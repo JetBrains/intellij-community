@@ -62,6 +62,7 @@ public class Splitter extends JPanel {
   private final FocusWatcher myFocusWatcher;
   private boolean myShowDividerIcon;
   private boolean myShowDividerControls;
+  private boolean mySkipNextLayouting;
   private static final Rectangle myNullBounds = new Rectangle();
 
 
@@ -215,8 +216,15 @@ public class Splitter extends JPanel {
 
     return super.getPreferredSize();
   }
+  public void skipNextLayouting() {
+    mySkipNextLayouting = true;
+  }
 
   public void doLayout() {
+    if (mySkipNextLayouting) {
+      mySkipNextLayouting = false;
+      return;
+    }
     final double width = getWidth();
     final double height = getHeight();
 

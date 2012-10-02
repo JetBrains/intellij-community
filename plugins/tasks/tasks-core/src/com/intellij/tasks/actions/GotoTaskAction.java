@@ -57,11 +57,11 @@ public class GotoTaskAction extends GotoActionBase {
       }
 
       @Override
-      public void filterElements(@NotNull ChooseByNameBase base,
-                                 @NotNull String pattern,
-                                 boolean everywhere,
-                                 @NotNull ProgressIndicator cancelled,
-                                 @NotNull Processor<Object> consumer) {
+      public boolean filterElements(@NotNull ChooseByNameBase base,
+                                    @NotNull String pattern,
+                                    boolean everywhere,
+                                    @NotNull ProgressIndicator cancelled,
+                                    @NotNull Processor<Object> consumer) {
         List<Task> cachedTasks = new TaskSearchSupport(project).getLocalAndCachedTasks(pattern);
         List<TaskPsiElement> taskPsiElements = ContainerUtil.map(cachedTasks, new Function<Task, TaskPsiElement>() {
           @Override
@@ -72,23 +72,23 @@ public class GotoTaskAction extends GotoActionBase {
 
         CREATE_NEW_TASK_ACTION.setTaskName(pattern);
         cancelled.checkCanceled();
-        if (!consumer.process(CREATE_NEW_TASK_ACTION)) return;
+        if (!consumer.process(CREATE_NEW_TASK_ACTION)) return false;
 
         boolean cachedTasksFound = taskPsiElements.size() != 0;
         if (cachedTasksFound) {
           cancelled.checkCanceled();
-          if (!consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return;
+          if (!consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
         }
 
         for (Object element : taskPsiElements) {
           cancelled.checkCanceled();
-          if (!consumer.process(element)) return;
+          if (!consumer.process(element)) return false;
         }
 
         //int i = 0;
         //while (true) {
           List<Task> tasks = new TaskSearchSupport(project).getRepositoryTasks(pattern, ChooseByNameBase.MAXIMUM_LIST_SIZE_LIMIT, 0, true);
-          if (tasks.size() == 0) return;
+          if (tasks.size() == 0) return true;
           tasks.removeAll(cachedTasks);
           taskPsiElements = ContainerUtil.map(tasks, new Function<Task, TaskPsiElement>() {
             @Override
@@ -99,15 +99,16 @@ public class GotoTaskAction extends GotoActionBase {
 
           if (!cachedTasksFound && taskPsiElements.size() != 0) {
             cancelled.checkCanceled();
-            if (!consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return;
+            if (!consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
           }
 
           for (Object element : taskPsiElements) {
             cancelled.checkCanceled();
-            if (!consumer.process(element)) return;
+            if (!consumer.process(element)) return false;
           }
           //i += ChooseByNameBase.MAXIMUM_LIST_SIZE_LIMIT;
         //}
+        return true;
       }
     }, "", false, 0);
     popup.setShowListForEmptyPattern(true);

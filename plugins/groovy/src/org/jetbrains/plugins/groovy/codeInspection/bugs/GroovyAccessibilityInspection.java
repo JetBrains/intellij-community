@@ -37,7 +37,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocat
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +50,20 @@ import java.util.List;
  */
 public class GroovyAccessibilityInspection extends BaseInspection {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection");
+
+  public static boolean isStaticallyImportedProperty(GroovyResolveResult result, GrReferenceElement place) {
+    final PsiElement parent = place.getParent();
+    if (!(parent instanceof GrImportStatement)) return false;
+
+    final PsiElement resolved = result.getElement();
+    if (!(resolved instanceof PsiField)) return false;
+
+    final PsiMethod getter = GroovyPropertyUtils.findGetterForField((PsiField)resolved);
+    final PsiMethod setter = GroovyPropertyUtils.findSetterForField((PsiField)resolved);
+
+    return getter != null && PsiUtil.isAccessible(place, getter) ||
+           setter != null && PsiUtil.isAccessible(place, setter);
+  }
 
   @Override
   protected BaseInspectionVisitor buildVisitor() {
@@ -240,7 +257,7 @@ public class GroovyAccessibilityInspection extends BaseInspection {
       final GroovyResolveResult result = ref.advancedResolve();
       if (result == null) return;
       if (result.getElement() == null) return;
-      if (!result.isAccessible()) {
+      if (!result.isAccessible() && !isStaticallyImportedProperty(result, ref)) {
         registerError(getErrorLocation(ref), ref.getReferenceName());
       }
     }

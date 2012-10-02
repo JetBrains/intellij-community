@@ -11,16 +11,14 @@ import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.Channels;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
+import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.incremental.Utils;
-import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
-import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.FSState;
-import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -168,7 +166,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       if (fsStateStream != null) {
         try {
           try {
-            fsState.load(fsStateStream, pd.jpsModel, pd.getBuildRootIndex());
+            fsState.load(fsStateStream, pd.getModel(), pd.getBuildRootIndex());
             applyFSEvent(pd, myInitialFSDelta);
           }
           finally {
@@ -263,48 +261,32 @@ final class BuildSession implements Runnable, CanceledStatus {
 
     for (String deleted : event.getDeletedPathsList()) {
       final File file = new File(deleted);
-      final RootDescriptor rd = pd.getBuildRootIndex().getModuleAndRoot(null, file);
-      if (rd != null) {
+      Collection<BuildRootDescriptor> descriptor = pd.getBuildRootIndex().findAllParentDescriptors(file, null, null);
+      if (!descriptor.isEmpty()) {
         if (Utils.IS_TEST_MODE) {
           LOG.info("Applying deleted path from fs event: " + file.getPath());
         }
-        pd.fsState.registerDeleted(rd.target, file, timestamps);
+        for (BuildRootDescriptor rootDescriptor : descriptor) {
+          pd.fsState.registerDeleted(rootDescriptor.getTarget(), file, timestamps);
+        }
       }
       else if (Utils.IS_TEST_MODE) {
         LOG.info("Skipping deleted path: " + file.getPath());
       }
-
-      Collection<ArtifactRootDescriptor> descriptor = pd.getBuildRootIndex().findAllParentDescriptors(file, Collections.singletonList(ArtifactBuildTargetType.INSTANCE), null);
-      if (!descriptor.isEmpty()) {
-        if (Utils.IS_TEST_MODE) {
-          LOG.info("Applying deleted path from fs event to artifacts: " + file.getPath());
-        }
-        for (ArtifactRootDescriptor rootDescriptor : descriptor)
-          pd.fsState.registerDeleted(rootDescriptor.getTarget(), file, timestamps);
-      }
     }
     for (String changed : event.getChangedPathsList()) {
       final File file = new File(changed);
-      final RootDescriptor rd = pd.getBuildRootIndex().getModuleAndRoot(null, file);
-      if (rd != null) {
+      Collection<BuildRootDescriptor> descriptors = pd.getBuildRootIndex().findAllParentDescriptors(file, null, null);
+      if (!descriptors.isEmpty()) {
         if (Utils.IS_TEST_MODE) {
           LOG.info("Applying dirty path from fs event: " + file.getPath());
         }
-        pd.fsState.markDirty(null, file, rd, timestamps);
+        for (BuildRootDescriptor descriptor : descriptors) {
+          pd.fsState.markDirty(null, file, descriptor, timestamps);
+        }
       }
       else if (Utils.IS_TEST_MODE) {
         LOG.info("Skipping dirty path: " + file.getPath());
-      }
-
-      Collection<ArtifactRootDescriptor> descriptors = pd.getBuildRootIndex().findAllParentDescriptors(file, Collections
-        .singletonList(ArtifactBuildTargetType.INSTANCE), null);
-      if (!descriptors.isEmpty()) {
-        if (Utils.IS_TEST_MODE) {
-          LOG.info("Applying dirty path from fs event to artifacts: " + file.getPath());
-        }
-        for (ArtifactRootDescriptor descriptor : descriptors) {
-          pd.fsState.markDirty(null, file, descriptor, timestamps);
-        }
       }
     }
   }
@@ -348,7 +330,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         out.writeInt(FSState.VERSION);
         out.writeLong(myLastEventOrdinal);
         boolean hasWorkToDoWithModules = false;
-        for (JpsModule module : pd.jpsProject.getModules()) {
+        for (JpsModule module : pd.getProject().getModules()) {
           for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
             if (state.hasWorkToDo(new ModuleBuildTarget(module, type))) {
               hasWorkToDoWithModules = true;

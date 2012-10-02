@@ -135,7 +135,11 @@ public class MethodCandidateInfo extends CandidateInfo{
     PsiTypeParameter[] typeParams = getElement().getTypeParameters();
     if (myTypeArguments != null && typeParams.length != myTypeArguments.length) return false;
     PsiSubstitutor substitutor = getSubstitutor();
-    return GenericsUtil.isTypeArgumentsApplicable(typeParams, substitutor, myArgumentList.getParent());
+    return GenericsUtil.isTypeArgumentsApplicable(typeParams, substitutor, getParent());
+  }
+
+  private PsiElement getParent() {
+    return myArgumentList != null ? myArgumentList.getParent() : myArgumentList;
   }
 
   @Override
@@ -150,8 +154,8 @@ public class MethodCandidateInfo extends CandidateInfo{
 
   public PsiSubstitutor inferTypeArguments(final ParameterTypeInferencePolicy policy) {
     return inferTypeArguments(policy, myArgumentList instanceof PsiExpressionList
-                                             ? ((PsiExpressionList)myArgumentList).getExpressions()
-                                             : PsiExpression.EMPTY_ARRAY);
+                                      ? ((PsiExpressionList)myArgumentList).getExpressions()
+                                      : PsiExpression.EMPTY_ARRAY);
   }
 
   public PsiSubstitutor inferTypeArguments(final ParameterTypeInferencePolicy policy, final PsiExpression[] arguments) {
@@ -166,12 +170,14 @@ public class MethodCandidateInfo extends CandidateInfo{
       }
     }
 
-    return javaPsiFacade.getResolveHelper().inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, mySubstitutor,
-                                     myArgumentList.getParent(), policy);
+    final PsiElement parent = getParent();
+    if (parent == null) return PsiSubstitutor.EMPTY;
+    return javaPsiFacade.getResolveHelper()
+      .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, mySubstitutor, parent, policy);
   }
 
   public boolean isInferencePossible() {
-    return myArgumentList.isValid();
+    return myArgumentList != null && myArgumentList.isValid();
   }
 
   public static class ApplicabilityLevel {

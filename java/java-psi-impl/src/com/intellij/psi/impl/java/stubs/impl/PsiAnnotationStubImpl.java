@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * @author max
  */
 package com.intellij.psi.impl.java.stubs.impl;
 
@@ -35,6 +31,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * @author max
+ */
 public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements PsiAnnotationStub {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl");
 
@@ -76,17 +75,13 @@ public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements Ps
       return parsed;
     }
     catch (IncorrectOperationException e) {
-      LOG.error("Bad annotation in repository!",e);
+      LOG.error("Bad annotation in repository!", e);
       return null;
     }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.append("PsiAnnotationStub[").
-        append(myText).
-        append("]");
-    return builder.toString();
+    return "PsiAnnotationStub[" + myText + "]";
   }
 }

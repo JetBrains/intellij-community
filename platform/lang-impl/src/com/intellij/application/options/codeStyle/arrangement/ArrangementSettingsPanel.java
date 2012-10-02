@@ -18,6 +18,7 @@ package com.intellij.application.options.codeStyle.arrangement;
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction;
 import com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction;
+import com.intellij.application.options.codeStyle.arrangement.node.ArrangementSectionNode;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.lang.Language;
@@ -39,6 +40,8 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Consumer;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.GridBag;
 import org.jdesktop.swingx.JXTaskPane;
 import org.jetbrains.annotations.NonNls;
@@ -48,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
@@ -99,7 +103,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     toolbarControl.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.TOP | SideBorder.RIGHT));
     myContent.add(toolbarControl, new GridBag().weightx(1).fillCellHorizontally().coverLine());
 
-    myRuleTree = new ArrangementRuleTree(getSettings(settings), groupingRules, displayManager);
+    myRuleTree = new ArrangementRuleTree(getSettings(settings), groupingRules, displayManager, mySettingsAware);
     final Tree treeComponent = myRuleTree.getTreeComponent();
     actionToolbar.setTargetComponent(treeComponent);
     JBScrollPane scrollPane = new JBScrollPane(treeComponent);
@@ -270,6 +274,35 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
         }
       }
     };
+    final NotNullFunction<Boolean, Boolean> updateMoveFunction = new NotNullFunction<Boolean, Boolean>() {
+      @NotNull
+      @Override
+      public Boolean fun(@NotNull Boolean moveUp) {
+        TreePath[] paths = treeComponent.getSelectionPaths();
+        if (paths == null) {
+          return false;
+        }
+        for (TreePath path : paths) {
+          TreeNode node = (TreeNode)path.getLastPathComponent();
+          if (node instanceof ArrangementSectionNode) {
+            continue;
+          }
+          if ((moveUp && node.getParent().getIndex(node) > 0)
+              || (!moveUp && node.getParent().getIndex(node) < node.getParent().getChildCount() - 1))
+          {
+            return true;
+          }
+        }
+        return false;
+      }
+    };
+    final Consumer<Boolean/* move up? */> moveFunction = new Consumer<Boolean>() {
+      @Override
+      public void consume(Boolean moveUp) {
+        TreePath[] paths = treeComponent.getSelectionPaths();
+        // TODO den implement
+      }
+    };
     treeComponent.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new DataProvider() {
       @Nullable
       @Override
@@ -280,6 +313,10 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
         else if (ArrangementConstants.REMOVE_RULE_FUNCTION_KEY.is(dataId)) {
           return removeRuleFunction;
         }
+        // TODO den uncomment
+        //else if (ArrangementConstants.UPDATE_MOVE_RULE_FUNCTION_KEY.is(dataId)) {
+        //  return updateMoveFunction;
+        //}
         return null;
       }
     });

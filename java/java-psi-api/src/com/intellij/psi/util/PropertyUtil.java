@@ -54,13 +54,13 @@ public class PropertyUtil {
     if (method.isConstructor()) return false;
 
     String methodName = method.getName();
-    PsiType returnType = method.getReturnType();
     int methodNameLength = methodName.length();
     if (methodName.startsWith("get") && methodNameLength > "get".length()) {
       if (Character.isLowerCase(methodName.charAt("get".length()))
           && (methodNameLength == "get".length() + 1 || Character.isLowerCase(methodName.charAt("get".length() + 1)))) {
         return false;
       }
+      PsiType returnType = method.getReturnType();
       if (returnType != null && PsiType.VOID.equals(returnType)) return false;
     }
     else if (methodName.startsWith("is") && methodNameLength > "is".length()) {
@@ -68,6 +68,7 @@ public class PropertyUtil {
           && (methodNameLength == "is".length() + 1 || Character.isLowerCase(methodName.charAt("is".length() + 1)))) {
         return false;
       }
+      PsiType returnType = method.getReturnType();
       return isBoolean(returnType);
     }
     else {

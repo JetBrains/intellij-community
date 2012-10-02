@@ -164,7 +164,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       return st == ArrayUtil.getLastElement(((GroovyFileBase)parent).getStatements());
     }
 
-    else if (parent instanceof GrControlStatement ||
+    else if (parent instanceof GrForStatement ||
+             parent instanceof GrIfStatement && st != ((GrIfStatement)parent).getCondition() ||
+             parent instanceof GrSynchronizedStatement && st != ((GrSynchronizedStatement)parent).getMonitor() ||
+             parent instanceof GrWhileStatement && st != ((GrWhileStatement)parent).getCondition() ||
              parent instanceof GrConditionalExpression && st != ((GrConditionalExpression)parent).getCondition() ||
              parent instanceof GrElvisExpression) {
       return isCertainlyReturnStatement((GrStatement)parent);
@@ -208,6 +211,23 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private void handlePossibleReturn(@NotNull GrStatement possibleReturn) {
     if (possibleReturn instanceof GrExpression && isCertainlyReturnStatement(possibleReturn)) {
       addNodeAndCheckPending(new MaybeReturnInstruction((GrExpression)possibleReturn));
+      /*
+
+      //all pending edges from the same psi element may be return too
+      InstructionImpl head = myHead;
+      for (ListIterator<Pair<InstructionImpl, GroovyPsiElement>> iterator = myPending.listIterator(); iterator.hasNext(); ) {
+        Pair<InstructionImpl, GroovyPsiElement> pair = iterator.next();
+        final InstructionImpl instruction = pair.getFirst();
+        if (instruction.getElement() == possibleReturn) {
+          myHead = instruction;
+          MaybeReturnInstruction newPending = addNode(new MaybeReturnInstruction((GrExpression)possibleReturn));
+          iterator.set(new Pair<InstructionImpl, GroovyPsiElement>(newPending, pair.getSecond()));
+        }
+      }
+
+      myHead = head;
+
+      */
     }
   }
 
@@ -397,6 +417,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
+  @Nullable
   private static PsiType getNominalTypeNoRecursion(final GrExpression exception) {
     return RecursionManager.doPreventingRecursion(exception, true, new NullableComputable<PsiType>() {
       @Override
@@ -640,10 +661,12 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     addNode(new InstanceOfInstruction(expression, cond));
     NegatingGotoInstruction negation = new NegatingGotoInstruction(expression, cond);
     addNode(negation);
+    handlePossibleReturn(expression);
     addPendingEdge(expression, negation);
 
     myHead = cond;
     addNode(new InstanceOfInstruction(expression, cond));
+    handlePossibleReturn(expression);
     myConditions.removeFirstOccurrence(cond);
   }
 
@@ -1093,7 +1116,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     return startNode(element, true);
   }
 
-  private InstructionImpl startNode(GroovyPsiElement element, boolean checkPending) {
+  private InstructionImpl startNode(@Nullable GroovyPsiElement element, boolean checkPending) {
     final InstructionImpl instruction = new InstructionImpl(element);
     addNode(instruction);
     if (checkPending) checkPending(instruction);

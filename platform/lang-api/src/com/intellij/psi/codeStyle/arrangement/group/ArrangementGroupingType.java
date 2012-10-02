@@ -26,6 +26,6 @@ public enum ArrangementGroupingType {
   GETTERS_AND_SETTERS,
   
   OVERRIDDEN_METHODS,
-  
-  UTILITY_METHODS
+
+  DEPENDENT_METHODS
 }

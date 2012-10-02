@@ -16,15 +16,16 @@
 package com.intellij.util.containers;
 
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 public class EmptyIterable<T> implements Iterable<T> {
   private static final EmptyIterable INSTANCE = new EmptyIterable();
 
   public static <T> EmptyIterable<T> getInstance() {
+    //noinspection unchecked
     return INSTANCE;
   }
 
+  @Override
   public Iterator<T> iterator() {
     return EmptyIterator.getInstance();
   }

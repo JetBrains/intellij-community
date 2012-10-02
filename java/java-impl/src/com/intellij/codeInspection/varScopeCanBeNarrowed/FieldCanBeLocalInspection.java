@@ -153,6 +153,15 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       }
 
       @Override
+      public void visitLambdaExpression(PsiLambdaExpression expression) {
+        super.visitLambdaExpression(expression);
+        final PsiElement body = expression.getBody();
+        if (body != null) {
+          checkCodeBlock(body, candidates, usedFields);
+        }
+      }
+
+      @Override
       public void visitClassInitializer(PsiClassInitializer initializer) {
         super.visitClassInitializer(initializer);
         checkCodeBlock(initializer.getBody(), candidates, usedFields);
@@ -160,7 +169,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     });
   }
 
-  private static void checkCodeBlock(final PsiCodeBlock body, final Set<PsiField> candidates, Set<PsiField> usedFields) {
+  private static void checkCodeBlock(final PsiElement body, final Set<PsiField> candidates, Set<PsiField> usedFields) {
     try {
       final ControlFlow controlFlow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, AllVariablesControlFlowPolicy.getInstance());
       final List<PsiVariable> usedVars = ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize());

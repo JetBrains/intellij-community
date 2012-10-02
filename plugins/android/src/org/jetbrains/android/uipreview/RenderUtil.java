@@ -15,7 +15,7 @@ import com.android.io.IAbstractResource;
 import com.android.io.StreamException;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
-import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,6 +48,7 @@ import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.xmlpull.v1.XmlPullParserException;
 
 import javax.imageio.ImageIO;
@@ -141,14 +142,18 @@ public class RenderUtil {
 
     String appLabel = getAppLabelToShow(facet);
 
+    final List<FixableIssueMessage> warnMessages = new ArrayList<FixableIssueMessage>();
+
     RenderSession session;
     try {
       while (true) {
+        final SimpleLogger logger = new SimpleLogger(project, LOG);
         session = renderService
-          .createRenderSession(layoutXmlText, appLabel, timeout);
+          .createRenderSession(layoutXmlText, appLabel, timeout, logger);
         if (checkTimeout && session.getResult().getStatus() == Result.Status.ERROR_TIMEOUT) {
           continue;
         }
+        warnMessages.addAll(logger.getMessages());
         break;
       }
     }
@@ -158,8 +163,6 @@ public class RenderUtil {
     if (session == null) {
       return null;
     }
-
-    final List<FixableIssueMessage> warnMessages = new ArrayList<FixableIssueMessage>();
 
     if (callback.hasUnsupportedClassVersionProblem() || (incorrectRClassFormat && callback.hasLoadedClasses())) {
       reportIncorrectClassFormatWarning(callback, rClassName, incorrectRClassFormat, warnMessages);
@@ -279,7 +282,7 @@ public class RenderUtil {
       quickFixes.add(new Pair<String, Runnable>("Rebuild project with '-target 1.6'", new Runnable() {
         @Override
         public void run() {
-          final JavacSettings settings = JavacSettings.getInstance(project);
+          final JpsJavaCompilerOptions settings = JavacConfiguration.getOptions(project, JavacConfiguration.class);
           if (settings.ADDITIONAL_OPTIONS_STRING.length() > 0) {
             settings.ADDITIONAL_OPTIONS_STRING += ' ';
           }

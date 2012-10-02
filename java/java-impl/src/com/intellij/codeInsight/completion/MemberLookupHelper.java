@@ -66,10 +66,12 @@ public class MemberLookupHelper {
                                                          PsiFormatUtil.SHOW_PARAMETERS,
                                                          PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE)
                             : "";
+    presentation.clearTail();
+    presentation.appendTailText(params, false);
     if (myShouldImport && StringUtil.isNotEmpty(className)) {
-      presentation.setTailText(params + " in " + className + location);
+      presentation.appendTailText(" in " + className + location, true);
     } else {
-      presentation.setTailText(params + location, !(myMember instanceof PsiMethod));
+      presentation.appendTailText(location, true);
     }
 
     final PsiType type = myMember instanceof PsiMethod ? ((PsiMethod)myMember).getReturnType() : ((PsiField) myMember).getType();

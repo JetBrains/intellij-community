@@ -119,7 +119,8 @@ public class ReplaceConditionalWithIfIntention extends Intention {
     final PsiElement expressionParent = elementToReplace.getParent();
     if (expressionParent instanceof PsiParenthesizedExpression) {
       final PsiElement grandParent = expressionParent.getParent();
-      if (!ParenthesesUtils.areParenthesesNeeded(replacementExpression, grandParent, true)) {
+      if (replacementExpression == null || !(grandParent instanceof PsiExpression) ||
+          !ParenthesesUtils.areParenthesesNeeded(replacementExpression, (PsiExpression) grandParent)) {
         appendElementText(element, expressionParent, replacementExpression, out);
         return;
       }

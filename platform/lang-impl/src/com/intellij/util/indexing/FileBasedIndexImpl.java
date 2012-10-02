@@ -614,7 +614,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         myFlushingFuture = null;
       }
 
-      myFileDocumentManager.saveAllDocuments();
+      //myFileDocumentManager.saveAllDocuments(); // rev=Eugene Juravlev
     }
     finally {
       LOG.info("START INDEX SHUTDOWN");
@@ -1010,7 +1010,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
-  void updatingDone() {
+  void filesUpdateFinished() {
     if(myUpdatingFiles.decrementAndGet() == 0) {
       ++myFilesModCount;
     }
@@ -1844,9 +1844,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       });
       IndexingStamp.flushCache(null);
       if (!contentChange) {
-        if(myUpdatingFiles.decrementAndGet() == 0) {
-          ++myFilesModCount;
-        }
+        filesUpdateFinished();
       }
     }
 
@@ -1874,7 +1872,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
         @Override
         public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
-          return file instanceof NewVirtualFile ? ((NewVirtualFile)file).iterInDbChildren() : Arrays.asList(file.getChildren());
+          return file instanceof NewVirtualFile ? ((NewVirtualFile)file).iterInDbChildren() : null;
         }
       });
     }

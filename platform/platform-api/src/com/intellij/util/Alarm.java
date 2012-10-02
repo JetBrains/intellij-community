@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.Activatable;
@@ -35,10 +36,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Alarm implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.Alarm");
@@ -48,7 +47,7 @@ public class Alarm implements Disposable {
   private final List<Request> myRequests = new ArrayList<Request>();
   private final List<Request> myPendingRequests = new ArrayList<Request>();
 
-  private final ThreadPoolExecutor myExecutorService;
+  private final ExecutorService myExecutorService;
 
   private static final ThreadPoolExecutor ourSharedExecutorService = ConcurrencyUtil.newSingleThreadExecutor("Alarm pool(shared)", Thread.NORM_PRIORITY - 2);
 
@@ -61,7 +60,6 @@ public class Alarm implements Disposable {
     myDisposed = true;
     cancelAllRequests();
     if (myThreadToUse == ThreadToUse.OWN_THREAD) {
-      myExecutorService.getQueue().clear();
       myExecutorService.shutdown();
     }
   }
@@ -89,7 +87,7 @@ public class Alarm implements Disposable {
   }
   public Alarm(@NotNull ThreadToUse threadToUse, Disposable parentDisposable) {
     myThreadToUse = threadToUse;
-    myExecutorService = threadToUse == ThreadToUse.OWN_THREAD ? ConcurrencyUtil.newSingleThreadExecutor("Alarm pool(own)", Thread.NORM_PRIORITY - 2) : ourSharedExecutorService;
+    myExecutorService = threadToUse == ThreadToUse.OWN_THREAD ? new MyExecutor() : ourSharedExecutorService;
 
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, this);
@@ -333,4 +331,45 @@ public class Alarm implements Disposable {
   public boolean isDisposed() {
     return myDisposed;
   }
+  
+  private class MyExecutor extends AbstractExecutorService {
+    private final AtomicBoolean isShuttingDown = new AtomicBoolean();
+    private final QueueProcessor<Runnable> myProcessor = new QueueProcessor<Runnable>(new Consumer<Runnable>() {
+      @Override
+      public void consume(Runnable runnable) {
+        runnable.run();
+      }
+    });
+
+    @Override
+    public void shutdown() {
+      myProcessor.clear();
+      isShuttingDown.set(myDisposed);
+    }
+  
+    @Override
+    public List<Runnable> shutdownNow() {
+      throw new UnsupportedOperationException();
+    }
+  
+    @Override
+    public boolean isShutdown() {
+      return isShuttingDown.get();
+    }
+  
+    @Override
+    public boolean isTerminated() {
+      return isShutdown() && myProcessor.isEmpty();
+    }
+  
+    @Override
+    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+      throw new UnsupportedOperationException();
+    }
+  
+    @Override
+    public void execute(Runnable command) {
+      myProcessor.add(command);
+    }
+  } 
 }

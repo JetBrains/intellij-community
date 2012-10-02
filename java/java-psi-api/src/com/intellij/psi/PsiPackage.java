@@ -111,4 +111,7 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
   String getName();
 
   boolean containsClassNamed(String name);
+
+  @NotNull
+  PsiClass[] findClassByShortName(@NotNull String name, @NotNull GlobalSearchScope scope);
 }

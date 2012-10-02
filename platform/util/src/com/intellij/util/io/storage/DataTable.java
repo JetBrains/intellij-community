@@ -22,7 +22,7 @@ package com.intellij.util.io.storage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.RandomAccessDataFile;
 
@@ -54,7 +54,7 @@ class DataTable implements Disposable, Forceable {
   }
 
   public boolean isCompactNecessary() {
-    return ((double)myWasteSize)/myFile.length() > 0.25 && myWasteSize > 3 * FileUtil.MEGABYTE;
+    return ((double)myWasteSize)/myFile.length() > 0.25 && myWasteSize > 3 * FileUtilRt.MEGABYTE;
   }
 
   private void readInHeader(File filePath) throws IOException {

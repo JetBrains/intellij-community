@@ -16,7 +16,7 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
@@ -838,7 +838,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
   }
 
   public void testSettingTargetLevel() throws Exception {
-    JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING = "-Xmm500m -Xms128m -target 1.5";
+    JavacConfiguration.getOptions(myProject, JavacConfiguration.class).ADDITIONAL_OPTIONS_STRING = "-Xmm500m -Xms128m -target 1.5";
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -855,7 +855,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "  </plugins>" +
                   "</build>");
 
-    assertEquals("-Xmm500m -Xms128m", JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING.trim());
+    assertEquals("-Xmm500m -Xms128m", JavacConfiguration.getOptions(myProject, JavacConfiguration.class).ADDITIONAL_OPTIONS_STRING.trim());
 
     Module module = getModule("project");
 

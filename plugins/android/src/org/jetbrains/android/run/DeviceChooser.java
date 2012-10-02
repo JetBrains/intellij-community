@@ -92,7 +92,7 @@ public class DeviceChooser implements Disposable {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
-        if (okAction.isEnabled()) {
+        if (myDeviceTable.isEnabled() && okAction.isEnabled()) {
           okAction.actionPerformed(null);
           return true;
         }

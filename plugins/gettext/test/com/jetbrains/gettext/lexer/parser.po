@@ -1,2 +1,0 @@
-msgid "string"
-msgstr "translated"

@@ -45,6 +45,7 @@
       </action>
       <action id="context.load" class="com.intellij.tasks.actions.context.LoadContextAction" text="_Load Context...">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift L"/>
+        <keyboard-shortcut keymap="Mac OS X" first-keystroke="alt shift L" remove="true"/>
       </action>
       <action id="context.clear" class="com.intellij.tasks.actions.context.ClearContextAction" text="_Clear Context">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift X"/>
@@ -111,13 +112,12 @@
     <tasks.repositoryType implementation="com.intellij.tasks.youtrack.YouTrackRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.lighthouse.LighthouseRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.pivotal.PivotalTrackerRepositoryType"/>
-    <tasks.repositoryType implementation="com.intellij.tasks.github.GitHubRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.redmine.RedmineRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.trac.TracRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.fogbugz.FogBugzRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.mantis.MantisRepositoryType"/>
 
     <checkinHandlerFactory implementation="com.intellij.tasks.impl.TaskCheckinHandlerFactory"/>
-    <!--<tasks.repositoryType implementation="com.intellij.tasks.mantis.MantisRepositoryType"/>-->
   </extensions>
 
 </idea-plugin>

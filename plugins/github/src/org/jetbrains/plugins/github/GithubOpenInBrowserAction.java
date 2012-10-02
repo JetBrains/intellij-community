@@ -133,7 +133,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     final StringBuilder builder = new StringBuilder();
     builder.append(makeGithubRepoUrlFromRemoteUrl(githubRemoteUrl)).append("/blob/").append(branch).append(relativePath);
     final Editor editor = e.getData(PlatformDataKeys.EDITOR);
-    if (editor != null) {
+    if (editor != null && editor.getDocument().getLineCount() >= 1) {
       final int line = editor.getCaretModel().getLogicalPosition().line + 1; // lines are counted internally from 0, but from 1 on github
       builder.append("#L").append(line);
     }

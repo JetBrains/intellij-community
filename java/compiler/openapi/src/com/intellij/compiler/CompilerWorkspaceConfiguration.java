@@ -37,6 +37,9 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
   public boolean CLEAR_OUTPUT_DIRECTORY = true;
   public boolean USE_COMPILE_SERVER = false;
   public boolean MAKE_PROJECT_ON_SAVE = false;
+  public boolean PARALLEL_COMPILATION = false;
+  public int COMPILER_PROCESS_HEAP_SIZE = 700;
+  public String COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = "";
 
   public static CompilerWorkspaceConfiguration getInstance(Project project) {
     return ServiceManager.getService(project, CompilerWorkspaceConfiguration.class);

@@ -79,25 +79,28 @@
           </component>
           <component id="53321" class="javax.swing.JCheckBox" binding="myCbStoreProjectConfiguration">
             <constraints>
-              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/ExecutionBundle" key="run.configuration.store.place.option"/>
             </properties>
           </component>
-          <hspacer id="e4047">
-            <constraints>
-              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-          </hspacer>
           <component id="d7b04" class="com.intellij.ui.components.JBCheckBox" binding="myCbSingleton">
             <constraints>
-              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/ExecutionBundle" key="run.configuration.singleton"/>
             </properties>
           </component>
+          <hspacer id="e4047">
+            <constraints>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
+                <minimum-size width="20" height="-1"/>
+                <preferred-size width="20" height="-1"/>
+              </grid>
+            </constraints>
+          </hspacer>
         </children>
       </grid>
     </children>

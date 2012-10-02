@@ -37,7 +37,6 @@ public class ArrayVariableMacro extends VariableTypeMacroBase {
 
     Project project = context.getProject();
     final int offset = context.getStartOffset();
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
     final ArrayList<PsiVariable> array = new ArrayList<PsiVariable>();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
     PsiElement place = file.findElementAt(offset);
