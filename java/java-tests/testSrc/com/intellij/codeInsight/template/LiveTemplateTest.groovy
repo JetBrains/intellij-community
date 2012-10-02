@@ -190,6 +190,14 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     assert !state.finished
   }
 
+  public void testAllowTypingRandomExpressionsWithLookupOpen() {
+    configure();
+    startTemplate("iter", "iterations")
+    myFixture.type('file.')
+    checkResult()
+    assert !state.finished
+  }
+
   private TemplateState getState() {
     TemplateManagerImpl.getTemplateState(getEditor())
   }
