@@ -16,7 +16,6 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.tree.IElementType;
@@ -83,8 +82,12 @@ public class ComparisonUtils {
     return s_swappedComparisons.get(tokenType);
   }
 
-  public static boolean isEqualityComparison(@NotNull PsiBinaryExpression expression) {
-    final IElementType tokenType = expression.getOperationTokenType();
+  public static boolean isEqualityComparison(@NotNull PsiExpression expression) {
+    if (!(expression instanceof PsiPolyadicExpression)) {
+      return false;
+    }
+    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+    final IElementType tokenType = polyadicExpression.getOperationTokenType();
     return tokenType.equals(JavaTokenType.EQEQ) || tokenType.equals(JavaTokenType.NE);
   }
 

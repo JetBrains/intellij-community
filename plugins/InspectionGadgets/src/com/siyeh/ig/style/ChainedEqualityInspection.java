@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPolyadicExpression;
-import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ChainedEqualityInspection extends BaseInspection {
@@ -50,15 +50,27 @@ public class ChainedEqualityInspection extends BaseInspection {
     @Override
     public void visitPolyadicExpression(PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (JavaTokenType.EQEQ != tokenType && JavaTokenType.NE != tokenType) {
+      if (!ComparisonUtils.isEqualityComparison(expression)) {
         return;
+      }
+      final PsiElement parent = expression.getParent();
+      if (parent instanceof PsiExpression) {
+        if (ComparisonUtils.isEqualityComparison((PsiExpression)parent)) {
+          return;
+        }
       }
       final PsiExpression[] operands = expression.getOperands();
-      if (operands.length < 3) {
-        return;
+      if (operands.length >= 3) {
+        registerError(expression);
       }
-      registerError(expression);
+      else {
+        for (PsiExpression operand : operands) {
+          if (ComparisonUtils.isEqualityComparison(operand)) {
+            registerError(expression);
+            break;
+          }
+        }
+      }
     }
   }
 }
