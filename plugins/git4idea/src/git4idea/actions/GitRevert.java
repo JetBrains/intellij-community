@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -52,12 +51,9 @@ public class GitRevert extends BasicAction {
     }
     RollbackChangesDialog.rollbackChanges(project, changes);
     for (VirtualFile conflictedFile : affectedFiles) {
-      GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-      if (manager != null) {
-        final GitRepository repo = manager.getRepositoryForFile(conflictedFile);
-        if (repo != null) {
-          repo.update(GitRepository.TrackedTopic.ALL_CURRENT);
-        }
+      final GitRepository repo = GitUtil.getRepositoryManager(project).getRepositoryForFile(conflictedFile);
+      if (repo != null) {
+        repo.update(GitRepository.TrackedTopic.ALL_CURRENT);
       }
     }
     return false;
