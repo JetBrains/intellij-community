@@ -16,6 +16,9 @@ public interface JpsModuleSourceRoot extends JpsElement {
   @Nullable
   <P extends JpsElement> P getProperties(@NotNull JpsModuleSourceRootType<P> type);
 
+  @Nullable
+  <P extends JpsElement> JpsTypedModuleSourceRoot<P> asTyped(@NotNull JpsModuleSourceRootType<P> type);
+
   @NotNull
   JpsElement getProperties();
 

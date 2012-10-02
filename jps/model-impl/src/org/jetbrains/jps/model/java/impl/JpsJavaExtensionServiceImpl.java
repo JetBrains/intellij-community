@@ -7,7 +7,6 @@ import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsProject;
-import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.java.impl.compiler.JpsJavaCompilerConfigurationImpl;
@@ -116,22 +115,6 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
   public File getOutputDirectory(JpsModule module, boolean forTests) {
     String url = getOutputUrl(module, forTests);
     return url != null ? JpsPathUtil.urlToFile(url) : null;
-  }
-
-  @Override
-  public String getSourcePrefix(JpsModule module, String rootUrl) {
-    for (JpsModuleSourceRoot root : module.getSourceRoots()) {
-      if (root.getUrl().equals(rootUrl)) {
-        JpsModuleSourceRootType<?> type = root.getRootType();
-        if (type instanceof JavaSourceRootType) {
-          final JpsSimpleElement<JavaSourceRootProperties> properties = root.getProperties((JavaSourceRootType)type);
-          if (properties != null) {
-            return properties.getData().getPackagePrefix();
-          }
-        }
-      }
-    }
-    return null;
   }
 
   @Override

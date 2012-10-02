@@ -92,6 +92,12 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
 
   @NotNull
   @Override
+  public <P extends JpsElement> Iterable<JpsTypedModuleSourceRoot<P>> getSourceRoots(@NotNull JpsModuleSourceRootType<P> type) {
+    return myContainer.getChild(JpsModuleSourceRootRole.ROOT_COLLECTION_ROLE).getElementsOfType(type);
+  }
+
+  @NotNull
+  @Override
   public <P extends JpsElement, T extends JpsModuleSourceRootType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull T rootType) {
     return addSourceRoot(url, rootType, rootType.createDefaultProperties());

@@ -36,6 +36,6 @@ public class AndroidAdditionalRootProviderService extends AdditionalRootsProvide
   }
 
   private static void addRoot(List<JavaSourceRootDescriptor> result, ModuleBuildTarget buildTarget, final File file) {
-    result.add(new JavaSourceRootDescriptor(file, buildTarget, true, false));
+    result.add(new JavaSourceRootDescriptor(file, buildTarget, true, false, ""));
   }
 }

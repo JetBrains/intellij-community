@@ -22,12 +22,14 @@ public final class JavaSourceRootDescriptor extends BuildRootDescriptor {
   public final ModuleBuildTarget target;
   public final boolean isGeneratedSources;
   public final boolean isTemp;
+  private final String myPackagePrefix;
 
-  public JavaSourceRootDescriptor(@NotNull File root, @NotNull ModuleBuildTarget target, boolean isGenerated, boolean isTemp) {
+  public JavaSourceRootDescriptor(@NotNull File root, @NotNull ModuleBuildTarget target, boolean isGenerated, boolean isTemp, @NotNull String packagePrefix) {
     this.root = root;
     this.target = target;
     this.isGeneratedSources = isGenerated;
     this.isTemp = isTemp;
+    myPackagePrefix = packagePrefix;
   }
 
   @Override
@@ -37,6 +39,11 @@ public final class JavaSourceRootDescriptor extends BuildRootDescriptor {
            ", root=" + root +
            ", generated=" + isGeneratedSources +
            '}';
+  }
+
+  @NotNull
+  public String getPackagePrefix() {
+    return myPackagePrefix;
   }
 
   @Override

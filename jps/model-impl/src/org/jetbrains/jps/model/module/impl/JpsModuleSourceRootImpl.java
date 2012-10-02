@@ -1,18 +1,20 @@
 package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementType;
 import org.jetbrains.jps.model.impl.JpsCompositeElementBase;
-import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 
 import java.io.File;
 
 /**
  * @author nik
  */
-public class JpsModuleSourceRootImpl<P extends JpsElement> extends JpsCompositeElementBase<JpsModuleSourceRootImpl<P>> implements JpsModuleSourceRoot {
+public class JpsModuleSourceRootImpl<P extends JpsElement> extends JpsCompositeElementBase<JpsModuleSourceRootImpl<P>> implements JpsTypedModuleSourceRoot<P> {
   private final JpsModuleSourceRootType<P> myRootType;
   private final String myUrl;
 
@@ -38,6 +40,18 @@ public class JpsModuleSourceRootImpl<P extends JpsElement> extends JpsCompositeE
     return null;
   }
 
+  @Nullable
+  @Override
+  public <P extends JpsElement> JpsTypedModuleSourceRoot<P> asTyped(@NotNull JpsModuleSourceRootType<P> type) {
+    //noinspection unchecked
+    return myRootType.equals(type) ? (JpsTypedModuleSourceRoot<P>)this : null;
+  }
+
+  @Override
+  public JpsElementType<?> getType() {
+    return myRootType;
+  }
+
   @NotNull
   @Override
   public P getProperties() {
@@ -46,7 +60,7 @@ public class JpsModuleSourceRootImpl<P extends JpsElement> extends JpsCompositeE
 
   @NotNull
   @Override
-  public JpsModuleSourceRootType<?> getRootType() {
+  public JpsModuleSourceRootType<P> getRootType() {
     return myRootType;
   }
 

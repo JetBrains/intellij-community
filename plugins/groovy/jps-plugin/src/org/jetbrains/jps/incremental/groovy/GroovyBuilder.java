@@ -136,7 +136,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         final BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
         for (ModuleBuildTarget target : generationOutputs.keySet()) {
           File root = new File(generationOutputs.get(target));
-          rootsIndex.associateTempRoot(context, target, new JavaSourceRootDescriptor(root, target, true, true));
+          rootsIndex.associateTempRoot(context, target, new JavaSourceRootDescriptor(root, target, true, true, ""));
         }
       }
 

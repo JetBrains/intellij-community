@@ -79,6 +79,11 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myProject).setOutputUrl(JpsPathUtil.pathToUrl(outputPath));
   }
 
+  @Override
+  protected File doGetProjectDir() throws IOException {
+    return workDir;
+  }
+
   protected String getUrl(String pathRelativeToProjectRoot) {
     return JpsPathUtil.pathToUrl(getAbsolutePath(pathRelativeToProjectRoot));
   }

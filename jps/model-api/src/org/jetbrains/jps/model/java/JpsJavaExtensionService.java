@@ -83,9 +83,6 @@ public abstract class JpsJavaExtensionService {
   @Nullable
   public abstract File getOutputDirectory(JpsModule module, boolean forTests);
 
-  @Nullable
-  public abstract String getSourcePrefix(JpsModule module, String rootUrl);
-
   public abstract JpsTypedLibrary<JpsSdk<JpsDummyElement>> addJavaSdk(@NotNull JpsGlobal global, @NotNull String name,
                                                                       @NotNull String homePath);
 

@@ -107,11 +107,11 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
     }
     String rootPath = FileUtil.toSystemIndependentName(sourceRoot.root.getAbsolutePath());
     final String relativePath = FileUtil.getRelativePath(rootPath, FileUtil.toSystemIndependentName(file.getPath()), '/');
-    final String prefix = JpsJavaExtensionService.getInstance().getSourcePrefix(module, JpsPathUtil.pathToUrl(rootPath));
+    final String prefix = sourceRoot.getPackagePrefix();
 
     final StringBuilder targetPath = new StringBuilder();
     targetPath.append(JpsPathUtil.urlToPath(outputRootUrl));
-    if (prefix != null && prefix.length() > 0) {
+    if (prefix.length() > 0) {
       targetPath.append('/').append(prefix.replace('.', '/'));
     }
     targetPath.append('/').append(relativePath);
