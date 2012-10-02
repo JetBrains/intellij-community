@@ -398,11 +398,11 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     PlatformTestUtil.startPerformanceTest("VF container create/delete",200, new ThrowableRunnable() {
       @Override
       public void run() throws Exception {
+        Disposable parent = Disposer.newDisposable();
         for (int i = 0; i < 10000; i++) {
-          Disposable parent = Disposer.newDisposable();
           myVirtualFilePointerManager.createContainer(parent);
-          Disposer.dispose(parent);
         }
+        Disposer.dispose(parent);
       }
     }).cpuBound().assertTiming();
   }

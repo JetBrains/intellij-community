@@ -26,6 +26,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.ListIterator;
 
 public final class ObjectNode<T> {
   private static final ObjectNode[] EMPTY_ARRAY = new ObjectNode[0];
@@ -73,7 +74,13 @@ public final class ObjectNode<T> {
   void removeChild(@NotNull ObjectNode<T> child) {
     synchronized (myTree.treeLock) {
       assert myChildren != null: "No children to remove child: " + this + ' ' + child;
-      myChildren.remove(child);
+      ListIterator<ObjectNode<T>> iterator = myChildren.listIterator(myChildren.size());
+      while (iterator.hasPrevious()) {
+        if (child.equals(iterator.previous())) {
+          iterator.remove();
+          return;
+        }
+      }
     }
   }
 
