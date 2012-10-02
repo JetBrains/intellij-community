@@ -536,15 +536,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
       setShowVerticalLines(false);
       setGridColor(getForeground());
       getColumnModel().getColumn(0).setMaxWidth(new JCheckBox().getPreferredSize().width);
-      final int[] preffered = new int[] {0} ;
-      ContainerUtil.process(injections, new Processor<InjInfo>() {
-        public boolean process(final InjInfo injection) {
-          final String languageId = injection.injection.getInjectedLanguageId();
-          if (preffered[0] < languageId.length()) preffered[0] = languageId.length();
-          return true;
-        }
-      });
-      final int[] max = new int[] {0};
+
       new DoubleClickListener() {
         @Override
         protected boolean onDoubleClick(MouseEvent e) {
@@ -558,18 +550,28 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
         }
       }.installOn(this);
 
-      ContainerUtil.process(InjectedLanguage.getAvailableLanguageIDs(), new Processor<String>() {
-        public boolean process(final String languageId) {
-          if (max[0] < languageId.length()) max[0] = languageId.length();
+      final String[] maxName = new String[]{""};
+      ContainerUtil.process(injections, new Processor<InjInfo>() {
+        public boolean process(final InjInfo injection) {
+          String languageId = injection.injection.getInjectedLanguageId();
+          Language language = InjectedLanguage.findLanguageById(languageId);
+          String displayName = language == null ? languageId : language.getDisplayName();
+          if (maxName[0].length() < displayName.length()) maxName[0] = displayName;
           return true;
         }
       });
-      getColumnModel().getColumn(2).setResizable(false);
-      final Icon icon = StdFileTypes.PLAIN_TEXT.getIcon();
-      final int preferred = new JLabel(StringUtil.repeatSymbol('m', preffered[0]), icon, SwingConstants.LEFT).getPreferredSize().width;
+      ContainerUtil.process(InjectedLanguage.getAvailableLanguages(), new Processor<Language>() {
+        public boolean process(final Language language) {
+          String displayName = language.getDisplayName();
+          if (maxName[0].length() < displayName.length()) maxName[0] = displayName;
+          return true;
+        }
+      });
+      Icon icon = StdFileTypes.PLAIN_TEXT.getIcon();
+      int preferred = (int)(new JLabel(maxName[0], icon, SwingConstants.LEFT).getPreferredSize().width * 1.1);
       getColumnModel().getColumn(2).setMinWidth(preferred);
       getColumnModel().getColumn(2).setPreferredWidth(preferred);
-      getColumnModel().getColumn(2).setMaxWidth(new JLabel(StringUtil.repeatSymbol('m', max[0]), icon, SwingConstants.LEFT).getPreferredSize().width);
+      getColumnModel().getColumn(2).setMaxWidth(preferred);
       new TableViewSpeedSearch(this) {
 
         @Override
