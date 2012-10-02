@@ -8,6 +8,7 @@ import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -15,6 +16,12 @@ import java.io.PrintWriter;
  * @author nik
  */
 public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
+  private static final FileFilter ALL_FILES_FILTER = new FileFilter() {
+    @Override
+    public boolean accept(File file) {
+      return true;
+    }
+  };
   protected final File myRoot;
   private final SourceFileFilter myFilter;
   private final int myRootIndex;
@@ -51,6 +58,11 @@ public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
 
   public ArtifactBuildTarget getTarget() {
     return myTarget;
+  }
+
+  @Override
+  public FileFilter createFileFilter() {
+    return ALL_FILES_FILTER;
   }
 
   @NotNull

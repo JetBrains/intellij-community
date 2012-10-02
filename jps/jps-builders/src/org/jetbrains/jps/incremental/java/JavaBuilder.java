@@ -32,6 +32,8 @@ import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
@@ -168,13 +170,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return "Java Builder";
   }
 
-  public ExitCode build(final CompileContext context, final ModuleChunk chunk) throws ProjectBuildException {
+  public ExitCode build(final CompileContext context,
+                        final ModuleChunk chunk,
+                        DirtyFilesHolder<RootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
     try {
       final Set<File> filesToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       final Set<File> formsToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
-      FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
-        public boolean apply(ModuleBuildTarget target, File file, String sourceRoot) throws IOException {
+      dirtyFilesHolder.processDirtyFiles(new FileProcessor<RootDescriptor, ModuleBuildTarget>() {
+        public boolean apply(ModuleBuildTarget target, File file, RootDescriptor sourceRoot) throws IOException {
           if (JAVA_SOURCES_FILTER.accept(file)) {
             filesToCompile.add(file);
           }

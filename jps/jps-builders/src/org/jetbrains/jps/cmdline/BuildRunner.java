@@ -7,24 +7,24 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
+import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetLoader;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetIndexImpl;
-import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
-import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
-import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
-import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.indices.ModuleExcludeIndex;
+import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
+import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
 import org.jetbrains.jps.model.JpsModel;
 
 import java.io.File;
@@ -171,16 +171,16 @@ public class BuildRunner {
       files = new HashMap<BuildTarget<?>, Set<File>>();
       for (String path : paths) {
         final File file = new File(path);
-        final RootDescriptor rd = pd.getBuildRootIndex().getModuleAndRoot(null, file);
-        if (rd != null) {
-          Set<File> fileSet = files.get(rd.target);
+        final Collection<BuildRootDescriptor> descriptors = pd.getBuildRootIndex().findAllParentDescriptors(file, null);
+        for (BuildRootDescriptor descriptor : descriptors) {
+          Set<File> fileSet = files.get(descriptor.getTarget());
           if (fileSet == null) {
             fileSet = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-            files.put(rd.target, fileSet);
+            files.put(descriptor.getTarget(), fileSet);
           }
           fileSet.add(file);
           if (buildType == BuildType.FORCED_COMPILATION) {
-            pd.fsState.markDirty(null, file, rd, timestamps);
+            pd.fsState.markDirty(null, file, descriptor, timestamps);
           }
         }
       }

@@ -11,6 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
@@ -63,9 +65,11 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return myBuilderName;
   }
 
-  public ModuleLevelBuilder.ExitCode build(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+  public ModuleLevelBuilder.ExitCode build(final CompileContext context,
+                                           ModuleChunk chunk,
+                                           DirtyFilesHolder<RootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
     try {
-      final List<File> toCompile = collectChangedFiles(context, chunk);
+      final List<File> toCompile = collectChangedFiles(context, dirtyFilesHolder);
       if (toCompile.isEmpty()) {
         return ExitCode.NOTHING_DONE;
       }
@@ -233,14 +237,15 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return isGroovyFile(file.getAbsolutePath());
   }
 
-  private static List<File> collectChangedFiles(CompileContext context, ModuleChunk chunk) throws IOException {
+  private static List<File> collectChangedFiles(CompileContext context,
+                                                DirtyFilesHolder<RootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws IOException {
     final ResourcePatterns patterns = ResourcePatterns.KEY.get(context);
     assert patterns != null;
     final List<File> toCompile = new ArrayList<File>();
-    FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
-      public boolean apply(ModuleBuildTarget target, File file, String sourceRoot) throws IOException {
+    dirtyFilesHolder.processDirtyFiles(new FileProcessor<RootDescriptor, ModuleBuildTarget>() {
+      public boolean apply(ModuleBuildTarget target, File file, RootDescriptor sourceRoot) throws IOException {
         final String path = file.getPath();
-        if (isGroovyFile(path) && !patterns.isResourceFile(file, sourceRoot)) { //todo file type check
+        if (isGroovyFile(path) && !patterns.isResourceFile(file, sourceRoot.root)) { //todo file type check
           toCompile.add(file);
         }
         return true;

@@ -3,20 +3,22 @@ package org.jetbrains.jps.incremental.fs;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileSystemUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
+import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.builders.FileProcessor;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.CompileScope;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
 import org.jetbrains.jps.incremental.storage.Timestamps;
-import org.jetbrains.jps.model.JpsProject;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
@@ -110,23 +112,20 @@ public class BuildFSState extends FSState {
     setRoundDelta(CURRENT_ROUND_DELTA_KEY, context, new FilesDelta());
   }
 
-  public boolean processFilesToRecompile(CompileContext context, final ModuleBuildTarget target, final FileProcessor processor) throws IOException {
+  public <R extends RootDescriptor, T extends BuildTarget<R>> boolean processFilesToRecompile(CompileContext context, final T target, final FileProcessor<R, T> processor) throws IOException {
     final Map<BuildRootDescriptor, Set<File>> data = getSourcesToRecompile(context, target);
-    JpsProject project = context.getProjectDescriptor().jpsProject;
-    final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getCompilerExcludes();
+    BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
     final CompileScope scope = context.getScope();
     synchronized (data) {
       for (Map.Entry<BuildRootDescriptor, Set<File>> entry : data.entrySet()) {
-        File rootFile = entry.getKey().getRootFile();
-        final String rootPath = FileUtil.toSystemIndependentName(rootFile.getPath());
+        //noinspection unchecked
+        R root = (R)entry.getKey();
+        FileFilter filter = rootIndex.getRootFilter(root);
         for (File file : entry.getValue()) {
-          if (!scope.isAffected(target, file)) {
+          if (!scope.isAffected(target, file) || !filter.accept(file)) {
             continue;
           }
-          if (excludes.isExcluded(file)) {
-            continue;
-          }
-          if (!processor.apply(target, file, rootPath)) {
+          if (!processor.apply(target, file, root)) {
             return false;
           }
         }
@@ -138,18 +137,16 @@ public class BuildFSState extends FSState {
   /**
    * @return true if marked something, false otherwise
    */
-  public boolean markAllUpToDate(JpsProject project,
-                                 CompileScope scope,
-                                 final RootDescriptor rd,
-                                 final Timestamps stamps,
-                                 final long compilationStartStamp) throws IOException {
+  public boolean markAllUpToDate(CompileContext context, final RootDescriptor rd, final Timestamps stamps) throws IOException {
     boolean marked = false;
     final FilesDelta delta = getDelta(rd.target);
     final Set<File> files = delta.clearRecompile(rd);
     if (files != null) {
-      final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getCompilerExcludes();
+      FileFilter filter = context.getProjectDescriptor().getBuildRootIndex().getRootFilter(rd);
+      CompileScope scope = context.getScope();
+      final long compilationStartStamp = context.getCompilationStartStamp();
       for (File file : files) {
-        if (!excludes.isExcluded(file)) {
+        if (filter.accept(file)) {
           if (scope.isAffected(rd.target, file)) {
             final long stamp = FileSystemUtil.lastModified(file);
             if (!rd.isGeneratedSources && stamp > compilationStartStamp) {

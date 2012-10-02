@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
+import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
@@ -71,20 +73,24 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   @Override
-  public ModuleLevelBuilder.ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+  public ModuleLevelBuilder.ExitCode build(CompileContext context,
+                                           ModuleChunk chunk,
+                                           DirtyFilesHolder<RootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
     if (chunk.containsTests() || !AndroidJpsUtil.containsAndroidFacet(chunk)) {
       return ExitCode.NOTHING_DONE;
     }
 
     try {
-      return doBuild(context, chunk);
+      return doBuild(context, chunk, dirtyFilesHolder);
     }
     catch (Exception e) {
       return AndroidJpsUtil.handleException(context, e, BUILDER_NAME);
     }
   }
 
-  private static ModuleLevelBuilder.ExitCode doBuild(CompileContext context, ModuleChunk chunk) throws IOException {
+  private static ModuleLevelBuilder.ExitCode doBuild(CompileContext context,
+                                                     ModuleChunk chunk,
+                                                     DirtyFilesHolder<RootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws IOException {
     final Map<JpsModule, MyModuleData> moduleDataMap = computeModuleDatas(chunk.getModules(), context);
     if (moduleDataMap == null || moduleDataMap.size() == 0) {
       return ExitCode.ABORT;
@@ -104,9 +110,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     final Map<File, ModuleBuildTarget> idlFilesToCompile = new HashMap<File, ModuleBuildTarget>();
     final Map<File, ModuleBuildTarget> rsFilesToCompile = new HashMap<File, ModuleBuildTarget>();
 
-    FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
+    dirtyFilesHolder.processDirtyFiles(new FileProcessor<RootDescriptor, ModuleBuildTarget>() {
       @Override
-      public boolean apply(ModuleBuildTarget target, File file, String sourceRoot) throws IOException {
+      public boolean apply(ModuleBuildTarget target, File file, RootDescriptor sourceRoot) throws IOException {
         final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(target.getModule());
 
         if (extension == null) {

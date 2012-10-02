@@ -7,10 +7,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
-import org.jetbrains.jps.incremental.BuilderCategory;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ModuleLevelBuilder;
-import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -29,7 +28,7 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
   }
 
   @Override
-  public ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+  public ExitCode build(CompileContext context, ModuleChunk chunk, DirtyFilesHolder<RootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
     if (chunk.containsTests() || !AndroidJpsUtil.containsAndroidFacet(chunk) || AndroidJpsUtil.isLightBuild(context)) {
       return ExitCode.NOTHING_DONE;
     }

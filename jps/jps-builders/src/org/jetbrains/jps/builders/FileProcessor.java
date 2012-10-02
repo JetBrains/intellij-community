@@ -1,4 +1,4 @@
-package org.jetbrains.jps.incremental;
+package org.jetbrains.jps.builders;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,9 +7,9 @@ import java.io.IOException;
 * @author Eugene Zhuravlev
 *         Date: 9/21/11
 */
-public interface FileProcessor {
+public interface FileProcessor<R extends BuildRootDescriptor, T extends BuildTarget<R>> {
   /**
    * @return true if processing should continue, false if should stop
    */
-  boolean apply(ModuleBuildTarget target, File file, String sourceRoot) throws IOException;
+  boolean apply(T target, File file, R root) throws IOException;
 }

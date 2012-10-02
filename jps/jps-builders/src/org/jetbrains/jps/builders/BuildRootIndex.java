@@ -6,6 +6,7 @@ import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.Collection;
 import java.util.List;
 
@@ -21,7 +22,7 @@ public interface BuildRootIndex {
   <R extends BuildRootDescriptor> List<R> getTempTargetRoots(@NotNull BuildTarget<R> target, @NotNull CompileContext context);
 
   @NotNull
-  <R extends BuildRootDescriptor> List<R> getRootDescriptors(@NotNull File root, @NotNull Collection<? extends BuildTargetType<? extends BuildTarget<R>>> types,
+  <R extends BuildRootDescriptor> List<R> getRootDescriptors(@NotNull File root, @Nullable Collection<? extends BuildTargetType<? extends BuildTarget<R>>> types,
                                                              @Nullable CompileContext context);
 
   <R extends BuildRootDescriptor> void associateTempRoot(@NotNull CompileContext context, @NotNull BuildTarget<R> target, @NotNull R root);
@@ -35,9 +36,15 @@ public interface BuildRootIndex {
 
   @NotNull
   <R extends BuildRootDescriptor> Collection<R> findAllParentDescriptors(@NotNull File file,
-                                                                         @NotNull Collection<? extends BuildTargetType<? extends BuildTarget<R>>> types,
+                                                                         @Nullable Collection<? extends BuildTargetType<? extends BuildTarget<R>>> types,
                                                                          @Nullable CompileContext context);
+
+  @NotNull
+  <R extends BuildRootDescriptor> Collection<R> findAllParentDescriptors(@NotNull File file, @Nullable CompileContext context);
 
   @Nullable
   RootDescriptor getModuleAndRoot(@Nullable CompileContext context, File file);
+
+  @NotNull
+  FileFilter getRootFilter(@NotNull BuildRootDescriptor descriptor);
 }

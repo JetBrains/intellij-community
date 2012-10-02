@@ -20,10 +20,7 @@ import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
-import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.builders.BuildTarget;
-import org.jetbrains.jps.builders.BuildTargetIndex;
-import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
@@ -752,7 +749,7 @@ public class IncProjectBuilder {
   }
 
   // return true if changed something, false otherwise
-  private boolean runModuleLevelBuilders(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+  private boolean runModuleLevelBuilders(final CompileContext context, final ModuleChunk chunk) throws ProjectBuildException {
     boolean doneSomething = false;
     boolean rebuildFromScratchRequested = false;
     float stageCount = myTotalModuleLevelBuilderCount;
@@ -763,8 +760,14 @@ public class IncProjectBuilder {
       nextPassRequired = false;
       myProjectDescriptor.fsState.beforeNextRoundStart(context, chunk);
 
+      DirtyFilesHolder<RootDescriptor, ModuleBuildTarget> dirtyFilesHolder = new DirtyFilesHolder<RootDescriptor, ModuleBuildTarget>() {
+        @Override
+        public void processDirtyFiles(@NotNull FileProcessor<RootDescriptor, ModuleBuildTarget> processor) throws IOException {
+          FSOperations.processFilesToRecompile(context, chunk, processor);
+        }
+      };
       if (!context.isProjectRebuild()) {
-        syncOutputFiles(context, chunk);
+        syncOutputFiles(context, dirtyFilesHolder);
       }
 
       BUILDER_CATEGORY_LOOP:
@@ -778,7 +781,7 @@ public class IncProjectBuilder {
           if (context.isMake()) {
             processDeletedPaths(context, chunk);
           }
-          final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk);
+          final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk, dirtyFilesHolder);
 
           doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
 
@@ -830,16 +833,17 @@ public class IncProjectBuilder {
     return doneSomething;
   }
 
-  private static void syncOutputFiles(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+  private static void syncOutputFiles(final CompileContext context,
+                                      DirtyFilesHolder<RootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
     final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     try {
       final Collection<String> allOutputs = new LinkedList<String>();
 
-      FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
+      dirtyFilesHolder.processDirtyFiles(new FileProcessor<RootDescriptor, ModuleBuildTarget>() {
         private final Map<ModuleBuildTarget, SourceToOutputMapping> storageMap = new HashMap<ModuleBuildTarget, SourceToOutputMapping>();
 
         @Override
-        public boolean apply(ModuleBuildTarget target, File file, String sourceRoot) throws IOException {
+        public boolean apply(ModuleBuildTarget target, File file, RootDescriptor sourceRoot) throws IOException {
           SourceToOutputMapping srcToOut = storageMap.get(target);
           if (srcToOut == null) {
             srcToOut = dataManager.getSourceToOutputMap(target);
@@ -940,7 +944,7 @@ public class IncProjectBuilder {
         }
         final Timestamps timestamps = pd.timestamps.getStorage();
         for (RootDescriptor rd : pd.getBuildRootIndex().getTargetRoots(target, context)) {
-          marked |= fsState.markAllUpToDate(context.getProjectDescriptor().jpsProject, context.getScope(), rd, timestamps, context.getCompilationStartStamp());
+          marked |= fsState.markAllUpToDate(context, rd, timestamps);
         }
       }
 

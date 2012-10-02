@@ -8,16 +8,16 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
-import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.module.JpsModuleType;
 
 import java.io.File;
 import java.io.IOException;
@@ -112,19 +112,6 @@ public class FSOperations {
   public static void processFilesToRecompile(CompileContext context, ModuleChunk chunk, FileProcessor processor) throws IOException {
     //noinspection unchecked
     processFilesToRecompile(context, chunk, Condition.TRUE, processor);
-  }
-
-  public static void processFilesToRecompile(final CompileContext context,
-                                             final ModuleChunk chunk,
-                                             final JpsModuleType moduleType,
-                                             final FileProcessor processor) throws IOException {
-    final Condition<JpsModule> moduleFilter = new Condition<JpsModule>() {
-      public boolean value(final JpsModule module) {
-        return module.getModuleType() == moduleType;
-      }
-    };
-
-    processFilesToRecompile(context, chunk, moduleFilter, processor);
   }
 
   public static void processFilesToRecompile(final CompileContext context,
