@@ -1265,7 +1265,7 @@ public class GenericsHighlightUtil {
       final PsiElement parent = refParamList.getParent();
       if (parent instanceof PsiReferenceExpression) {
         final PsiElement grandParent = parent.getParent();
-        if (!(grandParent instanceof PsiMethodCallExpression)) {
+        if (!(grandParent instanceof PsiMethodCallExpression) && !(parent instanceof PsiMethodReferenceExpression)) {
           final String message = JavaErrorMessages.message("generics.reference.parameters.not.allowed");
           return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, refParamList, message);
         }
