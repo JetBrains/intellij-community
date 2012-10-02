@@ -90,6 +90,9 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
 
       .before(ARGUMENT_LIST).spaceIf(commonSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES)
 
+      .around(DECORATOR_CALL).spacing(1, Integer.MAX_VALUE, 0, true, 0)
+      .after(DECORATOR_LIST).spacing(1, Integer.MAX_VALUE, 0, true, 0)
+
       .aroundInside(EQ, ASSIGNMENT_STATEMENT).spaceIf(commonSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS)
       .aroundInside(EQ, NAMED_PARAMETER).spaceIf(pySettings.SPACE_AROUND_EQ_IN_NAMED_PARAMETER)
       .aroundInside(EQ, KEYWORD_ARGUMENT_EXPRESSION).spaceIf(pySettings.SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT)
