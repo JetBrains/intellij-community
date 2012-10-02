@@ -1255,6 +1255,7 @@ public abstract class ChooseByNameBase {
       forwardStroke = getShortcut(IdeActions.ACTION_GOTO_FORWARD);
       backStroke = getShortcut(IdeActions.ACTION_GOTO_BACK);
       setFocusTraversalKeysEnabled(false);
+      putClientProperty("JTextField.variant", "search");
     }
 
     @Nullable
