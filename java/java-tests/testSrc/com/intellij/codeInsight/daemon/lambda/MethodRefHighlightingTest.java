@@ -18,6 +18,9 @@ package com.intellij.codeInsight.daemon.lambda;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.projectRoots.JavaVersionServiceImpl;
 import org.jetbrains.annotations.NonNls;
 
 public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
@@ -99,6 +102,13 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   private void doTest(final boolean warnings) throws Exception {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
+    final JavaVersionServiceImpl versionService = (JavaVersionServiceImpl)JavaVersionService.getInstance();
+    try {
+      versionService.setTestVersion(JavaSdkVersion.JDK_1_8);
+      doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
+    }
+    finally {
+      versionService.setTestVersion(null);
+    }
   }
 }
