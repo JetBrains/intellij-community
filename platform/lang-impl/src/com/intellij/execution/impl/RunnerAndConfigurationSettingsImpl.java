@@ -373,6 +373,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
         data.readExternal(temp);
       }
       setSingleton(template.isSingleton());
+      setEditBeforeRun(template.isEditBeforeRun());
     }
     catch (WriteExternalException e) {
       LOG.error(e);
