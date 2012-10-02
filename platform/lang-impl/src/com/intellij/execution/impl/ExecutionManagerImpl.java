@@ -282,7 +282,14 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                 return CommonBundle.message("dialog.options.do.not.show");
               }
             };
-            if (Messages.OK != Messages.showOkCancelDialog(ExecutionBundle.message("rerun.confirmation.message", configuration.getName()),
+            String message;
+            if (allHandlers.size() == 1 && handler != null) {//we restart single running configuration
+              message = ExecutionBundle.message("rerun.confirmation.message", configuration.getName());
+            }
+            else {
+              message = ExecutionBundle.message("rerun.singleton.confirmation.message", configuration.getName());
+            }
+            if (Messages.OK != Messages.showOkCancelDialog(message,
                                                            ExecutionBundle.message("rerun.confirmation.title") +
                                                            " (" +
                                                            pair.getSecond().getId() +
