@@ -16,9 +16,11 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -590,9 +592,14 @@ public class LambdaUtil {
 
         final MethodSignature signature1 = method.getSignature(resolveResult.getSubstitutor());
         PsiSubstitutor subst = PsiSubstitutor.EMPTY;
-        subst = subst.putAll(result.getSubstitutor());
         subst = subst.putAll(substRef.get());
+        subst = subst.putAll(result.getSubstitutor());
         final MethodSignature signature2 = ((PsiMethod)resolve).getSignature(subst);
+        
+        final PsiType interfaceReturnType = getFunctionalInterfaceReturnType(left);
+        final PsiType methodReturnType = subst.substitute(((PsiMethod)resolve).getReturnType());
+        if (interfaceReturnType != null && methodReturnType != null && interfaceReturnType != PsiType.VOID && 
+            !TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType)) return false;
         if (areAcceptable(signature1, signature2, classRef.get(), substRef.get(), ((PsiMethod)resolve).isVarArgs())) return true;
       }
     }
@@ -660,6 +667,35 @@ public class LambdaUtil {
       .createStatementFromText(leftType.getCanonicalText() + " " + uniqueVarName + " = " + methodReferenceExpression.getText(),
                                methodReferenceExpression);
     return (PsiLocalVariable)((PsiDeclarationStatement)assignmentFromText).getDeclaredElements()[0];
+  }
+
+  public static void processMethodReferenceReturnType(List<CandidateInfo> conflicts, int functionalInterfaceIdx) {
+    final CandidateInfo[] newConflictsArray = conflicts.toArray(new CandidateInfo[conflicts.size()]);
+    for (int i = 1; i < newConflictsArray.length; i++) {
+      final CandidateInfo method = newConflictsArray[i];
+      final PsiType interfaceReturnType = getReturnType(functionalInterfaceIdx, method);
+      for (int j = 0; j < i; j++) {
+        final CandidateInfo conflict = newConflictsArray[j];
+        assert conflict != method;
+        final PsiType interfaceReturnType1 = getReturnType(functionalInterfaceIdx, conflict);
+        if (interfaceReturnType != null && interfaceReturnType1 != null && !Comparing.equal(interfaceReturnType, interfaceReturnType1)) {
+          if (TypeConversionUtil.isAssignable(interfaceReturnType, interfaceReturnType1)) {
+            conflicts.remove(method);
+            break;
+          } else if (TypeConversionUtil.isAssignable(interfaceReturnType1, interfaceReturnType)) {
+            conflicts.remove(conflict);
+          }
+        }
+      }
+    }
+  }
+
+  @Nullable
+  private static PsiType getReturnType(int functionalTypeIdx, CandidateInfo method) {
+    final PsiParameter[] methodParameters = ((PsiMethod)method.getElement()).getParameterList().getParameters();
+    final PsiParameter param = functionalTypeIdx < methodParameters.length ? methodParameters[functionalTypeIdx] : methodParameters[methodParameters.length - 1];
+    final PsiType functionalInterfaceType = method.getSubstitutor().substitute(param.getType());
+    return getFunctionalInterfaceReturnType(functionalInterfaceType);
   }
 
   private static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {

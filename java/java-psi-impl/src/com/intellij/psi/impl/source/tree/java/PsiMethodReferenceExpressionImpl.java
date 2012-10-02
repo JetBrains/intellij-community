@@ -288,7 +288,11 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                     if (signature == null) return PsiSubstitutor.EMPTY;
                     final PsiType[] types = method.getSignature(PsiSubstitutor.EMPTY).getParameterTypes();
                     final PsiType[] rightTypes = signature.getParameterTypes();
-                    if (types.length != rightTypes.length) return PsiSubstitutor.EMPTY;
+                    if (types.length < rightTypes.length) {
+                      return PsiUtil.resolveGenericsClassInType(rightTypes[0]).getSubstitutor();
+                    } else if (types.length > rightTypes.length) {
+                      return PsiUtil.resolveGenericsClassInType(types[0]).getSubstitutor();
+                    }
                     return JavaPsiFacade.getInstance(getProject()).getResolveHelper()
                       .inferTypeArguments(method.getTypeParameters(), types, rightTypes,
                                           PsiUtil.getLanguageLevel(PsiMethodReferenceExpressionImpl.this));
@@ -356,8 +360,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           final PsiMethod psiMethod = ((MethodCandidateInfo)conflict).getElement();
           if (psiMethod == null) continue;
           PsiSubstitutor subst = PsiSubstitutor.EMPTY;
-          subst = subst.putAll(conflict.getSubstitutor());
           subst = subst.putAll(mySubstitutor);
+          subst = subst.putAll(conflict.getSubstitutor());
           final PsiType[] signatureParameterTypes2 = psiMethod.getSignature(subst).getParameterTypes();
 
           final boolean varArgs = psiMethod.isVarArgs();
