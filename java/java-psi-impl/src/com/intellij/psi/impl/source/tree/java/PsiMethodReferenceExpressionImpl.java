@@ -192,9 +192,11 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           substitutor = result.getSubstitutor();
         }
         if (containingClass == null && expression instanceof PsiReferenceExpression) {
-          final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
+          final JavaResolveResult resolveResult = ((PsiReferenceExpression)expression).advancedResolve(false);
+          final PsiElement resolve = resolveResult.getElement();
           if (resolve instanceof PsiClass) {
             containingClass = (PsiClass)resolve;
+            substitutor = resolveResult.getSubstitutor();
             return true;
           }
         }
@@ -342,8 +344,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         final PsiType[] parameterTypes = mySignature.getParameterTypes();
         if (parameterTypes.length > 0) {
           final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(parameterTypes[0]);
-          if (LambdaUtil.isReceiverType(parameterTypes[0], myContainingClass) && 
-              ((parameterTypes[0] instanceof PsiClassType && ((PsiClassType)parameterTypes[0]).isRaw()) || classResolveResult.getSubstitutor().equals(mySubstitutor))) {
+          if (LambdaUtil.isReceiverType(parameterTypes[0], myContainingClass, mySubstitutor)) {
             hasReceiver = true;
           }
         }

@@ -599,15 +599,24 @@ public class LambdaUtil {
     return false;
   }
 
-  public static boolean isReceiverType(PsiType receiverType, PsiClass containingClass) {
-    PsiClass aClass = PsiUtil.resolveClassInType(receiverType);
+  private static boolean isReceiverType(@Nullable PsiClass aClass, PsiClass containingClass) {
     while (containingClass != null) {
       if (InheritanceUtil.isInheritorOrSelf(aClass, containingClass, true)) return true;
       containingClass = containingClass.getContainingClass();
     }
     return false;
   }
-  
+
+  public static boolean isReceiverType(PsiType receiverType, PsiClass containingClass, PsiSubstitutor psiSubstitutor) {
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(receiverType);
+    final PsiClass receiverClass = resolveResult.getElement();
+    if (receiverClass != null && isReceiverType(receiverClass, containingClass)) {
+      return resolveResult.getSubstitutor().equals(psiSubstitutor) ||
+             PsiUtil.isRawSubstitutor(containingClass, psiSubstitutor) ||
+             PsiUtil.isRawSubstitutor(receiverClass, resolveResult.getSubstitutor());
+    } 
+    return false;
+  }
   
   public static boolean areAcceptable(MethodSignature signature1,
                                       MethodSignature signature2,
@@ -619,11 +628,7 @@ public class LambdaUtil {
     final PsiType[] signatureParameterTypes2 = signature2.getParameterTypes();
     if (signatureParameterTypes1.length != signatureParameterTypes2.length) {
       if (signatureParameterTypes1.length == signatureParameterTypes2.length + 1) {
-        final PsiClassType classType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, psiSubstitutor);
-        final PsiType receiverType = signatureParameterTypes1[0];
-        final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(receiverType);
-        if (isReceiverType(receiverType, psiClass) && resolveResult.getSubstitutor().equals(psiSubstitutor) || 
-            (receiverType instanceof PsiClassType && ((PsiClassType)receiverType).isRaw() && receiverType.equals(TypeConversionUtil.erasure(classType)))) {
+        if (isReceiverType(signatureParameterTypes1[0], psiClass, psiSubstitutor)) {
           offset++;
         }
         else if (!isVarargs){
