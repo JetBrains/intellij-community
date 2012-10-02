@@ -80,9 +80,6 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
           if (element instanceof GrLabel) {
             addInfo(element, LABEL);
           }
-          else if (element instanceof GrAnnotation) {
-            addInfo(element, ANNOTATION);
-          }
           super.visitElement(element);
         }
       }
@@ -119,6 +116,10 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
 
   @Nullable
   private static TextAttributesKey getDeclarationAttribute(PsiElement element) {
+    if (element.getParent() instanceof GrAnnotation && element.getNode().getElementType()==GroovyTokenTypes.mAT) {
+      return ANNOTATION;
+    }
+
     PsiElement parent = element.getParent();
     if (!(parent instanceof GrNamedElement) || ((GrNamedElement)parent).getNameIdentifierGroovy() != element) {
       return null;
