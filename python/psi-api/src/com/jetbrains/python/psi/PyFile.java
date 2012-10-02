@@ -62,4 +62,9 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
    * @return the deprecation message or null if the function is not deprecated.
    */
   String getDeprecationMessage();
+
+  /**
+   * Returns the sequential list of import statements in the beginning of the file.
+   */
+  List<PyImportStatementBase> getImportBlock();
 }

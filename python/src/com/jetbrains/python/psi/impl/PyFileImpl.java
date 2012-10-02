@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
@@ -9,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
@@ -661,6 +663,26 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return extractDeprecationMessage();
   }
 
+  @Override
+  public List<PyImportStatementBase> getImportBlock() {
+    List<PyImportStatementBase> result = new ArrayList<PyImportStatementBase>();
+    ASTNode firstImport = getNode().getFirstChildNode();
+    while(firstImport != null && !isImport(firstImport, false)) {
+      firstImport = firstImport.getTreeNext();
+    }
+    if (firstImport != null) {
+      result.add(firstImport.getPsi(PyImportStatementBase.class));
+      ASTNode lastImport = firstImport.getTreeNext();
+      while(lastImport != null && isImport(lastImport.getTreeNext(), true)) {
+        if (isImport(lastImport, false)) {
+          result.add(lastImport.getPsi(PyImportStatementBase.class));
+        }
+        lastImport = lastImport.getTreeNext();
+      }
+    }
+    return result;
+  }
+
   public String extractDeprecationMessage() {
     return PyFunctionImpl.extractDeprecationMessage(getStatements());
   }
@@ -721,5 +743,14 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     protected List<String> initialValue() {
       return new ArrayList<String>();
     }
+  }
+
+  public static boolean isImport(ASTNode node, boolean orWhitespace) {
+    if (node == null) return false;
+    IElementType elementType = node.getElementType();
+    if (orWhitespace && elementType == TokenType.WHITE_SPACE) {
+      return true;
+    }
+    return elementType == PyElementTypes.IMPORT_STATEMENT || elementType == PyElementTypes.FROM_IMPORT_STATEMENT;
   }
 }

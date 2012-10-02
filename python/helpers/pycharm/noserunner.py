@@ -13,8 +13,15 @@ except:
 def process_args():
   tests = []
 
-  if sys.argv != 0:
-    arg = sys.argv[1].strip()
+  opts = None
+  if sys.argv[-1].startswith("-"):
+    test_names = sys.argv[1:-1]
+    opts = sys.argv[-1]
+  else:
+    test_names = sys.argv[1:]
+
+  for arg in test_names:
+    arg = arg.strip()
     if len(arg) == 0:
       return
 
@@ -48,30 +55,30 @@ def process_args():
       else:
           tests.append(a[0] + ":" + a[1] + "." + a[2])
 
-    argv = ['nosetests']
+  argv = ['nosetests']
 
-    if len(sys.argv) > 2:
-      options = shlex.split(sys.argv[2])
-      argv.extend(options)
+  if opts:
+    options = shlex.split(opts)
+    argv.extend(options)
 
-    argv.extend(tests)
-    config = Config(plugins=DefaultPluginManager())
-    config.configure(argv)
-    config.plugins.loadPlugins()
+  argv.extend(tests)
+  config = Config(plugins=DefaultPluginManager())
+  config.configure(argv)
+  config.plugins.loadPlugins()
 
-    ind = [argv.index(x) for x in argv if x.startswith('--processes')]
-    if ind:
-      processes = argv.pop(ind[0]).split('=')[-1]
-      ind_timeout = [argv.index(x) for x in argv if x.startswith('--process-timeout')]
-      if ind_timeout:
-          timeout = argv.pop(ind_timeout[0]).split('=')[-1]
-      else:
-          timeout = 10
-      from nose_multiprocess import MultiProcessTeamcityNoseRunner
-      TestProgram(argv=argv, testRunner=MultiProcessTeamcityNoseRunner(verbosity=config.verbosity, config=config, processes=processes,
-                                                                       timeout=timeout))
+  ind = [argv.index(x) for x in argv if x.startswith('--processes')]
+  if ind:
+    processes = argv.pop(ind[0]).split('=')[-1]
+    ind_timeout = [argv.index(x) for x in argv if x.startswith('--process-timeout')]
+    if ind_timeout:
+      timeout = argv.pop(ind_timeout[0]).split('=')[-1]
     else:
-      TestProgram(argv=argv, testRunner=TeamcityNoseRunner(verbosity=config.verbosity, config=config))#, addplugins=[TeamcityPlugin()])
+      timeout = 10
+    from nose_multiprocess import MultiProcessTeamcityNoseRunner
+    TestProgram(argv=argv, testRunner=MultiProcessTeamcityNoseRunner(verbosity=config.verbosity, config=config, processes=processes,
+                                                                     timeout=timeout))
+  else:
+    TestProgram(argv=argv, testRunner=TeamcityNoseRunner(verbosity=config.verbosity, config=config))#, addplugins=[TeamcityPlugin()])
 
 if __name__ == "__main__":
   process_args()

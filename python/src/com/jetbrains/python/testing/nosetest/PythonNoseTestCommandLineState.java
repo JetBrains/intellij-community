@@ -1,13 +1,12 @@
 package com.jetbrains.python.testing.nosetest;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,11 +22,9 @@ public class PythonNoseTestCommandLineState extends PythonTestCommandLineStateBa
     myConfig = runConfiguration;
   }
 
-  protected void addTestRunnerParameters(GeneralCommandLine cmd) {
-    ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
-    assert script_params != null;
-    script_params.addParameter(new File(PythonHelpersLocator.getHelpersRoot(), NOSERUNNER_PY).getAbsolutePath());
-    script_params.addParameters(getTestSpecs());
+  @Override
+  protected String getRunner() {
+    return NOSERUNNER_PY;
   }
 
   protected List<String> getTestSpecs() {
@@ -52,8 +49,15 @@ public class PythonNoseTestCommandLineState extends PythonTestCommandLineStateBa
       default:
         throw new IllegalArgumentException("Unknown test type: " + myConfig.getTestType());
     }
-    if (myConfig.useParam() && !StringUtil.isEmptyOrSpaces(myConfig.getParams()))
-        specs.add(myConfig.getParams());
     return specs;
+  }
+
+  @Override
+  protected void addAfterParameters(GeneralCommandLine cmd) throws ExecutionException {
+    ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
+    assert script_params != null;
+    if (myConfig.useParam() && !StringUtil.isEmptyOrSpaces(myConfig.getParams()))
+      script_params.addParameter(myConfig.getParams());
+
   }
 }

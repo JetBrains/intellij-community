@@ -265,7 +265,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     envs.put("PYCHARM_HOSTED", "1");
   }
 
-  protected void addPredefinedEnvironmentVariables(Map<String, String> envs, boolean passParentEnvs) {
+  public void addPredefinedEnvironmentVariables(Map<String, String> envs, boolean passParentEnvs) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(myConfig.getInterpreterPath());
     if (flavor != null) {
       flavor.addPredefinedEnvironmentVariables(envs);

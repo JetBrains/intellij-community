@@ -10,11 +10,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFileElementType;
+import com.jetbrains.python.psi.PyImportStatementBase;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.impl.PyFileImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,24 +36,12 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
 
   private static void appendDescriptors(ASTNode node, List<FoldingDescriptor> descriptors) {
     if (node.getElementType() instanceof PyFileElementType) {
-      ASTNode firstImport = node.getFirstChildNode();
-      while(firstImport != null && !isImport(firstImport, false)) {
-        firstImport = firstImport.getTreeNext();
-      }
-      if (firstImport != null) {
-        ASTNode lastImport = firstImport.getTreeNext();
-        while(lastImport != null && isImport(lastImport.getTreeNext(), true)) {
-          lastImport = lastImport.getTreeNext();
-        }
-        if (lastImport != null) {
-          while (lastImport.getElementType() == TokenType.WHITE_SPACE) {
-            lastImport = lastImport.getTreePrev();
-          }
-          if (isImport(lastImport, false) && firstImport != lastImport) {
-            descriptors.add(new FoldingDescriptor(firstImport, new TextRange(firstImport.getStartOffset(),
-                                                                             lastImport.getTextRange().getEndOffset())));
-          }
-        }
+      final List<PyImportStatementBase> imports = ((PyFile)node.getPsi()).getImportBlock();
+      if (imports.size() > 1) {
+        final PyImportStatementBase firstImport = imports.get(0);
+        final PyImportStatementBase lastImport = imports.get(imports.size()-1);
+        descriptors.add(new FoldingDescriptor(firstImport, new TextRange(firstImport.getTextRange().getStartOffset(),
+                                                                         lastImport.getTextRange().getEndOffset())));
       }
     }
     else if (node.getElementType() == PyElementTypes.STATEMENT_LIST) {
@@ -116,18 +105,9 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     return null;
   }
 
-  private static boolean isImport(ASTNode node, boolean orWhitespace) {
-    if (node == null) return false;
-    IElementType elementType = node.getElementType();
-    if (orWhitespace && elementType == TokenType.WHITE_SPACE) {
-      return true;
-    }
-    return elementType == PyElementTypes.IMPORT_STATEMENT || elementType == PyElementTypes.FROM_IMPORT_STATEMENT;
-  }
-
   @Override
   protected String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
-    if (isImport(node, false)) {
+    if (PyFileImpl.isImport(node, false)) {
       return "import ...";
     }
     if (node.getElementType() == PyElementTypes.STRING_LITERAL_EXPRESSION) {
@@ -143,7 +123,7 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
 
   @Override
   protected boolean isRegionCollapsedByDefault(@NotNull ASTNode node) {
-    if (isImport(node, false)) {
+    if (PyFileImpl.isImport(node, false)) {
       return CodeFoldingSettings.getInstance().COLLAPSE_IMPORTS;
     }
     if (node.getElementType() == PyElementTypes.STRING_LITERAL_EXPRESSION) {

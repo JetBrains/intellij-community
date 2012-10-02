@@ -284,15 +284,13 @@ public class PySkeletonRefresher {
       cleanUpSkeletons(skeletonsDir);
     }
 
-    if (mustUpdateBuiltins) {
+    if (mustUpdateBuiltins && myProject != null) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          if (myProject != null) {
-            DaemonCodeAnalyzer.getInstance(myProject).restart();
-          }
+          DaemonCodeAnalyzer.getInstance(myProject).restart();
         }
-      });
+      }, myProject.getDisposed());
     }
 
     return errorList;

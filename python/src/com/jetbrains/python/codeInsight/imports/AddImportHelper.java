@@ -147,8 +147,9 @@ public class AddImportHelper {
       }
     }
 
-    final PyImportStatement importNodeToInsert = PyElementGenerator.getInstance(file.getProject()).createImportStatementFromText(
-      "import " + name + as_clause);
+    final PyElementGenerator generator = PyElementGenerator.getInstance(file.getProject());
+    final LanguageLevel languageLevel = LanguageLevel.forElement(file);
+    final PyImportStatement importNodeToInsert = generator.createImportStatementFromText(languageLevel, "import " + name + as_clause);
     try {
       file.addBefore(importNodeToInsert, getInsertPosition(file, name, priority));
     }
@@ -167,15 +168,15 @@ public class AddImportHelper {
    * @param asName optional name for 'as' clause
    */
   public static void addImportFromStatement(PsiFile file, String from, String name, @Nullable String asName, ImportPriority priority) {
-    String as_clause;
+    String asClause;
     if (asName == null) {
-      as_clause = "";
+      asClause = "";
     }
     else {
-      as_clause = " as " + asName;
+      asClause = " as " + asName;
     }
     final PyFromImportStatement importNodeToInsert = PyElementGenerator.getInstance(file.getProject()).createFromText(
-      LanguageLevel.getDefault(), PyFromImportStatement.class, "from " + from + " import " + name + as_clause);
+      LanguageLevel.forElement(file), PyFromImportStatement.class, "from " + from + " import " + name + asClause);
     try {
       file.addBefore(importNodeToInsert, getInsertPosition(file, from, priority));
     }
@@ -201,7 +202,8 @@ public class AddImportHelper {
             return false;
           }
         }
-        PyImportElement importElement = PyElementGenerator.getInstance(file.getProject()).createImportElement(name);
+        final PyElementGenerator generator = PyElementGenerator.getInstance(file.getProject());
+        PyImportElement importElement = generator.createImportElement(LanguageLevel.forElement(file), name);
         existingImport.add(importElement);
         return true;
       }

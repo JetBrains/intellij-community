@@ -15,22 +15,10 @@
  */
 package com.jetbrains.python.codeInsight.regexp;
 
-import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.ParserDefinition;
-import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import org.intellij.lang.regexp.RegExpHighlighter;
-import org.jetbrains.annotations.NotNull;
+import org.intellij.lang.regexp.RegExpSyntaxHighlighterFactory;
 
-public class PythonVerboseRegexpSyntaxHighlighterFactory extends SingleLazyInstanceSyntaxHighlighterFactory {
-  private final ParserDefinition myParserDefinition;
-
+public class PythonVerboseRegexpSyntaxHighlighterFactory extends RegExpSyntaxHighlighterFactory {
   public PythonVerboseRegexpSyntaxHighlighterFactory() {
-    myParserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(PythonVerboseRegexpLanguage.INSTANCE);
-  }
-
-  @NotNull
-  protected SyntaxHighlighter createHighlighter() {
-    return new RegExpHighlighter(null, myParserDefinition);
+    super(PythonVerboseRegexpLanguage.INSTANCE);
   }
 }

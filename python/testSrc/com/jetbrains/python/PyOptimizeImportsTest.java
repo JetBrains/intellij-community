@@ -38,7 +38,15 @@ public class PyOptimizeImportsTest extends PyTestCase {
   
   public void testSuppressed() {  // PY-5228
     doTest();
-  } 
+  }
+
+  public void testSplit() {
+    doTest();
+  }
+
+  public void testOrder() {
+    doTest();
+  }
 
   private void doTest() {
     myFixture.configureByFile("optimizeImports/" + getTestName(true) + ".py");

@@ -220,14 +220,15 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     throw new IllegalArgumentException("Invalid call expression text " + functionName);
   }
 
-  public PyImportStatement createImportStatementFromText(final String text) {
-    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), text);
+  public PyImportStatement createImportStatementFromText(final LanguageLevel languageLevel,
+                                                         final String text) {
+    final PsiFile dummyFile = createDummyFile(languageLevel, text);
     return (PyImportStatement)dummyFile.getFirstChild();
   }
 
   @Override
-  public PyImportElement createImportElement(String name) {
-    return createFromText(LanguageLevel.getDefault(), PyImportElement.class, "from foo import " + name, new int[]{0, 6});
+  public PyImportElement createImportElement(final LanguageLevel languageLevel, String name) {
+    return createFromText(languageLevel, PyImportElement.class, "from foo import " + name, new int[]{0, 6});
   }
 
   static final int[] FROM_ROOT = new int[]{0};
