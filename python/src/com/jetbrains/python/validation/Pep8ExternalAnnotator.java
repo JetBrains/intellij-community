@@ -21,6 +21,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -62,14 +63,16 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     private final String fileText;
     private final HighlightDisplayLevel level;
     private final List<String> ignoredErrors;
+    private final int margin;
     public final List<Problem> problems = new ArrayList<Problem>();
 
     public State(String interpreterPath, String fileText, HighlightDisplayLevel level,
-                 List<String> ignoredErrors) {
+                 List<String> ignoredErrors, int margin) {
       this.interpreterPath = interpreterPath;
       this.fileText = fileText;
       this.level = level;
       this.ignoredErrors = ignoredErrors;
+      this.margin = margin;
     }
   }
 
@@ -88,7 +91,8 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     final LocalInspectionToolWrapper profileEntry = (LocalInspectionToolWrapper)profile.getInspectionTool(
       PyPep8Inspection.INSPECTION_SHORT_NAME, file);
     final List<String> ignoredErrors = ((PyPep8Inspection) profileEntry.getTool()).ignoredErrors;
-    return new State(homePath, file.getText(), profile.getErrorLevel(key, file), ignoredErrors);
+    final int margin = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings().RIGHT_MARGIN;
+    return new State(homePath, file.getText(), profile.getErrorLevel(key, file), ignoredErrors, margin);
   }
 
   @Nullable
@@ -101,6 +105,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     if (collectedInfo.ignoredErrors.size() > 0) {
       options.add("--ignore=" + StringUtil.join(collectedInfo.ignoredErrors, ","));
     }
+    options.add("--max-line-length=" + collectedInfo.margin);
     options.add("-");
     ProcessOutput output = PySdkUtil.getProcessOutput(new File(collectedInfo.interpreterPath).getParent(),
                                                       ArrayUtil.toStringArray(options),
