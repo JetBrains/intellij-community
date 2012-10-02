@@ -39,40 +39,6 @@ public class ReflectionCache {
       return classes.length == 0 ? ArrayUtil.EMPTY_CLASS_ARRAY : classes;
     }
   };
-  private static final Method[] EMPTY_METHODS = new Method[0];
-  private static final ConcurrentFactoryMap<Class, Method[]> ourMethods = new ConcurrentFactoryMap<Class, Method[]>() {
-    @Override
-    @NotNull
-    protected Method[] create(final Class key) {
-      Method[] methods = key.getMethods();
-      intern(methods);
-      return methods.length == 0 ? EMPTY_METHODS : methods;
-    }
-  };
-
-  private static void intern(@NotNull Method[] methods) {
-    for (Method method : methods) {
-      intern(method);
-    }
-  }
-
-  private static void intern(@NotNull Method method) {
-    try {
-      if (method.getParameterTypes().length == 0) {
-        Field parameterTypes = Method.class.getDeclaredField("parameterTypes");
-        parameterTypes.setAccessible(true);
-        parameterTypes.set(method, ArrayUtil.EMPTY_CLASS_ARRAY);
-      }
-      if (method.getExceptionTypes().length == 0) {
-        Field parameterTypes = Method.class.getDeclaredField("exceptionTypes");
-        parameterTypes.setAccessible(true);
-        parameterTypes.set(method, ArrayUtil.EMPTY_CLASS_ARRAY);
-      }
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
 
   private static final ConcurrentFactoryMap<Class,Boolean> ourIsInterfaces = new ConcurrentFactoryMap<Class, Boolean>() {
     @Override
@@ -106,39 +72,44 @@ public class ReflectionCache {
   private ReflectionCache() {
   }
 
-  public static Class getSuperClass(Class aClass) {
+  public static Class getSuperClass(@NotNull Class aClass) {
     return ourSuperClasses.get(aClass);
   }
 
-  public static Class[] getInterfaces(Class aClass) {
+  @NotNull
+  public static Class[] getInterfaces(@NotNull Class aClass) {
     return ourInterfaces.get(aClass);
   }
 
-  public static Method[] getMethods(Class aClass) {
-    return ourMethods.get(aClass);
+  @NotNull
+  public static Method[] getMethods(@NotNull Class aClass) {
+    return aClass.getMethods();
   }
 
   public static boolean isAssignable(@NotNull Class ancestor, Class descendant) {
     return ancestor == descendant || ancestor.isAssignableFrom(descendant);
   }
 
-  public static boolean isInstance(Object instance, Class clazz) {
+  public static boolean isInstance(Object instance, @NotNull Class clazz) {
     return clazz.isInstance(instance);
   }
 
-  public static boolean isInterface(Class aClass) {
+  public static boolean isInterface(@NotNull Class aClass) {
     return ourIsInterfaces.get(aClass);
   }
 
-  public static <T> TypeVariable<Class<T>>[] getTypeParameters(Class<T> aClass) {
+  @NotNull
+  public static <T> TypeVariable<Class<T>>[] getTypeParameters(@NotNull Class<T> aClass) {
     return ourTypeParameters.get(aClass);
   }
 
-  public static Type[] getGenericInterfaces(Class aClass) {
+  @NotNull
+  public static Type[] getGenericInterfaces(@NotNull Class aClass) {
     return ourGenericInterfaces.get(aClass);
   }
 
-  public static Type[] getActualTypeArguments(ParameterizedType type) {
+  @NotNull
+  public static Type[] getActualTypeArguments(@NotNull ParameterizedType type) {
     return ourActualTypeArguments.get(type);
   }
 
