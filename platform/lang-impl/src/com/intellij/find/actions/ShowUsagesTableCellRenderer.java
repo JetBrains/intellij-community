@@ -33,6 +33,7 @@ import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -44,7 +45,7 @@ import java.awt.*;
 class ShowUsagesTableCellRenderer implements TableCellRenderer {
   private final UsageViewImpl myUsageView;
 
-  ShowUsagesTableCellRenderer(UsageViewImpl usageView) {
+  ShowUsagesTableCellRenderer(@NotNull UsageViewImpl usageView) {
     myUsageView = usageView;
   }
 
