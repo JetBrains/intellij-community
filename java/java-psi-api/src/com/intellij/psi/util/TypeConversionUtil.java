@@ -797,6 +797,21 @@ public class TypeConversionUtil {
   }
 
   public static boolean boxingConversionApplicable(final PsiType left, final PsiType right) {
+    if (right instanceof PsiMethodReferenceType) {
+      final JavaResolveResult result = ((PsiMethodReferenceType)right).getExpression().advancedResolve(false);
+      PsiElement element = result.getElement();
+      final PsiClassType.ClassResolveResult functionalInterfaceResult = PsiUtil.resolveGenericsClassInType(left);
+      final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceResult);
+      if (element instanceof PsiMethod && interfaceMethod != null) {
+        final PsiType[] parameterTypes = ((PsiMethod)element).getSignature(result.getSubstitutor()).getParameterTypes();
+        final PsiType[] argTypes = interfaceMethod.getSignature(functionalInterfaceResult.getSubstitutor()).getParameterTypes();
+        if (parameterTypes.length != argTypes.length) return false;
+        for (int i = 0; i < parameterTypes.length; i++) {
+          if (boxingConversionApplicable(parameterTypes[i], argTypes[i])) return true;
+        }
+      }
+    }
+
     if (left instanceof PsiPrimitiveType && !PsiType.NULL.equals(left)) {
       return right instanceof PsiClassType && isAssignable(left, right);
     }

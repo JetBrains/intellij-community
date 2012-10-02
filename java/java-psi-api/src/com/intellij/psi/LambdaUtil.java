@@ -639,7 +639,7 @@ public class LambdaUtil {
     for (int i = 0; i < min; i++) {
       final PsiType type1 = signatureParameterTypes1[offset + i];
       final PsiType type2 = isVarargs && i == min - 1 ? ((PsiArrayType)signatureParameterTypes2[i]).getComponentType() : signatureParameterTypes2[i];
-      if (!GenericsUtil.eliminateWildcards(psiSubstitutor.substitute(type1)).equals(GenericsUtil.eliminateWildcards(type2))) {
+      if (!TypeConversionUtil.isAssignable(type2, psiSubstitutor.substitute(GenericsUtil.eliminateWildcards(type1)))) {
         return false;
       }
     }
