@@ -182,7 +182,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       if (!PsiType.VOID.equals(method.getReturnType())) {
         buffer.append("return ");
       }
-      buffer.append(method.getName());
+      buffer.append(grInfo.getNewName());
     }
 
     generateParametersForDelegateCall(grInfo, method, buffer);

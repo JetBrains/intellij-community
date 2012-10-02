@@ -15,15 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.util.Arrays;
@@ -69,110 +65,7 @@ public abstract class ChangeSignatureTestCase extends LightCodeInsightFixtureTes
     GrParameterInfo[] genParams(GrMethod method) throws IncorrectOperationException;
   }
 
-  static class SimpleParameterGen implements GenParams {
-    private final SimpleInfo[] myInfos;
-    private Project myProject;
-
-    public SimpleParameterGen(SimpleInfo[] infos, Project project) {
-      myInfos = infos;
-      myProject = project;
-    }
-
-    @Override
-    public GrParameterInfo[] genParams(GrMethod method) {
-      GrParameter[] params = method.getParameterList().getParameters();
-      GrParameterInfo[] result = new GrParameterInfo[myInfos.length];
-      for (int i = 0; i < myInfos.length; i++) {
-
-        final SimpleInfo sim = myInfos[i];
-        int oldIndex = sim.myOldIndex;
-
-        final GrParameterInfo info;
-        String name = null;
-        String defInitializer = null;
-        PsiType type = null;
-        String defValue = null;
-        if (oldIndex > -1) {
-          final GrParameter p = params[oldIndex];
-          name = p.getName();
-          final GrExpression initializer = p.getDefaultInitializer();
-          defInitializer = initializer != null ? initializer.getText() : null;
-          type = p.getDeclaredType();
-        }
-
-        if (sim.myNewName != null) {
-          name = sim.myNewName;
-        }
-        if (sim.myType != null && sim.myType.length() > 0) {
-          type = JavaPsiFacade.getElementFactory(myProject).createTypeFromText(sim.myType, method);
-        }
-        if (sim.myDefaultInitializer != null) {
-          defInitializer = sim.myDefaultInitializer;
-        }
-        if (sim.myDefaultValue != null) {
-          defValue = sim.myDefaultValue;
-        }
-
-        assert (oldIndex < 0 && defValue != null) || oldIndex >= 0;
-        assert name != null;
-        info = new GrParameterInfo(name, defValue, defInitializer, type, oldIndex, sim.myFeelLucky);
-        result[i] = info;
-      }
-      return result;
-    }
-  }
-
   interface GenExceptions {
     ThrownExceptionInfo[] genExceptions(PsiMethod method) throws IncorrectOperationException;
-  }
-
-  static class SimpleExceptionsGen implements GenExceptions {
-    private final ThrownExceptionInfo[] myInfos;
-
-    public SimpleExceptionsGen(ThrownExceptionInfo[] infos) {
-      myInfos = infos;
-    }
-
-    @Override
-    public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
-      for (ThrownExceptionInfo info : myInfos) {
-        info.updateFromMethod(method);
-      }
-      return myInfos;
-    }
-  }
-
-  static class SimpleInfo {
-    int myOldIndex;
-    String myNewName;
-    String myDefaultValue;
-    String myDefaultInitializer;
-    private String myType;
-    boolean myFeelLucky;
-
-    SimpleInfo(int oldIndex) {
-      this(null, oldIndex);
-    }
-
-    SimpleInfo(@Nullable String newName, int oldIndex) {
-      this(newName, oldIndex, "", null, "");
-    }
-
-    SimpleInfo(String newName, int oldIndex, String defaultValue, @Nullable String defaultInitializer, String type) {
-      this(newName, oldIndex, defaultValue, defaultInitializer, type, false);
-    }
-
-    SimpleInfo(String newName, int oldIndex, String defaultValue, @Nullable String defaultInitializer, String type, boolean feelLucky) {
-      myOldIndex = oldIndex;
-      myNewName = newName;
-      myDefaultValue = defaultValue;
-      myDefaultInitializer = defaultInitializer;
-      myType = type;
-      myFeelLucky = feelLucky;
-    }
-
-    SimpleInfo(String newName, int oldIndex, String defaultValue, String defaultInitializer, PsiType type) {
-      this(newName, oldIndex, defaultValue, defaultInitializer, type.getCanonicalText());
-    }
   }
 }

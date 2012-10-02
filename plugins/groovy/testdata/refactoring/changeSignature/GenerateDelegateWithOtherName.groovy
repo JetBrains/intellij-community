@@ -1,0 +1,3 @@
+def b<caret>ar() {
+
+}

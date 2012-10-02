@@ -13,26 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.refactoring.changeSignature;
+package org.jetbrains.plugins.groovy.refactoring.changeSignature
 
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
-import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.util.TestUtils;
-
-import java.io.File;
-
+import com.intellij.psi.*
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo
+import com.intellij.refactoring.changeSignature.ThrownExceptionInfo
+import org.jetbrains.annotations.Nullable
+import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
  */
 public class ChangeSignatureTest extends ChangeSignatureTestCase {
 
-  @Override
-  protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "refactoring/changeSignature/";
-  }
+  final String basePath = TestUtils.testDataPath + "refactoring/changeSignature/"
 
   public void testOneNewParameter() throws Exception {
     doTest(new SimpleInfo("p", -1, "\"5\"", null, CommonClassNames.JAVA_LANG_STRING));
@@ -43,7 +37,7 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   public void testInsertParameter() throws Exception {
-    doTest(new SimpleInfo(0),
+    doTest( new SimpleInfo(0),
            new SimpleInfo("p", -1, "5", "-3", PsiType.INT),
            new SimpleInfo(1));
   }
@@ -91,7 +85,7 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   public void testChangeVisibilityAndName() throws Exception {
-    doTest(PsiModifier.PROTECTED, "newName", null, new SimpleInfo[]{new SimpleInfo(0)}, new ThrownExceptionInfo[0], false);
+    doTest(PsiModifier.PROTECTED, "newName", null, [new SimpleInfo(0)], [], false);
   }
 
   public void testImplicitConstructorInConstructor() throws Exception {
@@ -107,12 +101,11 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   public void testGroovyDocReferences() throws Exception {
-    doTest(new SimpleInfo(0),
-           new SimpleInfo(2));
+    doTest(new SimpleInfo(0), new SimpleInfo(2));
   }
 
   public void testOverriders() throws Exception {
-    doTest(PsiModifier.PUBLIC, "bar", null, new SimpleInfo[]{new SimpleInfo(0)}, new ThrownExceptionInfo[0], false);
+    doTest(PsiModifier.PUBLIC, "bar", null, [new SimpleInfo(0)], [], false);
   }
 
   public void testParameterRename() throws Exception {
@@ -120,57 +113,55 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   public void testAddReturnType() throws Exception {
-    doTest("int", new SimpleInfo[]{new SimpleInfo(0)});
+    doTest("int", new SimpleInfo(0));
   }
 
   public void testChangeReturnType() throws Exception {
-    doTest("int", new SimpleInfo[]{new SimpleInfo(0)});
+    doTest("int", new SimpleInfo(0));
   }
 
   public void testRemoveReturnType() throws Exception {
-    doTest("", new SimpleInfo[]{new SimpleInfo(0)});
+    doTest("", new SimpleInfo(0));
   }
 
   public void testChangeParameterType() throws Exception {
-    doTest("", new SimpleInfo[]{new SimpleInfo("p", 0, null, null, PsiType.INT)});
+    doTest("", new SimpleInfo("p", 0, null, null, PsiType.INT));
   }
 
   public void testGenerateDelegate() throws Exception {
-    doTest("", new SimpleInfo[]{new SimpleInfo(0), new SimpleInfo("p", -1, "2", "2", PsiType.INT)}, true);
+    doTest("", [new SimpleInfo(0), new SimpleInfo("p", -1, "2", "2", PsiType.INT)], true);
   }
 
   public void testAddException() throws Exception {
     doTest(PsiModifier.PUBLIC, null, "",
-           new SimpleInfo[]{new SimpleInfo(0)},
-           new ThrownExceptionInfo[]{new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))},
+           [new SimpleInfo(0)],
+           [new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))],
            false
           );
   }
 
   public void testExceptionCaughtInUsage() throws Exception {
     doTest(PsiModifier.PUBLIC, null, "",
-           new SimpleInfo[]{new SimpleInfo(0)},
-           new ThrownExceptionInfo[]{new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))},
+           [new SimpleInfo(0)],
+           [new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))],
            false
           );
   }
 
   public void testExceptionInClosableBlock() throws Exception {
     doTest(PsiModifier.PUBLIC, null, "",
-           new SimpleInfo[]{new SimpleInfo(0)},
-           new ThrownExceptionInfo[]{new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))},
+           [new SimpleInfo(0)],
+           [new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))],
            false
           );
   }
 
   public void testGenerateDelegateForConstructor() throws Exception {
-    doTest(PsiModifier.PUBLIC, "Foo", null, new SimpleInfo[]{new SimpleInfo(0), new SimpleInfo("a", -1, "5", null, PsiType.INT)},
-           new ThrownExceptionInfo[0], true);
+    doTest(PsiModifier.PUBLIC, "Foo", null, [new SimpleInfo(0), new SimpleInfo("a", -1, "5", null, PsiType.INT)], [], true);
   }
 
   public void testGenerateDelegateForAbstract() throws Exception {
-    doTest(PsiModifier.PUBLIC, "foo", null, new SimpleInfo[]{new SimpleInfo(0), new SimpleInfo("a", -1, "5", null, PsiType.INT)},
-           new ThrownExceptionInfo[0], true);
+    doTest(PsiModifier.PUBLIC, "foo", null, [new SimpleInfo(0), new SimpleInfo("a", -1, "5", null, PsiType.INT)], [], true);
   }
 
   public void testTypeParameters() throws Exception {
@@ -222,7 +213,7 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
   
   public void testChangeType() {
-    doTest(PsiModifier.PUBLIC, "foo", "List<String>", new SimpleInfo[0], new ThrownExceptionInfo[0], false);
+    doTest(PsiModifier.PUBLIC, "foo", "List<String>", [], [], false);
   }
   
   public void testDifferentParamNameInOverriden() {
@@ -230,11 +221,15 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   public void testFeelLucky() {
-    doTest(new SimpleInfo("lucky", -1, "defValue", "defInit", String.class.getName(), true));
+    doTest(new SimpleInfo("lucky", -1, "defValue", "defInit", "java.lang.String", true));
   }
 
   public void testParamsWithGenerics() {
     doTest(new SimpleInfo(0));
+  }
+
+  public void testGenerateDelegateWithOtherName() {
+    doTest(PsiModifier.PUBLIC, 'doSmthElse', null, [], [], true)
   }
 
   private PsiType createType(String typeText) {
@@ -243,30 +238,30 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
 
 
   private void doTest(SimpleInfo... parameterInfos) {
-    doTest(PsiModifier.PUBLIC, null, null, parameterInfos, new ThrownExceptionInfo[0], false);
+    doTest(PsiModifier.PUBLIC, null, null, parameterInfos as List<SimpleInfo>, [], false);
   }
 
   private void doTest(String newReturnType, SimpleInfo[] parameterInfos) {
-    doTest(PsiModifier.PUBLIC, null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], false);
+    doTest(PsiModifier.PUBLIC, null, newReturnType, parameterInfos as List<SimpleInfo>, [], false);
   }
 
-  private void doTest(String newReturnType, SimpleInfo[] parameterInfos, final boolean generateDelegate) {
-    doTest(PsiModifier.PUBLIC, null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], generateDelegate);
+  private void doTest(String newReturnType, List<SimpleInfo> parameterInfos, final boolean generateDelegate) {
+    doTest(PsiModifier.PUBLIC, null, newReturnType, parameterInfos, [], generateDelegate);
   }
 
   private void doTest(@PsiModifier.ModifierConstant String newVisibility,
                       @Nullable String newName,
                       @Nullable String newReturnType,
-                      SimpleInfo[] parameterInfo,
-                      ThrownExceptionInfo[] exceptionInfo,
+                      List<SimpleInfo> parameterInfo,
+                      List<ThrownExceptionInfo> exceptionInfo,
                       final boolean generateDelegate) {
-    final File javaSrc = new File(getTestDataPath() + "/" + getTestName(false) + ".java");
+    final File javaSrc = new File(testDataPath + "/" + getTestName(false) + ".java");
     if (javaSrc.exists()) {
       myFixture.copyFileToProject(getTestName(false) + ".java");
     }
     myFixture.configureByFile(getTestName(false) + ".groovy");
-    executeRefactoring(newVisibility, newName, newReturnType, new SimpleParameterGen(parameterInfo, getProject()),
-                       new SimpleExceptionsGen(exceptionInfo), generateDelegate);
+    executeRefactoring(newVisibility, newName, newReturnType, new SimpleParameterGen(parameterInfo as SimpleInfo[], project),
+                       new SimpleExceptionsGen(exceptionInfo as ThrownExceptionInfo[]), generateDelegate);
     if (javaSrc.exists()) {
       myFixture.checkResultByFile(getTestName(false) + ".java", getTestName(false) + "_after.java", true);
     }
