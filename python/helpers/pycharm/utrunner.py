@@ -34,7 +34,7 @@ def loadSource(fileName):
     baseName = os.path.realpath(fileName)
     moduleName = ".".join((baseName.split(os.sep)[-2], "models"))
 
-  if moduleName in modules: # add unique number to prevent name collisions
+  if moduleName in modules and len(sys.argv[1:-1]) == 1: # add unique number to prevent name collisions
     cnt = 2
     prefix = moduleName
     while getModuleName(prefix, cnt) in modules:

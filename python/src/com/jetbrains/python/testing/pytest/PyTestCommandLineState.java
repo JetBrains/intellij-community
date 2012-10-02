@@ -9,11 +9,9 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,32 +27,40 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
     myConfiguration = configuration;
   }
 
-  protected void addTestRunnerParameters(GeneralCommandLine cmd) throws ExecutionException {
+  @Override
+  protected void addBeforeParameters(GeneralCommandLine cmd) throws ExecutionException {
     ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
     assert script_params != null;
-    String runner = new File(PythonHelpersLocator.getHelpersRoot(), PYTESTRUNNER_PY).getAbsolutePath();
-    script_params.addParameter(runner);
     script_params.addParameters("-p", "pytest_teamcity");
-    script_params.addParameters(getTestSpecs());
+  }
 
+  @Override
+  protected String getRunner() {
+    return PYTESTRUNNER_PY;
   }
 
   @Override
   protected List<String> getTestSpecs() {
     List<String> specs = new ArrayList<String>();
     specs.add(myConfiguration.getTestToRun());
+    return specs;
+  }
+
+  @Override
+  protected void addAfterParameters(GeneralCommandLine cmd) throws ExecutionException {
+    ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
+    assert script_params != null;
     String params = myConfiguration.getParams();
     if (!StringUtil.isEmptyOrSpaces(params)) {
       for (String p : params.split(" "))
-        specs.add(p);
+        script_params.addParameter(p);
     }
 
     String keywords = myConfiguration.getKeywords();
     if (!StringUtil.isEmptyOrSpaces(keywords)) {
-      specs.add("-k");
-      specs.add(keywords);
+      script_params.addParameter("-k " + keywords);
     }
-    return specs;
+
   }
 
   @NotNull

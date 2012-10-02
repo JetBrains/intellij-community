@@ -1,10 +1,10 @@
 package com.jetbrains.python.testing.unittest;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 
 import java.io.File;
@@ -27,11 +27,9 @@ public class PythonUnitTestCommandLineState extends
     myConfig = runConfiguration;
   }
 
-  protected void addTestRunnerParameters(GeneralCommandLine cmd) {
-    ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
-    assert script_params != null;
-    script_params.addParameter(new File(PythonHelpersLocator.getHelpersRoot(), UTRUNNER_PY).getAbsolutePath());
-    script_params.addParameters(getTestSpecs());
+  @Override
+  protected String getRunner() {
+    return UTRUNNER_PY;
   }
 
   @Override
@@ -67,7 +65,6 @@ public class PythonUnitTestCommandLineState extends
         else {
           specs.add(myConfig.getFolderName() + "/");
         }
-        // TODO[kate]:think about delimiter between folderName and Pattern
         break;
       case TEST_FUNCTION:
         specs.add(myConfig.getScriptName() + "::::" + myConfig.getMethodName());
@@ -75,7 +72,13 @@ public class PythonUnitTestCommandLineState extends
       default:
         throw new IllegalArgumentException("Unknown test type: " + myConfig.getTestType());
     }
-    specs.add(String.valueOf(myConfig.isPureUnittest()));
     return specs;
+  }
+
+  @Override
+  protected void addAfterParameters(GeneralCommandLine cmd) throws ExecutionException {
+    ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
+    assert script_params != null;
+    script_params.addParameter(String.valueOf(myConfig.isPureUnittest()));
   }
 }
