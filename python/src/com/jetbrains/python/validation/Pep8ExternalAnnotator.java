@@ -3,6 +3,7 @@ package com.jetbrains.python.validation;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -14,7 +15,9 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.inspections.PyPep8Inspection;
 import com.jetbrains.python.inspections.quickfix.ReformatFix;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -23,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,12 +53,15 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     private final String interpreterPath;
     private final String fileText;
     private final HighlightDisplayLevel level;
+    private final List<String> ignoredErrors;
     public final List<Problem> problems = new ArrayList<Problem>();
 
-    public State(String interpreterPath, String fileText, HighlightDisplayLevel level) {
+    public State(String interpreterPath, String fileText, HighlightDisplayLevel level,
+                 List<String> ignoredErrors) {
       this.interpreterPath = interpreterPath;
       this.fileText = fileText;
       this.level = level;
+      this.ignoredErrors = ignoredErrors;
     }
   }
 
@@ -66,11 +73,14 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     final String homePath = sdk.getHomePath();
     if (homePath == null) return null;
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile();
-    final HighlightDisplayKey key = HighlightDisplayKey.find("PyPep8Inspection");
+    final String inspectionShortName = "PyPep8Inspection";
+    final HighlightDisplayKey key = HighlightDisplayKey.find(inspectionShortName);
     if (!profile.isToolEnabled(key)) {
       return null;
     }
-    return new State(homePath, file.getText(), profile.getErrorLevel(key, file));
+    final LocalInspectionToolWrapper profileEntry = (LocalInspectionToolWrapper)profile.getInspectionTool(inspectionShortName, file);
+    final List<String> ignoredErrors = ((PyPep8Inspection) profileEntry.getTool()).ignoredErrors;
+    return new State(homePath, file.getText(), profile.getErrorLevel(key, file), ignoredErrors);
   }
 
   @Nullable
@@ -78,12 +88,14 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   public State doAnnotate(State collectedInfo) {
     if (collectedInfo == null) return null;
     final String pep8Path = PythonHelpersLocator.getHelperPath("pep8.py");
+    ArrayList<String> options = new ArrayList<String>();
+    Collections.addAll(options, collectedInfo.interpreterPath, pep8Path);
+    if (collectedInfo.ignoredErrors.size() > 0) {
+      options.add("--ignore=" + StringUtil.join(collectedInfo.ignoredErrors, ","));
+    }
+    options.add("-");
     ProcessOutput output = PySdkUtil.getProcessOutput(new File(collectedInfo.interpreterPath).getParent(),
-                                                      new String[]{
-                                                        collectedInfo.interpreterPath,
-                                                        pep8Path,
-                                                        "-"
-                                                      },
+                                                      ArrayUtil.toStringArray(options),
                                                       null,
                                                       5000,
                                                       collectedInfo.fileText.getBytes());
