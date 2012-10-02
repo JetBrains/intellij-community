@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.regexp;
 
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
@@ -25,8 +26,13 @@ public class RegExpSyntaxHighlighterFactory extends SingleLazyInstanceSyntaxHigh
   private final ParserDefinition myParserDefinition;
 
   public RegExpSyntaxHighlighterFactory() {
-    myParserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(RegExpLanguage.INSTANCE);
+    this(RegExpLanguage.INSTANCE);
   }
+
+  protected RegExpSyntaxHighlighterFactory(@NotNull Language language) {
+    myParserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+  }
+
 
   @NotNull
   protected SyntaxHighlighter createHighlighter() {
