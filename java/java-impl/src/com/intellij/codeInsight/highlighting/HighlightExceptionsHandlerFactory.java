@@ -32,7 +32,7 @@ import java.util.Collection;
 public class HighlightExceptionsHandlerFactory implements HighlightUsagesHandlerFactory {
   @Override
   public HighlightUsagesHandlerBase createHighlightUsagesHandler(final Editor editor, final PsiFile file) {
-    int offset = TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
+    int offset = TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
     PsiElement target = file.findElementAt(offset);
     if (target instanceof PsiKeyword) {
       PsiElement parent = target.getParent();

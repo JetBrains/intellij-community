@@ -35,7 +35,7 @@ public class ThrowsUsageTargetProvider implements UsageTargetProvider {
   public UsageTarget[] getTargets(Editor editor, final PsiFile file) {
     if (editor == null || file == null) return null;
 
-    PsiElement element = file.findElementAt(TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset()));
+    PsiElement element = file.findElementAt(TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset()));
     if (element == null) return null;
 
     if (element instanceof PsiKeyword && PsiKeyword.THROWS.equals(element.getText())) {

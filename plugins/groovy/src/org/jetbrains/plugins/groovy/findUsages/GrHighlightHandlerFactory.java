@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 public class GrHighlightHandlerFactory implements HighlightUsagesHandlerFactory {
   @Override
   public HighlightUsagesHandlerBase createHighlightUsagesHandler(Editor editor, PsiFile file) {
-    int offset = TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
+    int offset = TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
     final PsiElement target = file.findElementAt(offset);
     if (target == null) return null;
 

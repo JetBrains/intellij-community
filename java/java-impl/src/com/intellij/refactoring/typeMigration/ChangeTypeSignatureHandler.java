@@ -36,7 +36,7 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    final int offset = TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
+    final int offset = TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
     final PsiElement element = file.findElementAt(offset);
     PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(element, PsiTypeElement.class);
     while (typeElement != null) {
