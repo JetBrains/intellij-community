@@ -488,7 +488,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
 
   public static class AuthStorage implements ISVNAuthenticationStorage {
 
-    private final Map<String, Object> myStorage = new Hashtable<String, Object>();
+    private final Map<String, Object> myStorage = Collections.synchronizedMap(new HashMap<String, Object>());
 
     public void clear() {
       myStorage.clear();

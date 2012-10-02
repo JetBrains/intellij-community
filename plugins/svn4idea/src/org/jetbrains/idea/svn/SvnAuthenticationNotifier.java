@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.impl.GenericNotifierImpl;
@@ -33,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -321,14 +323,37 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     } catch (SVNCancelException e) {
       log(e); // auth canceled
       return false;
-    } catch (SVNException e) {
+    } catch (final SVNException e) {
       if (e.getErrorMessage().getErrorCode().isAuthentication()) {
         log(e);
         return false;
       }
       LOG.info("some other exc", e);
       if (interactive) {
-        VcsBalloonProblemNotifier.showOverChangesView(project, "Authentication failed: " + e.getMessage(), MessageType.ERROR);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            VcsBalloonProblemNotifier.showOverChangesView(project, "Authentication failed: " + e.getMessage(), MessageType.ERROR,
+                                                          new NamedRunnable(SvnBundle.message("confirmation.title.clear.authentication.cache")) {
+                                                            @Override
+                                                            public void run() {
+                                                              SvnConfigurable.clearAuthenticationCache(project, null, configuration.getConfigurationDirectory());
+                                                            }
+                                                          },
+                                                          new NamedRunnable(SvnBundle.message("action.title.select.configuration.directory")) {
+                                                            @Override
+                                                            public void run() {
+                                                              SvnConfigurable.selectConfigirationDirectory(configuration.getConfigurationDirectory(),
+                                                                new Consumer<String>() {
+                                                                  @Override
+                                                                  public void consume(String s) {
+                                                                    configuration.setConfigurationDirectory(s);
+                                                                  }
+                                                                }, project, null);
+                                                            }
+                                                          });
+          }
+        }, ModalityState.NON_MODAL, project.getDisposed());
       }
       return false; /// !!!! any exception means user should be notified that authorization failed
     }
