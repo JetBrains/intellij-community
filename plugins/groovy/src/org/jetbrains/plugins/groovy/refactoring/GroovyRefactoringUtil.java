@@ -109,7 +109,7 @@ public abstract class GroovyRefactoringUtil {
                                                             final Class<T> klass) {
     PsiElement element1 = file.getViewProvider().findElementAt(startOffset, file.getLanguage());
     PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, file.getLanguage());
-    if (element1 == null) return null;
+    if (element1 == null || element2 == null) return null;
 
     if (TokenSets.WHITE_SPACES_SET.contains(element1.getNode().getElementType())) {
       startOffset = element1.getTextRange().getEndOffset();
@@ -119,6 +119,7 @@ public abstract class GroovyRefactoringUtil {
       endOffset = element2.getTextRange().getStartOffset();
       element2 = file.getViewProvider().findElementAt(endOffset - 1, file.getLanguage());
     }
+
     if (element2 == null || element1 == null) return null;
     final PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
     assert commonParent != null;
@@ -723,7 +724,7 @@ public abstract class GroovyRefactoringUtil {
     return psiClass instanceof PsiTypeParameter ? subst.substitute((PsiTypeParameter)psiClass) : elementFactory.createType(psiClass, substitutor);
   }
 
-  public static void collectTypeParameters(final Set<PsiTypeParameter> used, final GroovyPsiElement element) {
+  public static void collectTypeParameters(final Set<PsiTypeParameter> used, @NotNull final GroovyPsiElement element) {
     element.accept(new GroovyRecursiveElementVisitor() {
       @Override
       public void visitCodeReferenceElement(GrCodeReferenceElement reference) {
