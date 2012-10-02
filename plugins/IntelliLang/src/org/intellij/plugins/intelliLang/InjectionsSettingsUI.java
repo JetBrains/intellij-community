@@ -882,7 +882,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
 
     public void apply() {
       final List<BaseInjection> injectionList = getInjectionList(injectionInfos);
-      cfg.replaceInjections(injectionList, originalInjections);
+      cfg.replaceInjections(injectionList, originalInjections, true);
       originalInjections.clear();
       originalInjections.addAll(injectionList);
       sortInjections(originalInjections);

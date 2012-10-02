@@ -143,15 +143,16 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
       return super.getModificationCount() + myParentConfiguration.getModificationCount();
     }
 
-    public boolean replaceInjections(final List<? extends BaseInjection> newInjections,
-                                     final List<? extends BaseInjection> originalInjections) {
-      if (!originalInjections.isEmpty()) {
-        if (myParentConfiguration.replaceInjections(Collections.<BaseInjection>emptyList(), originalInjections)) {
-          myParentConfiguration.replaceInjections(newInjections, Collections.<BaseInjection>emptyList());
+    public boolean replaceInjections(List<? extends BaseInjection> newInjections,
+                                     List<? extends BaseInjection> originalInjections,
+                                     boolean forceLevel) {
+      if (!forceLevel && !originalInjections.isEmpty()) {
+        if (myParentConfiguration.replaceInjections(Collections.<BaseInjection>emptyList(), originalInjections, forceLevel)) {
+          myParentConfiguration.replaceInjections(newInjections, Collections.<BaseInjection>emptyList(), forceLevel);
           return true;
         }
       }
-      return super.replaceInjections(newInjections, originalInjections);
+      return super.replaceInjections(newInjections, originalInjections, forceLevel);
     }
   }
 
@@ -389,7 +390,7 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
       importInjections(getInjections(supportId), importingInjections, originalInjections, newInjections);
     }
     if (!newInjections.isEmpty()) configurationModified();
-    replaceInjections(newInjections, originalInjections);
+    replaceInjections(newInjections, originalInjections, true);
     return newInjections.size();
   }
 
@@ -505,7 +506,7 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
   }
 
   protected void replaceInjectionsWithUndoInner(final List<? extends BaseInjection> add, final List<? extends BaseInjection> remove) {
-    replaceInjections(add, remove);
+    replaceInjections(add, remove, false);
   }
 
   public static <T> void replaceInjectionsWithUndo(final Project project, final T add, final T remove,
@@ -541,8 +542,9 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
     }.execute();
   }
 
-  public boolean replaceInjections(final List<? extends BaseInjection> newInjections,
-                                   final List<? extends BaseInjection> originalInjections) {
+  public boolean replaceInjections(List<? extends BaseInjection> newInjections,
+                                   List<? extends BaseInjection> originalInjections,
+                                   boolean forceLevel) {
     boolean changed = false;
     for (BaseInjection injection : originalInjections) {
       changed |= myInjections.get(injection.getSupportId()).remove(injection);
