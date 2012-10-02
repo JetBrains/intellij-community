@@ -1,6 +1,7 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -10,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.inspections.quickfix.ReformatFix;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -99,7 +101,8 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         }
       }
       if (problemElement != null) {
-        holder.createWeakWarningAnnotation(problemElement, "PEP8: " + problem.myDescription);
+        final Annotation annotation = holder.createWeakWarningAnnotation(problemElement, "PEP8: " + problem.myDescription);
+        annotation.registerUniversalFix(new ReformatFix(), null, null);
       }
     }
   }
