@@ -313,6 +313,14 @@ public class PyIndentTest extends PyTestCase {
            "<caret>");
   }
 
+  public void testIndentOnBackslash() {  // PY-7360
+    doTest("def index():\n" +
+           "    return 'some string' + \\<caret>",
+           "def index():\n" +
+           "    return 'some string' + \\\n" +
+           "    <caret>");
+  }
+
   /*
   TODO: formatter core problem?
   public void testAlignListBeforeEquals() throws Exception {

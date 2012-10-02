@@ -51,6 +51,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
 
           result.addAll(referencesFromNames(element, offset, docString,
                                             docString.getTagArguments(StructuredDocString.VARIABLE_TAGS), StructuredDocString.VARIABLE));
+          result.addAll(returnTypes(element, docString, offset));
         }
         return result.toArray(new PsiReference[result.size()]);
       }
@@ -58,6 +59,17 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
     return PsiReference.EMPTY_ARRAY;
   }
 
+  private List<PsiReference> returnTypes(PsiElement element,
+                                         StructuredDocString docString,
+                                                 int offset) {
+    List<PsiReference> result = new ArrayList<PsiReference>();
+
+    final Substring rtype = docString.getReturnTypeSubstring();
+    if (rtype != null) {
+      result.addAll(parseTypeReferences(element, rtype, offset));
+    }
+    return result;
+  }
   private List<PsiReference> referencesFromNames(PsiElement element,
                                                  int offset,
                                                  StructuredDocString docString,
@@ -69,16 +81,12 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
       if (PyNames.isIdentifier(s)) {
         result.add(new DocStringParameterReference(element, name.getTextRange().shiftRight(offset), refType));
       }
-      if (!refType.equals(StructuredDocString.PARAMETER_TYPE)) {
+      if (refType.equals(StructuredDocString.PARAMETER_TYPE)) {
         final Substring type = docString.getParamTypeSubstring(s);
         if (type != null) {
           result.addAll(parseTypeReferences(element, type, offset));
         }
       }
-    }
-    final Substring rtype = docString.getReturnTypeSubstring();
-    if (rtype != null) {
-      result.addAll(parseTypeReferences(element, rtype, offset));
     }
     return result;
   }

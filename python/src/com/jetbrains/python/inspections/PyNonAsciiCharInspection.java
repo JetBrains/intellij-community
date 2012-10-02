@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.actions.AddEncodingQuickFix;
+import com.jetbrains.python.inspections.quickfix.AddEncodingQuickFix;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;

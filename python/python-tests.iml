@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="relaxng" scope="RUNTIME" />
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="python-helpers" scope="RUNTIME" />
+    <orderEntry type="module" module-name="remote-sdk-api" scope="TEST" />
   </component>
 </module>
 

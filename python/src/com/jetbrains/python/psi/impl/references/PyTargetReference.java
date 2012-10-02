@@ -5,6 +5,8 @@ import com.intellij.psi.PsiElementResolveResult;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -22,15 +24,16 @@ public class PyTargetReference extends PyReferenceImpl {
   @Override
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     final ResolveResult[] results = super.multiResolve(incompleteCode);
-    boolean resolvedToAnotherFile = false;
+    boolean shadowed = false;
     for (ResolveResult result : results) {
       final PsiElement element = result.getElement();
-      if (element != null && element.getContainingFile() != myElement.getContainingFile()) {
-        resolvedToAnotherFile = true;
+      if (element != null && (element.getContainingFile() != myElement.getContainingFile() ||
+                              element instanceof PyFunction || element instanceof PyClass)) {
+        shadowed = true;
         break;
       }
     }
-    if (results.length > 0 && !resolvedToAnotherFile) {
+    if (results.length > 0 && !shadowed) {
       return results;
     }
     // resolve to self if no other target found

@@ -25,6 +25,10 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
   private boolean useParam = false;
   private boolean useKeyword = false;
 
+  protected String myTitle = "py.test";
+  protected String myPluralTitle = "py.tests";
+
+
   private static final String TEST_TO_RUN_FIELD = "testToRun";
   private static final String KEYWORDS_FIELD = "keywords";
   private static final String PARAMS_FIELD = "params";
@@ -126,6 +130,11 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
 
   @Override
   protected String getTitle() {
-    return "py.tests";
+    return myTitle;
+  }
+
+  @Override
+  protected String getPluralTitle() {
+    return myPluralTitle;
   }
 }

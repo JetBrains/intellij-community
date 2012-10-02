@@ -475,15 +475,6 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
-  public void testNamedTuple() {  //
-    final String testName = "completion/" + getTestName(true);
-    myFixture.configureByFile(testName + ".py");
-    myFixture.completeBasic();
-    final List<String> strings = myFixture.getLookupElementStrings();
-    assertTrue(strings.contains("lat"));
-    assertTrue(strings.contains("long"));
-  }
-
   public void testPrivateMemberType() {  // PY-4589
     doTest();
   }
@@ -605,5 +596,11 @@ public class PythonCompletionTest extends PyTestCase {
     assertTrue(doTestByText("try:\n" +
                             "    pass\n" +
                             "except IOError <caret>").contains("as"));
+  }
+
+  public void testElseInFor() {  // PY-6755
+    assertTrue(doTestByText("for item in range(10):\n" +
+                            "    pass\n" +
+                            "el<caret>").contains("else"));
   }
 }

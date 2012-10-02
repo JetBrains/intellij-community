@@ -117,7 +117,7 @@
     <configurationProducer implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer"/>
     <configurationProducer implementation="com.jetbrains.python.testing.attest.PythonAtTestConfigurationProducer"/>
 
-    <referenceImporter implementation="com.jetbrains.python.codeInsight.imports.PythonReferenceImporter"/>
+    <!-- <referenceImporter implementation="com.jetbrains.python.codeInsight.imports.PythonReferenceImporter"/> -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
     <definitionsSearch implementation="com.jetbrains.python.psi.search.PyDefinitionsSearch"/>
     <gotoTargetRendererProvider implementation="com.jetbrains.python.codeInsight.PyGotoTargetRendererProvider"/>
@@ -237,6 +237,11 @@
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyDocStubIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyYieldFromIntention</className>
       <category>Python</category>
     </intentionAction>
 
@@ -395,9 +400,15 @@
 
     <applicationService serviceInterface="com.jetbrains.python.documentation.PythonDocumentationMap"
                         serviceImplementation="com.jetbrains.python.documentation.PythonDocumentationMap"/>
-    <applicationConfigurable instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"/>
-    <projectConfigurable instance="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"/>
-    <projectConfigurable instance="com.jetbrains.python.templateLanguages.TemplateLanguageModulesConfigurable"/>
+    <applicationConfigurable instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
+                             id="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
+                             displayName="Python External Documentation"/>
+    <projectConfigurable instance="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
+                         id="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable" displayName="Python Integrated Tools"
+                         nonDefaultProject="true"/>
+    <projectConfigurable instance="com.jetbrains.python.templateLanguages.TemplateLanguageModulesConfigurable"
+                         id="com.jetbrains.python.templateLanguages.TemplateLanguageModulesConfigurable"
+                         displayName="Python Template Languages"/>
     <projectService serviceInterface="com.jetbrains.python.documentation.PyDocumentationSettings"
                     serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings"/>
     <psi.referenceContributor implementation="com.jetbrains.python.documentation.DocStringReferenceContributor"/>
@@ -731,6 +742,7 @@
     <useScopeEnlarger implementation="com.jetbrains.jinja2.findUsages.Jinja2UseScopeEnlarger"/>
     <usageTypeProvider implementation="com.jetbrains.jinja2.findUsages.Jinja2UsageTypeProvider"/>
     <lang.commenter language="Jinja2" implementationClass="com.jetbrains.jinja2.Jinja2Commenter"/>
+    <xml.zenCodingGenerator implementation="com.jetbrains.jinja2.Jinja2ZenCodingGenerator"/>
 
     <!-- Packaging -->
     <moduleService serviceInterface="com.jetbrains.python.packaging.PyPackageRequirementsSettings"
@@ -943,6 +955,10 @@
       <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="first"/>
     </action>
 
+   <action id="CleanPyc" class="com.jetbrains.python.actions.CleanPycAction" text="Clean .pyc"
+           description="Delete compiled bytecode files in selected directory and its subdirectories">
+     <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ProjectViewPopupMenuRefactoringGroup"/>
+  </action>
 
     <group id="PyPackagingMenu" text="Packaging">
       <action id="CreateSetupPy" class="com.jetbrains.python.packaging.setupPy.CreateSetupPyAction"/>

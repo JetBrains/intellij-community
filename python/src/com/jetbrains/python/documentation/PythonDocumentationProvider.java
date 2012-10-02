@@ -520,7 +520,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         PyFunction func = elementGenerator.createFromText(LanguageLevel.forElement(function),
                                                           PyFunction.class,
                                                           "def " + function.getName() + function.getParameterList().getText()
-                                                          + ":\n\t" + string.getText() + "\n\t" + insertPlace.getText());
+                                                          + ":\n" + appendBefore("\t", string.getText()) + "\n\t" + insertPlace.getText());
         function.replace(func);
       }
       else {
@@ -533,6 +533,19 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       editor.getCaretModel().moveToOffset(offset);
       editor.getCaretModel().moveCaretRelatively(0, 1, false, false, false);
     }
+  }
+
+  @NotNull
+  private static CharSequence appendBefore(@NotNull CharSequence toAdd, @NotNull CharSequence text) {
+    StringBuilder result = new StringBuilder(toAdd);
+    for (int i = 0; i < text.length(); i++) {
+      char c = text.charAt(i);
+      result.append(c);
+      if (c == '\n') {
+        result.append(toAdd);
+      }
+    }
+    return result;
   }
 
   public static void insertDocStub(PyFunction function, Project project, Editor editor) {

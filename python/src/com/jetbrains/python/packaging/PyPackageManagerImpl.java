@@ -34,15 +34,15 @@ import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
+import com.jetbrains.plugins.remotesdk.RemoteFile;
+import com.jetbrains.plugins.remotesdk.RemoteInterpreterException;
+import com.jetbrains.plugins.remotesdk.RemoteSdkData;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListLiteralExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.remote.PyRemoteInterpreterException;
-import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
-import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
-import com.jetbrains.python.remote.RemoteFile;
+import com.jetbrains.python.remote.*;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -324,10 +324,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     mySdk = sdk;
     final Application app = ApplicationManager.getApplication();
     final MessageBusConnection connection = app.getMessageBus().connect();
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void before(@NotNull List<? extends VFileEvent> events) {}
-
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         final VirtualFile[] roots = mySdk.getRootProvider().getFiles(OrderRootType.CLASSES);
@@ -612,9 +609,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private String getHelperPath(String helper) {
     String helperPath;
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
-    if (sdkData instanceof PythonRemoteSdkAdditionalData) {
-      final PythonRemoteSdkAdditionalData remoteSdkData = (PythonRemoteSdkAdditionalData)sdkData;
-      helperPath = new RemoteFile(remoteSdkData.getPyCharmHelpersPath(),
+    if (sdkData instanceof RemoteSdkData) {
+      final RemoteSdkData remoteSdkData = (RemoteSdkData)sdkData;
+      helperPath = new RemoteFile(remoteSdkData.getHelpersPath(),
                                   helper).getPath();
     }
     else {
@@ -629,8 +626,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
                                          @Nullable String parentDir)
     throws PyExternalProcessException {
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
-    if (sdkData instanceof PythonRemoteSdkAdditionalData) {
-      final PythonRemoteSdkAdditionalData remoteSdkData = (PythonRemoteSdkAdditionalData)sdkData;
+    if (sdkData instanceof RemoteSdkData) {
+      final RemoteSdkData remoteSdkData = (RemoteSdkData)sdkData;
       final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
         final List<String> cmdline = new ArrayList<String>();
@@ -652,7 +649,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
           while (true);
           return processOutput;
         }
-        catch (PyRemoteInterpreterException e) {
+        catch (RemoteInterpreterException e) {
           throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Error running SDK: " + e.getMessage(), e);
         }
       }

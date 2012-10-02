@@ -1,7 +1,7 @@
 package com.jetbrains.python.run;
 
 import com.intellij.openapi.module.Module;
-import com.jetbrains.python.debugger.remote.PyPathMappingSettings;
+import com.intellij.util.PathMappingSettings;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -41,7 +41,7 @@ public interface AbstractPythonRunConfigurationParams {
   void setEnvs(final Map<String, String> envs);
 
   @Nullable
-  PyPathMappingSettings getMappingSettings();
+  PathMappingSettings getMappingSettings();
 
-  void setMappingSettings(@Nullable PyPathMappingSettings mappingSettings);
+  void setMappingSettings(@Nullable PathMappingSettings mappingSettings);
 }

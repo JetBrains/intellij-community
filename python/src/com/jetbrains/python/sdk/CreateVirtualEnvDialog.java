@@ -10,11 +10,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.LocationNameFieldsBinding;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.PathUtil;
+import com.jetbrains.plugins.remotesdk.RemoteSdkDataHolder;
 import com.jetbrains.python.packaging.PyPackageService;
-import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
 import com.jetbrains.python.ui.IdeaDialog;
 
 import javax.swing.*;
@@ -34,7 +33,8 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
   private TextFieldWithBrowseButton myDestination;
   private JTextField myName;
   private JBCheckBox mySitePackagesCheckBox;
-  private JBCheckBox myAssociateCheckbox;
+  private JBCheckBox myMakeAvailableToAllProjectsCheckbox;
+  private JBCheckBox mySetAsProjectInterpreterCheckbox;
   private Project myProject;
   private String myInitialPath;
 
@@ -45,13 +45,13 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     setTitle("Create Virtual Environment");
     updateSdkList(sdk, allSdks);
 
-    myAssociateCheckbox.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
+    myMakeAvailableToAllProjectsCheckbox.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
     if (project.isDefault()) {
-      myAssociateCheckbox.setSelected(false);
-      myAssociateCheckbox.setVisible(false);
+      myMakeAvailableToAllProjectsCheckbox.setSelected(true);
+      myMakeAvailableToAllProjectsCheckbox.setVisible(false);
     }
     else if (isNewProject) {
-      myAssociateCheckbox.setText("Associate this virtual environment with the project being created");
+      mySetAsProjectInterpreterCheckbox.setText("Set as project interpreter for the project being created");
     }
 
     setOKActionEnabled(false);
@@ -157,11 +157,11 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
   }
 
   private void updateSdkList(Sdk sdk, final List<Sdk> allSdks) {
-    final HtmlListCellRenderer<Sdk> sdkListCellRenderer = new PySdkListCellRenderer(mySdkCombo.getRenderer(), null);
-    mySdkCombo.setRenderer(sdkListCellRenderer);
+    mySdkCombo.setRenderer(new PySdkListCellRenderer(null));
     List<Sdk> baseSdks = new ArrayList<Sdk>();
     for (Sdk s : allSdks) {
-      if (!PythonSdkType.isInvalid(s) && !PythonSdkType.isVirtualEnv(s) && !PythonRemoteSdkAdditionalData.isRemoteSdk(s.getHomePath())) {
+      if (!PythonSdkType.isInvalid(s) && !PythonSdkType.isVirtualEnv(s) && !RemoteSdkDataHolder
+        .isRemoteSdk(s.getHomePath())) {
         baseSdks.add(s);
       }
       else if (s.equals(sdk)){
@@ -206,7 +206,11 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
   }
 
   public boolean associateWithProject() {
-    return myAssociateCheckbox.isSelected();
+    return !myMakeAvailableToAllProjectsCheckbox.isSelected();
+  }
+
+  public boolean setAsProjectInterpreter() {
+    return mySetAsProjectInterpreterCheckbox.isSelected();
   }
 
   @Override

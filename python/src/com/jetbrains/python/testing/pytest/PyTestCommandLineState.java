@@ -44,8 +44,10 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
     List<String> specs = new ArrayList<String>();
     specs.add(myConfiguration.getTestToRun());
     String params = myConfiguration.getParams();
-    if (!StringUtil.isEmptyOrSpaces(params))
-      specs.add(params);
+    if (!StringUtil.isEmptyOrSpaces(params)) {
+      for (String p : params.split(" "))
+        specs.add(p);
+    }
 
     String keywords = myConfiguration.getKeywords();
     if (!StringUtil.isEmptyOrSpaces(keywords)) {

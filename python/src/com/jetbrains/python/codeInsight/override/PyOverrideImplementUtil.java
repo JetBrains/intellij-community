@@ -166,7 +166,7 @@ public class PyOverrideImplementUtil {
       final PyNamedParameter pyNamedParameter = parameter.getAsNamed();
       if (pyNamedParameter != null) {
         String repr = pyNamedParameter.getRepr(false);
-        parameters.add(hadStar ? pyNamedParameter.getName() + "=" + repr : repr);
+        parameters.add(hadStar && !pyNamedParameter.isKeywordContainer() ? pyNamedParameter.getName() + "=" + repr : repr);
         if (pyNamedParameter.isPositionalContainer()) {
           hadStar = true;
         }
@@ -183,7 +183,7 @@ public class PyOverrideImplementUtil {
       statementBody.append(PyNames.PASS);
     }
     else {
-      if (baseFunction.getReturnType(TypeEvalContext.slow(), null) != PyNoneType.INSTANCE) {
+      if (!PyNames.INIT.equals(baseFunction.getName()) && baseFunction.getReturnType(TypeEvalContext.slow(), null) != PyNoneType.INSTANCE) {
         statementBody.append("return ");
       }
       if (baseClass.isNewStyleClass()) {

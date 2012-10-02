@@ -88,6 +88,7 @@ public abstract class PropertyBunch<MType> {
     final String name = ref.getName();
     if (name != null) {
       final ResolveProcessor processor = new ResolveProcessor(name);
+      processor.setLocalResolve();
       PyResolveUtil.scopeCrawlUp(processor, ref, name, null);
       return processor.getResult() != null;
     }

@@ -58,23 +58,25 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
       }
     }, this);
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileAdapter(), this);
-    project.getMessageBus().connect(this).subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Listener() {
-      @Override
-      public void jdkAdded(Sdk jdk) {
-      }
-
-      @Override
-      public void jdkRemoved(Sdk jdk) {
-        if (jdk == sdk) {
-          Disposer.dispose(PythonSdkPathCache.this);
+    if (!project.isDisposed()) {
+      project.getMessageBus().connect(this).subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Listener() {
+        @Override
+        public void jdkAdded(Sdk jdk) {
         }
-      }
 
-      @Override
-      public void jdkNameChanged(Sdk jdk, String previousName) {
-      }
-    });
-    Disposer.register(project, this);
+        @Override
+        public void jdkRemoved(Sdk jdk) {
+          if (jdk == sdk) {
+            Disposer.dispose(PythonSdkPathCache.this);
+          }
+        }
+
+        @Override
+        public void jdkNameChanged(Sdk jdk, String previousName) {
+        }
+      });
+      Disposer.register(project, this);
+    }
   }
 
   @Override
@@ -104,5 +106,9 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
         return pyBuiltinCache;
       }
     }
+  }
+
+  public void clearBuiltins() {
+    myBuiltins.set(null);
   }
 }

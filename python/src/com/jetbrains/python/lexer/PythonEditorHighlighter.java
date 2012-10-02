@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -23,9 +23,9 @@ import org.jetbrains.annotations.Nullable;
 public class PythonEditorHighlighter extends LexerEditorHighlighter {
 
   public PythonEditorHighlighter(@NotNull EditorColorsScheme scheme, @Nullable Project project, @Nullable VirtualFile file) {
-    super(SyntaxHighlighter.PROVIDER.create(file != null ? file.getFileType() : PythonFileType.INSTANCE,
-                                            project,
-                                            file),
+    super(SyntaxHighlighterFactory.getSyntaxHighlighter(file != null ? file.getFileType() : PythonFileType.INSTANCE,
+                                                               project,
+                                                               file),
           scheme);
   }
 

@@ -10,7 +10,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
-import com.jetbrains.python.debugger.remote.PyPathMappingSettings;
+import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,9 +43,9 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     final List<Module> validModules = data.getValidModules();
     Module selection = validModules.size() > 0 ? validModules.get(0) : null;
     myModuleComboBox.setModel(new CollectionComboBoxModel(validModules, selection));
-    myModuleComboBox.setRenderer(new PyModuleRenderer(PyPluginCommonOptionsForm.this.myModuleComboBox.getRenderer()));
+    myModuleComboBox.setRenderer(new PyModuleRenderer());
 
-    myInterpreterComboBox.setRenderer(new SdkListCellRenderer("<Project Default>", myInterpreterComboBox.getRenderer()));
+    myInterpreterComboBox.setRenderer(new SdkListCellRenderer("<Project Default>"));
     myWorkingDirectoryTextField.addBrowseFolderListener("Select Working Directory", "", data.getProject(),
                                                   FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
@@ -158,12 +158,12 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   @Override
-  public PyPathMappingSettings getMappingSettings() {
+  public PathMappingSettings getMappingSettings() {
     return null;  //TODO: implement for plugin
   }
 
   @Override
-  public void setMappingSettings(@Nullable PyPathMappingSettings mappingSettings) {
+  public void setMappingSettings(@Nullable PathMappingSettings mappingSettings) {
   }
 
   @Override

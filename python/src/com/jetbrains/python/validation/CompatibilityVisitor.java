@@ -9,7 +9,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.actions.*;
+import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.Nullable;
@@ -484,6 +484,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       if (level.isOlderThan(LanguageLevel.PYTHON33)) {
         registerProblem(node, "Python versions < 3.3 do not support this syntax. Delegating to a subgenerator is available since " +
                               "Python 3.3; use explicit iteration over subgenerator instead.");
+        break;
       }
     }
   }

@@ -12,12 +12,10 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.FilterComponent;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jetbrains.python.packaging.*;
@@ -82,6 +80,7 @@ public class ManagePackagesDialog extends DialogWrapper {
   private final PyPackagesPanel myPackageListPanel;
 
   private Set<String> currentlyInstalling = new HashSet<String>();
+  protected final ListSpeedSearch myListSpeedSearch;
 
   public ManagePackagesDialog(@NotNull Project project, @NotNull final Sdk sdk, @NotNull final PyPackagesPanel packageListPanel) {
     super(false);
@@ -125,6 +124,14 @@ public class ManagePackagesDialog extends DialogWrapper {
         });
       }
     };
+    myListSpeedSearch = new ListSpeedSearch(this.myPackages, new Function<Object, String>() {
+      @Override
+      public String fun(Object o) {
+        if (o instanceof ComparablePair)
+          return ((ComparablePair)o).getFirst();
+        return "";
+      }
+    });
     myPackagesPanel = ToolbarDecorator.createDecorator(this.myPackages).disableAddAction().
       disableUpDownActions().disableRemoveAction().addExtraAction(reloadButton).createPanel();
     myPackagesPanel.setPreferredSize(new Dimension(400, -1));

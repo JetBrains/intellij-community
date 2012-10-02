@@ -110,6 +110,9 @@ public class PyExtractMethodUtil {
               if (fragment.isReturnInstructionInside()) {
                 builder.append("return ");
               }
+              if (fragment.isYieldInside()) {
+                builder.append("yield from ");
+              }
               if (isMethod) {
                 appendSelf(firstElement, builder, isStaticMethod);
               }
@@ -158,6 +161,9 @@ public class PyExtractMethodUtil {
 
               // Generate call element
               builder.append(" = ");
+              if (fragment.isYieldInside()) {
+                builder.append("yield from ");
+              }
               if (isMethod){
                 appendSelf(elementsRange.get(0), builder, isStaticMethod);
               }
@@ -234,7 +240,7 @@ public class PyExtractMethodUtil {
 
   public static void extractFromExpression(final Project project,
                                            final Editor editor,
-                                           final CodeFragment fragment,
+                                           final PyCodeFragment fragment,
                                            final PsiElement expression) {
     if (!fragment.getOutputVariables().isEmpty()){
       CommonRefactoringUtil.showErrorHint(project, editor,
@@ -280,15 +286,25 @@ public class PyExtractMethodUtil {
 
               // Generating call element
               final StringBuilder builder = new StringBuilder();
-              builder.append("return ");
+              if (fragment.isYieldInside()) {
+                builder.append("yield from ");
+              } else {
+                builder.append("return ");
+              }
               if (isMethod){
                 appendSelf(expression, builder, isStaticMethod);
               }
               builder.append(methodName);
               builder.append("(").append(createCallArgsString(variableData)).append(")");
-              final PyReturnStatement returnStatement =
-                (PyReturnStatement) PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyElement.class, builder.toString());
-              PsiElement callElement = fragment.isReturnInstructionInside() ? returnStatement : returnStatement.getExpression();
+              final PyElementGenerator generator = PyElementGenerator.getInstance(project);
+              final PyElement generated = generator.createFromText(LanguageLevel.getDefault(), PyElement.class, builder.toString());
+              PsiElement callElement = null;
+              if (generated instanceof PyReturnStatement) {
+                callElement = fragment.isReturnInstructionInside() ? generated : ((PyReturnStatement)generated).getExpression();
+              }
+              else if (generated instanceof PyExpressionStatement) {
+                callElement = ((PyExpressionStatement)generated).getExpression();
+              }
 
               // replace statements with call
               if (callElement != null) {
@@ -415,7 +431,14 @@ public class PyExtractMethodUtil {
     final PyFunctionBuilder builder = new PyFunctionBuilder(methodName);
     addDecorators(builder, flags);
     addFakeParameters(builder, variableData);
-    builder.statement("return " + expression.getText());
+    final String text;
+    if (expression instanceof PyYieldExpression) {
+      text = String.format("(%s)", expression.getText());
+    }
+    else {
+      text = expression.getText();
+    }
+    builder.statement("return " + text);
     return builder.buildFunction(project, LanguageLevel.getDefault());
   }
 

@@ -48,6 +48,7 @@ public class PythonAllTestsSuite {
     PyQuickDocTest.class,
     PythonInspectionsTest.class,
     PyTypeCheckerInspectionTest.class,
+    PyUnreachableCodeInspectionTest.class,
     PyArgumentListInspectionTest.class,
     CythonInspectionsTest.class,
     PythonDemorganLawIntentionTest.class,
@@ -99,7 +100,8 @@ public class PythonAllTestsSuite {
     PyPropertyAccessInspectionTest.class,
     Jinja2ParserTest.class,
     DjangoTemplateParserTest.class,
-    PyJoinLinesTest.class
+    PyJoinLinesTest.class,
+    PyStatementListTest.class
   };
 
   public static TestSuite suite() {

@@ -18,7 +18,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PythonAtTestRunConfiguration extends AbstractPythonTestRunConfiguration
                                           implements PythonAtTestRunConfigurationParams {
-  protected String myTitle = "Attests";
+  protected String myTitle = "Attest";
+  protected String myPluralTitle = "Attests";
   public PythonAtTestRunConfiguration(RunConfigurationModule module,
                                       ConfigurationFactory configurationFactory,
                                       String name) {
@@ -53,6 +54,11 @@ public class PythonAtTestRunConfiguration extends AbstractPythonTestRunConfigura
   @Override
   protected String getTitle() {
     return myTitle;
+  }
+
+  @Override
+  protected String getPluralTitle() {
+    return myPluralTitle;
   }
 
   public static void copyParams(PythonAtTestRunConfigurationParams source, PythonAtTestRunConfigurationParams target) {

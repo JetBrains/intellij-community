@@ -294,3 +294,12 @@ def test_unused_variable_in_cycle(x, c):
         x -= 1 #pass
         if c:
             break
+
+
+# PY-7517
+def test_unused_condition_local_with_last_if_in_cycle(c):
+    x = True
+    while x:
+        x = False #pass
+        if c:
+            x = True

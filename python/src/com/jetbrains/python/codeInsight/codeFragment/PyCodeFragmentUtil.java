@@ -82,7 +82,13 @@ public class PyCodeFragmentUtil {
       }
     }
 
-    return new PyCodeFragment(inputNames, outputNames, globalWrites, nonlocalWrites, subGraphAnalysis.returns > 0);
+
+    final boolean yieldsFound = subGraphAnalysis.yieldExpressions > 0;
+    if (yieldsFound && LanguageLevel.forElement(owner).isOlderThan(LanguageLevel.PYTHON33)) {
+      throw new CannotCreateCodeFragmentException("Cannot perform refactoring with 'yield' statement inside code block");
+    }
+
+    return new PyCodeFragment(inputNames, outputNames, globalWrites, nonlocalWrites, subGraphAnalysis.returns > 0, yieldsFound);
   }
 
   private static boolean resolvesToBoundMethodParameter(@NotNull PsiElement element) {
@@ -164,13 +170,15 @@ public class PyCodeFragmentUtil {
     private final int regularExits;
     private final int returns;
     private final int outerLoopBreaks;
+    private final int yieldExpressions;
 
-    public AnalysisResult(int starImports, int targetInstructions, int returns, int regularExits, int outerLoopBreaks) {
+    public AnalysisResult(int starImports, int targetInstructions, int returns, int regularExits, int outerLoopBreaks, int yieldExpressions) {
       this.starImports = starImports;
       this.targetInstructions = targetInstructions;
       this.regularExits = regularExits;
       this.returns = returns;
       this.outerLoopBreaks = outerLoopBreaks;
+      this.yieldExpressions = yieldExpressions;
     }
   }
 
@@ -181,6 +189,7 @@ public class PyCodeFragmentUtil {
     final Set<Instruction> targetInstructions = new HashSet<Instruction>();
     int starImports = 0;
     int outerLoopBreaks = 0;
+    int yieldExpressions = 0;
 
     for (Pair<Instruction, Instruction> edge : getOutgoingEdges(subGraph)) {
       final Instruction sourceInstruction = edge.getFirst();
@@ -218,9 +227,12 @@ public class PyCodeFragmentUtil {
           outerLoopBreaks++;
         }
       }
+      if (element instanceof PyYieldExpression) {
+        yieldExpressions++;
+      }
     }
 
-    return new AnalysisResult(starImports, targetInstructions.size(), returnSources, regularSources, outerLoopBreaks);
+    return new AnalysisResult(starImports, targetInstructions.size(), returnSources, regularSources, outerLoopBreaks, yieldExpressions);
   }
 
   @NotNull

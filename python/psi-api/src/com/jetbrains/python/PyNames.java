@@ -40,6 +40,7 @@ public class PyNames {
 
   public static final String FAKE_OLD_BASE = "___Classobj";
   public static final String FAKE_GENERATOR = "__generator";
+  public static final String FAKE_NAMEDTUPLE = "__namedtuple";
 
   public static final String FUTURE_MODULE = "__future__";
   public static final String UNICODE_LITERALS = "unicode_literals";
@@ -120,6 +121,8 @@ public class PyNames {
   public static final String NOSE_TEST = "nose";
   public static final String PY_TEST = "pytest";
   public static final String AT_TEST = "attest";
+
+  public static final String PYCACHE =  "__pycache__";
 
 
   /**

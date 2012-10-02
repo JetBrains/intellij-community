@@ -1,7 +1,6 @@
 package com.jetbrains.python.refactoring.extractmethod;
 
 import com.intellij.codeInsight.codeFragment.CannotCreateCodeFragmentException;
-import com.intellij.codeInsight.codeFragment.CodeFragment;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
@@ -93,7 +92,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
       if (owner == null) {
         return;
       }
-      final CodeFragment fragment;
+      final PyCodeFragment fragment;
       try {
         fragment = PyCodeFragmentUtil.createCodeFragment(owner, element1, element2);
       }

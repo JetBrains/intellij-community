@@ -63,6 +63,9 @@ public abstract class PyElementGenerator {
   @NotNull
   public abstract <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text);
 
+  @NotNull
+  public abstract <T> T createPhysicalFromText(LanguageLevel langLevel, Class<T> aClass, final String text);
+
   /**
    * Creates an arbitrary PSI element from text, by creating a bigger construction and then cutting the proper subelement.
    * Will produce all kinds of exceptions if the path or class would not match the PSI tree.
@@ -74,6 +77,9 @@ public abstract class PyElementGenerator {
    */
   @NotNull
   public abstract <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text, final int[] path);
+
+  public abstract PyNamedParameter createParameter(@NotNull String name, @Nullable String defaultValue, @Nullable String annotation,
+                                                   @NotNull LanguageLevel level);
 
   public abstract PyNamedParameter createParameter(@NotNull String name);
 

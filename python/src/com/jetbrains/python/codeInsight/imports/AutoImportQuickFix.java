@@ -8,6 +8,8 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
@@ -169,5 +171,16 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
   public String getNameToImport() {
     final String text = myReference.getElement().getText();
     return myReference.getRangeInElement().substring(text); // text of the part we're working with
+  }
+
+  public boolean hasProjectImports() {
+    ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(myNode.getProject());
+    for (ImportCandidateHolder anImport : myImports) {
+      VirtualFile file = anImport.getFile().getVirtualFile();
+      if (file != null && fileIndex.isInContent(file)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

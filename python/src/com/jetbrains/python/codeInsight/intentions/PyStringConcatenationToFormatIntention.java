@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -11,6 +12,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyTypeChecker;
@@ -91,8 +93,14 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     NotNullFunction<String,String> escaper = StringUtil.escaper(false, null);
 
     int addParens = 0;
+    Pair<String, String> quotes = new Pair<String, String>("\"", "\"");
+    boolean quotesDetected = false;
     for (PyExpression expression : getSimpleExpressions((PyBinaryExpression) element)) {
       if (expression instanceof PyStringLiteralExpression) {
+        if (!quotesDetected) {
+          quotes = PythonStringUtil.getQuotes(expression.getText());
+          quotesDetected = true;
+        }
         stringLiteral.append(escaper.fun(((PyStringLiteralExpression)expression).getStringValue()));
       } else {
         ++addParens;
@@ -100,9 +108,12 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
         parameters.append(expression.getText()).append(", ");
       }
     }
+    if (quotes == null)
+      quotes = new Pair<String, String>("\"", "\"");
+
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     PyStringLiteralExpression stringLiteralExpression =
-      elementGenerator.createStringLiteralAlreadyEscaped("\"" + stringLiteral.toString() + "\"");
+      elementGenerator.createStringLiteralAlreadyEscaped(quotes.getFirst() + stringLiteral.toString() + quotes.getSecond());
 
     if (addParens > 0) {
       final String paramString = addParens > 1? "(" + parameters.substring(0, parameters.length() - 2) +")"

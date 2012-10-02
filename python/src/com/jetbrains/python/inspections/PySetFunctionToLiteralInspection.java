@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.actions.ReplaceFunctionWithSetLiteralQuickFix;
+import com.jetbrains.python.inspections.quickfix.ReplaceFunctionWithSetLiteralQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.Nls;

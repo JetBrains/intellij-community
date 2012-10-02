@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.actions.AugmentedAssignmentQuickFix;
+import com.jetbrains.python.inspections.quickfix.AugmentedAssignmentQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyType;

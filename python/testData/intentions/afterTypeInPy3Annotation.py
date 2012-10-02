@@ -1,3 +1,3 @@
-def foo(a: object, b):
+def foo(a : object, b):
   a.
   b = 1

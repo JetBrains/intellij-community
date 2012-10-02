@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -58,11 +59,16 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
           final int lineOffset = getLineStartSafeOffset(document, line);
           final PsiElement ws = file.findElementAt(lineOffset);
           int offset = ws instanceof PsiWhiteSpace? ws.getTextRange().getEndOffset() : lineOffset;
+          if (text.equals(selectionModel.getSelectedText())) return text;
           caretModel.moveToOffset(offset);
           selectionModel.setSelection(offset, selectionModel.getSelectionEnd());
         }
-        else
+        else {
+          if (isNotApplicable(document, caretOffset, lineStartOffset)) {
+            return text;
+          }
           caretModel.moveToOffset(lineStartOffset);
+        }
         String spaceString;
         int indent = 0;
 
@@ -107,7 +113,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
           newText = new String(text);   // to indent correctly (see PasteHandler)
         }
 
-        if (element instanceof PsiWhiteSpace &&
+        if ((element instanceof PsiWhiteSpace || element.getTextOffset() == 0) &&
             (StringUtil.countChars(element.getText(), '\n') <= 2 && !StringUtil.isEmptyOrSpaces(text))) {
           newText += "\n";
         }
@@ -118,8 +124,13 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     return newText;
   }
 
+  private boolean isNotApplicable(Document document, int caretOffset, int lineStartOffset) {
+    return !StringUtil.isEmptyOrSpaces(document.getText(TextRange.create(lineStartOffset, caretOffset)));
+  }
+
   public static int getLineStartSafeOffset(final Document document, int line) {
     if (line == document.getLineCount()) return document.getTextLength();
+    if (line < 0) return 0;
     return document.getLineStartOffset(line);
   }
 

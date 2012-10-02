@@ -123,13 +123,14 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   }
 
   protected static void load(@Nullable Element element, @NotNull PythonSdkAdditionalData data) {
-    data.setAddedPaths(loadStringList(element, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER));
-    data.setExcludedPaths(loadStringList(element, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER));
-    data.setAssociatedProjectPath(element.getAttributeValue(ASSOCIATED_PROJECT_PATH));
+    data.setAddedPaths(collectPaths(loadStringsList(element, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER)));
+    data.setExcludedPaths(collectPaths(loadStringsList(element, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER)));
+    if (element != null) {
+      data.setAssociatedProjectPath(element.getAttributeValue(ASSOCIATED_PROJECT_PATH));
+    }
   }
 
-  protected static Set<VirtualFile> loadStringList(@Nullable Element element, @NotNull String rootName, @NotNull String attrName) {
-    final List<String> paths = loadPaths(element, rootName, attrName);
+  protected static Set<VirtualFile> collectPaths(@NotNull List<String> paths) {
     final Set<VirtualFile> files = Sets.newHashSet();
     for (String path : paths) {
       VirtualFile vf = VirtualFileUtil.findFile(path);
@@ -140,14 +141,12 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     return files;
   }
 
-  protected static List<String> loadPaths(Element element, String rootName, String attrName) {
+  protected static List<String> loadStringsList(Element element, String rootName, String attrName) {
     final List<String> paths = new LinkedList<String>();
     if (element != null) {
-      final List list = element.getChildren(rootName);
-      if (list != null) {
-        for (Object o : list) {
-          paths.add(((Element)o).getAttribute(attrName).getValue());
-        }
+      @NotNull final List list = element.getChildren(rootName);
+      for (Object o : list) {
+        paths.add(((Element)o).getAttribute(attrName).getValue());
       }
     }
     return paths;

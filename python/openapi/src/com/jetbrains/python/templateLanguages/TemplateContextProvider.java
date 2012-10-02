@@ -18,6 +18,7 @@ package com.jetbrains.python.templateLanguages;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -34,7 +35,8 @@ public interface TemplateContextProvider {
    * name of the variable; the object is the PsiElement declaring the variable.
    *
    * @param template the template file
-   * @return the list of variables
+   * @return the list of variables, or null if the template is not used in the context handled by this processor.
    */
+  @Nullable
   Collection<LookupElement> getTemplateContext(PsiFile template);
 }

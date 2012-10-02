@@ -6,6 +6,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.actions.xmlbeans.UIUtils;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
@@ -52,7 +54,13 @@ public class PyConsoleSpecificOptionsPanel {
   }
 
   public void reset() {
-    myEditorTextField.setText(myConsoleSettings.myCustomStartScript);
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        myEditorTextField.setText(myConsoleSettings.myCustomStartScript);
+      }
+    });
+
     myConsoleSettings.reset(myCommonOptionsForm);
   }
 

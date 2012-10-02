@@ -21,7 +21,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonModuleTypeBase;
-import com.jetbrains.python.debugger.remote.PyPathMappingSettings;
+import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jdom.Element;
@@ -40,7 +40,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
   private String myWorkingDirectory = "";
   private String mySdkHome = "";
   private boolean myUseModuleSdk;
-  protected PyPathMappingSettings myMappingSettings;
+  protected PathMappingSettings myMappingSettings;
 
   public AbstractPythonRunConfiguration(final String name, final RunConfigurationModule module, final ConfigurationFactory factory) {
     super(name, module, factory);
@@ -51,11 +51,11 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     return getValidModules(getProject());
   }
 
-  public PyPathMappingSettings getMappingSettings() {
+  public PathMappingSettings getMappingSettings() {
     return myMappingSettings;
   }
 
-  public void setMappingSettings(PyPathMappingSettings mappingSettings) {
+  public void setMappingSettings(PathMappingSettings mappingSettings) {
     myMappingSettings = mappingSettings;
   }
 
@@ -193,10 +193,10 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     myUseModuleSdk = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "IS_MODULE_SDK"));
     getConfigurationModule().readExternal(element);
 
-    Element settingsElement = element.getChild(PyPathMappingSettings.class.getSimpleName());
+    Element settingsElement = element.getChild(PathMappingSettings.class.getSimpleName());
     if (settingsElement != null) {
       setMappingSettings(
-        XmlSerializer.deserialize(settingsElement, PyPathMappingSettings.class));
+        XmlSerializer.deserialize(settingsElement, PathMappingSettings.class));
     }
 
     // extension settings:
