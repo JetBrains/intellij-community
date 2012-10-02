@@ -390,7 +390,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       final GridBagConstraints gb =
         new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(1, 1, 1, 1), 0, 0);
 
-      myPatchFileLabel = new JLabel(VcsBundle.message("create.patch.file.name.field"));
+      myPatchFileLabel = new JLabel(VcsBundle.message("patch.apply.file.name.field"));
       myPatchFileLabel.setLabelFor(myPatchFile);
       myCenterPanel.add(myPatchFileLabel, gb);
 
