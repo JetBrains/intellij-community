@@ -22,8 +22,13 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.templates.github.ZipUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +36,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.List;
 import java.util.zip.ZipInputStream;
 
@@ -41,20 +47,17 @@ import java.util.zip.ZipInputStream;
 public class ArchivedProjectTemplate implements ProjectTemplate {
   private final String myDisplayName;
   private final String myDescription;
-  private final String myArchivePath;
-  private final ClassLoader myResourceLoader;
+  private final URL myArchivePath;
   private final WizardContext myContext;
 
   public ArchivedProjectTemplate(String displayName,
                                  String description,
-                                 String archivePath,
-                                 ClassLoader resourceLoader,
+                                 URL archivePath,
                                  WizardContext context) {
 
     myDisplayName = displayName;
     myDescription = description;
     myArchivePath = archivePath;
-    myResourceLoader = resourceLoader;
     myContext = context;
   }
 
@@ -75,18 +78,25 @@ public class ArchivedProjectTemplate implements ProjectTemplate {
       @Nullable
       @Override
       public List<Module> commit(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
-        InputStream stream = myResourceLoader.getResourceAsStream(myArchivePath);
-        if (stream == null) {
-          throw new RuntimeException("Can't open " + myArchivePath);
-        }
         final String path = myContext.getProjectFileDirectory();
+        String iml;
         try {
-          ZipUtil.unzip(null, new File(path), new ZipInputStream(stream));
+          InputStream stream = myArchivePath.openStream();
+          File dir = new File(path);
+          ZipUtil.unzip(null, dir, new ZipInputStream(stream));
+          VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+          RefreshQueue.getInstance().refresh(false, true, null, virtualFile);
+          iml = ContainerUtil.find(dir.list(), new Condition<String>() {
+            @Override
+            public boolean value(String s) {
+              return s.endsWith(".iml");
+            }
+          });
         }
         catch (IOException e) {
           throw new RuntimeException(e);
         }
-        return ImportImlMode.setUpLoader(path).commit(project, model, modulesProvider);
+        return ImportImlMode.setUpLoader(path + "/" + iml).commit(project, model, modulesProvider);
       }
     };
   }

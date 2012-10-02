@@ -35,7 +35,7 @@ import java.util.zip.ZipFile;
  * @author Eugene Zhuravlev
  *         Date: 3/25/11
  */
-class UrlUtil {
+public class UrlUtil {
   private static final String JAR_SEPARATOR = "!/";
   private static final String URL_PATH_SEPARATOR = "/";
   private static final String FILE_PROTOCOL = "file";

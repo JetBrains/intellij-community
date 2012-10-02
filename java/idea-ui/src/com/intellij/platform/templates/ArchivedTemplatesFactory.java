@@ -15,10 +15,15 @@
  */
 package com.intellij.platform.templates;
 
+import com.intellij.ide.fileTemplates.impl.UrlUtil;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
+import java.net.URL;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -29,8 +34,23 @@ public class ArchivedTemplatesFactory implements ProjectTemplatesFactory {
   @NotNull
   @Override
   public ProjectTemplate[] createTemplates(WizardContext context) {
-    return new ProjectTemplate[]{
-      new ArchivedProjectTemplate("Web Application", null, "foo", ClassLoader.getSystemClassLoader(), context)
-    };
+    try {
+      List<ProjectTemplate> templates = new ArrayList<ProjectTemplate>();
+      Enumeration<URL> resources = getClass().getClassLoader().getResources("resources/projectTemplates");
+      Set<URL> urls = new HashSet<URL>(Collections.list(resources));
+      for (URL url : urls) {
+        final List<String> children = UrlUtil.getChildrenRelativePaths(url);
+        for (String child : children) {
+          if (child.endsWith(".zip")) {
+            final URL templateUrl = new URL(url.toExternalForm() + "/" + child);
+            templates.add(new ArchivedProjectTemplate(child, null, templateUrl, context));
+          }
+        }
+      }
+      return templates.toArray(new ProjectTemplate[templates.size()]);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
