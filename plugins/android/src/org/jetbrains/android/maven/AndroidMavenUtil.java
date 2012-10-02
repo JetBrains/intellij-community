@@ -22,10 +22,13 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
@@ -56,7 +59,9 @@ public class AndroidMavenUtil {
     boolean resultUnderApp = false;
 
     for (MavenProject p : allProjects) {
-      if (p.findDependencies(mavenId).size() > 0) {
+      final List<MavenArtifact> dependencies = p.findDependencies(mavenId);
+
+      if (dependencies.size() > 0 && containsCompileDependency(dependencies)) {
         final VirtualFile projectDir = p.getDirectoryFile();
         final boolean app = APK_PACKAGING_TYPE.equals(p.getPackaging());
         if (path == null || !resultUnderApp && app) {
@@ -70,6 +75,15 @@ public class AndroidMavenUtil {
       path = project.getDirectoryFile().getPath() + '/' + GEN_EXTERNAL_APKLIBS_DIRNAME;
     }
     return path;
+  }
+
+  private static boolean containsCompileDependency(Collection<MavenArtifact> dependencies) {
+    for (MavenArtifact dependency : dependencies) {
+      if (MavenConstants.SCOPE_COMPILE.equals(dependency.getScope())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull

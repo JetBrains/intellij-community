@@ -18,6 +18,8 @@
 
 #include <errno.h>
 #include <limits.h>
+#include <mntent.h>
+#include <paths.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -362,45 +364,31 @@ static bool register_roots(array* new_roots, array* unwatchable, array* mounts) 
 }
 
 
-static bool is_watchable(const char* dev, const char* mnt, const char* fs) {
+static bool is_watchable(const char* mnt, const char* fs) {
   // don't watch special and network filesystems
   return !(strncmp(mnt, "/dev", 4) == 0 || strncmp(mnt, "/proc", 5) == 0 || strncmp(mnt, "/sys", 4) == 0 ||
-           strncmp(fs, "fuse.", 5) == 0 || strcmp(fs, "cifs") == 0 || strcmp(fs, "nfs") == 0);
+           strncmp(fs, "fuse.", 5) == 0 || strcmp(fs, "cifs") == 0 || strcmp(fs, MNTTYPE_NFS) == 0 || strcmp(fs, MNTTYPE_SWAP) == 0);
 }
 
-#define MTAB_DELIMS " \t"
-
 static array* unwatchable_mounts() {
-  FILE* mtab = fopen("/etc/mtab", "r");
+  FILE* mtab = setmntent(_PATH_MOUNTED, "r");
   if (mtab == NULL) {
-    mtab = fopen("/proc/mounts", "r");
-  }
-  if (mtab == NULL) {
-    userlog(LOG_ERR, "neither /etc/mtab nor /proc/mounts can be read");
+    userlog(LOG_ERR, "cannot open " _PATH_MOUNTED);
     return NULL;
   }
 
   array* mounts = array_create(20);
   CHECK_NULL(mounts, NULL);
 
-  char* line;
-  while ((line = read_line(mtab)) != NULL) {
-    userlog(LOG_DEBUG, "mtab: %s", line);
-    char* dev = strtok(line, MTAB_DELIMS);
-    char* point = strtok(NULL, MTAB_DELIMS);
-    char* fs = strtok(NULL, MTAB_DELIMS);
-
-    if (dev == NULL || point == NULL || fs == NULL) {
-      userlog(LOG_ERR, "can't parse mount line");
-      return NULL;
-    }
-
-    if (!is_watchable(dev, point, fs)) {
-      CHECK_NULL(array_push(mounts, strdup(point)), NULL);
+  struct mntent* ent;
+  while ((ent = getmntent(mtab)) != NULL) {
+    userlog(LOG_DEBUG, "mtab: %s : %s", ent->mnt_dir, ent->mnt_type);
+    if (strcmp(ent->mnt_type, MNTTYPE_IGNORE) != 0 && !is_watchable(ent->mnt_dir, ent->mnt_type)) {
+      CHECK_NULL(array_push(mounts, strdup(ent->mnt_dir)), NULL);
     }
   }
 
-  fclose(mtab);
+  endmntent(mtab);
   return mounts;
 }
 

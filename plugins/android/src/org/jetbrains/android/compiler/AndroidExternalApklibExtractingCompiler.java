@@ -102,14 +102,17 @@ public class AndroidExternalApklibExtractingCompiler implements SourceGenerating
 
     for (GenerationItem item : generatedItems) {
       final MyGenerationItem genItem = (MyGenerationItem)item;
+      final File contentRoot = new File(genItem.getGenContentRootPath());
+      final VirtualFile vContentRoot = LocalFileSystem.getInstance().findFileByIoFile(contentRoot);
 
-      final File srcRoot = new File(genItem.getGenContentRootPath() + '/' + 
-                                    AndroidMavenUtil.APK_LIB_ARTIFACT_SOURCE_ROOT);
-      
-      final VirtualFile vSrcRoot = LocalFileSystem.getInstance().findFileByIoFile(srcRoot);
-      if (vSrcRoot != null) {
-        AndroidCompileUtil.markDirtyAndRefresh(vSrcRoot, true);
-        AndroidUtils.collectFiles(vSrcRoot, visited, generatedVFiles);
+      if (vContentRoot != null) {
+        vContentRoot.refresh(false, true);
+        final VirtualFile vSrcRoot = vContentRoot.findChild(AndroidMavenUtil.APK_LIB_ARTIFACT_SOURCE_ROOT);
+
+        if (vSrcRoot != null) {
+          AndroidCompileUtil.markDirty(vSrcRoot, true);
+          AndroidUtils.collectFiles(vSrcRoot, visited, generatedVFiles);
+        }
       }
     }
     
