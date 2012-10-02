@@ -589,7 +589,10 @@ public class LambdaUtil {
         methodReferenceExpression.process(classRef, substRef);
 
         final MethodSignature signature1 = method.getSignature(resolveResult.getSubstitutor());
-        final MethodSignature signature2 = ((PsiMethod)resolve).getSignature(substRef.get());
+        PsiSubstitutor subst = PsiSubstitutor.EMPTY;
+        subst = subst.putAll(result.getSubstitutor());
+        subst = subst.putAll(substRef.get());
+        final MethodSignature signature2 = ((PsiMethod)resolve).getSignature(subst);
         if (areAcceptable(signature1, signature2, classRef.get(), substRef.get(), ((PsiMethod)resolve).isVarArgs())) return true;
       }
     }
