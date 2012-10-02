@@ -18,7 +18,7 @@ package com.intellij.execution.junit2.ui.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.actions.AbstractRerunFailedTestsAction;
+import com.intellij.execution.actions.JavaRerunFailedTestsAction;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.TestMethods;
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Alexey
  */
-public class RerunFailedTestsAction extends AbstractRerunFailedTestsAction {
+public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
 
   public RerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
     super(componentContainer);

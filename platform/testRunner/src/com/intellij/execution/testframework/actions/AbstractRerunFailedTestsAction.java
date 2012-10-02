@@ -18,7 +18,7 @@
  * User: anna
  * Date: 24-Dec-2008
  */
-package com.intellij.execution.actions;
+package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -130,18 +130,23 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     if (model == null || model.getRoot() == null) return false;
     final List<? extends AbstractTestProxy> myAllTests = model.getRoot().getAllTests();
     for (Object test : myAllTests) {
-      if (Filter.FAILED_OR_INTERRUPTED.and(JavaAwareFilter.METHOD(project)).shouldAccept((AbstractTestProxy)test)) return true;
+      if (getFilter(project).shouldAccept((AbstractTestProxy)test)) return true;
     }
     return false;
   }
 
   @NotNull
-  protected List<AbstractTestProxy> getFailedTests(Project project) {
+  protected List<AbstractTestProxy> getFailedTests(Project project){
     TestFrameworkRunningModel model = getModel();
     final List<? extends AbstractTestProxy> myAllTests = model != null
                                                          ? model.getRoot().getAllTests()
                                                          : Collections.<AbstractTestProxy>emptyList();
-    return Filter.FAILED_OR_INTERRUPTED.and(JavaAwareFilter.METHOD(project)).select(myAllTests);
+    return getFilter(project).select(myAllTests);
+  }
+
+  @NotNull
+  protected Filter getFilter(Project project) {
+    return Filter.FAILED_OR_INTERRUPTED;
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -190,6 +195,10 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
   }
 
   protected static abstract class MyRunProfile extends RunConfigurationBase implements ModuleRunProfile{
+    public RunConfigurationBase getConfiguration() {
+      return myConfiguration;
+    }
+
     private final RunConfigurationBase myConfiguration;
 
     public MyRunProfile(RunConfigurationBase configuration) {
