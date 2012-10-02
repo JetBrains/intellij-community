@@ -107,7 +107,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     }
     if (currentFile != null) {
       int offset = myEditor.getCaretModel().getOffset();
-      offset = TargetElementUtilBase.adjustOffset(myEditor.getDocument(), offset);
+      offset = TargetElementUtilBase.adjustOffset(currentFile, myEditor.getDocument(), offset);
       final PsiElement elementAt = currentFile.findElementAt(offset);
       if (elementAt != null) {
         final PsiElement referenceExpression = elementAt.getParent();
