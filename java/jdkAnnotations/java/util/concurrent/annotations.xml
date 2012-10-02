@@ -284,4 +284,8 @@
   <item name='java.util.concurrent.TransferQueue boolean tryTransfer(E, long, java.util.concurrent.TimeUnit) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item
+      name='java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;?&gt; schedule(java.lang.Runnable, long, java.util.concurrent.TimeUnit) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
 </root>
