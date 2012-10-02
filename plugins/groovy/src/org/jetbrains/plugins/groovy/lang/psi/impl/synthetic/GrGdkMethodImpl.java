@@ -57,6 +57,7 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
     setNavigationElement(method);
   }
 
+  @NotNull
   public PsiMethod getStaticMethod() {
     return myMethod;
   }
@@ -93,7 +94,7 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
   }
 
   @NotNull
-  public static GrGdkMethod createGdkMethod(final PsiMethod original, final boolean isStatic) {
+  public static GrGdkMethod createGdkMethod(@NotNull final PsiMethod original, final boolean isStatic) {
     final Key<CachedValue<GrGdkMethodImpl>> cachedValueKey = isStatic ? CACHED_STATIC : CACHED_NON_STATIC;
     CachedValue<GrGdkMethodImpl> cachedValue = original.getUserData(cachedValueKey);
     if (cachedValue == null) {

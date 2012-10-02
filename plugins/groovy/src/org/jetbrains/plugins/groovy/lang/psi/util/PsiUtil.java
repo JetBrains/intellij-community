@@ -233,13 +233,13 @@ public class PsiUtil {
   }
 
   @Nullable
-  public static PsiType[] getArgumentTypes(PsiElement place, boolean nullAsBottom) {
+  public static PsiType[] getArgumentTypes(@Nullable PsiElement place, boolean nullAsBottom) {
     return getArgumentTypes(place, nullAsBottom, null, false);
   }
 
   @Nullable
-  public static PsiType[] getArgumentTypes(PsiElement place, boolean nullAsBottom, @Nullable GrExpression stopAt, boolean byShape) {
-    PsiElement parent = place instanceof GrEnumConstant ? place : place.getParent();
+  public static PsiType[] getArgumentTypes(@Nullable PsiElement place, boolean nullAsBottom, @Nullable GrExpression stopAt, boolean byShape) {
+    PsiElement parent = place instanceof GrEnumConstant ? place : place != null ? place.getParent() : null;
 
     if (parent instanceof GrIndexProperty) {
       GrIndexProperty index = (GrIndexProperty)parent;
@@ -278,9 +278,9 @@ public class PsiUtil {
   }
 
   @Nullable
-  public static PsiType[] getArgumentTypes(GrNamedArgument[] namedArgs,
-                                           GrExpression[] expressions,
-                                           GrClosableBlock[] closures,
+  public static PsiType[] getArgumentTypes(@NotNull GrNamedArgument[] namedArgs,
+                                           @NotNull GrExpression[] expressions,
+                                           @NotNull GrClosableBlock[] closures,
                                            boolean nullAsBottom,
                                            @Nullable GrExpression stopAt,
                                            boolean byShape) {
@@ -592,7 +592,7 @@ public class PsiUtil {
   }
 
   @Nullable
-  public static PsiClass getContextClass(PsiElement context) {
+  public static PsiClass getContextClass(@Nullable PsiElement context) {
     while (context != null) {
       if (context instanceof PsiClass && !isInDummyFile(context)) {
         return (PsiClass)context;
@@ -606,7 +606,7 @@ public class PsiUtil {
     return null;
   }
 
-  private static boolean isInDummyFile(PsiElement context) {
+  private static boolean isInDummyFile(@NotNull PsiElement context) {
     PsiFile file = context.getContainingFile();
     if (file == null) return false;
 
@@ -660,7 +660,9 @@ public class PsiUtil {
       }
     }
     if (element instanceof PsiVariable) {
-      final PsiType type = call.getInvokedExpression().getType();
+      GrExpression expression = call.getInvokedExpression();
+      assert expression != null;
+      final PsiType type = expression.getType();
       if (type instanceof GrClosureType) {
         return isRawClosureCall(call, result, (GrClosureType)type);
       }
@@ -887,7 +889,7 @@ public class PsiUtil {
 
 
   @Nullable
-  public static PsiType getSmartReturnType(PsiMethod method) {
+  public static PsiType getSmartReturnType(@NotNull PsiMethod method) {
     if (method instanceof GrMethod) {
       return ((GrMethod)method).getInferredReturnType();
     }

@@ -249,6 +249,7 @@ public class GrClosureSignatureUtil {
             return myIterator.hasNext();
           }
 
+          @Nullable
           @Override
           public PsiType next() {
             return myIterator.next().first.getReturnType();

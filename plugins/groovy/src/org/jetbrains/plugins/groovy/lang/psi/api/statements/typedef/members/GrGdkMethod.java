@@ -17,10 +17,12 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
  */
 public interface GrGdkMethod extends PsiElement {
+  @NotNull
   PsiMethod getStaticMethod();
 }
