@@ -679,15 +679,57 @@ public class LambdaUtil {
         assert conflict != method;
         final PsiType interfaceReturnType1 = getReturnType(functionalInterfaceIdx, conflict);
         if (interfaceReturnType != null && interfaceReturnType1 != null && !Comparing.equal(interfaceReturnType, interfaceReturnType1)) {
-          if (TypeConversionUtil.isAssignable(interfaceReturnType, interfaceReturnType1)) {
+          int moreSpecific = isMoreSpecific(interfaceReturnType, interfaceReturnType1);
+          if (moreSpecific > 0) {
             conflicts.remove(method);
             break;
-          } else if (TypeConversionUtil.isAssignable(interfaceReturnType1, interfaceReturnType)) {
+          }
+          else if (moreSpecific < 0) {
             conflicts.remove(conflict);
           }
         }
       }
     }
+  }
+
+  private static int isMoreSpecific(PsiType returnType, PsiType returnType1) {
+    final PsiClassType.ClassResolveResult r = PsiUtil.resolveGenericsClassInType(returnType);
+    final PsiClass rClass = r.getElement();
+    final PsiClassType.ClassResolveResult r1 = PsiUtil.resolveGenericsClassInType(returnType1);
+    final PsiClass rClass1 = r1.getElement();
+    if (rClass != null && rClass1 != null) {
+      if (rClass == rClass1) {
+        int moreSpecific = 0;
+        for (PsiTypeParameter parameter : rClass.getTypeParameters()) {
+          final PsiType t = r.getSubstitutor().substituteWithBoundsPromotion(parameter);
+          final PsiType t1 = r1.getSubstitutor().substituteWithBoundsPromotion(parameter);
+          if (t == null || t1 == null) continue;
+          if (t1.isAssignableFrom(t) && !GenericsUtil.eliminateWildcards(t1).equals(t)) {
+            if (moreSpecific == 1) {
+              return 0;
+            }
+            moreSpecific = -1;
+          }
+          else if (t.isAssignableFrom(t1) && !GenericsUtil.eliminateWildcards(t).equals(t1)) {
+            if (moreSpecific == -1) {
+              return 0;
+            }
+            moreSpecific = 1;
+          }
+          else {
+            return 0;
+          }
+        }
+        return moreSpecific;
+      }
+      else if (rClass1.isInheritor(rClass, true)) {
+        return 1;
+      }
+      else if (rClass.isInheritor(rClass1, true)) {
+        return -1;
+      }
+    }
+    return 0;
   }
 
   @Nullable

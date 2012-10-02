@@ -16,11 +16,20 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import org.jetbrains.annotations.NonNls;
 
 public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/methodRef";
 
+  @Override
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    return new LocalInspectionTool[]{
+      new UnusedSymbolLocalInspection(),
+    };
+  }
+  
   public void testValidContext() throws Exception {
     doTest();
   }
@@ -82,10 +91,14 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testReturnTypeSpecific() throws Exception {
-    doTest();
+    doTest(true);
   }
 
   private void doTest() throws Exception {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
+    doTest(false);
+  }
+
+  private void doTest(final boolean warnings) throws Exception {
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
   }
 }
