@@ -14154,7 +14154,7 @@
     <option name="tab" path="Tabs and Indents" hit="Use tab character" />
     <option name="use" path="Tabs and Indents" hit="Use tab character" />
   </configurable>
-  <configurable id="com.jetbrains.php.tools.phpcs.PhpCSConfigurable" configurable_name="Code Sniffer">
+  <configurable id="com.jetbrains.php.tools.quality.phpcs.PhpCSConfigurable" configurable_name="Code Sniffer">
     <option name="" hit="" />
     <option name="code" hit="Code Sniffer" />
     <option name="sniffer" hit="Code Sniffer" />
