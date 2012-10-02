@@ -1,14 +1,12 @@
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.incremental.IgnoredFilePatterns;
-import org.jetbrains.jps.incremental.ModuleRootsIndex;
+import org.jetbrains.jps.indices.IgnoredFileIndex;
+import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,33 +17,36 @@ import java.util.Map;
  */
 public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuilder {
   private final Map<String, JarInfo> myJarByPath;
-  private final List<Pair<ArtifactRootDescriptor, DestinationInfo>> myInstructions;
-  private final ModuleRootsIndex myRootsIndex;
+  private final List<ArtifactRootDescriptor> myDescriptors;
+  private final ModuleExcludeIndex myRootsIndex;
   private int myRootIndex;
+  private final IgnoredFileIndex myIgnoredFileIndex;
   private ArtifactBuildTarget myBuildTarget;
 
-  public ArtifactInstructionsBuilderImpl(ModuleRootsIndex rootsIndex, ArtifactBuildTarget target) {
+  public ArtifactInstructionsBuilderImpl(ModuleExcludeIndex rootsIndex, IgnoredFileIndex ignoredFileIndex, ArtifactBuildTarget target) {
     myRootsIndex = rootsIndex;
+    myIgnoredFileIndex = ignoredFileIndex;
     myBuildTarget = target;
     myJarByPath = new HashMap<String, JarInfo>();
-    myInstructions = new ArrayList<Pair<ArtifactRootDescriptor, DestinationInfo>>();
+    myDescriptors = new ArrayList<ArtifactRootDescriptor>();
   }
 
-  public IgnoredFilePatterns getIgnoredFilePatterns() {
-    return myRootsIndex.getIgnoredFilePatterns();
+  public IgnoredFileIndex getIgnoredFileIndex() {
+    return myIgnoredFileIndex;
   }
 
-  public boolean addDestination(@NotNull ArtifactRootDescriptor descriptor, @NotNull DestinationInfo destinationInfo) {
+  public boolean addDestination(@NotNull ArtifactRootDescriptor descriptor) {
+    @NotNull DestinationInfo destinationInfo = descriptor.getDestinationInfo();
     if (destinationInfo instanceof ExplodedDestinationInfo && descriptor instanceof FileBasedArtifactRootDescriptor
         && FileUtil.filesEqual(descriptor.getRootFile(), new File(FileUtil.toSystemDependentName(destinationInfo.getOutputFilePath())))) {
       return false;
     }
 
-    myInstructions.add(Pair.create(descriptor, destinationInfo));
+    myDescriptors.add(descriptor);
     return true;
   }
 
-  public ModuleRootsIndex getRootsIndex() {
+  public ModuleExcludeIndex getRootsIndex() {
     return myRootsIndex;
   }
 
@@ -58,27 +59,19 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
   }
 
   @Override
-  public void processRoots(ArtifactRootProcessor processor) throws IOException {
-    for (Pair<ArtifactRootDescriptor, DestinationInfo> pair : myInstructions) {
-      if (!processor.process(pair.getFirst(), pair.getSecond())) {
-        break;
-      }
-    }
-  }
-
-  @Override
-  public List<Pair<ArtifactRootDescriptor, DestinationInfo>> getInstructions() {
-    return myInstructions;
+  public List<ArtifactRootDescriptor> getDescriptors() {
+    return myDescriptors;
   }
 
   public FileBasedArtifactRootDescriptor createFileBasedRoot(@NotNull File file,
-                                                         @NotNull SourceFileFilter filter) {
-    return new FileBasedArtifactRootDescriptor(file, filter, myRootIndex++, myBuildTarget);
+                                                             @NotNull SourceFileFilter filter,
+                                                             final DestinationInfo destinationInfo) {
+    return new FileBasedArtifactRootDescriptor(file, filter, myRootIndex++, myBuildTarget, destinationInfo);
   }
 
   public JarBasedArtifactRootDescriptor createJarBasedRoot(@NotNull File jarFile,
-                                                       @NotNull String pathInJar,
-                                                       @NotNull SourceFileFilter filter) {
-    return new JarBasedArtifactRootDescriptor(jarFile, pathInJar, filter, myRootIndex, myBuildTarget);
+                                                           @NotNull String pathInJar,
+                                                           @NotNull SourceFileFilter filter, final DestinationInfo destinationInfo) {
+    return new JarBasedArtifactRootDescriptor(jarFile, pathInJar, filter, myRootIndex, myBuildTarget, destinationInfo);
   }
 }

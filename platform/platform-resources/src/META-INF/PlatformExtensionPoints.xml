@@ -73,6 +73,9 @@
   <extensionPoint name="directoryProjectGenerator"
                   interface="com.intellij.platform.DirectoryProjectGenerator"/>
 
+  <extensionPoint name="projectTemplatesFactory"
+                  interface="com.intellij.platform.ProjectTemplatesFactory"/>
+
   <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener"/>
   <extensionPoint name="ComponentRoamingType" beanClass="com.intellij.openapi.components.impl.stores.RoamingTypeExtensionPointBean"/>
 
@@ -138,4 +141,6 @@
   <extensionPoint name="pathMacroFilter" interface="com.intellij.openapi.application.PathMacroFilter"/>
 
   <extensionPoint name="serverPipelineConsumer" interface="com.intellij.util.Consumer"/>
+  
+  <extensionPoint name="colorPickerListenerFactory" interface="com.intellij.ui.ColorPickerListenerFactory"/>
 </extensionPoints>

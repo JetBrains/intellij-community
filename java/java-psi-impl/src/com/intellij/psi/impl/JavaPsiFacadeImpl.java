@@ -42,7 +42,9 @@ import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
@@ -118,7 +120,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     if (pkg == null && packageName.length() < qualifiedName.length()) {
       PsiClass[] containingClasses = findClassesInDumbMode(packageName, scope);
       if (containingClasses.length == 1) {
-        return filterByName(className, containingClasses[0].getInnerClasses());
+        return PsiElementFinder.filterByName(className, containingClasses[0].getInnerClasses());
       }
 
       return PsiClass.EMPTY_ARRAY;
@@ -128,22 +130,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       return PsiClass.EMPTY_ARRAY;
     }
 
-    return filterByName(className, pkg.getClasses(scope));
-  }
-
-  @NotNull
-  private static PsiClass[] filterByName(@NotNull String className, @NotNull PsiClass[] classes) {
-    if (classes.length == 0) return PsiClass.EMPTY_ARRAY;
-    if (classes.length == 1) {
-      return className.equals(classes[0].getName()) ? classes : PsiClass.EMPTY_ARRAY;
-    }
-    List<PsiClass> foundClasses = new SmartList<PsiClass>();
-    for (PsiClass psiClass : classes) {
-      if (className.equals(psiClass.getName())) {
-        foundClasses.add(psiClass);
-      }
-    }
-    return foundClasses.isEmpty() ? PsiClass.EMPTY_ARRAY : foundClasses.toArray(new PsiClass[foundClasses.size()]);
+    return pkg.findClassByShortName(className, scope);
   }
 
   @Override
@@ -235,7 +222,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   @NotNull
   public Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    Set<String> result = new HashSet<String>();
+    Set<String> result = new THashSet<String>();
     for (PsiElementFinder finder : filteredFinders()) {
       result.addAll(finder.getClassNames(psiPackage, scope));
     }
@@ -273,6 +260,18 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
 
     return result.toArray(new PsiPackage[result.size()]);
+  }
+
+  public PsiClass[] findClassByShortName(String name, PsiPackage psiPackage, GlobalSearchScope scope) {
+    List<PsiClass> result = null;
+    for (PsiElementFinder finder : filteredFinders()) {
+      PsiClass[] classes = finder.getClasses(name, psiPackage, scope);
+      if (classes.length == 0) continue;
+      if (result == null) result = new ArrayList<PsiClass>();
+      ContainerUtil.addAll(result, classes);
+    }
+
+    return result == null ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
   }
 
   private class PsiElementFinderImpl extends PsiElementFinder implements DumbAware {
@@ -317,6 +316,12 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     @Override
     @NotNull
     public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull final GlobalSearchScope scope) {
+      return getClasses(null, psiPackage, scope);
+    }
+
+    @Override
+    @NotNull
+    public PsiClass[] getClasses(@Nullable String shortName, @NotNull PsiPackage psiPackage, @NotNull final GlobalSearchScope scope) {
       List<PsiClass> list = null;
       String packageName = psiPackage.getQualifiedName();
       for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
@@ -328,21 +333,24 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
           String qualifiedName = aClass.getQualifiedName();
           if (qualifiedName != null) qualifiedName = StringUtil.getPackageName(qualifiedName);
           if (Comparing.strEqual(qualifiedName, packageName)) {
-            list.add(aClass);
+            if (shortName == null || shortName.equals(aClass.getName())) list.add(aClass);
           }
         }
       }
       if (list == null) {
         return PsiClass.EMPTY_ARRAY;
       }
-      ContainerUtil.quickSort(list, new Comparator<PsiClass>() {
-        @Override
-        public int compare(PsiClass o1, PsiClass o2) {
-          VirtualFile file2 = PsiUtilCore.getVirtualFile(o2);
-          VirtualFile file1 = PsiUtilCore.getVirtualFile(o1);
-          return scope.compare(file2, file1);
-        }
-      });
+
+      if (list.size() > 1) {
+        ContainerUtil.quickSort(list, new Comparator<PsiClass>() {
+          @Override
+          public int compare(PsiClass o1, PsiClass o2) {
+            VirtualFile file2 = PsiUtilCore.getVirtualFile(o2);
+            VirtualFile file1 = PsiUtilCore.getVirtualFile(o1);
+            return scope.compare(file2, file1);
+          }
+        });
+      }
 
       return list.toArray(new PsiClass[list.size()]);
     }

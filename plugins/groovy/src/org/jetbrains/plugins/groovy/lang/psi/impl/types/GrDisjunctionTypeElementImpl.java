@@ -69,6 +69,11 @@ public class GrDisjunctionTypeElementImpl extends GroovyPsiElementImpl implement
   }
 
   @Override
+  public PsiType getTypeNoResolve(PsiElement context) {
+    return GrTypeElementImplUtil.getTypeNoResolve(this, context);
+  }
+
+  @Override
   public void subtreeChanged() {
     super.subtreeChanged();
     myCachedType = null;

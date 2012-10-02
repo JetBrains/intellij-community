@@ -449,9 +449,11 @@ public class CompileDriver {
 
       @Override
       public void sessionTerminated(UUID sessionId) {
-        final ProblemsView view = ProblemsViewImpl.SERVICE.getInstance(myProject);
-        view.clearProgress();
-        view.clearOldMessages(compileContext.getCompileScope(), sessionId);
+        if (compileContext.shouldUpdateProblemsView()) {
+          final ProblemsView view = ProblemsViewImpl.SERVICE.getInstance(myProject);
+          view.clearProgress();
+          view.clearOldMessages(compileContext.getCompileScope(), sessionId);
+        }
       }
 
       @Override
@@ -635,14 +637,12 @@ public class CompileDriver {
 
             CompilerCacheManager.getInstance(myProject).flushCaches();
 
-            if (ApplicationManager.getApplication().isUnitTestMode()) {
-              // need this for tests only;
-              final Set<File> outputs = new HashSet<File>();
-              for (final String path : CompilerPathsEx.getOutputPaths(ModuleManager.getInstance(myProject).getModules())) {
-                outputs.add(new File(path));
-              }
-              CompilerUtil.refreshIOFiles(outputs);
+            // refresh on output roots is required in order for the order enumerator to see all roots via VFS
+            final Set<File> outputs = new HashSet<File>();
+            for (final String path : CompilerPathsEx.getOutputPaths(ModuleManager.getInstance(myProject).getModules())) {
+              outputs.add(new File(path));
             }
+            CompilerUtil.refreshIOFiles(outputs);
           }
         }
       };

@@ -812,10 +812,16 @@
 
     <action id="Arrangement.Rule.Add"
             class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction"
-            icon="AllIcons.General.Add"/>
+            icon="AllIcons.ToolbarDecorator.Add"/>
     <action id="Arrangement.Rule.Remove"
             class="com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction"
-            icon="AllIcons.General.Remove"/>
+            icon="AllIcons.ToolbarDecorator.Remove"/>
+    <action id="Arrangement.Rule.Move.Up"
+            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementRuleUpAction"
+            icon="AllIcons.ToolbarDecorator.MoveUp"/>
+    <action id="Arrangement.Rule.Move.Down"
+            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementRuleDownAction"
+            icon="AllIcons.ToolbarDecorator.MoveDown"/>
     
     <group id="Arrangement.RuleEditor.Context.Menu">
       <reference ref="Arrangement.Rule.Add"/>
@@ -825,6 +831,8 @@
     <group id="Arrangement.RuleEditor.ToolWIndow">
       <reference ref="Arrangement.Rule.Add"/>
       <reference ref="Arrangement.Rule.Remove"/>
+      <reference ref="Arrangement.Rule.Move.Up"/>
+      <reference ref="Arrangement.Rule.Move.Down"/>
     </group>
     
   </actions>

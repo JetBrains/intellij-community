@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -29,18 +28,22 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.codeInsight.daemon.impl.HighlightInfoType.INFORMATION;
+import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.KEYWORD;
+import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.LABEL_ATTRIBUTES;
 
 /**
  * @author Max Medvedev
@@ -64,16 +67,19 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
         IElementType tokenType = element.getNode().getElementType();
         if (TokenSets.KEYWORDS.contains(tokenType)) {
           if (highlightKeyword(element, tokenType)) {
-            result.add(HighlightInfo.createHighlightInfo(HighlightInfoType.INFORMATION, element, null, DefaultHighlighter.KEYWORD));
+            result.add(HighlightInfo.createHighlightInfo(INFORMATION, element, null, KEYWORD));
           }
         }
         else if (!(element instanceof GroovyPsiElement || element instanceof PsiErrorElement)) {
           final TextAttributesKey attribute = getDeclarationAttribute(element);
           if (attribute != null) {
-            result.add(HighlightInfo.createHighlightInfo(HighlightInfoType.INFORMATION, element, null, attribute));
+            result.add(HighlightInfo.createHighlightInfo(INFORMATION, element, null, attribute));
           }
         }
         else {
+          if (element instanceof GrLabel) {
+            result.add(HighlightInfo.createHighlightInfo(INFORMATION, element, null, LABEL_ATTRIBUTES));
+          }
           super.visitElement(element);
         }
       }

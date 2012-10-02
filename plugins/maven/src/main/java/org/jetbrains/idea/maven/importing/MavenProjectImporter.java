@@ -17,7 +17,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -45,6 +45,7 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import java.io.File;
 import java.io.IOException;
@@ -394,9 +395,10 @@ public class MavenProjectImporter {
           }
         }
 
-        String options = JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING;
+        final JpsJavaCompilerOptions javacOptions = JavacConfiguration.getOptions(myProject, JavacConfiguration.class);
+        String options = javacOptions.ADDITIONAL_OPTIONS_STRING;
         options = options.replaceFirst("(-target (\\S+))", ""); // Old IDEAs saved
-        JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING = options;
+        javacOptions.ADDITIONAL_OPTIONS_STRING = options;
       }
     });
   }

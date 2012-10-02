@@ -500,6 +500,11 @@ public class ResolveUtil {
                                   PsiSubstitutor substitutor2) {  //method1 has more general parameter types then method2
     if (!method1.getName().equals(method2.getName())) return false;
 
+    if (method1 instanceof GrGdkMethod && method2 instanceof GrGdkMethod) {
+      method1 = ((GrGdkMethod)method1).getStaticMethod();
+      method2 = ((GrGdkMethod)method2).getStaticMethod();
+    }
+
     PsiParameter[] params1 = method1.getParameterList().getParameters();
     PsiParameter[] params2 = method2.getParameterList().getParameters();
 

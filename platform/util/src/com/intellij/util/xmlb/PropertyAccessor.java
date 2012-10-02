@@ -18,6 +18,7 @@ package com.intellij.util.xmlb;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
@@ -70,7 +71,18 @@ class PropertyAccessor implements Accessor {
     }
   }
 
+  private Annotation[] myAnnotationCache;
+
+  @NotNull
   public Annotation[] getAnnotations() {
+    Annotation[] annotations = myAnnotationCache;
+    if (annotations == null) {
+      annotations = myAnnotationCache = calcAnnotations();
+    }
+    return annotations;
+  }
+
+  private Annotation[] calcAnnotations() {
     List<Annotation> result = new ArrayList<Annotation>();
 
     if (myReadMethod != null) {

@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.completion.closureParameters;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -61,7 +62,7 @@ public class ClosureDescriptor extends LightElement implements PsiElement {
     this.myMethod = method;
   }
 
-  public boolean isMethodApplicable(PsiMethod method, PsiSubstitutor substitutor, GroovyPsiElement place) {
+  public boolean isMethodApplicable(PsiMethod method, GroovyPsiElement place) {
     String name = String.valueOf(myMethod.get("name"));
     if (name == null || !name.equals(method.getName())) return false;
 
@@ -84,9 +85,10 @@ public class ClosureDescriptor extends LightElement implements PsiElement {
     }
     final boolean isConstructor = Boolean.TRUE.equals(myMethod.get("constructor"));
     final MethodSignature signature = MethodSignatureUtil
-      .createMethodSignature(name, types.toArray(new PsiType[types.size()]), method.getTypeParameters(), substitutor, isConstructor);
+      .createMethodSignature(name, types.toArray(new PsiType[types.size()]), method.getTypeParameters(), PsiSubstitutor.EMPTY, isConstructor);
     final GrClosureSignature closureSignature = GrClosureSignatureUtil.createSignature(signature);
 
+    if (method instanceof ClsMethodImpl) method = ((ClsMethodImpl)method).getSourceMirrorMethod();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final PsiType[] typeArray = new PsiType[parameters.length];
     ContainerUtil.map(parameters, new Function<PsiParameter, PsiType>() {

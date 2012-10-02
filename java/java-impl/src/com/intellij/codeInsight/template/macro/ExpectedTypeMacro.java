@@ -69,7 +69,6 @@ public class ExpectedTypeMacro extends Macro {
     if (params.length != 0) return null;
 
     final Project project = context.getProject();
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
     PsiType[] types = null;
 
     final int offset = context.getTemplateStartOffset();

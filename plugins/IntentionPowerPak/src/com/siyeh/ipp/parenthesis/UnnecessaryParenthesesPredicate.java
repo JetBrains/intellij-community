@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,65 +16,24 @@
 package com.siyeh.ipp.parenthesis;
 
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ErrorUtil;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
 
 class UnnecessaryParenthesesPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
     if (element instanceof PsiParameterList) {
+      final PsiParameterList parameterList = (PsiParameterList)element;
       final PsiElement parent = element.getParent();
-      if (parent instanceof PsiLambdaExpression && ((PsiParameterList)element).getParametersCount() == 1) {
-        final PsiParameter parameter = ((PsiParameterList)element).getParameters()[0];
+      if (parent instanceof PsiLambdaExpression && parameterList.getParametersCount() == 1) {
+        final PsiParameter parameter = parameterList.getParameters()[0];
         return parameter.getTypeElement() == null && element.getFirstChild() != parameter && element.getLastChild() != parameter;
       }
     }
     if (!(element instanceof PsiParenthesizedExpression)) {
       return false;
     }
-    if (ErrorUtil.containsError(element)) {
-      return false;
-    }
-    final PsiParenthesizedExpression expression =
-      (PsiParenthesizedExpression)element;
-    final PsiElement parent = expression.getParent();
-    if (!(parent instanceof PsiExpression)) {
-      return true;
-    }
-    final PsiExpression body = expression.getExpression();
-    if (body instanceof PsiParenthesizedExpression) {
-      return true;
-    }
-    final int parentPrecedence =
-      ParenthesesUtils.getPrecedence((PsiExpression)parent);
-    final int childPrecedence = ParenthesesUtils.getPrecedence(body);
-    if (parentPrecedence > childPrecedence) {
-      return true;
-    }
-    else if (parentPrecedence == childPrecedence) {
-      if (parent instanceof PsiBinaryExpression &&
-          body instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression =
-          (PsiBinaryExpression)parent;
-        final PsiJavaToken parentSign =
-          binaryExpression.getOperationSign();
-        final IElementType parentOperator = parentSign.getTokenType();
-        final IElementType childOperator = ((PsiBinaryExpression)body).getOperationTokenType();
-        if (!parentOperator.equals(childOperator)) {
-          return false;
-        }
-        final PsiType parentType = binaryExpression.getType();
-        final PsiType bodyType = body.getType();
-        return parentType != null && parentType.equals(bodyType);
-      }
-      else {
-        return false;
-      }
-    }
-    else {
-      return false;
-    }
+    final PsiParenthesizedExpression expression = (PsiParenthesizedExpression)element;
+    return !ParenthesesUtils.areParenthesesNeeded(expression);
   }
 }

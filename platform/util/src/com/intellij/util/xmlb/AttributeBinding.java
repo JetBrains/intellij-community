@@ -24,18 +24,16 @@ import org.jetbrains.annotations.Nullable;
 public class AttributeBinding implements Binding {
   private final Accessor myAccessor;
   private final Attribute myAttribute;
-  private final XmlSerializerImpl myXmlSerializer;
   private Binding myBinding;
 
-  public AttributeBinding(final Accessor accessor, final Attribute attribute, final XmlSerializerImpl xmlSerializer) {
+  public AttributeBinding(final Accessor accessor, final Attribute attribute) {
     myAccessor = accessor;
     myAttribute = attribute;
-    myXmlSerializer = xmlSerializer;
   }
 
-  public Object serialize(Object o, Object context) {
+  public Object serialize(Object o, Object context, SerializationFilter filter) {
     final Object v = myAccessor.read(o);
-    final Object node = myBinding.serialize(v, context);
+    final Object node = myBinding.serialize(v, context, filter);
 
     return new org.jdom.Attribute(myAttribute.value(), ((Content)node).getValue());
   }
@@ -62,7 +60,7 @@ public class AttributeBinding implements Binding {
   }
 
   public void init() {
-    myBinding = myXmlSerializer.getBinding(myAccessor);
+    myBinding = XmlSerializerImpl.getBinding(myAccessor);
     if (!Text.class.isAssignableFrom(myBinding.getBoundNodeType())) {
       throw new XmlSerializationException("Can't use attribute binding for non-text content: " + myAccessor);
     }

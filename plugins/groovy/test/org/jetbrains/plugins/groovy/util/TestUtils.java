@@ -20,19 +20,26 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.PomDeclarationSearcher;
+import com.intellij.pom.PomTarget;
 import com.intellij.psi.*;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.util.CollectConsumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -180,6 +187,67 @@ public abstract class TestUtils {
     if (missedVariants.size() > 0) {
       Assert.assertTrue("Some completion variants are missed " + missedVariants, false);
     }
+  }
+
+  public static void checkResolve(PsiFile file, final String ... expectedUnresolved) {
+    final List<String> actualUnresolved = new ArrayList<String>();
+
+    final StringBuilder sb = new StringBuilder();
+    final String text = file.getText();
+    final Ref<Integer> lastUnresolvedRef = Ref.create(0);
+
+    file.acceptChildren(new PsiRecursiveElementVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        if (element instanceof GrReferenceExpression) {
+          GrReferenceExpression psiReference = (GrReferenceExpression)element;
+
+          GrExpression qualifier = psiReference.getQualifierExpression();
+          if (qualifier instanceof GrReferenceExpression) {
+            if (((GrReferenceExpression)qualifier).resolve() == null) {
+              super.visitElement(element);
+              return;
+            }
+          }
+
+          if (psiReference.resolve() == null) {
+            CollectConsumer<PomTarget> consumer = new CollectConsumer<PomTarget>();
+
+            for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
+              searcher.findDeclarationsAt(psiReference, 0, consumer);
+              if (consumer.getResult().size() > 0) break;
+            }
+
+            if (consumer.getResult().isEmpty()) {
+              PsiElement nameElement = psiReference.getReferenceNameElement();
+              assert nameElement != null;
+
+              String name = nameElement.getText();
+
+              assert name.equals(psiReference.getName());
+
+              int last = lastUnresolvedRef.get();
+              sb.append(text, last, nameElement.getTextOffset());
+              sb.append('!').append(name).append('!');
+              lastUnresolvedRef.set(nameElement.getTextOffset() + nameElement.getTextLength());
+
+              actualUnresolved.add(name);
+              return;
+            }
+          }
+        }
+
+        super.visitElement(element);
+      }
+
+      @Override
+      public void visitFile(PsiFile file) {
+      }
+    });
+
+    sb.append("\n\n");
+
+    Assert.assertEquals(sb.toString(), Arrays.asList(expectedUnresolved), actualUnresolved);
   }
 
 }

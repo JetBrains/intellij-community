@@ -1,6 +1,6 @@
- package org.jetbrains.android.uipreview;
+package org.jetbrains.android.uipreview;
 
- import com.intellij.openapi.Disposable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -23,7 +23,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
- /**
+/**
  * @author Eugene.Kudelevsky
  */
 public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
@@ -33,15 +33,17 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
 
   private FixableIssueMessage myErrorMessage;
   private List<FixableIssueMessage> myWarnMessages;
+
   private BufferedImage myImage;
 
   private final JPanel myMessagesPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
 
   private double myZoomFactor = 1.0;
   private boolean myZoomToFit = true;
-   
+
   private final List<ProgressIndicator> myProgressIndicators = new ArrayList<ProgressIndicator>();
   private boolean myProgressVisible = false;
+  private boolean myShowWarnings = false;
 
   private final JPanel myImagePanel = new JPanel() {
     @Override
@@ -125,7 +127,7 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
   public void unregisterIndicator(@NotNull ProgressIndicator indicator) {
     synchronized (myProgressIndicators) {
       myProgressIndicators.remove(indicator);
-      
+
       if (myProgressIndicators.size() == 0 && myProgressVisible) {
         myProgressVisible = false;
         myProgressIcon.suspend();
@@ -154,70 +156,96 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
     myMessagesPanel.removeAll();
 
     if (myErrorMessage != null) {
-      showMessage(myErrorMessage, Messages.getErrorIcon());
+      showMessage(myErrorMessage, Messages.getErrorIcon(), myMessagesPanel);
     }
-    if (myWarnMessages != null) {
+    if (myWarnMessages != null && myWarnMessages.size() > 0) {
+      final HyperlinkLabel showHideWarnsLabel = new HyperlinkLabel();
+      showHideWarnsLabel.setOpaque(false);
+      final String showMessage = "Show " + myWarnMessages.size() + " warnings";
+      final String hideMessage = "Hide " + myWarnMessages.size() + " warnings";
+      showHideWarnsLabel.setHyperlinkText("", myShowWarnings ? hideMessage : showMessage, "");
+
+      final JPanel warningsPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
+      warningsPanel.setOpaque(false);
+
+      showHideWarnsLabel.addHyperlinkListener(new HyperlinkListener() {
+        public void hyperlinkUpdate(final HyperlinkEvent e) {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            myShowWarnings = !warningsPanel.isVisible();
+            warningsPanel.setVisible(myShowWarnings);
+            showHideWarnsLabel.setHyperlinkText("", myShowWarnings ? hideMessage : showMessage, "");
+          }
+        }
+      });
+      final JPanel wrapper = new JPanel(new BorderLayout());
+      wrapper.setOpaque(false);
+      wrapper.add(showHideWarnsLabel);
+      wrapper.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 0));
+      myMessagesPanel.add(wrapper);
+
       for (FixableIssueMessage warnMessage : myWarnMessages) {
-        showMessage(warnMessage, Messages.getWarningIcon());
+        showMessage(warnMessage, Messages.getWarningIcon(), warningsPanel);
       }
+      warningsPanel.setVisible(myShowWarnings);
+      myMessagesPanel.add(warningsPanel);
     }
     revalidate();
     repaint();
   }
 
-   private void showMessage(final FixableIssueMessage message, Icon icon) {
-     if (message.myLinkText.length() > 0 || message.myAfterLinkText.length() > 0) {
-       final HyperlinkLabel warnLabel = new HyperlinkLabel();
-       warnLabel.setOpaque(false);
-       warnLabel.setHyperlinkText(message.myBeforeLinkText,
-                                  message.myLinkText,
-                                  message.myAfterLinkText);
-       warnLabel.setIcon(icon);
+  private static void showMessage(final FixableIssueMessage message, Icon icon, JPanel panel) {
+    if (message.myLinkText.length() > 0 || message.myAfterLinkText.length() > 0) {
+      final HyperlinkLabel warnLabel = new HyperlinkLabel();
+      warnLabel.setOpaque(false);
+      warnLabel.setHyperlinkText(message.myBeforeLinkText,
+                                 message.myLinkText,
+                                 message.myAfterLinkText);
+      warnLabel.setIcon(icon);
 
-       warnLabel.addHyperlinkListener(new HyperlinkListener() {
-         public void hyperlinkUpdate(final HyperlinkEvent e) {
-           final Runnable quickFix = message.myQuickFix;
-           if (quickFix != null && e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-             quickFix.run();
-           }
-         }
-       });
-       myMessagesPanel.add(warnLabel);
-     }
-     else {
-       final JBLabel warnLabel = new JBLabel();
-       warnLabel.setOpaque(false);
-       warnLabel.setText("<html><body>" + message.myBeforeLinkText.replace("\n", "<br>") + "</body></html>");
-       warnLabel.setIcon(icon);
-       myMessagesPanel.add(warnLabel);
-     }
-     if (message.myAdditionalFixes.size() > 0) {
-       final JPanel fixesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-       fixesPanel.setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 10, 0));
-       fixesPanel.setOpaque(false);
-       fixesPanel.add(Box.createHorizontalStrut(icon.getIconWidth()));
+      warnLabel.addHyperlinkListener(new HyperlinkListener() {
+        public void hyperlinkUpdate(final HyperlinkEvent e) {
+          final Runnable quickFix = message.myQuickFix;
+          if (quickFix != null && e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            quickFix.run();
+          }
+        }
+      });
+      panel.add(warnLabel);
+    }
+    else {
+      final JBLabel warnLabel = new JBLabel();
+      warnLabel.setOpaque(false);
+      warnLabel.setText("<html><body>" + message.myBeforeLinkText.replace("\n", "<br>") + "</body></html>");
+      warnLabel.setIcon(icon);
+      panel.add(warnLabel);
+    }
+    if (message.myAdditionalFixes.size() > 0) {
+      final JPanel fixesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+      fixesPanel.setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 10, 0));
+      fixesPanel.setOpaque(false);
+      fixesPanel.add(Box.createHorizontalStrut(icon.getIconWidth()));
 
-       for (Pair<String, Runnable> pair : message.myAdditionalFixes) {
-         final HyperlinkLabel fixLabel = new HyperlinkLabel();
-         fixLabel.setOpaque(false);
-         fixLabel.setHyperlinkText(pair.getFirst());
-         final Runnable fix = pair.getSecond();
+      for (Pair<String, Runnable> pair : message.myAdditionalFixes) {
+        final HyperlinkLabel fixLabel = new HyperlinkLabel();
+        fixLabel.setOpaque(false);
+        fixLabel.setHyperlinkText(pair.getFirst());
+        final Runnable fix = pair.getSecond();
 
-         fixLabel.addHyperlinkListener(new HyperlinkListener() {
-           @Override
-           public void hyperlinkUpdate(HyperlinkEvent e) {
-             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-               fix.run();
-             }
-           }
-         });
-         fixesPanel.add(fixLabel);
-       }
-       myMessagesPanel.add(fixesPanel);
-     }
-   }
+        fixLabel.addHyperlinkListener(new HyperlinkListener() {
+          @Override
+          public void hyperlinkUpdate(HyperlinkEvent e) {
+            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+              fix.run();
+            }
+          }
+        });
+        fixesPanel.add(fixLabel);
+      }
+      panel.add(fixesPanel);
+    }
+  }
 
-   void updateImageSize() {
+  void updateImageSize() {
     if (myImage == null) {
       myImagePanel.setSize(0, 0);
     }
@@ -263,7 +291,7 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
     if (myImage == null) {
       return myZoomFactor;
     }
-    return (double) myImagePanel.getWidth() / (double) myImage.getWidth();
+    return (double)myImagePanel.getWidth() / (double)myImage.getWidth();
   }
 
   private double getZoomFactor() {
@@ -279,7 +307,7 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
   }
 
   private double getMinZoomFactor() {
-    return Math.min(1.0, (double) getParent().getWidth() / (double) myImage.getWidth());
+    return Math.min(1.0, (double)getParent().getWidth() / (double)myImage.getWidth());
   }
 
   public void zoomIn() {

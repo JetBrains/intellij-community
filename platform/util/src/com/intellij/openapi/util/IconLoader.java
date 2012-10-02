@@ -31,6 +31,8 @@ import sun.reflect.Reflection;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.FilteredImageSource;
+import java.awt.image.ImageProducer;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.net.URL;
@@ -235,10 +237,16 @@ public final class IconLoader {
 
       graphics.dispose();
 
-      disabledIcon = new MyImageIcon(GrayFilter.createDisabledImage(image));
+      disabledIcon = new MyImageIcon(createDisabled(image));
       ourIcon2DisabledIcon.put(icon, disabledIcon);
     }
     return disabledIcon;
+  }
+
+  private static Image createDisabled(BufferedImage image) {
+    final GrayFilter filter = new GrayFilter(true, UIUtil.isUnderDarcula() ? 30 : 65);
+    final ImageProducer prod = new FilteredImageSource(image.getSource(), filter);
+    return Toolkit.getDefaultToolkit().createImage(prod);
   }
 
   public static Icon getTransparentIcon(final Icon icon) {

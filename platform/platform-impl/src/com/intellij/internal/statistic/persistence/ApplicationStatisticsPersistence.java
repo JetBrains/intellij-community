@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 public abstract class ApplicationStatisticsPersistence {
-  private Map<GroupDescriptor, Map<String, Set<UsageDescriptor>>> myApplicationData = new HashMap<GroupDescriptor, Map<String, Set<UsageDescriptor>>>();
+  private final Map<GroupDescriptor, Map<String, Set<UsageDescriptor>>> myApplicationData = new HashMap<GroupDescriptor, Map<String, Set<UsageDescriptor>>>();
 
   public ApplicationStatisticsPersistence() {
   }

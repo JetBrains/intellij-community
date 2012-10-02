@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.ui.TableUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -69,7 +70,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private Updater myUpdater;
   private List<DirDiffModelListener> myListeners = new ArrayList<DirDiffModelListener>();
   private TableSelectionConfig mySelectionConfig;
-
+  private String myStatus = null;
   public static final String EMPTY_STRING = "                                                  ";
   private DirDiffPanel myPanel;
 
@@ -201,6 +202,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
   public void reloadModel(final boolean userForcedRefresh) {
     myUpdating.set(true);
+    myTable.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
     final JBLoadingPanel loadingPanel = getLoadingPanel();
     loadingPanel.startLoading();
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
@@ -440,21 +442,37 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   @Nullable
   @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
-    final DirDiffElementImpl element = myElements.get(rowIndex);
-    if (element.isSeparator()) {
-      return columnIndex == 0 ? element.getName() : null;
-    }
+    try {
+      final DirDiffElementImpl element = myElements.get(rowIndex);
+      if (element.isSeparator()) {
+        return columnIndex == 0 ? element.getName() : null;
+      }
 
-    final String name = getColumnName(columnIndex);
-    boolean isSrc = columnIndex < getColumnCount() / 2;
-    if (name.equals(COLUMN_NAME)) {
-      return isSrc ? element.getSourceName() : element.getTargetName();
-    } else if (name.equals(COLUMN_SIZE)) {
-      return isSrc ? element.getSourceSize() : element.getTargetSize();
-    } else  if (name.equals(COLUMN_DATE)) {
-      return isSrc ? element.getSourceModificationDate() : element.getTargetModificationDate();
+      final String name = getColumnName(columnIndex);
+      boolean isSrc = columnIndex < getColumnCount() / 2;
+      if (name.equals(COLUMN_NAME)) {
+        return isSrc ? element.getSourceName() : element.getTargetName();
+      } else if (name.equals(COLUMN_SIZE)) {
+        return isSrc ? element.getSourceSize() : element.getTargetSize();
+      } else  if (name.equals(COLUMN_DATE)) {
+        return isSrc ? element.getSourceModificationDate() : element.getTargetModificationDate();
+      }
+      return "";
     }
-    return "";
+    catch (Exception e) {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          myElements.clear();
+          fireTableDataChanged();
+          myTable.getEmptyText().setText("Data has been changed externally. Reloading data...");
+          reloadModel(true);
+          myTable.repaint();
+        }
+      });
+      return "";
+    }
   }
 
   public List<DirDiffElementImpl> getSelectedElements() {
@@ -813,6 +831,12 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
   public void rememberSelection() {
     mySelectionConfig = new TableSelectionConfig();
+  }
+
+  public void clearWithMessage(String message) {
+    myTable.getEmptyText().setText(message);
+    myElements.clear();
+    fireTableDataChanged();
   }
 
   public class TableSelectionConfig {

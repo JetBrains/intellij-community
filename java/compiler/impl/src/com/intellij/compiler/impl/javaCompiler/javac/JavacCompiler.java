@@ -15,7 +15,10 @@
  */
 package com.intellij.compiler.impl.javaCompiler.javac;
 
-import com.intellij.compiler.*;
+import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.compiler.CompilerIOUtil;
+import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.ExternalCompiler;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
@@ -42,6 +45,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import java.io.*;
 import java.util.*;
@@ -138,7 +142,7 @@ public class JavacCompiler extends ExternalCompiler {
 
   @NotNull
   public Configurable createConfigurable() {
-    return new JavacConfigurable(JavacSettings.getInstance(myProject));
+    return new JavacConfigurable(JavacConfiguration.getOptions(myProject, JavacConfiguration.class));
   }
 
   public OutputParser createErrorParser(@NotNull final String outputDir, Process process) {
@@ -164,7 +168,7 @@ public class JavacCompiler extends ExternalCompiler {
         public String[] compute() {
           try {
             final List<String> commandLine = new ArrayList<String>();
-            createStartupCommand(chunk, commandLine, outputPath, JavacSettings.getInstance(myProject), context.isAnnotationProcessorsEnabled());
+            createStartupCommand(chunk, commandLine, outputPath, JavacConfiguration.getOptions(myProject, JavacConfiguration.class), context.isAnnotationProcessorsEnabled());
             return ArrayUtil.toStringArray(commandLine);
           }
           catch (IOException e) {
@@ -183,7 +187,7 @@ public class JavacCompiler extends ExternalCompiler {
   }
 
   private void createStartupCommand(final ModuleChunk chunk, @NonNls final List<String> commandLine, final String outputPath,
-                                    JavacSettings javacSettings, final boolean annotationProcessorsEnabled) throws IOException {
+                                    JpsJavaCompilerOptions javacOptions, final boolean annotationProcessorsEnabled) throws IOException {
     final Sdk jdk = getJdkForStartupCommand(chunk);
     final String versionString = jdk.getVersionString();
     JavaSdkVersion version = JavaSdk.getInstance().getVersion(jdk);
@@ -205,14 +209,14 @@ public class JavacCompiler extends ExternalCompiler {
     commandLine.add(vmExePath);
 
     if (version.isAtLeast(JavaSdkVersion.JDK_1_2)) {
-      commandLine.add("-Xmx" + javacSettings.MAXIMUM_HEAP_SIZE + "m");
+      commandLine.add("-Xmx" + javacOptions.MAXIMUM_HEAP_SIZE + "m");
     }
     else {
-      commandLine.add("-mx" + javacSettings.MAXIMUM_HEAP_SIZE + "m");
+      commandLine.add("-mx" + javacOptions.MAXIMUM_HEAP_SIZE + "m");
     }
 
     final List<String> additionalOptions =
-      addAdditionalSettings(commandLine, javacSettings, myAnnotationProcessorMode, version, chunk, annotationProcessorsEnabled);
+      addAdditionalSettings(commandLine, javacOptions, myAnnotationProcessorMode, version, chunk, annotationProcessorsEnabled);
 
     CompilerUtil.addLocaleOptions(commandLine, false);
 
@@ -272,10 +276,10 @@ public class JavacCompiler extends ExternalCompiler {
     }
   }
 
-  public static List<String> addAdditionalSettings(List<String> commandLine, JavacSettings javacSettings, boolean isAnnotationProcessing,
+  public static List<String> addAdditionalSettings(List<String> commandLine, JpsJavaCompilerOptions javacOptions, boolean isAnnotationProcessing,
                                                    JavaSdkVersion version, ModuleChunk chunk, boolean annotationProcessorsEnabled) {
     final List<String> additionalOptions = new ArrayList<String>();
-    StringTokenizer tokenizer = new StringTokenizer(javacSettings.getOptionsString(chunk), " ");
+    StringTokenizer tokenizer = new StringTokenizer(new JavacSettingsBuilder(javacOptions).getOptionsString(chunk), " ");
     if (!version.isAtLeast(JavaSdkVersion.JDK_1_6)) {
       isAnnotationProcessing = false; // makes no sense for these versions
       annotationProcessorsEnabled = false;
@@ -425,7 +429,7 @@ public class JavacCompiler extends ExternalCompiler {
 
   private Sdk getJdkForStartupCommand(final ModuleChunk chunk) {
     final Sdk jdk = chunk.getJdk();
-    if (ApplicationManager.getApplication().isUnitTestMode() && JavacSettings.getInstance(myProject).isTestsUseExternalCompiler()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && JavacConfiguration.getOptions(myProject, JavacConfiguration.class).isTestsUseExternalCompiler()) {
       final String jdkHomePath = CompilerConfigurationImpl.getTestsExternalCompilerHome();
       if (jdkHomePath == null) {
         throw new IllegalArgumentException("[TEST-MODE] Cannot determine home directory for JDK to use javac from");

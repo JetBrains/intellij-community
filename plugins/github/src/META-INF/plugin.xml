@@ -1,4 +1,4 @@
-<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin version="2">
   <name>GitHub</name>
   <id>org.jetbrains.plugins.github</id>
   <vendor>JetBrains</vendor>
@@ -6,17 +6,20 @@
 
   <depends>com.intellij.modules.lang</depends>
   <depends>Git4Idea</depends>
-  <depends>com.intellij.tasks</depends>
+  <depends optional="true" config-file="github-tracker.xml">com.intellij.tasks</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <checkoutProvider implementation="org.jetbrains.plugins.github.GithubCheckoutProvider"/>
     <applicationService serviceInterface="org.jetbrains.plugins.github.GithubSettings"
                         serviceImplementation="org.jetbrains.plugins.github.GithubSettings"/>
-    <applicationConfigurable instance="org.jetbrains.plugins.github.ui.GitHubSettingsConfigurable" id="settings.github"
-                             displayName="GitHub"/>
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.ui.GithubAnnotationGutterActionProvider" />
     <checkoutCompletedListener implementation="org.jetbrains.plugins.github.GithubCheckoutListener" order="after PlatformProjectCheckoutListener"/>
+    <vcsConfigurableProvider implementation="org.jetbrains.plugins.github.ui.GitHubSettingsConfigurable"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Git4Idea">
+    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.github.GithubHttpAuthDataProvider" />
   </extensions>
 
   <actions>
@@ -38,6 +41,7 @@
       <add-to-group group-id="EditorPopupMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu"/>
       <add-to-group group-id="EditorTabPopupMenu"/>
+      <add-to-group group-id="ConsoleEditorPopupMenu"/>
     </action>
     <action id="Github.Rebase.Internal" class="org.jetbrains.plugins.github.GithubRebase"/>
   </actions>

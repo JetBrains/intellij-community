@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,7 @@ import javax.swing.JComponent;
 
 public class StringConcatenationInLoopsInspection extends BaseInspection {
 
-  /**
-   * @noinspection PublicField
-   */
+  @SuppressWarnings("PublicField")
   public boolean m_ignoreUnlessAssigned = true;
 
   @Override
@@ -46,23 +44,19 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "string.concatenation.in.loops.display.name");
+    return InspectionGadgetsBundle.message("string.concatenation.in.loops.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "string.concatenation.in.loops.problem.descriptor");
+    return InspectionGadgetsBundle.message("string.concatenation.in.loops.problem.descriptor");
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "string.concatenation.in.loops.only.option"),
-      this, "m_ignoreUnlessAssigned");
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("string.concatenation.in.loops.only.option"),
+                                          this, "m_ignoreUnlessAssigned");
   }
 
   @Override
@@ -70,12 +64,12 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     return new StringConcatenationInLoopsVisitor();
   }
 
-  private class StringConcatenationInLoopsVisitor
-    extends BaseInspectionVisitor {
+  private class StringConcatenationInLoopsVisitor extends BaseInspectionVisitor {
+
     @Override
     public void visitPolyadicExpression(PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
-      PsiExpression[] operands = expression.getOperands();
+      final PsiExpression[] operands = expression.getOperands();
       if (operands.length <= 1) {
         return;
       }
@@ -107,8 +101,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
 
     @Override
-    public void visitAssignmentExpression(
-      @NotNull PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
       if (expression.getRExpression() == null) {
         return;
@@ -137,8 +130,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       }
       if (m_ignoreUnlessAssigned) {
         while (lhs instanceof PsiParenthesizedExpression) {
-          final PsiParenthesizedExpression parenthesizedExpression =
-            (PsiParenthesizedExpression)lhs;
+          final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)lhs;
           lhs = parenthesizedExpression.getExpression();
         }
         if (!(lhs instanceof PsiReferenceExpression)) {
@@ -149,52 +141,42 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
 
     private boolean containingStatementExits(PsiElement element) {
-      final PsiStatement newExpressionStatement =
-        PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+      final PsiStatement newExpressionStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
       if (newExpressionStatement == null) {
         return containingStatementExits(element);
       }
-      final PsiStatement parentStatement =
-        PsiTreeUtil.getParentOfType(newExpressionStatement,
-                                    PsiStatement.class);
-      return !ControlFlowUtils.statementMayCompleteNormally(
-        parentStatement);
+      final PsiStatement parentStatement = PsiTreeUtil.getParentOfType(newExpressionStatement, PsiStatement.class);
+      return !ControlFlowUtils.statementMayCompleteNormally(parentStatement);
     }
 
     private boolean isAppendedRepeatedly(PsiExpression expression) {
       PsiElement parent = expression.getParent();
-      while (parent instanceof PsiParenthesizedExpression ||
-             parent instanceof PsiPolyadicExpression) {
+      while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiPolyadicExpression) {
         parent = parent.getParent();
       }
       if (!(parent instanceof PsiAssignmentExpression)) {
         return false;
       }
-      final PsiAssignmentExpression assignmentExpression =
-        (PsiAssignmentExpression)parent;
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
       PsiExpression lhs = assignmentExpression.getLExpression();
       while (lhs instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression =
-          (PsiParenthesizedExpression)lhs;
+        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)lhs;
         lhs = parenthesizedExpression.getExpression();
       }
       if (!(lhs instanceof PsiReferenceExpression)) {
         return false;
       }
-      if (assignmentExpression.getOperationTokenType() ==
-          JavaTokenType.PLUSEQ) {
+      if (assignmentExpression.getOperationTokenType() == JavaTokenType.PLUSEQ) {
         return true;
       }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)lhs;
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
       final PsiElement element = referenceExpression.resolve();
       if (!(element instanceof PsiVariable)) {
         return false;
       }
       final PsiVariable variable = (PsiVariable)element;
       final PsiExpression rhs = assignmentExpression.getRExpression();
-      return rhs != null &&
-             VariableAccessUtils.variableIsUsed(variable, rhs);
+      return rhs != null && VariableAccessUtils.variableIsUsed(variable, rhs);
     }
   }
 }

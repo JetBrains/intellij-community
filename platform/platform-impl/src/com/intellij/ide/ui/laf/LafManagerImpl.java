@@ -27,7 +27,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
@@ -39,6 +38,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -69,6 +69,7 @@ import java.security.AccessController;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * @author Eugene Belyaev
@@ -104,7 +105,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     "TextField", "RadioButtonMenuItem", "CheckBoxMenuItem"};
 
   private final EventListenerList myListenerList;
-  private final UIManager.LookAndFeelInfo[] myLafs;
+  private final UIManager.LookAndFeelInfo[] myLaFs;
   private UIManager.LookAndFeelInfo myCurrentLaf;
   private final HashMap<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = new HashMap<UIManager.LookAndFeelInfo, HashMap<String, Object>>();
   private final UISettings myUiSettings;
@@ -113,35 +114,46 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
 
   /**
-   * invoked by reflection
-   *
-   * @param uiSettings
+   * Invoked via reflection.
    */
   LafManagerImpl(UISettings uiSettings) {
     myUiSettings = uiSettings;
     myListenerList = new EventListenerList();
 
-    IdeaLookAndFeelInfo ideaLaf = new IdeaLookAndFeelInfo();
-    DarculaLookAndFeelInfo darculaLaf = new DarculaLookAndFeelInfo();
-    UIManager.LookAndFeelInfo[] installedLafs = UIManager.getInstalledLookAndFeels();
+    List<UIManager.LookAndFeelInfo> lafList = ContainerUtil.newArrayList();
 
-    final boolean darculaAvailable = Registry.is("dark.laf.available");
-    // Get all installed LAFs
-    myLafs = new UIManager.LookAndFeelInfo[(darculaAvailable ? 2 : 1) + installedLafs.length];
-    myLafs[0] = ideaLaf;
-    if (darculaAvailable) {
-      myLafs[1] = darculaLaf;
+    if (SystemInfo.isMac) {
+      lafList.add(new UIManager.LookAndFeelInfo("Default", UIManager.getSystemLookAndFeelClassName()));
     }
-    System.arraycopy(installedLafs, 0, myLafs, darculaAvailable ? 2 : 1, installedLafs.length);
-    Arrays.sort(myLafs, new Comparator<UIManager.LookAndFeelInfo>() {
-      public int compare(UIManager.LookAndFeelInfo obj1, UIManager.LookAndFeelInfo obj2) {
-        String name1 = obj1.getName();
-        String name2 = obj2.getName();
-        return name1.compareToIgnoreCase(name2);
+    else {
+      lafList.add(new IdeaLookAndFeelInfo());
+      for (UIManager.LookAndFeelInfo laf : UIManager.getInstalledLookAndFeels()) {
+        String name = laf.getName();
+        if (!"Metal".equalsIgnoreCase(name) && !"CDE/Motif".equalsIgnoreCase(name)) {
+          lafList.add(laf);
+        }
       }
-    });
+    }
 
-    // Setup current LAF. Unfortunately it's system depended.
+    if (Registry.is("dark.laf.available")) {
+      lafList.add(new DarculaLookAndFeelInfo());
+    }
+
+    myLaFs = lafList.toArray(new UIManager.LookAndFeelInfo[lafList.size()]);
+
+    if (!SystemInfo.isMac) {
+      // do not sort LaFs on mac - the order is determined as Default, Darcula.
+      // when we leave only system LaFs on other OSes, the order also should be determined as Default, Darcula
+      
+      Arrays.sort(myLaFs, new Comparator<UIManager.LookAndFeelInfo>() {
+        public int compare(UIManager.LookAndFeelInfo obj1, UIManager.LookAndFeelInfo obj2) {
+          String name1 = obj1.getName();
+          String name2 = obj2.getName();
+          return name1.compareToIgnoreCase(name2);
+        }
+      });
+    }
+
     myCurrentLaf = getDefaultLaf();
   }
 
@@ -173,8 +185,12 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
   public void initComponent() {
     if (myCurrentLaf != null) {
-      setCurrentLookAndFeel(findLaf(myCurrentLaf.getClassName())); // setup default LAF or one specified by readExternal.
+      final UIManager.LookAndFeelInfo laf = findLaf(myCurrentLaf.getClassName());
+      if (laf != null) {
+        setCurrentLookAndFeel(laf); // setup default LAF or one specified by readExternal.
+      }
     }
+
     updateUI();
 
     if (SystemInfo.isLinux) {
@@ -240,7 +256,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   public UIManager.LookAndFeelInfo[] getInstalledLookAndFeels(){
-    return myLafs.clone();
+    return myLaFs.clone();
   }
 
   public UIManager.LookAndFeelInfo getCurrentLookAndFeel(){
@@ -253,7 +269,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
    * RubyMine uses Native L&F for linux as well
    */
   private UIManager.LookAndFeelInfo getDefaultLaf() {
-    final String lowercaseProductName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
     final String systemLafClassName = UIManager.getSystemLookAndFeelClassName();
     if (SystemInfo.isMac) {
       UIManager.LookAndFeelInfo laf = findLaf(systemLafClassName);
@@ -290,8 +305,11 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
    * will be returned.
    */
   @Nullable
-  private UIManager.LookAndFeelInfo findLaf(String className){
-    for (UIManager.LookAndFeelInfo laf : myLafs) {
+  private UIManager.LookAndFeelInfo findLaf(@Nullable String className) {
+    if (className == null) {
+      return null;
+    }
+    for (UIManager.LookAndFeelInfo laf : myLaFs) {
       if (Comparing.equal(laf.getClassName(), className)) {
         return laf;
       }
@@ -490,10 +508,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         uiDefaults.put(key + ".selectionBackground", bg);
         uiDefaults.put(key + ".selectionForeground", fg);
       }
-    }
-
-    if (UIUtil.isUnderMetalLookAndFeel()) {
-      uiDefaults.put("Tree.hash", new ColorUIResource(117, 117, 117));
     }
   }
 

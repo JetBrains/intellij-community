@@ -50,6 +50,7 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -67,6 +68,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.IncorrectOperationException;
@@ -92,8 +94,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author yole, coyote
@@ -717,4 +721,34 @@ public class AndroidUtils {
     }
   }
 
+  public static void showStackStace(@NotNull final Project project, @NotNull Throwable[] throwables) {
+    final StringBuilder messageBuilder = new StringBuilder();
+
+    for (Throwable t : throwables) {
+      if (messageBuilder.length() > 0) {
+        messageBuilder.append("\n\n");
+      }
+      messageBuilder.append(AndroidCommonUtils.getStackTrace(t));
+    }
+
+    final DialogWrapper wrapper = new DialogWrapper(project, false) {
+
+      {
+        init();
+      }
+
+      @Override
+      protected JComponent createCenterPanel() {
+        final JPanel panel = new JPanel(new BorderLayout());
+        final JTextArea textArea = new JTextArea(messageBuilder.toString());
+        textArea.setEditable(false);
+        textArea.setRows(40);
+        textArea.setColumns(70);
+        panel.add(ScrollPaneFactory.createScrollPane(textArea));
+        return panel;
+      }
+    };
+    wrapper.setTitle("Stack trace");
+    wrapper.show();
+  }
 }

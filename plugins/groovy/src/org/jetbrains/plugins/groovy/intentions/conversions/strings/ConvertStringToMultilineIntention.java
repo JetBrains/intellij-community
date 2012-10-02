@@ -25,7 +25,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.editor.actions.GroovyEditorActionUtil;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -63,7 +62,7 @@ public class ConvertStringToMultilineIntention extends Intention {
       final GrStringImpl gstring = PsiTreeUtil.getParentOfType(element, GrStringImpl.class);
       for (ASTNode child = gstring.getNode().getFirstChildNode(); child != null; child = child.getTreeNext()) {
         if (child.getElementType() == GroovyTokenTypes.mGSTRING_CONTENT) {
-          appendGStringContent(child, buffer);
+          appendSimpleStringValue(child.getPsi(), buffer, "\"\"\"");
         }
         else if (child.getElementType() == GroovyElementTypes.GSTRING_INJECTION) {
           buffer.append(child.getText());
@@ -100,17 +99,6 @@ public class ConvertStringToMultilineIntention extends Intention {
     }
   }
 
-  private static void appendGStringContent(ASTNode child, StringBuilder buffer) {
-    final String text = child.getText();
-    final StringBuilder parsed = new StringBuilder();
-    if (GrStringUtil.parseStringCharacters(text, parsed, null)) {
-      buffer.append(parsed);
-    }
-    else {
-      buffer.append(text);
-    }
-  }
-
   private static void appendSimpleStringValue(PsiElement element, StringBuilder buffer, String quote) {
     final String text = GrStringUtil.removeQuotes(element.getText());
     final int position = buffer.length();
@@ -134,10 +122,10 @@ public class ConvertStringToMultilineIntention extends Intention {
           final ASTNode node = element.getFirstChild().getNode();
           final IElementType type = node.getElementType();
           if (type == GroovyTokenTypes.mSTRING_LITERAL) {
-            return GroovyEditorActionUtil.isPlainStringLiteral(node);
+            return GrStringUtil.isPlainStringLiteral(node);
           }
           if (type == GroovyTokenTypes.mGSTRING_LITERAL) {
-            return GroovyEditorActionUtil.isPlainGString(node);
+            return GrStringUtil.isPlainGString(node);
           }
         }
         else {

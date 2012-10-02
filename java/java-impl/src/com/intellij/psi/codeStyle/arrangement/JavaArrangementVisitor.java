@@ -21,12 +21,17 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class JavaArrangementVisitor extends JavaElementVisitor {
   
@@ -52,6 +57,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
   @NotNull private final  JavaArrangementParseInfo     myInfo;
   @NotNull private final  Collection<TextRange>        myRanges;
   @NotNull private final  Set<ArrangementGroupingType> myGroupingRules;
+  @NotNull private final  MethodBodyProcessor          myMethodBodyProcessor;
   @Nullable private final Document                     myDocument;
 
   public JavaArrangementVisitor(@NotNull JavaArrangementParseInfo infoHolder,
@@ -63,6 +69,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     myDocument = document;
     myRanges = ranges;
     myGroupingRules = groupingRules;
+    myMethodBodyProcessor = new MethodBodyProcessor(infoHolder);
   }
 
   @Override
@@ -150,6 +157,13 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     
     processEntry(entry, method, method.getBody());
     parseProperties(method, entry);
+    myInfo.onMethodEntryCreated(method, entry);
+    MethodSignatureBackedByPsiMethod overridden = SuperMethodsSearch.search(method, null, true, false).findFirst();
+    if (overridden != null) {
+      myInfo.onOverriddenMethod(overridden.getMethod(), method);
+    }
+    myMethodBodyProcessor.setBaseMethod(method);
+    method.accept(myMethodBodyProcessor);
   }
 
   private void parseProperties(PsiMethod method, JavaElementArrangementEntry entry) {
@@ -302,4 +316,32 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
       entry.addModifier(ArrangementModifier.PACKAGE_PRIVATE);
     }
   }
+  
+  private static class MethodBodyProcessor extends JavaRecursiveElementVisitor {
+    
+    @NotNull private final JavaArrangementParseInfo myInfo;
+    @NotNull private PsiMethod myBaseMethod;
+
+    MethodBodyProcessor(@NotNull JavaArrangementParseInfo info) {
+      myInfo = info;
+    }
+
+    public void visitMethodCallExpression(PsiMethodCallExpression psiMethodCallExpression) {
+      PsiReference reference = psiMethodCallExpression.getMethodExpression().getReference();
+      if (reference == null) {
+        return;
+      }
+      PsiElement e = reference.resolve();
+      if (e instanceof PsiMethod) {
+        myInfo.registerDependency(myBaseMethod, (PsiMethod)e);
+      }
+      // Now parse the expression list, it also might contain method calls.
+      super.visitExpressionList(psiMethodCallExpression.getArgumentList());
+    }
+
+    public void setBaseMethod(@NotNull PsiMethod baseMethod) {
+      myBaseMethod = baseMethod;
+    }
+  }
 }
+

@@ -498,7 +498,7 @@ public class BuildManager implements ApplicationComponent{
 
           final CmdlineRemoteProto.Message.ControllerMessage params;
           if (isRebuild) {
-            params = CmdlineProtoUtil.createRebuildRequest(projectPath, userData, globals);
+            params = CmdlineProtoUtil.createRebuildRequest(projectPath, scopes, userData, globals);
           }
           else {
             params = isMake ?
@@ -706,12 +706,13 @@ public class BuildManager implements ApplicationComponent{
       compilerPath = new File(path);
     }
 
+    final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
     final String vmExecutablePath = ((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk);
     cmdLine.setExePath(vmExecutablePath);
     cmdLine.addParameter("-XX:MaxPermSize=150m");
     cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");
-    final int heapSize = Registry.intValue("compiler.process.heap.size");
+    final int heapSize = config.COMPILER_PROCESS_HEAP_SIZE;
     final int xms = heapSize / 2;
     if (xms > 32) {
       cmdLine.addParameter("-Xms" + xms + "m");
@@ -733,8 +734,9 @@ public class BuildManager implements ApplicationComponent{
     if (shouldGenerateIndex != null) {
       cmdLine.addParameter("-D"+ GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION +"=" + shouldGenerateIndex);
     }
+    cmdLine.addParameter("-D"+ GlobalOptions.COMPILE_PARALLEL_OPTION +"=" + Boolean.toString(config.PARALLEL_COMPILATION));
 
-    final String additionalOptions = Registry.stringValue("compiler.process.vm.options");
+    final String additionalOptions = config.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
     if (!StringUtil.isEmpty(additionalOptions)) {
       final StringTokenizer tokenizer = new StringTokenizer(additionalOptions, " ", false);
       while (tokenizer.hasMoreTokens()) {

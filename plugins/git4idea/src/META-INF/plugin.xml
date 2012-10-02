@@ -31,12 +31,12 @@
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference id="Vcs.ShowHistoryForBlock"/>
       <separator/>
-      <action id="Git.Revert" class="git4idea.actions.GitRevert" text="Revert File" icon="AllIcons.Actions.Rollback"/>
+      <action id="Git.Revert" class="git4idea.actions.GitRevert" icon="AllIcons.Actions.Rollback" text="Revert..."/>
       <action id="Git.ResolveConflicts" class="git4idea.actions.GitResolveConflictsAction" text="Resolve Conflicts..."/>
     </group>
 
     <group id="GitRepositoryActions">
-      <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches" icon="Git4ideaIcons.Branch"/>
+      <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches..." icon="Git4ideaIcons.Branch"/>
       <action id="Git.Tag" class="git4idea.actions.GitTag" text="Tag Files..."/>
       <action id="Git.Merge" class="git4idea.actions.GitMerge" text="Merge Changes..." icon="AllIcons.Vcs.MergeSourcesTree"/>
       <action id="Git.Stash" class="git4idea.actions.GitStash" text="Stash Changes..."/>
@@ -158,4 +158,9 @@
     <ComponentRoamingType component="Git.Settings" type="DISABLED"/>
     <fileTypeFactory implementation="git4idea.vfs.GitFileTypeFactory"/>
   </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Git4Idea.GitHttpAuthDataProvider" interface="git4idea.jgit.GitHttpAuthDataProvider"/>
+  </extensionPoints>
+
 </idea-plugin>

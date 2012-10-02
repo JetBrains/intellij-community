@@ -15,6 +15,8 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.application.options.codeStyle.arrangement.node.match.ArrangementAtomMatchNodeComponent;
+import com.intellij.application.options.codeStyle.arrangement.node.match.ArrangementMatchNodeComponent;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
@@ -42,9 +44,9 @@ import java.util.List;
  */
 public class ArrangementRuleEditor extends JPanel {
 
-  @NotNull private final List<JComponent>                          myColoredComponents = new ArrayList<JComponent>();
-  @NotNull private final Map<Object, ArrangementAtomNodeComponent> myComponents        =
-    new HashMap<Object, ArrangementAtomNodeComponent>();
+  @NotNull private final List<JComponent>                               myColoredComponents = new ArrayList<JComponent>();
+  @NotNull private final Map<Object, ArrangementAtomMatchNodeComponent> myComponents        =
+    new HashMap<Object, ArrangementAtomMatchNodeComponent>();
 
   @NotNull private final ArrangementStandardSettingsAware myFilter;
   @Nullable private      ArrangementRuleEditingModel      myModel;
@@ -79,12 +81,13 @@ public class ArrangementRuleEditor extends JPanel {
 
     JPanel valuesPanel = new MultiRowFlowPanel(FlowLayout.LEFT, 8, 5);
     for (Object value : manager.sort(values)) {
-      ArrangementAtomNodeComponent component = new ArrangementAtomNodeComponent(manager, new ArrangementAtomMatchCondition(key, value), null);
+      ArrangementAtomMatchNodeComponent component =
+        new ArrangementAtomMatchNodeComponent(manager, new ArrangementAtomMatchCondition(key, value), null);
       myComponents.put(value, component);
       valuesPanel.add(component.getUiComponent());
     }
 
-    int top = ArrangementAtomNodeComponent.VERTICAL_PADDING;
+    int top = ArrangementAtomMatchNodeComponent.VERTICAL_PADDING;
     add(new JLabel(manager.getDisplayLabel(key) + ":"), new GridBag().anchor(GridBagConstraints.NORTHWEST).insets(top, 0, 0, 0));
     add(valuesPanel, new GridBag().anchor(GridBagConstraints.WEST).weightx(1).fillCellHorizontally().coverLine());
     myColoredComponents.add(valuesPanel);
@@ -100,7 +103,7 @@ public class ArrangementRuleEditor extends JPanel {
     myModel = model;
     
     // Reset state.
-    for (ArrangementAtomNodeComponent component : myComponents.values()) {
+    for (ArrangementAtomMatchNodeComponent component : myComponents.values()) {
       component.setEnabled(false);
       component.setSelected(false);
     }
@@ -114,7 +117,7 @@ public class ArrangementRuleEditor extends JPanel {
     );
     for (Collection<?> ids : available.values()) {
       for (Object id : ids) {
-        ArrangementAtomNodeComponent component = myComponents.get(id);
+        ArrangementAtomMatchNodeComponent component = myComponents.get(id);
         if (component != null) {
           component.setEnabled(true);
           component.setSelected(model.hasCondition(id));
@@ -135,7 +138,7 @@ public class ArrangementRuleEditor extends JPanel {
     if (myModel == null) {
       return;
     }
-    ArrangementAtomNodeComponent clickedComponent = getNodeComponentAt(e.getLocationOnScreen());
+    ArrangementAtomMatchNodeComponent clickedComponent = getNodeComponentAt(e.getLocationOnScreen());
     if (clickedComponent == null || !clickedComponent.isEnabled()) {
       return;
     }
@@ -155,9 +158,9 @@ public class ArrangementRuleEditor extends JPanel {
       }
       for (Object key : mutex) {
         if (myModel.hasCondition(key)) {
-          ArrangementAtomNodeComponent componentToDeselect = myComponents.get(key);
+          ArrangementAtomMatchNodeComponent componentToDeselect = myComponents.get(key);
           myModel.replaceCondition(componentToDeselect.getMatchCondition(), chosenCondition);
-          for (ArrangementAtomNodeComponent componentToCheck : myComponents.values()) {
+          for (ArrangementAtomMatchNodeComponent componentToCheck : myComponents.values()) {
             Object value = componentToCheck.getMatchCondition().getValue();
             if (myModel.hasCondition(value) && !ArrangementConfigUtil.isEnabled(value, myFilter, myModel.getCondition())) {
               myModel.removeAndCondition(componentToCheck.getMatchCondition());
@@ -176,8 +179,8 @@ public class ArrangementRuleEditor extends JPanel {
   }
 
   @Nullable
-  private ArrangementAtomNodeComponent getNodeComponentAt(@NotNull Point screenPoint) {
-    for (ArrangementAtomNodeComponent component : myComponents.values()) {
+  private ArrangementAtomMatchNodeComponent getNodeComponentAt(@NotNull Point screenPoint) {
+    for (ArrangementAtomMatchNodeComponent component : myComponents.values()) {
       Rectangle screenBounds = component.getScreenBounds();
       if (screenBounds != null && screenBounds.contains(screenPoint)) {
         return component;
@@ -186,7 +189,7 @@ public class ArrangementRuleEditor extends JPanel {
     return null;
   }
   
-  private void repaintComponent(@NotNull ArrangementNodeComponent component) {
+  private void repaintComponent(@NotNull ArrangementMatchNodeComponent component) {
     Rectangle bounds = component.getScreenBounds();
     if (bounds != null) {
       Point location = bounds.getLocation();

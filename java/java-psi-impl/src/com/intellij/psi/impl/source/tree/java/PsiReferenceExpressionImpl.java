@@ -262,6 +262,9 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     if (parentType == JavaElementType.METHOD_CALL_EXPRESSION) {
       return resolveToMethod();
     }
+    if (parentType == JavaElementType.METHOD_REF_EXPRESSION) {
+      return resolve(JavaElementType.REFERENCE_EXPRESSION);
+    }
     return resolveToVariable();
   }
 

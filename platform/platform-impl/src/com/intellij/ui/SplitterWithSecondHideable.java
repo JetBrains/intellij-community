@@ -212,7 +212,7 @@ public abstract class SplitterWithSecondHideable {
     myTitledSeparator.myLabel.setForeground(enabled ? UIUtil.getActiveTextColor() : UIUtil.getInactiveTextColor());
   }
 
-  public JComponent getComponent() {
+  public Splitter getComponent() {
     return mySplitter;
   }
 

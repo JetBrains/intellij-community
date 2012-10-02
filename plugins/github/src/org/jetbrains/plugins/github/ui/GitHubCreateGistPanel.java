@@ -23,7 +23,6 @@ import javax.swing.*;
  */
 public class GitHubCreateGistPanel {
   private JTextArea myDescriptionTextArea;
-  private JTextPane myNoticeTextPane;
   private JCheckBox myPrivateCheckBox;
   private JPanel myPanel;
   private JCheckBox myAnonymousCheckBox;
@@ -64,11 +63,4 @@ public class GitHubCreateGistPanel {
     return myDescriptionTextArea;
   }
 
-  public void setCanBePersonal(final boolean canBePersonal) {
-    if (!canBePersonal){
-      myAnonymousCheckBox.setEnabled(false);
-      myAnonymousCheckBox.setSelected(true);
-      myNoticeTextPane.setText("<html><body><b>Note</b> you must be logged in to github to create personal gists</body></html>");
-    }
-  }
 }

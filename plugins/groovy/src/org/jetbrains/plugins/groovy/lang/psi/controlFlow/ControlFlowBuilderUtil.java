@@ -16,15 +16,18 @@
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -171,33 +174,29 @@ public class ControlFlowBuilderUtil {
       GrExpression left = binary.getLeftOperand();
       GrExpression right = binary.getRightOperand();
       if (left instanceof GrReferenceExpression && ((GrReferenceExpression)left).getQualifier() == null &&
-          right instanceof GrReferenceExpression && isClassHeuristic((GrReferenceExpression)right)) {
+          right instanceof GrReferenceExpression && findClassByText((GrReferenceExpression)right)) {
         return true;
       }
     }
     return false;
   }
 
-  private static boolean isClassHeuristic(GrReferenceExpression ref) {
-    if (findClassByText(ref)) {
-      return true;
-    }
-
-    GrExpression qualifier = ref.getQualifier();
-    while (qualifier != null) {
-      if (!(qualifier instanceof GrReferenceExpression)) return false;
-      qualifier = ((GrReferenceExpression)qualifier).getQualifier();
-    }
-
-    final String name = ref.getName();
-    if (name == null || Character.isLowerCase(name.charAt(0))) return false;
-
-    return true;
-  }
-
   private static boolean findClassByText(GrReferenceExpression ref) {
     final String text = ref.getText();
-    final PsiClass aClass = JavaPsiFacade.getInstance(ref.getProject()).findClass(text, ref.getResolveScope());
-    return aClass != null;
+    final int i = text.indexOf('<');
+    String className = i == -1 ? text : text.substring(0, i);
+
+    PsiClass[] names = PsiShortNamesCache.getInstance(ref.getProject()).getClassesByName(className, ref.getResolveScope());
+    if (names.length > 0) return true;
+
+    PsiFile file = ref.getContainingFile();
+    if (file instanceof GroovyFile) {
+      GrImportStatement[] imports = ((GroovyFile)file).getImportStatements();
+      for (GrImportStatement anImport : imports) {
+        if (className.equals(anImport.getImportedName())) return true;
+      }
+    }
+
+    return false;
   }
 }

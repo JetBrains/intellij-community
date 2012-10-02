@@ -154,7 +154,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
     }
   }
 
-  private Indent getChildrenIndent() {
+  protected Indent getChildrenIndent() {
     return myXmlFormattingPolicy.indentChildrenOf(getTag())
            ? Indent.getNormalIndent()
            : Indent.getNoneIndent();

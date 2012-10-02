@@ -28,16 +28,13 @@ abstract class AbstractCollectionBinding implements Binding {
   private Map<Class, Binding> myElementBindings;
 
   private final Class myElementType;
-  private final XmlSerializerImpl myXmlSerializer;
   private final String myTagName;
   @Nullable protected Accessor myAccessor;
   private AbstractCollection myAnnotation = null;
   private boolean myUsingOptionBinding = false;
 
-  public AbstractCollectionBinding(Class elementType, XmlSerializerImpl xmlSerializer, String tagName,
-                                   @Nullable Accessor accessor) {
+  public AbstractCollectionBinding(Class elementType, String tagName, @Nullable Accessor accessor) {
     myElementType = elementType;
-    myXmlSerializer = xmlSerializer;
     myTagName = tagName;
     myAccessor = accessor;
 
@@ -66,7 +63,7 @@ abstract class AbstractCollectionBinding implements Binding {
 
   protected Binding getElementBinding(Class<?> elementClass) {
     final Binding binding = getElementBindings().get(elementClass);
-    return binding == null ? myXmlSerializer.getBinding(elementClass) : binding;
+    return binding == null ? XmlSerializerImpl.getBinding(elementClass) : binding;
   }
 
   private Map<Class, Binding> getElementBindings() {
@@ -95,7 +92,7 @@ abstract class AbstractCollectionBinding implements Binding {
 
   private Binding getBinding(final Class type) {
     Binding binding;
-    binding = myXmlSerializer.getBinding(type);
+    binding = XmlSerializerImpl.getBinding(type);
 
     if (!binding.getBoundNodeType().isAssignableFrom(Element.class)) {
       binding = createElementTagWrapper(binding);
@@ -116,7 +113,7 @@ abstract class AbstractCollectionBinding implements Binding {
   abstract Object processResult(Collection result, Object target);
   abstract Iterable getIterable(Object o);
 
-  public Object serialize(Object o, Object context) {
+  public Object serialize(Object o, Object context, SerializationFilter filter) {
     Iterable iterable = getIterable(o);
     if (iterable == null) return context;
 
@@ -128,7 +125,7 @@ abstract class AbstractCollectionBinding implements Binding {
           throw new XmlSerializationException("Collection " + myAccessor + " contains 'null' object");
         }
         final Binding binding = getElementBinding(e.getClass());
-        result.addContent((Content)binding.serialize(e, result));
+        result.addContent((Content)binding.serialize(e, result, filter));
       }
 
       return result;
@@ -137,7 +134,7 @@ abstract class AbstractCollectionBinding implements Binding {
       List<Object> result = new ArrayList<Object>();
       for (Object e : iterable) {
         final Binding binding = getElementBinding(e.getClass());
-        result.add(binding.serialize(e, result));
+        result.add(binding.serialize(e, result, filter));
       }
 
       return result;

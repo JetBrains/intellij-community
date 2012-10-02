@@ -358,4 +358,9 @@ public class Tool implements SchemeElement {
     copy.copyFrom(this);
     return copy;
   }
+
+  @Override
+  public String toString() {
+    return myGroup + ": " + myName;
+  }
 }

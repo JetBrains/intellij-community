@@ -44,8 +44,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.List;
-
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -98,14 +96,14 @@ public class PathMacroManagerTest {
   }
 
   @Before
-  public final void setupFileSystem() throws Exception {
+  public final void setupFileSystem() {
     myOldFileSystem = FileSystem.FILE_SYSTEM;
     myFileSystem = new MockFileSystem();
     FileSystem.FILE_SYSTEM = myFileSystem;
   }
 
   @After
-  public final void restoreFilesystem() throws Exception {
+  public final void restoreFilesystem() {
     FileSystem.FILE_SYSTEM = myOldFileSystem;
   }
 
@@ -134,12 +132,11 @@ public class PathMacroManagerTest {
   }
 
   @Test
-  public void testRightMacrosOrder_RelativeValues_NoVariables() throws Exception {
+  public void testRightMacrosOrder_RelativeValues_NoVariables() {
     setUpMocks("/tmp/foo");
 
     final ReplacePathToMacroMap replacePathMap = new ModulePathMacroManager(myPathMacros, myModule).getReplacePathMap();
-    final String s = mapToString(replacePathMap);
-    assertEquals("file:/tmp/foo/module -> file:$MODULE_DIR$\n" +
+    assertReplacements(replacePathMap, "file:/tmp/foo/module -> file:$MODULE_DIR$\n" +
                  "file://tmp/foo/module -> file:/$MODULE_DIR$\n" +
                  "file:///tmp/foo/module -> file://$MODULE_DIR$\n" +
                  "jar:/tmp/foo/module -> jar:$MODULE_DIR$\n" +
@@ -148,17 +145,17 @@ public class PathMacroManagerTest {
                  "/tmp/foo/module -> $MODULE_DIR$\n" +
                  APP_HOME + " -> $APPLICATION_HOME_DIR$\n" +
                  "file:" + APP_HOME + " -> file:$APPLICATION_HOME_DIR$\n" +
-                 "file:/" + APP_HOME + " -> file://$APPLICATION_HOME_DIR$\n" +
+                 "file:/" + APP_HOME + " -> file:/$APPLICATION_HOME_DIR$\n" +
                  "file://" + APP_HOME + " -> file://$APPLICATION_HOME_DIR$\n" +
                  "jar:" + APP_HOME + " -> jar:$APPLICATION_HOME_DIR$\n" +
-                 "jar:/" + APP_HOME + " -> jar://$APPLICATION_HOME_DIR$\n" +
+                 "jar:/" + APP_HOME + " -> jar:/$APPLICATION_HOME_DIR$\n" +
                  "jar://" + APP_HOME + " -> jar://$APPLICATION_HOME_DIR$\n" +
                  USER_HOME + " -> $USER_HOME$\n" +
                  "file:" + USER_HOME + " -> file:$USER_HOME$\n" +
-                 "file:/" + USER_HOME + " -> file://$USER_HOME$\n" +
+                 "file:/" + USER_HOME + " -> file:/$USER_HOME$\n" +
                  "file://" + USER_HOME + " -> file://$USER_HOME$\n" +
                  "jar:" + USER_HOME + " -> jar:$USER_HOME$\n" +
-                 "jar:/" + USER_HOME + " -> jar://$USER_HOME$\n" +
+                 "jar:/" + USER_HOME + " -> jar:/$USER_HOME$\n" +
                  "jar://" + USER_HOME + " -> jar://$USER_HOME$\n" +
                  "file:/tmp/foo -> file:$MODULE_DIR$/..\n" +
                  "file://tmp/foo -> file:/$MODULE_DIR$/..\n" +
@@ -173,16 +170,15 @@ public class PathMacroManagerTest {
                  "jar:/tmp -> jar:$MODULE_DIR$/../..\n" +
                  "jar://tmp -> jar:/$MODULE_DIR$/../..\n" +
                  "jar:///tmp -> jar://$MODULE_DIR$/../..\n" +
-                 "/tmp -> $MODULE_DIR$/../..", s);
+                 "/tmp -> $MODULE_DIR$/../..");
   }
 
   @Test
-  public void testPathsOutsideProject() throws Exception {
+  public void testPathsOutsideProject() {
     setUpMocks("/tmp/foo");
 
     final ReplacePathToMacroMap replacePathMap = new ProjectPathMacroManager(myPathMacros, myProject).getReplacePathMap();
-    final String s = mapToString(replacePathMap);
-    assertEquals("file:/tmp/foo -> file:$PROJECT_DIR$\n" +
+    assertReplacements(replacePathMap, "file:/tmp/foo -> file:$PROJECT_DIR$\n" +
                  "file://tmp/foo -> file:/$PROJECT_DIR$\n" +
                  "file:///tmp/foo -> file://$PROJECT_DIR$\n" +
                  "jar:/tmp/foo -> jar:$PROJECT_DIR$\n" +
@@ -191,17 +187,17 @@ public class PathMacroManagerTest {
                  "/tmp/foo -> $PROJECT_DIR$\n" +
                  APP_HOME + " -> $APPLICATION_HOME_DIR$\n" +
                  "file:" + APP_HOME + " -> file:$APPLICATION_HOME_DIR$\n" +
-                 "file:/" + APP_HOME + " -> file://$APPLICATION_HOME_DIR$\n" +
+                 "file:/" + APP_HOME + " -> file:/$APPLICATION_HOME_DIR$\n" +
                  "file://" + APP_HOME + " -> file://$APPLICATION_HOME_DIR$\n" +
                  "jar:" + APP_HOME + " -> jar:$APPLICATION_HOME_DIR$\n" +
-                 "jar:/" + APP_HOME + " -> jar://$APPLICATION_HOME_DIR$\n" +
+                 "jar:/" + APP_HOME + " -> jar:/$APPLICATION_HOME_DIR$\n" +
                  "jar://" + APP_HOME + " -> jar://$APPLICATION_HOME_DIR$\n" +
                  USER_HOME + " -> $USER_HOME$\n" +
                  "file:" + USER_HOME + " -> file:$USER_HOME$\n" +
-                 "file:/" + USER_HOME + " -> file://$USER_HOME$\n" +
+                 "file:/" + USER_HOME + " -> file:/$USER_HOME$\n" +
                  "file://" + USER_HOME + " -> file://$USER_HOME$\n" +
                  "jar:" + USER_HOME + " -> jar:$USER_HOME$\n" +
-                 "jar:/" + USER_HOME + " -> jar://$USER_HOME$\n" +
+                 "jar:/" + USER_HOME + " -> jar:/$USER_HOME$\n" +
                  "jar://" + USER_HOME + " -> jar://$USER_HOME$\n" +
                  "file:/tmp -> file:$PROJECT_DIR$/..\n" +
                  "file://tmp -> file:/$PROJECT_DIR$/..\n" +
@@ -209,7 +205,16 @@ public class PathMacroManagerTest {
                  "jar:/tmp -> jar:$PROJECT_DIR$/..\n" +
                  "jar://tmp -> jar:/$PROJECT_DIR$/..\n" +
                  "jar:///tmp -> jar://$PROJECT_DIR$/..\n" +
-                 "/tmp -> $PROJECT_DIR$/..", s);
+                 "/tmp -> $PROJECT_DIR$/..");
+  }
+
+  private static void assertReplacements(ReplacePathToMacroMap map, String replacements) {
+    for (String s : replacements.split("\n")) {
+      String[] split = s.split(" -> ");
+      String path = split[0];
+      String replaced = split[1];
+      assertEquals(replaced, map.substitute(path, true));
+    }
   }
 
   @Test
@@ -223,12 +228,11 @@ public class PathMacroManagerTest {
   }
 
   @Test
-  public void testProjectUnderUserHome() throws Exception {
+  public void testProjectUnderUserHome() {
     setUpMocks(USER_HOME + "/IdeaProjects/foo");
 
     final ReplacePathToMacroMap replacePathMap = new ModulePathMacroManager(myPathMacros, myModule).getReplacePathMap();
-    final String s = mapToString(replacePathMap);
-    assertEquals("file:" + USER_HOME + "/IdeaProjects/foo/module -> file:$MODULE_DIR$\n" +
+    assertReplacements(replacePathMap, "file:" + USER_HOME + "/IdeaProjects/foo/module -> file:$MODULE_DIR$\n" +
                  "file:/" + USER_HOME + "/IdeaProjects/foo/module -> file:/$MODULE_DIR$\n" +
                  "file://" + USER_HOME + "/IdeaProjects/foo/module -> file://$MODULE_DIR$\n" +
                  "jar:" + USER_HOME + "/IdeaProjects/foo/module -> jar:$MODULE_DIR$\n" +
@@ -237,10 +241,10 @@ public class PathMacroManagerTest {
                  USER_HOME + "/IdeaProjects/foo/module -> $MODULE_DIR$\n" +
                  APP_HOME + " -> $APPLICATION_HOME_DIR$\n" +
                  "file:" + APP_HOME + " -> file:$APPLICATION_HOME_DIR$\n" +
-                 "file:/" + APP_HOME + " -> file://$APPLICATION_HOME_DIR$\n" +
+                 "file:/" + APP_HOME + " -> file:/$APPLICATION_HOME_DIR$\n" +
                  "file://" + APP_HOME + " -> file://$APPLICATION_HOME_DIR$\n" +
                  "jar:" + APP_HOME + " -> jar:$APPLICATION_HOME_DIR$\n" +
-                 "jar:/" + APP_HOME + " -> jar://$APPLICATION_HOME_DIR$\n" +
+                 "jar:/" + APP_HOME + " -> jar:/$APPLICATION_HOME_DIR$\n" +
                  "jar://" + APP_HOME + " -> jar://$APPLICATION_HOME_DIR$\n" +
                  "file:" + USER_HOME + "/IdeaProjects/foo -> file:$MODULE_DIR$/..\n" +
                  "file:/" + USER_HOME + "/IdeaProjects/foo -> file:/$MODULE_DIR$/..\n" +
@@ -258,24 +262,10 @@ public class PathMacroManagerTest {
                  USER_HOME + "/IdeaProjects -> $MODULE_DIR$/../..\n" +
                  USER_HOME + " -> $USER_HOME$\n" +
                  "file:" + USER_HOME + " -> file:$USER_HOME$\n" +
-                 "file:/" + USER_HOME + " -> file://$USER_HOME$\n" +
+                 "file:/" + USER_HOME + " -> file:/$USER_HOME$\n" +
                  "file://" + USER_HOME + " -> file://$USER_HOME$\n" +
                  "jar:" + USER_HOME + " -> jar:$USER_HOME$\n" +
-                 "jar:/" + USER_HOME + " -> jar://$USER_HOME$\n" +
-                 "jar://" + USER_HOME + " -> jar://$USER_HOME$", s);
-  }
-
-  private static String mapToString(final ReplacePathToMacroMap replacePathMap) {
-    final StringBuilder buf = new StringBuilder();
-
-    final List<String> pathIndex = replacePathMap.getPathIndex();
-    for (String s : pathIndex) {
-      if (buf.length() > 0) buf.append("\n");
-      buf.append(s);
-      buf.append(" -> ");
-      buf.append(replacePathMap.get(s));
-    }
-
-    return buf.toString();
+                 "jar:/" + USER_HOME + " -> jar:/$USER_HOME$\n" +
+                 "jar://" + USER_HOME + " -> jar://$USER_HOME$");
   }
 }

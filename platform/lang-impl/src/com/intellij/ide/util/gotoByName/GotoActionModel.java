@@ -46,7 +46,7 @@ import java.awt.*;
 import java.util.*;
 
 public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, Comparator<Object> {
-  private static final String SETTINGS_KEY = "$$$SETTINGS$$$";
+  @NonNls private static final String SETTINGS_KEY = "$$$SETTINGS$$$";
   @Nullable private final Project myProject;
   private final Component myContextComponent;
 
@@ -54,12 +54,10 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
-  private String myPattern;
-
   private Pattern myCompiledPattern;
-  private final PatternMatcher myMatcher = new Perl5Matcher();
-  
-  private Map<AnAction, String> myActionsMap = new TreeMap<AnAction, String>(new Comparator<AnAction>() {
+
+  private final SearchableOptionsRegistrar myIndex;
+  private final Map<AnAction, String> myActionsMap = new TreeMap<AnAction, String>(new Comparator<AnAction>() {
     @Override
     public int compare(AnAction o1, AnAction o2) {
       int compare = Comparing.compare(o1.getTemplatePresentation().getText(), o2.getTemplatePresentation().getText());
@@ -69,8 +67,6 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       return compare;
     }
   });
-  private final SearchableOptionsRegistrar myIndex;
-
 
   public GotoActionModel(@Nullable Project project, final Component component) {
     myProject = project;
@@ -80,26 +76,32 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     myIndex = SearchableOptionsRegistrar.getInstance();
   }
 
+  @Override
   public String getPromptText() {
     return IdeBundle.message("prompt.gotoaction.enter.action");
   }
 
+  @Override
   public String getCheckBoxName() {
     return IdeBundle.message("checkbox.other.included");
   }
 
+  @Override
   public char getCheckBoxMnemonic() {
     return 'd';
   }
 
+  @Override
   public String getNotInMessage() {
     return IdeBundle.message("label.no.menu.actions.found");
   }
 
+  @Override
   public String getNotFoundMessage() {
     return IdeBundle.message("label.no.actions.found");
   }
 
+  @Override
   public boolean loadInitialCheckBoxState() {
     PropertiesComponent propertiesComponent = getPropertiesStorage();
     return Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToAction.toSaveAllIncluded")) &&
@@ -110,6 +112,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return myProject != null ? PropertiesComponent.getInstance(myProject) : PropertiesComponent.getInstance();
   }
 
+  @Override
   public void saveInitialCheckBoxState(boolean state) {
     PropertiesComponent propertiesComponent = getPropertiesStorage();
     if (Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToAction.toSaveAllIncluded"))) {
@@ -117,9 +120,11 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     }
   }
 
+  @Override
   public ListCellRenderer getListCellRenderer() {
     return new DefaultListCellRenderer() {
 
+      @Override
       public Component getListCellRendererComponent(final JList list,
                                                     final Object value,
                                                     final int index, final boolean isSelected, final boolean cellHasFocus) {
@@ -154,7 +159,8 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
             groupLabel.setForeground(fg);
             panel.add(groupLabel, BorderLayout.EAST);
           }
-        } else if (value instanceof OptionDescription) {
+        }
+        else if (value instanceof OptionDescription) {
           String hit = ((OptionDescription)value).getHit();
           if (hit == null) {
             hit = ((OptionDescription)value).getOption();
@@ -169,7 +175,8 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           if (!isSelected) {
             panel.setBackground(LightColors.SLIGHTLY_GRAY);
           }
-        } else if (value instanceof String) {
+        }
+        else if (value instanceof String) {
           final JBLabel label = new JBLabel((String)value);
           label.setIcon(EMPTY_ICON);
           panel.add(label, BorderLayout.WEST);
@@ -179,7 +186,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     };
   }
 
-  protected String getActionId(final @NotNull AnAction anAction) {
+  protected String getActionId(@NotNull final AnAction anAction) {
     return myActionManager.getId(anAction);
   }
 
@@ -189,13 +196,14 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     final LayeredIcon layeredIcon = new LayeredIcon(2);
     layeredIcon.setIcon(EMPTY_ICON, 0);
     if (icon != null && icon.getIconWidth() <= EMPTY_ICON.getIconWidth() && icon.getIconHeight() <= EMPTY_ICON.getIconHeight()) {
-      layeredIcon.setIcon(icon, 1, (- icon.getIconWidth() + EMPTY_ICON.getIconWidth())/2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight())/2);
+      layeredIcon
+        .setIcon(icon, 1, (-icon.getIconWidth() + EMPTY_ICON.getIconWidth()) / 2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight()) / 2);
     }
 
     final Shortcut[] shortcutSet = KeymapManager.getInstance().getActiveKeymap().getShortcuts(getActionId(anAction));
     final String actionName = anActionName + (shortcutSet != null && shortcutSet.length > 0
-                                                                        ? " (" + KeymapUtil.getShortcutText(shortcutSet[0]) + ")"
-                                                                        : "");
+                                              ? " (" + KeymapUtil.getShortcutText(shortcutSet[0]) + ")"
+                                              : "");
     final JLabel actionLabel = new JLabel(actionName, layeredIcon, SwingConstants.LEFT);
     actionLabel.setBackground(bg);
     actionLabel.setForeground(fg);
@@ -235,6 +243,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return UIUtil.getListForeground();
   }
 
+  @Override
   @NotNull
   public String[] getNames(boolean checkBoxState) {
     final ArrayList<String> result = new ArrayList<String>();
@@ -251,6 +260,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return ArrayUtil.toStringArray(result);
   }
 
+  @Override
   @NotNull
   public Object[] getElementsByName(final String id, final boolean checkBoxState, final String pattern) {
     final HashMap<AnAction, String> map = new HashMap<AnAction, String>();
@@ -285,7 +295,8 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           if (!descriptions.isEmpty()) {
             if (optionDescriptions == null) {
               optionDescriptions = descriptions;
-            } else {
+            }
+            else {
               optionDescriptions.retainAll(descriptions);
             }
           }
@@ -308,7 +319,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return objects;
   }
 
-  private void collectActions(Map<AnAction, String> result, ActionGroup group, final String containingGroupName){
+  private void collectActions(Map<AnAction, String> result, ActionGroup group, final String containingGroupName) {
     final AnAction[] actions = group.getChildren(null);
     includeGroup(result, group, actions, containingGroupName);
     for (AnAction action : actions) {
@@ -317,12 +328,14 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           final ActionGroup actionGroup = (ActionGroup)action;
           final String groupName = actionGroup.getTemplatePresentation().getText();
           collectActions(result, actionGroup, StringUtil.isEmpty(groupName) || !actionGroup.isPopup() ? containingGroupName : groupName);
-        } else {
+        }
+        else {
           final String groupName = group.getTemplatePresentation().getText();
           if (result.containsKey(action)) {
             result.put(action, null);
-          } else {
-            result.put(action, groupName != null && groupName.length() > 0 ? groupName : containingGroupName);
+          }
+          else {
+            result.put(action, StringUtil.isEmpty(groupName) ? containingGroupName : groupName);
           }
         }
       }
@@ -345,48 +358,49 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     }
   }
 
+  @Override
   @Nullable
   public String getFullName(final Object element) {
     return getElementName(element);
   }
 
+  @NonNls
+  @Override
   public String getHelpId() {
     return "procedures.navigating.goto.action";
   }
 
+  @Override
   @NotNull
   public String[] getSeparators() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @Override
   public String getElementName(final Object element) {
     if (element instanceof OptionDescription) return ((OptionDescription)element).getHit();
     if (!(element instanceof Map.Entry)) return null;
     return ((AnAction)((Map.Entry)element).getKey()).getTemplatePresentation().getText();
   }
 
+  @Override
   public boolean matches(@NotNull final String name, @NotNull final String pattern) {
     final AnAction anAction = myActionManager.getAction(name);
+    if (anAction == null) return true;
     final Pattern compiledPattern = getPattern(pattern);
-    if (anAction != null) {
-      final Presentation presentation = anAction.getTemplatePresentation();
-      final String text = presentation.getText();
-      final String description = presentation.getDescription();
-      if ((text != null && myMatcher.matches(text, compiledPattern)) ||
-          (description != null && myMatcher.matches(description, compiledPattern))) {
-        return true;
-      }
-      final String groupName = myActionsMap.get(anAction);
-      if (groupName != null && text != null && myMatcher.matches(groupName + " " + text, compiledPattern)) {
-        return true;
-      }
-      return false;
-    }
-    else {
+    final Presentation presentation = anAction.getTemplatePresentation();
+    final String text = presentation.getText();
+    final String description = presentation.getDescription();
+    PatternMatcher matcher = getMatcher();
+    if (text != null && matcher.matches(text, compiledPattern) ||
+        description != null && !description.equals(text) && matcher.matches(description, compiledPattern)) {
       return true;
     }
+    final String groupName = myActionsMap.get(anAction);
+    return groupName != null && text != null && matcher.matches(groupName + " " + text, compiledPattern);
   }
 
+  @Nullable
   protected Project getProject() {
     return myProject;
   }
@@ -396,99 +410,102 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   }
 
   @NotNull
-  private Pattern getPattern(String pattern) {
-    if (!Comparing.strEqual(pattern, myPattern)) {
-      myCompiledPattern = null;
-      myPattern = pattern;
+  private Pattern getPattern(@NotNull String pattern) {
+    String converted = convertPattern(pattern);
+    Pattern compiledPattern = myCompiledPattern;
+    if (compiledPattern != null && !Comparing.strEqual(converted, compiledPattern.getPattern())) {
+      compiledPattern = null;
     }
-    if (myCompiledPattern == null) {
-      boolean allowToLower = true;
-      final int eol = pattern.indexOf('\n');
-      if (eol != -1) {
-        pattern = pattern.substring(0, eol);
-      }
-      if (pattern.length() >= 80) {
-        pattern = pattern.substring(0, 80);
-      }
-
-      final @NonNls StringBuilder buffer = new StringBuilder();
-
-      if (containsOnlyUppercaseLetters(pattern)) {
-        allowToLower = false;
-      }
-
-      if (allowToLower) {
-        buffer.append(".*");
-      }
-
-      boolean firstIdentifierLetter = true;
-      for (int i = 0; i < pattern.length(); i++) {
-        final char c = pattern.charAt(i);
-        if (Character.isLetterOrDigit(c)) {
-          // This logic allows to use uppercase letters only to catch the name like PDM for PsiDocumentManager
-          if (Character.isUpperCase(c) || Character.isDigit(c)) {
-
-            if (!firstIdentifierLetter) {
-              buffer.append("[^A-Z]*");
-            }
-
-            buffer.append("[");
-            buffer.append(c);
-            if (allowToLower || i == 0) {
-              buffer.append('|');
-              buffer.append(Character.toLowerCase(c));
-            }
-            buffer.append("]");
-          }
-          else if (Character.isLowerCase(c)) {
-            buffer.append('[');
-            buffer.append(c);
-            buffer.append('|');
-            buffer.append(Character.toUpperCase(c));
-            buffer.append(']');
-          }
-          else {
-            buffer.append(c);
-          }
-
-          firstIdentifierLetter = false;
-        }
-        else if (c == '*') {
-          buffer.append(".*");
-          firstIdentifierLetter = true;
-        }
-        else if (c == '.') {
-          buffer.append("\\.");
-          firstIdentifierLetter = true;
-        }
-        else if (c == ' ') {
-          buffer.append("[^A-Z]*\\ ");
-          firstIdentifierLetter = true;
-        }
-        else {
-          firstIdentifierLetter = true;
-          // for standard RegExp engine
-          // buffer.append("\\u");
-          // buffer.append(Integer.toHexString(c + 0x20000).substring(1));
-
-          // for OROMATCHER RegExp engine
-          buffer.append("\\x");
-          buffer.append(Integer.toHexString(c + 0x20000).substring(3));
-        }
-      }
-
-      buffer.append(".*");
-
-
+    if (compiledPattern == null) {
       try {
-        myCompiledPattern = new Perl5Compiler().compile(buffer.toString());
+        myCompiledPattern = compiledPattern = new Perl5Compiler().compile(converted, Perl5Compiler.READ_ONLY_MASK);
       }
       catch (MalformedPatternException e) {
         //do nothing
       }
     }
 
-    return myCompiledPattern;
+    return compiledPattern;
+  }
+
+  private String convertPattern(String pattern) {
+    final int eol = pattern.indexOf('\n');
+    if (eol != -1) {
+      pattern = pattern.substring(0, eol);
+    }
+    if (pattern.length() >= 80) {
+      pattern = pattern.substring(0, 80);
+    }
+
+    @NonNls final StringBuilder buffer = new StringBuilder();
+
+    boolean allowToLower = true;
+    if (containsOnlyUppercaseLetters(pattern)) {
+      allowToLower = false;
+    }
+
+    if (allowToLower) {
+      buffer.append(".*");
+    }
+
+    boolean firstIdentifierLetter = true;
+    for (int i = 0; i < pattern.length(); i++) {
+      final char c = pattern.charAt(i);
+      if (Character.isLetterOrDigit(c)) {
+        // This logic allows to use uppercase letters only to catch the name like PDM for PsiDocumentManager
+        if (Character.isUpperCase(c) || Character.isDigit(c)) {
+
+          if (!firstIdentifierLetter) {
+            buffer.append("[^A-Z]*");
+          }
+
+          buffer.append("[");
+          buffer.append(c);
+          if (allowToLower || i == 0) {
+            buffer.append('|');
+            buffer.append(Character.toLowerCase(c));
+          }
+          buffer.append("]");
+        }
+        else if (Character.isLowerCase(c)) {
+          buffer.append('[');
+          buffer.append(c);
+          buffer.append('|');
+          buffer.append(Character.toUpperCase(c));
+          buffer.append(']');
+        }
+        else {
+          buffer.append(c);
+        }
+
+        firstIdentifierLetter = false;
+      }
+      else if (c == '*') {
+        buffer.append(".*");
+        firstIdentifierLetter = true;
+      }
+      else if (c == '.') {
+        buffer.append("\\.");
+        firstIdentifierLetter = true;
+      }
+      else if (c == ' ') {
+        buffer.append("[^A-Z]*\\ ");
+        firstIdentifierLetter = true;
+      }
+      else {
+        firstIdentifierLetter = true;
+        // for standard RegExp engine
+        // buffer.append("\\u");
+        // buffer.append(Integer.toHexString(c + 0x20000).substring(1));
+
+        // for OROMATCHER RegExp engine
+        buffer.append("\\x");
+        buffer.append(Integer.toHexString(c + 0x20000).substring(3));
+      }
+    }
+
+    buffer.append(".*");
+    return buffer.toString();
   }
 
   private static boolean containsOnlyUppercaseLetters(String s) {
@@ -507,5 +524,15 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   @Override
   public boolean useMiddleMatching() {
     return false;
+  }
+
+  private final ThreadLocal<PatternMatcher> myMatcher = new ThreadLocal<PatternMatcher>() {
+    @Override
+    protected PatternMatcher initialValue() {
+      return new Perl5Matcher();
+    }
+  };
+  private PatternMatcher getMatcher() {
+    return myMatcher.get();
   }
 }

@@ -1,0 +1,3 @@
+class Foo {
+  <spot>private</spot> def foo() {}
+}

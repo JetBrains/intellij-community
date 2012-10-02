@@ -15,12 +15,15 @@
  */
 package com.intellij.ide.util.treeView.smartTree;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
 
 /**
  * @author Konstantin Bulenkov
  */
 public interface ProvidingTreeModel extends TreeModel {
+  @NotNull
   Collection<NodeProvider> getNodeProviders();
-  boolean isEnabled(NodeProvider provider);
+  boolean isEnabled(@NotNull NodeProvider provider);
 }

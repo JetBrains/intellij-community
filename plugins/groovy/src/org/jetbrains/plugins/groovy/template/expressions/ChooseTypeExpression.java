@@ -19,7 +19,6 @@ import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.editor.Document;
@@ -40,7 +39,13 @@ import java.util.Set;
  * @author ven
  */
 public class ChooseTypeExpression extends Expression {
-  protected SmartTypePointer myTypePointer;
+  public static final InsertHandler<PsiTypeLookupItem> IMPORT_FIXER = new InsertHandler<PsiTypeLookupItem>() {
+    @Override
+    public void handleInsert(InsertionContext context, PsiTypeLookupItem item) {
+      GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), item);
+    }
+  };
+  protected final SmartTypePointer myTypePointer;
   private final LookupElement[] myItems;
   private final PsiManager myManager;
 
@@ -63,10 +68,7 @@ public class ChooseTypeExpression extends Expression {
     for (TypeConstraint constraint : constraints) {
       if (constraint instanceof SubtypeConstraint) {
         PsiType type = constraint.getDefaultType();
-        PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(type, null);
-
-        setupLookup(item);
-
+        PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(type, null, PsiTypeLookupItem.isDiamond(type), IMPORT_FIXER);
         result.add(item);
       }
       else if (constraint instanceof SupertypeConstraint) {
@@ -81,14 +83,6 @@ public class ChooseTypeExpression extends Expression {
     return result.toArray(new LookupElement[result.size()]);
   }
 
-  private static void setupLookup(PsiTypeLookupItem item) {
-    item.setInsertHandler(new InsertHandler<LookupItem>() {
-      public void handleInsert(InsertionContext context, LookupItem item) {
-        GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), item);
-      }
-    });
-  }
-
   private static void processSuperTypes(PsiType type, Set<LookupElement> result) {
     String text = type.getCanonicalText();
     String unboxed = PsiTypesUtil.unboxIfPossible(text);
@@ -96,8 +90,7 @@ public class ChooseTypeExpression extends Expression {
       result.add(LookupElementBuilder.create(unboxed).bold());
     }
     else {
-      PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(type, null);
-      setupLookup(item);
+      PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(type, null, PsiTypeLookupItem.isDiamond(type), IMPORT_FIXER);
       result.add(item);
     }
     PsiType[] superTypes = type.getSuperTypes();

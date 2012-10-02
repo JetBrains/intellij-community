@@ -230,7 +230,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
             myTree.addTreeSelectionListener(listener);
 
             final JBPopup popup =
-              JBPopupFactory.getInstance().createComponentPopupBuilder(viewComponent, viewComponent.getPrefferedFocusableComponent())
+              JBPopupFactory.getInstance().createComponentPopupBuilder(viewComponent, viewComponent.getPreferredFocusableComponent())
                 .setRequestFocusCondition(myProject, NotLookupOrSearchCondition.INSTANCE)
                 .setProject(myProject)
                 .setDimensionServiceKey(myProject, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)

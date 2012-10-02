@@ -26,6 +26,7 @@ package com.intellij.refactoring.classMembers;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class DelegatingMemberInfoModel<T extends PsiElement, M extends MemberInfoBase<T>> implements MemberInfoModel<T, M> {
   private MemberInfoModel<T, M> myDelegatingTarget;
@@ -66,6 +67,7 @@ public class DelegatingMemberInfoModel<T extends PsiElement, M extends MemberInf
     myDelegatingTarget.memberInfoChanged(event);
   }
 
+  @Nullable
   public Boolean isFixedAbstract(M member) {
     return myDelegatingTarget.isFixedAbstract(member);
   }

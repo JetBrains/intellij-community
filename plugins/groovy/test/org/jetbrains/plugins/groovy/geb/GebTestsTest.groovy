@@ -97,11 +97,14 @@ class A extends geb.Page {
     someField<warning>()</warning>
     aaa { "Aaa" }
     bbb { aaa.length() }
+    ccc(required: false) { aaa.length() }
+    eee(1, required: false) { aaa.length() }
   }
 }
 """)
 
     myFixture.checkHighlighting(true, false, true)
+    TestUtils.checkResolve(myFixture.file, "eee")
   }
 
   void testRename() {

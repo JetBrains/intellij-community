@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class SmartList<E> extends AbstractList<E> {
       myElem = e;
     }
     else if (mySize == 1) {
-      Object[] array= new Object[2];
+      Object[] array = new Object[2];
       array[0] = myElem;
       array[1] = e;
       myElem = array;
@@ -61,7 +61,7 @@ public class SmartList<E> extends AbstractList<E> {
       int oldCapacity = array.length;
       if (mySize >= oldCapacity) {
         // have to resize
-        int newCapacity = oldCapacity * 3 /2 + 1;
+        int newCapacity = oldCapacity * 3 / 2 + 1;
         int minCapacity = mySize + 1;
         if (newCapacity < minCapacity) {
           newCapacity = minCapacity;
@@ -76,6 +76,39 @@ public class SmartList<E> extends AbstractList<E> {
     mySize++;
     modCount++;
     return true;
+  }
+
+  @Override
+  public void add(int index, E e) {
+    if (index < 0 || index > mySize) {
+      throw new IndexOutOfBoundsException("index= " + index + ". Must be index >= 0 && index < " + mySize);
+    }
+
+    if (mySize == 0) {
+      myElem = e;
+    }
+    else if (mySize == 1 && index == 0) {
+      Object[] array = new Object[2];
+      array[0] = e;
+      array[1] = myElem;
+      myElem = array;
+    }
+    else {
+      Object[] array = new Object[mySize + 1];
+      if (mySize == 1) {
+        array[0] = myElem; // index == 1
+      }
+      else {
+        Object[] oldArray = (Object[])myElem;
+        System.arraycopy(oldArray, 0, array, 0, index);
+        System.arraycopy(oldArray, index, array, index + 1, mySize - index);
+      }
+      array[index] = e;
+      myElem = array;
+    }
+
+    mySize++;
+    modCount++;
   }
 
   public int size() {
@@ -116,7 +149,7 @@ public class SmartList<E> extends AbstractList<E> {
     }
     else {
       final Object[] array = (Object[])myElem;
-      oldValue = (E) array[index];
+      oldValue = (E)array[index];
 
       if (mySize == 2) {
         myElem = array[1 - index];
@@ -126,7 +159,7 @@ public class SmartList<E> extends AbstractList<E> {
         if (numMoved > 0) {
           System.arraycopy(array, index + 1, array, index, numMoved);
         }
-        array[mySize-1] = null;
+        array[mySize - 1] = null;
       }
     }
     mySize--;
@@ -159,12 +192,16 @@ public class SmartList<E> extends AbstractList<E> {
     public E next() {
       if (myVisited) throw new NoSuchElementException();
       myVisited = true;
-      if (modCount != myInitialModCount) throw new ConcurrentModificationException("ModCount: "+modCount+"; expected: "+myInitialModCount);
+      if (modCount != myInitialModCount) {
+        throw new ConcurrentModificationException("ModCount: " + modCount + "; expected: " + myInitialModCount);
+      }
       return (E)myElem;
     }
 
     public void remove() {
-      if (modCount != myInitialModCount) throw new ConcurrentModificationException("ModCount: "+modCount+"; expected: "+myInitialModCount);
+      if (modCount != myInitialModCount) {
+        throw new ConcurrentModificationException("ModCount: " + modCount + "; expected: " + myInitialModCount);
+      }
       clear();
     }
   }

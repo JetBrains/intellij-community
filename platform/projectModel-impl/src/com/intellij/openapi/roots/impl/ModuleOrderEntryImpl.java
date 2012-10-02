@@ -39,10 +39,12 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
   @NonNls public static final String ENTRY_TYPE = JpsModuleRootModelSerializer.MODULE_TYPE;
   @NonNls public static final String MODULE_NAME_ATTR = JpsModuleRootModelSerializer.MODULE_NAME_ATTRIBUTE;
   @NonNls private static final String EXPORTED_ATTR = JpsJavaModelSerializerExtension.EXPORTED_ATTRIBUTE;
+  private static final String PRODUCTION_ON_TEST_ATTRIBUTE = "production-on-test";
 
   private final ModulePointer myModulePointer;
   private boolean myExported = false;
   @NotNull private DependencyScope myScope;
+  private boolean myProductionOnTestDependency;
 
   ModuleOrderEntryImpl(@NotNull Module module, @NotNull RootModelImpl rootModel) {
     super(rootModel);
@@ -66,6 +68,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
 
     myModulePointer = ModulePointerManager.getInstance(rootModel.getProject()).create(moduleName);
     myScope = DependencyScope.readExternal(element);
+    myProductionOnTestDependency = element.getAttributeValue(PRODUCTION_ON_TEST_ATTRIBUTE) != null;
   }
 
   private ModuleOrderEntryImpl(ModuleOrderEntryImpl that, RootModelImpl rootModel) {
@@ -73,12 +76,21 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     final ModulePointer thatModule = that.myModulePointer;
     myModulePointer = ModulePointerManager.getInstance(rootModel.getProject()).create(thatModule.getModuleName());
     myExported = that.myExported;
+    myProductionOnTestDependency = that.myProductionOnTestDependency;
     myScope = that.myScope;
   }
 
   @NotNull
   public Module getOwnerModule() {
     return getRootModel().getModule();
+  }
+
+  public boolean isProductionOnTestDependency() {
+    return myProductionOnTestDependency;
+  }
+
+  public void setProductionOnTestDependency(boolean productionOnTestDependency) {
+    myProductionOnTestDependency = productionOnTestDependency;
   }
 
   @NotNull
@@ -109,6 +121,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     return policy.visitModuleOrderEntry(this, initialValue);
   }
 
+  @NotNull
   public String getPresentableName() {
     return getModuleName();
   }
@@ -129,6 +142,9 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
       element.setAttribute(EXPORTED_ATTR, "");
     }
     myScope.writeExternal(element);
+    if (myProductionOnTestDependency) {
+      element.setAttribute(PRODUCTION_ON_TEST_ATTRIBUTE, "");
+    }
     rootElement.addContent(element);
   }
 

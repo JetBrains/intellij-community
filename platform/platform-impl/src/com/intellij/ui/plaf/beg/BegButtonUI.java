@@ -89,27 +89,6 @@ public class BegButtonUI extends MetalButtonUI {
   }
 
   protected void paintFocus(Graphics g, AbstractButton b, Rectangle viewRect, Rectangle textRect, Rectangle iconRect) {
-    Rectangle focusRect = new Rectangle();
-    String text = b.getText();
-    boolean isIcon = b.getIcon() != null;
-
-    // If there is text
-    if (text != null && !text.equals("")){
-      if (!isIcon){
-        focusRect.setBounds(textRect);
-      }
-      else{
-        focusRect.setBounds(iconRect.union(textRect));
-      }
-    }
-    // If there is an icon and no text
-    else
-      if (isIcon){
-        focusRect.setBounds(iconRect);
-      }
-
-    g.setColor(getFocusColor());
-//    g.drawRect(focusRect.x - 1, focusRect.y - 1, focusRect.width + 1, focusRect.height + 1);
     UIUtil.drawDottedRectangle(g, viewRect.x, viewRect.y, viewRect.x + viewRect.width, viewRect.y + viewRect.height);
   }
 }

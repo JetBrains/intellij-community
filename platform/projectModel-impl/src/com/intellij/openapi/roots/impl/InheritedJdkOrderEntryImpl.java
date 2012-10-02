@@ -26,6 +26,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 /**
@@ -94,6 +95,7 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
     return projectJdk == null ? null : projectJdk.getRootProvider();
   }
 
+  @NotNull
   public String getPresentableName() {
     return "< " + getJdkName() + " >";
   }

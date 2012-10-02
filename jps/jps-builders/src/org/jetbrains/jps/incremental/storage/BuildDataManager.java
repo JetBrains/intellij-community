@@ -3,10 +3,9 @@ package org.jetbrains.jps.incremental.storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
-import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactsBuildData;
 
 import java.io.*;
@@ -26,7 +25,7 @@ public class BuildDataManager implements StorageOwner {
   private static final String MAPPINGS_STORAGE = "mappings";
 
   private final Object mySourceToOutputLock = new Object();
-  private final Map<BuildTarget, SourceToOutputMapping> mySourceToOutputs = new HashMap<BuildTarget, SourceToOutputMapping>();
+  private final Map<BuildTarget<?>, SourceToOutputMappingImpl> mySourceToOutputs = new HashMap<BuildTarget<?>, SourceToOutputMappingImpl>();
 
   private final SourceToFormMapping mySrcToFormMap;
   private final ArtifactsBuildData myArtifactsBuildData;
@@ -50,12 +49,12 @@ public class BuildDataManager implements StorageOwner {
     return new File(myDataStorageRoot, "output-roots");
   }
 
-  public SourceToOutputMapping getSourceToOutputMap(final BuildTarget target) throws IOException {
-    SourceToOutputMapping mapping;
+  public SourceToOutputMappingImpl getSourceToOutputMap(final BuildTarget<?> target) throws IOException {
+    SourceToOutputMappingImpl mapping;
     synchronized (mySourceToOutputLock) {
       mapping = mySourceToOutputs.get(target);
       if (mapping == null) {
-        mapping = new SourceToOutputMapping(new File(myTargetsState.getTargetDataRoot(target), "src-out" + File.separator + "data"));
+        mapping = new SourceToOutputMappingImpl(new File(myTargetsState.getTargetDataRoot(target), "src-out" + File.separator + "data"));
         mySourceToOutputs.put(target, mapping);
       }
     }
@@ -117,7 +116,7 @@ public class BuildDataManager implements StorageOwner {
   public void flush(boolean memoryCachesOnly) {
     myArtifactsBuildData.flush(memoryCachesOnly);
     synchronized (mySourceToOutputLock) {
-      for (SourceToOutputMapping mapping : mySourceToOutputs.values()) {
+      for (SourceToOutputMappingImpl mapping : mySourceToOutputs.values()) {
         mapping.flush(memoryCachesOnly);
       }
     }
@@ -170,11 +169,11 @@ public class BuildDataManager implements StorageOwner {
     }
   }
 
-  public void closeSourceToOutputStorages(Collection<ModuleChunk> chunks) throws IOException {
+  public void closeSourceToOutputStorages(Collection<BuildTargetChunk> chunks) throws IOException {
     synchronized (mySourceToOutputLock) {
-      for (ModuleChunk chunk : chunks) {
-        for (ModuleBuildTarget target : chunk.getTargets()) {
-          final SourceToOutputMapping mapping = mySourceToOutputs.remove(target);
+      for (BuildTargetChunk chunk : chunks) {
+        for (BuildTarget<?> target : chunk.getTargets()) {
+          final SourceToOutputMappingImpl mapping = mySourceToOutputs.remove(target);
           if (mapping != null) {
             mapping.close();
           }
@@ -186,7 +185,7 @@ public class BuildDataManager implements StorageOwner {
   private void closeSourceToOutputStorages() throws IOException {
     IOException ex = null;
     try {
-      for (SourceToOutputMapping mapping : mySourceToOutputs.values()) {
+      for (SourceToOutputMappingImpl mapping : mySourceToOutputs.values()) {
         try {
           mapping.close();
         }

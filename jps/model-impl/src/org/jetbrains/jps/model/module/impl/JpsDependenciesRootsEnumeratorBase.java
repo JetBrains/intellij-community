@@ -49,12 +49,12 @@ public abstract class JpsDependenciesRootsEnumeratorBase<E extends JpsDependenci
       @Override
       public boolean process(JpsDependencyElement dependencyElement) {
         if (dependencyElement instanceof JpsModuleSourceDependency) {
-          processModuleRootUrls(dependencyElement.getContainingModule(), urlConsumer);
+          processModuleRootUrls(dependencyElement.getContainingModule(), dependencyElement, urlConsumer);
         }
         else if (dependencyElement instanceof JpsModuleDependency) {
           JpsModule dep = ((JpsModuleDependency)dependencyElement).getModule();
           if (dep != null) {
-            processModuleRootUrls(dep, urlConsumer);
+            processModuleRootUrls(dep, dependencyElement, urlConsumer);
           }
         }
         else if (dependencyElement instanceof JpsLibraryDependency) {
@@ -81,5 +81,5 @@ public abstract class JpsDependenciesRootsEnumeratorBase<E extends JpsDependenci
     return true;
   }
 
-  protected abstract boolean processModuleRootUrls(JpsModule module, Consumer<String> urlConsumer);
+  protected abstract boolean processModuleRootUrls(JpsModule module, JpsDependencyElement dependencyElement, Consumer<String> urlConsumer);
 }

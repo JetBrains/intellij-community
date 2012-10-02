@@ -7,10 +7,9 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
+import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
-import org.jetbrains.jps.incremental.ModuleRootsIndex;
 import org.jetbrains.jps.incremental.Utils;
-import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -44,7 +43,7 @@ final class FilesDelta {
     }
   }
 
-  public void load(DataInput in, @NotNull BuildTarget target, ModuleRootsIndex rootsIndex, ArtifactRootsIndex artifactRootsIndex) throws IOException {
+  public void load(DataInput in, @NotNull BuildTarget<?> target, BuildRootIndex buildRootIndex) throws IOException {
     myDeletedPaths.clear();
     int deletedCount = in.readInt();
     while (deletedCount-- > 0) {
@@ -54,7 +53,7 @@ final class FilesDelta {
     int recompileCount = in.readInt();
     while (recompileCount-- > 0) {
       String rootId = IOUtil.readString(in);
-      BuildRootDescriptor descriptor = target.findRootDescriptor(rootId, rootsIndex, artifactRootsIndex);
+      BuildRootDescriptor descriptor = target.findRootDescriptor(rootId, buildRootIndex);
       Set<File> files;
       if (descriptor != null) {
         files = myFilesToRecompile.get(descriptor);

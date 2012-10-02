@@ -83,6 +83,7 @@ public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel 
     return myModel.getCurrentEditorElement();
   }
 
+  @NotNull
   @Override
   public Collection<NodeProvider> getNodeProviders() {
     if (myModel instanceof ProvidingTreeModel) {
@@ -134,7 +135,7 @@ public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel 
   }
 
   @Override
-  public boolean isEnabled(NodeProvider provider) {
+  public boolean isEnabled(@NotNull NodeProvider provider) {
     return myStructureView.isActionActive(provider.getName());
   }
 }

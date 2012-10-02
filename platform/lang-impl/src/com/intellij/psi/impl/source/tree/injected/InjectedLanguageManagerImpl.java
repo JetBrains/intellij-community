@@ -389,22 +389,26 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
 
   private final Map<Class,MultiHostInjector[]> myInjectorsClone = new HashMap<Class, MultiHostInjector[]>();
   @TestOnly
-  public void pushInjectors() {
+  public static void pushInjectors(@NotNull Project project) {
+    InjectedLanguageManagerImpl cachedManager = (InjectedLanguageManagerImpl)project.getUserData(INSTANCE_CACHE);
+    if (cachedManager == null) return;
     try {
-      assert myInjectorsClone.isEmpty() : myInjectorsClone;
+      assert cachedManager.myInjectorsClone.isEmpty() : cachedManager.myInjectorsClone;
     }
     finally {
-      myInjectorsClone.clear();
+      cachedManager.myInjectorsClone.clear();
     }
-    myInjectorsClone.putAll(injectors);
+    cachedManager.myInjectorsClone.putAll(cachedManager.injectors);
   }
   @TestOnly
-  public void checkInjectorsAreDisposed() {
+  public static void checkInjectorsAreDisposed(@NotNull Project project) {
+    InjectedLanguageManagerImpl cachedManager = (InjectedLanguageManagerImpl)project.getUserData(INSTANCE_CACHE);
+    if (cachedManager == null) return;
     try {
-      for (Map.Entry<Class, MultiHostInjector[]> entry : injectors.entrySet()) {
+      for (Map.Entry<Class, MultiHostInjector[]> entry : cachedManager.injectors.entrySet()) {
         Class key = entry.getKey();
-        if (myInjectorsClone.isEmpty()) return;
-        MultiHostInjector[] oldInjectors = myInjectorsClone.get(key);
+        if (cachedManager.myInjectorsClone.isEmpty()) return;
+        MultiHostInjector[] oldInjectors = cachedManager.myInjectorsClone.get(key);
         for (MultiHostInjector injector : entry.getValue()) {
           if (!ArrayUtil.contains(injector, oldInjectors)) {
             throw new AssertionError("Injector was not disposed: " + key + " -> " + injector);
@@ -413,7 +417,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       }
     }
     finally {
-      myInjectorsClone.clear();
+      cachedManager.myInjectorsClone.clear();
     }
   }
 

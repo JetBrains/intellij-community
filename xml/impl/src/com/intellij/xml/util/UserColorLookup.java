@@ -62,7 +62,7 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
 
     Color color = ColorChooser
       .chooseColor(WindowManager.getInstance().suggestParentWindow(context.getProject()), XmlBundle.message("choose.color.dialog.title"),
-                   myColorAtCaret, true);
+                   myColorAtCaret, true, element);
 
     if (color != null) {
       String s = Integer.toHexString(color.getRGB() & 0xFFFFFF);

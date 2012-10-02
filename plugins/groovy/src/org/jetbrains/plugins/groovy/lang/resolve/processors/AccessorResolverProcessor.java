@@ -22,8 +22,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
 
 /**
  * @author Maxim.Medvedev
@@ -32,6 +34,7 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
   private final String myPropertyName;
   private final boolean mySearchForGetter;
   private final SubstitutorComputer mySubstitutorComputer;
+
 
   public AccessorResolverProcessor(String accessorName, String propertyName, GroovyPsiElement place, boolean searchForGetter) {
     this(accessorName, propertyName, place, searchForGetter, false, null, PsiType.EMPTY_ARRAY);
@@ -52,17 +55,34 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
   }
 
   public boolean execute(@NotNull PsiElement element, ResolveState state) {
+    final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
+    String importedName = resolveContext instanceof GrImportStatement ? ((GrImportStatement)resolveContext).getImportedName() : null;
     if (mySearchForGetter) {
-      if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)element, myPropertyName)) {
+      if (element instanceof PsiMethod &&
+          (importedName != null && isSimplePropertyGetter((PsiMethod)element, null) &&
+           (myPropertyName.equals(getPropertyNameByGetter((PsiMethod)element, importedName)) || myPropertyName.equals(importedName)) ||
+           importedName == null && isSimplePropertyGetter((PsiMethod)element, myPropertyName))) {
         return addAccessor((PsiMethod)element, state);
       }
     }
     else {
-      if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)element, myPropertyName)) {
+      if (element instanceof PsiMethod &&
+          (importedName != null && isSimplePropertySetter((PsiMethod)element, null) &&
+           (myPropertyName.equals(getPropertyNameBySetterName(importedName)) || myPropertyName.equals(importedName)) ||
+           importedName == null && isSimplePropertySetter((PsiMethod)element, myPropertyName))) {
         return addAccessor((PsiMethod)element, state);
       }
     }
     return true;
+  }
+
+  @Nullable
+  private static String getPropertyNameByGetter(PsiMethod element, String importedName) {
+    return getPropertyNameByGetterName(importedName, isBoolean(element));
+  }
+
+  private static boolean isBoolean(PsiMethod method) {
+    return method.getReturnType() == PsiType.BOOLEAN;
   }
 
   private boolean addAccessor(PsiMethod method, ResolveState state) {

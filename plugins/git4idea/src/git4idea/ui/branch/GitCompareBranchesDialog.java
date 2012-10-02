@@ -58,6 +58,7 @@ public class GitCompareBranchesDialog extends DialogWrapper {
       rootString = "";
     }
     setTitle(String.format("Comparing %s with %s%s", currentBranchName, branchName, rootString));
+    setModal(false);
     init();
   }
 

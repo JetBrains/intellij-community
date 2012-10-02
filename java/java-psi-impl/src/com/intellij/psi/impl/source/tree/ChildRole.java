@@ -157,6 +157,7 @@ public class ChildRole {
   public static final int ANNOTATION = 250;  // in MODIFIER_LIST
   public static final int CATCH_SECTION = 251; // in TRY_STATEMENT
   public static final int ARROW = 252; // in LAMBDA STATEMENT
+  public static final int DOUBLE_COLON = 253; // in METHOD_REF
 
   private ChildRole() {
   }

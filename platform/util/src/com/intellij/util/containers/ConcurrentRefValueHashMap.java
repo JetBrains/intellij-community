@@ -25,7 +25,7 @@ import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public abstract class ConcurrentRefValueHashMap<K,V> implements ConcurrentMap<K,V> {
+abstract class ConcurrentRefValueHashMap<K,V> implements ConcurrentMap<K,V> {
   private final ConcurrentHashMap<K,MyReference<K, V>> myMap;
   protected final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 

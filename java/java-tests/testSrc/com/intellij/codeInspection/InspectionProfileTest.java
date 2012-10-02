@@ -263,16 +263,20 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public static int countInitializedTools(Profile foo) {
-    int i = 0;
+    return getInitializedTools(foo).size();
+  }
+
+  public static List<InspectionProfileEntry> getInitializedTools(Profile foo) {
+    List<InspectionProfileEntry> initialized = new ArrayList<InspectionProfileEntry>();
     List<ScopeToolState> tools = ((InspectionProfileImpl)foo).getAllTools();
     for (ScopeToolState tool : tools) {
       InspectionProfileEntry entry = tool.getTool();
       assertTrue(entry instanceof InspectionToolWrapper);
       if (entry.isInitialized()) {
-        i++;
+        initialized.add(entry);
       }
     }
-    return i;
+    return initialized;
   }
 
   private static LocalInspectionToolWrapper createTool(String s) {

@@ -60,7 +60,7 @@ public class SliceHandler implements CodeInsightActionHandler {
 
   @Nullable
   public PsiElement getExpressionAtCaret(final Editor editor, final PsiFile file) {
-    int offset = TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
+    int offset = TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
     if (offset == 0) {
       return null;
     }

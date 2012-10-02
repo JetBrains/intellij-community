@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -47,8 +48,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
   private static final int INTER_RESPONSE_DELAY = 500;  // time to wait for a next event in a sequence
   private static final int NATIVE_PROCESS_DELAY = 60000;  // time to wait for a native watcher response
 
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private static Logger LOG =
-    Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcher");
+  private static Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcher");
 
   private FileWatcher myWatcher;
   private LocalFileSystem myFileSystem;
@@ -454,6 +454,56 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
   }
 
+  public void testDirectoryRecreation() throws Exception {
+    final File rootDir = IoTestUtil.createTestDir("root");
+    final File topDir = IoTestUtil.createTestDir(rootDir, "top");
+    final File file1 = IoTestUtil.createTestFile(topDir, "file1.txt", "abc");
+    final File file2 = IoTestUtil.createTestFile(topDir, "file2.txt", "123");
+    refresh(topDir);
+
+    final LocalFileSystem.WatchRequest request = watch(rootDir);
+    try {
+      myAccept = true;
+      assertTrue(FileUtil.delete(topDir));
+      assertTrue(topDir.mkdir());
+      TimeoutUtil.sleep(100);
+      assertTrue(file1.createNewFile());
+      assertTrue(file2.createNewFile());
+      assertEvent(VFileContentChangeEvent.class, file1.getPath(), file2.getPath());
+    }
+    finally {
+      unwatch(request);
+      delete(topDir);
+    }
+  }
+
+  public void testWatchRootRecreation() throws Exception {
+    if (SystemInfo.isLinux) {
+      // todo[r.sh]: fix Linux watcher
+      System.err.println("Ignored: to be fixed on Linux");
+      return;
+    }
+
+    final File rootDir = IoTestUtil.createTestDir("root");
+    final File file1 = IoTestUtil.createTestFile(rootDir, "file1.txt", "abc");
+    final File file2 = IoTestUtil.createTestFile(rootDir, "file2.txt", "123");
+    refresh(rootDir);
+
+    final LocalFileSystem.WatchRequest request = watch(rootDir);
+    try {
+      myAccept = true;
+      assertTrue(FileUtil.delete(rootDir));
+      assertTrue(rootDir.mkdir());
+      assertTrue(file1.createNewFile());
+      assertTrue(file2.createNewFile());
+      assertEvent(VFileContentChangeEvent.class, file1.getPath(), file2.getPath());
+    }
+    finally {
+      unwatch(request);
+      delete(rootDir);
+    }
+  }
+
 
   @NotNull
   private LocalFileSystem.WatchRequest watch(final File watchFile) {
@@ -541,14 +591,14 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
 
     int timeout = myTimeout;
-    synchronized (myWaiter) {
-      try {
+    try {
+      synchronized (myWaiter) {
         //noinspection WaitNotInLoop
         myWaiter.wait(timeout);
       }
-      catch (InterruptedException e) {
-        LOG.warn(e);
-      }
+    }
+    catch (InterruptedException e) {
+      LOG.warn(e);
     }
 
     myFileSystem.refresh(false);

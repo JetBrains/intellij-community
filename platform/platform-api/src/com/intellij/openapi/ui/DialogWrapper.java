@@ -1761,7 +1761,6 @@ public abstract class DialogWrapper {
 
     private ErrorText() {
       setLayout(new BorderLayout());
-      UIUtil.removeQuaquaVisualMarginsIn(this);
       JBScrollPane pane =
         new JBScrollPane(myLabel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
       pane.setBorder(IdeBorderFactory.createEmptyBorder(0));

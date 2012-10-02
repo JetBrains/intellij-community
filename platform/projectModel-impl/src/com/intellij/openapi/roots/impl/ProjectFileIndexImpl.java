@@ -56,6 +56,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   public boolean iterateContent(@NotNull ContentIterator iterator) {
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
+      if (module.isDisposed()) continue;
       VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
       for (VirtualFile contentRoot : contentRoots) {
         DirectoryInfo info = getInfoForDirectory(contentRoot);

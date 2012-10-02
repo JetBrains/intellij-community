@@ -31,7 +31,6 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
@@ -318,9 +317,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     super.setUp();
     initApplication();
     ourApplication.setDataProvider(this);
-    doSetup(new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK()), configureLocalInspectionTools(),
-            myAvailableInspectionTools);
-    ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).pushInjectors();
+    doSetup(new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK()), configureLocalInspectionTools(), myAvailableInspectionTools);
+    InjectedLanguageManagerImpl.pushInjectors(getProject());
 
     storeSettings();
 
@@ -470,17 +468,18 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   @Override
   protected void tearDown() throws Exception {
-    CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
+    Project project = getProject();
+    CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
     checkForSettingsDamage();
     VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
-    doTearDown(getProject(), ourApplication, true);
+    doTearDown(project, ourApplication, true);
 
     try {
       super.tearDown();
     }
     finally {
       myThreadTracker.checkLeak();
-      ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).checkInjectorsAreDisposed();
+      InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
       filePointerManager.assertPointersAreDisposed();
     }
   }

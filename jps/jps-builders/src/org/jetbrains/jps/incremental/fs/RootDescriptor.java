@@ -5,8 +5,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 
 import java.io.File;
+import java.io.FileFilter;
 
 /**
 * @author Eugene Zhuravlev
@@ -17,18 +20,12 @@ public final class RootDescriptor extends BuildRootDescriptor {
   public final File root;
   @NotNull
   public final ModuleBuildTarget target;
-  public final boolean isTestRoot;
   public final boolean isGeneratedSources;
   public final boolean isTemp;
 
-  public RootDescriptor(@NotNull File root,
-                        @NotNull ModuleBuildTarget target,
-                        boolean isTestRoot,
-                        boolean isGenerated,
-                        boolean isTemp) {
+  public RootDescriptor(@NotNull File root, @NotNull ModuleBuildTarget target, boolean isGenerated, boolean isTemp) {
     this.root = root;
     this.target = target;
-    this.isTestRoot = isTestRoot;
     this.isGeneratedSources = isGenerated;
     this.isTemp = isTemp;
   }
@@ -38,7 +35,6 @@ public final class RootDescriptor extends BuildRootDescriptor {
     return "RootDescriptor{" +
            "target='" + target + '\'' +
            ", root=" + root +
-           ", test=" + isTestRoot +
            ", generated=" + isGeneratedSources +
            '}';
   }
@@ -54,7 +50,18 @@ public final class RootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  public BuildTarget getTarget() {
+  public BuildTarget<?> getTarget() {
     return target;
+  }
+
+  @Override
+  public FileFilter createFileFilter() {
+    final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(target.getModule().getProject()).getCompilerExcludes();
+    return new FileFilter() {
+      @Override
+      public boolean accept(File file) {
+        return !excludes.isExcluded(file);
+      }
+    };
   }
 }

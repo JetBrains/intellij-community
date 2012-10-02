@@ -67,8 +67,7 @@ public class Foo {
 """)
     myFixture.configureByText "a.java", "class Bar {{ abcf<caret> }}"
     def element = complete()[0]
-    def presentation = new LookupElementPresentation()
-    element.renderElement(presentation)
+    def presentation = LookupElementPresentation.renderElement(element)
     assert 'Foo.abcfield' == presentation.itemText
     assert ' (foo)' == presentation.tailText
     assert 'int' == presentation.typeText
@@ -162,7 +161,14 @@ class Bar {{ abcmethod1()<caret> }}"""
     """)
 
     myFixture.configureByText("a.java", "class Bar {{ abcm<caret> }}")
-    complete()
+    def element = complete()[0]
+
+    def tail = LookupElementPresentation.renderElement(element).tailFragments
+    assert tail[0].text == '(...)'
+    assert !tail[0].grayed
+    assert tail[1].text == ' (foo)'
+    assert tail[1].grayed
+
     assertOrderedEquals myFixture.lookupElementStrings, "abcmethod", "abcmethod1"
   }
 
@@ -177,8 +183,7 @@ class A {
 }
 """)
     def element = complete()[0]
-    def presentation = new LookupElementPresentation()
-    element.renderElement(presentation)
+    def presentation = LookupElementPresentation.renderElement(element)
     assert 'foo' == presentation.itemText
     myFixture.type '\n'
     myFixture.checkResult '''

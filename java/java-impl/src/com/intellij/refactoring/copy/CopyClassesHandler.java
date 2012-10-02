@@ -54,7 +54,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       final PsiClass[] psiClasses = fileMap.values().iterator().next();
       return psiClasses != null && psiClasses.length > 1;
     }
-    return false;
+    return true;
   }
 
   @Override
@@ -65,6 +65,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     return canCopyClass(false, elements);
   }
   public static boolean canCopyClass(boolean fromUpdate, PsiElement... elements) {
+    if (fromUpdate && elements.length > 0 && elements[0] instanceof PsiDirectory) return true;
     return convertToTopLevelClasses(elements, fromUpdate, null, null) != null;
   }
 

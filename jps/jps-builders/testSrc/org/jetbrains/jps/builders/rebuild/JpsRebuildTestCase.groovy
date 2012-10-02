@@ -4,11 +4,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.TestFileSystemBuilder
 import org.jetbrains.jps.JpsPathUtil
 import org.jetbrains.jps.builders.JpsBuildTestCase
-import org.jetbrains.jps.incremental.BuildLoggingManager
-import org.jetbrains.jps.incremental.BuilderRegistry
-import org.jetbrains.jps.incremental.CompileScopeImpl
-import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLoggerImpl
-import org.jetbrains.jps.incremental.java.JavaBuilderLoggerImpl
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 /**
  * @author nik
@@ -44,14 +39,7 @@ abstract class JpsRebuildTestCase extends JpsBuildTestCase {
 
   protected void rebuild() {
     JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myJpsProject).outputUrl = JpsPathUtil.pathToUrl(FileUtil.toSystemIndependentName(getOrCreateOutputDirectory().getAbsolutePath()))
-    def descriptor = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), new JavaBuilderLoggerImpl()))
-    try {
-      def scope = new CompileScopeImpl(true, BuilderRegistry.getInstance().getTargetTypes(), Collections.emptySet(), Collections.emptyMap())
-      doBuild(descriptor, scope, false, true, false).assertSuccessful()
-    }
-    finally {
-      descriptor.release();
-    }
+    doRebuild()
   }
 
   private File getOrCreateOutputDirectory() {

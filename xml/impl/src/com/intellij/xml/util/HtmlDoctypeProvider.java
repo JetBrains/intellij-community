@@ -31,5 +31,6 @@ public interface HtmlDoctypeProvider {
   ExtensionPointName<HtmlDoctypeProvider> EP_NAME = ExtensionPointName.create("com.intellij.xml.util.htmlDoctypeProvider");
 
 
+  @Nullable
   XmlDoctype getDoctype(XmlFile file);
 }

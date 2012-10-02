@@ -106,6 +106,7 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
         myChangelist.setRenderer(new ColoredListCellRendererWrapper<String>() {
           @Override
           protected void doCustomize(JList list, String value, int index, boolean selected, boolean hasFocus) {
+            if (value == null) return;
             if (value.equals(defaultChangelist)) {
               append(value, selected ? SELECTED_BOLD_ATTRIBUTES : BOLD_ATTRIBUTES);
             }

@@ -7,19 +7,24 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
+import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetLoader;
 import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
+import org.jetbrains.jps.builders.impl.BuildTargetIndexImpl;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
-import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.indices.ModuleExcludeIndex;
+import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
+import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
 import org.jetbrains.jps.model.JpsModel;
 
 import java.io.File;
@@ -50,9 +55,11 @@ public class BuildRunner {
 
   public ProjectDescriptor load(MessageHandler msgHandler, File dataStorageRoot, BuildFSState fsState) throws IOException {
     final JpsModel jpsModel = myModelLoader.loadModel();
-    ModuleRootsIndex index = new ModuleRootsIndex(jpsModel, dataStorageRoot);
-    ArtifactRootsIndex artifactRootsIndex = new ArtifactRootsIndex(jpsModel, index);
-    BuildTargetsState targetsState = new BuildTargetsState(dataStorageRoot, index, artifactRootsIndex);
+    BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(jpsModel);
+    ModuleExcludeIndex index = new ModuleExcludeIndexImpl(jpsModel);
+    IgnoredFileIndexImpl ignoredFileIndex = new IgnoredFileIndexImpl(jpsModel);
+    BuildRootIndexImpl buildRootIndex = new BuildRootIndexImpl(targetIndex, jpsModel, index, dataStorageRoot, ignoredFileIndex);
+    BuildTargetsState targetsState = new BuildTargetsState(dataStorageRoot, jpsModel, buildRootIndex);
 
     ProjectTimestamps projectTimestamps = null;
     BuildDataManager dataManager = null;
@@ -75,7 +82,7 @@ public class BuildRunner {
       }
       myForceCleanCaches = true;
       FileUtil.delete(dataStorageRoot);
-      targetsState = new BuildTargetsState(dataStorageRoot, index, artifactRootsIndex);
+      targetsState = new BuildTargetsState(dataStorageRoot, jpsModel, buildRootIndex);
       projectTimestamps = new ProjectTimestamps(dataStorageRoot, targetsState);
       dataManager = new BuildDataManager(dataStorageRoot, targetsState, STORE_TEMP_CACHES_IN_MEMORY);
       // second attempt succeded
@@ -83,7 +90,7 @@ public class BuildRunner {
     }
 
     return new ProjectDescriptor(jpsModel, fsState, projectTimestamps, dataManager, BuildLoggingManager.DEFAULT, index, targetsState,
-                                 artifactRootsIndex);
+                                 targetIndex, buildRootIndex, ignoredFileIndex);
   }
 
   public void runBuild(ProjectDescriptor pd, CanceledStatus cs, @Nullable Callbacks.ConstantAffectionResolver constantSearch,
@@ -132,12 +139,12 @@ public class BuildRunner {
 
   private static CompileScope createCompilationScope(BuildType buildType, ProjectDescriptor pd, List<TargetTypeBuildScope> scopes,
                                                      Collection<String> paths) throws Exception {
-    Set<BuildTargetType> targetTypes = new HashSet<BuildTargetType>();
-    Set<BuildTarget> targets = new HashSet<BuildTarget>();
-    Map<BuildTarget, Set<File>> files;
+    Set<BuildTargetType<?>> targetTypes = new HashSet<BuildTargetType<?>>();
+    Set<BuildTarget<?>> targets = new HashSet<BuildTarget<?>>();
+    Map<BuildTarget<?>, Set<File>> files;
 
     for (TargetTypeBuildScope scope : scopes) {
-      BuildTargetType targetType = BuilderRegistry.getInstance().getTargetType(scope.getTypeId());
+      BuildTargetType<?> targetType = BuilderRegistry.getInstance().getTargetType(scope.getTypeId());
       if (targetType == null) {
         LOG.info("Unknown target type: " + scope.getTypeId());
         continue;
@@ -146,8 +153,9 @@ public class BuildRunner {
         targetTypes.add(targetType);
       }
       else {
+        BuildTargetLoader<?> loader = targetType.createLoader(pd.jpsModel);
         for (String targetId : scope.getTargetIdList()) {
-          BuildTarget target = targetType.createTarget(targetId, pd.rootsIndex, pd.getArtifactRootsIndex());
+          BuildTarget<?> target = loader.createTarget(targetId);
           if (target != null) {
             targets.add(target);
           }
@@ -160,19 +168,19 @@ public class BuildRunner {
 
     final Timestamps timestamps = pd.timestamps.getStorage();
     if (!paths.isEmpty()) {
-      files = new HashMap<BuildTarget, Set<File>>();
+      files = new HashMap<BuildTarget<?>, Set<File>>();
       for (String path : paths) {
         final File file = new File(path);
-        final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(null, file);
-        if (rd != null) {
-          Set<File> fileSet = files.get(rd.target);
+        final Collection<BuildRootDescriptor> descriptors = pd.getBuildRootIndex().findAllParentDescriptors(file, null);
+        for (BuildRootDescriptor descriptor : descriptors) {
+          Set<File> fileSet = files.get(descriptor.getTarget());
           if (fileSet == null) {
             fileSet = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-            files.put(rd.target, fileSet);
+            files.put(descriptor.getTarget(), fileSet);
           }
           fileSet.add(file);
           if (buildType == BuildType.FORCED_COMPILATION) {
-            pd.fsState.markDirty(null, file, rd, timestamps);
+            pd.fsState.markDirty(null, file, descriptor, timestamps);
           }
         }
       }

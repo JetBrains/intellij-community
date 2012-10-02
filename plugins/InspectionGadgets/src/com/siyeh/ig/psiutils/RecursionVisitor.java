@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class RecursionVisitor extends JavaRecursiveElementVisitor {
+class RecursionVisitor extends JavaRecursiveElementVisitor {
 
   private boolean recursive = false;
   private final PsiMethod method;
@@ -44,21 +44,16 @@ public class RecursionVisitor extends JavaRecursiveElementVisitor {
       return;
     }
     super.visitMethodCallExpression(call);
-    final PsiReferenceExpression methodExpression =
-      call.getMethodExpression();
+    final PsiReferenceExpression methodExpression = call.getMethodExpression();
     final String calledMethodName = methodExpression.getReferenceName();
-    if (calledMethodName == null) {
-      return;
-    }
-    if (!calledMethodName.equals(methodName)) {
+    if (!methodName.equals(calledMethodName)) {
       return;
     }
     final PsiMethod calledMethod = call.resolveMethod();
     if (!method.equals(calledMethod)) {
       return;
     }
-    if (method.hasModifierProperty(PsiModifier.STATIC) ||
-        method.hasModifierProperty(PsiModifier.PRIVATE)) {
+    if (method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.PRIVATE)) {
       recursive = true;
       return;
     }

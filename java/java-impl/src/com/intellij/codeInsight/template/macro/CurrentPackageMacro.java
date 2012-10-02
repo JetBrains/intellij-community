@@ -44,7 +44,6 @@ class CurrentPackageMacro extends Macro {
     Project project = context.getProject();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
     if (!(file instanceof PsiJavaFile)) return new TextResult ("");
-    PsiDocumentManager.getInstance(project).commitDocument(context.getEditor().getDocument());
     return new TextResult (((PsiJavaFile)file).getPackageName());
   }
 

@@ -23,7 +23,6 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Document;
@@ -45,7 +44,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
@@ -624,15 +626,17 @@ public class PlatformTestUtil {
     }
   }
 
-  private static void shallowCompare(final VirtualFile[] vfs, final File[] io) {
+  private static void shallowCompare(VirtualFile[] vfs, @Nullable File[] io) {
     List<String> vfsPaths = new ArrayList<String>();
     for (VirtualFile file : vfs) {
       vfsPaths.add(file.getPath());
     }
 
     List<String> ioPaths = new ArrayList<String>();
-    for (File file : io) {
-      ioPaths.add(file.getPath().replace(File.separatorChar, '/'));
+    if (io != null) {
+      for (File file : io) {
+        ioPaths.add(file.getPath().replace(File.separatorChar, '/'));
+      }
     }
 
     assertEquals(sortAndJoin(vfsPaths), sortAndJoin(ioPaths));
@@ -762,19 +766,5 @@ public class PlatformTestUtil {
   public static <T> T notNull(@Nullable T t) {
     assertNotNull(t);
     return t;
-  }
-
-  public static void deleteFiles(VirtualFile... files) throws IOException {
-    AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(PlatformTestUtil.class);
-    try {
-      for (VirtualFile file : files) {
-        if (file != null) {
-          file.delete(PlatformTestUtil.class);
-        }
-      }
-    }
-    finally {
-      token.finish();
-    }
   }
 }

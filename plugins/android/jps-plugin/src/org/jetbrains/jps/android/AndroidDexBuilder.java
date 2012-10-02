@@ -30,6 +30,7 @@ import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.android.builder.AndroidProjectBuildTarget;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.android.model.JpsAndroidSdkProperties;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
@@ -52,7 +53,7 @@ import java.util.*;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidDexBuilder extends ProjectLevelBuilder {
+public class AndroidDexBuilder extends TargetBuilder<AndroidProjectBuildTarget> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidDexBuilder");
 
   @NonNls private static final String BUILDER_NAME = "android-dex";
@@ -60,9 +61,13 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
   private static final Key<BuildListener> BUILD_LISTENER_KEY = Key.create("BUILD_LISTENER_KEY");
   public static final Key<Set<String>> DIRTY_OUTPUT_DIRS = Key.create("DIRTY_OUTPUT_DIRS");
 
+  public AndroidDexBuilder() {
+    super(Collections.singletonList(AndroidProjectBuildTarget.TargetType.INSTANCE));
+  }
+
   @Override
-  public void build(CompileContext context) throws ProjectBuildException {
-    if (!AndroidJpsUtil.containsAndroidFacet(context.getProjectDescriptor().jpsProject) || AndroidJpsUtil.isLightBuild(context)) {
+  public void build(@NotNull AndroidProjectBuildTarget target, @NotNull CompileContext context) throws ProjectBuildException {
+    if (target.getKind() != AndroidProjectBuildTarget.AndroidBuilderKind.DEX && AndroidJpsUtil.isLightBuild(context)) {
       return;
     }
 

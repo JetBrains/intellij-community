@@ -51,7 +51,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection;
 import org.jetbrains.plugins.groovy.editor.GroovyImportOptimizer;
-import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -134,7 +133,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
             }
             else if (element instanceof GrMethod) {
               GrMethod method = (GrMethod)element;
-              if (!GroovyCompletionUtil.OPERATOR_METHOD_NAMES.contains(method.getName()) && !PostHighlightingPass.isMethodReferenced(method, progress, usageHelper)) {
+              if (!PostHighlightingPass.isMethodReferenced(method, progress, usageHelper)) {
                 String message = (method.isConstructor() ? "Constructor" : "Method") + " " + name + " is unused";
                 HighlightInfo highlightInfo = PostHighlightingPass.createUnusedSymbolInfo(nameId, message, HighlightInfoType.UNUSED_SYMBOL);
                 QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(method));

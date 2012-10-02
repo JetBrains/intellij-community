@@ -22,6 +22,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.actions.generate.GroovyGenerationInfo;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -32,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
  * @author Max Medvedev
  */
 public class GrFieldMember extends PsiElementClassMember<PsiField> implements EncapsulatableClassMember {
-  private static final int FIELD_OPTIONS = PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER;
+  private static final int FIELD_OPTIONS = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER;
 
   protected GrFieldMember(final PsiField field) {
     super(field, PsiFormatUtil.formatVariable(field, FIELD_OPTIONS, PsiSubstitutor.EMPTY));
@@ -46,7 +47,7 @@ public class GrFieldMember extends PsiElementClassMember<PsiField> implements En
   }
 
   @Nullable
-  private static GrMethod createMethodIfNotExists(final PsiField field, final GrMethod template) {
+  private static GrMethod createMethodIfNotExists(final PsiField field, @Nullable final GrMethod template) {
     PsiMethod existing = field.getContainingClass().findMethodBySignature(template, false);
     return existing == null || existing instanceof GrAccessorMethod ? template : null;
   }

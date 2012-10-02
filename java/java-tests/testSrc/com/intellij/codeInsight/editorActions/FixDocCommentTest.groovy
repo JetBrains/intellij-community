@@ -427,14 +427,15 @@ class Test<T, V> {
 }''')
   }
 
-  void _testCorrectParametersOrder() {
+  void testCorrectParametersOrder() {
     doTest(
       initial: '''\
 class Test {
     /**
      * @param j
-     * @param k    k description
-     * @param i
+     * @param k    single line description
+     * @param i    multi-line
+     *             description
      */
     public void test(int i, int j, int k) {<caret>
     }
@@ -442,9 +443,10 @@ class Test {
       expected: '''\
 class Test {
     /**
-     * @param i    <caret>
-     * @param j
-     * @param k    k description
+     * @param i    multi-line
+     *             description
+     * @param j    <caret>
+     * @param k    single line description
      */
     public void test(int i, int j, int k) {
     }
@@ -452,12 +454,113 @@ class Test {
     )
   }
 
-  void testCorrectTypeParametersOrder() {
-    // TODO den implement
+  void testCorrectParametersDescriptionWhenIndentIsDefines() {
+    doTest(
+      initial: '''\
+class Test {
+    /**
+     * @param j    
+     * @param i
+     */
+    public void test(int i, int j) {<caret>
+    }
+}''',
+      expected: '''\
+class Test {
+    /**
+     * @param i    <caret>
+     * @param j    
+     */
+    public void test(int i, int j) {
+    }
+}'''
+    )
+  }
+
+  void testCorrectMethodTypeParametersOrder() {
+    doTest(
+      initial: '''\
+class Test {
+  /**
+   * @param <B>
+   * @param <A>    A description
+   */
+  <A, B> void test() {<caret>
+  }
+}''',
+      expected: '''\
+class Test {
+  /**
+   * @param <A>    A description
+   * @param <B>    <caret>
+   */
+  <A, B> void test() {
+  }
+}'''
+    )
+  }
+
+  void testCorrectClassTypeParametersOrder() {
+    doTest(
+      initial: '''\
+/**
+ * Class description
+ * @author Zigmund
+ * @param <B>    multi-line
+ *               description
+ * @param <A>
+ */
+class Test<A, B> {<caret>
+}''',
+      expected: '''\
+/**
+ * Class description
+ * @author Zigmund
+ * @param <A>    <caret>
+ * @param <B>    multi-line
+ *               description
+ */
+class Test<A, B> {
+}'''
+    )
   }
 
   void testAllesZusammen() {
-    // TODO den implement
+    doTest(
+      initial: '''\
+class MyException1 extends Exception {}
+class MyException2 extends Exception {}
+
+class Test {
+    /**
+     * Method description
+     * @param j    j description (single line)
+     * @param s    s description
+     * @param k
+     *             k description (single line but located at another line)
+     * @throws MyException2
+     * @return some value
+     */
+    void test(int i, int j, int k) throws MyException1 {<caret>
+    }
+}''',
+      expected: '''\
+class MyException1 extends Exception {}
+class MyException2 extends Exception {}
+
+class Test {
+    /**
+     * Method description
+     * @param i    <caret>
+     * @param j    j description (single line)
+     * @param k
+     *             k description (single line but located at another line)
+     * @throws MyException1
+     */
+    void test(int i, int j, int k) throws MyException1 {
+    }
+}'''
+    )
   }
   
   void testNavigateToMissingParamDescription() {
@@ -479,14 +582,6 @@ class Test {
     }
 }'''
     )
-  }
-
-  void testNavigateToMissingReturnDescription() {
-    // TODO den implement
-  }
-  
-  void testNavigateToMissingThrowsDescription() {
-    // TODO den implement
   }
 
   private def doTest(Map args) {

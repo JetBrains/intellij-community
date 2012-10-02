@@ -20,6 +20,7 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.ui.RawCommandLineEditor;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import javax.swing.*;
 
@@ -34,9 +35,9 @@ public class JavacConfigurable implements Configurable{
   private JCheckBox myCbGenerateNoWarnings;
   private RawCommandLineEditor myAdditionalOptionsField;
   private JTextField myJavacMaximumHeapField;
-  private final JavacSettings myJavacSettings;
+  private final JpsJavaCompilerOptions myJavacSettings;
 
-  public JavacConfigurable(final JavacSettings javacSettings) {
+  public JavacConfigurable(final JpsJavaCompilerOptions javacSettings) {
     myJavacSettings = javacSettings;
     myAdditionalOptionsField.setDialogCaption(CompilerBundle.message("java.compiler.option.additional.command.line.parameters"));
   }

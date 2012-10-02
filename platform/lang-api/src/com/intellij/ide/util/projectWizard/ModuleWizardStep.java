@@ -27,10 +27,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class ModuleWizardStep extends StepAdapter{
-  
-  public final static GridBagConstraints LABEL_CONSTRAINT = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0,
-                                                                    GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                                                    new Insets(8, 10, 0, 10), 0, 0);
 
   protected static final Icon ICON = IconLoader.getIcon("/addmodulewizard.png");
   public static final ModuleWizardStep[] EMPTY_ARRAY = new ModuleWizardStep[0];

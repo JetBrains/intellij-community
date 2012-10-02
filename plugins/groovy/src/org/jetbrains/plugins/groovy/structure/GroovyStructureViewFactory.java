@@ -41,6 +41,7 @@ public class GroovyStructureViewFactory implements PsiStructureViewFactory {
       @NotNull
       public StructureViewModel createStructureViewModel() {
         return new JavaFileTreeModel((GroovyFileBase)psiFile) {
+          @NotNull
           @Override
           public Collection<NodeProvider> getNodeProviders() {
             return Arrays.<NodeProvider>asList(new JavaInheritedMembersNodeProvider());

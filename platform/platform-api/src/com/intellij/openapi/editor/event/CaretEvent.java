@@ -31,7 +31,8 @@ public class CaretEvent extends EventObject {
     myNewPosition = newPosition;
   }
 
-  @NotNull public Editor getEditor() {
+  @NotNull
+  public Editor getEditor() {
     return (Editor) getSource();
   }
 

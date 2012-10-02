@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,8 @@ package com.intellij.ide;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.util.Consumer;
-import org.apache.xmlrpc.DefaultHandlerMapping;
-import org.apache.xmlrpc.DefaultXmlRpcContext;
-import org.apache.xmlrpc.XmlRpcContext;
-import org.apache.xmlrpc.XmlRpcWorker;
+import gnu.trove.THashMap;
+import org.apache.xmlrpc.*;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -29,19 +27,37 @@ import org.jboss.netty.channel.*;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.WebServerManager;
 import org.jetbrains.io.Responses;
 
-import java.lang.reflect.Field;
-import java.util.Hashtable;
+import java.util.Arrays;
 
 @ChannelHandler.Sharable
 public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements XmlRpcServer, Consumer<ChannelPipeline> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.XmlRpcServerImpl");
+  private static final Logger LOG = Logger.getInstance(XmlRpcServerImpl.class);
 
-  private final DefaultHandlerMapping handlerMapping = new LoggingDefaultHandlerMapping();
+  private final XmlRpcHandlerMappingImpl handlerMapping = new LoggingDefaultHandlerMapping();
   // idea doesn't use authentication
-  private final XmlRpcContext xmlRpcContext = new DefaultXmlRpcContext(null, null, handlerMapping);
+  private final XmlRpcContext xmlRpcContext = new XmlRpcContext() {
+    @Nullable
+    @Override
+    public String getUserName() {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public String getPassword() {
+      return null;
+    }
+
+    @Override
+    public XmlRpcHandlerMapping getHandlerMapping() {
+      return handlerMapping;
+    }
+  };
 
   public XmlRpcServerImpl() {
     for (XmlRpcHandlerBean handlerBean : Extensions.getExtensions(XmlRpcHandlerBean.EP_NAME)) {
@@ -55,6 +71,8 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
       }
       handlerMapping.addHandler(handlerBean.name, handler);
     }
+
+    LOG.info("XmlRpcServerImpl instantiated, handlers " + handlerMapping);
   }
 
   @Override
@@ -64,6 +82,11 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
 
   public int getPortNumber() {
     return WebServerManager.getInstance().getPort();
+  }
+
+  @Override
+  public boolean hasHandler(String name) {
+    return handlerMapping.handlers.containsKey(name);
   }
 
   public void addHandler(String name, Object handler) {
@@ -81,7 +104,12 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
         ChannelBuffer result;
         ChannelBufferInputStream in = new ChannelBufferInputStream(request.getContent());
         try {
-          result = ChannelBuffers.copiedBuffer(new XmlRpcWorker(xmlRpcContext.getHandlerMapping()).execute(in, xmlRpcContext));
+          result = ChannelBuffers.copiedBuffer(new XmlRpcWorker(handlerMapping).execute(in, xmlRpcContext));
+        }
+        catch (Throwable ex) {
+          context.getChannel().close();
+          LOG.error(ex);
+          return;
         }
         finally {
           in.close();
@@ -107,11 +135,52 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
     }
   }
 
-  private static class LoggingDefaultHandlerMapping extends DefaultHandlerMapping {
+  private static class XmlRpcHandlerMappingImpl implements XmlRpcHandlerMapping {
+    protected final THashMap<String, Object> handlers = new THashMap<String, Object>();
 
+    public void addHandler(@NotNull String handlerName, @NotNull Object handler) {
+      if (handler instanceof XmlRpcHandler) {
+        handlers.put(handlerName, handler);
+      }
+      else {
+        handlers.put(handlerName, new Invoker(handler));
+      }
+    }
+
+    public void removeHandler(String handlerName) {
+      handlers.remove(handlerName);
+    }
+
+    public Object getHandler(String methodName) {
+      Object handler = null;
+      String handlerName = null;
+      int dot = methodName.lastIndexOf('.');
+      if (dot > -1) {
+        handlerName = methodName.substring(0, dot);
+        handler = handlers.get(handlerName);
+      }
+
+      if (handler != null) {
+        return handler;
+      }
+
+      IllegalStateException exception;
+      if (dot > -1) {
+        exception = new IllegalStateException("RPC handler object \"" + handlerName + "\" not found");
+      }
+      else {
+        exception = new IllegalStateException("RPC handler object not found for \"" + methodName);
+      }
+
+      LOG.error(exception);
+      throw exception;
+    }
+  }
+
+  private static class LoggingDefaultHandlerMapping extends XmlRpcHandlerMappingImpl {
     @Override
-    public void addHandler(String handlerName, Object handler) {
-      LOG.debug(String.format("addHandler: handlerName: %s, handler: %s%s", handlerName, handler, getHandlers()));
+    public void addHandler(@NotNull String handlerName, @NotNull Object handler) {
+      LOG.info(String.format("addHandler: handlerName: %s, handler: %s%s", handlerName, handler, getHandlers()));
       super.addHandler(handlerName, handler);
     }
 
@@ -122,25 +191,18 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
     }
 
     @Override
-    public Object getHandler(String methodName) throws Exception {
-      LOG.debug(String.format("getHandler: methodName: %s%s", methodName, getHandlers()));
+    public Object getHandler(String methodName) {
+      LOG.info(String.format("getHandler: methodName: %s%s", methodName, getHandlers()));
       return super.getHandler(methodName);
     }
 
     private String getHandlers() {
-      try {
-        Field fHandlers = DefaultHandlerMapping.class.getDeclaredField("handlers");
-        fHandlers.setAccessible(true);
-        // this obsolete type is used in the XmlRpc library
-        // noinspection UseOfObsoleteCollectionType
-        Hashtable handlers = (Hashtable)fHandlers.get(this);
-        return String.format("%nhandlers: %s", handlers);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-        return e.toString();
-      }
+      return String.format("%nhandlers: %s %s", Arrays.toString(handlers.keySet().toArray()), Arrays.toString(handlers.values().toArray()));
     }
 
+    @Override
+    public String toString() {
+      return getHandlers();
+    }
   }
 }

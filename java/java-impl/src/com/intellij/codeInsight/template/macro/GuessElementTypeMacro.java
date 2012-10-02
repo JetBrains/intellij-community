@@ -23,7 +23,6 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiWildcardType;
@@ -70,7 +69,6 @@ public class GuessElementTypeMacro extends Macro {
     if (result == null) return null;
 
     Project project = context.getProject();
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     PsiExpression expr = MacroUtil.resultToPsiExpression(result, context);
     if (expr == null) return null;

@@ -60,6 +60,7 @@ public abstract class JpsSdkOrderEntryBase extends JpsOrderEntry<JpsSdkDependenc
     return JpsSdkManager.getInstance().getSdk(library);
   }
 
+  @NotNull
   @Override
   public String getPresentableName() {
     return "< " + getJdkName() + " >";

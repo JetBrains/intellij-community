@@ -21,7 +21,6 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -191,7 +190,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     if (myProject != null) {
       ProjectManagerEx.getInstanceEx().openTestProject(myProject);
       CodeStyleSettingsManager.getInstance(myProject).setTemporarySettings(new CodeStyleSettings());
-      ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(myProject)).pushInjectors();
+      InjectedLanguageManagerImpl.pushInjectors(getProject());
     }
 
     DocumentCommitThread.getInstance().clearQueue();
@@ -407,16 +406,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       result.add(e);
     }
     try {
-      InjectedLanguageManagerImpl injectedLanguageManager = null;
-      if (myProject != null) {
-        injectedLanguageManager = (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject());
-      }
-
+      Project project = getProject();
       disposeProject(result);
 
-      if (injectedLanguageManager != null) {
+      if (project != null) {
         try {
-          injectedLanguageManager.checkInjectorsAreDisposed();
+          InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
         }
         catch (AssertionError e) {
           result.add(e);

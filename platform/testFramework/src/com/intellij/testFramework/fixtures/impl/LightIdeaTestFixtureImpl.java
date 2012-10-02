@@ -18,7 +18,6 @@ package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.idea.IdeaTestApplication;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
@@ -46,18 +45,19 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixtu
 
     IdeaTestApplication application = LightPlatformTestCase.initApplication();
     LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, null);
-    ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).pushInjectors();
+    InjectedLanguageManagerImpl.pushInjectors(getProject());
     storeSettings();
     application.setDataProvider(new TestDataProvider(getProject()));
   }
 
   @Override
   public void tearDown() throws Exception {
-    CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
+    Project project = getProject();
+    CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
     checkForSettingsDamage();
-    LightPlatformTestCase.doTearDown(getProject(), LightPlatformTestCase.getApplication(), true);
+    LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication(), true);
     super.tearDown();
-    ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).checkInjectorsAreDisposed();
+    InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
   }
 
 

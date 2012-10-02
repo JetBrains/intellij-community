@@ -96,8 +96,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     public void handleInsert(InsertionContext context, JavaGlobalMemberLookupElement item) {
       GroovyInsertHandler.INSTANCE.handleInsert(context, item);
       final PsiMember member = item.getObject();
-      final PsiClass containingClass = item.getContainingClass();
-      PsiDocumentManager.getInstance(containingClass.getProject()).commitDocument(context.getDocument());
+      PsiDocumentManager.getInstance(member.getProject()).commitDocument(context.getDocument());
       final GrReferenceExpression ref = PsiTreeUtil.
         findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), GrReferenceExpression.class, false);
 
@@ -106,7 +105,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
           context.getFile() instanceof GroovyFile &&
           !importAlreadyExists(member, ((GroovyFile)context.getFile()), ref) &&
           !PsiManager.getInstance(context.getProject()).areElementsEquivalent(ref.resolve(), member)) {
-        ref.bindToElementViaStaticImport(containingClass);
+        ref.bindToElementViaStaticImport(member);
       }
 
     }

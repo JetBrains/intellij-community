@@ -69,11 +69,6 @@ public class ExceptionWorker {
     }
 
     myMethod = myInfo.getSecond().substring(line);
-    String className = myInfo.first.substring(line).trim();
-    final int dollarIndex = className.indexOf('$');
-    if (dollarIndex >= 0) {
-      className = className.substring(0, dollarIndex);
-    }
 
     final int lparenthIndex = myInfo.third.getStartOffset();
     final int rparenthIndex = myInfo.third.getEndOffset();
@@ -85,10 +80,7 @@ public class ExceptionWorker {
     final String lineString = fileAndLine.substring(colonIndex + 1);
     try {
       final int lineNumber = Integer.parseInt(lineString);
-      final PsiManager manager = PsiManager.getInstance(myProject);
-      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(manager.getProject());
-      myClass = psiFacade.findClass(className, mySearchScope);
-      myClass = myClass != null ? myClass : psiFacade.findClass(className, GlobalSearchScope.allScope(myProject));
+      myClass = findPositionClass(line);
       myFile = myClass == null ? null : (PsiFile)myClass.getContainingFile().getNavigationElement();
       if (myFile == null) {
         // try find the file with the required name
@@ -124,6 +116,24 @@ public class ExceptionWorker {
     catch (NumberFormatException e) {
       //
     }
+  }
+
+  private PsiClass findPositionClass(String line) {
+    String className = myInfo.first.substring(line).trim();
+    PsiClass result = findClassPreferringMyScope(className);
+    if (result == null) {
+      final int dollarIndex = className.indexOf('$');
+      if (dollarIndex >= 0) {
+        result = findClassPreferringMyScope(className.substring(0, dollarIndex));
+      }
+    }
+    return result;
+  }
+
+  private PsiClass findClassPreferringMyScope(String className) {
+    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
+    PsiClass result = psiFacade.findClass(className, mySearchScope);
+    return result != null ? result : psiFacade.findClass(className, GlobalSearchScope.allScope(myProject));
   }
 
   public Filter.Result getResult() {

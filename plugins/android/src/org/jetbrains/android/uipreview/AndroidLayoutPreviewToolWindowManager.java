@@ -40,7 +40,6 @@ import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -52,7 +51,6 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ArrayUtil;
@@ -68,17 +66,13 @@ import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
-import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidCommonUtils;
-import org.jetbrains.android.util.AndroidResourceUtil;
-import org.jetbrains.android.util.AndroidSdkNotConfiguredException;
+import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -428,7 +422,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       errorMessage = causes.length > 0 ? new FixableIssueMessage(message + ' ', "Details", "", new Runnable() {
         @Override
         public void run() {
-          showStackStace(causes);
+          AndroidUtils.showStackStace(myProject, causes);
         }
       }) : new FixableIssueMessage(message);
 
@@ -480,37 +474,6 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         myToolWindowForm.updatePreviewPanel();
       }
     });
-  }
-
-  private void showStackStace(@NotNull Throwable[] throwables) {
-    final StringBuilder messageBuilder = new StringBuilder();
-
-    for (Throwable t : throwables) {
-      if (messageBuilder.length() > 0) {
-        messageBuilder.append("\n\n");
-      }
-      messageBuilder.append(AndroidCommonUtils.getStackTrace(t));
-    }
-    
-    final DialogWrapper wrapper = new DialogWrapper(myProject, false) {
-
-      {
-        init();
-      }
-
-      @Override
-      protected JComponent createCenterPanel() {
-        final JPanel panel = new JPanel(new BorderLayout());
-        final JTextArea textArea = new JTextArea(messageBuilder.toString());
-        textArea.setEditable(false);
-        textArea.setRows(40);
-        textArea.setColumns(70);
-        panel.add(ScrollPaneFactory.createScrollPane(textArea));
-        return panel;
-      }
-    };
-    wrapper.setTitle("Stack trace");
-    wrapper.show();
   }
 
   @Nullable

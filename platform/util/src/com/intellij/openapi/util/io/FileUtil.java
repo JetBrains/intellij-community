@@ -40,7 +40,6 @@ import java.util.regex.Pattern;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
 public class FileUtil extends FileUtilRt {
-  public static final int MEGABYTE = 1024 * 1024;
 
   @NonNls public static final String ASYNC_DELETE_EXTENSION = ".__del__";
 
@@ -244,7 +243,7 @@ public class FileUtil extends FileUtilRt {
         throw new IOException("File length reported negative, probably doesn't exist");
       }
 
-      if (len > 100 * MEGABYTE) {
+      if (isTooLarge(len)) {
         throw new FileTooBigException("Attempt to load '" + file + "' in memory buffer, file length is " + len + " bytes.");
       }
 

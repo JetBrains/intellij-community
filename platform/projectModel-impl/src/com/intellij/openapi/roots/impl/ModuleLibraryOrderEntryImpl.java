@@ -17,6 +17,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
@@ -98,6 +99,7 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
     return LibraryTableImplUtil.MODULE_LEVEL;
   }
 
+  @NotNull
   @Override
   public String getPresentableName() {
     final String name = myLibrary.getName();
@@ -115,7 +117,7 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
         return PathUtil.toPresentableUrl(url);
       }
       else {
-        return null;
+        return ProjectBundle.message("library.empty.library.item");
       }
     }
   }

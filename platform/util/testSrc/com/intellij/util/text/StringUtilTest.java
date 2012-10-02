@@ -122,4 +122,16 @@ public class StringUtilTest extends TestCase {
     assertEquals("\\\"\\n", StringUtil.escapeStringCharacters(2, "\"\n", "\"", false, new StringBuilder()).toString());
     assertEquals("\\\\\\\"\\n", StringUtil.escapeStringCharacters(3, "\\\"\n", "\"", true, new StringBuilder()).toString());
   }
+
+  public void testEscapeSlashes() {
+    assertEquals("\\/", StringUtil.escapeSlashes("/"));
+    assertEquals("foo\\/bar\\foo\\/", StringUtil.escapeSlashes("foo/bar\\foo/"));
+
+    assertEquals("\\\\\\\\server\\\\share\\\\extension.crx", StringUtil.escapeBackSlashes("\\\\server\\share\\extension.crx"));
+  }
+
+  public void testEscapeQuotes() {
+    assertEquals("\\\"", StringUtil.escapeQuotes("\""));
+    assertEquals("foo\\\"bar'\\\"", StringUtil.escapeQuotes("foo\"bar'\""));
+  }
 }

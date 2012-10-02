@@ -122,7 +122,7 @@ class ToolsPanel extends JPanel {
     add(ToolbarDecorator.createDecorator(myTree).setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
-        ToolEditorDialog dlg = new ToolEditorDialog(ToolsPanel.this);
+        ToolEditorDialog dlg = new ToolEditorDialog(ToolsPanel.this, ToolsBundle.message("tools.add.title"));
         Tool tool = new Tool();
         tool.setUseConsole(true);
         tool.setFilesSynchronizedAfterRun(true);
@@ -167,7 +167,7 @@ class ToolsPanel extends JPanel {
         Tool originalTool = getSelectedTool();
 
         if (originalTool != null) {
-          ToolEditorDialog dlg = new ToolEditorDialog(ToolsPanel.this);
+          ToolEditorDialog dlg = new ToolEditorDialog(ToolsPanel.this, ToolsBundle.message("tools.copy.title"));
           Tool toolCopy = new Tool();
           toolCopy.copyFrom(originalTool);
           dlg.setData(toolCopy, getGroups());
@@ -439,7 +439,7 @@ class ToolsPanel extends JPanel {
       Tool selected = (Tool)node.getUserObject();
       if (selected != null) {
         String oldGroupName = selected.getGroup();
-        ToolEditorDialog dlg = new ToolEditorDialog(this);
+        ToolEditorDialog dlg = new ToolEditorDialog(this, ToolsBundle.message("tools.edit.title"));
         dlg.setData(selected, getGroups());
         dlg.show();
         if (dlg.isOK()) {

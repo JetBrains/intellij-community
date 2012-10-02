@@ -105,7 +105,7 @@ public class TargetElementUtilBase {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
     }
 
-    offset = adjustOffset(document, offset);
+    offset = adjustOffset(file, document, offset);
 
     if (file instanceof PsiCompiledFile) {
       return ((PsiCompiledFile) file).getDecompiledPsiFile().findReferenceAt(offset);
@@ -114,18 +114,39 @@ public class TargetElementUtilBase {
     return file.findReferenceAt(offset);
   }
 
+  /**
+   * @deprecated adjust offset with PsiElement should be used instead to provide correct checking for identifier part
+   * @param document
+   * @param offset
+   * @return
+   */
   public static int adjustOffset(Document document, final int offset) {
+    return adjustOffset(null, document, offset);
+  }
+
+  public static int adjustOffset(@Nullable PsiFile element, Document document, final int offset) {
     CharSequence text = document.getCharsSequence();
     int correctedOffset = offset;
     int textLength = document.getTextLength();
     if (offset >= textLength) {
       correctedOffset = textLength - 1;
     }
-    else if (!Character.isJavaIdentifierPart(text.charAt(offset))) {
+    else if (!isIdentifierPart(element, text, offset)) {
       correctedOffset--;
     }
-    if (correctedOffset < 0 || !Character.isJavaIdentifierPart(text.charAt(correctedOffset))) return offset;
+    if (correctedOffset < 0 || !isIdentifierPart(element, text, correctedOffset)) return offset;
     return correctedOffset;
+  }
+
+  private static boolean isIdentifierPart(@Nullable PsiFile element, CharSequence text, int offset) {
+    if (element != null) {
+      for (TargetElementEvaluator evaluator : getInstance().targetElementEvaluator.allForLanguage(element.getLanguage())) {
+        if (evaluator instanceof TargetElementEvaluatorEx && ((TargetElementEvaluatorEx)evaluator).isIdentifierPart(element, text, offset)) {
+          return true;
+        }
+      }
+    }
+    return Character.isJavaIdentifierPart(text.charAt(offset));
   }
 
   @Nullable
@@ -170,7 +191,7 @@ public class TargetElementUtilBase {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
 
-    offset = adjustOffset(document, offset);
+    offset = adjustOffset(file, document, offset);
 
     if (file instanceof PsiCompiledFile) {
       file = ((PsiCompiledFile) file).getDecompiledPsiFile();
@@ -282,8 +303,8 @@ public class TargetElementUtilBase {
     if (ref == null) return null;
 
     final Language language = ref.getElement().getLanguage();
-    final TargetElementEvaluator evaluator = targetElementEvaluator.forLanguage(language);
-    if (evaluator != null) {
+    final List<TargetElementEvaluator> evaluators = targetElementEvaluator.allForLanguage(language);
+    for (TargetElementEvaluator evaluator : evaluators) {
       final PsiElement element = evaluator.getElementByReference(ref, flags);
       if (element != null) return element;
     }

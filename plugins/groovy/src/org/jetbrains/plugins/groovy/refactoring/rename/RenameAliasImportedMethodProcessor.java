@@ -16,10 +16,13 @@
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.rename.RenameDialog;
 import com.intellij.refactoring.rename.RenameJavaMethodProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
@@ -53,7 +56,15 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
     return RenameAliasedUsagesUtil.filterAliasedRefs(super.findReferences(element), element);
   }
 
-
+  @Override
+  public RenameDialog createRenameDialog(Project project, PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
+    return new RenameDialog(project, element, nameSuggestionContext, editor) {
+      @Override
+      protected boolean areButtonsValid() {
+        return true;
+      }
+    };
+  }
 
   @Override
   public void renameElement(PsiElement psiElement,

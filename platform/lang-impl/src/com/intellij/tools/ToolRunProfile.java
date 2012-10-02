@@ -26,7 +26,10 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.ide.macro.Macro;
+import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -39,11 +42,14 @@ import javax.swing.*;
  *         Date: Mar 30, 2005
  */
 public class ToolRunProfile implements ModuleRunProfile{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.tools.ToolRunProfile");
   private final Tool myTool;
+  private final DataContext myContext;
   private final GeneralCommandLine myCommandLine;
 
   public ToolRunProfile(final Tool tool, final DataContext context) {
     myTool = tool;
+    myContext = context;
     myCommandLine = myTool.createCommandLine(context);
     //if (context instanceof DataManagerImpl.MyDataContext) {
     //  // hack: macro.expand() can cause UI events such as showing dialogs ('Prompt' macro) which may 'invalidate' the datacontext
@@ -53,7 +59,18 @@ public class ToolRunProfile implements ModuleRunProfile{
   }
 
   public String getName() {
-    return myTool.getName();
+    return expandMacrosInName(myTool, myContext);
+  }
+
+  public static String expandMacrosInName(Tool tool, DataContext context) {
+    String name = tool.getName();
+    try {
+      return MacroManager.getInstance().expandMacrosInString(name, true, context);
+    }
+    catch (Macro.ExecutionCancelledException e) {
+      LOG.info(e);
+      return name;
+    }
   }
 
   public Icon getIcon() {

@@ -693,7 +693,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   public static <T> List<T> findAll(@NotNull Collection<? extends T> collection, @NotNull Condition<? super T> condition) {
-    final ArrayList<T> result = new ArrayList<T>();
+    final List<T> result = new ArrayList<T>();
     for (final T t : collection) {
       if (condition.value(t)) {
         result.add(t);
@@ -732,7 +732,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   public static <T, V> List<V> findAll(@NotNull Collection<? extends T> collection, @NotNull Class<V> instanceOf) {
-    final ArrayList<V> result = new ArrayList<V>();
+    final List<V> result = new ArrayList<V>();
     for (final T t : collection) {
       if (instanceOf.isInstance(t)) {
         result.add((V)t);
@@ -1625,6 +1625,21 @@ public class ContainerUtil extends ContainerUtilRt {
       }
     }
     return -1;
+
+  }
+
+  public static <T> boolean equalsIdentity(List<T> list1, List<T> list2) {
+    int listSize = list1.size();
+    if (list2.size() != listSize) {
+      return false;
+    }
+
+    for (int i = 0; i < listSize; i++) {
+      if (list1.get(i) != list2.get(i)) {
+        return false;
+      }
+    }
+    return true;
 
   }
 

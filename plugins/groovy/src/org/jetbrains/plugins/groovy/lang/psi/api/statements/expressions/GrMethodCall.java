@@ -15,13 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import com.intellij.navigation.NavigationItem;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 
 /**
  * @author peter
  */
-public interface GrMethodCall extends GrCallExpression {
+public interface GrMethodCall extends GrCallExpression, NavigationItem {
   @Nullable
   GrExpression getInvokedExpression();
 

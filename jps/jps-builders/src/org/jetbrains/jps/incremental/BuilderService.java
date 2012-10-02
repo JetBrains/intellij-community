@@ -10,7 +10,7 @@ import java.util.List;
  * @author nik
  */
 public abstract class BuilderService {
-  public List<? extends BuildTargetType> getTargetTypes() {
+  public List<? extends BuildTargetType<?>> getTargetTypes() {
     return Collections.emptyList();
   }
 
@@ -20,7 +20,7 @@ public abstract class BuilderService {
   }
 
   @NotNull
-  public List<? extends ProjectLevelBuilder> createProjectLevelBuilders() {
+  public List<? extends TargetBuilder<?>> createBuilders() {
     return Collections.emptyList();
   }
 }

@@ -84,7 +84,7 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile> {
     }
     VirtualFile root = ProjectFileIndex.SERVICE.getInstance(project).getContentRootForFile(virtualFile);
     if (root != null) {
-      return VfsUtilCore.getRelativePath(virtualFile, root, File.separatorChar);
+      return root.getName() + File.separatorChar + VfsUtilCore.getRelativePath(virtualFile, root, File.separatorChar);
     }
 
     final VirtualFile baseDir = project.getBaseDir();

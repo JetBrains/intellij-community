@@ -15,8 +15,9 @@
  */
 package git4idea.commands;
 
-import java.util.HashMap;
-import java.util.Map;
+import gnu.trove.TObjectDoubleHashMap;
+import gnu.trove.TObjectDoubleProcedure;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,8 +29,8 @@ import java.util.regex.Pattern;
 public class GitStandardProgressAnalyzer implements GitProgressAnalyzer {
 
   // progress of each operation is stored here. this is an overhead since operations go one by one,
-  // but it looks simplier than storing current operation, checking that ther was no skipped, etc.
-  private Map<Operation, Double> myOperationsProgress = new HashMap<Operation, Double>(4);
+  // but it looks simpler than storing current operation, checking that ther was no skipped, etc.
+  private TObjectDoubleHashMap<Operation> myOperationsProgress = new TObjectDoubleHashMap<Operation>(4);
 
   /**
    * A long git command usually consists of the operations in this enum.
@@ -96,11 +97,15 @@ public class GitStandardProgressAnalyzer implements GitProgressAnalyzer {
       }
     }
     // counting progress
-    double totalProgress = 0;
-    for (Map.Entry<Operation, Double> progressEntry : myOperationsProgress.entrySet()) {
-      totalProgress += progressEntry.getKey().myFractionInTotal * progressEntry.getValue();
-    }
-    return totalProgress;
+    final double[] totalProgress = new double[1];
+    myOperationsProgress.forEachEntry(new TObjectDoubleProcedure<Operation>() {
+      @Override
+      public boolean execute(Operation operation, double progress) {
+        totalProgress[0] += operation.myFractionInTotal * progress;
+        return true;
+      }
+    });
+    return totalProgress[0];
   }
 
 }

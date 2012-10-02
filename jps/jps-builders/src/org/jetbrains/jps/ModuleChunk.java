@@ -4,7 +4,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
-import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.LinkedHashSet;
@@ -22,16 +21,18 @@ public class ModuleChunk {
     }
   };
   private Set<JpsModule> myModules;
-  private final boolean myTests;
+  private final boolean myContainsTests;
   private Set<ModuleBuildTarget> myTargets;
 
-  public ModuleChunk(Set<ModuleBuildTarget> targets, boolean tests) {
-    myTests = tests;
+  public ModuleChunk(Set<ModuleBuildTarget> targets) {
+    boolean containsTests = false;
     myTargets = targets;
     myModules = new LinkedHashSet<JpsModule>();
     for (ModuleBuildTarget target : targets) {
       myModules.add(target.getModule());
+      containsTests |= target.isTests();
     }
+    myContainsTests = containsTests;
   }
 
   public String getName() {
@@ -43,8 +44,8 @@ public class ModuleChunk {
     return myModules;
   }
 
-  public boolean isTests() {
-    return myTests;
+  public boolean containsTests() {
+    return myContainsTests;
   }
 
   public Set<ModuleBuildTarget> getTargets() {
@@ -55,11 +56,7 @@ public class ModuleChunk {
     return getName();
   }
 
-  public JpsProject getProject() {
-    return representativeModule().getProject();
-  }
-
-  public JpsModule representativeModule() {
-    return myModules.iterator().next();
+  public ModuleBuildTarget representativeTarget() {
+    return myTargets.iterator().next();
   }
 }

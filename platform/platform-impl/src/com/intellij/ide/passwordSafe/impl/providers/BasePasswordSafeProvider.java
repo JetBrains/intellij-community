@@ -31,13 +31,13 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
    * @param project the project to use
    * @return the secret key to use
    */
-  protected abstract byte[] key(Project project) throws PasswordSafeException;
+  protected abstract byte[] key(@Nullable Project project) throws PasswordSafeException;
 
   /**
    * {@inheritDoc}
    */
   @Nullable
-  public String getPassword(Project project, Class requester, String key) throws PasswordSafeException {
+  public String getPassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
     byte[] k = dbKey(project, requester, key);
     byte[] ct = getEncryptedPassword(k);
     return ct == null ? null : EncryptionUtil.decryptText(key(project), ct);
@@ -59,14 +59,14 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
    * @param key       the key to use
    * @return the key to use for map
    */
-  private byte[] dbKey(Project project, Class requester, String key) throws PasswordSafeException {
+  private byte[] dbKey(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
     return EncryptionUtil.dbKey(key(project), requester, key);
   }
 
   /**
    * {@inheritDoc}
    */
-  public void removePassword(Project project, Class requester, String key) throws PasswordSafeException {
+  public void removePassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
     byte[] k = dbKey(project, requester, key);
     removeEncryptedPassword(k);
   }
@@ -81,7 +81,7 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
   /**
    * {@inheritDoc}
    */
-  public void storePassword(Project project, Class requester, String key, String value) throws PasswordSafeException {
+  public void storePassword(@Nullable Project project, Class requester, String key, String value) throws PasswordSafeException {
     byte[] k = dbKey(project, requester, key);
     byte[] ct = EncryptionUtil.encryptText(key(project), value);
     storeEncryptedPassword(k, ct);

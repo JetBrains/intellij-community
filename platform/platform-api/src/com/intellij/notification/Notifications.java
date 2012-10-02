@@ -19,6 +19,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,8 +72,7 @@ public interface Notifications {
         doNotify(notification, project);
       }
       else {
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
             doNotify(notification, project);
@@ -81,7 +81,7 @@ public interface Notifications {
       }
     }
 
-    private static void doNotify(Notification notification, Project project) {
+    private static void doNotify(Notification notification, @Nullable Project project) {
       if (project != null && !project.isDisposed()) {
         project.getMessageBus().syncPublisher(TOPIC).notify(notification);
       } else {

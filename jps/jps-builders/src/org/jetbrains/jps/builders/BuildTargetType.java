@@ -1,14 +1,14 @@
 package org.jetbrains.jps.builders;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.incremental.ModuleRootsIndex;
-import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
+import org.jetbrains.jps.model.JpsModel;
+
+import java.util.List;
 
 /**
  * @author nik
  */
-public abstract class BuildTargetType {
+public abstract class BuildTargetType<T extends BuildTarget<?>> {
   private final String myTypeId;
 
   protected BuildTargetType(String typeId) {
@@ -19,8 +19,9 @@ public abstract class BuildTargetType {
     return myTypeId;
   }
 
-  @Nullable
-  public abstract BuildTarget createTarget(@NotNull String targetId,
-                                           @NotNull ModuleRootsIndex rootsIndex,
-                                           ArtifactRootsIndex artifactRootsIndex);
+  @NotNull
+  public abstract List<T> computeAllTargets(@NotNull JpsModel model);
+
+  @NotNull
+  public abstract BuildTargetLoader<T> createLoader(@NotNull JpsModel model);
 }

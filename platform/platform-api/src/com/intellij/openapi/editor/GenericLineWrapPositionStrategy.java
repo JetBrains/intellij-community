@@ -70,6 +70,10 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
         return i + 1;
       }
 
+      if (!canUseOffset(document, i, virtual)) {
+        continue;
+      }
+
       Rule rule = myRules.get(c);
       if (rule != null) {
         if (rule.condition == WrapCondition.BOTH || rule.condition == WrapCondition.AFTER) {
@@ -114,6 +118,10 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
         return i + 1;
       }
 
+      if (!canUseOffset(document, i, virtual)) {
+        continue;
+      }
+      
       Rule rule = myRules.get(c);
       if (rule != null) {
         switch (rule.condition) {
@@ -130,6 +138,10 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
     }
 
     return -1;
+  }
+
+  protected boolean canUseOffset(@NotNull Document document, int offset, boolean virtual) {
+    return true;
   }
 
   /**

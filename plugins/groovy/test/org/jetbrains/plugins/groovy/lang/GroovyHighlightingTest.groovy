@@ -151,6 +151,7 @@ public class GroovyHighlightingTest extends LightGroovyTestCase {
   public void testDefinitionUsedInClosure() { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
   public void testDefinitionUsedInClosure2() { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
   public void testDefinitionUsedInSwitchCase() { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
+  public void testUnusedDefinitionForMethodMissing() {doTest(new GroovyUnusedDeclarationInspection())}
   public void testDuplicateInnerClass() {doTest();}
 
   public void testThisInStaticContext() {doTest();}
@@ -240,7 +241,7 @@ class A {
   public void testMethodDuplicates() {doTest();}
 
   public void testPutValueToEmptyMap() {doTest(new GroovyAssignabilityCheckInspection());}
-  public void testPutIncorrectValueToMap() {doTest(new GroovyAssignabilityCheckInspection());}
+  public void _testPutIncorrectValueToMap() {doTest(new GroovyAssignabilityCheckInspection());} //incorrect test
 
   public void testAmbiguousCodeBlock() {doTest();}
   public void testAmbiguousCodeBlockInMethodCall() {doTest();}
@@ -255,6 +256,26 @@ class A {
 
   public void testInaccessibleConstructorCall() {
     doTest(new GroovyAccessibilityInspection());
+  }
+
+  public void testStaticImportProperty() {
+    myFixture.addFileToProject('Foo.groovy', '''\
+class Foo {
+  static def foo = 2
+  private static def bar = 3
+
+  private static def baz = 4
+
+  private static def getBaz() {baz}
+}
+''')
+    testHighlighting('''\
+import static Foo.foo
+import static Foo.<warning descr="Access to 'bar' exceeds its access rights">bar</warning>
+import static Foo.<warning descr="Access to 'baz' exceeds its access rights">baz</warning>
+
+print foo+<warning descr="Access to 'bar' exceeds its access rights">bar</warning>+<warning descr="Access to 'baz' exceeds its access rights">baz</warning>
+''', GroovyAccessibilityInspection)
   }
 
   public void testSignatureIsNotApplicableToList() {
@@ -580,13 +601,14 @@ class A {
   void testPrivateTopLevelClassInJava() {
     myFixture.addFileToProject('pack/Foo.groovy', 'package pack; private class Foo{}')
     myFixture.configureByText('Abc.java', '''\
-import pack.<error descr="'pack.Foo' is not public in 'pack'. Cannot be accessed from outside package">Foo</error>;
+import pack.Foo;
 
 class Abc {
   void foo() {
-    System.out.print(new <error descr="'pack.Foo' is not public in 'pack'. Cannot be accessed from outside package">Foo</error>());
+    System.out.print(new <error descr="'pack.Foo' has private access in 'pack'">Foo</error>());
   }
-}''')
+}
+''')
 
     myFixture.testHighlighting(false, false, false)
   }
@@ -707,80 +729,6 @@ private def handleImplicitBind(arg) {
 }''')
     myFixture.testHighlighting(true, false, false)
   }
-
-  public void testTargetAnnotationInsideGroovy1() {
-    myFixture.addFileToProject('Ann.groovy', '''
-import java.lang.annotation.Target
-
-import static java.lang.annotation.ElementType.*
-
-@Target(FIELD)
-@interface Ann {}
-''')
-
-    myFixture.configureByText('_.groovy', '''\
-@<error descr="'@Ann' not applicable to type">Ann</error>
-class C {
-  @Ann
-  def foo
-
-  def ar() {
-    @<error descr="'@Ann' not applicable to local variable">Ann</error>
-    def x
-  }
-}''')
-
-    myFixture.testHighlighting(true, false, false)
-  }
-
-  public void testTargetAnnotationInsideGroovy2() {
-    myFixture.addFileToProject('Ann.groovy', '''
-import java.lang.annotation.Target
-
-import static java.lang.annotation.ElementType.*
-
-@Target(value=[FIELD, TYPE])
-@interface Ann {}
-''')
-
-    myFixture.configureByText('_.groovy', '''\
-@Ann
-class C {
-  @Ann
-  def foo
-
-  def ar() {
-    @<error descr="'@Ann' not applicable to local variable">Ann</error>
-    def x
-  }
-}''')
-    myFixture.testHighlighting(true, false, false)
-  }
-
-  public void testTargetAnnotationInsideGroovy3() {
-    myFixture.addFileToProject('Ann.groovy', '''
-import java.lang.annotation.Target
-
-import static java.lang.annotation.ElementType.*
-
-@Target(LOCAL_VARIABLE)
-@interface Ann {}
-''')
-
-    myFixture.configureByText('_.groovy', '''\
-@<error descr="'@Ann' not applicable to type">Ann</error>
-class C {
-  @<error descr="'@Ann' not applicable to field">Ann</error>
-  def foo
-
-  def ar() {
-    @Ann
-    def x
-  }
-}''')
-    myFixture.testHighlighting(true, false, false)
-  }
-
 
   public void testNonInferrableArgsOfDefParams() {
     myFixture.configureByText('_.groovy', '''\
@@ -1385,6 +1333,24 @@ def bar() {
 ''', UnassignedVariableAccessInspection)
   }
 
+  void testUnassignedAccessInCheck() {
+    def inspection = new UnassignedVariableAccessInspection()
+    inspection.myIgnoreBooleanExpressions = true
+
+    myFixture.configureByText('_.groovy', '''\
+def foo
+if (foo) print 'fooo!!!'
+
+def bar
+if (bar!=null) print 'foo!!!'
+
+def baz
+if (<warning descr="Variable 'baz' might not be assigned">baz</warning> + 2) print "fooooo!"
+''')
+    myFixture.enableInspections(inspection)
+    myFixture.testHighlighting(true, false, true)
+  }
+
   void testDelegateWithDeprecated() {
     testHighlighting('''\
 interface Foo {
@@ -1501,6 +1467,22 @@ def foo(String key, ... params) {
 foo('anc')
 foo('abc', 1, '')
 foo<warning descr="'foo' in '_' cannot be applied to '(java.lang.Integer)'">(5)</warning>
+''', GroovyAssignabilityCheckInspection)
+  }
+
+  void testIncorrectReturnValue() {
+    testHighlighting('''\
+private int getObjects() {
+    try {
+        def t = "test";
+        t.substring(0);
+    }
+    finally {
+        //...
+    }
+
+    return <warning descr="Cannot assign 'String' to 'int'">''</warning>;
+}
 ''', GroovyAssignabilityCheckInspection)
   }
 

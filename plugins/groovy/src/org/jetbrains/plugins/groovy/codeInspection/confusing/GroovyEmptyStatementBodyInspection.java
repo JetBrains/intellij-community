@@ -15,11 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GroovyEmptyStatementBodyInspection extends BaseInspection {
 
@@ -39,9 +42,10 @@ public class GroovyEmptyStatementBodyInspection extends BaseInspection {
 
   public String buildErrorString(Object... args) {
     if (args[0] instanceof GrIfStatement) {
-      return "'#ref' Statement has empty branch";
-    } else {
-      return "'#ref' Statement has empty body";
+      return "'#ref' statement has empty branch";
+    }
+    else {
+      return "'#ref' statement has empty body";
     }
   }
 
@@ -98,9 +102,13 @@ public class GroovyEmptyStatementBodyInspection extends BaseInspection {
       if (!(body instanceof GrBlockStatement)) {
         return false;
       }
-      final GrBlockStatement block = (GrBlockStatement) body;
-      final GrStatement[] statements = block.getBlock().getStatements();
-      return statements.length == 0;
+      final GrBlockStatement block = (GrBlockStatement)body;
+      final GrOpenBlock openBlock = block.getBlock();
+
+      final PsiElement brace = openBlock.getLBrace();
+      if (brace == null) return false;
+      final PsiElement nextNonWhitespace = PsiUtil.skipWhitespaces(brace.getNextSibling(), true);
+      return nextNonWhitespace == openBlock.getRBrace();
     }
   }
 }

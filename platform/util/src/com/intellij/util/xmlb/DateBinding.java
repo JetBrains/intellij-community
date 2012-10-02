@@ -29,7 +29,7 @@ public class DateBinding extends PrimitiveValueBinding {
     super(Date.class);
   }
 
-  public Object serialize(Object o, Object context) {
+  public Object serialize(Object o, Object context, SerializationFilter filter) {
     return new Text(Long.toString(((Date)o).getTime()));
   }
 

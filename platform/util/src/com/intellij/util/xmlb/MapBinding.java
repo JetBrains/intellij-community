@@ -17,9 +17,8 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
-import static com.intellij.util.xmlb.Constants.*;
-import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
 import org.jdom.Attribute;
 import org.jdom.Content;
 import org.jdom.Element;
@@ -31,6 +30,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
+
+import static com.intellij.util.xmlb.Constants.*;
 
 class MapBinding implements Binding {
   private final Binding myKeyBinding;
@@ -49,17 +50,17 @@ class MapBinding implements Binding {
   };
 
 
-  public MapBinding(ParameterizedType type, XmlSerializerImpl serializer, Accessor accessor) {
+  public MapBinding(ParameterizedType type, Accessor accessor) {
     Type[] arguments = type.getActualTypeArguments();
     Type keyType = arguments[0];
     Type valueType = arguments[1];
 
-    myKeyBinding = serializer.getBinding(keyType);
-    myValueBinding = serializer.getBinding(valueType);
+    myKeyBinding = XmlSerializerImpl.getBinding(keyType);
+    myValueBinding = XmlSerializerImpl.getBinding(valueType);
     myMapAnnotation = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), MapAnnotation.class);
   }
 
-  public Object serialize(Object o, Object context) {
+  public Object serialize(Object o, Object context, SerializationFilter filter) {
     Map map = (Map)o;
 
     Element m;
@@ -80,7 +81,7 @@ class MapBinding implements Binding {
       Element entry = new Element(getEntryAttributeName());
       m.addContent(entry);
 
-      Object kNode = myKeyBinding.serialize(k, entry);
+      Object kNode = myKeyBinding.serialize(k, entry, filter);
 
       if (kNode instanceof Text) {
         Text text = (Text)kNode;
@@ -97,7 +98,7 @@ class MapBinding implements Binding {
         }
       }
 
-      Object vNode = myValueBinding.serialize(v, entry);
+      Object vNode = myValueBinding.serialize(v, entry, filter);
       if (vNode instanceof Text) {
         Text text = (Text)vNode;
         entry.setAttribute(getValueAttributeName(), text.getText());

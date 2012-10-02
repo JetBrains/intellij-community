@@ -981,6 +981,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                         @Override
                                                         public void on(Integer integer) {
                                                           if (integer == 0) return;
+                                                          mySplitter.skipNextLayouting();
+                                                          myDetailsSplitter.getComponent().skipNextLayouting();
                                                           final Dimension dialogSize = getSize();
                                                           setSize(dialogSize.width, dialogSize.height + integer);
                                                           repaint();
@@ -989,6 +991,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                         @Override
                                                         public void off(Integer integer) {
                                                           if (integer == 0) return;
+                                                          mySplitter.skipNextLayouting();
+                                                          myDetailsSplitter.getComponent().skipNextLayouting();
                                                           final Dimension dialogSize = getSize();
                                                           setSize(dialogSize.width, dialogSize.height - integer);
                                                           repaint();

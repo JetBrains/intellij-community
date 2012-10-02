@@ -18,9 +18,9 @@ package com.intellij.psi.search;
 import com.intellij.JavaTestUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.todo.TodoConfiguration;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
@@ -158,8 +158,10 @@ public class UpdateCacheTest extends PsiTestCase{
     assert projectLocation != null : myProject;
     myProject.save();
     final VirtualFile content = ModuleRootManager.getInstance(getModule()).getContentRoots()[0];
-    ProjectUtil.closeAndDispose(myProject);
-    ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).checkInjectorsAreDisposed();
+    Project project = myProject;
+    ProjectUtil.closeAndDispose(project);
+    InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
+
     assertTrue("Project was not disposed", myProject.isDisposed());
     myModule = null;
     
@@ -172,7 +174,8 @@ public class UpdateCacheTest extends PsiTestCase{
     LocalFileSystem.getInstance().refresh(false);
 
     myProject = ProjectManager.getInstance().loadAndOpenProject(projectLocation);
-    ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).pushInjectors();
+    InjectedLanguageManagerImpl.pushInjectors(getProject());
+
     setUpModule();
     setUpJdk();
     ProjectManagerEx.getInstanceEx().openTestProject(myProject);

@@ -34,7 +34,8 @@ public class GebContentDeclarationSearcher extends PomDeclarationSearcher {
     if (!"content".equals(field.getName()) || !field.hasModifierProperty(PsiModifier.STATIC)) return;
 
     PsiClass containingClass = field.getContainingClass();
-    if (!GroovyPsiManager.isInheritorCached(containingClass, "geb.Page")) return;
+    if (!GroovyPsiManager.isInheritorCached(containingClass, "geb.Page")
+        && !GroovyPsiManager.isInheritorCached(containingClass, "geb.Module")) return;
 
     Map<String, PsiField> elements = GebUtil.getContentElements(containingClass);
 

@@ -2,7 +2,7 @@ package org.jetbrains.jps.incremental;
 
 /**
  * @see ModuleLevelBuilder
- * @see ProjectLevelBuilder
+ * @see TargetBuilder
  *
  * @author nik
  */

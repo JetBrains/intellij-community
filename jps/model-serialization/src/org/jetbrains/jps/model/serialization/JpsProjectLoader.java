@@ -178,6 +178,10 @@ public class JpsProjectLoader extends JpsLoaderBase {
     final JpsModulePropertiesSerializer<?> serializer = getModulePropertiesSerializer(typeId);
     final JpsModule module = createModule(name, moduleRoot, serializer);
 
+    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
+      extension.loadModuleOptions(module, moduleRoot);
+    }
+
     String baseModulePath = FileUtil.toSystemIndependentName(file.getParent());
     String classpath = moduleRoot.getAttributeValue(CLASSPATH_ATTRIBUTE);
     if (classpath == null) {

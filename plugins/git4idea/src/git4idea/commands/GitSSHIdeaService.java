@@ -42,7 +42,11 @@ public class GitSSHIdeaService extends GitSSHService {
     return WebServerManager.getInstance().getPort();
   }
 
-  protected void registerInternalHandler(final String handlerName, final GitSSHHandler handler) {
-    ServiceManager.getService(XmlRpcServer.class).addHandler(handlerName, handler);
+  @Override
+  protected void addInternalHandler() {
+    XmlRpcServer xmlRpcServer = XmlRpcServer.SERVICE.getInstance();
+    if (!xmlRpcServer.hasHandler(GitSSHHandler.HANDLER_NAME)) {
+      xmlRpcServer.addHandler(GitSSHHandler.HANDLER_NAME, new InternalRequestHandler());
+    }
   }
 }

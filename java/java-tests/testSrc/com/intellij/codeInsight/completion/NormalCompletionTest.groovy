@@ -97,9 +97,15 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   private LookupElementPresentation renderElement(LookupElement element) {
-    def presentation = new LookupElementPresentation()
-    element.renderElement(presentation)
-    return presentation
+    return LookupElementPresentation.renderElement(element)
+  }
+
+  public void testFieldItemPresentationGenerics() {
+    configure()
+    LookupElementPresentation presentation = renderElement(myItems[0])
+    assert "target" == presentation.itemText
+    assert !presentation.tailText
+    assert "String" == presentation.typeText
   }
 
   public void testMethodItemPresentationGenerics() {

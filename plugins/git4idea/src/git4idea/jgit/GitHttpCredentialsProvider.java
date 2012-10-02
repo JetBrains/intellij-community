@@ -161,7 +161,7 @@ public class GitHttpCredentialsProvider extends CredentialsProvider {
     myRemoteUrl = url;
   }
 
-  public void fillAuthDataIfNotFilled(@NotNull String login, @NotNull String password) {
+  public void fillAuthDataIfNotFilled(@NotNull String login, @Nullable String password) {
     if (myUserName == null) {
       myUserName = login;
       myPassword = password;

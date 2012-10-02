@@ -43,12 +43,13 @@ public class ResourcePatterns {
     }
   }
 
-  public boolean isResourceFile(File file, @NotNull final String srcRoot) {
+  public boolean isResourceFile(File file, @NotNull final File srcRoot) {
     final String name = file.getName();
     final String relativePathToParent;
     final String parentPath = file.getParent();
     if (parentPath != null) {
-      relativePathToParent = "/" + FileUtil.getRelativePath(srcRoot, FileUtil.toSystemIndependentName(parentPath), '/', SystemInfo.isFileSystemCaseSensitive);
+      relativePathToParent = "/" + FileUtil.getRelativePath(FileUtil.toSystemIndependentName(srcRoot.getAbsolutePath()),
+                                                            FileUtil.toSystemIndependentName(parentPath), '/', SystemInfo.isFileSystemCaseSensitive);
     }
     else {
       relativePathToParent = null;

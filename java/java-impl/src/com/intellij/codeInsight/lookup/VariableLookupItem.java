@@ -64,7 +64,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
   public void renderElement(LookupElementPresentation presentation) {
     super.renderElement(presentation);
     if (myHelper != null) {
-      myHelper.renderElement(presentation, getAttribute(FORCE_QUALIFY) != null ? Boolean.TRUE : null, PsiSubstitutor.EMPTY);
+      myHelper.renderElement(presentation, getAttribute(FORCE_QUALIFY) != null ? Boolean.TRUE : null, getSubstitutor());
     }
   }
 

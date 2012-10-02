@@ -39,9 +39,9 @@ public class CmdlineProtoUtil {
   }
 
   public static CmdlineRemoteProto.Message.ControllerMessage createRebuildRequest(String project,
+                                                                                  List<TargetTypeBuildScope> scopes,
                                                                                   final Map<String, String> userData,
                                                                                   final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals) {
-    List<TargetTypeBuildScope> scopes = createAllModulesScopes();
     return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.REBUILD, project,
                                         scopes, userData, Collections.<String>emptyList(),
                                         globals, null);
@@ -54,7 +54,7 @@ public class CmdlineProtoUtil {
     );
   }
 
-  public static TargetTypeBuildScope createAllTargetsScope(BuildTargetType type) {
+  public static TargetTypeBuildScope createAllTargetsScope(BuildTargetType<?> type) {
     return TargetTypeBuildScope.newBuilder()
       .setTypeId(type.getTypeId())
       .setAllTargets(true)

@@ -37,7 +37,7 @@ public class FieldAccessor<FIELD_TYPE> {
     return myValueCache;
   }
 
-  private Object getFieldValue(Class c, String fieldName, Object o) {
+  private static Object getFieldValue(Class c, String fieldName, Object o) {
     try {
       Field f = c.getDeclaredField(fieldName);
       f.setAccessible(true);
@@ -52,6 +52,6 @@ public class FieldAccessor<FIELD_TYPE> {
   }
 
   public static <FIELD_TYPE> FIELD_TYPE get(Class hostClass, Object host, String fieldName) {
-    return new FieldAccessor<FIELD_TYPE>(hostClass, host, fieldName).get();
+    return (FIELD_TYPE)getFieldValue(hostClass, fieldName, host);
   }
 }

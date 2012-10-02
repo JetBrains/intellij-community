@@ -183,6 +183,12 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return getClassNamesCache().contains(name);
   }
 
+  @NotNull
+  @Override
+  public PsiClass[] findClassByShortName(@NotNull String name, @NotNull GlobalSearchScope scope) {
+    return getFacade().findClassByShortName(name, this, scope);
+  }
+
   @Nullable
   private PsiPackage findSubPackageByName(String name) {
     final String qName = getQualifiedName();

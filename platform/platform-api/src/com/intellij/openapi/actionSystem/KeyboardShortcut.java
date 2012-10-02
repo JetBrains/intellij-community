@@ -21,9 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 /**
- * A keyboard shortcut, which can consist of one or two invidivual key strokes.
+ * A keyboard shortcut, which can consist of one or two individual key strokes.
  */
-
 public final class KeyboardShortcut extends Shortcut {
   private final KeyStroke myFirstKeyStroke;
   private final KeyStroke mySecondKeyStroke;

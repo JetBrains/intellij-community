@@ -59,6 +59,9 @@ class WebServerManagerImpl extends WebServerManager {
       ShutDownTracker.getInstance().registerShutdownTask(server.createShutdownTask());
       LOG.info("web server started, port " + detectedPortNumber);
     }
+    else {
+      LOG.info("web server cannot be started, cannot bind to port");
+    }
   }
 
   @Override

@@ -233,7 +233,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   }
 
   private static CompileScope createAllModulesScope(final boolean forcedCompilation) {
-    return new CompileScopeImpl(forcedCompilation, JavaModuleBuildTargetType.ALL_TYPES, Collections.<BuildTarget>emptySet(), Collections.<BuildTarget, Set<File>>emptyMap());
+    return new CompileScopeImpl(forcedCompilation, JavaModuleBuildTargetType.ALL_TYPES, Collections.<BuildTarget<?>>emptySet(), Collections.<BuildTarget<?>, Set<File>>emptyMap());
   }
 
   private JpsSdk<JpsDummyElement> getOrCreateJdk() {

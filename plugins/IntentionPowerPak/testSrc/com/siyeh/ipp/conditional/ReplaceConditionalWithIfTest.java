@@ -18,8 +18,17 @@ package com.siyeh.ipp.conditional;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
 
+/**
+ * @see ReplaceConditionalWithIfIntention
+ */
 public class ReplaceConditionalWithIfTest extends IPPTestCase {
+
     public void testConditionalAsArgument() { doTest(); }
+    public void testComment() { doTest(); }
+    public void testParentheses() { doTest(); }
+    public void testConditionalInIf() { doTest(); }
+    public void testConditionalInBinaryExpression() { doTest(); }
+
     @Override
     protected String getIntentionName() {
         return IntentionPowerPackBundle.message(

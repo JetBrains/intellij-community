@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +41,6 @@ public abstract class FileTypeBasedContextType extends TemplateContextType {
 
   @Override
   public SyntaxHighlighter createHighlighter() {
-    return SyntaxHighlighter.PROVIDER.create(myFileType, null, null);
+    return SyntaxHighlighterFactory.getSyntaxHighlighter(myFileType, null, null);
   }
 }

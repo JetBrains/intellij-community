@@ -31,6 +31,10 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
+import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.FileProcessor;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -47,10 +51,7 @@ import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.LanguageLevel;
-import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
-import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
-import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
-import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
+import org.jetbrains.jps.model.java.compiler.*;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerConfiguration;
@@ -78,10 +79,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
   public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
   private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = Key.create("_java_compiler_version_");
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
-    "-target", "-proc:none", "-proc:only"
+    "-target"
   ));
   private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.<String>asList(
-    "-g", "-deprecation", "-nowarn", "-verbose"
+    "-g", "-deprecation", "-nowarn", "-verbose", "-proc:none", "-proc:only", "-proceedOnError"
   ));
 
   private static final FileFilter JAVA_SOURCES_FILTER =
@@ -123,14 +124,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
         if (srcFile != null && content != null) {
           final String outputPath = FileUtil.toSystemIndependentName(out.getFile().getPath());
           final String sourcePath = FileUtil.toSystemIndependentName(srcFile.getPath());
-          final RootDescriptor rootDescriptor = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, srcFile);
+          final RootDescriptor rootDescriptor = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, srcFile);
           final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
           boolean isTemp = false;
           if (rootDescriptor != null) {
             isTemp = rootDescriptor.isTemp;
             if (!isTemp) {
               try {
-                dataManager.getSourceToOutputMap(rootDescriptor.target).appendData(sourcePath, outputPath);
+                dataManager.getSourceToOutputMap(rootDescriptor.target).appendOutput(sourcePath, outputPath);
               }
               catch (Exception e) {
                 context.processMessage(new CompilerMessage(BUILDER_NAME, e));
@@ -169,13 +170,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return "Java Builder";
   }
 
-  public ExitCode build(final CompileContext context, final ModuleChunk chunk) throws ProjectBuildException {
+  public ExitCode build(final CompileContext context,
+                        final ModuleChunk chunk,
+                        DirtyFilesHolder<RootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
     try {
       final Set<File> filesToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       final Set<File> formsToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
-      FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
-        public boolean apply(ModuleBuildTarget target, File file, String sourceRoot) throws IOException {
+      dirtyFilesHolder.processDirtyFiles(new FileProcessor<RootDescriptor, ModuleBuildTarget>() {
+        public boolean apply(ModuleBuildTarget target, File file, RootDescriptor sourceRoot) throws IOException {
           if (JAVA_SOURCES_FILTER.accept(file)) {
             filesToCompile.add(file);
           }
@@ -191,11 +194,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (!context.isProjectRebuild()) {
         for (Iterator<File> formsIterator = formsToCompile.iterator(); formsIterator.hasNext(); ) {
           final File form = formsIterator.next();
-          final RootDescriptor descriptor = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, form);
+          final RootDescriptor descriptor = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, form);
           if (descriptor == null) {
             continue;
           }
-          for (RootDescriptor rd : context.getProjectDescriptor().rootsIndex.getModuleRoots(context, descriptor.target.getModule())) {
+          for (RootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(descriptor.target, context)) {
             final File boundSource = getBoundSource(rd.root, form);
             if (boundSource == null) {
               continue;
@@ -324,12 +327,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (hasSourcesToCompile) {
         exitCode = ExitCode.OK;
         final Set<File> tempRootsSourcePath = new HashSet<File>();
-        final ModuleRootsIndex index = pd.rootsIndex;
-        for (JpsModule module : chunk.getModules()) {
-          for (RootDescriptor rd : index.getModuleRoots(context, module)) {
-            if (rd.isTemp) {
-              tempRootsSourcePath.add(rd.root);
-            }
+        final BuildRootIndex index = pd.getBuildRootIndex();
+        for (ModuleBuildTarget target : chunk.getTargets()) {
+          for (RootDescriptor rd : index.getTempTargetRoots(target, context)) {
+            tempRootsSourcePath.add(rd.root);
           }
         }
 
@@ -339,7 +340,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final int filesCount = files.size();
         boolean compiledOk = true;
         if (filesCount > 0) {
-          LOG.info("Compiling " + filesCount + " java files; module: " + chunkName + (chunk.isTests() ? " (tests)" : ""));
+          LOG.info("Compiling " + filesCount + " java files; module: " + chunkName + (chunk.containsTests() ? " (tests)" : ""));
           if (LOG.isDebugEnabled()) {
             LOG.debug(" classpath for " + chunkName + ":");
             for (File file : classpath) {
@@ -365,7 +366,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                 context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
                 instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputSink);
                 JpsUiDesignerConfiguration configuration = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(pd.jpsProject);
-                if (configuration != null && configuration.isCopyFormsRuntimeToOutput() && !chunk.isTests()) {
+                if (configuration != null && configuration.isCopyFormsRuntimeToOutput() && !chunk.containsTests()) {
                   for (JpsModule module : chunk.getModules()) {
                     final File outputDir = paths.getModuleOutputDir(module, false);
                     if (outputDir != null) {
@@ -417,7 +418,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final Set<File> successfullyCompiled = outputSink.getSuccessfullyCompiled();
       DELTA_MAPPINGS_CALLBACK_KEY.set(context, null);
 
-      if (updateMappings(context, delta, chunk, files, successfullyCompiled)) {
+      if (JavaBuilderUtil.updateMappings(context, delta, chunk, files, successfullyCompiled)) {
         exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
       }
     }
@@ -628,7 +629,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
     final JpsJavaCompilerOptions options = config.getCurrentCompilerOptions();
     return options.MAXIMUM_HEAP_SIZE;
-    //return 512;//todo[jeka] default value was 128 in IDEA, do we really need to set it to 512 for javac server?
   }
 
   private static InstrumentationClassFinder createInstrumentationClassFinder(Collection<File> platformCp,
@@ -760,7 +760,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
 
       final File srcOutput = context.getProjectPaths()
-        .getAnnotationProcessorGeneratedSourcesOutputDir(chunk.getModules().iterator().next(), chunk.isTests(),
+        .getAnnotationProcessorGeneratedSourcesOutputDir(chunk.getModules().iterator().next(), chunk.containsTests(),
                                                          profile.getGeneratedSourcesDirectoryName());
       if (srcOutput != null) {
         srcOutput.mkdirs();
@@ -836,7 +836,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
     if (compilerOptions.GENERATE_NO_WARNINGS) {
       options.add("-nowarn");
     }
-
+    if (compilerOptions instanceof EclipseCompilerOptions) {
+      final EclipseCompilerOptions eclipseOptions = (EclipseCompilerOptions)compilerOptions;
+      if (eclipseOptions.PROCEED_ON_ERROR) {
+        options.add("-proceedOnError");
+      }
+    }
     final String customArgs = compilerOptions.ADDITIONAL_OPTIONS_STRING;
     if (customArgs != null) {
       final StringTokenizer customOptsTokenizer = new StringTokenizer(customArgs, " \t\r\n");
@@ -873,6 +878,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
     JAVAC_VM_OPTIONS.set(context, vmOptions);
   }
 
+  @Override
+  public void cleanupChunkResources(CompileContext context) {
+    JavaBuilderUtil.cleanupChunkResources(context);
+  }
+
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
     final Map<File, Set<File>> map = new LinkedHashMap<File, Set<File>>();
     for (ModuleBuildTarget target : chunk.getTargets()) {
@@ -881,10 +891,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
         continue;
       }
       final Set<File> roots = new LinkedHashSet<File>();
-      for (RootDescriptor descriptor : context.getProjectDescriptor().rootsIndex.getModuleRoots(context, target.getModule())) {
-        if (descriptor.isTestRoot == target.isTests()) {
-          roots.add(descriptor.root);
-        }
+      for (RootDescriptor descriptor : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
+        roots.add(descriptor.root);
       }
       map.put(outputDir, roots);
     }

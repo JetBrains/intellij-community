@@ -7,6 +7,7 @@ import com.intellij.util.containers.ClassMap;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactCompilerInstructionCreator;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactInstructionsBuilderContext;
+import org.jetbrains.jps.incremental.artifacts.instructions.CopyToDirectoryInstructionCreator;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.*;
 import org.jetbrains.jps.model.java.JpsProductionModuleOutputPackagingElement;
@@ -47,7 +48,12 @@ public class LayoutElementBuildersRegistry {
     }
   }
 
-  public void generateInstructions(JpsPackagingElement layoutElement, ArtifactCompilerInstructionCreator instructionCreator,
+  public void generateInstructions(JpsArtifact artifact, CopyToDirectoryInstructionCreator creator, ArtifactInstructionsBuilderContext context) {
+    context.enterArtifact(artifact);
+    generateInstructions(artifact.getRootElement(), creator, context);
+  }
+
+  private void generateInstructions(JpsPackagingElement layoutElement, ArtifactCompilerInstructionCreator instructionCreator,
                                    ArtifactInstructionsBuilderContext builderContext) {
     final LayoutElementBuilderService builder = myBuilders.get(layoutElement.getClass());
     if (builder != null) {
@@ -230,7 +236,14 @@ public class LayoutElementBuildersRegistry {
 
       final String outputPath = artifact.getOutputPath();
       if (StringUtil.isEmpty(outputPath)) {
-        generateSubstitutionInstructions(element, instructionCreator, builderContext);
+        try {
+          if (builderContext.enterArtifact(artifact)) {
+            generateSubstitutionInstructions(element, instructionCreator, builderContext);
+          }
+        }
+        finally {
+          builderContext.leaveArtifact(artifact);
+        }
         return;
       }
 

@@ -50,8 +50,10 @@ public class ClassMappingNameConverter extends ResolvingConverter.StringConverte
       }
     });
     if (classElement == null) return Collections.emptyList();
-    PsiClass psiClass = (PsiClass)((GenericDomValue)classElement).getValue();
-    if (psiClass == null) return Collections.emptyList();
+    Object value = ((GenericDomValue)classElement).getValue();
+    if (value == null) return Collections.emptyList();
+    assert value instanceof PsiClass : classElement + " should have PsiClass type";
+    PsiClass psiClass = (PsiClass)value;
 
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(context.getProject());
     PsiClassType classType = PsiTypesUtil.getClassType(psiClass);

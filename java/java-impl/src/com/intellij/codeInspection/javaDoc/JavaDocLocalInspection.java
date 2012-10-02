@@ -92,16 +92,17 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
   }
 
-  @NonNls public Options TOP_LEVEL_CLASS_OPTIONS   = new Options("none", "");
-  @NonNls public Options INNER_CLASS_OPTIONS       = new Options("none", "");
-  @NonNls public Options METHOD_OPTIONS            = new Options("none", "@return@param@throws or @exception");
-  @NonNls public Options FIELD_OPTIONS             = new Options("none", "");
-  public         boolean IGNORE_DEPRECATED         = false;
-  public         boolean IGNORE_JAVADOC_PERIOD     = true;
-  public         boolean IGNORE_DUPLICATED_THROWS  = false;
-  public         boolean IGNORE_POINT_TO_ITSELF    = false;
-  public         boolean IGNORE_EMPTY_DESCRIPTIONS = false;
-  public         String  myAdditionalJavadocTags   = "";
+  @NonNls public Options TOP_LEVEL_CLASS_OPTIONS  = new Options("none", "");
+  @NonNls public Options INNER_CLASS_OPTIONS      = new Options("none", "");
+  @NonNls public Options METHOD_OPTIONS           = new Options("none", "@return@param@throws or @exception");
+  @NonNls public Options FIELD_OPTIONS            = new Options("none", "");
+  public         boolean IGNORE_DEPRECATED        = false;
+  public         boolean IGNORE_JAVADOC_PERIOD    = true;
+  public         boolean IGNORE_DUPLICATED_THROWS = false;
+  public         boolean IGNORE_POINT_TO_ITSELF   = false;
+  public         String  myAdditionalJavadocTags  = "";
+
+  private boolean myIgnoreEmptyDescriptions = false;
 
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.javaDoc.JavaDocLocalInspection");
 
@@ -595,7 +596,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       }
     }
 
-    if (!IGNORE_EMPTY_DESCRIPTIONS) {
+    if (!myIgnoreEmptyDescriptions) {
       for (PsiDocTag tag : tags) {
         if ("param".equals(tag.getName())) {
           final PsiElement[] dataElements = tag.getDataElements();
@@ -664,7 +665,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         }
       }
       else
-        if ("return".equals(tag.getName()) && !IGNORE_EMPTY_DESCRIPTIONS) {
+        if ("return".equals(tag.getName()) && !myIgnoreEmptyDescriptions) {
           if (extractTagDescription(tag).length() == 0) {
             String message = InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", "<code>@return</code>");
             ProblemDescriptor descriptor = manager.createProblemDescriptor(tag.getNameElement(), message, (LocalQuickFix)null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
@@ -717,7 +718,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
             PsiClassType classType = it.next();
             final PsiClass psiClass = declaredExceptions.get(classType);
             if (InheritanceUtil.isInheritorOrSelf(exceptionClass, psiClass, true)) {
-              if (!IGNORE_EMPTY_DESCRIPTIONS && extractThrowsTagDescription(tag).length() == 0) {
+              if (!myIgnoreEmptyDescriptions && extractThrowsTagDescription(tag).length() == 0) {
                 problems.add(createDescriptor(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", "<code>" + tag.getName() + "</code>"), mananger,
                                               isOnTheFly));
               }
@@ -1148,6 +1149,10 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   @NotNull
   public String getShortName() {
     return SHORT_NAME;
+  }
+
+  public void setIgnoreEmptyDescriptions(boolean ignoreEmptyDescriptions) {
+    myIgnoreEmptyDescriptions = ignoreEmptyDescriptions;
   }
 
   private class AddUnknownTagToCustoms implements LocalQuickFix {

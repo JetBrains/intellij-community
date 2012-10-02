@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.GuiUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
@@ -167,7 +168,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
    * {@inheritDoc}
    */
   @Override
-  protected byte[] key(final Project project) throws PasswordSafeException {
+  protected byte[] key(@Nullable final Project project) throws PasswordSafeException {
     if (!isTestMode() && ApplicationManager.getApplication().isHeadlessEnvironment()) {
       throw new MasterPasswordUnavailableException("The provider is not available in headless environment");
     }
@@ -222,7 +223,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
    * {@inheritDoc}
    */
   @Override
-  public String getPassword(Project project, Class requester, String key) throws PasswordSafeException {
+  public String getPassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
     if (database.isEmpty()) {
       return null;
     }
@@ -233,7 +234,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
    * {@inheritDoc}
    */
   @Override
-  public void removePassword(Project project, Class requester, String key) throws PasswordSafeException {
+  public void removePassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
     if (database.isEmpty()) {
       return;
     }

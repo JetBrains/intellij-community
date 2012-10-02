@@ -15,20 +15,16 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.util.Key;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
  * @since 31.10.2011
  */
-public abstract class VirtualFileVisitor {
+public abstract class VirtualFileVisitor<T> {
   public static class Option {
     private Option() { }
 
@@ -43,7 +39,7 @@ public abstract class VirtualFileVisitor {
 
   public static final Option NO_FOLLOW_SYMLINKS = new Option();
   public static final Option SKIP_ROOT = new Option();
-  public static final Option ONE_LEVEL_DEEP = new Option.LimitOption(1);
+  public static final Option ONE_LEVEL_DEEP = limit(1);
 
   public static Option limit(int maxDepth) {
     return new Option.LimitOption(maxDepth);
@@ -59,6 +55,7 @@ public abstract class VirtualFileVisitor {
       this.skipToParent = skipToParent;
     }
 
+    @NonNls
     @Override
     public String toString() {
       return "(" + (skipChildren ? "skip," + skipToParent : "continue") + ")";
@@ -84,14 +81,21 @@ public abstract class VirtualFileVisitor {
   private boolean mySkipRoot = false;
   private int myDepthLimit = -1;
 
-  private int myLevel = -1;
-  private Stack<Map<Key, Object>> myParameters = null;
+  private int myLevel = 0;
+  private Stack<T> myValueStack = null;
+  private T myValue = null;
 
-  protected VirtualFileVisitor(Option... options) {
+  protected VirtualFileVisitor(@NotNull Option... options) {
     for (Option option : options) {
-      if (option == NO_FOLLOW_SYMLINKS) myFollowSymLinks = false;
-      else if (option == SKIP_ROOT) mySkipRoot = true;
-      else if (option instanceof Option.LimitOption) myDepthLimit = ((Option.LimitOption)option).limit;
+      if (option == NO_FOLLOW_SYMLINKS) {
+        myFollowSymLinks = false;
+      }
+      else if (option == SKIP_ROOT) {
+        mySkipRoot = true;
+      }
+      else if (option instanceof Option.LimitOption) {
+        myDepthLimit = ((Option.LimitOption)option).limit;
+      }
     }
   }
 
@@ -140,30 +144,22 @@ public abstract class VirtualFileVisitor {
     return null;
   }
 
-
-  public final <T> void set(@NotNull Key<T> parameter, @Nullable T value) {
-    if (myParameters == null) {
-      myParameters = ContainerUtil.newStack();
+  /**
+   * Stores the {@code value} to this visitor. The stored value can be retrieved later by calling the {@link #getCurrentValue()}.
+   * The visitor maintains the stack of stored values. I.e:
+   * This value is held here only during the visiting the current file and all its children. As soon as the visitor finished with
+   * the current file and all its subtree and returns to the level up, the value is cleared
+   * and the {@link #getCurrentValue()} returns the previous value which was stored here before the {@link #setValueForChildren} call.
+   */
+  public final void setValueForChildren(@Nullable T value) {
+    myValue = value;
+    if (myValueStack == null) {
+      myValueStack = new Stack<T>();
     }
-
-    final Map<Key, Object> frame;
-    if (myParameters.isEmpty()) {
-      myParameters.push(frame = ContainerUtil.newHashMap());
-    }
-    else {
-      frame = myParameters.peek();
-    }
-
-    frame.put(parameter, value);
   }
 
-  @SuppressWarnings("ConstantConditions")
-  public final <T> T get(@NotNull Key<T> parameter) {
-    if (myParameters == null || myParameters.isEmpty()) {
-      return null;
-    }
-    @SuppressWarnings({"unchecked"}) final T value = (T)myParameters.peek().get(parameter);
-    return value;
+  public final T getCurrentValue() {
+    return myValue;
   }
 
 
@@ -172,32 +168,30 @@ public abstract class VirtualFileVisitor {
   }
 
   final boolean allowVisitChildren(@NotNull VirtualFile file) {
-    return !file.isSymLink() || (myFollowSymLinks && !VfsUtilCore.isInvalidLink(file));
+    return !file.isSymLink() || myFollowSymLinks && !VfsUtilCore.isInvalidLink(file);
   }
 
   final boolean depthLimitReached() {
     return myDepthLimit >= 0 && myLevel >= myDepthLimit;
   }
 
-  final void pushFrame() {
+  final void saveValue() {
     ++myLevel;
-
-    if (myParameters != null && !myParameters.isEmpty()) {
-      final Map<Key, Object> lastFrame = myParameters.peek();
-      myParameters.push(new HashMap<Key, Object>() {
-        @Override
-        public Object get(Object key) {
-          return containsKey(key) ? super.get(key) : lastFrame.get(key);
-        }
-      });
+    if (myValueStack != null) {
+      myValueStack.push(myValue);
     }
   }
 
-  final void popFrame() {
-    --myLevel;
+  final void restoreValue(boolean pushed) {
+    if (pushed) {
+      --myLevel;
+      if (myValueStack != null && !myValueStack.isEmpty()) {
+        myValueStack.pop();
+      }
+    }
 
-    if (myParameters != null && !myParameters.isEmpty()) {
-      myParameters.pop();
+    if (myValueStack != null) {
+      myValue = myValueStack.isEmpty() ? null : myValueStack.peek();
     }
   }
 }

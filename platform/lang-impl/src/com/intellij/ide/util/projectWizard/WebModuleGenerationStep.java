@@ -259,6 +259,11 @@ public class WebModuleGenerationStep extends ModuleWizardStep {
     }
 
     @Override
+    public String getDescription() {
+      return "";
+    }
+
+    @Override
     public void generateProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Object settings, @NotNull Module module) {}
 
     @NotNull

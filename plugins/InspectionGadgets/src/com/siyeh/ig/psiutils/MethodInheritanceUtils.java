@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,6 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.reference.RefMethod;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.util.Query;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -28,56 +24,7 @@ import java.util.Stack;
 
 public class MethodInheritanceUtils {
 
-  private MethodInheritanceUtils() {
-  }
-
-  public static Set<PsiMethod> calculateSiblingMethods(PsiMethod method) {
-    final Set<PsiMethod> siblingMethods = new HashSet<PsiMethod>();
-    final Stack<PsiMethod> pendingMethods = new Stack<PsiMethod>();
-    pendingMethods.add(method);
-    while (!pendingMethods.isEmpty()) {
-      final PsiMethod methodToAnalyze = pendingMethods.pop();
-      siblingMethods.add(methodToAnalyze);
-      final SearchScope scope = methodToAnalyze.getUseScope();
-      final Query<PsiMethod> search =
-        OverridingMethodsSearch.search(methodToAnalyze, scope, true);
-      for (PsiMethod overridingMethod : search) {
-        if (!siblingMethods.contains(overridingMethod) &&
-            !pendingMethods.contains(overridingMethod)) {
-          pendingMethods.add(overridingMethod);
-        }
-      }
-      final PsiMethod[] superMethods = methodToAnalyze.findSuperMethods();
-      for (PsiMethod superMethod : superMethods) {
-        if (!siblingMethods.contains(superMethod) &&
-            !pendingMethods.contains(superMethod)) {
-          pendingMethods.add(superMethod);
-        }
-      }
-    }
-    return siblingMethods;
-  }
-
-  public static boolean hasSiblingMethods(PsiMethod method) {
-    final SearchScope scope = method.getUseScope();
-    final PsiMethod overridingMethod =
-      OverridingMethodsSearch.search(method, scope, true).findFirst();
-    if (overridingMethod != null) {
-      return true;
-    }
-    final PsiMethod[] superMethods = method.findSuperMethods();
-    return superMethods.length != 0;
-  }
-
-  public static boolean inheritsFromLibraryMethod(PsiMethod method) {
-    final Set<PsiMethod> superMethods = calculateSiblingMethods(method);
-    for (PsiMethod superMethod : superMethods) {
-      if (LibraryUtil.classIsInLibrary(superMethod.getContainingClass())) {
-        return true;
-      }
-    }
-    return false;
-  }
+  private MethodInheritanceUtils() {}
 
   public static Set<RefMethod> calculateSiblingMethods(RefMethod method) {
     final Set<RefMethod> siblingMethods = new HashSet<RefMethod>();

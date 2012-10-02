@@ -238,6 +238,15 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     assertBuildFailed(a);
   }
 
+  public void testArtifactContainingSelfIncludingArtifactWithoutOutput() {
+    final JpsArtifact a = addArtifact("a", root());
+    LayoutElementTestUtil.addArtifactToLayout(a, a);
+    final JpsArtifact b = addArtifact("b", root().artifact(a));
+    a.setOutputPath(null);
+
+    assertBuildFailed(b);
+  }
+
   //IDEA-73893
   public void testManifestFileIsFirstEntry() throws IOException {
     final String firstFile = createFile("src/A.txt");

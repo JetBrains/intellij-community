@@ -27,25 +27,35 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -75,6 +85,9 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     try {
       final InitialInfo initialInfo =
         GroovyExtractChooser.invoke(project, editor, file, model.getSelectionStart(), model.getSelectionEnd(), true);
+
+      if (findConflicts(initialInfo)) return;
+
       performRefactoring(initialInfo, editor);
     }
     catch (GrRefactoringError e) {
@@ -82,9 +95,66 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     }
   }
 
+  private static boolean findConflicts(InitialInfo info) {
+    //new ConflictsDialog()
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+
+    final PsiElement declarationOwner = info.getStatements()[0].getParent();
+
+    GroovyRecursiveElementVisitor visitor = new GroovyRecursiveElementVisitor() {
+      @Override
+      public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+        super.visitReferenceExpression(referenceExpression);
+
+        GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
+        GroovyPsiElement resolveContext = resolveResult.getCurrentFileResolveContext();
+        if (resolveContext != null &&
+            !(resolveContext instanceof GrImportStatement) &&
+            !PsiTreeUtil.isAncestor(declarationOwner, resolveContext, true) && !skipResult(resolveResult)) {
+          conflicts.putValue(referenceExpression, GroovyRefactoringBundle
+            .message("ref.0.will.not.be.resolved.outside.of.current.context", referenceExpression.getText()));
+        }
+      }
+
+      //skip 'print' and 'println'
+      private boolean skipResult(GroovyResolveResult result) {
+        PsiElement element = result.getElement();
+        if (element instanceof PsiMethod) {
+          String name = ((PsiMethod)element).getName();
+          if (!name.startsWith("print")) return false;
+
+          if (element instanceof GrGdkMethod) element = ((GrGdkMethod)element).getStaticMethod();
+
+          PsiClass aClass = ((PsiMethod)element).getContainingClass();
+          if (aClass != null) {
+            String qname = aClass.getQualifiedName();
+            return GroovyCommonClassNames.DEFAULT_GROOVY_METHODS.equals(qname);
+          }
+        }
+        return false;
+      }
+    };
+
+    GrStatement[] statements = info.getStatements();
+    for (GrStatement statement : statements) {
+      statement.accept(visitor);
+    }
+
+    if (conflicts.isEmpty()) return false;
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
+    }
+
+    ConflictsDialog dialog = new ConflictsDialog(info.getProject(), conflicts);
+    dialog.show();
+    return !dialog.isOK();
+  }
+
   private static void performRefactoring(@NotNull final InitialInfo initialInfo, final Editor editor) {
     final GrMemberOwner owner = PsiUtil.getMemberOwner(initialInfo.getStatements()[0]);
     LOG.assertTrue(owner!=null);
+
     final ExtractMethodInfoHelper helper = getSettings(initialInfo, owner);
     if (helper == null) return;
 

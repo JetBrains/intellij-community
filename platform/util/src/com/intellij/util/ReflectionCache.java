@@ -18,10 +18,7 @@ package com.intellij.util;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
+import java.lang.reflect.*;
 
 /**
  * @author peter
@@ -40,15 +37,6 @@ public class ReflectionCache {
     protected Class[] create(final Class key) {
       Class[] classes = key.getInterfaces();
       return classes.length == 0 ? ArrayUtil.EMPTY_CLASS_ARRAY : classes;
-    }
-  };
-  private static final Method[] EMPTY_METHODS = new Method[0];
-  private static final ConcurrentFactoryMap<Class, Method[]> ourMethods = new ConcurrentFactoryMap<Class, Method[]>() {
-    @Override
-    @NotNull
-    protected Method[] create(final Class key) {
-      Method[] methods = key.getMethods();
-      return methods.length == 0 ? EMPTY_METHODS : methods;
     }
   };
 
@@ -84,39 +72,44 @@ public class ReflectionCache {
   private ReflectionCache() {
   }
 
-  public static Class getSuperClass(Class aClass) {
+  public static Class getSuperClass(@NotNull Class aClass) {
     return ourSuperClasses.get(aClass);
   }
 
-  public static Class[] getInterfaces(Class aClass) {
+  @NotNull
+  public static Class[] getInterfaces(@NotNull Class aClass) {
     return ourInterfaces.get(aClass);
   }
 
-  public static Method[] getMethods(Class aClass) {
-    return ourMethods.get(aClass);
+  @NotNull
+  public static Method[] getMethods(@NotNull Class aClass) {
+    return aClass.getMethods();
   }
 
   public static boolean isAssignable(@NotNull Class ancestor, Class descendant) {
     return ancestor == descendant || ancestor.isAssignableFrom(descendant);
   }
 
-  public static boolean isInstance(Object instance, Class clazz) {
+  public static boolean isInstance(Object instance, @NotNull Class clazz) {
     return clazz.isInstance(instance);
   }
 
-  public static boolean isInterface(Class aClass) {
+  public static boolean isInterface(@NotNull Class aClass) {
     return ourIsInterfaces.get(aClass);
   }
 
-  public static <T> TypeVariable<Class<T>>[] getTypeParameters(Class<T> aClass) {
+  @NotNull
+  public static <T> TypeVariable<Class<T>>[] getTypeParameters(@NotNull Class<T> aClass) {
     return ourTypeParameters.get(aClass);
   }
 
-  public static Type[] getGenericInterfaces(Class aClass) {
+  @NotNull
+  public static Type[] getGenericInterfaces(@NotNull Class aClass) {
     return ourGenericInterfaces.get(aClass);
   }
 
-  public static Type[] getActualTypeArguments(ParameterizedType type) {
+  @NotNull
+  public static Type[] getActualTypeArguments(@NotNull ParameterizedType type) {
     return ourActualTypeArguments.get(type);
   }
 

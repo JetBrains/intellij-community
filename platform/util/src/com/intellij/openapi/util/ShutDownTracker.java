@@ -17,6 +17,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -133,9 +134,9 @@ public class ShutDownTracker implements Runnable {
     return list.isEmpty()? null : list.removeLast();
   }
 
-  public static void invokeAndWait(boolean timed, boolean edt, @NotNull final Runnable runnable) {
-    if (!edt) {
-      if (timed) {
+  public static void invokeAndWait(boolean returnOnTimeout, boolean runInEdt, @NotNull final Runnable runnable) {
+    if (!runInEdt) {
+      if (returnOnTimeout) {
         final Semaphore semaphore = new Semaphore();
         semaphore.down();
         new Thread(new Runnable() {
@@ -153,7 +154,7 @@ public class ShutDownTracker implements Runnable {
       return;
     }
 
-    if (timed) {
+    if (returnOnTimeout) {
       final Semaphore semaphore = new Semaphore();
       semaphore.down();
       SwingUtilities.invokeLater(new Runnable() {
@@ -168,7 +169,7 @@ public class ShutDownTracker implements Runnable {
     }
 
     try {
-      SwingUtilities.invokeAndWait(runnable);
+      UIUtil.invokeAndWaitIfNeeded(runnable);
     }
     catch (Exception e) {
       LOG.error(e);

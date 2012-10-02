@@ -372,4 +372,14 @@
       <val name="intValues" val="{javax.swing.JOptionPane.DEFAULT_OPTION, javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.YES_NO_CANCEL_OPTION, javax.swing.JOptionPane.OK_CANCEL_OPTION}"/>
     </annotation>
   </item>
+  <item name='javax.swing.Scrollable int getScrollableUnitIncrement(java.awt.Rectangle, int, int) 1'>
+      <annotation name='org.intellij.lang.annotations.MagicConstant'>
+        <val name="intValues" val="{javax.swing.SwingConstants.HORIZONTAL, javax.swing.SwingConstants.VERTICAL}"/>
+      </annotation>
+  </item>
+  <item name='javax.swing.Scrollable int getScrollableBlockIncrement(java.awt.Rectangle, int, int) 1'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{javax.swing.SwingConstants.HORIZONTAL, javax.swing.SwingConstants.VERTICAL}"/>
+    </annotation>
+  </item>
 </root>

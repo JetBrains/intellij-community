@@ -32,14 +32,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
-import org.jetbrains.jps.incremental.artifacts.*;
+import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLogger;
+import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
+import org.jetbrains.jps.incremental.artifacts.IncArtifactBuilder;
 import org.jetbrains.jps.incremental.artifacts.instructions.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
-import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 
 import java.io.*;
 import java.util.*;
@@ -60,10 +62,8 @@ public class JarsBuilder {
   private final SourceToOutputMapping mySrcOutMapping;
   private final ArtifactOutputToSourceMapping myOutSrcMapping;
 
-  public JarsBuilder(Set<JarInfo> jarsToBuild,
-                     CompileContext context,
-                     SourceToOutputMapping srcOutMapping,
-                     ArtifactOutputToSourceMapping outSrcMapping, ArtifactInstructionsBuilder instructions) {
+  public JarsBuilder(Set<JarInfo> jarsToBuild, CompileContext context, SourceToOutputMapping srcOutMapping,
+                     ArtifactOutputToSourceMapping outSrcMapping) {
     mySrcOutMapping = srcOutMapping;
     myOutSrcMapping = outSrcMapping;
     DependentJarsEvaluator evaluator = new DependentJarsEvaluator();
@@ -170,7 +170,7 @@ public class JarsBuilder {
           else {
             final String filePath = FileUtil.toSystemIndependentName(descriptor.getRootFile().getAbsolutePath());
             logger.fileCopied(filePath);
-            mySrcOutMapping.appendData(filePath, Collections.singletonList(targetJarPath));
+            mySrcOutMapping.appendOutput(filePath, targetJarPath);
             myOutSrcMapping.appendData(targetJarPath, Collections
               .singletonList(new ArtifactOutputToSourceMapping.SourcePathAndRootIndex(filePath, rootIndex)));
             extractFileAndAddToJar(jarOutputStream, (JarBasedArtifactRootDescriptor)descriptor, relativePath, writtenPaths);
@@ -216,7 +216,7 @@ public class JarsBuilder {
           if (manifestFile.exists()) {
             final String fullManifestPath = FileUtil.toSystemIndependentName(manifestFile.getAbsolutePath());
             myContext.getLoggingManager().getArtifactBuilderLogger().fileCopied(fullManifestPath);
-            mySrcOutMapping.appendData(fullManifestPath, Collections.singletonList(targetJarPath));
+            mySrcOutMapping.appendOutput(fullManifestPath, targetJarPath);
             //noinspection IOResourceOpenedButNotSafelyClosed
             return createManifest(new FileInputStream(manifestFile), manifestFile);
           }
@@ -322,7 +322,7 @@ public class JarsBuilder {
     if (rootIndex != -1) {
       myOutSrcMapping.appendData(targetJarPath, Collections.singletonList(new ArtifactOutputToSourceMapping.SourcePathAndRootIndex(filePath, rootIndex)));
       if (added) {
-        mySrcOutMapping.appendData(filePath, Collections.singletonList(targetJarPath));
+        mySrcOutMapping.appendOutput(filePath, targetJarPath);
         myContext.getLoggingManager().getArtifactBuilderLogger().fileCopied(filePath);
       }
     }

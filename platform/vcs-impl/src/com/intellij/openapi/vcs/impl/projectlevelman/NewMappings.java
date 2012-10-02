@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
@@ -252,7 +253,8 @@ public class NewMappings {
     if (mapping.getDirectory().length() == 0) {
       return myDefaultVcsRootPolicy.matchesDefaultMapping(file, matchContext);
     }
-    return FileUtil.startsWith(systemIndependPath, mapping.systemIndependentPath());
+    return FileUtil.startsWith(systemIndependPath, mapping.systemIndependentPath()) &&
+           !ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(file);
   }
 
   public List<VirtualFile> getMappingsAsFilesUnderVcs(final AbstractVcs vcs) {

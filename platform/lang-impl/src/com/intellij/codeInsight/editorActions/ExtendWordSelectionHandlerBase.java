@@ -19,9 +19,10 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,23 +37,19 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
 
   @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-
     final TextRange originalRange = e.getTextRange();
     LOG.assertTrue(originalRange.getEndOffset() <= editorText.length(), getClass() + "; " + e);
 
     List<TextRange> ranges = expandToWholeLine(editorText, originalRange, true);
 
     if (ranges.size() == 1 && ranges.contains(originalRange)) {
-      ranges = expandToWholeLine(editorText, originalRange, false);
+      return expandToWholeLine(editorText, originalRange, false);
     }
 
-    List<TextRange> result = ContainerUtil.newArrayList();
-    result.addAll(ranges);
-    return result;
+    return ranges;
   }
 
-  public static List<TextRange> expandToWholeLine(CharSequence text, TextRange range, boolean isSymmetric) {
-    int textLength = text.length();
+  public static List<TextRange> expandToWholeLine(CharSequence text, @Nullable TextRange range, boolean isSymmetric) {
     List<TextRange> result = new ArrayList<TextRange>();
 
     if (range == null) {
@@ -60,77 +57,58 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
     }
 
     LOG.assertTrue(range.getEndOffset() <= text.length());
-    boolean hasNewLines = false;
-
-    for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
-      char c = text.charAt(i);
-
-      if (c == '\r' || c == '\n') {
-        hasNewLines = true;
-        break;
-      }
-    }
-
-    if (!hasNewLines) {
+    if (!StringUtil.contains(text, range.getStartOffset(), range.getEndOffset(), '\n')) {
       result.add(range);
     }
 
+    TextRange expanded = getExpandedRange(text, range, isSymmetric);
+    if (expanded != null) {
+      result.add(expanded);
+    } else {
+      result.add(range);
+    }
+    return result;
+  }
 
+  @Nullable
+  private static TextRange getExpandedRange(CharSequence text, TextRange range, boolean isSymmetric) {
     int startOffset = range.getStartOffset();
     int endOffset = range.getEndOffset();
     int index1 = CharArrayUtil.shiftBackward(text, startOffset - 1, " \t");
-    if (endOffset > startOffset && text.charAt(endOffset - 1) == '\n' || text.charAt(endOffset - 1) == '\r') {
+    if (endOffset > startOffset && text.charAt(endOffset - 1) == '\n') {
       endOffset--;
     }
+    int textLength = text.length();
     int index2 = Math.min(textLength, CharArrayUtil.shiftForward(text, endOffset, " \t"));
 
-    if (index1 < 0
-        || text.charAt(index1) == '\n'
-        || text.charAt(index1) == '\r'
-        || index2 == textLength
-        || text.charAt(index2) == '\n'
-        || text.charAt(index2) == '\r') {
-
+    if (index1 < 0 || text.charAt(index1) == '\n' || index2 == textLength || text.charAt(index2) == '\n') {
       if (!isSymmetric) {
-        if (index1 < 0 || text.charAt(index1) == '\n' || text.charAt(index1) == '\r') {
+        if (index1 < 0 || text.charAt(index1) == '\n') {
           startOffset = index1 + 1;
         }
 
-        if (index2 == textLength || text.charAt(index2) == '\n' || text.charAt(index2) == '\r') {
+        if (index2 == textLength || text.charAt(index2) == '\n') {
           endOffset = index2;
           if (endOffset < textLength) {
             endOffset++;
-            if (endOffset < textLength && text.charAt(endOffset - 1) == '\r' && text.charAt(endOffset) == '\n') {
-              endOffset++;
-            }
           }
         }
 
-        result.add(new TextRange(startOffset, endOffset));
+        return new TextRange(startOffset, endOffset);
       }
-      else {
-        if ((index1 < 0 || text.charAt(index1) == '\n' || text.charAt(index1) == '\r') &&
-            (index2 == textLength || text.charAt(index2) == '\n' || text.charAt(index2) == '\r')) {
-          startOffset = index1 + 1;
-          endOffset = index2;
-          if (endOffset < textLength) {
-            endOffset++;
-            if (endOffset < textLength && text.charAt(endOffset - 1) == '\r' && text.charAt(endOffset) == '\n') {
-              endOffset++;
-            }
-          }
-          result.add(new TextRange(startOffset, endOffset));
+
+      if ((index1 < 0 || text.charAt(index1) == '\n') &&
+          (index2 == textLength || text.charAt(index2) == '\n')) {
+        startOffset = index1 + 1;
+        endOffset = index2;
+        if (endOffset < textLength) {
+          endOffset++;
         }
-        else {
-          result.add(range);
-        }
+        return new TextRange(startOffset, endOffset);
       }
-    }
-    else {
-      result.add(range);
     }
 
-    return result;
+    return null;
   }
 
   public static List<TextRange> expandToWholeLine(CharSequence text, TextRange range) {

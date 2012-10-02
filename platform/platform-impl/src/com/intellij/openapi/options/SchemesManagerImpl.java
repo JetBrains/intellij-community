@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -543,7 +542,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   private static long computeHashValue(final Document document) throws IOException {
-    return StringHash.calc(JDOMUtil.printDocument(document, "\n"));
+    return JDOMUtil.getTreeHash(document);
   }
 
   @Nullable

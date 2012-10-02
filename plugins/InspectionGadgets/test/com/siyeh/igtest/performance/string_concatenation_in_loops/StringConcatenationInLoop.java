@@ -46,4 +46,10 @@ public class StringConcatenationInLoop
             s += k;
         }
     }
+
+    void bla() {
+        while (true) {
+            System.out.println("a" + "b" + "c");
+        }
+    }
 }

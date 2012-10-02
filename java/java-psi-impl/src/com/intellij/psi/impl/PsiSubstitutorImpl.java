@@ -152,7 +152,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         if (newBound == null) {
           return null;
         }
-        assert newBound.isValid() : newBound.getClass();
+        assert newBound.isValid() : newBound.getClass() + "; " + bound.isValid();
         if (newBound instanceof PsiWildcardType) {
           return handleBoundComposition(wildcardType, (PsiWildcardType)newBound);
         }

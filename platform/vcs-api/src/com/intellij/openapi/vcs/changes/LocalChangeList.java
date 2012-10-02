@@ -55,7 +55,7 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
   @Nullable
   public abstract String getComment();
 
-  public abstract void setComment(String comment);
+  public abstract void setComment(@Nullable String comment);
 
   public abstract boolean isDefault();
 

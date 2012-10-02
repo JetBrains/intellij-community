@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -45,11 +46,11 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @Override
-  public void filterElements(@NotNull ChooseByNameBase base,
-                             @NotNull String pattern,
-                             boolean everywhere,
-                             @NotNull ProgressIndicator indicator,
-                             @NotNull Processor<Object> consumer) {
+  public boolean filterElements(@NotNull ChooseByNameBase base,
+                                @NotNull String pattern,
+                                boolean everywhere,
+                                @NotNull ProgressIndicator indicator,
+                                @NotNull Processor<Object> consumer) {
     String namePattern = getNamePattern(base, pattern);
     String qualifierPattern = getQualifierPattern(base, pattern);
     String modifiedNamePattern = null;
@@ -61,14 +62,15 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     ChooseByNameModel model = base.getModel();
     boolean empty = namePattern.isEmpty() ||
                     namePattern.equals("@") && model instanceof GotoClassModel2;    // TODO[yole]: remove implicit dependency
-    if (empty && !base.canShowListForEmptyPattern()) return;
+    if (empty && !base.canShowListForEmptyPattern()) return true;
 
     List<String> namesList = new ArrayList<String>();
     String[] names = base.getNames(everywhere);
-    getNamesByPattern(base, names, indicator, namesList, namePattern,
-                      modifiedNamePattern != null ? NameUtil.MatchingCaseSensitivity.ALL : NameUtil.MatchingCaseSensitivity.NONE);
+    NameUtil.MatchingCaseSensitivity sensitivity =
+      modifiedNamePattern == null ? NameUtil.MatchingCaseSensitivity.NONE : NameUtil.MatchingCaseSensitivity.ALL;
+    getNamesByPattern(base, names, indicator, namesList, namePattern, sensitivity);
 
-    if (modifiedNamePattern != null && namesList.isEmpty()) {
+    if (modifiedNamePattern != null && namesList.isEmpty() && sensitivity != NameUtil.MatchingCaseSensitivity.NONE) {
       getNamesByPattern(base, names, indicator, namesList, namePattern, NameUtil.MatchingCaseSensitivity.NONE);
     }
     indicator.checkCanceled();
@@ -110,25 +112,27 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       if (elements.length > 1) {
         sameNameElements.clear();
         for (final Object element : elements) {
+          indicator.checkCanceled();
           if (matchesQualifier(element, base, patternsAndMatchers)) {
             sameNameElements.add(element);
           }
         }
         sortByProximity(base, sameNameElements);
         for (Object element : sameNameElements) {
-          if (previousElemSeparator && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return;
-          if (!consumer.process(element)) return;
+          if (previousElemSeparator && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
+          if (!consumer.process(element)) return false;
           previousElemSeparator = false;
           wasElement = true;
         }
       }
       else if (elements.length == 1 && matchesQualifier(elements[0], base, patternsAndMatchers)) {
-        if (previousElemSeparator && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return;
-        if (!consumer.process(elements[0])) return;
+        if (previousElemSeparator && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
+        if (!consumer.process(elements[0])) return false;
         previousElemSeparator = false;
         wasElement = true;
       }
     }
+    return true;
   }
 
   protected void sortNamesList(@NotNull String namePattern, List<String> namesList) {
@@ -189,9 +193,8 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     final List<String> suspects = split(name, base);
 
-    int matchPosition = 0;
-
     try {
+      int matchPosition = 0;
       patterns:
       for (Pair<String, MinusculeMatcher> patternAndMatcher : patternsAndMatchers) {
         final String pattern = patternAndMatcher.first;
@@ -235,54 +238,56 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return res;
   }
 
-  private static void getNamesByPattern(@NotNull ChooseByNameBase base,
+  private static void getNamesByPattern(@NotNull final ChooseByNameBase base,
                                         @NotNull String[] names,
                                         @Nullable ProgressIndicator indicator,
                                         @NotNull final List<String> list,
                                         @NotNull String pattern,
-                                        NameUtil.MatchingCaseSensitivity caseSensitivity)
-    throws ProcessCanceledException {
+                                        @NotNull NameUtil.MatchingCaseSensitivity caseSensitivity) throws ProcessCanceledException {
     if (!base.canShowListForEmptyPattern()) {
       LOG.assertTrue(!pattern.isEmpty(), base);
     }
 
-    if (pattern.startsWith("@") && base.getModel() instanceof GotoClassModel2) {
+    if (StringUtil.startsWithChar(pattern, '@') && base.getModel() instanceof GotoClassModel2) {
       pattern = pattern.substring(1);
     }
 
     final MinusculeMatcher matcher = buildPatternMatcher(pattern, caseSensitivity);
 
-    try {
-      for (String name : names) {
-        if (indicator != null && indicator.isCanceled()) {
-          break;
+    final String finalPattern = pattern;
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(names), indicator, false, new Processor<String>() {
+      @Override
+      public boolean process(String name) {
+        if (matches(base, finalPattern, matcher, name)) {
+          synchronized (list) {
+            list.add(name);
+          }
         }
-        if (matches(base, pattern, matcher, name)) {
-          list.add(name);
-        }
+        return true;
       }
-    }
-    catch (Exception e) {
-      // Do nothing. No matches appears valid result for "bad" pattern
-    }
+    });
   }
 
-  private static boolean matches(@NotNull ChooseByNameBase base, @NotNull String pattern, @NotNull MinusculeMatcher matcher, @Nullable String name) {
+  private static boolean matches(@NotNull ChooseByNameBase base,
+                                 @NotNull String pattern,
+                                 @NotNull MinusculeMatcher matcher,
+                                 @Nullable String name) {
+    if (name == null) {
+      return false;
+    }
     boolean matches = false;
-    if (name != null) {
-      if (base.getModel() instanceof CustomMatcherModel) {
-        if (((CustomMatcherModel)base.getModel()).matches(name, pattern)) {
-          matches = true;
-        }
-      }
-      else if (pattern.isEmpty() || matcher.matches(name)) {
+    if (base.getModel() instanceof CustomMatcherModel) {
+      if (((CustomMatcherModel)base.getModel()).matches(name, pattern)) {
         matches = true;
       }
+    }
+    else if (pattern.isEmpty() || matcher.matches(name)) {
+      matches = true;
     }
     return matches;
   }
 
-  private static MinusculeMatcher buildPatternMatcher(String pattern, NameUtil.MatchingCaseSensitivity caseSensitivity) {
+  private static MinusculeMatcher buildPatternMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity caseSensitivity) {
     return NameUtil.buildMatcher(pattern, caseSensitivity);
   }
 

@@ -41,11 +41,11 @@ public class ProjectPaths {
   }
 
   public Collection<File> getPlatformCompilationClasspath(ModuleChunk chunk, boolean excludeMainModuleOutput) {
-    return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.isTests()), excludeMainModuleOutput, ClasspathPart.BEFORE_JDK, true);
+    return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.containsTests()), excludeMainModuleOutput, ClasspathPart.BEFORE_JDK, true);
   }
 
   public Collection<File> getCompilationClasspath(ModuleChunk chunk, boolean excludeMainModuleOutput) {
-    return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.isTests()), excludeMainModuleOutput, ClasspathPart.AFTER_JDK, true);
+    return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.containsTests()), excludeMainModuleOutput, ClasspathPart.AFTER_JDK, true);
   }
 
   private Collection<File> getClasspathFiles(ModuleChunk chunk,
@@ -94,7 +94,7 @@ public class ProjectPaths {
    * @return mapping "sourceRoot" -> "package prefix" Package prefix uses slashes instead of dots and ends with trailing slash
    */
   public static Map<File, String> getSourceRootsWithDependents(ModuleChunk chunk) {
-    final boolean includeTests = chunk.isTests();
+    final boolean includeTests = chunk.containsTests();
     final Map<File, String> result = new LinkedHashMap<File, String>();
     processModulesRecursively(chunk, JpsJavaClasspathKind.compile(includeTests), new Consumer<JpsModule>() {
       @Override
@@ -122,7 +122,7 @@ public class ProjectPaths {
   }
 
   public static Collection<File> getOutputPathsWithDependents(final ModuleChunk chunk) {
-    final boolean forTests = chunk.isTests();
+    final boolean forTests = chunk.containsTests();
     final Set<File> sourcePaths = new LinkedHashSet<File>();
     processModulesRecursively(chunk, JpsJavaClasspathKind.compile(forTests), new Consumer<JpsModule>() {
       @Override

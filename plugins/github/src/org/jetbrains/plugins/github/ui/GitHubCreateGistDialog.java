@@ -17,6 +17,7 @@ package org.jetbrains.plugins.github.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.GithubSettings;
 
 import javax.swing.*;
@@ -28,15 +29,12 @@ import javax.swing.*;
 public class GitHubCreateGistDialog extends DialogWrapper {
   private final GitHubCreateGistPanel myGithubCreateGistPanel;
 
-  public GitHubCreateGistDialog(final Project project, final boolean canBePersonal) {
+  public GitHubCreateGistDialog(@NotNull final Project project) {
     super(project, true);
     myGithubCreateGistPanel = new GitHubCreateGistPanel();
-    myGithubCreateGistPanel.setCanBePersonal(canBePersonal);
     // Use saved settings for controls
     final GithubSettings settings = GithubSettings.getInstance();
-    if (canBePersonal){
-      myGithubCreateGistPanel.setAnonymous(settings.isAnonymous());
-    }
+    myGithubCreateGistPanel.setAnonymous(settings.isAnonymous());
     myGithubCreateGistPanel.setPrivate(settings.isPrivateGist());
     myGithubCreateGistPanel.setOpenInBrowser(settings.isOpenInBrowserGist());
     setTitle("Create Gist");

@@ -17,43 +17,60 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ActionGroupUtil {
   private static Presentation getPresentation(AnAction action, Map<AnAction, Presentation> action2presentation) {
     Presentation presentation = action2presentation.get(action);
     if (presentation == null) {
-      presentation = (Presentation)action.getTemplatePresentation().clone();
+      presentation = action.getTemplatePresentation().clone();
       action2presentation.put(action, presentation);
     }
     return presentation;
   }
 
-  public static boolean isGroupEmpty(ActionGroup actionGroup, AnActionEvent e) {
-    return isGroupEmpty(actionGroup, e, new HashMap<AnAction, Presentation>());
+  public static boolean isGroupEmpty(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e) {
+    return getEnabledChildren(actionGroup, e, new HashMap<AnAction, Presentation>()).isEmpty();
   }
 
-  private static boolean isGroupEmpty(ActionGroup actionGroup, AnActionEvent e, Map<AnAction, Presentation> action2presentation) {
+  @Nullable
+  public static AnAction getSingleActiveAction(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e) {
+    List<AnAction> children = getEnabledChildren(actionGroup, e, new HashMap<AnAction, Presentation>());
+    if (children.size() == 1) {
+      return children.get(0);
+    }
+    return null;
+  }
+
+  private static List<AnAction> getEnabledChildren(@NotNull ActionGroup actionGroup,
+                                                   @NotNull AnActionEvent e,
+                                                   @NotNull Map<AnAction, Presentation> action2presentation) {
+    List<AnAction> result = new ArrayList<AnAction>();
     AnAction[] actions = actionGroup.getChildren(e);
     for (AnAction action : actions) {
-      if (action instanceof Separator) {
-        continue;
-      }
-      else if (action instanceof ActionGroup) {
-        if (isActionEnabledAndVisible(e, action2presentation, action) && !isGroupEmpty((ActionGroup)action, e, action2presentation)) {
-          return false;
+      if (action instanceof ActionGroup) {
+        if (isActionEnabledAndVisible(e, action2presentation, action)) {
+          result.addAll(getEnabledChildren((ActionGroup)action, e, action2presentation));
         }
-      } else {
-        if(isActionEnabledAndVisible(e, action2presentation, action)) return false;
+      }
+      else if (!(action instanceof Separator)) {
+        if (isActionEnabledAndVisible(e, action2presentation, action)) {
+          result.add(action);
+        }
       }
     }
-    return true;
+    return result;
   }
 
-  private static boolean isActionEnabledAndVisible(final AnActionEvent e, final Map<AnAction, Presentation> action2presentation,
-                                         final AnAction action) {
+  private static boolean isActionEnabledAndVisible(@NotNull final AnActionEvent e,
+                                                   @NotNull final Map<AnAction, Presentation> action2presentation,
+                                                   @NotNull final AnAction action) {
     Presentation presentation = getPresentation(action, action2presentation);
     AnActionEvent event = new AnActionEvent(e.getInputEvent(),
                                             e.getDataContext(),

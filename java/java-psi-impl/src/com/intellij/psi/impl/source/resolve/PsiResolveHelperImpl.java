@@ -212,7 +212,11 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
             if (currentSubstitution == FAILED_INFERENCE || (currentSubstitution == null && lowerBound == PsiType.NULL)) return RAW_INFERENCE;
           }
           if (nullPassed && currentSubstitution == null) return RAW_INFERENCE;
-        } else {
+        } else if (argumentType instanceof PsiMethodReferenceType) {
+          final PsiMethodReferenceExpression referenceExpression = ((PsiMethodReferenceType)argumentType).getExpression();
+          currentSubstitution = inferConstraintFromFunctionalInterfaceMethod(typeParameter, referenceExpression, parameterType);
+        }
+        else {
           currentSubstitution = getSubstitutionForTypeParameterConstraint(typeParameter, parameterType,
                                                                           argumentType, true, PsiUtil.getLanguageLevel(typeParameter));
         }
@@ -286,12 +290,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   private static void sortLambdaExpressionsLast(PsiType[] paramTypes, PsiType[] argTypes) {
     for (int i = 0; i < argTypes.length; i++) {
       PsiType argType = argTypes[i];
-      if (argType instanceof PsiLambdaExpressionType && i < argTypes.length - 1) {
+      if ((argType instanceof PsiLambdaExpressionType || argType instanceof PsiMethodReferenceType) && i < argTypes.length - 1) {
         int k = i + 1;
-        while(argTypes[k] instanceof PsiLambdaExpressionType && k < argTypes.length - 1) {
+        while((argTypes[k] instanceof PsiLambdaExpressionType || argTypes[k]  instanceof PsiMethodReferenceType) && k < argTypes.length - 1) {
           k++;
         }
-        if (!(argTypes[k] instanceof PsiLambdaExpressionType)) {
+        if (!(argTypes[k] instanceof PsiLambdaExpressionType || argTypes[k] instanceof PsiMethodReferenceType)) {
           ArrayUtil.swap(paramTypes, i, k);
           ArrayUtil.swap(argTypes, i, k);
           i = k;
@@ -589,6 +593,40 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return null;
   }
 
+  @Nullable
+  private static Pair<PsiType, ConstraintType> inferConstraintFromFunctionalInterfaceMethod(PsiTypeParameter typeParam,
+                                                                                            final PsiMethodReferenceExpression methodReferenceExpression,
+                                                                                            final PsiType functionalInterfaceType) {
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+    final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
+    if (method != null) {
+      final PsiSubstitutor subst = LambdaUtil.getSubstitutor(method, resolveResult);
+      final PsiParameter[] methodParameters = method.getParameterList().getParameters();
+      PsiType[] methodParamTypes = new PsiType[methodParameters.length];
+      for (int i = 0; i < methodParameters.length; i++) {
+        methodParamTypes[i] = subst.substitute(methodParameters[i].getType());
+      }
+
+      final PsiType[] args = new PsiType[methodParameters.length];
+      final PsiElement resolved = methodReferenceExpression.resolve();
+      if (resolved instanceof PsiMethod) {
+        final PsiParameter[] parameters = ((PsiMethod)resolved).getParameterList().getParameters();
+        if (parameters.length != methodParameters.length) return null;
+        for (int i = 0; i < parameters.length; i++) {
+          args[i] = subst.substitute(parameters[i].getType());
+        }
+        final Pair<PsiType, ConstraintType> constraint = inferTypeForMethodTypeParameterInner(typeParam, methodParamTypes, args, subst, null,
+                                                                                              DefaultParameterTypeInferencePolicy.INSTANCE);
+        if (constraint != null){
+          return constraint;
+        }
+        return getSubstitutionForTypeParameterConstraint(typeParam, GenericsUtil.eliminateWildcards(subst.substitute(method.getReturnType())), 
+                                                         ((PsiMethod)resolved).getReturnType(), true, PsiUtil.getLanguageLevel(method));
+      }
+    }
+    return null;
+  }
+  
   @Nullable
   private static Pair<PsiType, ConstraintType> inferConstraintFromFunctionalInterfaceMethod(PsiTypeParameter typeParam,
                                                                                             final PsiLambdaExpression lambdaExpression,

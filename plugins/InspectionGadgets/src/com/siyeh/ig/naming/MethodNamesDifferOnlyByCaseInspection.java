@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,10 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class MethodNamesDifferOnlyByCaseInspection extends BaseInspection {
 
@@ -42,24 +43,19 @@ public class MethodNamesDifferOnlyByCaseInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "method.names.differ.only.by.case.display.name");
+    return InspectionGadgetsBundle.message("method.names.differ.only.by.case.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "method.names.differ.only.by.case.problem.descriptor",
-      infos[0]);
+    return InspectionGadgetsBundle.message("method.names.differ.only.by.case.problem.descriptor", infos[0]);
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "method.names.differ.only.by.case.ignore.override.option"),
-      this, "ignoreIfMethodIsOverride");
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("method.names.differ.only.by.case.ignore.override.option"),
+                                          this, "ignoreIfMethodIsOverride");
   }
 
   @Override
@@ -77,8 +73,7 @@ public class MethodNamesDifferOnlyByCaseInspection extends BaseInspection {
     return new RenameFix();
   }
 
-  private class MethodNamesDifferOnlyByCaseVisitor
-    extends BaseInspectionVisitor {
+  private class MethodNamesDifferOnlyByCaseVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -90,11 +85,8 @@ public class MethodNamesDifferOnlyByCaseInspection extends BaseInspection {
         return;
       }
       final String methodName = method.getName();
-      if (ignoreIfMethodIsOverride) {
-        final PsiMethod[] superMethods = method.findSuperMethods();
-        if (superMethods.length != 0) {
-          return;
-        }
+      if (ignoreIfMethodIsOverride && MethodUtils.hasSuper(method)) {
+        return;
       }
       final PsiClass aClass = method.getContainingClass();
       if (aClass == null) {
@@ -103,8 +95,7 @@ public class MethodNamesDifferOnlyByCaseInspection extends BaseInspection {
       final PsiMethod[] methods = aClass.getAllMethods();
       for (PsiMethod testMethod : methods) {
         final String testMethodName = testMethod.getName();
-        if (!methodName.equals(testMethodName) &&
-            methodName.equalsIgnoreCase(testMethodName)) {
+        if (!methodName.equals(testMethodName) && methodName.equalsIgnoreCase(testMethodName)) {
           registerError(nameIdentifier, testMethodName);
         }
       }

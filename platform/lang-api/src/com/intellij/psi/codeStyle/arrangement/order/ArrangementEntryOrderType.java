@@ -21,5 +21,5 @@ package com.intellij.psi.codeStyle.arrangement.order;
  */
 public enum ArrangementEntryOrderType {
   
-  KEEP, BY_NAME, DEPTH_FIRST
+  KEEP, BY_NAME, DEPTH_FIRST, BREADTH_FIRST
 }

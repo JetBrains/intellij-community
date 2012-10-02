@@ -29,7 +29,6 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final CompileScope myScope;
   private final boolean myIsMake;
   private final boolean myIsProjectRebuild;
-  private final ProjectChunks myChunks;
   private final MessageHandler myDelegateMessageHandler;
   private final Set<ModuleBuildTarget> myNonIncrementalModules = new HashSet<ModuleBuildTarget>();
 
@@ -55,7 +54,6 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myScope = scope;
     myIsProjectRebuild = isProjectRebuild;
     myIsMake = !isProjectRebuild && isMake;
-    myChunks = new ProjectChunks(pd.jpsProject);
     myDelegateMessageHandler = delegateMessageHandler;
     myProjectPaths = new ProjectPaths(pd.jpsProject);
   }
@@ -63,11 +61,6 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   @Override
   public long getCompilationStartStamp() {
     return myCompilationStartStamp;
-  }
-
-  @Override
-  public ProjectChunks getChunks() {
-    return myChunks;
   }
 
   @Override

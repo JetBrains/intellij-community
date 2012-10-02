@@ -30,12 +30,11 @@ import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.ui.AbstractEditorCustomization;
 import com.intellij.util.Function;
 import com.intellij.util.containers.WeakHashMap;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Allows to enforce editors to use/don't use spell checking ignoring user-defined spelling inspection settings.
@@ -47,7 +46,7 @@ import java.util.Map;
  */
 public class SpellCheckingEditorCustomization extends AbstractEditorCustomization {
 
-  private static final Map<String, LocalInspectionToolWrapper> SPELL_CHECK_TOOLS = new HashMap<String, LocalInspectionToolWrapper>();
+  private static final Set<LocalInspectionToolWrapper> SPELL_CHECK_TOOLS = new HashSet<LocalInspectionToolWrapper>();
   private static final boolean READY = init();
   
   @SuppressWarnings({"unchecked"})
@@ -59,7 +58,7 @@ public class SpellCheckingEditorCustomization extends AbstractEditorCustomizatio
     for (Class<LocalInspectionTool> inspectionClass : inspectionClasses) {
       try {
         LocalInspectionTool tool = inspectionClass.newInstance();
-        SPELL_CHECK_TOOLS.put(tool.getID(), new LocalInspectionToolWrapper(tool));
+        SPELL_CHECK_TOOLS.add(new LocalInspectionToolWrapper(tool));
       }
       catch (Throwable e) {
         return false;
@@ -146,24 +145,26 @@ public class SpellCheckingEditorCustomization extends AbstractEditorCustomizatio
 
     @Override
     public List<LocalInspectionToolWrapper> getHighlightingLocalInspectionTools(PsiElement element) {
-      List<LocalInspectionToolWrapper> result = new ArrayList<LocalInspectionToolWrapper>(myDelegate.getHighlightingLocalInspectionTools(element));
+      Set<LocalInspectionToolWrapper> result = new THashSet<LocalInspectionToolWrapper>(myDelegate.getHighlightingLocalInspectionTools(element), new TObjectHashingStrategy<LocalInspectionToolWrapper>() {
+        @Override
+        public int computeHashCode(LocalInspectionToolWrapper object) {
+          return object.getShortName().hashCode();
+        }
+
+        @Override
+        public boolean equals(LocalInspectionToolWrapper o1, LocalInspectionToolWrapper o2) {
+          return o1.getShortName().equals(o2.getShortName());
+        }
+      });
       
       if (myUseSpellCheck) {
-        Map<String, LocalInspectionToolWrapper> spellingTools = new HashMap<String, LocalInspectionToolWrapper>(SPELL_CHECK_TOOLS);
-        for (LocalInspectionToolWrapper tool : result) {
-          spellingTools.remove(tool.getID());
-        }
-        result.addAll(spellingTools.values());
+        result.removeAll(SPELL_CHECK_TOOLS);
+        result.addAll(SPELL_CHECK_TOOLS);
       }
       else {
-        for (int i = result.size() - 1; i >= 0; i--) {
-          LocalInspectionToolWrapper tool = result.get(i);
-          if (SPELL_CHECK_TOOLS.containsKey(tool.getID())) {
-            result.remove(i);
-          }
-        }
+        result.removeAll(SPELL_CHECK_TOOLS);
       }
-      return result;
+      return new ArrayList<LocalInspectionToolWrapper>(result);
     }
 
     public void setUseSpellCheck(boolean useSpellCheck) {
