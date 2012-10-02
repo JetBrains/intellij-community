@@ -14,6 +14,7 @@ import java.util.List;
  */
 public class PyPep8Inspection extends PyInspection {
   public List<String> ignoredErrors = new ArrayList<String>();
+  public static final String INSPECTION_SHORT_NAME = "PyPep8Inspection";
 
   @Override
   public JComponent createOptionsPanel() {

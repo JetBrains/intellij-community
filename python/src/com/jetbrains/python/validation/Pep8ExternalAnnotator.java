@@ -1,21 +1,28 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.inspections.PyPep8Inspection;
 import com.jetbrains.python.inspections.quickfix.ReformatFix;
@@ -35,6 +42,7 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotator.State, Pep8ExternalAnnotator.State> {
+
   public static class Problem {
     private final int myLine;
     private final int myColumn;
@@ -73,12 +81,12 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     final String homePath = sdk.getHomePath();
     if (homePath == null) return null;
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile();
-    final String inspectionShortName = "PyPep8Inspection";
-    final HighlightDisplayKey key = HighlightDisplayKey.find(inspectionShortName);
+    final HighlightDisplayKey key = HighlightDisplayKey.find(PyPep8Inspection.INSPECTION_SHORT_NAME);
     if (!profile.isToolEnabled(key)) {
       return null;
     }
-    final LocalInspectionToolWrapper profileEntry = (LocalInspectionToolWrapper)profile.getInspectionTool(inspectionShortName, file);
+    final LocalInspectionToolWrapper profileEntry = (LocalInspectionToolWrapper)profile.getInspectionTool(
+      PyPep8Inspection.INSPECTION_SHORT_NAME, file);
     final List<String> ignoredErrors = ((PyPep8Inspection) profileEntry.getTool()).ignoredErrors;
     return new State(homePath, file.getText(), profile.getErrorLevel(key, file), ignoredErrors);
   }
@@ -136,6 +144,14 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
           annotation = holder.createWeakWarningAnnotation(problemElement, message);
         }
         annotation.registerUniversalFix(new ReformatFix(), null, null);
+        annotation.registerFix(new IgnoreErrorFix(problem.myCode, annotationResult.ignoredErrors));
+        annotation.registerFix(new CustomEditInspectionToolsSettingsAction(HighlightDisplayKey.find(PyPep8Inspection.INSPECTION_SHORT_NAME),
+                                                                           new Computable<String>() {
+                                                                             @Override
+                                                                             public String compute() {
+                                                                               return "Edit inspection profile setting";
+                                                                             }
+                                                                           }));
       }
     }
   }
@@ -151,5 +167,43 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       return new Problem(line, column, m.group(3), m.group(4));
     }
     return null;
+  }
+
+  private static class IgnoreErrorFix implements IntentionAction {
+    private final String myCode;
+    private final List<String> myErrors;
+
+    public IgnoreErrorFix(String code, List<String> errors) {
+      myCode = code;
+      myErrors = errors;
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      return "Ignore errors like this";
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getText();
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      return true;
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      myErrors.add(myCode);
+      DaemonCodeAnalyzer.getInstance(project).restart(file);
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
   }
 }

@@ -1,5 +1,6 @@
 package com.jetbrains.python.inspections.quickfix;
 
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -13,11 +14,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class ReformatFix implements IntentionAction, LocalQuickFix {
+public class ReformatFix implements IntentionAction, LocalQuickFix, HighPriorityAction {
   @NotNull
   @Override
   public String getText() {
-    return "Reformat File";
+    return "Reformat file";
   }
 
   @NotNull
