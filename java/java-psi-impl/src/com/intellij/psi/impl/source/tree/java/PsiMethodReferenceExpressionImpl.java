@@ -312,10 +312,11 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           final PsiType[] signatureParameterTypes2 = psiMethod.getSignature(subst).getParameterTypes();
 
           final boolean varArgs = psiMethod.isVarArgs();
-          final boolean isStatic = psiMethod.hasModifierProperty(PsiModifier.STATIC);
-          
+          final boolean validConstructorRef = psiMethod.isConstructor() && (myContainingClass.getContainingClass() == null || myContainingClass.hasModifierProperty(PsiModifier.STATIC));
+          final boolean staticOrValidConstructorRef = psiMethod.hasModifierProperty(PsiModifier.STATIC) || validConstructorRef;
+
           if ((parameterTypes.length == signatureParameterTypes2.length || varArgs && parameterTypes.length >= signatureParameterTypes2.length) && 
-              (!myBeginsWithReferenceType || isStatic || (psiMethod.isConstructor() && (conflict.isStaticsScopeCorrect() || myContainingClass.getContainingClass() == null)))) {
+              (!myBeginsWithReferenceType || staticOrValidConstructorRef)) {
             boolean correct = true;
             for (int i = 0; i < parameterTypes.length; i++) {
               final PsiType type1 = parameterTypes[i];
@@ -329,8 +330,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             }
           }
 
-          if (hasReceiver && parameterTypes.length == signatureParameterTypes2.length + 1 && !isStatic && 
-              (!psiMethod.isConstructor() || (myContainingClass.getContainingClass() != null) && !myContainingClass.hasModifierProperty(PsiModifier.STATIC))) {
+          if (hasReceiver && parameterTypes.length == signatureParameterTypes2.length + 1 && !staticOrValidConstructorRef) {
             boolean correct = true;
             for (int i = 0; i < signatureParameterTypes2.length; i++) {
               final PsiType type1 = parameterTypes[i + 1];
