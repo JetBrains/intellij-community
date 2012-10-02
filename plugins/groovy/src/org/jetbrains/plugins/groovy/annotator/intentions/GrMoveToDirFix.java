@@ -20,7 +20,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
@@ -64,30 +64,34 @@ public class GrMoveToDirFix implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof GroovyFile)) return false;
 
-    PsiDirectory currentDir = file.getContainingDirectory();
+    VirtualFile vfile = file.getVirtualFile();
+    if (vfile == null) return false;
 
-
-    final VirtualFile sourceRoot = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(file.getVirtualFile());
+    final VirtualFile sourceRoot = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(vfile);
     if (sourceRoot == null) return false;
 
     final PsiManager manager = PsiManager.getInstance(project);
-    final PsiDirectory targetDir =
-      RefactoringUtil.findPackageDirectoryInSourceRoot(new PackageWrapper(manager, myPackageName), sourceRoot);
+    PackageWrapper aPackage = new PackageWrapper(manager, myPackageName);
+    final PsiDirectory targetDir = RefactoringUtil.findPackageDirectoryInSourceRoot(aPackage, sourceRoot);
 
-    return targetDir != null && !manager.areElementsEquivalent(targetDir, currentDir);
+    PsiDirectory currentDir = file.getContainingDirectory();
+    return targetDir == null || !manager.areElementsEquivalent(targetDir, currentDir);
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!(file instanceof GroovyFile)) return;
 
-    final String packageName = ((GroovyFile)file).getPackageName();
-    final Module module = ModuleUtil.findModuleForFile(file.getVirtualFile(), project);
-    PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, packageName, null, true);
+    VirtualFile vfile = file.getVirtualFile();
+    if (vfile == null) return;
 
-    if (directory == null) {
-      return;
-    }
+    final Module module = ModuleUtilCore.findModuleForFile(vfile, project);
+    if (module == null) return;
+
+    final String packageName = ((GroovyFile)file).getPackageName();
+    PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, packageName, null, true);
+    if (directory == null) return;
+
     String error = RefactoringMessageUtil.checkCanCreateFile(directory, file.getName());
     if (error != null) {
       Messages.showMessageDialog(project, error, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
