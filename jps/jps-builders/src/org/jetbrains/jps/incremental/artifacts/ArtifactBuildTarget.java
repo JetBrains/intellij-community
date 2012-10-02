@@ -3,7 +3,6 @@ package org.jetbrains.jps.incremental.artifacts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -105,7 +104,7 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
   @Override
   public List<ArtifactRootDescriptor> computeRootDescriptors(JpsModel model, ModuleExcludeIndex index, IgnoredFileIndex ignoredFileIndex) {
     ArtifactInstructionsBuilderImpl builder = new ArtifactInstructionsBuilderImpl(index, ignoredFileIndex, this);
-    ArtifactInstructionsBuilderContext context = new ArtifactInstructionsBuilderContextImpl(model, new ProjectPaths(model.getProject()));
+    ArtifactInstructionsBuilderContext context = new ArtifactInstructionsBuilderContextImpl();
     String outputPath = StringUtil.notNullize(myArtifact.getOutputPath());
     final CopyToDirectoryInstructionCreator instructionCreator = new CopyToDirectoryInstructionCreator(builder, outputPath);
     LayoutElementBuildersRegistry.getInstance().generateInstructions(myArtifact, instructionCreator, context);

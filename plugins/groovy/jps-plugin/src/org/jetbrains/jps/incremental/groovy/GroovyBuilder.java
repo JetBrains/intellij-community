@@ -313,7 +313,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   private static Map<String, String> buildClassToSourceMap(ModuleChunk chunk, CompileContext context, Set<String> toCompilePaths, Map<ModuleBuildTarget, String> finalOutputs) throws IOException {
     final Map<String, String> class2Src = new HashMap<String, String>();
-    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(context.getProjectDescriptor().jpsProject);
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
+      context.getProjectDescriptor().getProject());
     for (ModuleBuildTarget target : chunk.getTargets()) {
       String moduleOutputPath = finalOutputs.get(target);
       final SourceToOutputMapping srcToOut = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);

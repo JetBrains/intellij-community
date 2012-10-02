@@ -55,7 +55,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myIsProjectRebuild = isProjectRebuild;
     myIsMake = !isProjectRebuild && isMake;
     myDelegateMessageHandler = delegateMessageHandler;
-    myProjectPaths = new ProjectPaths(pd.jpsProject);
+    myProjectPaths = new ProjectPaths(pd.getProject());
   }
 
   @Override
@@ -102,12 +102,13 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   @Override
   @NotNull
   public ProcessorConfigProfile getAnnotationProcessingProfile(JpsModule module) {
-    final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(getProjectDescriptor().jpsProject);
+    final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
+      getProjectDescriptor().getProject());
     Map<JpsModule, ProcessorConfigProfile> map = myAnnotationProcessingProfileMap;
     if (map == null) {
       map = new HashMap<JpsModule, ProcessorConfigProfile>();
       final Map<String, JpsModule> namesMap = new HashMap<String, JpsModule>();
-      for (JpsModule m : getProjectDescriptor().jpsProject.getModules()) {
+      for (JpsModule m : getProjectDescriptor().getProject().getModules()) {
         namesMap.put(m.getName(), m);
       }
       if (!namesMap.isEmpty()) {

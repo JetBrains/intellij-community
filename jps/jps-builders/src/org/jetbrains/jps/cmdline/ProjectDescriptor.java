@@ -25,14 +25,14 @@ import java.util.Set;
 *         Date: 1/8/12
 */
 public final class ProjectDescriptor {
-  public final JpsProject jpsProject;
-  public final JpsModel jpsModel;
+  private final JpsProject myProject;
+  private final JpsModel myModel;
   public final BuildFSState fsState;
   public final ProjectTimestamps timestamps;
   public final BuildDataManager dataManager;
   private final BuildLoggingManager myLoggingManager;
   private final BuildTargetsState myTargetsState;
-  public ModuleExcludeIndex moduleExcludeIndex;
+  private final ModuleExcludeIndex myModuleExcludeIndex;
   private int myUseCounter = 1;
   private Set<JpsSdk<?>> myProjectJavaSdks;
   private CompilerEncodingConfiguration myEncodingConfiguration;
@@ -40,7 +40,7 @@ public final class ProjectDescriptor {
   private final BuildTargetIndex myBuildTargetIndex;
   private final IgnoredFileIndex myIgnoredFileIndex;
 
-  public ProjectDescriptor(JpsModel jpsModel,
+  public ProjectDescriptor(JpsModel model,
                            BuildFSState fsState,
                            ProjectTimestamps timestamps,
                            BuildDataManager dataManager,
@@ -48,19 +48,19 @@ public final class ProjectDescriptor {
                            final ModuleExcludeIndex moduleExcludeIndex,
                            final BuildTargetsState targetsState,
                            final BuildTargetIndex buildTargetIndex, final BuildRootIndex buildRootIndex, IgnoredFileIndex ignoredFileIndex) {
-    this.jpsModel = jpsModel;
+    myModel = model;
     myIgnoredFileIndex = ignoredFileIndex;
-    this.jpsProject = jpsModel.getProject();
+    myProject = model.getProject();
     this.fsState = fsState;
     this.timestamps = timestamps;
     this.dataManager = dataManager;
     myBuildTargetIndex = buildTargetIndex;
     myBuildRootIndex = buildRootIndex;
     myLoggingManager = loggingManager;
-    this.moduleExcludeIndex = moduleExcludeIndex;
+    myModuleExcludeIndex = moduleExcludeIndex;
     myProjectJavaSdks = new HashSet<JpsSdk<?>>();
-    myEncodingConfiguration = new CompilerEncodingConfiguration(jpsModel, buildRootIndex);
-    for (JpsModule module : jpsProject.getModules()) {
+    myEncodingConfiguration = new CompilerEncodingConfiguration(model, buildRootIndex);
+    for (JpsModule module : myProject.getModules()) {
       final JpsSdk<?> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
       if (sdk != null && !myProjectJavaSdks.contains(sdk) && sdk.getVersionString() != null && sdk.getHomePath() != null) {
         myProjectJavaSdks.add(sdk);
@@ -120,5 +120,17 @@ public final class ProjectDescriptor {
         }
       }
     }
+  }
+
+  public ModuleExcludeIndex getModuleExcludeIndex() {
+    return myModuleExcludeIndex;
+  }
+
+  public JpsModel getModel() {
+    return myModel;
+  }
+
+  public JpsProject getProject() {
+    return myProject;
   }
 }

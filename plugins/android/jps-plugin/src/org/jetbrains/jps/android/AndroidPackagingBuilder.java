@@ -62,7 +62,7 @@ public class AndroidPackagingBuilder extends TargetBuilder<AndroidProjectBuildTa
     if (target.getKind() != AndroidProjectBuildTarget.AndroidBuilderKind.PACKAGING || AndroidJpsUtil.isLightBuild(context)) {
       return;
     }
-    final Collection<JpsModule> modules = context.getProjectDescriptor().jpsProject.getModules();
+    final Collection<JpsModule> modules = context.getProjectDescriptor().getProject().getModules();
     final Map<JpsModule, AndroidFileSetState> resourcesStates = new HashMap<JpsModule, AndroidFileSetState>();
     final Map<JpsModule, AndroidFileSetState> assetsStates = new HashMap<JpsModule, AndroidFileSetState>();
     final Map<JpsModule, File> manifestFiles = new HashMap<JpsModule, File>();
@@ -384,7 +384,7 @@ public class AndroidPackagingBuilder extends TargetBuilder<AndroidProjectBuildTa
     final List<AndroidNativeLibData> additionalNativeLibs = extension.getAdditionalNativeLibs();
 
     final AndroidFileSetState currentFileSetState =
-      buildCurrentApkBuilderState(context.getProjectDescriptor().jpsProject, resPackagePath, classesDexFilePath, nativeLibDirs, sourceRoots,
+      buildCurrentApkBuilderState(context.getProjectDescriptor().getProject(), resPackagePath, classesDexFilePath, nativeLibDirs, sourceRoots,
                                   externalJars, release);
 
     final AndroidApkBuilderConfigState currentApkBuilderConfigState =
@@ -404,7 +404,7 @@ public class AndroidPackagingBuilder extends TargetBuilder<AndroidProjectBuildTa
 
     final Map<AndroidCompilerMessageKind, List<String>> messages = AndroidApkBuilder
       .execute(resPackagePath, classesDexFilePath, sourceRoots, externalJars, nativeLibDirs, additionalNativeLibs,
-               outputApkPath, release, sdkPath, customKeyStorePath, new MyExcludedSourcesFilter(context.getProjectDescriptor().jpsProject));
+               outputApkPath, release, sdkPath, customKeyStorePath, new MyExcludedSourcesFilter(context.getProjectDescriptor().getProject()));
 
     AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME, module.getName());
     final boolean success = messages.get(AndroidCompilerMessageKind.ERROR).isEmpty();

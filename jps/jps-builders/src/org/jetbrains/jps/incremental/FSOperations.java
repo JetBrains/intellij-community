@@ -130,7 +130,7 @@ public class FSOperations {
                              ModuleBuildTarget target,
                              Timestamps timestamps, boolean forceMarkDirty,
                              @Nullable THashSet<File> currentFiles) throws IOException {
-    final ModuleExcludeIndex rootsIndex = context.getProjectDescriptor().moduleExcludeIndex;
+    final ModuleExcludeIndex rootsIndex = context.getProjectDescriptor().getModuleExcludeIndex();
     final Set<File> excludes = new HashSet<File>(rootsIndex.getModuleExcludes(target.getModule()));
     for (RootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
       if (!rd.root.exists()) {

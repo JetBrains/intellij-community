@@ -262,7 +262,7 @@ public class IncProjectBuilder {
   private void cleanOutputRoots(CompileContext context) throws ProjectBuildException {
     // whole project is affected
     final boolean shouldClear = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
-      context.getProjectDescriptor().jpsProject).isClearOutputDirectoryOnRebuild();
+      context.getProjectDescriptor().getProject()).isClearOutputDirectoryOnRebuild();
     try {
       if (shouldClear) {
         clearOutputs(context);

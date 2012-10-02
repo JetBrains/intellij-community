@@ -64,7 +64,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(myJpsProject)) {
+    for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(myProject)) {
       String outputPath = artifact.getOutputPath();
       if (outputPath != null) {
         FileUtil.delete(new File(FileUtil.toSystemDependentName(outputPath)));
@@ -97,7 +97,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
 
   private Set<String> getArtifactNames() {
     Set<String> usedNames = new HashSet<String>();
-    for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(myJpsProject)) {
+    for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(myProject)) {
       usedNames.add(artifact.getName());
     }
     return usedNames;
@@ -117,7 +117,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   
   protected JpsArtifact addArtifact(String name, LayoutElementTestUtil.LayoutElementCreator root) {
     assertFalse("JpsArtifact " + name + " already exists", getArtifactNames().contains(name));
-    JpsArtifact artifact = JpsArtifactService.getInstance().addArtifact(myJpsProject, name, root.buildElement(), DirectoryArtifactType.INSTANCE,
+    JpsArtifact artifact = JpsArtifactService.getInstance().addArtifact(myProject, name, root.buildElement(), DirectoryArtifactType.INSTANCE,
                                                                         JpsElementFactory.getInstance().createDummyElement());
     artifact.setOutputPath(getAbsolutePath("out/artifacts/" + name));
     return artifact;
@@ -135,13 +135,13 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   }
 
   protected JpsLibrary addProjectLibrary(String name, String jarPath) {
-    final JpsLibrary library = myJpsProject.getLibraryCollection().addLibrary(name, JpsJavaLibraryType.INSTANCE);
+    final JpsLibrary library = myProject.getLibraryCollection().addLibrary(name, JpsJavaLibraryType.INSTANCE);
     library.addRoot(JpsPathUtil.pathToUrl(jarPath), JpsOrderRootType.COMPILED);
     return library;
   }
 
   protected void buildAll() {
-    Collection<JpsArtifact> artifacts = JpsArtifactService.getInstance().getArtifacts(myJpsProject);
+    Collection<JpsArtifact> artifacts = JpsArtifactService.getInstance().getArtifacts(myProject);
     buildArtifacts(artifacts.toArray(new JpsArtifact[artifacts.size()]));
   }
 

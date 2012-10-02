@@ -41,7 +41,7 @@ import java.util.Set;
  * @author nik
  */
 public abstract class JpsBuildTestCase extends UsefulTestCase {
-  protected JpsProject myJpsProject;
+  protected JpsProject myProject;
   protected JpsModel myModel;
   private File myDataStorageRoot;
 
@@ -49,7 +49,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myModel = JpsElementFactory.getInstance().createModel();
-    myJpsProject = myModel.getProject();
+    myProject = myModel.getProject();
     myDataStorageRoot = FileUtil.createTempDirectory("compile-server-" + getProjectName(), null);
   }
 
@@ -101,7 +101,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       String testDataRootPath = getTestDataRootPath();
       String fullProjectPath = FileUtil.toSystemDependentName(testDataRootPath != null ? testDataRootPath + "/" + projectPath : projectPath);
       pathVariables = addPathVariables(pathVariables);
-      JpsProjectLoader.loadProject(myJpsProject, pathVariables, fullProjectPath);
+      JpsProjectLoader.loadProject(myProject, pathVariables, fullProjectPath);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -121,7 +121,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
                                 String[] srcPaths,
                                 @Nullable final String outputPath,
                                 final JpsSdk<JpsDummyElement> jdk) {
-    final JpsModule module = myJpsProject.addModule(moduleName, JpsJavaModuleType.INSTANCE);
+    final JpsModule module = myProject.addModule(moduleName, JpsJavaModuleType.INSTANCE);
     module.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, jdk.createReference());
     module.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);
     if (srcPaths.length > 0) {

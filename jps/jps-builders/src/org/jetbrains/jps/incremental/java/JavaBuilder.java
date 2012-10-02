@@ -190,7 +190,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
       });
 
       // force compilation of bound source file if the form is dirty
-      final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(context.getProjectDescriptor().jpsProject).getCompilerExcludes();
+      final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
+        context.getProjectDescriptor().getProject()).getCompilerExcludes();
       if (!context.isProjectRebuild()) {
         for (Iterator<File> formsIterator = formsToCompile.iterator(); formsIterator.hasNext(); ) {
           final File form = formsIterator.next();
@@ -311,7 +312,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final ProjectPaths paths = context.getProjectPaths();
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final boolean addNotNullAssertions = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
-      pd.jpsProject).isAddNotNullAssertions();
+      pd.getProject()).isAddNotNullAssertions();
 
     final Collection<File> classpath =
       paths.getCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
@@ -365,7 +366,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
               try {
                 context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
                 instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputSink);
-                JpsUiDesignerConfiguration configuration = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(pd.jpsProject);
+                JpsUiDesignerConfiguration configuration = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(
+                  pd.getProject());
                 if (configuration != null && configuration.isCopyFormsRuntimeToOutput() && !chunk.containsTests()) {
                   for (JpsModule module : chunk.getModules()) {
                     final File outputDir = paths.getModuleOutputDir(module, false);
@@ -505,7 +507,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static boolean useEclipseCompiler(CompileContext context) {
-    JpsProject project = context.getProjectDescriptor().jpsProject;
+    JpsProject project = context.getProjectDescriptor().getProject();
     return USE_EMBEDDED_JAVAC && "Eclipse".equalsIgnoreCase(JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getJavaCompilerId());
   }
 
@@ -625,7 +627,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static int getJavacServerHeapSize(CompileContext context) {
-    final JpsProject project = context.getProjectDescriptor().jpsProject;
+    final JpsProject project = context.getProjectDescriptor().getProject();
     final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
     final JpsJavaCompilerOptions options = config.getCurrentCompilerOptions();
     return options.MAXIMUM_HEAP_SIZE;
@@ -705,7 +707,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     JpsJavaCompilerConfiguration compilerConfiguration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
-      context.getProjectDescriptor().jpsProject);
+      context.getProjectDescriptor().getProject());
     String bytecodeTarget = null;
     int chunkSdkVersion = -1;
     for (JpsModule module : chunk.getModules()) {
@@ -823,7 +825,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final List<String> options = new ArrayList<String>();
     final List<String> vmOptions = new ArrayList<String>();
 
-    final JpsProject project = context.getProjectDescriptor().jpsProject;
+    final JpsProject project = context.getProjectDescriptor().getProject();
     final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
     final boolean useEclipseCompiler = useEclipseCompiler(context);
     final JpsJavaCompilerOptions compilerOptions = compilerConfig.getCurrentCompilerOptions();
