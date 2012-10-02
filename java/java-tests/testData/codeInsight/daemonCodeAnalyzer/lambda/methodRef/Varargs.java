@@ -72,3 +72,20 @@ class MyTest {
     }
 }
 
+class MyTest2 {
+
+    interface IBool { void m(boolean[] a); }
+    interface IInt { void m(int[] a); }
+    interface IDbl { void m(double[] a); }
+    interface IObj { void m(Object[] a); }
+
+    static void foo(Object... vi) {}
+
+    static {
+        IBool iBool = MyTest2::foo;
+        IInt iInt = MyTest2::foo;
+        IDbl iDbl = MyTest2::foo;
+        IObj iObj = MyTest2::foo;
+    }
+}
+
