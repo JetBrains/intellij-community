@@ -955,6 +955,10 @@
       <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="first"/>
     </action>
 
+   <action id="CleanPyc" class="com.jetbrains.python.actions.CleanPycAction" text="Clean .pyc"
+           description="Delete compiled bytecode files in selected directory and its subdirectories">
+     <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ProjectViewPopupMenuRefactoringGroup"/>
+  </action>
 
     <group id="PyPackagingMenu" text="Packaging">
       <action id="CreateSetupPy" class="com.jetbrains.python.packaging.setupPy.CreateSetupPyAction"/>

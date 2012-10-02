@@ -42,15 +42,15 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.net.NetUtils;
 import com.jetbrains.django.run.Runner;
+import com.jetbrains.plugins.remotesdk.RemoteInterpreterException;
+import com.jetbrains.plugins.remotesdk.RemoteSdkData;
+import com.jetbrains.plugins.remotesdk.RemoteSshProcess;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.debugger.PySourcePosition;
-import com.jetbrains.python.remote.PyRemoteInterpreterException;
-import com.jetbrains.python.remote.PyRemoteSshProcess;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
-import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -215,7 +215,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
           return createRemoteConsoleProcess(manager, myCommandLineArgumentsProvider.getArguments(),
                                             myCommandLineArgumentsProvider.getAdditionalEnvs());
         }
-        catch (final PyRemoteInterpreterException e) {
+        catch (final RemoteInterpreterException e) {
           throw new ExecutionException(e.getMessage(), e);
         }
       }
@@ -236,13 +236,13 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   }
 
   private Process createRemoteConsoleProcess(PythonRemoteInterpreterManager manager, String[] command, Map<String, String> envs)
-    throws PyRemoteInterpreterException, ExecutionException {
-    PythonRemoteSdkAdditionalData data = (PythonRemoteSdkAdditionalData)mySdk.getSdkAdditionalData();
+    throws RemoteInterpreterException, ExecutionException {
+    RemoteSdkData data = (RemoteSdkData)mySdk.getSdkAdditionalData();
 
     GeneralCommandLine commandLine = new GeneralCommandLine(command);
     commandLine.setEnvParams(envs);
 
-    commandLine.getParametersList().set(1, PythonRemoteInterpreterManager.toSystemDependent(new File(data.getPyCharmHelpersPath(),
+    commandLine.getParametersList().set(1, PythonRemoteInterpreterManager.toSystemDependent(new File(data.getHelpersPath(),
                                                                                                      PYDEV_PYDEVCONSOLE_PY)
                                                                                               .getPath(),
                                                                                             PySourcePosition.isWindowsPath(
@@ -253,7 +253,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     myCommandLine = commandLine.getCommandLineString();
 
 
-    PyRemoteSshProcess remoteProcess =
+    RemoteSshProcess remoteProcess =
       manager.createRemoteProcess(getProject(), data, commandLine, false);
 
 

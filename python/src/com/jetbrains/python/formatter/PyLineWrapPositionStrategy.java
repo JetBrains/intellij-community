@@ -1,6 +1,10 @@
 package com.jetbrains.python.formatter;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.GenericLineWrapPositionStrategy;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -21,5 +25,23 @@ public class PyLineWrapPositionStrategy extends GenericLineWrapPositionStrategy 
 
     // Symbols to wrap before
     addRule(new Rule('.', WrapCondition.BEFORE));
+  }
+
+  @Override
+  protected boolean canUseOffset(@NotNull Document document, int offset, boolean virtual) {
+    if (virtual) {
+      return true;
+    }
+    CharSequence text = document.getCharsSequence();
+    char c = text.charAt(offset);
+    if (!StringUtil.isWhiteSpace(c)) {
+      return true;
+    }
+
+    int i = CharArrayUtil.shiftBackward(text, offset, " \t");
+    if (i < 2) {
+      return true;
+    }
+    return text.charAt(i - 2) != 'd' || text.charAt(i - 1) != 'e' || text.charAt(i) != 'f';
   }
 }

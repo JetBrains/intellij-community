@@ -8,7 +8,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.actions.RemoveUnnecessaryBackslashQuickFix;
+import com.jetbrains.python.inspections.quickfix.RemoveUnnecessaryBackslashQuickFix;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;

@@ -39,7 +39,7 @@ public class TemplateFileReferenceSet extends FileReferenceSet {
     return PythonStringUtil.stripQuotesAroundValue(element.getText());
   }
 
-  private static int detectShift(PsiElement element, String text) {
+  public static int detectShift(PsiElement element, String text) {
     String elementText = element.getText();
     int from = 0;
     Pair<String, String> quotes = PythonStringUtil.getQuotes(elementText);
@@ -50,7 +50,7 @@ public class TemplateFileReferenceSet extends FileReferenceSet {
     return elementText.indexOf(text, from);
   }
 
-  private static String detectSeparator(PsiElement element) {
+  public static String detectSeparator(PsiElement element) {
     String winSeparator;
     if (PythonStringUtil.isRawString(element.getText())) {
       winSeparator = "\\";

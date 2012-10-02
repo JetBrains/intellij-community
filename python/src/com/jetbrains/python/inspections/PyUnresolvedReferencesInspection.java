@@ -29,7 +29,6 @@ import com.jetbrains.cython.types.CythonBuiltinType;
 import com.jetbrains.cython.types.CythonType;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.actions.*;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -40,6 +39,7 @@ import com.jetbrains.python.codeInsight.imports.PythonReferenceImporter;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.documentation.DocStringParameterReference;
 import com.jetbrains.python.documentation.DocStringTypeReference;
+import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.packaging.PyPIPackageUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyRequirement;
@@ -63,7 +63,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-import static com.jetbrains.python.actions.AddIgnoredIdentifierQuickFix.END_WILDCARD;
+import static com.jetbrains.python.inspections.quickfix.AddIgnoredIdentifierQuickFix.END_WILDCARD;
 
 /**
  * Marks references that fail to resolve. Also tracks unused imports and provides "optimize imports" support.

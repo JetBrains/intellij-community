@@ -15,7 +15,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.actions.AddGlobalQuickFix;
+import com.jetbrains.python.inspections.quickfix.AddGlobalQuickFix;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;

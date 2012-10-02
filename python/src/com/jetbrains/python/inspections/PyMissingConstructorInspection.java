@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.actions.AddCallSuperQuickFix;
+import com.jetbrains.python.inspections.quickfix.AddCallSuperQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;

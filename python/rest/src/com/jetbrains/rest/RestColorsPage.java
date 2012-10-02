@@ -2,6 +2,7 @@ package com.jetbrains.rest;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
@@ -53,7 +54,7 @@ public class RestColorsPage implements ColorSettingsPage {
 
   @NotNull
   public SyntaxHighlighter getHighlighter() {
-    final SyntaxHighlighter highlighter = SyntaxHighlighter.PROVIDER.create(RestFileType.INSTANCE, null, null);
+    final SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(RestFileType.INSTANCE, null, null);
     assert highlighter != null;
     return highlighter;
   }

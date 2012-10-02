@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
@@ -27,11 +26,11 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.jetbrains.django.util.DjangoUtil;
+import com.jetbrains.plugins.remotesdk.RemoteProcessHandlerBase;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.django.DjangoExceptionBreakpointHandler;
 import com.jetbrains.python.debugger.pydev.*;
 import com.jetbrains.python.debugger.remote.vfs.PyRemotePositionConverter;
-import com.jetbrains.python.remote.PyRemoteProcessHandlerBase;
 import com.jetbrains.python.run.PythonProcessHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,8 +89,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if (myProcessHandler != null) {
       myProcessHandler.addProcessListener(this);
     }
-    if (processHandler instanceof PyRemoteProcessHandlerBase) {
-      myPositionConverter = new PyRemotePositionConverter(this, ((PyRemoteProcessHandlerBase)processHandler).getMappingSettings());
+    if (processHandler instanceof RemoteProcessHandlerBase) {
+      myPositionConverter = new PyRemotePositionConverter(this, ((RemoteProcessHandlerBase)processHandler).getMappingSettings());
     }
     else {
       myPositionConverter = new PyLocalPositionConverter();
@@ -233,8 +232,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public int handleDebugPort(int localPort) throws IOException {
-    if (myProcessHandler instanceof PyRemoteProcessHandlerBase) {
-      PyRemoteProcessHandlerBase remoteProcessHandler = (PyRemoteProcessHandlerBase)myProcessHandler;
+    if (myProcessHandler instanceof RemoteProcessHandlerBase) {
+      RemoteProcessHandlerBase remoteProcessHandler = (RemoteProcessHandlerBase)myProcessHandler;
       try {
         Pair<String, Integer> remoteSocket = remoteProcessHandler.obtainRemoteSocket();
         remoteProcessHandler.addRemoteForwarding(remoteSocket.getSecond(), localPort);
@@ -265,7 +264,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   protected String getConnectionTitle() {
-    return "Connecting to debugger";
+    return "Connecting To Debugger";
   }
 
   private void handshake() throws PyDebuggerException {

@@ -2,6 +2,7 @@ package com.jetbrains.python.buildout.config;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
@@ -51,7 +52,7 @@ public class BuildoutCfgColorsPage implements ColorSettingsPage {
 
   @NotNull
   public SyntaxHighlighter getHighlighter() {
-    final SyntaxHighlighter highlighter = SyntaxHighlighter.PROVIDER.create(BuildoutCfgFileType.INSTANCE, null, null);
+    final SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(BuildoutCfgFileType.INSTANCE, null, null);
     assert highlighter != null;
     return highlighter;
   }

@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.LayerDescriptor;
 import com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,13 +24,13 @@ public class RestEditorHighlighter extends LayeredLexerEditorHighlighter {
     super(SyntaxHighlighterFactory.getSyntaxHighlighter(RestLanguage.INSTANCE, project, file), scheme);
 
     registerLayer(RestTokenTypes.PYTHON_LINE, new LayerDescriptor(
-      SyntaxHighlighter.PROVIDER.create(PythonFileType.INSTANCE, project, file), "", EditorColors.INJECTED_LANGUAGE_FRAGMENT));
+      SyntaxHighlighterFactory.getSyntaxHighlighter(PythonFileType.INSTANCE, project, file), "", EditorColors.INJECTED_LANGUAGE_FRAGMENT));
 
     registerLayer(RestTokenTypes.DJANGO_LINE, new LayerDescriptor(
-      SyntaxHighlighter.PROVIDER.create(DjangoTemplateFileType.INSTANCE, project, file), "", EditorColors.INJECTED_LANGUAGE_FRAGMENT));
+      SyntaxHighlighterFactory.getSyntaxHighlighter(DjangoTemplateFileType.INSTANCE, project, file), "", EditorColors.INJECTED_LANGUAGE_FRAGMENT));
 
 
     registerLayer(RestTokenTypes.JAVASCRIPT_LINE, new LayerDescriptor(
-      SyntaxHighlighter.PROVIDER.create(StdFileTypes.JS, project, file), "", EditorColors.INJECTED_LANGUAGE_FRAGMENT));
+      SyntaxHighlighterFactory.getSyntaxHighlighter(StdFileTypes.JS, project, file), "", EditorColors.INJECTED_LANGUAGE_FRAGMENT));
   }
 }

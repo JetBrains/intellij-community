@@ -23,6 +23,7 @@ public class ResolveProcessor implements PsiScopeProcessor {
   @NotNull private final String myName;
   private PsiElement myResult = null;
   private final List<PsiElement> myDefiners;
+  private boolean myLocalResolve = false;
 
   public ResolveProcessor(@NotNull final String name) {
     myName = name;
@@ -44,6 +45,10 @@ public class ResolveProcessor implements PsiScopeProcessor {
 
   public List<PsiElement> getDefiners() {
     return myDefiners;
+  }
+
+  public void setLocalResolve() {
+    myLocalResolve = true;
   }
 
   public String toString() {
@@ -79,16 +84,16 @@ public class ResolveProcessor implements PsiScopeProcessor {
     }
     if (element instanceof NameDefiner) {
       final NameDefiner definer = (NameDefiner)element;
-      PsiElement by_name = definer.getElementNamed(myName);
-      if (by_name != null) {
+      PsiElement byName = resolveFromNameDefiner(definer);
+      if (byName != null) {
         // prefer more specific imported modules to less specific ones
-        if (by_name instanceof PyImportedModule && myResult instanceof PyImportedModule &&
-            ((PyImportedModule)by_name).isAncestorOf((PyImportedModule)myResult)) {
+        if (byName instanceof PyImportedModule && myResult instanceof PyImportedModule &&
+            ((PyImportedModule)byName).isAncestorOf((PyImportedModule)myResult)) {
           return false;
         }
 
-        setResult(by_name, definer);
-        if (!PsiTreeUtil.isAncestor(element, by_name, true)) {
+        setResult(byName, definer);
+        if (!PsiTreeUtil.isAncestor(element, byName, true)) {
           addNameDefiner(definer);
         }
         // we can have same module imported directly and as part of chain (import os; import os.path)
@@ -138,6 +143,19 @@ public class ResolveProcessor implements PsiScopeProcessor {
     }
 
     return true;
+  }
+
+  @Nullable
+  private PsiElement resolveFromNameDefiner(NameDefiner definer) {
+    if (myLocalResolve) {
+      if (definer instanceof PyImportElement) {
+        return ((PyImportElement) definer).getElementNamed(myName, false);
+      }
+      else if (definer instanceof PyStarImportElement) {
+        return null;
+      }
+    }
+    return definer.getElementNamed(myName);
   }
 
   @Nullable

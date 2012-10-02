@@ -17,7 +17,7 @@ setProperty("ch", "$home/community")
 setProperty("dryRun", false)
 setProperty("jdk16", guessJdk())
 
-setProperty("pluginFilter", [
+setProperty("pluginFilter", [   //modules to compile
             "htmltools",
             "JavaScriptLanguage",
             "JavaScriptDebugger", "FirefoxConnector", "ChromeConnector", "python-javascript-debugger",
@@ -38,6 +38,7 @@ setProperty("pluginFilter", [
             "database-impl", "DatabaseSupport",
             "sql",
             "coffeescript",
+            "remote-sdk-impl",
             "python-remote-interpreter",
             "diagram-api", "uml",
             "python-uml", "localization",
@@ -52,8 +53,8 @@ private List<String> pycharmPlatformApiModules() {
 }
 
 
-private List pycharmImplementationModules() {
-  return ["yaml", "graph", "coverage-common", "python", "python-ide", "python-openapi", "python-psi-api"]
+private List pycharmImplementationModules() {   //modules to put into pycharm.jar
+  return ["yaml", "graph", "coverage-common", "python", "python-ide", "python-openapi", "python-psi-api", "remote-sdk-api"]
 }
 
 class Paths {
@@ -127,41 +128,7 @@ target('default': "Build artifacts") {
 
   zipSources(home, paths.artifacts)
 
-  def usedJars = new HashSet();
-
-  def forbiddenJars = ["client-api", "ideaLicenseDecoder", "eawtstub.jar", "ui.jar", "exe4jlib.jar", "cglib", "jcip-annotations", "/y.jar", "ysvg.jar"]
-
-  projectBuilder.cleanOutput()
-  modules.each {
-    def module = findModule(it)
-    if (module != null) {
-      projectBuilder.info("Building $module.name")
-      projectBuilder.moduleRuntimeClasspath(module, false).each {
-        File file = new File(it)
-        if (file.exists()) {
-          String path = file.canonicalPath.replace('\\', '/')
-          String normalizedHome = home.replace('\\', '/')
-          if (path.endsWith(".jar") && (path.startsWith("$normalizedHome/lib/") ||
-                                        path.startsWith("$normalizedHome/community/lib/") ||
-                                        path.startsWith("$normalizedHome/python/lib") ||
-                                        path.startsWith("$normalizedHome/plugins/coverage-common/lib") ||
-                                        path.startsWith("$normalizedHome/community/xml/relaxng/lib"))
-              && !path.contains("/dev/") && !path.contains("/rt/") && !path.contains("/ant/")
-              && !forbiddenJars.any { path.contains(it) }) {
-            usedJars.add(path);
-          }
-        }
-      }
-      projectBuilder.makeModule(module)
-    }
-    else {
-      projectBuilder.warning("$it is not a module")
-    }
-  }
-
-  usedJars.add("$home/community/lib/jgoodies-common-1.2.1.jar")
-  usedJars.add("$home/community/lib/jgoodies-looks-2.4.2.jar")
-  usedJars.add("$home/community/lib/netty-3.5.5.Final.jar")
+  def usedJars = buildModules(modules, ["python/lib", "plugins/coverage-common/lib"])
 
   buildSearchableOptions("${projectBuilder.moduleOutput(findModule("platform-resources"))}/search", ["$home/build/idea.license", "$home/build/pycharm.license"], {
     projectBuilder.moduleRuntimeClasspath(findModule("python-ide"), false).each {
@@ -206,13 +173,13 @@ target('default': "Build artifacts") {
   buildDmg("pycharm", "${home}/python/build/DMG_background.png")
 }
 
-// Collect pyCharm plugins
 private layoutPlugins() {
   def layouts = includeFile("$home/build/scripts/layouts.gant")
 
   dir("plugins") {
     layouts.layoutPlugin("django-db-config")
     layouts.layoutPlugin("python-javascript-debugger")
+    layouts.layoutPlugin("remote-sdk-impl")
     layouts.layoutPlugin("python-remote-interpreter")
     layouts.layoutPlugin("python-uml")
     layouts.layoutPlugin("localization")
@@ -292,6 +259,7 @@ private layoutFull(Map args, String target, Set usedJars) {
         module("forms_rt")
       }
 
+      //noinspection GroovyAssignabilityCheck
       jar([name: "resources_en.jar", duplicate: "preserve"]) {
         // custom resources should go first
         fileset(dir: "$home/python/resources") {

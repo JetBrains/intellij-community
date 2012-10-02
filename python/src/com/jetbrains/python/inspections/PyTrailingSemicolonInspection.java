@@ -8,7 +8,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.PsiWhiteSpace;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.actions.RemoveTrailingSemicolonQuickFix;
+import com.jetbrains.python.inspections.quickfix.RemoveTrailingSemicolonQuickFix;
 import com.jetbrains.python.psi.PyStatement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;

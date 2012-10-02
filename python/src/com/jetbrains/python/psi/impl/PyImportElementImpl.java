@@ -191,8 +191,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     String asName = getAsName();
     if (asName != null) {
       if (!Comparing.equal(name, asName)) return null;
-      // [yole] I'm not sure why we always resolve the module in this branch but the tests seem to rely on that
-      return resolve();
+      return resolveImportElement ? resolve() : this;
     }
     else {
       final PyQualifiedName qName = getImportedQName();
