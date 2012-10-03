@@ -38,12 +38,11 @@ import java.util.Map;
  * @param <T> type of queue elements.
  */
 public class QueueProcessor<T> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.concurrency.QueueProcessor");
   public static enum ThreadToUse {
     AWT,
     POOLED
   }
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.concurrency.QueueProcessor");
 
   private final PairConsumer<T, Runnable> myProcessor;
   private final LinkedList<T> myQueue = new LinkedList<T>();
@@ -85,6 +84,16 @@ public class QueueProcessor<T> {
 
   public QueueProcessor(@NotNull Consumer<T> processor, @NotNull Condition<?> deathCondition, boolean autostart) {
     this(wrappingProcessor(processor), autostart, ThreadToUse.POOLED, deathCondition);
+  }
+
+  @NotNull
+  public static QueueProcessor<Runnable> createRunnableQueueProcessor() {
+    return new QueueProcessor<Runnable>(new Consumer<Runnable>() {
+          @Override
+          public void consume(Runnable runnable) {
+            runnable.run();
+          }
+        });
   }
 
   @NotNull
@@ -146,15 +155,15 @@ public class QueueProcessor<T> {
     doAdd(t, false);
   }
 
-  public void add(T element) {
+  public void add(@NotNull T element) {
     doAdd(element, false);
   }
 
-  public void addFirst(T element) {
+  public void addFirst(@NotNull T element) {
     doAdd(element, true);
   }
 
-  private void doAdd(T element, boolean atHead) {
+  private void doAdd(@NotNull T element, boolean atHead) {
     synchronized (myQueue) {
       if (atHead) {
         myQueue.addFirst(element);

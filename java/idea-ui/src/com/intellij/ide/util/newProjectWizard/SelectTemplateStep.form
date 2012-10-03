@@ -63,10 +63,12 @@
         </clientProperties>
         <border type="etched" title="Description"/>
         <children>
-          <component id="1d5a0" class="com.intellij.ui.components.JBLabel" binding="myDescriptionLabel">
+          <component id="3ae1b" class="javax.swing.JTextPane" binding="myDescriptionPane">
             <constraints border-constraint="Center"/>
             <properties>
-              <text value="some description"/>
+              <contentType value="text/html"/>
+              <editable value="false"/>
+              <text value="&lt;html&gt;&#13;&#10;  &lt;head&gt;&#13;&#10;&#13;&#10;  &lt;/head&gt;&#13;&#10;  &lt;body&gt;&#13;&#10;    &lt;p style=&quot;margin-top: 0&quot;&gt;&#13;&#10;      &#13;&#10;    &lt;/p&gt;&#13;&#10;  &lt;/body&gt;&#13;&#10;&lt;/html&gt;&#13;&#10;"/>
             </properties>
           </component>
         </children>

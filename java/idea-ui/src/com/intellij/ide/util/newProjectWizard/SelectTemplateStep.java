@@ -17,6 +17,7 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
@@ -26,7 +27,6 @@ import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -49,7 +49,7 @@ public class SelectTemplateStep extends ModuleWizardStep {
   private JBList myTemplatesList;
   private JPanel mySettingsPanel;
   private SearchTextField mySearchField;
-  private JBLabel myDescriptionLabel;
+  private JTextPane myDescriptionPane;
   private JPanel myDescriptionPanel;
 
   public SelectTemplateStep(WizardContext context) {
@@ -59,6 +59,8 @@ public class SelectTemplateStep extends ModuleWizardStep {
     for (ProjectTemplatesFactory factory : factories) {
       templates.addAll(Arrays.asList(factory.createTemplates(context)));
     }
+
+    Messages.installHyperlinkSupport(myDescriptionPane);
 
     myTemplatesList.setModel(new CollectionListModel<ProjectTemplate>(templates));
     myTemplatesList.setCellRenderer(new ColoredListCellRenderer() {
@@ -83,7 +85,7 @@ public class SelectTemplateStep extends ModuleWizardStep {
           }
           mySettingsPanel.setVisible(settingsPanel != null);
           String description = template.getDescription();
-          myDescriptionLabel.setText(description);
+          myDescriptionPane.setText(description);
           myDescriptionPanel.setVisible(description != null);
         }
         mySettingsPanel.revalidate();

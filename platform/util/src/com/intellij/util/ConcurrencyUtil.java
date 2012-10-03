@@ -93,7 +93,7 @@ public class ConcurrencyUtil {
   }
 
   @NotNull
-  public static ThreadPoolExecutor newSingleThreadExecutor(@NotNull final String threadFactoryName, final int threadPriority) {
+  public static ThreadPoolExecutor newSingleThreadExecutor(@NonNls @NotNull final String threadFactoryName, final int threadPriority) {
     return new ThreadPoolExecutor(1, 1,
                                     0L, TimeUnit.MILLISECONDS,
                                     new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
