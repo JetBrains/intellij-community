@@ -157,19 +157,20 @@ public class DetailsCache {
                   public void run(@NotNull ProgressIndicator indicator) {
                     if (!recheck.process(abstractHash)) return;
                     if (getBranches(root, abstractHash) != null) return;
-                    final List<String> branches;
+                    List<String> branches;
                     try {
                       branches = new LowLevelAccessImpl(myProject, root).getBranchesWithCommit(abstractHash.getString());
                     }
                     catch (VcsException e) {
                       LOG.info(e);
-                      return;
+                      branches = Collections.singletonList("Can not load branches due to error: " + e.getMessage());
                     }
                     putBranches(root, abstractHash, branches);
+                    final List<String> finalBranches = branches;
                     SwingUtilities.invokeLater(new Runnable() {
                       @Override
                       public void run() {
-                        continuation.consume(branches);
+                        continuation.consume(finalBranches);
                       }
                     });
                   }
