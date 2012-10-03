@@ -36,6 +36,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
@@ -830,7 +831,13 @@ public class GitLogUI implements Disposable {
         }
       }
       group.add(myCherryPickAction);
-      group.add(ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"));
+      group.add(new CreatePatchFromChangesAction() {
+        @Override
+        public void update(AnActionEvent e) {
+          Change[] changes;
+          e.getPresentation().setEnabled((changes = e.getData(VcsDataKeys.CHANGES)) != null && changes.length > 0);
+        }
+      });
       group.add(new MyCheckoutRevisionAction());
       group.add(new MyCheckoutNewBranchAction());
       group.add(new MyCreateNewTagAction());
