@@ -1082,6 +1082,10 @@ public class Messages {
     }
   }
 
+  public static void installHyperlinkSupport(JTextPane messageComponent) {
+    configureMessagePaneUi(messageComponent, "<html></html>");
+  }
+
   public static JTextPane configureMessagePaneUi(JTextPane messageComponent, String message) {
     return configureMessagePaneUi(messageComponent, message, true);
   }

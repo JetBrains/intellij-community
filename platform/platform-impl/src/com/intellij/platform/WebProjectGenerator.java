@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
@@ -28,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * Extend this class to contribute web project generator to IDEA (available via File -> 'Add Module...' -> 'Web Module')
@@ -97,15 +97,15 @@ public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerato
 
     private final GeneratorPeer myPeer;
     private final JComponent myCenterComponent;
-    private final JPanel myDescriptionPanel;
+    private final JTextPane myDescriptionPane;
 
     protected MyDialogWrapper(@NotNull GeneratorPeer<T> peer) {
       super(true);
       myPeer = peer;
       myCenterComponent = peer.getComponent();
-      myDescriptionPanel = new JPanel(new BorderLayout());
-      myDescriptionPanel.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 0));
-      myDescriptionPanel.add(new JLabel(getDescription()), BorderLayout.WEST);
+      myDescriptionPane = new JTextPane();
+      myDescriptionPane.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 0));
+      Messages.configureMessagePaneUi(myDescriptionPane, getDescription());
 
       getOKAction().setEnabled(peer.validate() == null);
       peer.addSettingsStateListener(new SettingsStateListener() {
@@ -131,7 +131,7 @@ public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerato
     @Nullable
     @Override
     protected JComponent createNorthPanel() {
-      return myDescriptionPanel;
+      return myDescriptionPane;
     }
 
     @Override
