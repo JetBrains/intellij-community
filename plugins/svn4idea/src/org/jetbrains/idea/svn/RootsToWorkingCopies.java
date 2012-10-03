@@ -23,8 +23,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CalledInBackground;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
+import com.intellij.openapi.vcs.ZipperUpdater;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -50,16 +52,32 @@ public class RootsToWorkingCopies implements VcsListener {
   private final Set<VirtualFile> myUnversioned;
   private final BackgroundTaskQueue myQueue;
   private final Project myProject;
+  private final ZipperUpdater myZipperUpdater;
+  private Runnable myRechecker;
+  private final SvnVcs myVcs;
 
-  public RootsToWorkingCopies(final Project project) {
-    myProject = project;
-    myQueue = new BackgroundTaskQueue(project, "SVN VCS roots authorization checker");
+  public RootsToWorkingCopies(final SvnVcs vcs) {
+    myProject = vcs.getProject();
+    myQueue = new BackgroundTaskQueue(myProject, "SVN VCS roots authorization checker");
     myLock = new Object();
     myRootMapping = new HashMap<VirtualFile, WorkingCopy>();
     myUnversioned = new HashSet<VirtualFile>();
+    myVcs = vcs;
+    myRechecker = new Runnable() {
+      public void run() {
+        final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(myVcs);
+        synchronized (myLock) {
+          clear();
+          for (VirtualFile root : roots) {
+            addRoot(root);
+          }
+        }
+      }
+    };
+    myZipperUpdater = new ZipperUpdater(200, Alarm.ThreadToUse.OWN_THREAD, myProject);
   }
 
-  public void addRoot(final VirtualFile root) {
+  private void addRoot(final VirtualFile root) {
     myQueue.run(new Task.Backgroundable(myProject, "Looking for '" + root.getPath() + "' working copy root", false,
                                         BackgroundFromStartOption.getInstance()) {
       
@@ -156,20 +174,14 @@ public class RootsToWorkingCopies implements VcsListener {
     synchronized (myLock) {
       myRootMapping.clear();
       myUnversioned.clear();
+      myZipperUpdater.stop();
     }
   }
   
   public void directoryMappingChanged() {
-    final SvnVcs svnVcs = SvnVcs.getInstance(myProject);
     // todo +- here... shouldnt be
-    svnVcs.getAuthNotifier().clear();
-    
-    final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(svnVcs);
-    synchronized (myLock) {
-      clear();
-      for (VirtualFile root : roots) {
-        addRoot(root);
-      }
-    }
+    myVcs.getAuthNotifier().clear();
+
+    myZipperUpdater.queue(myRechecker);
   }
 }

@@ -218,7 +218,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     super(project, VCS_NAME);
     myLoadedBranchesStorage = storage;
     LOG.debug("ct");
-    myRootsToWorkingCopies = new RootsToWorkingCopies(myProject);
+    myRootsToWorkingCopies = new RootsToWorkingCopies(this);
     myConfiguration = svnConfiguration;
     myAuthNotifier = new SvnAuthenticationNotifier(this);
 
