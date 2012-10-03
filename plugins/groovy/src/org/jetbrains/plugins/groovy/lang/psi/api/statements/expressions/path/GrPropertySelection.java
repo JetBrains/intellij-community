@@ -18,20 +18,17 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 /**
  * @author ilyas
  */
-public interface GrPropertySelection extends GrReferenceExpression {
+public interface GrPropertySelection extends GrExpression {
   @NotNull
   GrExpression getQualifier();
 
   @NotNull
   PsiElement getDotToken();
 
-  @Override
   PsiElement getReferenceNameElement();
 }

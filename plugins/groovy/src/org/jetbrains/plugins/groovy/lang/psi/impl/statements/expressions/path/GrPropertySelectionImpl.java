@@ -19,18 +19,19 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 
 /**
  * @author ilyas
  */
-public class GrPropertySelectionImpl extends GrReferenceExpressionImpl implements GrPropertySelection {
+public class GrPropertySelectionImpl extends GrExpressionImpl implements GrPropertySelection {
   private static final Logger LOG = Logger.getInstance(GrPropertySelectionImpl.class);
 
   public GrPropertySelectionImpl(@NotNull ASTNode node) {
@@ -43,17 +44,6 @@ public class GrPropertySelectionImpl extends GrReferenceExpressionImpl implement
 
   public String toString() {
     return "Property selection";
-  }
-
-  @NotNull
-  @Override
-  public GroovyResolveResult[] multiResolve(boolean incomplete) {
-    return GroovyResolveResult.EMPTY_ARRAY;
-  }
-
-  @Override
-  public String getClassNameText() {
-    return null;
   }
 
   @NotNull
@@ -72,12 +62,13 @@ public class GrPropertySelectionImpl extends GrReferenceExpressionImpl implement
   @Override
   public PsiElement getReferenceNameElement() {
     final PsiElement last = getLastChild();
-    LOG.assertTrue(last!=null);
+    LOG.assertTrue(last != null);
     return last;
   }
 
+  @Nullable
   @Override
-  public boolean isFullyQualified() {
-    return false;
+  public PsiType getType() {
+    return null;
   }
 }
