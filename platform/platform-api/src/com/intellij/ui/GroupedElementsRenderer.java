@@ -21,6 +21,7 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
 public abstract class GroupedElementsRenderer {
@@ -135,7 +136,7 @@ public abstract class GroupedElementsRenderer {
     }
   }
 
-  public static abstract class Tree extends GroupedElementsRenderer {
+  public static abstract class Tree extends GroupedElementsRenderer implements TreeCellRenderer {
 
     protected void layout() {
       myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);

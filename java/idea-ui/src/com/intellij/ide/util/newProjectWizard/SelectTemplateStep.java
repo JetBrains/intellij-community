@@ -18,27 +18,37 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
-import com.intellij.ui.components.JBList;
+import com.intellij.ui.speedSearch.ElementFilter;
+import com.intellij.ui.treeStructure.*;
+import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
+import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -47,34 +57,76 @@ import java.util.List;
 public class SelectTemplateStep extends ModuleWizardStep {
 
   private JPanel myPanel;
-  private JBList myTemplatesList;
+  private SimpleTree myTemplatesTree;
   private JPanel mySettingsPanel;
   private SearchTextField mySearchField;
   private JTextPane myDescriptionPane;
   private JPanel myDescriptionPanel;
 
+  private final WizardContext myContext;
+  private final ElementFilter.Active.Impl<SimpleNode> myFilter;
+  private final FilteringTreeBuilder myBuilder;
+  private MinusculeMatcher myMatcher;
+
   public SelectTemplateStep(WizardContext context) {
 
-    final List<ProjectTemplate> templates = new ArrayList<ProjectTemplate>();
-    ProjectTemplatesFactory[] factories = ProjectTemplatesFactory.EP_NAME.getExtensions();
-    for (ProjectTemplatesFactory factory : factories) {
-      templates.addAll(Arrays.asList(factory.createTemplates(context)));
-    }
-
+    myContext = context;
     Messages.installHyperlinkSupport(myDescriptionPane);
 
-    myTemplatesList.setModel(new CollectionListModel<ProjectTemplate>(templates));
-    myTemplatesList.setCellRenderer(new ColoredListCellRenderer() {
+    ProjectTemplatesFactory[] factories = ProjectTemplatesFactory.EP_NAME.getExtensions();
+    final MultiMap<String, ProjectTemplatesFactory> groups = new MultiMap<String, ProjectTemplatesFactory>();
+    for (ProjectTemplatesFactory factory : factories) {
+      for (String string : factory.getGroups()) {
+        groups.putValue(string, factory);
+      }
+    }
+
+    SimpleTreeStructure.Impl structure = new SimpleTreeStructure.Impl(new SimpleNode() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        ProjectTemplate template = (ProjectTemplate)value;
-        append(template.getName());
+      public SimpleNode[] getChildren() {
+        return ContainerUtil.map2Array(groups.entrySet(), NO_CHILDREN, new Function<Map.Entry<String, Collection<ProjectTemplatesFactory>>, SimpleNode>() {
+          @Override
+          public SimpleNode fun(Map.Entry<String, Collection<ProjectTemplatesFactory>> entry) {
+            return new GroupNode(entry.getKey(), entry.getValue());
+          }
+        });
       }
     });
 
-    myTemplatesList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+    buildMatcher();
+    myFilter = new ElementFilter.Active.Impl<SimpleNode>() {
       @Override
-      public void valueChanged(ListSelectionEvent e) {
+      public boolean shouldBeShowing(SimpleNode template) {
+        return matches(template);
+      }
+    };
+    myBuilder = new FilteringTreeBuilder(myTemplatesTree, myFilter, structure, null);
+
+    myTemplatesTree.setRootVisible(false);
+    myTemplatesTree.setShowsRootHandles(false);
+    myTemplatesTree.setCellRenderer(new ColoredTreeCellRenderer() {
+      @Override
+      public void customizeCellRenderer(JTree tree,
+                                        Object value,
+                                        boolean selected,
+                                        boolean expanded,
+                                        boolean leaf,
+                                        int row,
+                                        boolean hasFocus) {
+//        setIpad(new Insets());
+        SimpleNode node = getSimpleNode(value);
+        if (node != null) {
+          append(node.getName());
+        }
+        if (node instanceof GroupNode) {
+          setIcon(UIUtil.getTreeIcon(expanded));
+        }
+      }
+    });
+
+    myTemplatesTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
+      public void valueChanged(TreeSelectionEvent e) {
         if (mySettingsPanel.getComponentCount() > 0) {
           mySettingsPanel.remove(0);
         }
@@ -89,44 +141,83 @@ public class SelectTemplateStep extends ModuleWizardStep {
           myDescriptionPane.setText(description);
           myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
         }
+        else {
+          mySettingsPanel.setVisible(false);
+          myDescriptionPanel.setVisible(false);
+        }
         mySettingsPanel.revalidate();
         mySettingsPanel.repaint();
       }
     });
-    if (myTemplatesList.getModel().getSize() > 0) {
-      myTemplatesList.setSelectedIndex(0);
-    }
+
+    //if (myTemplatesTree.getModel().getSize() > 0) {
+    //  myTemplatesTree.setSelectedIndex(0);
+    //}
     mySearchField.addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        final MinusculeMatcher matcher = NameUtil.buildMatcher(mySearchField.getText(), NameUtil.MatchingCaseSensitivity.NONE);
-        ProjectTemplate selectedTemplate = getSelectedTemplate();
-        List<ProjectTemplate> list = ContainerUtil.filter(templates, new Condition<ProjectTemplate>() {
-          @Override
-          public boolean value(ProjectTemplate template) {
-            String name = template.getName();
-            String[] words = NameUtil.nameToWords(name);
-            for (String word : words) {
-              if (matcher.matches(word)) return true;
-            }
-            return false;
-          }
-        });
-        myTemplatesList.setModel(new CollectionListModel<ProjectTemplate>(list));
-        if (!list.isEmpty()) {
-          if (list.contains(selectedTemplate)) {
-            myTemplatesList.setSelectedValue(selectedTemplate, true);
-          }
-          else {
-            myTemplatesList.setSelectedIndex(0);
-          }
-        }
+        doFilter();
       }
     });
+    doFilter();
   }
 
+  private void doFilter() {
+    buildMatcher();
+    SimpleNode selectedNode = getSelectedNode();
+    final Ref<SimpleNode> node = new Ref<SimpleNode>();
+    if (!(selectedNode instanceof TemplateNode) || !matches(selectedNode)) {
+      myTemplatesTree.accept(myBuilder, new SimpleNodeVisitor() {
+        @Override
+        public boolean accept(SimpleNode simpleNode) {
+          FilteringTreeStructure.FilteringNode wrapper = (FilteringTreeStructure.FilteringNode)simpleNode;
+          Object delegate = wrapper.getDelegate();
+          if (delegate instanceof TemplateNode && matches((SimpleNode)delegate)) {
+            node.set((SimpleNode)delegate);
+            return true;
+          }
+          return false;
+        }
+      });
+    }
+
+    myFilter.fireUpdate(node.get(), true, false);
+  }
+
+  private boolean matches(SimpleNode template) {
+    String name = template.getName();
+    if (name == null) return false;
+    String[] words = NameUtil.nameToWords(name);
+    for (String word : words) {
+      if (myMatcher.matches(word)) return true;
+    }
+    return false;
+  }
+
+  private void buildMatcher() {
+    myMatcher = NameUtil.buildMatcher(mySearchField.getText(), NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
+  @Nullable
   public ProjectTemplate getSelectedTemplate() {
-    return (ProjectTemplate)myTemplatesList.getSelectedValue();
+    SimpleNode delegate = getSelectedNode();
+    return delegate instanceof TemplateNode ? ((TemplateNode)delegate).myTemplate : null;
+  }
+
+  @Nullable
+  private SimpleNode getSelectedNode() {
+    TreePath path = myTemplatesTree.getSelectionPath();
+    if (path == null) return null;
+    return getSimpleNode(path.getLastPathComponent());
+  }
+
+  @Nullable
+  private SimpleNode getSimpleNode(Object component) {
+    DefaultMutableTreeNode node = (DefaultMutableTreeNode)component;
+    Object userObject = node.getUserObject();
+    if (!(userObject instanceof FilteringTreeStructure.FilteringNode)) return null;
+    FilteringTreeStructure.FilteringNode object = (FilteringTreeStructure.FilteringNode)userObject;
+    return (SimpleNode)object.getDelegate();
   }
 
   @Override
@@ -141,5 +232,52 @@ public class SelectTemplateStep extends ModuleWizardStep {
 
   @Override
   public void updateDataModel() {
+  }
+
+  @Override
+  public void disposeUIResources() {
+    Disposer.dispose(myBuilder);
+  }
+
+  private class GroupNode extends SimpleNode {
+    private final String myGroup;
+    private final Collection<ProjectTemplatesFactory> myFactories;
+
+    public GroupNode(String group, Collection<ProjectTemplatesFactory> factories) {
+      myGroup = group;
+      myFactories = factories;
+    }
+
+    @Override
+    public SimpleNode[] getChildren() {
+      List<SimpleNode> children = new ArrayList<SimpleNode>();
+      for (ProjectTemplatesFactory factory : myFactories) {
+        ProjectTemplate[] templates = factory.createTemplates(myGroup, myContext);
+        for (ProjectTemplate template : templates) {
+          children.add(new TemplateNode(template));
+        }
+      }
+      return children.toArray(new SimpleNode[children.size()]);
+    }
+
+
+    @Override
+    public String getName() {
+      return myGroup;
+    }
+  }
+
+  private static class TemplateNode extends NullNode {
+
+    private final ProjectTemplate myTemplate;
+
+    public TemplateNode(ProjectTemplate template) {
+      myTemplate = template;
+    }
+
+    @Override
+    public String getName() {
+      return myTemplate.getName();
+    }
   }
 }

@@ -38,7 +38,13 @@ public class ArchivedTemplatesFactory implements ProjectTemplatesFactory {
 
   @NotNull
   @Override
-  public ProjectTemplate[] createTemplates(WizardContext context) {
+  public String[] getGroups() {
+    return new String[] {"Standard"};
+  }
+
+  @NotNull
+  @Override
+  public ProjectTemplate[] createTemplates(String group, WizardContext context) {
 
     IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
     Set<URL> urls = new HashSet<URL>();

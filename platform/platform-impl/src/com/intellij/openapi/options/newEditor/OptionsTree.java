@@ -45,7 +45,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
@@ -283,7 +282,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     return null;
   }
 
-  class Renderer extends GroupedElementsRenderer.Tree implements TreeCellRenderer {
+  class Renderer extends GroupedElementsRenderer.Tree {
 
 
     private JLabel myHandle;

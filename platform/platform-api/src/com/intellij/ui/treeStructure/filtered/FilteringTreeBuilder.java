@@ -48,7 +48,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   public FilteringTreeBuilder(Tree tree,
                               ElementFilter filter,
                               AbstractTreeStructure structure,
-                              Comparator<NodeDescriptor> comparator) {
+                              @Nullable Comparator<NodeDescriptor> comparator) {
     super(tree,
           (DefaultTreeModel)tree.getModel(),
           structure instanceof FilteringTreeStructure ? structure

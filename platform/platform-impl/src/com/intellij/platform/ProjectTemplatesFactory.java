@@ -28,5 +28,8 @@ public interface ProjectTemplatesFactory {
   ExtensionPointName<ProjectTemplatesFactory> EP_NAME = ExtensionPointName.create("com.intellij.projectTemplatesFactory");
 
   @NotNull
-  ProjectTemplate[] createTemplates(WizardContext context);
+  String[] getGroups();
+
+  @NotNull
+  ProjectTemplate[] createTemplates(String group, WizardContext context);
 }
