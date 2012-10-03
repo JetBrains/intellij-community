@@ -37,10 +37,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  * @author ven
  */
 public class ResolvePropertyTest extends GroovyResolveTestCase {
-  @Override
-  protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "resolve/property/";
-  }
+  final String basePath = TestUtils.testDataPath + "resolve/property/"
 
   public void testParameter1() throws Exception {
     doTest("parameter1/A.groovy");
@@ -877,5 +874,31 @@ print othe<caret>r
 ''')
 
     assertInstanceOf(ref.resolve(), GrAccessorMethod)
+  }
+
+  void testPrefLocalVarToScriptName() {
+    myFixture.addFileToProject('foo.groovy', 'print 2')
+
+    def ref = configureByText('''\
+class Bar {
+    public float FOO = 1.23f
+    public float ZZZ = 5.78f
+    public float pi = 3.14f
+    public float xxx = 6f
+
+    void doSmth() {}
+}
+
+class User {
+    public static void main(String[] args) {
+        Bar foo = new Bar()
+        foo.bar()
+        println foo.F<caret>OO * foo.ZZZ * foo.pi * foo.xxx
+        foo.doSmth()
+    }
+}
+''')
+
+    assertInstanceOf(ref.resolve(), GrField)
   }
 }

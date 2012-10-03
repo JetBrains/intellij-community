@@ -69,6 +69,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -157,19 +158,22 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     GroovyResolveResult[] classCandidates = null;
 
-    if (findClassOrPackageAtFirst()) {
-      ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
-      GrReferenceResolveUtil.resolveImpl(classProcessor, this);
-      classCandidates = classProcessor.getCandidates();
-      if (classCandidates.length > 0) return classCandidates;
-    }
-
     ResolverProcessor processor = new PropertyResolverProcessor(name, this);
     GrReferenceResolveUtil.resolveImpl(processor, this);
     final GroovyResolveResult[] fieldCandidates = processor.getCandidates();
 
     if (hasAt()) {
       return fieldCandidates;
+    }
+
+    if (findClassOrPackageAtFirst()) {
+      boolean preferVar = containsLocalVar(fieldCandidates);
+      if (!preferVar) {
+        ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
+        GrReferenceResolveUtil.resolveImpl(classProcessor, this);
+        classCandidates = classProcessor.getCandidates();
+        if (classCandidates.length > 0) return classCandidates;
+      }
     }
 
     //if reference expression is in class we need to return field instead of accessor method
@@ -210,6 +214,20 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     if (classCandidates.length > 0) return classCandidates;
     if (accessorResults.size() > 0) return new GroovyResolveResult[]{accessorResults.get(0)};
     return GroovyResolveResult.EMPTY_ARRAY;
+  }
+
+  private boolean containsLocalVar(GroovyResolveResult[] fieldCandidates) {
+    boolean preferVar = false;
+    if (fieldCandidates.length > 0) {
+      for (GroovyResolveResult candidate : fieldCandidates) {
+        PsiElement element = candidate.getElement();
+        if (GroovyRefactoringUtil.isLocalVariable(element)) {
+          preferVar = true;
+          break;
+        }
+      }
+    }
+    return preferVar;
   }
 
 
