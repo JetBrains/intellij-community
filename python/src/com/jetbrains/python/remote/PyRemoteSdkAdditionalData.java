@@ -268,6 +268,8 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
     rootElement.setAttribute(SKELETONS_PATH, StringUtil.notNullize(getSkeletonsPath()));
   }
 
+  @Nullable
+  @Override
   public Object clone() throws CloneNotSupportedException {
     try {
       final PyRemoteSdkAdditionalData copy = (PyRemoteSdkAdditionalData)super.clone();
