@@ -250,12 +250,10 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
 
       // todo implement for nested classes
-      if (refElement.getQualifier() == null || PsiTreeUtil.getParentOfType(refElement, GrImportStatement.class) != null) {
-        registerCreateClassByTypeFix(refElement, annotation);
-        registerAddImportFixes(refElement, annotation);
-        UnresolvedReferenceQuickFixProvider.registerReferenceFixes(refElement, new QuickFixActionRegistrarAdapter(annotation));
-        OrderEntryFix.registerFixes(new QuickFixActionRegistrarAdapter(annotation), refElement);
-      }
+      registerCreateClassByTypeFix(refElement, annotation);
+      registerAddImportFixes(refElement, annotation);
+      UnresolvedReferenceQuickFixProvider.registerReferenceFixes(refElement, new QuickFixActionRegistrarAdapter(annotation));
+      OrderEntryFix.registerFixes(new QuickFixActionRegistrarAdapter(annotation), refElement);
     }
   }
 
@@ -358,14 +356,12 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
     if (GrHighlightUtil.shouldHighlightAsUnresolved(referenceExpression)) {
       Annotation annotation = createAnnotationForRef(referenceExpression, cannotBeDynamic, GroovyBundle.message("cannot.resolve", referenceExpression.getReferenceName()));
-      if (referenceExpression.getQualifier() == null) {
-        if (isCall(referenceExpression)) {
-          registerStaticImportFix(referenceExpression, annotation);
-        }
-        else {
-          registerCreateClassByTypeFix(referenceExpression, annotation);
-          registerAddImportFixes(referenceExpression, annotation);
-        }
+      if (isCall(referenceExpression)) {
+        registerStaticImportFix(referenceExpression, annotation);
+      }
+      else {
+        registerCreateClassByTypeFix(referenceExpression, annotation);
+        registerAddImportFixes(referenceExpression, annotation);
       }
 
       registerReferenceFixes(referenceExpression, annotation, cannotBeDynamic);
@@ -438,6 +434,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   private static void registerStaticImportFix(GrReferenceExpression referenceExpression, Annotation annotation) {
     final String referenceName = referenceExpression.getReferenceName();
     if (StringUtil.isEmpty(referenceName)) return;
+    if (referenceExpression.getQualifier() != null) return;
 
     annotation.registerFix(new GroovyStaticImportMethodFix((GrMethodCall)referenceExpression.getParent()));
   }
@@ -1971,9 +1968,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       addDynamicAnnotation(annotation, refExpr);
     }
     if (targetClass.isWritable()) {
-      if (!(targetClass instanceof GroovyScriptClass)) {
-        annotation.registerFix(new CreateFieldFromUsageFix(refExpr, targetClass));
-      }
+      annotation.registerFix(new CreateFieldFromUsageFix(refExpr, targetClass));
 
       if (refExpr.getParent() instanceof GrCall && refExpr.getParent() instanceof GrExpression) {
         annotation.registerFix(new CreateMethodFromUsageFix(refExpr, targetClass));
@@ -2016,39 +2011,38 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   private static void registerAddImportFixes(GrReferenceElement refElement, Annotation annotation) {
     final String referenceName = refElement.getReferenceName();
     //noinspection ConstantConditions
-    if (StringUtil.isEmpty(referenceName) ||
-        (!(refElement instanceof GrCodeReferenceElement) && Character.isLowerCase(referenceName.charAt(0)))) {
-      return;
-    }
+    if (StringUtil.isEmpty(referenceName)) return;
+    if (!(refElement instanceof GrCodeReferenceElement) && Character.isLowerCase(referenceName.charAt(0))) return;
+    if (refElement.getQualifier() != null) return;
 
     annotation.registerFix(new GroovyAddImportAction(refElement));
   }
 
   private static void registerCreateClassByTypeFix(GrReferenceElement refElement, Annotation annotation) {
     GrPackageDefinition packageDefinition = PsiTreeUtil.getParentOfType(refElement, GrPackageDefinition.class);
-    if (packageDefinition == null && refElement.getQualifier() == null) {
-      PsiElement parent = refElement.getParent();
-      if (parent instanceof GrNewExpression &&
-          refElement.getManager().areElementsEquivalent(((GrNewExpression)parent).getReferenceElement(), refElement)) {
-        annotation.registerFix(CreateClassFix.createClassFromNewAction((GrNewExpression)parent));
+    if (packageDefinition != null) return;
+
+    PsiElement parent = refElement.getParent();
+    if (parent instanceof GrNewExpression &&
+        refElement.getManager().areElementsEquivalent(((GrNewExpression)parent).getReferenceElement(), refElement)) {
+      annotation.registerFix(CreateClassFix.createClassFromNewAction((GrNewExpression)parent));
+    }
+    else {
+      if (shouldBeInterface(refElement)) {
+        annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.INTERFACE));
+      }
+      else if (shouldBeClass(refElement)) {
+        annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.CLASS));
+        annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.ENUM));
+      }
+      else if (shouldBeAnnotation(refElement)) {
+        annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.ANNOTATION));
       }
       else {
-        if (shouldBeInterface(refElement)) {
-          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.INTERFACE));
-        }
-        else if (shouldBeClass(refElement)) {
-          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.CLASS));
-          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.ENUM));
-        }
-        else if (shouldBeAnnotation(refElement)) {
-          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.ANNOTATION));
-        }
-        else {
-          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.CLASS));
-          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.INTERFACE));
-          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.ENUM));
-          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.ANNOTATION));
-        }
+        annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.CLASS));
+        annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.INTERFACE));
+        annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.ENUM));
+        annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.ANNOTATION));
       }
     }
   }

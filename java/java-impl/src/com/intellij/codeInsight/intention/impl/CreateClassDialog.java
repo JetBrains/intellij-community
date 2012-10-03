@@ -86,18 +86,17 @@ public class CreateClassDialog extends DialogWrapper {
 
   public CreateClassDialog(@NotNull Project project,
                            @NotNull String title,
-                           String targetClassName,
-                           String targetPackageName,
+                           @NotNull String targetClassName,
+                           @NotNull String targetPackageName,
                            @NotNull CreateClassKind kind,
                            boolean classNameEditable,
-                           Module defaultModule) {
+                           @Nullable Module defaultModule) {
     super(project, true);
     myClassNameEditable = classNameEditable;
     myModule = defaultModule;
     myClassName = targetClassName;
     myProject = project;
-    final String normalizedPackageName = targetPackageName != null ? targetPackageName : "";
-    myPackageComponent = new PackageNameReferenceEditorCombo(normalizedPackageName, myProject, RECENTS_KEY, CodeInsightBundle.message("dialog.create.class.package.chooser.title"));
+    myPackageComponent = new PackageNameReferenceEditorCombo(targetPackageName, myProject, RECENTS_KEY, CodeInsightBundle.message("dialog.create.class.package.chooser.title"));
     myPackageComponent.setTextFieldPreferredWidth(40);
 
     init();
@@ -111,7 +110,7 @@ public class CreateClassDialog extends DialogWrapper {
     }
 
     myTfClassName.setText(myClassName);
-    myDestinationCB.setData(myProject, getBaseDir(normalizedPackageName), new Pass<String>() {
+    myDestinationCB.setData(myProject, getBaseDir(targetPackageName), new Pass<String>() {
       @Override
       public void pass(String s) {
         setErrorText(s);
@@ -278,6 +277,7 @@ public class CreateClassDialog extends DialogWrapper {
     return myModule == null? null : PackageUtil.findPossiblePackageDirectoryInModule(myModule, packageName);
   }
 
+  @NotNull
   public String getClassName() {
     if (myClassNameEditable) {
       return myTfClassName.getText();
