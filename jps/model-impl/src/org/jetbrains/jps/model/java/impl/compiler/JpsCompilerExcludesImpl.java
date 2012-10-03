@@ -1,7 +1,7 @@
 package org.jetbrains.jps.model.java.impl.compiler;
 
-import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.jps.JpsPathUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 
 import java.io.File;
@@ -41,7 +41,7 @@ public class JpsCompilerExcludesImpl implements JpsCompilerExcludes {
     }
 
     if (!myDirectories.isEmpty() || !myRecursivelyExcludedDirectories.isEmpty()) { // optimization
-      File parent = FileUtil.getParentFile(file);
+      File parent = FileUtilRt.getParentFile(file);
       if (myDirectories.contains(parent)) {
         return true;
       }
@@ -50,7 +50,7 @@ public class JpsCompilerExcludesImpl implements JpsCompilerExcludes {
         if (myRecursivelyExcludedDirectories.contains(parent)) {
           return true;
         }
-        parent = FileUtil.getParentFile(parent);
+        parent = FileUtilRt.getParentFile(parent);
       }
     }
     return false;

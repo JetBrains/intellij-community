@@ -1,4 +1,4 @@
-package org.jetbrains.jps.model.impl;
+package org.jetbrains.jps.model.ex;
 
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementChildRole;

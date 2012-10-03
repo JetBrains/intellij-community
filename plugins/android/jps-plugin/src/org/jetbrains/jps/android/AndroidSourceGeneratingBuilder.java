@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
@@ -911,7 +912,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     }
     final File sourceRoot = descriptor.root;
 
-    final File parent = FileUtil.getParentFile(sourceFile);
+    final File parent = FileUtilRt.getParentFile(sourceFile);
     if (parent == null) {
       return null;
     }
@@ -980,7 +981,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       return null;
     }
 
-    final String relPath = FileUtil.getRelativePath(descriptor.root, FileUtil.getParentFile(file));
+    final String relPath = FileUtil.getRelativePath(descriptor.root, FileUtilRt.getParentFile(file));
     if (relPath == null) {
       return null;
     }

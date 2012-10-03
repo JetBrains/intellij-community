@@ -1,6 +1,6 @@
 package org.jetbrains.jps.indices.impl;
 
-import org.jetbrains.jps.JpsPathUtil;
+import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;

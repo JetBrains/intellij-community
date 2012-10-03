@@ -3,6 +3,7 @@ package org.jetbrains.jps.model.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsEventDispatcher;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.ex.JpsCompositeElementBase;
 
 /**
  * @author nik

@@ -33,7 +33,7 @@ import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import junit.framework.Assert;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.JpsPathUtil;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.IOException;

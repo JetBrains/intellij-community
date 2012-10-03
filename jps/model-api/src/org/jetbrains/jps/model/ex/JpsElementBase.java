@@ -1,15 +1,15 @@
-package org.jetbrains.jps.model.impl;
+package org.jetbrains.jps.model.ex;
 
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsEventDispatcher;
+import org.jetbrains.jps.model.JpsModel;
 
 /**
  * @author nik
  */
 public abstract class JpsElementBase<Self extends JpsElementBase<Self>> implements JpsElement, JpsElement.BulkModificationSupport<Self> {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.model.impl.JpsElementBase");
   protected JpsElementBase myParent;
 
   protected JpsElementBase() {
@@ -17,7 +17,7 @@ public abstract class JpsElementBase<Self extends JpsElementBase<Self>> implemen
 
   public void setParent(@Nullable JpsElementBase<?> parent) {
     if (myParent != null && parent != null) {
-      LOG.error("Parent for " + this + " is already set");
+      throw new AssertionError("Parent for " + this + " is already set: " + myParent);
     }
     myParent = parent;
   }

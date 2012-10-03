@@ -1,8 +1,8 @@
 package org.jetbrains.jps.model.artifact.impl;
 
 import org.jetbrains.jps.model.artifact.JpsArtifact;
-import org.jetbrains.jps.model.impl.JpsElementCollectionRole;
-import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
+import org.jetbrains.jps.model.ex.JpsElementCollectionRole;
+import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 
 /**
 * @author nik

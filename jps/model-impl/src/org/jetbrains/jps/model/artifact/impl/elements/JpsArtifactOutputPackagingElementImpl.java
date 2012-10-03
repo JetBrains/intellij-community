@@ -8,7 +8,8 @@ import org.jetbrains.jps.model.artifact.elements.JpsArtifactOutputPackagingEleme
 import org.jetbrains.jps.model.artifact.elements.JpsArtifactRootElement;
 import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
 import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
-import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
+import org.jetbrains.jps.model.artifact.elements.ex.JpsComplexPackagingElementBase;
+import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 
 import java.util.ArrayList;
 import java.util.Collections;

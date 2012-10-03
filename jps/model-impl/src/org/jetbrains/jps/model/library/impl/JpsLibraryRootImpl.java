@@ -1,7 +1,7 @@
 package org.jetbrains.jps.model.library.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.impl.JpsElementBase;
+import org.jetbrains.jps.model.ex.JpsElementBase;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryRoot;
 import org.jetbrains.jps.model.library.JpsOrderRootType;

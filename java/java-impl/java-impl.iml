@@ -31,6 +31,7 @@
     <orderEntry type="module" module-name="RegExpSupport" />
     <orderEntry type="module" module-name="java-indexing-impl" exported="" />
     <orderEntry type="module" module-name="java-indexing-api" />
+    <orderEntry type="module" module-name="jps-model-impl" />
   </component>
   <component name="copyright">
     <Base>

@@ -3,11 +3,11 @@ package org.jetbrains.jps.model.library.impl;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.JpsPathUtil;
+import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.impl.JpsElementCollectionImpl;
-import org.jetbrains.jps.model.impl.JpsElementCollectionRole;
-import org.jetbrains.jps.model.impl.JpsNamedCompositeElementBase;
+import org.jetbrains.jps.model.ex.JpsElementCollectionRole;
+import org.jetbrains.jps.model.ex.JpsNamedCompositeElementBase;
 import org.jetbrains.jps.model.library.*;
 
 import java.io.File;

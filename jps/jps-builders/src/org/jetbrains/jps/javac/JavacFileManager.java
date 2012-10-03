@@ -1,6 +1,6 @@
 package org.jetbrains.jps.javac;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.Utils;
@@ -159,14 +159,14 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
   }
 
   private File findOutputDir(File src) {
-    File file = FileUtil.getParentFile(src);
+    File file = FileUtilRt.getParentFile(src);
     while (file != null) {
       for (Map.Entry<File, Set<File>> entry : myOutputsMap.entrySet()) {
         if (entry.getValue().contains(file)) {
           return entry.getKey();
         }
       }
-      file = FileUtil.getParentFile(file);
+      file = FileUtilRt.getParentFile(file);
     }
     return null;
   }

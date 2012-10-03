@@ -6,6 +6,7 @@ import org.jetbrains.jps.model.JpsCompositeElement;
 import org.jetbrains.jps.model.JpsElementCollection;
 import org.jetbrains.jps.model.JpsElementReference;
 import org.jetbrains.jps.model.JpsNamedElement;
+import org.jetbrains.jps.model.ex.JpsElementCollectionRole;
 
 /**
  * @author nik

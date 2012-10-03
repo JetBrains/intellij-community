@@ -2,6 +2,7 @@ package org.jetbrains.jps.builders.impl;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentHashMap;
 import gnu.trove.THashMap;
@@ -172,7 +173,7 @@ public class BuildRootIndexImpl implements BuildRootIndex {
       if (!descriptors.isEmpty()) {
         return descriptors.get(0);
       }
-      current = FileUtil.getParentFile(current);
+      current = FileUtilRt.getParentFile(current);
     }
     return null;
   }
@@ -197,7 +198,7 @@ public class BuildRootIndexImpl implements BuildRootIndex {
           result.addAll(descriptors);
         }
       }
-      current = FileUtil.getParentFile(current);
+      current = FileUtilRt.getParentFile(current);
     }
     return result != null ? result : Collections.<R>emptyList();
   }

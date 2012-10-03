@@ -1,4 +1,4 @@
-package org.jetbrains.jps.model.impl;
+package org.jetbrains.jps.model.ex;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,7 +10,7 @@ import java.util.Map;
 /**
  * @author nik
  */
-public class JpsElementContainerImpl implements JpsElementContainer {
+public class JpsElementContainerImpl extends JpsElementContainerEx implements JpsElementContainer {
   private final Map<JpsElementChildRole<?>, JpsElement> myElements = new HashMap<JpsElementChildRole<?>, JpsElement>();
   private final @NotNull JpsCompositeElementBase<?> myParent;
 
@@ -18,9 +18,9 @@ public class JpsElementContainerImpl implements JpsElementContainer {
     myParent = parent;
   }
 
-  public JpsElementContainerImpl(@NotNull JpsElementContainerImpl original, @NotNull JpsCompositeElementBase<?> parent) {
+  public JpsElementContainerImpl(@NotNull JpsElementContainerEx original, @NotNull JpsCompositeElementBase<?> parent) {
     myParent = parent;
-    for (Map.Entry<JpsElementChildRole<?>, JpsElement> entry : original.myElements.entrySet()) {
+    for (Map.Entry<JpsElementChildRole<?>, JpsElement> entry : original.getElementsMap().entrySet()) {
       final JpsElementChildRole role = entry.getKey();
       final JpsElement copy = entry.getValue().getBulkModificationSupport().createCopy();
       JpsElementBase.setParent(copy, myParent);
@@ -82,18 +82,23 @@ public class JpsElementContainerImpl implements JpsElementContainer {
     JpsElementBase.setParent(removed, null);
   }
 
-  public void applyChanges(@NotNull JpsElementContainerImpl modified) {
+  @Override
+  protected Map<JpsElementChildRole<?>, JpsElement> getElementsMap() {
+    return myElements;
+  }
+
+  public void applyChanges(@NotNull JpsElementContainerEx modified) {
     for (JpsElementChildRole<?> role : myElements.keySet()) {
       applyChanges(role, modified);
     }
-    for (JpsElementChildRole<?> role : modified.myElements.keySet()) {
+    for (JpsElementChildRole<?> role : modified.getElementsMap().keySet()) {
       if (!myElements.containsKey(role)) {
         applyChanges(role, modified);
       }
     }
   }
 
-  private <T extends JpsElement> void applyChanges(JpsElementChildRole<T> role, JpsElementContainerImpl modified) {
+  private <T extends JpsElement> void applyChanges(JpsElementChildRole<T> role, JpsElementContainerEx modified) {
     final T child = getChild(role);
     final T modifiedChild = modified.getChild(role);
     if (child != null && modifiedChild != null) {

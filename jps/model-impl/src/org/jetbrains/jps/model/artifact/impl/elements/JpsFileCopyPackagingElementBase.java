@@ -3,7 +3,7 @@ package org.jetbrains.jps.model.artifact.impl.elements;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
-import org.jetbrains.jps.model.impl.JpsElementBase;
+import org.jetbrains.jps.model.ex.JpsElementBase;
 
 /**
  * @author nik

@@ -3,6 +3,8 @@ package org.jetbrains.jps.model.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.ex.JpsCompositeElementBase;
+import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 
 import java.util.List;
 
@@ -11,7 +13,8 @@ import java.util.List;
  */
 public abstract class JpsNamedElementReferenceBase<S extends JpsNamedElement, T extends JpsNamedElement, Self extends JpsNamedElementReferenceBase<S, T, Self>>
   extends JpsCompositeElementBase<Self> implements JpsElementReference<T> {
-  private static final JpsElementChildRole<JpsElementReference<? extends JpsCompositeElement>> PARENT_REFERENCE_ROLE = JpsElementChildRoleBase.create("parent");
+  private static final JpsElementChildRole<JpsElementReference<? extends JpsCompositeElement>> PARENT_REFERENCE_ROLE = JpsElementChildRoleBase
+    .create("parent");
   protected final String myElementName;
 
   protected JpsNamedElementReferenceBase(@NotNull String elementName, @NotNull JpsElementReference<? extends JpsCompositeElement> parentReference) {

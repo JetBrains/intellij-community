@@ -1,20 +1,21 @@
-package org.jetbrains.jps.model.impl;
+package org.jetbrains.jps.model.ex;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsCompositeElement;
+import org.jetbrains.jps.model.JpsElementContainer;
 
 /**
  * @author nik
  */
 public abstract class JpsCompositeElementBase<Self extends JpsCompositeElementBase<Self>> extends JpsElementBase<Self> implements JpsCompositeElement {
-  protected final JpsElementContainerImpl myContainer;
+  protected final JpsElementContainerEx myContainer;
 
   protected JpsCompositeElementBase() {
-    myContainer = new JpsElementContainerImpl(this);
+    myContainer = JpsExElementFactory.getInstance().createContainer(this);
   }
 
   protected JpsCompositeElementBase(JpsCompositeElementBase<Self> original) {
-    myContainer = new JpsElementContainerImpl(original.myContainer, this);
+    myContainer = JpsExElementFactory.getInstance().createContainerCopy(original.myContainer, this);
   }
 
   public void applyChanges(@NotNull Self modified) {
@@ -23,7 +24,7 @@ public abstract class JpsCompositeElementBase<Self extends JpsCompositeElementBa
 
   @Override
   @NotNull
-  public JpsElementContainerImpl getContainer() {
+  public JpsElementContainer getContainer() {
     return myContainer;
   }
 }

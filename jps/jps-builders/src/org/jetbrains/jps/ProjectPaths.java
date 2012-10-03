@@ -15,6 +15,7 @@ import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsSdkDependency;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.util.*;

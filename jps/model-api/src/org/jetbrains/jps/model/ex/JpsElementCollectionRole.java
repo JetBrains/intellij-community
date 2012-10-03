@@ -1,4 +1,4 @@
-package org.jetbrains.jps.model.impl;
+package org.jetbrains.jps.model.ex;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
@@ -18,7 +18,7 @@ public class JpsElementCollectionRole<E extends JpsElement> extends JpsElementCh
   @NotNull
   @Override
   public JpsElementCollection<E> create() {
-    return new JpsElementCollectionImpl<E>(myChildRole);
+    return JpsExElementFactory.getInstance().createCollection(myChildRole);
   }
 
   @Override

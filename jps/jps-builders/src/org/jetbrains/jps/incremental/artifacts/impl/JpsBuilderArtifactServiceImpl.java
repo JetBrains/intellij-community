@@ -7,8 +7,8 @@ import org.jetbrains.jps.model.JpsElementCollection;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.JpsArtifactService;
-import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
-import org.jetbrains.jps.model.impl.JpsElementCollectionRole;
+import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
+import org.jetbrains.jps.model.ex.JpsElementCollectionRole;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.ArrayList;

@@ -2,11 +2,11 @@ package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
+import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactPathUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +38,7 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
     String targetPath;
     if (!FileUtil.filesEqual(file, getRootFile())) {
       final String relativePath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(getRootFile().getPath()), filePath, '/');
-      targetPath = JpsPathUtil.appendToPath(outputPath, relativePath);
+      targetPath = JpsArtifactPathUtil.appendToPath(outputPath, relativePath);
     }
     else {
       targetPath = outputPath;

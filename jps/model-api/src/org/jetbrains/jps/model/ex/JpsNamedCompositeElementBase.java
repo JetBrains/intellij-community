@@ -1,4 +1,4 @@
-package org.jetbrains.jps.model.impl;
+package org.jetbrains.jps.model.ex;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
@@ -6,7 +6,8 @@ import org.jetbrains.jps.model.*;
 /**
  * @author nik
  */
-public abstract class JpsNamedCompositeElementBase<Self extends JpsNamedCompositeElementBase<Self>> extends JpsCompositeElementBase<Self> implements JpsNamedElement {
+public abstract class JpsNamedCompositeElementBase<Self extends JpsNamedCompositeElementBase<Self>> extends JpsCompositeElementBase<Self>
+  implements JpsNamedElement {
   private String myName;
 
   protected JpsNamedCompositeElementBase(@NotNull String name) {

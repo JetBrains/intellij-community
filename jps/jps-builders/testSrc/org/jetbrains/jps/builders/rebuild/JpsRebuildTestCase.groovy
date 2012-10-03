@@ -2,7 +2,7 @@ package org.jetbrains.jps.builders.rebuild
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.TestFileSystemBuilder
-import org.jetbrains.jps.JpsPathUtil
+import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.jps.builders.JpsBuildTestCase
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 /**

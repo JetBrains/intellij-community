@@ -5,6 +5,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.ex.JpsElementBase;
 
 import java.util.*;
 
@@ -16,7 +17,7 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
   private final Map<E, E> myCopyToOriginal;
   private final JpsElementChildRole<E> myChildRole;
 
-  public JpsElementCollectionImpl(JpsElementChildRole<E> role) {
+  JpsElementCollectionImpl(JpsElementChildRole<E> role) {
     myChildRole = role;
     myElements = new SmartList<E>();
     myCopyToOriginal = null;

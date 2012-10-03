@@ -56,6 +56,7 @@
     <orderEntry type="module" module-name="maven2-server-impl" scope="RUNTIME" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="jps-model-impl" />
   </component>
   <component name="copyright">
     <Base>

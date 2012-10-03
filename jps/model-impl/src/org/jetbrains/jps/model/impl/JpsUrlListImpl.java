@@ -2,6 +2,7 @@ package org.jetbrains.jps.model.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.ex.JpsElementBase;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -8,8 +8,8 @@ import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.JpsArtifactType;
 import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
-import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
-import org.jetbrains.jps.model.impl.JpsNamedCompositeElementBase;
+import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
+import org.jetbrains.jps.model.ex.JpsNamedCompositeElementBase;
 
 /**
  * @author nik

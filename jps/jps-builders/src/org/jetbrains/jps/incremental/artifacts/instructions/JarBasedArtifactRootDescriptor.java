@@ -4,12 +4,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
 import org.jetbrains.jps.incremental.artifacts.JarPathUtil;
+import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactPathUtil;
 
 import java.io.*;
 import java.util.Collections;
@@ -70,7 +70,7 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
     processEntries(new EntryProcessor() {
       @Override
       public void process(@Nullable InputStream inputStream, @NotNull String relativePath) throws IOException {
-        final String fullOutputPath = FileUtil.toSystemDependentName(JpsPathUtil.appendToPath(outputPath, relativePath));
+        final String fullOutputPath = FileUtil.toSystemDependentName(JpsArtifactPathUtil.appendToPath(outputPath, relativePath));
         final File outputFile = new File(fullOutputPath);
 
         FileUtil.createParentDirs(outputFile);

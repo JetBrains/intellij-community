@@ -3,6 +3,7 @@ package org.jetbrains.jps.model.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 
 import java.util.Map;
 

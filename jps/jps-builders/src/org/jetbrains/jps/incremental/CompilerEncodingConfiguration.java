@@ -1,11 +1,12 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.JpsPathUtil;
+import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
@@ -59,7 +60,7 @@ public class CompilerEncodingConfiguration {
         map.put(module, set);
 
         final File sourceRoot = rootDescriptor.root;
-        File current = FileUtil.getParentFile(file);
+        File current = FileUtilRt.getParentFile(file);
         String parentCharset = null;
         while (current != null) {
           final String currentCharset = myUrlToCharset.get(FileUtil.toSystemIndependentName(current.getAbsolutePath()));
@@ -69,7 +70,7 @@ public class CompilerEncodingConfiguration {
           if (FileUtil.filesEqual(current, sourceRoot)) {
             break;
           }
-          current = FileUtil.getParentFile(current);
+          current = FileUtilRt.getParentFile(current);
         }
         if (parentCharset != null) {
           set.add(parentCharset);

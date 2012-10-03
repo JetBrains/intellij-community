@@ -3,6 +3,7 @@ package org.jetbrains.jps.model.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElementCreator;
 import org.jetbrains.jps.model.JpsUrlList;
+import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 
 /**
  * @author nik

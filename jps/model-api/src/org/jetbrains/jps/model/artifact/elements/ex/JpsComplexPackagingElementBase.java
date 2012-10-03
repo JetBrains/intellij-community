@@ -1,7 +1,7 @@
-package org.jetbrains.jps.model.artifact.impl.elements;
+package org.jetbrains.jps.model.artifact.elements.ex;
 
 import org.jetbrains.jps.model.artifact.elements.JpsComplexPackagingElement;
-import org.jetbrains.jps.model.impl.JpsCompositeElementBase;
+import org.jetbrains.jps.model.ex.JpsCompositeElementBase;
 
 /**
  * @author nik

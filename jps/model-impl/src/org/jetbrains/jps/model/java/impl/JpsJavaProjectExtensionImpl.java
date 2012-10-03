@@ -2,7 +2,7 @@ package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.impl.JpsElementBase;
+import org.jetbrains.jps.model.ex.JpsElementBase;
 import org.jetbrains.jps.model.java.JpsJavaProjectExtension;
 import org.jetbrains.jps.model.java.LanguageLevel;
 
