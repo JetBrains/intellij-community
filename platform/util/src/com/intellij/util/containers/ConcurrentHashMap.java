@@ -18,6 +18,7 @@ package com.intellij.util.containers;
 
 import com.intellij.util.ConcurrencyUtil;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -144,7 +145,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      * subclasses from ReentrantLock opportunistically, just to
      * simplify some locking and avoid separate construction.
      **/
-    final static class Segment<K,V> extends ReentrantLock implements Serializable {
+    static final class Segment<K,V> extends ReentrantLock implements Serializable {
         /*
          * Segments maintain a table of entry lists that are ALWAYS
          * kept in a consistent state, so can be read without locking.
@@ -592,6 +593,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     }
 
     // inherit Map javadoc
+    @Override
     public boolean isEmpty() {
         final Segment[] segments = this.segments;
         /*
@@ -625,6 +627,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     }
 
     // inherit Map javadoc
+    @Override
     public int size() {
         final Segment[] segments = this.segments;
         long sum = 0;
@@ -678,6 +681,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      * @throws  NullPointerException  if the key is
      *               <tt>null</tt>.
      */
+    @Override
     public V get(Object key) {
       int hash = myHashingStrategy.computeHashCode((K)key); // throws NullPointerException if key null
         return segmentFor(hash).get((K)key, hash);
@@ -693,6 +697,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      * @throws  NullPointerException  if the key is
      *               <tt>null</tt>.
      */
+    @Override
     public boolean containsKey(Object key) {
       int hash = myHashingStrategy.computeHashCode((K)key); // throws NullPointerException if key null
         return segmentFor(hash).containsKey((K)key, hash);
@@ -709,9 +714,8 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      * specified value.
      * @throws  NullPointerException  if the value is <tt>null</tt>.
      */
-    public boolean containsValue(Object value) {
-        if (value == null)
-            throw new NullPointerException();
+    @Override
+    public boolean containsValue(@NotNull Object value) {
 
         // See explanation of modCount use above
 
@@ -793,9 +797,8 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      * @throws  NullPointerException  if the key or value is
      *               <tt>null</tt>.
      */
-    public V put(K key, V value) {
-        if (value == null)
-            throw new NullPointerException();
+    @Override
+    public V put(K key, @NotNull V value) {
       int hash = myHashingStrategy.computeHashCode(key);
         return segmentFor(hash).put(key, hash, value, false);
     }
@@ -818,9 +821,8 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      * @throws NullPointerException if the specified key or value is
      *            <tt>null</tt>.
      */
-    public V putIfAbsent(K key, V value) {
-        if (value == null)
-            throw new NullPointerException();
+    @Override
+    public V putIfAbsent(@NotNull K key, @NotNull V value) {
       int hash = myHashingStrategy.computeHashCode(key);
         return segmentFor(hash).put(key, hash, value, true);
     }
@@ -834,6 +836,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      *
      * @param t Mappings to be stored in this map.
      */
+    @Override
     public void putAll(Map<? extends K, ? extends V> t) {
         for (Iterator<? extends Entry<? extends K, ? extends V>> it = (Iterator<? extends Entry<? extends K, ? extends V>>) t.entrySet().iterator(); it.hasNext(); ) {
             Entry<? extends K, ? extends V> e = it.next();
@@ -851,6 +854,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      * @throws  NullPointerException  if the key is
      *               <tt>null</tt>.
      */
+    @Override
     public V remove(Object key) {
       int hash = myHashingStrategy.computeHashCode((K)key);
         return segmentFor(hash).remove((K)key, hash, null);
@@ -872,7 +876,8 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      * @throws NullPointerException if the specified key is
      *            <tt>null</tt>.
      */
-    public boolean remove(Object key, Object value) {
+    @Override
+    public boolean remove(@NotNull Object key, Object value) {
       int hash = myHashingStrategy.computeHashCode((K)key);
         return segmentFor(hash).remove((K)key, hash, value) != null;
     }
@@ -895,9 +900,8 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      * @throws NullPointerException if the specified key or values are
      * <tt>null</tt>.
      */
-    public boolean replace(K key, V oldValue, V newValue) {
-        if (oldValue == null || newValue == null)
-            throw new NullPointerException();
+    @Override
+    public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
       int hash = myHashingStrategy.computeHashCode(key);
         return segmentFor(hash).replace(key, hash, oldValue, newValue);
     }
@@ -918,9 +922,8 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      * @throws NullPointerException if the specified key or value is
      *            <tt>null</tt>.
      */
-    public V replace(K key, V value) {
-        if (value == null)
-            throw new NullPointerException();
+    @Override
+    public V replace(@NotNull K key, @NotNull V value) {
       int hash = myHashingStrategy.computeHashCode(key);
         return segmentFor(hash).replace(key, hash, value);
     }
@@ -929,9 +932,9 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     /**
      * Removes all mappings from this map.
      */
+    @Override
     public void clear() {
-        for (int i = 0; i < segments.length; ++i)
-            segments[i].clear();
+      for (Segment segment : segments) segment.clear();
     }
 
     /**
@@ -950,6 +953,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      *
      * @return a set view of the keys contained in this map.
      */
+    @Override
     public Set<K> keySet() {
         Set<K> ks = keySet;
         return (ks != null) ? ks : (keySet = new KeySet());
@@ -972,6 +976,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      *
      * @return a collection view of the values contained in this map.
      */
+    @Override
     public Collection<V> values() {
         Collection<V> vs = values;
         return (vs != null) ? vs : (values = new Values());
@@ -995,6 +1000,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      *
      * @return a collection view of the mappings contained in this map.
      */
+    @Override
     public Set<Entry<K,V>> entrySet() {
         Set<Entry<K,V>> es = entrySet;
         return (es != null) ? es : (entrySet = (Set<Entry<K,V>>) (Set) new EntrySet());
@@ -1080,12 +1086,16 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     }
 
     final class KeyIterator extends HashIterator implements Iterator<K>, Enumeration<K> {
+        @Override
         public K next() { return super.nextEntry().key; }
+        @Override
         public K nextElement() { return super.nextEntry().key; }
     }
 
     final class ValueIterator extends HashIterator implements Iterator<V>, Enumeration<V> {
+        @Override
         public V next() { return super.nextEntry().value; }
+        @Override
         public V nextElement() { return super.nextEntry().value; }
     }
 
@@ -1098,23 +1108,27 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      * itself acts as a forwarding pseudo-entry.
      */
     final class EntryIterator extends HashIterator implements Entry<K,V>, Iterator<Entry<K,V>> {
+        @Override
         public Entry<K,V> next() {
             nextEntry();
             return this;
         }
 
+        @Override
         public K getKey() {
             if (lastReturned == null)
                 throw new IllegalStateException("Entry was removed");
             return lastReturned.key;
         }
 
+        @Override
         public V getValue() {
             if (lastReturned == null)
                 throw new IllegalStateException("Entry was removed");
             return ConcurrentHashMap.this.get(lastReturned.key);
         }
 
+        @Override
         public V setValue(V value) {
             if (lastReturned == null)
                 throw new IllegalStateException("Entry was removed");
@@ -1159,27 +1173,34 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     }
 
     final class KeySet extends AbstractSet<K> {
+        @Override
         public Iterator<K> iterator() {
             return new KeyIterator();
         }
+        @Override
         public int size() {
             return ConcurrentHashMap.this.size();
         }
+        @Override
         public boolean contains(Object o) {
             return ConcurrentHashMap.this.containsKey(o);
         }
+        @Override
         public boolean remove(Object o) {
             return ConcurrentHashMap.this.remove(o) != null;
         }
+        @Override
         public void clear() {
             ConcurrentHashMap.this.clear();
         }
+        @Override
         public Object[] toArray() {
             Collection<K> c = new ArrayList<K>();
             for (Iterator<K> i = iterator(); i.hasNext(); )
                 c.add(i.next());
             return c.toArray();
         }
+        @Override
         public <T> T[] toArray(T[] a) {
             Collection<K> c = new ArrayList<K>();
             for (Iterator<K> i = iterator(); i.hasNext(); )
@@ -1189,24 +1210,30 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     }
 
     final class Values extends AbstractCollection<V> {
+        @Override
         public Iterator<V> iterator() {
             return new ValueIterator();
         }
+        @Override
         public int size() {
             return ConcurrentHashMap.this.size();
         }
+        @Override
         public boolean contains(Object o) {
             return ConcurrentHashMap.this.containsValue(o);
         }
+        @Override
         public void clear() {
             ConcurrentHashMap.this.clear();
         }
+        @Override
         public Object[] toArray() {
             Collection<V> c = new ArrayList<V>();
             for (Iterator<V> i = iterator(); i.hasNext(); )
                 c.add(i.next());
             return c.toArray();
         }
+        @Override
         public <T> T[] toArray(T[] a) {
             Collection<V> c = new ArrayList<V>();
             for (Iterator<V> i = iterator(); i.hasNext(); )
@@ -1216,9 +1243,11 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     }
 
     final class EntrySet extends AbstractSet<Entry<K,V>> {
+        @Override
         public Iterator<Entry<K,V>> iterator() {
             return new EntryIterator();
         }
+        @Override
         public boolean contains(Object o) {
             if (!(o instanceof Entry))
                 return false;
@@ -1226,18 +1255,22 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
             V v = ConcurrentHashMap.this.get(e.getKey());
             return v != null && v.equals(e.getValue());
         }
+        @Override
         public boolean remove(Object o) {
             if (!(o instanceof Entry))
                 return false;
             Entry<K,V> e = (Entry<K,V>)o;
             return ConcurrentHashMap.this.remove(e.getKey(), e.getValue());
         }
+        @Override
         public int size() {
             return ConcurrentHashMap.this.size();
         }
+        @Override
         public void clear() {
             ConcurrentHashMap.this.clear();
         }
+        @Override
         public Object[] toArray() {
             // Since we don't ordinarily have distinct Entry objects, we
             // must pack elements using exportable SimpleEntry
@@ -1246,6 +1279,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
                 c.add(new SimpleEntry(i.next()));
             return c.toArray();
         }
+        @Override
         public <T> T[] toArray(T[] a) {
             Collection<Entry<K,V>> c = new ArrayList<Entry<K,V>>(size());
             for (Iterator<Entry<K,V>> i = iterator(); i.hasNext(); )
@@ -1273,14 +1307,17 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
             this.value = e.getValue();
         }
 
+        @Override
         public K getKey() {
             return key;
         }
 
+        @Override
         public V getValue() {
             return value;
         }
 
+        @Override
         public V setValue(V value) {
             V oldValue = this.value;
             this.value = value;
@@ -1368,6 +1405,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
         }
     }
 
+  @Override
   public int computeHashCode(final K object) {
     int h = object.hashCode();
     h += ~(h << 9);
@@ -1377,6 +1415,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     return h;
   }
 
+  @Override
   public boolean equals(final K o1, final K o2) {
     return o1.equals(o2);
   }

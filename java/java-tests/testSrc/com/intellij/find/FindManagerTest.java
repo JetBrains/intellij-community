@@ -50,10 +50,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/*
+/**
  * @author: MYakovlev
- * Date: Oct 17, 2002
- * Time: 7:53:31 PM
+ * @since Oct 17, 2002
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class FindManagerTest extends DaemonAnalyzerTestCase {
@@ -438,6 +437,4 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       fixture.tearDown();
     }
   }
-
-
 }
