@@ -23,6 +23,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -35,9 +36,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /**
@@ -45,18 +46,16 @@ import java.util.zip.ZipInputStream;
  *         Date: 10/1/12
  */
 public class ArchivedProjectTemplate implements ProjectTemplate {
+
   private final String myDisplayName;
-  private final String myDescription;
   private final URL myArchivePath;
   private final WizardContext myContext;
 
   public ArchivedProjectTemplate(String displayName,
-                                 String description,
                                  URL archivePath,
                                  WizardContext context) {
 
     myDisplayName = displayName;
-    myDescription = description;
     myArchivePath = archivePath;
     myContext = context;
   }
@@ -68,7 +67,19 @@ public class ArchivedProjectTemplate implements ProjectTemplate {
 
   @Override
   public String getDescription() {
-    return myDescription;
+    try {
+      ZipInputStream stream = getStream();
+      ZipEntry entry;
+      while ((entry = stream.getNextEntry()) != null) {
+        if (entry.getName().endsWith("/description.html")) {
+          return StreamUtil.readText(stream);
+        }
+      }
+    }
+    catch (IOException e) {
+      return null;
+    }
+    return null;
   }
 
   @NotNull
@@ -81,9 +92,9 @@ public class ArchivedProjectTemplate implements ProjectTemplate {
         final String path = myContext.getProjectFileDirectory();
         String iml;
         try {
-          InputStream stream = myArchivePath.openStream();
           File dir = new File(path);
-          ZipUtil.unzip(null, dir, new ZipInputStream(stream));
+          ZipInputStream zipInputStream = getStream();
+          ZipUtil.unzip(null, dir, zipInputStream);
           VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
           RefreshQueue.getInstance().refresh(false, true, null, virtualFile);
           iml = ContainerUtil.find(dir.list(), new Condition<String>() {
@@ -99,6 +110,10 @@ public class ArchivedProjectTemplate implements ProjectTemplate {
         return ImportImlMode.setUpLoader(path + "/" + iml).commit(project, model, modulesProvider);
       }
     };
+  }
+
+  private ZipInputStream getStream() throws IOException {
+    return new ZipInputStream(myArchivePath.openStream());
   }
 
   @Override

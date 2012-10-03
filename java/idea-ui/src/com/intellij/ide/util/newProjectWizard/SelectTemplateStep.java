@@ -26,6 +26,7 @@ import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -48,6 +49,8 @@ public class SelectTemplateStep extends ModuleWizardStep {
   private JBList myTemplatesList;
   private JPanel mySettingsPanel;
   private SearchTextField mySearchField;
+  private JBLabel myDescriptionLabel;
+  private JPanel myDescriptionPanel;
 
   public SelectTemplateStep(WizardContext context) {
 
@@ -78,6 +81,10 @@ public class SelectTemplateStep extends ModuleWizardStep {
           if (settingsPanel != null) {
             mySettingsPanel.add(settingsPanel, BorderLayout.NORTH);
           }
+          mySettingsPanel.setVisible(settingsPanel != null);
+          String description = template.getDescription();
+          myDescriptionLabel.setText(description);
+          myDescriptionPanel.setVisible(description != null);
         }
         mySettingsPanel.revalidate();
         mySettingsPanel.repaint();

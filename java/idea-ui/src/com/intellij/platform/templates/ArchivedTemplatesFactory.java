@@ -16,7 +16,10 @@
 package com.intellij.platform.templates;
 
 import com.intellij.ide.fileTemplates.impl.UrlUtil;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import org.jetbrains.annotations.NotNull;
@@ -34,23 +37,36 @@ public class ArchivedTemplatesFactory implements ProjectTemplatesFactory {
   @NotNull
   @Override
   public ProjectTemplate[] createTemplates(WizardContext context) {
-    try {
-      List<ProjectTemplate> templates = new ArrayList<ProjectTemplate>();
-      Enumeration<URL> resources = getClass().getClassLoader().getResources("resources/projectTemplates");
-      Set<URL> urls = new HashSet<URL>(Collections.list(resources));
-      for (URL url : urls) {
+
+    IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
+    Set<URL> urls = new HashSet<URL>();
+    for (IdeaPluginDescriptor plugin : plugins) {
+      try {
+        Enumeration<URL> resources = plugin.getPluginClassLoader().getResources("resources/projectTemplates");
+        urls.addAll(Collections.list(resources));
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+
+    List<ProjectTemplate> templates = new ArrayList<ProjectTemplate>();
+    for (URL url : urls) {
+      try {
         final List<String> children = UrlUtil.getChildrenRelativePaths(url);
         for (String child : children) {
           if (child.endsWith(".zip")) {
             final URL templateUrl = new URL(url.toExternalForm() + "/" + child);
-            templates.add(new ArchivedProjectTemplate(child, null, templateUrl, context));
+            templates.add(new ArchivedProjectTemplate(child, templateUrl, context));
           }
         }
       }
-      return templates.toArray(new ProjectTemplate[templates.size()]);
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    return templates.toArray(new ProjectTemplate[templates.size()]);
   }
+
+  private final static Logger LOG = Logger.getInstance(ArchivedTemplatesFactory.class);
 }

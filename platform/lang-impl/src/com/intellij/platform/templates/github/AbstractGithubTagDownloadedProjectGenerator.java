@@ -119,8 +119,5 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
   }
 
   @Nullable
-  public abstract String getHomepageUrl();
-
-  @Nullable
   public abstract String getDescription();
 }

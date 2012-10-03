@@ -29,6 +29,7 @@ public interface ProjectTemplate {
 
   String getName();
 
+  @Nullable
   String getDescription();
 
   @Nullable
