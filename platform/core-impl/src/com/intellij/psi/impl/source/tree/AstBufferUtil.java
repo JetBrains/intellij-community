@@ -22,7 +22,9 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,37 +36,9 @@ public class AstBufferUtil {
   }
 
   public static int toBuffer(@NotNull final ASTNode element, @Nullable final char[] buffer, int offset, final boolean skipWhitespaceAndComments) {
-    final int[] result = {offset};
-
-    ((TreeElement)element).acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
-      @Override
-      public void visitLeaf(LeafElement element) {
-        ProgressIndicatorProvider.checkCanceled();
-        if (element instanceof ForeignLeafPsiElement ||
-            (skipWhitespaceAndComments && (element instanceof PsiWhiteSpace || element instanceof PsiComment))) {
-          return;
-        }
-
-        result[0] = element.copyTo(buffer, result[0]);
-      }
-
-      @Override
-      public void visitComposite(CompositeElement composite) {
-        if (composite instanceof LazyParseableElement) {
-          LazyParseableElement lpe = (LazyParseableElement)composite;
-          int lpeResult = lpe.copyTo(buffer, result[0]);
-          if (lpeResult >= 0) {
-            result[0] = lpeResult;
-            return;
-          }
-          assert lpe.isParsed();
-        }
-
-        super.visitComposite(composite);
-      }
-    });
-
-    return result[0];
+    BufferVisitor visitor = new BufferVisitor(skipWhitespaceAndComments, skipWhitespaceAndComments, offset, buffer);
+    ((TreeElement)element).acceptTree(visitor);
+    return visitor.end;
   }
 
   public static String getTextSkippingWhitespaceComments(@NotNull ASTNode element) {
@@ -72,5 +46,73 @@ public class AstBufferUtil {
     char[] buffer = new char[length];
     toBuffer(element, buffer, 0, true);
     return new String(buffer);
+  }
+
+  public static class BufferVisitor extends RecursiveTreeElementWalkingVisitor {
+    private final boolean skipWhitespace;
+    private final boolean skipComments;
+
+    protected final int offset;
+    protected int end;
+    protected final char[] buffer;
+
+    public BufferVisitor(PsiElement element, boolean skipWhitespace, boolean skipComments) {
+      this(skipWhitespace, skipComments, 0, new char[element.getTextLength()]);
+      ((TreeElement)element.getNode()).acceptTree(this);
+    }
+
+    public BufferVisitor(boolean skipWhitespace, boolean skipComments, int offset, @Nullable char[] buffer) {
+      super(false);
+
+      this.skipWhitespace = skipWhitespace;
+      this.skipComments = skipComments;
+      this.buffer = buffer;
+      this.offset = offset;
+      end = offset;
+    }
+
+    public int getEnd() {
+      return end;
+    }
+
+    public char[] getBuffer() {
+      assert buffer != null;
+      return buffer;
+    }
+
+    public CharSequence createCharSequence() {
+      assert buffer != null;
+      return new CharArrayCharSequence(buffer, offset, end);
+    }
+
+    @Override
+    public void visitLeaf(LeafElement element) {
+      ProgressIndicatorProvider.checkCanceled();
+      if (!isIgnored(element)) {
+        end = element.copyTo(buffer, end);
+      }
+    }
+
+    protected boolean isIgnored(LeafElement element) {
+      return element instanceof ForeignLeafPsiElement ||
+             (skipWhitespace && element instanceof PsiWhiteSpace) ||
+             (skipComments && element instanceof PsiComment);
+    }
+
+    @Override
+    public void visitComposite(CompositeElement composite) {
+      if (composite instanceof LazyParseableElement) {
+        LazyParseableElement lpe = (LazyParseableElement)composite;
+        assert buffer != null;
+        int lpeResult = lpe.copyTo(buffer, end);
+        if (lpeResult >= 0) {
+          end = lpeResult;
+          return;
+        }
+        assert lpe.isParsed();
+      }
+
+      super.visitComposite(composite);
+    }
   }
 }
