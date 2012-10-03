@@ -64,7 +64,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
   Map<Configurable, EditorNode> myConfigurable2Node = new HashMap<Configurable, EditorNode>();
 
   MergingUpdateQueue mySelection;
-  private final OptionsTree.Renderer myRendrer;
+  private final OptionsTree.Renderer myRenderer;
 
   public OptionsTree(Project project, ConfigurableGroup[] groups, OptionsEditorContext context) {
     myProject = project;
@@ -85,8 +85,8 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
     myTree.setRowHeight(-1);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-    myRendrer = new Renderer();
-    myTree.setCellRenderer(myRendrer);
+    myRenderer = new Renderer();
+    myTree.setCellRenderer(myRenderer);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
     myBuilder = new MyBuilder(structure);
@@ -676,13 +676,13 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
             final boolean selected = isPathSelected(path);
             final boolean expanded = isExpanded(path);
             final Component comp =
-              myRendrer.getTreeCellRendererComponent(this, node, selected, expanded, node.isLeaf(), getRowForPath(path), isFocusOwner());
+              myRenderer.getTreeCellRendererComponent(this, node, selected, expanded, node.isLeaf(), getRowForPath(path), isFocusOwner());
 
             comp.setBounds(bounds);
             comp.validate();
 
             Point point = new Point(e.getX() - bounds.x, e.getY() - bounds.y);
-            if (myRendrer.isUnderHandle(point)) {
+            if (myRenderer.isUnderHandle(point)) {
               if (toggleNow) {
                 ui.toggleExpandState(path);
                 e.consume();
