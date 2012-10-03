@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +68,12 @@ public class IncomingChangesIndicator {
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new VcsListener() {
       @Override
       public void directoryMappingChanged() {
-        updateIndicatorVisibility();
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            updateIndicatorVisibility();
+          }
+        });
       }
     });
   }
