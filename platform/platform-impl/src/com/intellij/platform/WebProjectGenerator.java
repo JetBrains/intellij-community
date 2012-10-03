@@ -38,6 +38,7 @@ import javax.swing.*;
  */
 public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerator<T> {
 
+  @NotNull
   @Nls
   @Override
   public abstract String getName();

@@ -27,6 +27,7 @@ import javax.swing.*;
  */
 public interface ProjectTemplate {
 
+  @NotNull
   String getName();
 
   @Nullable

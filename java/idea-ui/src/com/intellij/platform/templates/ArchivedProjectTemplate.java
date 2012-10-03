@@ -60,6 +60,7 @@ public class ArchivedProjectTemplate implements ProjectTemplate {
     myContext = context;
   }
 
+  @NotNull
   @Override
   public String getName() {
     return myDisplayName;

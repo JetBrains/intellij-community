@@ -19,6 +19,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -86,7 +87,7 @@ public class SelectTemplateStep extends ModuleWizardStep {
           mySettingsPanel.setVisible(settingsPanel != null);
           String description = template.getDescription();
           myDescriptionPane.setText(description);
-          myDescriptionPanel.setVisible(description != null);
+          myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
         }
         mySettingsPanel.revalidate();
         mySettingsPanel.repaint();

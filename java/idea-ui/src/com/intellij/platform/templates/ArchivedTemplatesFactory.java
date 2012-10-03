@@ -34,6 +34,8 @@ import java.util.*;
  */
 public class ArchivedTemplatesFactory implements ProjectTemplatesFactory {
 
+  private static final String ZIP = ".zip";
+
   @NotNull
   @Override
   public ProjectTemplate[] createTemplates(WizardContext context) {
@@ -55,9 +57,9 @@ public class ArchivedTemplatesFactory implements ProjectTemplatesFactory {
       try {
         final List<String> children = UrlUtil.getChildrenRelativePaths(url);
         for (String child : children) {
-          if (child.endsWith(".zip")) {
+          if (child.endsWith(ZIP)) {
             final URL templateUrl = new URL(url.toExternalForm() + "/" + child);
-            templates.add(new ArchivedProjectTemplate(child, templateUrl, context));
+            templates.add(new ArchivedProjectTemplate(child.substring(0, child.length() - ZIP.length()), templateUrl, context));
           }
         }
       }
