@@ -82,6 +82,14 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
       }
     }
 
+    PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    if (psiElements != null && psiElements.length > 1) {
+      RefactoringActionHandler handler = getHandler(psiElements[0].getLanguage(), psiElements[0]);
+      if (handler != null && isEnabledOnElements(psiElements)) {
+        return handler;
+      }
+    }
+
     if (element == null) {
       element = referenced;
     }
