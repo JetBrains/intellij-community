@@ -20,5 +20,4 @@ private List testMethod(int a) {
     return [b, c]
 }
 
-
 print a+b+c

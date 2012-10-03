@@ -17,5 +17,4 @@ private boolean testMethod(boolean cond) {
     return result
 }
 
-
 println result

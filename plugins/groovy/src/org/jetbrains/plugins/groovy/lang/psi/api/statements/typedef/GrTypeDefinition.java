@@ -38,8 +38,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public interface GrTypeDefinition extends GrTopStatement, NavigatablePsiElement, PsiClass, GrTopLevelDefinition, GrMemberOwner,
-                                          GrDocCommentOwner, GrMember {
+public interface GrTypeDefinition
+  extends GrTopStatement, NavigatablePsiElement, PsiClass, GrTopLevelDefinition, GrDocCommentOwner, GrMember {
 
   GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
   ArrayFactory<GrTypeDefinition> ARRAY_FACTORY = new ArrayFactory<GrTypeDefinition>() {

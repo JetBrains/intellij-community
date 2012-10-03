@@ -130,7 +130,7 @@ public abstract class CreateClassFix {
 
       GrMethod method = GroovyPsiElementFactory.getInstance(project).createConstructorFromText(name, paramTypes, paramNames, "{\n}");
 
-      method = targetClass.addMemberDeclaration(method, null);
+      method = (GrMethod)targetClass.addBefore(method, null);
       final PsiNameIdentifierOwner context = PsiTreeUtil.getParentOfType(refElement, PsiMethod.class, PsiClass.class);
       IntentionUtils.createTemplateForMethod(argTypes, paramTypesExpressions, method, targetClass, new TypeConstraint[0], true, context);
     }
