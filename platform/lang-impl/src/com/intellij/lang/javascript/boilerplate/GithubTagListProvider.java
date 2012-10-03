@@ -1,4 +1,4 @@
-package com.intellij.platform.templates.github;
+package com.intellij.lang.javascript.boilerplate;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSet;
@@ -12,6 +12,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.platform.templates.github.DownloadUtil;
+import com.intellij.platform.templates.github.GeneratorException;
+import com.intellij.platform.templates.github.GithubTagInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +24,7 @@ import java.io.IOException;
 /**
  * @author Sergey Simonchik
  */
-class GithubTagListProvider {
+public class GithubTagListProvider {
 
   private static final Logger LOG = Logger.getInstance(GithubTagListProvider.class);
 

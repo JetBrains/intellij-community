@@ -1,4 +1,4 @@
-package com.intellij.platform.templates.github;
+package com.intellij.lang.javascript.boilerplate;
 
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.templates.github.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

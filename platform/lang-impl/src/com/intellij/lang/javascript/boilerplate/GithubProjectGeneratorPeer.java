@@ -1,10 +1,11 @@
-package com.intellij.platform.templates.github;
+package com.intellij.lang.javascript.boilerplate;
 
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.platform.WebProjectGenerator;
+import com.intellij.platform.templates.github.GithubTagInfo;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;

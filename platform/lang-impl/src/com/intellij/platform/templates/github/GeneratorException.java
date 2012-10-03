@@ -3,7 +3,7 @@ package com.intellij.platform.templates.github;
 /**
  * @author Sergey Simonchik
  */
-class GeneratorException extends Exception {
+public class GeneratorException extends Exception {
   public GeneratorException(String message) {
     super(message);
   }
