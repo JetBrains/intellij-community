@@ -23,12 +23,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 /**
  * @author Maxim.Medvedev
  */
-public class CreateFieldFix  {
+public class CreateFieldFix {
   private final PsiClass myTargetClass;
 
   protected PsiClass getTargetClass() {
@@ -44,12 +47,20 @@ public class CreateFieldFix  {
   }
 
   protected void doFix(Project project, String[] modifiers, String fieldName, TypeConstraint[] typeConstraints, PsiElement context) throws IncorrectOperationException {
-    PsiField field = JVMElementFactories.getFactory(myTargetClass.getLanguage(), project).createField(fieldName, PsiType.INT);
+    JVMElementFactory factory = JVMElementFactories.getFactory(myTargetClass.getLanguage(), project);
+    if (factory == null) return;
+
+    PsiField field = factory.createField(fieldName, PsiType.INT);
+    if (myTargetClass instanceof GroovyScriptClass) {
+      field.getModifierList().addAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD);
+    }
+
     for (String modifier : modifiers) {
       PsiUtil.setModifierProperty(field, modifier, true);
     }
 
     field = CreateFieldFromUsageHelper.insertField(myTargetClass, field, context);
+    GrReferenceAdjuster.shortenReferences(field.getParent());
 
     Editor newEditor = QuickfixUtil.positionCursor(project, myTargetClass.getContainingFile(), field);
 
