@@ -19,3 +19,13 @@ public class Bug {
     }
   }
 }
+class PointlessBooleanExpression {
+  void foo(boolean a, boolean b) {
+    boolean c = !(b && false);
+    boolean d = a ^ b ^ true;
+    boolean x = a ^ !true ^ b;
+
+    boolean y = false || c;
+    boolean z = b != true;
+  }
+}

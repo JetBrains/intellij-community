@@ -22,7 +22,7 @@ import com.siyeh.ig.IGInspectionTestCase;
  */
 public class PointlessBooleanExpressionInspectionTest extends IGInspectionTestCase {
 
-  public void testIgnoreExpressionsContainingConstants() throws Exception {
+  public void test() throws Exception {
     final PointlessBooleanExpressionInspection inspection = new PointlessBooleanExpressionInspection();
     inspection.m_ignoreExpressionsContainingConstants = true;
     doTest("com/siyeh/igtest/controlflow/pointless_boolean_expression_ignore_cont_const", inspection);
