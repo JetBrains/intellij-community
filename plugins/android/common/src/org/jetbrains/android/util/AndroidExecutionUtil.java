@@ -50,7 +50,7 @@ public final class AndroidExecutionUtil {
     }
     else {
       if (code == 0) {
-        messages.get(AndroidCompilerMessageKind.INFORMATION).addAll(errMessages);
+        messages.get(AndroidCompilerMessageKind.WARNING).addAll(errMessages);
         errMessages.clear();
       }
       return messages;
