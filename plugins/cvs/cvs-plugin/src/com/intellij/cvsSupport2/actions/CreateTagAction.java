@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.actions;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
@@ -25,8 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.actions.VcsContext;
 
-import java.util.Arrays;
-
 /**
  * author: lesya
  */
@@ -34,27 +33,25 @@ public class CreateTagAction extends ActionOnSelectedElement{
 
   public CreateTagAction() {
     super(true);
-    CvsActionVisibility visibility = getVisibility();
+    final CvsActionVisibility visibility = getVisibility();
     visibility.canBePerformedOnSeveralFiles();
     visibility.canBePerformedOnLocallyDeletedFile();
     visibility.addCondition(FILES_EXIST_IN_CVS);
   }
 
   protected String getTitle(VcsContext context) {
-    return com.intellij.CvsBundle.message("operation.name.create.tag");
+    return CvsBundle.message("operation.name.create.tag");
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {
-    FilePath[] selectedFiles = context.getSelectedFilePaths();
-    Project project = context.getProject();
-    CreateTagDialog dialog = new CreateTagDialog(Arrays.asList(selectedFiles),
-                                                 project, true);
+    final FilePath[] selectedFiles = context.getSelectedFilePaths();
+    final Project project = context.getProject();
+    final CreateTagDialog dialog = new CreateTagDialog(selectedFiles, project, true);
     dialog.show();
-    if (!dialog.isOK())
-      return CvsHandler.NULL;
-    return CommandCvsHandler.createBranchOrTagHandler(selectedFiles, dialog.getTagName(),
-            dialog.switchToThisBranch(), dialog.getOverrideExisting(),
-            true, CvsConfiguration.getInstance(project).MAKE_NEW_FILES_READONLY, project);
-  }
+    if (!dialog.isOK()) return CvsHandler.NULL;
 
+    final boolean makeNewFilesReadOnly = CvsConfiguration.getInstance(project).MAKE_NEW_FILES_READONLY;
+    return CommandCvsHandler.createTagHandler(
+      selectedFiles, dialog.getTagName(), dialog.switchToThisBranch(), dialog.getOverrideExisting(), makeNewFilesReadOnly, project);
+  }
 }

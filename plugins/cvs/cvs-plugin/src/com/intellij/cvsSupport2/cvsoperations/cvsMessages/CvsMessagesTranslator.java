@@ -78,6 +78,7 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
     new CvsMessagePattern("cvs server: cannot make path to *: Permission denied"),
     new CvsMessagePattern("cvs server: cannot find module `*' - ignored"),
     new CvsMessagePattern("W * : * already exists on version * : NOT MOVING tag to version *"),
+    new CvsMessagePattern("W * : * already exists on branch * : NOT MOVING tag to branch *"),
     new CvsMessagePattern(new String[]{"cvs server: ", "*", " added independently by second party"}, 2),
     new CvsMessagePattern("cvs server: failed to create lock directory for `*' (*#cvs.lock): No such file or directory"),
     new CvsMessagePattern("cvs server: failed to obtain dir lock in repository `*'"),
@@ -145,14 +146,11 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
       myListener.addFileMessage(message, myCvsFileSystem);
       return;
     }
-
     if (isMessage(message)) {
       lastMessage = MessageType.MESSAGE;
       myListener.addMessage(message);
       return;
     }
-
-    if (!error) return;
 
     final CvsMessagePattern errorMessagePattern = getErrorMessagePattern(message, ERRORS_PATTERNS);
     if (errorMessagePattern != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,25 +29,25 @@ public class BranchOperation extends CvsOperationOnFiles{
 
   private final String myBranchName;
   private final boolean myOverrideExisting;
-  private final boolean myIsTag;
 
-  public BranchOperation(FilePath[] files, String branchName,
-                         boolean overrideExisting, boolean isTag) {
+  public BranchOperation(FilePath[] files, String branchName, boolean overrideExisting) {
     myBranchName = branchName;
     myOverrideExisting = overrideExisting;
-    myIsTag = isTag;
-    for (int i = 0; i < files.length; i++) {
-      addFile(files[i].getIOFile());
+    for (FilePath file : files) {
+      addFile(file.getIOFile());
     }
   }
 
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
-    TagCommand result = new TagCommand();
-    result.setMakeBranchTag(!myIsTag);
-    result.setTag(myBranchName);
-    result.setOverrideExistingTag(myOverrideExisting);
-    addFilesToCommand(root, result);
-    return result;
+    final TagCommand tagCommand = new TagCommand();
+    tagCommand.setMakeBranchTag(true);
+    tagCommand.setTag(myBranchName);
+    tagCommand.setOverrideExistingTag(myOverrideExisting);
+    if (myOverrideExisting) {
+      tagCommand.setAllowMoveDeleteBranchTag(true);
+    }
+    addFilesToCommand(root, tagCommand);
+    return tagCommand;
   }
 
   protected String getOperationName() {
