@@ -369,7 +369,7 @@
       <group id="HelpMenu" popup="true">
         <action id="GotoAction" class="com.intellij.ide.actions.GotoActionAction"/>
         <separator/>
-        <action id="HelpTopics" class="com.intellij.ide.actions.HelpTopicsAction" icon="AllIcons.Actions.Menu_help"/>
+        <action id="HelpTopics" class="com.intellij.ide.actions.HelpTopicsAction" icon="AllIcons.Actions.Help"/>
         <action id="ShowTips" class="com.intellij.ide.actions.ShowTipsAction"/>
         <action id="ProductivityGude" class="com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsAction"/>
         <separator/>
