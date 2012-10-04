@@ -21,7 +21,7 @@ class MyTest {
 
     static {
          foo(MyTest::m);
-         foo<error descr="Ambiguous method call: both 'MyTest.foo(I2)' and 'MyTest.foo(I3)' match">(MyTest::m1)</error>;
+         foo<error descr="Ambiguous method call: both 'MyTest.foo(I1)' and 'MyTest.foo(I2)' match">(MyTest::m1)</error>;
     }
 }
 
