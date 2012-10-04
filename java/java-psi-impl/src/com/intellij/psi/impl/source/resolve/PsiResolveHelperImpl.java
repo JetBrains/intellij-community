@@ -594,7 +594,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   }
 
   @Nullable
-  private static Pair<PsiType, ConstraintType> inferConstraintFromFunctionalInterfaceMethod(PsiTypeParameter typeParam,
+  private static Pair<PsiType, ConstraintType> inferConstraintFromFunctionalInterfaceMethod(final PsiTypeParameter typeParam,
                                                                                             final PsiMethodReferenceExpression methodReferenceExpression,
                                                                                             final PsiType functionalInterfaceType) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
@@ -605,6 +605,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       PsiType[] methodParamTypes = new PsiType[methodParameters.length];
       for (int i = 0; i < methodParameters.length; i++) {
         methodParamTypes[i] = subst.substitute(methodParameters[i].getType());
+      }
+
+      if (methodParamsDependOn(typeParam, methodReferenceExpression, functionalInterfaceType, methodParameters, subst)) {
+        return null;
       }
 
       final PsiType[] args = new PsiType[methodParameters.length];
@@ -698,12 +702,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return null;
   }
 
-  private static boolean methodParamsDependOn(PsiTypeParameter typeParam, PsiLambdaExpression lambdaExpression,
+  private static boolean methodParamsDependOn(PsiTypeParameter typeParam, PsiElement psiElement,
                                               PsiType functionalInterfaceType,
                                               PsiParameter[] methodParameters,
                                               PsiSubstitutor subst) {
     for (PsiParameter parameter : methodParameters) {
-      if (LambdaUtil.dependsOnTypeParams(subst.substitute(parameter.getType()), functionalInterfaceType, lambdaExpression, typeParam)) {
+      if (LambdaUtil.dependsOnTypeParams(subst.substitute(parameter.getType()), functionalInterfaceType, psiElement, typeParam)) {
         return true;
       }
     }
@@ -948,15 +952,15 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       final PsiExpressionList argumentList = methodCall.getArgumentList();
       if (argumentList != null && PsiUtil.getLanguageLevel(argumentList).isAtLeast(LanguageLevel.JDK_1_8)) {
         for (PsiExpression expression : argumentList.getExpressions()) {
-          if (expression instanceof PsiLambdaExpression) {
-            final PsiType functionalInterfaceType = LambdaUtil.getFunctionalInterfaceType((PsiLambdaExpression)expression, false);
+          if (expression instanceof PsiLambdaExpression || expression instanceof PsiMethodReferenceExpression) {
+            final PsiType functionalInterfaceType = LambdaUtil.getFunctionalInterfaceType(expression, false);
             if (functionalInterfaceType == null || PsiUtil.resolveClassInType(functionalInterfaceType) == typeParameter){
               return getFailedInferenceConstraint(typeParameter);
             }
             final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
 
             final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
-            if (method == null || methodParamsDependOn(typeParameter, (PsiLambdaExpression)expression, 
+            if (method == null || methodParamsDependOn(typeParameter, expression, 
                                                        functionalInterfaceType, method.getParameterList().getParameters(),
                                                        LambdaUtil.getSubstitutor(method, resolveResult))) {
               return getFailedInferenceConstraint(typeParameter);

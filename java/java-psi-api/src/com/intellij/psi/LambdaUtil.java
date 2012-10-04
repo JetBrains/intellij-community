@@ -355,7 +355,7 @@ public class LambdaUtil {
 
   public static boolean dependsOnTypeParams(PsiType type,
                                             PsiType functionalInterfaceType,
-                                            PsiLambdaExpression lambdaExpression,
+                                            PsiElement lambdaExpression,
                                             PsiTypeParameter param2Check) {
     return depends(type, param2Check, new TypeParamsChecker(lambdaExpression,
                                                             PsiUtil.resolveClassInType(functionalInterfaceType)));
@@ -750,11 +750,11 @@ public class LambdaUtil {
       myClass = aClass;
     }
 
-    public TypeParamsChecker(PsiLambdaExpression expression) {
+    public TypeParamsChecker(PsiElement expression) {
       this(expression, PsiUtil.resolveGenericsClassInType(getFunctionalInterfaceType(expression, false)).getElement());
     }
 
-    public TypeParamsChecker(PsiLambdaExpression expression, PsiClass aClass) {
+    public TypeParamsChecker(PsiElement expression, PsiClass aClass) {
       myClass = aClass;
       PsiElement parent = expression.getParent();
       while (parent instanceof PsiParenthesizedExpression) {
@@ -763,7 +763,11 @@ public class LambdaUtil {
       if (parent instanceof PsiExpressionList) {
         final PsiElement gParent = parent.getParent();
         if (gParent instanceof PsiCallExpression) {
-          myMethod = ((PsiCallExpression)gParent).resolveMethod();
+          final Map<PsiElement, PsiMethod> map = MethodCandidateInfo.CURRENT_CANDIDATE.get();
+          myMethod = map != null ? map.get(parent) : null;
+          if (myMethod == null) {
+            myMethod = ((PsiCallExpression)gParent).resolveMethod();
+          }
           if (myMethod != null && PsiTreeUtil.isAncestor(myMethod, expression, false)) {
             myMethod = null;
           }
