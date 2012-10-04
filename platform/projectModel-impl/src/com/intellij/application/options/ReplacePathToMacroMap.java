@@ -80,22 +80,21 @@ public class ReplacePathToMacroMap extends PathMacroMap {
 
     if (!startsWith) return text;
 
+    //check that this is complete path (ends with "/" or "!/")
+    // do not collapse partial paths, i.e. do not substitute "/a/b/cd" in paths like "/a/b/cdeFgh"
+    int endOfOccurrence = path.length();
+    final boolean isWindowsRoot = path.endsWith(":/");
+    if (!isWindowsRoot &&
+        endOfOccurrence < text.length() &&
+        text.charAt(endOfOccurrence) != '/' &&
+        !text.substring(endOfOccurrence).startsWith("!/")) {
+      return text;
+    }
+
     final StringBuilder newText = StringBuilderSpinAllocator.alloc();
     try {
-      //check that this is complete path (ends with "/" or "!/")
-      // do not collapse partial paths, i.e. do not substitute "/a/b/cd" in paths like "/a/b/cdeFgh"
-      int endOfOccurrence = path.length();
-      final boolean isWindowsRoot = path.endsWith(":/");
-      if (!isWindowsRoot &&
-          endOfOccurrence < text.length() &&
-          text.charAt(endOfOccurrence) != '/' &&
-          !text.substring(endOfOccurrence).startsWith("!/")) {
-        return text;
-      }
-
       newText.append(myMacroMap.get(path));
       newText.append(text.substring(endOfOccurrence));
-
       return newText.toString();
     }
     finally {
