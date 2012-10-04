@@ -52,7 +52,7 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
   public static final String DIMENSION_KEY = "OptionsEditor";
   @NonNls static final String LAST_SELECTED_CONFIGURABLE = "options.lastSelected";
 
-  public OptionsEditorDialog(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
+  public OptionsEditorDialog(Project project, ConfigurableGroup[] groups, @Nullable Configurable preselectedConfigurable) {
     super(project, true);
     init(project, groups, preselectedConfigurable != null ? preselectedConfigurable : findLastSavedConfigurable(groups, project));
   }
@@ -62,7 +62,7 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
     init(project, groups, getPreselectedByDisplayName(groups, preselectedConfigurableDisplayName, project));
   }
 
-  private void init(final Project project, final ConfigurableGroup[] groups, final Configurable preselected) {
+  private void init(final Project project, final ConfigurableGroup[] groups, @Nullable final Configurable preselected) {
     myProject = project;
     myGroups = groups;
     myPreselected = preselected;
@@ -72,6 +72,7 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
     init();
   }
 
+  @Nullable
   private static Configurable getPreselectedByDisplayName(final ConfigurableGroup[] groups, final String preselectedConfigurableDisplayName,
                                                    final Project project) {
     Configurable result = findPreselectedByDisplayName(preselectedConfigurableDisplayName, groups);
@@ -182,6 +183,7 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
     return findConfigurableInGroups(id, groups);
   }
 
+  @Nullable
   private static Configurable findConfigurableInGroups(String id, Configurable.Composite... groups) {
     // avoid unnecessary group expand: check top-level configurables in all groups before looking at children
     for (Configurable.Composite group : groups) {
@@ -214,12 +216,8 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
     for (Configurable each : all) {
       if (preselectedConfigurableDisplayName.equals(each.getDisplayName())) return each;
     }
-
     return null;
-
   }
-
-
 
   @Override
   public void doCancelAction(final AWTEvent source) {
