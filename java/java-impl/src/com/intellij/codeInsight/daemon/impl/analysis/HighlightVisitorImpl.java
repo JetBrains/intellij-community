@@ -977,6 +977,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (myRefCountHolder != null) {
       myRefCountHolder.registerReference(expression, result);
     }
+    if (result.getElement() != null && !result.isAccessible()) {
+      final String accessProblem = HighlightUtil.buildProblemWithAccessDescription(expression, result);
+      myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, accessProblem));
+    }
     if (!myHolder.hasErrorResults()) {
       final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
       if (LambdaUtil.dependsOnTypeParams(functionalInterfaceType, functionalInterfaceType, expression, null)) {

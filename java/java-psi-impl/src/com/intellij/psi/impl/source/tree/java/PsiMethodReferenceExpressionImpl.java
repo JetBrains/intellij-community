@@ -302,6 +302,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           };
           processor.setIsConstructor(isConstructor);
           processor.setName(isConstructor ? containingClass.getName() : element.getText());
+          processor.setAccessClass(containingClass);
 
           if (beginsWithReferenceType) {
             if (containingClass.getContainingClass() == null || !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
