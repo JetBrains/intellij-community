@@ -126,7 +126,7 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
               registerError(nameElement, GroovyBundle.message("property.name.expected"));
             }
           }
-          else {
+          else if (!"*".equals(nameElement.getText())) {
             registerError(nameElement, GroovyBundle.message("property.name.expected"));
           }
         }
