@@ -1516,4 +1516,22 @@ class A {
 A.B foo = new <error descr="Cannot reference nonstatic symbol 'A.B' from static context">A.B</error>()
 ''')
   }
+
+  void testFallthroughInSwitch() {
+    testHighlighting('''\
+def f(String foo, int mode) {
+    switch (mode) {
+        case 0: foo = foo.reverse()
+        case 1: return foo
+    }
+}
+
+def f2(String foo, int mode) {
+    switch (mode) {
+        case 0: <warning descr="Assignment is not used">foo</warning> = foo.reverse()
+        case 1: return 2
+    }
+}
+''', UnusedDefInspection)
+  }
 }

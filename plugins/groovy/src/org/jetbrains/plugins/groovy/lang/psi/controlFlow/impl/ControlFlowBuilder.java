@@ -995,6 +995,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       statement.accept(this);
       if (j == i) handlePossibleReturn(statement);
     }
+
+    if (myHead != null) {
+      addPendingEdge(caseSection, myHead);
+    }
   }
 
   public void visitTryStatement(GrTryCatchStatement tryCatchStatement) {
