@@ -115,7 +115,7 @@ public class InspectionValidatorWrapper implements Validator {
   @NotNull
   public ProcessingItem[] getProcessingItems(final CompileContext context) {
     final Project project = context.getProject();
-    if (!ValidationConfiguration.shouldValidate(this, context)) {
+    if (project.isDefault() || !ValidationConfiguration.shouldValidate(this, context)) {
       return ProcessingItem.EMPTY_ARRAY;
     }
     final ExcludedEntriesConfiguration excludedEntriesConfiguration = ValidationConfiguration.getExcludedEntriesConfiguration(project);

@@ -2,6 +2,7 @@ package git4idea.branch;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -461,10 +462,10 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
         return DialogWrapper.CANCEL_EXIT_CODE;
       }
     });
-    GitBranchOperationsProcessor processor = new GitBranchOperationsProcessor(myProject, singletonList(myCommunity), myCommunity);
-    Method method = GitBranchOperationsProcessor.class.getDeclaredMethod("doDelete", String.class, ProgressIndicator.class);
+    GitBrancher processor = ServiceManager.getService(myProject, GitBrancher.class);
+    Method method = GitBrancherImpl.class.getDeclaredMethod("doDelete", String.class, ProgressIndicator.class);
     method.setAccessible(true);
-    method.invoke(processor, "feature", new EmptyProgressIndicator());
+    method.invoke(processor, "feature", singletonList(myCommunity), new EmptyProgressIndicator());
 
     assertTrue(dialogShown.get());
   }
@@ -670,10 +671,10 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   }
 
   private void doMerge(String branch) throws InvocationTargetException, NoSuchMethodException, IllegalAccessException {
-    GitBranchOperationsProcessor processor = new GitBranchOperationsProcessor(myProject, myRepositories, myCommunity);
-    Method method = GitBranchOperationsProcessor.class.getDeclaredMethod("doMerge", String.class, Boolean.TYPE, ProgressIndicator.class);
+    GitBrancher processor = ServiceManager.getService(myProject, GitBrancher.class);
+    Method method = GitBrancherImpl.class.getDeclaredMethod("doMerge", String.class, Boolean.TYPE, ProgressIndicator.class);
     method.setAccessible(true);
-    method.invoke(processor, branch, true, new EmptyProgressIndicator());
+    method.invoke(processor, branch, true, myRepositories, new EmptyProgressIndicator());
 
     // sync refresh is needed, because the refresh inside GitMergeOperation is asynchronous.
     for (GitRepository repository : myRepositories) {
@@ -707,10 +708,10 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   private void callPrivateBranchOperationsProcessorMethod(String methodName, String branchName) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     // call private doCheckoutNewBranch instead of public checkoutNewBranch to avoid dealing with background process creation
     // same for other branch operations
-    GitBranchOperationsProcessor processor = new GitBranchOperationsProcessor(myProject, myRepositories, myCommunity);
-    Method method = GitBranchOperationsProcessor.class.getDeclaredMethod(methodName, String.class, ProgressIndicator.class);
+    GitBrancher processor = ServiceManager.getService(myProject, GitBrancher.class);
+    Method method = GitBrancherImpl.class.getDeclaredMethod(methodName, String.class, ProgressIndicator.class);
     method.setAccessible(true);
-    method.invoke(processor, branchName, new EmptyProgressIndicator());
+    method.invoke(processor, branchName, myRepositories, new EmptyProgressIndicator());
   }
 
   private void doDeleteBranch(@NotNull String branchName) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
@@ -718,10 +719,10 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   }
   
   private void doCheckout(@NotNull String branchName, @Nullable String newBranch) throws InvocationTargetException, NoSuchMethodException, IllegalAccessException {
-    GitBranchOperationsProcessor processor = new GitBranchOperationsProcessor(myProject, myRepositories, myCommunity);
-    Method doCheckout = GitBranchOperationsProcessor.class.getDeclaredMethod("doCheckout", ProgressIndicator.class, String.class, String.class);
+    GitBrancher processor = ServiceManager.getService(myProject, GitBrancher.class);
+    Method doCheckout = GitBrancherImpl.class.getDeclaredMethod("doCheckout", ProgressIndicator.class, String.class, String.class);
     doCheckout.setAccessible(true);
-    doCheckout.invoke(processor, new EmptyProgressIndicator(), branchName, newBranch);
+    doCheckout.invoke(processor, new EmptyProgressIndicator(), branchName, newBranch, myRepositories);
   }
 
   private void assertBranch(String branch) throws IOException {

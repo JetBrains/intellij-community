@@ -19,13 +19,14 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.IconUtil;
 import git4idea.GitBranch;
-import git4idea.branch.GitBranchOperationsProcessor;
+import git4idea.branch.GitBrancher;
 import git4idea.repo.GitRepository;
 import git4idea.validators.GitNewBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,7 @@ class GitBranchPopupActions {
   ActionGroup createActions(@Nullable DefaultActionGroup toInsert) {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
 
-    popupGroup.addAction(new NewBranchAction(myProject, Collections.singletonList(myRepository), myRepository));
+    popupGroup.addAction(new NewBranchAction(myProject, Collections.singletonList(myRepository)));
     popupGroup.addAction(new CheckoutRevisionActions(myProject, myRepository));
 
     if (toInsert != null) {
@@ -82,20 +83,19 @@ class GitBranchPopupActions {
   static class NewBranchAction extends DumbAwareAction {
     private final Project myProject;
     private final List<GitRepository> myRepositories;
-    @NotNull private final GitRepository mySelectedRepository;
 
-    NewBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull GitRepository selectedRepository) {
+    NewBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories) {
       super("New Branch", "Create and checkout new branch", IconUtil.getAddIcon());
       myProject = project;
       myRepositories = repositories;
-      mySelectedRepository = selectedRepository;
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
       final String name = GitBranchUiUtil.getNewBranchNameFromUser(myProject, myRepositories, "Create New Branch");
       if (name != null) {
-        new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).checkoutNewBranch(name);
+        GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+        brancher.checkoutNewBranch(name, myRepositories, null);
       }
     }
 
@@ -136,7 +136,8 @@ class GitBranchPopupActions {
       String reference = Messages
         .showInputDialog(myProject, "Enter reference (branch, tag) name or commit hash", "Checkout", Messages.getQuestionIcon());
       if (reference != null) {
-        new GitBranchOperationsProcessor(myRepository).checkout(reference);
+        GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+        brancher.checkout(reference, Collections.singletonList(myRepository), null);
       }
     }
 
@@ -194,11 +195,11 @@ class GitBranchPopupActions {
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[] {
-        new CheckoutAction(myProject, myRepositories, myBranchName, mySelectedRepository),
-        new CheckoutAsNewBranch(myProject, myRepositories, myBranchName, mySelectedRepository),
+        new CheckoutAction(myProject, myRepositories, myBranchName),
+        new CheckoutAsNewBranch(myProject, myRepositories, myBranchName),
         new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
-        new MergeAction(myProject, myRepositories, myBranchName, mySelectedRepository, true),
-        new DeleteAction(myProject, myRepositories, myBranchName, mySelectedRepository)
+        new MergeAction(myProject, myRepositories, myBranchName, true),
+        new DeleteAction(myProject, myRepositories, myBranchName)
       };
     }
 
@@ -206,20 +207,18 @@ class GitBranchPopupActions {
       private final Project myProject;
       private final List<GitRepository> myRepositories;
       private final String myBranchName;
-      @NotNull private final GitRepository mySelectedRepository;
 
-      CheckoutAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
-                     @NotNull GitRepository selectedRepository) {
+      CheckoutAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
         super("Checkout");
         myProject = project;
         myRepositories = repositories;
         myBranchName = branchName;
-        mySelectedRepository = selectedRepository;
       }
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).checkout(myBranchName);
+        GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+        brancher.checkout(myBranchName, myRepositories, null);
       }
 
     }
@@ -228,15 +227,12 @@ class GitBranchPopupActions {
       private final Project myProject;
       private final List<GitRepository> myRepositories;
       private final String myBranchName;
-      @NotNull private final GitRepository mySelectedRepository;
 
-      CheckoutAsNewBranch(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
-                          @NotNull GitRepository selectedRepository) {
+      CheckoutAsNewBranch(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
         super("Checkout as new branch");
         myProject = project;
         myRepositories = repositories;
         myBranchName = branchName;
-        mySelectedRepository = selectedRepository;
       }
 
       @Override
@@ -245,7 +241,8 @@ class GitBranchPopupActions {
           .showInputDialog(myProject, "Enter name of new branch", "Checkout New Branch From " + myBranchName,
                            Messages.getQuestionIcon(), "", GitNewBranchNameValidator.newInstance(myRepositories));
         if (name != null) {
-          new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).checkoutNewBranchStartingFrom(name, myBranchName);
+          GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+          brancher.checkoutNewBranchStartingFrom(name, myBranchName, myRepositories, null);
         }
       }
 
@@ -255,19 +252,18 @@ class GitBranchPopupActions {
       private final Project myProject;
       private final List<GitRepository> myRepositories;
       private final String myBranchName;
-      private final GitRepository mySelectedRepository;
 
-      DeleteAction(Project project, List<GitRepository> repositories, String branchName, GitRepository selectedRepository) {
+      DeleteAction(Project project, List<GitRepository> repositories, String branchName) {
         super("Delete");
         myProject = project;
         myRepositories = repositories;
         myBranchName = branchName;
-        mySelectedRepository = selectedRepository;
       }
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).deleteBranch(myBranchName);
+        GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+        brancher.deleteBranch(myBranchName, myRepositories);
       }
     }
   }
@@ -296,10 +292,10 @@ class GitBranchPopupActions {
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[] {
-        new CheckoutRemoteBranchAction(myProject, myRepositories, myBranchName, mySelectedRepository),
+        new CheckoutRemoteBranchAction(myProject, myRepositories, myBranchName),
         new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
-        new MergeAction(myProject, myRepositories, myBranchName, mySelectedRepository, false),
-        new RemoteDeleteAction(myProject, myRepositories, myBranchName, mySelectedRepository)
+        new MergeAction(myProject, myRepositories, myBranchName, false),
+        new RemoteDeleteAction(myProject, myRepositories, myBranchName)
       };
     }
 
@@ -307,15 +303,13 @@ class GitBranchPopupActions {
       private final Project myProject;
       private final List<GitRepository> myRepositories;
       private final String myRemoteBranchName;
-      @NotNull private final GitRepository mySelectedRepository;
 
       public CheckoutRemoteBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories,
-                                        @NotNull String remoteBranchName, @NotNull GitRepository selectedRepository) {
+                                        @NotNull String remoteBranchName) {
         super("Checkout as new local branch");
         myProject = project;
         myRepositories = repositories;
         myRemoteBranchName = remoteBranchName;
-        mySelectedRepository = selectedRepository;
       }
 
       @Override
@@ -323,7 +317,8 @@ class GitBranchPopupActions {
         final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout Remote Branch", Messages.getQuestionIcon(),
                                                guessBranchName(), GitNewBranchNameValidator.newInstance(myRepositories));
         if (name != null) {
-          new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).checkoutNewBranchStartingFrom(name, myRemoteBranchName);
+          GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+          brancher.checkoutNewBranchStartingFrom(name, myRemoteBranchName, myRepositories, null);
         }
       }
 
@@ -339,20 +334,18 @@ class GitBranchPopupActions {
       private final Project myProject;
       private final List<GitRepository> myRepositories;
       private final String myBranchName;
-      private final GitRepository mySelectedRepository;
 
-      RemoteDeleteAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
-                         @NotNull GitRepository selectedRepository) {
+      RemoteDeleteAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
         super("Delete");
         myProject = project;
         myRepositories = repositories;
         myBranchName = branchName;
-        mySelectedRepository = selectedRepository;
       }
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).deleteRemoteBranch(myBranchName);
+        GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+        brancher.deleteRemoteBranch(myBranchName, myRepositories);
       }
     }
 
@@ -376,7 +369,8 @@ class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).compare(myBranchName);
+      GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+      brancher.compare(myBranchName, myRepositories, mySelectedRepository);
     }
 
   }
@@ -386,23 +380,28 @@ class GitBranchPopupActions {
     private final Project myProject;
     private final List<GitRepository> myRepositories;
     private final String myBranchName;
-    private final GitRepository mySelectedRepository;
     private final boolean myLocalBranch;
 
     public MergeAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
-                       @NotNull GitRepository selectedRepository, boolean localBranch) {
+                       boolean localBranch) {
       super("Merge");
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
-      mySelectedRepository = selectedRepository;
       myLocalBranch = localBranch;
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      new GitBranchOperationsProcessor(myProject, myRepositories, mySelectedRepository).merge(myBranchName, myLocalBranch);
+      GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+      brancher.merge(myBranchName, deleteOnMerge(), myRepositories, null);
     }
 
+    private GitBrancher.DeleteOnMergeOption deleteOnMerge() {
+      if (myLocalBranch && !myBranchName.equals("master")) {
+        return GitBrancher.DeleteOnMergeOption.PROPOSE;
+      }
+      return GitBrancher.DeleteOnMergeOption.NOTHING;
+    }
   }
 }

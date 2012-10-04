@@ -220,11 +220,11 @@ public class GitImpl implements Git {
   @NotNull
   @Override
   public GitCommandResult createNewTag(@NotNull GitRepository repository, @NotNull String tagName,
-                                                     @Nullable GitLineHandlerListener listener, @NotNull String reference) {
+                                       @Nullable GitLineHandlerListener listener, @NotNull String reference) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.TAG);
     h.setSilent(false);
     h.addParameters(tagName);
-    if (reference != null && ! reference.isEmpty()) {
+    if (!reference.isEmpty()) {
       h.addParameters(reference);
     }
     if (listener != null) {
