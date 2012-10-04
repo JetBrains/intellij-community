@@ -6,6 +6,6 @@
   />
 
   <requestFocus />
-  <include />
+  <include style="<error>@style/unknownStyle</error>"/>
 
 </LinearLayout>
