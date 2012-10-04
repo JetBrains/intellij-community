@@ -64,33 +64,19 @@ public class ReplacePathToMacroMap extends PathMacroMap {
       //noinspection ConstantConditions
       return null;
     }
-    if (myMacroMap.isEmpty()) {
-      return text;
-    }
 
     for (final String path : getPathIndex()) {
-      final String macro = myMacroMap.get(path);
-      text = replacePathMacro(text, path, macro, caseSensitive);
+      text = replacePathMacro(text, path, caseSensitive);
     }
     return text;
   }
 
-  private static String replacePathMacro(String text,
-                                         String path,
-                                         final String macro,
-                                         boolean caseSensitive) {
+  private String replacePathMacro(String text, final String path, boolean caseSensitive) {
     if (text.length() < path.length() || path.length() == 0) {
       return text;
     }
 
-    boolean startsWith;
-
-    if (caseSensitive) {
-      startsWith = text.startsWith(path);
-    }
-    else {
-      startsWith = StringUtil.startsWithIgnoreCase(text, path);
-    }
+    boolean startsWith = caseSensitive ? text.startsWith(path) : StringUtil.startsWithIgnoreCase(text, path);
 
     if (!startsWith) return text;
 
@@ -107,7 +93,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
         return text;
       }
 
-      newText.append(macro);
+      newText.append(myMacroMap.get(path));
       newText.append(text.substring(endOfOccurrence));
 
       return newText.toString();
@@ -120,16 +106,12 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   @Override
   public String substituteRecursively(String text, final boolean caseSensitive) {
     for (final String path : getPathIndex()) {
-      final String macro = myMacroMap.get(path);
-      text = replacePathMacroRecursively(text, path, macro, caseSensitive);
+      text = replacePathMacroRecursively(text, path, caseSensitive);
     }
     return text;
   }
 
-  private static String replacePathMacroRecursively(String text,
-                                                    String path,
-                                                    final String macro,
-                                                    boolean caseSensitive) {
+  private String replacePathMacroRecursively(String text, final String path, boolean caseSensitive) {
     if (text.length() < path.length()) {
       return text;
     }
@@ -172,7 +154,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
         }
         else {
           newText.append(text.substring(i, occurrenceOfPath));
-          newText.append(macro);
+          newText.append(myMacroMap.get(path));
           i = occurrenceOfPath + path.length();
         }
       }
