@@ -581,26 +581,37 @@ public class LambdaUtil {
       map.remove(methodReferenceExpression);
     }
 
-    final PsiElement resolve = result.getElement();
-    if (resolve instanceof PsiMethod) {
-      final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(left);
-      final PsiMethod method = getFunctionalInterfaceMethod(resolveResult);
-      if (method != null) {
-        final Ref<PsiClass> classRef = new Ref<PsiClass>();
-        final Ref<PsiSubstitutor> substRef = new Ref<PsiSubstitutor>();
-        methodReferenceExpression.process(classRef, substRef);
-
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(left);
+    final PsiMethod method = getFunctionalInterfaceMethod(resolveResult);
+    if (method != null) {
+      final Ref<PsiClass> classRef = new Ref<PsiClass>();
+      final Ref<PsiSubstitutor> substRef = new Ref<PsiSubstitutor>();
+      methodReferenceExpression.process(classRef, substRef);
+      final PsiElement resolve = result.getElement();
+      if (resolve instanceof PsiMethod) {
         final MethodSignature signature1 = method.getSignature(resolveResult.getSubstitutor());
         PsiSubstitutor subst = PsiSubstitutor.EMPTY;
         subst = subst.putAll(substRef.get());
         subst = subst.putAll(result.getSubstitutor());
         final MethodSignature signature2 = ((PsiMethod)resolve).getSignature(subst);
-        
+
         final PsiType interfaceReturnType = getFunctionalInterfaceReturnType(left);
         final PsiType methodReturnType = subst.substitute(((PsiMethod)resolve).getReturnType());
         if (interfaceReturnType != null && methodReturnType != null && interfaceReturnType != PsiType.VOID && 
             !TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType)) return false;
         if (areAcceptable(signature1, signature2, classRef.get(), substRef.get(), ((PsiMethod)resolve).isVarArgs())) return true;
+      } else if (resolve instanceof PsiClass) {
+        final PsiType interfaceReturnType = getFunctionalInterfaceReturnType(left);
+        if (interfaceReturnType != null) {
+          final PsiClassType classType = JavaPsiFacade.getElementFactory(methodReferenceExpression.getProject()).createType((PsiClass)resolve, result.getSubstitutor());
+          if (TypeConversionUtil.isAssignable(interfaceReturnType, classType)) {
+            final PsiParameter[] parameters = method.getParameterList().getParameters();
+            if (parameters.length == 0) return true;
+            if (parameters.length == 1) {
+              if (isReceiverType(resolveResult.getSubstitutor().substitute(parameters[0].getType()), classRef.get(), substRef.get())) return true;
+            }
+          }
+        }
       }
     }
     return false;

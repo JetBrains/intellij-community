@@ -100,6 +100,10 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testAccessModifiers() throws Exception {
     doTest();
   }
+  
+  public void testDefaultConstructor() throws Exception {
+    doTest();
+  }
 
   public void testReturnTypeSpecific() throws Exception {
     doTest(true);

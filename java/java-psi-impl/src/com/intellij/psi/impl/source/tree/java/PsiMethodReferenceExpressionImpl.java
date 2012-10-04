@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
@@ -255,6 +256,9 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             new MethodReferenceConflictResolver(containingClass, substitutor, signature, beginsWithReferenceType);
           final PsiConflictResolver[] resolvers;
           if (signature != null) {
+            if (isConstructor && containingClass.getConstructors().length == 0 && !containingClass.isEnum() && !containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+              return new JavaResolveResult[]{new ClassCandidateInfo(containingClass, substitutor)};
+            }
             final PsiType[] parameterTypes = signature.getParameterTypes();
             resolvers = new PsiConflictResolver[]{conflictResolver,
               new JavaMethodsConflictResolver(PsiMethodReferenceExpressionImpl.this, parameterTypes) {
@@ -312,10 +316,11 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           }
 
           if (beginsWithReferenceType) {
-            if (containingClass.getContainingClass() == null || !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+            final PsiClass gContainingClass = containingClass.getContainingClass();
+            if (gContainingClass == null || !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
               PsiClass aClass = null;
-              if (PsiTreeUtil.isAncestor(containingClass, PsiMethodReferenceExpressionImpl.this, false)) {
-                aClass = containingClass;
+              if (PsiTreeUtil.isAncestor(gContainingClass != null ? gContainingClass : containingClass, PsiMethodReferenceExpressionImpl.this, false)) {
+                aClass = gContainingClass != null ? gContainingClass : containingClass;
               }
               if (PsiUtil.getEnclosingStaticElement(PsiMethodReferenceExpressionImpl.this, aClass) != null) {
                 processor.handleEvent(JavaScopeProcessorEvent.START_STATIC, null);
@@ -354,11 +359,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
         boolean hasReceiver = false;
         final PsiType[] parameterTypes = mySignature.getParameterTypes();
-        if (parameterTypes.length > 0) {
-          final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(parameterTypes[0]);
-          if (LambdaUtil.isReceiverType(parameterTypes[0], myContainingClass, mySubstitutor)) {
-            hasReceiver = true;
-          }
+        if (parameterTypes.length > 0 && LambdaUtil.isReceiverType(parameterTypes[0], myContainingClass, mySubstitutor)) {
+          hasReceiver = true;
         }
 
         final List<CandidateInfo> firstCandidates = new ArrayList<CandidateInfo>();
