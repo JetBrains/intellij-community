@@ -256,6 +256,31 @@ public class PsiTreeUtil {
     return (T)processor.getFoundElement();
   }
 
+  public static <T extends PsiElement> Collection<T> findChildrenOfType(@Nullable final PsiElement element,
+                                                                           @NotNull final Class<T> aClass) {
+    return findChildrenOfAnyType(element, aClass);
+
+  }
+
+
+  public static <T extends PsiElement> Collection<T> findChildrenOfAnyType(@Nullable final PsiElement element,
+                                                                           @NotNull final Class<T>... classes) {
+    PsiElementProcessor.CollectElements<T> processor = new PsiElementProcessor.CollectElements<T>() {
+      @Override
+      public boolean execute(@NotNull T each) {
+        if (each == element) return true;
+        if (instanceOf(each, classes)) {
+          return super.execute(each);
+        }
+        return true;
+      }
+    };
+
+    processElements(element, processor);
+    //noinspection unchecked
+    return processor.getCollection();
+  }
+
   /**
    * Non-recursive search for element of type T amongst given {@code element} children.
    *
