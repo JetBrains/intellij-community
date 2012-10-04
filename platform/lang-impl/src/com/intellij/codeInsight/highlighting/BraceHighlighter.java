@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.highlighting;
 
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -28,38 +27,19 @@ import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-public class BraceHighlighter extends AbstractProjectComponent {
+public class BraceHighlighter implements StartupActivity {
+
   private final Alarm myAlarm = new Alarm();
 
-  public BraceHighlighter(Project project) {
-    super(project);
-  }
-
   @Override
-  @NotNull
-  public String getComponentName() {
-    return "BraceHighlighter";
-  }
-
-  @Override
-  public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        doinit();
-      }
-    });
-  }
-
-  private void doinit() {
+  public void runActivity(final Project project) {
     final EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
 
     CaretListener myCaretListener = new CaretListener() {
@@ -69,7 +49,7 @@ public class BraceHighlighter extends AbstractProjectComponent {
         Editor editor = e.getEditor();
         final SelectionModel selectionModel = editor.getSelectionModel();
         // Don't update braces in case of the active selection.
-        if (editor.getProject() != myProject || selectionModel.hasSelection() || selectionModel.hasBlockSelection()) {
+        if (editor.getProject() != project || selectionModel.hasSelection() || selectionModel.hasBlockSelection()) {
           return;
         }
 
@@ -81,17 +61,17 @@ public class BraceHighlighter extends AbstractProjectComponent {
         updateBraces(editor, myAlarm);
       }
     };
-    eventMulticaster.addCaretListener(myCaretListener, myProject);
+    eventMulticaster.addCaretListener(myCaretListener, project);
 
     final SelectionListener mySelectionListener = new SelectionListener() {
       @Override
       public void selectionChanged(SelectionEvent e) {
         myAlarm.cancelAllRequests();
         Editor editor = e.getEditor();
-        if (editor.getProject() != myProject) {
+        if (editor.getProject() != project) {
           return;
         }
-        
+
         final TextRange oldRange = e.getOldRange();
         final TextRange newRange = e.getNewRange();
         if (oldRange != null && newRange != null && !(oldRange.isEmpty() ^ newRange.isEmpty())) {
@@ -101,19 +81,19 @@ public class BraceHighlighter extends AbstractProjectComponent {
         updateBraces(editor, myAlarm);
       }
     };
-    eventMulticaster.addSelectionListener(mySelectionListener, myProject);
+    eventMulticaster.addSelectionListener(mySelectionListener, project);
 
     DocumentListener documentListener = new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
         myAlarm.cancelAllRequests();
-        Editor[] editors = EditorFactory.getInstance().getEditors(e.getDocument(), myProject);
+        Editor[] editors = EditorFactory.getInstance().getEditors(e.getDocument(), project);
         for (Editor editor : editors) {
           updateBraces(editor, myAlarm);
         }
       }
     };
-    eventMulticaster.addDocumentListener(documentListener, myProject);
+    eventMulticaster.addDocumentListener(documentListener, project);
 
     final FocusChangeListener myFocusChangeListener = new FocusChangeListener() {
       @Override
@@ -126,16 +106,16 @@ public class BraceHighlighter extends AbstractProjectComponent {
         updateBraces(editor, myAlarm);
       }
     };
-    ((EditorEventMulticasterEx)eventMulticaster).addFocusChangeListner(myFocusChangeListener, myProject);
+    ((EditorEventMulticasterEx)eventMulticaster).addFocusChangeListner(myFocusChangeListener, project);
 
-    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
 
     fileEditorManager.addFileEditorManagerListener(new FileEditorManagerAdapter() {
       @Override
       public void selectionChanged(FileEditorManagerEvent e) {
         myAlarm.cancelAllRequests();
       }
-    }, myProject);
+    }, project);
   }
 
   static void updateBraces(@NotNull final Editor editor, @NotNull final Alarm alarm) {
