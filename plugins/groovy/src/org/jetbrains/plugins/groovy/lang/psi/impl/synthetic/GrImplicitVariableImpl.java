@@ -17,9 +17,9 @@ public class GrImplicitVariableImpl extends LightVariableBase implements GrImpli
     super(manager, nameIdentifier, GroovyFileType.GROOVY_LANGUAGE, type, writable, scope);
   }
 
-  public GrImplicitVariableImpl(PsiManager manager, @NonNls String name, @NonNls @NotNull String type, PsiElement referenceExpression) {
+  public GrImplicitVariableImpl(PsiManager manager, @NonNls String name, @NonNls @NotNull String type, PsiElement scope) {
     this(manager, new GrLightIdentifier(manager, name), JavaPsiFacade.getElementFactory(manager.getProject()).
-      createTypeFromText(type, referenceExpression), false, referenceExpression);
+      createTypeFromText(type, scope), false, scope);
   }
 
   @Override
