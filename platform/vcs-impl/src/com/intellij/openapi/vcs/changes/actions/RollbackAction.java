@@ -72,7 +72,7 @@ public class RollbackAction extends AnAction implements DumbAware {
     String operationName = RollbackUtil.getRollbackOperationName(project);
     e.getPresentation().setText(operationName);
     if (isEnabled) {
-      e.getPresentation().setDescription(operationName + " selected changes");
+      e.getPresentation().setDescription(UIUtil.removeMnemonic(operationName) + " selected changes");
     }
   }
 
