@@ -63,25 +63,24 @@ public class GitImpl implements Git {
   }
 
   /**
-   * <p>Queries Git for the unversioned files in the given paths.</p>
-   * <p>
-   *   <b>Note:</b> this method doesn't check for ignored files. You have to check if the file is ignored afterwards, if needed.
-   * </p>
+   * <p>Queries Git for the unversioned files in the given paths. </p>
+   * <p>Ignored files are left ignored, i. e. no information is returned about them (thus this method may also be used as a
+   *    ignored files checker.</p>
    *
    * @param files files that are to be checked for the unversioned files among them.
    *              <b>Pass <code>null</code> to query the whole repository.</b>
-   * @return Unversioned files from the given scope.
+   * @return Unversioned not ignored files from the given scope.
    */
   @Override
   @NotNull
-  public Set<VirtualFile> untrackedFiles(@NotNull Project project,
-                                         @NotNull VirtualFile root,
+  public Set<VirtualFile> untrackedFiles(@NotNull Project project, @NotNull VirtualFile root,
                                          @Nullable Collection<VirtualFile> files) throws VcsException {
     final Set<VirtualFile> untrackedFiles = new HashSet<VirtualFile>();
 
     if (files == null) {
       untrackedFiles.addAll(untrackedFilesNoChunk(project, root, null));
-    } else {
+    }
+    else {
       for (List<String> relativePaths : VcsFileUtil.chunkFiles(root, files)) {
         untrackedFiles.addAll(untrackedFilesNoChunk(project, root, relativePaths));
       }
