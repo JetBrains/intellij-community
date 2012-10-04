@@ -378,7 +378,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           final boolean staticOrValidConstructorRef = psiMethod.hasModifierProperty(PsiModifier.STATIC) || validConstructorRef;
 
           if ((parameterTypes.length == signatureParameterTypes2.length || varArgs && parameterTypes.length >= signatureParameterTypes2.length) && 
-              (!myBeginsWithReferenceType || staticOrValidConstructorRef)) {
+              (!myBeginsWithReferenceType || staticOrValidConstructorRef || (psiMethod.isConstructor() && conflict.isStaticsScopeCorrect()))) {
             boolean correct = true;
             for (int i = 0; i < parameterTypes.length; i++) {
               final PsiType type1 = parameterTypes[i];
