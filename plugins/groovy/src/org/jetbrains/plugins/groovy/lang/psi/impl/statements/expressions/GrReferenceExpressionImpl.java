@@ -57,10 +57,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.InferenceContext;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -650,7 +647,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     else if (qualifier != null) {
       //map access
       PsiType qType = qualifier.getType();
-      if (qType instanceof PsiClassType) {
+      if (qType instanceof PsiClassType && !(qType instanceof GrMapType)) {
         PsiClassType.ClassResolveResult qResult = ((PsiClassType)qType).resolveGenerics();
         PsiClass clazz = qResult.getElement();
         if (clazz != null) {
