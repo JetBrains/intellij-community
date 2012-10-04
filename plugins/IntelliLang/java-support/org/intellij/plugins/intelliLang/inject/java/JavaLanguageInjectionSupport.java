@@ -57,7 +57,6 @@ import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel;
 import org.intellij.plugins.intelliLang.inject.config.ui.MethodParameterPanel;
 import org.intellij.plugins.intelliLang.inject.config.ui.configurables.MethodParameterInjectionConfigurable;
-import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jdom.Element;
@@ -101,7 +100,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   public boolean removeInjectionInPlace(final PsiLanguageInjectionHost psiElement) {
     if (!isMine(psiElement)) return false;
     final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap = new HashMap<BaseInjection, Pair<PsiMethod, Integer>>();
-    final ArrayList<PsiAnnotation> annotations = new ArrayList<PsiAnnotation>();
+    final ArrayList<PsiElement> annotations = new ArrayList<PsiElement>();
     final PsiLiteralExpression host = (PsiLiteralExpression)psiElement;
     final Project project = host.getProject();
     final Configuration configuration = Configuration.getProjectInstance(project);
@@ -125,7 +124,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   public boolean editInjectionInPlace(final PsiLanguageInjectionHost psiElement) {
     if (!isMine(psiElement)) return false;
     final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap = new HashMap<BaseInjection, Pair<PsiMethod, Integer>>();
-    final ArrayList<PsiAnnotation> annotations = new ArrayList<PsiAnnotation>();
+    final ArrayList<PsiElement> annotations = new ArrayList<PsiElement>();
     final PsiLiteralExpression host = (PsiLiteralExpression)psiElement;
     final Project project = host.getProject();
     final Configuration configuration = Configuration.getProjectInstance(project);
@@ -338,11 +337,18 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
 
   private static void collectInjections(final PsiLiteralExpression host, final Configuration configuration,
                                         final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap,
-                                        final ArrayList<PsiAnnotation> annotations) {
+                                        final ArrayList<PsiElement> annotations) {
     new ConcatenationInjector.InjectionProcessor(configuration, host) {
+
       @Override
-      protected boolean processAnnotationInjections(PsiModifierListOwner annoElement) {
-        ContainerUtil.addAll(annotations, AnnotationUtilEx.getAnnotationFrom(annoElement, configuration.getAdvancedConfiguration().getLanguageAnnotationPair(), true));
+      protected boolean processCommentInjectionInner(PsiVariable owner, PsiElement comment, Language language) {
+        ContainerUtil.addAll(annotations, comment);
+        return true;
+      }
+
+      @Override
+      protected boolean processAnnotationInjectionInner(PsiModifierListOwner owner, PsiAnnotation[] annos) {
+        ContainerUtil.addAll(annotations, annos);
         return true;
       }
 
