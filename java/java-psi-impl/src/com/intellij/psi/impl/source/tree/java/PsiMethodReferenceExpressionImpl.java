@@ -186,7 +186,12 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     try {
       final PsiExpression expression = getQualifierExpression();
       if (expression != null) {
-        PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(expression.getType());
+        final PsiType expressionType = expression.getType();
+        if (expressionType instanceof PsiArrayType) {
+          containingClass = JavaPsiFacade.getInstance(getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, getResolveScope());
+          return false;
+        }
+        PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(expressionType);
         containingClass = result.getElement();
         if (containingClass != null) {
           substitutor = result.getSubstitutor();
@@ -302,7 +307,10 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           };
           processor.setIsConstructor(isConstructor);
           processor.setName(isConstructor ? containingClass.getName() : element.getText());
-          processor.setAccessClass(containingClass);
+          final PsiExpression expression = getQualifierExpression();
+          if (expression == null || !(expression.getType() instanceof PsiArrayType)) {
+            processor.setAccessClass(containingClass);
+          }
 
           if (beginsWithReferenceType) {
             if (containingClass.getContainingClass() == null || !containingClass.hasModifierProperty(PsiModifier.STATIC)) {

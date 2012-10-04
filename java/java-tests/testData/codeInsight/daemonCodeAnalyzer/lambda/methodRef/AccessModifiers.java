@@ -34,3 +34,42 @@ class AlienTest {
         IInt i7 = MyTest.<error descr="'MyTest.Foo' has private access in 'MyTest'">Foo</error>::foo;
     }
 }
+
+
+class MyTest1 {
+    
+    interface I1 {
+        int[] _();
+    }
+    
+    interface I2 {
+        Object _();
+    }
+    
+    interface I3 {
+        char[] _();
+    }
+    
+    interface I4 {
+
+        boolean  _();
+    }
+
+    interface I5 {
+        Class<? extends MyTest1> _();
+    }
+
+    interface I6 {
+        Class<MyTest1> _();
+    }
+    
+    void foo(Object[] arr) {
+        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I1'">I1 c1 = arr :: clone;</error>
+        I2 c2 = arr :: clone;
+        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I3'">I3 c3 = arr::clone;</error>
+        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I4'">I4 c5 = arr::clone;</error>
+
+        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I5'">I5 c4 = this::getClass;</error>
+        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I6'">I6 c6 = this::getClass;</error>
+    }
+}
