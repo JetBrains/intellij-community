@@ -16,7 +16,6 @@
 package git4idea.roots;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.PlatformFacade;
@@ -97,47 +96,37 @@ public class GitRootDetector {
       return roots;
     }
 
-    myPlatformFacade.runReadAction(new Computable<Object>() {
-      @Nullable @Override public Object compute() {
-        if (myProject.isDisposed() || !dir.isDirectory()) {
-          return null;
-        }
-        if (hasGitDir(dir)) {
-          roots.add(dir);
-        }
-        for (VirtualFile child : dir.getChildren()) {
-          roots.addAll(scanForRootsInsideDir(child, depth + 1));
-        }
-        return null;
-      }
-    });
-
+    if (myProject.isDisposed() || !dir.isDirectory()) {
+      return roots;
+    }
+    if (hasGitDir(dir)) {
+      roots.add(dir);
+    }
+    for (VirtualFile child : dir.getChildren()) {
+      roots.addAll(scanForRootsInsideDir(child, depth + 1));
+    }
     return roots;
   }
 
   @NotNull
-  private Set<VirtualFile> scanForRootsInsideDir(@NotNull VirtualFile projectDir) {
-    return scanForRootsInsideDir(projectDir, 0);
+  private Set<VirtualFile> scanForRootsInsideDir(@NotNull VirtualFile dir) {
+    return scanForRootsInsideDir(dir, 0);
   }
 
   @Nullable
-  private VirtualFile scanForSingleRootAboveDir(@NotNull final VirtualFile projectDir) {
-    return myPlatformFacade.runReadAction(new Computable<VirtualFile>() {
-      @Nullable @Override public VirtualFile compute() {
-        if (myProject.isDisposed()) {
-          return null;
-        }
+  private VirtualFile scanForSingleRootAboveDir(@NotNull final VirtualFile dir) {
+    if (myProject.isDisposed()) {
+      return null;
+    }
 
-        VirtualFile par = projectDir.getParent();
-        while (par != null) {
-          if (hasGitDir(par)) {
-            return par;
-          }
-          par = par.getParent();
-        }
-        return null;
+    VirtualFile par = dir.getParent();
+    while (par != null) {
+      if (hasGitDir(par)) {
+        return par;
       }
-    });
+      par = par.getParent();
+    }
+    return null;
   }
 
   private static boolean hasGitDir(@NotNull VirtualFile dir) {

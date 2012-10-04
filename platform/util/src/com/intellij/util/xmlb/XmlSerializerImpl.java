@@ -16,7 +16,6 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +24,7 @@ import java.lang.ref.SoftReference;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author mike
@@ -90,7 +90,7 @@ class XmlSerializerImpl {
     SoftReference<Map<Pair<Type, Accessor>, Binding>> ref = ourBindings;
     Map<Pair<Type, Accessor>, Binding> map = ref == null ? null : ref.get();
     if (map == null) {
-      map = ContainerUtil.newHashMap();
+      map = new ConcurrentHashMap<Pair<Type, Accessor>, Binding>();
       ourBindings = new SoftReference<Map<Pair<Type, Accessor>, Binding>>(map);
     }
     return map;
