@@ -920,10 +920,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
   @Nullable
   private static String getRelativePath(String basePath, String absPath) {
     absPath = FileUtil.toSystemIndependentName(absPath);
-    if (VfsUtil.isAncestor(new File(basePath), new File(absPath), true)) {
-      return FileUtil.getRelativePath(basePath, absPath, '/');
-    }
-    return null;
+    return FileUtil.getRelativePath(basePath, absPath, '/');
   }
 
   @Override
