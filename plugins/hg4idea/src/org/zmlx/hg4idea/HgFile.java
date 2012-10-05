@@ -13,9 +13,7 @@
 package org.zmlx.hg4idea;
 
 import com.google.common.base.Objects;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -64,12 +62,7 @@ public class HgFile {
 
   @NotNull
   public FilePath toFilePath() {
-    return ApplicationManager.getApplication().runReadAction(
-      new Computable<FilePath>() {
-      public FilePath compute() {
-        return VcsUtil.getFilePath(file);
-      }
-    });
+    return VcsUtil.getFilePath(file);
   }
 
   private static String buildRelativePath(File anchestor, File descendant) {
