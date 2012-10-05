@@ -247,17 +247,16 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public void activate() {
+	  super.activate();
+
     // validate hg executable on start
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       getExecutableValidator().checkExecutableAndNotifyIfNeeded();
     }
 
     // status bar
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    if (statusBar != null) {
-      hgStatusWidget = new HgStatusWidget(this, getProject(), projectSettings);
-      hgStatusWidget.activate();
-    }
+    hgStatusWidget = new HgStatusWidget( this, getProject(), projectSettings );
+    hgStatusWidget.activate();
 
     // updaters and listeners
     messageBusConnection = myProject.getMessageBus().connect();
@@ -289,19 +288,21 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public void deactivate() {
-    if (messageBusConnection != null) {
-      messageBusConnection.disconnect();
-    }
-
     if (null != hgStatusWidget) {
       hgStatusWidget.deactivate();
       hgStatusWidget = null;
     }
 
+	  if (messageBusConnection != null) {
+     messageBusConnection.disconnect();
+   }
+
     if (myVFSListener != null) {
       Disposer.dispose(myVFSListener);
       myVFSListener = null;
     }
+
+	  super.deactivate();
   }
 
   @Nullable

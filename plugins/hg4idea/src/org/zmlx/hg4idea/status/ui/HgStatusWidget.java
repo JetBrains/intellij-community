@@ -214,22 +214,25 @@ public class HgStatusWidget
 
 		StatusBar statusBar = WindowManager.getInstance().getStatusBar( project );
 		if ( null != statusBar  ) {
-			statusBar.addWidget( this );
+			statusBar.addWidget( this, project );
 		}
 	}
 
 	public void deactivate() {
 
-		busConnection.disconnect();
-
-		remoteUpdater.deactivate();
-		branchStatusUpdater.deactivate();
-
+		// TODO: Note that at this point, we cannot get the status bar...the com.intellij.openapi.wm.impl.WindowManagerImpl.releaseFrame()
+		//  has already been invoked, and so the window manager has no idea what we're talking about. This happens to be
+		//  (or at least seems to be) OK, because when we add the widget to the status bar, we're doing so with the project
+		//  as the parentDisposable, so IJ seems to Do The Right Thing and cleans things up.
 		StatusBar statusBar = WindowManager.getInstance().getStatusBar( getProject() );
 		if ( null != statusBar ) {
 			statusBar.removeWidget( ID() );
 		}
 
+		busConnection.disconnect();
+
+		remoteUpdater.deactivate();
+		branchStatusUpdater.deactivate();
 	}
 
   private void update() {
@@ -243,4 +246,3 @@ public class HgStatusWidget
 
 
 }  // End of HgStatusWidget class
-- 
