@@ -151,7 +151,7 @@ public class GroovyHighlightingTest extends LightGroovyTestCase {
   public void testDefinitionUsedInClosure() { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
   public void testDefinitionUsedInClosure2() { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
   public void testDefinitionUsedInSwitchCase() { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
-  public void testUnusedDefinitionForMethodMissing() {doTest(new GroovyUnusedDeclarationInspection())}
+  public void testUnusedDefinitionForMethodMissing() {doTest(new GroovyUnusedDeclarationInspection(), new UnusedDeclarationInspection())}
   public void testDuplicateInnerClass() {doTest();}
 
   public void testThisInStaticContext() {doTest();}
@@ -675,6 +675,21 @@ List<?> list2
 
   public void testUnusedParameter() {
     doTest(new GroovyUnusedDeclarationInspection(), new UnusedDeclarationInspection())
+  }
+
+  public void testSuppressUnusedMethod() {
+    myFixture.configureByText('_.groovy', '''\
+class <warning descr="Class Foo is unused">Foo</warning> {
+    @SuppressWarnings("GroovyUnusedDeclaration")
+    static def foo(int x) {
+        print 2
+    }
+
+    static def <warning descr="Method bar is unused">bar</warning>() {}
+}
+''')
+    myFixture.enableInspections(new UnusedDeclarationInspection(), new GroovyUnusedDeclarationInspection())
+    myFixture.testHighlighting(true, false, true)
   }
 
   public void testAliasInParameterType() {

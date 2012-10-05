@@ -16,18 +16,23 @@
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.CustomSuppressableInspectionTool;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-public class GroovyUnusedDeclarationInspection extends DescriptorProviderInspection implements UnfairLocalInspectionTool {
+public class GroovyUnusedDeclarationInspection extends DescriptorProviderInspection implements UnfairLocalInspectionTool,
+                                                                                               CustomSuppressableInspectionTool {
   public static final String SHORT_NAME = "GroovyUnusedDeclaration";
 
   @Override
@@ -47,4 +52,14 @@ public class GroovyUnusedDeclarationInspection extends DescriptorProviderInspect
     return JobDescriptor.EMPTY_ARRAY;
   }
 
+  @Nullable
+  @Override
+  public SuppressIntentionAction[] getSuppressActions(@Nullable PsiElement element) {
+    return GroovySuppressableInspectionTool.getSuppressActions(SHORT_NAME);
+  }
+
+  @Override
+  public boolean isSuppressedFor(PsiElement element) {
+    return GroovySuppressableInspectionTool.isElementToolSuppressedIn(element, SHORT_NAME);
+  }
 }

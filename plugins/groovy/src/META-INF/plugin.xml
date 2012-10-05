@@ -478,7 +478,7 @@
     <copyPastePreProcessor implementation="org.jetbrains.plugins.groovy.editor.GroovyLiteralCopyPasteProcessor"/>
     <copyPastePostProcessor implementation="org.jetbrains.plugins.groovy.editor.GroovyReferenceCopyPasteProcessor"/>
 
-    <specialTool shortName="GroovyUnusedDeclaration" displayName="Unused declaration"
+    <globalInspection shortName="GroovyUnusedDeclaration" displayName="Unused declaration"
                  groupPath="Groovy"
                  groupName="Declaration redundancy" enabledByDefault="true" level="WARNING"
                  implementationClass="org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection"/>
