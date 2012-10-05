@@ -18,7 +18,6 @@ package git4idea.repo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -72,11 +71,11 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
     myGitDir = GitUtil.findGitDir(myRootDir);
     assert myGitDir != null : ".git directory wasn't found under " + rootDir.getPresentableUrl();
 
-    myReader = new GitRepositoryReader(VfsUtil.virtualToIoFile(myGitDir));
+    myReader = new GitRepositoryReader(VfsUtilCore.virtualToIoFile(myGitDir));
 
     myMessageBus = project.getMessageBus();
     myNotifier = new QueueProcessor<Object>(new NotificationConsumer(myProject, myMessageBus), myProject.getDisposed());
-    if (! light) {
+    if (!light) {
       myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
       Disposer.register(this, myUntrackedFilesHolder);
     } else {
