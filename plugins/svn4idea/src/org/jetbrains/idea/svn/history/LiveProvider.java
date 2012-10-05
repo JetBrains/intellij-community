@@ -122,9 +122,11 @@ public class LiveProvider implements BunchProvider {
       myEarliestRevisionWasAccessed = (oldestRevision == 0);
       return null;
     }
-    for (Iterator<CommittedChangeList> iterator = list.iterator(); iterator.hasNext(); ) {
-      final CommittedChangeList changeList = iterator.next();
-      if (changeList.getNumber() > earliestToTake) iterator.remove();
+    if (earliestToTake > 0) {
+      for (Iterator<CommittedChangeList> iterator = list.iterator(); iterator.hasNext(); ) {
+        final CommittedChangeList changeList = iterator.next();
+        if (changeList.getNumber() > earliestToTake) iterator.remove();
+      }
     }
     myEarliestRevisionWasAccessed = (oldestRevision == 0) && ((list.size() + ((! includeOldest) ? 1 : 0) + ((! includeYoungest) ? 1 : 0)) < desirableSize);
     return new Fragment(Origin.LIVE, list, true, true, null);
