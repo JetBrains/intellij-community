@@ -222,7 +222,10 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
           }
         }
 
-        //params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5009");
+        String mavenEmbedderDebugPort = System.getProperty("idea.maven.embedder.debug.port");
+        if (mavenEmbedderDebugPort != null) {
+          params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=" + mavenEmbedderDebugPort);
+        }
 
         return params;
       }
@@ -264,15 +267,15 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
         classpath.add(new File(pluginFileOrDir.getParent(), "maven3-server-impl"));
         File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
 
-        File maven3Lib = new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven3-server-impl/lib/maven3");
+        File maven3Module_Lib = new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven3-server-impl/lib");
 
-        File maven3Home = new File(maven3Lib, "maven3");
+        File maven3Home = new File(maven3Module_Lib, "maven3");
 
         libDir = new File(maven3Home, "lib");
 
         classpath.add(new File(maven3Home, "boot/plexus-classworlds-2.4.jar"));
 
-        for (File jar : maven3Lib.listFiles()) {
+        for (File jar : maven3Module_Lib.listFiles()) {
           if (jar.isFile() && jar.getName().endsWith(".jar")) {
             classpath.add(jar);
           }
