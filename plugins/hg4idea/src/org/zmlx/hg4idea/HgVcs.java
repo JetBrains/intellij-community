@@ -95,9 +95,9 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private File myPromptHooksExtensionFile;
   private CommitExecutor myCommitAndPushExecutor;
 
-  private HgStatusWidget hgStatusWidget;
+  private HgStatusWidget myStatusWidget;
 
-	private IncomingChangesViewProvider incomingChangesViewProvider;
+  private IncomingChangesViewProvider myChangesViewProvider;
 
 
   public HgVcs(Project project, HgGlobalSettings globalSettings, HgProjectSettings projectSettings, ProjectLevelVcsManager vcsManager) {
@@ -249,7 +249,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public void activate() {
-	  super.activate();
+    super.activate();
 
     // validate hg executable on start
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -257,8 +257,8 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     }
 
     // status bar
-    hgStatusWidget = new HgStatusWidget( this, getProject(), projectSettings );
-    hgStatusWidget.activate();
+    myStatusWidget = new HgStatusWidget(this, getProject(), projectSettings);
+    myStatusWidget.activate();
 
     // updaters and listeners
     messageBusConnection = myProject.getMessageBus().connect();
@@ -283,35 +283,36 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
       });
     }
 
+    myChangesViewProvider = new IncomingChangesViewProvider(myProject, myProject.getMessageBus());
+
     // Force a branch topic update
     myProject.getMessageBus().syncPublisher(Topics.BRANCH_TOPIC).update(myProject);
 
-	  invokeLaterRecalculateWindows();
+    invokeLaterRecalculateWindows();
   }
 
   @Override
   public void deactivate() {
-    if (null != hgStatusWidget) {
-      hgStatusWidget.deactivate();
-      hgStatusWidget = null;
+    if (null != myStatusWidget) {
+      myStatusWidget.deactivate();
+      myStatusWidget = null;
     }
 
-	  incomingChangesViewProvider = new IncomingChangesViewProvider( myProject, myProject.getMessageBus() );
-	  if (messageBusConnection != null) {
-     messageBusConnection.disconnect();
-   }
+    if (messageBusConnection != null) {
+      messageBusConnection.disconnect();
+    }
 
     if (myVFSListener != null) {
       Disposer.dispose(myVFSListener);
       myVFSListener = null;
     }
 
-	  if ( null != incomingChangesViewProvider ) {
-		  incomingChangesViewProvider.disposeContent();
-		  incomingChangesViewProvider = null;
-	  }
+    if (null != myChangesViewProvider) {
+      myChangesViewProvider.disposeContent();
+      myChangesViewProvider = null;
+    }
 
-	  super.deactivate();
+    super.deactivate();
   }
 
   @Nullable
@@ -381,21 +382,21 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     return ourKey;
   }
 
-	private void invokeLaterRecalculateWindows() {
-   new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
-     public void run() {
-       recalculateWindows();
-     }
-   }.callMe();
- }
+  private void invokeLaterRecalculateWindows() {
+    new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
+      public void run() {
+        recalculateWindows();
+      }
+    }.callMe();
+  }
 
- private void recalculateWindows() {
+  private void recalculateWindows() {
 
 //   final ChangesViewContentI cvcm = ChangesViewContentManager.getInstance( myProject );
 //   final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
 //   final Content content = contentFactory.createContent(incomingChangesViewProvider.initContent(), "Incoming", false);
 //   content.setCloseable(false);
 //   cvcm.addContent(content);
- }
+  }
 
 }

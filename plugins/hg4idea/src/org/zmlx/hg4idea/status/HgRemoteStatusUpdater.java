@@ -40,24 +40,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class HgRemoteStatusUpdater implements HgUpdater {
 
-	private final AbstractVcs myVcs;
+  private final AbstractVcs myVcs;
   private final HgChangesetStatus myIncomingStatus;
   private final HgChangesetStatus myOutgoingStatus;
   private final HgProjectSettings myProjectSettings;
   private final AtomicBoolean myUpdateStarted = new AtomicBoolean();
 
-	private MessageBusConnection busConnection;
+  private MessageBusConnection busConnection;
 
-	private ScheduledFuture<?> changesUpdaterScheduledFuture;
+  private ScheduledFuture<?> changesUpdaterScheduledFuture;
 
 
-	public HgRemoteStatusUpdater(
-		@NotNull HgVcs vcs,
-		HgChangesetStatus incomingStatus,
-		HgChangesetStatus outgoingStatus,
-		HgProjectSettings projectSettings
-	) {
-	  myVcs = vcs;
+  public HgRemoteStatusUpdater(@NotNull HgVcs vcs,
+                               HgChangesetStatus incomingStatus,
+                               HgChangesetStatus outgoingStatus,
+                               HgProjectSettings projectSettings) {
+    myVcs = vcs;
     myIncomingStatus = incomingStatus;
     myOutgoingStatus = outgoingStatus;
     myProjectSettings = projectSettings;
@@ -81,9 +79,7 @@ public class HgRemoteStatusUpdater implements HgUpdater {
               updateChangesetStatus(project, roots, myOutgoingStatus, false);
             }
 
-	          project.getMessageBus()
-	            .syncPublisher( Topics.STATUS_TOPIC )
-	            .update( project );
+            project.getMessageBus().syncPublisher(Topics.STATUS_TOPIC).update(project);
 
             indicator.stop();
             myUpdateStarted.set(false);
@@ -94,33 +90,33 @@ public class HgRemoteStatusUpdater implements HgUpdater {
   }
 
 
-	public void activate() {
-		busConnection = myVcs.getProject().getMessageBus().connect();
-		busConnection.subscribe( Topics.REMOTE_TOPIC, this );
+  public void activate() {
+    busConnection = myVcs.getProject().getMessageBus().connect();
+    busConnection.subscribe(Topics.REMOTE_TOPIC, this);
 
-		int checkIntervalSeconds = HgGlobalSettings.getIncomingCheckIntervalSeconds();
-		changesUpdaterScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(
-			new Runnable() {
-				public void run() {
-					update( myVcs.getProject() );
-				}
-			}, 5, checkIntervalSeconds, TimeUnit.SECONDS );
-	}
+    int checkIntervalSeconds = HgGlobalSettings.getIncomingCheckIntervalSeconds();
+    changesUpdaterScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
+      public void run() {
+        update(myVcs.getProject());
+      }
+    }, 5, checkIntervalSeconds, TimeUnit.SECONDS);
+  }
 
-	public void deactivate() {
-		busConnection.disconnect();
+  public void deactivate() {
+    busConnection.disconnect();
 
-		if ( changesUpdaterScheduledFuture != null ) {
-			changesUpdaterScheduledFuture.cancel( true );
-		}
-	}
+    if (changesUpdaterScheduledFuture != null) {
+      changesUpdaterScheduledFuture.cancel(true);
+    }
+  }
 
   private void updateChangesetStatus(Project project, VirtualFile[] roots, HgChangesetStatus status, boolean incoming) {
     final List<HgRevisionNumber> changesets = new LinkedList<HgRevisionNumber>();
     for (VirtualFile root : roots) {
       if (incoming) {
         changesets.addAll(new HgIncomingCommand(project).execute(root));
-      } else {
+      }
+      else {
         changesets.addAll(new HgOutgoingCommand(project).execute(root));
       }
     }
@@ -132,10 +128,12 @@ public class HgRemoteStatusUpdater implements HgUpdater {
     if (myProjectSettings.isCheckIncoming()) {
       if (myProjectSettings.isCheckOutgoing()) {
         type = "incoming and outgoing";
-      } else {
+      }
+      else {
         type = "incoming";
       }
-    } else {
+    }
+    else {
       type = "outgoing";
     }
     return "Checking " + type + " changes";
@@ -152,10 +150,8 @@ public class HgRemoteStatusUpdater implements HgUpdater {
       builder.append("<html>");
       builder.append("<b>").append(status.getStatusName()).append(" changesets</b>:<br>");
       for (HgRevisionNumber revisionNumber : changesets) {
-        builder
-          .append(revisionNumber.asString()).append(" ")
-          .append(revisionNumber.getCommitMessage())
-          .append(" (").append(revisionNumber.getAuthor()).append(")<br>");
+        builder.append(revisionNumber.asString()).append(" ").append(revisionNumber.getCommitMessage()).append(" (")
+          .append(revisionNumber.getAuthor()).append(")<br>");
       }
       builder.append("</html>");
     }

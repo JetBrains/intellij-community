@@ -18,8 +18,8 @@ import com.intellij.openapi.application.ApplicationManager;
 public class HgChangesetStatus {
 
   private final String myName;
-	private int numChanges;
-	private String toolTip;
+  private int numChanges;
+  private String toolTip;
 
   public HgChangesetStatus(String name) {
     myName = name;
@@ -29,12 +29,12 @@ public class HgChangesetStatus {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (count == 0) {
-	        numChanges = 0;
-	        toolTip = "";
+          numChanges = 0;
+          toolTip = "";
           return;
         }
 
-	      numChanges = count;
+        numChanges = count;
         toolTip = formatter.asString();
       }
     });
@@ -45,17 +45,17 @@ public class HgChangesetStatus {
   }
 
 
-	public int getNumChanges() {
-		return numChanges;
-	}
+  public int getNumChanges() {
+    return numChanges;
+  }
 
 
-	public String getToolTip() {
-		return toolTip;
-	}
+  public String getToolTip() {
+    return toolTip;
+  }
 
 
-	public interface ChangesetWriter {
+  public interface ChangesetWriter {
     String asString();
   }
 

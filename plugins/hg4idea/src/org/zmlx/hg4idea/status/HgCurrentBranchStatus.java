@@ -12,7 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea.status;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,17 +22,14 @@ import java.util.List;
 
 public class HgCurrentBranchStatus {
 
-	private String text;
-	private String toolTip;
+  private String text;
+  private String toolTip;
 
 
   public HgCurrentBranchStatus() {
   }
 
-  public void updateFor(
-	  @Nullable String branch,
-	  @NotNull List<HgRevisionNumber> parents
-  ) {
+  public void updateFor(@Nullable String branch, @NotNull List<HgRevisionNumber> parents) {
     StringBuilder parentsBuffer = new StringBuilder();
     for (HgRevisionNumber parent : parents) {
       String rev = parent.getRevision();
@@ -43,25 +39,25 @@ public class HgCurrentBranchStatus {
     if (length > 2) {
       parentsBuffer.delete(length - 2, length);
     }
-	  String parent = parentsBuffer.toString();
-	  String statusText = !StringUtil.isEmptyOrSpaces(branch)
-      ? HgVcsMessages.message( "hg4idea.status.currentSituationText", branch, parent ) : "";
+    String parent = parentsBuffer.toString();
+    String statusText =
+      !StringUtil.isEmptyOrSpaces(branch) ? HgVcsMessages.message("hg4idea.status.currentSituationText", branch, parent) : "";
 
-    String toolTipText = !StringUtil.isEmptyOrSpaces(statusText)
-      ? HgVcsMessages.message("hg4idea.status.currentSituation.description", branch, parent ) : "";
+    String toolTipText =
+      !StringUtil.isEmptyOrSpaces(statusText) ? HgVcsMessages.message("hg4idea.status.currentSituation.description", branch, parent) : "";
 
     text = statusText;
     toolTip = toolTipText;
   }
 
 
-	public String getStatusText() {
-		return text;
-	}
+  public String getStatusText() {
+    return text;
+  }
 
 
-	public String getToolTipText() {
-		return toolTip;
-	}
+  public String getToolTipText() {
+    return toolTip;
+  }
 
 }

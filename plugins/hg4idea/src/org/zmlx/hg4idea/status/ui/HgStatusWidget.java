@@ -42,42 +42,38 @@ import java.awt.event.MouseEvent;
 /**
  * Widget to display basic hg status in the IJ status bar.
  */
-public class HgStatusWidget
-  extends EditorBasedWidget
+public class HgStatusWidget extends EditorBasedWidget
   implements StatusBarWidget.MultipleTextValuesPresentation, StatusBarWidget.Multiframe, HgUpdater {
 
-	private final HgVcs vcs;
-	private final HgProjectSettings projectSettings;
+  private final HgVcs myVcs;
+  private final HgProjectSettings myProjectSettings;
+  private final HgCurrentBranchStatus myCurrentBranchStatus;
+  private final HgChangesetStatus myIncomingChangesStatus;
+  private final HgChangesetStatus myOutgoingChangesStatus;
 
-	private volatile String myText = "";
+  private MessageBusConnection myBusConnection;
+  private HgRemoteStatusUpdater myRemoteStatusUpdater;
+  private HgCurrentBranchStatusUpdater myCurrentBranchStatusUpdater;
+
+  private volatile String myText = "";
   private volatile String myTooltip = "";
-
-  private final HgCurrentBranchStatus currentBranchStatus;
-  private final HgChangesetStatus incomingChangesStatus;
-  private final HgChangesetStatus outgoingChangesStatus;
 
   private static final String myMaxString = "hg: default; in: 99; out: 99";
 
-	private MessageBusConnection busConnection;
 
-	private HgRemoteStatusUpdater remoteUpdater;
+  public HgStatusWidget(HgVcs vcs, Project project, HgProjectSettings projectSettings) {
+    super(project);
+    this.myVcs = vcs;
+    this.myProjectSettings = projectSettings;
 
-	private HgCurrentBranchStatusUpdater branchStatusUpdater;
-
-
-	public HgStatusWidget( HgVcs vcs, Project project, HgProjectSettings projectSettings) {
-	  super( project );
-	  this.vcs = vcs;
-	  this.projectSettings = projectSettings;
-
-	  this.incomingChangesStatus = new HgChangesetStatus( "In" );
-    this.outgoingChangesStatus = new HgChangesetStatus( "Out" );
-		currentBranchStatus = new HgCurrentBranchStatus();
-	}
+    this.myIncomingChangesStatus = new HgChangesetStatus("In");
+    this.myOutgoingChangesStatus = new HgChangesetStatus("Out");
+    this.myCurrentBranchStatus = new HgCurrentBranchStatus();
+  }
 
   @Override
   public StatusBarWidget copy() {
-    return new HgStatusWidget( vcs, getProject(), projectSettings );
+    return new HgStatusWidget(myVcs, getProject(), myProjectSettings);
   }
 
   @NotNull
@@ -159,84 +155,84 @@ public class HgStatusWidget
   }
 
 
-	@Override
-	public void update( final Project project ) {
+  @Override
+  public void update(final Project project) {
 
-		ApplicationManager.getApplication().invokeLater(new Runnable() {
-	    @Override
-	    public void run() {
-	      if ( ( project == null ) || project.isDisposed() ) {
-	        emptyTextAndTooltip();
-	        return;
-	      }
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if ((project == null) || project.isDisposed()) {
+          emptyTextAndTooltip();
+          return;
+        }
 
-		    emptyTextAndTooltip();
+        emptyTextAndTooltip();
 
-		    if ( null != currentBranchStatus.getStatusText() ) {
-			    myText = currentBranchStatus.getStatusText();
-		      myTooltip = currentBranchStatus.getToolTipText();
-		    }
+        if (null != myCurrentBranchStatus.getStatusText()) {
+          myText = myCurrentBranchStatus.getStatusText();
+          myTooltip = myCurrentBranchStatus.getToolTipText();
+        }
 
-	      if ( incomingChangesStatus.getNumChanges() > 0 ) {
-		      myText += "; " + incomingChangesStatus.getStatusName() + ": " + incomingChangesStatus.getNumChanges();
-	        myTooltip = "\n" + incomingChangesStatus.getToolTip();
-	      }
+        if (myIncomingChangesStatus.getNumChanges() > 0) {
+          myText += "; " + myIncomingChangesStatus.getStatusName() + ": " + myIncomingChangesStatus.getNumChanges();
+          myTooltip = "\n" + myIncomingChangesStatus.getToolTip();
+        }
 
-	      if ( outgoingChangesStatus.getNumChanges() > 0 ) {
-		      myText += "; " + outgoingChangesStatus.getStatusName() + ": " + outgoingChangesStatus.getNumChanges();
-	        myTooltip += "\n" + outgoingChangesStatus.getToolTip();
-	      }
+        if (myOutgoingChangesStatus.getNumChanges() > 0) {
+          myText += "; " + myOutgoingChangesStatus.getStatusName() + ": " + myOutgoingChangesStatus.getNumChanges();
+          myTooltip += "\n" + myOutgoingChangesStatus.getToolTip();
+        }
 
-	      int maxLength = myMaxString.length() - 1; // -1, because there are arrows indicating that it is a popup
-	      myText = StringUtil.shortenTextWithEllipsis(myText, maxLength, 5);
+        int maxLength = myMaxString.length() - 1; // -1, because there are arrows indicating that it is a popup
+        myText = StringUtil.shortenTextWithEllipsis(myText, maxLength, 5);
 
-	      myStatusBar.updateWidget(ID());
-	    }
-	  });
-	}
+        myStatusBar.updateWidget(ID());
+      }
+    });
+  }
 
 
-	public void activate() {
+  public void activate() {
 
-		Project project = getProject();
-		if ( null == project ) {
-			return;
-		}
+    Project project = getProject();
+    if (null == project) {
+      return;
+    }
 
-		busConnection = project.getMessageBus().connect();
-		busConnection.subscribe( Topics.STATUS_TOPIC, this );
+    myBusConnection = project.getMessageBus().connect();
+    myBusConnection.subscribe(Topics.STATUS_TOPIC, this);
 
-		branchStatusUpdater = new HgCurrentBranchStatusUpdater( vcs, currentBranchStatus );
-		branchStatusUpdater.activate();
+    myCurrentBranchStatusUpdater = new HgCurrentBranchStatusUpdater(myVcs, myCurrentBranchStatus);
+    myCurrentBranchStatusUpdater.activate();
 
-		remoteUpdater = new HgRemoteStatusUpdater( vcs, incomingChangesStatus, outgoingChangesStatus, projectSettings );
-		remoteUpdater.activate();
+    myRemoteStatusUpdater = new HgRemoteStatusUpdater(myVcs, myIncomingChangesStatus, myOutgoingChangesStatus, myProjectSettings);
+    myRemoteStatusUpdater.activate();
 
-		StatusBar statusBar = WindowManager.getInstance().getStatusBar( project );
-		if ( null != statusBar  ) {
-			statusBar.addWidget( this, project );
-		}
-	}
+    StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+    if (null != statusBar) {
+      statusBar.addWidget(this, project);
+    }
+  }
 
-	public void deactivate() {
+  public void deactivate() {
 
-		// TODO: Note that at this point, we cannot get the status bar...the com.intellij.openapi.wm.impl.WindowManagerImpl.releaseFrame()
-		//  has already been invoked, and so the window manager has no idea what we're talking about. This happens to be
-		//  (or at least seems to be) OK, because when we add the widget to the status bar, we're doing so with the project
-		//  as the parentDisposable, so IJ seems to Do The Right Thing and cleans things up.
-		StatusBar statusBar = WindowManager.getInstance().getStatusBar( getProject() );
-		if ( null != statusBar ) {
-			statusBar.removeWidget( ID() );
-		}
+    // TODO: Note that at this point, we cannot get the status bar...the com.intellij.openapi.wm.impl.WindowManagerImpl.releaseFrame()
+    //  has already been invoked, and so the window manager has no idea what we're talking about. This happens to be
+    //  (or at least seems to be) OK, because when we add the widget to the status bar, we're doing so with the project
+    //  as the parentDisposable, so IJ seems to Do The Right Thing and cleans things up.
+    StatusBar statusBar = WindowManager.getInstance().getStatusBar(getProject());
+    if (null != statusBar) {
+      statusBar.removeWidget(ID());
+    }
 
-		busConnection.disconnect();
+    myBusConnection.disconnect();
 
-		remoteUpdater.deactivate();
-		branchStatusUpdater.deactivate();
-	}
+    myRemoteStatusUpdater.deactivate();
+    myCurrentBranchStatusUpdater.deactivate();
+  }
 
   private void update() {
-	  update( getProject() );
+    update(getProject());
   }
 
   private void emptyTextAndTooltip() {

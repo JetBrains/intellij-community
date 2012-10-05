@@ -37,18 +37,15 @@ import java.util.concurrent.atomic.AtomicReference;
 
 class HgCurrentBranchStatusUpdater implements HgUpdater {
 
-	private final HgVcs vcs;
-	private final HgCurrentBranchStatus currentBranchStatus;
+  private final HgVcs vcs;
+  private final HgCurrentBranchStatus currentBranchStatus;
 
-	private MessageBusConnection busConnection;
+  private MessageBusConnection busConnection;
 
 
-	public HgCurrentBranchStatusUpdater(
-	  HgVcs vcs,
-	  HgCurrentBranchStatus currentBranchStatus
-  ) {
-	  this.vcs = vcs;
-	  this.currentBranchStatus = currentBranchStatus;
+  public HgCurrentBranchStatusUpdater(HgVcs vcs, HgCurrentBranchStatus currentBranchStatus) {
+    this.vcs = vcs;
+    this.currentBranchStatus = currentBranchStatus;
   }
 
   public void update(final Project project) {
@@ -66,9 +63,9 @@ class HgCurrentBranchStatusUpdater implements HgUpdater {
     });
 
     if (textEditor.get() == null) {
-	    handleUpdate( project, null, Collections.<HgRevisionNumber>emptyList() );
+      handleUpdate(project, null, Collections.<HgRevisionNumber>emptyList());
     }
-	  else {
+    else {
       Document document = textEditor.get().getDocument();
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
 
@@ -83,7 +80,7 @@ class HgCurrentBranchStatusUpdater implements HgUpdater {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
-	              handleUpdate( project, branch, parents );
+                handleUpdate(project, branch, parents);
               }
             });
           }
@@ -93,28 +90,22 @@ class HgCurrentBranchStatusUpdater implements HgUpdater {
   }
 
 
-	private void handleUpdate(
-		Project project,
-		@Nullable String branch,
-		List<HgRevisionNumber> parents
-	) {
+  private void handleUpdate(Project project, @Nullable String branch, List<HgRevisionNumber> parents) {
 
-		currentBranchStatus.updateFor( branch, parents );
+    currentBranchStatus.updateFor(branch, parents);
 
-		project.getMessageBus()
-    .syncPublisher( Topics.STATUS_TOPIC )
-    .update( project );
-	}
+    project.getMessageBus().syncPublisher(Topics.STATUS_TOPIC).update(project);
+  }
 
 
-	public void activate() {
+  public void activate() {
 
-		busConnection = vcs.getProject().getMessageBus().connect();
-		busConnection.subscribe( Topics.BRANCH_TOPIC, this );
-	}
+    busConnection = vcs.getProject().getMessageBus().connect();
+    busConnection.subscribe(Topics.BRANCH_TOPIC, this);
+  }
 
 
-	public void deactivate() {
-		busConnection.disconnect();
-	}
+  public void deactivate() {
+    busConnection.disconnect();
+  }
 }
