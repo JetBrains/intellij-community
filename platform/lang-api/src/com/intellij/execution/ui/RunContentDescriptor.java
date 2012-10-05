@@ -30,9 +30,9 @@ import javax.swing.*;
 public class RunContentDescriptor implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ui.RunContentDescriptor");
 
-  private final ExecutionConsole myExecutionConsole;
+  private ExecutionConsole myExecutionConsole;
   private ProcessHandler myProcessHandler;
-  private final JComponent myComponent;
+  private JComponent myComponent;
   private final String myDisplayName;
   private final Icon myIcon;
 
@@ -74,6 +74,11 @@ public class RunContentDescriptor implements Disposable {
   public void dispose() {
     if (myExecutionConsole != null) {
       Disposer.dispose(myExecutionConsole);
+      myExecutionConsole = null;
+    }
+    if (myComponent != null) {
+      DataManager.removeDataProvider(myComponent);
+      myComponent = null;
     }
   }
 
