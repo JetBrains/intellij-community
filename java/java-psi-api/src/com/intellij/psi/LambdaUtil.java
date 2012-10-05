@@ -16,9 +16,11 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -43,7 +45,7 @@ public class LambdaUtil {
   }
   
   @Nullable
-  public static PsiType getFunctionalInterfaceReturnType(PsiType functionalInterfaceType) {
+  public static PsiType getFunctionalInterfaceReturnType(@Nullable PsiType functionalInterfaceType) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiClass psiClass = resolveResult.getElement();
     if (psiClass != null) {
@@ -596,15 +598,19 @@ public class LambdaUtil {
         final MethodSignature signature2 = ((PsiMethod)resolve).getSignature(subst);
 
         final PsiType interfaceReturnType = getFunctionalInterfaceReturnType(left);
-        final PsiType methodReturnType = subst.substitute(((PsiMethod)resolve).getReturnType());
-        if (interfaceReturnType != null && methodReturnType != null && interfaceReturnType != PsiType.VOID && 
-            !TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType)) return false;
+        PsiType methodReturnType = subst.substitute(((PsiMethod)resolve).getReturnType());
+        if (interfaceReturnType != null && interfaceReturnType != PsiType.VOID) {
+          if (methodReturnType == null) {
+            methodReturnType = JavaPsiFacade.getElementFactory(methodReferenceExpression.getProject()).createType(((PsiMethod)resolve).getContainingClass(), subst);
+          }
+          if (!TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType, false)) return false;
+        }
         if (areAcceptable(signature1, signature2, classRef.get(), substRef.get(), ((PsiMethod)resolve).isVarArgs())) return true;
       } else if (resolve instanceof PsiClass) {
         final PsiType interfaceReturnType = getFunctionalInterfaceReturnType(left);
         if (interfaceReturnType != null) {
           final PsiClassType classType = JavaPsiFacade.getElementFactory(methodReferenceExpression.getProject()).createType((PsiClass)resolve, result.getSubstitutor());
-          if (TypeConversionUtil.isAssignable(interfaceReturnType, classType)) {
+          if (TypeConversionUtil.isAssignable(interfaceReturnType, classType, false)) {
             final PsiParameter[] parameters = method.getParameterList().getParameters();
             if (parameters.length == 0) return true;
             if (parameters.length == 1) {
@@ -749,6 +755,36 @@ public class LambdaUtil {
     final PsiParameter param = functionalTypeIdx < methodParameters.length ? methodParameters[functionalTypeIdx] : methodParameters[methodParameters.length - 1];
     final PsiType functionalInterfaceType = method.getSubstitutor().substitute(param.getType());
     return getFunctionalInterfaceReturnType(functionalInterfaceType);
+  }
+
+  public static PsiSubstitutor inferFromReturnType(final PsiTypeParameter[] typeParameters,
+                                                   final PsiType returnType,
+                                                   @Nullable final PsiType interfaceMethodReturnType,
+                                                   PsiSubstitutor psiSubstitutor,
+                                                   final LanguageLevel languageLevel,
+                                                   final Project project) {
+    if (interfaceMethodReturnType == null) return psiSubstitutor;
+    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
+    for (PsiTypeParameter typeParameter : typeParameters) {
+      final PsiType constraint = resolveHelper.getSubstitutionForTypeParameter(typeParameter, returnType, interfaceMethodReturnType, false, languageLevel);
+      if (constraint != PsiType.NULL) {
+        PsiType inferredType = null;
+        final PsiClassType[] bounds = typeParameter.getExtendsListTypes();
+        for (PsiClassType classTypeBound : bounds) {
+          if (TypeConversionUtil.isAssignable(classTypeBound, constraint)) {
+            inferredType = constraint;
+            break;
+          }
+        }
+        if (bounds.length == 0) {
+          inferredType = constraint;
+        }
+        if (inferredType != null) {
+          psiSubstitutor = psiSubstitutor.put(typeParameter, inferredType);
+        }
+      }
+    }
+    return psiSubstitutor;
   }
 
   private static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {

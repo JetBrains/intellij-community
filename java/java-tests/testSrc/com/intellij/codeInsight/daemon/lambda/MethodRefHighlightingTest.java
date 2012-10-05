@@ -105,6 +105,10 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testInferenceFromReturnType() throws Exception {
+    doTest(true);
+  }
+
   public void testReturnTypeSpecific() throws Exception {
     doTest(true);
   }

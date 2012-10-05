@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
@@ -235,7 +236,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       final boolean beginsWithReferenceType = process(classRef, substRef);
 
       final PsiClass containingClass = classRef.get();
-      final PsiSubstitutor substitutor = substRef.get();
+      PsiSubstitutor substitutor = substRef.get();
 
       if (containingClass != null) {
         final PsiElement element = getReferenceNameElement();
@@ -251,31 +252,31 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           }
           final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
           final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
+          final PsiType interfaceMethodReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
+          final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(PsiMethodReferenceExpressionImpl.this);
+          if (isConstructor && interfaceMethod != null) {
+            final PsiTypeParameter[] typeParameters = containingClass.getTypeParameters();
+            final boolean isRawSubst = PsiUtil.isRawSubstitutor(containingClass, substitutor);
+            final PsiClassType returnType = JavaPsiFacade.getElementFactory(getProject()).createType(containingClass, 
+                                                                                                     isRawSubst ? PsiSubstitutor.EMPTY : substitutor);
+
+            substitutor = LambdaUtil.inferFromReturnType(typeParameters, returnType, interfaceMethodReturnType, substitutor, languageLevel,
+                                                         PsiMethodReferenceExpressionImpl.this.getProject());
+
+            if (containingClass.getConstructors().length == 0 &&
+                !containingClass.isEnum() &&
+                !containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+              return new JavaResolveResult[]{new ClassCandidateInfo(containingClass, substitutor)};
+            }
+          }
+
           final MethodSignature signature = interfaceMethod != null ? interfaceMethod.getSignature(resolveResult.getSubstitutor()) : null;
           final MethodReferenceConflictResolver conflictResolver =
             new MethodReferenceConflictResolver(containingClass, substitutor, signature, beginsWithReferenceType);
           final PsiConflictResolver[] resolvers;
           if (signature != null) {
-            if (isConstructor && containingClass.getConstructors().length == 0 && !containingClass.isEnum() && !containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-              return new JavaResolveResult[]{new ClassCandidateInfo(containingClass, substitutor)};
-            }
             final PsiType[] parameterTypes = signature.getParameterTypes();
-            resolvers = new PsiConflictResolver[]{conflictResolver,
-              new JavaMethodsConflictResolver(PsiMethodReferenceExpressionImpl.this, parameterTypes) {
-                @Override
-                public CandidateInfo resolveConflict(List<CandidateInfo> conflicts) {
-                  boolean varargs = false;
-                  for (CandidateInfo conflict : conflicts) {
-                    final PsiElement psiElement = conflict.getElement();
-                    if (psiElement instanceof PsiMethod && ((PsiMethod)psiElement).isVarArgs()) {
-                      varargs = true;
-                      break;
-                    }
-                  }
-                  checkSpecifics(conflicts, varargs ? MethodCandidateInfo.ApplicabilityLevel.VARARGS : MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY);
-                  return conflicts.size() == 1 ? conflicts.get(0) : null; 
-                }
-              }};
+            resolvers = new PsiConflictResolver[]{conflictResolver, new MethodRefsSpecificResolver(parameterTypes)};
           }
           else {
             resolvers = new PsiConflictResolver[]{conflictResolver};
@@ -284,26 +285,16 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             new MethodCandidatesProcessor(PsiMethodReferenceExpressionImpl.this, resolvers, new SmartList<CandidateInfo>()) {
               @Override
               protected MethodCandidateInfo createCandidateInfo(final PsiMethod method,
-                                                                PsiSubstitutor substitutor,
-                                                                boolean staticProblem,
-                                                                boolean accessible) {
+                                                                final PsiSubstitutor substitutor,
+                                                                final boolean staticProblem,
+                                                                final boolean accessible) {
                 final PsiExpressionList argumentList = getArgumentList();
                 return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, argumentList, myCurrentFileContext,
                                                argumentList != null ? argumentList.getExpressionTypes() : null, getTypeArguments(),
                                                getLanguageLevel()) {
                   @Override
                   public PsiSubstitutor inferTypeArguments(ParameterTypeInferencePolicy policy) {
-                    if (signature == null) return PsiSubstitutor.EMPTY;
-                    final PsiType[] types = method.getSignature(PsiSubstitutor.EMPTY).getParameterTypes();
-                    final PsiType[] rightTypes = signature.getParameterTypes();
-                    if (types.length < rightTypes.length) {
-                      return PsiUtil.resolveGenericsClassInType(rightTypes[0]).getSubstitutor();
-                    } else if (types.length > rightTypes.length) {
-                      return PsiUtil.resolveGenericsClassInType(types[0]).getSubstitutor();
-                    }
-                    return JavaPsiFacade.getInstance(getProject()).getResolveHelper()
-                      .inferTypeArguments(method.getTypeParameters(), types, rightTypes,
-                                          PsiUtil.getLanguageLevel(PsiMethodReferenceExpressionImpl.this));
+                    return inferTypeArgumentsFromInterfaceMethod(signature, interfaceMethodReturnType, method, substitutor, languageLevel);
                   }
                 };
               }
@@ -335,6 +326,31 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         }
       }
       return JavaResolveResult.EMPTY_ARRAY;
+    }
+
+    private PsiSubstitutor inferTypeArgumentsFromInterfaceMethod(@Nullable MethodSignature signature,
+                                                                 @Nullable PsiType interfaceMethodReturnType,
+                                                                 PsiMethod method,
+                                                                 PsiSubstitutor substitutor,
+                                                                 LanguageLevel languageLevel) {
+      if (signature == null) return PsiSubstitutor.EMPTY;
+      final PsiType[] types = method.getSignature(substitutor).getParameterTypes();
+      final PsiType[] rightTypes = signature.getParameterTypes();
+      if (types.length < rightTypes.length) {
+        return PsiUtil.resolveGenericsClassInType(rightTypes[0]).getSubstitutor();
+      } else if (types.length > rightTypes.length) {
+        return PsiUtil.resolveGenericsClassInType(types[0]).getSubstitutor();
+      }
+
+      PsiSubstitutor psiSubstitutor = JavaPsiFacade.getInstance(getProject()).getResolveHelper().inferTypeArguments(
+        method.getTypeParameters(), types, rightTypes, languageLevel);
+      psiSubstitutor = psiSubstitutor.putAll(substitutor);
+
+      return LambdaUtil.inferFromReturnType(method.getTypeParameters(),
+                                            psiSubstitutor.substitute(method.getReturnType()),
+                                            interfaceMethodReturnType,
+                                            psiSubstitutor,
+                                            languageLevel, PsiMethodReferenceExpressionImpl.this.getProject());
     }
 
     private class MethodReferenceConflictResolver implements PsiConflictResolver {
@@ -416,6 +432,27 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           return null;
         }
         return !firstCandidates.isEmpty() ? firstCandidates.get(0) : secondCandidates.get(0);
+      }
+    }
+
+    private class MethodRefsSpecificResolver extends JavaMethodsConflictResolver {
+      public MethodRefsSpecificResolver(PsiType[] parameterTypes) {
+        super(PsiMethodReferenceExpressionImpl.this, parameterTypes);
+      }
+
+      @Override
+      public CandidateInfo resolveConflict(List<CandidateInfo> conflicts) {
+        boolean varargs = false;
+        for (CandidateInfo conflict : conflicts) {
+          final PsiElement psiElement = conflict.getElement();
+          if (psiElement instanceof PsiMethod && ((PsiMethod)psiElement).isVarArgs()) {
+            varargs = true;
+            break;
+          }
+        }
+        checkSpecifics(conflicts,
+                       varargs ? MethodCandidateInfo.ApplicabilityLevel.VARARGS : MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY);
+        return conflicts.size() == 1 ? conflicts.get(0) : null;
       }
     }
   }
