@@ -122,8 +122,8 @@ public class TagsHelper {
     return (BranchesProvider)operation;
   }
 
-  private static Collection<String> collectAllBranches(Collection<FilePath> files, Project project) throws VcsException {
-    if (files.isEmpty()) {
+  public static Collection<FilePath> findVcsRoots(FilePath[] files, Project project) {
+    if (files.length == 0) {
       return Collections.emptyList();
     }
     final Collection<FilePath> roots = new HashSet<FilePath>();
@@ -135,10 +135,14 @@ public class TagsHelper {
       }
       roots.add(VcsContextFactory.SERVICE.getInstance().createFilePathOn(root));
     }
-    if (roots.isEmpty()) {
+    return roots;
+  }
+
+  private static Collection<String> collectAllBranches(Collection<FilePath> files, Project project) throws VcsException {
+    if (files.isEmpty()) {
       return Collections.emptyList();
     }
-    return getBranchesProvider(new LogOperation(roots), project).getAllBranches();
+    return getBranchesProvider(new LogOperation(files), project).getAllBranches();
   }
 
   private static void showErrorMessage(VcsException e1) {
