@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
@@ -44,8 +45,10 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
   protected final File myFile;
   private final String myName;
 
-  protected FileOrDirectoryTreeNode(@NotNull String path, SimpleTextAttributes invalidAttributes,
-                                 Project project, String parentPath) {
+  protected FileOrDirectoryTreeNode(@NotNull String path,
+                                    @NotNull SimpleTextAttributes invalidAttributes,
+                                    @NotNull Project project,
+                                    @Nullable String parentPath) {
     String preparedPath = path.replace(File.separatorChar, '/');
     String url = VirtualFileManager.constructUrl(LocalFileSystem.getInstance().getProtocol(), preparedPath);
     setUserObject(VirtualFilePointerManager.getInstance().create(url, this, this));
@@ -55,6 +58,7 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
     myName = parentPath == null ? myFile.getAbsolutePath() : myFile.getName();
   }
 
+  @NotNull
   @Override
   public String getName() {
     return myName;
@@ -100,6 +104,7 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
     return (VirtualFilePointer)getUserObject();
   }
 
+  @NotNull
   @Override
   public SimpleTextAttributes getAttributes() {
     if (!getFilePointer().isValid()) {
@@ -111,7 +116,8 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
     return getAttributesFor(status);
   }
 
-  private static SimpleTextAttributes getAttributesFor(FileStatus status) {
+  @NotNull
+  private static SimpleTextAttributes getAttributesFor(@NotNull FileStatus status) {
     Color color = status.getColor();
     if (color == null) color = Color.black;
 
