@@ -179,7 +179,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     
     final TextRange range;
     if (!processWholeFile && editor != null && editor.getSelectionModel().hasSelection()){
-      range = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
+      range = TextRange.create(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
     }
     else{
       range = null;
@@ -203,8 +203,8 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
         final PsiFile finalFile = file;
         SelectionModel selectionModel = editor.getSelectionModel();
         final TextRange rangeToUse = selectionModel.hasSelection()
-                                     ? TextRange.from(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd())
-                                     : TextRange.from(0, editor.getDocument().getTextLength());
+                                     ? TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd())
+                                     : TextRange.create(0, editor.getDocument().getTextLength());
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           @Override
           public void run() {
