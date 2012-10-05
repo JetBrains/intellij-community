@@ -18,7 +18,7 @@ package com.intellij.openapi.command;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.GuiUtils;
@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
@@ -50,7 +49,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     myName = name;
     myGroupID = groupID;
     myProject = project;
-    myPsiFiles = files;
+    myPsiFiles = files == null || files.length == 0 ? PsiFile.EMPTY_ARRAY : files;
   }
 
   public final Project getProject() {
@@ -83,7 +82,8 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
       else {
         GuiUtils.invokeAndWait(runnable);
       }
-    } catch (Throwable e) {
+    }
+    catch (Throwable e) {
       if (e instanceof InvocationTargetException) e = e.getCause();
       throw new RuntimeException(e);
     }
@@ -101,7 +101,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
           }
       }
       if (!list.isEmpty()) {
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(VfsUtil.toVirtualFileArray(list)).hasReadonlyFiles()) {
+        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(VfsUtilCore.toVirtualFileArray(list)).hasReadonlyFiles()) {
           return false;
         }
       }
@@ -110,7 +110,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   private void performWriteCommandAction(final RunResult<T> result) {
-    if (myProject != null && !ensureFilesWritable(myProject, myPsiFiles == null? Collections.<PsiFile>emptyList() : Arrays.asList(myPsiFiles))) return;
+    if (myProject != null && !ensureFilesWritable(myProject, Arrays.asList(myPsiFiles))) return;
 
     //this is needed to prevent memory leak, since command
     // is put into undo queue
