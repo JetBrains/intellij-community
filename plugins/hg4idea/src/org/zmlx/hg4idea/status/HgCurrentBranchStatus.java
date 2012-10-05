@@ -24,14 +24,11 @@ import java.util.List;
 
 public class HgCurrentBranchStatus {
 
-	private final HgUpdater toUpdate;
-
 	private String text;
 	private String toolTip;
 
 
-  public HgCurrentBranchStatus( HgUpdater toUpdate ) {
-	  this.toUpdate = toUpdate;
+  public HgCurrentBranchStatus() {
   }
 
   public void updateFor(
@@ -39,7 +36,7 @@ public class HgCurrentBranchStatus {
 	  @Nullable String branch,
 	  @NotNull List<HgRevisionNumber> parents
   ) {
-    StringBuffer parentsBuffer = new StringBuffer();
+    StringBuilder parentsBuffer = new StringBuilder();
     for (HgRevisionNumber parent : parents) {
       String rev = parent.getRevision();
       parentsBuffer.append(rev).append(", ");
@@ -48,16 +45,15 @@ public class HgCurrentBranchStatus {
     if (length > 2) {
       parentsBuffer.delete(length - 2, length);
     }
-    String statusText = !StringUtil.isEmptyOrSpaces(branch)
-      ? HgVcsMessages.message( "hg4idea.status.currentSituationText", branch, parentsBuffer.toString()) : "";
+	  String parent = parentsBuffer.toString();
+	  String statusText = !StringUtil.isEmptyOrSpaces(branch)
+      ? HgVcsMessages.message( "hg4idea.status.currentSituationText", branch, parent ) : "";
 
     String toolTipText = !StringUtil.isEmptyOrSpaces(statusText)
-      ? HgVcsMessages.message("hg4idea.status.currentSituation.description") : "";
+      ? HgVcsMessages.message("hg4idea.status.currentSituation.description", branch, parent ) : "";
 
     text = statusText;
     toolTip = toolTipText;
-
-	  toUpdate.update( project );
   }
 
 

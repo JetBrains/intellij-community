@@ -15,6 +15,7 @@
  */
 package org.zmlx.hg4idea.status;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -24,15 +25,14 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgProjectSettings;
-import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.HgUpdater;
-import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.HgIncomingCommand;
 import org.zmlx.hg4idea.command.HgOutgoingCommand;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -40,7 +40,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class HgRemoteStatusUpdater implements HgUpdater {
 
-	private final HgUpdater toUpdate;
 	private final AbstractVcs myVcs;
   private final HgChangesetStatus myIncomingStatus;
   private final HgChangesetStatus myOutgoingStatus;
@@ -49,15 +48,15 @@ public class HgRemoteStatusUpdater implements HgUpdater {
 
 	private MessageBusConnection busConnection;
 
+	private ScheduledFuture<?> changesUpdaterScheduledFuture;
+
 
 	public HgRemoteStatusUpdater(
-	  HgUpdater toUpdate,
-	  @NotNull HgVcs vcs,
-	  HgChangesetStatus incomingStatus,
-	  HgChangesetStatus outgoingStatus,
-	  HgProjectSettings projectSettings
-  ) {
-	  this.toUpdate = toUpdate;
+		@NotNull HgVcs vcs,
+		HgChangesetStatus incomingStatus,
+		HgChangesetStatus outgoingStatus,
+		HgProjectSettings projectSettings
+	) {
 	  myVcs = vcs;
     myIncomingStatus = incomingStatus;
     myOutgoingStatus = outgoingStatus;
@@ -82,7 +81,9 @@ public class HgRemoteStatusUpdater implements HgUpdater {
               updateChangesetStatus(project, roots, myOutgoingStatus, false);
             }
 
-	          toUpdate.update( project );
+	          project.getMessageBus()
+	            .syncPublisher( Topics.STATUS_TOPIC )
+	            .update( project );
 
             indicator.stop();
             myUpdateStarted.set(false);
@@ -95,11 +96,23 @@ public class HgRemoteStatusUpdater implements HgUpdater {
 
 	public void activate() {
 		busConnection = myVcs.getProject().getMessageBus().connect();
-		busConnection.subscribe( HgVcs.REMOTE_TOPIC, this );
+		busConnection.subscribe( Topics.REMOTE_TOPIC, this );
+
+		int checkIntervalSeconds = HgGlobalSettings.getIncomingCheckIntervalSeconds();
+		changesUpdaterScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(
+			new Runnable() {
+				public void run() {
+					update( myVcs.getProject() );
+				}
+			}, 5, checkIntervalSeconds, TimeUnit.SECONDS );
 	}
 
 	public void deactivate() {
 		busConnection.disconnect();
+
+		if ( changesUpdaterScheduledFuture != null ) {
+			changesUpdaterScheduledFuture.cancel( true );
+		}
 	}
 
   private void updateChangesetStatus(Project project, VirtualFile[] roots, HgChangesetStatus status, boolean incoming) {

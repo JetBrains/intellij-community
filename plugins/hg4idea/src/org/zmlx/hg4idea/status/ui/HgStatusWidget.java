@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zmlx.hg4idea.ui.status;
+package org.zmlx.hg4idea.status.ui;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -30,20 +29,18 @@ import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgGlobalSettings;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.Topics;
 import org.zmlx.hg4idea.status.HgChangesetStatus;
 import org.zmlx.hg4idea.status.HgCurrentBranchStatus;
 import org.zmlx.hg4idea.status.HgRemoteStatusUpdater;
 
 import java.awt.event.MouseEvent;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Widget to display basic hg status in the IJ status bar.
  */
 public class HgStatusWidget
   extends EditorBasedWidget
@@ -55,16 +52,17 @@ public class HgStatusWidget
 	private volatile String myText = "";
   private volatile String myTooltip = "";
 
-  private final HgCurrentBranchStatus hgCurrentBranchStatus = new HgCurrentBranchStatus( this );
+  private final HgCurrentBranchStatus currentBranchStatus;
   private final HgChangesetStatus incomingChangesStatus;
   private final HgChangesetStatus outgoingChangesStatus;
-	private ScheduledFuture<?> changesUpdaterScheduledFuture;
 
   private static final String myMaxString = "hg: default; in: 99; out: 99";
 
 	private MessageBusConnection busConnection;
 
 	private HgRemoteStatusUpdater remoteUpdater;
+
+	private HgCurrentBranchStatusUpdater branchStatusUpdater;
 
 
 	public HgStatusWidget( HgVcs vcs, Project project, HgProjectSettings projectSettings) {
@@ -74,7 +72,8 @@ public class HgStatusWidget
 
 	  this.incomingChangesStatus = new HgChangesetStatus( "In" );
     this.outgoingChangesStatus = new HgChangesetStatus( "Out" );
-  }
+		currentBranchStatus = new HgCurrentBranchStatus();
+	}
 
   @Override
   public StatusBarWidget copy() {
@@ -166,16 +165,16 @@ public class HgStatusWidget
 		ApplicationManager.getApplication().invokeLater(new Runnable() {
 	    @Override
 	    public void run() {
-	      if (project == null) {
+	      if ( ( project == null ) || project.isDisposed() ) {
 	        emptyTextAndTooltip();
 	        return;
 	      }
 
 		    emptyTextAndTooltip();
 
-		    if ( null != hgCurrentBranchStatus.getStatusText() ) {
-			    myText = hgCurrentBranchStatus.getStatusText();
-		      myTooltip = hgCurrentBranchStatus.getToolTipText();
+		    if ( null != currentBranchStatus.getStatusText() ) {
+			    myText = currentBranchStatus.getStatusText();
+		      myTooltip = currentBranchStatus.getToolTipText();
 		    }
 
 	      if ( incomingChangesStatus.getNumChanges() > 0 ) {
@@ -199,19 +198,21 @@ public class HgStatusWidget
 
 	public void activate() {
 
-		busConnection = getProject().getMessageBus().connect();
-	  busConnection.subscribe( HgVcs.BRANCH_TOPIC, new HgCurrentBranchStatusUpdater( hgCurrentBranchStatus ) );
+		Project project = getProject();
+		if ( null == project ) {
+			return;
+		}
 
-		remoteUpdater = new HgRemoteStatusUpdater( this, vcs, incomingChangesStatus, outgoingChangesStatus, projectSettings );
-		int checkIntervalSeconds = HgGlobalSettings.getIncomingCheckIntervalSeconds();
-		changesUpdaterScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(
-			new Runnable() {
-				public void run() {
-					remoteUpdater.update( getProject() );
-				}
-			}, 5, checkIntervalSeconds, TimeUnit.SECONDS );
+		busConnection = project.getMessageBus().connect();
+		busConnection.subscribe( Topics.STATUS_TOPIC, this );
 
-		StatusBar statusBar = WindowManager.getInstance().getStatusBar( getProject() );
+		branchStatusUpdater = new HgCurrentBranchStatusUpdater( vcs, currentBranchStatus );
+		branchStatusUpdater.activate();
+
+		remoteUpdater = new HgRemoteStatusUpdater( vcs, incomingChangesStatus, outgoingChangesStatus, projectSettings );
+		remoteUpdater.activate();
+
+		StatusBar statusBar = WindowManager.getInstance().getStatusBar( project );
 		if ( null != statusBar  ) {
 			statusBar.addWidget( this );
 		}
@@ -221,9 +222,8 @@ public class HgStatusWidget
 
 		busConnection.disconnect();
 
-		if ( changesUpdaterScheduledFuture != null ) {
-			changesUpdaterScheduledFuture.cancel( true );
-		}
+		remoteUpdater.deactivate();
+		branchStatusUpdater.deactivate();
 
 		StatusBar statusBar = WindowManager.getInstance().getStatusBar( getProject() );
 		if ( null != statusBar ) {

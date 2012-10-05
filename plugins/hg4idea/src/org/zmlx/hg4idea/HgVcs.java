@@ -46,7 +46,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.provider.*;
@@ -55,7 +54,7 @@ import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
 import org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutor;
 import org.zmlx.hg4idea.provider.update.HgIntegrateEnvironment;
 import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
-import org.zmlx.hg4idea.ui.status.HgStatusWidget;
+import org.zmlx.hg4idea.status.ui.HgStatusWidget;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
@@ -63,10 +62,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class HgVcs extends AbstractVcs<CommittedChangeList> {
-
-  public static final Topic<HgUpdater> BRANCH_TOPIC = new Topic<HgUpdater>("hg4idea.branch", HgUpdater.class);
-
-  public static final Topic<HgUpdater> REMOTE_TOPIC = new Topic<HgUpdater>("hg4idea.remote", HgUpdater.class);
 
   private static final Logger LOG = Logger.getInstance(HgVcs.class);
 
@@ -270,7 +265,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
       @Override
       public void selectionChanged(FileEditorManagerEvent event) {
         Project project = event.getManager().getProject();
-        project.getMessageBus().syncPublisher(BRANCH_TOPIC).update(project);
+        project.getMessageBus().syncPublisher(Topics.BRANCH_TOPIC).update(project);
       }
     });
 
@@ -286,6 +281,10 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
         }
       });
     }
+
+    // Force a branch topic update
+    myProject.getMessageBus().syncPublisher(Topics.BRANCH_TOPIC).update(myProject);
+
   }
 
   @Override

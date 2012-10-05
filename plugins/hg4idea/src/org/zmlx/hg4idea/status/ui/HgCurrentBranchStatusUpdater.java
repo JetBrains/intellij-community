@@ -10,7 +10,7 @@
 // the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 // either express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
-package org.zmlx.hg4idea.ui.status;
+package org.zmlx.hg4idea.status.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -19,10 +19,14 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgUpdater;
+import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.Topics;
 import org.zmlx.hg4idea.command.HgTagBranchCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.status.HgCurrentBranchStatus;
@@ -33,10 +37,18 @@ import java.util.concurrent.atomic.AtomicReference;
 
 class HgCurrentBranchStatusUpdater implements HgUpdater {
 
-  private final HgCurrentBranchStatus hgCurrentBranchStatus;
+	private final HgVcs vcs;
+	private final HgCurrentBranchStatus currentBranchStatus;
 
-  public HgCurrentBranchStatusUpdater(HgCurrentBranchStatus hgCurrentBranchStatus) {
-    this.hgCurrentBranchStatus = hgCurrentBranchStatus;
+	private MessageBusConnection busConnection;
+
+
+	public HgCurrentBranchStatusUpdater(
+	  HgVcs vcs,
+	  HgCurrentBranchStatus currentBranchStatus
+  ) {
+	  this.vcs = vcs;
+	  this.currentBranchStatus = currentBranchStatus;
   }
 
   public void update(final Project project) {
@@ -53,7 +65,10 @@ class HgCurrentBranchStatusUpdater implements HgUpdater {
       }
     });
 
-    if (textEditor.get() != null) {
+    if (textEditor.get() == null) {
+	    handleUpdate( project, null, Collections.<HgRevisionNumber>emptyList() );
+    }
+	  else {
       Document document = textEditor.get().getDocument();
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
 
@@ -68,15 +83,38 @@ class HgCurrentBranchStatusUpdater implements HgUpdater {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
-                hgCurrentBranchStatus.updateFor(project, branch, parents);
+	              handleUpdate( project, branch, parents );
               }
             });
           }
         });
-        return;
       }
     }
-    hgCurrentBranchStatus.updateFor( project, null, Collections.<HgRevisionNumber>emptyList());
   }
 
+
+	private void handleUpdate(
+		Project project,
+		@Nullable String branch,
+		List<HgRevisionNumber> parents
+	) {
+
+		currentBranchStatus.updateFor( project, branch, parents );
+
+		project.getMessageBus()
+    .syncPublisher( Topics.STATUS_TOPIC )
+    .update( project );
+	}
+
+
+	public void activate() {
+
+		busConnection = vcs.getProject().getMessageBus().connect();
+		busConnection.subscribe( Topics.BRANCH_TOPIC, this );
+	}
+
+
+	public void deactivate() {
+		busConnection.disconnect();
+	}
 }
