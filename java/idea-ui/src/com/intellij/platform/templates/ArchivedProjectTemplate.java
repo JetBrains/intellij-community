@@ -20,6 +20,7 @@ import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Condition;
@@ -95,7 +96,7 @@ public class ArchivedProjectTemplate implements ProjectTemplate {
         try {
           File dir = new File(path);
           ZipInputStream zipInputStream = getStream();
-          ZipUtil.unzip(null, dir, zipInputStream);
+          ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, zipInputStream);
           VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
           RefreshQueue.getInstance().refresh(false, true, null, virtualFile);
           iml = ContainerUtil.find(dir.list(), new Condition<String>() {

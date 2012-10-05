@@ -42,6 +42,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.*;
@@ -67,7 +68,7 @@ public class NewProjectUtil {
       }
     }, ProjectBundle.message("project.new.wizard.progress.title"), true, null);
     if (!proceed) return;
-    AddModuleWizard dialog = new AddModuleWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, defaultPath);
+    final AddModuleWizard dialog = new AddModuleWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, defaultPath);
     dialog.show();
     if (!dialog.isOK()) {
       return;
@@ -92,8 +93,18 @@ public class NewProjectUtil {
         }
       }
 
-      final Project newProject =
-        projectBuilder == null || !projectBuilder.isUpdate() ? projectManager.newProject(dialog.getProjectName(), projectFilePath, true, false) : projectToClose;
+      final Project newProject;
+      if (projectBuilder == null || !projectBuilder.isUpdate()) {
+        newProject = ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<Project, RuntimeException>() {
+          @Override
+          public Project compute() throws RuntimeException {
+            return projectManager.newProject(dialog.getProjectName(), projectFilePath, true, false);
+          }
+        }, "Creating Project", true, null);
+      }
+      else {
+        newProject = projectToClose;
+      }
 
       if (newProject == null) return;
 
