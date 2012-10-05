@@ -353,4 +353,526 @@
   <item name='java.util.List java.util.List&lt;E&gt; subList(int, int)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.util.Collection java.util.Iterator&lt;E&gt; iterator()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Collection java.lang.Object[] toArray()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Collection T[] toArray(T[])'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Collection T[] toArray(T[]) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Collection boolean containsAll(java.util.Collection&lt;?&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Collection boolean addAll(java.util.Collection&lt;? extends E&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Collection boolean removeAll(java.util.Collection&lt;?&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Collection boolean retainAll(java.util.Collection&lt;?&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Deque java.util.Iterator&lt;E&gt; descendingIterator()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Map void putAll(java.util.Map&lt;? extends K,? extends V&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Map java.util.Set&lt;K&gt; keySet()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Map java.util.Collection&lt;V&gt; values()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Map java.util.Set&lt;java.util.Map.Entry&lt;K,V&gt;&gt; entrySet()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.NavigableSet java.util.NavigableSet&lt;E&gt; descendingSet()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.NavigableSet java.util.Iterator&lt;E&gt; descendingIterator()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.NavigableSet java.util.NavigableSet&lt;E&gt; subSet(E, boolean, E, boolean)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.NavigableSet java.util.NavigableSet&lt;E&gt; headSet(E, boolean)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.NavigableSet java.util.NavigableSet&lt;E&gt; tailSet(E, boolean)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.SortedMap java.util.Comparator&lt;? super K&gt; comparator()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.SortedMap java.util.SortedMap&lt;K,V&gt; subMap(K, K)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.SortedMap java.util.SortedMap&lt;K,V&gt; headMap(K)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.SortedMap java.util.SortedMap&lt;K,V&gt; tailMap(K)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.SortedSet java.util.Comparator&lt;? super E&gt; comparator()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.SortedSet java.util.SortedSet&lt;E&gt; subSet(E, E)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.SortedSet java.util.SortedSet&lt;E&gt; headSet(E)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.SortedSet java.util.SortedSet&lt;E&gt; tailSet(E)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void sort(int[]) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void sort(int[], int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void sort(long[]) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void sort(long[], int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void sort(short[]) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void sort(short[], int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void sort(char[]) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void sort(char[], int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void sort(byte[]) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void sort(byte[], int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void sort(float[]) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void sort(float[], int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void sort(double[]) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void sort(double[], int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void sort(java.lang.Object[], int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void sort(T[], java.util.Comparator&lt;? super T&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays void sort(T[], int, int, java.util.Comparator&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void sort(T[], int, int, java.util.Comparator&lt;? super T&gt;) 3'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays int binarySearch(long[], long) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int binarySearch(long[], int, int, long) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int binarySearch(int[], int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int binarySearch(int[], int, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int binarySearch(short[], short) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int binarySearch(short[], int, int, short) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int binarySearch(char[], char) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int binarySearch(char[], int, int, char) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int binarySearch(byte[], byte) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int binarySearch(byte[], int, int, byte) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int binarySearch(double[], double) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int binarySearch(double[], int, int, double) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int binarySearch(float[], float) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int binarySearch(float[], int, int, float) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int binarySearch(java.lang.Object[], java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int binarySearch(java.lang.Object[], int, int, java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int binarySearch(T[], T, java.util.Comparator&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int binarySearch(T[], T, java.util.Comparator&lt;? super T&gt;) 2'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays int binarySearch(T[], int, int, T, java.util.Comparator&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int binarySearch(T[], int, int, T, java.util.Comparator&lt;? super T&gt;) 4'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays boolean equals(long[], long[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays boolean equals(long[], long[]) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays boolean equals(int[], int[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays boolean equals(int[], int[]) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays boolean equals(short[], short[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays boolean equals(short[], short[]) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays boolean equals(char[], char[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays boolean equals(char[], char[]) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays boolean equals(byte[], byte[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays boolean equals(byte[], byte[]) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays boolean equals(boolean[], boolean[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays boolean equals(boolean[], boolean[]) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays boolean equals(double[], double[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays boolean equals(double[], double[]) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays boolean equals(float[], float[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays boolean equals(float[], float[]) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays boolean equals(java.lang.Object[], java.lang.Object[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays boolean equals(java.lang.Object[], java.lang.Object[]) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays void fill(long[], long) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void fill(long[], int, int, long) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void fill(int[], int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void fill(int[], int, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void fill(short[], short) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void fill(short[], int, int, short) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void fill(char[], char) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void fill(char[], int, int, char) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void fill(byte[], byte) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void fill(byte[], int, int, byte) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void fill(boolean[], boolean) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void fill(boolean[], int, int, boolean) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void fill(double[], double) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void fill(double[], int, int, double) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void fill(float[], float) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void fill(float[], int, int, float) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void fill(java.lang.Object[], java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays void fill(java.lang.Object[], int, int, java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays T[] copyOf(T[], int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays T[] copyOf(T[], int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays T[] copyOf(U[], int, java.lang.Class&lt;? extends T[]&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays T[] copyOf(U[], int, java.lang.Class&lt;? extends T[]&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays T[] copyOf(U[], int, java.lang.Class&lt;? extends T[]&gt;) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays byte[] copyOf(byte[], int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays byte[] copyOf(byte[], int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays short[] copyOf(short[], int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays short[] copyOf(short[], int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int[] copyOf(int[], int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int[] copyOf(int[], int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays long[] copyOf(long[], int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays long[] copyOf(long[], int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays char[] copyOf(char[], int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays char[] copyOf(char[], int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays float[] copyOf(float[], int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays float[] copyOf(float[], int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays double[] copyOf(double[], int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays double[] copyOf(double[], int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays boolean[] copyOf(boolean[], int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays boolean[] copyOf(boolean[], int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays T[] copyOfRange(T[], int, int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays T[] copyOfRange(T[], int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays T[] copyOfRange(U[], int, int, java.lang.Class&lt;? extends T[]&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays T[] copyOfRange(U[], int, int, java.lang.Class&lt;? extends T[]&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays T[] copyOfRange(U[], int, int, java.lang.Class&lt;? extends T[]&gt;) 3'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays byte[] copyOfRange(byte[], int, int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays byte[] copyOfRange(byte[], int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays short[] copyOfRange(short[], int, int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays short[] copyOfRange(short[], int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int[] copyOfRange(int[], int, int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int[] copyOfRange(int[], int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays long[] copyOfRange(long[], int, int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays long[] copyOfRange(long[], int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays char[] copyOfRange(char[], int, int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays char[] copyOfRange(char[], int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays float[] copyOfRange(float[], int, int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays float[] copyOfRange(float[], int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays double[] copyOfRange(double[], int, int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays double[] copyOfRange(double[], int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays boolean[] copyOfRange(boolean[], int, int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays boolean[] copyOfRange(boolean[], int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays int hashCode(long[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays int hashCode(int[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays int hashCode(short[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays int hashCode(char[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays int hashCode(byte[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays int hashCode(boolean[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays int hashCode(float[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays int hashCode(double[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays int hashCode(java.lang.Object[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays int deepHashCode(java.lang.Object[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays boolean deepEquals(java.lang.Object[], java.lang.Object[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays boolean deepEquals(java.lang.Object[], java.lang.Object[]) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays java.lang.String toString(long[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays java.lang.String toString(long[])'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays java.lang.String toString(int[])'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays java.lang.String toString(int[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays java.lang.String toString(short[])'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays java.lang.String toString(short[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays java.lang.String toString(char[])'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays java.lang.String toString(char[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays java.lang.String toString(byte[])'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays java.lang.String toString(byte[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays java.lang.String toString(boolean[])'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays java.lang.String toString(boolean[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays java.lang.String toString(float[])'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays java.lang.String toString(float[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays java.lang.String toString(double[])'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays java.lang.String toString(double[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays java.lang.String toString(java.lang.Object[])'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays java.lang.String toString(java.lang.Object[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Arrays java.lang.String deepToString(java.lang.Object[])'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Arrays java.lang.String deepToString(java.lang.Object[]) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
 </root>
