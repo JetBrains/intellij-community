@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
@@ -28,7 +29,7 @@ public final class HgVcsMessages {
 
   private HgVcsMessages() { }
 
-  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, @Nullable Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
 
