@@ -41,7 +41,7 @@ public abstract class DomTestCase extends LightIdeaTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    DomApplicationComponent.getInstance().clearImplementations();
+    DomApplicationComponent.getInstance().clearCachesInTests();
     super.tearDown();
   }
 
