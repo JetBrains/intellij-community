@@ -34,7 +34,10 @@ import static git4idea.test.MockGit.OperationName.GET_UNMERGED_FILES
 /**
  * 
  * @author Kirill Likhodedov
+ *
+ * @deprecated Use {@link GitTestImpl} - prefer fair Git to the simulation.
  */
+@Deprecated
 class MockGit implements Git {
 
   public static final GitCommandResult FAKE_SUCCESS_RESULT = new GitCommandResult(true, 0, Collections.emptyList(), Collections.emptyList())
