@@ -133,7 +133,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   @Nullable
-  public TextAttributes getTextAttributesBySeverity(HighlightSeverity severity) {
+  public TextAttributes getTextAttributesBySeverity(@NotNull HighlightSeverity severity) {
     final SeverityBasedTextAttributes infoType = ourMap.get(severity.toString());
     if (infoType != null) {
       return infoType.getAttributes();
@@ -272,6 +272,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     return max;
   }
 
+  @Nullable
   public HighlightSeverity getSeverity(@NotNull String name) {
     final HighlightInfoType type = STANDARD_SEVERITIES.get(name);
     if (type != null) return type.getSeverity(null);

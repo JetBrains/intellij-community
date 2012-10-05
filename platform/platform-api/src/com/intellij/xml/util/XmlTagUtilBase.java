@@ -16,9 +16,10 @@
 package com.intellij.xml.util;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public class XmlTagUtilBase {
-  public static String escapeString(final String str, final boolean escapeWhiteSpace) {
+  public static String escapeString(@Nullable final String str, final boolean escapeWhiteSpace) {
     if (str == null) return null;
     StringBuffer buffer = null;
     for (int i = 0; i < str.length(); i++) {

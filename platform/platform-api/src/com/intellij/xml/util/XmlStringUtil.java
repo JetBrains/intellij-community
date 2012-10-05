@@ -16,6 +16,8 @@
 
 package com.intellij.xml.util;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author yole
  */
@@ -23,11 +25,11 @@ public class XmlStringUtil {
   private XmlStringUtil() {
   }
 
-  public static String escapeString(String str) {
+  public static String escapeString(@Nullable String str) {
     return escapeString(str, false);
   }
 
-  public static String escapeString(String str, final boolean escapeWhiteSpace) {
+  public static String escapeString(@Nullable String str, final boolean escapeWhiteSpace) {
     return XmlTagUtilBase.escapeString(str, escapeWhiteSpace);
   }
 }
