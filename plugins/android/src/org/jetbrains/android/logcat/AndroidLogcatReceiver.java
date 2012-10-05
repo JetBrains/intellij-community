@@ -19,6 +19,7 @@ package org.jetbrains.android.logcat;
 import com.android.ddmlib.Log;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.android.util.AndroidOutputReceiver;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -56,7 +57,7 @@ public class AndroidLogcatReceiver extends AndroidOutputReceiver {
       myLastMessageHeader = new LogMessageHeader();
       myLastMessageHeader.myTime = matcher.group(1);
       myLastMessageHeader.myPid = Integer.valueOf(matcher.group(2));
-      myLastMessageHeader.myLogLevel = Log.LogLevel.getByLetterString(matcher.group(4));
+      myLastMessageHeader.myLogLevel = getByLetterString(matcher.group(4));
       myLastMessageHeader.myTag = matcher.group(5).trim();
     }
     else {
@@ -75,6 +76,21 @@ public class AndroidLogcatReceiver extends AndroidOutputReceiver {
       myPrevLogLevel = myLastMessageHeader.myLogLevel;
       myLastMessageHeader = null;
     }
+  }
+
+  @Nullable
+  private static Log.LogLevel getByLetterString(@Nullable String s) {
+    if (s == null) {
+      return null;
+    }
+    final Log.LogLevel logLevel = Log.LogLevel.getByLetterString(s);
+
+    /* LogLevel doesn't support messages with severity "F". Log.wtf() is supposed
+     * to generate "A", but generates "F" */
+    if (logLevel == null && s.equals("F")) {
+      return Log.LogLevel.ASSERT;
+    }
+    return logLevel;
   }
 
   public boolean isCancelled() {
