@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.GraphicsUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,7 +50,13 @@ public class DaemonEditorPopup extends PopupHandler {
         DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = errorsFirst.isSelected();
       }
     });
-    final JPopupMenu popupMenu = new JPopupMenu();
+    final JPopupMenu popupMenu = new JPopupMenu() {
+      @Override
+      public void paint(Graphics g) {
+        GraphicsUtil.setupAntialiasing(g);
+        super.paint(g);
+      }
+    };
     popupMenu.add(errorsFirst);
 
     final JRadioButtonMenuItem next = new JRadioButtonMenuItem(EditorBundle.message("errors.panel.go.to.next.error.warning.radio"));
