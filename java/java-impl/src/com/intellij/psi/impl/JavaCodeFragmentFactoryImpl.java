@@ -38,19 +38,13 @@ public class JavaCodeFragmentFactoryImpl extends JavaCodeFragmentFactory {
                                                                 final PsiElement context,
                                                                 final PsiType expectedType,
                                                                 final boolean isPhysical) {
-    final PsiExpressionCodeFragmentImpl result =
-      new PsiExpressionCodeFragmentImpl(myProject, isPhysical, "fragment.java", text, expectedType);
-    result.setContext(context);
-    return result;
+    return new PsiExpressionCodeFragmentImpl(myProject, isPhysical, "fragment.java", text, expectedType, context);
   }
 
   @NotNull
   @Override
   public JavaCodeFragment createCodeBlockCodeFragment(@NotNull final String text, @Nullable final PsiElement context, final boolean isPhysical) {
-    final PsiCodeFragmentImpl result =
-      new PsiCodeFragmentImpl(myProject, JavaElementType.STATEMENTS, isPhysical, "fragment.java", text);
-    result.setContext(context);
-    return result;
+    return new PsiCodeFragmentImpl(myProject, JavaElementType.STATEMENTS, isPhysical, "fragment.java", text, context);
   }
 
   @NotNull
@@ -62,9 +56,7 @@ public class JavaCodeFragmentFactoryImpl extends JavaCodeFragmentFactory {
   @NotNull
   @Override
   public PsiTypeCodeFragment createTypeCodeFragment(@NotNull final String text, @Nullable final PsiElement context, final boolean isPhysical, final int flags) {
-    final PsiTypeCodeFragmentImpl result = new PsiTypeCodeFragmentImpl(myProject, isPhysical, "fragment.java", text, flags);
-    result.setContext(context);
-    return result;
+    return new PsiTypeCodeFragmentImpl(myProject, isPhysical, "fragment.java", text, flags, context);
   }
 
   @NotNull
@@ -73,10 +65,6 @@ public class JavaCodeFragmentFactoryImpl extends JavaCodeFragmentFactory {
                                                                       final PsiElement context,
                                                                       final boolean isPhysical,
                                                                       final boolean isClassesAccepted) {
-    final PsiJavaCodeReferenceCodeFragmentImpl result =
-      new PsiJavaCodeReferenceCodeFragmentImpl(myProject, isPhysical, "fragment.java", text, isClassesAccepted);
-    result.setContext(context);
-    return result;
+    return new PsiJavaCodeReferenceCodeFragmentImpl(myProject, isPhysical, "fragment.java", text, isClassesAccepted, context);
   }
-
 }

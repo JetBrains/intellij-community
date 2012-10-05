@@ -28,8 +28,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -44,7 +44,7 @@ import java.util.LinkedHashMap;
 import java.util.StringTokenizer;
 
 public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment, IntentionFilterOwner {
-  private PsiElement myContext;
+  private final PsiElement myContext;
   private boolean myPhysical;
   private PsiType myThisType;
   private PsiType mySuperType;
@@ -58,12 +58,14 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
                              IElementType contentElementType,
                              boolean isPhysical,
                              @NonNls String name,
-                             CharSequence text) {
-    super(Constants.CODE_FRAGMENT,
+                             CharSequence text,
+                             PsiElement context) {
+    super(TokenType.CODE_FRAGMENT,
           contentElementType,
           ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().createFileViewProvider(
             new LightVirtualFile(name, FileTypeManager.getInstance().getFileTypeByFileName(name), text), isPhysical)
     );
+    myContext = context;
     ((SingleRootFileViewProvider)getViewProvider()).forceCachedPsi(this);
     myPhysical = isPhysical;
   }
@@ -102,8 +104,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
   @Override
   public boolean isValid() {
     if (!super.isValid()) return false;
-    if (myContext != null && !myContext.isValid()) return false;
-    return true;
+    return myContext == null || myContext.isValid();
   }
 
   @Override
@@ -115,10 +116,6 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
   @Override
   public PsiElement getContext() {
     return myContext;
-  }
-
-  public void setContext(PsiElement context) {
-    myContext = context;
   }
 
   @Override
@@ -215,7 +212,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
     }
 
     IElementType i = myContentElementType;
-    if (i == ElementType.TYPE_TEXT || i == ElementType.EXPRESSION_STATEMENT || i == ElementType.REFERENCE_TEXT) {
+    if (i == JavaElementType.TYPE_TEXT || i == JavaElementType.EXPRESSION_STATEMENT || i == JavaElementType.REFERENCE_TEXT) {
       return true;
     }
     else {
