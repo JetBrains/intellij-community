@@ -10,35 +10,32 @@
 // the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 // either express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
-package org.zmlx.hg4idea.ui;
+package org.zmlx.hg4idea.status;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.wm.CustomStatusBarWidget;
-import com.intellij.openapi.wm.StatusBar;
-import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 
-public class HgChangesetStatus extends JLabel implements CustomStatusBarWidget {
+public class HgChangesetStatus {
 
   private final String myName;
+	private int numChanges;
+	private String toolTip;
 
-  public HgChangesetStatus(Icon icon, String name) {
-    super(icon, SwingConstants.TRAILING);
+  public HgChangesetStatus(String name) {
     myName = name;
-    setVisible(false);
   }
 
   public void setChanges(final int count, final ChangesetWriter formatter) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (count == 0) {
-          setVisible(false);
+	        numChanges = 0;
+	        toolTip = "";
           return;
         }
-        setText(String.valueOf(count));
-        setToolTipText(formatter.asString());
-        setVisible(true);
+
+	      numChanges = count;
+        toolTip = formatter.asString();
       }
     });
   }
@@ -47,24 +44,19 @@ public class HgChangesetStatus extends JLabel implements CustomStatusBarWidget {
     return myName;
   }
 
-  public interface ChangesetWriter {
+
+	public int getNumChanges() {
+		return numChanges;
+	}
+
+
+	public String getToolTip() {
+		return toolTip;
+	}
+
+
+	public interface ChangesetWriter {
     String asString();
-  }
-
-  public JComponent getComponent() {
-    return this;
-  }
-
-  @NotNull
-  public String ID() {
-    return "HgChangeSetStatus";
-  }
-
-  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
-    return null;
-  }
-
-  public void install(@NotNull StatusBar statusBar) {
   }
 
   public void dispose() {

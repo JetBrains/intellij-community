@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zmlx.hg4idea;
+package org.zmlx.hg4idea.status;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -22,10 +22,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgProjectSettings;
+import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.HgUpdater;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgIncomingCommand;
 import org.zmlx.hg4idea.command.HgOutgoingCommand;
-import org.zmlx.hg4idea.ui.HgChangesetStatus;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -34,16 +38,27 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author Kirill Likhodedov
  */
-class HgRemoteStatusUpdater implements HgUpdater {
+public class HgRemoteStatusUpdater implements HgUpdater {
 
+	private final HgUpdater toUpdate;
+	private final AbstractVcs myVcs;
   private final HgChangesetStatus myIncomingStatus;
   private final HgChangesetStatus myOutgoingStatus;
   private final HgProjectSettings myProjectSettings;
   private final AtomicBoolean myUpdateStarted = new AtomicBoolean();
-  private final AbstractVcs myVcs;
 
-  public HgRemoteStatusUpdater(@NotNull HgVcs vcs, HgChangesetStatus incomingStatus, HgChangesetStatus outgoingStatus, HgProjectSettings projectSettings) {
-    myVcs = vcs;
+	private MessageBusConnection busConnection;
+
+
+	public HgRemoteStatusUpdater(
+	  HgUpdater toUpdate,
+	  @NotNull HgVcs vcs,
+	  HgChangesetStatus incomingStatus,
+	  HgChangesetStatus outgoingStatus,
+	  HgProjectSettings projectSettings
+  ) {
+	  this.toUpdate = toUpdate;
+	  myVcs = vcs;
     myIncomingStatus = incomingStatus;
     myOutgoingStatus = outgoingStatus;
     myProjectSettings = projectSettings;
@@ -66,6 +81,9 @@ class HgRemoteStatusUpdater implements HgUpdater {
             if (myProjectSettings.isCheckOutgoing()) {
               updateChangesetStatus(project, roots, myOutgoingStatus, false);
             }
+
+	          toUpdate.update( project );
+
             indicator.stop();
             myUpdateStarted.set(false);
           }
@@ -73,6 +91,16 @@ class HgRemoteStatusUpdater implements HgUpdater {
       }
     });
   }
+
+
+	public void activate() {
+		busConnection = myVcs.getProject().getMessageBus().connect();
+		busConnection.subscribe( HgVcs.REMOTE_TOPIC, this );
+	}
+
+	public void deactivate() {
+		busConnection.disconnect();
+	}
 
   private void updateChangesetStatus(Project project, VirtualFile[] roots, HgChangesetStatus status, boolean incoming) {
     final List<HgRevisionNumber> changesets = new LinkedList<HgRevisionNumber>();

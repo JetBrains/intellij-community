@@ -10,27 +10,35 @@
 // the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 // either express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
-package org.zmlx.hg4idea.ui;
+package org.zmlx.hg4idea.status;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.CustomStatusBarWidget;
-import com.intellij.openapi.wm.StatusBar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcsMessages;
 
-import javax.swing.*;
 import java.util.List;
 
-public class HgCurrentBranchStatus extends JLabel implements CustomStatusBarWidget {
+public class HgCurrentBranchStatus {
 
-  public HgCurrentBranchStatus() {
-    super("", SwingConstants.TRAILING);
-    setVisible(false);
+	private final HgUpdater toUpdate;
+
+	private String text;
+	private String toolTip;
+
+
+  public HgCurrentBranchStatus( HgUpdater toUpdate ) {
+	  this.toUpdate = toUpdate;
   }
 
-  public void updateFor(@Nullable String branch, @NotNull List<HgRevisionNumber> parents) {
+  public void updateFor(
+	  Project project,
+	  @Nullable String branch,
+	  @NotNull List<HgRevisionNumber> parents
+  ) {
     StringBuffer parentsBuffer = new StringBuffer();
     for (HgRevisionNumber parent : parents) {
       String rev = parent.getRevision();
@@ -41,32 +49,25 @@ public class HgCurrentBranchStatus extends JLabel implements CustomStatusBarWidg
       parentsBuffer.delete(length - 2, length);
     }
     String statusText = !StringUtil.isEmptyOrSpaces(branch)
-      ? HgVcsMessages.message("hg4idea.status.currentSituationtext", branch, parentsBuffer.toString()) : "";
+      ? HgVcsMessages.message( "hg4idea.status.currentSituationText", branch, parentsBuffer.toString()) : "";
 
     String toolTipText = !StringUtil.isEmptyOrSpaces(statusText)
       ? HgVcsMessages.message("hg4idea.status.currentSituation.description") : "";
 
-    setVisible(!StringUtil.isEmptyOrSpaces(branch));
-    setText(statusText);
-    setToolTipText(toolTipText);
+    text = statusText;
+    toolTip = toolTipText;
+
+	  toUpdate.update( project );
   }
 
-  public JComponent getComponent() {
-    return this;
-  }
 
-  @NotNull
-  public String ID() {
-    return "HgCurrentBranchStatus";
-  }
+	public String getStatusText() {
+		return text;
+	}
 
-  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
-    return null;
-  }
 
-  public void install(@NotNull StatusBar statusBar) {
-  }
+	public String getToolTipText() {
+		return toolTip;
+	}
 
-  public void dispose() {
-  }
 }

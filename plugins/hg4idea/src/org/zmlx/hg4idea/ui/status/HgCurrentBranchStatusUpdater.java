@@ -10,7 +10,7 @@
 // the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 // either express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
-package org.zmlx.hg4idea;
+package org.zmlx.hg4idea.ui.status;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -21,9 +21,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.command.HgTagBranchCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
-import org.zmlx.hg4idea.ui.HgCurrentBranchStatus;
+import org.zmlx.hg4idea.status.HgCurrentBranchStatus;
 
 import java.util.Collections;
 import java.util.List;
@@ -66,7 +68,7 @@ class HgCurrentBranchStatusUpdater implements HgUpdater {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
-                hgCurrentBranchStatus.updateFor(branch, parents);
+                hgCurrentBranchStatus.updateFor(project, branch, parents);
               }
             });
           }
@@ -74,7 +76,7 @@ class HgCurrentBranchStatusUpdater implements HgUpdater {
         return;
       }
     }
-    hgCurrentBranchStatus.updateFor(null, Collections.<HgRevisionNumber>emptyList());
+    hgCurrentBranchStatus.updateFor( project, null, Collections.<HgRevisionNumber>emptyList());
   }
 
 }
