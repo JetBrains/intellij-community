@@ -17,7 +17,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcsMessages;
 
 import java.util.List;
@@ -32,7 +31,6 @@ public class HgCurrentBranchStatus {
   }
 
   public void updateFor(
-	  Project project,
 	  @Nullable String branch,
 	  @NotNull List<HgRevisionNumber> parents
   ) {

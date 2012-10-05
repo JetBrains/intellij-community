@@ -99,7 +99,7 @@ class HgCurrentBranchStatusUpdater implements HgUpdater {
 		List<HgRevisionNumber> parents
 	) {
 
-		currentBranchStatus.updateFor( project, branch, parents );
+		currentBranchStatus.updateFor( branch, parents );
 
 		project.getMessageBus()
     .syncPublisher( Topics.STATUS_TOPIC )
