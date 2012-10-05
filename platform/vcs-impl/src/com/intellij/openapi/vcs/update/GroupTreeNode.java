@@ -40,8 +40,11 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   private final SimpleTextAttributes myInvalidAttributes;
   private final Project myProject;
 
-  public GroupTreeNode(String name, boolean supportsDeletion, SimpleTextAttributes invalidAttributes,
-                       Project project, final Map<String, String> errorsMap) {
+  public GroupTreeNode(@NotNull String name,
+                       boolean supportsDeletion,
+                       @NotNull SimpleTextAttributes invalidAttributes,
+                       @NotNull Project project,
+                       @NotNull Map<String, String> errorsMap) {
     myName = name;
     mySupportsDeletion = supportsDeletion;
     myInvalidAttributes = invalidAttributes;
@@ -49,15 +52,20 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
     myErrorsMap = errorsMap;
   }
 
+  @NotNull
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public Icon getIcon(boolean expanded) {
     @NonNls String iconName = expanded ? "folderOpen" : "folder";
     return IconLoader.getIcon("/nodes/" + iconName + ".png");
   }
 
+  @NotNull
+  @Override
   public Collection<VirtualFile> getVirtualFiles() {
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     for (int i = 0; i < getChildCount(); i++) {
@@ -66,6 +74,8 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
     return result;
   }
 
+  @NotNull
+  @Override
   public Collection<File> getFiles() {
     ArrayList<File> result = new ArrayList<File>();
     for (int i = 0; i < getChildCount(); i++) {
@@ -74,6 +84,7 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
     return result;
   }
 
+  @Override
   protected int getItemsCount() {
     int result = 0;
     Enumeration children = children();
@@ -84,14 +95,18 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
     return result;
   }
 
+  @Override
   protected boolean showStatistics() {
     return true;
   }
 
+  @NotNull
+  @Override
   public SimpleTextAttributes getAttributes() {
     return SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES;
   }
 
+  @Override
   public boolean getSupportsDeletion() {
     return mySupportsDeletion;
   }
@@ -104,18 +119,19 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
     if (containsGroups()) {
       rebuildGroups(groupByPackages);
     }
-    else
+    else {
       rebuildFiles(groupByPackages);
-
+    }
   }
 
   private void rebuildGroups(boolean groupByPackages) {
-    for (int i = 0; i < getChildCount(); i++)
+    for (int i = 0; i < getChildCount(); i++) {
       ((GroupTreeNode)getChildAt(i)).rebuild(groupByPackages);
+    }
   }
 
   private void rebuildFiles(boolean groupByPackages) {
-    for (int i = getChildCount()-1; i >= 0; i--) {
+    for (int i = getChildCount() - 1; i >= 0; i--) {
       final TreeNode node = getChildAt(i);
       if (node instanceof Disposable) {
         Disposer.dispose((Disposable)node);
@@ -132,12 +148,13 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
 
     setTreeModel(myTreeModel);
 
-    if (myTreeModel != null)
+    if (myTreeModel != null) {
       myTreeModel.nodeStructureChanged(this);
+    }
   }
 
   private void buildPackages() {
-    ArrayList<File> files = new ArrayList<File>();
+    Collection<File> files = new LinkedHashSet<File>();
     for (final String myFilePath : myFilePaths) {
       files.add(new File(myFilePath));
     }
@@ -145,21 +162,22 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
 
     List<File> roots = groupByPackages.getRoots();
     addFiles(this, roots, files, groupByPackages, null);
-
   }
 
-  private void addFiles(AbstractTreeNode parentNode, List<File> roots,
-                        final ArrayList<File> files, GroupByPackages groupByPackages, String parentPath) {
-    if (roots == null) return;
-
-    Collections.sort(roots, new Comparator<File>(){
-      public int compare(File file, File file1) {
-        if (files.contains(file) == files.contains(file1))
-          return file.getAbsolutePath().compareToIgnoreCase(file1.getAbsolutePath());
-        else if (files.contains(file))
-          return 1;
-        else
-          return -1;
+  private void addFiles(@NotNull AbstractTreeNode parentNode,
+                        @NotNull List<File> roots,
+                        @NotNull final Collection<File> files,
+                        @NotNull GroupByPackages groupByPackages,
+                        String parentPath) {
+    Collections.sort(roots, new Comparator<File>() {
+      @Override
+      public int compare(File file1, File file2) {
+        boolean containsFile1 = files.contains(file1);
+        boolean containsFile2 = files.contains(file2);
+        if (containsFile1 == containsFile2) {
+          return file1.getAbsolutePath().compareToIgnoreCase(file2.getAbsolutePath());
+        }
+        return containsFile1 ? 1 : -1;
       }
     });
 
@@ -167,14 +185,15 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
       FileOrDirectoryTreeNode child = files.contains(root)
                                       ? new FileTreeNode(root.getAbsolutePath(), myInvalidAttributes, myProject, parentPath)
                                       : new DirectoryTreeNode(root.getAbsolutePath(), myProject, parentPath);
-      Disposer.register(((Disposable) parentNode), child);
+      Disposer.register((Disposable)parentNode, child);
       parentNode.add(child);
       addFiles(child, groupByPackages.getChildren(root), files, groupByPackages, child.getFilePath());
     }
   }
 
   private void buildFiles() {
-    Collections.sort(myFilePaths, new Comparator<String>(){
+    Collections.sort(myFilePaths, new Comparator<String>() {
+      @Override
       public int compare(String path1, String path2) {
         return path1.compareToIgnoreCase(path2);
       }
@@ -191,10 +210,11 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
     }
   }
 
-  private boolean containsGroups(){
+  private boolean containsGroups() {
     return myFilePaths.isEmpty();
   }
 
+  @Override
   public void dispose() {
   }
 }
