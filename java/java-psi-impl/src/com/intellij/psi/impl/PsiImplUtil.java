@@ -85,7 +85,7 @@ public class PsiImplUtil {
   }
 
   @Nullable
-  public static PsiAnnotationMemberValue findAttributeValue(@NotNull PsiAnnotation annotation, @NonNls String attributeName) {
+  public static PsiAnnotationMemberValue findAttributeValue(@NotNull PsiAnnotation annotation, @Nullable @NonNls String attributeName) {
     final PsiAnnotationMemberValue value = findDeclaredAttributeValue(annotation, attributeName);
     if (value != null) return value;
 
