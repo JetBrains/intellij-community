@@ -16,6 +16,9 @@
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,8 +97,14 @@ public class FileCopyPasteUtil {
   public static List<File> getFileList(@NotNull final Transferable transferable) {
     try {
       if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-        @SuppressWarnings({"unchecked"}) final List<File> fileList = (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor);
-        return fileList;
+        @SuppressWarnings({"unchecked"})
+        final List<File> fileList = (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor);
+        return ContainerUtil.filter(fileList, new Condition<File>() {
+          @Override
+          public boolean value(File file) {
+            return !StringUtil.isEmptyOrSpaces(file.getPath());
+          }
+        });
       }
       else {
         return LinuxDragAndDropSupport.getFiles(transferable);
@@ -105,4 +114,5 @@ public class FileCopyPasteUtil {
 
     return null;
   }
+
 }
