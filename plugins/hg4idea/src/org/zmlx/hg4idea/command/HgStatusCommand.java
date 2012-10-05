@@ -16,6 +16,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ObjectsConvertor;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.Nullable;
@@ -178,5 +180,27 @@ public class HgStatusCommand {
       }
     }
     return changes;
+  }
+
+  private void setOnlyUntrackedTrue() {
+    includeAdded = false;
+    includeModified = false;
+    includeRemoved = false;
+    includeDeleted = false;
+    includeCopySource = false;
+    includeIgnored = false;
+    includeUnknown = true;
+  }
+
+  public Collection<VirtualFile> getHgUntrackedFiles(VirtualFile repo, List<VirtualFile> files) throws VcsException {
+    Collection<VirtualFile> untrackedFiles = new HashSet<VirtualFile>();
+    setOnlyUntrackedTrue();
+    List<FilePath> filePaths;
+    filePaths = ObjectsConvertor.vf2fp(files);
+    Set<HgChange> change = execute(repo, filePaths);
+    for (HgChange hgChange : change) {
+      untrackedFiles.add(hgChange.afterFile().toFilePath().getVirtualFile());
+    }
+    return untrackedFiles;
   }
 }
