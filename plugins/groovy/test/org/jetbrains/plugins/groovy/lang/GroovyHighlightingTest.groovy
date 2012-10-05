@@ -58,6 +58,11 @@ public class GroovyHighlightingTest extends LightGroovyTestCase {
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".groovy");
   }
 
+  private void doRefTest(InspectionProfileEntry... tools) {
+    myFixture.enableInspections(*tools, new GroovyUnresolvedAccessInspection())
+    myFixture.testHighlighting(true, true, true, getTestName(false) + '.groovy')
+  }
+
   public void testCircularInheritance() {
     doTest();
   }
@@ -96,7 +101,7 @@ public class GroovyHighlightingTest extends LightGroovyTestCase {
   }
 
   public void testSuperClassNotExists() {
-    doTest();
+    doTest(new GroovyUnresolvedAccessInspection());
   }
   public void testDontSimplifyString() { doTest(new GroovyTrivialIfInspection(), new GroovyTrivialConditionalInspection()); }
 
@@ -352,8 +357,8 @@ print foo+<warning descr="Access to 'bar' exceeds its access rights">bar</warnin
     doTest(new UnassignedVariableAccessInspection());
   }
 
-  public void testTestMarkupStubs() {
-    doTest();
+  public void _testTestMarkupStubs() {
+    doRefTest()
   }
 
   public void testResultOfAssignmentUsed() {
@@ -459,8 +464,8 @@ print foo+<warning descr="Access to 'bar' exceeds its access rights">bar</warnin
     doTest(new GroovyAssignabilityCheckInspection(), new GroovyUnresolvedAccessInspection());
   }
 
-  public void testBuilderMembersAreNotUnresolved() {
-    doTest(new GroovyUnresolvedAccessInspection());
+  public void _testBuilderMembersAreNotUnresolved() {
+    doRefTest();
   }
 
   public void testImplicitEnumCoercion() {
@@ -559,7 +564,7 @@ class Bar {{
   void testConstructorTypeArgs(){doTest()}
 
   void testIncorrectEscaping() {doTest()}
-  void testExtendingOwnInner() {doTest()}
+  void testExtendingOwnInner() {doTest(new GroovyUnresolvedAccessInspection())}
 
   void testRegexInCommandArg() {doTest()}
   void testOctalInspection() {
@@ -965,20 +970,21 @@ public @interface CompileStatic {
 }''')
 
     myFixture.configureByText('_.groovy', '''\
-<info descr="null">import</info> <info descr="null">groovy.transform.CompileStatic</info>
+import groovy.transform.CompileStatic
 
-<info descr="null">class</info> A {
+class A {
 
-<info descr="null">def</info> <info descr="null">foo</info>() {
-<info descr="null">print</info> <info descr="null">abc</info>
+def foo() {
+print <warning descr="Cannot resolve symbol 'abc'">abc</warning>
 }
 
-<info descr="null">@CompileStatic</info>
-<info descr="null">def</info> bar() {
-<info descr="null">print</info> <error descr="Cannot resolve symbol 'abc'">abc</error>
+@CompileStatic
+def bar() {
+print <error descr="Cannot resolve symbol 'abc'">abc</error>
 }
 }
 ''')
+    myFixture.enableInspections(new GroovyUnresolvedAccessInspection())
     myFixture.testHighlighting(true, false, false)
   }
 
@@ -1044,10 +1050,10 @@ static def foo() {
   print <error descr="Cannot resolve symbol 'abc'">abc</error>
 
   def cl = {
-     print cde
+     print <warning descr="Cannot resolve symbol 'cde'">cde</warning>
   }
 }
-''')
+''', GroovyUnresolvedAccessInspection)
   }
 
   void testMissingReturnInBinaryOr() {
@@ -1145,7 +1151,7 @@ test() {
     cl()
     var.<error descr="Cannot resolve symbol 'toUpperCase'">toUpperCase</error>()
 }
-""")
+""", GroovyUnresolvedAccessInspection)
   }
 
   void testReassignedVarInClosureInspection() {

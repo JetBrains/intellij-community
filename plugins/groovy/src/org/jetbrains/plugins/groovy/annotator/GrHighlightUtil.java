@@ -185,7 +185,7 @@ public class GrHighlightUtil {
     if (isDeclarationAssignment(referenceExpression)) return false;
 
     GrExpression qualifier = referenceExpression.getQualifier();
-    if (qualifier != null && qualifier.getType() == null) return false;
+    if (qualifier != null && qualifier.getType() == null && !isRefToPackage(qualifier)) return false;
 
     if (qualifier != null &&
         referenceExpression.getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER &&
@@ -202,6 +202,10 @@ public class GrHighlightUtil {
     }
 
     return true;
+  }
+
+  private static boolean isRefToPackage(GrExpression expr) {
+    return expr instanceof GrReferenceExpression && ((GrReferenceExpression)expr).resolve() instanceof PsiPackage;
   }
 
   public static TextRange getMethodHeaderTextRange(PsiMethod method) {

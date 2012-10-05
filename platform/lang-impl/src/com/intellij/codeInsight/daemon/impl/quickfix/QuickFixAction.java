@@ -46,15 +46,15 @@ import java.util.List;
 public final class QuickFixAction {
   private QuickFixAction() { }
 
-  public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, HighlightDisplayKey key) {
+  public static void registerQuickFixAction(@Nullable HighlightInfo info, @Nullable IntentionAction action, @Nullable HighlightDisplayKey key) {
     registerQuickFixAction(info, null, action, key);
   }
 
-  public static void registerQuickFixAction(HighlightInfo info, IntentionAction action) {
+  public static void registerQuickFixAction(@Nullable HighlightInfo info, @Nullable IntentionAction action) {
     registerQuickFixAction(info, null, action);
   }
 
-  public static void registerQuickFixActions(final HighlightInfo info, final Collection<? extends IntentionAction> actions) {
+  public static void registerQuickFixActions(@Nullable final HighlightInfo info, @NotNull final Collection<? extends IntentionAction> actions) {
     for (IntentionAction action : actions) {
       registerQuickFixAction(info, action);
     }
@@ -62,7 +62,7 @@ public final class QuickFixAction {
 
   /** This is used by TeamCity plugin */
   @Deprecated
-  public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, List<IntentionAction> options, String displayName) {
+  public static void registerQuickFixAction(@Nullable HighlightInfo info, @Nullable IntentionAction action, @Nullable List<IntentionAction> options, @Nullable String displayName) {
     doRegister(info, action, options, displayName, null, null);
   }
 
@@ -86,11 +86,11 @@ public final class QuickFixAction {
     }
   }
 
-  public static void registerQuickFixAction(HighlightInfo info, @Nullable TextRange fixRange, IntentionAction action, final HighlightDisplayKey key) {
+  public static void registerQuickFixAction(@Nullable HighlightInfo info, @Nullable TextRange fixRange, @Nullable IntentionAction action, @Nullable final HighlightDisplayKey key) {
     doRegister(info, action, null, HighlightDisplayKey.getDisplayNameByKey(key), fixRange, key);
   }
 
-  public static void registerQuickFixAction(HighlightInfo info, @Nullable TextRange fixRange, IntentionAction action) {
+  public static void registerQuickFixAction(@Nullable HighlightInfo info, @Nullable TextRange fixRange, @Nullable IntentionAction action) {
     doRegister(info, action, null, null, fixRange, null);
   }
 

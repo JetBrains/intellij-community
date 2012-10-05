@@ -221,7 +221,34 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   @Override
   public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
-    GroovyUnresolvedAccessInspection.checkCodeReferenceElement(refElement, myHolder);
+    GroovyUnresolvedAccessInspection.checkCodeReferenceElement(refElement);
+
+    GroovyResolveResult resolveResult = refElement.advancedResolve();
+    final PsiElement resolved = resolveResult.getElement();
+
+    if (refElement.getParent() instanceof GrPackageDefinition) {
+      checkPackage((GrPackageDefinition)refElement.getParent(), myHolder);
+    }
+  }
+
+  private static void checkPackage(GrPackageDefinition packageDefinition, final AnnotationHolder holder) {
+    final PsiFile file = packageDefinition.getContainingFile();
+    assert file != null;
+
+    PsiDirectory psiDirectory = file.getContainingDirectory();
+    if (psiDirectory != null && file instanceof GroovyFile) {
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
+      if (aPackage != null) {
+        String expectedPackage = aPackage.getQualifiedName();
+        String actualPackage = packageDefinition.getPackageName();
+        if (!expectedPackage.equals(actualPackage)) {
+          final Annotation annotation = holder.createWarningAnnotation(packageDefinition, GroovyBundle
+            .message("wrong.package.name", actualPackage, aPackage.getQualifiedName()));
+          annotation.registerFix(new ChangePackageQuickFix((GroovyFile)packageDefinition.getContainingFile(), expectedPackage));
+          annotation.registerFix(new GrMoveToDirFix(actualPackage));
+        }
+      }
+    }
   }
 
   @Override
@@ -294,7 +321,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   public void visitReferenceExpression(final GrReferenceExpression referenceExpression) {
     checkStringNameIdentifier(referenceExpression);
 
-    GroovyUnresolvedAccessInspection.checkReferenceExpression(referenceExpression, myHolder);
+    GroovyUnresolvedAccessInspection.checkReferenceExpression(referenceExpression);
   }
 
   private void checkStringNameIdentifier(GrReferenceExpression ref) {

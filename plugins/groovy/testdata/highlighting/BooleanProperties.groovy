@@ -6,5 +6,5 @@ class Foo {
   }
 }
 def x = new Foo().small
-def y = new Foo().<warning descr="Can not resolve symbol 'big'">big</warning>
-def z = new Foo().<warning descr="Can not resolve symbol 'inferred'">inferred</warning>
+def y = new Foo().<warning descr="Cannot resolve symbol 'big'">big</warning>
+def z = new Foo().<warning descr="Cannot resolve symbol 'inferred'">inferred</warning>
