@@ -86,6 +86,7 @@ public final class AndroidExecutionUtil {
       myMessages = new HashMap<AndroidCompilerMessageKind, List<String>>(2);
       myMessages.put(AndroidCompilerMessageKind.INFORMATION, information);
       myMessages.put(AndroidCompilerMessageKind.ERROR, error);
+      myMessages.put(AndroidCompilerMessageKind.WARNING, new ArrayList<String>());
     }
 
     public Map<AndroidCompilerMessageKind, List<String>> getMessages() {
