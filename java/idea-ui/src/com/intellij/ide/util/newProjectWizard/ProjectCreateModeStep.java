@@ -21,6 +21,7 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.newProjectWizard.modes.CreateFromScratchMode;
 import com.intellij.ide.util.newProjectWizard.modes.CreateFromSourcesMode;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
@@ -43,6 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProjectCreateModeStep extends ModuleWizardStep {
+  private static final String LAST_PROJECT_CREATION_MODE = "LAST_PROJECT_CREATION_MODE";
   private final JPanel myWholePanel;
 
   private WizardMode myMode;
@@ -51,14 +53,14 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
 
   public ProjectCreateModeStep(final String defaultPath, final WizardContext wizardContext) {
     final StringBuilder buf = new StringBuilder();
+    String def = defaultPath != null && wizardContext.isCreatingNewProject() ?
+                 CreateFromSourcesMode.class.getSimpleName() :
+                 PropertiesComponent.getInstance().getValue(LAST_PROJECT_CREATION_MODE, CreateFromScratchMode.class.getSimpleName());
+
     for (WizardMode mode : Extensions.getExtensions(WizardMode.MODES)) {
       if (mode.isAvailable(wizardContext)) {
         myModes.add(mode);
-        if (defaultPath != null && wizardContext.isCreatingNewProject()) {
-          if (mode instanceof CreateFromSourcesMode) {
-            myMode = mode;
-          }
-        } else if (mode instanceof CreateFromScratchMode) {
+        if (mode.getClass().getSimpleName().equals(def)) {
           myMode = mode;
         }
       }
@@ -157,6 +159,7 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
     myMode.onChosen(false);
     myMode = mode;
     myMode.onChosen(true);
+    PropertiesComponent.getInstance().setValue(LAST_PROJECT_CREATION_MODE, myMode.getClass().getSimpleName());
     update();
   }
 

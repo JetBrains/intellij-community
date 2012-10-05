@@ -46,6 +46,8 @@ import java.util.Set;
  */
 public class LeakHunter {
   private static final Map<Class, Field[]> allFields = new THashMap<Class, Field[]>();
+  private static final Field[] EMPTY_FIELD_ARRAY = new Field[0];
+
   private static Field[] getAllFields(@NotNull Class aClass) {
     Field[] cached = allFields.get(aClass);
     if (cached == null) {
@@ -63,7 +65,7 @@ public class LeakHunter {
           }
         }
       }
-      cached = fields.toArray(new Field[fields.size()]);
+      cached = fields.isEmpty() ? EMPTY_FIELD_ARRAY : fields.toArray(new Field[fields.size()]);
       allFields.put(aClass, cached);
     }
     return cached;

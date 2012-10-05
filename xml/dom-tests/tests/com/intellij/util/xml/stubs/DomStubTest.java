@@ -27,6 +27,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.impl.DomApplicationComponent;
 import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.stubs.model.Foo;
 
@@ -53,6 +54,12 @@ public abstract class DomStubTest extends LightCodeInsightFixtureTestCase {
   public void setUp() throws Exception {
     super.setUp();
     ((DomManagerImpl)DomManager.getDomManager(getProject())).registerFileDescription(DOM_FILE_DESCRIPTION, getTestRootDisposable());
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    DomApplicationComponent.getInstance().clearCachesInTests();
+    super.tearDown();
   }
 
   @Override

@@ -18,9 +18,11 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionCodeFragment;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import org.jetbrains.annotations.NonNls;
 
@@ -32,14 +34,15 @@ public class PsiExpressionCodeFragmentImpl extends PsiCodeFragmentImpl implement
                                        boolean isPhysical,
                                        @NonNls String name,
                                        CharSequence text,
-                                       final PsiType expectedType) {
-    super(project, JavaElementType.EXPRESSION_TEXT, isPhysical, name, text);
+                                       final PsiType expectedType,
+                                       PsiElement context) {
+    super(project, JavaElementType.EXPRESSION_TEXT, isPhysical, name, text, context);
     setExpectedType(expectedType);
   }
 
   @Override
   public PsiExpression getExpression() {
-    ASTNode exprChild = calcTreeElement().findChildByType(Constants.EXPRESSION_BIT_SET);
+    ASTNode exprChild = calcTreeElement().findChildByType(ElementType.EXPRESSION_BIT_SET);
     if (exprChild == null) return null;
     return (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(exprChild);
   }

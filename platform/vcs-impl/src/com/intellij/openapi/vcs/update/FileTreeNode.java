@@ -35,11 +35,14 @@ public class FileTreeNode extends FileOrDirectoryTreeNode {
   private static final Collection<VirtualFile> EMPTY_VIRTUAL_FILE_ARRAY = new ArrayList<VirtualFile>();
 
 
-  public FileTreeNode(@NotNull String path, SimpleTextAttributes invalidAttributes,
-                      Project project, String parentPath) {
+  public FileTreeNode(@NotNull String path,
+                      @NotNull SimpleTextAttributes invalidAttributes,
+                      @NotNull Project project,
+                      String parentPath) {
     super(path, invalidAttributes, project, parentPath);
   }
 
+  @Override
   public Icon getIcon(boolean expanded) {
     if (myFile.isDirectory()) {
       return PlatformIcons.DIRECTORY_CLOSED_ICON;
@@ -47,25 +50,29 @@ public class FileTreeNode extends FileOrDirectoryTreeNode {
     return FileTypeManager.getInstance().getFileTypeByFileName(myFile.getName()).getIcon();
   }
 
+  @NotNull
+  @Override
   public Collection<VirtualFile> getVirtualFiles() {
     VirtualFile virtualFile = getFilePointer().getFile();
     if (virtualFile == null) return EMPTY_VIRTUAL_FILE_ARRAY;
     return Collections.singleton(virtualFile);
   }
 
+  @NotNull
+  @Override
   public Collection<File> getFiles() {
     if (getFilePointer().getFile() == null) {
       return Collections.singleton(myFile);
     }
-    else {
-      return EMPTY_FILE_ARRAY;
-    }
+    return EMPTY_FILE_ARRAY;
   }
 
+  @Override
   protected int getItemsCount() {
     return 1;
   }
 
+  @Override
   protected boolean showStatistics() {
     return false;
   }
