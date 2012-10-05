@@ -58,7 +58,7 @@ public class OptionsEditorContext {
 
   }
 
-  ActionCallback fireModifiedAdded(@NotNull final Configurable configurable, OptionsEditorColleague requestor) {
+  ActionCallback fireModifiedAdded(@NotNull final Configurable configurable, @Nullable OptionsEditorColleague requestor) {
     if (myModified.contains(configurable)) return new ActionCallback.Rejected();
 
     myModified.add(configurable);
@@ -71,7 +71,7 @@ public class OptionsEditorContext {
 
   }
 
-  ActionCallback fireModifiedRemoved(@NotNull final Configurable configurable, OptionsEditorColleague requestor) {
+  ActionCallback fireModifiedRemoved(@NotNull final Configurable configurable, @Nullable OptionsEditorColleague requestor) {
     if (!myModified.contains(configurable)) return new ActionCallback.Rejected();
 
     myModified.remove(configurable);

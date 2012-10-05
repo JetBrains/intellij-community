@@ -537,7 +537,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
                 initConfigurable(configurable).doWhenDone(new Runnable() {
                   public void run() {
                     if (myDisposed) return;
-                    fireModifiationInt(configurable);
+                    fireModificationInt(configurable);
                   }
                 });
               }
@@ -546,7 +546,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         });
       }
       else if (myConfigurable2Content.containsKey(configurable)) {
-        fireModifiationInt(configurable);
+        fireModificationInt(configurable);
       }
     }
   }
@@ -556,7 +556,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         ((SearchableConfigurable.Parent)configurable).hasOwnContent();
   }
 
-  private void fireModifiationInt(final Configurable configurable) {
+  private void fireModificationInt(final Configurable configurable) {
     if (configurable.isModified()) {
       getContext().fireModifiedAdded(configurable, null);
     } else if (!configurable.isModified() && !getContext().getErrors().containsKey(configurable)) {
