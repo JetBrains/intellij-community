@@ -68,6 +68,10 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
     doTestInplaceRename("Bar");
   }
 
+  public void testMethodWithMethodRef() throws Exception {
+    doTestInplaceRename("bar");
+  }
+
   public void testConflictingMethodName() throws Exception {
     try {
       doTestInplaceRename("bar");

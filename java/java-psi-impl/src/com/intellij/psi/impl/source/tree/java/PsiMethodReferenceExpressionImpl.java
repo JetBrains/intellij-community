@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
@@ -42,6 +43,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,6 +99,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     final IElementType elType = child.getElementType();
     if (elType == JavaTokenType.DOUBLE_COLON) {
       return ChildRole.DOUBLE_COLON;
+    } else if (elType == JavaTokenType.IDENTIFIER) {
+      return ChildRole.REFERENCE_NAME;
     }
     return ChildRole.EXPRESSION;
   }
@@ -175,6 +179,24 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     else {
       visitor.visitElement(this);
     }
+  }
+
+  @Override
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    PsiElement oldIdentifier = findChildByRoleAsPsiElement(ChildRole.REFERENCE_NAME);
+    if (oldIdentifier == null) {
+      throw new IncorrectOperationException();
+    }
+    final String oldRefName = oldIdentifier.getText();
+    if (PsiKeyword.THIS.equals(oldRefName) ||
+        PsiKeyword.SUPER.equals(oldRefName) ||
+        PsiKeyword.NEW.equals(oldRefName) ||
+        Comparing.strEqual(oldRefName, newElementName)) {
+      return this;
+    }
+    PsiIdentifier identifier = JavaPsiFacade.getInstance(getProject()).getElementFactory().createIdentifier(newElementName);
+    oldIdentifier.replace(identifier);
+    return this;
   }
 
   @Override
