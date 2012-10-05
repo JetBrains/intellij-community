@@ -93,6 +93,22 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testCyclicInference() throws Exception {
+    doTest();
+  }
+
+  public void testAccessModifiers() throws Exception {
+    doTest();
+  }
+  
+  public void testDefaultConstructor() throws Exception {
+    doTest();
+  }
+
+  public void testInferenceFromReturnType() throws Exception {
+    doTest(true);
+  }
+
   public void testReturnTypeSpecific() throws Exception {
     doTest(true);
   }

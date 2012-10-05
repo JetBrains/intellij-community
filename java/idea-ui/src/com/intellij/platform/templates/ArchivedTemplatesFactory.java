@@ -34,9 +34,17 @@ import java.util.*;
  */
 public class ArchivedTemplatesFactory implements ProjectTemplatesFactory {
 
+  private static final String ZIP = ".zip";
+
   @NotNull
   @Override
-  public ProjectTemplate[] createTemplates(WizardContext context) {
+  public String[] getGroups() {
+    return new String[] {"Standard"};
+  }
+
+  @NotNull
+  @Override
+  public ProjectTemplate[] createTemplates(String group, WizardContext context) {
 
     IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
     Set<URL> urls = new HashSet<URL>();
@@ -55,9 +63,9 @@ public class ArchivedTemplatesFactory implements ProjectTemplatesFactory {
       try {
         final List<String> children = UrlUtil.getChildrenRelativePaths(url);
         for (String child : children) {
-          if (child.endsWith(".zip")) {
+          if (child.endsWith(ZIP)) {
             final URL templateUrl = new URL(url.toExternalForm() + "/" + child);
-            templates.add(new ArchivedProjectTemplate(child, templateUrl, context));
+            templates.add(new ArchivedProjectTemplate(child.substring(0, child.length() - ZIP.length()), templateUrl, context));
           }
         }
       }

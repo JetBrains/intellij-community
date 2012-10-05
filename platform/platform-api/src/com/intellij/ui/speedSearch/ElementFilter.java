@@ -41,7 +41,7 @@ public interface ElementFilter<T> {
     abstract class Impl<T> implements Active<T> {
       Set<Listener<T>> myListeners = new CopyOnWriteArraySet<Listener<T>>();
 
-      public ActionCallback fireUpdate(final T preferredSelection, final boolean adjustSelection, final boolean now) {
+      public ActionCallback fireUpdate(@Nullable final T preferredSelection, final boolean adjustSelection, final boolean now) {
         final ActionCallback result = new ActionCallback(myListeners.size());
         for (final Listener<T> myListener : myListeners) {
           myListener.update(preferredSelection, adjustSelection, now).doWhenProcessed(result.createSetDoneRunnable());

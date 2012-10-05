@@ -138,7 +138,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
   public static void removeEndOfIdentifier(InsertionContext context){
     final Document document = context.getEditor().getDocument();
-    JavaCompletionUtil.initOffsets(context.getFile(), context.getProject(), context.getOffsetMap());
+    JavaCompletionUtil.initOffsets(context.getFile(), context.getOffsetMap());
     document.deleteString(context.getSelectionEndOffset(), context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
     if(context.getOffsetMap().getOffset(JavaCompletionUtil.LPAREN_OFFSET) > 0){
       document.deleteString(context.getOffsetMap().getOffset(JavaCompletionUtil.LPAREN_OFFSET),
@@ -171,7 +171,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
   @Override
   protected void populateInsertMap(@NotNull final PsiFile file, @NotNull final OffsetMap offsetMap) {
-    JavaCompletionUtil.initOffsets(file, file.getProject(), offsetMap);
+    JavaCompletionUtil.initOffsets(file, offsetMap);
   }
 
   public static class InsertHandlerState{

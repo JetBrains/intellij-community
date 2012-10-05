@@ -109,8 +109,16 @@ public class IdeaWin32 {
 
   @Nullable
   public FileInfo[] listChildren(@NotNull final String path) {
-    LogUtil.debug(LOG, "list(%s)", path);
-    return listChildren0(path(path));
+    if (LOG.isDebugEnabled()) {
+      long t = System.currentTimeMillis();
+      FileInfo[] children = listChildren0(path(path));
+      t = System.currentTimeMillis() - t;
+      LOG.debug("list(" + path + "): " + children.length + " children, " + t + " ms");
+      return children;
+    }
+    else {
+      return listChildren0(path(path));
+    }
   }
 
   private static String path(final String path) {

@@ -71,12 +71,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.codeInsight.highlighting.BraceHighlighter</interface-class>
-      <implementation-class>com.intellij.codeInsight.highlighting.BraceHighlighter</implementation-class>
-      <skipForDefaultProject/>
-    </component>
-
-    <component>
       <interface-class>com.intellij.codeInsight.folding.CodeFoldingManager</interface-class>
       <implementation-class>com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl</implementation-class>
     </component>

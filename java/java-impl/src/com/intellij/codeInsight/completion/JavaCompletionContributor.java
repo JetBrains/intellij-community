@@ -587,7 +587,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     final PsiFile file = context.getFile();
 
     if (file instanceof PsiJavaFile) {
-      JavaCompletionUtil.initOffsets(file, context.getProject(), context.getOffsetMap());
+      JavaCompletionUtil.initOffsets(file, context.getOffsetMap());
 
       autoImport(file, context.getStartOffset() - 1, context.getEditor());
 

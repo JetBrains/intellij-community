@@ -489,8 +489,13 @@ public class AndroidJpsUtil {
                                                        @NotNull List<JpsAndroidModuleExtension> result,
                                                        @NotNull Set<String> visitedSet,
                                                        boolean librariesOnly) {
-    for (JpsDependencyElement item : JpsJavaExtensionService.getInstance().getDependencies(module, JpsJavaClasspathKind.PRODUCTION_RUNTIME,
-                                                                                           false)) {
+    final List<JpsDependencyElement> dependencies =
+      new ArrayList<JpsDependencyElement>(JpsJavaExtensionService.getInstance().getDependencies(
+        module, JpsJavaClasspathKind.PRODUCTION_RUNTIME, false));
+
+    for (int i = dependencies.size() - 1; i >= 0; i--) {
+      final JpsDependencyElement item = dependencies.get(i);
+
       if (item instanceof JpsModuleDependency) {
         final JpsModule depModule = ((JpsModuleDependency)item).getModule();
         if (depModule != null) {

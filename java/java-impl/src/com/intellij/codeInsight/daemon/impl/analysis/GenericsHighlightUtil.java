@@ -1167,7 +1167,7 @@ public class GenericsHighlightUtil {
         return false;
       }
       if (parameters.length == 0) {
-        if (resolved != null) {
+        if (resolved != null && !resolved.hasModifierProperty(PsiModifier.STATIC)) {
           final PsiClass containingClass = resolved.getContainingClass();
           if (containingClass != null) {
             final PsiTypeParameter[] containingClassTypeParameters = containingClass.getTypeParameters();

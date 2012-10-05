@@ -24,6 +24,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
 
   private static final Logger LOG = Logger.getInstance(AbstractGithubTagDownloadedProjectGenerator.class);
 
+  @NotNull
   @Nls
   @Override
   public final String getName() {

@@ -28,6 +28,7 @@ import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 public class LazyParseableElement extends CompositeElement {
@@ -215,7 +216,7 @@ public class LazyParseableElement extends CompositeElement {
     return super.getLastChildNode();
   }
 
-  public int copyTo(char[] buffer, int start) {
+  public int copyTo(@Nullable char[] buffer, int start) {
     CharSequence text = myText();
     if (text == null) return -1;
 

@@ -26,8 +26,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -93,9 +91,8 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     return hasTextEditor(file);
   }
 
-  private static boolean hasTextEditor(VirtualFile selectedFile) {
-    FileType fileType = selectedFile.getFileType();
-    return !fileType.isBinary() && fileType != StdFileTypes.GUI_DESIGNER_FORM;
+  private static boolean hasTextEditor(@NotNull VirtualFile selectedFile) {
+    return !selectedFile.getFileType().isBinary();
   }
 
   public boolean isSelected(AnActionEvent e) {

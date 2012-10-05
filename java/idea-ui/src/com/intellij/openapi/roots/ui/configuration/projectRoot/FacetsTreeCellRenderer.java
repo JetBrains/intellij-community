@@ -21,13 +21,12 @@ import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.GroupedElementsRenderer;
 
 import javax.swing.*;
-import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
 /**
  * @author nik
  */
-public class FacetsTreeCellRenderer extends GroupedElementsRenderer.Tree implements TreeCellRenderer {
+public class FacetsTreeCellRenderer extends GroupedElementsRenderer.Tree {
   @Override
   protected JComponent createItemComponent() {
     myTextLabel = new ErrorLabel();

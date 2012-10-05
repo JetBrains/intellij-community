@@ -24,11 +24,12 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="9dad" class="com.intellij.ui.components.JBList" binding="myTemplatesList">
+              <component id="a0023" class="com.intellij.ui.treeStructure.SimpleTree" binding="myTemplatesTree">
                 <constraints/>
-                <properties>
-                  <fixedCellWidth value="30"/>
-                </properties>
+                <properties/>
+                <clientProperties>
+                  <JTree.lineStyle class="java.lang.String" value="Angled"/>
+                </clientProperties>
               </component>
             </children>
           </scrollpane>
@@ -68,7 +69,7 @@
             <properties>
               <contentType value="text/html"/>
               <editable value="false"/>
-              <text value="&lt;html&gt;&#13;&#10;  &lt;head&gt;&#13;&#10;&#13;&#10;  &lt;/head&gt;&#13;&#10;  &lt;body&gt;&#13;&#10;    &lt;p style=&quot;margin-top: 0&quot;&gt;&#13;&#10;      &#13;&#10;    &lt;/p&gt;&#13;&#10;  &lt;/body&gt;&#13;&#10;&lt;/html&gt;&#13;&#10;"/>
+              <text value="&lt;html&gt;&#13;&#10;  &lt;head&gt;&#13;&#10;    &#13;&#10;  &lt;/head&gt;&#13;&#10;  &lt;body&gt;&#13;&#10;  &lt;/body&gt;&#13;&#10;&lt;/html&gt;&#13;&#10;"/>
             </properties>
           </component>
         </children>

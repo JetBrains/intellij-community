@@ -60,7 +60,6 @@ public class AllIcons {
     public static final Icon Lightning = IconLoader.getIcon("/actions/lightning.png"); // 16x16
     public static final Icon Menu_cut = IconLoader.getIcon("/actions/menu-cut.png"); // 16x16
     public static final Icon Menu_find = IconLoader.getIcon("/actions/menu-find.png"); // 16x16
-    public static final Icon Menu_help = IconLoader.getIcon("/actions/menu-help.png"); // 16x16
     public static final Icon Menu_open = IconLoader.getIcon("/actions/menu-open.png"); // 16x16
     public static final Icon Menu_paste = IconLoader.getIcon("/actions/menu-paste.png"); // 16x16
     public static final Icon Menu_replace = IconLoader.getIcon("/actions/menu-replace.png"); // 16x16

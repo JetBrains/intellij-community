@@ -840,6 +840,10 @@ public class UIUtil {
     return UIManager.getIcon("Tree.expandedIcon");
   }
 
+  public static Icon getTreeIcon(boolean expanded) {
+    return expanded ? getTreeExpandedIcon() : getTreeCollapsedIcon();
+  }
+
   public static Icon getTreeSelectedCollapsedIcon() {
     return isUnderAquaBasedLookAndFeel() || isUnderNimbusLookAndFeel() || isUnderGTKLookAndFeel()
            ? AllIcons.Mac.Tree_white_right_arrow : getTreeCollapsedIcon();

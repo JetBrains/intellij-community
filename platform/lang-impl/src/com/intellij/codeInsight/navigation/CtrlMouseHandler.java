@@ -447,7 +447,11 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     public InfoMultiple(@NotNull final PsiElement elementAtPointer) {
       super(elementAtPointer);
     }
-    
+
+    public InfoMultiple(@NotNull final PsiElement elementAtPointer, @NotNull PsiReference ref) {
+      super(elementAtPointer, ReferenceRange.getAbsoluteRanges(ref));
+    }
+
     @Override
     @NotNull
     public DocInfo getInfo() {
@@ -503,7 +507,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         return new InfoSingle(ref, resolvedElements.get(0));
       }
       else if (resolvedElements.size() > 1) {
-        return elementAtPointer != null ? new InfoMultiple(elementAtPointer) : null;
+        return elementAtPointer != null ? new InfoMultiple(elementAtPointer, ref) : null;
       }
     }
     else if (browseMode == BrowseMode.Implementation) {
