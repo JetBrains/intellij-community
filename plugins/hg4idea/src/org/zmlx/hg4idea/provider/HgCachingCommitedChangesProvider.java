@@ -136,6 +136,10 @@ public class HgCachingCommitedChangesProvider
 
   public Collection<FilePath> getIncomingFiles(RepositoryLocation repositoryLocation)
     throws VcsException {
+
+	  VirtualFile root = ((HgRepositoryLocation) repositoryLocation).getRoot();
+	  List<HgRevisionNumber> incomingRevisions = new HgIncomingCommand(project).execute(root);
+
     return null;
   }
 
@@ -198,7 +202,6 @@ public class HgCachingCommitedChangesProvider
     hgLogCommand.setLogFile(false);
 
     List<HgFileRevision> localRevisions = hgLogCommand.execute(hgFile, maxCount == 0 ? -1 : maxCount, true); //can be zero
-    List<HgRevisionNumber> incomingRevisions = new HgIncomingCommand(project).execute(root);
 
     Collections.reverse(localRevisions);
 
