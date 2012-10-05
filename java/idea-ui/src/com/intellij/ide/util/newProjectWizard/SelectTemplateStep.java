@@ -17,6 +17,7 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -35,6 +36,7 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.text.Matcher;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +68,7 @@ public class SelectTemplateStep extends ModuleWizardStep {
   private final WizardContext myContext;
   private final ElementFilter.Active.Impl<SimpleNode> myFilter;
   private final FilteringTreeBuilder myBuilder;
-  private MinusculeMatcher myMatcher;
+  private MinusculeMatcher[] myMatchers;
 
   public SelectTemplateStep(WizardContext context) {
 
@@ -100,7 +102,7 @@ public class SelectTemplateStep extends ModuleWizardStep {
         return matches(template);
       }
     };
-    myBuilder = new FilteringTreeBuilder(myTemplatesTree, myFilter, structure, null);
+    myBuilder = new FilteringTreeBuilder(myTemplatesTree, myFilter, structure, AlphaComparator.INSTANCE);
 
     myTemplatesTree.setRootVisible(false);
     myTemplatesTree.setShowsRootHandles(false);
@@ -116,7 +118,10 @@ public class SelectTemplateStep extends ModuleWizardStep {
 //        setIpad(new Insets());
         SimpleNode node = getSimpleNode(value);
         if (node != null) {
-          append(node.getName());
+          String name = node.getName();
+          if (name != null) {
+            append(name);
+          }
         }
         if (node instanceof GroupNode) {
           setIcon(UIUtil.getTreeIcon(expanded));
@@ -159,7 +164,7 @@ public class SelectTemplateStep extends ModuleWizardStep {
         doFilter();
       }
     });
-    doFilter();
+//    doFilter();
   }
 
   private void doFilter() {
@@ -189,13 +194,21 @@ public class SelectTemplateStep extends ModuleWizardStep {
     if (name == null) return false;
     String[] words = NameUtil.nameToWords(name);
     for (String word : words) {
-      if (myMatcher.matches(word)) return true;
+      for (Matcher matcher : myMatchers) {
+        if (matcher.matches(word)) return true;
+      }
     }
     return false;
   }
 
   private void buildMatcher() {
-    myMatcher = NameUtil.buildMatcher(mySearchField.getText(), NameUtil.MatchingCaseSensitivity.NONE);
+    String text = mySearchField.getText();
+    myMatchers = ContainerUtil.map2Array(text.split(" "), MinusculeMatcher.class, new Function<String, MinusculeMatcher>() {
+      @Override
+      public MinusculeMatcher fun(String s) {
+        return NameUtil.buildMatcher(s, NameUtil.MatchingCaseSensitivity.NONE);
+      }
+    });
   }
 
   @Nullable
