@@ -330,10 +330,12 @@ public class IdeEventQueue extends EventQueue {
     myCurrentEvent = e;
 
     try {
-      _dispatchEvent(e);
-    } catch (ProcessCanceledException pce) {
+      _dispatchEvent(e, false);
+    }
+    catch (ProcessCanceledException pce) {
       throw pce;
-    } catch (Throwable exc) {
+    }
+    catch (Throwable exc) {
       if (!myToolkitBugsProcessor.process(exc)) {
         LOG.error("Error during dispatching of " + e, exc);
       }
@@ -371,11 +373,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
 
-  private void _dispatchEvent(final AWTEvent e) {
-    _dispatchEvent(e, false);
-  }
-
-  public void _dispatchEvent(AWTEvent e, boolean typeAheadFlushing) {
+  public void _dispatchEvent(@NotNull AWTEvent e, boolean typeAheadFlushing) {
     if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
       DnDManagerImpl dndManager = (DnDManagerImpl)DnDManager.getInstance();
       if (dndManager != null) {
@@ -395,7 +393,10 @@ public class IdeEventQueue extends EventQueue {
       enterSuspendModeIfNeeded(e);
     }
 
-    myKeyboardBusy = (e instanceof KeyEvent) || peekEvent(KeyEvent.KEY_PRESSED) != null || peekEvent(KeyEvent.KEY_RELEASED) != null || peekEvent(KeyEvent.KEY_TYPED) != null;
+    myKeyboardBusy = e instanceof KeyEvent ||
+                     peekEvent(KeyEvent.KEY_PRESSED) != null ||
+                     peekEvent(KeyEvent.KEY_RELEASED) != null ||
+                     peekEvent(KeyEvent.KEY_TYPED) != null;
 
     if (e instanceof KeyEvent) {
       if (e.getID() == KeyEvent.KEY_RELEASED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_SHIFT) {
@@ -815,7 +816,7 @@ public class IdeEventQueue extends EventQueue {
     return peekEvent(FocusEvent.FOCUS_GAINED) != null || peekEvent(FocusEvent.FOCUS_LOST) != null;
   }
 
-  public boolean isReady() {
+  private boolean isReady() {
     return !myKeyboardBusy && myKeyEventDispatcher.isReady();
   }
 
@@ -866,8 +867,8 @@ public class IdeEventQueue extends EventQueue {
     public boolean dispatch(AWTEvent e) {
       boolean dispatch = true;
       if (e instanceof KeyEvent) {
-        KeyEvent ke = ((KeyEvent)e);
-        boolean pureAlt = ke.getKeyCode() == KeyEvent.VK_ALT && (ke.getModifiers() | KeyEvent.ALT_MASK) == KeyEvent.ALT_MASK;
+        KeyEvent ke = (KeyEvent)e;
+        boolean pureAlt = ke.getKeyCode() == KeyEvent.VK_ALT && (ke.getModifiers() | InputEvent.ALT_MASK) == InputEvent.ALT_MASK;
         if (!pureAlt) {
           myPureAltWasPressed = false;
           myWaitingForAltRelease = false;

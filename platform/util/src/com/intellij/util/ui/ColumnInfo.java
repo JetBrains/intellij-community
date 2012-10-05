@@ -29,6 +29,7 @@ public abstract class ColumnInfo <Item, Aspect> {
           super(name);
       }
 
+      @Override
       public String valueOf(final String item) {
           return item;
       }
