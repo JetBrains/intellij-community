@@ -255,10 +255,23 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
   }
 
   static void addExpectedClassMembers(CompletionParameters params, final CompletionResultSet result) {
-    for (TypeConstraint info : getExpectedTypeInfos(params)) {
+    for (final TypeConstraint info : getExpectedTypeInfos(params)) {
       Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
         @Override
         public void consume(LookupElement element) {
+          PsiElement psi = element.getPsiElement();
+
+          PsiType type = null;
+
+          if (psi instanceof PsiField) {
+            type = ((PsiField)psi).getType();
+          }
+          else if (psi instanceof PsiMethod) {
+            type = ((PsiMethod)psi).getReturnType();
+          }
+
+          if (type != null && !info.satisfied(type, psi.getManager(), psi.getResolveScope())) return;
+
           result.addElement(element);
         }
       };
