@@ -1509,22 +1509,22 @@ private int getObjects() {
 
   void testPackageDefinition() {
     myFixture.addFileToProject('abc/foo.groovy', '''\
-<warning descr="Package name 'cde' does not corresponding to the file path 'abc'">package cde</warning>
+<warning descr="Package name mismatch. Actual: 'cde', expected: 'abc'">package cde</warning>
 
 print 2
 ''')
     myFixture.addFileToProject('cde/bar.groovy', '//empty file')
-
+    myFixture.enableInspections(new GrPackageInspection())
     myFixture.testHighlighting(true, false, false, 'abc/foo.groovy')
   }
 
   void testPackageDefinition2() {
     myFixture.addFileToProject('abc/foo.groovy', '''\
-<warning descr="Package name 'cde' does not corresponding to the file path 'abc'">package cde</warning>
+<warning descr="Package name mismatch. Actual: 'cde', expected: 'abc'">package cde</warning>
 
 print 2
 ''')
-
+    myFixture.enableInspections(new GrPackageInspection())
     myFixture.testHighlighting(true, false, false, 'abc/foo.groovy')
   }
 
