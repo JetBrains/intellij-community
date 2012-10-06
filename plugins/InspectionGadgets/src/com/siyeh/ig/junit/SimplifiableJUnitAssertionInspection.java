@@ -160,7 +160,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         newExpression.append(message.getText()).append(',');
       }
       newExpression.append(lhs.getText()).append(',').append(rhs.getText());
-      if (isFloatingPoint(lhs) || isFloatingPoint(rhs)) {
+      if (TypeUtils.hasFloatingPointType(lhs) || TypeUtils.hasFloatingPointType(rhs)) {
         newExpression.append(",0.0");
       }
       newExpression.append(')');
@@ -323,11 +323,6 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
       }
       newExpression.append(compareValue).append(')');
       replaceExpressionAndShorten(callExpression, newExpression.toString());
-    }
-
-    private static boolean isFloatingPoint(PsiExpression expression) {
-      final PsiType type = expression.getType();
-      return PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type);
     }
   }
 

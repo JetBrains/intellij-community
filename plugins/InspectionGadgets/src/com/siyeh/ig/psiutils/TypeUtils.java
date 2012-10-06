@@ -65,9 +65,7 @@ public class TypeUtils {
     return typeEquals(CommonClassNames.JAVA_LANG_STRING, targetType);
   }
 
-  public static boolean expressionHasTypeOrSubtype(
-    @Nullable PsiExpression expression,
-    @NonNls @NotNull String typeName) {
+  public static boolean expressionHasTypeOrSubtype(@Nullable PsiExpression expression, @NonNls @NotNull String typeName) {
     if (expression == null) {
       return false;
     }
@@ -84,8 +82,7 @@ public class TypeUtils {
   }
 
   //getTypeIfOneOfOrSubtype
-  public static String expressionHasTypeOrSubtype(
-    @Nullable PsiExpression expression,
+  public static String expressionHasTypeOrSubtype(@Nullable PsiExpression expression,
     @NonNls @NotNull String... typeNames) {
     if (expression == null) {
       return null;
@@ -110,9 +107,7 @@ public class TypeUtils {
     return null;
   }
 
-  public static boolean expressionHasTypeOrSubtype(
-    @Nullable PsiExpression expression,
-    @NonNls @NotNull Collection<String> typeNames) {
+  public static boolean expressionHasTypeOrSubtype(@Nullable PsiExpression expression, @NonNls @NotNull Collection<String> typeNames) {
     if (expression == null) {
       return false;
     }
@@ -136,9 +131,7 @@ public class TypeUtils {
     return false;
   }
 
-  public static boolean variableHasTypeOrSubtype(
-    @Nullable PsiVariable variable,
-    @NonNls @NotNull String... typeNames) {
+  public static boolean variableHasTypeOrSubtype(@Nullable PsiVariable variable, @NonNls @NotNull String... typeNames) {
     if (variable == null) {
       return false;
     }
@@ -157,5 +150,16 @@ public class TypeUtils {
       }
     }
     return false;
+  }
+
+  public static boolean hasFloatingPointType(@Nullable PsiExpression expression) {
+    if (expression == null) {
+      return false;
+    }
+    final PsiType type = expression.getType();
+    if (type == null) {
+      return false;
+    }
+    return PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type);
   }
 }
