@@ -35,12 +35,16 @@ import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -224,5 +228,26 @@ public class GrHighlightUtil {
   public static PsiElement getElementToHighlight(@NotNull GrReferenceElement refElement) {
     final PsiElement refNameElement = refElement.getReferenceNameElement();
     return refNameElement != null ? refNameElement : refElement;
+  }
+
+  public static TextRange getClassHeaderTextRange(GrTypeDefinition clazz) {
+    final GrModifierList modifierList = clazz.getModifierList();
+    final int startOffset = modifierList != null ? modifierList.getTextOffset() : clazz.getTextOffset();
+    final GrImplementsClause implementsClause = clazz.getImplementsClause();
+
+    final int endOffset;
+    if (implementsClause != null) {
+      endOffset = implementsClause.getTextRange().getEndOffset();
+    }
+    else {
+      final GrExtendsClause extendsClause = clazz.getExtendsClause();
+      if (extendsClause != null) {
+        endOffset = extendsClause.getTextRange().getEndOffset();
+      }
+      else {
+        endOffset = clazz.getNameIdentifierGroovy().getTextRange().getEndOffset();
+      }
+    }
+    return new TextRange(startOffset, endOffset);
   }
 }

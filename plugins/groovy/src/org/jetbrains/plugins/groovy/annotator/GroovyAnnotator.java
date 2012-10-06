@@ -49,7 +49,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
@@ -220,38 +219,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   @Override
-  public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
-    GroovyUnresolvedAccessInspection.checkCodeReferenceElement(refElement);
-
-    GroovyResolveResult resolveResult = refElement.advancedResolve();
-    final PsiElement resolved = resolveResult.getElement();
-
-    if (refElement.getParent() instanceof GrPackageDefinition) {
-      checkPackage((GrPackageDefinition)refElement.getParent(), myHolder);
-    }
-  }
-
-  private static void checkPackage(GrPackageDefinition packageDefinition, final AnnotationHolder holder) {
-    final PsiFile file = packageDefinition.getContainingFile();
-    assert file != null;
-
-    PsiDirectory psiDirectory = file.getContainingDirectory();
-    if (psiDirectory != null && file instanceof GroovyFile) {
-      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
-      if (aPackage != null) {
-        String expectedPackage = aPackage.getQualifiedName();
-        String actualPackage = packageDefinition.getPackageName();
-        if (!expectedPackage.equals(actualPackage)) {
-          final Annotation annotation = holder.createWarningAnnotation(packageDefinition, GroovyBundle
-            .message("wrong.package.name", actualPackage, aPackage.getQualifiedName()));
-          annotation.registerFix(new ChangePackageQuickFix((GroovyFile)packageDefinition.getContainingFile(), expectedPackage));
-          annotation.registerFix(new GrMoveToDirFix(actualPackage));
-        }
-      }
-    }
-  }
-
-  @Override
   public void visitTryStatement(GrTryCatchStatement statement) {
     final GrCatchClause[] clauses = statement.getCatchClauses();
     List<PsiType> usedExceptions = new ArrayList<PsiType>();
@@ -320,8 +287,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   @Override
   public void visitReferenceExpression(final GrReferenceExpression referenceExpression) {
     checkStringNameIdentifier(referenceExpression);
-
-    GroovyUnresolvedAccessInspection.checkReferenceExpression(referenceExpression);
   }
 
   private void checkStringNameIdentifier(GrReferenceExpression ref) {
@@ -341,7 +306,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
     final PsiElement parent = typeDefinition.getParent();
     if (!(typeDefinition.isAnonymous() || parent instanceof GrTypeDefinitionBody || parent instanceof GroovyFile || typeDefinition instanceof GrTypeParameter)) {
-      final TextRange range = getClassHeaderTextRange(typeDefinition);
+      final TextRange range = GrHighlightUtil.getClassHeaderTextRange(typeDefinition);
       final Annotation errorAnnotation =
         myHolder.createErrorAnnotation(range, GroovyBundle.message("class.definition.is.not.expected.here"));
       errorAnnotation.registerFix(new GrMoveClassToCorrectPlaceFix(typeDefinition));
@@ -383,7 +348,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     final String qName = superClass.getQualifiedName();
     if (constructors.length == 0) {
       if (!hasImplicitDefConstructor && (defConstructor == null || !PsiUtil.isAccessible(typeDefinition, defConstructor))) {
-        final TextRange range = getClassHeaderTextRange(typeDefinition);
+        final TextRange range = GrHighlightUtil.getClassHeaderTextRange(typeDefinition);
         holder.createErrorAnnotation(range, GroovyBundle.message("there.is.no.default.constructor.available.in.class.0", qName)).registerFix(new CreateConstructorMatchingSuperFix(typeDefinition));
       }
       return;
@@ -1439,31 +1404,10 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     assert element instanceof PsiNamedElement;
     String notImplementedMethodName = ((PsiNamedElement)element).getName();
 
-    final TextRange range = getClassHeaderTextRange(typeDefinition);
+    final TextRange range = GrHighlightUtil.getClassHeaderTextRange(typeDefinition);
     final Annotation annotation = holder.createErrorAnnotation(range,
                                                                GroovyBundle.message("method.is.not.implemented", notImplementedMethodName));
     registerImplementsMethodsFix(typeDefinition, annotation);
-  }
-
-  private static TextRange getClassHeaderTextRange(GrTypeDefinition clazz) {
-    final GrModifierList modifierList = clazz.getModifierList();
-    final int startOffset = modifierList != null ? modifierList.getTextOffset() : clazz.getTextOffset();
-    final GrImplementsClause implementsClause = clazz.getImplementsClause();
-
-    final int endOffset;
-    if (implementsClause != null) {
-      endOffset = implementsClause.getTextRange().getEndOffset();
-    }
-    else {
-      final GrExtendsClause extendsClause = clazz.getExtendsClause();
-      if (extendsClause != null) {
-        endOffset = extendsClause.getTextRange().getEndOffset();
-      }
-      else {
-        endOffset = clazz.getNameIdentifierGroovy().getTextRange().getEndOffset();
-      }
-    }
-    return new TextRange(startOffset, endOffset);
   }
 
   private static void registerImplementsMethodsFix(GrTypeDefinition typeDefinition, Annotation annotation) {
@@ -1736,7 +1680,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
                                              GrTypeDefinition typeDefinition) {
     final PsiClass psiClass = getCircularClass(typeDefinition, new HashSet<PsiClass>());
     if (psiClass != null) {
-      holder.createErrorAnnotation(getClassHeaderTextRange(typeDefinition),
+      holder.createErrorAnnotation(GrHighlightUtil.getClassHeaderTextRange(typeDefinition),
                                    GroovyBundle.message("cyclic.inheritance.involving.0", psiClass.getQualifiedName()));
     }
   }

@@ -747,6 +747,10 @@
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="clashing.getters" groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingGettersInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" shortName="GrPackage"
+                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
+                     key="gr.package" groupName="Potentially confusing code constructs" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrPackageInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GrDeprecatedAPIUsage"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="gr.deprecated.api.usage" groupName="Potentially confusing code constructs" enabledByDefault="true" level="WARNING"
