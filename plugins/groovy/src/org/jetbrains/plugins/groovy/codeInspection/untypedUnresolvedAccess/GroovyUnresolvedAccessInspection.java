@@ -108,7 +108,18 @@ public class GroovyUnresolvedAccessInspection extends GroovySuppressableInspecti
 
   @Nullable
   public static HighlightInfo checkCodeReferenceElement(GrCodeReferenceElement refElement) {
+    if (GroovySuppressableInspectionTool.isElementToolSuppressedIn(refElement, SHORT_NAME)) return null;
+
     HighlightInfo info = checkCodeRefInner(refElement);
+    addEmptyIntentionIfNeeded(info);
+    return info;
+  }
+
+  @Nullable
+  public static HighlightInfo checkReferenceExpression(GrReferenceExpression ref) {
+    if (GroovySuppressableInspectionTool.isElementToolSuppressedIn(ref, SHORT_NAME)) return null;
+
+    HighlightInfo info = checkRefInner(ref);
     addEmptyIntentionIfNeeded(info);
     return info;
   }
@@ -144,13 +155,6 @@ public class GroovyUnresolvedAccessInspection extends GroovySuppressableInspecti
     }
 
     return null;
-  }
-
-  @Nullable
-  public static HighlightInfo checkReferenceExpression(GrReferenceExpression ref) {
-    HighlightInfo info = checkRefInner(ref);
-    addEmptyIntentionIfNeeded(info);
-    return info;
   }
 
   @Nullable
