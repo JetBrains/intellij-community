@@ -6,6 +6,7 @@ package org.hanuna.gitalk.gittree;
 public class SimpleLexer {
     private final String separator = "|-";
     private final String s;
+    public String sSave = "";
 
     int k = 0;
 
@@ -20,11 +21,17 @@ public class SimpleLexer {
         }
         String s1 = s.substring(k, newK);
         k = newK + 2;
-        return s1;
+        sSave = s1;
+        return sSave;
+    }
+
+    public String currentString() {
+        return sSave;
     }
 
     public String restString() {
-        return s.substring(k);
+        sSave = s.substring(k);
+        return sSave;
     }
 
 }

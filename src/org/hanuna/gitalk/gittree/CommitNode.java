@@ -46,18 +46,6 @@ public class CommitNode {
         return secondParent;
     }
 
-    public String toString() {
-        StringBuilder s = new StringBuilder();
-        s.append(logIndex).append(' ');
-        if (mainParent != null) {
-            s.append('m').append(mainParent.getLogIndex()).append(' ');
-        }
-        if (secondParent != null) {
-            s.append('s').append(secondParent.getLogIndex()).append(' ');
-        }
 
-        s.append(commitData);
-        return s.toString();
-    }
 
 }

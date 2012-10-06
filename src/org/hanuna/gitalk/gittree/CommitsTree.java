@@ -2,7 +2,6 @@ package org.hanuna.gitalk.gittree;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,13 +41,5 @@ public class CommitsTree {
     }
 
 
-    public static void main(String args[]) throws IOException {
-        Process p = Runtime.getRuntime().exec(" git log --all --format=\"%h|-%p|-%an|-%ct|-%s\"");
-        BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        CommitsTree ct = new CommitsTree(r);
-        for (int i = 0; i < ct.size(); i++) {
-            CommitNode cn = ct.getNode(i);
-            System.out.println(cn);
-        }
-    }
+
 }

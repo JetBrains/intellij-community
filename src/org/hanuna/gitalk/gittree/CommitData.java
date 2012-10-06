@@ -22,7 +22,11 @@ public class CommitData {
         }
 
         author = sl.next();
-        date = Integer.parseInt(sl.next());
+        try {
+            date = Integer.parseInt(sl.next());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Excepted unix date, but found \"" + sl.currentString() + "\"");
+        }
         message = sl.restString();
     }
 
@@ -44,16 +48,16 @@ public class CommitData {
         return secondParent;
     }
 
-
-    public String toString() {
-        StringBuilder s = new StringBuilder();
-        s.append(hash).append('|');
-        s.append(mainParent).append('|');
-        s.append(secondParent).append('|');
-        s.append(date).append('|');
-        s.append(author).append('|');
-        s.append(message);
-
-        return s.toString();
+    public int getDate() {
+        return date;
     }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
 }
