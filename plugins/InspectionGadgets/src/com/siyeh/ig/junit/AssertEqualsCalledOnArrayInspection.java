@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,8 +48,7 @@ public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
     return new AssertEqualsCalledOnArrayFix();
   }
 
-  private static class AssertEqualsCalledOnArrayFix
-    extends InspectionGadgetsFix {
+  private static class AssertEqualsCalledOnArrayFix extends InspectionGadgetsFix {
 
     @Override
     @NotNull
@@ -59,17 +59,17 @@ public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement methodNameIdentifier = descriptor.getPsiElement();
-      final PsiReferenceExpression methodExpression = (PsiReferenceExpression)methodNameIdentifier.getParent();
-      if (methodExpression == null) {
+      final PsiElement parent = methodNameIdentifier.getParent();
+      if (!(parent instanceof PsiReferenceExpression)) {
         return;
       }
+      final PsiReferenceExpression methodExpression = (PsiReferenceExpression)parent;
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null) {
+      if (qualifier == null && ImportUtils.addStaticImport("org.junit.Assert", "assertArrayEquals", methodExpression)) {
         replaceExpression(methodExpression, "assertArrayEquals");
       }
       else {
-        final String qualifierText = qualifier.getText();
-        replaceExpression(methodExpression, qualifierText + ".assertArrayEquals");
+        replaceExpression(methodExpression, "org.junit.Assert.assertArrayEquals");
       }
     }
   }
