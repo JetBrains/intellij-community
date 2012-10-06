@@ -84,12 +84,10 @@ public class HgVFSListener extends VcsVFSListener {
         it.remove();
       }
     }
-    // exlude files which are additional ignored from .hgignore and execute adding
-    final Map<VirtualFile, Collection<VirtualFile>> sortedFiles;
-    sortedFiles = HgUtil.sortByHgRoots(myProject, addedFiles);
+    // exclude files which are ignored in .hgignore in background and execute adding after that
+    final Map<VirtualFile, Collection<VirtualFile>> sortedFiles = HgUtil.sortByHgRoots(myProject, addedFiles);
     final HashSet<VirtualFile> untrackedFiles = new HashSet<VirtualFile>();
-    final ProgressManager progressManager = ProgressManager.getInstance();
-    progressManager.run(new Task.Backgroundable(myProject, HgVcsMessages.message("hg4idea.progress.checking.ignored"), false) {
+    new Task.Backgroundable(myProject, HgVcsMessages.message("hg4idea.progress.checking.ignored"), false) {
       @Override
       public void run(@NotNull ProgressIndicator pi) {
         for (Map.Entry<VirtualFile, Collection<VirtualFile>> e : sortedFiles.entrySet()) {
@@ -119,7 +117,7 @@ public class HgVFSListener extends VcsVFSListener {
           });
         }
       }
-    });
+    }.queue();
   }
 
   /**

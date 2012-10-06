@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgChange;
 import org.zmlx.hg4idea.HgFile;
@@ -192,11 +193,11 @@ public class HgStatusCommand {
     includeUnknown = true;
   }
 
-  public Collection<VirtualFile> getHgUntrackedFiles(VirtualFile repo, List<VirtualFile> files) throws VcsException {
+  @NotNull
+  public Collection<VirtualFile> getHgUntrackedFiles(@NotNull VirtualFile repo, @NotNull List<VirtualFile> files) throws VcsException {
     Collection<VirtualFile> untrackedFiles = new HashSet<VirtualFile>();
     setOnlyUntrackedTrue();
-    List<FilePath> filePaths;
-    filePaths = ObjectsConvertor.vf2fp(files);
+    List<FilePath> filePaths = ObjectsConvertor.vf2fp(files);
     Set<HgChange> change = execute(repo, filePaths);
     for (HgChange hgChange : change) {
       untrackedFiles.add(hgChange.afterFile().toFilePath().getVirtualFile());
