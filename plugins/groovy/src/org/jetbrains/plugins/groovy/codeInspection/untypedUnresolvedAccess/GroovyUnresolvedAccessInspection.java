@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -109,6 +110,11 @@ public class GroovyUnresolvedAccessInspection extends GroovySuppressableInspecti
     return (GroovyUnresolvedAccessInspection)profile.getUnwrappedTool(SHORT_NAME, file);
   }
 
+  private static HighlightDisplayLevel getHighlightDisplayLevel(Project project, GrReferenceElement ref) {
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+    return profile.getErrorLevel(HighlightDisplayKey.find(SHORT_NAME), ref);
+  }
+
   @Nullable
   public static HighlightInfo checkCodeReferenceElement(GrCodeReferenceElement refElement) {
     if (GroovySuppressableInspectionTool.isElementToolSuppressedIn(refElement, SHORT_NAME)) return null;
@@ -168,12 +174,14 @@ public class GroovyUnresolvedAccessInspection extends GroovySuppressableInspecti
     if (!isInspectionEnabled(ref.getContainingFile(), ref.getProject())) return null;
     GroovyUnresolvedAccessInspection inspection = getInstance(ref.getContainingFile(), ref.getProject());
 
+
     boolean cannotBeDynamic = PsiUtil.isCompileStatic(ref) || isPropertyAccessInStaticMethod(ref);
     GroovyResolveResult resolveResult = getBestResolveResult(ref);
 
     if (resolveResult.getElement() != null) {
-      return isStaticOk(resolveResult) ? null : createAnnotationForRef(ref, cannotBeDynamic, GroovyBundle
-        .message("cannot.reference.nonstatic", refNameElement));
+      if (isStaticOk(resolveResult))  return null;
+      String message = GroovyBundle.message("cannot.reference.nonstatic", ref.getReferenceName());
+      return createAnnotationForRef(ref, cannotBeDynamic, message);
     }
 
     if (ResolveUtil.isKeyOfMap(ref)) {
@@ -325,21 +333,27 @@ public class GroovyUnresolvedAccessInspection extends GroovySuppressableInspecti
   }
 
   @Nullable
-  private static HighlightInfo createAnnotationForRef(@NotNull GrReferenceExpression referenceExpression,
+  private static HighlightInfo createAnnotationForRef(@NotNull GrReferenceExpression ref,
                                                       boolean compileStatic,
                                                       @Nullable final String message) {
-    PsiElement refNameElement = referenceExpression.getReferenceNameElement();
+    PsiElement refNameElement = ref.getReferenceNameElement();
     assert refNameElement != null;
 
-    if (compileStatic) {
-      return  HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, refNameElement, message);
+    HighlightDisplayLevel displayLevel = getHighlightDisplayLevel(ref.getProject(), ref);
+
+    if (compileStatic || displayLevel == HighlightDisplayLevel.ERROR) {
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, refNameElement, message);
     }
-    else {
+
+    if (displayLevel == HighlightDisplayLevel.WARNING) {
       boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
       HighlightInfoType infotype = isTestMode ? HighlightInfoType.WARNING : HighlightInfoType.INFORMATION;
 
       return HighlightInfo.createHighlightInfo(infotype, refNameElement, message, UNRESOLVED_ACCESS_ATTRIBUTES);
     }
+
+    HighlightInfoType highlightInfoType = HighlightInfo.convertSeverity(displayLevel.getSeverity());
+    return HighlightInfo.createHighlightInfo(highlightInfoType, refNameElement, message);
   }
 
   private static void registerStaticImportFix(GrReferenceExpression referenceExpression, HighlightInfo info, final HighlightDisplayKey key) {

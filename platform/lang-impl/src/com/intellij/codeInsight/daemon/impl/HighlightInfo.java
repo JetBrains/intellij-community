@@ -435,11 +435,12 @@ public class HighlightInfo implements Segment {
   }
 
   public static HighlightInfoType convertSeverity(final HighlightSeverity severity) {
-    return severity == HighlightSeverity.ERROR
-           ? HighlightInfoType.ERROR
-           : severity == HighlightSeverity.WARNING ? HighlightInfoType.WARNING
-             : severity == HighlightSeverity.INFO ? HighlightInfoType.INFO
-                                                  : severity == HighlightSeverity.WEAK_WARNING ? HighlightInfoType.WEAK_WARNING : HighlightInfoType.INFORMATION;
+    return severity == HighlightSeverity.ERROR? HighlightInfoType.ERROR :
+           severity == HighlightSeverity.WARNING ? HighlightInfoType.WARNING :
+           severity == HighlightSeverity.INFO ? HighlightInfoType.INFO :
+           severity == HighlightSeverity.WEAK_WARNING ? HighlightInfoType.WEAK_WARNING :
+           severity ==HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING ? HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER :
+           HighlightInfoType.INFORMATION;
   }
 
   public static ProblemHighlightType convertType(HighlightInfoType infoType) {
