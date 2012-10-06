@@ -49,6 +49,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicProperty
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
+import org.jetbrains.plugins.groovy.findUsages.MissingMethodAndPropertyUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -66,6 +67,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -133,7 +136,7 @@ public class GroovyUnresolvedAccessInspection extends GroovySuppressableInspecti
 
 
     if (!isInspectionEnabled(refElement.getContainingFile(), refElement.getProject())) return null;
-    GroovyUnresolvedAccessInspection inspection = getInstance(refElement.getContainingFile(), refElement.getProject());
+    //GroovyUnresolvedAccessInspection inspection = getInstance(refElement.getContainingFile(), refElement.getProject());
 
     if (isResolvedStaticImport(refElement)) return null;
 
@@ -177,6 +180,15 @@ public class GroovyUnresolvedAccessInspection extends GroovySuppressableInspecti
       return HighlightInfo.createHighlightInfo(HighlightInfoType.INFORMATION, refNameElement, null, MAP_KEY_ATTRIBUTES);
     }
 
+    if (!inspection.myHighlightIfGroovyObjectOverridden) {
+      if (areGroovyObjectMethodsOverridden(ref)) return null;
+    }
+
+    if (!inspection.myHighlightIfMissingMethodsDeclared) {
+      if (areMissingMethodsDeclared(ref)) return null;
+    }
+
+
     if (GrHighlightUtil.shouldHighlightAsUnresolved(ref)) {
       HighlightInfo info = createAnnotationForRef(ref, cannotBeDynamic, GroovyBundle.message("cannot.resolve", ref.getReferenceName()));
 
@@ -196,6 +208,68 @@ public class GroovyUnresolvedAccessInspection extends GroovySuppressableInspecti
     }
 
     return null;
+  }
+
+  private static boolean areMissingMethodsDeclared(GrReferenceExpression ref) {
+    PsiType qualifierType = GrReferenceResolveUtil.getQualifierType(ref);
+    if (!(qualifierType instanceof PsiClassType)) return false;
+
+    PsiClass resolved = ((PsiClassType)qualifierType).resolve();
+    if (resolved == null) return false;
+
+    if (ref.getParent() instanceof GrCall) {
+      PsiMethod[] found = resolved.findMethodsByName("methodMissing", true);
+      for (PsiMethod method : found) {
+        if (MissingMethodAndPropertyUtil.isMethodMissing(method)) return true;
+      }
+    }
+    else {
+      PsiMethod[] found = resolved.findMethodsByName("propertyMissing", true);
+      for (PsiMethod method : found) {
+        if (MissingMethodAndPropertyUtil.isPropertyMissing(method)) return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static boolean areGroovyObjectMethodsOverridden(GrReferenceExpression ref) {
+    PsiType qualifierType = GrReferenceResolveUtil.getQualifierType(ref);
+    if (!(qualifierType instanceof PsiClassType)) return false;
+
+    PsiClass resolved = ((PsiClassType)qualifierType).resolve();
+    if (resolved == null) return false;
+
+    PsiClass groovyObject =
+      JavaPsiFacade.getInstance(ref.getProject()).findClass(GroovyCommonClassNames.GROOVY_OBJECT, ref.getResolveScope());
+    if (groovyObject == null) return false;
+
+
+    String methodName;
+    if (ref.getParent() instanceof GrCall) {
+      methodName = "invokeMethod";
+    }
+    else if (PsiUtil.isLValue(ref)) {
+      methodName = "setProperty";
+    }
+    else {
+      methodName = "getProperty";
+    }
+
+    PsiMethod[] patternMethods = groovyObject.findMethodsByName(methodName, false);
+    if (patternMethods.length != 1) return false;
+
+    PsiMethod patternMethod = patternMethods[0];
+    PsiMethod found = resolved.findMethodBySignature(patternMethod, true);
+    if (found == null) return false;
+
+    PsiClass aClass = found.getContainingClass();
+    if (aClass == null) return false;
+    String qname = aClass.getQualifiedName();
+    if (GroovyCommonClassNames.GROOVY_OBJECT.equals(qname)) return false;
+    if (GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(qname)) return false;
+
+    return true;
   }
 
   private static void addEmptyIntentionIfNeeded(@Nullable HighlightInfo info) {
