@@ -128,8 +128,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
                                                  boolean isSelected,
                                                  final int row,
                                                  int column) {
-      final EditorTextField textField =
-        (EditorTextField)super.getTableCellEditorComponent(table, value, isSelected, row, column);
+      final EditorTextField textField = (EditorTextField)super.getTableCellEditorComponent(table, value, isSelected, row, column);
       textField.registerKeyboardAction(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           PsiType type = getRowType(table, row);
@@ -172,11 +171,8 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
   }
 
   public static class JavaTypeColumn extends TypeColumn<ParameterInfoImpl> {
-    private final Project myProject;
-
     public JavaTypeColumn(Project project) {
       super(project, StdFileTypes.JAVA);
-      myProject = project;
     }
 
     @Override

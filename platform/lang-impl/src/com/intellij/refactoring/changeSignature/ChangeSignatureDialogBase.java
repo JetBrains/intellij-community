@@ -18,6 +18,7 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -53,6 +54,7 @@ import com.intellij.util.ui.table.JBListTable;
 import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -72,8 +74,9 @@ import java.util.Set;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M extends PsiElement, V, D extends MethodDescriptor<P, V>>
-  extends RefactoringDialog {
+public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M extends PsiElement, V, D extends MethodDescriptor<P, V>> extends RefactoringDialog {
+
+  private static final Logger LOG = Logger.getInstance(ChangeSignatureDialogBase.class);
 
   protected static final String EXIT_SILENTLY = "";
 
@@ -107,8 +110,10 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
   protected abstract PsiCodeFragment createReturnTypeCodeFragment();
 
+  @Nullable
   protected abstract CallerChooserBase<M> createCallerChooser(String title, Tree treeToReuse, Consumer<Set<M>> callback);
 
+  @Nullable
   protected abstract String validateAndCommitData();
 
   protected abstract String calculateSignature();
@@ -148,6 +153,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     }
   }
 
+  @Nullable
   protected V getVisibility() {
     if (myVisibilityPanel != null) {
       return myVisibilityPanel.getVisibility();
@@ -328,9 +334,8 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
             }
           };
           try {
-            chooser.set(
-              createCallerChooser(RefactoringBundle.message("changeSignature.parameter.caller.chooser"), myParameterPropagationTreeToReuse,
-                                  callback));
+            String message = RefactoringBundle.message("changeSignature.parameter.caller.chooser");
+            chooser.set(createCallerChooser(message, myParameterPropagationTreeToReuse, callback));
           }
           catch (ProcessCanceledException ex) {
             // user cancelled initial callers search, don't show dialog
@@ -450,6 +455,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
         protected JBTableRowEditor getRowEditor(final int row) {
           final List<ParameterTableModelItemBase<P>> items = myParametersTable.getItems();
           JBTableRowEditor editor = getTableEditor(myParametersList.getTable(), items.get(row));
+          LOG.assertTrue(editor != null);
           editor.addDocumentListener(new JBTableRowEditor.RowDocumentListener() {
             @Override
             public void documentChanged(DocumentEvent e, int column) {
@@ -496,6 +502,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     }
   }
 
+  @Nullable
   protected JBTableRowEditor getTableEditor(JTable table, ParameterTableModelItemBase<P> item) {
     return null;
   }
@@ -504,6 +511,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     return false;
   }
 
+  @Nullable
   protected JComponent getRowPresentation(ParameterTableModelItemBase<P> item, boolean selected, boolean focused) {
     return null;
   }

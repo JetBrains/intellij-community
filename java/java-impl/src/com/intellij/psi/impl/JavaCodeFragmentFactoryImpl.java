@@ -35,8 +35,8 @@ public class JavaCodeFragmentFactoryImpl extends JavaCodeFragmentFactory {
   @NotNull
   @Override
   public PsiExpressionCodeFragment createExpressionCodeFragment(@NotNull final String text,
-                                                                final PsiElement context,
-                                                                final PsiType expectedType,
+                                                                @Nullable final PsiElement context,
+                                                                @Nullable final PsiType expectedType,
                                                                 final boolean isPhysical) {
     return new PsiExpressionCodeFragmentImpl(myProject, isPhysical, "fragment.java", text, expectedType, context);
   }
@@ -62,7 +62,7 @@ public class JavaCodeFragmentFactoryImpl extends JavaCodeFragmentFactory {
   @NotNull
   @Override
   public PsiJavaCodeReferenceCodeFragment createReferenceCodeFragment(@NotNull final String text,
-                                                                      final PsiElement context,
+                                                                      @Nullable final PsiElement context,
                                                                       final boolean isPhysical,
                                                                       final boolean isClassesAccepted) {
     return new PsiJavaCodeReferenceCodeFragmentImpl(myProject, isPhysical, "fragment.java", text, isClassesAccepted, context);

@@ -39,6 +39,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.StringTokenizer;
@@ -59,7 +60,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
                              boolean isPhysical,
                              @NonNls String name,
                              CharSequence text,
-                             PsiElement context) {
+                             @Nullable PsiElement context) {
     super(TokenType.CODE_FRAGMENT,
           contentElementType,
           ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().createFileViewProvider(
