@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,12 @@ public class UnnecessaryReturnInspection extends BaseInspection {
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("unnecessary.return.problem.descriptor");
+    if (((Boolean)infos[0]).booleanValue()) {
+      return InspectionGadgetsBundle.message("unnecessary.return.constructor.problem.descriptor");
+    }
+    else {
+      return InspectionGadgetsBundle.message("unnecessary.return.problem.descriptor");
+    }
   }
 
   @Override
@@ -85,14 +90,22 @@ public class UnnecessaryReturnInspection extends BaseInspection {
       }
       final PsiElement methodParent = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class);
       PsiCodeBlock codeBlock = null;
+      final boolean constructor;
       if (methodParent instanceof PsiMethod) {
-        codeBlock = ((PsiMethod)methodParent).getBody();
+        final PsiMethod method = (PsiMethod)methodParent;
+        codeBlock = method.getBody();
+        constructor = method.isConstructor();
       }
       else if (methodParent instanceof PsiLambdaExpression) {
-        final PsiElement lambdaBody = ((PsiLambdaExpression)methodParent).getBody();
+        constructor = false;
+        final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)methodParent;
+        final PsiElement lambdaBody = lambdaExpression.getBody();
         if (lambdaBody instanceof PsiCodeBlock) {
           codeBlock = (PsiCodeBlock)lambdaBody;
         }
+      }
+      else {
+        return;
       }
       if (codeBlock == null) {
         return;
@@ -103,7 +116,7 @@ public class UnnecessaryReturnInspection extends BaseInspection {
       if (ignoreInThenBranch && isInThenBranch(statement, statement.getParent())) {
         return;
       }
-      registerStatementError(statement);
+      registerStatementError(statement, Boolean.valueOf(constructor));
     }
 
     private boolean isInThenBranch(PsiReturnStatement statement, PsiElement parent) {
@@ -119,7 +132,7 @@ public class UnnecessaryReturnInspection extends BaseInspection {
         return false;
       }
       final PsiStatement elseBranch = ((PsiIfStatement)greatGrandParent).getElseBranch();
-      return elseBranch == null || !PsiTreeUtil.isAncestor(elseBranch, statement, true);
+      return elseBranch != null && !PsiTreeUtil.isAncestor(elseBranch, statement, true);
     }
   }
 }
