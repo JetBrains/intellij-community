@@ -74,29 +74,36 @@ import java.util.Set;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M extends PsiElement, V, D extends MethodDescriptor<P, V>> extends RefactoringDialog {
+public abstract class ChangeSignatureDialogBase<
+    ParamInfo extends ParameterInfo,
+    Method extends PsiElement,
+    Visibility,
+    Descriptor extends MethodDescriptor<ParamInfo, Visibility>,
+    ParameterTableModelItem extends ParameterTableModelItemBase<ParamInfo>,
+    ParameterTableModel extends ParameterTableModelBase<ParamInfo, ParameterTableModelItem>
+  > extends RefactoringDialog {
 
   private static final Logger LOG = Logger.getInstance(ChangeSignatureDialogBase.class);
 
   protected static final String EXIT_SILENTLY = "";
 
-  protected final D myMethod;
+  protected final Descriptor myMethod;
   private final boolean myAllowDelegation;
   protected JPanel myNamePanel;
   protected EditorTextField myNameField;
   protected EditorTextField myReturnTypeField;
   protected JBListTable myParametersList;
-  protected TableView<ParameterTableModelItemBase<P>> myParametersTable;
-  protected final ParameterTableModelBase<P> myParametersTableModel;
+  protected TableView<ParameterTableModelItem> myParametersTable;
+  protected final ParameterTableModel myParametersTableModel;
   protected final UpdateSignatureListener mySignatureUpdater = new UpdateSignatureListener();
   private MethodSignatureComponent mySignatureArea;
   private final Alarm myUpdateSignatureAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  protected VisibilityPanelBase<V> myVisibilityPanel;
+  protected VisibilityPanelBase<Visibility> myVisibilityPanel;
   protected PsiCodeFragment myReturnTypeCodeFragment;
   private DelegationPanel myDelegationPanel;
   protected AnActionButton myPropagateParamChangesButton;
-  protected Set<M> myMethodsToPropagateParameters = null;
+  protected Set<Method> myMethodsToPropagateParameters = null;
 
   private Tree myParameterPropagationTreeToReuse;
 
@@ -104,23 +111,23 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
   protected abstract LanguageFileType getFileType();
 
-  protected abstract ParameterTableModelBase<P> createParametersInfoModel(MethodDescriptor<P, V> method);
+  protected abstract ParameterTableModel createParametersInfoModel(Descriptor method);
 
   protected abstract BaseRefactoringProcessor createRefactoringProcessor();
 
   protected abstract PsiCodeFragment createReturnTypeCodeFragment();
 
   @Nullable
-  protected abstract CallerChooserBase<M> createCallerChooser(String title, Tree treeToReuse, Consumer<Set<M>> callback);
+  protected abstract CallerChooserBase<Method> createCallerChooser(String title, Tree treeToReuse, Consumer<Set<Method>> callback);
 
   @Nullable
   protected abstract String validateAndCommitData();
 
   protected abstract String calculateSignature();
 
-  protected abstract VisibilityPanelBase<V> createVisibilityControl();
+  protected abstract VisibilityPanelBase<Visibility> createVisibilityControl();
 
-  public ChangeSignatureDialogBase(Project project, final D method, boolean allowDelegation, PsiElement defaultValueContext) {
+  public ChangeSignatureDialogBase(Project project, final Descriptor method, boolean allowDelegation, PsiElement defaultValueContext) {
     super(project, true);
     myMethod = method;
     myDefaultValueContext = defaultValueContext;
@@ -139,7 +146,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     });
   }
 
-  public void setParameterInfos(List<P> parameterInfos) {
+  public void setParameterInfos(List<ParamInfo> parameterInfos) {
     myParametersTableModel.setParameterInfos(parameterInfos);
     updateSignature();
   }
@@ -154,7 +161,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   }
 
   @Nullable
-  protected V getVisibility() {
+  protected Visibility getVisibility() {
     if (myVisibilityPanel != null) {
       return myVisibilityPanel.getVisibility();
     }
@@ -163,9 +170,9 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     }
   }
 
-  public List<P> getParameters() {
-    List<P> result = new ArrayList<P>(myParametersTableModel.getRowCount());
-    for (ParameterTableModelItemBase<P> item : myParametersTableModel.getItems()) {
+  public List<ParamInfo> getParameters() {
+    List<ParamInfo> result = new ArrayList<ParamInfo>(myParametersTableModel.getRowCount());
+    for (ParameterTableModelItemBase<ParamInfo> item : myParametersTableModel.getItems()) {
       result.add(item.parameter);
     }
     return result;
@@ -325,10 +332,10 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       new AnActionButton(RefactoringBundle.message("changeSignature.propagate.parameters.title"), null, PlatformIcons.NEW_PARAMETER) {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          final Ref<CallerChooserBase<M>> chooser = new Ref<CallerChooserBase<M>>();
-          Consumer<Set<M>> callback = new Consumer<Set<M>>() {
+          final Ref<CallerChooserBase<Method>> chooser = new Ref<CallerChooserBase<Method>>();
+          Consumer<Set<Method>> callback = new Consumer<Set<Method>>() {
             @Override
-            public void consume(Set<M> callers) {
+            public void consume(Set<Method> callers) {
               myMethodsToPropagateParameters = callers;
               myParameterPropagationTreeToReuse = chooser.get().getTree();
             }
@@ -373,7 +380,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
 
   protected JPanel createParametersPanel(boolean hasTabsInDialog) {
-    myParametersTable = new TableView<ParameterTableModelItemBase<P>>(myParametersTableModel) {
+    myParametersTable = new TableView<ParameterTableModelItem>(myParametersTableModel) {
 
       public void removeEditor() {
         clearEditorListeners();
@@ -432,7 +439,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       myParametersList = new JBListTable(myParametersTable) {
         @Override
         protected JComponent getRowRenderer(JTable table, int row, boolean selected, boolean focused) {
-          final List<ParameterTableModelItemBase<P>> items = myParametersTable.getItems();
+          final List<ParameterTableModelItem> items = myParametersTable.getItems();
           final JComponent component = getRowPresentation(items.get(row), selected, focused);
           for (EditorTextField editorTextField : UIUtil.findComponentsOfType(component, EditorTextField.class)) {
             editorTextField.addSettingsProvider(new EditorSettingsProvider() {
@@ -447,13 +454,13 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
         @Override
         protected boolean isRowEmpty(int row) {
-          final List<ParameterTableModelItemBase<P>> items = myParametersTable.getItems();
+          final List<ParameterTableModelItem> items = myParametersTable.getItems();
           return isEmptyRow(items.get(row));
         }
 
         @Override
         protected JBTableRowEditor getRowEditor(final int row) {
-          final List<ParameterTableModelItemBase<P>> items = myParametersTable.getItems();
+          final List<ParameterTableModelItem> items = myParametersTable.getItems();
           JBTableRowEditor editor = getTableEditor(myParametersList.getTable(), items.get(row));
           LOG.assertTrue(editor != null);
           editor.addDocumentListener(new JBTableRowEditor.RowDocumentListener() {
@@ -503,20 +510,20 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   }
 
   @Nullable
-  protected JBTableRowEditor getTableEditor(JTable table, ParameterTableModelItemBase<P> item) {
+  protected JBTableRowEditor getTableEditor(JTable table, ParameterTableModelItemBase<ParamInfo> item) {
     return null;
   }
 
-  protected boolean isEmptyRow(ParameterTableModelItemBase<P> row) {
+  protected boolean isEmptyRow(ParameterTableModelItemBase<ParamInfo> row) {
     return false;
   }
 
   @Nullable
-  protected JComponent getRowPresentation(ParameterTableModelItemBase<P> item, boolean selected, boolean focused) {
+  protected JComponent getRowPresentation(ParameterTableModelItemBase<ParamInfo> item, boolean selected, boolean focused) {
     return null;
   }
 
-  protected void customizeParametersTable(TableView<ParameterTableModelItemBase<P>> table) {
+  protected void customizeParametersTable(TableView<ParameterTableModelItem> table) {
   }
 
   private JComponent createSignaturePanel() {
@@ -600,7 +607,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   }
 
   private boolean mayPropagateParameters() {
-    final List<P> infos = getParameters();
+    final List<ParamInfo> infos = getParameters();
     if (infos.size() <= myMethod.getParametersCount()) return false;
     for (int i = 0; i < myMethod.getParametersCount(); i++) {
       if (infos.get(i).getOldIndex() != i) return false;

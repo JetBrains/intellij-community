@@ -45,7 +45,7 @@ import java.awt.event.KeyEvent;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class JavaParameterTableModel extends ParameterTableModelBase<ParameterInfoImpl> {
+public class JavaParameterTableModel extends ParameterTableModelBase<ParameterInfoImpl, ParameterTableModelItemBase<ParameterInfoImpl>> {
   private final Project myProject;
 
   public JavaParameterTableModel(final PsiElement typeContext,
@@ -54,12 +54,13 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     this(typeContext, defaultValueContext,
          new JavaTypeColumn(typeContext.getProject()),
          new JavaNameColumn(typeContext.getProject()),
-         new DefaultValueColumn<ParameterInfoImpl>(typeContext.getProject(), StdFileTypes.JAVA) {
+         new DefaultValueColumn<ParameterInfoImpl, ParameterTableModelItemBase<ParameterInfoImpl>>(typeContext.getProject(), StdFileTypes.JAVA) {
            @Override
            public TableCellEditor doCreateEditor(ParameterTableModelItemBase<ParameterInfoImpl> item) {
              return new EditorWithExpectedType(typeContext);
            }
-         }, new AnyVarColumn<ParameterInfoImpl>() {
+         },
+         new AnyVarColumn<ParameterInfoImpl, ParameterTableModelItemBase<ParameterInfoImpl>>() {
         @Override
         public boolean isCellEditable(ParameterTableModelItemBase<ParameterInfoImpl> item) {
           boolean isGenerateDelegate = ((ChangeSignatureDialogBase)dialog).isGenerateDelegate();
@@ -170,7 +171,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     }
   }
 
-  public static class JavaTypeColumn extends TypeColumn<ParameterInfoImpl> {
+  public static class JavaTypeColumn extends TypeColumn<ParameterInfoImpl, ParameterTableModelItemBase<ParameterInfoImpl>> {
     public JavaTypeColumn(Project project) {
       super(project, StdFileTypes.JAVA);
     }
@@ -181,7 +182,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     }
   }
 
-  public static class JavaNameColumn extends NameColumn<ParameterInfoImpl> {
+  public static class JavaNameColumn extends NameColumn<ParameterInfoImpl, ParameterTableModelItemBase<ParameterInfoImpl>> {
     private final Project myProject;
 
     public JavaNameColumn(Project project) {

@@ -25,7 +25,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.changeSignature.*;
+import com.intellij.refactoring.changeSignature.CallerChooserBase;
+import com.intellij.refactoring.changeSignature.ChangeSignatureDialogBase;
+import com.intellij.refactoring.changeSignature.ExceptionsTableModel;
+import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
 import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
 import com.intellij.refactoring.ui.VisibilityPanelBase;
@@ -55,7 +58,7 @@ import static org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle.m
 /**
  * @author Max Medvedev
  */
-public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParameterInfo, PsiMethod, String, GrMethodDescriptor> {
+public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParameterInfo, PsiMethod, String, GrMethodDescriptor, GrParameterTableModelItem, GrParameterTableModel > {
   private static final Logger LOG = Logger.getInstance(GrChangeSignatureDialog.class);
 
   private static final String INDENT = "    ";
@@ -75,8 +78,8 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
   }
 
   @Override
-  protected GrParameterTableModel createParametersInfoModel(MethodDescriptor<GrParameterInfo, String> method) {
-    final PsiParameterList parameterList = ((GrMethodDescriptor)method).getMethod().getParameterList();
+  protected GrParameterTableModel createParametersInfoModel(GrMethodDescriptor method) {
+    final PsiParameterList parameterList = method.getMethod().getParameterList();
     return new GrParameterTableModel(parameterList, myDefaultValueContext, this);
   }
 
@@ -212,10 +215,10 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
       return message("return.type.is.wrong");
     }
 
-    List<ParameterTableModelItemBase<GrParameterInfo>> parameterInfos = myParametersTableModel.getItems();
+    List<GrParameterTableModelItem> parameterInfos = myParametersTableModel.getItems();
     int newParameterCount = parameterInfos.size();
     for (int i = 0; i < newParameterCount; i++) {
-      GrParameterTableModelItem item = ((GrParameterTableModelItem)parameterInfos.get(i));
+      GrParameterTableModelItem item = parameterInfos.get(i);
 
       String name = item.parameter.getName();
       if (!StringUtil.isJavaIdentifier(name)) {
