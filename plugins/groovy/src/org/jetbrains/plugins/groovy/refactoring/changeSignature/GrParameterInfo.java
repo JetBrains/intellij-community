@@ -30,10 +30,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 public class GrParameterInfo implements JavaParameterInfo {
   private String myName;
   private final String myDefaultValue;
-  private final String myDefaultInitializer;
+  private String myDefaultInitializer;
   private final int myPosition;
   private CanonicalTypes.Type myTypeWrapper;
-  private final boolean myUseAnySingleVariable;
+  private boolean myUseAnySingleVariable;
 
   public GrParameterInfo(GrParameter parameter, int position) {
     myPosition = position;
@@ -67,12 +67,7 @@ public class GrParameterInfo implements JavaParameterInfo {
     myDefaultInitializer = defaultInitializer;
     myPosition = position;
     myUseAnySingleVariable = useAnySingleVariable;
-    if (type != null) {
-      myTypeWrapper = CanonicalTypes.createTypeWrapper(type);
-    }
-    else {
-      myTypeWrapper = null;
-    }
+    setType(type);
   }
 
   public String getName() {
@@ -94,6 +89,7 @@ public class GrParameterInfo implements JavaParameterInfo {
     return myTypeWrapper.getType(context, manager);
   }
 
+  @NotNull
   public String getTypeText() {
     if (myTypeWrapper != null) {
       return myTypeWrapper.getTypeText();
@@ -119,8 +115,8 @@ public class GrParameterInfo implements JavaParameterInfo {
   }
 
   @Override
-  public void setUseAnySingleVariable(boolean b) {
-    throw new UnsupportedOperationException();
+  public void setUseAnySingleVariable(boolean useAnyVar) {
+    myUseAnySingleVariable = useAnyVar;
   }
 
   public boolean isOptional() {
@@ -144,5 +140,13 @@ public class GrParameterInfo implements JavaParameterInfo {
    */
   public void setName(String newName) {
     myName = newName;
+  }
+
+  public void setType(@Nullable PsiType type) {
+    myTypeWrapper = type == null ? null : CanonicalTypes.createTypeWrapper(type);
+  }
+
+  public void setInitializer(String initializer) {
+    myDefaultInitializer = initializer;
   }
 }
