@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
+import com.intellij.codeInsight.completion.originInfo.OriginInfoAwareElement;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -56,7 +57,7 @@ import java.util.List;
  * User: Dmitry.Krasilschikov
  * Date: 21.02.2008
  */
-public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, GrDynamicImplicitElement {
+public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, GrDynamicImplicitElement, OriginInfoAwareElement {
   private final PsiManager myManager;
 
   private final GrMethod myMethod;
@@ -70,6 +71,12 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
     myMethod = method;
     myProject = myManager.getProject();
     myContainingClassName = containingClassName;
+  }
+
+  @Nullable
+  @Override
+  public String getOriginInfo() {
+    return "dynamic method";
   }
 
   public String[] getParameterTypes() {

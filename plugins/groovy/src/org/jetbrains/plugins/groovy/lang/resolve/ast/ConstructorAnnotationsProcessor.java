@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.resolve.noncode;
+package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -24,19 +24,20 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*;
 
 /**
  * @author peter
  */
 public class ConstructorAnnotationsProcessor extends AstTransformContributor {
-
-  public static final String IMMUTABLE = "groovy.lang.Immutable";
 
   @Override
   public void collectMethods(@NotNull GrTypeDefinition typeDefinition, Collection<PsiMethod> collector) {
@@ -45,10 +46,10 @@ public class ConstructorAnnotationsProcessor extends AstTransformContributor {
     PsiModifierList modifierList = typeDefinition.getModifierList();
     if (modifierList == null) return;
 
-    final PsiAnnotation tupleConstructor = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
-    final boolean immutable = modifierList.findAnnotation(IMMUTABLE) != null ||
-                              modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_IMMUTABLE) != null;
-    final PsiAnnotation canonical = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_CANONICAL);
+    final PsiAnnotation tupleConstructor = modifierList.findAnnotation(GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
+    final boolean immutable = modifierList.findAnnotation(GROOVY_LANG_IMMUTABLE) != null ||
+                              modifierList.findAnnotation(GROOVY_TRANSFORM_IMMUTABLE) != null;
+    final PsiAnnotation canonical = modifierList.findAnnotation(GROOVY_TRANSFORM_CANONICAL);
     if (!immutable && canonical == null && tupleConstructor == null) {
       return;
     }
@@ -86,6 +87,15 @@ public class ConstructorAnnotationsProcessor extends AstTransformContributor {
                   tupleConstructor != null ? PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeFields", false) : canonical == null,
                   !immutable, excludes);
 
+    if (immutable) {
+      fieldsConstructor.setOriginInfo("created by @Immutable");
+    }
+    else if (tupleConstructor != null) {
+      fieldsConstructor.setOriginInfo("created by @TupleConstructor");
+    }
+    else /*if (canonical != null)*/ {
+      fieldsConstructor.setOriginInfo("created by @Canonical");
+    }
 
     collector.add(fieldsConstructor.setContainingClass(typeDefinition));
 
@@ -97,7 +107,7 @@ public class ConstructorAnnotationsProcessor extends AstTransformContributor {
                                             boolean superFields,
                                             boolean superProperties, Set<PsiClass> visited, Set<String> excludes) {
     PsiClass parent = typeDefinition.getSuperClass();
-    if (parent != null && visited.add(parent) && !GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(parent.getQualifiedName())) {
+    if (parent != null && visited.add(parent) && !GROOVY_OBJECT_SUPPORT.equals(parent.getQualifiedName())) {
       addParametersForSuper(parent, fieldsConstructor, superFields, superProperties, visited, excludes);
       addParameters(parent, fieldsConstructor, superProperties, superFields, true, excludes);
     }

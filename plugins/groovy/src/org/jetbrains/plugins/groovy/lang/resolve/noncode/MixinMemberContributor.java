@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.resolve;
+package org.jetbrains.plugins.groovy.lang.resolve.noncode;
 
 import com.intellij.psi.*;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,7 +72,9 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
         @Override
         public boolean execute(@NotNull PsiElement element, ResolveState state) {
           if (isCategoryMethod(element, qualifierType, state.get(PsiSubstitutor.KEY))) {
-            return super.execute(GrGdkMethodImpl.createGdkMethod((PsiMethod)element, false), state);
+            PsiMethod method = (PsiMethod)element;
+            String originInfo = getOriginInfo(method);
+            return super.execute(GrGdkMethodImpl.createGdkMethod(method, false, originInfo), state);
           }
           else {
             return super.execute(element, state);
@@ -81,6 +84,14 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
         return;
       }
     }
+  }
+
+  private static String getOriginInfo(PsiMethod element) {
+    PsiClass aClass = element.getContainingClass();
+    if (aClass != null && aClass.getName() != null) {
+      return "mixed in from " + aClass.getName();
+    }
+    return "mixed in";
   }
 
   private static List<PsiAnnotation> getAllMixins(PsiModifierList modifierList) {

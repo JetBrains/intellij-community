@@ -55,6 +55,8 @@ public final class GroovyCommonClassNames {
   @NonNls public static final String GROOVY_TRANSFORM_TYPE_CHECKED = "groovy.transform.TypeChecked";
   @NonNls public static final String GROOVY_TRANSFORM_TYPE_CHECKING_MODE = "groovy.transform.TypeCheckingMode";
   @NonNls public static final String JAVA_LANG_CHAR_SEQUENCE = "java.lang.CharSequence";
+  public static final String GROOVY_TRANSFORM_INHERIT_CONSTRUCTORS = "groovy.transform.InheritConstructors";
+  public static final String GROOVY_LANG_IMMUTABLE = "groovy.lang.Immutable";
 
 
   private GroovyCommonClassNames() {

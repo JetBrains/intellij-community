@@ -13,19 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.light;
+package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
+import com.intellij.codeInsight.completion.originInfo.OriginInfoAwareElement;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMirrorElement;
+import com.intellij.psi.impl.light.LightMethod;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Max Medvedev
  */
-public class LightMirrorMethod extends LightMethod implements PsiMethod, PsiMirrorElement {
+public class DelegatedMethod extends LightMethod implements PsiMethod, PsiMirrorElement, OriginInfoAwareElement {
   private PsiMethod myPrototype;
 
-  public LightMirrorMethod(@NotNull PsiMethod delegate, @NotNull PsiMethod prototype) {
+  public DelegatedMethod(@NotNull PsiMethod delegate, @NotNull PsiMethod prototype) {
     super(prototype.getManager(), delegate, delegate.getContainingClass());
     myPrototype = prototype;
   }
@@ -34,5 +38,15 @@ public class LightMirrorMethod extends LightMethod implements PsiMethod, PsiMirr
   @Override
   public PsiMethod getPrototype() {
     return myPrototype;
+  }
+
+  @Nullable
+  @Override
+  public String getOriginInfo() {
+    PsiClass aClass = myPrototype.getContainingClass();
+    if (aClass != null & aClass.getName() != null) {
+      return "delegated from " + aClass.getName();
+    }
+    return null;
   }
 }

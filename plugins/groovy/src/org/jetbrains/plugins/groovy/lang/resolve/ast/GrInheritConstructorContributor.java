@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.resolve.noncode;
+package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -21,7 +21,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
-import org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.Collection;
 
@@ -29,7 +29,6 @@ import java.util.Collection;
  * @author Maxim.Medvedev
  */
 public class GrInheritConstructorContributor extends AstTransformContributor {
-  public static final String INHERIT_CONSTRUCTOR_NAME = "groovy.transform.InheritConstructors";
 
   @Override
   public void collectMethods(@NotNull GrTypeDefinition psiClass, Collection<PsiMethod> collector) {
@@ -44,12 +43,16 @@ public class GrInheritConstructorContributor extends AstTransformContributor {
 
     final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, psiClass, PsiSubstitutor.EMPTY);
     for (PsiMethod constructor : superClass.getConstructors()) {
-      final GrLightMethodBuilder inheritedConstructor =
-        new GrLightMethodBuilder(psiClass.getManager(), psiClass.getName()).setContainingClass(psiClass);
-      inheritedConstructor.setConstructor(true).setNavigationElement(psiClass);
+      final GrLightMethodBuilder inheritedConstructor = new GrLightMethodBuilder(psiClass.getManager(), psiClass.getName());
+      inheritedConstructor.setContainingClass(psiClass);
+      inheritedConstructor.setConstructor(true);
+      inheritedConstructor.setNavigationElement(psiClass);
+      inheritedConstructor.setOriginInfo("created by @InheritConstructors");
+
       for (PsiParameter parameter : constructor.getParameterList().getParameters()) {
-        inheritedConstructor
-          .addParameter(StringUtil.notNullize(parameter.getName()), superClassSubstitutor.substitute(parameter.getType()), false);
+        String name = StringUtil.notNullize(parameter.getName());
+        PsiType type = superClassSubstitutor.substitute(parameter.getType());
+        inheritedConstructor.addParameter(name, type, false);
       }
       if (psiClass.findCodeMethodsBySignature(inheritedConstructor, false).length == 0) {
         collector.add(inheritedConstructor);
@@ -59,6 +62,6 @@ public class GrInheritConstructorContributor extends AstTransformContributor {
 
   public static boolean hasInheritConstructorsAnnotation(PsiClass psiClass) {
     final PsiModifierList modifierList = psiClass.getModifierList();
-    return modifierList != null && modifierList.findAnnotation(INHERIT_CONSTRUCTOR_NAME) != null;
+    return modifierList != null && modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_INHERIT_CONSTRUCTORS) != null;
   }
 }

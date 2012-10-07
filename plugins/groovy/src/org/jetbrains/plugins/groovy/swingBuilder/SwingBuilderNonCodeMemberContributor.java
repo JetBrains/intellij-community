@@ -35,7 +35,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Sergey Evdokimov
@@ -70,6 +72,7 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
       public MyMethodBuilder(PsiManager manager, String name) {
         super(manager, name);
         setMethodKind(METHOD_KIND);
+        setOriginInfo("SwingBuilder method");
       }
 
       @NotNull

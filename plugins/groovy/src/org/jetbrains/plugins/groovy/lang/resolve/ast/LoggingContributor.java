@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.resolve.noncode;
+package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.google.common.collect.ImmutableMap;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightFieldBuilder;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+
+import java.util.Collection;
 
 /**
  * @author peter
  */
-public class LoggingContributor extends NonCodeMembersContributor {
+public class LoggingContributor extends AstTransformContributor {
   private static final ImmutableMap<String, String> ourLoggers = ImmutableMap.<String, String>builder().
     put("groovy.util.logging.Log", "java.util.logging.Logger").
     put("groovy.util.logging.Commons", "org.apache.commons.logging.Log").
@@ -39,23 +39,20 @@ public class LoggingContributor extends NonCodeMembersContributor {
     build();
 
   @Override
-  public void processDynamicElements(@NotNull PsiType qualifierType,
-                                     PsiClass psiClass,
-                                     PsiScopeProcessor processor,
-                                     GroovyPsiElement place,
-                                     ResolveState state) {
-    if (!(psiClass instanceof GrTypeDefinition) || !PsiTreeUtil.isAncestor(psiClass, place, true)) return;
-
-    PsiModifierList modifierList = psiClass.getModifierList();
+  public void collectFields(@NotNull GrTypeDefinition psiClass, Collection<GrField> collector) {
+    GrModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return;
-    for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+
+    for (GrAnnotation annotation : modifierList.getAnnotations()) {
       String qname = annotation.getQualifiedName();
       String logger = ourLoggers.get(qname);
       if (logger != null) {
         String fieldName = PsiUtil.getAnnoAttributeValue(annotation, "value", "log");
-        LightFieldBuilder field = new LightFieldBuilder(fieldName, logger, annotation).setContainingClass(psiClass)
-          .setModifiers(PsiModifier.FINAL, PsiModifier.STATIC, PsiModifier.PRIVATE);
-        ResolveUtil.processElement(processor, field, state);
+        GrLightField field = new GrLightField(psiClass, fieldName, logger);
+        field.setNavigationElement(annotation);
+        field.getModifierList().setModifiers(PsiModifier.PRIVATE, PsiModifier.FINAL, PsiModifier.STATIC);
+        field.setOriginInfo("created by @" + annotation.getShortName());
+        collector.add(field);
       }
     }
   }

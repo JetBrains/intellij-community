@@ -322,6 +322,7 @@
   <extensionPoint name="completion.skip" interface="com.intellij.codeInsight.completion.CompletionPreselectSkipper"/>
   <extensionPoint name="lookup.charFilter" interface="com.intellij.codeInsight.lookup.CharFilter"/>
   <extensionPoint name="lookup.actionProvider" interface="com.intellij.codeInsight.lookup.LookupActionProvider"/>
+  <extensionPoint name="originInfoProvider" interface="com.intellij.codeInsight.completion.originInfo.OriginInfoProvider"/>
 
   <extensionPoint name="highlightRangeExtension" interface="com.intellij.codeInsight.daemon.impl.HighlightRangeExtension"/>
 

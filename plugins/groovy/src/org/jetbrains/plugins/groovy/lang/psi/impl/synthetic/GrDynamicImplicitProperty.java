@@ -60,6 +60,8 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
     else {
       myNavigationalElement = navigationalElement;
     }
+
+    setOriginInfo("dynamic property");
   }
 
   @Nullable

@@ -292,6 +292,12 @@ public final class LookupElementBuilder extends LookupElement {
                                     myAllLookupStrings, myCaseSensitive);
   }
 
+  public LookupElementBuilder appendTailText(@NotNull String tailText, boolean grayed) {
+    final LookupElementPresentation presentation = copyPresentation();
+    presentation.appendTailText(tailText, grayed);
+    return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation, myAllLookupStrings, myCaseSensitive);
+  }
+
   public LookupElement withAutoCompletionPolicy(AutoCompletionPolicy policy) {
     return policy.applyPolicy(this);
   }
