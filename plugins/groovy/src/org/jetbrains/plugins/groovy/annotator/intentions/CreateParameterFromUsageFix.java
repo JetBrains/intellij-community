@@ -21,7 +21,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -39,8 +42,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureDialog;
-import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrParameterTableModel;
-import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrTableParameterInfo;
+import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrMethodDescriptor;
+import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrParameterInfo;
 import org.jetbrains.plugins.groovy.refactoring.convertToJava.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.refactoring.ui.MethodOrClosureScopeChooser;
 
@@ -138,28 +141,18 @@ public class CreateParameterFromUsageFix implements IntentionAction, MethodOrClo
 
         final String name = ref.getName();
         final Set<PsiType> types = GroovyExpectedTypesProvider.getDefaultExpectedTypes(ref);
-        final PsiType type;
-        if (types.isEmpty()) {
-          type = PsiType.getJavaLangObject(PsiManager.getInstance(project), ref.getResolveScope());
-        }
-        else {
-          type = TypesUtil.unboxPrimitiveTypeWrapper(types.iterator().next());
-        }
+
+        PsiType unboxed = types.isEmpty() ? null : TypesUtil.unboxPrimitiveTypeWrapper(types.iterator().next());
+        @NotNull final PsiType type = unboxed != null ? unboxed : PsiType.getJavaLangObject(ref.getManager(), ref.getResolveScope());
 
         if (method instanceof GrMethod) {
-          new GrChangeSignatureDialog(project, (GrMethod)method) {
-            @Override
-            protected GrParameterTableModel createParameterTableModel() {
-              GrParameterTableModel model = super.createParameterTableModel();
+          GrMethodDescriptor descriptor = new GrMethodDescriptor((GrMethod)method);
+          GrChangeSignatureDialog dialog = new GrChangeSignatureDialog(project, descriptor, true, ref);
 
-              model.addRow(new GrTableParameterInfo(project, ref, name, type.getPresentableText(),
-                                                    GroovyToJavaGenerator.getDefaultValueText(type.getCanonicalText()), ""));
-              if (method.isVarArgs()) {
-                model.exchangeRows(model.getRowCount() - 1, model.getRowCount() - 2);
-              }
-              return model;
-            }
-          }.show();
+          List<GrParameterInfo> parameters = dialog.getParameters();
+          parameters.add(createParameterInfo(name, type));
+          dialog.setParameterInfos(parameters);
+          dialog.show();
         }
         else if (method != null) {
           JavaChangeSignatureDialog dialog = new JavaChangeSignatureDialog(project, method, false, ref);
@@ -176,6 +169,12 @@ public class CreateParameterFromUsageFix implements IntentionAction, MethodOrClo
         }
       }
     });
+  }
+
+  private static GrParameterInfo createParameterInfo(String name, PsiType type) {
+    String notNullName = name != null ? name : "";
+    String defaultValueText = GroovyToJavaGenerator.getDefaultValueText(type.getCanonicalText());
+    return new GrParameterInfo(notNullName, defaultValueText, "", type, -1, false);
   }
 
   @Override

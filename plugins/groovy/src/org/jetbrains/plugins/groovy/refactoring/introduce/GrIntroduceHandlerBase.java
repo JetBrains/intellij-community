@@ -83,7 +83,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   @Nullable
   public abstract GrVariable runRefactoring(GrIntroduceContext context, Settings settings);
 
-  public static List<GrExpression> collectExpressions(final PsiFile file, final Editor editor, final int offset) {
+  public static List<GrExpression> collectExpressions(final PsiFile file, final Editor editor, final int offset, boolean acceptVoidCalls) {
     int correctedOffset = correctOffset(editor, offset);
     final PsiElement elementAtCaret = file.findElementAt(correctedOffset);
     final List<GrExpression> expressions = new ArrayList<GrExpression>();
@@ -92,14 +92,17 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
          expression != null;
          expression = PsiTreeUtil.getParentOfType(expression, GrExpression.class)) {
       if (expressions.contains(expression)) continue;
-      if (expressionIsIncorrect(expression)) continue;
+      if (expression instanceof GrParenthesizedExpression && !expressions.contains(((GrParenthesizedExpression)expression).getOperand())) {
+        expressions.add(((GrParenthesizedExpression)expression).getOperand());
+      }
+      if (expressionIsIncorrect(expression, acceptVoidCalls)) continue;
 
       expressions.add(expression);
     }
     return expressions;
   }
 
-  public static boolean expressionIsIncorrect(GrExpression expression) {
+  public static boolean expressionIsIncorrect(GrExpression expression, boolean acceptVoidCalls) {
     if (expression instanceof GrParenthesizedExpression) return true;
     if (expression instanceof GrSuperReferenceExpression) return true;
     if (expression instanceof GrAssignmentExpression) return true;
@@ -110,6 +113,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
 
     if (expression instanceof GrClosableBlock && expression.getParent() instanceof GrStringInjection) return true;
+    if (!acceptVoidCalls && expression instanceof GrMethodCall && PsiType.VOID == expression.getType()) return true;
 
     return false;
   }
@@ -130,14 +134,12 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       correctedOffset = offset;
     }
     else {
-      final char c = text.charAt(correctedOffset);
-      if (!Character.isJavaIdentifierPart(c)) {
-        if (c == ';') {//initially caret on the end of line
-          correctedOffset--;
-        }
-        if (c != ')' && c != ']' && c!='}' && c!='\'' && c!='"' && c!='/') {
-          correctedOffset = offset;
-        }
+      char c = text.charAt(correctedOffset);
+      if (c == ';' && correctedOffset != 0) {//initially caret on the end of line
+        correctedOffset--;
+      }
+      else if (!Character.isJavaIdentifierPart(c) && c != ')' && c != ']' && c != '}' && c != '\'' && c != '"' && c != '/') {
+        correctedOffset = offset;
       }
     }
     return correctedOffset;
@@ -157,7 +159,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     if (!selectionModel.hasSelection()) {
       final int offset = editor.getCaretModel().getOffset();
 
-      final List<GrExpression> expressions = collectExpressions(file, editor, offset);
+      final List<GrExpression> expressions = collectExpressions(file, editor, offset, false);
       if (expressions.isEmpty()) {
         final GrVariable variable = findVariableAtCaret(file, editor, offset);
         if (variable == null || variable instanceof GrField || variable instanceof GrParameter) {

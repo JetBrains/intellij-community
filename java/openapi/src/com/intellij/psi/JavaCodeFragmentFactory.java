@@ -38,7 +38,10 @@ public abstract class JavaCodeFragmentFactory {
    * @return the created code fragment.
    */
   @NotNull
-  public abstract PsiExpressionCodeFragment createExpressionCodeFragment(@NotNull String text, PsiElement context, final PsiType expectedType, boolean isPhysical);
+  public abstract PsiExpressionCodeFragment createExpressionCodeFragment(@NotNull String text,
+                                                                         @Nullable PsiElement context,
+                                                                         @Nullable final PsiType expectedType,
+                                                                         boolean isPhysical);
 
   /**
    * Creates a Java code fragment from the text of a Java code block.
@@ -77,7 +80,7 @@ public abstract class JavaCodeFragmentFactory {
    * @return the created code fragment.
    */
   @NotNull
-  public abstract PsiTypeCodeFragment createTypeCodeFragment(@NotNull String text, PsiElement context, boolean isPhysical);
+  public abstract PsiTypeCodeFragment createTypeCodeFragment(@NotNull String text, @Nullable PsiElement context, boolean isPhysical);
 
   /**
    * Creates a Java type code fragment from the text of the name of a Java type (the name
@@ -91,11 +94,12 @@ public abstract class JavaCodeFragmentFactory {
    * @param flags      types allowed to present in text.
    * @return the created code fragment.
    */
-  @NotNull 
-  public abstract PsiTypeCodeFragment createTypeCodeFragment(@NotNull String text, PsiElement context, boolean isPhysical,
-                                                             @MagicConstant(flags = {ALLOW_VOID, ALLOW_ELLIPSIS, ALLOW_DISJUNCTION})
-                                                             int flags);
-  
+  @NotNull
+  public abstract PsiTypeCodeFragment createTypeCodeFragment(@NotNull String text,
+                                                             @Nullable PsiElement context,
+                                                             boolean isPhysical,
+                                                             @MagicConstant(flags = {ALLOW_VOID, ALLOW_ELLIPSIS, ALLOW_DISJUNCTION}) int flags);
+
   /**
    * Creates a Java reference code fragment from the text of a Java reference to a
    * package or class.
@@ -110,7 +114,7 @@ public abstract class JavaCodeFragmentFactory {
    */
   @NotNull
   public abstract PsiJavaCodeReferenceCodeFragment createReferenceCodeFragment(@NotNull String text,
-                                                                               PsiElement context,
+                                                                               @Nullable PsiElement context,
                                                                                boolean isPhysical,
                                                                                boolean isClassesAccepted);
 
