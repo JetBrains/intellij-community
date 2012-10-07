@@ -78,6 +78,8 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
   private final ArtifactRepository myLocalRepository;
   private final Maven3ServerConsoleLogger myConsoleWrapper;
 
+  private volatile MavenServerProgressIndicator myCurrentIndicator;
+
   public Maven3ServerEmbedderImpl(MavenServerSettings settings) throws RemoteException {
     File mavenHome = settings.getMavenHome();
     if (mavenHome != null) {
@@ -222,6 +224,24 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
                         boolean failOnUnresolvedDependency,
                         @NotNull MavenServerConsole console,
                         @NotNull MavenServerProgressIndicator indicator) throws RemoteException {
+
+    try {
+      //((CustomArtifactFactory)getComponent(ArtifactFactory.class)).customize();
+      //((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).customize();
+      //((CustomArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, failOnUnresolvedDependency);
+      //((CustomRepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
+      //((CustomMaven3WagonManager)getComponent(WagonManager.class)).customize(failOnUnresolvedDependency);
+
+      setConsoleAndIndicator(console, indicator);
+    }
+    catch (Exception e) {
+      throw rethrowException(e);
+    }
+  }
+
+  private void setConsoleAndIndicator(MavenServerConsole console, MavenServerProgressIndicator indicator) {
+    myConsoleWrapper.setWrappee(console);
+    myCurrentIndicator = indicator;
   }
 
   @NotNull
