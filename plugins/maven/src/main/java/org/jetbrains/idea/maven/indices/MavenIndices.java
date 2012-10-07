@@ -50,6 +50,9 @@ public class MavenIndices {
     File[] indices = myIndicesDir.listFiles();
     if (indices == null) return;
     Arrays.sort(indices);
+
+    if (Boolean.getBoolean("idea.use.maven3")) return;
+
     for (File each : indices) {
       if (!each.isDirectory()) continue;
 
