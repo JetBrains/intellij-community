@@ -179,14 +179,30 @@ public class DumbServiceImpl extends DumbService {
         if (!wasDumb) {
           // always change dumb status inside write action.
           // This will ensure all active read actions are completed before the app goes dumb
+          final Ref<Boolean> startFailure = new Ref<Boolean>(Boolean.FALSE);
           application.runWriteAction(new Runnable() {
             public void run() {
               myDumb = true;
-              myPublisher.enteredDumbMode();
-
-              updateRunnable.run();
+              try {
+                myPublisher.enteredDumbMode();
+              }
+              catch (Throwable e) {
+                LOG.error(e);
+              }
+              finally {
+                try {
+                  updateRunnable.run();
+                }
+                catch (Throwable e) {
+                  startFailure.set(Boolean.TRUE);
+                  LOG.error("Failed to start background index update task", e);
+                }
+              }
             }
           });
+          if (startFailure.get()) {
+            updateFinished();
+          }
         }
         else {
           myUpdatesQueue.addLast(updateRunnable);
@@ -197,23 +213,27 @@ public class DumbServiceImpl extends DumbService {
 
   private void updateFinished() {
     myDumb = false;
-    if (!myProject.isDisposed()) {
-      myPublisher.exitDumbMode();
-      FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
+    try {
+      if (!myProject.isDisposed()) {
+        myPublisher.exitDumbMode();
+        FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
+      }
     }
-    while (true) {
-      final Runnable runnable;
-      synchronized (myRunWhenSmartQueue) {
-        if (myRunWhenSmartQueue.isEmpty()) {
-          break;
+    finally {
+      while (true) {
+        final Runnable runnable;
+        synchronized (myRunWhenSmartQueue) {
+          if (myRunWhenSmartQueue.isEmpty()) {
+            break;
+          }
+          runnable = myRunWhenSmartQueue.pullFirst();
         }
-        runnable = myRunWhenSmartQueue.pullFirst();
-      }
-      try {
-        runnable.run();
-      }
-      catch (Throwable e) {
-        LOG.error(e);
+        try {
+          runnable.run();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
     }
   }
@@ -278,10 +298,6 @@ public class DumbServiceImpl extends DumbService {
     }
 
     public void run() {
-      if (myProject.isDisposed()) {
-        return;
-      }
-
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, IdeBundle.message("progress.indexing"), false) {
         private final BlockingQueue<Ref<CacheUpdateRunner>> myActionQueue = new LinkedBlockingQueue<Ref<CacheUpdateRunner>>();
 
