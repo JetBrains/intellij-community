@@ -93,7 +93,7 @@ class Bar {
   }
 
   void testThis() {
-    doTest('''\
+    myFixture.configureByText('_.groovy', '''\
 class Foo {
   void <warning descr="Method may be static">barx</warning>() {
     this.abc()
@@ -107,6 +107,10 @@ class Foo {
   void bar(){}
 }
 ''')
+    def inspection = new GrMethodMayBeStaticInspection()
+    myFixture.enableInspections(inspection)
+    inspection.myIgnoreInstanceRefsInClosure = true
+    myFixture.checkHighlighting(true, false, false)
   }
 
   void testSuper() {
