@@ -66,7 +66,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     if (!selectionModel.hasSelection()) {
       final int offset = editor.getCaretModel().getOffset();
 
-      final List<GrExpression> expressions = GrIntroduceHandlerBase.collectExpressions(file, editor, offset);
+      final List<GrExpression> expressions = GrIntroduceHandlerBase.collectExpressions(file, editor, offset, false);
       if (expressions.isEmpty()) {
         final GrVariable variable = GrIntroduceHandlerBase.findVariableAtCaret(file, editor, offset);
         if (variable == null || variable instanceof GrField || variable instanceof GrParameter) {

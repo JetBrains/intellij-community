@@ -104,7 +104,7 @@ public class GroovyExtractChooser {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
     }
 
-    if (ExtractUtil.isSingleExpression(statements) && GrIntroduceHandlerBase.expressionIsIncorrect((GrExpression)statement0)) {
+    if (ExtractUtil.isSingleExpression(statements) && GrIntroduceHandlerBase.expressionIsIncorrect((GrExpression)statement0, true)) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.block.should.represent.an.expression"));
     }
 
