@@ -374,7 +374,7 @@ public class DumbServiceImpl extends DumbService {
             finally {
               myProcessedItems += count;
               if (LOG.isDebugEnabled()) {
-                LOG.debug("Scheduling checkNextUpdateFromQueue");
+                LOG.debug("Scheduling checkNextUpdateFromQueue; Thread: " + Thread.currentThread().getName());
               }
               UIUtil.invokeLaterIfNeeded(new DumbAwareRunnable() {
                 public void run() {
@@ -405,7 +405,7 @@ public class DumbServiceImpl extends DumbService {
 
         private void checkNextUpdateFromQueue() {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("Inside checkNextUpdateFromQueue");
+            LOG.debug("Inside checkNextUpdateFromQueue, Thread: " + Thread.currentThread().getName());
           }
           IndexUpdateRunnable nextUpdateRunnable = null;
           try {
