@@ -1,7 +1,7 @@
-package com.siyeh.igtest.verbose;
+package com.siyeh.igtest.controlflow.unnecessary_continue;
 
-public class UnnecessaryContinueInspection {
-    public UnnecessaryContinueInspection() {
+public class UnnecessaryContinue {
+    public UnnecessaryContinue() {
         for (; ;) {
         continue;
         }
@@ -46,11 +46,13 @@ public class UnnecessaryContinueInspection {
     public void foo5() {
         while (true)
             synchronized(this) {
-                if (true)
+                if (false)
                 {
                     continue;
                 }
-                System.out.println("");
+              else {
+                  System.out.println();
+                }
             }
     }
 
