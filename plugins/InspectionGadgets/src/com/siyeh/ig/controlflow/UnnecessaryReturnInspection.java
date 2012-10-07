@@ -41,20 +41,7 @@ public class UnnecessaryReturnInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.return.display.name");
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message("unnecessary.return.option"),
-      this, "ignoreInThenBranch");
+    return InspectionGadgetsBundle.message("unnecessary.return.display.name");
   }
 
   @Override
@@ -66,6 +53,16 @@ public class UnnecessaryReturnInspection extends BaseInspection {
     else {
       return InspectionGadgetsBundle.message("unnecessary.return.problem.descriptor");
     }
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unnecessary.return.option"), this, "ignoreInThenBranch");
   }
 
   @Override
@@ -113,25 +110,19 @@ public class UnnecessaryReturnInspection extends BaseInspection {
       if (!ControlFlowUtils.blockCompletesWithStatement(codeBlock, statement)) {
         return;
       }
-      if (ignoreInThenBranch && isInThenBranch(statement, statement.getParent())) {
+      if (ignoreInThenBranch && isInThenBranch(statement)) {
         return;
       }
       registerStatementError(statement, Boolean.valueOf(constructor));
     }
 
-    private boolean isInThenBranch(PsiReturnStatement statement, PsiElement parent) {
-      if (!(parent instanceof PsiCodeBlock)) {
+    private boolean isInThenBranch(PsiStatement statement) {
+      final PsiIfStatement ifStatement =
+        PsiTreeUtil.getParentOfType(statement, PsiIfStatement.class, true, PsiMethod.class, PsiLambdaExpression.class);
+      if (ifStatement == null) {
         return false;
       }
-      final PsiElement grandParent = parent.getParent();
-      if (grandParent == null) {
-        return false;
-      }
-      final PsiElement greatGrandParent = grandParent.getParent();
-      if (!(greatGrandParent instanceof PsiIfStatement)) {
-        return false;
-      }
-      final PsiStatement elseBranch = ((PsiIfStatement)greatGrandParent).getElseBranch();
+      final PsiStatement elseBranch = ifStatement.getElseBranch();
       return elseBranch != null && !PsiTreeUtil.isAncestor(elseBranch, statement, true);
     }
   }

@@ -87,4 +87,11 @@ class C {
     Callable<Integer> c = () -> { return 42; };
     System.out.println(c);
   }
+
+  void m5(boolean a) {
+    if (a) return;
+    else {
+      System.out.println();
+    }
+  }
 }
