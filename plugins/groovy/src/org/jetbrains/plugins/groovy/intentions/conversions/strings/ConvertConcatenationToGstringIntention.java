@@ -74,16 +74,21 @@ public class ConvertConcatenationToGstringIntention extends Intention {
 
 
   private static List<GrExpression> collectExpressions(final PsiFile file, final int offset) {
-    final PsiElement elementAtCaret = file.findElementAt(offset);
     final List<GrExpression> expressions = new ArrayList<GrExpression>();
 
+    _collect(file, offset, expressions);
+    if (expressions.isEmpty()) _collect(file, offset, expressions);
+    return expressions;
+  }
+
+  private static void _collect(PsiFile file, int offset, List<GrExpression> expressions) {
+    final PsiElement elementAtCaret = file.findElementAt(offset);
     for (GrExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, GrExpression.class);
          expression != null;
          expression = PsiTreeUtil.getParentOfType(expression, GrExpression.class)) {
       if (MyPredicate.satisfied(expression)) expressions.add(expression);
       else if (!expressions.isEmpty()) break;
     }
-    return expressions;
   }
 
   @Override
