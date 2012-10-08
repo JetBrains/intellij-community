@@ -47,10 +47,10 @@ public class AppEngineRunConfigurationEditor extends SettingsEditor<CommonModel>
     final Artifact selectedArtifact = getSelectedArtifact();
     if (!Comparing.equal(myLastSelectedArtifact, selectedArtifact)) {
       if (myLastSelectedArtifact != null) {
-        BuildArtifactsBeforeRunTaskProvider.setBuildArtifactBeforeRunOption(myMainPanel, myLastSelectedArtifact, false);
+        BuildArtifactsBeforeRunTaskProvider.setBuildArtifactBeforeRunOption(myMainPanel, myProject, myLastSelectedArtifact, false);
       }
       if (selectedArtifact != null) {
-        BuildArtifactsBeforeRunTaskProvider.setBuildArtifactBeforeRunOption(myMainPanel, selectedArtifact, true);
+        BuildArtifactsBeforeRunTaskProvider.setBuildArtifactBeforeRunOption(myMainPanel, myProject, selectedArtifact, true);
       }
       myLastSelectedArtifact = selectedArtifact;
     }
