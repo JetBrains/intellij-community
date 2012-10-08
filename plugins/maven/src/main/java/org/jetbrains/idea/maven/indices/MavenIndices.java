@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -51,7 +52,7 @@ public class MavenIndices {
     if (indices == null) return;
     Arrays.sort(indices);
 
-    if (Boolean.getBoolean("idea.use.maven3")) return;
+    if (!MavenServerManager.getInstance().isUseMaven2()) return;
 
     for (File each : indices) {
       if (!each.isDirectory()) continue;

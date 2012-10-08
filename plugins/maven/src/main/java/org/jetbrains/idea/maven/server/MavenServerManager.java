@@ -26,7 +26,7 @@ import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
@@ -42,8 +42,10 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.apache.lucene.search.Query;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.project.MavenConsole;
@@ -62,7 +64,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
+@State(
+  name = "MavenVersion",
+  storages = {@Storage(
+    file = StoragePathMacros.APP_CONFIG + "/mavenVersion.xml")})
+public class MavenServerManager extends RemoteObjectWrapper<MavenServer> implements PersistentStateComponent<Element> {
   @NonNls private static final String MAIN_CLASS = "org.jetbrains.idea.maven.server.RemoteMavenServer";
 
   private final RemoteProcessSupport<Object, MavenServer, Object> mySupport;
@@ -73,6 +79,8 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
   private boolean myDownloadListenerExported;
 
   private final Alarm myShutdownAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+
+  private boolean useMaven2 = true;
 
   public static MavenServerManager getInstance() {
     return ServiceManager.getService(MavenServerManager.class);
@@ -263,7 +271,12 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
     if (pluginFileOrDir.isDirectory()) {
       classpath.add(new File(pluginFileOrDir.getParent(), "maven-server-api"));
 
-      if (Boolean.getBoolean("idea.use.maven3")) {
+      if (getInstance().isUseMaven2()) {
+        classpath.add(new File(pluginFileOrDir.getParent(), "maven2-server-impl"));
+        File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
+        libDir = new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven2-server-impl/lib");
+      }
+      else {
         classpath.add(new File(pluginFileOrDir.getParent(), "maven3-server-impl"));
         File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
 
@@ -280,11 +293,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
             classpath.add(jar);
           }
         }
-      }
-      else {
-        classpath.add(new File(pluginFileOrDir.getParent(), "maven2-server-impl"));
-        File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
-        libDir = new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven2-server-impl/lib");
       }
     }
     else {
@@ -408,6 +416,31 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
     catch (RemoteException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public boolean isUseMaven2() {
+    return useMaven2;
+  }
+
+  public void setUseMaven2(boolean useMaven2) {
+    if (this.useMaven2 != useMaven2) {
+      this.useMaven2 = useMaven2;
+      shutdown(false);
+    }
+  }
+
+  @Nullable
+  @Override
+  public Element getState() {
+    final Element element = new Element("maven-version");
+    element.setAttribute("version", useMaven2 ? "2" : "3");
+    return element;
+  }
+
+  @Override
+  public void loadState(Element state) {
+    String version = state.getAttributeValue("version");
+    useMaven2 = !"3".equals(version);
   }
 
   private static class RemoteMavenServerLogger extends MavenRemoteObject implements MavenServerLogger {
