@@ -43,6 +43,7 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
   private JTextField myProxyPortTextField;
   private JTextField myProxyHostTextField;
   private JCheckBox myUseProxyCheckBox;
+  private JCheckBox myUseProxyPacCheckBox;
   private JCheckBox myRememberProxyPasswordCheckBox;
 
   private JLabel myProxyLoginLabel;
@@ -77,7 +78,7 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
       }
     });
 
-    myUseProxyCheckBox.addActionListener(new ActionListener () {
+    myUseProxyCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         enableProxy(myUseProxyCheckBox.isSelected());
       }
@@ -104,6 +105,7 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
   public void apply () {
     HttpConfigurable httpConfigurable = myHttpConfigurable;
     httpConfigurable.USE_HTTP_PROXY = myUseProxyCheckBox.isSelected();
+    httpConfigurable.USE_PROXY_PAC = myUseProxyPacCheckBox.isSelected();
     httpConfigurable.PROXY_AUTHENTICATION = myProxyAuthCheckBox.isSelected();
     httpConfigurable.KEEP_PROXY_PASSWORD = myRememberProxyPasswordCheckBox.isSelected();
 

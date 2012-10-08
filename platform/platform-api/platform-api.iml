@@ -29,6 +29,8 @@
     </orderEntry>
     <orderEntry type="module" module-name="projectModel-api" exported="" />
     <orderEntry type="library" name="Netty" level="project" />
+    <orderEntry type="library" exported="" name="proxy-vole_20120920" level="project" />
+    <orderEntry type="library" name="proxy-vole_20120920" level="project" />
   </component>
 </module>
 

@@ -47,3 +47,4 @@ xstream.jar
 swingx-core-1.6.2.jar
 netty-3.5.8.Final.jar
 protobuf-2.4.1.jar
+proxy-vole_20120920.jar
