@@ -41,7 +41,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
     myConsole = new TestsConsoleBuilderImpl(properties.getProject(),
                                             myProperties.getScope(),
                                             !properties.isEditable()).getConsole();
-    myPrinter = new TestsOutputConsolePrinter(myConsole, properties, unboundOutputRoot);
+    myPrinter = new TestsOutputConsolePrinter(this, properties, unboundOutputRoot);
     myProperties.setConsole(this);
 
     Disposer.register(this, myProperties);
@@ -146,6 +146,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
     return AnAction.EMPTY_ARRAY;
   }
 
+  @NotNull
   public ConsoleView getConsole() {
     return myConsole;
   }

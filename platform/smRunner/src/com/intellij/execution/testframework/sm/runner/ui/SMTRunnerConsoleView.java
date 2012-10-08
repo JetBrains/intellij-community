@@ -17,12 +17,13 @@ package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,4 +94,31 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   public SMTestRunnerResultsForm getResultsViewer() {
     return myResultsViewer;
   }
+
+  /**
+   * Prints a given string of a given type on the root node.
+   * Note: it's a permanent printing, as opposed to calling the same method on {@link #getConsole()} instance.
+   * @param s            given string
+   * @param contentType  given type
+   */
+  @Override
+  public void print(final String s, final ConsoleViewContentType contentType) {
+    myResultsViewer.getRoot().addLast(new Printable() {
+      public void printOn(final Printer printer) {
+        printer.print(s, contentType);
+      }
+    });
+  }
+
+  /**
+   * Prints a given hyperlink on the root node.
+   * Note: it's a permanent printing, as opposed to calling the same method on {@link #getConsole()} instance.
+   * @param hyperlinkText hyperlink text
+   * @param info          HyperlinkInfo
+   */
+  @Override
+  public void printHyperlink(String hyperlinkText, HyperlinkInfo info) {
+    myResultsViewer.getRoot().addLast(new HyperLink(hyperlinkText, info));
+  }
+
 }
