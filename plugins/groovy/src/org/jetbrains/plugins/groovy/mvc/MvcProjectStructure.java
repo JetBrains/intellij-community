@@ -17,9 +17,7 @@
 package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -62,7 +60,7 @@ public abstract class MvcProjectStructure {
   public abstract String[] getInvalidSourceFolders();
   public abstract String[] getExcludedFolders();
 
-  public void setupFacets(Collection<Consumer<ModifiableRootModel>> actions, Collection<VirtualFile> roots) {
+  public void setupFacets(Collection<Runnable> actions, Collection<VirtualFile> roots) {
 
   }
 }

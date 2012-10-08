@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.NullableConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +54,7 @@ public class SdkConfigurationUtil {
 
   public static void createSdk(@Nullable final Project project,
                                final Sdk[] existingSdks,
-                               final Consumer<Sdk> onSdkCreatedCallBack,
+                               final NullableConsumer<Sdk> onSdkCreatedCallBack,
                                final SdkType... sdkTypes) {
     if (sdkTypes.length == 0) {
       onSdkCreatedCallBack.consume(null);
