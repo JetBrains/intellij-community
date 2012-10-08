@@ -306,8 +306,9 @@
 
     <sdkType implementation="org.jetbrains.android.sdk.AndroidSdkType"/>
     <gotoDeclarationHandler implementation="org.jetbrains.android.AndroidGotoDeclarationHandler"/>
-    <refactoring.safeDeleteProcessor id="android" order="before javaProcessor"
-                                     implementation="org.jetbrains.android.AndroidSafeDeleteProcessorDelegate"/>
+    <refactoring.safeDeleteProcessor id="android_component" order="before javaProcessor"
+                                     implementation="org.jetbrains.android.AndroidComponentSafeDeleteProcessor"/>
+    <refactoring.safeDeleteProcessor id="android_resource_file" implementation="org.jetbrains.android.AndroidResourceFileSafeDeleteProcessor"/>
 
     <externalAnnotator language="JAVA" implementationClass="org.jetbrains.android.inspections.lint.AndroidLintExternalAnnotator"/>
     <externalAnnotator language="XML" implementationClass="org.jetbrains.android.inspections.lint.AndroidLintExternalAnnotator"/>
@@ -331,6 +332,8 @@
 
     <inlineActionHandler implementation="org.jetbrains.android.refactoring.AndroidInlineStyleHandler"/>
     <inlineActionHandler implementation="org.jetbrains.android.refactoring.AndroidInlineLayoutHandler" order="first"/>
+
+    <!--<treeStructureProvider implementation="org.jetbrains.android.AndroidTreeStructureProvider"/>-->
   </extensions>
 
   <extensionPoints>
