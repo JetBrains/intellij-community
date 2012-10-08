@@ -52,7 +52,7 @@ public class DPropertyElement extends DItemElement {
     if (type == null || type.trim().length() == 0) {
       type = CommonClassNames.JAVA_LANG_OBJECT;
     }
-    myPsi = new GrDynamicImplicitProperty(manager, getName(), type, containingClassName, null) {
+    myPsi = new GrDynamicImplicitProperty(manager, getName(), type, containingClassName) {
       @Override
       public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
         DynamicManager.getInstance(getProject()).replaceDynamicPropertyName(containingClassName, getName(), name);

@@ -15,17 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrDynamicImplicitMethod;
 
 import java.util.ArrayList;
@@ -37,7 +30,7 @@ import java.util.List;
  */
 public class DMethodElement extends DItemElement {
   public List<ParamInfo> myPairs = new ArrayList<ParamInfo>();
-  private PsiMethod myImplicitMethod;
+  private GrDynamicImplicitMethod myImplicitMethod;
 
   @SuppressWarnings("UnusedDeclaration") //for serialization
   public DMethodElement() {
@@ -62,26 +55,8 @@ public class DMethodElement extends DItemElement {
   public PsiMethod getPsi(PsiManager manager, final String containingClassName) {
     if (myImplicitMethod != null) return myImplicitMethod;
 
-    final String type = getType();
-
-    String staticModifier = null;
-    Boolean isStatic = isStatic();
-
-    if (isStatic != null && isStatic.booleanValue()) {
-      staticModifier = PsiModifier.STATIC;
-    }
-
-    final String[] argumentsTypes = QuickfixUtil.getArgumentsTypes(myPairs);
-    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(manager.getProject());
-    final GrMethod method = factory.createMethodFromText(staticModifier, getName(), type, argumentsTypes, null);
-
-    myImplicitMethod = new GrDynamicImplicitMethod(manager, method, containingClassName) {
-      @Override
-      public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-        DynamicManager.getInstance(getProject()).replaceDynamicMethodName(containingClassName, getName(), name, argumentsTypes);
-        return super.setName(name);
-      }
-    };
+    Boolean aStatic = isStatic();
+    myImplicitMethod = new GrDynamicImplicitMethod(manager, getName(), containingClassName, aStatic != null && aStatic.booleanValue(), myPairs);
     return myImplicitMethod;
   }
 }
