@@ -663,7 +663,7 @@ public class LambdaUtil {
           return false;
         }
       }
-      else {
+      else if (!isVarargs) {
         return false;
       }
     }

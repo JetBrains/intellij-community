@@ -182,6 +182,11 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
   }
 
   @Override
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    return this;
+  }
+
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     PsiElement oldIdentifier = findChildByRoleAsPsiElement(ChildRole.REFERENCE_NAME);
     if (oldIdentifier == null) {
@@ -419,7 +424,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           final boolean validConstructorRef = psiMethod.isConstructor() && (myContainingClass.getContainingClass() == null || myContainingClass.hasModifierProperty(PsiModifier.STATIC));
           final boolean staticOrValidConstructorRef = psiMethod.hasModifierProperty(PsiModifier.STATIC) || validConstructorRef;
 
-          if ((parameterTypes.length == signatureParameterTypes2.length || varArgs && parameterTypes.length >= signatureParameterTypes2.length) && 
+          if ((parameterTypes.length == signatureParameterTypes2.length || varArgs) && 
               (!myBeginsWithReferenceType || staticOrValidConstructorRef || (psiMethod.isConstructor() && conflict.isStaticsScopeCorrect()))) {
             boolean correct = true;
             for (int i = 0; i < parameterTypes.length; i++) {
