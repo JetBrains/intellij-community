@@ -754,6 +754,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     return null;
   }
 
+  public void setFileType(FileType fileType) {
+    setNewDocumentAndFileType(fileType, getDocument());
+  }
+
   public void setNewDocumentAndFileType(final FileType fileType, Document document) {
     myFileType = fileType;
     setDocument(document);

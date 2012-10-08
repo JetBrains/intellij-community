@@ -167,6 +167,11 @@ public class SelectTemplateStep extends ModuleWizardStep {
 //    doFilter();
   }
 
+  @Override
+  public void updateStep() {
+    myBuilder.queueUpdate();
+  }
+
   private void doFilter() {
     buildMatcher();
     SimpleNode selectedNode = getSelectedNode();

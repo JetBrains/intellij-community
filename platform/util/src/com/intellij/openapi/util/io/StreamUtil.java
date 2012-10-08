@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.util.io;
 
+import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.*;
 
 public class StreamUtil {
@@ -115,4 +118,18 @@ public class StreamUtil {
 
     return writer.toCharArray();
   }
+
+  public static void closeStream(@Nullable Closeable stream) {
+    if (stream != null) {
+      try {
+        stream.close();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+  }
+
+  private final static Logger LOG = Logger.getInstance(StreamUtil.class);
+
 }
