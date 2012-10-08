@@ -549,7 +549,7 @@ public abstract class PluginManagerMain implements Disposable {
 
   protected class RefreshAction extends DumbAwareAction {
     public RefreshAction() {
-      super("Reload List of Plugins", "Reload list of plugins", AllIcons.Vcs.Refresh);
+      super("Reload List of Plugins", "Reload list of plugins", AllIcons.Actions.Sync);
     }
 
     @Override
