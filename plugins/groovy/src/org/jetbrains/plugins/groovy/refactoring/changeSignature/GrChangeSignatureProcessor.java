@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -82,6 +83,10 @@ public class GrChangeSignatureProcessor extends ChangeSignatureProcessorBase {
     Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usagesIn));
     RenameUtil.removeConflictUsages(usagesSet);
     if (!conflictDescriptions.isEmpty()) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw new ConflictsInTestsException(conflictDescriptions.values());
+      }
+
       ConflictsDialog dialog = prepareConflictsDialog(conflictDescriptions, usagesIn);
       dialog.show();
       if (!dialog.isOK()) {

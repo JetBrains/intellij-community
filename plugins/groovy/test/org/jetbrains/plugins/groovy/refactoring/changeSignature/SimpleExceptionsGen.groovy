@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.refactoring.changeSignature;
-
-import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
-
+package org.jetbrains.plugins.groovy.refactoring.changeSignature
+import com.intellij.psi.PsiMethod
+import com.intellij.refactoring.changeSignature.ThrownExceptionInfo
 /**
 * @author Max Medvedev
 */
 class SimpleExceptionsGen implements ChangeSignatureTestCase.GenExceptions {
-  private final ThrownExceptionInfo[] myInfos;
+  private final List<ThrownExceptionInfo> myInfos;
 
-  public SimpleExceptionsGen(ThrownExceptionInfo[] infos) {
+  public SimpleExceptionsGen(List<ThrownExceptionInfo> infos) {
     myInfos = infos;
   }
 

@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.refactoring.changeSignature;
+package org.jetbrains.plugins.groovy.refactoring.changeSignature
 
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiType;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import com.intellij.openapi.project.Project
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiType
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
 /**
-* @author Max Medvedev
-*/
+ * @author Max Medvedev
+ */
 class SimpleParameterGen implements ChangeSignatureTestCase.GenParams {
-  private final SimpleInfo[] myInfos;
+  private final List<SimpleInfo> myInfos;
   private Project myProject;
 
-  public SimpleParameterGen(SimpleInfo[] infos, Project project) {
+  public SimpleParameterGen(List<SimpleInfo> infos, Project project) {
     myInfos = infos;
     myProject = project;
   }
@@ -37,8 +37,9 @@ class SimpleParameterGen implements ChangeSignatureTestCase.GenParams {
   @Override
   public GrParameterInfo[] genParams(GrMethod method) {
     GrParameter[] params = method.getParameterList().getParameters();
-    GrParameterInfo[] result = new GrParameterInfo[myInfos.length];
-    for (int i = 0; i < myInfos.length; i++) {
+    int size = myInfos.size();
+    GrParameterInfo[] result = new GrParameterInfo[size];
+    for (int i = 0; i < size; i++) {
 
       final SimpleInfo sim = myInfos[i];
       int oldIndex = sim.myOldIndex;
@@ -69,7 +70,7 @@ class SimpleParameterGen implements ChangeSignatureTestCase.GenParams {
         defValue = sim.myDefaultValue;
       }
 
-      assert (oldIndex < 0 && defValue != null) || oldIndex >= 0;
+      assert oldIndex >= 0 || defValue != null || defInitializer != null;
       assert name != null;
       info = new GrParameterInfo(name, defValue, defInitializer, type, oldIndex, sim.myFeelLucky);
       result[i] = info;
