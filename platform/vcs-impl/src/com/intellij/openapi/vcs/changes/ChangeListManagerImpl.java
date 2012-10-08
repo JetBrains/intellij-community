@@ -291,6 +291,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     context.suspend();
   }
 
+  @Override
   public void freezeImmediately(@Nullable String reason) {
     myUpdater.setIgnoreBackgroundOperation(false);
     myUpdater.pause();

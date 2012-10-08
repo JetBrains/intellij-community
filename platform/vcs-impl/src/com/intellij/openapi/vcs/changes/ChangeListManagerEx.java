@@ -28,4 +28,7 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
   public abstract LocalChangeList getIdentityChangeList(Change change);
   public abstract boolean isInUpdate();
   public abstract Collection<LocalChangeList> getInvolvedListsFilterChanges(final Collection<Change> changes, final List<Change> validChanges);
+
+
+  public abstract void freezeImmediately(@Nullable String reason);
 }
