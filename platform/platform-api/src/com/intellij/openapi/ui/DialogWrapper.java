@@ -1408,6 +1408,15 @@ public abstract class DialogWrapper {
     showAndGetOk();
   }
 
+  public boolean showAndGet() {
+    show();
+    return isOK();
+  }
+
+  /**
+   * You need this method ONLY for NON-MODAL dialogs. Otherwise, use {@link #show()} or {@link #showAndGet()}.
+   * @return result callback
+   */
   public AsyncResult<Boolean> showAndGetOk() {
     final AsyncResult<Boolean> result = new AsyncResult<Boolean>();
 
