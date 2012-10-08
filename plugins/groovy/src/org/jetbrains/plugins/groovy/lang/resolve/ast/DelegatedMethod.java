@@ -45,7 +45,7 @@ public class DelegatedMethod extends LightMethod implements PsiMethod, PsiMirror
   public String getOriginInfo() {
     PsiClass aClass = myPrototype.getContainingClass();
     if (aClass != null & aClass.getName() != null) {
-      return "delegated from " + aClass.getName();
+      return "delegates to " + aClass.getName();
     }
     return null;
   }
