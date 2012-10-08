@@ -18,10 +18,9 @@ package org.jetbrains.android.dom.wrappers;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -45,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 
 /**
  * Created by IntelliJ IDEA.
@@ -55,7 +55,8 @@ import javax.swing.*;
  */
 public class ValueResourceElementWrapper implements XmlAttributeValue, ResourceElementWrapper, PsiNamedElement, PsiElementNavigationItem {
   private final XmlAttributeValue myWrappee;
-  private final PsiDirectory myResourceDir;
+  private final String myFileName;
+  private final String myDirName;
 
   public ValueResourceElementWrapper(@NotNull XmlAttributeValue wrappeeElement) {
     if (!(wrappeeElement instanceof NavigationItem)) {
@@ -65,7 +66,10 @@ public class ValueResourceElementWrapper implements XmlAttributeValue, ResourceE
       throw new IllegalArgumentException();
     }
     myWrappee = wrappeeElement;
-    myResourceDir = getContainingFile().getContainingDirectory();
+    final PsiFile file = getContainingFile();
+    myFileName = file != null ? file.getName() : null;
+    final PsiDirectory dir = file != null ? file.getContainingDirectory() : null;
+    myDirName = dir != null ? dir.getName() : null;
   }
 
   public PsiElement getWrappee() {
@@ -361,10 +365,11 @@ public class ValueResourceElementWrapper implements XmlAttributeValue, ResourceE
       @Nullable
       public String getPresentableText() {
         String name = ((NavigationItem)myWrappee).getName();
-        if (myResourceDir == null) {
+        if (myDirName == null || myFileName == null) {
           return name;
         }
-        return name + " (" + myResourceDir.getName() + ')';
+        return name + " (..." + File.separatorChar + myDirName +
+               File.separatorChar + myFileName + ')';
       }
 
       public String getLocationString() {
