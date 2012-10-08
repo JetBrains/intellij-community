@@ -22,7 +22,7 @@ public class CmdlineProtoUtil {
                                                                                List<TargetTypeBuildScope> scopes,
                                                                                final Map<String, String> userData,
                                                                                final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
-                                                                               final CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
+                                                                               final @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
     return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.MAKE, project, scopes,
                                 userData, Collections.<String>emptyList(),
                                 globals, event);
@@ -33,7 +33,7 @@ public class CmdlineProtoUtil {
                                                                                        Collection<String> paths,
                                                                                        final Map<String, String> userData,
                                                                                        final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
-                                                                                       final CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
+                                                                                       final @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
     return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.FORCED_COMPILATION, project,
                                         scopes, userData, paths, globals, event);
   }
@@ -63,7 +63,7 @@ public class CmdlineProtoUtil {
 
   private static CmdlineRemoteProto.Message.ControllerMessage createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type buildType,
                                                                                           String project,
-                                                                                          List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes,
+                                                                                          List<TargetTypeBuildScope> scopes,
                                                                                           Map<String, String> userData,
                                                                                           Collection<String> paths,
                                                                                           final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
@@ -99,7 +99,7 @@ public class CmdlineProtoUtil {
   }
 
 
-  public static CmdlineRemoteProto.Message.Failure createFailure(String description, Throwable cause) {
+  public static CmdlineRemoteProto.Message.Failure createFailure(String description, @Nullable Throwable cause) {
     final CmdlineRemoteProto.Message.Failure.Builder builder = CmdlineRemoteProto.Message.Failure.newBuilder();
     builder.setDescription(description);
     if (cause != null) {
