@@ -81,7 +81,11 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     private void checkContext() {
       final PsiElement contextElement = getContext();
       if(contextElement == null || !contextElement.isValid()) {
-        final DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myProject).getContextManager().getContext();
+        final DebuggerManagerEx manager = DebuggerManagerEx.getInstanceEx(myProject);
+        if (manager == null) {
+          LOG.error("Cannot obtain debugger manager for project " + myProject);
+        }
+        final DebuggerContextImpl context = manager.getContextManager().getContext();
         final PsiElement newContextElement = PositionUtil.getContextElement(context);
         setContext(newContextElement != null && newContextElement.isValid()? newContextElement : null);
       }
