@@ -332,8 +332,6 @@
 
     <inlineActionHandler implementation="org.jetbrains.android.refactoring.AndroidInlineStyleHandler"/>
     <inlineActionHandler implementation="org.jetbrains.android.refactoring.AndroidInlineLayoutHandler" order="first"/>
-
-    <!--<treeStructureProvider implementation="org.jetbrains.android.AndroidTreeStructureProvider"/>-->
   </extensions>
 
   <extensionPoints>
