@@ -81,4 +81,7 @@ public class HgPushCommand {
     });
   }
 
+  public VirtualFile getRepo() {
+    return myRepo;
+  }
 }
