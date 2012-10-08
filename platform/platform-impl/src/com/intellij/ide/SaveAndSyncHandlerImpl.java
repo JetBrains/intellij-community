@@ -52,8 +52,8 @@ public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSync
   private final AtomicInteger myBlockSyncOnFrameActivationCount = new AtomicInteger();
   private final Alarm myRefreshDelayAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  public static SaveAndSyncHandler getInstance(){
-    return ApplicationManager.getApplication().getComponent(SaveAndSyncHandler.class);
+  public static SaveAndSyncHandlerImpl getInstance(){
+    return (SaveAndSyncHandlerImpl) ApplicationManager.getApplication().getComponent(SaveAndSyncHandler.class);
   }
 
   public SaveAndSyncHandlerImpl(final FrameStateManager frameStateManager,
