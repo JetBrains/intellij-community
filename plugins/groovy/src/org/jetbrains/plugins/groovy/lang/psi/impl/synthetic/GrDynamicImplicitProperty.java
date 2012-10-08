@@ -75,6 +75,12 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
     return psiClass.getContainingFile();
   }
 
+  @Override
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+    DynamicManager.getInstance(getProject()).replaceDynamicPropertyName(myContainingClassName, getName(), name);
+    return super.setName(name);
+  }
+
   public String getPresentableText() {
     return getName();
   }
