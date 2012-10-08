@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -165,6 +166,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     if (runner == null)
       return false;
     final ExecutionEnvironment environment = new ExecutionEnvironment(runner, settings, myProject);
+    environment.putUserData(RunContentDescriptor.REUSE_CONTENT_PROHIBITED, env.getUserData(RunContentDescriptor.REUSE_CONTENT_PROHIBITED));
     if (!ExecutionTargetManager.canRun(settings, env.getExecutionTarget())) {
       return false;
     }
@@ -309,6 +311,13 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       mySettings = settings;
       init();
       myJBList.setSelectedValue(mySelectedSettings, true);
+      FontMetrics fontMetrics = myJBList.getFontMetrics(myJBList.getFont());
+      int maxWidth = fontMetrics.stringWidth("m") * 30;
+      for (RunnerAndConfigurationSettings setting : settings) {
+        maxWidth = Math.max(fontMetrics.stringWidth(setting.getConfiguration().getName()), maxWidth);
+      }
+      maxWidth += 24;//icon and gap
+      myJBList.setPreferredSize(new Dimension(maxWidth, myJBList.getPreferredSize().height));
     }
 
     @Override
@@ -347,7 +356,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
 
     @Nullable
     RunnerAndConfigurationSettings getSelectedSettings() {
-      return mySelectedSettings;
+      return isOK() ? mySelectedSettings : null;
     }
   }
 }

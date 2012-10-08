@@ -18,10 +18,7 @@ package com.intellij.execution.runners;
 import com.intellij.diagnostic.logging.LogConsoleManagerBase;
 import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.diagnostic.logging.OutputFileUtil;
-import com.intellij.execution.DefaultExecutionResult;
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -53,7 +50,7 @@ public class RunContentBuilder extends LogConsoleManagerBase {
 
   private final ProgramRunner myRunner;
   private final ArrayList<AnAction> myRunnerActions = new ArrayList<AnAction>();
-  private final boolean myReuseProhibited = false;
+  private boolean myReuseProhibited = false;
   private ExecutionResult myExecutionResult;
 
   private final LogFilesManager myManager;
@@ -82,6 +79,7 @@ public class RunContentBuilder extends LogConsoleManagerBase {
     if (profile instanceof RunConfigurationBase) {
       myManager.registerFileMatcher((RunConfigurationBase)profile);
     }
+    myReuseProhibited = Boolean.TRUE.equals(env.getUserData(RunContentDescriptor.REUSE_CONTENT_PROHIBITED));
   }
 
   public void addAction(@NotNull final AnAction action) {

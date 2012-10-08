@@ -133,7 +133,13 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
           public void run() {
             for (BeforeRunTask task : activeTasks) {
               BeforeRunTaskProvider<BeforeRunTask> provider = BeforeRunTaskProvider.getProvider(myProject, task.getProviderId());
-              if (provider != null && !provider.executeTask(dataContext, runConfiguration, env, task)) {
+              if (provider == null) {
+                LOG.warn("Cannot find BeforeRunTaskProvider for id='" + task.getProviderId()+"'");
+                continue;
+              }
+              ExecutionEnvironment taskEnvironment = new ExecutionEnvironment(env.getRunProfile(), env.getProject(), null, null, null, null);
+              taskEnvironment.putUserData(RunContentDescriptor.REUSE_CONTENT_PROHIBITED, RunConfigurationBeforeRunProvider.ID.equals(provider.getId()));
+              if (!provider.executeTask(dataContext, runConfiguration, taskEnvironment, task)) {
                 if (onCancelRunnable != null) {
                   SwingUtilities.invokeLater(onCancelRunnable);
                 }
