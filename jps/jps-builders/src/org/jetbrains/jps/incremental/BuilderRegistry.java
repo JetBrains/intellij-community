@@ -18,7 +18,7 @@ public class BuilderRegistry {
     static final BuilderRegistry ourInstance = new BuilderRegistry();
   }
   private final Map<BuilderCategory, List<ModuleLevelBuilder>> myModuleLevelBuilders = new HashMap<BuilderCategory, List<ModuleLevelBuilder>>();
-  private final List<TargetBuilder<?>> myTargetBuilders = new ArrayList<TargetBuilder<?>>();
+  private final List<TargetBuilder<?,?>> myTargetBuilders = new ArrayList<TargetBuilder<?,?>>();
   private final Map<String, BuildTargetType<?>> myTargetTypes = new LinkedHashMap<String, BuildTargetType<?>>();
 
   public static BuilderRegistry getInstance() {
@@ -79,7 +79,7 @@ public class BuilderRegistry {
     return ContainerUtil.concat(myModuleLevelBuilders.values());
   }
 
-  public List<TargetBuilder<?>> getTargetBuilders() {
+  public List<TargetBuilder<?,?>> getTargetBuilders() {
     return myTargetBuilders;
   }
 }

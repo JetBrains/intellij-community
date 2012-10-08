@@ -7,7 +7,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 
 import java.util.List;
@@ -67,5 +69,14 @@ public class JpsFacetSerializer {
       }
     }
     return null;
+  }
+
+  public static JpsModuleReference createModuleReference(String facetId) {
+    String moduleName = facetId.substring(0, facetId.indexOf('/'));
+    return JpsElementFactory.getInstance().createModuleReference(moduleName);
+  }
+
+  public static String getFacetId(final JpsModuleReference moduleReference, final String facetTypeId, final String facetName) {
+    return moduleReference.getModuleName() + "/" + facetTypeId + "/" + facetName;
   }
 }

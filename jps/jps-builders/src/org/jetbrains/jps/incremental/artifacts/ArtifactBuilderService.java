@@ -19,7 +19,7 @@ public class ArtifactBuilderService extends BuilderService {
 
   @NotNull
   @Override
-  public List<? extends TargetBuilder<?>> createBuilders() {
+  public List<? extends TargetBuilder<?,?>> createBuilders() {
     return Collections.singletonList(new IncArtifactBuilder());
   }
 }

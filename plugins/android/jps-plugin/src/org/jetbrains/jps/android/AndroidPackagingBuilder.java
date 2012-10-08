@@ -18,6 +18,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.android.builder.AndroidProjectBuildTarget;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
+import org.jetbrains.jps.builders.BuildRootDescriptor;
+import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -38,7 +40,7 @@ import java.util.*;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidPackagingBuilder extends TargetBuilder<AndroidProjectBuildTarget> {
+public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, AndroidProjectBuildTarget> {
   @NonNls private static final String BUILDER_NAME = "android-packager";
   @NonNls private static final String RELEASE_SUFFIX = ".release";
   @NonNls private static final String UNSIGNED_SUFFIX = ".unsigned";
@@ -58,7 +60,8 @@ public class AndroidPackagingBuilder extends TargetBuilder<AndroidProjectBuildTa
   }
 
   @Override
-  public void build(@NotNull AndroidProjectBuildTarget target, @NotNull CompileContext context) throws ProjectBuildException {
+  public void build(@NotNull AndroidProjectBuildTarget target, @NotNull CompileContext context,
+                    DirtyFilesHolder<BuildRootDescriptor, AndroidProjectBuildTarget> holder) throws ProjectBuildException {
     if (target.getKind() != AndroidProjectBuildTarget.AndroidBuilderKind.PACKAGING || AndroidJpsUtil.isLightBuild(context)) {
       return;
     }
@@ -123,7 +126,7 @@ public class AndroidPackagingBuilder extends TargetBuilder<AndroidProjectBuildTa
                                    @NotNull Collection<JpsModule> modules,
                                    @NotNull Map<JpsModule, AndroidFileSetState> module2state) throws IOException {
     boolean success = true;
-    final File dataStorageRoot = context.getProjectDescriptor().dataManager.getDataStorageRoot();
+    final File dataStorageRoot = context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot();
     final AndroidFileSetStorage storage = new AndroidFileSetStorage(dataStorageRoot, "resource_caching");
 
     try {
@@ -212,7 +215,7 @@ public class AndroidPackagingBuilder extends TargetBuilder<AndroidProjectBuildTa
                                              @NotNull Map<JpsModule, File> manifestFiles) throws IOException {
     boolean success = true;
 
-    final File dataStorageRoot = context.getProjectDescriptor().dataManager.getDataStorageRoot();
+    final File dataStorageRoot = context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot();
     final boolean releaseBuild = AndroidJpsUtil.isReleaseBuild(context);
     AndroidFileSetStorage resourcesStorage = null;
     AndroidFileSetStorage assetsStorage = null;
@@ -292,7 +295,7 @@ public class AndroidPackagingBuilder extends TargetBuilder<AndroidProjectBuildTa
 
   private static boolean doPackaging(@NotNull CompileContext context, @NotNull Collection<JpsModule> modules) throws IOException {
     final boolean release = AndroidJpsUtil.isReleaseBuild(context);
-    final File dataStorageRoot = context.getProjectDescriptor().dataManager.getDataStorageRoot();
+    final File dataStorageRoot = context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot();
 
     boolean success = true;
 

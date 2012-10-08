@@ -16,6 +16,7 @@ import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
@@ -153,7 +154,7 @@ public class AndroidJpsUtil {
   @NotNull
   public static File getDirectoryForIntermediateArtifacts(@NotNull CompileContext context,
                                                           @NotNull JpsModule module) {
-    final File androidStorage = new File(context.getProjectDescriptor().dataManager.getDataStorageRoot(), ANDROID_STORAGE_DIR);
+    final File androidStorage = new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), ANDROID_STORAGE_DIR);
     return new File(new File(androidStorage, INTERMEDIATE_ARTIFACTS_STORAGE), module.getName());
   }
 
@@ -520,7 +521,7 @@ public class AndroidJpsUtil {
 
   @NotNull
   public static File getResourcesCacheDir(@NotNull CompileContext context, @NotNull JpsModule module) {
-    final File androidStorage = new File(context.getProjectDescriptor().dataManager.getDataStorageRoot(), ANDROID_STORAGE_DIR);
+    final File androidStorage = new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), ANDROID_STORAGE_DIR);
     return new File(new File(androidStorage, RESOURCE_CACHE_STORAGE), module.getName());
   }
 
@@ -585,19 +586,19 @@ public class AndroidJpsUtil {
 
   @NotNull
   public static File getGeneratedSourcesStorage(@NotNull JpsModule module, BuildDataManager dataManager) {
-    return getGeneratedSourcesStorage(module, dataManager.getDataStorageRoot());
+    return getGeneratedSourcesStorage(module, dataManager.getDataPaths());
   }
 
   @NotNull
-  public static File getGeneratedSourcesStorage(@NotNull JpsModule module, final File dataStorageRoot) {
-    final File androidStorageRoot = new File(dataStorageRoot, ANDROID_STORAGE_DIR);
+  public static File getGeneratedSourcesStorage(@NotNull JpsModule module, final BuildDataPaths dataPaths) {
+    final File androidStorageRoot = new File(dataPaths.getDataStorageRoot(), ANDROID_STORAGE_DIR);
     final File generatedSourcesRoot = new File(androidStorageRoot, GENERATED_SOURCES_FOLDER_NAME);
     return new File(generatedSourcesRoot, module.getName());
   }
 
   @NotNull
   public static File getGeneratedResourcesStorage(@NotNull JpsModule module, BuildDataManager dataManager) {
-    final File dataStorageRoot = dataManager.getDataStorageRoot();
+    final File dataStorageRoot = dataManager.getDataPaths().getDataStorageRoot();
     final File androidStorageRoot = new File(dataStorageRoot, ANDROID_STORAGE_DIR);
     final File generatedSourcesRoot = new File(androidStorageRoot, GENERATED_RESOURCES_DIR_NAME);
     return new File(generatedSourcesRoot, module.getName());

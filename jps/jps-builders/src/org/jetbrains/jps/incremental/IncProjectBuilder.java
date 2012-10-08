@@ -528,13 +528,19 @@ public class IncProjectBuilder {
       buildModuleChunk(context, new ModuleChunk(Collections.singleton(moduleBuildTarget)));
     }
     else {
-      buildTarget(target, context);
+      try {
+        buildTarget(target, context);
+      }
+      catch (IOException e) {
+        throw new ProjectBuildException(e);
+      }
     }
   }
 
-  private void buildTarget(BuildTarget<?> target, CompileContext context) throws ProjectBuildException {
-    List<TargetBuilder<?>> builders = BuilderRegistry.getInstance().getTargetBuilders();
-    for (TargetBuilder<?> builder : builders) {
+  private void buildTarget(BuildTarget<?> target, CompileContext context) throws ProjectBuildException, IOException {
+    ensureFSStateInitialized(context, target);
+    List<TargetBuilder<?,?>> builders = BuilderRegistry.getInstance().getTargetBuilders();
+    for (TargetBuilder<?,?> builder : builders) {
       buildTarget(target, context, builder);
       updateDoneFraction(context, 1.0f / builders.size());
     }
@@ -546,10 +552,17 @@ public class IncProjectBuilder {
     context.setDone(processed / myTotalTargetsWork);
   }
 
-  private static <B extends BuildTarget<?>> void buildTarget(B target, CompileContext context, TargetBuilder<?> builder) throws ProjectBuildException {
+  private static <R extends BuildRootDescriptor, T extends BuildTarget<R>> void buildTarget(final T target, final CompileContext context, TargetBuilder<?,?> builder)
+    throws ProjectBuildException, IOException {
     if (builder.getTargetTypes().contains(target.getTargetType())) {
+      DirtyFilesHolder<R, T> holder = new DirtyFilesHolder<R, T>() {
+        @Override
+        public void processDirtyFiles(@NotNull FileProcessor<R, T> processor) throws IOException {
+          context.getProjectDescriptor().fsState.processFilesToRecompile(context, target, processor);
+        }
+      };
       //noinspection unchecked
-      ((TargetBuilder<B>)builder).build(target, context);
+      ((TargetBuilder<R,T>)builder).build(target, context, holder);
       context.checkCanceled();
     }
   }
@@ -949,6 +962,16 @@ public class IncProjectBuilder {
       if (marked) {
         context.processMessage(UptoDateFilesSavedEvent.INSTANCE);
       }
+    }
+  }
+
+  private static void ensureFSStateInitialized(CompileContext context, BuildTarget<?> target) throws IOException {
+    final ProjectDescriptor pd = context.getProjectDescriptor();
+    final Timestamps timestamps = pd.timestamps.getStorage();
+    final BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
+    if (context.isProjectRebuild() || configuration.isTargetDirty() || context.getScope().isRecompilationForced(target)) {
+      FSOperations.markDirtyFiles(context, target, timestamps, true, null, Collections.<File>emptySet());
+      configuration.save();
     }
   }
 

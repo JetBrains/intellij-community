@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -79,7 +80,10 @@ public class ModuleBuildTarget extends BuildTarget<JavaSourceRootDescriptor> {
 
   @NotNull
   @Override
-  public List<JavaSourceRootDescriptor> computeRootDescriptors(JpsModel model, ModuleExcludeIndex index, IgnoredFileIndex ignoredFileIndex) {
+  public List<JavaSourceRootDescriptor> computeRootDescriptors(JpsModel model,
+                                                               ModuleExcludeIndex index,
+                                                               IgnoredFileIndex ignoredFileIndex,
+                                                               BuildDataPaths dataPaths) {
     List<JavaSourceRootDescriptor> roots = new ArrayList<JavaSourceRootDescriptor>();
     JavaSourceRootType type = isTests() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     for (JpsTypedModuleSourceRoot<JpsSimpleElement<JavaSourceRootProperties>> sourceRoot : myModule.getSourceRoots(type)) {
