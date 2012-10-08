@@ -20,6 +20,7 @@ import com.intellij.ide.util.newProjectWizard.SelectTemplateStep;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.platform.ProjectTemplate;
@@ -48,7 +49,7 @@ public class CreateFromTemplateMode extends WizardMode {
 
   @Override
   public boolean isAvailable(WizardContext context) {
-    return true;
+    return ApplicationManager.getApplication().isInternal();
   }
 
   @Nullable
