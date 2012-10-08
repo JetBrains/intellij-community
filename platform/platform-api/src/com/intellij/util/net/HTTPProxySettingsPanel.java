@@ -49,11 +49,13 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
   private JLabel myProxyPasswordLabel;
   private JLabel myHostNameLabel;
   private JLabel myPortNumberLabel;
+  private JCheckBox myUseProxyPacCheckBox;
   private final HttpConfigurable myHttpConfigurable;
 
   public boolean isModified() {
     boolean isModified = false;
     HttpConfigurable httpConfigurable = myHttpConfigurable;
+    isModified |= httpConfigurable.USE_PROXY_PAC != myUseProxyPacCheckBox.isSelected();
     isModified |= httpConfigurable.USE_HTTP_PROXY != myUseProxyCheckBox.isSelected();
     isModified |= httpConfigurable.PROXY_AUTHENTICATION != myProxyAuthCheckBox.isSelected();
     isModified |= httpConfigurable.KEEP_PROXY_PASSWORD != myRememberProxyPasswordCheckBox.isSelected();
@@ -87,6 +89,7 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
 
   public void reset() {
     HttpConfigurable httpConfigurable = myHttpConfigurable;
+    myUseProxyPacCheckBox.setSelected(httpConfigurable.USE_PROXY_PAC);
     myUseProxyCheckBox.setSelected(httpConfigurable.USE_HTTP_PROXY);
     myProxyAuthCheckBox.setSelected(httpConfigurable.PROXY_AUTHENTICATION);
 
@@ -103,6 +106,7 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
 
   public void apply () {
     HttpConfigurable httpConfigurable = myHttpConfigurable;
+    httpConfigurable.USE_PROXY_PAC = myUseProxyPacCheckBox.isSelected();
     httpConfigurable.USE_HTTP_PROXY = myUseProxyCheckBox.isSelected();
     httpConfigurable.PROXY_AUTHENTICATION = myProxyAuthCheckBox.isSelected();
     httpConfigurable.KEEP_PROXY_PASSWORD = myRememberProxyPasswordCheckBox.isSelected();
