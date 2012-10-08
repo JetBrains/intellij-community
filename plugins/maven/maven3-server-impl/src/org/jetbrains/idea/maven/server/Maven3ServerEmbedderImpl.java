@@ -16,24 +16,26 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.util.SystemProperties;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
-import org.apache.maven.artifact.manager.WagonManager;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
 import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
 import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
-import org.apache.maven.artifact.resolver.ArtifactResolutionRequest;
-import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
-import org.apache.maven.artifact.resolver.ArtifactResolver;
-import org.apache.maven.artifact.resolver.ResolutionListener;
+import org.apache.maven.artifact.resolver.*;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.model.Activation;
 import org.apache.maven.model.Model;
+import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Profile;
 import org.apache.maven.model.profile.DefaultProfileInjector;
+import org.apache.maven.plugin.PluginManager;
+import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.profiles.activation.*;
 import org.apache.maven.project.*;
 import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
@@ -53,6 +55,7 @@ import org.apache.maven.shared.dependency.tree.DependencyTreeResolutionListener;
 import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.classworlds.ClassWorld;
+import org.codehaus.plexus.component.repository.ComponentDependency;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.context.ContextException;
 import org.codehaus.plexus.context.DefaultContext;
@@ -62,7 +65,9 @@ import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationExce
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.server.embedder.*;
+import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator;
+import org.jetbrains.idea.maven.server.embedder.FieldAccessor;
+import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -443,14 +448,7 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
   @Override
   public MavenArtifact resolve(@NotNull MavenArtifactInfo info, @NotNull List<MavenRemoteRepository> remoteRepositories)
     throws RemoteException, MavenServerProcessCanceledException {
-    //DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
-    //
-    //MavenExecutionResult result = myImpl.resolveProject(file,
-    //                                                    new ArrayList<String>(activeProfiles),
-    //                                                    Arrays.<ResolutionListener>asList(listener));
-    //return createExecutionResult(file, result, listener.getRootNode());
-
-    throw new UnsupportedOperationException();
+    return doResolve(info, remoteRepositories);
   }
 
   @NotNull
@@ -466,7 +464,94 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
                                                  @NotNull List<MavenRemoteRepository> repositories,
                                                  int nativeMavenProjectId,
                                                  boolean transitive) throws RemoteException, MavenServerProcessCanceledException {
-    throw new UnsupportedOperationException();
+    try {
+      Plugin mavenPlugin = new Plugin();
+      mavenPlugin.setGroupId(plugin.getGroupId());
+      mavenPlugin.setArtifactId(plugin.getArtifactId());
+      mavenPlugin.setVersion(plugin.getVersion());
+      MavenProject project = RemoteNativeMavenProjectHolder.findProjectById(nativeMavenProjectId);
+
+      PluginDescriptor result = getComponent(PluginManager.class).verifyPlugin(mavenPlugin, project, myMavenSettings, myLocalRepository);
+
+      Map<MavenArtifactInfo, MavenArtifact> resolvedArtifacts = new THashMap<MavenArtifactInfo, MavenArtifact>();
+
+      Artifact pluginArtifact = result.getPluginArtifact();
+
+      MavenArtifactInfo artifactInfo = new MavenArtifactInfo(pluginArtifact.getGroupId(),
+                                                             pluginArtifact.getArtifactId(),
+                                                             pluginArtifact.getVersion(),
+                                                             pluginArtifact.getType(), null);
+
+      resolveIfNecessary(artifactInfo, repositories, resolvedArtifacts);
+
+      if (transitive) {
+        // todo try to use parallel downloading
+        for (Artifact each : result.getIntroducedDependencyArtifacts()) {
+          resolveIfNecessary(new MavenArtifactInfo(each.getGroupId(), each.getArtifactId(), each.getVersion(), each.getType(), null),
+                             repositories, resolvedArtifacts);
+        }
+        for (ComponentDependency each : result.getDependencies()) {
+          resolveIfNecessary(new MavenArtifactInfo(each.getGroupId(), each.getArtifactId(), each.getVersion(), each.getType(), null),
+                             repositories, resolvedArtifacts);
+        }
+      }
+
+      return new THashSet<MavenArtifact>(resolvedArtifacts.values());
+    }
+    catch (Exception e) {
+      Maven3ServerGlobals.getLogger().info(e);
+      return Collections.emptyList();
+    }
+  }
+
+  private void resolveIfNecessary(MavenArtifactInfo info,
+                                  List<MavenRemoteRepository> repos,
+                                  Map<MavenArtifactInfo, MavenArtifact> resolvedArtifacts) throws RemoteException {
+    if (resolvedArtifacts.containsKey(info)) return;
+    resolvedArtifacts.put(info, doResolve(info, repos));
+  }
+
+  private MavenArtifact doResolve(MavenArtifactInfo info, List<MavenRemoteRepository> remoteRepositories) throws RemoteException {
+    Artifact resolved = doResolve(createArtifact(info), convertRepositories(remoteRepositories));
+    return MavenModelConverter.convertArtifact(resolved, getLocalRepositoryFile());
+  }
+
+  private Artifact doResolve(Artifact artifact, List<ArtifactRepository> remoteRepositories) throws RemoteException {
+    try {
+      resolve(artifact, remoteRepositories);
+      return artifact;
+    }
+    catch (Exception e) {
+      Maven3ServerGlobals.getLogger().info(e);
+    }
+    return artifact;
+  }
+
+  public void resolve(@NotNull final Artifact artifact, @NotNull final List<ArtifactRepository> repos)
+          throws ArtifactResolutionException, ArtifactNotFoundException {
+      getComponent(ArtifactResolver.class).resolve(artifact, repos, myLocalRepository);
+  }
+
+  private List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) throws RemoteException {
+    List<ArtifactRepository> result = new ArrayList<ArtifactRepository>();
+    for (MavenRemoteRepository each : repositories) {
+      try {
+        ArtifactRepositoryFactory factory = getComponent(ArtifactRepositoryFactory.class);
+        result.add(ProjectUtils.buildArtifactRepository(MavenModelConverter.toNativeRepository(each), factory, myContainer));
+      }
+      catch (InvalidRepositoryException e) {
+        Maven3ServerGlobals.getLogger().warn(e);
+      }
+    }
+    return result;
+  }
+
+  private Artifact createArtifact(MavenArtifactInfo info) {
+    return getComponent(ArtifactFactory.class).createArtifactWithClassifier(info.getGroupId(),
+                                                                            info.getArtifactId(),
+                                                                            info.getVersion(),
+                                                                            info.getPackaging(),
+                                                                            info.getClassifier());
   }
 
   @NotNull
