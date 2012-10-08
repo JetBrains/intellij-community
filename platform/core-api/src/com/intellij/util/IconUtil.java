@@ -265,6 +265,12 @@ public class IconUtil {
     return getToolbarDecoratorIcon("analyze.png");
   }
 
+  public static void paintInCenterOf(Component c, Graphics g, Icon icon) {
+    final int x = (c.getWidth() - icon.getIconWidth()) / 2;
+    final int y = (c.getHeight() - icon.getIconHeight()) / 2;
+    icon.paintIcon(c, g, x, y);
+  }
+
   public static Icon getToolbarDecoratorIcon(String name) {
     return IconLoader.getIcon(getToolbarDecoratorIconsFolder() + name);
   }
@@ -303,9 +309,7 @@ public class IconUtil {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      x += (myWidth - myIcon.getIconWidth()) / 2;
-      y += (myHeight - myIcon.getIconHeight()) / 2;
-      myIcon.paintIcon(c, g, x, y);
+      paintInCenterOf(c, g, myIcon);
     }
 
     @Override
