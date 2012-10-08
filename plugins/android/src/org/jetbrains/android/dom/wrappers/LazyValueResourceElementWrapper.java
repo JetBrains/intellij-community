@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 
 /**
 * @author Eugene.Kudelevsky
@@ -49,11 +50,13 @@ public class LazyValueResourceElementWrapper extends RenameableFakePsiElement im
       @Nullable
       public String getPresentableText() {
         final String name = myResourceInfo.getName();
-        final VirtualFile resDir = myResourceInfo.getContainingFile().getParent();
-        if (resDir == null) {
+        final VirtualFile file = myResourceInfo.getContainingFile();
+        final VirtualFile dir = file.getParent();
+        if (dir == null) {
           return name;
         }
-        return name + " (" + resDir.getName() + ')';
+        return name + " (..." + File.separatorChar + dir.getName() +
+               File.separatorChar + file.getName() + ')';
       }
 
       public String getLocationString() {
