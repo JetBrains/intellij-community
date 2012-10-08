@@ -46,7 +46,6 @@ public class IdeaWin32PerformanceTest {
     long gain = (myJavaTotal - myIdeaTotal) * 100 / myJavaTotal;
     String message = "home=" + path + " java.io=" + myJavaTotal / 1000 + "ms IdeaWin32=" + myIdeaTotal / 1000 + "ms gain=" + gain + "%";
     assertTrue(message, myIdeaTotal <= myJavaTotal);
-    //noinspection UseOfSystemOutOrSystemErr
     System.out.println(message);
   }
 
