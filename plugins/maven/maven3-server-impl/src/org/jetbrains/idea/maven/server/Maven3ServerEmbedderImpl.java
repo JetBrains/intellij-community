@@ -36,6 +36,7 @@ import org.apache.maven.model.Profile;
 import org.apache.maven.model.profile.DefaultProfileInjector;
 import org.apache.maven.profiles.activation.*;
 import org.apache.maven.project.*;
+import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
 import org.apache.maven.project.interpolation.AbstractStringBasedModelInterpolator;
 import org.apache.maven.project.interpolation.ModelInterpolationException;
 import org.apache.maven.project.path.DefaultPathTranslator;
@@ -432,8 +433,9 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
   private Set<MavenId> retrieveUnresolvedArtifactIds() {
     Set<MavenId> result = new THashSet<MavenId>();
-    ((CustomMaven3WagonManager)getComponent(WagonManager.class)).getUnresolvedCollector().retrieveUnresolvedIds(result);
-    ((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).getUnresolvedCollector().retrieveUnresolvedIds(result);
+    // TODO collect unresolved artifacts
+    //((CustomMaven3WagonManager)getComponent(WagonManager.class)).getUnresolvedCollector().retrieveUnresolvedIds(result);
+    //((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).getUnresolvedCollector().retrieveUnresolvedIds(result);
     return result;
   }
 
@@ -501,8 +503,10 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     return MavenModelConverter.convertModel(result, null);
   }
 
-  public static MavenModel assembleInheritance(MavenModel model, MavenModel parentModel) {
-    throw new UnsupportedOperationException();
+  public static MavenModel assembleInheritance(MavenModel model, MavenModel parentModel) throws RemoteException {
+    Model result = MavenModelConverter.toNativeModel(model);
+    new DefaultModelInheritanceAssembler().assembleModelInheritance(result, MavenModelConverter.toNativeModel(parentModel));
+    return MavenModelConverter.convertModel(result, null);
   }
 
   public static ProfileApplicationResult applyProfiles(MavenModel model,
