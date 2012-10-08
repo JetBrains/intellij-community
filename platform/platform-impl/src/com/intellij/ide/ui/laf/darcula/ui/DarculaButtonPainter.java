@@ -63,6 +63,6 @@ public class DarculaButtonPainter implements Border, UIResource {
 
   @Override
   public boolean isBorderOpaque() {
-    return false;
+    return true;
   }
 }
