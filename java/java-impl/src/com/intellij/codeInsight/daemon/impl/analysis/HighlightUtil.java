@@ -481,7 +481,7 @@ public class HighlightUtil {
     int start = variable.getTypeElement().getTextRange().getStartOffset();
     int end = variable.getTextRange().getEndOffset();
     HighlightInfo highlightInfo = checkAssignability(lType, rType, initializer, new TextRange(start, end));
-    if (highlightInfo != null) {
+    if (highlightInfo != null && !(rType instanceof PsiMethodReferenceType)) {
       registerChangeVariableTypeFixes(variable, rType, highlightInfo);
     }
     return highlightInfo;

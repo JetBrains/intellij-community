@@ -271,7 +271,8 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
       PsiExpression initializer = variable.getInitializer();
       if (initializer == null || initializer instanceof PsiArrayInitializerExpression) return;
       final PsiType initializerType = initializer.getType();
-      checkRawToGenericsAssignment(initializer, variable.getType(), initializerType, true, myOnTheFly ? getChangeVariableTypeFixes(variable, initializerType) : LocalQuickFix.EMPTY_ARRAY);
+      checkRawToGenericsAssignment(initializer, variable.getType(), initializerType, true, 
+                                   myOnTheFly && !(initializerType instanceof PsiMethodReferenceType) ? getChangeVariableTypeFixes(variable, initializerType) : LocalQuickFix.EMPTY_ARRAY);
     }
 
     @Override
