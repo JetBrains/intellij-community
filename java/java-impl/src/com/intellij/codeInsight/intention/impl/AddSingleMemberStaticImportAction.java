@@ -56,35 +56,38 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
   public static String getStaticImportClass(@NotNull PsiElement element) {
     if (!PsiUtil.isLanguageLevel5OrHigher(element)) return null;
     PsiFile file = element.getContainingFile();
-    if (element instanceof PsiIdentifier && element.getParent() instanceof PsiJavaCodeReferenceElement &&
-        ((PsiJavaCodeReferenceElement)element.getParent()).getQualifier() != null) {
-      PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
-      PsiReferenceParameterList parameterList = refExpr.getParameterList();
-      if (parameterList != null && parameterList.getFirstChild() != null) return null;
-      PsiElement resolved = refExpr.resolve();
-      if (resolved instanceof PsiMember && ((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
-        PsiClass aClass = getResolvedClass(element, (PsiMember)resolved);
-        if (aClass != null && !PsiTreeUtil.isAncestor(aClass, element, true) && !aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-          String qName = aClass.getQualifiedName();
-          if (qName != null && !Comparing.strEqual(qName, aClass.getName())) {
-            qName = qName + "." +refExpr.getReferenceName();
-            if (file instanceof PsiJavaFile) {
-              PsiImportList importList = ((PsiJavaFile)file).getImportList();
-              if (importList != null) {
-                for (PsiImportStaticStatement staticStatement : importList.getImportStaticStatements()) {
-                  if (staticStatement.isOnDemand()) {
-                    if (staticStatement.resolveTargetClass() == aClass) {
-                      return null;
+    if (element instanceof PsiIdentifier) {
+      final PsiElement parent = element.getParent();
+      if (parent instanceof PsiMethodReferenceExpression) return null;
+      if (parent instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)parent).getQualifier() != null) {
+        PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)parent;
+        PsiReferenceParameterList parameterList = refExpr.getParameterList();
+        if (parameterList != null && parameterList.getFirstChild() != null) return null;
+        PsiElement resolved = refExpr.resolve();
+        if (resolved instanceof PsiMember && ((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
+          PsiClass aClass = getResolvedClass(element, (PsiMember)resolved);
+          if (aClass != null && !PsiTreeUtil.isAncestor(aClass, element, true) && !aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+            String qName = aClass.getQualifiedName();
+            if (qName != null && !Comparing.strEqual(qName, aClass.getName())) {
+              qName = qName + "." +refExpr.getReferenceName();
+              if (file instanceof PsiJavaFile) {
+                PsiImportList importList = ((PsiJavaFile)file).getImportList();
+                if (importList != null) {
+                  for (PsiImportStaticStatement staticStatement : importList.getImportStaticStatements()) {
+                    if (staticStatement.isOnDemand()) {
+                      if (staticStatement.resolveTargetClass() == aClass) {
+                        return null;
+                      }
                     }
                   }
-                }
-                final PsiImportStatementBase importStatement = importList.findSingleImportStatement(refExpr.getReferenceName());
-                if (importStatement == null) {
-                  return qName;
-                }
-                final PsiElement resolve = importStatement.resolve();
-                if (resolve instanceof PsiMember && ((PsiMember)resolve).getContainingClass() != aClass) {
-                  return qName;
+                  final PsiImportStatementBase importStatement = importList.findSingleImportStatement(refExpr.getReferenceName());
+                  if (importStatement == null) {
+                    return qName;
+                  }
+                  final PsiElement resolve = importStatement.resolve();
+                  if (resolve instanceof PsiMember && ((PsiMember)resolve).getContainingClass() != aClass) {
+                    return qName;
+                  }
                 }
               }
             }
@@ -158,7 +161,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
         if (reference.getParameterList() != null &&
             reference.getParameterList().getFirstChild() != null) return;
 
-        if (referenceName.equals(reference.getReferenceName())) {
+        if (referenceName.equals(reference.getReferenceName()) && !(reference instanceof PsiMethodReferenceExpression)) {
           final PsiElement qualifierExpression = reference.getQualifier();
           PsiElement referent = reference.getUserData(TEMP_REFERENT_USER_DATA);
           if (!reference.isQualified()) {
