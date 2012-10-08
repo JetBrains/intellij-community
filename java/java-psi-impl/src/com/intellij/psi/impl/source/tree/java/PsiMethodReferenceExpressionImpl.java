@@ -356,7 +356,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                                                                  PsiSubstitutor substitutor,
                                                                  LanguageLevel languageLevel) {
       if (signature == null) return PsiSubstitutor.EMPTY;
-      final PsiType[] types = method.getSignature(substitutor).getParameterTypes();
+      final PsiType[] types = method.getSignature(PsiUtil.isRawSubstitutor(method, substitutor) ? PsiSubstitutor.EMPTY : substitutor).getParameterTypes();
       final PsiType[] rightTypes = signature.getParameterTypes();
       if (types.length < rightTypes.length) {
         return PsiUtil.resolveGenericsClassInType(rightTypes[0]).getSubstitutor();
@@ -364,9 +364,12 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         return PsiUtil.resolveGenericsClassInType(types[0]).getSubstitutor();
       }
 
-      PsiSubstitutor psiSubstitutor = JavaPsiFacade.getInstance(getProject()).getResolveHelper().inferTypeArguments(
-        method.getTypeParameters(), types, rightTypes, languageLevel);
+      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(getProject()).getResolveHelper();
+      PsiSubstitutor psiSubstitutor = resolveHelper.inferTypeArguments(method.getTypeParameters(), types, rightTypes, languageLevel);
       psiSubstitutor = psiSubstitutor.putAll(substitutor);
+      if (method.isConstructor()) {
+        psiSubstitutor = psiSubstitutor.putAll(resolveHelper.inferTypeArguments(method.getContainingClass().getTypeParameters(), types, rightTypes, languageLevel));
+      }
 
       return LambdaUtil.inferFromReturnType(method.getTypeParameters(),
                                             psiSubstitutor.substitute(method.getReturnType()),

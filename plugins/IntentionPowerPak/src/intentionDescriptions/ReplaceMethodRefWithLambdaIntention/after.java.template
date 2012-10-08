@@ -1,0 +1,10 @@
+class X {
+  interface I {
+      void _();
+  }
+
+  static void m() {}
+  {
+    I i = () -> m();
+  }
+}
