@@ -62,7 +62,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
 
   private JPanel myCustomPanel;
   private JBCheckBox myAddCommitMessage;
-  private JLabel myComment;
+  private JBLabel myComment;
   private JPanel myEditorPanel;
 
   private boolean myApplying;
