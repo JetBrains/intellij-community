@@ -6,6 +6,8 @@ import com.siyeh.ig.security.SerializableClassInSecureContextInspection;
 public class SerializableClassInSecureContextInspectionTest extends IGInspectionTestCase {
 
   public void test() throws Exception {
-    doTest("com/siyeh/igtest/serialization/serializable_class_in_secure_context", new SerializableClassInSecureContextInspection());
+    final SerializableClassInSecureContextInspection tool = new SerializableClassInSecureContextInspection();
+    tool.ignoreThrowable = true;
+    doTest("com/siyeh/igtest/serialization/serializable_class_in_secure_context", tool);
   }
 }
