@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ExpandBooleanPredicate implements PsiElementPredicate {
 
@@ -26,53 +25,63 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
     if (!(element instanceof PsiJavaToken)) {
       return false;
     }
-    final PsiStatement containingStatement =
-      PsiTreeUtil.getParentOfType(element,
-                                  PsiStatement.class);
+    final PsiStatement containingStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
     if (containingStatement == null) {
       return false;
     }
-    return isBooleanReturn(containingStatement) ||
-           isBooleanAssignment(containingStatement);
+    return isBooleanReturn(containingStatement) || isBooleanAssignment(containingStatement) || isBooleanDeclaration(containingStatement);
   }
 
-  public static boolean isBooleanReturn(PsiStatement containingStatement) {
-    if (!(containingStatement instanceof PsiReturnStatement)) {
+  public static boolean isBooleanReturn(PsiStatement statement) {
+    if (!(statement instanceof PsiReturnStatement)) {
       return false;
     }
-    final PsiReturnStatement returnStatement =
-      (PsiReturnStatement)containingStatement;
+    final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
     final PsiExpression returnValue = returnStatement.getReturnValue();
     if (returnValue == null || returnValue instanceof PsiLiteralExpression) {
       return false;
     }
     final PsiType returnType = returnValue.getType();
-    if (!PsiType.BOOLEAN.equals(returnType)) {
-      return false;
-    }
-    return !ErrorUtil.containsError(returnValue);
+    return PsiType.BOOLEAN.equals(returnType);
   }
 
-  public static boolean isBooleanAssignment(PsiStatement containingStatement) {
-    if (!(containingStatement instanceof PsiExpressionStatement)) {
+  public static boolean isBooleanAssignment(PsiStatement statement) {
+    if (!(statement instanceof PsiExpressionStatement)) {
       return false;
     }
-    final PsiExpressionStatement expressionStatement =
-      (PsiExpressionStatement)containingStatement;
+    final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
     final PsiExpression expression = expressionStatement.getExpression();
     if (!(expression instanceof PsiAssignmentExpression)) {
       return false;
     }
-    final PsiAssignmentExpression assignment =
-      (PsiAssignmentExpression)expression;
+    final PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
     final PsiExpression rhs = assignment.getRExpression();
     if (rhs == null || rhs instanceof PsiLiteralExpression) {
       return false;
     }
     final PsiType assignmentType = rhs.getType();
-    if (!PsiType.BOOLEAN.equals(assignmentType)) {
+    return PsiType.BOOLEAN.equals(assignmentType);
+  }
+
+  public static boolean isBooleanDeclaration(PsiStatement statement) {
+    if (!(statement instanceof PsiDeclarationStatement)) {
       return false;
     }
-    return !ErrorUtil.containsError(rhs);
+    final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement;
+    final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
+    if (declaredElements.length != 1) {
+      return false;
+    }
+    final PsiElement element = declaredElements[0];
+    if (!(element instanceof PsiLocalVariable)) {
+      return false;
+    }
+    final PsiLocalVariable variable = (PsiLocalVariable)element;
+    final PsiExpression initializer = variable.getInitializer();
+    if (initializer == null || initializer instanceof PsiLiteralExpression) {
+      return false;
+    }
+    final PsiType type = initializer.getType();
+    return PsiType.BOOLEAN.equals(type);
   }
 }
