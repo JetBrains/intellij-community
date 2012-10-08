@@ -22,6 +22,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -80,7 +81,8 @@ public class ClosureDescriptor extends LightElement implements PsiElement {
     }
     else if (params instanceof List) {
       for (Object param : ((List)params)) {
-        types.add(convertToPsiType(String.valueOf(param), method.getTypeParameterList()));
+        PsiTypeParameterList typeParameterList = method.getTypeParameterList();
+        types.add(convertToPsiType(String.valueOf(param), typeParameterList != null ? typeParameterList : method));
       }
     }
     final boolean isConstructor = Boolean.TRUE.equals(myMethod.get("constructor"));
@@ -100,7 +102,7 @@ public class ClosureDescriptor extends LightElement implements PsiElement {
     return GrClosureSignatureUtil.isSignatureApplicable(closureSignature, typeArray, place);
   }
 
-  private static PsiType convertToPsiType(String type, PsiElement place) {
+  private static PsiType convertToPsiType(String type, @NotNull PsiElement place) {
     return JavaPsiFacade.getElementFactory(place.getProject()).createTypeFromText(type, place);
   }
 }
