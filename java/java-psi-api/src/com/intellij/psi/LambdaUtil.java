@@ -59,7 +59,7 @@ public class LambdaUtil {
   }
 
   @Nullable
-  public static PsiMethod getFunctionalInterfaceMethod(PsiType functionalInterfaceType) {
+  public static PsiMethod getFunctionalInterfaceMethod(@Nullable PsiType functionalInterfaceType) {
     return getFunctionalInterfaceMethod(PsiUtil.resolveGenericsClassInType(functionalInterfaceType));
   }
 
@@ -224,8 +224,12 @@ public class LambdaUtil {
     if (checkReturnType) {
       final String uniqueVarName =
         JavaCodeStyleManager.getInstance(lambdaExpression.getProject()).suggestUniqueVariableName("l", lambdaExpression, true);
+      String canonicalText = leftType.getCanonicalText();
+      if (leftType instanceof PsiEllipsisType) {
+        canonicalText = ((PsiEllipsisType)leftType).toArrayType().getCanonicalText();
+      }
       final PsiStatement assignmentFromText = JavaPsiFacade.getElementFactory(lambdaExpression.getProject())
-        .createStatementFromText(leftType.getCanonicalText() + " " + uniqueVarName + " = " + lambdaExpression.getText(), lambdaExpression);
+        .createStatementFromText(canonicalText + " " + uniqueVarName + " = " + lambdaExpression.getText(), lambdaExpression);
       final PsiLocalVariable localVariable = (PsiLocalVariable)((PsiDeclarationStatement)assignmentFromText).getDeclaredElements()[0];
       LOG.assertTrue(psiClass != null);
       PsiType methodReturnType = getReturnType(psiClass, methodSignature);

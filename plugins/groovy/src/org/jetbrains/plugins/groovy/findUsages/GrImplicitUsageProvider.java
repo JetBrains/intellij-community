@@ -21,6 +21,9 @@ import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
+import static org.jetbrains.plugins.groovy.findUsages.MissingMethodAndPropertyUtil.isMethodMissing;
+import static org.jetbrains.plugins.groovy.findUsages.MissingMethodAndPropertyUtil.isPropertyMissing;
+
 /**
  * @author Max Medvedev
  */
@@ -43,16 +46,6 @@ public class GrImplicitUsageProvider implements ImplicitUsageProvider {
     }
 
     return false;
-  }
-
-  private static boolean isMethodMissing(GrMethod method) {
-    GrParameter[] parameters = method.getParameters();
-    return method.getName().equals("methodMissing") && (parameters.length == 2 || parameters.length == 1);
-  }
-
-  private static boolean isPropertyMissing(GrMethod method) {
-    GrParameter[] parameters = method.getParameters();
-    return method.getName().equals("propertyMissing") && (parameters.length == 2 || parameters.length == 1);
   }
 
   @Override

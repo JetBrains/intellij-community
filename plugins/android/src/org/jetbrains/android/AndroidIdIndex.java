@@ -22,7 +22,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.*;
+import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.CharArrayUtil;
@@ -30,15 +32,18 @@ import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidIdIndex extends ScalarIndexExtension<String> {
-  public static final String[] RES_TYPES_CONTAINING_ID_DECLARATIONS = {AndroidConstants.FD_RES_LAYOUT, AndroidConstants.FD_RES_MENU};
-  public static final ID<String, Void> INDEX_ID = ID.create("android.id.index");
+public class AndroidIdIndex extends FileBasedIndexExtension<String, Set<String>> {
+  public static final ID<String, Set<String>> INDEX_ID = ID.create("android.id.index");
   public static final String MARKER = "$";
 
   private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
@@ -49,16 +54,16 @@ public class AndroidIdIndex extends ScalarIndexExtension<String> {
     }
   };
 
-  private static final DataIndexer<String, Void, FileContent> INDEXER = new DataIndexer<String, Void, FileContent>() {
+  private static final DataIndexer<String, Set<String>, FileContent> INDEXER = new DataIndexer<String, Set<String>, FileContent>() {
     @Override
     @NotNull
-    public Map<String, Void> map(FileContent inputData) {
+    public Map<String, Set<String>> map(FileContent inputData) {
       final CharSequence content = inputData.getContentAsText();
 
       if (content == null || CharArrayUtil.indexOf(content, SdkConstants.NS_RESOURCES, 0) == -1) {
         return Collections.emptyMap();
       }
-      final HashMap<String, Void> ids = new HashMap<String, Void>();
+      final HashMap<String, Set<String>> map = new HashMap<String, Set<String>>();
       
       NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlUtil.IXMLBuilderAdapter() {
         @Override
@@ -66,35 +71,63 @@ public class AndroidIdIndex extends ScalarIndexExtension<String> {
           super.addAttribute(key, nsPrefix, nsURI, value, type);
 
           if (AndroidResourceUtil.isIdDeclaration(value)) {
-            String id = AndroidResourceUtil.getResourceNameByReferenceText(value);
+            final String id = AndroidResourceUtil.getResourceNameByReferenceText(value);
+
             if (id != null) {
-              if (ids.isEmpty()) {
-                ids.put(MARKER, null);
-              }
-              ids.put(id, null);
+              map.put(id, Collections.<String>emptySet());
             }
           }
         }
       });
-      return ids;
+      if (map.size() > 0) {
+        map.put(MARKER, new HashSet<String>(map.keySet()));
+      }
+      return map;
+    }
+  };
+
+  private static final DataExternalizer<Set<String>> DATA_EXTERNALIZER = new DataExternalizer<Set<String>>() {
+    @Override
+    public void save(DataOutput out, Set<String> value) throws IOException {
+      out.writeInt(value.size());
+      for (String s : value) {
+        out.writeUTF(s);
+      }
+    }
+
+    @Override
+    public Set<String> read(DataInput in) throws IOException {
+      final int size = in.readInt();
+      final Set<String> result = new HashSet<String>(size);
+
+      for (int i = 0; i < size; i++) {
+        final String s = in.readUTF();
+        result.add(s);
+      }
+      return result;
     }
   };
 
   @NotNull
   @Override
-  public ID<String, Void> getName() {
+  public ID<String, Set<String>> getName() {
     return INDEX_ID;
   }
 
   @NotNull
   @Override
-  public DataIndexer<String, Void, FileContent> getIndexer() {
+  public DataIndexer<String, Set<String>, FileContent> getIndexer() {
     return INDEXER;
   }
 
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return new EnumeratorStringDescriptor();
+  }
+
+  @Override
+  public DataExternalizer<Set<String>> getValueExternalizer() {
+    return DATA_EXTERNALIZER;
   }
 
   @Override
@@ -109,6 +142,6 @@ public class AndroidIdIndex extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 2;
+    return 3;
   }
 }

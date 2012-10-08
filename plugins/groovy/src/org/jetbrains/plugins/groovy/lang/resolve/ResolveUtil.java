@@ -761,4 +761,17 @@ public class ResolveUtil {
     if (element instanceof PsiClass && ((PsiClass)element).isAnnotationType()) return (PsiClass)element;
     return null;
   }
+
+  @NotNull
+  public static String inferExpectedPackageName(PsiElement place) {
+    PsiFile file = place.getContainingFile();
+    PsiDirectory psiDirectory = file.getContainingDirectory();
+    if (psiDirectory != null && file instanceof GroovyFile) {
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
+      if (aPackage != null) {
+        return aPackage.getQualifiedName();
+      }
+    }
+    return "";
+  }
 }

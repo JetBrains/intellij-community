@@ -52,7 +52,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrDisjunctionTypeElementImpl;
 
 /**
  * @author ven
@@ -218,7 +217,7 @@ public abstract class GroovyElementVisitor {
   }
 
   public void visitPropertySelection(GrPropertySelection expression) {
-    visitReferenceExpression(expression);
+    visitExpression(expression);
   }
 
   public void visitIndexProperty(GrIndexProperty expression) {

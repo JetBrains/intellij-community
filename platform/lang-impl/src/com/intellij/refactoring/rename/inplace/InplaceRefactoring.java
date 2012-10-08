@@ -696,20 +696,21 @@ public abstract class InplaceRefactoring {
         releaseIfNotRestart();
       }
     });
-    myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+    topLevelEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    myBalloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {
+    myBalloon.show(new PositionTracker<Balloon>(topLevelEditor.getContentComponent()) {
       @Override
       public RelativePoint recalculateLocation(Balloon object) {
-        if (myTarget != null && !popupFactory.isBestPopupLocationVisible(myEditor)) {
+        if (myTarget != null && !popupFactory.isBestPopupLocationVisible(topLevelEditor)) {
           return myTarget;
         }
-        final RelativePoint target = popupFactory.guessBestPopupLocation(myEditor);
+        final RelativePoint target = popupFactory.guessBestPopupLocation(topLevelEditor);
         if (target == null) return myTarget;
         final Point screenPoint = target.getScreenPoint();
         int y = screenPoint.y;
-        if (target.getPoint().getY() > myEditor.getLineHeight() + myBalloon.getPreferredSize().getHeight()) {
-          y -= myEditor.getLineHeight();
+        if (target.getPoint().getY() > topLevelEditor.getLineHeight() + myBalloon.getPreferredSize().getHeight()) {
+          y -= topLevelEditor.getLineHeight();
         }
         myTarget = new RelativePoint(new Point(screenPoint.x, y));
         return myTarget;

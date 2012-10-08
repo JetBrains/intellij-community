@@ -350,7 +350,7 @@ public class AndroidSdkData {
     return mySdkManager;
   }
 
-  @Nullable
+  @NotNull
   public AndroidTargetData getTargetData(@NotNull IAndroidTarget target) {
     final SoftReference<AndroidTargetData> targetDataRef = myTargetDatas.get(target);
     AndroidTargetData targetData = targetDataRef != null ? targetDataRef.get() : null;

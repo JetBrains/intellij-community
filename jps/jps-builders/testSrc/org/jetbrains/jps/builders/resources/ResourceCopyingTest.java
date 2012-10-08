@@ -25,7 +25,7 @@ public class ResourceCopyingTest extends JpsBuildTestCase {
   public void testSimple() {
     String file = createFile("src/a.xml");
     JpsModule m = addModule("m", PathUtil.getParentPath(file));
-    doRebuild();
+    rebuildAll();
     assertOutput(m, fs().file("a.xml"));
   }
   public void testPackagePrefix() {
@@ -35,7 +35,7 @@ public class ResourceCopyingTest extends JpsBuildTestCase {
     JpsTypedModuleSourceRoot<JpsSimpleElement<JavaSourceRootProperties>> typed = sourceRoot.asTyped(JavaSourceRootType.SOURCE);
     assertNotNull(typed);
     typed.getProperties().setData(new JavaSourceRootProperties("xxx"));
-    doRebuild();
+    rebuildAll();
     assertOutput(m, fs().dir("xxx").file("a.xml"));
   }
 }

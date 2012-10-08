@@ -55,6 +55,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -795,7 +796,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   @Override
   public void save() {
     // Ensure all documents are committed on save so file content dependent indices, that use PSI to build have consistent content.
-    commitAllDocuments();
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        commitAllDocuments();
+      }
+    });
   }
 
   @NonNls

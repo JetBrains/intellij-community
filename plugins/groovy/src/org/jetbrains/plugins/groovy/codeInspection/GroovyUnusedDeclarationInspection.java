@@ -15,36 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection;
 
-import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ex.DescriptorProviderInspection;
-import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public class GroovyUnusedDeclarationInspection extends DescriptorProviderInspection implements UnfairLocalInspectionTool {
+public class GroovyUnusedDeclarationInspection extends GroovySuppressableInspectionTool implements UnfairLocalInspectionTool {
   public static final String SHORT_NAME = "GroovyUnusedDeclaration";
-
-  @Override
-  public void runInspection(@NotNull AnalysisScope scope, @NotNull InspectionManager manager) {
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Unused declaration";
-  }
-
-  @NotNull
-  @Override
-  public JobDescriptor[] getJobDescriptors(GlobalInspectionContext globalInspectionContext) {
-    return JobDescriptor.EMPTY_ARRAY;
-  }
-
 }

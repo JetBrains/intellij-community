@@ -39,8 +39,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -57,7 +55,7 @@ import java.util.List;
 /**
  * @author ven
  */
-public class GroovyScriptClass extends LightElement implements GrMemberOwner, SyntheticElement {
+public class GroovyScriptClass extends LightElement implements PsiClass, SyntheticElement {
   private final GroovyFile myFile;
   private final PsiMethod myMainMethod;
   private final PsiMethod myRunMethod;
@@ -473,8 +471,5 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
     myFile.delete();
   }
 
-  public <T extends GrMembersDeclaration> T addMemberDeclaration(T decl, PsiElement anchorBefore) throws IncorrectOperationException {
-    return myFile.addMemberDeclaration(decl, anchorBefore);
-  }
 }
 

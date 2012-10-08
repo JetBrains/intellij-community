@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileSystemUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -131,17 +132,21 @@ public class FSOperations {
                              Timestamps timestamps, boolean forceMarkDirty,
                              @Nullable THashSet<File> currentFiles) throws IOException {
     final ModuleExcludeIndex rootsIndex = context.getProjectDescriptor().getModuleExcludeIndex();
-    final Set<File> excludes = new HashSet<File>(rootsIndex.getModuleExcludes(target.getModule()));
-    for (JavaSourceRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
-      if (!rd.root.exists()) {
+    markDirtyFiles(context, target, timestamps, forceMarkDirty, currentFiles,
+                   new HashSet<File>(rootsIndex.getModuleExcludes(target.getModule())));
+  }
+
+  static void markDirtyFiles(CompileContext context, BuildTarget<?> target, Timestamps timestamps, boolean forceMarkDirty, @Nullable THashSet<File> currentFiles, final Set<File> excludes) throws IOException {
+    for (BuildRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
+      if (!rd.getRootFile().exists()) {
         continue;
       }
       context.getProjectDescriptor().fsState.clearRecompile(rd);
-      traverseRecursively(context, rd, rd.root, excludes, timestamps, forceMarkDirty, currentFiles);
+      traverseRecursively(context, rd, rd.getRootFile(), excludes, timestamps, forceMarkDirty, currentFiles);
     }
   }
 
-  private static void traverseRecursively(CompileContext context, final JavaSourceRootDescriptor rd, final File file, Set<File> excludes, @NotNull final Timestamps tsStorage, final boolean forceDirty, @Nullable Set<File> currentFiles) throws IOException {
+  private static void traverseRecursively(CompileContext context, final BuildRootDescriptor rd, final File file, Set<File> excludes, @NotNull final Timestamps tsStorage, final boolean forceDirty, @Nullable Set<File> currentFiles) throws IOException {
     final File[] children = file.listFiles();
     if (children != null) { // is directory
       if (children.length > 0 && !JpsPathUtil.isUnder(excludes, file)) {
@@ -153,7 +158,7 @@ public class FSOperations {
     else { // is file
       boolean markDirty = forceDirty;
       if (!markDirty) {
-        markDirty = tsStorage.getStamp(file, rd.target) != FileSystemUtil.lastModified(file);
+        markDirty = tsStorage.getStamp(file, rd.getTarget()) != FileSystemUtil.lastModified(file);
       }
       if (markDirty) {
         // if it is full project rebuild, all storages are already completely cleared;

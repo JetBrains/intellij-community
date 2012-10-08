@@ -239,7 +239,7 @@ public class RenderUtil {
       if (brokenClasses.size() > 1) {
         builder.append("Unable to initialize:\n");
         for (String brokenClass : brokenClasses.keySet()) {
-          builder.append("    ").append(brokenClass).append('\n');
+          builder.append("&nbsp; &nbsp; &nbsp; &nbsp;").append(brokenClass).append('\n');
         }
       }
       else {

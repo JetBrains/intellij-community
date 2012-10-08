@@ -23,6 +23,7 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -36,7 +37,7 @@ public class PsiJavaCodeReferenceCodeFragmentImpl extends PsiCodeFragmentImpl im
                                               @NonNls final String name,
                                               final CharSequence text,
                                               boolean isClassesAccepted,
-                                              PsiElement context) {
+                                              @Nullable PsiElement context) {
     super(project, JavaElementType.REFERENCE_TEXT, isPhysical, name, text, context);
     myIsClassesAccepted = isClassesAccepted;
   }

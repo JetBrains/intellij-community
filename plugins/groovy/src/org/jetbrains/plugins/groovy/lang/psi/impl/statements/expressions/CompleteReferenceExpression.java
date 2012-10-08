@@ -72,7 +72,7 @@ public class CompleteReferenceExpression {
   }
 
   public static void processVariants(PrefixMatcher matcher, Consumer<LookupElement> consumer, GrReferenceExpressionImpl refExpr, CompletionParameters parameters) {
-    processRefInAnnotation(consumer, refExpr, matcher);
+    processRefInAnnotation(refExpr, matcher, consumer);
 
     final CompleteReferenceProcessor processor = new CompleteReferenceProcessor(refExpr, consumer, matcher, parameters);
     getVariantsImpl(refExpr, processor);
@@ -82,8 +82,10 @@ public class CompleteReferenceExpression {
     }
   }
 
-  private static void processRefInAnnotation(Consumer<LookupElement> consumer, GrReferenceExpressionImpl refExpr, PrefixMatcher matcher) {
-    if (refExpr.getParent() instanceof GrAnnotationNameValuePair) {
+  public static void processRefInAnnotation(GrReferenceExpression refExpr,
+                                            PrefixMatcher matcher, Consumer<LookupElement> consumer) {
+    if (refExpr.getParent() instanceof GrAnnotationNameValuePair &&
+        ((GrAnnotationNameValuePair)refExpr.getParent()).getNameIdentifierGroovy() == null) {
       PsiElement parent = refExpr.getParent().getParent();
       if (!(parent instanceof GrAnnotation)) {
         parent = parent.getParent();

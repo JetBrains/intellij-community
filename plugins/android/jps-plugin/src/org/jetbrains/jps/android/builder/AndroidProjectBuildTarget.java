@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.android.AndroidJpsUtil;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
@@ -81,7 +82,10 @@ public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> 
 
   @NotNull
   @Override
-  public List<BuildRootDescriptor> computeRootDescriptors(JpsModel model, ModuleExcludeIndex index, IgnoredFileIndex ignoredFileIndex) {
+  public List<BuildRootDescriptor> computeRootDescriptors(JpsModel model,
+                                                          ModuleExcludeIndex index,
+                                                          IgnoredFileIndex ignoredFileIndex,
+                                                          BuildDataPaths dataPaths) {
     return Collections.emptyList();
   }
 

@@ -411,7 +411,13 @@ public class MvcModuleStructureUtil {
   }
 
   public static boolean hasModulesWithSupport(Project project, final MvcFramework framework) {
-    return !getAllModulesWithSupport(project, framework).isEmpty();
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      if (framework.hasSupport(module)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   public static List<Module> getAllModulesWithSupport(Project project, MvcFramework framework) {

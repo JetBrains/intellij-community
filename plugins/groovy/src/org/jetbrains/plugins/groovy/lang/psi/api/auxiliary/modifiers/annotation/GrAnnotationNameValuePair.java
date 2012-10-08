@@ -31,5 +31,6 @@ public interface GrAnnotationNameValuePair extends GroovyPsiElement, PsiNameValu
   @Nullable
   PsiElement getNameIdentifierGroovy();
 
+  @Nullable
   GrAnnotationMemberValue getValue();
 }

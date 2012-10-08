@@ -22,7 +22,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 import java.util.List;
 
@@ -37,9 +36,6 @@ public class PropertyResolverProcessor extends ResolverProcessor {
 
   @Override
   public boolean execute(@NotNull PsiElement element, ResolveState state) {
-    if (element instanceof GrReferenceExpression && ((GrReferenceExpression)element).getQualifier() != null) {
-      return true;
-    }
     return super.execute(element, state) || state.get(RESOLVE_CONTEXT) != null;
   }
 

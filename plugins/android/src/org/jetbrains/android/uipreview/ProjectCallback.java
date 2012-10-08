@@ -224,7 +224,9 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
         while (psiClass != null) {
           final String qName = psiClass.getQualifiedName();
 
-          if (qName == null || !visited.add(qName)) {
+          if (qName == null ||
+              !visited.add(qName) ||
+              AndroidUtils.VIEW_CLASS_NAME.equals(psiClass.getQualifiedName())) {
             break;
           }
 

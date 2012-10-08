@@ -23,7 +23,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
 
 import javax.swing.*;
-import java.util.Arrays;
 
 /**
  * author: lesya
@@ -37,7 +36,7 @@ public class CreateTagDialog extends CvsTagDialog {
   private JLabel myTagOrBranchLabel;
   private JLabel myErrorLabel;
 
-  public CreateTagDialog(final FilePath[] files, final Project project, boolean isTag) {
+  public CreateTagDialog(FilePath[] files, Project project, boolean isTag) {
     if (isTag) {
       myTagOrBranchLabel.setText(CvsBundle.message("label.tag.name"));
       mySwitchToThisTag.setText(CvsBundle.message("checkbox.switch.to.this.tag"));
@@ -48,7 +47,7 @@ public class CreateTagDialog extends CvsTagDialog {
       mySwitchToThisTag.setText(CvsBundle.message("checkbox.switch.to.this.branch"));
       myOverrideExisting.setText(CvsBundle.message("checkbox.create.tag.override.existing.branch"));
     }
-    TagsHelper.addChooseBranchAction(myTagName, Arrays.asList(files), project);
+    TagsHelper.addChooseBranchAction(myTagName, TagsHelper.findVcsRoots(files, project), project);
     setTitle(isTag ? CvsBundle.message("operation.name.create.tag") : CvsBundle.message("operation.name.create.branch"));
     CvsFieldValidator.installOn(this, myTagName.getTextField(), myErrorLabel);
     init();

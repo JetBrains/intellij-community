@@ -261,7 +261,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return message;
   }
 
-  private static void initProject(ProjectImpl project, @Nullable ProjectImpl template) throws IOException {
+  private void initProject(@NotNull ProjectImpl project, @Nullable ProjectImpl template) throws IOException {
+
+    final ProgressIndicator indicator = myProgressManager.getProgressIndicator();
+    if (indicator != null) {
+      indicator.setText(ProjectBundle.message("loading.components.for", project.isDefault() ? "Default" : project.getName()));
+      indicator.setIndeterminate(true);
+    }
 
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
 
@@ -311,22 +317,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public Project loadProject(String filePath) throws IOException, JDOMException, InvalidDataException {
     try {
       ProjectImpl project = createProject(null, filePath, false, false);
-      doLoadProject(filePath, project);
+      initProject(project, null);
       return project;
     }
     catch (StateStorageException e) {
       throw new IOException(e.getMessage());
     }
-  }
-
-  private void doLoadProject(String filePath, ProjectImpl project) throws IOException, StateStorageException {
-    filePath = toCanonicalName(filePath);
-    final ProgressIndicator indicator = myProgressManager.getProgressIndicator();
-    if (indicator != null) {
-      indicator.setText(ProjectBundle.message("loading.components.for", FileUtil.toSystemDependentName(filePath)));
-      indicator.setIndeterminate(true);
-    }
-    initProject(project, null);
   }
 
   @NotNull
@@ -540,7 +536,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         @Override
         @Nullable
         public Project compute() throws IOException {
-          doLoadProject(filePath, project);
+          initProject(project, null);
           return project;
         }
       }, ProjectBundle.message("project.load.progress"), true, project);

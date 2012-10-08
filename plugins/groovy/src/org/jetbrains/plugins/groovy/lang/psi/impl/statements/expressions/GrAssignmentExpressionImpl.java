@@ -17,11 +17,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -32,13 +37,15 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightLocalVariable;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
@@ -68,6 +75,7 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
         return returnType;
       }
     };
+  private static final Key<CachedValue<GrLightLocalVariable>> LOCAL_VAR_KEY = Key.create("local var");
 
   public GrAssignmentExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -109,20 +117,42 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
     }
 
     GrExpression lValue = getLValue();
-    if (lValue instanceof GrReferenceExpression) {
-      String refName = processor instanceof ResolverProcessor ? ((ResolverProcessor) processor).getName() : null;
-      if (isDeclarationAssignment((GrReferenceExpression) lValue, refName)) {
-        if (!processor.execute(lValue, ResolveState.initial())) return false;
+    if (lValue instanceof GrReferenceExpression && ((GrReferenceExpression)lValue).getQualifier() == null) {
+      String refName = processor instanceof ResolverProcessor ? ((ResolverProcessor)processor).getName() : null;
+      if (isDeclarationAssignment((GrReferenceExpression)lValue, refName)) {
+
+        GrVariable var = getOrCreateLocalVar();
+        if (!processor.execute(var, ResolveState.initial())) {
+          return false;
+        }
+
+        //if (!processor.execute(lValue, ResolveState.initial())) return false;
       }
     }
 
     return true;
   }
 
+  private GrVariable getOrCreateLocalVar() {
+    GrExpression lValue = getLValue();
+    CachedValue<GrLightLocalVariable> local = lValue.getUserData(LOCAL_VAR_KEY);
+    if (local == null) {
+      local = CachedValuesManager.getManager(getProject()).createCachedValue(new CachedValueProvider<GrLightLocalVariable>() {
+        @Nullable
+        @Override
+        public Result<GrLightLocalVariable> compute() {
+          return Result.create(new GrLightLocalVariable(GrAssignmentExpressionImpl.this), PsiModificationTracker.MODIFICATION_COUNT);
+        }
+      });
+      lValue.putUserData(LOCAL_VAR_KEY, local);
+    }
+    return local.getValue();
+  }
+
   private static boolean isDeclarationAssignment(@NotNull GrReferenceExpression lRefExpr, @Nullable String nameHint) {
     if (nameHint == null || nameHint.equals(lRefExpr.getName())) {
       final PsiElement target = lRefExpr.resolve(); //this is NOT quadratic since the next statement will prevent from further processing declarations upstream
-      if (!(target instanceof PsiVariable) && !(target instanceof GrAccessorMethod)) {
+      if (!(target instanceof PsiVariable || target instanceof GrAccessorMethod)) {
         return true;
       }
     }

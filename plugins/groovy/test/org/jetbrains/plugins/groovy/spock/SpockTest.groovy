@@ -220,9 +220,9 @@ class FooSpec extends spock.lang.Specification {
     myFixture.configureByText("FooSpec.groovy", """\
 class FooSpec extends spock.lang.Specification {
   def "foo test"() {
-    String subscriber = <warning descr="Can not resolve symbol 'Mock'">Mock</warning>()
+    String subscriber = <warning descr="Cannot resolve symbol 'Mock'">Mock</warning>()
     then: (0.._) * subscriber.concat<weak_warning descr="Cannot infer argument types">(_)</weak_warning>
-      subscriber.concat<weak_warning descr="Cannot infer argument types">(<warning descr="Can not resolve symbol 'asdasdasd'">asdasdasd</warning>)</weak_warning>
+      subscriber.concat<weak_warning descr="Cannot infer argument types">(<warning descr="Cannot resolve symbol 'asdasdasd'">asdasdasd</warning>)</weak_warning>
       subscriber.concat<warning descr="'concat' in 'java.lang.String' cannot be applied to '(java.lang.Integer)'">(23)</warning>
   }
 }

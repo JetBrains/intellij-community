@@ -323,7 +323,7 @@ public class CanonicalTypes {
     }
   }
 
-  public static Type createTypeWrapper(final PsiType type) {
+  public static Type createTypeWrapper(@NotNull final PsiType type) {
     return type.accept(Creator.INSTANCE);
   }
 }

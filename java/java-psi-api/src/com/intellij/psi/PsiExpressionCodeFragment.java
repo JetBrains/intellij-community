@@ -28,6 +28,7 @@ public interface PsiExpressionCodeFragment extends JavaCodeFragment {
    *
    * @return the expression contained in the fragment.
    */
+  @Nullable
   PsiExpression getExpression();
 
   /**

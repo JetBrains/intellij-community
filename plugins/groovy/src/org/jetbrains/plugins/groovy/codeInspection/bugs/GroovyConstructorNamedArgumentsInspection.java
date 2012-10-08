@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -126,7 +126,7 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
               registerError(nameElement, GroovyBundle.message("property.name.expected"));
             }
           }
-          else {
+          else if (!"*".equals(nameElement.getText())) {
             registerError(nameElement, GroovyBundle.message("property.name.expected"));
           }
         }
@@ -139,8 +139,8 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
             }
 
             List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>(2);
-            if (element instanceof GrMemberOwner) {
-              fixes.add(new CreateFieldFromConstructorLabelFix((GrMemberOwner)element, label.getNamedArgument()));
+            if (element instanceof GrTypeDefinition) {
+              fixes.add(new CreateFieldFromConstructorLabelFix((GrTypeDefinition)element, label.getNamedArgument()));
             }
             if (element instanceof PsiClass) {
               fixes.add(new DynamicPropertyFix(label, (PsiClass)element));

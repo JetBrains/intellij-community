@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2010 Bas Leijdekkers
+ * Copyright 2008-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,15 +32,13 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "assertequals.may.be.assertsame.display.name");
+    return InspectionGadgetsBundle.message("assertequals.may.be.assertsame.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "assertequals.may.be.assertsame.problem.descriptor");
+    return InspectionGadgetsBundle.message("assertequals.may.be.assertsame.problem.descriptor");
   }
 
   @Override
@@ -47,29 +46,45 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
     return new AssertEqualsMayBeAssertSameFix();
   }
 
-  private static class AssertEqualsMayBeAssertSameFix
-    extends InspectionGadgetsFix {
+  private static class AssertEqualsMayBeAssertSameFix extends InspectionGadgetsFix {
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "assertequals.may.be.assertsame.quickfix");
+      return InspectionGadgetsBundle.message("assertequals.may.be.assertsame.quickfix");
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiElement grandParent = element.getParent().getParent();
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiReferenceExpression methodExpression = (PsiReferenceExpression)parent;
+      final PsiElement grandParent = methodExpression.getParent();
       if (!(grandParent instanceof PsiMethodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)grandParent;
-      @NonNls final String text = methodCallExpression.getText();
-      final String newExpressionText =
-        text.replace("assertEquals", "assertSame");
-      replaceExpression(methodCallExpression, newExpressionText);
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+      final PsiMethod method = methodCallExpression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass ==  null) {
+        return;
+      }
+      final String className = containingClass.getQualifiedName();
+      if (className == null) {
+        return;
+      }
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      if (qualifier == null && ImportUtils.addStaticImport(className, "assertSame", methodExpression)) {
+        replaceExpression(methodExpression, "assertSame");
+      }
+      else {
+        replaceExpression(methodExpression, className + ".assertSame");
+      }
     }
   }
 
@@ -78,22 +93,19 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
     return new AssertEqualsMayBeAssertSameVisitor();
   }
 
-  private static class AssertEqualsMayBeAssertSameVisitor
-    extends BaseInspectionVisitor {
+  private static class AssertEqualsMayBeAssertSameVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       @NonNls final String name = methodExpression.getReferenceName();
       if (!"assertEquals".equals(name)) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length == 3 && arguments.length == 2) {
+      if (arguments.length != 3 && arguments.length != 2) {
         return;
       }
       final PsiMethod method = expression.resolveMethod();
@@ -105,8 +117,7 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
         return;
       }
       final String qualifiedName = aClass.getQualifiedName();
-      if (!"org.junit.Assert".equals(qualifiedName) &&
-          !"junit.framework.Assert".equals(qualifiedName)) {
+      if (!"org.junit.Assert".equals(qualifiedName) && !"junit.framework.Assert".equals(qualifiedName)) {
         return;
       }
       final PsiExpression argument1 = arguments[arguments.length - 2];
@@ -120,9 +131,8 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
       registerMethodCallError(expression);
     }
 
-    private static boolean couldBeAssertSameArgument(
-      PsiExpression argument1) {
-      final PsiType type = argument1.getType();
+    private static boolean couldBeAssertSameArgument(PsiExpression expression) {
+      final PsiType type = expression.getType();
       if (!(type instanceof PsiClassType)) {
         return false;
       }
@@ -134,19 +144,15 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
       if (!argumentClass.hasModifierProperty(PsiModifier.FINAL)) {
         return false;
       }
-      final PsiMethod[] methods =
-        argumentClass.findMethodsByName("equals", true);
-      final PsiManager manager = argument1.getManager();
-      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(
-        manager.getProject());
-      final PsiClass objectClass = psiFacade.findClass(
-        CommonClassNames.JAVA_LANG_OBJECT,
-        argumentClass.getResolveScope());
+      final PsiMethod[] methods = argumentClass.findMethodsByName("equals", true);
+      final PsiManager manager = expression.getManager();
+      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(manager.getProject());
+      final PsiClass objectClass = psiFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, argumentClass.getResolveScope());
       if (objectClass == null) {
         return false;
       }
-      for (PsiMethod psiMethod : methods) {
-        final PsiClass containingClass = psiMethod.getContainingClass();
+      for (PsiMethod method : methods) {
+        final PsiClass containingClass = method.getContainingClass();
         if (!objectClass.equals(containingClass)) {
           return false;
         }

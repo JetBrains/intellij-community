@@ -52,17 +52,14 @@ public class AndroidMavenProviderImpl implements AndroidMavenProvider {
     String moduleDirPath = AndroidRootUtil.getModuleDirPath(module);
     String genSources = FileUtil.toSystemIndependentName(mavenProject.getGeneratedSourcesDirectory(false));
 
-    if (VfsUtil.isAncestor(new File(moduleDirPath), new File(genSources), true)) {
-      String genRelativePath = FileUtil.getRelativePath(moduleDirPath, genSources, '/');
+    if (moduleDirPath != null) {
+      final String genRelativePath = FileUtil.getRelativePath(moduleDirPath, genSources, '/');
+
       if (genRelativePath != null) {
         configuration.GEN_FOLDER_RELATIVE_PATH_APT = '/' + genRelativePath + "/r";
         configuration.GEN_FOLDER_RELATIVE_PATH_AIDL = '/' + genRelativePath + "/aidl";
       }
-    }
-
-    String buildDirectory = FileUtil.toSystemIndependentName(mavenProject.getBuildDirectory());
-
-    if (VfsUtil.isAncestor(new File(moduleDirPath), new File(buildDirectory), true)) {
+      String buildDirectory = FileUtil.toSystemIndependentName(mavenProject.getBuildDirectory());
       String buildDirRelPath = FileUtil.getRelativePath(moduleDirPath, buildDirectory, '/');
       configuration.APK_PATH = '/' + buildDirRelPath + '/' + AndroidCompileUtil.getApkName(module);
     }
@@ -75,8 +72,9 @@ public class AndroidMavenProviderImpl implements AndroidMavenProvider {
     String moduleDirPath = AndroidRootUtil.getModuleDirPath(module);
     String genSources = FileUtil.toSystemIndependentName(mavenProject.getGeneratedSourcesDirectory(false));
 
-    if (VfsUtil.isAncestor(new File(moduleDirPath), new File(genSources), true)) {
-      String genRelativePath = FileUtil.getRelativePath(moduleDirPath, genSources, '/');
+    if (moduleDirPath != null) {
+      final String genRelativePath = FileUtil.getRelativePath(moduleDirPath, genSources, '/');
+
       if (genRelativePath != null) {
         configuration.USE_CUSTOM_APK_RESOURCE_FOLDER = hasApkSources;
         configuration.CUSTOM_APK_RESOURCE_FOLDER = '/' + genRelativePath + "/combined-resources/" + SdkConstants.FD_RES;

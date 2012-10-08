@@ -43,8 +43,9 @@ if (true) {
   }
 
   public void testSecondAnnotationSuppression() {
-    myFixture.enableInspections new GroovyUnresolvedAccessInspection()
-    myFixture.configureByText "a.groovy", """class FooBarGoo {
+    myFixture.enableInspections(new GroovyUnresolvedAccessInspection())
+    myFixture.configureByText "a.groovy", """\
+class FooBarGoo {
   @SuppressWarnings(["GroovyParameterNamingConvention"])
   def test(Object abc) {
     abc.d<caret>ef()
@@ -52,7 +53,8 @@ if (true) {
 }
 """
     myFixture.launchAction(myFixture.findSingleIntention("Suppress for method"))
-    myFixture.checkResult """class FooBarGoo {
+    myFixture.checkResult """\
+class FooBarGoo {
   @SuppressWarnings(["GroovyParameterNamingConvention", "GroovyUnresolvedAccess"])
   def test(Object abc) {
     abc.def()

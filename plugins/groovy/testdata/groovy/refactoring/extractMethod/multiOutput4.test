@@ -15,5 +15,4 @@ private int testMethod(int a) {
     return b
 }
 
-
 print a+b

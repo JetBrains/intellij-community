@@ -23,7 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 
 /**
  * @author Max Medvedev
@@ -36,7 +36,7 @@ public class GrReferenceHighlighterFactory extends AbstractProjectComponent impl
 
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    if (!(file instanceof GroovyFile)) return null;
-    return new GrReferenceHighlighter(editor.getDocument(), (GroovyFile)file);
+    if (!(file instanceof GroovyFileBase)) return null;
+    return new GrReferenceHighlighter(editor.getDocument(), (GroovyFileBase)file);
   }
 }

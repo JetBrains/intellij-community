@@ -2,12 +2,12 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
+import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.model.JpsModel;
 
@@ -20,14 +20,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class BuildTargetsState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildTargetsState");
-  private final File myDataStorageRoot;
+  private final BuildDataPaths myDataPaths;
   private AtomicInteger myMaxTargetId = new AtomicInteger(0);
   private ConcurrentMap<BuildTargetType<?>, BuildTargetTypeState> myTypeStates = new ConcurrentHashMap<BuildTargetType<?>, BuildTargetTypeState>();
   private JpsModel myModel;
   private final BuildRootIndexImpl myBuildRootIndex;
 
-  public BuildTargetsState(File dataStorageRoot, JpsModel model, BuildRootIndexImpl buildRootIndex) {
-    myDataStorageRoot = dataStorageRoot;
+  public BuildTargetsState(BuildDataPaths dataPaths, JpsModel model, BuildRootIndexImpl buildRootIndex) {
+    myDataPaths = dataPaths;
     myModel = model;
     myBuildRootIndex = buildRootIndex;
     File targetTypesFile = getTargetTypesFile();
@@ -49,16 +49,8 @@ public class BuildTargetsState {
     }
   }
 
-  public File getTargetTypeDataRoot(BuildTargetType<?> targetType) {
-    return new File(getTargetsDataRoot(), targetType.getTypeId());
-  }
-
-  public File getTargetsDataRoot() {
-    return new File(myDataStorageRoot, "targets");
-  }
-
   private File getTargetTypesFile() {
-    return new File(getTargetsDataRoot(), "targetTypes.dat");
+    return new File(myDataPaths.getTargetsDataRoot(), "targetTypes.dat");
   }
 
   public void save() {
@@ -113,12 +105,8 @@ public class BuildTargetsState {
     return myMaxTargetId.incrementAndGet();
   }
 
-  public File getTargetDataRoot(BuildTarget<?> target) {
-    return new File(getTargetTypeDataRoot(target.getTargetType()), PathUtilRt.suggestFileName(target.getId(), true, true));
-  }
-
   public void clean() {
-    FileUtil.delete(getTargetsDataRoot());
+    FileUtil.delete(myDataPaths.getTargetsDataRoot());
   }
 
   public JpsModel getModel() {
@@ -127,5 +115,9 @@ public class BuildTargetsState {
 
   public BuildRootIndexImpl getBuildRootIndex() {
     return myBuildRootIndex;
+  }
+
+  public BuildDataPaths getDataPaths() {
+    return myDataPaths;
   }
 }

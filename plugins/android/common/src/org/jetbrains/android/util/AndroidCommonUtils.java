@@ -135,7 +135,14 @@ public class AndroidCommonUtils {
       return null;
     }
 
-    return SdkManager.createManager(path + File.separatorChar, log);
+    // safety from errors inside sdklib
+    try {
+      return SdkManager.createManager(path + File.separatorChar, log);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   public static void moveAllFiles(@NotNull File from, @NotNull File to, @NotNull Collection<File> newFiles) throws IOException {

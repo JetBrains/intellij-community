@@ -17,7 +17,7 @@ public class JpsUiDesignerExtensionServiceImpl extends JpsUiDesignerExtensionSer
   }
 
   @Override
-  public void setUiDesignerConfiguration(@NotNull JpsProject project, @Nullable JpsUiDesignerConfiguration configuration) {
+  public void setUiDesignerConfiguration(@NotNull JpsProject project, @NotNull JpsUiDesignerConfiguration configuration) {
     project.getContainer().setChild(JpsUiDesignerConfigurationImpl.ROLE, configuration);
   }
 }

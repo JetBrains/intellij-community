@@ -17,26 +17,42 @@ package org.jetbrains.idea.maven.server;
 
 import com.intellij.util.SystemProperties;
 import gnu.trove.THashSet;
+import org.apache.maven.artifact.factory.ArtifactFactory;
+import org.apache.maven.artifact.manager.WagonManager;
+import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
+import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
+import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
+import org.apache.maven.artifact.resolver.ArtifactResolutionRequest;
+import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
+import org.apache.maven.artifact.resolver.ArtifactResolver;
+import org.apache.maven.artifact.resolver.ResolutionListener;
 import org.apache.maven.cli.MavenCli;
+import org.apache.maven.execution.DefaultMavenExecutionRequest;
+import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.model.Activation;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Profile;
 import org.apache.maven.model.profile.DefaultProfileInjector;
 import org.apache.maven.profiles.activation.*;
-import org.apache.maven.project.DefaultProjectBuilderConfiguration;
-import org.apache.maven.project.ProjectBuilderConfiguration;
+import org.apache.maven.project.*;
 import org.apache.maven.project.interpolation.AbstractStringBasedModelInterpolator;
 import org.apache.maven.project.interpolation.ModelInterpolationException;
 import org.apache.maven.project.path.DefaultPathTranslator;
 import org.apache.maven.project.path.PathTranslator;
+import org.apache.maven.project.validation.ModelValidationResult;
 import org.apache.maven.settings.Settings;
+import org.apache.maven.settings.SettingsUtils;
 import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
 import org.apache.maven.settings.building.SettingsBuilder;
 import org.apache.maven.settings.building.SettingsBuildingException;
 import org.apache.maven.settings.building.SettingsBuildingRequest;
+import org.apache.maven.shared.dependency.tree.DependencyNode;
+import org.apache.maven.shared.dependency.tree.DependencyTreeResolutionListener;
 import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.classworlds.ClassWorld;
+import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.context.ContextException;
 import org.codehaus.plexus.context.DefaultContext;
 import org.codehaus.plexus.logging.BaseLoggerManager;
@@ -45,19 +61,24 @@ import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationExce
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator;
-import org.jetbrains.idea.maven.server.embedder.FieldAccessor;
+import org.jetbrains.idea.maven.server.embedder.*;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 
 public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements MavenServerEmbedder {
   @NotNull private final DefaultPlexusContainer myContainer;
   @NotNull private final Settings myMavenSettings;
+
+  private final ArtifactRepository myLocalRepository;
+  private final Maven3ServerConsoleLogger myConsoleWrapper;
+
+  private volatile MavenServerProgressIndicator myCurrentIndicator;
 
   public Maven3ServerEmbedderImpl(MavenServerSettings settings) throws RemoteException {
     File mavenHome = settings.getMavenHome();
@@ -65,8 +86,8 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
       System.setProperty("maven.home", mavenHome.getPath());
     }
 
-    final Maven3ServerConsoleLogger logger = new Maven3ServerConsoleLogger();
-    logger.setThreshold(settings.getLoggingLevel());
+    myConsoleWrapper = new Maven3ServerConsoleLogger();
+    myConsoleWrapper.setThreshold(settings.getLoggingLevel());
 
     ClassWorld classWorld = new ClassWorld("plexus.core", Thread.currentThread().getContextClassLoader());
     MavenCli cli = new MavenCli(classWorld) {
@@ -75,13 +96,13 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
         ((DefaultPlexusContainer)container).setLoggerManager(new BaseLoggerManager() {
           @Override
           protected Logger createLogger(String s) {
-            return logger;
+            return myConsoleWrapper;
           }
         });
       }
     };
 
-    Class cliRequestClass = null;
+    Class cliRequestClass;
     try {
       cliRequestClass = MavenCli.class.getClassLoader().loadClass("org.apache.maven.cli.MavenCli$CliRequest");
     }
@@ -128,12 +149,14 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
                                     settings,
                                     FieldAccessor.<Properties>get(cliRequestClass, cliRequest, "systemProperties"),
                                     FieldAccessor.<Properties>get(cliRequestClass, cliRequest, "userProperties"));
+
+    myLocalRepository = createLocalRepository(settings.getSnapshotUpdatePolicy());
   }
 
-  private Settings buildSettings(SettingsBuilder builder,
-                                 MavenServerSettings settings,
-                                 Properties systemProperties,
-                                 Properties userProperties)
+  private static Settings buildSettings(SettingsBuilder builder,
+                                        MavenServerSettings settings,
+                                        Properties systemProperties,
+                                        Properties userProperties)
     throws RemoteException {
     SettingsBuildingRequest settingsRequest = new DefaultSettingsBuildingRequest();
     settingsRequest.setGlobalSettingsFile(settings.getGlobalSettingsFile());
@@ -160,18 +183,258 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     return result;
   }
 
+  @SuppressWarnings({"unchecked"})
+  public <T> T getComponent(Class<T> clazz, String roleHint) {
+      try {
+          return (T) myContainer.lookup(clazz.getName(), roleHint);
+      } catch (ComponentLookupException e) {
+          throw new RuntimeException(e);
+      }
+  }
+
+  @SuppressWarnings({"unchecked"})
+  public <T> T getComponent(Class<T> clazz) {
+      try {
+          return (T) myContainer.lookup(clazz.getName());
+      } catch (ComponentLookupException e) {
+          throw new RuntimeException(e);
+      }
+  }
+
+  private ArtifactRepository createLocalRepository(MavenServerSettings.UpdatePolicy snapshotUpdatePolicy) {
+    ArtifactRepositoryLayout layout = getComponent(ArtifactRepositoryLayout.class, "default");
+    ArtifactRepositoryFactory factory = getComponent(ArtifactRepositoryFactory.class);
+
+    String url = myMavenSettings.getLocalRepository();
+    if (!url.startsWith("file:")) url = "file://" + url;
+
+    ArtifactRepository localRepository = factory.createArtifactRepository("local", url, layout, null, null);
+
+    boolean snapshotPolicySet = myMavenSettings.isOffline();
+    if (!snapshotPolicySet && snapshotUpdatePolicy == MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE) {
+      factory.setGlobalUpdatePolicy(ArtifactRepositoryPolicy.UPDATE_POLICY_ALWAYS);
+    }
+    factory.setGlobalChecksumPolicy(ArtifactRepositoryPolicy.CHECKSUM_POLICY_WARN);
+
+    return localRepository;
+  }
+
   @Override
   public void customize(@Nullable MavenWorkspaceMap workspaceMap,
                         boolean failOnUnresolvedDependency,
                         @NotNull MavenServerConsole console,
                         @NotNull MavenServerProgressIndicator indicator) throws RemoteException {
+
+    try {
+      //((CustomArtifactFactory)getComponent(ArtifactFactory.class)).customize();
+      //((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).customize();
+      //((CustomArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, failOnUnresolvedDependency);
+      //((CustomRepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
+      //((CustomMaven3WagonManager)getComponent(WagonManager.class)).customize(failOnUnresolvedDependency);
+
+      setConsoleAndIndicator(console, indicator);
+    }
+    catch (Exception e) {
+      throw rethrowException(e);
+    }
+  }
+
+  private void setConsoleAndIndicator(MavenServerConsole console, MavenServerProgressIndicator indicator) {
+    myConsoleWrapper.setWrappee(console);
+    myCurrentIndicator = indicator;
   }
 
   @NotNull
   @Override
   public MavenServerExecutionResult resolveProject(@NotNull File file, @NotNull Collection<String> activeProfiles)
     throws RemoteException, MavenServerProcessCanceledException {
-    throw new UnsupportedOperationException();
+    DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
+
+    MavenExecutionResult result = doResolveProject(file,
+                                                   new ArrayList<String>(activeProfiles),
+                                                   Arrays.<ResolutionListener>asList(listener));
+    return createExecutionResult(file, result, listener.getRootNode());
+  }
+
+  private static void setProfilesFromSettings(MavenExecutionRequest request, Settings settings) {
+    List<org.apache.maven.settings.Profile> settingsProfiles = settings.getProfiles();
+
+    request.setActiveProfiles(settings.getActiveProfiles());
+
+    if (settingsProfiles != null) {
+      for (org.apache.maven.settings.Profile rawProfile : settingsProfiles) {
+        Profile profile = SettingsUtils.convertFromSettingsProfile(rawProfile);
+        request.addProfile(profile);
+      }
+    }
+  }
+
+  @NotNull
+  public MavenExecutionResult doResolveProject(@NotNull final File file,
+                                               @NotNull final List<String> activeProfiles,
+                                               List<ResolutionListener> listeners) {
+    MavenExecutionRequest request = createRequest(file, activeProfiles, Collections.<String>emptyList(), Collections.<String>emptyList());
+
+    setProfilesFromSettings(request, myMavenSettings);
+
+    ProjectBuildingRequest config = request.getProjectBuildingRequest();
+
+    List<Exception> exceptions = new ArrayList<Exception>();
+
+    try {
+      // copied from DefaultMavenProjectBuilder.buildWithDependencies
+      ProjectBuilder builder = getComponent(ProjectBuilder.class);
+      ProjectBuildingResult buildingResult = builder.build(new File(file.getPath()), config);
+      //builder.calculateConcreteState(project, config, false);
+
+      MavenProject project = buildingResult.getProject();
+
+      // copied from DefaultLifecycleExecutor.execute
+      //findExtensions(project);
+      // end copied from DefaultLifecycleExecutor.execute
+
+      //Artifact projectArtifact = project.getArtifact();
+      //Map managedVersions = project.getManagedVersionMap();
+      //ArtifactMetadataSource metadataSource = getComponent(ArtifactMetadataSource.class);
+      project.setDependencyArtifacts(project.createArtifacts(getComponent(ArtifactFactory.class), null, null));
+      //
+      ArtifactResolver resolver = getComponent(ArtifactResolver.class);
+
+      ArtifactResolutionRequest resolutionRequest = new ArtifactResolutionRequest();
+      resolutionRequest.setArtifactDependencies(project.getDependencyArtifacts());
+      resolutionRequest.setArtifact(project.getArtifact());
+      resolutionRequest.setManagedVersionMap(project.getManagedVersionMap());
+      resolutionRequest.setLocalRepository(myLocalRepository);
+      resolutionRequest.setRemoteRepositories(project.getRemoteArtifactRepositories());
+      resolutionRequest.setListeners(listeners);
+
+      resolutionRequest.setResolveRoot(false);
+      resolutionRequest.setResolveTransitively(true);
+
+      ArtifactResolutionResult result = resolver.resolve(resolutionRequest);
+
+      project.setArtifacts(result.getArtifacts());
+      // end copied from DefaultMavenProjectBuilder.buildWithDependencies
+
+      return new MavenExecutionResult(project, exceptions);
+    }
+    catch (Exception e) {
+      return handleException(e);
+    }
+
+
+  }
+
+  private MavenExecutionRequest createRequest(File file, List<String> activeProfiles, List<String> inactiveProfiles, List<String> goals) {
+    //Properties executionProperties = myMavenSettings.getProperties();
+    //if (executionProperties == null) {
+    //  executionProperties = new Properties();
+    //}
+
+    MavenExecutionRequest result = new DefaultMavenExecutionRequest();
+    result.setLocalRepository(myLocalRepository);
+    result.setGoals(goals);
+    result.setBaseDirectory(file.getParentFile());
+
+
+    result.setPom(file);
+
+      return result;
+  }
+
+  private static MavenExecutionResult handleException(Throwable e) {
+      if (e instanceof RuntimeException) throw (RuntimeException) e;
+      if (e instanceof Error) throw (Error) e;
+
+      return new MavenExecutionResult(null, Collections.singletonList((Exception) e));
+  }
+
+  @NotNull
+  public File getLocalRepositoryFile() {
+      return new File(myLocalRepository.getBasedir());
+  }
+
+  @NotNull
+  private MavenServerExecutionResult createExecutionResult(File file, MavenExecutionResult result, DependencyNode rootNode)
+    throws RemoteException {
+    Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
+    THashSet<MavenId> unresolvedArtifacts = new THashSet<MavenId>();
+
+    validate(file, result.getExceptions(), problems, unresolvedArtifacts);
+
+    MavenProject mavenProject = result.getMavenProject();
+    if (mavenProject == null) return new MavenServerExecutionResult(null, problems, unresolvedArtifacts);
+
+    MavenModel model = MavenModelConverter.convertModel(mavenProject.getModel(),
+                                                         mavenProject.getCompileSourceRoots(),
+                                                         mavenProject.getTestCompileSourceRoots(),
+                                                         mavenProject.getArtifacts(),
+                                                         (rootNode == null ? Collections.emptyList() : rootNode.getChildren()),
+                                                         mavenProject.getExtensionArtifacts(),
+                                                         getLocalRepositoryFile());
+
+    RemoteNativeMavenProjectHolder holder = new RemoteNativeMavenProjectHolder(mavenProject);
+    try {
+      UnicastRemoteObject.exportObject(holder, 0);
+    }
+    catch (RemoteException e) {
+      throw new RuntimeException(e);
+    }
+
+    Collection<String> activatedProfiles = collectActivatedProfiles(mavenProject);
+
+    MavenServerExecutionResult.ProjectData data = new MavenServerExecutionResult.ProjectData(
+      model, MavenModelConverter.convertToMap(mavenProject.getModel()), holder, activatedProfiles);
+    return new MavenServerExecutionResult(data, problems, unresolvedArtifacts);
+  }
+
+  private static Collection<String> collectActivatedProfiles(MavenProject mavenProject) {
+    // for some reason project's active profiles do not contain parent's profiles - only local and settings'.
+    // parent's profiles do not contain settings' profiles.
+
+    List<Profile> profiles = new ArrayList<Profile>();
+    while (mavenProject != null) {
+      profiles.addAll(mavenProject.getActiveProfiles());
+      mavenProject = mavenProject.getParent();
+    }
+    return collectProfilesIds(profiles);
+  }
+
+
+  private void validate(File file,
+                        Collection<Exception> exceptions,
+                        Collection<MavenProjectProblem> problems,
+                        Collection<MavenId> unresolvedArtifacts) throws RemoteException {
+    for (Exception each : exceptions) {
+      Maven3ServerGlobals.getLogger().info(each);
+
+      if (each instanceof InvalidProjectModelException) {
+        ModelValidationResult modelValidationResult = ((InvalidProjectModelException)each).getValidationResult();
+        if (modelValidationResult != null) {
+          for (Object eachValidationProblem : modelValidationResult.getMessages()) {
+            problems.add(MavenProjectProblem.createStructureProblem(file.getPath(), (String)eachValidationProblem));
+          }
+        }
+        else {
+          problems.add(MavenProjectProblem.createStructureProblem(file.getPath(), each.getCause().getMessage()));
+        }
+      }
+      else if (each instanceof ProjectBuildingException) {
+        String causeMessage = each.getCause() != null ? each.getCause().getMessage() : each.getMessage();
+        problems.add(MavenProjectProblem.createStructureProblem(file.getPath(), causeMessage));
+      }
+      else {
+        problems.add(MavenProjectProblem.createStructureProblem(file.getPath(), each.getMessage()));
+      }
+    }
+    unresolvedArtifacts.addAll(retrieveUnresolvedArtifactIds());
+  }
+
+  private Set<MavenId> retrieveUnresolvedArtifactIds() {
+    Set<MavenId> result = new THashSet<MavenId>();
+    ((CustomMaven3WagonManager)getComponent(WagonManager.class)).getUnresolvedCollector().retrieveUnresolvedIds(result);
+    ((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).getUnresolvedCollector().retrieveUnresolvedIds(result);
+    return result;
   }
 
   @NotNull

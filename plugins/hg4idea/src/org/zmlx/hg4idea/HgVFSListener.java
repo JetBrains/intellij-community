@@ -15,14 +15,18 @@
  */
 package org.zmlx.hg4idea;
 
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.AppUIUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsBackgroundTask;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +65,7 @@ public class HgVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected void executeAdd(List<VirtualFile> addedFiles, Map<VirtualFile, VirtualFile> copyFromMap) {
+  protected void executeAdd(final List<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copyFromMap) {
     // if a file is copied from another repository, then 'hg add' should be used instead of 'hg copy'.
     // Thus here we remove such files from the copyFromMap.
     for (Iterator<Map.Entry<VirtualFile, VirtualFile>> it = copyFromMap.entrySet().iterator(); it.hasNext(); ) {
@@ -80,11 +84,50 @@ public class HgVFSListener extends VcsVFSListener {
         it.remove();
       }
     }
+    // exclude files which are ignored in .hgignore in background and execute adding after that
+    final Map<VirtualFile, Collection<VirtualFile>> sortedFiles = HgUtil.sortByHgRoots(myProject, addedFiles);
+    final HashSet<VirtualFile> untrackedFiles = new HashSet<VirtualFile>();
+    new Task.Backgroundable(myProject, HgVcsMessages.message("hg4idea.progress.checking.ignored"), false) {
+      @Override
+      public void run(@NotNull ProgressIndicator pi) {
+        for (Map.Entry<VirtualFile, Collection<VirtualFile>> e : sortedFiles.entrySet()) {
+          VirtualFile repo = e.getKey();
+          final Collection<VirtualFile> files = e.getValue();
+          pi.setText(repo.getPresentableUrl());
+          try {
+            untrackedFiles.addAll(new HgStatusCommand(myProject).getHgUntrackedFiles(repo, new ArrayList<VirtualFile>(files)));
+          }
+          catch (final VcsException ex) {
+            UIUtil.invokeLaterIfNeeded(new Runnable() {
+              public void run() {
+                ((HgVcs)myVcs).showMessageInConsole(ex.getMessage(), ConsoleViewContentType.ERROR_OUTPUT.getAttributes());
+              }
+            });
+          }
+        }
+        addedFiles.retainAll(untrackedFiles);
+        // select files to add if there is something to select
+        if (!addedFiles.isEmpty() || !copyFromMap.isEmpty()) {
 
-    // select files to add if there is something to select
-    if (!addedFiles.isEmpty() || !copyFromMap.isEmpty()) {
-      super.executeAdd(addedFiles, copyFromMap);
-    }
+          AppUIUtil.invokeLaterIfProjectAlive(myProject, new Runnable() {
+            @Override
+            public void run() {
+              originalExecuteAdd(addedFiles, copyFromMap);
+            }
+          });
+        }
+      }
+    }.queue();
+  }
+
+  /**
+   * The version of execute add before overriding
+   *
+   * @param addedFiles  the added files
+   * @param copiedFiles the copied files
+   */
+  private void originalExecuteAdd(List<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copiedFiles) {
+    super.executeAdd(addedFiles, copiedFiles);
   }
 
   @Override

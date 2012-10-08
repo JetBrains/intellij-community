@@ -21,12 +21,10 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 
-import java.lang.reflect.Method;
 import java.util.List;
 
 
@@ -34,16 +32,16 @@ public abstract class BaseInspection extends GroovySuppressableInspectionTool {
 
   private final String m_shortName = StringUtil.trimEnd(getClass().getSimpleName(), "Inspection");
 
-  protected static final String ASSIGNMENT_ISSUES = "Assignment issues";
-  protected static final String CONFUSING_CODE_CONSTRUCTS = "Potentially confusing code constructs";
-  protected static final String CONTROL_FLOW = "Control Flow";
-  protected static final String PROBABLE_BUGS = "Probable bugs";
-  protected static final String ERROR_HANDLING = "Error handling";
-  protected static final String GPATH = "GPath inspections";
-  protected static final String METHOD_METRICS = "Method Metrics";
-  protected static final String THREADING_ISSUES = "Threading issues";
-  protected static final String VALIDITY_ISSUES = "Validity issues";
-  protected static final String ANNOTATIONS_ISSUES = "Annotations verifying";
+  public static final String ASSIGNMENT_ISSUES = "Assignment issues";
+  public static final String CONFUSING_CODE_CONSTRUCTS = "Potentially confusing code constructs";
+  public static final String CONTROL_FLOW = "Control Flow";
+  public static final String PROBABLE_BUGS = "Probable bugs";
+  public static final String ERROR_HANDLING = "Error handling";
+  public static final String GPATH = "GPath inspections";
+  public static final String METHOD_METRICS = "Method Metrics";
+  public static final String THREADING_ISSUES = "Threading issues";
+  public static final String VALIDITY_ISSUES = "Validity issues";
+  public static final String ANNOTATIONS_ISSUES = "Annotations verifying";
 
   @NotNull
   @Override
@@ -97,17 +95,6 @@ public abstract class BaseInspection extends GroovySuppressableInspectionTool {
     final List<ProblemDescriptor> problems = problemsHolder.getResults();
     return problems.toArray(new ProblemDescriptor[problems.size()]);
 
-  }
-
-  public boolean hasQuickFix() {
-    final Method[] methods = getClass().getDeclaredMethods();
-    for (final Method method : methods) {
-      @NonNls final String methodName = method.getName();
-      if ("buildFix".equals(methodName)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   protected abstract BaseInspectionVisitor buildVisitor();

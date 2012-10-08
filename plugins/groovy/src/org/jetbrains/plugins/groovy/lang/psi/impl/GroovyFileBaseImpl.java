@@ -134,10 +134,6 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return myMethods;
   }
 
-  public GrVariableDeclaration[] getTopLevelVariableDeclarations() {
-    return findChildrenByClass(GrVariableDeclaration.class);
-  }
-
   public GrTopStatement[] getTopStatements() {
     return findChildrenByClass(GrTopStatement.class);
   }

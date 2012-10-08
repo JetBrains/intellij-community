@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
@@ -79,6 +80,12 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
         else {
           if (element instanceof GrLabel) {
             addInfo(element, LABEL);
+          }
+          else if (element instanceof GrCodeReferenceElement) {
+            PsiElement resolved = ((GrCodeReferenceElement)element).resolve();
+            if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
+              addInfo(element, ANNOTATION);
+            }
           }
           super.visitElement(element);
         }

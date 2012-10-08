@@ -61,7 +61,11 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
   }
 
   public boolean isSuppressedFor(final PsiElement element) {
-    return getElementToolSuppressedIn(element, getID()) != null;
+    return isElementToolSuppressedIn(element, getID());
+  }
+
+  public static boolean isElementToolSuppressedIn(final PsiElement place, final String toolId) {
+    return getElementToolSuppressedIn(place, toolId) != null;
   }
 
   @Nullable

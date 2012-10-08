@@ -6,6 +6,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.io.TestFileSystemBuilder;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.builders.impl.BuildDataPathsImpl;
+import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
@@ -125,10 +127,11 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(myModel);
       ModuleExcludeIndex index = new ModuleExcludeIndexImpl(myModel);
       IgnoredFileIndexImpl ignoredFileIndex = new IgnoredFileIndexImpl(myModel);
-      BuildRootIndexImpl buildRootIndex = new BuildRootIndexImpl(targetIndex, myModel, index, myDataStorageRoot, ignoredFileIndex);
-      BuildTargetsState targetsState = new BuildTargetsState(myDataStorageRoot, myModel, buildRootIndex);
+      BuildDataPaths dataPaths = new BuildDataPathsImpl(myDataStorageRoot);
+      BuildRootIndexImpl buildRootIndex = new BuildRootIndexImpl(targetIndex, myModel, index, dataPaths, ignoredFileIndex);
+      BuildTargetsState targetsState = new BuildTargetsState(dataPaths, myModel, buildRootIndex);
       ProjectTimestamps timestamps = new ProjectTimestamps(myDataStorageRoot, targetsState);
-      BuildDataManager dataManager = new BuildDataManager(myDataStorageRoot, targetsState, true);
+      BuildDataManager dataManager = new BuildDataManager(dataPaths, targetsState, true);
       return new ProjectDescriptor(myModel, new BuildFSState(true), timestamps, dataManager, buildLoggingManager, index, targetsState,
                                    targetIndex, buildRootIndex, ignoredFileIndex);
     }
@@ -186,7 +189,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     return module;
   }
 
-  protected void doRebuild() {
+  protected void rebuildAll() {
     ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), new JavaBuilderLoggerImpl()));
     try {
       CompileScope scope = new CompileScopeImpl(true, BuilderRegistry.getInstance().getTargetTypes(), Collections.<BuildTarget<?>>emptySet(), Collections.<BuildTarget<?>,Set<File>>emptyMap());

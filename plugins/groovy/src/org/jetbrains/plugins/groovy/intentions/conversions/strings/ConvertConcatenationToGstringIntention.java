@@ -55,7 +55,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,9 +73,8 @@ public class ConvertConcatenationToGstringIntention extends Intention {
   }
 
 
-  private static List<GrExpression> collectExpressions(final PsiFile file, final Editor editor, final int offset) {
-    int correctedOffset = GrIntroduceHandlerBase.correctOffset(editor, offset);
-    final PsiElement elementAtCaret = file.findElementAt(correctedOffset);
+  private static List<GrExpression> collectExpressions(final PsiFile file, final int offset) {
+    final PsiElement elementAtCaret = file.findElementAt(offset);
     final List<GrExpression> expressions = new ArrayList<GrExpression>();
 
     for (GrExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, GrExpression.class);
@@ -100,7 +98,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     final AccessToken accessToken = ReadAction.start();
     final List<GrExpression> expressions;
     try {
-      expressions = collectExpressions(file, editor, offset);
+      expressions = collectExpressions(file, offset);
     }
     finally {
       accessToken.finish();

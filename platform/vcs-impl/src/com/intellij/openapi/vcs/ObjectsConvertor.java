@@ -74,24 +74,24 @@ public class ObjectsConvertor {
   private ObjectsConvertor() {
   }
 
-  public static List<VirtualFile> fp2vf(final Collection<FilePath> in) {
+  public static List<VirtualFile> fp2vf(@NotNull final Collection<FilePath> in) {
     return convert(in, FILEPATH_TO_VIRTUAL);
   }
 
-  public static List<FilePath> vf2fp(final List<VirtualFile> in) {
+  public static List<FilePath> vf2fp(@NotNull final List<VirtualFile> in) {
     return convert(in, VIRTUAL_FILEPATH);
   }
 
-  public static List<File> fp2jiof(final Collection<FilePath> in) {
+  public static List<File> fp2jiof(@NotNull final Collection<FilePath> in) {
     return convert(in, FILEPATH_FILE);
   }
 
-  public static <T,S> List<S> convert(final Collection<T> in, final Convertor<T,S> convertor) {
+  public static <T,S> List<S> convert(@NotNull final Collection<T> in, final Convertor<T,S> convertor) {
     return convert(in, convertor, null);
   }
 
-  public static <T,U, S extends U> List<S> convert(final Collection<T> in, final Convertor<T,S> convertor,
-                                      @Nullable final NotNullFunction<U, Boolean> outFilter) {
+  public static <T,U, S extends U> List<S> convert(@NotNull final Collection<T> in, final Convertor<T,S> convertor,
+                                                   @Nullable final NotNullFunction<U, Boolean> outFilter) {
     final List<S> out = new ArrayList<S>();
     for (T t : in) {
       final S converted = convertor.convert(t);

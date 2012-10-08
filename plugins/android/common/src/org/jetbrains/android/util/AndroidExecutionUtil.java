@@ -50,7 +50,7 @@ public final class AndroidExecutionUtil {
     }
     else {
       if (code == 0) {
-        messages.get(AndroidCompilerMessageKind.INFORMATION).addAll(errMessages);
+        messages.get(AndroidCompilerMessageKind.WARNING).addAll(errMessages);
         errMessages.clear();
       }
       return messages;
@@ -86,6 +86,7 @@ public final class AndroidExecutionUtil {
       myMessages = new HashMap<AndroidCompilerMessageKind, List<String>>(2);
       myMessages.put(AndroidCompilerMessageKind.INFORMATION, information);
       myMessages.put(AndroidCompilerMessageKind.ERROR, error);
+      myMessages.put(AndroidCompilerMessageKind.WARNING, new ArrayList<String>());
     }
 
     public Map<AndroidCompilerMessageKind, List<String>> getMessages() {

@@ -15,8 +15,10 @@
  */
 package git4idea.repo;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import git4idea.GitBranch;
+import git4idea.PlatformFacade;
 import git4idea.tests.GitTest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +50,8 @@ public class GitRepositoryTest extends GitTest {
   @BeforeMethod
   public void setUp(Method testMethod) throws Exception {
     super.setUp(testMethod);
-    myRepository = GitRepositoryImpl.getFullInstance(myRepo.getVFRootDir(), myProject, myProject);
+    PlatformFacade facade = ServiceManager.getService(myProject, PlatformFacade.class);
+    myRepository = GitRepositoryImpl.getFullInstance(myRepo.getVFRootDir(), myProject, facade, myProject);
     myReader = new GitRepositoryReader(new File(VfsUtil.virtualToIoFile(myRepository.getRoot()), ".git"));
   }
 

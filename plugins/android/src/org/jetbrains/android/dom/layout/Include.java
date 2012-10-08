@@ -39,4 +39,8 @@ public interface Include extends LayoutElement {
   @AndroidResourceType("layout")
   @Convert(ResourceReferenceConverter.class)
   GenericAttributeValue<ResourceValue> getLayout();
+
+  @Convert(ResourceReferenceConverter.class)
+  @AndroidResourceType("style")
+  GenericAttributeValue<ResourceValue> getStyle();
 }

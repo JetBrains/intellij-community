@@ -32,6 +32,6 @@ public class JpsMavenJavaBuildingTest extends JpsBuildTestCase {
     FileUtil.copyDir(srcDir, workDir);
     addJdk("1.6");
     loadProject(workDir.getAbsolutePath());
-    doRebuild();
+    rebuildAll();
   }
 }

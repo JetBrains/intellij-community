@@ -152,7 +152,11 @@ public abstract class CreateClassActionBase implements IntentionAction {
   }
 
   @Nullable
-  protected PsiDirectory getTargetDirectory(Project project, String qualifier, String name, Module module, String title) {
+  protected PsiDirectory getTargetDirectory(@NotNull Project project,
+                                            @NotNull String qualifier,
+                                            @NotNull String name,
+                                            @Nullable Module module,
+                                            @NotNull String title) {
     CreateClassDialog dialog = new CreateClassDialog(project, title, name, qualifier, getType(), false, module) {
       @Override
       protected boolean reportBaseInSourceSelectionInTest() {

@@ -23,7 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.MembersGetter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
@@ -63,6 +62,6 @@ class GroovyMembersGetter extends MembersGetter {
   }
 
   private boolean isSuitableType(PsiType type) {
-    return type != null && TypesUtil.isAssignable(myExpectedType, type, (GroovyPsiElement)myPlace.getParent(), false);
+    return type != null && TypesUtil.isAssignableByMethodCallConversion(myExpectedType, type, myPlace.getManager(), myPlace.getResolveScope());
   }
 }

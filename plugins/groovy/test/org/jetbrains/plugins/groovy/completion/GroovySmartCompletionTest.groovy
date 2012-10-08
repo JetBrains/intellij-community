@@ -93,6 +93,37 @@ public class GroovySmartCompletionTest extends GroovyCompletionTestBase {
     assertOrderedEquals(myFixture.lookupElementStrings, 'SUBSTRING', 'createExpected', 'createSubGeneric', 'SUB_RAW')
   }
 
+  public void testGlobalStaticMembersForString() {
+    myFixture.configureByText('a.groovy', ''''\
+class Foo {
+  public static String string(){}
+  public static Comparator<String> comparator(){}
+  public static String foo(){}
+}
+
+String s = <caret>
+''')
+
+    myFixture.complete(CompletionType.SMART, 2)
+    assertOrderedEquals(myFixture.lookupElementStrings,
+                        'copyValueOf',
+                        'copyValueOf',
+                        'format',
+                        'format',
+                        'valueOf',
+                        'valueOf',
+                        'valueOf',
+                        'valueOf',
+                        'valueOf',
+                        'valueOf',
+                        'valueOf',
+                        'valueOf',
+                        'valueOf',
+                        'foo',
+                        'string',
+                        'toString')
+  }
+
   public void testGlobalListCreators() {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     myFixture.complete(CompletionType.SMART, 2);

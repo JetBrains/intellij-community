@@ -381,22 +381,14 @@ public abstract class ResourceManager {
     final FileBasedIndex index = FileBasedIndex.getInstance();
     final Map<VirtualFile, Set<String>> file2ids = new HashMap<VirtualFile, Set<String>>();
 
-    for (String key : index.getAllKeys(AndroidIdIndex.INDEX_ID, project)) {
-      if (!AndroidIdIndex.MARKER.equals(key)) {
-        if (index.getValues(AndroidIdIndex.INDEX_ID, key, scope).size() > 0) {
-
-          for (VirtualFile file : index.getContainingFiles(AndroidIdIndex.INDEX_ID, key, scope)) {
-            Set<String> ids = file2ids.get(file);
-
-            if (ids == null) {
-              ids = new HashSet<String>();
-              file2ids.put(file, ids);
-            }
-            ids.add(key);
-          }
-        }
+    index.processValues(AndroidIdIndex.INDEX_ID, AndroidIdIndex.MARKER, null, new FileBasedIndex.ValueProcessor<Set<String>>() {
+      @Override
+      public boolean process(VirtualFile file, Set<String> value) {
+        file2ids.put(file, value);
+        return true;
       }
-    }
+    }, scope);
+
     final Set<String> result = new HashSet<String>();
 
     for (VirtualFile resSubdir : getResourceSubdirsToSearchIds()) {

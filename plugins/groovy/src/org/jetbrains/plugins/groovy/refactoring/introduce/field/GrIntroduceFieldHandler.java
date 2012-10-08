@@ -79,21 +79,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
   @Override
   protected PsiClass findScope(GrExpression expression, GrVariable variable) {
     PsiElement place = expression == null ? variable : expression;
-    return ObjectUtils.assertNotNull(findScopeImpl(place));
-  }
-
-  @Nullable
-  private static PsiClass findScopeImpl(PsiElement place) {
-    final PsiClass scope = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class);
-    if (scope != null) return scope;
-    final PsiFile file = place.getContainingFile();
-    if (file instanceof GroovyFile) {
-      final PsiClass script = ((GroovyFile)file).getScriptClass();
-      if (script != null) {
-        return script;
-      }
-    }
-    return null;
+    return ObjectUtils.assertNotNull(PsiUtil.getContextClass(place));
   }
 
   @Override
@@ -102,7 +88,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
   }
 
   private static void checkContainingClass(PsiElement place) {
-    final PsiClass containingClass = findScopeImpl(place);
+    final PsiClass containingClass = PsiUtil.getContextClass(place);
     if (containingClass == null) throw new GrRefactoringError(GroovyRefactoringBundle.message("cannot.introduce.field.in.script"));
     if (containingClass.isInterface()) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("cannot.introduce.field.in.interface"));
@@ -144,7 +130,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
       if (targetClass instanceof GrTypeDefinition) {
         final PsiMethod[] methods = targetClass.getMethods();
         PsiElement anchor = getFirstElement(methods);
-        added = ((GrTypeDefinition)targetClass).addMemberDeclaration(declaration, anchor);
+        added = (GrVariableDeclaration)targetClass.addBefore(declaration, anchor);
       }
       else {
         assert targetClass instanceof GroovyScriptClass;
@@ -152,7 +138,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
         PsiElement[] elements = file.getMethods();
         if (elements.length == 0) elements = file.getStatements();
         final PsiElement anchor = getFirstElement(elements);
-        added = file.addMemberDeclaration(declaration, anchor);
+        added = (GrVariableDeclaration)file.addBefore(declaration, anchor);
 //        GrReferenceAdjuster.shortenReferences(added.getModifierList());
       }
     }

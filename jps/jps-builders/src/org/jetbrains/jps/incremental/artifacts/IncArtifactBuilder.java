@@ -9,6 +9,7 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
@@ -28,7 +29,7 @@ import java.util.*;
 /**
  * @author nik
  */
-public class IncArtifactBuilder extends TargetBuilder<ArtifactBuildTarget> {
+public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, ArtifactBuildTarget> {
   public static final String BUILDER_NAME = "artifacts";
 
   public IncArtifactBuilder() {
@@ -36,7 +37,9 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactBuildTarget> {
   }
 
   @Override
-  public void build(@NotNull ArtifactBuildTarget target, @NotNull CompileContext context) throws ProjectBuildException {
+  public void build(@NotNull ArtifactBuildTarget target,
+                    @NotNull CompileContext context,
+                    DirtyFilesHolder<ArtifactRootDescriptor, ArtifactBuildTarget> holder) throws ProjectBuildException {
     JpsArtifact artifact = target.getArtifact();
     if (StringUtil.isEmpty(artifact.getOutputPath())) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot build '" + artifact.getName() + "' artifact: output path is not specified"));

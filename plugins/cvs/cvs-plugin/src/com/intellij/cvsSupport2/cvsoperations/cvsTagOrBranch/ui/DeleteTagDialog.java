@@ -23,7 +23,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
 
 import javax.swing.*;
-import java.util.Arrays;
 
 /**
  * author: lesya
@@ -34,8 +33,8 @@ public class DeleteTagDialog extends CvsTagDialog {
   private JPanel myPanel;
   private JLabel myErrorLabel;
 
-  public DeleteTagDialog(final FilePath[] files, final Project project) {
-    TagsHelper.addChooseBranchAction(myTagName, Arrays.asList(files), project);
+  public DeleteTagDialog(FilePath[] files, Project project) {
+    TagsHelper.addChooseBranchAction(myTagName, TagsHelper.findVcsRoots(files, project), project);
     CvsFieldValidator.installOn(this, myTagName.getTextField(), myErrorLabel);
     setTitle(CvsBundle.message("action.name.delete.tag"));
     init();

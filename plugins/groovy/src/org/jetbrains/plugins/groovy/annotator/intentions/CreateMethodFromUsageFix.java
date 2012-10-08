@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -37,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
 /**
  * @author ven
@@ -80,7 +80,7 @@ public class CreateMethodFromUsageFix implements IntentionAction {
     TypeConstraint[] constraints = GroovyExpectedTypesProvider.calculateTypeConstraints((GrExpression)myRefExpression.getParent());
 
     final PsiGenerationInfo<PsiMethod> info = OverrideImplementUtil.createGenerationInfo(method);
-    info.insert(myTargetClass, findInsertionAnchor(info), true);
+    info.insert(myTargetClass, findInsertionAnchor(info), false);
     method = info.getPsiMember();
 
     final PsiElement context = PsiTreeUtil.getParentOfType(myRefExpression, PsiClass.class, PsiMethod.class);

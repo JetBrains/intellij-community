@@ -45,6 +45,8 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -53,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.CompleteReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -73,6 +76,9 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       or(psiElement(GrAssignmentExpression.class), psiElement(GrVariable.class))));
 
   static final ElementPattern<PsiElement> AFTER_NEW = psiElement().afterLeaf(psiElement().withText(PsiKeyword.NEW));
+
+  private static final ElementPattern<PsiElement> IN_ANNOTATION = psiElement().withParent(psiElement(GrReferenceExpression.class).withParent(GrAnnotationNameValuePair.class));
+
   private static final TObjectHashingStrategy<TypeConstraint> EXPECTED_TYPE_INFO_STRATEGY =
     new TObjectHashingStrategy<TypeConstraint>() {
       public int computeHashCode(final TypeConstraint object) {
@@ -92,6 +98,8 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
                                     @NotNull final CompletionResultSet result) {
         final PsiElement position = params.getPosition();
         if (position.getParent() instanceof GrLiteral) return;
+
+        if (isInDefaultAnnotationNameValuePair(position)) return;
 
         final Set<TypeConstraint> infos = getExpectedTypeInfos(params);
 
@@ -195,10 +203,59 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       }
     });
 
+    extend(CompletionType.SMART, IN_ANNOTATION, new CompletionProvider<CompletionParameters>() {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters params,
+                                    ProcessingContext context,
+                                    @NotNull final CompletionResultSet result) {
+        final PsiElement position = params.getPosition();
+
+        if (!isInDefaultAnnotationNameValuePair(position)) return;
+
+        final GrReferenceExpression reference = (GrReferenceExpression)position.getParent();
+        if (reference == null) return;
+
+        CompleteReferenceExpression.processRefInAnnotation(reference, result.getPrefixMatcher(), new Consumer<LookupElement>() {
+          @Override
+          public void consume(@Nullable LookupElement element) {
+            if (element != null) {
+              result.addElement(element);
+            }
+          }
+        });
+      }
+    });
+
+  }
+
+  /**
+   * we are here: @Abc(<caret>)
+   * where Abc does not have 'value' attribute
+   */
+  private static boolean isInDefaultAnnotationNameValuePair(PsiElement position) {
+    PsiElement parent = position.getParent();
+    if (parent instanceof GrReferenceExpression) {
+      PsiElement pparent = parent.getParent();
+      if (pparent instanceof GrAnnotationNameValuePair) {
+        PsiElement identifier = ((GrAnnotationNameValuePair)pparent).getNameIdentifierGroovy();
+        if (identifier == null) {
+          PsiElement ppparent = pparent.getParent().getParent();
+          if (ppparent instanceof GrAnnotation) {
+            PsiElement resolved = ((GrAnnotation)ppparent).getClassReference().resolve();
+            if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
+              PsiMethod[] values = ((PsiClass)resolved).findMethodsByName("value", false);
+              return values.length == 0;
+            }
+          }
+        }
+      }
+    }
+
+    return false;
   }
 
   static void addExpectedClassMembers(CompletionParameters params, final CompletionResultSet result) {
-    for (TypeConstraint info : getExpectedTypeInfos(params)) {
+    for (final TypeConstraint info : getExpectedTypeInfos(params)) {
       Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
         @Override
         public void consume(LookupElement element) {

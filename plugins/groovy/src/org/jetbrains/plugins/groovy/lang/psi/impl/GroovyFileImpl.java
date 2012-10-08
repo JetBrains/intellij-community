@@ -18,9 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
@@ -47,7 +45,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
@@ -402,33 +399,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
   }
 
-  public <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl, PsiElement anchorBefore)
-    throws IncorrectOperationException {
-    T result = (T)addBefore(decl, anchorBefore);
-    CodeStyleManager styleManager = CodeStyleManager.getInstance(getManager().getProject());
-    PsiElement parent = result.getContainingFile();
-    TextRange range = result.getTextRange();
-    if (checkRange(parent, range.getEndOffset())) {
-      styleManager.reformatRange(parent, range.getEndOffset() - 1, range.getEndOffset() + 1);
-    }
-    if (checkRange(parent, range.getStartOffset())) {
-      styleManager.reformatRange(parent, range.getStartOffset() - 1, range.getStartOffset() + 1);
-    }
-
-    return result;
-  }
-
   private static boolean checkRange(PsiElement parent, int offset) {
     return parent.getTextRange().contains(offset -1) && parent.getTextRange().contains(offset+1);
-  }
-
-  public void removeMemberDeclaration(GrMembersDeclaration decl) {
-    try {
-      deleteChildRange(decl, decl);
-    }
-    catch (IncorrectOperationException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   @Nullable

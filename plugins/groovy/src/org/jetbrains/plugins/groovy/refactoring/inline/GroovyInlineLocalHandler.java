@@ -133,6 +133,7 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
             }
           }
 
+          PsiElement old_cur = cur;
           if (controlFlowOwner instanceof GrClosableBlock) {
             cur = controlFlowOwner;
           }
@@ -140,6 +141,7 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
             PsiElement parent = controlFlowOwner.getParent();
             if (parent instanceof GrMember) cur = ((GrMember)parent).getContainingClass();
           }
+          if (cur == old_cur) break;
         }
         while (initializer == null);
       }

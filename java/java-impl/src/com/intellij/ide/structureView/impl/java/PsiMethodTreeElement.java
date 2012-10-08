@@ -31,12 +31,15 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.util.Function;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+
+import static com.intellij.psi.util.PsiFormatUtilBase.*;
 
 public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> implements SortableTreeElement, LocationPresentation {
   private String myLocation;
@@ -67,19 +70,17 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
         if (!(aClass instanceof PsiAnonymousClass) && !(aClass instanceof PsiTypeParameter)) {
           result.add(new JavaClassTreeElement(aClass, isInherited(), new HashSet<PsiClass>(Arrays.asList(aClass.getSupers()))));
         }
-
       }
     });
     return result;
   }
 
   public String getPresentableText() {
-    return StringUtil.replace(PsiFormatUtil.formatMethod(
-      getElement(),
-      PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME |
-                            PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_PARAMETERS,
-      PsiFormatUtilBase.SHOW_TYPE
-    ), ":", ": ");
+    String method = PsiFormatUtil.formatMethod(getElement(),
+                                               PsiSubstitutor.EMPTY,
+                                               SHOW_NAME | SHOW_TYPE | TYPE_AFTER | SHOW_PARAMETERS,
+                                               SHOW_TYPE);
+    return StringUtil.replace(method, ":", ": ");
   }
 
 
@@ -104,14 +105,15 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
         //some searchers (EJB) require indices. What shall we do?
       }
 
-      if (myLocation == null) {
+      if (StringUtil.isEmpty(myLocation)) {
         myLocation = "";
+      } else {
+        char upArrow = '\u2191';
+        myLocation = UIUtil.getLabelFont().canDisplay(upArrow) ? upArrow + myLocation : myLocation;
       }
     }
     return StringUtil.isEmpty(myLocation) ? null : myLocation;
   }
-
-
 
   @Override
   public TextAttributesKey getTextAttributesKey() {
@@ -139,7 +141,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
 
   @Override
   public String getLocationPrefix() {
-    return " \u2191";
+    return " ";
   }
 
   @Override

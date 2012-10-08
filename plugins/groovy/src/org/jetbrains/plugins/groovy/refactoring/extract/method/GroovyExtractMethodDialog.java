@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
@@ -81,7 +80,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   private ParameterTablePanel myParameterTablePanel;
   private final Project myProject;
 
-  public GroovyExtractMethodDialog(InitialInfo info, GrMemberOwner owner) {
+  public GroovyExtractMethodDialog(InitialInfo info, PsiClass owner) {
     super(info.getProject(), true);
     myProject = info.getProject();
     myHelper = new ExtractMethodInfoHelper(info, "", owner, false);
@@ -260,7 +259,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
 
   private static boolean validateMethod(GrMethod method, ExtractMethodInfoHelper helper) {
     ArrayList<String> conflicts = new ArrayList<String>();
-    GrMemberOwner owner = helper.getOwner();
+    PsiClass owner = helper.getOwner();
     PsiMethod[] methods = ArrayUtil.mergeArrays(owner.getAllMethods(), new PsiMethod[]{method}, PsiMethod.ARRAY_FACTORY);
     final Map<PsiMethod, List<PsiMethod>> map = DuplicatesUtil.factorDuplicates(methods, new TObjectHashingStrategy<PsiMethod>() {
       public int computeHashCode(PsiMethod method) {

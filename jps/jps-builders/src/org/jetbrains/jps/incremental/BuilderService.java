@@ -20,7 +20,7 @@ public abstract class BuilderService {
   }
 
   @NotNull
-  public List<? extends TargetBuilder<?>> createBuilders() {
+  public List<? extends TargetBuilder<?,?>> createBuilders() {
     return Collections.emptyList();
   }
 }

@@ -29,7 +29,6 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.editor.HandlerUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,7 +69,7 @@ public class DumpGroovyControlFlowAction extends AnAction implements DumbAware {
   }
 
   private static List<GrControlFlowOwner> collectControlFlowOwners(final PsiFile file, final Editor editor, final int offset) {
-    final PsiElement elementAtCaret = file.findElementAt(GrIntroduceHandlerBase.correctOffset(editor, offset));
+    final PsiElement elementAtCaret = file.findElementAt(offset);
     final List<GrControlFlowOwner> result = new ArrayList<GrControlFlowOwner>();
 
     for (GrControlFlowOwner owner = ControlFlowUtils.findControlFlowOwner(elementAtCaret);

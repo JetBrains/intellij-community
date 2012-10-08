@@ -35,8 +35,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class ParameterTableModelBase<P extends ParameterInfo> extends ListTableModel<ParameterTableModelItemBase<P>>
-  implements RowEditableTableModel {
+public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem extends ParameterTableModelItemBase<P>> extends ListTableModel<TableItem> implements RowEditableTableModel {
 
   protected final PsiElement myTypeContext;
   protected final PsiElement myDefaultValueContext;
@@ -49,14 +48,14 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
     myDefaultValueContext = defaultValueContext;
   }
 
-  protected abstract ParameterTableModelItemBase<P> createRowItem(@Nullable P parameterInfo);
+  protected abstract TableItem createRowItem(@Nullable P parameterInfo);
 
   public void addRow() {
     addRow(createRowItem(null));
   }
 
   public void setParameterInfos(List<P> parameterInfos) {
-    List<ParameterTableModelItemBase<P>> items = new ArrayList<ParameterTableModelItemBase<P>>(parameterInfos.size());
+    List<TableItem> items = new ArrayList<TableItem>(parameterInfos.size());
     for (P parameterInfo : parameterInfos) {
       items.add(createRowItem(parameterInfo));
     }
@@ -73,8 +72,8 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
     fireTableCellUpdated(rowIndex, columnIndex); // to update signature
   }
 
-  protected static abstract class ColumnInfoBase<P extends ParameterInfo, Aspect>
-    extends ColumnInfo<ParameterTableModelItemBase<P>, Aspect> {
+  protected static abstract class ColumnInfoBase<P extends ParameterInfo, TableItem extends ParameterTableModelItemBase<P>, Aspect>
+    extends ColumnInfo<TableItem, Aspect> {
     private TableCellRenderer myRenderer;
     private TableCellEditor myEditor;
 
@@ -83,7 +82,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
     }
 
     @Override
-    public final TableCellEditor getEditor(ParameterTableModelItemBase<P> o) {
+    public final TableCellEditor getEditor(TableItem o) {
       if (myEditor == null) {
         myEditor = doCreateEditor(o);
       }
@@ -91,7 +90,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
     }
 
     @Override
-    public final TableCellRenderer getRenderer(ParameterTableModelItemBase<P> item) {
+    public final TableCellRenderer getRenderer(TableItem item) {
       if (myRenderer == null) {
         final TableCellRenderer original = doCreateRenderer(item);
         myRenderer = new TableCellRenderer() {
@@ -119,12 +118,12 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
       return myRenderer;
     }
 
-    protected abstract TableCellRenderer doCreateRenderer(ParameterTableModelItemBase<P> item);
+    protected abstract TableCellRenderer doCreateRenderer(TableItem item);
 
-    protected abstract TableCellEditor doCreateEditor(ParameterTableModelItemBase<P> item);
+    protected abstract TableCellEditor doCreateEditor(TableItem item);
   }
 
-  protected static class TypeColumn<P extends ParameterInfo> extends ColumnInfoBase<P, PsiCodeFragment> {
+  protected static class TypeColumn<P extends ParameterInfo, TableItem extends ParameterTableModelItemBase<P>> extends ColumnInfoBase<P, TableItem, PsiCodeFragment> {
     protected final Project myProject;
     private final FileType myFileType;
 
@@ -139,25 +138,25 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
     }
 
     @Override
-    public PsiCodeFragment valueOf(ParameterTableModelItemBase<P> item) {
+    public PsiCodeFragment valueOf(TableItem item) {
       return item.typeCodeFragment;
     }
 
     @Override
-    public boolean isCellEditable(ParameterTableModelItemBase<P> pParameterTableModelItemBase) {
+    public boolean isCellEditable(TableItem pParameterTableModelItemBase) {
       return true;
     }
 
-    public TableCellRenderer doCreateRenderer(ParameterTableModelItemBase<P> pParameterTableModelItemBase) {
+    public TableCellRenderer doCreateRenderer(TableItem pParameterTableModelItemBase) {
       return new CodeFragmentTableCellRenderer(myProject, myFileType);
     }
 
-    public TableCellEditor doCreateEditor(ParameterTableModelItemBase<P> o) {
+    public TableCellEditor doCreateEditor(TableItem o) {
       return new CodeFragmentTableCellEditorBase(myProject, myFileType);
     }
   }
 
-  protected static class NameColumn<P extends ParameterInfo> extends ColumnInfoBase<P, String> {
+  protected static class NameColumn<P extends ParameterInfo, TableItem extends ParameterTableModelItemBase<P>> extends ColumnInfoBase<P, TableItem, String> {
     private final Project myProject;
 
     public NameColumn(Project project) {
@@ -170,21 +169,21 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
     }
 
     @Override
-    public String valueOf(ParameterTableModelItemBase<P> item) {
+    public String valueOf(TableItem item) {
       return item.parameter.getName();
     }
 
     @Override
-    public void setValue(ParameterTableModelItemBase<P> item, String value) {
+    public void setValue(TableItem item, String value) {
       item.parameter.setName(value);
     }
 
     @Override
-    public boolean isCellEditable(ParameterTableModelItemBase<P> pParameterTableModelItemBase) {
+    public boolean isCellEditable(TableItem pParameterTableModelItemBase) {
       return true;
     }
 
-    public TableCellRenderer doCreateRenderer(ParameterTableModelItemBase<P> item) {
+    public TableCellRenderer doCreateRenderer(TableItem item) {
       return new ColoredTableCellRenderer() {
         public void customizeCellRenderer(JTable table, Object value,
                                           boolean isSelected, boolean hasFocus, int row, int column) {
@@ -194,12 +193,12 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
       };
     }
 
-    public TableCellEditor doCreateEditor(ParameterTableModelItemBase<P> o) {
+    public TableCellEditor doCreateEditor(TableItem o) {
       return new StringTableCellEditor(myProject);
     }
   }
 
-  protected static class DefaultValueColumn<P extends ParameterInfo> extends ColumnInfoBase<P, PsiCodeFragment> {
+  protected static class DefaultValueColumn<P extends ParameterInfo, TableItem extends ParameterTableModelItemBase<P>> extends ColumnInfoBase<P, TableItem, PsiCodeFragment> {
     private final Project myProject;
     private final FileType myFileType;
 
@@ -214,50 +213,50 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
     }
 
     @Override
-    public boolean isCellEditable(ParameterTableModelItemBase<P> item) {
+    public boolean isCellEditable(TableItem item) {
       return !item.isEllipsisType() && item.parameter.getOldIndex() == -1;
     }
 
     @Override
-    public PsiCodeFragment valueOf(ParameterTableModelItemBase<P> item) {
+    public PsiCodeFragment valueOf(TableItem item) {
       return item.defaultValueCodeFragment;
     }
 
-    public TableCellRenderer doCreateRenderer(ParameterTableModelItemBase<P> item) {
+    public TableCellRenderer doCreateRenderer(TableItem item) {
       return new CodeFragmentTableCellRenderer(myProject, myFileType);
     }
 
-    public TableCellEditor doCreateEditor(ParameterTableModelItemBase<P> item) {
+    public TableCellEditor doCreateEditor(TableItem item) {
       return new CodeFragmentTableCellEditorBase(myProject, myFileType);
     }
   }
 
-  protected static class AnyVarColumn<P extends ParameterInfo> extends ColumnInfoBase<P, Boolean> {
+  protected static class AnyVarColumn<P extends ParameterInfo, TableItem extends ParameterTableModelItemBase<P>> extends ColumnInfoBase<P, TableItem, Boolean> {
 
     public AnyVarColumn() {
       super(RefactoringBundle.message("column.name.any.var"));
     }
 
     @Override
-    public boolean isCellEditable(ParameterTableModelItemBase<P> item) {
+    public boolean isCellEditable(TableItem item) {
       return !item.isEllipsisType() && item.parameter.getOldIndex() == -1;
     }
 
     @Override
-    public Boolean valueOf(ParameterTableModelItemBase<P> item) {
+    public Boolean valueOf(TableItem item) {
       return item.parameter.isUseAnySingleVariable();
     }
 
     @Override
-    public void setValue(ParameterTableModelItemBase<P> item, Boolean value) {
+    public void setValue(TableItem item, Boolean value) {
       item.parameter.setUseAnySingleVariable(value);
     }
 
-    public TableCellRenderer doCreateRenderer(ParameterTableModelItemBase<P> item) {
+    public TableCellRenderer doCreateRenderer(TableItem item) {
       return new BooleanTableCellRenderer();
     }
 
-    public TableCellEditor doCreateEditor(ParameterTableModelItemBase<P> item) {
+    public TableCellEditor doCreateEditor(TableItem item) {
       return new BooleanTableCellEditor(false);
     }
 

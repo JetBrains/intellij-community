@@ -36,7 +36,6 @@ import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.impl.UsagePreviewPanel;
-import com.intellij.util.ui.Table;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -134,9 +133,11 @@ public class AutomaticRenamingDialog extends DialogWrapper {
 
   protected void handleChanges() {
     final int selectedRow = myTable.getSelectedRow();
-    final boolean validName = RenameUtil.isValidName(myProject, myRenames[selectedRow], myNewNames[selectedRow]);
-    getOKAction().setEnabled(validName);
-    setErrorText(validName ? null : "Identifier \'" + myNewNames[selectedRow] + "\' is invalid");
+    if (selectedRow > -1) {
+      final boolean validName = RenameUtil.isValidName(myProject, myRenames[selectedRow], myNewNames[selectedRow]);
+      getOKAction().setEnabled(validName);
+      setErrorText(validName ? null : "Identifier \'" + myNewNames[selectedRow] + "\' is invalid");
+    }
   }
 
   protected JComponent createCenterPanel() {

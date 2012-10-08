@@ -51,7 +51,7 @@ import javax.swing.*;
 public class GrMethodMayBeStaticInspection extends BaseInspection {
   public boolean myOnlyPrivateOrFinal = false;
   public boolean myIgnoreEmptyMethods = true;
-  public boolean myIgnoreInstanceRefsInClosure = true;
+  public boolean myIgnoreInstanceRefsInClosure = false;
 
   @Override
   public JComponent createOptionsPanel() {

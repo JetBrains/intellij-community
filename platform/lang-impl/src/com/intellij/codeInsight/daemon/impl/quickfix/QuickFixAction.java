@@ -33,6 +33,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,15 +46,15 @@ import java.util.List;
 public final class QuickFixAction {
   private QuickFixAction() { }
 
-  public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, HighlightDisplayKey key) {
+  public static void registerQuickFixAction(@Nullable HighlightInfo info, @Nullable IntentionAction action, @Nullable HighlightDisplayKey key) {
     registerQuickFixAction(info, null, action, key);
   }
 
-  public static void registerQuickFixAction(HighlightInfo info, IntentionAction action) {
+  public static void registerQuickFixAction(@Nullable HighlightInfo info, @Nullable IntentionAction action) {
     registerQuickFixAction(info, null, action);
   }
 
-  public static void registerQuickFixActions(final HighlightInfo info, final Collection<? extends IntentionAction> actions) {
+  public static void registerQuickFixActions(@Nullable final HighlightInfo info, @NotNull final Collection<? extends IntentionAction> actions) {
     for (IntentionAction action : actions) {
       registerQuickFixAction(info, action);
     }
@@ -61,16 +62,16 @@ public final class QuickFixAction {
 
   /** This is used by TeamCity plugin */
   @Deprecated
-  public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, List<IntentionAction> options, String displayName) {
+  public static void registerQuickFixAction(@Nullable HighlightInfo info, @Nullable IntentionAction action, @Nullable List<IntentionAction> options, @Nullable String displayName) {
     doRegister(info, action, options, displayName, null, null);
   }
 
-  private static void doRegister(HighlightInfo info,
-                                 IntentionAction action,
-                                 List<IntentionAction> options,
-                                 String displayName,
-                                 TextRange fixRange,
-                                 HighlightDisplayKey key) {
+  private static void doRegister(@Nullable HighlightInfo info,
+                                 @Nullable IntentionAction action,
+                                 @Nullable List<IntentionAction> options,
+                                 @Nullable String displayName,
+                                 @Nullable TextRange fixRange,
+                                 @Nullable HighlightDisplayKey key) {
     if (info == null || action == null) return;
     if (fixRange == null) fixRange = new TextRange(info.startOffset, info.endOffset);
     if (info.quickFixActionRanges == null) {
@@ -85,11 +86,11 @@ public final class QuickFixAction {
     }
   }
 
-  public static void registerQuickFixAction(HighlightInfo info, TextRange fixRange, IntentionAction action, final HighlightDisplayKey key) {
+  public static void registerQuickFixAction(@Nullable HighlightInfo info, @Nullable TextRange fixRange, @Nullable IntentionAction action, @Nullable final HighlightDisplayKey key) {
     doRegister(info, action, null, HighlightDisplayKey.getDisplayNameByKey(key), fixRange, key);
   }
 
-  public static void registerQuickFixAction(HighlightInfo info, TextRange fixRange, IntentionAction action) {
+  public static void registerQuickFixAction(@Nullable HighlightInfo info, @Nullable TextRange fixRange, @Nullable IntentionAction action) {
     doRegister(info, action, null, null, fixRange, null);
   }
 

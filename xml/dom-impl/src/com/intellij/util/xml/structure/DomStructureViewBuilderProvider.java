@@ -25,10 +25,12 @@ import com.intellij.util.xml.DomService;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * This SHOULD NOT be subclassed!
+ *
  * @author Dmitry Avdeev
  *         Date: 6/7/12
  */
-public class DomStructureViewBuilderProvider implements XmlStructureViewBuilderProvider {
+public final class DomStructureViewBuilderProvider implements XmlStructureViewBuilderProvider {
 
   @Override
   public StructureViewBuilder createStructureViewBuilder(@NotNull XmlFile file) {
@@ -38,7 +40,7 @@ public class DomStructureViewBuilderProvider implements XmlStructureViewBuilderP
     return null;
   }
 
-  protected static final Function<DomElement,DomService.StructureViewMode> DESCRIPTOR =
+  public static final Function<DomElement,DomService.StructureViewMode> DESCRIPTOR =
     new Function<DomElement, DomService.StructureViewMode>() {
       @Override
       public DomService.StructureViewMode fun(DomElement element) {
