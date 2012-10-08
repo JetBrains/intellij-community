@@ -76,6 +76,7 @@ target(name: "compile", description: "Compile module python") {
       include(name: "pluginSrc")
       include(name: "pydevSrc")
       include(name: "openapi/src")
+      include(name: "psi-api/src")
     }
     dirset(dir: "${pluginHome}/../ultimate/ultimate-verifier") {
       include(name: "src")
