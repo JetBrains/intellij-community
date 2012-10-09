@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.gant
 
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -44,11 +43,10 @@ public class GantReferenceCompletionTest extends LightCodeInsightFixtureTestCase
 
   void checkVariants(String text, String... items) {
     complete text
-    assertSameElements myFixture.lookupElementStrings, items
+    assert myFixture.lookupElementStrings.containsAll(items as List)
   }
 
   public void testDep() {
-    CamelHumpMatcher.forceStartMatching(testRootDisposable);
     checkVariants """
 target(aaa: "") {
     dep<caret>
@@ -71,7 +69,6 @@ target(aaa: "") {
   }
 
   public void testInclude() {
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     checkVariants "inc<caret>", "include", "includeTool", "includeTargets"
   }
 
@@ -123,7 +120,6 @@ ant.zip {
   }
   
   public void testTagsInsideTagsInGantTarget() throws Exception {
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     checkVariants """
 target(aaa: "") {
   zip {

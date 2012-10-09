@@ -1,6 +1,4 @@
-package org.jetbrains.plugins.groovy.gant;
-
-
+package org.jetbrains.plugins.groovy.gant
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -15,8 +13,6 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.util.SdkHomeConfigurable.SdkHomeBean
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
-
 /**
  * @author peter
  */
@@ -61,10 +57,9 @@ public class StandaloneGantTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testDep() throws Throwable {
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     checkVariants """
 target(aaa: "") {
-    dep<caret>
+    depend<caret>
 }
 """, "depends", "dependset"
   }
