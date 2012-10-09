@@ -233,10 +233,24 @@ public def layoutCommunityPlugins(String home) {
       jar("maven2-server-impl.jar") {
         module("maven2-server-impl")
       }
+      jar("maven3-server-impl.jar") {
+        module("maven3-server-impl")
+      }
+
+      dir("maven3") {
+        fileset(dir: "$home/plugins/maven/maven3-server-impl/lib") {include(name: "maven-dependency-tree-*.jar")}
+        fileset(dir: "$home/plugins/maven/maven3-server-impl/lib") {include(name: "nexus-indexer-*.jar")}
+        fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/lib") {include(name: "*.jar")}
+        fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/boot")
+      }
+
+      dir("maven2") {
+        fileset(dir: "$home/lib/") { include(name: "jaxb*.jar")}
+        fileset(dir: "$home/plugins/maven/maven2-server-impl/lib")
+      }
+
       fileset(dir: "$home/plugins/maven/lib")
-      fileset(dir: "$home/lib/") { include(name: "jaxb*.jar")}
       fileset(dir: "$home/plugins/maven/maven-server-api/lib")
-      fileset(dir: "$home/plugins/maven/maven2-server-impl/lib")
     }
 
     layoutPlugin("gradle") {
