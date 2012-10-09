@@ -1,4 +1,4 @@
-package com.intellij.tasks.connector;
+package com.intellij.tasks.generic;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.config.BaseRepositoryEditor;
@@ -13,7 +13,7 @@ import javax.swing.*;
  * User: Evgeny.Zakrevsky
  * Date: 10/4/12
  */
-public class WebRepositoryEditor extends BaseRepositoryEditor<WebRepository> {
+public class GenericWebRepositoryEditor extends BaseRepositoryEditor<GenericWebRepository> {
   private JBLabel myTasksListURLLabel;
   private JBLabel myTaskPatternLabel;
   private JTextField myTasksListURLText;
@@ -21,7 +21,9 @@ public class WebRepositoryEditor extends BaseRepositoryEditor<WebRepository> {
   private JBLabel myLoginURLLabel;
   private JTextField myLoginURLText;
 
-  public WebRepositoryEditor(final Project project, final WebRepository repository, final Consumer<WebRepository> changeListener) {
+  public GenericWebRepositoryEditor(final Project project,
+                                    final GenericWebRepository repository,
+                                    final Consumer<GenericWebRepository> changeListener) {
     super(project, repository, changeListener);
     myUrlLabel.setText("{serverUrl}:");
     myUsernameLabel.setText("{username}:");
@@ -57,10 +59,10 @@ public class WebRepositoryEditor extends BaseRepositoryEditor<WebRepository> {
     installListener(myLoginURLText);
     return FormBuilder.createFormBuilder().setAlignLabelOnRight(true)
       .addLabeledComponent(myLoginURLLabel, myLoginURLText)
-      .addTooltip("Available placeholders: " + WebRepository.SERVER_URL_PLACEHOLDER + ", " +
-                  WebRepository.USERNAME_PLACEHOLDER + ", " + WebRepository.PASSWORD_PLACEHOLDER)
+      .addTooltip("Available placeholders: " + GenericWebRepository.SERVER_URL_PLACEHOLDER + ", " +
+                  GenericWebRepository.USERNAME_PLACEHOLDER + ", " + GenericWebRepository.PASSWORD_PLACEHOLDER)
       .addLabeledComponent(myTasksListURLLabel, myTasksListURLText)
-      .addTooltip("Available placeholders: " + WebRepository.SERVER_URL_PLACEHOLDER)
+      .addTooltip("Available placeholders: " + GenericWebRepository.SERVER_URL_PLACEHOLDER)
       .addLabeledComponent(myTaskPatternLabel, myTaskPatternText)
       .addTooltip("Task pattern should be a regexp with two matching group: ({id}.+?) and ({summary}.+?)")
       .getPanel();

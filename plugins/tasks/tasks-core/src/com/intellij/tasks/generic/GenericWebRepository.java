@@ -1,4 +1,4 @@
-package com.intellij.tasks.connector;
+package com.intellij.tasks.generic;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.tasks.Task;
@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
  * Date: 10/4/12
  */
 @Tag("Web")
-public class WebRepository extends BaseRepositoryImpl {
+public class GenericWebRepository extends BaseRepositoryImpl {
   private String myTasksListURL;
   private String myTaskPattern;
   private String myLoginURL;
@@ -36,14 +36,14 @@ public class WebRepository extends BaseRepositoryImpl {
   final static String PAGE_PLACEHOLDER = "{page}";
 
   @SuppressWarnings({"UnusedDeclaration"})
-  public WebRepository() {
+  public GenericWebRepository() {
   }
 
-  public WebRepository(final TaskRepositoryType type) {
+  public GenericWebRepository(final TaskRepositoryType type) {
     super(type);
   }
 
-  public WebRepository(final WebRepository other) {
+  public GenericWebRepository(final GenericWebRepository other) {
     super(other);
     myTasksListURL = other.getTasksListURL();
     myTaskPattern = other.getTaskPattern();
@@ -75,7 +75,7 @@ public class WebRepository extends BaseRepositoryImpl {
     while (matcher.find()) {
       final String id = matcher.group(placeholders.indexOf(ID_PLACEHOLDER) + 1);
       final String summary = matcher.group(placeholders.indexOf(SUMMARY_PLACEHOLDER) + 1);
-      tasks.add(new WebTask(id, summary));
+      tasks.add(new GenericWebTask(id, summary));
     }
 
     tasks = TaskSearchSupport.filterTasks(query != null ? query : "", tasks);
@@ -129,7 +129,7 @@ public class WebRepository extends BaseRepositoryImpl {
 
   @Override
   public BaseRepository clone() {
-    return new WebRepository(this);
+    return new GenericWebRepository(this);
   }
 
   public String getTasksListURL() {
@@ -151,9 +151,9 @@ public class WebRepository extends BaseRepositoryImpl {
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof WebRepository)) return false;
+    if (!(o instanceof GenericWebRepository)) return false;
     if (!super.equals(o)) return false;
-    WebRepository that = (WebRepository)o;
+    GenericWebRepository that = (GenericWebRepository)o;
     if (!Comparing.equal(getTasksListURL(), that.getTasksListURL())) return false;
     if (!Comparing.equal(getTaskPattern(), that.getTaskPattern())) return false;
     if (!Comparing.equal(getLoginURL(), that.getLoginURL())) return false;

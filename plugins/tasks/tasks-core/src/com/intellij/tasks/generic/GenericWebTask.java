@@ -1,4 +1,4 @@
-package com.intellij.tasks.connector;
+package com.intellij.tasks.generic;
 
 import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
@@ -10,11 +10,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Date;
 
-public class WebTask extends Task {
+public class GenericWebTask extends Task {
   private final String myId;
   private final String myDescription;
 
-  public WebTask(final String id, final String description) {
+  public GenericWebTask(final String id, final String description) {
     myId = id;
     myDescription = description;
   }

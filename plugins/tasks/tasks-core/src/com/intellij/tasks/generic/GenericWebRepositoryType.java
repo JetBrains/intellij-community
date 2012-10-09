@@ -1,4 +1,4 @@
-package com.intellij.tasks.connector;
+package com.intellij.tasks.generic;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
@@ -14,11 +14,11 @@ import javax.swing.*;
  * User: Evgeny.Zakrevsky
  * Date: 10/4/12
  */
-public class WebRepositoryType extends BaseRepositoryType<WebRepository> {
+public class GenericWebRepositoryType extends BaseRepositoryType<GenericWebRepository> {
   @NotNull
   @Override
   public String getName() {
-    return "Web Repository";
+    return "Generic Web Repository";
   }
 
   @Override
@@ -29,20 +29,20 @@ public class WebRepositoryType extends BaseRepositoryType<WebRepository> {
   @NotNull
   @Override
   public TaskRepository createRepository() {
-    return new WebRepository(this);
+    return new GenericWebRepository(this);
   }
 
   @Override
-  public Class<WebRepository> getRepositoryClass() {
-    return WebRepository.class;
+  public Class<GenericWebRepository> getRepositoryClass() {
+    return GenericWebRepository.class;
   }
 
   @NotNull
   @Override
-  public TaskRepositoryEditor createEditor(final WebRepository repository,
+  public TaskRepositoryEditor createEditor(final GenericWebRepository repository,
                                            final Project project,
-                                           final Consumer<WebRepository> changeListener) {
-    return new WebRepositoryEditor(project, repository, changeListener);
+                                           final Consumer<GenericWebRepository> changeListener) {
+    return new GenericWebRepositoryEditor(project, repository, changeListener);
   }
 
   @Override
