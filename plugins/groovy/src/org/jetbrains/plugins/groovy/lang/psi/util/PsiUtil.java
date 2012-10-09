@@ -64,6 +64,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -1333,5 +1334,16 @@ public class PsiUtil {
   public static boolean isCompileStatic(PsiElement e) {
     PsiMember containingMember = PsiTreeUtil.getParentOfType(e, PsiMember.class, false);
     return containingMember != null && GroovyPsiManager.getInstance(containingMember.getProject()).isCompileStatic(containingMember);
+  }
+
+  @Nullable
+  public static PsiType extractIteratedType(GrForInClause forIn) {
+    GrExpression iterated = forIn.getIteratedExpression();
+    if (iterated == null) return null;
+    PsiType type = iterated.getType();
+    if (type == null) return null;
+
+    if (type instanceof PsiArrayType) return ((PsiArrayType)type).getComponentType();
+    return com.intellij.psi.util.PsiUtil.extractIterableTypeParameter(type, true);
   }
 }

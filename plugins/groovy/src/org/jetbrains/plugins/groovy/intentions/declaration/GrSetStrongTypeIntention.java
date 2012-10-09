@@ -23,7 +23,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +81,7 @@ public class GrSetStrongTypeIntention extends Intention {
     ArrayList<TypeConstraint> types = new ArrayList<TypeConstraint>();
 
     if (parent.getParent() instanceof GrForInClause) {
-      types.add(SupertypeConstraint.create(extractIterableTypeParameter((GrForInClause)parent.getParent())));
+      types.add(SupertypeConstraint.create(PsiUtil.extractIteratedType((GrForInClause)parent.getParent())));
     }
     else {
       for (GrVariable variable : variables) {
@@ -182,7 +185,7 @@ public class GrSetStrongTypeIntention extends Intention {
           }
         }
         else if (pparent instanceof GrForInClause) {
-          return extractIterableTypeParameter((GrForInClause)pparent) != null;
+          return PsiUtil.extractIteratedType((GrForInClause)pparent) != null;
         }
         else {
           return isVarDeclaredWithInitializer((GrVariable)parent);
@@ -206,17 +209,6 @@ public class GrSetStrongTypeIntention extends Intention {
               element == ((GrVariable)parent).getNameIdentifierGroovy();
       }
     };
-  }
-
-  @Nullable
-  private PsiType extractIterableTypeParameter(GrForInClause forIn) {
-    GrExpression iterated = forIn.getIteratedExpression();
-    if (iterated == null) return null;
-    PsiType type = iterated.getType();
-    if (type == null) return null;
-
-    if (type instanceof PsiArrayType) return ((PsiArrayType)type).getComponentType();
-    return com.intellij.psi.util.PsiUtil.extractIterableTypeParameter(type, true);
   }
 
   private static boolean isVarDeclaredWithInitializer(GrVariable variable) {
