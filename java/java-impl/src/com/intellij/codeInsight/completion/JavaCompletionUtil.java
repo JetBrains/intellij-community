@@ -464,6 +464,7 @@ public class JavaCompletionUtil {
             document.insertString(exprStart, prefix + spaceWithin + ")" + spaceAfter);
 
             CompletionUtil.emulateInsertion(context, exprStart + prefix.length(), castTypeItem);
+            PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(document);
             context.getEditor().getCaretModel().moveToOffset(context.getTailOffset());
           }
         }
