@@ -357,7 +357,7 @@ public class PsiUtil {
     if (!(place instanceof GrReferenceExpression)) return true;
 
     GrExpression qualifier = ((GrReferenceExpression)place).getQualifierExpression();
-    final PsiClass containingClass = ((PsiMember)member).getContainingClass();
+    final PsiClass containingClass = getContainingClass((PsiMember)member);
     if (qualifier != null) {
       final boolean isStatic = member.hasModifierProperty(PsiModifier.STATIC);
       if (qualifier instanceof GrReferenceExpression) {
@@ -383,13 +383,13 @@ public class PsiUtil {
             return true;
           }
 
-          //non-physical method, e.g. gdk
-          if (containingClass == null) {
+          if (isStatic) {
             return true;
           }
 
-          if (isStatic) {
-            return true;
+          //non-physical method, e.g. gdk
+          if (containingClass == null) {
+            return isStatic;
           }
 
           //members from java.lang.Class can be invoked without ".class"
@@ -430,6 +430,7 @@ public class PsiUtil {
       if (containingClass == null) return true;
       if (member instanceof GrVariable && !(member instanceof GrField)) return true;
       if (member.hasModifierProperty(PsiModifier.STATIC)) return true;
+      if (CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) return true;
 
       if (resolveContext != null) {
         PsiElement stopAt = PsiTreeUtil.findCommonParent(place, resolveContext);
@@ -493,6 +494,25 @@ public class PsiUtil {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
+
+  @Nullable
+  private static PsiClass getContainingClass(PsiMember member) {
+    PsiClass aClass = member.getContainingClass();
+
+    if (aClass != null) return aClass;
+
+    if (member instanceof GrGdkMethod && !member.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiMethod method = ((GrGdkMethod)member).getStaticMethod();
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameters.length > 0) {
+        PsiType type = parameters[0].getType();
+        if (type instanceof PsiClassType) {
+          return ((PsiClassType)type).resolve();
+        }
+      }
+    }
+    return null;
   }
 
   public static boolean isInStaticContext(GrQualifiedReference refExpression) {

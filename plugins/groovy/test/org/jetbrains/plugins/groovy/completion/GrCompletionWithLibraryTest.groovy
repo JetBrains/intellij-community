@@ -149,7 +149,7 @@ for (def ch: "abc".toCharArray()) {
       new FooImpl().<caret>
     """
     myFixture.completeBasic()
-    assertOrderedEquals myFixture.lookupElementStrings,"""\
+    assertOrderedEquals myFixture.lookupElementStrings, '''\
 fromThis
 fromThis2
 fromThis3
@@ -236,7 +236,7 @@ sprintf
 use
 use
 use\
-""".split('\n')
+'''.split('\n')
   }
 
 }

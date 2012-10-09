@@ -102,8 +102,8 @@ public class GdkMethodUtil {
    */
   public static boolean processCategoryMethods(final GroovyPsiElement place,
                                                final PsiScopeProcessor processor,
-                                               @NotNull ResolveState state,
-                                               @NotNull PsiClass categoryClass) {
+                                               @NotNull final ResolveState state,
+                                               @NotNull final PsiClass categoryClass) {
     final DelegatingScopeProcessor delegate = new DelegatingScopeProcessor(processor) {
       @Override
       public boolean execute(@NotNull PsiElement element, ResolveState state) {
@@ -111,7 +111,7 @@ public class GdkMethodUtil {
           if (!((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC)) return true;
           final PsiParameter[] parameters = ((PsiMethod)element).getParameterList().getParameters();
           if (parameters.length == 0) return true;
-          return processor.execute(GrGdkMethodImpl.createGdkMethod((PsiMethod)element, false), state);
+          return processor.execute(GrGdkMethodImpl.createGdkMethod((PsiMethod)element, false, categoryClass.getName()), state);
         }
         return true;
       }

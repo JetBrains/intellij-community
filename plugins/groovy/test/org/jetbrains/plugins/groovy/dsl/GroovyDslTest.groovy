@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 package org.jetbrains.plugins.groovy.dsl
+
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
@@ -28,6 +29,8 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider
 import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
+
 /**
  * @author peter
  */
@@ -227,6 +230,6 @@ public class MyCategory {
     myFixture.configureByText 'a.groovy', '"".fo<caret>o'
     myFixture.completeBasic()
     assert generateDoc().contains('Some doc2')
-    assert generateDoc().contains('foo')
+    assert generateDoc().contains('getFoo')
   }
 }
