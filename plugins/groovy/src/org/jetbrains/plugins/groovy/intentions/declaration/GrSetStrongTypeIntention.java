@@ -23,10 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
@@ -61,6 +59,10 @@ public class GrSetStrongTypeIntention extends Intention {
       variables = ((GrVariableDeclaration)parent.getParent()).getVariables();
       elementToBuildTemplate = parent.getParent();
     }
+    else if (parent instanceof GrVariable && parent.getParent() instanceof GrForInClause) {
+      variables = new GrVariable[]{(GrVariable)parent};
+      elementToBuildTemplate = parent.getParent().getParent();
+    }
     else if (parent instanceof GrVariableDeclaration) {
       variables = ((GrVariableDeclaration)parent).getVariables();
       elementToBuildTemplate = parent;
@@ -74,12 +76,18 @@ public class GrSetStrongTypeIntention extends Intention {
     }
 
     ArrayList<TypeConstraint> types = new ArrayList<TypeConstraint>();
-    for (GrVariable variable : variables) {
-      GrExpression initializer = variable.getInitializerGroovy();
-      if (initializer != null) {
-        PsiType type = initializer.getType();
-        if (type != null) {
-          types.add(SupertypeConstraint.create(type));
+
+    if (parent.getParent() instanceof GrForInClause) {
+      types.add(SupertypeConstraint.create(extractIterableTypeParameter((GrForInClause)parent.getParent())));
+    }
+    else {
+      for (GrVariable variable : variables) {
+        GrExpression initializer = variable.getInitializerGroovy();
+        if (initializer != null) {
+          PsiType type = initializer.getType();
+          if (type != null) {
+            types.add(SupertypeConstraint.create(type));
+          }
         }
       }
     }
@@ -173,6 +181,9 @@ public class GrSetStrongTypeIntention extends Intention {
             if (isVarDeclaredWithInitializer(variable)) return true;
           }
         }
+        else if (pparent instanceof GrForInClause) {
+          return extractIterableTypeParameter((GrForInClause)pparent) != null;
+        }
         else {
           return isVarDeclaredWithInitializer((GrVariable)parent);
         }
@@ -195,6 +206,17 @@ public class GrSetStrongTypeIntention extends Intention {
               element == ((GrVariable)parent).getNameIdentifierGroovy();
       }
     };
+  }
+
+  @Nullable
+  private PsiType extractIterableTypeParameter(GrForInClause forIn) {
+    GrExpression iterated = forIn.getIteratedExpression();
+    if (iterated == null) return null;
+    PsiType type = iterated.getType();
+    if (type == null) return null;
+
+    if (type instanceof PsiArrayType) return ((PsiArrayType)type).getComponentType();
+    return com.intellij.psi.util.PsiUtil.extractIterableTypeParameter(type, true);
   }
 
   private static boolean isVarDeclaredWithInitializer(GrVariable variable) {

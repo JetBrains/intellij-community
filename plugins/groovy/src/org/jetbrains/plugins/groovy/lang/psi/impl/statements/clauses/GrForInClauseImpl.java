@@ -17,9 +17,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
@@ -66,5 +69,15 @@ public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForInCl
   @Nullable
   public GrExpression getIteratedExpression() {
     return findChildByClass(GrExpression.class);
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getDelimiter() {
+    PsiElement in = findChildByType(GroovyTokenTypes.kIN);
+    if (in != null) return in;
+
+    PsiElement colon = findChildByType(GroovyTokenTypes.mCOLON);
+    return ObjectUtils.assertNotNull(colon);
   }
 }
