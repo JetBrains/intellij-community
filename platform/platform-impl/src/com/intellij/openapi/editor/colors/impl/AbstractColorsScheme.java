@@ -552,7 +552,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
         }
       }
     }
-    return "Monospaced";
+    return "Source Code Pro"; // "Monospaced" if we cease to bundle Source Code Pro
   }
 
 }
