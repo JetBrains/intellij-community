@@ -20,6 +20,8 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -120,7 +122,12 @@ public class SelectTemplateStep extends ModuleWizardStep {
         }
         return AlphaComparator.INSTANCE.compare(o1, o2);
       }
-    });
+    }) {
+      @Override
+      public boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
+        return false;
+      }
+    };
 
     myTemplatesTree.setRootVisible(false);
     myTemplatesTree.setShowsRootHandles(false);
@@ -133,7 +140,6 @@ public class SelectTemplateStep extends ModuleWizardStep {
                                         boolean leaf,
                                         int row,
                                         boolean hasFocus) {
-//        setIpad(new Insets());
         SimpleNode node = getSimpleNode(value);
         if (node != null) {
           String name = node.getName();
@@ -155,7 +161,6 @@ public class SelectTemplateStep extends ModuleWizardStep {
         }
         ProjectTemplate template = getSelectedTemplate();
         if (template != null) {
-//          PropertiesComponent
           JComponent settingsPanel = template.getSettingsPanel();
           if (settingsPanel != null) {
             mySettingsPanel.add(settingsPanel, BorderLayout.NORTH);
@@ -184,16 +189,32 @@ public class SelectTemplateStep extends ModuleWizardStep {
       }
     });
 //    doFilter();
-
-    TreeState state = SelectTemplateSettings.getInstance().getTreeState();
-    if (state != null) {
-      state.applyTo(myTemplatesTree, (DefaultMutableTreeNode)myTemplatesTree.getModel().getRoot());
-    }
   }
 
   @Override
   public void updateStep() {
-    myBuilder.queueUpdate();
+    TreeState state = SelectTemplateSettings.getInstance().getTreeState();
+    if (state != null) {
+      state.applyTo(myTemplatesTree, (DefaultMutableTreeNode)myTemplatesTree.getModel().getRoot());
+    }
+    else {
+      myBuilder.expandAll(null);
+    }
+//    myBuilder.queueUpdate();
+  }
+
+  @Override
+  public void onStepLeaving() {
+    TreeState state = TreeState.createOn(myTemplatesTree, (DefaultMutableTreeNode)myTemplatesTree.getModel().getRoot());
+    SelectTemplateSettings.getInstance().setTreeState(state);
+  }
+
+  @Override
+  public boolean validate() throws ConfigurationException {
+    if (getSelectedTemplate() == null) {
+      throw new ConfigurationException(ProjectBundle.message("project.new.wizard.from.template.error", myContext.getPresentationName()));
+    }
+    return true;
   }
 
   private void doFilter() {
@@ -275,19 +296,6 @@ public class SelectTemplateStep extends ModuleWizardStep {
 
   @Override
   public void updateDataModel() {
-  }
-
-  @Override
-  public void onStepLeaving() {
-    TreePath path = myTemplatesTree.getSelectionPath();
-    TreeState state;
-    if (path == null) {
-      state = TreeState.createOn(myTemplatesTree);
-    }
-    else {
-      state = TreeState.createOn(myTemplatesTree, (DefaultMutableTreeNode)path.getLastPathComponent());
-    }
-    SelectTemplateSettings.getInstance().setTreeState(state);
   }
 
   @Override
