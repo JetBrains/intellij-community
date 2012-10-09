@@ -55,7 +55,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.List;
 
-public class ProjectNameWithTypeStep extends ProjectNameStep {
+public class ProjectNameWithModuleStep extends ProjectNameStep {
   private JEditorPane myModuleDescriptionPane;
   private JList myTypesList;
   protected JCheckBox myCreateModuleCb;
@@ -82,7 +82,7 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
   private final StepSequence mySequence;
 
 
-  public ProjectNameWithTypeStep(final WizardContext wizardContext, StepSequence sequence, final WizardMode mode) {
+  public ProjectNameWithModuleStep(final WizardContext wizardContext, StepSequence sequence, final WizardMode mode) {
     super(wizardContext, mode);
     mySequence = sequence;
     myAdditionalContentPanel.add(myModulePanel,

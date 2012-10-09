@@ -16,12 +16,16 @@
 package com.intellij.platform.templates;
 
 import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -87,7 +91,17 @@ public class ArchivedProjectTemplate implements ProjectTemplate {
   @NotNull
   @Override
   public ProjectBuilder createModuleBuilder() {
-    return new ProjectBuilder() {
+    return new ModuleBuilder() {
+      @Override
+      public void setupRootModel(ModifiableRootModel modifiableRootModel) throws ConfigurationException {
+
+      }
+
+      @Override
+      public ModuleType getModuleType() {
+        return null;
+      }
+
       @Nullable
       @Override
       public List<Module> commit(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {

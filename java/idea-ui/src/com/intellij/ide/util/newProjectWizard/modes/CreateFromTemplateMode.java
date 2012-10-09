@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.util.newProjectWizard.modes;
 
-import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
+import com.intellij.ide.util.newProjectWizard.ProjectNameWithModuleStep;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateStep;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
@@ -56,7 +56,9 @@ public class CreateFromTemplateMode extends WizardMode {
   @Override
   protected StepSequence createSteps(WizardContext context, @NotNull ModulesProvider modulesProvider) {
     mySelectTemplateStep = new SelectTemplateStep(context);
-    return new StepSequence(mySelectTemplateStep, new ProjectNameStep(context, this));
+    StepSequence sequence = new StepSequence(mySelectTemplateStep);
+    sequence.addCommonStep(new ProjectNameWithModuleStep(context, sequence, this));
+    return sequence;
   }
 
   @Nullable
