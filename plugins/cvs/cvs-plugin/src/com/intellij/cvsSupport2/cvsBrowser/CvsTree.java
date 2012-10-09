@@ -274,6 +274,9 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
           if (myShowFiles) {
             process(directoryContent.getFilesRaw(), CvsElementFactory.FILE_ELEMENT_FACTORY, RemoteResourceDataProvider.NOT_EXPANDABLE);
           }
+          if (myTree.getSelectionPath() == null) {
+            myTree.setSelectionPath(mySelectionPath);
+          }
           final long currentTime = System.currentTimeMillis();
           if (currentTime - timeStamp > waitTime) {
             waitTime += 100; // ease off
