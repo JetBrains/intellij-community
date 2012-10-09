@@ -44,4 +44,9 @@ public class WebRepositoryType extends BaseRepositoryType<WebRepository> {
                                            final Consumer<WebRepository> changeListener) {
     return new WebRepositoryEditor(project, repository, changeListener);
   }
+
+  @Override
+  protected int getFeatures() {
+    return LOGIN_ANONYMOUSLY;
+  }
 }

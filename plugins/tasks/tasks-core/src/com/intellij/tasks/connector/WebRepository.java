@@ -61,7 +61,8 @@ public class WebRepository extends BaseRepositoryImpl {
   @Override
   public Task[] getIssues(@Nullable final String query, final int max, final long since) throws Exception {
     final HttpClient httpClient = getHttpClient();
-    login(httpClient);
+
+    if (!isLoginAnonymously()) login(httpClient);
 
     final GetMethod getMethod = new GetMethod(getFullTasksUrl());
     httpClient.executeMethod(getMethod);

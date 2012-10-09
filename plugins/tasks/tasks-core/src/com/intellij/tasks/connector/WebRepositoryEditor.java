@@ -8,6 +8,8 @@ import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * User: Evgeny.Zakrevsky
@@ -27,7 +29,20 @@ public class WebRepositoryEditor extends BaseRepositoryEditor<WebRepository> {
     myUsernameLabel.setText("{username}:");
     myPasswordLabel.setText("{password}:");
 
+    myLoginAnonymouslyJBCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(final ActionEvent e) {
+      }
+    });
+
     //setAnchor(myUsernameLabel);
+  }
+
+  @Override
+  protected void loginAnonymouslyChanged(boolean enabled) {
+    super.loginAnonymouslyChanged(enabled);
+    myLoginURLLabel.setEnabled(enabled);
+    myLoginURLText.setEnabled(enabled);
   }
 
   @Override
