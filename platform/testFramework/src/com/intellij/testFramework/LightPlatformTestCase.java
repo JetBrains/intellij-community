@@ -58,6 +58,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
@@ -343,7 +344,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ProjectManagerEx projectManagerEx = ProjectManagerEx.getInstanceEx();
     projectManagerEx.openTestProject(ourProject);
 
-    ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).clearUncommitedDocuments();
+    clearUncommittedDocuments(getProject());
 
     for (LocalInspectionTool tool : localInspectionTools) {
       enableInspectionTool(availableInspectionTools, new LocalInspectionToolWrapper(tool));
@@ -532,8 +533,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         throw IdeaLogger.ourErrorsOccurred;
       }
     }
-    PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
-    documentManager.clearUncommitedDocuments();
+    PsiDocumentManagerImpl documentManager = clearUncommittedDocuments(project);
     ((HintManagerImpl)HintManager.getInstance()).cleanup();
     DocumentCommitThread.getInstance().clearQueue();
 
@@ -560,10 +560,22 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       checkEditorsReleased();
     }
     if (isLight(project)) {
-      ((ProjectImpl)project)
-        .setTemporarilyDisposed(true); // mark temporarily as disposed so that rogue component trying to access it will fail
+      // mark temporarily as disposed so that rogue component trying to access it will fail
+      ((ProjectImpl)project).setTemporarilyDisposed(true);
       documentManager.clearUncommitedDocuments();
     }
+  }
+
+  public static PsiDocumentManagerImpl clearUncommittedDocuments(@NotNull Project project) {
+    PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
+    documentManager.clearUncommitedDocuments();
+
+    ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManager.getInstance();
+    if (projectManager.isDefaultProjectInitialized()) {
+      Project defaultProject = projectManager.getDefaultProject();
+      ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(defaultProject)).clearUncommitedDocuments();
+    }
+    return documentManager;
   }
 
   public static void checkEditorsReleased() throws Exception {

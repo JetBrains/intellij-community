@@ -223,7 +223,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
     setUpJdk();
 
-    ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).clearUncommitedDocuments();
+    LightPlatformTestCase.clearUncommittedDocuments(getProject());
 
     runStartupActivities();
   }

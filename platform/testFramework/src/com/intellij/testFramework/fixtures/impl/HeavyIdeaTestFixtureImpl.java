@@ -162,7 +162,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
         sm.runPostStartupActivities();
 
         ProjectManagerEx.getInstanceEx().openTestProject(myProject);
-        ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).clearUncommitedDocuments();
+        LightPlatformTestCase.clearUncommittedDocuments(myProject);
       }
     }.execute().throwException();
   }
