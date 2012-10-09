@@ -1,5 +1,7 @@
 package com.siyeh.igtest.imports.unused;
 
+import java.util.Map.*;
+import static java.util.Map.*;
 import static java.lang.Math.*;
 import static java.lang.Integer.SIZE;
 import java.util.List;
@@ -18,5 +20,6 @@ public class UnusedImport {
 
     public void add(int i) {
         list.add(i);
+        Entry entry;
     }
 }
