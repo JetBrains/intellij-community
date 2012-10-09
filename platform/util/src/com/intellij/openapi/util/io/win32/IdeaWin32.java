@@ -100,7 +100,6 @@ public class IdeaWin32 {
       final FileInfo result = getInfo0(path);
       t = (System.nanoTime() - t) / 1000;
       LOG.debug("getInfo(" + path + "): " + t + " mks");
-      LogUtil.debug(LOG, "getInfo(%s)", path);
       return result;
     }
     else {
