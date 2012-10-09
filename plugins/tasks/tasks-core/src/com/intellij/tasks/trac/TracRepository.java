@@ -46,12 +46,12 @@ public class TracRepository extends BaseRepositoryImpl {
   private Boolean myMaxSupported;
 
   @Override
-  public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
+  public List<Task> getIssues(@Nullable String query, int max, long since) throws Exception {
     Transport transport = new Transport();
     return getIssues(query, max, transport);
   }
 
-  private Task[] getIssues(String query, int max, final Transport transport) throws Exception {
+  private List<Task> getIssues(@Nullable String query, int max, final Transport transport) throws Exception {
     final XmlRpcClient client = getRpcClient();
 
     Vector<Object> result = null;
@@ -83,10 +83,10 @@ public class TracRepository extends BaseRepositoryImpl {
       Task task = getTask((Integer)result.get(i), client, transport);
       ContainerUtil.addIfNotNull(tasks, task);
     }
-    return tasks.toArray(new Task[tasks.size()]);
+    return tasks;
   }
 
-  private Vector<Object> runQuery(String query, Transport transport, XmlRpcClient client, String search)
+  private Vector<Object> runQuery(@Nullable String query, Transport transport, XmlRpcClient client, String search)
     throws XmlRpcException, IOException {
     if (query != null) {
       search = search.replace("{query}", query);

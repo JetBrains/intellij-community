@@ -1,24 +1,18 @@
 package com.intellij.tasks.connector;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositoryType;
-import com.intellij.tasks.TaskType;
+import com.intellij.tasks.actions.TaskSearchSupport;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import icons.TasksIcons;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,8 +35,6 @@ public class WebRepository extends BaseRepositoryImpl {
   final static String DESCRIPTION_PLACEHOLDER = "{description}";
   final static String PAGE_PLACEHOLDER = "{page}";
 
-  //final Map<String, String> myPlaceholder2Value = new HashMap<String, String>();
-
   @SuppressWarnings({"UnusedDeclaration"})
   public WebRepository() {
   }
@@ -59,7 +51,7 @@ public class WebRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public Task[] getIssues(@Nullable final String query, final int max, final long since) throws Exception {
+  public List<Task> getIssues(@Nullable final String query, final int max, final long since) throws Exception {
     final HttpClient httpClient = getHttpClient();
 
     if (!isLoginAnonymously()) login(httpClient);
@@ -82,81 +74,22 @@ public class WebRepository extends BaseRepositoryImpl {
     List<Task> tasks = new ArrayList<Task>();
     while (matcher.find()) {
       final String id = matcher.group(placeholders.indexOf(ID_PLACEHOLDER) + 1);
-      final String description = matcher.group(placeholders.indexOf(SUMMARY_PLACEHOLDER) + 1);
-      tasks.add(new Task() {
-        @NotNull
-        @Override
-        public String getId() {
-          return id;
-        }
-
-        @NotNull
-        @Override
-        public String getSummary() {
-          return description;
-        }
-
-        @Nullable
-        @Override
-        public String getDescription() {
-          return null;
-        }
-
-        @NotNull
-        @Override
-        public Comment[] getComments() {
-          return new Comment[0];
-        }
-
-        @Nullable
-        @Override
-        public Icon getIcon() {
-          return TasksIcons.Other;
-        }
-
-        @NotNull
-        @Override
-        public TaskType getType() {
-          return TaskType.OTHER;
-        }
-
-        @Nullable
-        @Override
-        public Date getUpdated() {
-          return null;
-        }
-
-        @Nullable
-        @Override
-        public Date getCreated() {
-          return null;
-        }
-
-        @Override
-        public boolean isClosed() {
-          return false;
-        }
-
-        @Override
-        public boolean isIssue() {
-          return true;
-        }
-
-        @Nullable
-        @Override
-        public String getIssueUrl() {
-          return null;
-        }
-      });
+      final String summary = matcher.group(placeholders.indexOf(SUMMARY_PLACEHOLDER) + 1);
+      tasks.add(new WebTask(id, summary));
     }
 
+    tasks = TaskSearchSupport.filterTasks(query != null ? query : "", tasks);
+    tasks = tasks.subList(0, Math.min(max, tasks.size()));
 
-    return tasks.toArray(new Task[tasks.size()]);
+    return tasks;
   }
 
-  private void login(final HttpClient httpClient) throws IOException {
+  private void login(final HttpClient httpClient) throws Exception {
     final GetMethod method = new GetMethod(getFullLoginUrl());
     httpClient.executeMethod(method);
+    if (method.getStatusCode() != 200) {
+      throw new Exception("Cannot login: HTTP status code " + method.getStatusCode());
+    }
   }
 
   private static List<String> getPlaceholders(String value) {
@@ -233,8 +166,8 @@ public class WebRepository extends BaseRepositoryImpl {
     return new CancellableConnection() {
       @Override
       protected void doTest() throws Exception {
-        final Task[] issues = getIssues("", 0, 0);
-        if (issues.length == 0) throw new Exception("Tasks not found. Probably, you don't login.");
+        final List<Task> issues = getIssues("", 1, 0);
+        if (issues.size() == 0) throw new Exception("Tasks not found. Probably, you don't login.");
       }
 
       @Override

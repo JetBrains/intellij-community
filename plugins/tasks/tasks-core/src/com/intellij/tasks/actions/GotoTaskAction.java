@@ -62,7 +62,7 @@ public class GotoTaskAction extends GotoActionBase {
                                     boolean everywhere,
                                     @NotNull ProgressIndicator cancelled,
                                     @NotNull Processor<Object> consumer) {
-        List<Task> cachedTasks = new TaskSearchSupport(project).getLocalAndCachedTasks(pattern);
+        List<Task> cachedTasks = TaskSearchSupport.getLocalAndCachedTasks(TaskManager.getManager(project), pattern);
         List<TaskPsiElement> taskPsiElements = ContainerUtil.map(cachedTasks, new Function<Task, TaskPsiElement>() {
           @Override
           public TaskPsiElement fun(Task task) {
@@ -85,29 +85,25 @@ public class GotoTaskAction extends GotoActionBase {
           if (!consumer.process(element)) return false;
         }
 
-        //int i = 0;
-        //while (true) {
-          List<Task> tasks = new TaskSearchSupport(project).getRepositoryTasks(pattern, ChooseByNameBase.MAXIMUM_LIST_SIZE_LIMIT, 0, true);
-          if (tasks.size() == 0) return true;
-          tasks.removeAll(cachedTasks);
-          taskPsiElements = ContainerUtil.map(tasks, new Function<Task, TaskPsiElement>() {
-            @Override
-            public TaskPsiElement fun(Task task) {
-              return new TaskPsiElement(PsiManager.getInstance(project), task);
-            }
-          });
-
-          if (!cachedTasksFound && taskPsiElements.size() != 0) {
-            cancelled.checkCanceled();
-            if (!consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
+        List<Task> tasks =
+          TaskSearchSupport.getRepositoriesTasks(TaskManager.getManager(project), pattern, base.getMaximumListSizeLimit(), 0, true);
+        tasks.removeAll(cachedTasks);
+        taskPsiElements = ContainerUtil.map(tasks, new Function<Task, TaskPsiElement>() {
+          @Override
+          public TaskPsiElement fun(Task task) {
+            return new TaskPsiElement(PsiManager.getInstance(project), task);
           }
+        });
 
-          for (Object element : taskPsiElements) {
-            cancelled.checkCanceled();
-            if (!consumer.process(element)) return false;
-          }
-          //i += ChooseByNameBase.MAXIMUM_LIST_SIZE_LIMIT;
-        //}
+        if (!cachedTasksFound && taskPsiElements.size() != 0) {
+          cancelled.checkCanceled();
+          if (!consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
+        }
+
+        for (Object element : taskPsiElements) {
+          cancelled.checkCanceled();
+          if (!consumer.process(element)) return false;
+        }
         return true;
       }
     }, "", false, 0);

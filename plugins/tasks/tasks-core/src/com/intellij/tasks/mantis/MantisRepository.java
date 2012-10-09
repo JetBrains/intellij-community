@@ -1,6 +1,5 @@
 package com.intellij.tasks.mantis;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositoryType;
@@ -14,6 +13,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.apache.axis.utils.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.rpc.ServiceException;
@@ -30,8 +30,6 @@ import java.util.Set;
  */
 @Tag("Mantis")
 public class MantisRepository extends BaseRepositoryImpl {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.tasks.mantis.MantisRepository");
-
   private final static String SOAP_API_LOCATION = "/api/soap/mantisconnect.php";
 
   private Map<MantisProject, List<MantisFilter>> myProject2FiltersCachedData;
@@ -59,55 +57,55 @@ public class MantisRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public Task[] getIssues(String request, int max, long since) throws Exception {
+  public List<Task> getIssues(@Nullable String request, int max, long since) throws Exception {
     MantisConnectPortType soap = createSoap();
+    List<Task> result = new ArrayList<Task>(max);
+    int page = 0;
+    int issuesOnPage = StringUtils.isEmpty(request) ? max : max * 2;
+    while (true) {
+      final List<Task> issuesFromPage = getIssues(page, issuesOnPage, soap);
+      final List<Task> filteredTasks = TaskSearchSupport.filterTasks(request != null ? request : "", issuesFromPage);
+      result.addAll(filteredTasks);
+      if (issuesFromPage.size() < issuesOnPage || result.size() >= max) {
+        break;
+      }
+    }
+    result = result.subList(0, Math.min(max, result.size()));
+    return result;
+  }
+
+  private List<Task> getIssues(final int page, final int issuesOnPage, final MantisConnectPortType soap) throws Exception {
     try {
       IssueData[] issues;
       if (MantisFilter.LAST_TASKS.equals(myFilter)) {
-        issues = soap.mc_project_get_issues(getUsername(), getPassword(), BigInteger.valueOf(myProject.getId()), BigInteger.ZERO,
-                                            BigInteger.valueOf(max));
+        issues = soap.mc_project_get_issues(getUsername(), getPassword(), BigInteger.valueOf(myProject.getId()), BigInteger.valueOf(page),
+                                            BigInteger.valueOf(issuesOnPage));
       }
       else {
         issues = soap.mc_filter_get_issues(getUsername(), getPassword(), BigInteger.valueOf(myProject.getId()),
-                                           BigInteger.valueOf(myFilter.getId()), BigInteger.ZERO, BigInteger.valueOf(max));
+                                           BigInteger.valueOf(myFilter.getId()), BigInteger.valueOf(page), BigInteger.valueOf(issuesOnPage));
       }
-      final List<Task> filteredTasks =
-        TaskSearchSupport
-          .filterTasks(request == null ? "" : request, ContainerUtil.mapNotNull(issues, new NullableFunction<IssueData, Task>() {
-            public Task fun(IssueData issueData) {
-              try {
-                return createIssue(issueData);
-              }
-              catch (Exception e) {
-                return null;
-              }
-            }
-          }));
-      return filteredTasks.toArray(new Task[filteredTasks.size()]);
+      return ContainerUtil.mapNotNull(issues, new NullableFunction<IssueData, Task>() {
+        public Task fun(IssueData issueData) {
+          return createIssue(issueData);
+        }
+      });
     }
     catch (Exception e) {
       IssueHeaderData[] issues;
       if (MantisFilter.LAST_TASKS.equals(myFilter)) {
-        issues = soap.mc_project_get_issue_headers(getUsername(), getPassword(), BigInteger.valueOf(myProject.getId()), BigInteger.ZERO,
-                                                   BigInteger.valueOf(max));
+        issues = soap.mc_project_get_issue_headers(getUsername(), getPassword(), BigInteger.valueOf(myProject.getId()), BigInteger.valueOf(page),
+                                                   BigInteger.valueOf(issuesOnPage));
       }
       else {
         issues = soap.mc_filter_get_issue_headers(getUsername(), getPassword(), BigInteger.valueOf(myProject.getId()),
-                                                  BigInteger.valueOf(myFilter.getId()), BigInteger.ZERO, BigInteger.valueOf(max));
+                                                  BigInteger.valueOf(myFilter.getId()), BigInteger.valueOf(page), BigInteger.valueOf(issuesOnPage));
       }
-      final List<Task> filteredTasks =
-        TaskSearchSupport
-          .filterTasks(request == null ? "" : request, ContainerUtil.mapNotNull(issues, new NullableFunction<IssueHeaderData, Task>() {
-            public Task fun(IssueHeaderData issueHeaderData) {
-              try {
-                return createIssue(issueHeaderData);
-              }
-              catch (Exception e) {
-                return null;
-              }
-            }
-          }));
-      return filteredTasks.toArray(new Task[filteredTasks.size()]);
+      return ContainerUtil.mapNotNull(issues, new NullableFunction<IssueHeaderData, Task>() {
+        public Task fun(IssueHeaderData issueData) {
+          return createIssue(issueData);
+        }
+      });
     }
   }
 
@@ -133,7 +131,7 @@ public class MantisRepository extends BaseRepositoryImpl {
   }
 
   @Nullable
-  private Task createIssue(final IssueData data) throws Exception {
+  private Task createIssue(final IssueData data) {
     String id = String.valueOf(data.getId());
     if (id == null) return null;
     String summary = data.getSummary();
@@ -151,7 +149,7 @@ public class MantisRepository extends BaseRepositoryImpl {
   }
 
   @Nullable
-  private Task createIssue(final IssueHeaderData data) throws Exception {
+  private Task createIssue(final IssueHeaderData data) {
     String id = String.valueOf(data.getId());
     if (id == null) return null;
     String summary = data.getSummary();

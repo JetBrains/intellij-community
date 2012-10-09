@@ -8,8 +8,6 @@ import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * User: Evgeny.Zakrevsky
@@ -28,14 +26,6 @@ public class WebRepositoryEditor extends BaseRepositoryEditor<WebRepository> {
     myUrlLabel.setText("{serverUrl}:");
     myUsernameLabel.setText("{username}:");
     myPasswordLabel.setText("{password}:");
-
-    myLoginAnonymouslyJBCheckBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-      }
-    });
-
-    //setAnchor(myUsernameLabel);
   }
 
   @Override
@@ -66,15 +56,13 @@ public class WebRepositoryEditor extends BaseRepositoryEditor<WebRepository> {
     myLoginURLText = new JTextField(myRepository.getLoginURL());
     installListener(myLoginURLText);
     return FormBuilder.createFormBuilder().setAlignLabelOnRight(true)
-      .addVerticalGap(8)
-      .addLabeledComponent(myTasksListURLLabel, myTasksListURLText)
-      .addTooltip("Available placeholders: " + WebRepository.SERVER_URL_PLACEHOLDER)
-      .addLabeledComponent(myTaskPatternLabel, myTaskPatternText, 8)
-      .addTooltip("Task pattern should be a regexp with two matching group: ({id}.+?) and ({summary}.+?)")
-      .addLabeledComponent(myLoginURLLabel, myLoginURLText, 8)
+      .addLabeledComponent(myLoginURLLabel, myLoginURLText)
       .addTooltip("Available placeholders: " + WebRepository.SERVER_URL_PLACEHOLDER + ", " +
                   WebRepository.USERNAME_PLACEHOLDER + ", " + WebRepository.PASSWORD_PLACEHOLDER)
-      .addVerticalGap(8)
+      .addLabeledComponent(myTasksListURLLabel, myTasksListURLText)
+      .addTooltip("Available placeholders: " + WebRepository.SERVER_URL_PLACEHOLDER)
+      .addLabeledComponent(myTaskPatternLabel, myTaskPatternText)
+      .addTooltip("Task pattern should be a regexp with two matching group: ({id}.+?) and ({summary}.+?)")
       .getPanel();
   }
 
