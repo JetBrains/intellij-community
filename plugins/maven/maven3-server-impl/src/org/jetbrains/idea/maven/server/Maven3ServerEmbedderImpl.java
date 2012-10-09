@@ -18,24 +18,29 @@ package org.jetbrains.idea.maven.server;
 import com.intellij.util.SystemProperties;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.apache.maven.DefaultMaven;
+import org.apache.maven.Maven;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
-import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
-import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
 import org.apache.maven.artifact.resolver.*;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionRequest;
+import org.apache.maven.execution.MavenExecutionRequestPopulationException;
+import org.apache.maven.execution.MavenExecutionRequestPopulator;
 import org.apache.maven.model.Activation;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Profile;
 import org.apache.maven.model.profile.DefaultProfileInjector;
-import org.apache.maven.plugin.PluginManager;
+import org.apache.maven.plugin.MavenPluginManager;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
+import org.apache.maven.plugin.version.DefaultPluginVersionRequest;
+import org.apache.maven.plugin.version.PluginVersionRequest;
+import org.apache.maven.plugin.version.PluginVersionResolver;
 import org.apache.maven.profiles.activation.*;
 import org.apache.maven.project.*;
 import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
@@ -44,8 +49,8 @@ import org.apache.maven.project.interpolation.ModelInterpolationException;
 import org.apache.maven.project.path.DefaultPathTranslator;
 import org.apache.maven.project.path.PathTranslator;
 import org.apache.maven.project.validation.ModelValidationResult;
+import org.apache.maven.repository.RepositorySystem;
 import org.apache.maven.settings.Settings;
-import org.apache.maven.settings.SettingsUtils;
 import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
 import org.apache.maven.settings.building.SettingsBuilder;
 import org.apache.maven.settings.building.SettingsBuildingException;
@@ -68,6 +73,7 @@ import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator;
 import org.jetbrains.idea.maven.server.embedder.FieldAccessor;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
+import org.sonatype.aether.RepositorySystemSession;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -208,21 +214,28 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
   }
 
   private ArtifactRepository createLocalRepository(MavenServerSettings.UpdatePolicy snapshotUpdatePolicy) {
-    ArtifactRepositoryLayout layout = getComponent(ArtifactRepositoryLayout.class, "default");
-    ArtifactRepositoryFactory factory = getComponent(ArtifactRepositoryFactory.class);
-
-    String url = myMavenSettings.getLocalRepository();
-    if (!url.startsWith("file:")) url = "file://" + url;
-
-    ArtifactRepository localRepository = factory.createArtifactRepository("local", url, layout, null, null);
-
-    boolean snapshotPolicySet = myMavenSettings.isOffline();
-    if (!snapshotPolicySet && snapshotUpdatePolicy == MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE) {
-      factory.setGlobalUpdatePolicy(ArtifactRepositoryPolicy.UPDATE_POLICY_ALWAYS);
+    try {
+      return getComponent(RepositorySystem.class).createLocalRepository(new File(myMavenSettings.getLocalRepository()));
     }
-    factory.setGlobalChecksumPolicy(ArtifactRepositoryPolicy.CHECKSUM_POLICY_WARN);
-
-    return localRepository;
+    catch (InvalidRepositoryException e) {
+      throw new RuntimeException(e);
+      // Legacy code.
+    }
+    //ArtifactRepositoryLayout layout = getComponent(ArtifactRepositoryLayout.class, "default");
+    //ArtifactRepositoryFactory factory = getComponent(ArtifactRepositoryFactory.class);
+    //
+    //String url = myMavenSettings.getLocalRepository();
+    //if (!url.startsWith("file:")) url = "file://" + url;
+    //
+    //ArtifactRepository localRepository = factory.createArtifactRepository("local", url, layout, null, null);
+    //
+    //boolean snapshotPolicySet = myMavenSettings.isOffline();
+    //if (!snapshotPolicySet && snapshotUpdatePolicy == MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE) {
+    //  factory.setGlobalUpdatePolicy(ArtifactRepositoryPolicy.UPDATE_POLICY_ALWAYS);
+    //}
+    //factory.setGlobalChecksumPolicy(ArtifactRepositoryPolicy.CHECKSUM_POLICY_WARN);
+    //
+    //return localRepository;
   }
 
   @Override
@@ -262,26 +275,11 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     return createExecutionResult(file, result, listener.getRootNode());
   }
 
-  private static void setProfilesFromSettings(MavenExecutionRequest request, Settings settings) {
-    List<org.apache.maven.settings.Profile> settingsProfiles = settings.getProfiles();
-
-    request.setActiveProfiles(settings.getActiveProfiles());
-
-    if (settingsProfiles != null) {
-      for (org.apache.maven.settings.Profile rawProfile : settingsProfiles) {
-        Profile profile = SettingsUtils.convertFromSettingsProfile(rawProfile);
-        request.addProfile(profile);
-      }
-    }
-  }
-
   @NotNull
   public MavenExecutionResult doResolveProject(@NotNull final File file,
                                                @NotNull final List<String> activeProfiles,
-                                               List<ResolutionListener> listeners) {
+                                               List<ResolutionListener> listeners) throws RemoteException {
     MavenExecutionRequest request = createRequest(file, activeProfiles, Collections.<String>emptyList(), Collections.<String>emptyList());
-
-    setProfilesFromSettings(request, myMavenSettings);
 
     ProjectBuildingRequest config = request.getProjectBuildingRequest();
 
@@ -327,25 +325,31 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     catch (Exception e) {
       return handleException(e);
     }
-
-
   }
 
-  private MavenExecutionRequest createRequest(File file, List<String> activeProfiles, List<String> inactiveProfiles, List<String> goals) {
+  private MavenExecutionRequest createRequest(File file, List<String> activeProfiles, List<String> inactiveProfiles, List<String> goals)
+    throws RemoteException {
     //Properties executionProperties = myMavenSettings.getProperties();
     //if (executionProperties == null) {
     //  executionProperties = new Properties();
     //}
 
     MavenExecutionRequest result = new DefaultMavenExecutionRequest();
-    result.setLocalRepository(myLocalRepository);
-    result.setGoals(goals);
-    result.setBaseDirectory(file.getParentFile());
 
+    try {
+      getComponent(MavenExecutionRequestPopulator.class).populateFromSettings(result, myMavenSettings);
 
-    result.setPom(file);
+      result.setGoals(goals);
+
+      result.setPom(file);
+
+      getComponent(MavenExecutionRequestPopulator.class).populateDefaults(result);
 
       return result;
+    }
+    catch (MavenExecutionRequestPopulationException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static MavenExecutionResult handleException(Throwable e) {
@@ -471,7 +475,20 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
       mavenPlugin.setVersion(plugin.getVersion());
       MavenProject project = RemoteNativeMavenProjectHolder.findProjectById(nativeMavenProjectId);
 
-      PluginDescriptor result = getComponent(PluginManager.class).verifyPlugin(mavenPlugin, project, myMavenSettings, myLocalRepository);
+      MavenExecutionRequest request = createRequest(null, Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList());
+
+      DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
+      RepositorySystemSession repositorySystemSession = maven.newRepositorySession(request);
+
+      if (plugin.getVersion() == null) {
+        PluginVersionRequest versionRequest =
+          new DefaultPluginVersionRequest(mavenPlugin, repositorySystemSession, project.getRemotePluginRepositories());
+        mavenPlugin.setVersion(getComponent(PluginVersionResolver.class).resolve(versionRequest).getVersion());
+      }
+
+      PluginDescriptor result = getComponent(MavenPluginManager.class).getPluginDescriptor(mavenPlugin,
+                                                                                           project.getRemotePluginRepositories(),
+                                                                                           repositorySystemSession);
 
       Map<MavenArtifactInfo, MavenArtifact> resolvedArtifacts = new THashMap<MavenArtifactInfo, MavenArtifact>();
 
