@@ -14,7 +14,6 @@ import com.intellij.util.io.PersistentEnumerator;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.CanceledStatus;
@@ -32,12 +31,12 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.java.ExternalJavacDescriptor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
-import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.*;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.service.SharedThreadPool;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -616,10 +615,10 @@ public class IncProjectBuilder {
 
           try {
             // restore deleted paths that were not procesesd by 'integrate'
-            final Map<ModuleBuildTarget, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
+            final Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
             if (map != null) {
-              for (Map.Entry<ModuleBuildTarget, Collection<String>> entry : map.entrySet()) {
-                final ModuleBuildTarget target = entry.getKey();
+              for (Map.Entry<BuildTarget<?>, Collection<String>> entry : map.entrySet()) {
+                final BuildTarget<?> target = entry.getKey();
                 final Collection<String> paths = entry.getValue();
                 if (paths != null) {
                   for (String path : paths) {
@@ -689,7 +688,7 @@ public class IncProjectBuilder {
   private void processDeletedPaths(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     try {
       // cleanup outputs
-      final Map<ModuleBuildTarget, Collection<String>> removedSources = new HashMap<ModuleBuildTarget, Collection<String>>();
+      final Map<BuildTarget<?>, Collection<String>> removedSources = new HashMap<BuildTarget<?>, Collection<String>>();
 
       for (ModuleBuildTarget target : chunk.getTargets()) {
         final Collection<String> deletedPaths = myProjectDescriptor.fsState.getAndClearDeletedPaths(target);
@@ -705,19 +704,9 @@ public class IncProjectBuilder {
           final Collection<String> outputs = sourceToOutputStorage.getOutputs(deletedSource);
 
           if (outputs != null && !outputs.isEmpty()) {
-            final JavaBuilderLogger logger = context.getLoggingManager().getJavaBuilderLogger();
+            final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
             if (logger.isEnabled()) {
-              final String[] buffer = new String[outputs.size()];
-              int i = 0;
-              for (final String o : outputs) {
-                buffer[i++] = o;
-              }
-              Arrays.sort(buffer);
-              logger.log("Cleaning output files:");
-              for (final String o : buffer) {
-                logger.log(o);
-              }
-              logger.log("End of files");
+              logger.logDeletedFiles(outputs);
             }
 
             for (String output : outputs) {
@@ -739,9 +728,9 @@ public class IncProjectBuilder {
         }
       }
       if (!removedSources.isEmpty()) {
-        final Map<ModuleBuildTarget, Collection<String>> existing = Utils.REMOVED_SOURCES_KEY.get(context);
+        final Map<BuildTarget<?>, Collection<String>> existing = Utils.REMOVED_SOURCES_KEY.get(context);
         if (existing != null) {
-          for (Map.Entry<ModuleBuildTarget, Collection<String>> entry : existing.entrySet()) {
+          for (Map.Entry<BuildTarget<?>, Collection<String>> entry : existing.entrySet()) {
             final Collection<String> paths = removedSources.get(entry.getKey());
             if (paths != null) {
               paths.addAll(entry.getValue());
@@ -778,7 +767,7 @@ public class IncProjectBuilder {
         }
       };
       if (!context.isProjectRebuild()) {
-        syncOutputFiles(context, dirtyFilesHolder);
+        deleteOutputsOfDirtyFiles(context, dirtyFilesHolder);
       }
 
       BUILDER_CATEGORY_LOOP:
@@ -829,8 +818,7 @@ public class IncProjectBuilder {
               }
             }
             else {
-              context.getLoggingManager().getJavaBuilderLogger().log(
-                "Builder " + builder.getDescription() + " requested second chunk rebuild");
+              LOG.debug("Builder " + builder.getDescription() + " requested second chunk rebuild");
             }
           }
 
@@ -844,17 +832,18 @@ public class IncProjectBuilder {
     return doneSomething;
   }
 
-  private static void syncOutputFiles(final CompileContext context,
-                                      DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
+  private static <R extends BuildRootDescriptor,T extends BuildTarget<R>>
+  void deleteOutputsOfDirtyFiles(final CompileContext context, DirtyFilesHolder<R, T> dirtyFilesHolder) throws ProjectBuildException {
     final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     try {
-      final Collection<String> allOutputs = new LinkedList<String>();
+      ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
+      final Collection<String> outputsToLog = logger.isEnabled() ? new LinkedList<String>() : null;
 
-      dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
-        private final Map<ModuleBuildTarget, SourceToOutputMapping> storageMap = new HashMap<ModuleBuildTarget, SourceToOutputMapping>();
+      dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
+        private final Map<T, SourceToOutputMapping> storageMap = new HashMap<T, SourceToOutputMapping>();
 
         @Override
-        public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor sourceRoot) throws IOException {
+        public boolean apply(T target, File file, R sourceRoot) throws IOException {
           SourceToOutputMapping srcToOut = storageMap.get(target);
           if (srcToOut == null) {
             srcToOut = dataManager.getSourceToOutputMap(target);
@@ -864,10 +853,9 @@ public class IncProjectBuilder {
           final Collection<String> outputs = srcToOut.getOutputs(srcPath);
 
           if (outputs != null) {
-            final JavaBuilderLogger logger = context.getLoggingManager().getJavaBuilderLogger();
             for (String output : outputs) {
-              if (logger.isEnabled()) {
-                allOutputs.add(output);
+              if (outputsToLog != null) {
+                outputsToLog.add(output);
               }
               new File(output).delete();
             }
@@ -880,21 +868,8 @@ public class IncProjectBuilder {
         }
       });
 
-      final JavaBuilderLogger logger = context.getLoggingManager().getJavaBuilderLogger();
-      if (logger.isEnabled()) {
-        if (context.isMake() && allOutputs.size() > 0) {
-          logger.log("Cleaning output files:");
-          final String[] buffer = new String[allOutputs.size()];
-          int i = 0;
-          for (String output : allOutputs) {
-            buffer[i++] = output;
-          }
-          Arrays.sort(buffer);
-          for (String output : buffer) {
-            logger.log(output);
-          }
-          logger.log("End of files");
-        }
+      if (outputsToLog != null && context.isMake()) {
+        logger.logDeletedFiles(outputsToLog);
       }
     }
     catch (Exception e) {

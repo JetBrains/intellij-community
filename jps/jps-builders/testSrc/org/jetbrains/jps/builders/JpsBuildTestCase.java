@@ -6,18 +6,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.io.TestFileSystemBuilder;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.builders.impl.BuildDataPathsImpl;
-import org.jetbrains.jps.builders.storage.BuildDataPaths;
-import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.builders.impl.BuildDataPathsImpl;
 import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetIndexImpl;
+import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLoggerImpl;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
-import org.jetbrains.jps.incremental.java.JavaBuilderLoggerImpl;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
@@ -34,6 +31,7 @@ import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -190,7 +188,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   }
 
   protected void rebuildAll() {
-    ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), new JavaBuilderLoggerImpl()));
+    ProjectDescriptor descriptor = createProjectDescriptor(BuildLoggingManager.DEFAULT);
     try {
       CompileScope scope = new CompileScopeImpl(true, BuilderRegistry.getInstance().getTargetTypes(), Collections.<BuildTarget<?>>emptySet(), Collections.<BuildTarget<?>,Set<File>>emptyMap());
       doBuild(descriptor, scope, false, true, false).assertSuccessful();
