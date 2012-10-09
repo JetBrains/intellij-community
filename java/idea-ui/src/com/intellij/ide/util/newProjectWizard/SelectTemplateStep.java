@@ -43,7 +43,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.Matcher;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -130,7 +129,7 @@ public class SelectTemplateStep extends ModuleWizardStep {
     };
 
     myTemplatesTree.setRootVisible(false);
-    myTemplatesTree.setShowsRootHandles(false);
+//    myTemplatesTree.setShowsRootHandles(false);
     myTemplatesTree.setCellRenderer(new ColoredTreeCellRenderer() {
       @Override
       public void customizeCellRenderer(JTree tree,
@@ -148,7 +147,7 @@ public class SelectTemplateStep extends ModuleWizardStep {
           }
         }
         if (node instanceof GroupNode) {
-          setIcon(UIUtil.getTreeIcon(expanded));
+//          setIcon(UIUtil.getTreeIcon(expanded));
         }
       }
     });
