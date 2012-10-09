@@ -22,12 +22,12 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,14 +35,13 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.templates.github.ZipUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -102,28 +101,30 @@ public class ArchivedProjectTemplate implements ProjectTemplate {
         return null;
       }
 
-      @Nullable
+      @NotNull
       @Override
-      public List<Module> commit(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
-        final String path = myContext.getProjectFileDirectory();
+      public Module createModule(@NotNull ModifiableModuleModel moduleModel)
+        throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
+        final String path = getContentEntryPath();
         String iml;
         try {
           File dir = new File(path);
           ZipInputStream zipInputStream = getStream();
           ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, zipInputStream);
           VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
-          RefreshQueue.getInstance().refresh(false, true, null, virtualFile);
           iml = ContainerUtil.find(dir.list(), new Condition<String>() {
             @Override
             public boolean value(String s) {
               return s.endsWith(".iml");
             }
           });
+          new File(path, iml).renameTo(new File(getModuleFilePath()));
+          RefreshQueue.getInstance().refresh(false, true, null, virtualFile);
         }
         catch (IOException e) {
           throw new RuntimeException(e);
         }
-        return ImportImlMode.setUpLoader(path + "/" + iml).commit(project, model, modulesProvider);
+        return ImportImlMode.setUpLoader(getModuleFilePath()).createModule(moduleModel);
       }
     };
   }

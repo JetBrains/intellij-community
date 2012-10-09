@@ -30,8 +30,8 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -236,7 +236,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
       if (myModuleFilePath == null) {
         myModuleFilePath = project.getBaseDir().getPath() + File.separator + myName + ModuleFileType.DOT_DEFAULT_EXTENSION;
       }
-      Exception ex = ApplicationManager.getApplication().runWriteAction(new Computable<Exception>() {
+      Exception ex = ApplicationManager.getApplication().runWriteAction(new NullableComputable<Exception>() {
         @Override
         public Exception compute() {
           try {
@@ -249,7 +249,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
         }
       });
       if (ex != null) {
-        LOG.info(ex);
+        LOG.warn(ex);
         Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", ex.getMessage()), IdeBundle.message("title.add.module"));
       }
     }
