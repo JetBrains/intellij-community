@@ -428,11 +428,14 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
               (!myBeginsWithReferenceType || staticOrValidConstructorRef || (psiMethod.isConstructor() && conflict.isStaticsScopeCorrect()))) {
             boolean correct = true;
             for (int i = 0; i < parameterTypes.length; i++) {
-              final PsiType type1 = parameterTypes[i];
-              final PsiType type2 = varArgs && i >= signatureParameterTypes2.length - 1 ?
-                                    ((PsiArrayType)signatureParameterTypes2[signatureParameterTypes2.length -1]).getComponentType() :
-                                    signatureParameterTypes2[i];
-              correct &= TypeConversionUtil.isAssignable(type2, subst.substitute(GenericsUtil.eliminateWildcards(type1)));
+              final PsiType type1 = subst.substitute(GenericsUtil.eliminateWildcards(parameterTypes[i]));
+              if (varArgs && i >= signatureParameterTypes2.length - 1) {
+                final PsiType type2 = signatureParameterTypes2[signatureParameterTypes2.length - 1];
+                correct &= TypeConversionUtil.isAssignable(type2, type1) || TypeConversionUtil.isAssignable(((PsiArrayType)type2).getComponentType(), type1);
+              }
+              else {
+                correct &= TypeConversionUtil.isAssignable(signatureParameterTypes2[i], type1);
+              }
             }
             if (correct) {
               firstCandidates.add(conflict);
