@@ -13,9 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package org.jetbrains.plugins.groovy.dsl;
-
-
+package org.jetbrains.plugins.groovy.dsl
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
@@ -30,8 +28,6 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
-
 /**
  * @author peter
  */
@@ -129,15 +125,14 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testClassContext() throws Throwable {
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
-    doCustomTest( """
+    addGdsl("""
      def ctx = context(scope: classScope(name: /.*WsSecurityConfig/))
      
      contributor ctx, {
        property name: "auxWsProperty", type: "java.lang.String"
      }
-    """
-    )
+    """)
+    myFixture.testCompletionTyping(getTestName(false) + ".groovy", '\n', getTestName(false) + "_after.groovy")
   }
 
   @NotNull
@@ -159,12 +154,11 @@ public class MyCategory {
   }
 
   public void testPathRegexp() {
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     addGdsl "contributor(pathRegexp: '.*aaa.*') { property name:'fffooo', type:'int' }"
 
     myFixture.configureFromExistingVirtualFile myFixture.addFileToProject("aaa/foo.groovy", "fff<caret>x").virtualFile
     myFixture.completeBasic()
-    assertOrderedEquals myFixture.lookupElementStrings, 'fffooo'
+    assert 'fffooo' in myFixture.lookupElementStrings
 
     myFixture.configureFromExistingVirtualFile myFixture.addFileToProject("bbb/foo.groovy", "fff<caret>x").virtualFile
     myFixture.completeBasic()
@@ -172,7 +166,6 @@ public class MyCategory {
   }
 
   public void testNamedParameters() {
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     addGdsl '''contribute(currentType(String.name)) {
   method name:'foo', type:void, params:[:], namedParams:[
     parameter(name:'param1', type:String),
@@ -181,11 +174,10 @@ public class MyCategory {
 }'''
     myFixture.configureByText 'a.groovy', '"".foo(par<caret>)'
     myFixture.completeBasic()
-    assert myFixture.lookupElementStrings == ['param1', 'param2']
+    myFixture.assertPreferredCompletionItems 0, 'param1', 'param2'
   }
 
   public void testNamedParametersGroovyConvention() {
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     addGdsl '''contribute(currentType(String.name)) {
   method name:'foo', type:void, params:[args:[
       parameter(name:'param1', type:String, doc:'My doc'),
@@ -194,7 +186,7 @@ public class MyCategory {
 }'''
     myFixture.configureByText 'a.groovy', '"".foo(par<caret>)'
     myFixture.completeBasic()
-    assert myFixture.lookupElementStrings == ['param1', 'param2']
+    myFixture.assertPreferredCompletionItems 0, 'param1', 'param2'
     assert '<pre><b>param1</b>: java.lang.String</pre><p>My doc' == generateDoc()
   }
 
