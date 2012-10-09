@@ -376,7 +376,7 @@ public abstract class AppIcon {
       }
 
       try {
-        if (frame != null) {
+        if (isValid(frame)) {
           Win7TaskBar.setProgress(frame, value, isOk);
         }
       }
@@ -396,7 +396,7 @@ public abstract class AppIcon {
       }
 
       try {
-        if (frame != null) {
+        if (isValid(frame)) {
           Win7TaskBar.hideProgress(frame);
         }
       }
@@ -413,7 +413,7 @@ public abstract class AppIcon {
 
     @Override
     public void _setTextBadge(IdeFrame frame, String text) {
-      if (frame == null) {
+      if (!isValid(frame)) {
         return;
       }
 
@@ -458,7 +458,7 @@ public abstract class AppIcon {
 
     @Override
     public void _setOkBadge(IdeFrame frame, boolean visible) {
-      if (frame == null) {
+      if (!isValid(frame)) {
         return;
       }
 
@@ -494,7 +494,7 @@ public abstract class AppIcon {
     @Override
     public void _requestAttention(IdeFrame frame, boolean critical) {
       try {
-        if (frame != null) {
+        if (isValid(frame)) {
           Win7TaskBar.attention(frame, critical);
         }
       }
@@ -510,6 +510,10 @@ public abstract class AppIcon {
 
     @Override
     public void requestFocus(IdeFrame frame) {
+    }
+
+    private static boolean isValid(IdeFrame frame) {
+      return frame != null && ((Component)frame).isDisplayable();
     }
   }
 
