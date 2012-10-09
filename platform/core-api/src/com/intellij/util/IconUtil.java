@@ -309,7 +309,9 @@ public class IconUtil {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      paintInCenterOf(c, g, myIcon);
+      x += (myWidth - myIcon.getIconWidth()) / 2;
+      y += (myHeight - myIcon.getIconHeight()) / 2;
+      myIcon.paintIcon(c, g, x, y);
     }
 
     @Override
