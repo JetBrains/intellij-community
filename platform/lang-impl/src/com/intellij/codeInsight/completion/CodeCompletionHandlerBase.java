@@ -454,7 +454,9 @@ public class CodeCompletionHandlerBase {
       CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(indicator));
       indicator.getLookup().setCalculating(false);
       if (indicator.showLookup() && isAutocompleteCommonPrefixOnInvocation() && items.length > 1) {
-        indicator.fillInCommonPrefix(false);
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          indicator.fillInCommonPrefix(false);
+        }
       }
     }
     else if (decision instanceof AutoCompletionDecision.InsertItem) {
