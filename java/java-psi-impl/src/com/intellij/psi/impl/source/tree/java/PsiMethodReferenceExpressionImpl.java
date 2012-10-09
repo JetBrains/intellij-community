@@ -279,6 +279,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           }
           final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
           final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
+          final MethodSignature signature = interfaceMethod != null ? interfaceMethod.getSignature(resolveResult.getSubstitutor()) : null;
           final PsiType interfaceMethodReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
           final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(PsiMethodReferenceExpressionImpl.this);
           if (isConstructor && interfaceMethod != null) {
@@ -293,11 +294,19 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             if (containingClass.getConstructors().length == 0 &&
                 !containingClass.isEnum() &&
                 !containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-              return new JavaResolveResult[]{new ClassCandidateInfo(containingClass, substitutor)};
+              boolean hasReceiver = false;
+              final PsiType[] parameterTypes = signature.getParameterTypes();
+              
+              if (parameterTypes.length == 1 && LambdaUtil.isReceiverType(parameterTypes[0], containingClass, substitutor)) {
+                hasReceiver = true;
+              }
+              if (parameterTypes.length == 0 || hasReceiver && !(containingClass.getContainingClass() == null || containingClass.hasModifierProperty(PsiModifier.STATIC))) {
+                return new JavaResolveResult[]{new ClassCandidateInfo(containingClass, substitutor)};
+              }
+              return JavaResolveResult.EMPTY_ARRAY;
             }
           }
 
-          final MethodSignature signature = interfaceMethod != null ? interfaceMethod.getSignature(resolveResult.getSubstitutor()) : null;
           final MethodReferenceConflictResolver conflictResolver =
             new MethodReferenceConflictResolver(containingClass, substitutor, signature, beginsWithReferenceType);
           final PsiConflictResolver[] resolvers;
