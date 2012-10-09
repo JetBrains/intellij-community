@@ -2,11 +2,13 @@ package org.hanuna.gitalk;
 
 import org.hanuna.gitalk.gittree.CommitData;
 import org.hanuna.gitalk.gittree.CommitNode;
+import org.hanuna.gitalk.gittree.CommitsLines;
 import org.hanuna.gitalk.gittree.CommitsTree;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.List;
 
 /**
  * @author erokhins
@@ -28,13 +30,22 @@ public class testUtils {
 
 
     public static void main(String args[]) throws IOException {
-        Process p = Runtime.getRuntime().exec("git log --all --format=\"%h|-%p|-%an|-%ct|-%s\"");
+        Process p = Runtime.getRuntime().exec("git log --all --format=%h|-%p|-%an|-%ct|-%s");
         BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
         CommitsTree ct = new CommitsTree(r);
         for (int i = 0; i < ct.size(); i++) {
             CommitNode cn = ct.getNode(i);
-            System.out.println(toStr(cn.getData()));
+            System.out.println(toShortStr(cn) + " " + toStr(cn.getData()));
         }
+        CommitsLines cl = new CommitsLines(ct);
+        for (int i = 0; i < cl.size(); i++) {
+            List<Integer> line = cl.getLine(i);
+            for (int j = 0; j < line.size(); j++) {
+                System.out.print(line.get(j) + " ");
+            }
+            System.out.println();
+        }
+
     }
 
     public static String toShortStr(CommitNode n) {

@@ -22,7 +22,6 @@ public class CommitsTreeTest {
     public void runTreeTest(String input, String output) throws IOException {
         input = input.replace("|", "|-");
         input = input.replace("\n", "|-smv|-34|-message\n");
-        System.out.println(input);
         StringReader r = new StringReader(input);
         BufferedReader br = new BufferedReader(r);
         CommitsTree ct = new CommitsTree(br);
@@ -31,7 +30,9 @@ public class CommitsTreeTest {
 
     @Test
     public void simpleTest() throws IOException {
-        runTreeTest("0|1 2\n1|3\n2|\n3|\n", "0|1|2|0\n1|3|");
+        runTreeTest("a|b c\nb|d\nc|\nd|\n", "0|1|2|a\n1|3|b\n2|c\n3|d\n");
+
+        runTreeTest("a|b\nb|c\nc|\n", "0|1|a\n1|2|b\n2|c\n");
     }
 
 }
