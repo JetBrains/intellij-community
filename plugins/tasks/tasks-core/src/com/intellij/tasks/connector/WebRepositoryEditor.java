@@ -5,7 +5,6 @@ import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.FormBuilder;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -54,15 +53,12 @@ public class WebRepositoryEditor extends BaseRepositoryEditor<WebRepository> {
     return FormBuilder.createFormBuilder().setAlignLabelOnRight(true)
       .addVerticalGap(8)
       .addLabeledComponent(myTasksListURLLabel, myTasksListURLText)
-      .addLabeledComponent(new JLabel(), new JBLabel("Available placeholders: " + WebRepository.SERVER_URL_PLACEHOLDER, UIUtil.ComponentStyle.SMALL,
-                                UIUtil.FontColor.BRIGHTER), 1)
+      .addTooltip("Available placeholders: " + WebRepository.SERVER_URL_PLACEHOLDER)
       .addLabeledComponent(myTaskPatternLabel, myTaskPatternText, 8)
-      .addLabeledComponent(new JLabel(), new JBLabel("Task pattern should be a regexp with two matching group: ({id}.+?) and ({summary}.+?)",
-                                UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER), 1)
+      .addTooltip("Task pattern should be a regexp with two matching group: ({id}.+?) and ({summary}.+?)")
       .addLabeledComponent(myLoginURLLabel, myLoginURLText, 8)
-      .addLabeledComponent(new JLabel(), new JBLabel("Available placeholders: " + WebRepository.SERVER_URL_PLACEHOLDER + ", " +
-                                WebRepository.USERNAME_PLACEHOLDER + ", " + WebRepository.PASSWORD_PLACEHOLDER, UIUtil.ComponentStyle.SMALL,
-                                UIUtil.FontColor.BRIGHTER), 1)
+      .addTooltip("Available placeholders: " + WebRepository.SERVER_URL_PLACEHOLDER + ", " +
+                  WebRepository.USERNAME_PLACEHOLDER + ", " + WebRepository.PASSWORD_PLACEHOLDER)
       .addVerticalGap(8)
       .getPanel();
   }

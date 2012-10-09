@@ -19,10 +19,12 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
@@ -107,6 +109,20 @@ public class FormBuilder {
   public FormBuilder addVerticalGap(final int height) {
     return addLabeledComponent((JLabel)null,
                                new Box.Filler(new Dimension(0, height), new Dimension(0, height), new Dimension(Short.MAX_VALUE, height)));
+  }
+
+  public FormBuilder addTooltip(final String text) {
+    final JBLabel label = new JBLabel(text, UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER);
+    label.setBorder(new EmptyBorder(0, 10, 0, 0));
+    return addComponentToRightColumn(label, 1);
+  }
+
+  public FormBuilder addComponentToRightColumn(@NotNull final JComponent component) {
+    return addComponentToRightColumn(component, myVerticalGap);
+  }
+
+  public FormBuilder addComponentToRightColumn(@NotNull final JComponent component, final int topInset) {
+    return addLabeledComponent(new JLabel(), component, topInset);
   }
 
   public FormBuilder addLabeledComponent(@Nullable JComponent label, @NotNull JComponent component, int topInset, boolean labelOnTop) {
