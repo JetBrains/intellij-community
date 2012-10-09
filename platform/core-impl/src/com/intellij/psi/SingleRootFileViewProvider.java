@@ -29,6 +29,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -238,7 +239,12 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
         final VirtualFile parent = vFile.getParent();
         if (parent == null) return null;
         final PsiDirectory psiDir = getManager().findDirectory(parent);
-        if (psiDir == null) return null;
+        if (psiDir == null) {
+          FileIndexFacade indexFacade = FileIndexFacade.getInstance(project);
+          if (!indexFacade.isInLibrarySource(vFile) && !indexFacade.isInLibraryClasses(vFile)) {
+            return null;
+          }
+        }
       }
 
       FileType fileType = vFile.getFileType();
