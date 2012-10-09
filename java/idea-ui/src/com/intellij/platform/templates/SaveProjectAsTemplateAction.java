@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ZipUtil;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.zip.ZipOutputStream;
@@ -50,7 +51,14 @@ public class SaveProjectAsTemplateAction extends AnAction {
         file.createNewFile();
         stream = new ZipOutputStream(new FileOutputStream(file));
         VirtualFile dir = project.getBaseDir();
-        ZipUtil.addDirToZipRecursively(stream, null, new File(dir.getPath()), dir.getName(), null, null);
+        ZipUtil.addDirToZipRecursively(stream, null, new File(dir.getPath()), dir.getName(), new FileFilter() {
+          @Override
+          public boolean accept(File pathname) {
+            if (!".idea".equals(pathname.getParent())) return true;
+            // todo filter out some garbage from .idea
+            return true;
+          }
+        }, null);
       }
       catch (IOException ex) {
         Messages.showErrorDialog(project, ex.getMessage(), "Error");
