@@ -235,11 +235,14 @@ public class SmartList<E> extends AbstractList<E> {
   @Override
   public <T> T[] toArray(@NotNull T[] a) {
     if (mySize == 1) {
-      a[0] = (T)myElem;
-      if (a.length > 1) {
-        a[1] = null;
+      int length = a.length;
+      if (length  != 0) {
+        a[0] = (T)myElem;
+        if (length > 1) {
+          a[1] = null;
+        }
+        return a;
       }
-      return a;
     }
     return super.toArray(a);
   }
