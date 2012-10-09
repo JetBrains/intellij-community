@@ -33,6 +33,9 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Main entry point is {@link #createOn(javax.swing.JTree)}
+ */
 public class TreeState implements JDOMExternalizable {
   @NonNls private static final String PATH = "PATH";
   @NonNls private static final String PATH_ELEMENT = "PATH_ELEMENT";
@@ -128,6 +131,10 @@ public class TreeState implements JDOMExternalizable {
     return new TreeState(createExpandedPaths(tree, treeNode), createSelectedPaths(tree, treeNode));
   }
 
+  public static TreeState createOn(@NotNull JTree tree) {
+    return new TreeState(createPaths(tree), new ArrayList<List<PathElement>>());
+  }
+
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     for (List<PathElement> path : myExpandedPaths) {
@@ -144,11 +151,6 @@ public class TreeState implements JDOMExternalizable {
       pathXmlElement.addContent(pathXmlElementElement);
     }
   }
-
-  public static TreeState createOn(@NotNull JTree tree) {
-    return new TreeState(createPaths(tree), new ArrayList<List<PathElement>>());
-  }
-
 
   private static List<List<PathElement>> createPaths(final JTree tree) {
     final ArrayList<List<PathElement>> result = new ArrayList<List<PathElement>>();
