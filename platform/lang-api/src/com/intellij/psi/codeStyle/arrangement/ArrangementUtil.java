@@ -130,7 +130,7 @@ public class ArrangementUtil {
    * @param document      target document against which the ranges are built
    * @return              expanded range if possible; <code>null</code> otherwise
    */
-  @Nullable
+  @NotNull
   public static TextRange expandToLine(@NotNull TextRange initialRange, @NotNull Document document) {
     int startLine = document.getLineNumber(initialRange.getStartOffset());
     int startOffsetToUse = document.getLineStartOffset(startLine);
