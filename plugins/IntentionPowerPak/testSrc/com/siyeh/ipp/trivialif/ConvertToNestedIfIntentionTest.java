@@ -21,6 +21,8 @@ import com.siyeh.ipp.IPPTestCase;
 public class ConvertToNestedIfIntentionTest extends IPPTestCase {
 
   public void testNested() { doTest(); }
+  public void testStaircase() { doTest(); }
+  public void testOneLevelStaircase() { assertIntentionNotAvailable(); }
 
   @Override
   protected String getIntentionName() {
