@@ -368,11 +368,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
                 instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputSink);
                 JpsUiDesignerConfiguration configuration = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(
                   pd.getProject());
-                if (configuration != null && configuration.isCopyFormsRuntimeToOutput() && !chunk.containsTests()) {
-                  for (JpsModule module : chunk.getModules()) {
-                    final File outputDir = paths.getModuleOutputDir(module, false);
-                    if (outputDir != null) {
-                      CopyResourcesUtil.copyFormsRuntime(outputDir.getAbsolutePath(), false);
+                if (configuration != null && configuration.isCopyFormsRuntimeToOutput()) {
+                  for (ModuleBuildTarget target : chunk.getTargets()) {
+                    if (!target.isTests()) {
+                      final File outputDir = target.getOutputDir();
+                      if (outputDir != null) {
+                        CopyResourcesUtil.copyFormsRuntime(outputDir.getAbsolutePath(), false);
+                      }
                     }
                   }
                 }
@@ -888,7 +890,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
     final Map<File, Set<File>> map = new LinkedHashMap<File, Set<File>>();
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      final File outputDir = JpsJavaExtensionService.getInstance().getOutputDirectory(target.getModule(), target.isTests());
+      final File outputDir = target.getOutputDir();
       if (outputDir == null) {
         continue;
       }

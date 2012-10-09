@@ -221,7 +221,7 @@ public class AndroidRenameResourceProcessor extends RenamePsiElementProcessor {
       return;
     }
 
-    List<PsiFile> resourceFiles = manager.findResourceFiles(type, AndroidCommonUtils.getResourceName(type, name));
+    List<PsiFile> resourceFiles = manager.findResourceFiles(type, AndroidCommonUtils.getResourceName(type, name), true, false);
     List<PsiFile> alternativeResources = new ArrayList<PsiFile>();
     for (PsiFile resourceFile : resourceFiles) {
       if (!resourceFile.getManager().areElementsEquivalent(file, resourceFile) && resourceFile.getName().equals(name)) {

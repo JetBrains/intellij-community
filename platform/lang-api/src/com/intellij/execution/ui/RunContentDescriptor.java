@@ -21,6 +21,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class RunContentDescriptor implements Disposable {
+  public static final Key<Boolean> REUSE_CONTENT_PROHIBITED = Key.create("ReuseContentProhibited");
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ui.RunContentDescriptor");
 
   private ExecutionConsole myExecutionConsole;

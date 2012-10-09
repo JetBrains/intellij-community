@@ -15,6 +15,7 @@
  */
 package com.intellij.util.net;
 
+import com.btr.proxy.search.ProxySearch;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.InvalidDataException;
@@ -49,6 +50,7 @@ import java.util.List;
 )
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, JDOMExternalizable {
   public boolean USE_HTTP_PROXY = false;
+  public boolean USE_PROXY_PAC = false;
   public String PROXY_HOST = "";
   public int PROXY_PORT = 80;
 
@@ -165,6 +167,11 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
       System.setProperty("http.proxyHost", PROXY_HOST);
       System.setProperty("http.proxyPort", Integer.toString (PROXY_PORT));
       Authenticator.setDefault(getAuthenticator());
+    } else if (USE_PROXY_PAC) {
+      ProxySearch proxySearch = ProxySearch.getDefaultProxySearch();
+      ProxySelector proxySelector = proxySearch.getProxySelector();
+      ProxySelector.setDefault(proxySelector);
+      Authenticator.setDefault(proxySelector != null ? getAuthenticator() : null);
     } else {
       System.setProperty("proxySet", "false");
       System.clearProperty("http.proxyHost");

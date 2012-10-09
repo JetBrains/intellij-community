@@ -19,6 +19,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.text.UniqueNameGenerator;
+import org.jetbrains.jps.incremental.ProjectBuilderLoggerImpl;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -104,7 +105,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
 
   private BuildResult doBuild(boolean force, JpsArtifact... artifacts) {
     BuildResult result;
-    ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(myArtifactBuilderLogger, new JavaBuilderLoggerImpl()));
+    ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(myArtifactBuilderLogger, new JavaBuilderLoggerImpl(), new ProjectBuilderLoggerImpl()));
     try {
       myArtifactBuilderLogger.clear();
       List<BuildTarget<?>> targets = new ArrayList<BuildTarget<?>>();

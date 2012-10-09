@@ -245,6 +245,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
       }
 
       item.parameter.setInitializer(initializer);
+      item.parameter.setDefaultValue(defaultValue);
     }
 
     ThrownExceptionInfo[] exceptionInfos = myExceptionsModel.getThrownExceptions();

@@ -19,16 +19,13 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.incremental.BuildLoggingManager;
-import org.jetbrains.jps.incremental.CompileScope;
-import org.jetbrains.jps.incremental.CompileScopeImpl;
-import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLoggerImpl;
 import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
 import org.jetbrains.jps.model.JpsDummyElement;
@@ -173,8 +170,11 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   }
 
   protected BuildResult doTestBuild(int makesCount) {
-    final TestJavaBuilderLogger builderLogger = new TestJavaBuilderLogger(FileUtil.toSystemIndependentName(workDir.getAbsolutePath()) + "/");
-    final ProjectDescriptor pd = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), builderLogger));
+    StringBuilder log = new StringBuilder();
+    String rootPath = FileUtil.toSystemIndependentName(workDir.getAbsolutePath()) + "/";
+    final TestJavaBuilderLogger builderLogger = new TestJavaBuilderLogger(rootPath, log);
+    final ProjectDescriptor pd = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), builderLogger,
+                                                                                 new TestProjectBuilderLogger(rootPath, log)));
     try {
       doBuild(pd, createAllModulesScope(true), false, true, false).assertSuccessful();
 
@@ -206,7 +206,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
         logFile = new File(baseDir, "build.log");
       }
       final String expected = StringUtil.convertLineSeparators(FileUtil.loadFile(logFile));
-      final String actual = builderLogger.myLog.toString();
+      final String actual = log.toString();
 
       assertEquals(expected, actual);
 
@@ -262,9 +262,9 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     private final String myRoot;
     private final StringBuilder myLog;
 
-    public TestJavaBuilderLogger(String root) {
+    public TestJavaBuilderLogger(String root, final StringBuilder log) {
       myRoot = root;
-      myLog = new StringBuilder();
+      myLog = log;
     }
 
     @Override
@@ -275,6 +275,26 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     @Override
     public boolean isEnabled() {
       return true;
+    }
+  }
+
+  private static class TestProjectBuilderLogger extends ProjectBuilderLoggerImpl {
+    private final String myRoot;
+    private StringBuilder myLog;
+
+    private TestProjectBuilderLogger(String root, StringBuilder log) {
+      myRoot = root;
+      myLog = log;
+    }
+
+    @Override
+    public boolean isEnabled() {
+      return true;
+    }
+
+    @Override
+    protected void logLine(String line) {
+      myLog.append(StringUtil.trimStart(line, myRoot)).append('\n');
     }
   }
 }

@@ -16,7 +16,6 @@
 package com.intellij.openapi.util.io.win32;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +99,6 @@ public class IdeaWin32 {
       final FileInfo result = getInfo0(path);
       t = (System.nanoTime() - t) / 1000;
       LOG.debug("getInfo(" + path + "): " + t + " mks");
-      LogUtil.debug(LOG, "getInfo(%s)", path);
       return result;
     }
     else {

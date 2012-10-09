@@ -15,17 +15,18 @@
  */
 package com.siyeh.ipp.trivialif;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
+import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * User: anna
+ * @author anna
  * Date: 2/2/12
  */
 public class ConvertToNestedIfIntention extends Intention {
@@ -36,52 +37,72 @@ public class ConvertToNestedIfIntention extends Intention {
     return new PsiElementPredicate() {
 
       public boolean satisfiedBy(PsiElement element) {
-        if (!(element instanceof PsiJavaToken)) {
+        if (!(element instanceof PsiReturnStatement)) {
           return false;
         }
-        final PsiStatement containingStatement =
-          PsiTreeUtil.getParentOfType(element,
-                                      PsiStatement.class);
-        if (containingStatement instanceof PsiReturnStatement) {
-          final PsiExpression returnValue = ((PsiReturnStatement)containingStatement).getReturnValue();
-          return returnValue instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)returnValue).getOperationTokenType() == JavaTokenType.ANDAND;
+        final PsiReturnStatement returnStatement = (PsiReturnStatement)element;
+        final PsiExpression returnValue = ParenthesesUtils.stripParentheses(returnStatement.getReturnValue());
+        if (!(returnValue instanceof PsiPolyadicExpression)) {
+          return false;
         }
-        return false;
+        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)returnValue;
+        final IElementType tokenType = polyadicExpression.getOperationTokenType();
+        return tokenType == JavaTokenType.ANDAND || tokenType == JavaTokenType.OROR;
       }
     };
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    final PsiStatement containingStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
-    if (containingStatement == null) {
-      return;
-    }
-    final PsiReturnStatement returnStatement =
-      (PsiReturnStatement)containingStatement;
+  public void processIntention(@NotNull PsiElement element) {
+    final PsiReturnStatement returnStatement = (PsiReturnStatement)element;
     final PsiExpression returnValue = returnStatement.getReturnValue();
-    if (returnValue == null) {
+    if (returnValue == null || ErrorUtil.containsDeepError(returnValue)) {
       return;
     }
-    if (ErrorUtil.containsDeepError(returnValue)) {
-      return;
-    }
-    final StringBuilder buf = new StringBuilder();
-    if (returnValue instanceof PsiPolyadicExpression) {
-      final PsiExpression[] operands = ((PsiPolyadicExpression)returnValue).getOperands();
-      for (PsiExpression operand : operands) {
-        buf.append("if (" + operand.getText() + ") {");
-      }
-      buf.append("return true;");
-      for (PsiExpression operand : operands) {
-        buf.append("}");
-      }
-    }
+    final String newStatementText = buildIf(returnValue, new StringBuilder()).toString();
+    addStatementBefore(newStatementText, returnStatement);
+    replaceStatement("return false;", returnStatement);
+  }
 
-    final PsiStatement ifStmt =
-      JavaPsiFacade.getElementFactory(containingStatement.getProject()).createStatementFromText(buf.toString(), containingStatement);
-    CodeStyleManager.getInstance(containingStatement.getProject()).reformat(containingStatement.getParent().addBefore(ifStmt, containingStatement));
-    replaceStatement("return false;", containingStatement);
+  private static StringBuilder buildIf(@Nullable PsiExpression expression, StringBuilder out) {
+    if (expression instanceof PsiPolyadicExpression) {
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      final PsiExpression[] operands = polyadicExpression.getOperands();
+      final IElementType tokenType = polyadicExpression.getOperationTokenType();
+      if (JavaTokenType.ANDAND.equals(tokenType)) {
+        for (PsiExpression operand : operands) {
+          buildIf(operand, out);
+        }
+        if (!StringUtil.endsWith(out, "return true;")) {
+          out.append("return true;");
+        }
+        return out;
+      }
+      else if (JavaTokenType.OROR.equals(tokenType)) {
+        boolean insertElse = false;
+        for (PsiExpression operand : operands) {
+          if (insertElse) {
+            out.append("else ");
+          }
+          else {
+            insertElse = true;
+          }
+          buildIf(operand, out);
+          if (!StringUtil.endsWith(out, "return true;")) {
+            out.append("return true;");
+          }
+        }
+        return out;
+      }
+    }
+    else if (expression instanceof PsiParenthesizedExpression) {
+      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+      buildIf(parenthesizedExpression.getExpression(), out);
+      return out;
+    }
+    if (expression != null) {
+      out.append("if(").append(expression.getText()).append(")");
+    }
+    return out;
   }
 }

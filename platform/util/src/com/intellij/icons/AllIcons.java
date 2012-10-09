@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.icons;
 
 import com.intellij.openapi.util.IconLoader;
@@ -60,6 +75,7 @@ public class AllIcons {
     public static final Icon Lightning = IconLoader.getIcon("/actions/lightning.png"); // 16x16
     public static final Icon Menu_cut = IconLoader.getIcon("/actions/menu-cut.png"); // 16x16
     public static final Icon Menu_find = IconLoader.getIcon("/actions/menu-find.png"); // 16x16
+    public static final Icon Menu_help = IconLoader.getIcon("/actions/menu-help.png"); // 16x16
     public static final Icon Menu_open = IconLoader.getIcon("/actions/menu-open.png"); // 16x16
     public static final Icon Menu_paste = IconLoader.getIcon("/actions/menu-paste.png"); // 16x16
     public static final Icon Menu_replace = IconLoader.getIcon("/actions/menu-replace.png"); // 16x16
@@ -161,6 +177,7 @@ public class AllIcons {
   }
   
   public static class Darcula {
+    public static final Icon DoubleComboArrow = IconLoader.getIcon("/darcula/doubleComboArrow.png"); // 7x11
     public static final Icon TreeNodeCollapsed = IconLoader.getIcon("/darcula/treeNodeCollapsed.png"); // 9x9
     public static final Icon TreeNodeExpanded = IconLoader.getIcon("/darcula/treeNodeExpanded.png"); // 9x9
 
@@ -448,9 +465,6 @@ public class AllIcons {
     public static final Icon TodoDefault = IconLoader.getIcon("/general/todoDefault.png"); // 12x12
     public static final Icon TodoImportant = IconLoader.getIcon("/general/todoImportant.png"); // 12x12
     public static final Icon TodoQuestion = IconLoader.getIcon("/general/todoQuestion.png"); // 12x12
-    
-    @SuppressWarnings("unused")
-    public static final Icon ToolWindowChanges = IconLoader.getIcon("/general/toolWindowChanges.png"); // 13x13
     public static final Icon WarningDialog = IconLoader.getIcon("/general/warningDialog.png"); // 32x32
     public static final Icon Web = IconLoader.getIcon("/general/web.png"); // 13x13
 

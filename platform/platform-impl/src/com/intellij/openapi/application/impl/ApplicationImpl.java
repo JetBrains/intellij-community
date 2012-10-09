@@ -270,6 +270,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myRestartCode = Restarter.getRestartCode();
 
     registerFont("/fonts/Inconsolata.ttf");
+    registerFont("/fonts/SourceCodePro-Regular.ttf");
+    registerFont("/fonts/SourceCodePro-Bold.ttf");
   }
 
   private void registerFont(@NonNls String name) {

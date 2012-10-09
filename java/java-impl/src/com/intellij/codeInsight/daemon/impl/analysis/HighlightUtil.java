@@ -2534,6 +2534,7 @@ public class HighlightUtil {
   }
 
   public static void registerChangeVariableTypeFixes(PsiVariable parameter, PsiType itemType, HighlightInfo highlightInfo) {
+    if (itemType instanceof PsiMethodReferenceType) return;
     for (ChangeVariableTypeQuickFixProvider fixProvider : Extensions.getExtensions(ChangeVariableTypeQuickFixProvider.EP_NAME)) {
       for (IntentionAction action : fixProvider.getFixes(parameter, itemType)) {
         QuickFixAction.registerQuickFixAction(highlightInfo, action);

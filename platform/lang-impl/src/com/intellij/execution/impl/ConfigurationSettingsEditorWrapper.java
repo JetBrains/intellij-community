@@ -103,6 +103,10 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     }
   }
 
+  public void addBeforeLaunchStep(BeforeRunTask<?> task) {
+    myBeforeRunStepsPanel.addTask(task);
+  }
+
   public List<BeforeRunTask> getStepsBeforeLaunch() {
     return Collections.unmodifiableList(myBeforeRunStepsPanel.getTasks(true));
   }

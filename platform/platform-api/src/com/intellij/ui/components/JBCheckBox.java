@@ -2,6 +2,7 @@ package com.intellij.ui.components;
 
 import com.intellij.ui.AnchorableComponent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ButtonUI;
@@ -53,20 +54,18 @@ public class JBCheckBox extends JCheckBox implements AnchorableComponent {
   }
 
   @Override
-  public void setAnchor(JComponent anchor) {
-    if (this != anchor) {
-      this.myAnchor = anchor;
-    }
+  public void setAnchor(@Nullable JComponent anchor) {
+    this.myAnchor = anchor;
   }
 
   @Override
   public Dimension getPreferredSize() {
-    return myAnchor == null ? super.getPreferredSize() : myAnchor.getPreferredSize();
+    return myAnchor == null || myAnchor == this ? super.getPreferredSize() : myAnchor.getPreferredSize();
   }
 
   @Override
   public Dimension getMinimumSize() {
-    return myAnchor == null ? super.getMinimumSize() : myAnchor.getMinimumSize();
+    return myAnchor == null || myAnchor == this ? super.getMinimumSize() : myAnchor.getMinimumSize();
   }
 
   /**

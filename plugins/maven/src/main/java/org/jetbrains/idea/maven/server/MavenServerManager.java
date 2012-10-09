@@ -32,12 +32,10 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -176,7 +174,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Query.class), classPath);
         params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
         params.getClassPath().addAll(classPath);
-        params.getClassPath().addAllFiles(collectClassPathAndLibsFolder().first);
+        params.getClassPath().addAllFiles(collectClassPathAndLibsFolder());
 
         params.setMainClass(MAIN_CLASS);
 
@@ -262,51 +260,68 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     };
   }
 
-  public static Pair<List<File>, File> collectClassPathAndLibsFolder() {
+  public static File getMavenLibDirectory() {
+    File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
+    if (pluginFileOrDir.isDirectory()) {
+      File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
+      return new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven3-server-impl/lib/maven3/lib");
+    }
+
+    return new File(pluginFileOrDir.getParentFile(), "maven3");
+  }
+
+  public static List<File> collectClassPathAndLibsFolder() {
     File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
 
-    File libDir;
-    List<File> classpath = new SmartList<File>();
+    List<File> classpath = new ArrayList<File>();
+
+    String root = pluginFileOrDir.getParent();
 
     if (pluginFileOrDir.isDirectory()) {
-      classpath.add(new File(pluginFileOrDir.getParent(), "maven-server-api"));
+      classpath.add(new File(root, "maven-server-api"));
+
+      File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
 
       if (getInstance().isUseMaven2()) {
-        classpath.add(new File(pluginFileOrDir.getParent(), "maven2-server-impl"));
-        File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
-        libDir = new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven2-server-impl/lib");
+        classpath.add(new File(root, "maven2-server-impl"));
+        addDir(classpath, new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven2-server-impl/lib"));
       }
       else {
-        classpath.add(new File(pluginFileOrDir.getParent(), "maven3-server-impl"));
-        File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
+        classpath.add(new File(root, "maven3-server-impl"));
 
         File maven3Module_Lib = new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven3-server-impl/lib");
+        addDir(classpath, maven3Module_Lib);
 
         File maven3Home = new File(maven3Module_Lib, "maven3");
 
-        libDir = new File(maven3Home, "lib");
+        addDir(classpath, new File(maven3Home, "lib"));
 
         classpath.add(new File(maven3Home, "boot/plexus-classworlds-2.4.jar"));
-
-        for (File jar : maven3Module_Lib.listFiles()) {
-          if (jar.isFile() && jar.getName().endsWith(".jar")) {
-            classpath.add(jar);
-          }
-        }
       }
     }
     else {
-      libDir = pluginFileOrDir.getParentFile();
-    }
-    MavenLog.LOG.assertTrue(libDir.exists() && libDir.isDirectory(), "Maven server libraries dir not found: " + libDir);
+      classpath.add(new File(root, "maven-server-api.jar"));
 
-    File[] files = libDir.listFiles();
-    for (File jar : files) {
-      if (jar.isFile() && jar.getName().endsWith(".jar") && !jar.equals(pluginFileOrDir)) {
+      if (getInstance().isUseMaven2()) {
+        classpath.add(new File(root, "maven2-server-impl.jar"));
+
+        addDir(classpath, new File(root, "maven2"));
+      }
+      else {
+        classpath.add(new File(root, "maven3-server-impl.jar"));
+        addDir(classpath, new File(root, "maven3"));
+      }
+    }
+
+    return classpath;
+  }
+
+  private static void addDir(List<File> classpath, File dir) {
+    for (File jar : dir.listFiles()) {
+      if (jar.isFile() && jar.getName().endsWith(".jar")) {
         classpath.add(jar);
       }
     }
-    return Pair.create(classpath, libDir);
   }
 
   public MavenEmbedderWrapper createEmbedder(final Project project, final boolean alwaysOnline) {

@@ -388,9 +388,9 @@ public class UIUtil {
     int defSize = getLabelFont().getSize();
     switch (size) {
       case SMALL:
-        return Math.max(defSize - 2f, 11f);
+        return Math.max(defSize - 2f, 10f);
       case MINI:
-        return Math.max(defSize - 4f, 9f);
+        return Math.max(defSize - 4f, 8f);
       default:
         return defSize;
     }

@@ -24,6 +24,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 
@@ -37,7 +38,7 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
   private static Key<CachedValue<GrGdkMethodImpl>> CACHED_NON_STATIC = Key.create("Cached instance gdk method");
   private final PsiMethod myMethod;
 
-  private GrGdkMethodImpl(PsiMethod method, boolean isStatic) {
+  private GrGdkMethodImpl(PsiMethod method, boolean isStatic, String originInfo) {
     super(method.getManager(), GroovyFileType.GROOVY_LANGUAGE, method.getName());
     myMethod = method;
 
@@ -55,6 +56,16 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
     setBaseIcon(JetgroovyIcons.Groovy.Method);
     setMethodKind("GrGdkMethod");
     setNavigationElement(method);
+
+    if (originInfo != null) {
+      setOriginInfo(originInfo);
+    }
+    else {
+      PsiClass aClass = method.getContainingClass();
+      if (aClass != null && aClass.getName() != null) {
+        setOriginInfo(aClass.getName());
+      }
+    }
   }
 
   @NotNull
@@ -95,13 +106,18 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
 
   @NotNull
   public static GrGdkMethod createGdkMethod(@NotNull final PsiMethod original, final boolean isStatic) {
+    return createGdkMethod(original, isStatic, null);
+  }
+
+  @NotNull
+  public static GrGdkMethod createGdkMethod(@NotNull final PsiMethod original, final boolean isStatic, @Nullable final String originInfo) {
     final Key<CachedValue<GrGdkMethodImpl>> cachedValueKey = isStatic ? CACHED_STATIC : CACHED_NON_STATIC;
     CachedValue<GrGdkMethodImpl> cachedValue = original.getUserData(cachedValueKey);
     if (cachedValue == null) {
       cachedValue = CachedValuesManager.getManager(original.getProject()).createCachedValue(new CachedValueProvider<GrGdkMethodImpl>() {
         @Override
         public Result<GrGdkMethodImpl> compute() {
-          return Result.create(new GrGdkMethodImpl(original, isStatic), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+          return Result.create(new GrGdkMethodImpl(original, isStatic, originInfo), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
         }
       });
       original.putUserData(cachedValueKey, cachedValue);

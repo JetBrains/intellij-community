@@ -41,17 +41,18 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton;
+import com.intellij.ui.components.JBLabelDecorator;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
 import java.io.File;
 import java.util.List;
 
-public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
+public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
   @NonNls private static final String RECENT_KEYS = "MoveFile.RECENT_KEYS";
 
   public interface Callback {
@@ -74,8 +75,8 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
     init();
   }
 
-  protected Action[] createActions(){
-    return new Action[]{getOKAction(),getCancelAction(),getHelpAction()};
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -87,20 +88,8 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
   }
 
   protected JComponent createNorthPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
-    final GridBagConstraints c = new GridBagConstraints();
-    c.gridx = 0;
-    c.gridy = 0;
-    c.fill = GridBagConstraints.HORIZONTAL;
-    c.insets = new Insets(0, 2, 0, 0);
+    myNameLabel = JBLabelDecorator.createJBLabelDecorator().setBold(true);
 
-    myNameLabel = new JLabel();
-    panel.add(myNameLabel, c);
-    c.insets.top = 10;
-    c.gridy++;    
-    panel.add(new JLabel(RefactoringBundle.message("move.files.to.directory.label")), c);
-    c.insets.top = 0;
-    
     myTargetDirectoryField = new TextFieldWithHistoryWithBrowseButton();
     final List<String> recentEntries = RecentsManager.getInstance(myProject).getRecentEntries(RECENT_KEYS);
     if (recentEntries != null) {
@@ -114,33 +103,24 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
                                                    TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
     final JTextField textField = myTargetDirectoryField.getChildComponent().getTextEditor();
     FileChooserFactory.getInstance().installFileCompletion(textField, descriptor, true, getDisposable());
-    myTargetDirectoryField.setTextFieldPreferredWidth(60);
-    c.insets.left = 0;
-    c.gridy++;
-    panel.add(myTargetDirectoryField, c);
-    String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
-    final JLabel label = new JLabel(RefactoringBundle.message("path.completion.shortcut", shortcutText));
-    UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, label);
-    c.insets.left = 6;
-    c.gridy++;
-    panel.add(label, c);
-
-    myCbSearchForReferences = new NonFocusableCheckBox(RefactoringBundle.message("search.for.references"));
-    myCbSearchForReferences.setSelected(RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE);
-    c.insets.top = 10;
-    c.insets.left = 0;
-    c.gridy++;
-    panel.add(myCbSearchForReferences, c);
-
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
         validateOKButton();
       }
     });
+    myTargetDirectoryField.setTextFieldPreferredWidth(60);
     Disposer.register(getDisposable(), myTargetDirectoryField);
 
-    return panel;
+    String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
+
+    myCbSearchForReferences = new NonFocusableCheckBox(RefactoringBundle.message("search.for.references"));
+    myCbSearchForReferences.setSelected(RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE);
+
+    return FormBuilder.createFormBuilder().addComponent(myNameLabel)
+      .addLabeledComponent(RefactoringBundle.message("move.files.to.directory.label"), myTargetDirectoryField, UIUtil.LARGE_VGAP)
+      .addTooltip(RefactoringBundle.message("path.completion.shortcut", shortcutText))
+      .addComponentToRightColumn(myCbSearchForReferences, UIUtil.LARGE_VGAP).getPanel();
   }
 
   public void setData(PsiElement[] psiElements, PsiDirectory initialTargetDirectory, @NonNls String helpID) {
@@ -170,7 +150,8 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
                           RefactoringBundle.message("move.specified.elements"));
     }
 
-    myTargetDirectoryField.getChildComponent().setText(initialTargetDirectory == null ? "" : initialTargetDirectory.getVirtualFile().getPresentableUrl());
+    myTargetDirectoryField.getChildComponent()
+      .setText(initialTargetDirectory == null ? "" : initialTargetDirectory.getVirtualFile().getPresentableUrl());
 
     validateOKButton();
     myHelpID = helpID;

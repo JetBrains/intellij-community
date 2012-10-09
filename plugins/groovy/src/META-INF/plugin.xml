@@ -30,7 +30,7 @@
   <extensionPoints>
     <extensionPoint name="membersContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor"/>
     <extensionPoint name="defaultImportContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.DefaultImportContributor"/>
-    <extensionPoint name="astTransformContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor"/>
+    <extensionPoint name="astTransformContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor"/>
     <extensionPoint name="closureMissingMethodContributor"
                     interface="org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor"/>
     <extensionPoint name="variableEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer"/>
@@ -79,9 +79,8 @@
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMembersContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrCollectionTypeMembersProvider"/>
-    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.LoggingContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.spock.SpockMemberContributor"/>
-    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.MixinMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNonCodeMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.dgm.DGMMemberContributor"/>
 
@@ -92,11 +91,14 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebJUnitTestMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebBrowserMemberContributor"/>
 
+    <membersContributor implementation="org.jetbrains.plugins.groovy.gant.GantMemberContributor"/>
+
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.DelegatedMethodsContributor"/>
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.AutoExternalizeContributor"/>
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.AutoCloneContributor"/>
-    <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.ConstructorAnnotationsProcessor"/>
-    <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrInheritConstructorContributor"/>
+    <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.ConstructorAnnotationsProcessor"/>
+    <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.GrInheritConstructorContributor"/>
+    <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.LoggingContributor"/>
 
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
@@ -133,7 +135,6 @@
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureAsAnonymousParameterEnhancer"/>
 
-    <membersContributor implementation="org.jetbrains.plugins.groovy.gant.GantMemberContributor"/>
 
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GrContainerTypeConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.impl.types.GrStringTypeConverter"/>

@@ -55,7 +55,7 @@ class MyTest2<X> {
     public static void main(String[] args) {
         I<String> s = MyTest2<String>::new;
         s.m("");
-        //todo test(MyTest2<String>::new, "");
+        test(MyTest2<String>::new, "");
     }
 }
 

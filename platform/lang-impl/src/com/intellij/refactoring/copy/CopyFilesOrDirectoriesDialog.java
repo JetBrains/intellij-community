@@ -38,7 +38,9 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton;
+import com.intellij.ui.components.JBLabelDecorator;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -49,7 +51,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.List;
 
-class CopyFilesOrDirectoriesDialog extends DialogWrapper{
+class CopyFilesOrDirectoriesDialog extends DialogWrapper {
   private JLabel myInformationLabel;
   private TextFieldWithHistoryWithBrowseButton myTargetDirectoryField;
   private JTextField myNewNameField;
@@ -104,7 +106,8 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
     }
 
     if (myShowDirectoryField) {
-      myTargetDirectoryField.getChildComponent().setText(defaultTargetDirectory == null ? "" : defaultTargetDirectory.getVirtualFile().getPresentableUrl());
+      myTargetDirectoryField.getChildComponent()
+        .setText(defaultTargetDirectory == null ? "" : defaultTargetDirectory.getVirtualFile().getPresentableUrl());
     }
     validateOKButton();
   }
@@ -131,8 +134,8 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
     }
   }
 
-  protected Action[] createActions(){
-    return new Action[]{getOKAction(),getCancelAction(),getHelpAction()};
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -144,63 +147,47 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
   }
 
   protected JComponent createNorthPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
-
-    myInformationLabel = new JLabel();
-
-    panel.add(myInformationLabel, new GridBagConstraints(0,0,2,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,8,4,8),0,0));
-
+    myInformationLabel = JBLabelDecorator.createJBLabelDecorator().setBold(true);
+    final FormBuilder formBuilder = FormBuilder.createFormBuilder().addComponent(myInformationLabel).addVerticalGap(
+      UIUtil.LARGE_VGAP - UIUtil.DEFAULT_VGAP);
     DocumentListener documentListener = new DocumentAdapter() {
       public void textChanged(DocumentEvent event) {
         validateOKButton();
       }
     };
+
     if (myShowNewNameField) {
-      myNewNameField = new JTextField();
-      Dimension size = myNewNameField.getPreferredSize();
-      FontMetrics fontMetrics = myNewNameField.getFontMetrics(myNewNameField.getFont());
-      size.width = fontMetrics.charWidth('a') * 60;
-      myNewNameField.setPreferredSize(size);
-
-      panel.add(new JLabel(RefactoringBundle.message("copy.files.new.name.label")), new GridBagConstraints(0,1,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,8,4,8),0,0));
-
-      panel.add(myNewNameField, new GridBagConstraints(1,1,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,0,4,8),0,0));
-
+      myNewNameField = new JTextField(60);
       myNewNameField.getDocument().addDocumentListener(documentListener);
+      formBuilder.addLabeledComponent(RefactoringBundle.message("copy.files.new.name.label"), myNewNameField);
     }
 
     if (myShowDirectoryField) {
-      panel.add(new JLabel(RefactoringBundle.message("copy.files.to.directory.label")), new GridBagConstraints(0,2,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,8,4,8),0,0));
-
       myTargetDirectoryField = new TextFieldWithHistoryWithBrowseButton();
       final List<String> recentEntries = RecentsManager.getInstance(myProject).getRecentEntries(RECENT_KEYS);
-      
       if (recentEntries != null) {
         myTargetDirectoryField.getChildComponent().setHistory(recentEntries);
       }
       final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
       myTargetDirectoryField.addBrowseFolderListener(RefactoringBundle.message("select.target.directory"),
-                                                                            RefactoringBundle.message("the.file.will.be.copied.to.this.directory"),
-                                                                            myProject, descriptor,
-                                                                            TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
-      
+                                                     RefactoringBundle.message("the.file.will.be.copied.to.this.directory"),
+                                                     myProject, descriptor,
+                                                     TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
       myTargetDirectoryField.setTextFieldPreferredWidth(60);
-      panel.add(myTargetDirectoryField, new GridBagConstraints(1,2,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,0,2,8),0,0));
-
       myTargetDirectoryField.getChildComponent().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(DocumentEvent e) {
           validateOKButton();
         }
       });
-      String shortcutText = KeymapUtil
-        .getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
-      final JLabel label = new JLabel(RefactoringBundle.message("path.completion.shortcut", shortcutText));
-      UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, label);
-      panel.add(label, new GridBagConstraints(1,3,2,1,1,0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,6,4,8), 0,0));
+      formBuilder.addLabeledComponent(RefactoringBundle.message("copy.files.to.directory.label"), myTargetDirectoryField);
+
+      String shortcutText =
+        KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
+      formBuilder.addTooltip(RefactoringBundle.message("path.completion.shortcut", shortcutText));
     }
 
-    return panel;
+    return formBuilder.getPanel();
   }
 
   public PsiDirectory getTargetDirectory() {
@@ -211,12 +198,13 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
     return myNewNameField != null ? myNewNameField.getText().trim() : null;
   }
 
-  protected void doOKAction(){
+  protected void doOKAction() {
     if (myShowNewNameField) {
       String newName = getNewName();
 
       if (newName.length() == 0) {
-        Messages.showMessageDialog(myProject, RefactoringBundle.message("no.new.name.specified"), RefactoringBundle.message("error.title"), Messages.getErrorIcon());
+        Messages.showMessageDialog(myProject, RefactoringBundle.message("no.new.name.specified"), RefactoringBundle.message("error.title"),
+                                   Messages.getErrorIcon());
         return;
       }
     }
@@ -225,7 +213,8 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
       final String targetDirectoryName = myTargetDirectoryField.getChildComponent().getText();
 
       if (targetDirectoryName.length() == 0) {
-        Messages.showMessageDialog(myProject, RefactoringBundle.message("no.target.directory.specified"), RefactoringBundle.message("error.title"), Messages.getErrorIcon());
+        Messages.showMessageDialog(myProject, RefactoringBundle.message("no.target.directory.specified"),
+                                   RefactoringBundle.message("error.title"), Messages.getErrorIcon());
         return;
       }
 
@@ -236,7 +225,8 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               try {
-                myTargetDirectory = DirectoryUtil.mkdirs(PsiManager.getInstance(myProject), targetDirectoryName.replace(File.separatorChar, '/'));
+                myTargetDirectory =
+                  DirectoryUtil.mkdirs(PsiManager.getInstance(myProject), targetDirectoryName.replace(File.separatorChar, '/'));
               }
               catch (IncorrectOperationException e) {
               }
@@ -246,7 +236,9 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
       }, RefactoringBundle.message("create.directory"), null);
 
       if (myTargetDirectory == null) {
-        Messages.showMessageDialog(myProject, RefactoringBundle.message("cannot.create.directory"), RefactoringBundle.message("error.title"), Messages.getErrorIcon());
+        Messages
+          .showMessageDialog(myProject, RefactoringBundle.message("cannot.create.directory"), RefactoringBundle.message("error.title"),
+                             Messages.getErrorIcon());
         return;
       }
     }

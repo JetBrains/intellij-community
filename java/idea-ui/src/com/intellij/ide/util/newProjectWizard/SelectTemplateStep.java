@@ -18,12 +18,18 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.util.treeView.AlphaComparator;
+import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
+import com.intellij.platform.templates.ArchivedTemplatesFactory;
+import com.intellij.platform.templates.EmptyModuleTemplatesFactory;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -47,10 +53,8 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -102,7 +106,28 @@ public class SelectTemplateStep extends ModuleWizardStep {
         return matches(template);
       }
     };
-    myBuilder = new FilteringTreeBuilder(myTemplatesTree, myFilter, structure, AlphaComparator.INSTANCE);
+    myBuilder = new FilteringTreeBuilder(myTemplatesTree, myFilter, structure, new Comparator<NodeDescriptor>() {
+      @Override
+      public int compare(NodeDescriptor o1, NodeDescriptor o2) {
+        if (o1 instanceof FilteringTreeStructure.FilteringNode) {
+          if (((FilteringTreeStructure.FilteringNode)o1).getDelegate() instanceof GroupNode) {
+            String name = ((GroupNode)((FilteringTreeStructure.FilteringNode)o1).getDelegate()).getName();
+            if (name.equals(EmptyModuleTemplatesFactory.GROUP_NAME)) {
+//              return 1;
+            }
+            else if (name.equals(ArchivedTemplatesFactory.CUSTOM_GROUP)) {
+//              return -1;
+            }
+          }
+        }
+        return AlphaComparator.INSTANCE.compare(o1, o2);
+      }
+    }) {
+      @Override
+      public boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
+        return false;
+      }
+    };
 
     myTemplatesTree.setRootVisible(false);
     myTemplatesTree.setShowsRootHandles(false);
@@ -115,7 +140,6 @@ public class SelectTemplateStep extends ModuleWizardStep {
                                         boolean leaf,
                                         int row,
                                         boolean hasFocus) {
-//        setIpad(new Insets());
         SimpleNode node = getSimpleNode(value);
         if (node != null) {
           String name = node.getName();
@@ -167,9 +191,35 @@ public class SelectTemplateStep extends ModuleWizardStep {
 //    doFilter();
   }
 
+  @Override
+  public void updateStep() {
+    TreeState state = SelectTemplateSettings.getInstance().getTreeState();
+    if (state != null) {
+      state.applyTo(myTemplatesTree, (DefaultMutableTreeNode)myTemplatesTree.getModel().getRoot());
+    }
+    else {
+      myBuilder.expandAll(null);
+    }
+//    myBuilder.queueUpdate();
+  }
+
+  @Override
+  public void onStepLeaving() {
+    TreeState state = TreeState.createOn(myTemplatesTree, (DefaultMutableTreeNode)myTemplatesTree.getModel().getRoot());
+    SelectTemplateSettings.getInstance().setTreeState(state);
+  }
+
+  @Override
+  public boolean validate() throws ConfigurationException {
+    if (getSelectedTemplate() == null) {
+      throw new ConfigurationException(ProjectBundle.message("project.new.wizard.from.template.error", myContext.getPresentationName()));
+    }
+    return true;
+  }
+
   private void doFilter() {
     buildMatcher();
-    SimpleNode selectedNode = getSelectedNode();
+    SimpleNode selectedNode = myTemplatesTree.getSelectedNode();
     final Ref<SimpleNode> node = new Ref<SimpleNode>();
     if (!(selectedNode instanceof TemplateNode) || !matches(selectedNode)) {
       myTemplatesTree.accept(myBuilder, new SimpleNodeVisitor() {
@@ -228,7 +278,8 @@ public class SelectTemplateStep extends ModuleWizardStep {
   private SimpleNode getSimpleNode(Object component) {
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)component;
     Object userObject = node.getUserObject();
-    if (!(userObject instanceof FilteringTreeStructure.FilteringNode)) return null;
+    if (!(userObject instanceof FilteringTreeStructure.FilteringNode)) //noinspection ConstantConditions
+      return null;
     FilteringTreeStructure.FilteringNode object = (FilteringTreeStructure.FilteringNode)userObject;
     return (SimpleNode)object.getDelegate();
   }
@@ -272,7 +323,6 @@ public class SelectTemplateStep extends ModuleWizardStep {
       }
       return children.toArray(new SimpleNode[children.size()]);
     }
-
 
     @Override
     public String getName() {

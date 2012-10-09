@@ -135,9 +135,11 @@ public class CodeCompletionHandlerBase {
 
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
     boolean repeated = phase.indicator != null && phase.indicator.isRepeatedInvocation(myCompletionType, editor);
+    /*
     if (repeated && isAutocompleteCommonPrefixOnInvocation() && phase.fillInCommonPrefix()) {
       return;
     }
+    */
 
     int newTime = phase.newCompletionStarted(time, repeated);
     if (invokedExplicitly) {
@@ -452,7 +454,9 @@ public class CodeCompletionHandlerBase {
       CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(indicator));
       indicator.getLookup().setCalculating(false);
       if (indicator.showLookup() && isAutocompleteCommonPrefixOnInvocation() && items.length > 1) {
-        indicator.fillInCommonPrefix(false);
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          indicator.fillInCommonPrefix(false);
+        }
       }
     }
     else if (decision instanceof AutoCompletionDecision.InsertItem) {

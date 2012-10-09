@@ -7,9 +7,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.tasks.GitHubRepository;
-import com.intellij.util.ui.FormBuilder;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 

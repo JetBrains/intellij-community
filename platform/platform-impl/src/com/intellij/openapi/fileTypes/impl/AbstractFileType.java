@@ -25,21 +25,23 @@ import com.intellij.openapi.fileTypes.ex.ExternalizableFileType;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.ExternalInfo;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
+import com.intellij.util.text.StringTokenizer;
 import org.jdom.Element;
+import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
 
 public class AbstractFileType extends UserFileType<AbstractFileType> implements ExternalizableFileType, ExternalizableScheme,
                                                                                 CustomSyntaxTableFileType {
+  private static final String SEMICOLON = ";";
   protected SyntaxTable mySyntaxTable;
   private SyntaxTable myDefaultSyntaxTable;
   protected Commenter myCommenter = null;
@@ -161,36 +163,51 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
       else if (ELEMENT_KEYWORDS.equals(element.getName())) {
         boolean ignoreCase = Boolean.valueOf(element.getAttributeValue(ATTRIBUTE_IGNORE_CASE)).booleanValue();
         table.setIgnoreCase(ignoreCase);
-        for (final Object o1 : element.getChildren(ELEMENT_KEYWORD)) {
-          Element e = (Element)o1;
-          table.addKeyword1(e.getAttributeValue(ATTRIBUTE_NAME));
-        }
+        loadKeywords(element, table.getKeywords1());
       }
       else if (ELEMENT_KEYWORDS2.equals(element.getName())) {
-        for (final Object o1 : element.getChildren(ELEMENT_KEYWORD)) {
-          Element e = (Element)o1;
-          table.addKeyword2(e.getAttributeValue(ATTRIBUTE_NAME));
-        }
+        loadKeywords(element, table.getKeywords2());
       }
       else if (ELEMENT_KEYWORDS3.equals(element.getName())) {
-        for (final Object o1 : element.getChildren(ELEMENT_KEYWORD)) {
-          Element e = (Element)o1;
-          table.addKeyword3(e.getAttributeValue(ATTRIBUTE_NAME));
-        }
+        loadKeywords(element, table.getKeywords3());
       }
       else if (ELEMENT_KEYWORDS4.equals(element.getName())) {
-        for (final Object o1 : element.getChildren(ELEMENT_KEYWORD)) {
-          Element e = (Element)o1;
-          table.addKeyword4(e.getAttributeValue(ATTRIBUTE_NAME));
-        }
+        loadKeywords(element, table.getKeywords4());
       }
     }
 
+    boolean DUMP_TABLE = false;
+    if (DUMP_TABLE) {
+      Element element = new Element("temp");
+      writeTable(element, table);
+      XMLOutputter outputter = JDOMUtil.createOutputter("\n");
+      try {
+        outputter.output((Element)element.getContent().get(0), System.out);
+      } catch (IOException ex) {}
+    }
     return table;
+  }
+
+  private static void loadKeywords(Element element, Set<String> keywords) {
+    String value = element.getAttributeValue(ELEMENT_KEYWORDS);
+    if (value != null) {
+      StringTokenizer tokenizer = new StringTokenizer(value, SEMICOLON);
+      while(tokenizer.hasMoreElements()) {
+        String keyword = tokenizer.nextToken().trim();
+        if (keyword.length() != 0) keywords.add(keyword);
+      }
+    }
+    for (final Object o1 : element.getChildren(ELEMENT_KEYWORD)) {
+      keywords.add(((Element)o1).getAttributeValue(ATTRIBUTE_NAME));
+    }
   }
 
   public void writeExternal(final Element element) throws WriteExternalException {
     SyntaxTable table = getSyntaxTable();
+    writeTable(element, table);
+  }
+
+  private static void writeTable(Element element, SyntaxTable table) {
     Element highlightingElement = new Element(ELEMENT_HIGHLIGHTING);
 
     Element optionsElement = new Element(ELEMENT_OPTIONS);
@@ -200,67 +217,87 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     lineComment.setAttribute(ATTRIBUTE_VALUE, table.getLineComment());
     optionsElement.addContent(lineComment);
 
-    Element commentStart = new Element(ELEMENT_OPTION);
-    commentStart.setAttribute(ATTRIBUTE_NAME, VALUE_COMMENT_START);
-    commentStart.setAttribute(ATTRIBUTE_VALUE, table.getStartComment());
-    optionsElement.addContent(commentStart);
+    String commentStart = table.getStartComment();
+    if (commentStart != null) {
+      Element commentStartElement = new Element(ELEMENT_OPTION);
+      commentStartElement.setAttribute(ATTRIBUTE_NAME, VALUE_COMMENT_START);
+      commentStartElement.setAttribute(ATTRIBUTE_VALUE, commentStart);
+      optionsElement.addContent(commentStartElement);
+    }
 
-    Element commentEnd = new Element(ELEMENT_OPTION);
-    commentEnd.setAttribute(ATTRIBUTE_NAME, VALUE_COMMENT_END);
-    commentEnd.setAttribute(ATTRIBUTE_VALUE, table.getEndComment());
-    optionsElement.addContent(commentEnd);
+    String endComment = table.getEndComment();
 
-    Element hexPrefix = new Element(ELEMENT_OPTION);
-    hexPrefix.setAttribute(ATTRIBUTE_NAME, VALUE_HEX_PREFIX);
-    hexPrefix.setAttribute(ATTRIBUTE_VALUE, table.getHexPrefix());
-    optionsElement.addContent(hexPrefix);
+    if (endComment != null) {
+      Element commentEndElement = new Element(ELEMENT_OPTION);
+      commentEndElement.setAttribute(ATTRIBUTE_NAME, VALUE_COMMENT_END);
+      commentEndElement.setAttribute(ATTRIBUTE_VALUE, endComment);
+      optionsElement.addContent(commentEndElement);
+    }
 
-    Element numPostfixes = new Element(ELEMENT_OPTION);
-    numPostfixes.setAttribute(ATTRIBUTE_NAME, VALUE_NUM_POSTFIXES);
-    numPostfixes.setAttribute(ATTRIBUTE_VALUE, table.getNumPostfixChars());
-    optionsElement.addContent(numPostfixes);
+    String prefix = table.getHexPrefix();
 
-    addElementOption(optionsElement, VALUE_HAS_BRACKETS, table.isHasBrackets());
+    if (prefix != null) {
+      Element hexPrefix = new Element(ELEMENT_OPTION);
+      hexPrefix.setAttribute(ATTRIBUTE_NAME, VALUE_HEX_PREFIX);
+      hexPrefix.setAttribute(ATTRIBUTE_VALUE, prefix);
+      optionsElement.addContent(hexPrefix);
+    }
+
+    String chars = table.getNumPostfixChars();
+
+    if (chars != null) {
+      Element numPostfixes = new Element(ELEMENT_OPTION);
+      numPostfixes.setAttribute(ATTRIBUTE_NAME, VALUE_NUM_POSTFIXES);
+      numPostfixes.setAttribute(ATTRIBUTE_VALUE, chars);
+      optionsElement.addContent(numPostfixes);
+    }
+
     addElementOption(optionsElement, VALUE_HAS_BRACES, table.isHasBraces());
+    addElementOption(optionsElement, VALUE_HAS_BRACKETS, table.isHasBrackets());
     addElementOption(optionsElement, VALUE_HAS_PARENS, table.isHasParens());
     addElementOption(optionsElement, VALUE_HAS_STRING_ESCAPES, table.isHasStringEscapes());
     addElementOption(optionsElement, VALUE_LINE_COMMENT_AT_START, table.lineCommentOnlyAtStart);
 
     highlightingElement.addContent(optionsElement);
 
-    Element keywordsElement = new Element(ELEMENT_KEYWORDS);
-    keywordsElement.setAttribute(ATTRIBUTE_IGNORE_CASE, String.valueOf(table.isIgnoreCase()));
-    writeKeywords(table.getKeywords1(), keywordsElement);
-    highlightingElement.addContent(keywordsElement);
-
-    Element keywordsElement2 = new Element(ELEMENT_KEYWORDS2);
-    writeKeywords(table.getKeywords2(), keywordsElement2);
-    highlightingElement.addContent(keywordsElement2);
-
-    Element keywordsElement3 = new Element(ELEMENT_KEYWORDS3);
-    writeKeywords(table.getKeywords3(), keywordsElement3);
-    highlightingElement.addContent(keywordsElement3);
-
-    Element keywordsElement4 = new Element(ELEMENT_KEYWORDS4);
-    writeKeywords(table.getKeywords4(), keywordsElement4);
-    highlightingElement.addContent(keywordsElement4);
+    writeKeywords(table.getKeywords1(), ELEMENT_KEYWORDS, highlightingElement).setAttribute(ATTRIBUTE_IGNORE_CASE, String.valueOf(table.isIgnoreCase()));
+    writeKeywords(table.getKeywords2(), ELEMENT_KEYWORDS2, highlightingElement);
+    writeKeywords(table.getKeywords3(), ELEMENT_KEYWORDS3, highlightingElement);
+    writeKeywords(table.getKeywords4(), ELEMENT_KEYWORDS4, highlightingElement);
 
     element.addContent(highlightingElement);
   }
 
   private static void addElementOption(final Element optionsElement, final String valueHasParens, final boolean hasParens) {
+    if (!hasParens) return;
     Element supportParens = new Element(ELEMENT_OPTION);
     supportParens.setAttribute(ATTRIBUTE_NAME, valueHasParens);
     supportParens.setAttribute(ATTRIBUTE_VALUE, String.valueOf(hasParens));
     optionsElement.addContent(supportParens);
   }
 
-  private static void writeKeywords(Set keywords, Element keywordsElement) {
-    for (final Object keyword : keywords) {
-      Element e = new Element(ELEMENT_KEYWORD);
-      e.setAttribute(ATTRIBUTE_NAME, (String)keyword);
-      keywordsElement.addContent(e);
+  private static Element writeKeywords(Set<String> keywords, String tagName, Element highlightingElement) {
+    if (keywords.size() == 0 && !ELEMENT_KEYWORDS.equals(tagName)) return null;
+    Element keywordsElement = new Element(tagName);
+    String[] strings = keywords.toArray(new String[keywords.size()]);
+    Arrays.sort(strings);
+    StringBuilder keywordsAttribute = new StringBuilder();
+
+    for (final String keyword : strings) {
+      if (keyword.indexOf(SEMICOLON) == -1) {
+        if (keywordsAttribute.length() != 0) keywordsAttribute.append(SEMICOLON);
+        keywordsAttribute.append(keyword);
+      } else {
+        Element e = new Element(ELEMENT_KEYWORD);
+        e.setAttribute(ATTRIBUTE_NAME, keyword);
+        keywordsElement.addContent(e);
+      }
     }
+    if (keywordsAttribute.length() != 0) {
+      keywordsElement.setAttribute(ELEMENT_KEYWORDS, keywordsAttribute.toString());
+    }
+    highlightingElement.addContent(keywordsElement);
+    return keywordsElement;
   }
 
   public void markDefaultSettings() {
@@ -271,19 +308,14 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     return !Comparing.equal(myDefaultSyntaxTable, getSyntaxTable());
   }
 
-
   @NonNls private static final String ELEMENT_MAPPING = "mapping";
   @NonNls private static final String ATTRIBUTE_EXT = "ext";
   @NonNls private static final String ATTRIBUTE_PATTERN = "pattern";
   @NonNls private static final String ELEMENT_REMOVED_MAPPING = "removed_mapping";
   @NonNls private static final String ATTRIBUTE_TYPE = "type";
 
-
   public static List<Pair<FileNameMatcher, String>> readAssociations(final Element e) {
-
     ArrayList<Pair<FileNameMatcher, String>> result = new ArrayList<Pair<FileNameMatcher, String>>();
-
-
     List mappings = e.getChildren(ELEMENT_MAPPING);
 
     for (Object mapping1 : mappings) {

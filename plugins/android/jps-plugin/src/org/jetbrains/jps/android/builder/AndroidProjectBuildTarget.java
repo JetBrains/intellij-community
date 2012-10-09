@@ -19,6 +19,7 @@ import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.android.AndroidJpsUtil;
+import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
@@ -28,6 +29,7 @@ import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -60,8 +62,12 @@ public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> 
       result.add(new AndroidProjectBuildTarget(AndroidBuilderKind.DEX, myModel));
     }
     for (JpsModule module : myModel.getProject().getModules()) {
-      if (AndroidJpsUtil.getExtension(module) != null) {
+      JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
+      if (extension != null) {
         result.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION));
+        if (extension.isPackTestCode()) {
+          result.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.TEST));
+        }
       }
     }
     return result;
@@ -100,7 +106,13 @@ public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> 
   public String getPresentableName() {
     return "Android " + myKind.name();
   }
-  
+
+  @Nullable
+  @Override
+  public File getOutputDir(BuildDataPaths paths) {
+    return null;
+  }
+
   public static class TargetType extends BuildTargetType<AndroidProjectBuildTarget> {
     public static final TargetType INSTANCE = new TargetType();
 

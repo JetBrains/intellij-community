@@ -10,6 +10,10 @@ public class MantisFilter {
   private int id;
   private String name;
 
+  @SuppressWarnings({"UnusedDeclaration"})
+  public MantisFilter() {
+  }
+
   public MantisFilter(final int id, final String name) {
     this.id = id;
     this.name = name;

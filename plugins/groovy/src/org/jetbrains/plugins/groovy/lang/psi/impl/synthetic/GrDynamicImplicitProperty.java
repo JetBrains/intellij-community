@@ -47,19 +47,12 @@ import javax.swing.tree.TreePath;
 public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements GrDynamicImplicitElement, PsiField {
   private final String myContainingClassName;
   private final Project myProject;
-  private final PsiElement myNavigationalElement;
 
-  public GrDynamicImplicitProperty(PsiManager manager, @NonNls String name, @NonNls @NotNull String type, String containingClassName,
-                                   PsiElement navigationalElement) {
-    super(manager, name, type, navigationalElement);
+  public GrDynamicImplicitProperty(PsiManager manager, @NonNls String name, @NonNls @NotNull String type, String containingClassName) {
+    super(manager, name, type, null);
     myContainingClassName = containingClassName;
     myProject = manager.getProject();
-    if (navigationalElement==null) {
-      myNavigationalElement = this;
-    }
-    else {
-      myNavigationalElement = navigationalElement;
-    }
+    setOriginInfo("dynamic property");
   }
 
   @Nullable
@@ -80,6 +73,12 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
     if (psiClass == null) return null;
 
     return psiClass.getContainingFile();
+  }
+
+  @Override
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+    DynamicManager.getInstance(getProject()).replaceDynamicPropertyName(myContainingClassName, getName(), name);
+    return super.setName(name);
   }
 
   public String getPresentableText() {
@@ -150,13 +149,7 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
   }
 
   public boolean canNavigateToSource() {
-    return myNavigationalElement != this;
-  }
-
-  @NotNull
-  @Override
-  public PsiElement getNavigationElement() {
-    return myNavigationalElement;
+    return false;
   }
 
   public boolean canNavigate() {

@@ -15,35 +15,31 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
@@ -56,30 +52,29 @@ import java.util.List;
  * User: Dmitry.Krasilschikov
  * Date: 21.02.2008
  */
-public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, GrDynamicImplicitElement {
-  private final PsiManager myManager;
+public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrDynamicImplicitElement {
+  private static final Logger LOG = Logger.getInstance(GrDynamicImplicitMethod.class);
 
-  private final GrMethod myMethod;
   private final String myContainingClassName;
-  private final Project myProject;
+  private final List<ParamInfo> myParamInfos;
 
-  public GrDynamicImplicitMethod(PsiManager manager, GrMethod method, String containingClassName) {
-    super(manager, GroovyFileType.GROOVY_LANGUAGE);
-    myManager = manager;
-
-    myMethod = method;
-    myProject = myManager.getProject();
+  public GrDynamicImplicitMethod(PsiManager manager,
+                                 String name,
+                                 String containingClassName,
+                                 boolean isStatic,
+                                 List<ParamInfo> paramInfos) {
+    super(manager, name);
     myContainingClassName = containingClassName;
-  }
+    myParamInfos = paramInfos;
+    setOriginInfo("dynamic method");
 
-  public String[] getParameterTypes() {
-    final PsiParameter[] psiParameters = getParameterList().getParameters();
-    List<String> result = new ArrayList<String>();
-    for (PsiParameter psiParameter : psiParameters) {
-      result.add(psiParameter.getTypeElement().getType().getCanonicalText());
+    if (isStatic) {
+      addModifier(PsiModifier.STATIC);
     }
 
-    return ArrayUtil.toStringArray(result);
+    for (ParamInfo pair : paramInfos) {
+      addParameter(pair.name, pair.type, false);
+    }
   }
 
   public String getContainingClassName() {
@@ -91,139 +86,16 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
     return JavaPsiFacade.getInstance(getProject()).findClass(myContainingClassName, ProjectScope.getAllScope(getProject()));
   }
 
-  public boolean hasTypeParameters() {
-    return myMethod.hasTypeParameters();
-  }
-
-  @NotNull
-  public PsiTypeParameter[] getTypeParameters() {
-    return myMethod.getTypeParameters();
-  }
-
-  public PsiTypeParameterList getTypeParameterList() {
-    return myMethod.getTypeParameterList();
-  }
-
-  public PsiDocComment getDocComment() {
-    return myMethod.getDocComment();
-  }
-
-  public boolean isDeprecated() {
-    return myMethod.isDeprecated();
-  }
-
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    return myMethod.setName(name);
+    String[] argumentsTypes = QuickfixUtil.getArgumentsTypes(myParamInfos);
+    DynamicManager.getInstance(getProject()).replaceDynamicMethodName(getContainingClassName(), getName(), name, argumentsTypes);
+
+    return super.setName(name);
   }
 
-  @NotNull
-  public String getName() {
-    return myMethod.getName();
-  }
-
-  @NotNull
-  public HierarchicalMethodSignature getHierarchicalMethodSignature() {
-    return myMethod.getHierarchicalMethodSignature();
-  }
-
-  public boolean hasModifierProperty(@NotNull final String name) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-
-    try {
-      return myMethod.hasModifierProperty(name);
-    }
-    finally {
-      accessToken.finish();
-    }
-  }
-
-  @NotNull
-  public PsiModifierList getModifierList() {
-    return myMethod.getModifierList();
-  }
-
-  public PsiType getReturnType() {
-    final PsiType type = myMethod.getReturnType();
-    if (type == null || type instanceof PsiClassType && ((PsiClassType)type).resolve() == null) {
-      return TypesUtil.getJavaLangObject(myMethod);
-    }
-    return type;
-  }
-
-  public PsiTypeElement getReturnTypeElement() {
-    return myMethod.getReturnTypeElement();
-  }
-
-  @NotNull
-  public PsiParameterList getParameterList() {
-    return myMethod.getParameterList();
-  }
-
-  @NotNull
-  public PsiReferenceList getThrowsList() {
-    return myMethod.getThrowsList();
-  }
-
-  public PsiCodeBlock getBody() {
-    return myMethod.getBody();
-  }
-
-  public boolean isConstructor() {
-    return myMethod.isConstructor();
-  }
-
-  public boolean isVarArgs() {
-    return myMethod.isVarArgs();
-  }
-
-  @NotNull
-  public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
-    return myMethod.getSignature(substitutor);
-  }
-
-  public PsiIdentifier getNameIdentifier() {
-    return myMethod.getNameIdentifier();
-  }
-
-  @NotNull
-  public PsiMethod[] findSuperMethods() {
-    return myMethod.findSuperMethods();
-  }
-
-  @NotNull
-  public PsiMethod[] findSuperMethods(boolean checkAccess) {
-    return myMethod.findSuperMethods(checkAccess);
-  }
-
-  @NotNull
-  public PsiMethod[] findSuperMethods(PsiClass parentClass) {
-    return myMethod.findSuperMethods(parentClass);
-  }
-
-  @NotNull
-  public List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
-    return myMethod.findSuperMethodSignaturesIncludingStatic(checkAccess);
-  }
-
-  public PsiMethod findDeepestSuperMethod() {
-    return myMethod.findDeepestSuperMethod();
-  }
-
-  @NotNull
-  public PsiMethod[] findDeepestSuperMethods() {
-    return myMethod.findDeepestSuperMethods();
-  }
-
-  public String getText() {
-    return myMethod.getText();
-  }
-
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    myMethod.accept(visitor);
-  }
-
-  public PsiElement copy() {
-    return new GrDynamicImplicitMethod(myManager, (GrMethod) myMethod.copy(), myContainingClassName);
+  public GrDynamicImplicitMethod copy() {
+    return new GrDynamicImplicitMethod(myManager, getName(), getContainingClassName(), hasModifierProperty(PsiModifier.STATIC), ContainerUtil.newArrayList(myParamInfos));
   }
 
   public boolean isValid() {
@@ -240,22 +112,24 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
 
   @Nullable
   public PsiClass getContainingClass() {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
-      final GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(myProject).createTypeElement(myContainingClassName);
-      if (typeElement == null) return null;
+    return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+      @Override
+      public PsiClass compute() {
+        try {
+          final GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(myContainingClassName);
+          if (typeElement == null) return null;
 
-      final PsiType type = typeElement.getType();
-      if (!(type instanceof PsiClassType)) return null;
+          final PsiType type = typeElement.getType();
+          if (!(type instanceof PsiClassType)) return null;
 
-      return ((PsiClassType)type).resolve();
-    }
-    catch (IncorrectOperationException e) {
-      return null;
-    }
-    finally {
-      accessToken.finish();
-    }
+          return ((PsiClassType)type).resolve();
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+          return null;
+        }
+      }
+    });
   }
 
   public String toString() {
@@ -264,14 +138,14 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
 
   @NotNull
   public SearchScope getUseScope() {
-    return GlobalSearchScope.projectScope(myProject);
+    return GlobalSearchScope.projectScope(getProject());
   }
 
   public void navigate(boolean requestFocus) {
 
-    DynamicToolWindowWrapper.getInstance(myProject).getToolWindow().activate(new Runnable() {
+    DynamicToolWindowWrapper.getInstance(getProject()).getToolWindow().activate(new Runnable() {
       public void run() {
-        DynamicToolWindowWrapper toolWindowWrapper = DynamicToolWindowWrapper.getInstance(myProject);
+        DynamicToolWindowWrapper toolWindowWrapper = DynamicToolWindowWrapper.getInstance(getProject());
         final TreeTable treeTable = toolWindowWrapper.getTreeTable();
         final ListTreeTableModelOnColumns model = toolWindowWrapper.getTreeTableModel();
 
@@ -290,16 +164,16 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
         PsiClass trueClass = null;
         DMethodElement methodElement = null;
 
-        final GrParameter[] parameters = myMethod.getParameterList().getParameters();
+        final GrParameter[] parameters = getParameters();
 
         List<String> parameterTypes = new ArrayList<String>();
         for (GrParameter parameter : parameters) {
-          final String type = parameter.getTypeElementGroovy().getType().getCanonicalText();
+          final String type = parameter.getType().getCanonicalText();
           parameterTypes.add(type);
         }
 
         for (PsiClass aSuper : PsiUtil.iterateSupers(psiClass, true)) {
-          methodElement = DynamicManager.getInstance(myProject).findConcreteDynamicMethod(aSuper.getQualifiedName(), getName(), ArrayUtil.toStringArray(parameterTypes));
+          methodElement = DynamicManager.getInstance(getProject()).findConcreteDynamicMethod(aSuper.getQualifiedName(), getName(), ArrayUtil.toStringArray(parameterTypes));
 
           if (methodElement != null) {
             trueClass = aSuper;
@@ -308,7 +182,7 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
         }
 
         if (trueClass == null) return;
-        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DClassElement(myProject, trueClass.getQualifiedName()));
+        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DClassElement(getProject(), trueClass.getQualifiedName()));
 
         if (classNode == null) return;
         desiredNode = TreeUtil.findNodeWithObject(classNode, methodElement);
@@ -351,20 +225,5 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
   @Nullable
   public Icon getIcon(boolean open) {
     return JetgroovyIcons.Groovy.Method;
-  }
-
-  public GrMethod getMethod() {
-    return myMethod;
-  }
-  public PsiMethodReceiver getMethodReceiver() {
-    return null;
-  }
-  public PsiType getReturnTypeNoResolve() {
-    return getReturnType();
-  }
-
-  @Override
-  public PsiElement getContext() {
-    return myMethod;
   }
 }

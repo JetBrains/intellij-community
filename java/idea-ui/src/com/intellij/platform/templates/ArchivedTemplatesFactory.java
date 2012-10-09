@@ -19,15 +19,19 @@ import com.intellij.ide.fileTemplates.impl.UrlUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
@@ -37,7 +41,9 @@ import java.util.*;
  */
 public class ArchivedTemplatesFactory implements ProjectTemplatesFactory {
 
+  public static final String CUSTOM_GROUP = "Custom";
   private static final String ZIP = ".zip";
+
   private final NotNullLazyValue<MultiMap<String, URL>> myGroups = new NotNullLazyValue<MultiMap<String, URL>>() {
     @NotNull
     @Override
@@ -54,9 +60,18 @@ public class ArchivedTemplatesFactory implements ProjectTemplatesFactory {
           LOG.error(e);
         }
       }
+
+      URL configURL = getCustomTemplatesURL();
+      ContainerUtil.addIfNotNull(urls, configURL);
+
       for (URL url : urls) {
         try {
           List<String> children = UrlUtil.getChildrenRelativePaths(url);
+          if (configURL == url && !children.isEmpty()) {
+            map.putValue(CUSTOM_GROUP, url);
+            continue;
+          }
+
           for (String child : children) {
             int index = child.indexOf('/');
             if (index != -1) {
@@ -73,9 +88,24 @@ public class ArchivedTemplatesFactory implements ProjectTemplatesFactory {
     }
   };
 
+  private static URL getCustomTemplatesURL() {
+    String path = getCustomTemplatesPath();
+    try {
+      return new File(path).toURI().toURL();
+    }
+    catch (MalformedURLException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  static String getCustomTemplatesPath() {
+    return PathManager.getConfigPath() + "/projectTemplates";
+  }
+
   @NotNull
   @Override
   public String[] getGroups() {
+    myGroups.drop();
     Set<String> groups = myGroups.getValue().keySet();
     return ArrayUtil.toStringArray(groups);
   }

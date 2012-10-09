@@ -29,6 +29,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION;
+
 /**
  * @author Maxim.Medvedev
  */
@@ -36,7 +38,7 @@ public class GrCollectionTypeMembersProvider extends NonCodeMembersContributor {
 
   @Override
   public String getParentClassName() {
-    return CommonClassNames.JAVA_UTIL_COLLECTION;
+    return JAVA_UTIL_COLLECTION;
   }
 
   @Override
@@ -48,31 +50,28 @@ public class GrCollectionTypeMembersProvider extends NonCodeMembersContributor {
     final PsiType collectionType = PsiUtil.extractIterableTypeParameter(qualifierType, true);
     if (collectionType == null) return;
 
-    final PsiScopeProcessor fieldSearcher = new FieldSearcher(processor, JavaPsiFacade.getInstance(place.getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION, place.getResolveScope()));
+    PsiClass collectionClass = JavaPsiFacade.getInstance(place.getProject()).findClass(JAVA_UTIL_COLLECTION, place.getResolveScope());
+    final PsiScopeProcessor fieldSearcher = new FieldSearcher(processor, collectionClass);
     ResolveUtil.processAllDeclarations(collectionType, fieldSearcher, state, place);
   }
 
   private static class FieldSearcher extends DelegatingScopeProcessor implements ClassHint, ElementClassHint {
-    final PsiClass collectionClass;
+    final PsiClass myCollectionClass;
 
     public FieldSearcher(PsiScopeProcessor processor, PsiClass collectionClass) {
       super(processor);
-      this.collectionClass = collectionClass;
+      myCollectionClass = collectionClass;
     }
 
     @Override
     public boolean execute(@NotNull PsiElement element, ResolveState state) {
       if (element instanceof PsiField) {
         final PsiType type = ((PsiField)element).getType();
-        final String typeText;
-        if (type instanceof PsiClassType) {
-          typeText = CommonClassNames.JAVA_UTIL_COLLECTION + "<" + type.getCanonicalText() + ">";
-        }
-        else {
-          typeText = CommonClassNames.JAVA_UTIL_COLLECTION;
-        }
-        LightFieldBuilder lightField = new LightFieldBuilder(((PsiField)element).getName(), typeText, element).setContainingClass(
-          collectionClass);
+        final String typeText =
+          type instanceof PsiClassType ? JAVA_UTIL_COLLECTION + "<" + type.getCanonicalText() + ">" : JAVA_UTIL_COLLECTION;
+        LightFieldBuilder lightField = new LightFieldBuilder(((PsiField)element).getName(), typeText, element);
+        lightField.setContainingClass(myCollectionClass);
+        lightField.setOriginInfo("spread collection field");
         return super.execute(lightField, state);
       }
       return true;

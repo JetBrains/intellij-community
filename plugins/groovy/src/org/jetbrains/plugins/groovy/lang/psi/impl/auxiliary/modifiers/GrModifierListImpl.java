@@ -43,7 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
-import org.jetbrains.plugins.groovy.lang.resolve.noncode.ConstructorAnnotationsProcessor;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -164,7 +164,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
       }
       if (pParent instanceof GrTypeDefinition) {
         PsiModifierList pModifierList = ((GrTypeDefinition)pParent).getModifierList();
-        if (pModifierList != null && pModifierList.findAnnotation(ConstructorAnnotationsProcessor.IMMUTABLE) != null) {
+        if (pModifierList != null && pModifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_IMMUTABLE) != null) {
           if (modifier.equals(GrModifier.FINAL)) return true;
         }
       }

@@ -83,14 +83,17 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
     myMappings = null;
   }
 
+  @Override
   public String getDisplayName() {
     return VcsBundle.message("version.control.main.configurable.name");
   }
 
+  @Override
   public String getHelpTopic() {
     return "project.propVCSSupport.Mappings";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getDefaultConfigurableIdValue(this);
@@ -102,6 +105,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
     return helpTopic == null ? configurable.getClass().getName() : helpTopic;
   }
 
+  @Override
   protected Configurable[] buildConfigurables() {
     myGeneralPanel = new VcsGeneralConfigurationPanel(myProject){
       @Override
@@ -152,6 +156,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
 
   private void addListenerToGeneralPanel() {
     myMappings.addVcsListener(new ModuleVcsListener() {
+      @Override
       public void activeVcsSetChanged(Collection<AbstractVcs> activeVcses) {
         myGeneralPanel.updateAvailableOptions(activeVcses);
       }
@@ -168,42 +173,56 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
     };
     return new SearchableConfigurable(){
 
+      @Override
       @Nls
       public String getDisplayName() {
         return vcs.getDisplayName();
       }
 
+      @Override
       public String getHelpTopic() {
         return delegate.getValue().getHelpTopic();
       }
 
+      @Override
       public JComponent createComponent() {
         return delegate.getValue().createComponent();
       }
 
+      @Override
       public boolean isModified() {
         return delegate.getValue().isModified();
       }
 
+      @Override
       public void apply() throws ConfigurationException {
         delegate.getValue().apply();
       }
 
+      @Override
       public void reset() {
         delegate.getValue().reset();
       }
 
+      @Override
       public void disposeUIResources() {
         delegate.getValue().disposeUIResources();
       }
 
+      @Override
       @NotNull
       public String getId() {
         return "vcs." + getDisplayName();
       }
 
+      @Override
       public Runnable enableSearch(String option) {
         return null;
+      }
+
+      @Override
+      public String toString() {
+        return "VcsConfigurable for "+vcs.getDisplayName();
       }
     };
   }

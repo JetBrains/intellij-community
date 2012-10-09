@@ -182,6 +182,11 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
   }
 
   @Override
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    return this;
+  }
+
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     PsiElement oldIdentifier = findChildByRoleAsPsiElement(ChildRole.REFERENCE_NAME);
     if (oldIdentifier == null) {
@@ -356,7 +361,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                                                                  PsiSubstitutor substitutor,
                                                                  LanguageLevel languageLevel) {
       if (signature == null) return PsiSubstitutor.EMPTY;
-      final PsiType[] types = method.getSignature(substitutor).getParameterTypes();
+      final PsiType[] types = method.getSignature(PsiUtil.isRawSubstitutor(method, substitutor) ? PsiSubstitutor.EMPTY : substitutor).getParameterTypes();
       final PsiType[] rightTypes = signature.getParameterTypes();
       if (types.length < rightTypes.length) {
         return PsiUtil.resolveGenericsClassInType(rightTypes[0]).getSubstitutor();
@@ -364,9 +369,12 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         return PsiUtil.resolveGenericsClassInType(types[0]).getSubstitutor();
       }
 
-      PsiSubstitutor psiSubstitutor = JavaPsiFacade.getInstance(getProject()).getResolveHelper().inferTypeArguments(
-        method.getTypeParameters(), types, rightTypes, languageLevel);
+      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(getProject()).getResolveHelper();
+      PsiSubstitutor psiSubstitutor = resolveHelper.inferTypeArguments(method.getTypeParameters(), types, rightTypes, languageLevel);
       psiSubstitutor = psiSubstitutor.putAll(substitutor);
+      if (method.isConstructor()) {
+        psiSubstitutor = psiSubstitutor.putAll(resolveHelper.inferTypeArguments(method.getContainingClass().getTypeParameters(), types, rightTypes, languageLevel));
+      }
 
       return LambdaUtil.inferFromReturnType(method.getTypeParameters(),
                                             psiSubstitutor.substitute(method.getReturnType()),
@@ -416,15 +424,18 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           final boolean validConstructorRef = psiMethod.isConstructor() && (myContainingClass.getContainingClass() == null || myContainingClass.hasModifierProperty(PsiModifier.STATIC));
           final boolean staticOrValidConstructorRef = psiMethod.hasModifierProperty(PsiModifier.STATIC) || validConstructorRef;
 
-          if ((parameterTypes.length == signatureParameterTypes2.length || varArgs && parameterTypes.length >= signatureParameterTypes2.length) && 
+          if ((parameterTypes.length == signatureParameterTypes2.length || varArgs) && 
               (!myBeginsWithReferenceType || staticOrValidConstructorRef || (psiMethod.isConstructor() && conflict.isStaticsScopeCorrect()))) {
             boolean correct = true;
             for (int i = 0; i < parameterTypes.length; i++) {
-              final PsiType type1 = parameterTypes[i];
-              final PsiType type2 = varArgs && i >= signatureParameterTypes2.length - 1 ?
-                                    ((PsiArrayType)signatureParameterTypes2[signatureParameterTypes2.length -1]).getComponentType() :
-                                    signatureParameterTypes2[i];
-              correct &= TypeConversionUtil.isAssignable(type2, subst.substitute(GenericsUtil.eliminateWildcards(type1)));
+              final PsiType type1 = subst.substitute(GenericsUtil.eliminateWildcards(parameterTypes[i]));
+              if (varArgs && i >= signatureParameterTypes2.length - 1) {
+                final PsiType type2 = signatureParameterTypes2[signatureParameterTypes2.length - 1];
+                correct &= TypeConversionUtil.isAssignable(type2, type1) || TypeConversionUtil.isAssignable(((PsiArrayType)type2).getComponentType(), type1);
+              }
+              else {
+                correct &= TypeConversionUtil.isAssignable(signatureParameterTypes2[i], type1);
+              }
             }
             if (correct) {
               firstCandidates.add(conflict);

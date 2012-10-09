@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.refactoring.changeSignature
 
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo
 import org.jetbrains.annotations.Nullable
@@ -29,7 +30,7 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   final String basePath = TestUtils.testDataPath + "refactoring/changeSignature/"
 
   public void testOneNewParameter() throws Exception {
-    doTest(new SimpleInfo("p", -1, "\"5\"", null, CommonClassNames.JAVA_LANG_STRING));
+    doTest(new SimpleInfo("p", -1, '"5"', null, CommonClassNames.JAVA_LANG_STRING));
   }
 
   public void testRemoveParameter() throws Exception {
@@ -129,7 +130,7 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   public void testGenerateDelegate() throws Exception {
-    doTest("", [new SimpleInfo(0), new SimpleInfo("p", -1, "2", "2", PsiType.INT)], true);
+    doTest("", true, new SimpleInfo(0), new SimpleInfo("p", -1, "2", "2", PsiType.INT));
   }
 
   public void testAddException() throws Exception {
@@ -232,21 +233,23 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
     doTest(PsiModifier.PUBLIC, 'doSmthElse', null, [], [], true)
   }
 
+  public void testFailBecauseOfOptionalParam() {
+    try {
+      doTest(new SimpleInfo('optional', -1, null, '1', 'int'));
+    }
+    catch (ConflictsInTestsException e) {
+      assertEquals('Method with signature foo(int) is already defined in class <b><code>Test</code></b>', e.message)
+      return
+    }
+    assertFalse('conflicts are not detected!', true);
+  }
+
   private PsiType createType(String typeText) {
-    return JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName(typeText, GlobalSearchScope.allScope(getProject()));
+    return JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(typeText, GlobalSearchScope.allScope(project));
   }
 
-
-  private void doTest(SimpleInfo... parameterInfos) {
-    doTest(PsiModifier.PUBLIC, null, null, parameterInfos as List<SimpleInfo>, [], false);
-  }
-
-  private void doTest(String newReturnType, SimpleInfo[] parameterInfos) {
-    doTest(PsiModifier.PUBLIC, null, newReturnType, parameterInfos as List<SimpleInfo>, [], false);
-  }
-
-  private void doTest(String newReturnType, List<SimpleInfo> parameterInfos, final boolean generateDelegate) {
-    doTest(PsiModifier.PUBLIC, null, newReturnType, parameterInfos, [], generateDelegate);
+  private void doTest(String newReturnType = null, boolean generateDelegate = false, SimpleInfo... parameterInfos ) {
+    doTest(PsiModifier.PUBLIC, null, newReturnType, parameterInfos as List, [], generateDelegate);
   }
 
   private void doTest(@PsiModifier.ModifierConstant String newVisibility,
@@ -255,16 +258,21 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
                       List<SimpleInfo> parameterInfo,
                       List<ThrownExceptionInfo> exceptionInfo,
                       final boolean generateDelegate) {
-    final File javaSrc = new File(testDataPath + "/" + getTestName(false) + ".java");
+    final javaTestName = getTestName(false) + ".java"
+    final groovyTestName = getTestName(false) + ".groovy"
+
+
+    final File javaSrc = new File(testDataPath + "/" + javaTestName);
     if (javaSrc.exists()) {
-      myFixture.copyFileToProject(getTestName(false) + ".java");
+      myFixture.copyFileToProject(javaTestName);
     }
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    executeRefactoring(newVisibility, newName, newReturnType, new SimpleParameterGen(parameterInfo as SimpleInfo[], project),
-                       new SimpleExceptionsGen(exceptionInfo as ThrownExceptionInfo[]), generateDelegate);
+
+    myFixture.configureByFile(groovyTestName);
+    executeRefactoring(newVisibility, newName, newReturnType, new SimpleParameterGen(parameterInfo, project),
+                       new SimpleExceptionsGen(exceptionInfo), generateDelegate);
     if (javaSrc.exists()) {
-      myFixture.checkResultByFile(getTestName(false) + ".java", getTestName(false) + "_after.java", true);
+      myFixture.checkResultByFile(javaTestName, getTestName(false) + "_after.java", true);
     }
-    myFixture.checkResultByFile(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy", true);
+    myFixture.checkResultByFile(groovyTestName, getTestName(false) + "_after.groovy", true);
   }
 }

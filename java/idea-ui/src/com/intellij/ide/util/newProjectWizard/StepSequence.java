@@ -94,7 +94,7 @@ public class StepSequence {
     mySelectedSteps = null;
   }
 
-  public void setType(@NonNls final String type) {
+  public void setType(@Nullable @NonNls final String type) {
     setTypes(Collections.singletonList(type == null ? ModuleType.EMPTY.getId() : type));
   }
 

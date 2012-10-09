@@ -2,10 +2,10 @@ package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
-import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -269,4 +269,15 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     }
   }
 
+  public void testClearOutputOnRebuild() throws IOException {
+    String file = createFile("d/a.txt");
+    JpsArtifact a = addArtifact(root().parentDirCopy(file));
+    buildAll();
+    new File(a.getOutputPath(), "b.txt").createNewFile();
+    buildAllAndAssertUpToDate();
+    assertOutput(a, fs().file("a.txt").file("b.txt"));
+
+    rebuildAll();
+    assertOutput(a, fs().file("a.txt"));
+  }
 }

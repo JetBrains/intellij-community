@@ -81,6 +81,10 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testVarargs1() throws Exception {
+    doTest();
+  }
+
   public void testConstructorRefInnerFromSuper() throws Exception {
     doTest();
   }

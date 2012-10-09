@@ -88,6 +88,7 @@ public class CodeCompletionPanel {
 
     hideOption(myCbShowStaticAfterInstance, OptionId.COMPLETION_SHOW_STATIC_AFTER_IMPORT);
     hideOption(myCbOnSmartTypeCompletion, OptionId.COMPLETION_SMART_TYPE);
+    myCbAutocompleteCommonPrefix.setVisible(false);
 
     reset();
   }

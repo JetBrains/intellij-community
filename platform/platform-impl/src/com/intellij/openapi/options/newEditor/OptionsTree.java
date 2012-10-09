@@ -257,17 +257,6 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     return path;
   }
 
-  @Nullable
-  public Configurable getParentFor(final Configurable configurable) {
-    final List<Configurable> path = getPathToRoot(configurable);
-    if (path.size() > 1) {
-      return path.get(1);
-    }
-    else {
-      return null;
-    }
-  }
-
   public SimpleNode findNodeFor(final Configurable toSelect) {
     return myConfigurable2Node.get(toSelect);
   }
