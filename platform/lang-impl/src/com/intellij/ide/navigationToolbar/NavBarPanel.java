@@ -376,12 +376,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         index++;
       }
 
-      //IDEA-89401
-      if (myModel.getSelectedIndex() != myModel.size() - 1 && !hasFocus() && !isNodePopupShowing()) {
-        myModel.setSelectedIndex(myModel.size() -1);
-        return true;
-      }
-
       return false;
     } else {
       return true;
