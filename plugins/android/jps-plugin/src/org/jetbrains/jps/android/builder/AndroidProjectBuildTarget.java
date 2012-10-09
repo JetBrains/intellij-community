@@ -19,6 +19,7 @@ import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.android.AndroidJpsUtil;
+import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
@@ -60,8 +61,12 @@ public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> 
       result.add(new AndroidProjectBuildTarget(AndroidBuilderKind.DEX, myModel));
     }
     for (JpsModule module : myModel.getProject().getModules()) {
-      if (AndroidJpsUtil.getExtension(module) != null) {
+      JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
+      if (extension != null) {
         result.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION));
+        if (extension.isPackTestCode()) {
+          result.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.TEST));
+        }
       }
     }
     return result;
