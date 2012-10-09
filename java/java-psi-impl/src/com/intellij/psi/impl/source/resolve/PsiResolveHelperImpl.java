@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -38,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class PsiResolveHelperImpl implements PsiResolveHelper {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl");
   public static final Pair<PsiType,ConstraintType> RAW_INFERENCE = new Pair<PsiType, ConstraintType>(null, ConstraintType.EQUALS);
   private final PsiManager myManager;
 
@@ -86,6 +88,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(myManager.getProject()).getParserFacade();
     try {
       final PsiJavaCodeReferenceElement ref = parserFacade.createReferenceFromText(referenceText, context);
+      LOG.assertTrue(ref.isValid());
       return ResolveClassUtil.resolveClass(ref);
     }
     catch (IncorrectOperationException e) {
