@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.inspections
 
-import com.intellij.codeInspection.InspectionProfile
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStaticInspection
 /**
@@ -129,28 +127,5 @@ class Bar extends Base {
     }
 }
 ''')
-  }
-
-  void testInstanceRefInsideClosure() {
-    myFixture.configureByText('_.groovy', '''\
-class Base {
-    void var() {}
-
-    static foo() {}
-}
-
-class Bar extends Base {
-    void <warning descr="Method may be static (have instance references inside closure)">b</warning>() {
-        def cl = {
-            super.var()
-        }
-    }
-}
-''')
-    myFixture.enableInspections(GrMethodMayBeStaticInspection)
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).inspectionProfile;
-    def inspection = (GrMethodMayBeStaticInspection)profile.getUnwrappedTool('GrMethodMayBeStatic', myFixture.file);
-    inspection.myIgnoreInstanceRefsInClosure = true
-    myFixture.checkHighlighting(true, false, false)
   }
 }
