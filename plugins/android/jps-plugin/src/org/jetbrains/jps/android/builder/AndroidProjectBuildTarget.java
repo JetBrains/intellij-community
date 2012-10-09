@@ -29,6 +29,7 @@ import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -105,7 +106,13 @@ public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> 
   public String getPresentableName() {
     return "Android " + myKind.name();
   }
-  
+
+  @Nullable
+  @Override
+  public File getOutputDir(BuildDataPaths paths) {
+    return null;
+  }
+
   public static class TargetType extends BuildTargetType<AndroidProjectBuildTarget> {
     public static final TargetType INSTANCE = new TargetType();
 

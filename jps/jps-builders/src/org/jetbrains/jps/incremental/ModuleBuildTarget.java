@@ -3,12 +3,12 @@ package org.jetbrains.jps.incremental;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.storage.BuildDataPaths;
-import org.jetbrains.jps.util.JpsPathUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
+import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -19,6 +19,7 @@ import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -39,6 +40,17 @@ public class ModuleBuildTarget extends BuildTarget<JavaSourceRootDescriptor> {
     myTargetType = targetType;
     myModuleName = module.getName();
     myModule = module;
+  }
+
+  @Nullable
+  public File getOutputDir() {
+    return JpsJavaExtensionService.getInstance().getOutputDirectory(myModule, myTargetType.isTests());
+  }
+
+  @Nullable
+  @Override
+  public File getOutputDir(BuildDataPaths paths) {
+    return getOutputDir();
   }
 
   @NotNull

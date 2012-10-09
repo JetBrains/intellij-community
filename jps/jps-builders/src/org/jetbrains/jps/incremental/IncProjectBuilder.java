@@ -305,31 +305,19 @@ public class IncProjectBuilder {
   }
 
   private void clearOutputs(CompileContext context) throws ProjectBuildException, IOException {
-    final MultiMap<File, ModuleBuildTarget> rootsToDelete = new MultiMapBasedOnSet<File, ModuleBuildTarget>();
-    final Set<File> annotationOutputs = new HashSet<File>(); // separate collection because no root intersection checks needed for annotation generated sources
+    final MultiMap<File, BuildTarget<?>> rootsToDelete = new MultiMapBasedOnSet<File,BuildTarget<?>>();
     final Set<File> allSourceRoots = new HashSet<File>();
 
     final ProjectPaths paths = context.getProjectPaths();
 
-    for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
-      for (ModuleBuildTarget target : context.getProjectDescriptor().getBuildTargetIndex().getAllTargets(type)) {
-        final File out = paths.getModuleOutputDir(target.getModule(), target.isTests());
-        if (out != null) {
-          rootsToDelete.putValue(out, target);
-        }
-
-        final ProcessorConfigProfile profile = context.getAnnotationProcessingProfile(target.getModule());
-        if (profile.isEnabled()) {
-          File annotationOut =
-            paths.getAnnotationProcessorGeneratedSourcesOutputDir(target.getModule(), target.isTests(), profile.getGeneratedSourcesDirectoryName());
-          if (annotationOut != null) {
-            annotationOutputs.add(annotationOut);
-          }
-        }
+    ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+    for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
+      File outputDir = target.getOutputDir(projectDescriptor.dataManager.getDataPaths());
+      if (outputDir != null) {
+        rootsToDelete.putValue(outputDir, target);
       }
     }
 
-    ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     for (BuildTargetType<?> type : JavaModuleBuildTargetType.ALL_TYPES) {
       for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets(type)) {
         for (BuildRootDescriptor descriptor : projectDescriptor.getBuildRootIndex().getTargetRoots(target, context)) {
@@ -340,7 +328,7 @@ public class IncProjectBuilder {
 
     // check that output and source roots are not overlapping
     final List<File> filesToDelete = new ArrayList<File>();
-    for (Map.Entry<File, Collection<ModuleBuildTarget>> entry : rootsToDelete.entrySet()) {
+    for (Map.Entry<File, Collection<BuildTarget<?>>> entry : rootsToDelete.entrySet()) {
       context.checkCanceled();
       boolean okToDelete = true;
       final File outputRoot = entry.getKey();
@@ -366,12 +354,24 @@ public class IncProjectBuilder {
       else {
         context.processMessage(new CompilerMessage(BUILD_NAME, BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. The output cannot be cleaned."));
         // clean only those files we are aware of
-        for (ModuleBuildTarget target : entry.getValue()) {
+        for (BuildTarget<?> target : entry.getValue()) {
           clearOutputFiles(context, target);
         }
       }
     }
 
+    final Set<File> annotationOutputs = new HashSet<File>(); // separate collection because no root intersection checks needed for annotation generated sources
+    for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
+      for (ModuleBuildTarget target : projectDescriptor.getBuildTargetIndex().getAllTargets(type)) {
+        final ProcessorConfigProfile profile = context.getAnnotationProcessingProfile(target.getModule());
+        if (profile.isEnabled()) {
+          File annotationOut = paths.getAnnotationProcessorGeneratedSourcesOutputDir(target.getModule(), target.isTests(), profile.getGeneratedSourcesDirectoryName());
+          if (annotationOut != null) {
+            annotationOutputs.add(annotationOut);
+          }
+        }
+      }
+    }
     for (File annotationOutput : annotationOutputs) {
       // do not delete output root itself to avoid lots of unnecessary "roots_changed" events in IDEA
       final File[] children = annotationOutput.listFiles();
@@ -649,25 +649,22 @@ public class IncProjectBuilder {
   }
 
   private static void createClasspathIndex(final ModuleChunk chunk) {
-    final Set<File> outputPaths = new LinkedHashSet<File>();
+    final Set<File> outputDirs = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      final File outputDir = JpsJavaExtensionService.getInstance().getOutputDirectory(target.getModule(), target.isTests());
-      if (outputDir != null) {
-        outputPaths.add(outputDir);
-      }
-    }
-    for (File outputRoot : outputPaths) {
-      try {
-        BufferedWriter writer = new BufferedWriter(new FileWriter(new File(outputRoot, CLASSPATH_INDEX_FINE_NAME)));
+      File outputDir = target.getOutputDir();
+      if (outputDir != null && outputDirs.add(outputDir)) {
         try {
-          writeIndex(writer, outputRoot, "");
+          BufferedWriter writer = new BufferedWriter(new FileWriter(new File(outputDir, CLASSPATH_INDEX_FINE_NAME)));
+          try {
+            writeIndex(writer, outputDir, "");
+          }
+          finally {
+            writer.close();
+          }
         }
-        finally {
-          writer.close();
+        catch (IOException e) {
+          // Ignore. Failed to create optional classpath index
         }
-      }
-      catch (IOException e) {
-        // Ignore. Failed to create optional classpath index
       }
     }
   }
@@ -964,7 +961,7 @@ public class IncProjectBuilder {
         if (context.isMake()) {
           if (pd.fsState.markInitialScanPerformed(target)) {
             boolean forceMarkDirty = false;
-            final File currentOutput = context.getProjectPaths().getModuleOutputDir(target.getModule(), target.isTests());
+            final File currentOutput = target.getOutputDir();
             if (currentOutput != null) {
               final Pair<String, String> outputsPair = pd.dataManager.getOutputRootsLayout().getState(target.getModuleName());
               if (outputsPair != null) {
@@ -1011,7 +1008,7 @@ public class IncProjectBuilder {
   }
 
   private static void updateOutputRootsLayout(CompileContext context, ModuleBuildTarget target) throws IOException {
-    final File currentOutput = context.getProjectPaths().getModuleOutputDir(target.getModule(), target.isTests());
+    final File currentOutput = target.getOutputDir();
     if (currentOutput == null) {
       return;
     }

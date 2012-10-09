@@ -7,6 +7,7 @@ import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.List;
@@ -43,6 +44,9 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
 
   @NotNull
   public abstract String getPresentableName();
+
+  @Nullable
+  public abstract File getOutputDir(BuildDataPaths paths);
 
   @Override
   public String toString() {
