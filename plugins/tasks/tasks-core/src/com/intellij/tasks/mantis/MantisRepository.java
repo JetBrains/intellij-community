@@ -1,6 +1,5 @@
 package com.intellij.tasks.mantis;
 
-import biz.futureware.mantis.rpc.soap.client.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.tasks.Task;
@@ -9,6 +8,7 @@ import com.intellij.tasks.actions.TaskSearchSupport;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.LocalTaskImpl;
+import com.intellij.tasks.mantis.model.*;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
