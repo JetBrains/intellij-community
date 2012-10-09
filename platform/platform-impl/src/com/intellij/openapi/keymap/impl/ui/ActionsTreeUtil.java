@@ -160,6 +160,7 @@ public class ActionsTreeUtil {
                                    ? ((DefaultActionGroup)actionGroup).getChildActionsOrStubs()
                                    : actionGroup.getChildren(null);
     for (AnAction action : mainMenuTopGroups) {
+      if (!(action instanceof ActionGroup)) continue;
       Group subGroup = createGroup((ActionGroup)action, false, filtered);
       if (subGroup.getSize() > 0) {
         group.addGroup(subGroup);
