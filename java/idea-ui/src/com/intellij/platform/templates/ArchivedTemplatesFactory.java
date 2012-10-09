@@ -41,7 +41,9 @@ import java.util.*;
  */
 public class ArchivedTemplatesFactory implements ProjectTemplatesFactory {
 
+  public static final String CUSTOM_GROUP = "Custom";
   private static final String ZIP = ".zip";
+
   private final NotNullLazyValue<MultiMap<String, URL>> myGroups = new NotNullLazyValue<MultiMap<String, URL>>() {
     @NotNull
     @Override
@@ -66,7 +68,7 @@ public class ArchivedTemplatesFactory implements ProjectTemplatesFactory {
         try {
           List<String> children = UrlUtil.getChildrenRelativePaths(url);
           if (configURL == url && !children.isEmpty()) {
-            map.putValue("Custom", url);
+            map.putValue(CUSTOM_GROUP, url);
             continue;
           }
 

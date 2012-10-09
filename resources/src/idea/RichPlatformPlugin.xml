@@ -299,6 +299,9 @@
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.ImportImlMode" id="ImportImlMode"/>
 
     <projectTemplatesFactory implementation="com.intellij.platform.templates.ArchivedTemplatesFactory"/>
+    <projectTemplatesFactory implementation="com.intellij.platform.templates.EmptyModuleTemplatesFactory"/>
+
+    <applicationService serviceImplementation="com.intellij.ide.util.newProjectWizard.SelectTemplateSettings"/>
 
     <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.ProjectBaseDirNavigationContributor"/>
 

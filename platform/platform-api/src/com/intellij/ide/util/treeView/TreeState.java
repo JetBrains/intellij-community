@@ -34,7 +34,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Main entry point is {@link #createOn(javax.swing.JTree)}
+ * @see  #createOn(javax.swing.JTree)
+ * @see #createOn(javax.swing.JTree, javax.swing.tree.DefaultMutableTreeNode)
+ *
+ * @see #applyTo(javax.swing.JTree)
+ * @see #applyTo(javax.swing.JTree, javax.swing.tree.DefaultMutableTreeNode)
  */
 public class TreeState implements JDOMExternalizable {
   @NonNls private static final String PATH = "PATH";
