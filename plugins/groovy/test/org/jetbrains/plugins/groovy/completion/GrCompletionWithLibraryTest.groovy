@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.completion
 
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -165,6 +166,7 @@ class
 equals
 getProperty
 hashCode
+identity
 invokeMethod
 metaClass
 notify
@@ -207,7 +209,6 @@ getProperties
 grep
 hasPerInstanceMetaClass
 hasProperty
-identity
 inject
 inspect
 is
