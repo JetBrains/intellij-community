@@ -1196,6 +1196,11 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     final PsiClass annot = ResolveUtil.resolveAnnotation(annotationArgumentList);
     if (annot == null) return;
 
+
+    if ("groovy.lang.Newify".equals(annot.getQualifiedName()) && annotation.getParameterList().getAttributes().length == 0) {
+      return;
+    }
+
     final GrAnnotationNameValuePair[] attributes = annotationArgumentList.getAttributes();
 
     Set<String> usedAttrs = new HashSet<String>();
