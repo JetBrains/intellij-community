@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
 
   @NonNls private static final String INVALID_OPTION_F = "invalid option -- F";
   @NonNls private static final String USAGE_CVSNTSRV_SERVER = "Usage: cvs";
+  private static final Collection<String> ourDoNotAnnotateBinaryRoots = new HashSet<String>();
 
   private final Project myProject;
   private final CvsHistoryProvider myCvsHistoryProvider;
@@ -64,9 +65,10 @@ public class CvsAnnotationProvider implements AnnotationProvider{
     final File file = new File(virtualFile.getPath());
     final File cvsLightweightFile = CvsUtil.getCvsLightweightFileForFile(file);
     final String revision = CvsUtil.getRevisionFor(file);
-    final CvsConnectionSettings root =
-      CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(file.getParentFile());
-    final AnnotateOperation operation = executeOperation(cvsLightweightFile, revision, root, true);
+    final CvsEntriesManager entriesManager = CvsEntriesManager.getInstance();
+    final CvsConnectionSettings root = entriesManager.getCvsConnectionSettingsFor(file.getParentFile());
+    final boolean binary = annotateBinary(virtualFile, root);
+    final AnnotateOperation operation = executeOperation(cvsLightweightFile, revision, root, binary, true);
 
     final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(virtualFile);
     final List<VcsFileRevision> revisions = myCvsHistoryProvider.createRevisions(filePath);
@@ -94,8 +96,8 @@ public class CvsAnnotationProvider implements AnnotationProvider{
       hasLocalFile = true;
       cvsFile = new File(CvsUtil.getModuleName(cvsVirtualFile));
     }
-
-    final AnnotateOperation annotateOperation = executeOperation(cvsFile, revision, environment, true);
+    final boolean binary = annotateBinary(cvsVirtualFile, environment);
+    final AnnotateOperation annotateOperation = executeOperation(cvsFile, revision, environment, binary, true);
     final Annotation[] lineAnnotations = annotateOperation.getLineAnnotations();
     final List<VcsFileRevision> revisions;
     if (hasLocalFile) {
@@ -119,12 +121,18 @@ public class CvsAnnotationProvider implements AnnotationProvider{
     return new CvsFileAnnotation(annotateOperation.getContent(), lineAnnotations, revisions, cvsVirtualFile);
   }
 
-  private AnnotateOperation executeOperation(File cvsLightweightFile, String revision, CvsEnvironment root, boolean retryOnFailure)
+  private static boolean annotateBinary(VirtualFile cvsVirtualFile, CvsEnvironment environment) {
+    if (ourDoNotAnnotateBinaryRoots.contains(environment.getCvsRootAsString())) {
+      return false;
+    }
+    return CvsEntriesManager.getInstance().getEntryFor(cvsVirtualFile).isBinary();
+  }
+
+  private AnnotateOperation executeOperation(File file, String revision, CvsEnvironment root, boolean binary, boolean retryOnFailure)
     throws VcsException {
-    final AnnotateOperation operation = new AnnotateOperation(cvsLightweightFile, revision, root);
+    final AnnotateOperation operation = new AnnotateOperation(file, revision, root, binary);
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
-    executor.performActionSync(new CommandCvsHandler(CvsBundle.getAnnotateOperationName(), operation),
-                               CvsOperationExecutorCallback.EMPTY);
+    executor.performActionSync(new CommandCvsHandler(CvsBundle.getAnnotateOperationName(), operation), CvsOperationExecutorCallback.EMPTY);
     final CvsResult result = executor.getResult();
     if (result.hasErrors()) {
       if (!retryOnFailure) {
@@ -133,8 +141,8 @@ public class CvsAnnotationProvider implements AnnotationProvider{
       for (VcsException error : result.getErrors()) {
         for (String message : error.getMessages()) {
           if (message.contains(INVALID_OPTION_F) || message.contains(USAGE_CVSNTSRV_SERVER)) {
-            AnnotateOperation.doesNotSupportAnnotateBinary(root);
-            return executeOperation(cvsLightweightFile, revision, root, false);
+            ourDoNotAnnotateBinaryRoots.add(root.getCvsRootAsString());
+            return executeOperation(file, revision, root, false, false);
           }
         }
       }
