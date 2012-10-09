@@ -5,6 +5,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -54,7 +55,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
             info = JavaCoverageAnnotator.merge(info, coverageInfo);
           }
         } else {
-          final PackageAnnotator.ClassCoverageInfo classCoverageInfo = myAnnotator.getClassCoverageInfo(((PsiClass)childValue).getQualifiedName());
+          final PackageAnnotator.ClassCoverageInfo classCoverageInfo = getClassCoverageInfo(((PsiClass)childValue));
           if (classCoverageInfo != null) {
             info.coveredClassCount += classCoverageInfo.coveredMethodCount > 0 ? 1 : 0;
             info.totalClassCount ++;
@@ -178,7 +179,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     }
 
     for (PsiClass aClass : classes) {
-      if (myAnnotator.getClassCoverageInfo(aClass.getQualifiedName()) == null) continue;
+      if (getClassCoverageInfo(aClass) == null) continue;
       topLevelNodes.add(new CoverageListNode(aClass, mySuitesBundle, myStateBean));
     }
     return topLevelNodes;
@@ -250,7 +251,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
             }
           });
           for (PsiClass aClass : classes) {
-            if (myAnnotator.getClassCoverageInfo(aClass.getQualifiedName()) == null) continue;
+            if (getClassCoverageInfo(aClass) == null) continue;
             children.add(new CoverageListNode(aClass, mySuitesBundle, myStateBean));
           }
         }
@@ -259,7 +260,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
         for (CoverageSuite suite : mySuitesBundle.getSuites()) {
           final List<PsiClass> classes = ((JavaCoverageSuite)suite).getCurrentSuiteClasses(myProject);
           for (PsiClass aClass : classes) {
-            if (myAnnotator.getClassCoverageInfo(aClass.getQualifiedName()) == null) continue;
+            if (getClassCoverageInfo(aClass) == null) continue;
             children.add(new CoverageListNode(aClass, mySuitesBundle, myStateBean));
           }
         }
@@ -269,6 +270,15 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       }
     }
     return children;
+  }
+
+  @Nullable
+  private PackageAnnotator.ClassCoverageInfo getClassCoverageInfo(final PsiClass aClass) {
+    return myAnnotator.getClassCoverageInfo(ApplicationManager.getApplication().runReadAction(new NullableComputable<String>() {
+      public String compute() {
+        return aClass.getQualifiedName();
+      }
+    }));
   }
 
   @Override
