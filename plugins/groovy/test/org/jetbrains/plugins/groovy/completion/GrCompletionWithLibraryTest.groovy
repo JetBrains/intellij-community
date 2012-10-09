@@ -26,8 +26,6 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
-
 /**
  * @author Maxim.Medvedev
  */
@@ -42,12 +40,6 @@ class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
     }
   };
 
-  @Override
-  protected void setUp() {
-    super.setUp()
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
-  }
-
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
@@ -60,9 +52,9 @@ class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
   }
 
   public void testCategoryMethod() {doBasicTest()}
-  public void testCategoryProperty() {doBasicTest()}
+  public void testCategoryProperty() {doBasicTest('\n')}
   public void testMultipleCategories() {doBasicTest()}
-  public void testCategoryForArray() {doBasicTest()}
+  public void testCategoryForArray() {doBasicTest('\n')}
 
   public void testArrayLikeAccessForList() throws Throwable {doBasicTest(); }
   public void testArrayLikeAccessForMap() throws Throwable {doBasicTest();}
@@ -91,7 +83,7 @@ class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
   }
 
   public void testIteratorNext() {
-    doVariantableTest "next", "notify", "notifyAll"
+    doHasVariantsTest('next', 'notify')
   }
 
   public void testGstringExtendsString() {
@@ -99,7 +91,7 @@ class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
   }
 
   public void testCompletionInEachClosure() {
-    myFixture.testCompletionVariants getTestName(false)+".groovy", "intValue", "intdiv", "intdiv"
+    doHasVariantsTest('intValue', 'intdiv')
   }
 
   public void testEllipsisTypeCompletion() {
