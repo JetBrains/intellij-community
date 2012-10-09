@@ -25,6 +25,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
@@ -166,6 +167,13 @@ public class SelectTemplateStep extends ModuleWizardStep {
           }
           mySettingsPanel.setVisible(settingsPanel != null);
           String description = template.getDescription();
+          if (description != null) {
+            StringBuilder sb = new StringBuilder("<html><body><font face=\"Verdana\" ");
+            sb.append(SystemInfo.isMac ? "" : "size=\"-1\"").append('>');
+            sb.append(description).append("</font></body></html>");
+            description = sb.toString();
+          }
+
           myDescriptionPane.setText(description);
           myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
         }
