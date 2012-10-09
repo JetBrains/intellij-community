@@ -191,6 +191,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         if (element instanceof PsiDocMethodOrFieldRef && !PsiTreeUtil.isAncestor(myMethod, element, false)) {
           conflicts.putValue(element, "Inlined method is used in javadoc");
         }
+        if (element instanceof PsiMethodReferenceExpression) {
+          conflicts.putValue(element, "Inlined method is used in method reference");
+        }
       }
     }
 
@@ -426,6 +429,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           PsiReferenceExpression[] refs = refExprList.toArray(new PsiReferenceExpression[refExprList.size()]);
           refs = addBracesWhenNeeded(refs);
           for (PsiReferenceExpression ref : refs) {
+            if (ref instanceof PsiMethodReferenceExpression) continue;
             inlineMethodCall(ref);
           }
           for (PsiElement psiElement : imports2Delete) {
