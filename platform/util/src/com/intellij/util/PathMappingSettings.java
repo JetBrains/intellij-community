@@ -87,13 +87,6 @@ public class PathMappingSettings implements Cloneable {
     return false;
   }
 
-  public static PathMappingSettings initFromDeployment(Sdk sdk) {
-    PathMappingSettings settings = new PathMappingSettings();
-
-    //settings.add(new PathMapping());
-    return settings;
-  }
-
   private static String norm(String s) {
     return FileUtil.toSystemIndependentName(s);
   }
