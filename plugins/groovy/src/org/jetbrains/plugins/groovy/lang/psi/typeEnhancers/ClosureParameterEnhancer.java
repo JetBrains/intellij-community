@@ -89,7 +89,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
   protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
     PsiElement parent = closure.getParent();
     if (parent instanceof GrStringInjection && index == 0) {
-      return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING_BUILDER, closure);
+      return TypesUtil.createTypeByFQClassName("java.io.StringWriter", closure);
     }
     
     if (parent instanceof GrArgumentList) parent = parent.getParent();
