@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ipp.trivialif;
+package com.intellij.codeInsight.daemon.quickFix;
 
-import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.intellij.codeInspection.AnonymousCanBeMethodReferenceInspection;
+import com.intellij.codeInspection.LocalInspectionTool;
 
-public class ConvertToNestedIfIntentionTest extends IPPTestCase {
 
-  public void testNested() { doTest(); }
-  public void testStaircase() { doTest(); }
-  public void testOneLevelStaircase() { assertIntentionNotAvailable(); }
-
+public class Anonymous2MethodReferenceInspectionTest extends LightQuickFixTestCase {
   @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("convert.to.nested.if.intention.name");
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    return new LocalInspectionTool[]{
+      new AnonymousCanBeMethodReferenceInspection(),
+    };
   }
 
+  public void test() throws Exception { doAllTests(); }
+
   @Override
-  protected String getRelativePath() {
-    return "trivialif/convert_to_nested_if";
+  protected String getBasePath() {
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/anonymous2methodReference";
   }
+
 }

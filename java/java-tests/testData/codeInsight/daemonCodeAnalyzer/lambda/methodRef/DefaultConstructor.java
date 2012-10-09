@@ -44,3 +44,15 @@ class DefaultConstructor1 {
         Runnable b1 = DefaultConstructor1 :: new;
     }
 }
+
+class DefaultConstructor2 {
+    interface I {
+        void foo(DefaultConstructor2 e);
+    }
+
+
+    void f() {
+        <error descr="Incompatible types. Found: '<method reference>', required: 'DefaultConstructor2.I'">I i1 = DefaultConstructor2 :: new;</error>
+        <error descr="Incompatible types. Found: '<method reference>', required: 'DefaultConstructor2.I'">I i2 = this::new;</error>
+    }
+}
