@@ -481,7 +481,7 @@ public class HighlightUtil {
     int start = variable.getTypeElement().getTextRange().getStartOffset();
     int end = variable.getTextRange().getEndOffset();
     HighlightInfo highlightInfo = checkAssignability(lType, rType, initializer, new TextRange(start, end));
-    if (highlightInfo != null && !(rType instanceof PsiMethodReferenceType)) {
+    if (highlightInfo != null) {
       registerChangeVariableTypeFixes(variable, rType, highlightInfo);
     }
     return highlightInfo;
@@ -2534,6 +2534,7 @@ public class HighlightUtil {
   }
 
   public static void registerChangeVariableTypeFixes(PsiVariable parameter, PsiType itemType, HighlightInfo highlightInfo) {
+    if (itemType instanceof PsiMethodReferenceType) return;
     for (ChangeVariableTypeQuickFixProvider fixProvider : Extensions.getExtensions(ChangeVariableTypeQuickFixProvider.EP_NAME)) {
       for (IntentionAction action : fixProvider.getFixes(parameter, itemType)) {
         QuickFixAction.registerQuickFixAction(highlightInfo, action);

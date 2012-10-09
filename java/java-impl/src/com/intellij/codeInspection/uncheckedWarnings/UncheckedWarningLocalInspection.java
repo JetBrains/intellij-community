@@ -272,7 +272,7 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
       if (initializer == null || initializer instanceof PsiArrayInitializerExpression) return;
       final PsiType initializerType = initializer.getType();
       checkRawToGenericsAssignment(initializer, variable.getType(), initializerType, true, 
-                                   myOnTheFly && !(initializerType instanceof PsiMethodReferenceType) ? getChangeVariableTypeFixes(variable, initializerType) : LocalQuickFix.EMPTY_ARRAY);
+                                   myOnTheFly ? getChangeVariableTypeFixes(variable, initializerType) : LocalQuickFix.EMPTY_ARRAY);
     }
 
     @Override
@@ -467,6 +467,7 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
   }
 
   public static LocalQuickFix[] getChangeVariableTypeFixes(PsiVariable parameter, PsiType itemType) {
+    if (itemType instanceof PsiMethodReferenceType) return LocalQuickFix.EMPTY_ARRAY;
     final List<LocalQuickFix> result = new ArrayList<LocalQuickFix>();
     LOG.assertTrue(parameter.isValid());
     for (ChangeVariableTypeQuickFixProvider fixProvider : Extensions.getExtensions(ChangeVariableTypeQuickFixProvider.EP_NAME)) {
