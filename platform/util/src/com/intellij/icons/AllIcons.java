@@ -383,6 +383,7 @@ public class AllIcons {
     public static final Icon GearHover = IconLoader.getIcon("/general/gearHover.png"); // 21x16
     public static final Icon GetProjectfromVCS = IconLoader.getIcon("/general/getProjectfromVCS.png"); // 48x48
     public static final Icon Help = IconLoader.getIcon("/general/help.png"); // 10x10
+    public static final Icon Help_small = IconLoader.getIcon("/general/help_small.png"); // 16x16
     public static final Icon HideDown = IconLoader.getIcon("/general/hideDown.png"); // 16x16
     public static final Icon HideDownHover = IconLoader.getIcon("/general/hideDownHover.png"); // 16x16
     public static final Icon HideDownPart = IconLoader.getIcon("/general/hideDownPart.png"); // 16x16
