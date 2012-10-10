@@ -97,7 +97,7 @@ class AnchorElementInfo extends SelfElementInfo {
   }
 
   @Override
-  public void fastenBelt(int offset, RangeMarker cachedRangeMarker) {
+  public void fastenBelt(int offset, RangeMarker[] cachedRangeMarker) {
     if (stubId != -1) {
       PsiElement element = restoreElement();
       if (element != null) {
