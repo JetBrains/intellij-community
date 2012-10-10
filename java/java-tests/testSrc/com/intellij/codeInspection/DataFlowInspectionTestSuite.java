@@ -19,7 +19,7 @@ import com.intellij.codeInsight.slice.SliceTreeTest;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-public class DataFlowInspectionSuite {
+public class DataFlowInspectionTestSuite {
   public static Test suite() {
     TestSuite suite = new TestSuite();
     suite.addTestSuite(DataFlowInspectionFixtureTest.class);
