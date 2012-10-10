@@ -570,6 +570,20 @@ public class LambdaUtil {
     return true;
   }
 
+  public static boolean isValidQualifier(PsiMethodReferenceExpression expression) {
+    final PsiElement referenceNameElement = expression.getReferenceNameElement();
+    if (referenceNameElement instanceof PsiKeyword) {
+      final PsiElement qualifier = expression.getQualifier();
+      if (qualifier instanceof PsiTypeElement) {
+        return true;
+      }
+      if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).resolve() instanceof PsiClass) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
   public static boolean isAcceptable(@Nullable final PsiMethodReferenceExpression methodReferenceExpression, PsiType left) {
     if (methodReferenceExpression == null) return false;
     Map<PsiMethodReferenceExpression, PsiType> map = ourRefs.get();

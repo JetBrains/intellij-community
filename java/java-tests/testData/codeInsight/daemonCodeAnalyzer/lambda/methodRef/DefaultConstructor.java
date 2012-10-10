@@ -53,7 +53,7 @@ class DefaultConstructor2 {
 
     void f() {
         <error descr="Incompatible types. Found: '<method reference>', required: 'DefaultConstructor2.I'">I i1 = DefaultConstructor2 :: new;</error>
-        <error descr="Incompatible types. Found: '<method reference>', required: 'DefaultConstructor2.I'">I i2 = this::new;</error>
+        I i2 = <error descr="Cannot find class this">this</error>::new;
     }
 }
 
