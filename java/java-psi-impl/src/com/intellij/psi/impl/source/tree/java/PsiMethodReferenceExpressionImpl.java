@@ -300,10 +300,24 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
               if (parameterTypes.length == 1 && LambdaUtil.isReceiverType(parameterTypes[0], containingClass, substitutor)) {
                 hasReceiver = true;
               }
-              if (parameterTypes.length == 0 || hasReceiver && !(containingClass.getContainingClass() == null || containingClass.hasModifierProperty(PsiModifier.STATIC))) {
-                return new JavaResolveResult[]{new ClassCandidateInfo(containingClass, substitutor)};
+              boolean insideStaticClass = containingClass.getContainingClass() == null;
+              if (!insideStaticClass) { //inner class
+                PsiClass parentClass = containingClass;
+                while (parentClass != null) {
+                  if (parentClass.hasModifierProperty(PsiModifier.STATIC)) {
+                    insideStaticClass = true;
+                    break;
+                  }
+  
+                  parentClass = parentClass.getContainingClass(); 
+                }
               }
-              return JavaResolveResult.EMPTY_ARRAY;
+              final boolean innerClassOuterClassReference = containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC);
+              ClassCandidateInfo candidateInfo = null;
+              if (insideStaticClass && parameterTypes.length == 0 || hasReceiver && innerClassOuterClassReference) {
+                candidateInfo = new ClassCandidateInfo(containingClass, substitutor);
+              }
+              return candidateInfo == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[]{candidateInfo};
             }
           }
 
