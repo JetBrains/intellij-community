@@ -257,6 +257,10 @@ public class DomFileDescription<T> {
     return null;
   }
 
+  /**
+   * @see Stubbed
+   * @return false
+   */
   public boolean hasStubs() {
     return false;
   }
