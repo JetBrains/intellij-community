@@ -46,6 +46,7 @@ abstract class Timed<T> implements Disposable {
     }
   }
 
+  @Override
   public synchronized void dispose() {
     final Object t = myT;
     myT = null;
@@ -77,6 +78,7 @@ abstract class Timed<T> implements Disposable {
   static {
     ScheduledExecutorService service = ConcurrencyUtil.newSingleScheduledThreadExecutor("timed reference disposer", Thread.MIN_PRIORITY + 1);
     service.scheduleWithFixedDelay(new Runnable() {
+      @Override
       public void run() {
         try {
           disposeTimed();
