@@ -80,9 +80,8 @@ public class GitTestRunEnv {
     if (out.length() > 0) {
       log(out);
     }
-    if (stdout.contains("fatal")) {
-      if (stdout.contains("Unable to create") && stdout.contains(".git/index.lock") && myRetryCount <= MAX_RETRIES){
-        // retry
+    if (stdout.contains("fatal") && stdout.contains("Unable to create") && stdout.contains(".git/index.lock")) {
+      if (myRetryCount <= MAX_RETRIES) {// retry
         myRetryCount++;
         return run(silent, command, params);
       }
