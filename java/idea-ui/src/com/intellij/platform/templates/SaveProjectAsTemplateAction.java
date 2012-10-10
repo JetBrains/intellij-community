@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,6 +30,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -41,7 +43,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = getEventProject(e);
     assert project != null;
-    VirtualFile descriptionFile = VfsUtil.findRelativeFile(project.getBaseDir(), "description.html");
+    VirtualFile descriptionFile = VfsUtil.findRelativeFile(project.getBaseDir(), ArchivedProjectTemplate.DESCRIPTION_PATH.split("/"));
     SaveProjectAsTemplateDialog dialog = new SaveProjectAsTemplateDialog(project, descriptionFile);
     if (dialog.showAndGet()) {
       File file = dialog.getTemplateFile();
@@ -51,6 +53,15 @@ public class SaveProjectAsTemplateAction extends AnAction {
         file.createNewFile();
         stream = new ZipOutputStream(new FileOutputStream(file));
         VirtualFile dir = project.getBaseDir();
+        String description = dialog.getDescription();
+        if (descriptionFile == null) {
+          stream.putNextEntry(new ZipEntry(dir.getName() + "/" + ArchivedProjectTemplate.DESCRIPTION_PATH));
+          stream.write(description.getBytes());
+          stream.closeEntry();
+        }
+        else {
+          VfsUtil.saveText(descriptionFile, description);
+        }
         ZipUtil.addDirToZipRecursively(stream, null, new File(dir.getPath()), dir.getName(), new FileFilter() {
           @Override
           public boolean accept(File pathname) {
@@ -59,6 +70,8 @@ public class SaveProjectAsTemplateAction extends AnAction {
             return true;
           }
         }, null);
+        Messages.showInfoMessage(FileUtil.getNameWithoutExtension(file) + " was successfully created.\n" +
+                                 "It's available now in Project Wizard", "Template Created");
       }
       catch (IOException ex) {
         Messages.showErrorDialog(project, ex.getMessage(), "Error");
