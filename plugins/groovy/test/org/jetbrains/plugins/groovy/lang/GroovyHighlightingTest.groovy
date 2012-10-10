@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryRetu
 import org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyLongMethodInspection
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
 import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -59,7 +59,7 @@ public class GroovyHighlightingTest extends LightGroovyTestCase {
   }
 
   private void doRefTest(InspectionProfileEntry... tools) {
-    myFixture.enableInspections(*tools, new GroovyUnresolvedAccessInspection())
+    myFixture.enableInspections(*tools, new GrUnresolvedAccessInspection())
     myFixture.testHighlighting(true, true, true, getTestName(false) + '.groovy')
   }
 
@@ -101,7 +101,7 @@ public class GroovyHighlightingTest extends LightGroovyTestCase {
   }
 
   public void testSuperClassNotExists() {
-    doTest(new GroovyUnresolvedAccessInspection());
+    doTest(new GrUnresolvedAccessInspection());
   }
   public void testDontSimplifyString() { doTest(new GroovyTrivialIfInspection(), new GroovyTrivialConditionalInspection()); }
 
@@ -136,14 +136,14 @@ public class GroovyHighlightingTest extends LightGroovyTestCase {
   public void testSingleAllocationInClosure() {doTest(new GroovyResultOfObjectAllocationIgnoredInspection());}
   public void testUnusedAllocationInClosure() {doTest(new GroovyResultOfObjectAllocationIgnoredInspection());}
 
-  public void testUnresolvedLhsAssignment() { doTest(new GroovyUnresolvedAccessInspection()); }
+  public void testUnresolvedLhsAssignment() { doTest(new GrUnresolvedAccessInspection()); }
 
   public void testUnresolvedMethodCallWithTwoDeclarations() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
 
-  public void testUnresolvedAccess() { doTest(new GroovyUnresolvedAccessInspection()); }
-  public void testBooleanProperties() { doTest(new GroovyUnresolvedAccessInspection()); }
+  public void testUnresolvedAccess() { doTest(new GrUnresolvedAccessInspection()); }
+  public void testBooleanProperties() { doTest(new GrUnresolvedAccessInspection()); }
   public void testUntypedAccess() { doTest(new GroovyUntypedAccessInspection()); }
 
   public void testUnassigned1() { doTest(new UnassignedVariableAccessInspection()); }
@@ -379,7 +379,7 @@ print foo+<warning descr="Access to 'bar' exceeds its access rights">bar</warnin
   }
 
   public void testSuppressions() {
-    doTest(new GroovyUnresolvedAccessInspection(), new GroovyUntypedAccessInspection());
+    doTest(new GrUnresolvedAccessInspection(), new GroovyUntypedAccessInspection());
   }
 
   public void testUsageInInjection() { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
@@ -461,7 +461,7 @@ print foo+<warning descr="Access to 'bar' exceeds its access rights">bar</warnin
   }
 
   public void testPassingCollectionSubtractionIntoGenericMethod() {
-    doTest(new GroovyAssignabilityCheckInspection(), new GroovyUnresolvedAccessInspection());
+    doTest(new GroovyAssignabilityCheckInspection(), new GrUnresolvedAccessInspection());
   }
 
   public void _testBuilderMembersAreNotUnresolved() {
@@ -564,7 +564,7 @@ class Bar {{
   void testConstructorTypeArgs(){doTest()}
 
   void testIncorrectEscaping() {doTest()}
-  void testExtendingOwnInner() {doTest(new GroovyUnresolvedAccessInspection())}
+  void testExtendingOwnInner() {doTest(new GrUnresolvedAccessInspection())}
 
   void testRegexInCommandArg() {doTest()}
   void testOctalInspection() {
@@ -984,7 +984,7 @@ print <error descr="Cannot resolve symbol 'abc'">abc</error>
 }
 }
 ''')
-    myFixture.enableInspections(new GroovyUnresolvedAccessInspection())
+    myFixture.enableInspections(new GrUnresolvedAccessInspection())
     myFixture.testHighlighting(true, false, false)
   }
 
@@ -1053,7 +1053,7 @@ static def foo() {
      print <warning descr="Cannot resolve symbol 'cde'">cde</warning>
   }
 }
-''', GroovyUnresolvedAccessInspection)
+''', GrUnresolvedAccessInspection)
   }
 
   void testMissingReturnInBinaryOr() {
@@ -1151,7 +1151,7 @@ test() {
     cl()
     var.<error descr="Cannot resolve symbol 'toUpperCase'">toUpperCase</error>()
 }
-""", GroovyUnresolvedAccessInspection)
+""", GrUnresolvedAccessInspection)
   }
 
   void testReassignedVarInClosureInspection() {
