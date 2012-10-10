@@ -369,7 +369,7 @@ final public class Emitter {
 
   private String zzBufferLLength() {
     if (Options.sliceAndCharAt) {
-      return "zzBufferArrayL != null ? zzBufferArrayL.length:zzBufferL.length()";
+      return "(zzBufferArrayL != null ? zzBufferArrayL.length : zzBufferL.length())";
     }
     if (Options.char_at) {
       return "zzBufferL.length()";
