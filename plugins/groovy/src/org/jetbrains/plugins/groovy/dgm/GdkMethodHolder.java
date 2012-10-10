@@ -65,6 +65,7 @@ public class GdkMethodHolder {
       protected MultiMap<String, PsiMethod> compute() {
         MultiMap<String, PsiMethod> map = new MultiMap<String, PsiMethod>();
         for (PsiMethod method : byName.values()) {
+          if (!method.hasModifierProperty(PsiModifier.PUBLIC)) continue;
           map.putValue(getCategoryTargetType(method).getCanonicalText(), method);
         }
         return map;

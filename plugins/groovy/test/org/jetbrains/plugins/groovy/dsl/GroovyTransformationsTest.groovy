@@ -38,11 +38,11 @@ class GroovyTransformationsTest extends LightCodeInsightFixtureTestCase {
 
   public void testDelegateAnnotation() throws Throwable { doPlainTest() }
 
-  public void testSingletonTransform() throws Throwable { doPlainTest() }
+  public void testSingletonTransform() throws Throwable { doVariantsTest('instance', 'newInstance', 'newInstance', 'isInstance', 'getInstance', 'setInstance') }
 
-  public void testCategoryTransform() throws Throwable { doPlainTest() }
+  public void testCategoryTransform() throws Throwable { doVariantsTest('name', 'getName', 'FileNameByRegexFinder', 'FileNameFinder', 'FilenameFilter', 'IFileNameFinder') }
 
-  public void testMixinTransform() throws Throwable { doPlainTest() }
+  public void testMixinTransform() throws Throwable { doVariantsTest('dive', 'findIndexValues', 'findIndexValues') }
 
   public void testBindableTransform() throws Throwable { doPlainTest() }
 

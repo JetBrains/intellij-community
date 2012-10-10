@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.completion
 
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -88,7 +87,7 @@ class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
   }
 
   public void testGstringExtendsString() {
-    myFixture.testCompletionVariants getTestName(false)+".groovy", "stripIndent", "stripIndent", "stripIndentFromLine"
+    doBasicTest()
   }
 
   public void testCompletionInEachClosure() {
@@ -207,7 +206,6 @@ getMetaClass
 getMetaPropertyValues
 getProperties
 grep
-hasPerInstanceMetaClass
 hasProperty
 inject
 inspect
@@ -215,10 +213,6 @@ is
 isCase
 iterator
 metaClass
-primitiveArrayGet
-primitiveArrayGet
-primitiveArrayGet
-primitiveArrayPut
 print
 print
 printf
