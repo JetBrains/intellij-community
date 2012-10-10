@@ -142,7 +142,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                                                                               env.getProject(),
                                                                               env.getRunnerSettings(),
                                                                               env.getConfigurationSettings(),
-                                                                              null, null);
+                                                                              null,
+                                                                              env.getRunnerAndConfigurationSettings());
               taskEnvironment.putUserData(RunContentDescriptor.REUSE_CONTENT_PROHIBITED, RunConfigurationBeforeRunProvider.ID.equals(provider.getId()));
               if (!provider.executeTask(dataContext, runConfiguration, taskEnvironment, task)) {
                 if (onCancelRunnable != null) {
