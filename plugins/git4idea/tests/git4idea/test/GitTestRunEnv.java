@@ -44,6 +44,12 @@ public class GitTestRunEnv {
 
   public GitTestRunEnv(@NotNull File rootDir) {
     ourGitExecutable = getExecutable();
+    try {
+      run(false, "version");
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
     myRootDir = rootDir;
   }
 
