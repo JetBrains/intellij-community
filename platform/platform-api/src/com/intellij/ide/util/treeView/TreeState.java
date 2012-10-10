@@ -24,6 +24,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -42,6 +43,7 @@ import java.util.List;
  */
 public class TreeState implements JDOMExternalizable {
   @NonNls private static final String PATH = "PATH";
+  @NonNls private static final String SELECTED = "SELECTED";
   @NonNls private static final String PATH_ELEMENT = "PATH_ELEMENT";
   @NonNls private static final String USER_OBJECT = "USER_OBJECT";
   @NonNls public static final String CALLBACK = "Callback";
@@ -111,11 +113,16 @@ public class TreeState implements JDOMExternalizable {
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    myExpandedPaths.clear();
-    final List paths = element.getChildren(PATH);
+    readExternal(element, myExpandedPaths, PATH);
+    readExternal(element, mySelectedPaths, SELECTED);
+  }
+
+  private static void readExternal(Element element, List<List<PathElement>> list, String name) throws InvalidDataException {
+    list.clear();
+    final List paths = element.getChildren(name);
     for (final Object path : paths) {
       Element xmlPathElement = (Element)path;
-      myExpandedPaths.add(readPath(xmlPathElement));
+      list.add(readPath(xmlPathElement));
     }
   }
 
@@ -141,8 +148,13 @@ public class TreeState implements JDOMExternalizable {
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    for (List<PathElement> path : myExpandedPaths) {
-      final Element pathElement = new Element(PATH);
+    writeExternal(element, myExpandedPaths, PATH);
+    writeExternal(element, mySelectedPaths, SELECTED);
+  }
+
+  private static void writeExternal(Element element, List<List<PathElement>> list, String name) throws WriteExternalException {
+    for (List<PathElement> path : list) {
+      final Element pathElement = new Element(name);
       writeExternal(pathElement, path);
       element.addContent(pathElement);
     }
@@ -251,7 +263,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
   private void applyExpanded(final TreeFacade tree, final Object root) {
-    tree.getIntialized().doWhenDone(new Runnable() {
+    tree.getInitialized().doWhenDone(new Runnable() {
       @Override
       public void run() {
         tree.batch(new Progressive() {
@@ -302,6 +314,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
 
+  @Nullable
   private static DefaultMutableTreeNode findMatchedChild(DefaultMutableTreeNode parent, PathElement pathElement) {
 
     for (int j = 0; j < parent.getChildCount(); j++) {
@@ -327,6 +340,7 @@ public class TreeState implements JDOMExternalizable {
       if (index >= parent.getChildCount()) {
         index = parent.getChildCount()-1;
       }
+      index = Math.max(0, index);
       final TreeNode child = parent.getChildAt(index);
       if (child instanceof DefaultMutableTreeNode) {
         return (DefaultMutableTreeNode) child;
@@ -334,7 +348,6 @@ public class TreeState implements JDOMExternalizable {
     }
 
     return null;
-
   }
 
   private static boolean applyTo(final int positionInPath,
@@ -402,7 +415,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
   interface TreeFacade {
-    ActionCallback getIntialized();
+    ActionCallback getInitialized();
     ActionCallback expand(DefaultMutableTreeNode node);
 
     void batch(Progressive progressive);
@@ -428,7 +441,7 @@ public class TreeState implements JDOMExternalizable {
     }
 
     @Override
-    public ActionCallback getIntialized() {
+    public ActionCallback getInitialized() {
       final WeakReference<ActionCallback> ref = (WeakReference<ActionCallback>)myTree.getClientProperty(CALLBACK);
       if (ref != null) {
         final ActionCallback callback = ref.get();
@@ -452,7 +465,7 @@ public class TreeState implements JDOMExternalizable {
     }
 
     @Override
-    public ActionCallback getIntialized() {
+    public ActionCallback getInitialized() {
       return myBuilder.getReady(this);
     }
 
