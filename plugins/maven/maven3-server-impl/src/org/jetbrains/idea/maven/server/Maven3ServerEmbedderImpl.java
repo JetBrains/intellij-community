@@ -70,6 +70,7 @@ import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationExce
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.server.embedder.CustomMaven3ArtifactResolver;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator;
 import org.jetbrains.idea.maven.server.embedder.FieldAccessor;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
@@ -247,7 +248,7 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     try {
       //((CustomArtifactFactory)getComponent(ArtifactFactory.class)).customize();
       //((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).customize();
-      //((CustomArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, failOnUnresolvedDependency);
+      ((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, failOnUnresolvedDependency);
       //((CustomRepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
       //((CustomMaven3WagonManager)getComponent(WagonManager.class)).customize(failOnUnresolvedDependency);
 
@@ -580,6 +581,19 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
   @Override
   public void reset() throws RemoteException {
+    try {
+      setConsoleAndIndicator(null, null);
+
+      //((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).reset();
+      //((CustomArtifactFactory)getComponent(ArtifactFactory.class)).reset();
+      ((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).reset();
+      //((CustomRepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).reset();
+      //((CustomWagonManager)getComponent(WagonManager.class)).reset();
+    }
+    catch (Exception e) {
+      throw rethrowException(e);
+    }
+
   }
 
   @Override
