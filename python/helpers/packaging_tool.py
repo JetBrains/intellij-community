@@ -31,7 +31,11 @@ def error(message, retcode):
 
 
 def error_no_pip():
-    error("Python package management tool 'pip' not found", ERROR_NO_PIP)
+    tb = sys.exc_traceback
+    if tb is not None and tb.tb_next is None:
+        error("Python package management tool 'pip' not found", ERROR_NO_PIP)
+    else:
+        error(traceback.format_exc(), ERROR_EXCEPTION)
 
 
 def do_list():
