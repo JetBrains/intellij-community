@@ -45,6 +45,7 @@ import static junit.framework.Assert.*
  */
 @Mixin(GitExecutor)
 @Mixin(GitScenarios)
+@Mixin(GitLightTest)
 class GitBranchWorkerTest {
 
   private String myRootDir
@@ -103,6 +104,7 @@ class GitBranchWorkerTest {
   private void initRepo(String repoRoot) {
     cd repoRoot
     git("init")
+    setupUsername();
     touch("file.txt")
     git("add file.txt")
     git("commit -m initial")
