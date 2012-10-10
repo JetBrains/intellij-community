@@ -235,7 +235,6 @@ public class MavenModelConverter {
       List<Plugin> plugins = build.getPlugins();
       if (plugins != null) {
         for (Plugin each : plugins) {
-          String key = each.getGroupId() + ":" + each.getArtifactId();
           result.add(convertPlugin(false, each));
         }
       }
