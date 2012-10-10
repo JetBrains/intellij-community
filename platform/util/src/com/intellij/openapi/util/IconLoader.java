@@ -173,7 +173,7 @@ public final class IconLoader {
   }
 
   @Nullable
-  private static Icon findIcon(URL url) {
+  public static Icon findIcon(URL url) {
     if (url == null) return null;
     Icon icon = ourIconsCache.get(url);
     if (icon == null) {

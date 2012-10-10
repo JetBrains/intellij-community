@@ -32,6 +32,12 @@ public class SizedIcon implements Icon {
     myImage = icon.getImage();
   }
 
+  public SizedIcon(int maxWidth, int maxHeight, Image image) {
+    myWidth = Math.min(maxWidth, image.getWidth(null));
+    myHeight = Math.min(maxHeight, image.getHeight(null));
+    myImage = image;
+  }
+
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
     g.drawImage(myImage, x, y, myWidth, myHeight, null);
