@@ -400,7 +400,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    return myName + " active=" + myActive + " scheduled=" + myScheduledUpdates;
+    return myName + " active=" + myActive + " scheduled=" + myScheduledUpdates.size();
   }
 
   private ModalityState getMergerModalityState() {
