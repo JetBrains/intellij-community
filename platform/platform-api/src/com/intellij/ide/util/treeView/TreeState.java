@@ -48,7 +48,7 @@ public class TreeState implements JDOMExternalizable {
   @NonNls private static final String USER_OBJECT = "USER_OBJECT";
   @NonNls public static final String CALLBACK = "Callback";
 
-  static class PathElement implements JDOMExternalizable {
+  static class PathElement {
     public String myItemId;
     public String myItemType;
 
@@ -82,13 +82,11 @@ public class TreeState implements JDOMExternalizable {
       return myUserObject != null && myUserObject.equals(object);
     }
 
-    @Override
     public void readExternal(Element element) throws InvalidDataException {
       DefaultJDOMExternalizer.readExternal(this, element);
       myUserObject = element.getAttributeValue(USER_OBJECT);
     }
 
-    @Override
     public void writeExternal(Element element) throws WriteExternalException {
       DefaultJDOMExternalizer.writeExternal(this, element);
       if (myUserObject instanceof String){
