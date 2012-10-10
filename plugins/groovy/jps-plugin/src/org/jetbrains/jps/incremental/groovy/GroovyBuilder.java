@@ -78,7 +78,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       if (finalOutputs == null) {
         return ExitCode.ABORT;
       }
-      Map<ModuleBuildTarget, String> generationOutputs = getGenerationOutputs(chunk, finalOutputs);
+      Map<ModuleBuildTarget, String> generationOutputs = myForStubs ? getStubGenerationOutputs(chunk, context) : finalOutputs;
 
       final Set<String> toCompilePaths = new LinkedHashSet<String>();
       for (File file : toCompile) {
@@ -176,11 +176,18 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     STUB_TO_SRC.set(context, null);
   }
 
-  private Map<ModuleBuildTarget, String> getGenerationOutputs(ModuleChunk chunk, Map<ModuleBuildTarget, String> finalOutputs) throws IOException {
+  private static Map<ModuleBuildTarget, String> getStubGenerationOutputs(ModuleChunk chunk, CompileContext context) throws IOException {
     Map<ModuleBuildTarget, String> generationOutputs = new HashMap<ModuleBuildTarget, String>();
+    File commonRoot = new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), "groovyStubs");
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      generationOutputs.put(target, myForStubs ? FileUtil.createTempDirectory("groovyStubs", "__" + target.getModuleName()).getPath()
-                                    : finalOutputs.get(target));
+      File targetRoot = new File(commonRoot, target.getModuleName() + File.separator + target.getTargetType().getTypeId());
+      if (!FileUtil.delete(targetRoot)) {
+        throw new IOException("External make cannot clean " + targetRoot.getPath());
+      }
+      if (!targetRoot.mkdirs()) {
+        throw new IOException("External make cannot create " + targetRoot.getPath());
+      }
+      generationOutputs.put(target, targetRoot.getPath());
     }
     return generationOutputs;
   }
@@ -254,11 +261,11 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return toCompile;
   }
 
-  private boolean updateDependencies(CompileContext context,
-                                  ModuleChunk chunk,
-                                  List<File> toCompile,
-                                  Map<ModuleBuildTarget, String> generationOutputs,
-                                  List<GroovycOSProcessHandler.OutputItem> successfullyCompiled) throws IOException {
+  private static boolean updateDependencies(CompileContext context,
+                                            ModuleChunk chunk,
+                                            List<File> toCompile,
+                                            Map<ModuleBuildTarget, String> generationOutputs,
+                                            List<GroovycOSProcessHandler.OutputItem> successfullyCompiled) throws IOException {
     final Mappings delta = context.getProjectDescriptor().dataManager.getMappings().createDelta();
     final List<File> successfullyCompiledFiles = new ArrayList<File>();
     if (!successfullyCompiled.isEmpty()) {

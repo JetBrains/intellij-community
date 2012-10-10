@@ -29,6 +29,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -64,6 +65,7 @@ public class GdkMethodHolder {
       protected MultiMap<String, PsiMethod> compute() {
         MultiMap<String, PsiMethod> map = new MultiMap<String, PsiMethod>();
         for (PsiMethod method : byName.values()) {
+          if (!method.hasModifierProperty(PsiModifier.PUBLIC)) continue;
           map.putValue(getCategoryTargetType(method).getCanonicalText(), method);
         }
         return map;
@@ -99,7 +101,9 @@ public class GdkMethodHolder {
 
     for (String superType : ResolveUtil.getAllSuperTypes(qualifierType, project).keySet()) {
       for (PsiMethod method : map.get(superType)) {
-        if (!processor.execute(GrGdkMethodImpl.createGdkMethod(method, myStatic), state)) {
+        String originInfo = method.getContainingClass().getName();
+        GrGdkMethod gdk = GrGdkMethodImpl.createGdkMethod(method, myStatic, originInfo);
+        if (!processor.execute(gdk, state)) {
           return false;
         }
       }

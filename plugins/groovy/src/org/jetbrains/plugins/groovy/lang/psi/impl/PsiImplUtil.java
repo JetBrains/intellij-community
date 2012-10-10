@@ -264,7 +264,7 @@ public class PsiImplUtil {
 
       if (resolved instanceof GrGdkMethod &&
           isFromDGM((GrGdkMethod)resolved) &&
-          !GdkMethodUtil.WITH.equals(((GrGdkMethod)resolved).getStaticMethod().getName())) {
+          !GdkMethodUtil.isWithName(((GrGdkMethod)resolved).getStaticMethod().getName())) {
         continue;
       }
 

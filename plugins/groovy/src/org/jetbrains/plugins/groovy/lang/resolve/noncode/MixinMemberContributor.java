@@ -106,9 +106,11 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
 
   public static boolean isCategoryMethod(@Nullable PsiElement element, @Nullable PsiType qualifierType, @Nullable PsiSubstitutor substitutor) {
     if (!(element instanceof PsiMethod)) return false;
-    if (!((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC)) return false;
+    PsiMethod method = (PsiMethod)element;
+    if (!method.hasModifierProperty(PsiModifier.STATIC)) return false;
+    if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return false;
 
-    final PsiParameter[] parameters = ((PsiMethod)element).getParameterList().getParameters();
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length == 0) return false;
 
     if (qualifierType == null) return true;

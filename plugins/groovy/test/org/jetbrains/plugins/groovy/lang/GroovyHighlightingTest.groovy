@@ -1555,4 +1555,10 @@ def f2(String foo, int mode) {
 }
 ''', UnusedDefInspection)
   }
+
+  void testForInAssignability() {
+    testHighlighting('''\
+for (int <warning descr="Cannot assign 'String' to 'int'">x</warning> in ['a']){}
+''', GroovyAssignabilityCheckInspection)
+  }
 }

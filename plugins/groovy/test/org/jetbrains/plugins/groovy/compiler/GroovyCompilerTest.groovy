@@ -14,14 +14,14 @@
  *  limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.compiler;
-
-
-
+package org.jetbrains.plugins.groovy.compiler
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.compiler.server.BuildManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.compiler.CompilerMessage
+import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration
 import com.intellij.openapi.module.Module
@@ -30,8 +30,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.TestLoggerFactory
-import junit.framework.AssertionFailedError
-
+import org.jetbrains.plugins.groovy.compiler.generator.GroovycStubGenerator
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 /**
  * @author peter
  */
@@ -82,15 +82,8 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   }
 
   private void shouldFail(Closure action) {
-    try {
-      action()
-      fail("Make should fail");
-    }
-    catch (RuntimeException e) {
-      if (!(e.getCause() instanceof AssertionFailedError)) {
-        throw e;
-      }
-    }
+    List<CompilerMessage> messages = action()
+    assert messages.find { it.category == CompilerMessageCategory.ERROR }
   }
 
   public void testRenameToJava() throws Throwable {
@@ -718,6 +711,20 @@ public class Main {
 
     assertEmpty(make())
     assert findClassFile("Client")
+  }
+
+  public void "test navigate from stub to source"() {
+    GroovyFile groovyFile = (GroovyFile) myFixture.addFileToProject("a.groovy", "class Groovy3 { InvalidType type }")
+    myFixture.addClass("class Java4 extends Groovy3 {}").containingFile
+
+    def msg = make().find { it.message.contains('InvalidType') }
+    assert msg?.virtualFile
+    ApplicationManager.application.runWriteAction { msg.virtualFile.delete(this) }
+
+    def error = make().find { it.message.contains('InvalidType') }
+    assert error?.virtualFile
+    assert groovyFile.classes[0] == GroovycStubGenerator.findClassByStub(project, error.virtualFile)
+    
   }
 
   public void "test ignore groovy internal non-existent interface helper inner class"() {
