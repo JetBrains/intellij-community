@@ -341,7 +341,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         PsiType paramType = substitutor.substitute(parameter.getType());
         ParameterInfoImpl parameterInfo = result.get(i);
         String typeText = parameterInfo.getTypeText();
-        if (!paramType.equalsToText(typeText)) {
+        if (!paramType.equalsToText(typeText) && !paramType.getPresentableText().equals(typeText)) {
           isSilly = false;
           break;
         }
