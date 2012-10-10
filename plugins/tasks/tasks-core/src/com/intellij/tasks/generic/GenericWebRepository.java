@@ -58,6 +58,7 @@ public class GenericWebRepository extends BaseRepositoryImpl {
 
     final GetMethod getMethod = new GetMethod(getFullTasksUrl());
     httpClient.executeMethod(getMethod);
+    if (getMethod.getStatusCode() != 200) throw new Exception("Cannot get tasks: HTTP status code " + getMethod.getStatusCode());
     final String response = getMethod.getResponseBodyAsString(Integer.MAX_VALUE);
 
     final String taskPatternWithoutPlaceholders = myTaskPattern.replaceAll("\\{.+?\\}", "");
@@ -87,9 +88,7 @@ public class GenericWebRepository extends BaseRepositoryImpl {
   private void login(final HttpClient httpClient) throws Exception {
     final GetMethod method = new GetMethod(getFullLoginUrl());
     httpClient.executeMethod(method);
-    if (method.getStatusCode() != 200) {
-      throw new Exception("Cannot login: HTTP status code " + method.getStatusCode());
-    }
+    if (method.getStatusCode() != 200) throw new Exception("Cannot login: HTTP status code " + method.getStatusCode());
   }
 
   private static List<String> getPlaceholders(String value) {

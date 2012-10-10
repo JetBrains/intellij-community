@@ -868,8 +868,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public int taskHistoryLength = 50;
 
     public boolean updateEnabled = true;
-    public int updateInterval = 5;
-    public int updateIssuesCount = 50;
+    public int updateInterval = 20;
+    public int updateIssuesCount = 100;
 
     public boolean clearContext = true;
     public boolean createChangelist = true;
