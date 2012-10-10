@@ -17,7 +17,6 @@
 package org.jetbrains.android.dom;
 
 import com.android.sdklib.SdkConstants;
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 
 /**
  * @author Eugene.Kudelevsky
@@ -43,7 +42,6 @@ public class AndroidAnimatorDomTest extends AndroidDomTest {
   }
 
   public void testTagNames() throws Throwable {
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     toTestCompletion("tn.xml", "tn_after.xml");
   }
 
