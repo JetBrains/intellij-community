@@ -25,6 +25,7 @@ import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
+import org.apache.maven.artifact.repository.metadata.RepositoryMetadataManager;
 import org.apache.maven.artifact.resolver.*;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
@@ -70,10 +71,7 @@ import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationExce
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.server.embedder.CustomMaven3ArtifactResolver;
-import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator;
-import org.jetbrains.idea.maven.server.embedder.FieldAccessor;
-import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
+import org.jetbrains.idea.maven.server.embedder.*;
 import org.sonatype.aether.RepositorySystemSession;
 
 import java.io.File;
@@ -249,7 +247,7 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
       //((CustomArtifactFactory)getComponent(ArtifactFactory.class)).customize();
       //((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).customize();
       ((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, failOnUnresolvedDependency);
-      //((CustomRepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
+      ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
       //((CustomMaven3WagonManager)getComponent(WagonManager.class)).customize(failOnUnresolvedDependency);
 
       setConsoleAndIndicator(console, indicator);
@@ -587,6 +585,7 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
       //((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).reset();
       //((CustomArtifactFactory)getComponent(ArtifactFactory.class)).reset();
       ((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).reset();
+      ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).reset();
       //((CustomRepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).reset();
       //((CustomWagonManager)getComponent(WagonManager.class)).reset();
     }

@@ -15,12 +15,10 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
-import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.repository.RepositoryRequest;
 import org.apache.maven.artifact.repository.metadata.*;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
-
-import java.util.List;
 
 public class CustomMaven3RepositoryMetadataManager extends DefaultRepositoryMetadataManager {
   private MavenWorkspaceMap myWorkspaceMap;
@@ -34,9 +32,8 @@ public class CustomMaven3RepositoryMetadataManager extends DefaultRepositoryMeta
   }
 
   @Override
-  public void resolve(RepositoryMetadata metadata, List remoteRepositories, ArtifactRepository localRepository)
-    throws RepositoryMetadataResolutionException {
-    super.resolve(metadata, remoteRepositories, localRepository);
+  public void resolve(RepositoryMetadata metadata, RepositoryRequest request) throws RepositoryMetadataResolutionException {
+    super.resolve(metadata, request);
 
     MavenWorkspaceMap map = myWorkspaceMap;
     if (map == null) return;
