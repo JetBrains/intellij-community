@@ -637,13 +637,37 @@ public class LambdaUtil {
   }
 
   public static boolean isReceiverType(PsiType receiverType, PsiClass containingClass, PsiSubstitutor psiSubstitutor) {
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(receiverType);
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(receiverType));
     final PsiClass receiverClass = resolveResult.getElement();
     if (receiverClass != null && isReceiverType(receiverClass, containingClass)) {
       return resolveResult.getSubstitutor().equals(psiSubstitutor) ||
              PsiUtil.isRawSubstitutor(containingClass, psiSubstitutor) ||
              PsiUtil.isRawSubstitutor(receiverClass, resolveResult.getSubstitutor());
     } 
+    return false;
+  }
+  
+  public static boolean isReceiverType(PsiType functionalInterfaceType, PsiClass containingClass, @Nullable PsiMethod referencedMethod) {
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+    final MethodSignature function = getFunction(resolveResult.getElement());
+    if (function != null) {
+      final int interfaceMethodParamsLength = function.getParameterTypes().length;
+      if (interfaceMethodParamsLength > 0) {
+        final PsiType firstParamType = resolveResult.getSubstitutor().substitute(function.getParameterTypes()[0]);
+        boolean isReceiver = isReceiverType(firstParamType,
+                                            containingClass, PsiUtil.resolveGenericsClassInType(firstParamType).getSubstitutor());
+        if (isReceiver) {
+          if (referencedMethod == null){
+            if (interfaceMethodParamsLength == 1) return true;
+            return false;
+          }
+          if (referencedMethod.getParameterList().getParametersCount() != interfaceMethodParamsLength - 1) {
+            return false;
+          }
+          return true;
+        }
+      }
+    }
     return false;
   }
   

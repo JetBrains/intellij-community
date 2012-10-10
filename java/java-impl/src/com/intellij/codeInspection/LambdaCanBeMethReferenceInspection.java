@@ -67,7 +67,7 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
         super.visitLambdaExpression(expression);
         if (PsiUtil.getLanguageLevel(expression).isAtLeast(LanguageLevel.JDK_1_8)) {
           final PsiElement body = expression.getBody();
-          final PsiCallExpression callExpression = canBeMethodReferenceProblem(body, expression.getParameterList().getParameters());
+          final PsiCallExpression callExpression = canBeMethodReferenceProblem(body, expression.getParameterList().getParameters(), expression.getFunctionalInterfaceType());
           if (callExpression != null) {
             holder.registerProblem(callExpression,
                                    "Can be replaced with method reference",
@@ -79,7 +79,9 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
   }
 
   @Nullable
-  protected static PsiCallExpression canBeMethodReferenceProblem(@Nullable final PsiElement body, final PsiParameter[] parameters) {
+  protected static PsiCallExpression canBeMethodReferenceProblem(@Nullable final PsiElement body,
+                                                                 final PsiParameter[] parameters,
+                                                                 PsiType functionalInterfaceType) {
     PsiCallExpression methodCall = null;
     if (body instanceof PsiCallExpression) {
       methodCall = (PsiCallExpression)body;
@@ -122,8 +124,7 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
           isConstructor = psiMethod.isConstructor();
         }
         if (containingClass == null) return null;
-        boolean isReceiverType = parameters.length > 0 && LambdaUtil.isReceiverType(parameters[0].getType(), containingClass, PsiUtil
-          .resolveGenericsClassInType(parameters[0].getType()).getSubstitutor());
+        boolean isReceiverType = LambdaUtil.isReceiverType(functionalInterfaceType, containingClass, psiMethod);
         final boolean staticOrValidConstructorRef;
         if (isConstructor) {
           staticOrValidConstructorRef =
@@ -167,7 +168,7 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
   }
 
   @Nullable
-  protected static String createMethodReferenceText(PsiElement element, final PsiParameter[] parameters) {
+  protected static String createMethodReferenceText(PsiElement element, final PsiParameter[] parameters, PsiType functionalInterfaceType) {
     String methodRefText = null;
     if (element instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
@@ -179,8 +180,7 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       final String methodReferenceName = methodExpression.getReferenceName();
       if (qualifierExpression != null) {
-        boolean isReceiverType = parameters.length > 0 && LambdaUtil.isReceiverType(parameters[0].getType(), containingClass, PsiUtil
-          .resolveGenericsClassInType(parameters[0].getType()).getSubstitutor());
+        boolean isReceiverType = LambdaUtil.isReceiverType(functionalInterfaceType, containingClass, psiMethod);
         methodRefText = (isReceiverType ? containingClass.getQualifiedName() : qualifierExpression.getText()) + "::" + methodReferenceName;
       }
       else {
@@ -227,7 +227,7 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
       final PsiElement element = descriptor.getPsiElement();
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
       if (lambdaExpression == null) return;
-      final String methodRefText = createMethodReferenceText(element, lambdaExpression.getParameterList().getParameters());
+      final String methodRefText = createMethodReferenceText(element, lambdaExpression.getParameterList().getParameters(), lambdaExpression.getFunctionalInterfaceType());
 
       if (methodRefText != null) {
         final PsiExpression psiExpression =

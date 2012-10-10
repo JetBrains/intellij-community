@@ -45,6 +45,7 @@ import static junit.framework.Assert.*
  */
 @Mixin(GitExecutor)
 @Mixin(GitScenarios)
+@Mixin(GitLightTest)
 class GitBranchWorkerTest {
 
   private String myRootDir
@@ -103,6 +104,7 @@ class GitBranchWorkerTest {
   private void initRepo(String repoRoot) {
     cd repoRoot
     git("init")
+    setupUsername();
     touch("file.txt")
     git("add file.txt")
     git("commit -m initial")
@@ -112,35 +114,6 @@ class GitBranchWorkerTest {
   public void tearDown() {
     FileUtil.delete(new File(myRootDir))
     Disposer.dispose(myProject)
-  }
-
-  def assertCurrentBranch(GitRepository repository, String name) {
-    def curBranch = git(repository, "branch").split("\n").find { it -> it.contains("*") }.replace('*', ' ').trim()
-    assertEquals("Current branch is incorrect in ${repository}", name, curBranch)
-  }
-
-  def assertCurrentBranch(String name) {
-    myRepositories.each { assertCurrentBranch(it, name) }
-  }
-
-  def checkoutNewBranch(String name, def uiHandler) {
-    GitBranchWorker brancher = new GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler as GitBranchUiHandler)
-    brancher.checkoutNewBranch(name, myRepositories)
-  }
-
-  def checkoutBranch(String name, def uiHandler) {
-    GitBranchWorker brancher = new GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler as GitBranchUiHandler)
-    brancher.checkout(name, myRepositories)
-  }
-
-  def mergeBranch(String name, def uiHandler) {
-    GitBranchWorker brancher = new GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler as GitBranchUiHandler)
-    brancher.merge(name, GitBrancher.DeleteOnMergeOption.PROPOSE, myRepositories)
-  }
-
-  def deleteBranch(String name, def uiHandler) {
-    GitBranchWorker brancher = new GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler as GitBranchUiHandler)
-    brancher.deleteBranch(name, myRepositories)
   }
 
   @Test
@@ -258,15 +231,6 @@ class GitBranchWorkerTest {
     assertCurrentBranch(myContrib, "master")
   }
 
-  def branchOperation(def operation, String name, def uiHandler) {
-    if (operation == "checkout") {
-      checkoutBranch(name, uiHandler)
-    }
-    else {
-      mergeBranch(name, uiHandler)
-    }
-  }
-  
   @Test
   public void "checkout with untracked files overwritten by checkout in first repo should show notification"() {
     test_untracked_files_overwritten_by_in_first_repo("checkout");
@@ -282,7 +246,7 @@ class GitBranchWorkerTest {
     untrackedFileOverwrittenBy(myUltimate, "feature")
     
     boolean notificationShown = false;
-    branchOperation operation, "feature", [
+    checkoutOrMerge operation, "feature", [
             showUntrackedFilesNotification : { String s, Collection c -> notificationShown = true }
     ]
     
@@ -304,7 +268,7 @@ class GitBranchWorkerTest {
     def untracked = untrackedFileOverwrittenBy(myCommunity, "feature")
 
     Collection<VirtualFile> untrackedFiles = null;
-    branchOperation operation, "feature", [
+    checkoutOrMerge operation, "feature", [
             showUntrackedFilesDialogWithRollback : {  String s, String p, Collection files -> untrackedFiles = files; false }
     ]
 
@@ -328,7 +292,7 @@ class GitBranchWorkerTest {
     def localChanges = prepareLocalChangesOverwrittenBy(myUltimate)
 
     List<Change> changes = null;
-    branchOperation(operation, "feature", [
+    checkoutOrMerge(operation, "feature", [
             showSmartOperationDialog: { Project p, List<Change> cs, String op, boolean force ->
               changes = cs  
               DialogWrapper.CANCEL_EXIT_CODE
@@ -387,7 +351,7 @@ line with master changes
     prepareLocalChangesOverwrittenBy(myUltimate)
 
     AgreeToSmartOperationTestUiHandler handler = new AgreeToSmartOperationTestUiHandler()
-    branchOperation(operation, "feature", handler)
+    checkoutOrMerge(operation, "feature", handler)
 
     assertNotNull "No success notification was shown", handler.mySuccessMessage
     assertEquals "Success message is incorrect", expectedSuccessMessage, handler.mySuccessMessage
@@ -422,7 +386,7 @@ line with master changes
     prepareLocalChangesOverwrittenBy(myUltimate)
 
     def errorMessage = null
-    branchOperation(operation, "feature", [
+    checkoutOrMerge(operation, "feature", [
             showSmartOperationDialog : { Project p, List<Change> cs, String op, boolean f -> GitSmartOperationDialog.CANCEL_EXIT_CODE },
             notifyError: { String title, String message -> errorMessage = message }
     ] as GitBranchUiHandler )
@@ -448,7 +412,7 @@ line with master changes
     prepareLocalChangesOverwrittenBy(myCommunity)
 
     def rollbackMsg = null
-    branchOperation(operation, "feature", [
+    checkoutOrMerge(operation, "feature", [
             showSmartOperationDialog : { Project p, List<Change> cs, String op, boolean f -> GitSmartOperationDialog.CANCEL_EXIT_CODE },
             notifyErrorWithRollbackProposal: { String t, String m, String rp -> rollbackMsg = m ; false }
     ] as GitBranchUiHandler )
@@ -504,22 +468,6 @@ line with master changes
     ]);
 
     assertTrue "'Branch is not fully merged' dialog was not shown", dialogShown
-  }
-
-  private void prepareUnmergedBranch(GitRepository unmergedRepo) {
-    myRepositories.each {
-      git(it, "branch todelete")
-    }
-    cd unmergedRepo
-    git("checkout todelete")
-    touch("afile.txt", "content")
-    git("add afile.txt")
-    git("commit -m unmerged_commit")
-    git("checkout master")
-  }
-
-  void assertBranchDeleted(String name) {
-    myRepositories.each { assertBranchDeleted(it, name) }
   }
 
   @Test
@@ -583,19 +531,8 @@ line with master changes
   @Test
   public void "delete branch merged to head but unmerged to upstream should show dialog"() {
     // inspired by IDEA-83604
-    // for the sake of simplicity we deal with a single myCommunity repository here
 
-    // prepare parent repository
-    // create it under ultimate not to bother with removing it after the test (tearDown will clean automatically)
-    cd myUltimate
-    git("clone --bare $myCommunity parent.git")
-
-    // initialize feature branch and push to make origin/feature, set up tracking
-    cd myCommunity
-    git("checkout -b feature");
-    git ("remote add origin ${myUltimate.root.path}/parent.git");
-    git ("push -u origin feature")
-
+    prepareRemoteRepoAndBranch("feature")
     // create a commit and merge it to master, but not to feature's upstream
     touch("feature.txt", "feature content")
     git("add feature.txt")
@@ -613,12 +550,23 @@ line with master changes
     assertTrue "'Branch is not fully merged' dialog was not shown", dialogShown
   }
 
-  def assertBranchDeleted(GitRepository repo, String branch) {
-    assertFalse("Branch $branch should have been deleted from $repo", git(repo, "branch").contains(branch))
+  // for the sake of simplicity we deal with a single myCommunity repository for remote operations
+  private void prepareRemoteRepoAndBranch(String branch) {
+    // prepare parent repository
+    // create it under ultimate not to bother with removing it after the test (tearDown will clean automatically)
+    cd myUltimate
+    git("clone --bare $myCommunity parent.git")
+
+    // initialize feature branch and push to make origin/feature, set up tracking
+    cd myCommunity
+    git("checkout -b $branch");
+    git("remote add origin ${myUltimate.root.path}/parent.git");
+    git("push -u origin $branch")
   }
 
-  def assertBranchExists(GitRepository repo, String branch) {
-    assertTrue("Branch $branch should exist in $repo", git(repo, "branch").contains(branch))
+  @Test
+  void "delete remote branch without problems"() {
+
   }
 
   @Test
@@ -636,11 +584,6 @@ line with master changes
     assertFile(myUltimate, "branch_file.txt", "branch content");
     assertFile(myCommunity, "branch_file.txt", "branch content");
     assertFile(myContrib, "branch_file.txt", "branch content");
-  }
-
-  private void assertFile(GitRepository repository, String path, String content) throws IOException {
-    cd repository
-    assertEquals "Content doesn't match", content, cat(path)
   }
 
   @Test
@@ -729,6 +672,73 @@ line with master changes
     ]
 
     assertEquals "Merge in ultimate should have been reset", ultimateTipAfterMerge, tip(myUltimate)
+  }
+
+  def assertCurrentBranch(GitRepository repository, String name) {
+    def curBranch = git(repository, "branch").split("\n").find { it -> it.contains("*") }.replace('*', ' ').trim()
+    assertEquals("Current branch is incorrect in ${repository}", name, curBranch)
+  }
+
+  def assertCurrentBranch(String name) {
+    myRepositories.each { assertCurrentBranch(it, name) }
+  }
+
+  def checkoutNewBranch(String name, def uiHandler) {
+    GitBranchWorker brancher = new GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler as GitBranchUiHandler)
+    brancher.checkoutNewBranch(name, myRepositories)
+  }
+
+  def checkoutBranch(String name, def uiHandler) {
+    GitBranchWorker brancher = new GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler as GitBranchUiHandler)
+    brancher.checkout(name, myRepositories)
+  }
+
+  def mergeBranch(String name, def uiHandler) {
+    GitBranchWorker brancher = new GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler as GitBranchUiHandler)
+    brancher.merge(name, GitBrancher.DeleteOnMergeOption.PROPOSE, myRepositories)
+  }
+
+  def deleteBranch(String name, def uiHandler) {
+    GitBranchWorker brancher = new GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler as GitBranchUiHandler)
+    brancher.deleteBranch(name, myRepositories)
+  }
+
+  def checkoutOrMerge(def operation, String name, def uiHandler) {
+    if (operation == "checkout") {
+      checkoutBranch(name, uiHandler)
+    }
+    else {
+      mergeBranch(name, uiHandler)
+    }
+  }
+
+  private void prepareUnmergedBranch(GitRepository unmergedRepo) {
+    myRepositories.each {
+      git(it, "branch todelete")
+    }
+    cd unmergedRepo
+    git("checkout todelete")
+    touch("afile.txt", "content")
+    git("add afile.txt")
+    git("commit -m unmerged_commit")
+    git("checkout master")
+  }
+
+  void assertBranchDeleted(String name) {
+    myRepositories.each { assertBranchDeleted(it, name) }
+  }
+
+  def assertBranchDeleted(GitRepository repo, String branch) {
+    assertFalse("Branch $branch should have been deleted from $repo", git(repo, "branch").contains(branch))
+  }
+
+  def assertBranchExists(GitRepository repo, String branch) {
+    assertTrue("Branch $branch should exist in $repo", git(repo, "branch").contains(branch))
+  }
+
+  private void assertFile(GitRepository repository, String path, String content) throws IOException {
+    cd repository
+    assertEquals "Content doesn't match", content, cat(path)
   }
 
   // TODO Somehow I wasn't able to make dynamic partial implementations, because both overloaded notifySuccess() methods are needed,
