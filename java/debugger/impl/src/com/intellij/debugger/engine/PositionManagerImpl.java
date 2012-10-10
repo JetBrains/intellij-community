@@ -61,16 +61,11 @@ public class PositionManagerImpl implements PositionManager {
   @NotNull
   public List<Location> locationsOfLine(ReferenceType type, SourcePosition position) throws NoDataException {
     try {
-      int line = position.getLine() + 1;
-      List<Location> locs = (getDebugProcess().getVirtualMachineProxy().versionHigher("1.4")
-                             ? type.locationsOfLine(DebugProcessImpl.JAVA_STRATUM, null, line) : type.locationsOfLine(line));
-      if (locs.size() > 0) {
-        return locs;
-      }
+      final int line = position.getLine() + 1;
+      return type.locationsOfLine(DebugProcess.JAVA_STRATUM, null, line);
     }
     catch (AbsentInformationException ignored) {
     }
-
     return Collections.emptyList();
   }
 
