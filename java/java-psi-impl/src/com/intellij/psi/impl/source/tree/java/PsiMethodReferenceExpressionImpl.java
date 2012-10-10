@@ -454,9 +454,15 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           if (hasReceiver && parameterTypes.length == signatureParameterTypes2.length + 1 && !staticOrValidConstructorRef) {
             boolean correct = true;
             for (int i = 0; i < signatureParameterTypes2.length; i++) {
-              final PsiType type1 = parameterTypes[i + 1];
+              final PsiType type1 = subst.substitute(GenericsUtil.eliminateWildcards(parameterTypes[i + 1]));
               final PsiType type2 = signatureParameterTypes2[i];
-              correct &= TypeConversionUtil.isAssignable(type2, subst.substitute(GenericsUtil.eliminateWildcards(type1)));
+              final boolean assignable = TypeConversionUtil.isAssignable(type2, type1);
+              if (varArgs && i == signatureParameterTypes2.length - 1) {
+                correct &= assignable || TypeConversionUtil.isAssignable(((PsiArrayType)type2).getComponentType(), type1);
+              }
+              else {
+                correct &= assignable;
+              }
             }
             if (correct) {
               secondCandidates.add(conflict);

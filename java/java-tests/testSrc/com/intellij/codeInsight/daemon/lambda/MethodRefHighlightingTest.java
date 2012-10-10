@@ -113,6 +113,10 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testVarargsInReceiverPosition() throws Exception {
+    doTest();
+  }
+
   public void testInferenceFromReturnType() throws Exception {
     doTest(true);
   }
