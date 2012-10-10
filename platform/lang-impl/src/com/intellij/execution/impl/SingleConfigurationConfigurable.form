@@ -71,11 +71,11 @@
           </component>
           <component id="4f1db" class="javax.swing.JTextField" binding="myNameText">
             <constraints>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false">
-                <preferred-size width="100" height="-1"/>
-              </grid>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
-            <properties/>
+            <properties>
+              <columns value="25"/>
+            </properties>
           </component>
           <component id="53321" class="javax.swing.JCheckBox" binding="myCbStoreProjectConfiguration">
             <constraints>
