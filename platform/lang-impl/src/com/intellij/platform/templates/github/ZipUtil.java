@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Enumeration;
 import java.util.concurrent.Callable;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -73,26 +72,6 @@ public class ZipUtil {
     } finally {
       stream.close();
     }
-  }
-
-  private static boolean isSingleTopLevelDir(@NotNull Enumeration<? extends ZipEntry> zipEntries) {
-    String singleTopLevelDirName = null;
-    char pathDelimiterChar = '/';
-    int cnt = 0;
-    while (zipEntries.hasMoreElements()) {
-      cnt++;
-      ZipEntry zipEntry = zipEntries.nextElement();
-      String name = zipEntry.getName();
-      int ind = (name + pathDelimiterChar).indexOf(pathDelimiterChar);
-      String topLevelFileName = name.substring(0, ind);
-      if (singleTopLevelDirName == null) {
-        singleTopLevelDirName = topLevelFileName;
-      }
-      else if (!singleTopLevelDirName.equals(topLevelFileName)) {
-        return false;
-      }
-    }
-    return cnt > 0;
   }
 
   private static void unzipEntryToDir(@Nullable ProgressIndicator progress,
