@@ -95,6 +95,11 @@ class MockGit implements Git {
     throw new UnsupportedOperationException()
   }
 
+  @Override
+  GitCommandResult diff(GitRepository repository, List<String> parameters, String range) {
+    throw new UnsupportedOperationException()
+  }
+
   @NotNull
   @Override
   GitCommandResult merge(@NotNull GitRepository repository, @NotNull String branchToMerge, @Nullable List<String> additionalParams,
@@ -200,6 +205,23 @@ class MockGit implements Git {
   @Override
   GitCommandResult checkAttr(@NotNull GitRepository repository, @NotNull Collection<String> attributes, @NotNull Collection<VirtualFile> files) {
 
+  }
+
+  @NotNull
+  @Override
+  GitCommandResult stashSave(@NotNull GitRepository repository, @NotNull String message) {
+    throw new UnsupportedOperationException()
+  }
+
+  @NotNull
+  @Override
+  GitCommandResult stashPop(@NotNull GitRepository repository, GitLineHandlerListener... listeners) {
+    throw new UnsupportedOperationException()
+  }
+
+  @Override
+  List<GitCommit> history(GitRepository repository, String range) {
+    throw new UnsupportedOperationException()
   }
 
   private void produceOutput(String output, GitLineHandlerListener... listeners) {

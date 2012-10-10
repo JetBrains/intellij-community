@@ -203,7 +203,10 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
     return result.get();
   }
 
-  public static void setBuildArtifactBeforeRunOption(@NotNull JComponent runConfigurationEditorComponent, @NotNull Artifact artifact, final boolean enable) {
+  public static void setBuildArtifactBeforeRunOption(@NotNull JComponent runConfigurationEditorComponent,
+                                                     Project project,
+                                                     @NotNull Artifact artifact,
+                                                     final boolean enable) {
     final DataContext dataContext = DataManager.getInstance().getDataContext(runConfigurationEditorComponent);
     final ConfigurationSettingsEditorWrapper editor = ConfigurationSettingsEditorWrapper.CONFIGURATION_EDITOR_KEY.getData(dataContext);
     if (editor != null) {
@@ -214,15 +217,23 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
           myTasks.add((BuildArtifactsBeforeRunTask)task);
         }
       }
-      for (BuildArtifactsBeforeRunTask task : myTasks) {
-        if (enable) {
-          task.addArtifact(artifact);
-          task.setEnabled(true);
-        }
-        else {
-          task.removeArtifact(artifact);
-          if (task.getArtifactPointers().isEmpty()) {
-            task.setEnabled(false);
+      if (enable && myTasks.isEmpty()) {
+        BuildArtifactsBeforeRunTask task = new BuildArtifactsBeforeRunTask(project);
+        task.addArtifact(artifact);
+        task.setEnabled(true);
+        editor.addBeforeLaunchStep(task);
+      }
+      else {
+        for (BuildArtifactsBeforeRunTask task : myTasks) {
+          if (enable) {
+            task.addArtifact(artifact);
+            task.setEnabled(true);
+          }
+          else {
+            task.removeArtifact(artifact);
+            if (task.getArtifactPointers().isEmpty()) {
+              task.setEnabled(false);
+            }
           }
         }
       }

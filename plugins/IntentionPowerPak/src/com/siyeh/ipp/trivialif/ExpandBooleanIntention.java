@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,25 +33,20 @@ public class ExpandBooleanIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    final PsiStatement containingStatement =
-      PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+    final PsiStatement containingStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
     if (containingStatement == null) {
       return;
     }
     if (ExpandBooleanPredicate.isBooleanAssignment(containingStatement)) {
-      final PsiExpressionStatement assignmentStatement =
-        (PsiExpressionStatement)containingStatement;
-      final PsiAssignmentExpression assignmentExpression =
-        (PsiAssignmentExpression)assignmentStatement.getExpression();
+      final PsiExpressionStatement assignmentStatement = (PsiExpressionStatement)containingStatement;
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)assignmentStatement.getExpression();
       final PsiExpression rhs = assignmentExpression.getRExpression();
       if (rhs == null) {
         return;
       }
       final PsiExpression lhs = assignmentExpression.getLExpression();
-      if (ErrorUtil.containsDeepError(lhs) ||
-          ErrorUtil.containsDeepError(rhs)) {
+      if (ErrorUtil.containsDeepError(lhs) || ErrorUtil.containsDeepError(rhs)) {
         return;
       }
       final String rhsText = rhs.getText();
@@ -65,16 +60,11 @@ public class ExpandBooleanIntention extends Intention {
       else {
         conditionText = rhsText;
       }
-
-      @NonNls final String statement =
-        "if(" + conditionText + ") " + lhsText + " = true; else " +
-        lhsText + " = false;";
+      @NonNls final String statement = "if(" + conditionText + ") " + lhsText + " = true; else " + lhsText + " = false;";
       replaceStatement(statement, containingStatement);
     }
-    else if (ExpandBooleanPredicate.isBooleanReturn(
-      containingStatement)) {
-      final PsiReturnStatement returnStatement =
-        (PsiReturnStatement)containingStatement;
+    else if (ExpandBooleanPredicate.isBooleanReturn(containingStatement)) {
+      final PsiReturnStatement returnStatement = (PsiReturnStatement)containingStatement;
       final PsiExpression returnValue = returnStatement.getReturnValue();
       if (returnValue == null) {
         return;
@@ -83,9 +73,26 @@ public class ExpandBooleanIntention extends Intention {
         return;
       }
       final String valueText = returnValue.getText();
-      @NonNls final String statement =
-        "if(" + valueText + ") return true; else return false;";
+      @NonNls final String statement = "if(" + valueText + ") return true; else return false;";
       replaceStatement(statement, containingStatement);
+    }
+    else if (ExpandBooleanPredicate.isBooleanDeclaration(containingStatement)) {
+      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)containingStatement;
+      final PsiElement declaredElement = declarationStatement.getDeclaredElements()[0];
+      if (!(declaredElement instanceof PsiLocalVariable)) {
+        return;
+      }
+      final PsiLocalVariable variable = (PsiLocalVariable)declaredElement;
+      final PsiExpression initializer = variable.getInitializer();
+      if (initializer == null) {
+        return;
+      }
+      final String name = variable.getName();
+      @NonNls final String newStatementText = "if(" + initializer.getText() + ") " + name +"=true; else " + name + "=false;";
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(containingStatement.getProject());
+      final PsiStatement newStatement = factory.createStatementFromText(newStatementText, containingStatement);
+      declarationStatement.getParent().addAfter(newStatement, declarationStatement);
+      initializer.delete();
     }
   }
 }

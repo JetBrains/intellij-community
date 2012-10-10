@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
-import com.intellij.psi.impl.light.LightMirrorMethod;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -38,7 +37,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor;
 
 import java.util.*;
 
@@ -300,6 +298,6 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
     }
     builder.setBaseIcon(JetgroovyIcons.Groovy.Method);
 
-    return new LightMirrorMethod(builder, method);
+    return new DelegatedMethod(builder, method);
   }
 }

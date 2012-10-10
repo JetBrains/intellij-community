@@ -24,7 +24,6 @@ import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -44,11 +43,13 @@ public class AutoExternalizeContributor extends AstTransformContributor {
     write.setContainingClass(clazz);
     write.addParameter("out", ObjectOutput.class.getName());
     write.addException(IOException.class.getName());
+    write.setOriginInfo("created by @AutoExternalize");
     collector.add(write);
 
     final LightMethodBuilder read = new LightMethodBuilder(clazz.getManager(), "readExternal");
     read.setContainingClass(clazz);
     read.addParameter("oin", ObjectInput.class.getName());
+    read.setOriginInfo("created by @AutoExternalize");
     collector.add(read);
   }
 

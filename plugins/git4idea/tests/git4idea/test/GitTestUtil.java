@@ -17,21 +17,15 @@ package git4idea.test;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.MessageManager;
-import git4idea.Notificator;
-import git4idea.PlatformFacade;
 import git4idea.tests.GitTestRepository;
-import git4idea.tests.TestDialogManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -43,9 +37,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 /**
  * @author Kirill Likhodedov
@@ -251,38 +243,6 @@ public class GitTestUtil {
   @NotNull
   public static String stringifyActualExpected(@NotNull Object actual, @NotNull Object expected) {
     return "\nExpected:\n" + expected + "\nActual:\n" + actual;
-  }
-
-  /**
-   * Registers {@link git4idea.tests.TestDialogManager} as the {@link git4idea.DialogManager} implementation.
-   * @param project
-   */
-  public static TestDialogManager registerDialogManager(@NotNull Project project) {
-    return new TestDialogManager();
-  }
-
-  public static TestMessageManager registerMessageManager(@NotNull Project project) {
-    final String key = "git4idea.MessageManager";
-    final MutablePicoContainer picoContainer = (MutablePicoContainer) project.getPicoContainer();
-    picoContainer.unregisterComponent(key);
-    picoContainer.registerComponentImplementation(key, TestMessageManager.class);
-    return (TestMessageManager)MessageManager.getInstance(project);
-  }
-
-  public static TestNotificator registerNotificationManager(Project project) {
-    final String key = "git4idea.Notificator";
-    final MutablePicoContainer picoContainer = (MutablePicoContainer) project.getPicoContainer();
-    picoContainer.unregisterComponent(key);
-    picoContainer.registerComponentImplementation(key, TestNotificator.class);
-    return (TestNotificator)Notificator.getInstance(project);
-  }
-
-  public static GitTestPlatformFacade registerPlatformFacade(@NotNull Project project) {
-    final String key = "git4idea.PlatformFacade";
-    final MutablePicoContainer picoContainer = (MutablePicoContainer) project.getPicoContainer();
-    picoContainer.unregisterComponent(key);
-    picoContainer.registerComponentImplementation(key, GitTestPlatformFacade.class);
-    return (GitTestPlatformFacade)ServiceManager.getService(project, PlatformFacade.class);
   }
 
 }

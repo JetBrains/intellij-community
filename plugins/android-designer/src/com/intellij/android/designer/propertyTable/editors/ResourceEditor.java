@@ -272,6 +272,7 @@ public class ResourceEditor extends PropertyEditor {
       return null;
     }
     if (myIsDimension &&
+        !value.startsWith("@") &&
         !value.equalsIgnoreCase("wrap_content") &&
         !value.equalsIgnoreCase("fill_parent") &&
         !value.equalsIgnoreCase("match_parent")) {

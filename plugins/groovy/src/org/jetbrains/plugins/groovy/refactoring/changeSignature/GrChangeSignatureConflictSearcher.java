@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.util.Arrays;
@@ -47,12 +48,11 @@ import java.util.Set;
  * @author Maxim.Medvedev
  */
 class GrChangeSignatureConflictSearcher {
-  private static final Logger LOG =
-    Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureConflictSearcher");
+  private static final Logger LOG = Logger.getInstance(GrChangeSignatureConflictSearcher.class);
   private final JavaChangeInfo myChangeInfo;
 
   GrChangeSignatureConflictSearcher(JavaChangeInfo changeInfo) {
-    this.myChangeInfo = changeInfo;
+    myChangeInfo = changeInfo;
   }
 
   public MultiMap<PsiElement, String> findConflicts(Ref<UsageInfo[]> refUsages) {
@@ -95,8 +95,8 @@ class GrChangeSignatureConflictSearcher {
             accessObjectClass = getAccessObjectClass(qualifier);
           }
 
-          if (!JavaPsiFacade.getInstance(element.getProject()).getResolveHelper()
-            .isAccessible(method, modifierList, element, accessObjectClass, null)) {
+          PsiResolveHelper helper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
+          if (!helper.isAccessible(method, modifierList, element, accessObjectClass, null)) {
             String message =
               RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
                                         RefactoringUIUtil.getDescription(method, true),
@@ -134,6 +134,7 @@ class GrChangeSignatureConflictSearcher {
       GrMethod prototype;
       final PsiMethod method = myChangeInfo.getMethod();
       if (!(method instanceof GrMethod)) return;
+
       PsiManager manager = method.getManager();
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(manager.getProject());
       final CanonicalTypes.Type returnType = myChangeInfo.getNewReturnType();
@@ -147,7 +148,13 @@ class GrChangeSignatureConflictSearcher {
       JavaParameterInfo[] parameters = myChangeInfo.getNewParameters();
 
       for (JavaParameterInfo info : parameters) {
-        PsiParameter param = factory.createParameter(info.getName(), info.getTypeText(), (GroovyPsiElement)method);
+        GrParameter param;
+        if (info instanceof GrParameterInfo) {
+          param = factory.createParameter(info.getName(), info.getTypeText(), ((GrParameterInfo)info).getDefaultInitializer(), (GroovyPsiElement)method);
+        }
+        else {
+          param = factory.createParameter(info.getName(), info.getTypeText(), (GroovyPsiElement)method);
+        }
         prototype.getParameterList().add(param);
       }
 

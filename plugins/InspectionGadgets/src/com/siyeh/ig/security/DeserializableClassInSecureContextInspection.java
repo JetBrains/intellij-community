@@ -15,17 +15,25 @@
  */
 package com.siyeh.ig.security;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class DeserializableClassInSecureContextInspection extends BaseInspection {
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreThrowable = false;
 
   @Override
   @NotNull
@@ -39,16 +47,22 @@ public class DeserializableClassInSecureContextInspection extends BaseInspection
     return InspectionGadgetsBundle.message("deserializable.class.in.secure.context.problem.descriptor");
   }
 
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message("ignore.classes.extending.throwable.option"), this, "ignoreThrowable");
+  }
+
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new DeserializableClassInSecureContextVisitor();
   }
 
-  private static class DeserializableClassInSecureContextVisitor extends BaseInspectionVisitor {
+  private class DeserializableClassInSecureContextVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so it doesn't drill down
       if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
         return;
       }
@@ -57,11 +71,18 @@ public class DeserializableClassInSecureContextInspection extends BaseInspection
       }
       final PsiMethod[] methods = aClass.getMethods();
       for (final PsiMethod method : methods) {
-        if (SerializationUtils.isReadObject(method)) {
-          if (ControlFlowUtils.methodAlwaysThrowsException(method)) {
-            return;
-          }
+        if (!SerializationUtils.isReadObject(method)) {
+          continue;
         }
+        if (ControlFlowUtils.methodAlwaysThrowsException(method)) {
+          return;
+        }
+        else {
+          break;
+        }
+      }
+      if (ignoreThrowable && InheritanceUtil.isInheritor(aClass, false, "java.lang.Throwable")) {
+        return;
       }
       registerClassError(aClass);
     }

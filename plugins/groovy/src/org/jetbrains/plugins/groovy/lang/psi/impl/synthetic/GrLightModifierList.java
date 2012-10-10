@@ -65,7 +65,7 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
     myModifiers = modifiers;
   }
 
-  public void setModifiers(String[] modifiers) {
+  public void setModifiers(String... modifiers) {
     myModifiers = 0;
 
     for (String modifier : modifiers) {

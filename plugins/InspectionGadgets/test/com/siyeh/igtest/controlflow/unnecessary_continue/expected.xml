@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>UnnecessaryContinue.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary 'continue' statement</problem_class>
+    <description>&lt;code&gt;continue&lt;/code&gt; is unnecessary as the last statement in a loop #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryContinue.java</file>
+    <line>12</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary 'continue' statement</problem_class>
+    <description>&lt;code&gt;continue&lt;/code&gt; is unnecessary as the last statement in a loop #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryContinue.java</file>
+    <line>19</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary 'continue' statement</problem_class>
+    <description>&lt;code&gt;continue&lt;/code&gt; is unnecessary as the last statement in a loop #loc</description>
+  </problem>
+</problems>

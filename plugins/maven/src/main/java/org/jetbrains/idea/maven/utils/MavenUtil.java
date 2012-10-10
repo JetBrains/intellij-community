@@ -689,7 +689,7 @@ public class MavenUtil {
       result = doResolveSuperPomFile(new File(mavenHome, LIB_DIR));
     }
     if (result == null) {
-      result = doResolveSuperPomFile(MavenServerManager.collectClassPathAndLibsFolder().second);
+      result = doResolveSuperPomFile(MavenServerManager.getMavenLibDirectory());
     }
     return result;
   }

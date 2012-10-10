@@ -351,8 +351,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     // read ID and register loaded action
     String id = element.getAttributeValue(ID_ATTR_NAME);
     if (id == null || id.length() == 0) {
-      reportActionError(pluginId, "ID of the action cannot be an empty string");
-      return null;
+      id = StringUtil.getShortName(className);
     }
     if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManagerEx.getApplicationEx().isInternal()) {
       myNotRegisteredInternalActionIds.add(id);

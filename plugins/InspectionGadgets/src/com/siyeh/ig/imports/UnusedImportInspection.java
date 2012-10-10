@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,7 @@ public class UnusedImportInspection extends BaseInspection {
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "unused.import.problem.descriptor");
+    return InspectionGadgetsBundle.message("unused.import.problem.descriptor");
   }
 
   @Override
@@ -66,8 +65,7 @@ public class UnusedImportInspection extends BaseInspection {
         return;
       }
       final PsiClass[] classes = file.getClasses();
-      final PsiPackageStatement packageStatement =
-        file.getPackageStatement();
+      final PsiPackageStatement packageStatement = file.getPackageStatement();
       final PsiModifierList annotationList;
       if (packageStatement != null) {
         annotationList = packageStatement.getAnnotationList();
@@ -75,51 +73,23 @@ public class UnusedImportInspection extends BaseInspection {
       else {
         annotationList = null;
       }
-      final PsiImportStatement[] importStatements =
-        importList.getImportStatements();
+      final PsiImportStatementBase[] importStatements = importList.getAllImportStatements();
       checkImports(importStatements, classes, annotationList);
-      final PsiImportStaticStatement[] importStaticStatements =
-        importList.getImportStaticStatements();
-      checkStaticImports(importStaticStatements, classes);
     }
 
-    private void checkStaticImports(
-      PsiImportStaticStatement[] importStaticStatements,
-      PsiClass[] classes) {
-      if (importStaticStatements.length == 0) {
-        return;
-      }
-      final StaticImportsAreUsedVisitor visitor =
-        new StaticImportsAreUsedVisitor(importStaticStatements);
-      for (PsiClass aClass : classes) {
-        aClass.accept(visitor);
-      }
-      final PsiImportStaticStatement[] unusedImportStaticStatements =
-        visitor.getUnusedImportStaticStatements();
-      for (PsiImportStaticStatement importStaticStatement :
-        unusedImportStaticStatements) {
-        registerError(importStaticStatement);
-      }
-    }
-
-    private void checkImports(PsiImportStatement[] importStatements,
-                              PsiClass[] classes,
-                              @Nullable PsiModifierList annotationList) {
+    private void checkImports(PsiImportStatementBase[] importStatements, PsiClass[] classes, @Nullable PsiModifierList annotationList) {
       if (importStatements.length == 0) {
         return;
       }
-      final ImportsAreUsedVisitor visitor =
-        new ImportsAreUsedVisitor(importStatements);
+      final ImportsAreUsedVisitor visitor = new ImportsAreUsedVisitor(importStatements);
       for (PsiClass aClass : classes) {
         aClass.accept(visitor);
       }
       if (annotationList != null) {
         annotationList.accept(visitor);
       }
-      final PsiImportStatement[] unusedImportStatements =
-        visitor.getUnusedImportStatements();
-      for (PsiImportStatement unusedImportStatement :
-        unusedImportStatements) {
+      final PsiImportStatementBase[] unusedImportStatements = visitor.getUnusedImportStatements();
+      for (PsiImportStatementBase unusedImportStatement : unusedImportStatements) {
         registerError(unusedImportStatement);
       }
     }

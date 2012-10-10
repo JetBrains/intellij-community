@@ -62,6 +62,7 @@ import com.intellij.util.diff.FilesTooBigForDiffException;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -934,6 +935,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   @Override
+  @NotNull
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.editor.colors";
   }
@@ -1165,7 +1167,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     private boolean mySubInitInvoked = false;
     private final ColorAndFontPanelFactory myFactory;
 
-    private InnerSearchableConfigurable(final ColorAndFontPanelFactory factory) {
+    private InnerSearchableConfigurable(@NotNull ColorAndFontPanelFactory factory) {
       myFactory = factory;
     }
 
@@ -1280,6 +1282,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     public Set<String> processListOptions() {
       return createPanel().processListOptions();
     }
-  }
 
+    @NonNls
+    @Override
+    public String toString() {
+      return "Color And Fonts for "+getDisplayName();
+    }
+  }
 }

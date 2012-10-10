@@ -15,13 +15,11 @@
  */
 package git4idea.util;
 
-import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.util.ui.UIUtil;
+import git4idea.PlatformFacade;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,14 +33,17 @@ public class GitFreezingProcess {
 
   private static final Logger LOG = Logger.getInstance(GitFreezingProcess.class);
 
+  @NotNull private final PlatformFacade myFacade;
   @NotNull private final String myOperationTitle;
   @NotNull private final Runnable myRunnable;
-  @NotNull private final ChangeListManagerImpl myChangeListManager;
+  @NotNull private final ChangeListManagerEx myChangeListManager;
 
-  public GitFreezingProcess(@NotNull Project project, @NotNull String operationTitle, @NotNull Runnable runnable) {
+  public GitFreezingProcess(@NotNull Project project, @NotNull PlatformFacade facade,
+                            @NotNull String operationTitle, @NotNull Runnable runnable) {
+    myFacade = facade;
     myOperationTitle = operationTitle;
     myRunnable = runnable;
-    myChangeListManager = ChangeListManagerImpl.getInstanceImpl(project);
+    myChangeListManager = myFacade.getChangeListManager(project);
   }
 
   public void execute() {
@@ -69,37 +70,37 @@ public class GitFreezingProcess {
     LOG.debug("finished.");
   }
 
-  public static void saveAndBlock() {
-    ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
-    FileDocumentManager.getInstance().saveAllDocuments();
-    SaveAndSyncHandler.getInstance().blockSaveOnFrameDeactivation();
-    SaveAndSyncHandler.getInstance().blockSyncOnFrameActivation();
+  public static void saveAndBlock(@NotNull PlatformFacade platformFacade) {
+    platformFacade.getProjectManager().blockReloadingProjectOnExternalChanges();
+    platformFacade.saveAllDocuments();
+    platformFacade.getSaveAndSyncHandler().blockSaveOnFrameDeactivation();
+    platformFacade.getSaveAndSyncHandler().blockSyncOnFrameActivation();
   }
 
-  private static void saveAndBlockInAwt() {
+  private void saveAndBlockInAwt() {
     RethrowingRunnable rethrowingRunnable = new RethrowingRunnable(new Runnable() {
       @Override public void run() {
-        saveAndBlock();
+        saveAndBlock(myFacade);
       }
     });
     UIUtil.invokeAndWaitIfNeeded(rethrowingRunnable);
     rethrowingRunnable.rethrowIfHappened();
   }
 
-  private static void unblockInAwt() {
+  private void unblockInAwt() {
     RethrowingRunnable rethrowingRunnable = new RethrowingRunnable(new Runnable() {
       @Override public void run() {
-        unblock();
+        unblock(myFacade);
       }
     });
     UIUtil.invokeAndWaitIfNeeded(rethrowingRunnable);
     rethrowingRunnable.rethrowIfHappened();
   }
 
-  public static void unblock() {
-    ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
-    SaveAndSyncHandler.getInstance().unblockSaveOnFrameDeactivation();
-    SaveAndSyncHandler.getInstance().unblockSyncOnFrameActivation();
+  public static void unblock(@NotNull PlatformFacade platformFacade) {
+    platformFacade.getProjectManager().unblockReloadingProjectOnExternalChanges();
+    platformFacade.getSaveAndSyncHandler().unblockSaveOnFrameDeactivation();
+    platformFacade.getSaveAndSyncHandler().unblockSyncOnFrameActivation();
   }
 
   private void freeze() {

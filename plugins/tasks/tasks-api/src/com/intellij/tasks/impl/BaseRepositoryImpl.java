@@ -8,6 +8,7 @@ import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.contrib.ssl.EasySSLProtocolSocketFactory;
 import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.UnsupportedEncodingException;
@@ -36,7 +37,7 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
     super(other);
   }
 
-  protected static String encodeUrl(String s) {
+  protected static String encodeUrl(@NotNull String s) {
     try {
       return URLEncoder.encode(s, "UTF-8");
     }

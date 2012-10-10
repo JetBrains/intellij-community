@@ -171,7 +171,7 @@ public class MavenIndicesManager {
 
     MavenIndices indicesObjectCache = getIndicesObject();
 
-    if (Boolean.getBoolean("idea.use.maven3")) return new ArrayList<MavenIndex>(result);
+    if (!MavenServerManager.getInstance().isUseMaven2()) return new ArrayList<MavenIndex>(result);
 
     try {
       MavenIndex localIndex = indicesObjectCache.add(LOCAL_REPOSITORY_ID, localRepository.getPath(), MavenIndex.Kind.LOCAL);

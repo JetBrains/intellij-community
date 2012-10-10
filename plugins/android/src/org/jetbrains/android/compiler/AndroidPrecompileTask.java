@@ -129,8 +129,14 @@ public class AndroidPrecompileTask implements CompileTask {
     if (!ProjectFacetManager.getInstance(project).hasFacets(AndroidFacet.ID)) {
       return true;
     }
+    final CompileScope scope = context.getCompileScope();
 
-    final Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(project, context.getCompileScope(), false);
+    final Set<Artifact> artifacts = ApplicationManager.getApplication().runReadAction(new Computable<Set<Artifact>>() {
+      @Override
+      public Set<Artifact> compute() {
+        return ArtifactCompileScope.getArtifactsToBuild(project, scope, false);
+      }
+    });
     if (artifacts == null) {
       return true;
     }

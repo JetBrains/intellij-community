@@ -19,6 +19,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
@@ -274,27 +275,34 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       }
     }
 
-    final AnAction arrow = new AnAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (e.getInputEvent() instanceof KeyEvent) {
-          final int code = ((KeyEvent)e.getInputEvent()).getKeyCode();
-          if (!myCreateModuleCb.isSelected()) return;
-          int i = myTypesList.getSelectedIndex();
-          if (code == KeyEvent.VK_DOWN) {
-            if (++i == myTypesList.getModel().getSize()) return;
+
+    if (mode instanceof CreateFromTemplateMode) {
+      replaceModuleTypeOptions(new JPanel());
+      myHeader.setVisible(false);
+    }
+    else {
+      final AnAction arrow = new AnAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          if (e.getInputEvent() instanceof KeyEvent) {
+            final int code = ((KeyEvent)e.getInputEvent()).getKeyCode();
+            if (!myCreateModuleCb.isSelected()) return;
+            int i = myTypesList.getSelectedIndex();
+            if (code == KeyEvent.VK_DOWN) {
+              if (++i == myTypesList.getModel().getSize()) return;
+            }
+            else if (code == KeyEvent.VK_UP) {
+              if (--i == -1) return;
+            }
+            myTypesList.setSelectedIndex(i);
           }
-          else if (code == KeyEvent.VK_UP) {
-            if (--i == -1) return;
-          }
-          myTypesList.setSelectedIndex(i);
         }
-      }
-    };
-    final KeyboardShortcut up = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), null);
-    final KeyboardShortcut down = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), null);
-    arrow.registerCustomShortcutSet(new CustomShortcutSet(up, down), myNamePathComponent.getNameComponent());
-    arrow.registerCustomShortcutSet(new CustomShortcutSet(up, down), myModuleName);
+      };
+      final KeyboardShortcut up = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), null);
+      final KeyboardShortcut down = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), null);
+      arrow.registerCustomShortcutSet(new CustomShortcutSet(up, down), myNamePathComponent.getNameComponent());
+      arrow.registerCustomShortcutSet(new CustomShortcutSet(up, down), myModuleName);
+    }
   }
 
   private Dimension calcTypeListPreferredSize(final List<ModuleBuilder> allModuleTypes) {

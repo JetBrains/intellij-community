@@ -158,6 +158,7 @@ public final class DarculaLaf extends BasicLookAndFeel {
     }));
   }
 
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private static void loadDefaults(UIDefaults defaults) {
     final Properties properties = new Properties();
     final String osSuffix = SystemInfo.isMac ? "mac" : SystemInfo.isWindows ? "windows" : "linux";
@@ -210,6 +211,7 @@ public final class DarculaLaf extends BasicLookAndFeel {
     } else {
       final Color color = ColorUtil.fromHex(value, null);
       final Integer invVal = getInteger(value);
+      final Boolean boolVal = "true".equals(value) ? Boolean.TRUE : "false".equals(value) ? Boolean.FALSE : null;
       Icon icon = value.startsWith("AllIcons.") ? IconLoader.getIcon(value) : null;
       if (color != null) {
         return  new ColorUIResource(color);
@@ -217,6 +219,8 @@ public final class DarculaLaf extends BasicLookAndFeel {
         return invVal;
       } else if (icon != null) {
         return new IconUIResource(icon);
+      } else if (boolVal != null) {
+        return boolVal;
       }
     }
     return value;

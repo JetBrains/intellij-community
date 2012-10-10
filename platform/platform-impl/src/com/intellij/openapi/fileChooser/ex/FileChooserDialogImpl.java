@@ -16,7 +16,7 @@
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.idea.ActionsBundle;
@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ScrollPaneFactory;
@@ -238,7 +239,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       .subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
         @Override
         public void applicationActivated(IdeFrame ideFrame) {
-          SaveAndSyncHandler.getInstance().maybeRefresh(ModalityState.current());
+          SaveAndSyncHandlerImpl.getInstance().maybeRefresh(ModalityState.current());
         }
 
         @Override
@@ -343,7 +344,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
           selectInTree(new VirtualFile[]{files.get(0)}, true);
         }
         else {
-          selectInTree(VfsUtil.toVirtualFileArray(files), true);
+          selectInTree(VfsUtilCore.toVirtualFileArray(files), true);
         }
       }
     });
@@ -357,7 +358,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
   private VirtualFile[] getSelectedFilesInt() {
     final List<VirtualFile> selectedFiles = Arrays.asList(myFileSystemTree.getSelectedFiles());
-    return VfsUtil.toVirtualFileArray(FileChooserUtil.getChosenFiles(myChooserDescriptor, selectedFiles));
+    return VfsUtilCore.toVirtualFileArray(FileChooserUtil.getChosenFiles(myChooserDescriptor, selectedFiles));
   }
 
   private final Map<String, LocalFileSystem.WatchRequest> myRequests = new HashMap<String, LocalFileSystem.WatchRequest>();

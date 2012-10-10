@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.imports;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -25,9 +27,10 @@ import java.util.List;
 
 class ImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
 
-  private final List<PsiImportStatement> importStatements;
+  private final List<PsiImportStatementBase> importStatements;
+  private final List<PsiImportStatementBase> usedImportStatements = new ArrayList();
 
-  ImportsAreUsedVisitor(PsiImportStatement[] importStatements) {
+  ImportsAreUsedVisitor(PsiImportStatementBase[] importStatements) {
     this.importStatements = new ArrayList(Arrays.asList(importStatements));
     Collections.reverse(this.importStatements);
   }
@@ -57,43 +60,81 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
     // during typing there can be incomplete code
     final JavaResolveResult resolveResult = reference.advancedResolve(true);
     final PsiElement element = resolveResult.getElement();
-    if (!(element instanceof PsiClass)) {
+    if (element == null) {
       return;
     }
-    final PsiClass referencedClass = (PsiClass)element;
-    final String qualifiedName = referencedClass.getQualifiedName();
-    if (qualifiedName == null) {
+    if (findImport(element, usedImportStatements) != null) {
       return;
     }
-    final List<PsiImportStatement> importStatementsCopy =
-      new ArrayList(importStatements);
-    for (PsiImportStatement importStatement : importStatementsCopy) {
-      final String importName = importStatement.getQualifiedName();
-      if (importName == null) {
-        return;
-      }
-      if (importStatement.isOnDemand()) {
-        final int lastComponentIndex =
-          qualifiedName.lastIndexOf((int)'.');
-        if (lastComponentIndex > 0) {
-          final String packageName = qualifiedName.substring(0,
-                                                             lastComponentIndex);
-          if (importName.equals(packageName)) {
-            removeAll(importStatement);
-            break;
-          }
-        }
-      }
-      else if (importName.equals(qualifiedName)) {
-        removeAll(importStatement);
-        break;
-      }
+    final PsiImportStatementBase foundImport = findImport(element, importStatements);
+    if (foundImport != null) {
+      removeAll(foundImport);
+      usedImportStatements.add(foundImport);
     }
   }
 
-  private void removeAll(@NotNull PsiImportStatement importStatement) {
+  private static PsiImportStatementBase findImport(PsiElement element, List<PsiImportStatementBase> importStatements) {
+    final String qualifiedName;
+    final String packageName;
+    if (element instanceof PsiClass) {
+      final PsiClass referencedClass = (PsiClass)element;
+      qualifiedName = referencedClass.getQualifiedName();
+      packageName = qualifiedName != null ? StringUtil.getPackageName(qualifiedName) : null;
+    }
+    else {
+      qualifiedName = null;
+      packageName = null;
+    }
+    final PsiClass referenceClass;
+    final String referenceName;
+    if (element instanceof PsiMember) {
+      final PsiMember member = (PsiMember)element;
+      referenceClass = member.getContainingClass();
+      referenceName = member.getName();
+    }
+    else {
+      referenceClass = null;
+      referenceName = null;
+    }
+    for (PsiImportStatementBase importStatementBase : importStatements) {
+      if (importStatementBase instanceof PsiImportStatement && qualifiedName != null && packageName != null) {
+        final PsiImportStatement importStatement = (PsiImportStatement)importStatementBase;
+        final String importName = importStatement.getQualifiedName();
+        if (importName != null) {
+          if (importStatement.isOnDemand()) {
+            if (importName.equals(packageName)) {
+              return importStatement;
+            }
+          }
+          else if (importName.equals(qualifiedName)) {
+            return importStatement;
+          }
+        }
+      }
+      if (importStatementBase instanceof PsiImportStaticStatement && referenceClass != null && referenceName != null) {
+        final PsiImportStaticStatement importStaticStatement = (PsiImportStaticStatement)importStatementBase;
+        if (importStaticStatement.isOnDemand()) {
+          final PsiClass targetClass = importStaticStatement.resolveTargetClass();
+          if (InheritanceUtil.isInheritorOrSelf(targetClass, referenceClass, true)) {
+            return importStaticStatement;
+          }
+        }
+        else {
+          final String importReferenceName = importStaticStatement.getReferenceName();
+          if (importReferenceName != null) {
+            if (importReferenceName.equals(referenceName)) {
+              return importStaticStatement;
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private void removeAll(@NotNull PsiImportStatementBase importStatement) {
     for (int i = importStatements.size() - 1; i >= 0; i--) {
-      final PsiImportStatement statement = importStatements.get(i);
+      final PsiImportStatementBase statement = importStatements.get(i);
       final String statementText = statement.getText();
       final String importText = importStatement.getText();
       if (importText.equals(statementText)) {
@@ -102,11 +143,10 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
     }
   }
 
-  public PsiImportStatement[] getUnusedImportStatements() {
+  public PsiImportStatementBase[] getUnusedImportStatements() {
     if (importStatements.isEmpty()) {
-      return PsiImportStatement.EMPTY_ARRAY;
+      return PsiImportStatementBase.EMPTY_ARRAY;
     }
-    return importStatements.toArray(
-      new PsiImportStatement[importStatements.size()]);
+    return importStatements.toArray(new PsiImportStatementBase[importStatements.size()]);
   }
 }

@@ -52,8 +52,8 @@ class Win32FsCache {
   }
 
   @NotNull
-  String[] list(@NotNull String absolutePath) {
-    FileInfo[] fileInfo = myKernel.listChildren(absolutePath.replace('/', '\\'));
+  String[] list(@NotNull String path) {
+    FileInfo[] fileInfo = myKernel.listChildren(path);
     if (fileInfo == null) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
@@ -62,14 +62,7 @@ class Win32FsCache {
     Map<String, FileInfo> map = getMap();
     for (FileInfo info : fileInfo) {
       String name = info.getName();
-      if (name.equals(".")) {
-        map.put(absolutePath, info);
-        continue;
-      }
-      if (name.equals("..")) {
-        continue;
-      }
-      map.put(absolutePath + "/" + name, info);
+      map.put(path + "/" + name, info);
       names.add(name);
     }
 
@@ -82,7 +75,7 @@ class Win32FsCache {
     Map<String, FileInfo> map = getMap();
     FileInfo info = map.get(path);
     if (info == null) {
-      info = myKernel.getInfo(path.replace('/', '\\'));
+      info = myKernel.getInfo(path);
       if (info == null) {
         return null;
       }

@@ -189,7 +189,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   private static Map<ModuleBuildTarget, String> getCanonicalModuleOutputs(CompileContext context, ModuleChunk chunk) {
     Map<ModuleBuildTarget, String> finalOutputs = new HashMap<ModuleBuildTarget, String>();
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      File moduleOutputDir = context.getProjectPaths().getModuleOutputDir(target.getModule(), target.isTests());
+      File moduleOutputDir = target.getOutputDir();
       if (moduleOutputDir == null) {
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Output directory not specified for module " + target.getModuleName()));
         return null;

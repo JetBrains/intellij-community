@@ -26,7 +26,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.ui.*;
-import com.intellij.util.Consumer;
+import com.intellij.util.NullableConsumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,10 +54,10 @@ public class ChangeListChooserPanel extends JPanel {
   private JRadioButton myRbNew;
   private JComboBox myExistingListsCombo;
   private NewEditChangelistPanel myNewListPanel;
-  private final Consumer<String> myOkEnabledListener;
+  private final NullableConsumer<String> myOkEnabledListener;
   private Project myProject;
 
-  public ChangeListChooserPanel(final Project project, @NotNull final Consumer<String> okEnabledListener) {
+  public ChangeListChooserPanel(final Project project, @NotNull final NullableConsumer<String> okEnabledListener) {
     super(new BorderLayout());
     myProject = project;
     myOkEnabledListener = okEnabledListener;

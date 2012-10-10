@@ -18,7 +18,7 @@ import java.util.*;
 public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<JpsJavaCompilerConfigurationImpl> implements JpsJavaCompilerConfiguration {
   public static final JpsElementChildRole<JpsJavaCompilerConfiguration> ROLE = JpsElementChildRoleBase.create("compiler configuration");
   private boolean myAddNotNullAssertions = true;
-  private boolean myClearOutputDirectoryOnRebuild;
+  private boolean myClearOutputDirectoryOnRebuild = true;
   private JpsCompilerExcludes myCompilerExcludes = new JpsCompilerExcludesImpl();
   private List<String> myResourcePatterns = new ArrayList<String>();
   private List<ProcessorConfigProfile> myAnnotationProcessingProfiles = new ArrayList<ProcessorConfigProfile>();

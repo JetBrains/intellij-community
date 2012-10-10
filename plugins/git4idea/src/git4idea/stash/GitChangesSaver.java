@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.continuation.ContinuationContext;
 import git4idea.GitVcs;
+import git4idea.PlatformFacade;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
 import git4idea.merge.GitConflictResolver;
@@ -45,11 +46,12 @@ public abstract class GitChangesSaver {
 
   private static final Logger LOG = Logger.getInstance(GitChangesSaver.class);
 
-  protected final Project myProject;
-  protected final ChangeListManagerEx myChangeManager;
+  @NotNull protected final Project myProject;
+  @NotNull protected final PlatformFacade myPlatformFacade;
+  @NotNull protected final ChangeListManagerEx myChangeManager;
   @NotNull protected final Git myGit;
-  protected final ProgressIndicator myProgressIndicator;
-  protected final String myStashMessage;
+  @NotNull protected final ProgressIndicator myProgressIndicator;
+  @NotNull protected final String myStashMessage;
 
   protected GitConflictResolver.Params myParams;
 
@@ -62,30 +64,33 @@ public abstract class GitChangesSaver {
    * Returns an instance of the proper GitChangesSaver depending on the chosen save changes policy.
    * @return {@link GitStashChangesSaver}, {@link GitShelveChangesSaver} or {@link GitDumbChangesSaver}
    */
-  public static GitChangesSaver getSaver(Project project, @NotNull Git git, ProgressIndicator progressIndicator, String stashMessage) {
+  public static GitChangesSaver getSaver(@NotNull Project project, @NotNull PlatformFacade platformFacade, @NotNull Git git,
+                                         @NotNull ProgressIndicator progressIndicator, @NotNull String stashMessage) {
     final GitVcsSettings settings = GitVcsSettings.getInstance(project);
     if (settings == null) {
-      return getDefaultSaver(project, git, progressIndicator, stashMessage);
+      return getDefaultSaver(project, platformFacade, git, progressIndicator, stashMessage);
     }
     switch (settings.updateChangesPolicy()) {
-      case STASH: return new GitStashChangesSaver(project, git, progressIndicator, stashMessage);
-      case SHELVE: return new GitShelveChangesSaver(project, git, progressIndicator, stashMessage);
+      case STASH: return new GitStashChangesSaver(project, platformFacade, git, progressIndicator, stashMessage);
+      case SHELVE: return new GitShelveChangesSaver(project, platformFacade, git, progressIndicator, stashMessage);
     }
-    return getDefaultSaver(project, git, progressIndicator, stashMessage);
+    return getDefaultSaver(project, platformFacade, git, progressIndicator, stashMessage);
   }
 
   // In the case of illegal value in the settings or impossibility to get the settings.
-  private static GitChangesSaver getDefaultSaver(Project project, @NotNull Git git, ProgressIndicator progressIndicator,
-                                                 String stashMessage) {
-    return new GitStashChangesSaver(project, git, progressIndicator, stashMessage);
+  private static GitChangesSaver getDefaultSaver(@NotNull Project project, @NotNull PlatformFacade platformFacade, @NotNull Git git,
+                                                 @NotNull ProgressIndicator progressIndicator, @NotNull String stashMessage) {
+    return new GitStashChangesSaver(project, platformFacade, git, progressIndicator, stashMessage);
   }
 
-  protected GitChangesSaver(Project project, @NotNull Git git, ProgressIndicator indicator, String stashMessage) {
+  protected GitChangesSaver(@NotNull Project project, @NotNull PlatformFacade platformFacade, @NotNull Git git,
+                            @NotNull ProgressIndicator indicator, @NotNull String stashMessage) {
     myProject = project;
+    myPlatformFacade = platformFacade;
     myGit = git;
     myProgressIndicator = indicator;
     myStashMessage = stashMessage;
-    myChangeManager = (ChangeListManagerEx)ChangeListManagerEx.getInstance(myProject);
+    myChangeManager = platformFacade.getChangeListManager(project);
   }
 
   /**

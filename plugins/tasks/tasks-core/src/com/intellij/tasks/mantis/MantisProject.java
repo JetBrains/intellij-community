@@ -10,6 +10,10 @@ public class MantisProject {
   private int id;
   private String name;
 
+  @SuppressWarnings({"UnusedDeclaration"})
+  public MantisProject() {
+  }
+
   public MantisProject(final int id, final String name) {
     this.id = id;
     this.name = name;

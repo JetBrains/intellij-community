@@ -15,6 +15,7 @@
  */
 package com.intellij.tasks.impl;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskRepositoryType;
@@ -34,6 +35,7 @@ public abstract class BaseRepository extends TaskRepository {
   protected String myPassword = "";
   protected boolean myUseProxy;
   protected boolean myUseHttpAuthentication;
+  protected boolean myLoginAnonymously;
 
   public BaseRepository(TaskRepositoryType type) {
     super(type);
@@ -45,6 +47,7 @@ public abstract class BaseRepository extends TaskRepository {
     myUsername = other.getUsername();
     myUseProxy = other.myUseProxy;
     myUseHttpAuthentication = other.myUseHttpAuthentication;
+    myLoginAnonymously = other.myLoginAnonymously;
   }
 
   public BaseRepository() {
@@ -93,11 +96,14 @@ public abstract class BaseRepository extends TaskRepository {
 
     BaseRepository that = (BaseRepository)o;
 
-    if (getUrl() != null ? !getUrl().equals(that.getUrl()) : that.getUrl() != null) return false;
-    if (getPassword() != null ? !getPassword().equals(that.getPassword()) : that.getPassword() != null) return false;
-    if (getUsername() != null ? !getUsername().equals(that.getUsername()) : that.getUsername() != null) return false;
+    if (!Comparing.equal(getUrl(), that.getUrl())) return false;
+    if (!Comparing.equal(getPassword(), that.getPassword())) return false;
+    if (!Comparing.equal(getUsername(), that.getUsername())) return false;
+    if (!Comparing.equal(isLoginAnonymously(), that.isLoginAnonymously())) return false;
+    if (!Comparing.equal(isUseProxy(), that.isUseProxy())) return false;
+    if (!Comparing.equal(isUseHttpAuthentication(), that.isUseHttpAuthentication())) return false;
 
-    return myUseProxy == that.myUseProxy && myUseHttpAuthentication == that.myUseHttpAuthentication;
+    return true;
   }
 
   public boolean isUseProxy() {
@@ -114,6 +120,14 @@ public abstract class BaseRepository extends TaskRepository {
 
   public void setUseHttpAuthentication(boolean useHttpAuthentication) {
     myUseHttpAuthentication = useHttpAuthentication;
+  }
+
+  public boolean isLoginAnonymously() {
+    return myLoginAnonymously;
+  }
+
+  public void setLoginAnonymously(final boolean loginAnonymously) {
+    myLoginAnonymously = loginAnonymously;
   }
 
   @Nullable

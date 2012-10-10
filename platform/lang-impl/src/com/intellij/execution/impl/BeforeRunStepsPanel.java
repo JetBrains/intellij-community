@@ -302,7 +302,7 @@ class BeforeRunStepsPanel extends DropDownPanel {
                                             ExecutionBundle.message("warning.common.title"),JOptionPane.WARNING_MESSAGE);
               return;
             }
-            myModel.add(task);
+            addTask(task);
             myListener.fireStepsBeforeRunChanged();
           }
         };
@@ -313,6 +313,10 @@ class BeforeRunStepsPanel extends DropDownPanel {
                                             SimpleDataContext.getProjectContext(myRunConfiguration.getProject()), false, false, false, null,
                                             -1, Condition.TRUE);
       popup.show(button.getPreferredPopupPoint());
+  }
+
+  public void addTask(BeforeRunTask task) {
+    myModel.add(task);
   }
 
   private Set<Key> getActiveProviderKeys() {

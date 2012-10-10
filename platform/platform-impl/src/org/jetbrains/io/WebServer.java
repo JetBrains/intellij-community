@@ -13,7 +13,9 @@ import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.codec.http.*;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.concurrent.Executor;
 
@@ -63,20 +65,35 @@ public class WebServer {
     ServerBootstrap bootstrap = new ServerBootstrap(channelFactory);
     bootstrap.setOption("child.tcpNoDelay", true);
     bootstrap.setPipelineFactory(new ChannelPipelineFactoryImpl(pipelineConsumers, new DefaultHandler(openChannels)));
+    return bind(firstPort, portsCount, tryAnyPort, bootstrap);
+  }
 
+  // IDEA-91436 idea <121 binds to 127.0.0.1, but >=121 must be available not only from localhost
+  // but if we bind only to any local port (0.0.0.0), instance of idea <121 can bind to our ports and any request to us will be intercepted
+  // so, we bind to 127.0.0.1 and 0.0.0.0
+  private int bind(int firstPort, int portsCount, boolean tryAnyPort, ServerBootstrap bootstrap) {
     for (int i = 0; i < portsCount; i++) {
       int port = firstPort + i;
       try {
+        openChannels.add(bootstrap.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), port)));
         openChannels.add(bootstrap.bind(new InetSocketAddress(port)));
         return port;
       }
       catch (ChannelException e) {
+        if (!openChannels.isEmpty()) {
+          openChannels.close();
+          openChannels.clear();
+        }
+
         if (portsCount == 1) {
           throw e;
         }
         else if (!tryAnyPort && i == (portsCount - 1)) {
           LOG.error(e);
         }
+      }
+      catch (UnknownHostException e) {
+        LOG.error(e);
       }
     }
 

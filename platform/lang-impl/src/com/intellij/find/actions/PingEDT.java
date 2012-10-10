@@ -85,20 +85,19 @@ class PingEDT {
     return pinged;
   }
 
+  // returns true if invokeLater was called
   public boolean ping() {
     pinged = true;
-    scheduleUpdate();
-    return true;
+    return scheduleUpdate();
   }
 
-  private void scheduleUpdate() {
+  // returns true if invokeLater was called
+  private boolean scheduleUpdate() {
     if (!stopped && invokeLaterScheduled.compareAndSet(false, true)) {
-      schedule(myUpdateRunnable);
+      SwingUtilities.invokeLater(myUpdateRunnable);
+      return true;
     }
-  }
-
-  protected void schedule(@NotNull Runnable updateRunnable) {
-    SwingUtilities.invokeLater(updateRunnable);
+    return false;
   }
 
   public void stop() {

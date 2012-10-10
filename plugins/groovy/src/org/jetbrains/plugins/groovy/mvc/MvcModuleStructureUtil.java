@@ -281,7 +281,16 @@ public class MvcModuleStructureUtil {
       }
     }
 
-    structure.setupFacets(actions, rootsToFacetSetup);
+    List<Runnable> facetActions = new ArrayList<Runnable>();
+    structure.setupFacets(facetActions, rootsToFacetSetup);
+    for (final Runnable action : facetActions) {
+      actions.add(new Consumer<ModifiableRootModel>() {
+        @Override
+        public void consume(ModifiableRootModel model) {
+          action.run();
+        }
+      });
+    }
 
     return actions;
   }

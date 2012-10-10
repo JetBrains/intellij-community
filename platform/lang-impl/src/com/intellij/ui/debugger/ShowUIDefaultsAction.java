@@ -19,10 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.Cell;
-import com.intellij.ui.ColorPicker;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.TableSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.PairFunction;
@@ -68,6 +65,20 @@ public class ShowUIDefaultsAction extends AnAction {
       {
         setTitle("Edit LaF Defaults");
         init();
+      }
+
+      public JBTable myTable;
+
+      @Nullable
+      @Override
+      public JComponent getPreferredFocusedComponent() {
+        return myTable;
+      }
+
+      @Nullable
+      @Override
+      protected String getDimensionServiceKey() {
+        return "UI.Defaults.Dialog";
       }
 
       @Override
@@ -142,6 +153,8 @@ public class ShowUIDefaultsAction extends AnAction {
         table.setShowGrid(false);
         final JPanel panel = new JPanel(new BorderLayout());
         panel.add(pane, BorderLayout.CENTER);
+        myTable = table;
+        TableUtil.ensureSelectionExists(myTable);
         return panel;
       }
     }.show();

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
+import com.intellij.codeInsight.completion.originInfo.OriginInfoAwareElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -54,7 +55,7 @@ import java.util.Map;
 /**
  * @author Sergey Evdokimov
  */
-public class GrLightMethodBuilder extends LightElement implements GrMethod {
+public class GrLightMethodBuilder extends LightElement implements GrMethod, OriginInfoAwareElement {
   protected String myName;
   private PsiType myReturnType = PsiType.VOID;
   private final GrLightModifierList myModifierList;
@@ -67,6 +68,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
 
   private Object myData;
   private boolean myConstructor;
+  private String myOriginInfo;
 
   public GrLightMethodBuilder(PsiManager manager, String name) {
     super(manager, GroovyFileType.GROOVY_LANGUAGE);
@@ -462,4 +464,13 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     return this;
   }
 
+  @Nullable
+  @Override
+  public String getOriginInfo() {
+    return myOriginInfo;
+  }
+
+  public void setOriginInfo(@Nullable String originInfo) {
+    myOriginInfo = originInfo;
+  }
 }

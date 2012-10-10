@@ -66,12 +66,12 @@ public class CreateXmlResourceDialog extends DialogWrapper {
   private JTextField myNameField;
   private JComboBox myModuleCombo;
   private JBLabel myModuleLabel;
-  private JTextField myFileNameField;
   private JPanel myDirectoriesPanel;
   private JBLabel myDirectoriesLabel;
   private JTextField myValueField;
   private JBLabel myValueLabel;
   private JBLabel myNameLabel;
+  private JComboBox myFileNameCombo;
 
   private final Module myModule;
   private final ResourceType myResourceType;
@@ -146,7 +146,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
       final String defaultFileName = AndroidResourceUtil.getDefaultResourceFileName(resourceType);
 
       if (defaultFileName != null) {
-        myFileNameField.setText(defaultFileName);
+        myFileNameCombo.getEditor().setItem(defaultFileName);
       }
     }
     myDirectoriesList = new CheckBoxList();
@@ -188,12 +188,12 @@ public class CreateXmlResourceDialog extends DialogWrapper {
 
     myDirectoriesPanel.add(decorator.createPanel());
 
-    updateDirectories();
+    updateDirectories(true);
 
     myModuleCombo.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        updateDirectories();
+        updateDirectories(true);
       }
     });
     final JCheckBox valuesCheckBox = myCheckBoxes.get(AndroidConstants.FD_RES_VALUES);
@@ -240,7 +240,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
       checkBox1.setSelected(false);
     }
     checkBox.setSelected(true);
-    myFileNameField.setText(file.getName());
+    myFileNameCombo.getEditor().setItem(file.getName());
   }
 
   private void doDeleteDirectory() {
@@ -271,7 +271,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
         }
       }
     });
-    updateDirectories();
+    updateDirectories(false);
   }
 
   private void doSelectAllDirs() {
@@ -303,12 +303,12 @@ public class CreateXmlResourceDialog extends DialogWrapper {
       final PsiElement[] createdElements = new CreateResourceDirectoryAction(ResourceFolderType.VALUES).invokeDialog(project, psiResDir);
       
       if (createdElements.length > 0) {
-        updateDirectories();
+        updateDirectories(false);
       }
     }
   }
 
-  private void updateDirectories() {
+  private void updateDirectories(boolean updateFileCombo) {
     final Module module = getModule();
     List<VirtualFile> valuesDirs = Collections.emptyList();
 
@@ -366,6 +366,21 @@ public class CreateXmlResourceDialog extends DialogWrapper {
     if (checkBoxList.size() == 1) {
       checkBoxList.get(0).setSelected(true);
     }
+    
+    if (updateFileCombo) {
+      final Object oldItem = myFileNameCombo.getEditor().getItem();
+      final Set<String> fileNameSet = new HashSet<String>();
+      
+      for (VirtualFile valuesDir : valuesDirs) {
+        for (VirtualFile file : valuesDir.getChildren()) {
+          fileNameSet.add(file.getName());
+        }
+      }
+      final List<String> fileNames = new ArrayList<String>(fileNameSet);
+      Collections.sort(fileNames);
+      myFileNameCombo.setModel(new DefaultComboBoxModel(fileNames.toArray()));
+      myFileNameCombo.getEditor().setItem(oldItem);
+    }
   }
 
   @Override
@@ -382,7 +397,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
       return new ValidationInfo(resourceName + " is not correct resource name", myNameField);
     }
     else if (fileName.length() == 0) {
-      return new ValidationInfo("specify file name", myFileNameField);
+      return new ValidationInfo("specify file name", myFileNameCombo);
     }
     else if (selectedModule == null) {
       return new ValidationInfo("specify module", myModuleCombo);
@@ -458,7 +473,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
       return myModuleCombo;
     }
     else {
-      return myFileNameField;
+      return myFileNameCombo;
     }
   }
 
@@ -514,7 +529,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
 
   @NotNull
   public String getFileName() {
-    return myFileNameField.getText().trim();
+    return ((String)myFileNameCombo.getEditor().getItem()).trim();
   }
 
   @NotNull

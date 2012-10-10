@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,10 +47,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/*
- * User: max
- * Date: Apr 11, 2002
- * Time: 5:18:36 PM
+/**
+ * @author max
+ * @since Apr 11, 2002
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class InspectionTestCase extends PsiTestCase {
@@ -84,6 +83,10 @@ public abstract class InspectionTestCase extends PsiTestCase {
 
   public void doTest(@NonNls String folderName, InspectionTool tool, final boolean checkRange) {
     doTest(folderName, tool, "java 1.4", checkRange);
+  }
+
+  public void doTest(@NonNls String folderName, LocalInspectionTool tool, @NonNls final String jdkName) {
+    doTest(folderName, new LocalInspectionToolWrapper(tool), jdkName);
   }
 
   public void doTest(@NonNls String folderName, InspectionTool tool, @NonNls final String jdkName) {

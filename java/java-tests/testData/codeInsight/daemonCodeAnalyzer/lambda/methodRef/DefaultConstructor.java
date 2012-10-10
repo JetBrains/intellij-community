@@ -34,3 +34,25 @@ class DefaultConstructor {
         <error descr="Incompatible types. Found: '<method reference>', required: 'DefaultConstructor.I2<DefaultConstructor.Outer.Inner,java.lang.String>'">I2<Outer.Inner, String> i2str = Outer.Inner::new;</error>
     }
 }
+
+class DefaultConstructor1 {
+
+    public void bar() {
+    }
+
+    {
+        Runnable b1 = DefaultConstructor1 :: new;
+    }
+}
+
+class DefaultConstructor2 {
+    interface I {
+        void foo(DefaultConstructor2 e);
+    }
+
+
+    void f() {
+        <error descr="Incompatible types. Found: '<method reference>', required: 'DefaultConstructor2.I'">I i1 = DefaultConstructor2 :: new;</error>
+        <error descr="Incompatible types. Found: '<method reference>', required: 'DefaultConstructor2.I'">I i2 = this::new;</error>
+    }
+}

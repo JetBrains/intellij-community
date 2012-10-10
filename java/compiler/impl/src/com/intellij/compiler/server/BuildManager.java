@@ -137,7 +137,7 @@ public class BuildManager implements ApplicationComponent{
   private final CompileServerClasspathManager myClasspathManager = new CompileServerClasspathManager();
   private final Executor myPooledThreadExecutor = new Executor() {
     @Override
-    public void execute(Runnable command) {
+    public void execute(@NotNull Runnable command) {
       ApplicationManager.getApplication().executeOnPooledThread(command);
     }
   };
@@ -478,7 +478,7 @@ public class BuildManager implements ApplicationComponent{
             globals = buildGlobalSettings();
             myGlobals = globals;
           }
-          CmdlineRemoteProto.Message.ControllerMessage.FSEvent currentFSChanges = null;
+          CmdlineRemoteProto.Message.ControllerMessage.FSEvent currentFSChanges;
           final SequentialTaskExecutor projectTaskQueue;
           synchronized (myProjectDataMap) {
             ProjectData data = myProjectDataMap.get(projectPath);
@@ -761,21 +761,12 @@ public class BuildManager implements ApplicationComponent{
     cmdLine.addParameter("-D"+ GlobalOptions.HOSTNAME_OPTION + "=" + host);
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
-    final String lang = System.getProperty("user.language");
-    if (lang != null) {
-      //noinspection HardCodedStringLiteral
-      cmdLine.addParameter("-Duser.language=" + lang);
-    }
-    final String country = System.getProperty("user.country");
-    if (country != null) {
-      //noinspection HardCodedStringLiteral
-      cmdLine.addParameter("-Duser.country=" + country);
-    }
-    //noinspection HardCodedStringLiteral
-    final String region = System.getProperty("user.region");
-    if (region != null) {
-      //noinspection HardCodedStringLiteral
-      cmdLine.addParameter("-Duser.region=" + region);
+    String[] propertyNames = {"user.language", "user.country", "user.region"};
+    for (String name : propertyNames) {
+      final String value = System.getProperty(name);
+      if (value != null) {
+        cmdLine.addParameter("-D" + name + "=" + value);
+      }
     }
 
     cmdLine.addParameter("-classpath");

@@ -1,22 +1,21 @@
-interface Intf {
+interface IntF {
 }
 
-interface Factory<E extends Intf> {
+interface Factory<E extends IntF> {
     E create();
 
     void save(E obj);
 
     static class helper {
-        static Factory<Intf> get() {
+        static Factory<IntF> get() {
             return null;
         }
     }
 }
 
-
-public class Clazz implements Intf {
+public class Clazz implements IntF {
     void bar() {
-        Intf y = Factory.helper.get().create();
+        IntF y = Factory.helper.get().create();
         Factory.helper.get().save(y);
     }
 }

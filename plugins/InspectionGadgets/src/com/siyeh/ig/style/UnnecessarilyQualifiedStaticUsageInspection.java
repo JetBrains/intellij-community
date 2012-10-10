@@ -141,8 +141,8 @@ public class UnnecessarilyQualifiedStaticUsageInspection
       visitReferenceElement(expression);
     }
 
-    private boolean isUnnecessarilyQualifiedAccess(
-      @NotNull PsiJavaCodeReferenceElement referenceElement) {
+    private boolean isUnnecessarilyQualifiedAccess(@NotNull PsiJavaCodeReferenceElement referenceElement) {
+      if (referenceElement instanceof PsiMethodReferenceExpression) return false;
       final PsiElement parent = referenceElement.getParent();
       if (parent instanceof PsiImportStatementBase) {
         return false;

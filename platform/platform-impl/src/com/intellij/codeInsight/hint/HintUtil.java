@@ -113,7 +113,7 @@ public class HintUtil {
 
     HintLabel label = new HintLabel();
     label.setText(text, hintHint);
-    label.setIcon(AllIcons.Actions.Help);
+    label.setIcon(AllIcons.General.Help_small);
 
     if (!hintHint.isAwtTooltip()) {
       label.setBorder(createHintBorder());

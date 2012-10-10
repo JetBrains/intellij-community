@@ -50,18 +50,16 @@ public class JBRadioButton extends JRadioButton implements AnchorableComponent {
 
   @Override
   public void setAnchor(@Nullable JComponent anchor) {
-    if (anchor != this) {
-      this.myAnchor = anchor;
-    }
+    this.myAnchor = anchor;
   }
 
   @Override
   public Dimension getPreferredSize() {
-    return myAnchor == null ? super.getPreferredSize() : myAnchor.getPreferredSize();
+    return myAnchor == null || myAnchor == this ? super.getPreferredSize() : myAnchor.getPreferredSize();
   }
 
   @Override
   public Dimension getMinimumSize() {
-    return myAnchor == null ? super.getMinimumSize() : myAnchor.getMinimumSize();
+    return myAnchor == null || myAnchor == this ? super.getMinimumSize() : myAnchor.getMinimumSize();
   }
 }

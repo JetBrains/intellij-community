@@ -27,8 +27,8 @@ import org.jetbrains.annotations.Nullable;
 public class SpeedSearchComparator {
   private MinusculeMatcher myMinusculeMatcher;
   private String myRecentSearchText;
-  private boolean myShouldMatchFromTheBeginning;
-  private boolean myShouldMatchCamelCase;
+  private final boolean myShouldMatchFromTheBeginning;
+  private final boolean myShouldMatchCamelCase;
 
   public SpeedSearchComparator() {
     this(true);

@@ -5,7 +5,7 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/community/lib/src/groovy-src-1.8.5.zip!/groovy-1.8.5/src/main" />
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-1.8.5.zip!/groovy-1.8.5/src/main" />
     </SOURCES>
   </library>
 </component>

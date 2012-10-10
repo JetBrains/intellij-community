@@ -1,12 +1,12 @@
-interface Intf {
+interface IntF {
 }
 
-interface Factory<E extends Intf> {
+interface Factory<E extends IntF> {
     E create();
     void save(E obj);
 
     static class helper {
-        static Factory<Intf> get2() {
+        static Factory<IntF> get2() {
             return (Factory)new Factory<Clazz>() {
                 public Clazz create() { return null; }
                 public void save(Clazz obj) { }
@@ -16,5 +16,5 @@ interface Factory<E extends Intf> {
 }
 
 
-public class Clazz implements Intf {
+public class Clazz implements IntF {
 }

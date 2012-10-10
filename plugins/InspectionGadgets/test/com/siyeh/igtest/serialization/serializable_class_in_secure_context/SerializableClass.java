@@ -21,3 +21,4 @@ interface Event extends Serializable {
 class EventListener<E  extends Event> {
 
 }
+class MyException extends Exception {}

@@ -102,7 +102,7 @@ class GitMockProject implements Project {
 
   @Override
   boolean isDefault() {
-    throw new UnsupportedOperationException()
+    false
   }
 
   @Override

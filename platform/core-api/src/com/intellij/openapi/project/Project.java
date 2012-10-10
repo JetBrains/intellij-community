@@ -42,18 +42,16 @@ public interface Project extends ComponentManager, AreaInstance {
    * Returns a project base directory - a parent directory of a <code>.ipr</code> file or <code>.idea</code> directory.<br/>
    * Returns <code>null</code> for default project.
    *
-   * @return project base directory, or null for default project
+   * @return project base directory, or <code>null</code> for default project
    */
-  @Nullable
   VirtualFile getBaseDir();
 
   /**
    * Returns a system-dependent path to a project base directory (see {@linkplain #getBaseDir()}).<br/>
    * Returns <code>null</code> for default project.
    *
-   * @return a path to a project base directory, or empty string for default project
+   * @return a path to a project base directory, or <code>null</code> for default project
    */
-  @Nullable
   @NonNls
   String getBasePath();
 

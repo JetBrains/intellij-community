@@ -137,7 +137,7 @@
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
         <group id="FileOpenGroup">
-          <action id="NewDummyProject" class="com.intellij.ide.actions.NewDummyProjectAction" text="New Dummy Project"/>
+          <action id="NewDummyProject" class="com.intellij.ide.actions.NewDummyProjectAction" text="New Dummy Project" internal="true"/>
           <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.Actions.Menu_open"/>
           <group id="$LRU" class="com.intellij.ide.actions.RecentProjectsGroup" popup="true"/>
           <action id="CloseProject" class="com.intellij.ide.actions.CloseProjectAction"/>

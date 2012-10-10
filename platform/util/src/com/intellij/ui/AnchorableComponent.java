@@ -9,6 +9,6 @@ import javax.swing.*;
  */
 
 public interface AnchorableComponent {
-  JComponent getAnchor();
+  @Nullable JComponent getAnchor();
   void setAnchor(@Nullable JComponent anchor);
 }

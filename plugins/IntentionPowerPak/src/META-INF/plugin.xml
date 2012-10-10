@@ -214,6 +214,10 @@
       <className>com.siyeh.ipp.types.ReplaceLambdaWithAnonymousIntention</className>
       <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.types.ReplaceMethodRefWithLambdaIntention</className>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
    <intentionAction>
       <className>com.siyeh.ipp.types.InferLambdaParameterTypeIntention</className>
       <categoryKey>intention.category.declaration</categoryKey>

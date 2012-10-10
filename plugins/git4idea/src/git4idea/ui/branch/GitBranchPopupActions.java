@@ -95,7 +95,7 @@ class GitBranchPopupActions {
       final String name = GitBranchUiUtil.getNewBranchNameFromUser(myProject, myRepositories, "Create New Branch");
       if (name != null) {
         GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
-        brancher.checkoutNewBranch(name, myRepositories, null);
+        brancher.checkoutNewBranch(name, myRepositories);
       }
     }
 
@@ -394,7 +394,7 @@ class GitBranchPopupActions {
     @Override
     public void actionPerformed(AnActionEvent e) {
       GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
-      brancher.merge(myBranchName, deleteOnMerge(), myRepositories, null);
+      brancher.merge(myBranchName, deleteOnMerge(), myRepositories);
     }
 
     private GitBrancher.DeleteOnMergeOption deleteOnMerge() {

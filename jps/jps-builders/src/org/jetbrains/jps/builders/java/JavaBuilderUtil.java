@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
@@ -203,7 +204,7 @@ public class JavaBuilderUtil {
   }
 
   private static Set<String> getRemovedPaths(CompileContext context, ModuleChunk chunk) {
-    final Map<ModuleBuildTarget, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
+    final Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
     if (map == null) {
       return Collections.emptySet();
     }
@@ -218,7 +219,7 @@ public class JavaBuilderUtil {
   }
 
   private static void dropRemovedPaths(CompileContext context, ModuleChunk chunk) throws IOException {
-    final Map<ModuleBuildTarget, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
+    final Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
     if (map != null) {
       for (ModuleBuildTarget target : chunk.getTargets()) {
         final Collection<String> paths = map.remove(target);

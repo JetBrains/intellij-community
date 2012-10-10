@@ -15,9 +15,11 @@
  */
 package git4idea.actions;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.PlatformFacade;
 import git4idea.push.GitPusher;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,6 +42,6 @@ public class GitPushAction extends GitRepositoryAction {
                          @NotNull final VirtualFile defaultRoot,
                          final Set<VirtualFile> affectedRoots,
                          final List<VcsException> exceptions) throws VcsException {
-    GitPusher.showPushDialogAndPerformPush(project);
+    GitPusher.showPushDialogAndPerformPush(project, ServiceManager.getService(project, PlatformFacade.class));
   }
 }
