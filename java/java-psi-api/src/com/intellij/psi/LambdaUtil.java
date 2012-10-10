@@ -647,6 +647,30 @@ public class LambdaUtil {
     return false;
   }
   
+  public static boolean isReceiverType(PsiType functionalInterfaceType, PsiClass containingClass, @Nullable PsiMethod referencedMethod) {
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+    final MethodSignature function = getFunction(resolveResult.getElement());
+    if (function != null) {
+      final int interfaceMethodParamsLength = function.getParameterTypes().length;
+      if (interfaceMethodParamsLength > 0) {
+        final PsiType firstParamType = resolveResult.getSubstitutor().substitute(function.getParameterTypes()[0]);
+        boolean isReceiver = isReceiverType(firstParamType,
+                                            containingClass, PsiUtil.resolveGenericsClassInType(firstParamType).getSubstitutor());
+        if (isReceiver) {
+          if (referencedMethod == null){
+            if (interfaceMethodParamsLength == 1) return true;
+            return false;
+          }
+          if (referencedMethod.getParameterList().getParametersCount() != interfaceMethodParamsLength - 1) {
+            return false;
+          }
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  
   public static boolean areAcceptable(MethodSignature signature1,
                                       MethodSignature signature2,
                                       PsiClass psiClass,
