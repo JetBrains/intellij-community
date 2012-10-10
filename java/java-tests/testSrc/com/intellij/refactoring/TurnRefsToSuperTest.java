@@ -53,12 +53,16 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
   public void testTypeArgumentsRH1() throws Exception { doTest("IImpl", "I", false); }
   public void testAnonymousWithTypeArguments() throws Exception { doTest("Clazz", "IntF", false); }
   public void testTypeArgumentsParam() throws Exception { doTest("Clazz", "IntF", false); }
+  public void testTryWithResources1() throws Exception { doTest("Test.MyResourceImpl", "Test.MyResource", false); }
+  public void testTryWithResources2() throws Exception { doTest("Test.MyResourceImpl", "Test.MyResource", false); }
 
   //todo[ann] fix and uncomment
   //public void testStaticCallArguments() throws Exception { doTest("Impl", "Int", false); }
   //public void testListArgs() throws Exception { doTest("Impl", "Int", false); }
   //public void testCovariantReturnTypes() throws Exception { doTest("Impl", "Int", false); }
   //public void testNewExpr() throws Exception { doTest("Impl", "Int", false); }
+  //public void testForEach1() throws Exception { doTest("Test.MyIterableImpl", "Test.MyIterable", false); }
+  //public void testForEach2() throws Exception { doTest("Test.MyIterableImpl", "Test.MyIterable", false); }
 
   private void doTest(@NonNls final String className, @NonNls final String superClassName, final boolean replaceInstanceOf) throws Exception {
     doTest(new PerformAction() {
