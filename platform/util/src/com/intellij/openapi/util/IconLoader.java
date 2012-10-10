@@ -174,7 +174,9 @@ public final class IconLoader {
 
   @Nullable
   public static Icon findIcon(URL url) {
-    if (url == null) return null;
+    if (url == null) {
+      return null;
+    }
     Icon icon = ourIconsCache.get(url);
     if (icon == null) {
       icon = new CachedImageIcon(url);
