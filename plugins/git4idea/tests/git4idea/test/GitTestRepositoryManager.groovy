@@ -13,26 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.test;
-
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryChangeListener;
-import git4idea.repo.GitRepositoryManager;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
+package git4idea.test
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vfs.VirtualFile
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryChangeListener
+import git4idea.repo.GitRepositoryManager
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 /**
  * @author Kirill Likhodedov
  */
 public class GitTestRepositoryManager implements GitRepositoryManager {
 
-  private final Collection<GitRepository> myRepositories = new ArrayList<GitRepository>();
+  private final List<GitRepository> myRepositories = new ArrayList<GitRepository>();
 
   public void add(GitRepository repository) {
     myRepositories.add(repository);
@@ -61,12 +55,12 @@ public class GitTestRepositoryManager implements GitRepositoryManager {
   @NotNull
   @Override
   public List<GitRepository> getRepositories() {
-    throw new UnsupportedOperationException();
+    myRepositories
   }
 
   @Override
   public boolean moreThanOneRoot() {
-    throw new UnsupportedOperationException();
+    myRepositories.size() > 1
   }
 
   @Override
