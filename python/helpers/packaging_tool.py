@@ -1,6 +1,7 @@
 import sys
 import traceback
 import getopt
+import os
 
 ERROR_WRONG_USAGE = 1
 ERROR_NO_PIP = 2
@@ -69,7 +70,6 @@ def do_pyvenv(path, system_site_packages):
 
 
 def untarDirectory(name):
-    import os
     import tempfile
 
     directory_name = tempfile.mkdtemp("pycharm-management")
