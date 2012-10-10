@@ -103,7 +103,7 @@ public class VcsSqliteLayer {
       new ThrowableConvertor<Connection, PreparedStatement, SQLException>() {
         @Override
         public PreparedStatement convert(Connection connection) throws SQLException {
-          return connection.prepareStatement("SELECT MAX(" + SqliteTables.REVISION.NUMBER_INT + ") " +
+          return connection.prepareStatement("SELECT MAX(" + SqliteTables.REVISION.NUMBER_INT + ") , MIN(" + SqliteTables.REVISION.NUMBER_INT + ") " +
                                              " FROM " + SqliteTables.REVISION.TABLE_NAME + " WHERE " + SqliteTables.REVISION.ROOT_FK + " =?");
         }
       });
@@ -115,8 +115,10 @@ public class VcsSqliteLayer {
           @Override
           public void run() throws SQLException {
             final long max = set.getLong(1);
+            final long min = set.getLong(2);
             if (max > 0) {// 0 is === SQL NULL
               myKnownRepositoryLocations.setLastRevision(id, max);
+              myKnownRepositoryLocations.setFirstRevision(id, min);
             }
           }
         });
@@ -290,8 +292,10 @@ public class VcsSqliteLayer {
     try {
       statement.setLong(1, locationId);
       final Long lastRevision = myKnownRepositoryLocations.getLastRevision(locationId);
+      final Long firstRevision = myKnownRepositoryLocations.getFirstRevision(locationId);
+
       for (CommittedChangeList list : lists) {
-        if (lastRevision != null && list.getNumber() <= lastRevision) continue;
+        if (lastRevision != null && list.getNumber() <= lastRevision && list.getNumber() >= firstRevision) continue;
         statement.setLong(2, authors.get(list.getCommitterName()));
         statement.setLong(3, list.getCommitDate().getTime());
         statement.setLong(4, list.getNumber());
