@@ -294,7 +294,12 @@ public class TreeState implements JDOMExternalizable {
   public void applyTo(final JTree tree, final DefaultMutableTreeNode node) {
     applyExpanded(getFacade(tree), node);
     if (tree.getSelectionCount() == 0) {
-      applySelected(tree, node);
+      getFacade(tree).getInitialized().doWhenDone(new Runnable() {
+        @Override
+        public void run() {
+          applySelected(tree, node);
+        }
+      });
     }
   }
 
