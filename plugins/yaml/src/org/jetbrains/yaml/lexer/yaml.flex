@@ -153,13 +153,17 @@ STRING=                         '([^\\']|{ESCAPE_SEQUENCE}|(''))*?'?
 }
 
 
-<VALUE, VALUE_OR_KEY>{
+<BRACES, VALUE, VALUE_OR_KEY>{
 
 {WHITE_SPACE}                   {   return WHITESPACE; }
 
 {STRING}                        {   return SCALAR_STRING; }
 
 {DSTRING}                       {   return SCALAR_DSTRING; }
+
+}
+
+<VALUE, VALUE_OR_KEY>{
 
 ">"/ ({WHITE_SPACE} | {EOL})      {   yybegin(INDENT_VALUE);
                                     //System.out.println("Started SCALAR_TEXT state");

@@ -97,7 +97,8 @@ public class YAMLLexerTest extends LexerTestCase {
            "\n" +
            "single: '\"Howdy!\" he cried.'\n" +
            "quoted: ' # not a ''comment''.'\n" +
-           "tie-fighter: '|\\-*-/|'");
+           "tie-fighter: '|\\-*-/|'\n" +
+           "foo: ['a', 'b']");
   }
 
   public void testSample_log(){
