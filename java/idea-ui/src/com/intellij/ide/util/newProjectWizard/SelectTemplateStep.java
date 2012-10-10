@@ -123,8 +123,14 @@ public class SelectTemplateStep extends ModuleWizardStep {
         return AlphaComparator.INSTANCE.compare(o1, o2);
       }
     }) {
+
       @Override
       public boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
+        return false;
+      }
+
+      @Override
+      public boolean isToEnsureSelectionOnFocusGained() {
         return false;
       }
     };
@@ -195,11 +201,9 @@ public class SelectTemplateStep extends ModuleWizardStep {
         doFilter();
       }
     });
-//    doFilter();
-  }
+    myDescriptionPanel.setVisible(false);
+    mySettingsPanel.setVisible(false);
 
-  @Override
-  public void updateStep() {
     TreeState state = SelectTemplateSettings.getInstance().getTreeState();
     if (state != null) {
       state.applyTo(myTemplatesTree, (DefaultMutableTreeNode)myTemplatesTree.getModel().getRoot());
@@ -207,7 +211,11 @@ public class SelectTemplateStep extends ModuleWizardStep {
     else {
       myBuilder.expandAll(null);
     }
-//    myBuilder.queueUpdate();
+  }
+
+  @Override
+  public void updateStep() {
+    myBuilder.queueUpdate();
   }
 
   @Override

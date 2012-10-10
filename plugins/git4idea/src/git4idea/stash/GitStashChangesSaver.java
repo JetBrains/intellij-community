@@ -18,11 +18,9 @@ package git4idea.stash;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -33,8 +31,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.continuation.ContinuationContext;
 import git4idea.GitVcs;
 import git4idea.PlatformFacade;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitHandlerUtil;
+import git4idea.commands.GitSimpleEventDetector;
 import git4idea.merge.GitConflictResolver;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.GitUnstashDialog;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,9 +45,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.intellij.notification.NotificationType.WARNING;
 
 /**
  * @author Kirill Likhodedov
@@ -53,15 +53,19 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
   private static final Logger LOG = Logger.getInstance(GitStashChangesSaver.class);
   private final Set<VirtualFile> myStashedRoots = new HashSet<VirtualFile>(); // save stashed roots to unstash only them
+  @NotNull private final GitRepositoryManager myRepositoryManager;
 
-  public GitStashChangesSaver(Project project, @NotNull Git git, ProgressIndicator progressIndicator, String stashMessage) {
-    super(project, git, progressIndicator, stashMessage);
+  public GitStashChangesSaver(@NotNull Project project, @NotNull PlatformFacade platformFacade, @NotNull Git git,
+                              @NotNull ProgressIndicator progressIndicator, @NotNull String stashMessage) {
+    super(project, platformFacade, git, progressIndicator, stashMessage);
+    myRepositoryManager = platformFacade.getRepositoryManager(project);
   }
 
   @Override
   protected void save(Collection<VirtualFile> rootsToSave) throws VcsException {
     LOG.info("save " + rootsToSave);
-    final Map<VirtualFile, Collection<Change>> changes = new LocalChangesUnderRoots(myProject).getChangesUnderRoots(rootsToSave);
+    final Map<VirtualFile, Collection<Change>> changes =
+      new LocalChangesUnderRoots(myChangeManager, myPlatformFacade.getVcsManager(myProject)).getChangesUnderRoots(rootsToSave);
     stash(changes.keySet());
   }
 
@@ -80,7 +84,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
       loadRoot(root);
     }
 
-    boolean conflictsResolved = new UnstashConflictResolver(myProject, myGit, myStashedRoots, myParams).merge();
+    boolean conflictsResolved = new UnstashConflictResolver(myProject, myPlatformFacade, myGit, myStashedRoots, myParams).merge();
     LOG.info("load: conflicts resolved status is " + conflictsResolved + " in roots " + myStashedRoots);
   }
 
@@ -111,8 +115,12 @@ public class GitStashChangesSaver extends GitChangesSaver {
       LOG.info(message);
       final String oldProgressTitle = myProgressIndicator.getText();
       myProgressIndicator.setText(message);
-      if (GitStashUtils.saveStash(myProject, root, myStashMessage)) {
-        myStashedRoots.add(root);
+      GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+      if (repository == null) {
+        LOG.error("Repository is null for root " + root);
+      }
+      else if (GitStashUtils.saveStash(myGit, repository, myStashMessage)) {
+          myStashedRoots.add(root);
       }
       myProgressIndicator.setText(oldProgressTitle);
     }
@@ -125,55 +133,35 @@ public class GitStashChangesSaver extends GitChangesSaver {
   private boolean loadRoot(final VirtualFile root) throws VcsException {
     LOG.info("loadRoot " + root);
     myProgressIndicator.setText(GitHandlerUtil.formatOperationName("Unstashing changes to", root));
-    final GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.STASH);
-    handler.setNoSSH(true);
-    handler.addParameters("pop");
 
-    final AtomicBoolean conflict = new AtomicBoolean();
-    handler.addLineListener(new GitLineHandlerAdapter() {
-      @Override
-      public void onLineAvailable(String line, Key outputType) {
-        if (line.contains("Merge conflict")) {
-          conflict.set(true);
-        }
-      }
-    });
-
-    final GitTask task = new GitTask(myProject, handler, "Unstashing uncommitted changes");
-    task.setProgressIndicator(myProgressIndicator);
-    final AtomicBoolean failure = new AtomicBoolean();
-    task.executeInBackground(true, new GitTaskResultHandlerAdapter() {
-      @Override protected void onSuccess() {
-      }
-
-      @Override protected void onCancel() {
-        GitVcs.NOTIFICATION_GROUP_ID.createNotification("Unstash cancelled",
-                                                  "You may view the stashed changes <a href='saver'>here</a>", WARNING,
-                                                  new ShowSavedChangesNotificationListener()).notify(myProject);
-      }
-
-      @Override protected void onFailure() {
-        failure.set(true);
-      }
-    });
-
-    if (failure.get()) {
-      if (conflict.get()) {
-        return true;
-      } else {
-        LOG.info("unstash failed " + handler.errors());
-        GitUIUtil.notifyImportantError(myProject, "Couldn't unstash", "<br/>" + GitUIUtil.stringifyErrors(handler.errors()));
-      }
+    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    if (repository == null) {
+      LOG.error("Repository is null for root " + root);
+      return false;
     }
-    return false;
+
+    GitSimpleEventDetector conflictDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT_ON_UNSTASH);
+    GitCommandResult result = myGit.stashPop(repository, conflictDetector);
+    if (result.success()) {
+      return false;
+    }
+    else if (conflictDetector.hasHappened()) {
+      return true;
+    }
+    else {
+      LOG.info("unstash failed " + result.getErrorOutputAsJoinedString());
+      GitUIUtil.notifyImportantError(myProject, "Couldn't unstash", "<br/>" + result.getErrorOutputAsHtmlString());
+      return false;
+    }
   }
 
   private static class UnstashConflictResolver extends GitConflictResolver {
 
     private final Set<VirtualFile> myStashedRoots;
 
-    public UnstashConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull Set<VirtualFile> stashedRoots, @Nullable Params params) {
-      super(project, git, ServiceManager.getService(PlatformFacade.class), stashedRoots, makeParamsOrUse(params));
+    public UnstashConflictResolver(@NotNull Project project, PlatformFacade platformFacade, @NotNull Git git,
+                                   @NotNull Set<VirtualFile> stashedRoots, @Nullable Params params) {
+      super(project, git, platformFacade, stashedRoots, makeParamsOrUse(params));
       myStashedRoots = stashedRoots;
     }
 

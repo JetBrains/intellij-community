@@ -23,14 +23,12 @@ import com.intellij.openapi.wm.StatusBar;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
+import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.File;
@@ -196,7 +194,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
   protected void addFileToGroup(final String id, final SVNEvent event) {
     final FileGroup fileGroup = myUpdatedFiles.getGroupById(id);
     final String path = event.getFile().getAbsolutePath();
-    fileGroup.add(path, SvnVcs.getKey(), null);
+    fileGroup.add(path, SvnVcs.getKey(), new SvnRevisionNumber(SVNRevision.create(event.getRevision())));
     if (event.getErrorMessage() != null) {
       fileGroup.addError(path, event.getErrorMessage().getMessage());
     }

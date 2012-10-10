@@ -35,6 +35,7 @@ import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
+import git4idea.repo.GitRepository;
 import git4idea.util.GitUIUtil;
 import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
@@ -164,7 +165,13 @@ public class GitMergeUpdater extends GitUpdater {
     String currentBranch = gitBranchPair.getBranch().getName();
     String remoteBranch = gitBranchPair.getDest().getName();
     try {
-      final Collection<String> remotelyChanged = GitUtil.getPathsDiffBetweenRefs(currentBranch, remoteBranch, myProject, myRoot);
+      GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(myRoot);
+      if (repository == null) {
+        LOG.error("Repository is null for root " + myRoot);
+        return true; // fail safe
+      }
+      final Collection<String> remotelyChanged = GitUtil.getPathsDiffBetweenRefs(ServiceManager.getService(Git.class), repository,
+                                                                                 currentBranch, remoteBranch);
       final List<File> locallyChanged = myChangeListManager.getAffectedPaths();
       for (File localPath : locallyChanged) {
         if (remotelyChanged.contains(FilePathsHelper.convertPath(localPath.getPath()))) {

@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
+import git4idea.PlatformFacade;
 import git4idea.commands.Git;
 import git4idea.i18n.GitBundle;
 import git4idea.rollback.GitRollbackEnvironment;
@@ -44,8 +45,9 @@ public class GitShelveChangesSaver extends GitChangesSaver {
   private final ShelvedChangesViewManager myShelveViewManager;
   private Map<String, ShelvedChangeList> myShelvedLists;
 
-  public GitShelveChangesSaver(Project project, Git git, ProgressIndicator indicator, String stashMessage) {
-    super(project, git, indicator, stashMessage);
+  public GitShelveChangesSaver(@NotNull Project project, PlatformFacade platformFacade, @NotNull Git git,
+                               @NotNull ProgressIndicator indicator, String stashMessage) {
+    super(project, platformFacade, git, indicator, stashMessage);
     myShelveManager = ShelveChangesManager.getInstance(myProject);
     myShelveViewManager = ShelvedChangesViewManager.getInstance(myProject);
   }
@@ -53,7 +55,8 @@ public class GitShelveChangesSaver extends GitChangesSaver {
   @Override
   protected void save(@NotNull Collection<VirtualFile> rootsToSave) throws VcsException {
     LOG.info("save " + rootsToSave);
-    final Map<String, Map<VirtualFile, Collection<Change>>> lists = new LocalChangesUnderRoots(myProject).getChangesByLists(rootsToSave);
+    final Map<String, Map<VirtualFile, Collection<Change>>> lists =
+      new LocalChangesUnderRoots(myChangeManager, myPlatformFacade.getVcsManager(myProject)).getChangesByLists(rootsToSave);
 
     String oldProgressTitle = myProgressIndicator.getText();
     myProgressIndicator.setText(GitBundle.getString("update.shelving.changes"));

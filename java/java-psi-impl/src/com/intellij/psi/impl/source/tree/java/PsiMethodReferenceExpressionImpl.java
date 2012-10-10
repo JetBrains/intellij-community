@@ -300,10 +300,24 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
               if (parameterTypes.length == 1 && LambdaUtil.isReceiverType(parameterTypes[0], containingClass, substitutor)) {
                 hasReceiver = true;
               }
-              if (parameterTypes.length == 0 || hasReceiver && !(containingClass.getContainingClass() == null || containingClass.hasModifierProperty(PsiModifier.STATIC))) {
-                return new JavaResolveResult[]{new ClassCandidateInfo(containingClass, substitutor)};
+              boolean insideStaticClass = containingClass.getContainingClass() == null;
+              if (!insideStaticClass) { //inner class
+                PsiClass parentClass = containingClass;
+                while (parentClass != null) {
+                  if (parentClass.hasModifierProperty(PsiModifier.STATIC)) {
+                    insideStaticClass = true;
+                    break;
+                  }
+  
+                  parentClass = parentClass.getContainingClass(); 
+                }
               }
-              return JavaResolveResult.EMPTY_ARRAY;
+              final boolean innerClassOuterClassReference = containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC);
+              ClassCandidateInfo candidateInfo = null;
+              if (insideStaticClass && parameterTypes.length == 0 || hasReceiver && innerClassOuterClassReference) {
+                candidateInfo = new ClassCandidateInfo(containingClass, substitutor);
+              }
+              return candidateInfo == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[]{candidateInfo};
             }
           }
 
@@ -454,9 +468,15 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           if (hasReceiver && parameterTypes.length == signatureParameterTypes2.length + 1 && !staticOrValidConstructorRef) {
             boolean correct = true;
             for (int i = 0; i < signatureParameterTypes2.length; i++) {
-              final PsiType type1 = parameterTypes[i + 1];
+              final PsiType type1 = subst.substitute(GenericsUtil.eliminateWildcards(parameterTypes[i + 1]));
               final PsiType type2 = signatureParameterTypes2[i];
-              correct &= TypeConversionUtil.isAssignable(type2, subst.substitute(GenericsUtil.eliminateWildcards(type1)));
+              final boolean assignable = TypeConversionUtil.isAssignable(type2, type1);
+              if (varArgs && i == signatureParameterTypes2.length - 1) {
+                correct &= assignable || TypeConversionUtil.isAssignable(((PsiArrayType)type2).getComponentType(), type1);
+              }
+              else {
+                correct &= assignable;
+              }
             }
             if (correct) {
               secondCandidates.add(conflict);

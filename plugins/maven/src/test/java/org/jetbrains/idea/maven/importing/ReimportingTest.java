@@ -19,6 +19,11 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -223,6 +228,43 @@ public class ReimportingTest extends MavenImportingTestCase {
 
     importProjectWithProfiles("profile2");
     assertModules("project", "m2");
+  }
+
+  public void testChangingDependencyTypeToTestJar() throws Exception {
+    configConfirmationForYesAnswer();
+    VirtualFile m1 = createModulePom("m1", createPomXmlWithModuleDependency("jar"));
+
+    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
+                                           "<artifactId>m2</artifactId>" +
+                                           "<version>1</version>");
+
+    importProjects(m1, m2);
+    assertModules("m1", "m2");
+    ModuleOrderEntry dep = OrderEntryUtil.findModuleOrderEntry(ModuleRootManager.getInstance(getModule("m1")), getModule("m2"));
+    assertNotNull(dep);
+    assertFalse(((ModuleOrderEntryImpl)dep).isProductionOnTestDependency());
+
+    createModulePom("m1", createPomXmlWithModuleDependency("test-jar"));
+    importProjects(m1, m2);
+    ModuleOrderEntry dep2 = OrderEntryUtil.findModuleOrderEntry(ModuleRootManager.getInstance(getModule("m1")), getModule("m2"));
+    assertNotNull(dep2);
+    assertTrue(((ModuleOrderEntryImpl)dep2).isProductionOnTestDependency());
+
+  }
+
+  private String createPomXmlWithModuleDependency(final String dependencyType) {
+    return "<groupId>test</groupId>" +
+           "<artifactId>m1</artifactId>" +
+           "<version>1</version>" +
+
+           "<dependencies>" +
+           "  <dependency>" +
+           "    <groupId>test</groupId>" +
+           "    <artifactId>m2</artifactId>" +
+           "    <version>1</version>" +
+           "    <type>" + dependencyType + "</type>" +
+           "  </dependency>" +
+           "</dependencies>";
   }
 
   public void testReimportingWhenModuleHaveRootOfTheParent() throws Exception {

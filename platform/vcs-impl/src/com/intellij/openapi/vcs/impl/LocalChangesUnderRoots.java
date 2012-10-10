@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
@@ -35,15 +34,13 @@ import java.util.*;
  * @author Kirill Likhodedov
  */
 public class LocalChangesUnderRoots {
-  private final Project myProject;
   private final ChangeListManager myChangeManager;
   private final ProjectLevelVcsManager myVcsManager;
   private VcsRoot[] myRoots;
 
-  public LocalChangesUnderRoots(Project project) {
-    myProject = project;
-    myChangeManager = ChangeListManager.getInstance(myProject);
-    myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
+  public LocalChangesUnderRoots(@NotNull ChangeListManager changeListManager, @NotNull ProjectLevelVcsManager projectLevelVcsManager) {
+    myChangeManager = changeListManager;
+    myVcsManager = projectLevelVcsManager;
   }
 
   public Map<String, Map<VirtualFile, Collection<Change>>> getChangesByLists(@NotNull Collection<VirtualFile> rootsToSave) {

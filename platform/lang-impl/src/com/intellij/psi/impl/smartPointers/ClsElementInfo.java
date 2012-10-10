@@ -42,7 +42,7 @@ public class ClsElementInfo implements SmartPointerElementInfo {
 
   // before change
   @Override
-  public void fastenBelt(int offset, RangeMarker cachedRangeMarker) {
+  public void fastenBelt(int offset, RangeMarker[] cachedRangeMarker) {
   }
 
   // after change

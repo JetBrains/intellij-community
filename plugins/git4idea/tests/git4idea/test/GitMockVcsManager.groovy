@@ -36,12 +36,15 @@ public class GitMockVcsManager extends ProjectLevelVcsManager {
   PlatformFacade myPlatformFacade
   Collection<String> myRoots = []
   boolean myProjectRootMapping = false
+  AbstractVcs myVcs
 
   GitMockVcsManager(Project project, PlatformFacade facade) {
     myProject = project
     myPlatformFacade = facade
+    myVcs = facade.getVcs(project)
   }
 
+  // TODO remove and use getting all roots from GitRepositoryManager.
   void addRoots(String... roots) {
     roots.each { myRoots << it }
   }
@@ -223,7 +226,9 @@ public class GitMockVcsManager extends ProjectLevelVcsManager {
 
   @Override
   VcsRoot[] getAllVcsRoots() {
-    throw new UnsupportedOperationException()
+    myPlatformFacade.getRepositoryManager(myProject).repositories.collect {
+      new VcsRoot(myVcs, it.root)
+    }
   }
 
   @Override

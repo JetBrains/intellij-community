@@ -46,6 +46,7 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
     final PsiMethodReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(element, PsiMethodReferenceExpression.class);
     LOG.assertTrue(referenceExpression != null);
     final PsiType functionalInterfaceType = referenceExpression.getFunctionalInterfaceType();
+    final PsiClassType.ClassResolveResult functionalInterfaceResolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
     final StringBuilder buf = new StringBuilder("(");
     LOG.assertTrue(functionalInterfaceType != null);
@@ -85,11 +86,7 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
       if (resolveElement instanceof PsiMethod) {
         final PsiClass containingClass = ((PsiMember)resolveElement).getContainingClass();
         LOG.assertTrue(containingClass != null);
-        isReceiver = parameters.length > 0 &&
-                     LambdaUtil.isReceiverType(parameters[0].getType(), containingClass, PsiUtil.resolveGenericsClassInType(parameters[0].getType()).getSubstitutor());
-        if (isReceiver && ((PsiMethod)resolveElement).getParameterList().getParametersCount() != parameters.length - 1) {
-          isReceiver = false;
-        }
+        isReceiver = LambdaUtil.isReceiverType(functionalInterfaceType, containingClass, (PsiMethod)resolveElement);
       }
 
       final PsiElement referenceNameElement = referenceExpression.getReferenceNameElement();

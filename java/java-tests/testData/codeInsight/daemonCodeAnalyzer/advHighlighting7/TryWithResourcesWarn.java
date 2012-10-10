@@ -23,21 +23,4 @@ class C {
       System.out.println(r);
     }
   }
-
-  interface MyResourceProvider {
-    MyResource getResource();
-  }
-
-  void m3() throws Exception {
-    MyResourceProvider provider = null;
-    try (MyResource r = <warning descr="Method invocation 'provider.getResource()' may produce 'java.lang.NullPointerException'">provider.getResource()</warning>) {
-      System.out.println(r);
-    }
-  }
-
-  void m4() {
-    try (MyResource r = null) {
-      System.out.println(r);
-    }
-  }
 }

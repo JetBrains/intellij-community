@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
+import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.builders.BuildResult;
@@ -176,13 +177,13 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     final ProjectDescriptor pd = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), builderLogger,
                                                                                  new TestProjectBuilderLogger(rootPath, log)));
     try {
-      doBuild(pd, createAllModulesScope(true), false, true, false).assertSuccessful();
+      doBuild(pd, CompileScopeTestBuilder.rebuild().allModules()).assertSuccessful();
 
       BuildResult result = null;
 
       for (int idx = 0; idx < makesCount; idx++) {
         modify(idx);
-        result = doBuild(pd, createAllModulesScope(false), true, false, false);
+        result = doBuild(pd, CompileScopeTestBuilder.make().allModules());
       }
 
       assertNotNull(result);
@@ -211,7 +212,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
       assertEquals(expected, actual);
 
       if (result.isSuccessful()) {
-        doBuild(pd, createAllModulesScope(true), false, true, false).assertSuccessful();
+        doBuild(pd, CompileScopeTestBuilder.rebuild().allModules()).assertSuccessful();
   
         final ByteArrayOutputStream rebuildDump = new ByteArrayOutputStream();
 

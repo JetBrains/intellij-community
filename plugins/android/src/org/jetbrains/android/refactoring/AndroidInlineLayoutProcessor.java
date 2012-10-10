@@ -16,6 +16,7 @@ import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.android.util.AndroidBundle;
@@ -24,6 +25,7 @@ import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -122,7 +124,19 @@ public class AndroidInlineLayoutProcessor extends BaseRefactoringProcessor {
       }
     }
     if (myUsageElement == null) {
-      myLayoutFile.delete();
+      try {
+        myLayoutFile.delete();
+      }
+      catch (IncorrectOperationException e) {
+        // see IDEA-90562 and http://code.google.com/p/android/issues/detail?id=36435
+        final Throwable c = e.getCause();
+
+        if (c instanceof IOException && c.getMessage() != null) {
+          AndroidUtils.reportError(myProject, c.getMessage(), AndroidBundle.message("android.inline.style.title"));
+          return;
+        }
+        throw e;
+      }
     }
   }
 

@@ -61,7 +61,7 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
    * If you need to have an instance of GitRepository for a repository outside the project, use
    * {@link #getLightInstance(VirtualFile, Project, PlatformFacade, Disposable)}.
    */
-  private GitRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull PlatformFacade facade, @NotNull Project project,
+  protected GitRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull PlatformFacade facade, @NotNull Project project,
                             @NotNull Disposable parentDisposable, final boolean light) {
     myRootDir = rootDir;
     myPlatformFacade = facade;
@@ -271,7 +271,7 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
     myBranches = myReader.readBranches();
   }
 
-  private void notifyListeners() {
+  protected void notifyListeners() {
     myNotifier.add(STUB_OBJECT);     // we don't have parameters for listeners
   }
 

@@ -88,7 +88,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     setRange(anchor);
   }
 
-  protected void setRange(TextRange range) {
+  protected void setRange(@NotNull Segment range) {
     mySyncStartOffset = range.getStartOffset();
     mySyncEndOffset = range.getEndOffset();
   }
@@ -104,7 +104,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
 
   // before change
   @Override
-  public void fastenBelt(int offset, @Nullable RangeMarker cachedRangeMarker) {
+  public void fastenBelt(int offset, @Nullable RangeMarker[] cachedRangeMarkers) {
     if (!mySyncMarkerIsValid) return;
     RangeMarker marker = getMarker();
     int actualEndOffset = marker == null || !marker.isValid() ? getSyncEndOffset() : marker.getEndOffset();
@@ -120,11 +120,15 @@ public class SelfElementInfo implements SmartPointerElementInfo {
       int start = Math.min(getSyncStartOffset(), document.getTextLength());
       int end = Math.min(Math.max(getSyncEndOffset(), start), document.getTextLength());
       // use supplied cached markers if available
-      if (cachedRangeMarker != null &&
-          cachedRangeMarker.isValid() &&
-          cachedRangeMarker.getStartOffset() == start &&
-          cachedRangeMarker.getEndOffset() == end) {
-        marker = cachedRangeMarker;
+      if (cachedRangeMarkers != null) {
+        for (RangeMarker cachedRangeMarker : cachedRangeMarkers) {
+          if (cachedRangeMarker.isValid() &&
+              cachedRangeMarker.getStartOffset() == start &&
+              cachedRangeMarker.getEndOffset() == end) {
+            marker = cachedRangeMarker;
+            break;
+          }
+        }
       }
       else {
         marker = document.createRangeMarker(start, end, true);
@@ -147,8 +151,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     RangeMarker marker = getMarker();
     if (marker != null) {
       if (marker.isValid()) {
-        mySyncStartOffset = marker.getStartOffset();
-        mySyncEndOffset = marker.getEndOffset();
+        setRange(marker);
         assert mySyncEndOffset <= marker.getDocument().getTextLength() : "mySyncEndOffset: "+mySyncEndOffset+"; docLength: "+marker.getDocument().getTextLength()+"; marker: "+marker +"; "+marker.getClass();
       }
       else {

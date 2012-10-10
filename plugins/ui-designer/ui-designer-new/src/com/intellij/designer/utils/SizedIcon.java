@@ -26,10 +26,14 @@ public class SizedIcon implements Icon {
   private final int myHeight;
   private final Image myImage;
 
+  public SizedIcon(int maxWidth, int maxHeight, Image image) {
+    myWidth = Math.min(maxWidth, image.getWidth(null));
+    myHeight = Math.min(maxHeight, image.getHeight(null));
+    myImage = image;
+  }
+
   public SizedIcon(int maxWidth, int maxHeight, ImageIcon icon) {
-    myWidth = Math.min(maxWidth, icon.getIconWidth());
-    myHeight = Math.min(maxHeight, icon.getIconHeight());
-    myImage = icon.getImage();
+    this(maxWidth, maxHeight, icon.getImage());
   }
 
   @Override

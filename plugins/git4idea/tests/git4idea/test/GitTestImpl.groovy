@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package git4idea.test
+import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -21,11 +22,15 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
+import git4idea.commands.GitImpl
 import git4idea.commands.GitLineHandlerListener
+import git4idea.history.browser.GitCommit
 import git4idea.push.GitPushSpec
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
+
+import java.lang.reflect.Method
 /**
  * @author Kirill Likhodedov
  */
@@ -72,6 +77,11 @@ public class GitTestImpl implements Git {
                                 Arrays.asList(StringUtil.splitByLines(output)))
   }
 
+  @Override
+  GitCommandResult diff(GitRepository repository, List<String> parameters, String range) {
+    execute(repository, "diff ${parameters.join(" ")} $range")
+  }
+
   @NotNull
   @Override
   GitCommandResult checkAttr(@NotNull GitRepository repository, @NotNull Collection<String> attributes, @NotNull Collection<VirtualFile> files) {
@@ -79,83 +89,82 @@ public class GitTestImpl implements Git {
     cd root
     String output = git("check-attr " + attributes.join(" ") + " -- " +
                         files.collect({it -> FileUtil.getRelativePath(root, it.path, (char)'/')}).join(" "))
-    return new GitCommandResult(!output.contains("fatal"), 0, Collections.emptyList(),
-                                Arrays.asList(StringUtil.splitByLines(output)))
+    commandResult(output)
   }
 
   @NotNull
   @Override
-  public GitCommandResult merge(@NotNull GitRepository repository,
-                                @NotNull String branchToMerge,
-                                @Nullable List<String> additionalParams,
+  GitCommandResult stashSave(@NotNull GitRepository repository, @NotNull String message) {
+    execute(repository, "stash save $message")
+  }
+
+  @NotNull
+  @Override
+  GitCommandResult stashPop(@NotNull GitRepository repository, GitLineHandlerListener... listeners) {
+    execute(repository, "stash pop")
+  }
+
+  @Override
+  List<GitCommit> history(GitRepository repository, String range) {
+    []
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult merge(@NotNull GitRepository repository, @NotNull String branchToMerge, @Nullable List<String> additionalParams,
                                 @NotNull GitLineHandlerListener... listeners) {
-    throw new UnsupportedOperationException();
+    execute(repository, "merge ${additionalParams.join(" ")} $branchToMerge", listeners)
   }
 
   @NotNull
   @Override
-  public GitCommandResult checkout(@NotNull GitRepository repository,
-                                   @NotNull String reference,
-                                   @Nullable String newBranch,
-                                   boolean force,
+  public GitCommandResult checkout(@NotNull GitRepository repository, @NotNull String reference, @Nullable String newBranch, boolean force,
                                    @NotNull GitLineHandlerListener... listeners) {
-    throw new UnsupportedOperationException();
+    execute(repository, "checkout ${force ? "--force" : ""} ${newBranch != null ? "-b $newBranch" : ""} $reference", listeners)
   }
 
   @NotNull
   @Override
-  public GitCommandResult checkoutNewBranch(@NotNull GitRepository repository,
-                                            @NotNull String branchName,
+  public GitCommandResult checkoutNewBranch(@NotNull GitRepository repository, @NotNull String branchName,
                                             @Nullable GitLineHandlerListener listener) {
-    throw new UnsupportedOperationException();
+    execute(repository, "checkout -b ${branchName}", listener)
   }
 
   @NotNull
   @Override
-  public GitCommandResult createNewTag(@NotNull GitRepository repository,
-                                       @NotNull String tagName,
-                                       @Nullable GitLineHandlerListener listener,
-                                       @NotNull String reference) {
-    throw new UnsupportedOperationException();
-  }
-
-  @NotNull
-  @Override
-  public GitCommandResult branchDelete(@NotNull GitRepository repository,
-                                       @NotNull String branchName,
-                                       boolean force,
+  public GitCommandResult branchDelete(@NotNull GitRepository repository, @NotNull String branchName, boolean force,
                                        @NotNull GitLineHandlerListener... listeners) {
-    throw new UnsupportedOperationException();
+    execute(repository, "branch ${force ? "-D" : "-d"} $branchName", listeners)
   }
 
   @NotNull
   @Override
   public GitCommandResult branchContains(@NotNull GitRepository repository, @NotNull String commit) {
-    throw new UnsupportedOperationException();
+    execute(repository, "branch --contains $commit")
   }
 
   @NotNull
   @Override
   public GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName) {
-    throw new UnsupportedOperationException();
+    execute(repository, "branch $branchName")
   }
 
   @NotNull
   @Override
   public GitCommandResult resetHard(@NotNull GitRepository repository, @NotNull String revision) {
-    throw new UnsupportedOperationException();
+    execute(repository, "reset --hard $revision")
   }
 
   @NotNull
   @Override
   public GitCommandResult resetMerge(@NotNull GitRepository repository, @Nullable String revision) {
-    throw new UnsupportedOperationException();
+    execute(repository, "reset --merge $revision")
   }
 
   @NotNull
   @Override
   public GitCommandResult tip(@NotNull GitRepository repository, @NotNull String branchName) {
-    throw new UnsupportedOperationException();
+    execute(repository, "rev-list -1 $branchName")
   }
 
   @NotNull
@@ -193,7 +202,41 @@ public class GitTestImpl implements Git {
   @NotNull
   @Override
   public GitCommandResult getUnmergedFiles(@NotNull GitRepository repository) {
+    execute(repository, "ls-files --unmerged")
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult createNewTag(@NotNull GitRepository repository,
+                                       @NotNull String tagName,
+                                       @Nullable GitLineHandlerListener listener,
+                                       @NotNull String reference) {
     throw new UnsupportedOperationException();
+  }
+
+  private static GitCommandResult commandResult(String output) {
+    boolean success = !output.split("\n").collect { isError(it) }.contains(true)
+    return new GitCommandResult(success, 0, Collections.emptyList(), Arrays.asList(StringUtil.splitByLines(output)))
+  }
+
+  private static boolean isError(String s) {
+    // we don't want to make that method public, since it is reused only in the test.
+    Method m = GitImpl.class.getDeclaredMethod("isError", String.class)
+    m.setAccessible(true)
+    return m.invoke(null, s) as boolean
+  }
+
+  static def feedOutput(String output, GitLineHandlerListener... listeners) {
+    listeners.each { GitLineHandlerListener listener ->
+      output.split("\n").each { listener.onLineAvailable(it, ProcessOutputTypes.STDERR) }
+    }
+  }
+
+  def execute(GitRepository repository, String operation, GitLineHandlerListener... listeners) {
+    cd repository.root.path
+    def out = git(operation)
+    feedOutput(out, listeners)
+    commandResult(out)
   }
 
 }
