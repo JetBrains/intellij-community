@@ -1,6 +1,5 @@
 package com.intellij.tasks.mantis;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositoryType;
@@ -77,7 +76,6 @@ public class MantisRepository extends BaseRepositoryImpl {
 
   private List<Task> getIssues(final int page, final int issuesOnPage, final MantisConnectPortType soap) throws Exception {
     IssueHeaderData[] issues;
-    Logger.getInstance(getClass()).warn("1");
     if (MantisFilter.LAST_TASKS.equals(myFilter)) {
       issues =
         soap.mc_project_get_issue_headers(getUsername(), getPassword(), BigInteger.valueOf(myProject.getId()), BigInteger.valueOf(page),
@@ -88,7 +86,6 @@ public class MantisRepository extends BaseRepositoryImpl {
                                                 BigInteger.valueOf(myFilter.getId()), BigInteger.valueOf(page),
                                                 BigInteger.valueOf(issuesOnPage));
     }
-    Logger.getInstance(getClass()).warn("2");
     return ContainerUtil.mapNotNull(issues, new NullableFunction<IssueHeaderData, Task>() {
       public Task fun(IssueHeaderData issueData) {
         return createIssue(issueData);
