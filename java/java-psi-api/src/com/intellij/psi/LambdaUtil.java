@@ -637,7 +637,7 @@ public class LambdaUtil {
   }
 
   public static boolean isReceiverType(PsiType receiverType, PsiClass containingClass, PsiSubstitutor psiSubstitutor) {
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(receiverType);
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(receiverType));
     final PsiClass receiverClass = resolveResult.getElement();
     if (receiverClass != null && isReceiverType(receiverClass, containingClass)) {
       return resolveResult.getSubstitutor().equals(psiSubstitutor) ||
