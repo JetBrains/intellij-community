@@ -229,7 +229,6 @@ public class MavenModelConverter {
 
   private static List<MavenPlugin> convertPlugins(Model mavenModel) throws RemoteException {
     List<MavenPlugin> result = new ArrayList<MavenPlugin>();
-    Set<String> pluginKeys = new THashSet<String>();
     Build build = mavenModel.getBuild();
 
     if (build != null) {
@@ -238,7 +237,6 @@ public class MavenModelConverter {
         for (Plugin each : plugins) {
           String key = each.getGroupId() + ":" + each.getArtifactId();
           result.add(convertPlugin(false, each));
-          pluginKeys.add(key);
         }
       }
     }
