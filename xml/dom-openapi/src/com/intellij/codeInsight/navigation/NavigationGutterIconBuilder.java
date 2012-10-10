@@ -25,6 +25,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
@@ -70,7 +71,7 @@ public class NavigationGutterIconBuilder<T> {
   private String myEmptyText;
   private String myTooltipTitle;
   private GutterIconRenderer.Alignment myAlignment = GutterIconRenderer.Alignment.CENTER;
-  private PsiElementListCellRenderer myCellRenderer;
+  private Computable<PsiElementListCellRenderer> myCellRenderer;
   private NullableFunction<T,String> myNamer = ElementPresentationManager.namer();
   private final NotNullFunction<T, Collection<? extends GotoRelatedItem>> myGotoRelatedItemProvider;
   public static final NotNullFunction<DomElement,Collection<? extends PsiElement>> DEFAULT_DOM_CONVERTOR = new NotNullFunction<DomElement, Collection<? extends PsiElement>>() {
@@ -179,7 +180,7 @@ public class NavigationGutterIconBuilder<T> {
   }
 
   public NavigationGutterIconBuilder<T> setCellRenderer(@NotNull final PsiElementListCellRenderer cellRenderer) {
-    myCellRenderer = cellRenderer;
+    myCellRenderer = new Computable.PredefinedValueComputable<PsiElementListCellRenderer>(cellRenderer);
     return this;
   }
 
@@ -267,11 +268,14 @@ public class NavigationGutterIconBuilder<T> {
       myTooltipText = sb.toString();
     }
 
-    if (myCellRenderer == null) {
-      myCellRenderer = new DefaultPsiElementCellRenderer();
-    }
-
-    return new MyNavigationGutterIconRenderer(this, myAlignment, myIcon, myTooltipText, pointers, empty);
+    Computable<PsiElementListCellRenderer> renderer =
+      myCellRenderer == null ? new Computable<PsiElementListCellRenderer>() {
+        @Override
+        public PsiElementListCellRenderer compute() {
+          return new DefaultPsiElementCellRenderer();
+        }
+      } : myCellRenderer;
+    return new MyNavigationGutterIconRenderer(this, myAlignment, myIcon, myTooltipText, pointers, renderer, empty);
   }
 
   private boolean isEmpty() {
@@ -300,10 +304,11 @@ public class NavigationGutterIconBuilder<T> {
     public MyNavigationGutterIconRenderer(@NotNull NavigationGutterIconBuilder builder,
                                           final Alignment alignment,
                                           final Icon icon,
-                                          final String tooltipText,
+                                          @Nullable final String tooltipText,
                                           @NotNull NotNullLazyValue<List<SmartPsiElementPointer>> pointers,
+                                          Computable<PsiElementListCellRenderer> cellRenderer,
                                           boolean empty) {
-      super(builder.myPopupTitle, builder.myEmptyText, builder.myCellRenderer, pointers);
+      super(builder.myPopupTitle, builder.myEmptyText, cellRenderer, pointers);
       myAlignment = alignment;
       myIcon = icon;
       myTooltipText = tooltipText;
