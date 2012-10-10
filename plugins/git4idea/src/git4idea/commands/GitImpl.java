@@ -184,6 +184,7 @@ public class GitImpl implements Git {
   public GitCommandResult stashPop(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.STASH);
     handler.addParameters("pop");
+    addListeners(handler, listeners);
     return run(handler);
   }
 
