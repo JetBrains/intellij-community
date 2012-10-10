@@ -195,7 +195,8 @@ public class SelectTemplateStep extends ModuleWizardStep {
         doFilter();
       }
     });
-//    doFilter();
+    myDescriptionPanel.setVisible(false);
+    mySettingsPanel.setVisible(false);
   }
 
   @Override
