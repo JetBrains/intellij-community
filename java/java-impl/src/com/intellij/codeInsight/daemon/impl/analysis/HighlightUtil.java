@@ -237,7 +237,7 @@ public class HighlightUtil {
       }
       else if (PsiModifier.ABSTRACT.equals(incompatible)) {
         final PsiElement owner = modifierList.getParent();
-        if (owner instanceof PsiMethod && PsiUtil.isExtensionMethod((PsiMethod)owner)) {
+        if (owner instanceof PsiMethod && ((PsiMethod)owner).isExtensionMethod()) {
           return incompatible;
         }
       }
@@ -1363,7 +1363,7 @@ public class HighlightUtil {
 
       if (PsiUtil.isLanguageLevel8OrHigher(expr)) {
         final PsiMethod method = PsiTreeUtil.getParentOfType(expr, PsiMethod.class);
-        if (PsiUtil.isExtensionMethod(method) && qualifier == null) {
+        if (method != null && method.isExtensionMethod() && qualifier == null) {
           //todo[r.sh] "Add qualifier" quick fix
           return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parent, JavaErrorMessages.message("unqualified.super.disallowed"));
         }

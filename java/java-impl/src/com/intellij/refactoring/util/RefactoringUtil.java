@@ -803,8 +803,7 @@ public class RefactoringUtil {
   }
 
   public static void makeMethodAbstract(@NotNull PsiClass targetClass, @NotNull PsiMethod method) throws IncorrectOperationException {
-    final boolean isExtension = PsiUtil.isExtensionMethod(method);
-    if (!isExtension) {
+    if (!method.isExtensionMethod()) {
       PsiCodeBlock body = method.getBody();
       if (body != null) {
         body.delete();

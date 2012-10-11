@@ -302,7 +302,7 @@ public class LambdaUtil {
       for (HierarchicalMethodSignature signature : visibleSignatures) {
         final PsiMethod psiMethod = signature.getMethod();
         if (!psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) continue;
-        if (!overridesPublicObjectMethod(psiMethod) && !PsiUtil.isExtensionMethod(psiMethod)) {
+        if (!overridesPublicObjectMethod(psiMethod) && !psiMethod.isExtensionMethod()) {
           methods.add(signature);
         }
       }
