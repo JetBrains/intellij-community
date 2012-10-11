@@ -17,7 +17,6 @@ package com.intellij.platform.templates;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -50,7 +49,6 @@ public class SaveProjectAsTemplateAction extends AnAction {
       ZipOutputStream stream = null;
       try {
         file.getParentFile().mkdirs();
-        file.createNewFile();
         stream = new ZipOutputStream(new FileOutputStream(file));
         VirtualFile dir = project.getBaseDir();
         String description = dialog.getDescription();
@@ -85,7 +83,6 @@ public class SaveProjectAsTemplateAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     Project project = getEventProject(e);
-    e.getPresentation().setVisible(ApplicationManager.getApplication().isInternal());
-    e.getPresentation().setVisible(project != null && !project.isDefault());
+    e.getPresentation().setEnabled(project != null && !project.isDefault());
   }
 }
