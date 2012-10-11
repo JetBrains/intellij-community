@@ -1,5 +1,7 @@
 package org.jetbrains.io;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.Consumer;
@@ -15,8 +17,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Executor;
 
 import static org.jboss.netty.channel.Channels.pipeline;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
@@ -30,8 +31,14 @@ public class WebServer {
   private static final Logger LOG = Logger.getInstance(WebServer.class);
 
   public WebServer() {
-    ExecutorService executor = Executors.newCachedThreadPool();
-    channelFactory = new NioServerSocketChannelFactory(executor, executor);
+    final Application application = ApplicationManager.getApplication();
+    final Executor pooledThreadExecutor = new Executor() {
+      @Override
+      public void execute(Runnable command) {
+        application.executeOnPooledThread(command);
+      }
+    };
+    channelFactory = new NioServerSocketChannelFactory(pooledThreadExecutor, pooledThreadExecutor, 2);
   }
 
   public boolean isRunning() {
