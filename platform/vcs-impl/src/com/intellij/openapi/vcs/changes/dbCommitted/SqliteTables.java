@@ -44,6 +44,7 @@ public interface SqliteTables {
   String PREPARED_READ_PATH = "PREPARED_READ_PATH";
   String PREPARED_INSERT_PATH = "PREPARED_INSERT_PATH";
   String PREPARED_INSERT_PATH_2_REVS = "PREPARED_INSERT_PATH_2_REVS";
+  String PREPARED_SELECT_REVISIONS = "PREPARED_SELECT_REVISIONS";
 
   abstract class BaseTable {
     public final String ID;
@@ -108,7 +109,7 @@ public interface SqliteTables {
                         "DATE INTEGER NOT NULL, " +
                         "NUMBER_STR TEXT NOT NULL, " +
                         "NUMBER_INT INTEGER NOT NULL, " +
-                        "COMMENT TEXT");
+                        "COMMENT TEXT, RAW_DATA BLOB");
     }
 
     public final String ROOT_FK = "ROOT_FK";
@@ -119,6 +120,7 @@ public interface SqliteTables {
     @Indexed
     public final String NUMBER_INT = "NUMBER_INT";
     public final String COMMENT = "COMMENT";
+    public final String RAW_DATA = "RAW_DATA";
   }
 
   class Paths extends BaseTable {

@@ -16,18 +16,21 @@
 package com.intellij.openapi.vcs.changes.dbCommitted;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.CollectionSplitter;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.io.DataOutputStream;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.sql.*;
 import java.util.*;
 
@@ -251,12 +254,18 @@ public class VcsSqliteLayer {
     assert myKnownRepositoryLocations.exists(vcs.getName(), root);
     final long locationId = myKnownRepositoryLocations.getLocationId(vcs.getName(), root);
 
+    long maxRev = -1;
+    long minRev = Long.MAX_VALUE;
+
     final List<List<CommittedChangeList>> split = new CollectionSplitter<CommittedChangeList>(20).split(lists);
     final Map<String, Long> knowPaths = new HashMap<String, Long>();
     for (List<CommittedChangeList> changeLists : split) {
       final Set<String> names = new HashSet<String>();
       final Set<String> paths = new HashSet<String>();
       for (CommittedChangeList list : changeLists) {
+        maxRev = Math.max(maxRev, list.getNumber());
+        minRev = Math.min(minRev, list.getNumber());
+
         names.add(list.getCommitterName()); // todo if null. also comment
         for (Change change : list.getChanges()) {
           if (change.getBeforeRevision() != null) {
@@ -270,11 +279,20 @@ public class VcsSqliteLayer {
       final Map<String, Long> knownAuthors = myKnownRepositoryLocations.filterKnownAuthors(names);
       checkAndAddAuthors(names, knownAuthors);
       checkAndAddPaths(paths, knowPaths, locationId);
-      insertChangeListsIfNotExists(knownAuthors, changeLists, locationId, knowPaths);
+      insertChangeListsIfNotExists(vcs, knownAuthors, changeLists, locationId, knowPaths);
+
+      final Long firstRevision = myKnownRepositoryLocations.getFirstRevision(locationId);
+      if (firstRevision == null || minRev < firstRevision) {
+        myKnownRepositoryLocations.setFirstRevision(locationId, minRev);
+      }
+      final Long lastRevision = myKnownRepositoryLocations.getLastRevision(locationId);
+      if (lastRevision == null || maxRev > lastRevision) {
+        myKnownRepositoryLocations.setLastRevision(locationId, maxRev);
+      }
     }
   }
 
-  private Map<Long, CommittedChangeList> insertChangeListsIfNotExists(final Map<String, Long> authors,
+  private Map<Long, CommittedChangeList> insertChangeListsIfNotExists(AbstractVcs vcs, final Map<String, Long> authors,
                                                                       final List<CommittedChangeList> lists,
                                                                       final long locationId, Map<String, Long> knowPaths)
     throws VcsException {
@@ -284,11 +302,12 @@ public class VcsSqliteLayer {
         public PreparedStatement convert(Connection connection) throws SQLException {
           return connection.prepareStatement("INSERT INTO " + SqliteTables.REVISION.TABLE_NAME + " ( " +
                                              StringUtil.join(Arrays.asList(SqliteTables.REVISION.ROOT_FK, SqliteTables.REVISION.AUTHOR_FK, SqliteTables.REVISION.DATE,
-                                                             SqliteTables.REVISION.NUMBER_INT, SqliteTables.REVISION.NUMBER_STR, SqliteTables.REVISION.COMMENT), ", ") +
-                                             ") VALUES (?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
+                                                             SqliteTables.REVISION.NUMBER_INT, SqliteTables.REVISION.NUMBER_STR, SqliteTables.REVISION.COMMENT, SqliteTables.REVISION.RAW_DATA), ", ") +
+                                             ") VALUES (?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
         }
       });
     final Map<Long, CommittedChangeList> result = new HashMap<Long, CommittedChangeList>();
+    final CachingCommittedChangesProvider provider = (CachingCommittedChangesProvider)vcs.getCommittedChangesProvider();
     try {
       statement.setLong(1, locationId);
       final Long lastRevision = myKnownRepositoryLocations.getLastRevision(locationId);
@@ -301,6 +320,9 @@ public class VcsSqliteLayer {
         statement.setLong(4, list.getNumber());
         statement.setString(5, String.valueOf(list.getNumber()));
         statement.setString(6, list.getComment());
+        final BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
+        provider.writeChangeList(new DataOutputStream(stream), list);
+        statement.setBytes(7, stream.toByteArray());
         final long id = SqliteUtil.insert(statement);
         result.put(id, list);
 
@@ -309,6 +331,9 @@ public class VcsSqliteLayer {
       myConnection.commit();
     }
     catch (SQLException e) {
+      throw new VcsException(e);
+    }
+    catch (IOException e) {
       throw new VcsException(e);
     }
     return result;
@@ -448,5 +473,91 @@ public class VcsSqliteLayer {
     catch (SQLException e) {
       throw new VcsException(e);
     }
+  }
+
+  public long getFirstRevision(final AbstractVcs vcs, final String root) {
+    final String systemIndependent = FileUtil.toSystemIndependentName(root);
+    if (! myKnownRepositoryLocations.exists(vcs.getName(), systemIndependent)) {
+      return -1;
+    }
+    final long locationId = myKnownRepositoryLocations.getLocationId(vcs.getName(), systemIndependent);
+    final Long firstRevision = myKnownRepositoryLocations.getFirstRevision(locationId);
+    return firstRevision == null ? -1 : firstRevision.longValue();
+  }
+
+  public long getLastRevision(final AbstractVcs vcs, final String root) {
+    final String systemIndependent = FileUtil.toSystemIndependentName(root);
+    if (! myKnownRepositoryLocations.exists(vcs.getName(), systemIndependent)) {
+      return -1;
+    }
+    final long locationId = myKnownRepositoryLocations.getLocationId(vcs.getName(), systemIndependent);
+    final Long lastRevision = myKnownRepositoryLocations.getLastRevision(locationId);
+    return lastRevision == null ? -1 : lastRevision.longValue();
+  }
+
+  public List<CommittedChangeList> readLists(final AbstractVcs vcs, final RepositoryLocation location, final long lastRev, final long oldRev)
+    throws VcsException {
+    final String root = FileUtil.toSystemIndependentName(location.toPresentableString());
+    final long lastExisting = getLastRevision(vcs, root);
+    final long firstExisting = getFirstRevision(vcs, root);
+
+    if (lastExisting == -1 || firstExisting == -1) return Collections.emptyList();
+    final long operatingFirst = oldRev == -1 ? firstExisting : oldRev;
+    final long operatingLast = lastRev == -1 ? lastExisting : lastRev;
+
+    final PreparedStatement statement = myConnection.getOrCreatePreparedStatement(SqliteTables.PREPARED_SELECT_REVISIONS,
+      new ThrowableConvertor<Connection, PreparedStatement, SQLException>() {
+        @Override
+        public PreparedStatement convert(Connection connection) throws SQLException {
+          // "real" statement - will be used when each committed changes provider will have the method to restore revision uniformly, through changed paths + #
+          // maybe it's safier to call left outer join, but for current VCSes we always have at least one path changed for each revision -> inner join is preferable
+          /*return connection.prepareStatement("SELECT * FROM " + SqliteTables.REVISION.TABLE_NAME + "R , " +
+            SqliteTables.PATHS + "P , "+ SqliteTables.AUTHOR + "A INNER JOIN " + SqliteTables.PATHS_2_REVS + "PR ON PR." +
+            SqliteTables.PATHS_2_REVS.REVISION_FK + "=R." + SqliteTables.REVISION.ID + " AND PR." + SqliteTables.PATHS_2_REVS.PATH_FK +
+            "=" + SqliteTables.PATHS.ID + " AND R." + SqliteTables.REVISION.AUTHOR_FK + "=A." + SqliteTables.AUTHOR.ID +
+            " WHERE R." + SqliteTables.REVISION.NUMBER_INT + ">=? AND R." + SqliteTables.REVISION.NUMBER_INT + "<=?");*/
+          //1=first, 2=last
+
+          return connection.prepareStatement("SELECT * FROM " + SqliteTables.REVISION.TABLE_NAME + " WHERE " +
+            SqliteTables.REVISION.NUMBER_INT + ">=? AND " + SqliteTables.REVISION.NUMBER_INT + "<=? ORDER BY " + SqliteTables.REVISION.NUMBER_INT
+          + " DESC");
+        }
+      });
+    final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+    try {
+
+      statement.setLong(1, operatingFirst);
+      statement.setLong(2, operatingLast);
+      final CachingCommittedChangesProvider provider = (CachingCommittedChangesProvider)vcs.getCommittedChangesProvider();
+      final ResultSet set = statement.executeQuery();
+      SqliteUtil.readSelectResults(set, new ThrowableRunnable<SQLException>() {
+        @Override
+        public void run() throws SQLException {
+          final byte[] bytes = set.getBytes(SqliteTables.REVISION.RAW_DATA);
+          try {
+            final CommittedChangeList list = provider.readChangeList(location, new DataInputStream(new ByteArrayInputStream(bytes)));
+            result.add(list);
+          }
+          catch (IOException e) {
+            throw new SQLException(e);
+          }
+
+          /*final long revisionId = set.getLong("R." + SqliteTables.REVISION.ID);
+          CommittedChangeList list = lists.get(revisionId);
+          if (list == null) {
+            final long numberLong = set.getLong("R." + SqliteTables.REVISION.NUMBER_INT);
+            final String numberStr = set.getString("R." + SqliteTables.REVISION.NUMBER_STR);
+            final String comment = set.getString("R." + SqliteTables.REVISION.COMMENT);
+            final Long date = set.getLong("R." + SqliteTables.REVISION.DATE);
+            final String author = set.getString("A." + SqliteTables.REVISION.AUTHOR_FK);
+            list = new CommittedChangeListImpl("", comment, author, numberLong, new Date(date), Collections.<Change>emptyList());
+          }*/
+        }
+      });
+    }
+    catch (SQLException e) {
+      throw new VcsException(e);
+    }
+    return result;
   }
 }

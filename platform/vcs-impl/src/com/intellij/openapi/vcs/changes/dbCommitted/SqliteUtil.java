@@ -31,8 +31,8 @@ public class SqliteUtil {
   public static void readSelectResults(final ResultSet set, final ThrowableRunnable<SQLException> onNextRow) throws SQLException {
     //if (! set.first()) return;
     while (! set.isAfterLast()) {
-      onNextRow.run();
       if (! set.next()) break;
+      onNextRow.run();
     }
   }
 
