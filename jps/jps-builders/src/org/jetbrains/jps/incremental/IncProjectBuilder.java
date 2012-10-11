@@ -597,14 +597,8 @@ public class IncProjectBuilder {
         throw new ProjectBuildException(e);
       }
       finally {
-        final Collection<? extends BuildRootDescriptor> tempRoots = context.getProjectDescriptor().getBuildRootIndex().clearTempRoots(context);
-        if (!tempRoots.isEmpty()) {
-          final Set<File> rootFiles = new HashSet<File>();
-          for (BuildRootDescriptor rd : tempRoots) {
-            rootFiles.add(rd.getRootFile());
-            context.getProjectDescriptor().fsState.clearRecompile(rd);
-          }
-          myAsyncTasks.add(FileUtil.asyncDelete(rootFiles));
+        for (BuildRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().clearTempRoots(context)) {
+          context.getProjectDescriptor().fsState.clearRecompile(rd);
         }
 
         try {
