@@ -8,10 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  *
@@ -60,6 +57,12 @@ public final class SourceToOutputMappingImpl extends AbstractStateStorage<String
   @Override
   public Collection<String> getSources() throws IOException {
     return getKeys();
+  }
+
+  @Override
+  @NotNull
+  public Iterator<String> getSourcesIterator() throws IOException {
+    return getKeysIterator();
   }
 
   private static Collection<String> normalizePaths(Collection<String> outputs) {

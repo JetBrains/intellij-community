@@ -71,4 +71,9 @@ public final class JavaSourceRootDescriptor extends BuildRootDescriptor {
       }
     };
   }
+
+  @Override
+  public boolean isGenerated() {
+    return isGeneratedSources;
+  }
 }

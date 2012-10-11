@@ -10,11 +10,10 @@ import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.FileProcessor;
-import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
+import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompileScope;
 import org.jetbrains.jps.incremental.Utils;
-import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 
 import java.io.File;
@@ -103,7 +102,7 @@ public class BuildFSState extends FSState {
     setContextTargets(context, null);
   }
 
-  public void beforeChunkBuildStart(@NotNull CompileContext context, ModuleChunk chunk) {
+  public void beforeChunkBuildStart(@NotNull CompileContext context, BuildTargetChunk chunk) {
     setContextTargets(context, chunk.getTargets());
   }
 
@@ -137,9 +136,9 @@ public class BuildFSState extends FSState {
   /**
    * @return true if marked something, false otherwise
    */
-  public boolean markAllUpToDate(CompileContext context, final JavaSourceRootDescriptor rd, final Timestamps stamps) throws IOException {
+  public boolean markAllUpToDate(CompileContext context, final BuildRootDescriptor rd, final Timestamps stamps) throws IOException {
     boolean marked = false;
-    final FilesDelta delta = getDelta(rd.target);
+    final FilesDelta delta = getDelta(rd.getTarget());
     final Set<File> files = delta.clearRecompile(rd);
     if (files != null) {
       FileFilter filter = context.getProjectDescriptor().getBuildRootIndex().getRootFilter(rd);
@@ -147,9 +146,9 @@ public class BuildFSState extends FSState {
       final long compilationStartStamp = context.getCompilationStartStamp();
       for (File file : files) {
         if (filter.accept(file)) {
-          if (scope.isAffected(rd.target, file)) {
+          if (scope.isAffected(rd.getTarget(), file)) {
             final long stamp = FileSystemUtil.lastModified(file);
-            if (!rd.isGeneratedSources && stamp > compilationStartStamp) {
+            if (!rd.isGenerated() && stamp > compilationStartStamp) {
               // if the file was modified after the compilation had started,
               // do not save the stamp considering file dirty
               delta.markRecompile(rd, file);
@@ -159,7 +158,7 @@ public class BuildFSState extends FSState {
             }
             else {
               marked = true;
-              stamps.saveStamp(file, rd.target, stamp);
+              stamps.saveStamp(file, rd.getTarget(), stamp);
             }
           }
           else {
@@ -170,23 +169,8 @@ public class BuildFSState extends FSState {
           }
         }
         else {
-          stamps.removeStamp(file, rd.target);
+          stamps.removeStamp(file, rd.getTarget());
         }
-      }
-    }
-    return marked;
-  }
-
-  public boolean markAllUpToDate(ArtifactRootDescriptor descriptor, Timestamps storage, long compilationStartStamp)
-    throws IOException {
-    boolean marked = false;
-    FilesDelta delta = getDelta(descriptor.getTarget());
-    Set<File> files = delta.clearRecompile(descriptor);
-    if (files != null) {
-      for (File file : files) {
-        long stamp = FileSystemUtil.lastModified(file);
-        marked = true;
-        storage.saveStamp(file, descriptor.getTarget(), stamp);
       }
     }
     return marked;

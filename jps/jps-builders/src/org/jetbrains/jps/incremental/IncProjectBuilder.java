@@ -34,6 +34,7 @@ import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.*;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.service.SharedThreadPool;
 import org.jetbrains.jps.util.JpsPathUtil;
@@ -260,14 +261,15 @@ public class IncProjectBuilder {
 
   private void cleanOutputRoots(CompileContext context) throws ProjectBuildException {
     // whole project is affected
-    final boolean shouldClear = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
-      context.getProjectDescriptor().getProject()).isClearOutputDirectoryOnRebuild();
+    ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(projectDescriptor.getProject());
+    final boolean shouldClear = configuration.isClearOutputDirectoryOnRebuild();
     try {
       if (shouldClear) {
         clearOutputs(context);
       }
       else {
-        for (BuildTarget<?> target : context.getProjectDescriptor().getBuildTargetIndex().getAllTargets()) {
+        for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
           clearOutputFiles(context, target);
         }
       }
@@ -277,13 +279,13 @@ public class IncProjectBuilder {
     }
 
     try {
-      context.getProjectDescriptor().timestamps.getStorage().clean();
+      projectDescriptor.timestamps.getStorage().clean();
     }
     catch (IOException e) {
       throw new ProjectBuildException("Error cleaning timestamps storage", e);
     }
     try {
-      context.getProjectDescriptor().dataManager.clean();
+      projectDescriptor.dataManager.clean();
     }
     catch (IOException e) {
       throw new ProjectBuildException("Error cleaning compiler storages", e);
@@ -504,8 +506,8 @@ public class IncProjectBuilder {
     return false;
   }
 
-  private void buildTargetsChunk(CompileContext context, final BuildTargetChunk chunk) throws ProjectBuildException {
-    Set<BuildTarget<?>> targets = chunk.getTargets();
+  private boolean runBuildersForChunk(CompileContext context, final BuildTargetChunk chunk) throws ProjectBuildException {
+    Set<? extends BuildTarget<?>> targets = chunk.getTargets();
     if (targets.size() > 1) {
       Set<ModuleBuildTarget> moduleTargets = new HashSet<ModuleBuildTarget>();
       for (BuildTarget<?> target : targets) {
@@ -514,21 +516,21 @@ public class IncProjectBuilder {
         }
         else {
           context.processMessage(new CompilerMessage(BUILD_NAME, BuildMessage.Kind.ERROR, "Cannot build " + target.getPresentableName() + " because it is included into a circular dependency"));
-          return;
+          return false;
         }
       }
-      buildModuleChunk(context, new ModuleChunk(moduleTargets));
-      return;
+
+      return runModuleLevelBuilders(context, new ModuleChunk(moduleTargets));
     }
 
     BuildTarget<?> target = targets.iterator().next();
     if (target instanceof ModuleBuildTarget) {
       ModuleBuildTarget moduleBuildTarget = (ModuleBuildTarget)target;
-      buildModuleChunk(context, new ModuleChunk(Collections.singleton(moduleBuildTarget)));
+      return runModuleLevelBuilders(context, new ModuleChunk(Collections.singleton(moduleBuildTarget)));
     }
     else {
       try {
-        buildTarget(target, context);
+        return runTargetBuilders(target, context);
       }
       catch (IOException e) {
         throw new ProjectBuildException(e);
@@ -536,13 +538,13 @@ public class IncProjectBuilder {
     }
   }
 
-  private void buildTarget(BuildTarget<?> target, CompileContext context) throws ProjectBuildException, IOException {
-    ensureFSStateInitialized(context, target);
+  private boolean runTargetBuilders(BuildTarget<?> target, CompileContext context) throws ProjectBuildException, IOException {
     List<TargetBuilder<?,?>> builders = BuilderRegistry.getInstance().getTargetBuilders();
     for (TargetBuilder<?,?> builder : builders) {
       buildTarget(target, context, builder);
       updateDoneFraction(context, 1.0f / builders.size());
     }
+    return true;
   }
 
   private void updateDoneFraction(CompileContext context, final float delta) {
@@ -566,20 +568,20 @@ public class IncProjectBuilder {
     }
   }
 
-  private void buildModuleChunk(CompileContext context, final ModuleChunk chunk) throws ProjectBuildException {
+  private void buildTargetsChunk(CompileContext context, final BuildTargetChunk chunk) throws ProjectBuildException {
 
     boolean doneSomething = false;
     try {
       Utils.ERRORS_DETECTED_KEY.set(context, Boolean.FALSE);
       ensureFSStateInitialized(context, chunk);
       if (context.isMake()) {
-        processDeletedPaths(context, chunk);
+        processDeletedPaths(context, chunk.getTargets());
         doneSomething |= Utils.hasRemovedSources(context);
       }
 
       myProjectDescriptor.fsState.beforeChunkBuildStart(context, chunk);
 
-      doneSomething = runModuleLevelBuilders(context, chunk);
+      doneSomething = runBuildersForChunk(context, chunk);
     }
     catch (ProjectBuildException e) {
       throw e;
@@ -589,75 +591,74 @@ public class IncProjectBuilder {
     }
     finally {
       try {
-        for (BuilderCategory category : BuilderCategory.values()) {
-          for (ModuleLevelBuilder builder : myBuilderRegistry.getBuilders(category)) {
-            builder.cleanupChunkResources(context);
-          }
-        }
+        onChunkBuildComplete(context, chunk);
+      }
+      catch (Exception e) {
+        throw new ProjectBuildException(e);
       }
       finally {
-        try {
-          onChunkBuildComplete(context, chunk);
-        }
-        catch (Exception e) {
-          throw new ProjectBuildException(e);
-        }
-        finally {
-          for (BuildRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().clearTempRoots(context)) {
+        final Collection<? extends BuildRootDescriptor> tempRoots = context.getProjectDescriptor().getBuildRootIndex().clearTempRoots(context);
+        if (!tempRoots.isEmpty()) {
+          final Set<File> rootFiles = new HashSet<File>();
+          for (BuildRootDescriptor rd : tempRoots) {
+            rootFiles.add(rd.getRootFile());
             context.getProjectDescriptor().fsState.clearRecompile(rd);
           }
+          myAsyncTasks.add(FileUtil.asyncDelete(rootFiles));
+        }
 
-          try {
-            // restore deleted paths that were not procesesd by 'integrate'
-            final Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
-            if (map != null) {
-              for (Map.Entry<BuildTarget<?>, Collection<String>> entry : map.entrySet()) {
-                final BuildTarget<?> target = entry.getKey();
-                final Collection<String> paths = entry.getValue();
-                if (paths != null) {
-                  for (String path : paths) {
-                    myProjectDescriptor.fsState.registerDeleted(target, new File(path), null);
-                  }
+        try {
+          // restore deleted paths that were not procesesd by 'integrate'
+          final Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
+          if (map != null) {
+            for (Map.Entry<BuildTarget<?>, Collection<String>> entry : map.entrySet()) {
+              final BuildTarget<?> target = entry.getKey();
+              final Collection<String> paths = entry.getValue();
+              if (paths != null) {
+                for (String path : paths) {
+                  myProjectDescriptor.fsState.registerDeleted(target, new File(path), null);
                 }
               }
             }
           }
-          catch (IOException e) {
-            throw new ProjectBuildException(e);
-          }
+        }
+        catch (IOException e) {
+          throw new ProjectBuildException(e);
+        }
 
-          Utils.REMOVED_SOURCES_KEY.set(context, null);
+        Utils.REMOVED_SOURCES_KEY.set(context, null);
 
-          if (doneSomething && GENERATE_CLASSPATH_INDEX) {
-            final Future<?> future = SharedThreadPool.getInstance().executeOnPooledThread(new Runnable() {
-              @Override
-              public void run() {
-                createClasspathIndex(chunk);
-              }
-            });
-            myAsyncTasks.add(future);
-          }
+        if (doneSomething && GENERATE_CLASSPATH_INDEX) {
+          final Future<?> future = SharedThreadPool.getInstance().executeOnPooledThread(new Runnable() {
+            @Override
+            public void run() {
+              createClasspathIndex(chunk);
+            }
+          });
+          myAsyncTasks.add(future);
         }
       }
     }
   }
 
-  private static void createClasspathIndex(final ModuleChunk chunk) {
+  private static void createClasspathIndex(final BuildTargetChunk chunk) {
     final Set<File> outputDirs = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-    for (ModuleBuildTarget target : chunk.getTargets()) {
-      File outputDir = target.getOutputDir();
-      if (outputDir != null && outputDirs.add(outputDir)) {
-        try {
-          BufferedWriter writer = new BufferedWriter(new FileWriter(new File(outputDir, CLASSPATH_INDEX_FINE_NAME)));
+    for (BuildTarget<?> target : chunk.getTargets()) {
+      if (target instanceof ModuleBuildTarget) {
+        File outputDir = ((ModuleBuildTarget)target).getOutputDir();
+        if (outputDir != null && outputDirs.add(outputDir)) {
           try {
-            writeIndex(writer, outputDir, "");
+            BufferedWriter writer = new BufferedWriter(new FileWriter(new File(outputDir, CLASSPATH_INDEX_FINE_NAME)));
+            try {
+              writeIndex(writer, outputDir, "");
+            }
+            finally {
+              writer.close();
+            }
           }
-          finally {
-            writer.close();
+          catch (IOException e) {
+            // Ignore. Failed to create optional classpath index
           }
-        }
-        catch (IOException e) {
-          // Ignore. Failed to create optional classpath index
         }
       }
     }
@@ -676,12 +677,12 @@ public class IncProjectBuilder {
   }
 
 
-  private void processDeletedPaths(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+  private void processDeletedPaths(CompileContext context, final Set<? extends BuildTarget<?>> targets) throws ProjectBuildException {
     try {
       // cleanup outputs
       final Map<BuildTarget<?>, Collection<String>> removedSources = new HashMap<BuildTarget<?>, Collection<String>>();
 
-      for (ModuleBuildTarget target : chunk.getTargets()) {
+      for (BuildTarget<?> target : targets) {
         final Collection<String> deletedPaths = myProjectDescriptor.fsState.getAndClearDeletedPaths(target);
         if (deletedPaths.isEmpty()) {
           continue;
@@ -706,15 +707,17 @@ public class IncProjectBuilder {
             context.processMessage(new FileDeletedEvent(outputs));
           }
 
-          // check if deleted source was associated with a form
-          final SourceToFormMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
-          final String formPath = sourceToFormMap.getState(deletedSource);
-          if (formPath != null) {
-            final File formFile = new File(formPath);
-            if (formFile.exists()) {
-              FSOperations.markDirty(context, formFile);
+          if (target instanceof ModuleBuildTarget) {
+            // check if deleted source was associated with a form
+            final SourceToFormMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
+            final String formPath = sourceToFormMap.getState(deletedSource);
+            if (formPath != null) {
+              final File formFile = new File(formPath);
+              if (formFile.exists()) {
+                FSOperations.markDirty(context, formFile);
+              }
+              sourceToFormMap.remove(deletedSource);
             }
-            sourceToFormMap.remove(deletedSource);
           }
         }
       }
@@ -747,78 +750,87 @@ public class IncProjectBuilder {
     final int modulesInChunk = chunk.getModules().size();
     int buildersPassed = 0;
     boolean nextPassRequired;
-    do {
-      nextPassRequired = false;
-      myProjectDescriptor.fsState.beforeNextRoundStart(context, chunk);
+    try {
+      do {
+        nextPassRequired = false;
+        myProjectDescriptor.fsState.beforeNextRoundStart(context, chunk);
 
-      DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder = new DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget>() {
-        @Override
-        public void processDirtyFiles(@NotNull FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget> processor) throws IOException {
-          FSOperations.processFilesToRecompile(context, chunk, processor);
-        }
-      };
-      if (!context.isProjectRebuild()) {
-        deleteOutputsOfDirtyFiles(context, dirtyFilesHolder);
-      }
-
-      BUILDER_CATEGORY_LOOP:
-      for (BuilderCategory category : BuilderCategory.values()) {
-        final List<ModuleLevelBuilder> builders = myBuilderRegistry.getBuilders(category);
-        if (builders.isEmpty()) {
-          continue;
+        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder = new DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget>() {
+          @Override
+          public void processDirtyFiles(@NotNull FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget> processor) throws IOException {
+            FSOperations.processFilesToRecompile(context, chunk, processor);
+          }
+        };
+        if (!context.isProjectRebuild()) {
+          deleteOutputsOfDirtyFiles(context, dirtyFilesHolder);
         }
 
-        for (ModuleLevelBuilder builder : builders) {
-          if (context.isMake()) {
-            processDeletedPaths(context, chunk);
+        BUILDER_CATEGORY_LOOP:
+        for (BuilderCategory category : BuilderCategory.values()) {
+          final List<ModuleLevelBuilder> builders = myBuilderRegistry.getBuilders(category);
+          if (builders.isEmpty()) {
+            continue;
           }
-          final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk, dirtyFilesHolder);
 
-          doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
-
-          if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
-            throw new ProjectBuildException("Builder " + builder.getDescription() + " requested build stop");
-          }
-          context.checkCanceled();
-          if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
-            if (!nextPassRequired) {
-              // recalculate basis
-              myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
-              stageCount += myTotalModuleLevelBuilderCount;
-              myTargetsProcessed += (buildersPassed * modulesInChunk) / stageCount;
+          for (ModuleLevelBuilder builder : builders) {
+            if (context.isMake()) {
+              processDeletedPaths(context, chunk.getTargets());
             }
-            nextPassRequired = true;
-          }
-          else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
-            if (!rebuildFromScratchRequested && !context.isProjectRebuild()) {
-              LOG.info("Builder " + builder.getDescription() + " requested rebuild of module chunk " + chunk.getName());
-              // allow rebuild from scratch only once per chunk
-              rebuildFromScratchRequested = true;
-              try {
-                // forcibly mark all files in the chunk dirty
-                FSOperations.markDirty(context, chunk);
-                // reverting to the beginning
+            final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk, dirtyFilesHolder);
+
+            doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
+
+            if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
+              throw new ProjectBuildException("Builder " + builder.getDescription() + " requested build stop");
+            }
+            context.checkCanceled();
+            if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
+              if (!nextPassRequired) {
+                // recalculate basis
                 myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
-                stageCount = myTotalModuleLevelBuilderCount;
-                buildersPassed = 0;
-                nextPassRequired = true;
-                break BUILDER_CATEGORY_LOOP;
+                stageCount += myTotalModuleLevelBuilderCount;
+                myTargetsProcessed += (buildersPassed * modulesInChunk) / stageCount;
               }
-              catch (Exception e) {
-                throw new ProjectBuildException(e);
+              nextPassRequired = true;
+            }
+            else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
+              if (!rebuildFromScratchRequested && !context.isProjectRebuild()) {
+                LOG.info("Builder " + builder.getDescription() + " requested rebuild of module chunk " + chunk.getName());
+                // allow rebuild from scratch only once per chunk
+                rebuildFromScratchRequested = true;
+                try {
+                  // forcibly mark all files in the chunk dirty
+                  FSOperations.markDirty(context, chunk);
+                  // reverting to the beginning
+                  myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
+                  stageCount = myTotalModuleLevelBuilderCount;
+                  buildersPassed = 0;
+                  nextPassRequired = true;
+                  break BUILDER_CATEGORY_LOOP;
+                }
+                catch (Exception e) {
+                  throw new ProjectBuildException(e);
+                }
+              }
+              else {
+                LOG.debug("Builder " + builder.getDescription() + " requested second chunk rebuild");
               }
             }
-            else {
-              LOG.debug("Builder " + builder.getDescription() + " requested second chunk rebuild");
-            }
-          }
 
-          buildersPassed++;
-          updateDoneFraction(context, modulesInChunk / (stageCount));
+            buildersPassed++;
+            updateDoneFraction(context, modulesInChunk / (stageCount));
+          }
+        }
+      }
+      while (nextPassRequired);
+    }
+    finally {
+      for (BuilderCategory category : BuilderCategory.values()) {
+        for (ModuleLevelBuilder builder : myBuilderRegistry.getBuilders(category)) {
+          builder.cleanupChunkResources(context);
         }
       }
     }
-    while (nextPassRequired);
 
     return doneSomething;
   }
@@ -893,7 +905,7 @@ public class IncProjectBuilder {
 
   private static boolean dependsOnGroup(BuildTargetChunk chunk, ChunkGroup group, Map<BuildTarget<?>, Set<BuildTarget<?>>> depsMap) {
     for (BuildTargetChunk groupChunk : group.getChunks()) {
-      final Set<BuildTarget<?>> groupChunkTargets = groupChunk.getTargets();
+      final Set<? extends BuildTarget<?>> groupChunkTargets = groupChunk.getTargets();
       for (BuildTarget<?> target : chunk.getTargets()) {
         if (ContainerUtil.intersects(depsMap.get(target), groupChunkTargets)) {
           return true;
@@ -903,7 +915,7 @@ public class IncProjectBuilder {
     return false;
   }
 
-  private static void onChunkBuildComplete(CompileContext context, @NotNull ModuleChunk chunk) throws IOException {
+  private static void onChunkBuildComplete(CompileContext context, @NotNull BuildTargetChunk chunk) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final BuildFSState fsState = pd.fsState;
     fsState.clearContextRoundData(context);
@@ -911,22 +923,36 @@ public class IncProjectBuilder {
 
     if (!Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled()) {
       boolean marked = false;
-      for (ModuleBuildTarget target : chunk.getTargets()) {
-        if (context.isMake()) {
+      for (BuildTarget<?> target : chunk.getTargets()) {
+        if (context.isMake() && target instanceof ModuleBuildTarget) {
           // ensure non-incremental flag cleared
-          context.clearNonIncrementalMark(target);
+          context.clearNonIncrementalMark((ModuleBuildTarget)target);
         }
         if (context.isProjectRebuild()) {
           fsState.markInitialScanPerformed(target);
         }
         final Timestamps timestamps = pd.timestamps.getStorage();
-        for (JavaSourceRootDescriptor rd : pd.getBuildRootIndex().getTargetRoots(target, context)) {
+        for (BuildRootDescriptor rd : pd.getBuildRootIndex().getTargetRoots(target, context)) {
           marked |= fsState.markAllUpToDate(context, rd, timestamps);
         }
       }
 
       if (marked) {
         context.processMessage(UptoDateFilesSavedEvent.INSTANCE);
+      }
+    }
+  }
+
+  private static void ensureFSStateInitialized(CompileContext context, BuildTargetChunk chunk) throws IOException {
+    final ProjectDescriptor pd = context.getProjectDescriptor();
+    final Timestamps timestamps = pd.timestamps.getStorage();
+    for (BuildTarget<?> target : chunk.getTargets()) {
+      final BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
+      if (target instanceof ModuleBuildTarget) {
+        ensureFSStateInitialized(context, pd, timestamps, configuration, (ModuleBuildTarget)target);
+      }
+      else {
+        ensureFSStateInitialized(context, target);
       }
     }
   }
@@ -939,41 +965,44 @@ public class IncProjectBuilder {
       FSOperations.markDirtyFiles(context, target, timestamps, true, null, Collections.<File>emptySet());
       configuration.save();
     }
+    else if (context.isMake()) {
+      if (pd.fsState.markInitialScanPerformed(target)) {
+        FSOperations.markDirtyFiles(context, target, timestamps, false, null, Collections.<File>emptySet());
+      }
+    }
   }
 
-  private static void ensureFSStateInitialized(CompileContext context, ModuleChunk chunk) throws IOException {
-    final ProjectDescriptor pd = context.getProjectDescriptor();
-    final Timestamps timestamps = pd.timestamps.getStorage();
-    for (ModuleBuildTarget target : chunk.getTargets()) {
-      final BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
-      if (context.isProjectRebuild() || configuration.isTargetDirty()) {
-        FSOperations.markDirtyFiles(context, target, timestamps, true, null);
-        updateOutputRootsLayout(context, target);
-        configuration.save();
+  private static void ensureFSStateInitialized(CompileContext context,
+                                               ProjectDescriptor pd,
+                                               Timestamps timestamps,
+                                               BuildTargetConfiguration configuration, ModuleBuildTarget target) throws IOException {
+    if (context.isProjectRebuild() || configuration.isTargetDirty()) {
+      FSOperations.markDirtyFiles(context, target, timestamps, true, null);
+      updateOutputRootsLayout(context, target);
+      configuration.save();
+    }
+    else {
+      if (context.isMake()) {
+        if (pd.fsState.markInitialScanPerformed(target)) {
+          boolean forceMarkDirty = false;
+          final File currentOutput = target.getOutputDir();
+          if (currentOutput != null) {
+            final Pair<String, String> outputsPair = pd.dataManager.getOutputRootsLayout().getState(target.getModuleName());
+            if (outputsPair != null) {
+              final String previousPath = target.isTests() ? outputsPair.second : outputsPair.first;
+              forceMarkDirty = StringUtil.isEmpty(previousPath) || !FileUtil.filesEqual(currentOutput, new File(previousPath));
+            }
+            else {
+              forceMarkDirty = true;
+            }
+          }
+          initModuleFSState(context, target, forceMarkDirty);
+        }
       }
       else {
-        if (context.isMake()) {
-          if (pd.fsState.markInitialScanPerformed(target)) {
-            boolean forceMarkDirty = false;
-            final File currentOutput = target.getOutputDir();
-            if (currentOutput != null) {
-              final Pair<String, String> outputsPair = pd.dataManager.getOutputRootsLayout().getState(target.getModuleName());
-              if (outputsPair != null) {
-                final String previousPath = target.isTests() ? outputsPair.second : outputsPair.first;
-                forceMarkDirty = StringUtil.isEmpty(previousPath) || !FileUtil.filesEqual(currentOutput, new File(previousPath));
-              }
-              else {
-                forceMarkDirty = true;
-              }
-            }
-            initModuleFSState(context, target, forceMarkDirty);
-          }
-        }
-        else {
-          // forced compilation mode
-          if (context.getScope().isRecompilationForced(target)) {
-            initModuleFSState(context, target, true);
-          }
+        // forced compilation mode
+        if (context.getScope().isRecompilationForced(target)) {
+          initModuleFSState(context, target, true);
         }
       }
     }
@@ -988,8 +1017,8 @@ public class IncProjectBuilder {
     // handle deleted paths
     final BuildFSState fsState = pd.fsState;
     fsState.clearDeletedPaths(target);
-    final SourceToOutputMappingImpl sourceToOutputMap = pd.dataManager.getSourceToOutputMap(target);
-    for (final Iterator<String> it = sourceToOutputMap.getKeysIterator(); it.hasNext();) {
+    final SourceToOutputMapping sourceToOutputMap = pd.dataManager.getSourceToOutputMap(target);
+    for (final Iterator<String> it = sourceToOutputMap.getSourcesIterator(); it.hasNext();) {
       final String path = it.next();
       // can check if the file exists
       final File file = new File(path);
