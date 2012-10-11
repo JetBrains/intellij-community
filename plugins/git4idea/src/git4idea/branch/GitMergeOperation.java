@@ -42,8 +42,6 @@ import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static git4idea.commands.GitMessageWithFilesDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_MERGE;
-
 /**
  * @author Kirill Likhodedov
  */
@@ -83,7 +81,8 @@ class GitMergeOperation extends GitBranchOperation {
       LOG.info("next repository: " + repository);
 
       VirtualFile root = repository.getRoot();
-      GitMessageWithFilesDetector localChangesOverwrittenByMerge = new GitMessageWithFilesDetector(LOCAL_CHANGES_OVERWRITTEN_BY_MERGE, root);
+      GitLocalChangesWouldBeOverwrittenDetector localChangesDetector =
+        new GitLocalChangesWouldBeOverwrittenDetector(root, GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE);
       GitSimpleEventDetector unmergedFiles = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED_PREVENTING_MERGE);
       GitUntrackedFilesOverwrittenByOperationDetector untrackedOverwrittenByMerge =
         new GitUntrackedFilesOverwrittenByOperationDetector(root);
@@ -91,7 +90,7 @@ class GitMergeOperation extends GitBranchOperation {
       GitSimpleEventDetector alreadyUpToDateDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.ALREADY_UP_TO_DATE);
 
       GitCommandResult result = myGit.merge(repository, myBranchToMerge, Collections.<String>emptyList(),
-                                          localChangesOverwrittenByMerge, unmergedFiles, untrackedOverwrittenByMerge, mergeConflict,
+                                          localChangesDetector, unmergedFiles, untrackedOverwrittenByMerge, mergeConflict,
                                           alreadyUpToDateDetector);
       if (result.success()) {
         LOG.info("Merged successfully");
@@ -106,9 +105,9 @@ class GitMergeOperation extends GitBranchOperation {
         fatalUnmergedFilesError();
         fatalErrorHappened = true;
       }
-      else if (localChangesOverwrittenByMerge.wasMessageDetected()) {
+      else if (localChangesDetector.wasMessageDetected()) {
         LOG.info("Local changes would be overwritten by merge!");
-        boolean smartMergeSucceeded = proposeSmartMergePerformAndNotify(repository, localChangesOverwrittenByMerge);
+        boolean smartMergeSucceeded = proposeSmartMergePerformAndNotify(repository, localChangesDetector);
         if (!smartMergeSucceeded) {
           fatalErrorHappened = true;
         }

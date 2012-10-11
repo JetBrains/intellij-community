@@ -98,13 +98,6 @@ public class GitMessageWithFilesDetector implements GitLineHandlerListener {
   }
 
   public static class Event {
-    public static final Event LOCAL_CHANGES_OVERWRITTEN_BY_MERGE = new Event(
-      "Your local changes to the following files would be overwritten by merge",
-      "commit your changes or stash them before");
-    public static final Event LOCAL_CHANGES_OVERWRITTEN_BY_CHECKOUT = new Event(
-      "Your local changes to the following files would be overwritten by checkout",
-      "commit your changes or stash them before");
-
     private final String myMessageStartMarker;
     private final String myMessageEndMarker;
 
