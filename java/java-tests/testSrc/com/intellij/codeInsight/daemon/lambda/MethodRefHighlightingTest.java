@@ -117,6 +117,14 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testInferenceFromMethodReference() throws Exception {
+    doTest();
+  }
+
+  public void testAssignability1() throws Exception {
+    doTest();
+  }
+
   public void testInferenceFromReturnType() throws Exception {
     doTest(true);
   }

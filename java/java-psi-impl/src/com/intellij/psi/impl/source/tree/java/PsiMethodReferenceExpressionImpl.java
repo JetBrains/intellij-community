@@ -385,6 +385,9 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         return PsiUtil.resolveGenericsClassInType(types[0]).getSubstitutor();
       }
 
+      for (int i = 0; i < rightTypes.length; i++) {
+        rightTypes[i] = GenericsUtil.eliminateWildcards(rightTypes[i]);
+      }
       final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(getProject()).getResolveHelper();
       PsiSubstitutor psiSubstitutor = resolveHelper.inferTypeArguments(method.getTypeParameters(), types, rightTypes, languageLevel);
       psiSubstitutor = psiSubstitutor.putAll(substitutor);
