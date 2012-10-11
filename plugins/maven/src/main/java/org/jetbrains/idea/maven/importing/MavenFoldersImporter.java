@@ -173,18 +173,22 @@ public class MavenFoldersImporter {
     myModel.addSourceFolder(myMavenProject.getAnnotationProcessorDirectory(true), true);
     myModel.addSourceFolder(myMavenProject.getAnnotationProcessorDirectory(false), false);
 
-    for (File f : getChildren(targetDir)) {
-      if (!f.isDirectory()) continue;
+    File[] targetChildren = targetDir.listFiles();
 
-      Boolean isGeneratedTestSources = generatedDirs.get(f);
-      if (isGeneratedTestSources != null) {
-        configGeneratedSourceFolder(f, isGeneratedTestSources);
-      }
-      else {
-        if (myImportingSettings.isExcludeTargetFolder()) {
-          if (myModel.hasRegisteredSourceSubfolder(f)) continue;
-          if (myModel.isAlreadyExcluded(f)) continue;
-          myModel.addExcludedFolder(f.getPath());
+    if (targetChildren != null) {
+      for (File f : getChildren(targetDir)) {
+        if (!f.isDirectory()) continue;
+
+        Boolean isGeneratedTestSources = generatedDirs.get(f);
+        if (isGeneratedTestSources != null) {
+          configGeneratedSourceFolder(f, isGeneratedTestSources);
+        }
+        else {
+          if (myImportingSettings.isExcludeTargetFolder()) {
+            if (myModel.hasRegisteredSourceSubfolder(f)) continue;
+            if (myModel.isAlreadyExcluded(f)) continue;
+            myModel.addExcludedFolder(f.getPath());
+          }
         }
       }
     }
@@ -199,7 +203,7 @@ public class MavenFoldersImporter {
     }
 
     if (myImportingSettings.isExcludeTargetFolder()) {
-      if (!myModel.hasRegisteredSourceSubfolder(targetDir)) {
+      if (targetChildren == null || !myModel.hasRegisteredSourceSubfolder(targetDir)) {
         myModel.addExcludedFolder(targetDir.getPath());
       }
     }

@@ -985,6 +985,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
       if (LambdaUtil.dependsOnTypeParams(functionalInterfaceType, functionalInterfaceType, expression, null)) {
         myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, "Cyclic inference")); //todo[ann] append not inferred type params info
+      } else {
+        final PsiElement referenceNameElement = expression.getReferenceNameElement();
+        if (referenceNameElement instanceof PsiKeyword) {
+          if (!LambdaUtil.isValidQualifier(expression)) {
+            final PsiElement qualifier = expression.getQualifier();
+            myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, "Cannot find class " + qualifier.getText()));
+          }
+        }
       }
     }
   }

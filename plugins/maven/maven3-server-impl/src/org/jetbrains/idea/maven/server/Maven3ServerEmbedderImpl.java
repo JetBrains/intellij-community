@@ -244,8 +244,7 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
                         @NotNull MavenServerProgressIndicator indicator) throws RemoteException {
 
     try {
-      //((CustomArtifactFactory)getComponent(ArtifactFactory.class)).customize();
-      //((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).customize();
+      ((CustomMaven3ArtifactFactory)getComponent(ArtifactFactory.class)).customize();
       ((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, failOnUnresolvedDependency);
       ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
       //((CustomMaven3WagonManager)getComponent(WagonManager.class)).customize(failOnUnresolvedDependency);
@@ -582,11 +581,9 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     try {
       setConsoleAndIndicator(null, null);
 
-      //((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).reset();
-      //((CustomArtifactFactory)getComponent(ArtifactFactory.class)).reset();
+      ((CustomMaven3ArtifactFactory)getComponent(ArtifactFactory.class)).reset();
       ((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).reset();
       ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).reset();
-      //((CustomRepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).reset();
       //((CustomWagonManager)getComponent(WagonManager.class)).reset();
     }
     catch (Exception e) {

@@ -50,6 +50,8 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
+import junit.framework.Test
+import junit.framework.TestSuite
 /**
  * @author peter
  */
@@ -155,6 +157,8 @@ package com
 class Foo {
   static bar = 2
   int field = 3
+  
+  String toString() { field as String }
 }""")
 
 
@@ -173,6 +177,8 @@ println 2 //4
       eval 'secondConstant', '1'
       eval 'mainConstant - secondConstant', '41'
       eval '(lst as List<Foo>)[0].field', '3'
+      eval 'lst', '[3]'
+      eval 'lst.size()', '1'
     }
   }
 
@@ -330,9 +336,7 @@ foo()
   }
 
   private void eval(final String codeText, String expected) throws EvaluateException {
-
     Semaphore semaphore = new Semaphore()
-    semaphore.down()
     semaphore.down()
 
     EvaluationContextImpl ctx
@@ -340,7 +344,8 @@ foo()
     managed {
       ctx = evaluationContext()
       item.setContext(ctx)
-      item.updateRepresentation(ctx, { semaphore.up() } as DescriptorLabelListener)
+      item.updateRepresentation(ctx, { } as DescriptorLabelListener)
+      semaphore.up()
     }
     assert semaphore.waitFor(10000):  "too long evaluation: $item.label $item.evaluateException"
 

@@ -71,7 +71,7 @@ class XmlSerializerImpl {
     throw new UnsupportedOperationException("Can't get binding for: " + type);
   }
 
-  private static Binding _getClassBinding(Class<?> aClass, Type originalType, final Accessor accessor) {
+  private static synchronized Binding _getClassBinding(Class<?> aClass, Type originalType, final Accessor accessor) {
     final Pair<Type, Accessor> p = new Pair<Type, Accessor>(originalType, accessor);
 
     Map<Pair<Type, Accessor>, Binding> map = getBindingCacheMap();

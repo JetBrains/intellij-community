@@ -242,7 +242,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     }.execute();
   }
 
-  protected List<String> make() {
+  protected List<CompilerMessage> make() {
     return runCompiler(new Consumer<ErrorReportingCallback>() {
       @Override
       public void consume(ErrorReportingCallback callback) {
@@ -251,7 +251,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     });
   }
 
-  protected List<String> rebuild() {
+  protected List<CompilerMessage> rebuild() {
     return runCompiler(new Consumer<ErrorReportingCallback>() {
       @Override
       public void consume(ErrorReportingCallback callback) {
@@ -260,7 +260,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     });
   }
 
-  protected List<String> compileModule(final Module module) {
+  protected List<CompilerMessage> compileModule(final Module module) {
     return runCompiler(new Consumer<ErrorReportingCallback>() {
       @Override
       public void consume(ErrorReportingCallback callback) {
@@ -269,7 +269,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     });
   }
 
-  protected List<String> compileFiles(final VirtualFile... files) {
+  protected List<CompilerMessage> compileFiles(final VirtualFile... files) {
     return runCompiler(new Consumer<ErrorReportingCallback>() {
       @Override
       public void consume(ErrorReportingCallback callback) {
@@ -278,7 +278,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     });
   }
 
-  private List<String> runCompiler(final Consumer<ErrorReportingCallback> runnable) {
+  private List<CompilerMessage> runCompiler(final Consumer<ErrorReportingCallback> runnable) {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
@@ -389,7 +389,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
   private static class ErrorReportingCallback implements CompileStatusNotification {
     private final Semaphore mySemaphore;
     private Throwable myError;
-    private final List<String> myMessages = new ArrayList<String>();
+    private final List<CompilerMessage> myMessages = new ArrayList<CompilerMessage>();
 
     public ErrorReportingCallback(Semaphore semaphore) {
       mySemaphore = semaphore;
@@ -400,14 +400,10 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
       try {
         for (CompilerMessageCategory category : CompilerMessageCategory.values()) {
           for (CompilerMessage message : compileContext.getMessages(category)) {
-            final String msg = message.getMessage();
-            if (category != CompilerMessageCategory.INFORMATION || !msg.startsWith("Compilation completed successfully")) {
-              myMessages.add(category + ": " + msg);
+            if (category != CompilerMessageCategory.INFORMATION || !message.getMessage().startsWith("Compilation completed successfully")) {
+              myMessages.add(message);
             }
           }
-        }
-        if (errors > 0) {
-          fail("Compiler errors occurred! " + StringUtil.join(myMessages, "\n"));
         }
         assertFalse("Code did not compile!", aborted);
       }
@@ -425,7 +421,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
       }
     }
 
-    public List<String> getMessages() {
+    public List<CompilerMessage> getMessages() {
       return myMessages;
     }
   }

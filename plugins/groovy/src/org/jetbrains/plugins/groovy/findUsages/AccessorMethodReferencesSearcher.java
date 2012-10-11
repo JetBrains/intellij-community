@@ -47,7 +47,7 @@ public class AccessorMethodReferencesSearcher extends QueryExecutorBase<PsiRefer
 
     final String propertyName;
     if (MixinMemberContributor.isCategoryMethod(method, null, PsiSubstitutor.EMPTY)) {
-      final GrGdkMethod cat = GrGdkMethodImpl.createGdkMethod(method, false);
+      final GrGdkMethod cat = GrGdkMethodImpl.createGdkMethod(method, false, null);
       propertyName = GroovyPropertyUtils.getPropertyName((PsiMethod)cat);
     }
     else {

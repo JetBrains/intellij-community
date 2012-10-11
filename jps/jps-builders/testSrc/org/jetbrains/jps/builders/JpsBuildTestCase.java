@@ -259,6 +259,15 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   protected String getProjectRelativePath(String path) {
     assertNotNull(myProjectDir);
     final String projectDir = FileUtil.toSystemIndependentName(myProjectDir.getAbsolutePath());
-    return FileUtil.getRelativePath(projectDir, path, '/');
+    String dataStorageRoot = FileUtil.toSystemIndependentName(myDataStorageRoot.getAbsolutePath());
+    if (FileUtil.isAncestor(projectDir, path, true)) {
+      return FileUtil.getRelativePath(projectDir, path, '/');
+    }
+    else if (FileUtil.isAncestor(dataStorageRoot, path, true)) {
+      return FileUtil.getRelativePath(dataStorageRoot, path, '/');
+    }
+    else {
+      return path;
+    }
   }
 }

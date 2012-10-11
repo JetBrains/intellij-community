@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyConstantIfStatementInspection
 import org.jetbrains.plugins.groovy.codeInspection.gpath.GroovySetterCallCanBePropertyAccessInspection
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 /**
  * @author peter
@@ -43,7 +43,7 @@ if (true) {
   }
 
   public void testSecondAnnotationSuppression() {
-    myFixture.enableInspections(new GroovyUnresolvedAccessInspection())
+    myFixture.enableInspections(new GrUnresolvedAccessInspection())
     myFixture.configureByText "a.groovy", """\
 class FooBarGoo {
   @SuppressWarnings(["GroovyParameterNamingConvention"])
@@ -55,7 +55,7 @@ class FooBarGoo {
     myFixture.launchAction(myFixture.findSingleIntention("Suppress for method"))
     myFixture.checkResult """\
 class FooBarGoo {
-  @SuppressWarnings(["GroovyParameterNamingConvention", "GroovyUnresolvedAccess"])
+  @SuppressWarnings(["GroovyParameterNamingConvention", "GrUnresolvedAccess"])
   def test(Object abc) {
     abc.def()
   }
@@ -64,7 +64,7 @@ class FooBarGoo {
   }
 
   public void testSecondAnnotationSuppression2() {
-    myFixture.enableInspections new GroovyUnresolvedAccessInspection()
+    myFixture.enableInspections new GrUnresolvedAccessInspection()
     myFixture.configureByText "a.groovy", """class FooBarGoo {
   @SuppressWarnings("GroovyParameterNamingConvention")
   def test(Object abc) {
@@ -74,7 +74,7 @@ class FooBarGoo {
 """
     myFixture.launchAction(myFixture.findSingleIntention("Suppress for method"))
     myFixture.checkResult """class FooBarGoo {
-  @SuppressWarnings(["GroovyParameterNamingConvention", "GroovyUnresolvedAccess"])
+  @SuppressWarnings(["GroovyParameterNamingConvention", "GrUnresolvedAccess"])
   def test(Object abc) {
     abc.def()
   }

@@ -38,6 +38,7 @@ import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -321,9 +322,10 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
 
         @Override
         public void mouseExited(MouseEvent e) {
-          actionLabel.setIcon(null);
+          actionLabel.setIcon(EmptyIcon.create(AllIcons.Actions.CloseNew));
         }
       });
+      actionLabel.setIcon(EmptyIcon.create(AllIcons.Actions.CloseNew));
       actionLabel.setOpaque(false);
       actionLabel.setIconOpaque(false);
       action.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_0 + row, InputEvent.ALT_DOWN_MASK)),

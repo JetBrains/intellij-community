@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -46,11 +47,11 @@ import java.util.List;
 public abstract class NavigationGutterIconRenderer extends GutterIconRenderer implements GutterIconNavigationHandler<PsiElement>{
   private final String myPopupTitle;
   private final String myEmptyText;
-  private final PsiElementListCellRenderer myCellRenderer;
+  private final Computable<PsiElementListCellRenderer> myCellRenderer;
   private final NotNullLazyValue<List<SmartPsiElementPointer>> myPointers;
 
-  protected NavigationGutterIconRenderer(final String popupTitle, final String emptyText, @NotNull PsiElementListCellRenderer cellRenderer,
-                                         @NotNull NotNullLazyValue<List<SmartPsiElementPointer>> pointers) {
+  protected NavigationGutterIconRenderer(final String popupTitle, final String emptyText, @NotNull Computable<PsiElementListCellRenderer> cellRenderer,
+    @NotNull NotNullLazyValue<List<SmartPsiElementPointer>> pointers) {
     myPopupTitle = popupTitle;
     myEmptyText = emptyText;
     myCellRenderer = cellRenderer;
@@ -90,10 +91,6 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer im
     return result;
   }
 
-  public PsiElementListCellRenderer getCellRenderer() {
-    return myCellRenderer;
-  }
-
   @Nullable
   public AnAction getClickAction() {
     return new AnAction() {
@@ -103,7 +100,7 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer im
     };
   }
 
-  public void navigate(final MouseEvent event, final PsiElement elt) {
+  public void navigate(@Nullable final MouseEvent event, @Nullable final PsiElement elt) {
     final List<PsiElement> list = getTargetElements();
     if (list.isEmpty()) {
       if (myEmptyText != null) {
@@ -125,7 +122,7 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer im
     }
     else {
       if (event != null) {
-        final JBPopup popup = NavigationUtil.getPsiElementPopup(PsiUtilCore.toPsiElementArray(list), myCellRenderer, myPopupTitle);
+        final JBPopup popup = NavigationUtil.getPsiElementPopup(PsiUtilCore.toPsiElementArray(list), myCellRenderer.compute(), myPopupTitle);
         popup.show(new RelativePoint(event));
       }
     }

@@ -82,7 +82,7 @@ public final class Revision {
 	}
 
 	public void setMessage(String message) {
-		this.message = message;
+		this.message = message.intern();
 	}
 
 	public String getBranches() {
