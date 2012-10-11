@@ -106,20 +106,22 @@ public class HgPusher {
   }
 
   private static void push(final Project project, HgPushCommand command) {
+    final VirtualFile repo = command.getRepo();
     command.execute(new HgCommandResultHandler() {
       @Override
       public void process(@Nullable HgCommandResult result) {
+        if ( result == null ) return;
+
         int commitsNum = getNumberOfPushedCommits(result);
-        String title = null;
-        String description = null;
-        if (commitsNum > 0) {
-          title = "Pushed successfully";
-          description = "Pushed " + commitsNum + " " + StringUtil.pluralize("commit", commitsNum) + ".";
+        if (commitsNum > 0 && result.getExitValue() == 0 ) {
+          String successTitle = "Pushed successfully";
+          String successDescription = "Pushed " + commitsNum + " " + StringUtil.pluralize("commit", commitsNum) + " ["+ repo.getPresentableName() +"]";
+          new HgCommandResultNotifier(project).process(result, successTitle, successDescription);
         } else if (commitsNum == 0) {
-          title = "";
-          description = "Nothing to push";
+          new HgCommandResultNotifier(project).process(result, "", "Nothing to push");
+        } else if ( result.getExitValue() != 0 ) {
+          new HgCommandResultNotifier( project ).process(result, null, null, "Push failed", "Failed to push to [" + repo.getPresentableName() + "]" );
         }
-        new HgCommandResultNotifier(project).process(result, title, description);
       }
     });
   }
