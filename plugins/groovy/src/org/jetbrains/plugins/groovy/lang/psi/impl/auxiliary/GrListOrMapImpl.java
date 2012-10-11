@@ -203,7 +203,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
         }
       }
 
-      return new GrMapType(facade, scope, stringEntries, otherEntries);
+      return GrMapType.create(facade, scope, stringEntries, otherEntries);
     }
 
 

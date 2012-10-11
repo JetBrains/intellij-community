@@ -15,7 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhanc
 /**
  * @author Sergey Evdokimov
  */
-public class GroovyMapValueTypeEhancer extends GrReferenceTypeEnhancer {
+public class GroovyMapValueTypeEnhancer extends GrReferenceTypeEnhancer {
   @Override
   public PsiType getReferenceType(GrReferenceExpression ref, @Nullable PsiElement resolved) {
     if (resolved != null) return null;

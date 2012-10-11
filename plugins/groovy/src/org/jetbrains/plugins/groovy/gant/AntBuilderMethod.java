@@ -29,7 +29,7 @@ class AntBuilderMethod extends LightMethodBuilder implements GrBuilderMethod {
     myPlace = place;
     myAntClass = antClass;
     setModifiers(PsiModifier.PUBLIC);
-    addParameter("args", new GrMapType(place.getResolveScope()));
+    addParameter("args", GrMapType.create(place.getResolveScope()));
     setBaseIcon(JetgroovyIcons.Groovy.Ant_task);
     addParameter(new GrLightParameter("singleArg", stringType, this).setOptional(true));
     addParameter(new GrLightParameter("body", closureType, this).setOptional(true));
