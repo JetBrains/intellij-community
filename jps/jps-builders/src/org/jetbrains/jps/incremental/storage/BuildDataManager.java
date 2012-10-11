@@ -19,7 +19,7 @@ import java.util.Map;
  *         Date: 10/7/11
  */
 public class BuildDataManager implements StorageOwner {
-  private static final int VERSION = 12;
+  private static final int VERSION = 14;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildDataManager");
   private static final String SRC_TO_FORM_STORAGE = "src-form";
   private static final String MAPPINGS_STORAGE = "mappings";
@@ -27,7 +27,7 @@ public class BuildDataManager implements StorageOwner {
   private final Object mySourceToOutputLock = new Object();
   private final Map<BuildTarget<?>, SourceToOutputMappingImpl> mySourceToOutputs = new HashMap<BuildTarget<?>, SourceToOutputMappingImpl>();
 
-  private final SourceToFormMapping mySrcToFormMap;
+  private final OneToManyPathsMapping mySrcToFormMap;
   private final ArtifactsBuildData myArtifactsBuildData;
   private final ModuleOutputRootsLayout myOutputRootsLayout;
   private final Mappings myMappings;
@@ -38,7 +38,7 @@ public class BuildDataManager implements StorageOwner {
   public BuildDataManager(final BuildDataPaths dataPaths, BuildTargetsState targetsState, final boolean useMemoryTempCaches) throws IOException {
     myDataPaths = dataPaths;
     myTargetsState = targetsState;
-    mySrcToFormMap = new SourceToFormMapping(new File(getSourceToFormsRoot(), "data"));
+    mySrcToFormMap = new OneToManyPathsMapping(new File(getSourceToFormsRoot(), "data"));
     myOutputRootsLayout = new ModuleOutputRootsLayout(new File(getOutputsLayoutRoot(), "data"));
     myMappings = new Mappings(getMappingsRoot(), useMemoryTempCaches);
     myArtifactsBuildData = new ArtifactsBuildData(new File(dataPaths.getDataStorageRoot(), "artifacts"));
@@ -65,7 +65,7 @@ public class BuildDataManager implements StorageOwner {
     return myArtifactsBuildData;
   }
 
-  public SourceToFormMapping getSourceToFormMap() {
+  public OneToManyPathsMapping getSourceToFormMap() {
     return mySrcToFormMap;
   }
 

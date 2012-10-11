@@ -703,12 +703,14 @@ public class IncProjectBuilder {
 
           if (target instanceof ModuleBuildTarget) {
             // check if deleted source was associated with a form
-            final SourceToFormMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
-            final String formPath = sourceToFormMap.getState(deletedSource);
-            if (formPath != null) {
-              final File formFile = new File(formPath);
-              if (formFile.exists()) {
-                FSOperations.markDirty(context, formFile);
+            final OneToManyPathsMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
+            final Collection<String> boundForms = sourceToFormMap.getState(deletedSource);
+            if (boundForms != null) {
+              for (String formPath : boundForms) {
+                final File formFile = new File(formPath);
+                if (formFile.exists()) {
+                  FSOperations.markDirty(context, formFile);
+                }
               }
               sourceToFormMap.remove(deletedSource);
             }
