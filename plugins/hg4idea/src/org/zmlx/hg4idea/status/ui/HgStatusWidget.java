@@ -102,27 +102,8 @@ public class HgStatusWidget extends EditorBasedWidget
     update();
   }
 
-  //@Override
-  //public void repositoryChanged() {
-  //  update();
-  //}
-
   @Override
   public ListPopup getPopupStep() {
-    Project project = getProject();
-    if (project == null) {
-      return null;
-    }
-
-    /*
-    TODO:
-    GitRepository repo = GitBranchUiUtil.getCurrentRepository(project);
-    if (repo == null) {
-      return null;
-    }
-    return GitBranchPopup.getInstance(project, repo).asListPopup();
-    */
-
     return null;
   }
 
@@ -135,7 +116,6 @@ public class HgStatusWidget extends EditorBasedWidget
   @NotNull
   @Override
   public String getMaxValue() {
-    // todo: ????
     return myMaxString;
   }
 
@@ -154,10 +134,8 @@ public class HgStatusWidget extends EditorBasedWidget
     };
   }
 
-
   @Override
   public void update(final Project project) {
-
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -193,7 +171,6 @@ public class HgStatusWidget extends EditorBasedWidget
 
 
   public void activate() {
-
     Project project = getProject();
     if (null == project) {
       return;
@@ -215,18 +192,12 @@ public class HgStatusWidget extends EditorBasedWidget
   }
 
   public void deactivate() {
-
-    // TODO: Note that at this point, we cannot get the status bar...the com.intellij.openapi.wm.impl.WindowManagerImpl.releaseFrame()
-    //  has already been invoked, and so the window manager has no idea what we're talking about. This happens to be
-    //  (or at least seems to be) OK, because when we add the widget to the status bar, we're doing so with the project
-    //  as the parentDisposable, so IJ seems to Do The Right Thing and cleans things up.
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(getProject());
     if (null != statusBar) {
       statusBar.removeWidget(ID());
     }
 
     myBusConnection.disconnect();
-
     myRemoteStatusUpdater.deactivate();
     myCurrentBranchStatusUpdater.deactivate();
   }
@@ -240,5 +211,4 @@ public class HgStatusWidget extends EditorBasedWidget
     myTooltip = "";
   }
 
-
-}  // End of HgStatusWidget class
+}
