@@ -316,7 +316,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
               }
               final boolean innerClassOuterClassReference = containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC);
               ClassCandidateInfo candidateInfo = null;
-              if (!isLocatedInStaticContext(containingClass) && parameterTypes.length == 0 || hasReceiver && innerClassOuterClassReference) {
+              if ((containingClass.getContainingClass() == null || !isLocatedInStaticContext(containingClass)) && parameterTypes.length == 0 || hasReceiver && innerClassOuterClassReference) {
                 candidateInfo = new ClassCandidateInfo(containingClass, substitutor);
               }
               return candidateInfo == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[]{candidateInfo};
