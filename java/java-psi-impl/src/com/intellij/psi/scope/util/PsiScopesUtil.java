@@ -199,7 +199,7 @@ public class PsiScopesUtil {
               substitutor = substitutor.putAll((PsiClass)target, types);
             }
           }
-          else if (target instanceof PsiClass && !(ref instanceof PsiMethodReferenceExpression)) {
+          else if (target instanceof PsiClass) {
             processor.handleEvent(JavaScopeProcessorEvent.START_STATIC, null);
           }
         }
