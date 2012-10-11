@@ -295,12 +295,17 @@ class GitBranchWorkerTest {
   }
 
   @Test
+  public void "checkout with several local changes overwritten by checkout should show smart checkout dialog"() {
+    test_operation_with_local_changes_overwritten_by_should_show_smart_checkout_dialog("checkout", 3);
+  }
+
+  @Test
   public void "merge with local changes overwritten by checkout should show smart checkout dialog"() {
     test_operation_with_local_changes_overwritten_by_should_show_smart_checkout_dialog("merge");
   }
 
-  def test_operation_with_local_changes_overwritten_by_should_show_smart_checkout_dialog(String operation) {
-    def localChanges = prepareLocalChangesOverwrittenBy(myUltimate)
+  def test_operation_with_local_changes_overwritten_by_should_show_smart_checkout_dialog(String operation, int numFiles = 1) {
+    def localChanges = prepareLocalChangesOverwrittenBy(myUltimate, numFiles)
 
     List<Change> changes = null;
     checkoutOrMerge(operation, "feature", [
@@ -368,8 +373,12 @@ line with master changes
     assertEquals "Success message is incorrect", expectedSuccessMessage, handler.mySuccessMessage
   }
 
-  def prepareLocalChangesOverwrittenBy(GitRepository repository) {
-    def localChanges = localChangesOverwrittenByWithoutConflict(repository, "feature")
+  def prepareLocalChangesOverwrittenBy(GitRepository repository, int numFiles = 1) {
+    def localChanges = []
+    for (int i = 0; i < numFiles; i++) {
+      localChanges.add("local${i}.txt")
+    }
+    localChangesOverwrittenByWithoutConflict(repository, "feature", localChanges)
     // TODO we'd better avoid manual adding changes to the ChangeListManager.
     // Probably we should create GitTestChangeListManager that would fairly call git status and analyze the output.
     // Maybe we could reuse GitChangeProvider or at least GitNewChangesCollector.
