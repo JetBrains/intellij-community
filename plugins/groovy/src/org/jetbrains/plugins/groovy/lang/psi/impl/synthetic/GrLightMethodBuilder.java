@@ -55,7 +55,7 @@ import java.util.Map;
 /**
  * @author Sergey Evdokimov
  */
-public class GrLightMethodBuilder extends LightElement implements GrMethod, OriginInfoAwareElement {
+public class GrLightMethodBuilder  extends LightElement implements GrMethod, OriginInfoAwareElement {
   protected String myName;
   private PsiType myReturnType = PsiType.VOID;
   private final GrLightModifierList myModifierList;
@@ -484,7 +484,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   public static <T> T getData(@Nullable PsiElement method, @NotNull Object kind) {
     if (method instanceof GrLightMethodBuilder) {
       if (kind.equals(((GrLightMethodBuilder)method).myMethodKind)) {
-        return ((GrLightMethodBuilder)method).getData();
+        return ((GrLightMethodBuilder)method).<T>getData();
       }
     }
     return null;
