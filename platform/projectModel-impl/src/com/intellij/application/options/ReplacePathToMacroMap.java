@@ -17,6 +17,7 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,7 +38,16 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   private List<String> myPathsIndex = null;
   private final Map<String, String> myMacroMap = ContainerUtilRt.newLinkedHashMap();
 
-  @NonNls private static final String[] PROTOCOLS = new String[]{"file", "jar"};
+  @NonNls private static final String[] PROTOCOLS;
+  static {
+    List<String> protocols = new ArrayList<String>();
+    protocols.add("file");
+    protocols.add("jar");
+    for (PathMacroExpendableProtocolBean bean : PathMacroExpendableProtocolBean.EP_NAME.getExtensions()) {
+      protocols.add(bean.protocol);
+    }
+    PROTOCOLS = ArrayUtil.toStringArray(protocols);
+  }
 
   public void addMacroReplacement(String path, String macroName) {
     addReplacement(quotePath(path), "$" + macroName + "$", true);
